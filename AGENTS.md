@@ -5,6 +5,7 @@ This repository is a multi-module workspace with a Vue frontend under `web/`, Ja
 ## Read First
 
 - For a compact project map, read `docs/codex-project-map.md`.
+- For multi-repository SDD delivery, read `docs/sdd-workflow.md`; use `docs/knowledge-base/` for current-state reverse-engineering reference.
 - For Juyi Hall work, read `docs/juyiting-runbook.md` first, then use `docs/juyiting-feature-guide.md` for deeper flow details.
 - Prefer targeted `rg` searches over broad file reads.
 

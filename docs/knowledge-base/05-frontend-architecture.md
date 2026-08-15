@@ -6,14 +6,14 @@
 
 ## 页面与状态
 
-- 路由定义：[`web/src/router/index.js`](../web/src/router/index.js)。根路径重定向 `/juyiting`。
-- App shell：[`web/src/App.vue`](../web/src/App.vue)，负责 app bar、侧菜单、PWA 更新/安装提示和 `router-view`。
+- 路由定义：[`web/src/router/index.js`](../../web/src/router/index.js)。根路径重定向 `/juyiting`。
+- App shell：[`web/src/App.vue`](../../web/src/App.vue)，负责 app bar、侧菜单、PWA 更新/安装提示和 `router-view`。
 - Pinia stores：`api`（令牌及 OAuth 回调）、`agent`（Agent/任务数据）、`global`（UI shell）、`message`、`i18n`、`util`。
 - 页面域：chat、Juyi Hall、通用任务、礼品/支付/订单、个人资料、消息、帮助、投票、短语、短链、微信公众号管理。
 
 ## HTTP 边界
 
-[`web/src/composables/useHttp.js`](../web/src/composables/useHttp.js) 是请求单入口：
+[`web/src/composables/useHttp.js`](../../web/src/composables/useHttp.js) 是请求单入口：
 
 1. `VITE_API_BASE_URL` 存在时为相对 URL 加前缀。
 2. 默认 JSON 请求、超时 AbortSignal、可选流式读取。

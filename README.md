@@ -8,7 +8,8 @@ This repository coordinates the JIA system through Spec-Driven Development (SDD)
 | --- | --- | --- |
 | `api/` | `chcbz/jia` | Java/Gradle backend |
 | `web/` | `chcbz/cyf-web-kit` | Vue frontend |
-| `specs/` | This repository | Feature specifications, design, tasks, and acceptance |
+| `specs/` | This repository | SDD feature specifications, design, tasks, and acceptance |
+| `docs/knowledge-base/` | This repository | Reverse-engineered current-state architecture and inventories |
 
 ## Clone
 
@@ -21,6 +22,11 @@ For an existing checkout:
 ```bash
 git submodule update --init --recursive
 ```
+
+## Documentation
+
+- [SDD workflow](docs/sdd-workflow.md)
+- [Current-state knowledge base](docs/knowledge-base/README.md)
 
 ## Delivery workflow
 

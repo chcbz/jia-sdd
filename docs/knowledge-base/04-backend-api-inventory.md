@@ -7,7 +7,7 @@
 
 ## `AgentController`
 
-- 源码：[`api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentController.java`](../api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentController.java)
+- 源码：[`api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentController.java`](../../api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentController.java)
 - 类级映射：`@RequestMapping("/agent")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -47,7 +47,7 @@
 
 ## `AgentSceneController`
 
-- 源码：[`api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentSceneController.java`](../api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentSceneController.java)
+- 源码：[`api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentSceneController.java`](../../api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentSceneController.java)
 - 类级映射：`@RequestMapping("/agent/scenes")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -58,7 +58,7 @@
 
 ## `DictController`
 
-- 源码：[`api/base/jia-base-service/src/main/java/cn/jia/base/api/DictController.java`](../api/base/jia-base-service/src/main/java/cn/jia/base/api/DictController.java)
+- 源码：[`api/base/jia-base-service/src/main/java/cn/jia/base/api/DictController.java`](../../api/base/jia-base-service/src/main/java/cn/jia/base/api/DictController.java)
 - 类级映射：`@RequestMapping("/dict")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -73,7 +73,7 @@
 
 ## `ActiveAgentController`
 
-- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ActiveAgentController.java`](../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ActiveAgentController.java)
+- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ActiveAgentController.java`](../../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ActiveAgentController.java)
 - 类级映射：`@RequestMapping("/agent")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -82,7 +82,7 @@
 
 ## `AgentTaskThreadController`
 
-- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/AgentTaskThreadController.java`](../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/AgentTaskThreadController.java)
+- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/AgentTaskThreadController.java`](../../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/AgentTaskThreadController.java)
 - 类级映射：`@RequestMapping("/chat/task-threads")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -94,7 +94,7 @@
 
 ## `ChatController`
 
-- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatController.java`](../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatController.java)
+- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatController.java`](../../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatController.java)
 - 类级映射：`@RequestMapping("/chat")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -111,7 +111,7 @@
 
 ## `JuyitingActionController`
 
-- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/JuyitingActionController.java`](../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/JuyitingActionController.java)
+- 源码：[`api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/JuyitingActionController.java`](../../api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/JuyitingActionController.java)
 - 类级映射：`@RequestMapping("/juyiting")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -121,7 +121,7 @@
 
 ## `DwzController`
 
-- 源码：[`api/dwz/jia-dwz-service/src/main/java/cn/jia/dwz/api/DwzController.java`](../api/dwz/jia-dwz-service/src/main/java/cn/jia/dwz/api/DwzController.java)
+- 源码：[`api/dwz/jia-dwz-service/src/main/java/cn/jia/dwz/api/DwzController.java`](../../api/dwz/jia-dwz-service/src/main/java/cn/jia/dwz/api/DwzController.java)
 - 类级映射：`@RequestMapping("/dwz")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -136,7 +136,7 @@
 
 ## `CarController`
 
-- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CarController.java`](../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CarController.java)
+- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CarController.java`](../../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CarController.java)
 - 类级映射：`@RequestMapping("/car")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -164,7 +164,7 @@
 
 ## `CmsController`
 
-- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CmsController.java`](../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CmsController.java)
+- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CmsController.java`](../../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/CmsController.java)
 - 类级映射：`@RequestMapping("/cms")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -189,7 +189,7 @@
 
 ## `FileController`
 
-- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/FileController.java`](../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/FileController.java)
+- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/FileController.java`](../../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/FileController.java)
 - 类级映射：`@RequestMapping("/file")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -198,7 +198,7 @@
 
 ## `IspController`
 
-- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/IspController.java`](../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/IspController.java)
+- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/IspController.java`](../../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/IspController.java)
 - 类级映射：`@RequestMapping("/isp")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -215,7 +215,7 @@
 
 ## `LdapController`
 
-- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/LdapController.java`](../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/LdapController.java)
+- 源码：[`api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/LdapController.java`](../../api/isp/jia-isp-service/src/main/java/cn/jia/isp/api/LdapController.java)
 - 类级映射：`@RequestMapping("/ldap")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -237,7 +237,7 @@
 
 ## `KefuController`
 
-- 源码：[`api/kefu/jia-kefu-service/src/main/java/cn/jia/kefu/api/KefuController.java`](../api/kefu/jia-kefu-service/src/main/java/cn/jia/kefu/api/KefuController.java)
+- 源码：[`api/kefu/jia-kefu-service/src/main/java/cn/jia/kefu/api/KefuController.java`](../../api/kefu/jia-kefu-service/src/main/java/cn/jia/kefu/api/KefuController.java)
 - 类级映射：`@RequestMapping("/kefu")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -256,7 +256,7 @@
 
 ## `MediaController`
 
-- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/MediaController.java`](../api/material/jia-material-service/src/main/java/cn/jia/mat/api/MediaController.java)
+- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/MediaController.java`](../../api/material/jia-material-service/src/main/java/cn/jia/mat/api/MediaController.java)
 - 类级映射：`@RequestMapping("/media")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -272,7 +272,7 @@
 
 ## `NewsController`
 
-- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/NewsController.java`](../api/material/jia-material-service/src/main/java/cn/jia/mat/api/NewsController.java)
+- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/NewsController.java`](../../api/material/jia-material-service/src/main/java/cn/jia/mat/api/NewsController.java)
 - 类级映射：`@RequestMapping("/news")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -286,7 +286,7 @@
 
 ## `PhraseController`
 
-- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/PhraseController.java`](../api/material/jia-material-service/src/main/java/cn/jia/mat/api/PhraseController.java)
+- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/PhraseController.java`](../../api/material/jia-material-service/src/main/java/cn/jia/mat/api/PhraseController.java)
 - 类级映射：`@RequestMapping("/phrase")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -301,7 +301,7 @@
 
 ## `PvLogController`
 
-- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/PvLogController.java`](../api/material/jia-material-service/src/main/java/cn/jia/mat/api/PvLogController.java)
+- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/PvLogController.java`](../../api/material/jia-material-service/src/main/java/cn/jia/mat/api/PvLogController.java)
 - 类级映射：`@RequestMapping("/pvlog")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -314,7 +314,7 @@
 
 ## `TipController`
 
-- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/TipController.java`](../api/material/jia-material-service/src/main/java/cn/jia/mat/api/TipController.java)
+- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/TipController.java`](../../api/material/jia-material-service/src/main/java/cn/jia/mat/api/TipController.java)
 - 类级映射：`@RequestMapping("/tip")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -327,7 +327,7 @@
 
 ## `VoteController`
 
-- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/VoteController.java`](../api/material/jia-material-service/src/main/java/cn/jia/mat/api/VoteController.java)
+- 源码：[`api/material/jia-material-service/src/main/java/cn/jia/mat/api/VoteController.java`](../../api/material/jia-material-service/src/main/java/cn/jia/mat/api/VoteController.java)
 - 类级映射：`@RequestMapping("/vote")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -343,7 +343,7 @@
 
 ## `AuthenticationController`
 
-- 源码：[`api/oauth/jia-oauth-client-starter/src/main/java/cn/jia/oauth/api/AuthenticationController.java`](../api/oauth/jia-oauth-client-starter/src/main/java/cn/jia/oauth/api/AuthenticationController.java)
+- 源码：[`api/oauth/jia-oauth-client-starter/src/main/java/cn/jia/oauth/api/AuthenticationController.java`](../../api/oauth/jia-oauth-client-starter/src/main/java/cn/jia/oauth/api/AuthenticationController.java)
 - 类级映射：`(none)`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -352,7 +352,7 @@
 
 ## `AuthenticationController`
 
-- 源码：[`api/oauth/jia-oauth-resource/src/main/java/cn/jia/oauth/api/AuthenticationController.java`](../api/oauth/jia-oauth-resource/src/main/java/cn/jia/oauth/api/AuthenticationController.java)
+- 源码：[`api/oauth/jia-oauth-resource/src/main/java/cn/jia/oauth/api/AuthenticationController.java`](../../api/oauth/jia-oauth-resource/src/main/java/cn/jia/oauth/api/AuthenticationController.java)
 - 类级映射：`(none)`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -361,7 +361,7 @@
 
 ## `OauthController`
 
-- 源码：[`api/oauth/jia-oauth-service/src/main/java/cn/jia/oauth/api/OauthController.java`](../api/oauth/jia-oauth-service/src/main/java/cn/jia/oauth/api/OauthController.java)
+- 源码：[`api/oauth/jia-oauth-service/src/main/java/cn/jia/oauth/api/OauthController.java`](../../api/oauth/jia-oauth-service/src/main/java/cn/jia/oauth/api/OauthController.java)
 - 类级映射：`@RequestMapping("/oauth")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -379,7 +379,7 @@
 
 ## `GiftController`
 
-- 源码：[`api/point/jia-point-service/src/main/java/cn/jia/point/api/GiftController.java`](../api/point/jia-point-service/src/main/java/cn/jia/point/api/GiftController.java)
+- 源码：[`api/point/jia-point-service/src/main/java/cn/jia/point/api/GiftController.java`](../../api/point/jia-point-service/src/main/java/cn/jia/point/api/GiftController.java)
 - 类级映射：`@RequestMapping("/gift")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -397,7 +397,7 @@
 
 ## `PointController`
 
-- 源码：[`api/point/jia-point-service/src/main/java/cn/jia/point/api/PointController.java`](../api/point/jia-point-service/src/main/java/cn/jia/point/api/PointController.java)
+- 源码：[`api/point/jia-point-service/src/main/java/cn/jia/point/api/PointController.java`](../../api/point/jia-point-service/src/main/java/cn/jia/point/api/PointController.java)
 - 类级映射：`@RequestMapping("/point")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -409,7 +409,7 @@
 
 ## `SmsController`
 
-- 源码：[`api/sms/jia-sms-service/src/main/java/cn/jia/sms/api/SmsController.java`](../api/sms/jia-sms-service/src/main/java/cn/jia/sms/api/SmsController.java)
+- 源码：[`api/sms/jia-sms-service/src/main/java/cn/jia/sms/api/SmsController.java`](../../api/sms/jia-sms-service/src/main/java/cn/jia/sms/api/SmsController.java)
 - 类级映射：`@RequestMapping("/sms")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -434,7 +434,7 @@
 
 ## `JobController`
 
-- 源码：[`api/task/jia-task-service/src/main/java/cn/jia/task/api/JobController.java`](../api/task/jia-task-service/src/main/java/cn/jia/task/api/JobController.java)
+- 源码：[`api/task/jia-task-service/src/main/java/cn/jia/task/api/JobController.java`](../../api/task/jia-task-service/src/main/java/cn/jia/task/api/JobController.java)
 - 类级映射：`@RequestMapping("/job")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -447,7 +447,7 @@
 
 ## `TaskController`
 
-- 源码：[`api/task/jia-task-service/src/main/java/cn/jia/task/api/TaskController.java`](../api/task/jia-task-service/src/main/java/cn/jia/task/api/TaskController.java)
+- 源码：[`api/task/jia-task-service/src/main/java/cn/jia/task/api/TaskController.java`](../../api/task/jia-task-service/src/main/java/cn/jia/task/api/TaskController.java)
 - 类级映射：`@RequestMapping("/task")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -462,7 +462,7 @@
 
 ## `GroupController`
 
-- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/GroupController.java`](../api/user/jia-user-service/src/main/java/cn/jia/user/api/GroupController.java)
+- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/GroupController.java`](../../api/user/jia-user-service/src/main/java/cn/jia/user/api/GroupController.java)
 - 类级映射：`@RequestMapping("/group")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -480,7 +480,7 @@
 
 ## `LoginController`
 
-- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/LoginController.java`](../api/user/jia-user-service/src/main/java/cn/jia/user/api/LoginController.java)
+- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/LoginController.java`](../../api/user/jia-user-service/src/main/java/cn/jia/user/api/LoginController.java)
 - 类级映射：`@RequestMapping("/login")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -499,7 +499,7 @@
 
 ## `MsgController`
 
-- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/MsgController.java`](../api/user/jia-user-service/src/main/java/cn/jia/user/api/MsgController.java)
+- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/MsgController.java`](../../api/user/jia-user-service/src/main/java/cn/jia/user/api/MsgController.java)
 - 类级映射：`@RequestMapping("/msg")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -516,7 +516,7 @@
 
 ## `OrgController`
 
-- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/OrgController.java`](../api/user/jia-user-service/src/main/java/cn/jia/user/api/OrgController.java)
+- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/OrgController.java`](../../api/user/jia-user-service/src/main/java/cn/jia/user/api/OrgController.java)
 - 类级映射：`@RequestMapping("/org")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -537,7 +537,7 @@
 
 ## `PermsController`
 
-- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/PermsController.java`](../api/user/jia-user-service/src/main/java/cn/jia/user/api/PermsController.java)
+- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/PermsController.java`](../../api/user/jia-user-service/src/main/java/cn/jia/user/api/PermsController.java)
 - 类级映射：`@RequestMapping("/action")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -551,7 +551,7 @@
 
 ## `RoleController`
 
-- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/RoleController.java`](../api/user/jia-user-service/src/main/java/cn/jia/user/api/RoleController.java)
+- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/RoleController.java`](../../api/user/jia-user-service/src/main/java/cn/jia/user/api/RoleController.java)
 - 类级映射：`@RequestMapping("/role")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -569,7 +569,7 @@
 
 ## `UserController`
 
-- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/UserController.java`](../api/user/jia-user-service/src/main/java/cn/jia/user/api/UserController.java)
+- 源码：[`api/user/jia-user-service/src/main/java/cn/jia/user/api/UserController.java`](../../api/user/jia-user-service/src/main/java/cn/jia/user/api/UserController.java)
 - 类级映射：`@RequestMapping("/user")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -598,7 +598,7 @@
 
 ## `WorkflowController`
 
-- 源码：[`api/workflow/jia-workflow-service/src/main/java/cn/jia/workflow/api/WorkflowController.java`](../api/workflow/jia-workflow-service/src/main/java/cn/jia/workflow/api/WorkflowController.java)
+- 源码：[`api/workflow/jia-workflow-service/src/main/java/cn/jia/workflow/api/WorkflowController.java`](../../api/workflow/jia-workflow-service/src/main/java/cn/jia/workflow/api/WorkflowController.java)
 - 类级映射：`@RequestMapping("/workflow")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -631,7 +631,7 @@
 
 ## `WxMpController`
 
-- 源码：[`api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxMpController.java`](../api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxMpController.java)
+- 源码：[`api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxMpController.java`](../../api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxMpController.java)
 - 类级映射：`@RequestMapping("/wx/mp")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |
@@ -665,7 +665,7 @@
 
 ## `WxPayController`
 
-- 源码：[`api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxPayController.java`](../api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxPayController.java)
+- 源码：[`api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxPayController.java`](../../api/wx/jia-wx-service/src/main/java/cn/jia/wx/api/WxPayController.java)
 - 类级映射：`@RequestMapping("/wx/pay")`
 
 | 行 | 方法 | 方法级 mapping | `@PreAuthorize` |

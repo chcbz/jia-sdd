@@ -12,7 +12,7 @@
 
 ## 后端构建
 
-- 根工程：[`api/settings.gradle`](../api/settings.gradle)；公共编译和发布规则：[`api/build.gradle`](../api/build.gradle)。
+- 根工程：[`api/settings.gradle`](../../api/settings.gradle)；公共编译和发布规则：[`api/build.gradle`](../../api/build.gradle)。
 - 后端使用 Java library / Maven publishing；所有子工程启用 JUnit Platform。
 - `validateLayering` 是根 Gradle 校验任务，检查 mapper 不依赖 service、API 不依赖 service、DAO 所属层等边界。
 - 广泛 Gradle 命令前必须读取目标模块构建文件；本主机上每一个 Gradle 命令都需要持有 `/tmp/cyf-gradle.lock`，不得并行执行。
@@ -26,7 +26,7 @@ flock /tmp/cyf-gradle.lock bash -lc 'cd api && ./gradlew :agent:jia-agent-servic
 
 ## 前端构建
 
-- Node 要求：`>=18.19.0`；npm 要求：`>=9.0.0`（见 [`web/package.json`](../web/package.json)）。
+- Node 要求：`>=18.19.0`；npm 要求：`>=9.0.0`（见 [`web/package.json`](../../web/package.json)）。
 - 开发：`cd web && npm run dev -- --host 0.0.0.0`
 - 生产构建：`cd web && npm run build`
 - 默认单元测试：`cd web && npm run test`

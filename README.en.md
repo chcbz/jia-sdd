@@ -5,6 +5,7 @@ This repository coordinates the JIA backend and frontend as Git submodules. It c
 - `api/`: Java/Gradle backend
 - `web/`: Vue frontend
 - `specs/`: feature specification, design, task, and acceptance records
+- `docs/knowledge-base/`: reverse-engineered current-state documentation
 
 Clone with submodules:
 

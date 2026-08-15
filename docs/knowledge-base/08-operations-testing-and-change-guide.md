@@ -4,7 +4,7 @@
 
 `common:jia-common-starter` 的 `application.properties` 给出默认 profile、Hikari、Tomcat、MyBatis、PageHelper、Redis session、Jackson、Swagger/Knife4j 等共性参数。各 starter 的 `application-dev.properties` / `application-prod.properties` 补充环境值；这些值及外部环境变量才是实际运行配置来源。
 
-前端 Vite dev server 默认 8080 并使用本地 TLS 文件；生产输出 `web/dist/`。前端部署流程详见根仓 [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md)，不要用文档假设替代实际脚本和运行服务状态。
+前端 Vite dev server 默认 8080 并使用本地 TLS 文件；生产输出 `web/dist/`。前端部署流程详见根仓 [`docs/DEPLOYMENT.md`](../DEPLOYMENT.md)，不要用文档假设替代实际脚本和运行服务状态。
 
 ## 验证选择
 

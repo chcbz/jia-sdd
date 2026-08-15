@@ -8,7 +8,7 @@ This file is a compact orientation map for future Codex sessions. It should stay
 | --- | --- |
 | `web/` | Vue frontend app, Vite build, UI components, frontend assets, frontend tests |
 | `api/` | Java backend workspace with Gradle modules for common, agent, chat, task, and ISP domains |
-| `docs/` | Project guides, implementation plans, operational notes |
+| `docs/` | Project guides, implementation plans, operational notes, and the reverse-engineered knowledge base |
 | `deliverables/` | Packaged deployment artifacts and generated packages |
 
 ## Git Layout
@@ -80,3 +80,6 @@ npm run test
 ## Maintenance Rule
 
 When a future task uncovers stable project knowledge that would save repeated exploration, update this file or the relevant runbook in the same change.
+
+- `docs/knowledge-base/README.md`: current-state code, API, data, and integration reference.
+- `docs/sdd-workflow.md`: multi-repository SDD lifecycle and integration gate.
