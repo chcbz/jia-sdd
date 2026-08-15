@@ -1,0 +1,142 @@
+# Task Handoff: B03 协作任务状态机与事务/CAS 冲突处理
+
+## 1. 结论
+
+- 状态：review（等待独立 Reviewer，不宣称 accepted/done）
+- Owner：Copernicus（`019f8a40-63b0-72e0-aaec-e1874fbbe32c`）
+- Branch：`feat/b03`
+- Worktree：`/home/isp/wsps/cyf/.worktrees/b03-api`
+- Baseline：`10fa1c3b2d4b0154e2c36c4ef9ae94a36bc35587`（accepted B02）
+- Commit：`2fbe6ae755d7c856f8a59415736f10cd283862b0`
+- 日期：2026-07-22
+
+## 2. 实现内容
+
+- 新增任务、成员、work item 三类显式枚举状态机；未知状态、同状态重复写和未列入矩阵的转换全部 fail closed。
+- 新增 `AgentTaskStateService`/`AgentTaskStateServiceImpl`，所有方法显式接收 `tenantId + clientId`，不从 taskId/agentId 推导 scope。
+- 任务状态使用 `agent_task_meta.task_version` 单 SQL CAS；成员和 work item 复用 B02 的 `version` CAS。CAS 影响 0 行统一返回明确 `VERSION_CONFLICT`，不静默覆盖。
+- 新增成员与 work item 的原子组合转换。两个对象在任何写入前完成 scope、版本和状态校验；若第一次 CAS 成功而第二次 CAS 冲突，异常触发 Spring 事务整体回滚。
+- 成员状态转换只更新成员自身；组合转换只更新成员和 work item，从不更新 task meta，因此成员 `done` 不会直接完成整项任务。
+- task/member 转入 `blocked` 或 `failed` 必须提供非空原因。
+- work item 的 claim-sensitive 转换在枚举中定义为合法领域边，但通用 B03 服务返回 `RESERVED_FOR_CLAIM_PROTOCOL`，禁止在没有 lease token/ownership 校验时进入或离开 `claimed`；实际领取、启动、过期回队列留给 B04。
+- 未实现 Controller、UI、RabbitMQ、领域事件、task 聚合推导或数据库 Schema 变更。
+
+## 3. 冻结的状态转换
+
+### 3.1 Task
+
+```text
+open       -> planning | assigned | cancelled
+planning   -> assigned | cancelled
+assigned   -> running | blocked | cancelled
+running    -> reviewing | blocked | failed | cancelled
+blocked    -> running | failed | cancelled
+reviewing  -> running | completed | failed | cancelled
+completed  -> archived
+failed     -> archived
+cancelled  -> archived
+archived   -> (none)
+```
+
+说明：`completed/failed/cancelled` 不可恢复到工作态，只允许单向归档；兼容原有 task meta 的 `open/assigned/running/completed/failed/archived`，并补入设计中的 `planning/reviewing/blocked/cancelled`。
+
+### 3.2 Member
+
+```text
+invited  -> accepted | rejected
+accepted -> working | left
+working  -> done | blocked | failed | left
+blocked  -> working | failed | left
+done/rejected/failed/left -> (none)
+```
+
+### 3.3 Work item
+
+```text
+pending   -> ready | cancelled
+ready     -> claimed | cancelled
+claimed   -> running | ready | cancelled
+running   -> blocked | submitted | failed | cancelled
+blocked   -> ready | failed | cancelled
+submitted -> completed | ready | cancelled
+completed/failed/cancelled -> (none)
+```
+
+其中所有 source/target 涉及 `claimed` 的边均由 B04 专用 claim 协议执行；B03 通用服务会拒绝这些边，防止绕过 lease 约束。
+
+## 4. 修改文件
+
+### API/Core
+
+- `agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskStateService.java`
+- `agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskStateTransitionDTO.java`
+- `agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskStateDTO.java`
+- `agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskMemberWorkItemStateDTO.java`
+- `agent/jia-agent-core/src/main/java/cn/jia/agent/exception/AgentTaskStateException.java`
+- `agent/jia-agent-core/src/main/java/cn/jia/agent/state/AgentTaskStatus.java`
+- `agent/jia-agent-core/src/main/java/cn/jia/agent/state/AgentTaskMemberStatus.java`
+- `agent/jia-agent-core/src/main/java/cn/jia/agent/state/AgentTaskWorkItemStatus.java`
+
+### Mapper/DAO 最小扩展
+
+- `agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentTaskMetaDao.java`
+- `agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentTaskMetaDaoImpl.java`
+- `agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskMetaMapper.java`
+
+仅增加 scoped task lookup 和 `task_version` CAS 状态更新；未改 Schema/Initializer。
+
+### Service/Tests
+
+- `agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskStateServiceImpl.java`
+- `agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskStateServiceImplTest.java`
+- `agent/jia-agent-mapper/src/test/java/cn/jia/agent/dao/AgentTaskMetaStateDaoTest.java`
+
+## 5. 测试证据
+
+```text
+命令：bash ./gradlew \
+  :agent:jia-agent-mapper:test --tests cn.jia.agent.dao.AgentTaskMetaStateDaoTest \
+  :agent:jia-agent-service:test --tests cn.jia.agent.service.impl.AgentTaskStateServiceImplTest \
+  --rerun-tasks --no-daemon
+结果：BUILD SUCCESSFUL；mapper 定向 4 tests、service 定向 11 tests，0 failures / 0 errors / 0 skipped
+
+命令：bash ./gradlew \
+  :agent:jia-agent-core:test \
+  :agent:jia-agent-api:test \
+  :agent:jia-agent-mapper:test \
+  :agent:jia-agent-service:test \
+  --no-daemon
+结果：BUILD SUCCESSFUL；core/api 无测试源，mapper 35 tests、service 110 tests，0 failures / 0 errors / 0 skipped
+
+命令：git diff --check（提交前）
+结果：通过，无空白错误
+```
+
+覆盖内容：合法转换、非法转换、终态不可逆、未知/缺失状态 fail closed、显式 scope 隔离、读取后旧版本冲突、CAS 竞态冲突、组合事务预校验和第二次 CAS 失败回滚、成员 done 不更新 task、B04 claim 边保留。
+
+## 6. 设计决定
+
+1. **冲突不自动重试**：状态转换依赖调用方决策，B03 遇到旧版本或竞态统一抛 `VERSION_CONFLICT`，调用方刷新 snapshot 后重新决策，避免静默覆盖。
+2. **scope miss 不泄露跨租户存在性**：在请求 scope 内查不到记录统一为 `NOT_FOUND`，不执行跨 scope 探测来区分“存在于其他租户”。
+3. **完整快照 CAS**：成员和 work item 从当前 scoped entity 构造完整 B02 DTO 后更新，防止缺字段调用方无意覆盖必填列。
+4. **先校验后写入**：组合转换先读取并验证两个对象，再进行第一个 CAS；可预知的非法状态不会产生第一笔写入，真正的第二笔竞态由事务回滚兜底。
+5. **任务完成权限边界**：B03 的 task 转换接口被视为内部 Orchestrator/授权人工能力；成员转换接口没有任何 task meta 写入路径。
+6. **归档是单向后终态**：completed/failed/cancelled 不能恢复，只允许转 archived；archived 无任何出边。
+
+## 7. 已知后续边界
+
+- **B04**：实现 claim、lease token、lease owner、lease expiry、heartbeat、attempt/retry，并提供执行 `ready -> claimed -> running` 与过期 `claimed -> ready` 的专用受控路径；不得直接绕过 B03 状态定义。
+- **B05**：根据必需工作项和验收结果聚合 task 状态。B03 不会因 member done 或 work item completed 自动更新 task。
+- **B06**：在 submitted/completed 等转换前校验 artifact、review 和 ACL；B03 当前只执行状态和 CAS，不验证成果内容。
+- **C01**：接入 task event 后，状态更新和事件插入需放在同一事务；B03 未创建或发布任何事件。
+- 既有 `AgentServiceImpl.reportTask/assignTask/archiveTask` 是 legacy 兼容路径，当前 Controller 未迁移到新接口，因为本任务明确不改 Controller；新协作流程必须调用 `AgentTaskStateService`。后续切流时应补 expectedVersion 并停用 legacy 非 CAS 状态写入。
+- `AgentTaskMetaDao` 因旧代码兼容仍继承通用 DAO 并保留一参数非 scoped 查询；B03 新服务只使用新增的三参数 scoped 查询和 task-version CAS 方法。
+
+## 8. 范围核对
+
+- [x] 未修改任何 DB SQL 或 `AgentSchemaInitializer`。
+- [x] 未修改 chat、Controller、UI、RabbitMQ 或事件代码。
+- [x] 未实现 B04 claim/lease/heartbeat。
+- [x] 未实现 B05 task 聚合状态计算。
+- [x] 未修改 `TASKS.yaml`、`COVERAGE`、`DECISIONS.md`。
+- [x] 未执行生产迁移。

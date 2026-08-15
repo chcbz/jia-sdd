@@ -1,0 +1,2232 @@
+schema_version: 1
+updated_at: "2026-08-03"
+source_design: "docs/juyiting-multi-agent-collaboration-design.md"
+policy:
+  max_parallel_writers: 1
+  task_lease_hours: 8
+  review_required: true
+  integration_required: true
+  statuses:
+    - draft
+    - ready
+    - claimed
+    - in_progress
+    - blocked
+    - lease_expired
+    - review
+    - rejected
+    - accepted
+    - integrated
+    - done
+    - cancelled
+tasks:
+  - id: A01
+    title: "定义稳定 Agent ID 规则和历史映射"
+    milestone: M0
+    status: accepted
+    priority: P0
+    estimate_person_days: 1
+    dependencies: []
+    owner: "main-gpt-5.6-sol"
+    reviewer: "Lagrange (019f8a43-2c6b-7ee3-8e49-838e46fd56aa)"
+    claimed_at: "2026-07-22T22:34:48+08:00"
+    lease_until: "2026-07-23T06:34:48+08:00"
+    branch: "docs/a01-stable-agent-id"
+    worktree: "/home/isp/wsps/cyf"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "runtime/persona/display ID 边界明确"
+    progress: "首轮 Review 驳回后完成 8 项修订；Lagrange 第二轮独立 Review 已 ACCEPT。"
+    evidence:
+      commits: []
+      tests: []
+      files:
+        - "docs/implementation/agent-identity-v1.md"
+        - "docs/implementation/DECISIONS.md"
+        - "docs/implementation/handoffs/A01.md"
+      handoff: "docs/implementation/handoffs/A01.md"
+    blocked_reason: null
+  - id: A02
+    title: "实现身份注册/alias Schema 与历史检测修复"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 3.5
+    dependencies: [A01]
+    owner: "Zeno + Hume (019f8d25-ed84-7bd3-9fd8-5c2b14050db0)"
+    reviewer: "Erdos (019f8d95-ebad-7491-900c-0ee8e3e20ee0)"
+    claimed_at: "2026-07-22T23:59:00+08:00"
+    lease_until: "2026-07-23T20:00:00+08:00"
+    branch: "feat/a02"
+    worktree: "/home/isp/wsps/cyf/.worktrees/a02-api"
+    allowed_paths:
+      - "api/agent/jia-agent-mapper/src/main/resources/db/schema.sql"
+      - "api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-*.sql"
+      - "api/agent/jia-agent-mapper/src/test/java/cn/jia/agent/schema/**"
+      - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java"
+      - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentSchemaInitializerTest.java"
+      - "docs/DEPLOYMENT.md"
+      - "docs/implementation/handoffs/A02.md"
+    forbidden_paths:
+      - "api/agent/**/entity/**"
+      - "api/agent/**/dao/**"
+      - "api/chat/**"
+      - "deliverables/**"
+    acceptance_summary: "identity registry/alias SQL、Initializer、active 唯一约束测试、dry-run 和迁移说明一致且可审计"
+    progress: "Erdos 第三轮独立 Review ACCEPT；三项 commit 已集成并推送 api/develop，联合模块测试通过；未执行生产迁移。"
+    evidence:
+      commits:
+        - "b0f1aeda9e8d275d03f5a01b1af69c1299e97c18"
+        - "b8cf1b5 fix(agent): [A02] enforce immutable identity registry"
+        - "24fef9e55162893f1ebf924e52251aa2099ce3d7"
+        - "integrated api/develop: 4983e74, 31dc54f, 81dc6f2"
+      tests:
+        - "AgentIdentitySchemaTest: PASS (5 tests after hardening)"
+        - "AgentSchemaInitializerTest: PASS (16 tests after hardening)"
+        - "./gradlew :agent:jia-agent-mapper:test :agent:jia-agent-service:test --no-daemon: PASS"
+        - "Feynman MySQL 8.0.21 migration: FAIL ERROR 1064 (CREATE TRIGGER IF NOT EXISTS)"
+        - "Feynman MySQL 8.0.21 dry-run: FAIL ERROR 1066 (duplicate linked_candidate_counts CTE)"
+        - "A02 R3 mapper/service tests: PASS"
+        - "A02 R3 isolated MySQL 8.0.21 fresh + b0 upgrade twice + constraints + dry-run: PASS"
+        - "Erdos independent MySQL 8.0.21 verification: ACCEPT"
+        - "integrated develop agent core/mapper/service + chat service: PASS"
+        - "mapper/service modules: PASS (27 + 102 tests)"
+      files:
+        - "api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-schema.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-dry-run.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/schema.sql"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java"
+        - "docs/DEPLOYMENT.md"
+        - "docs/implementation/handoffs/A02.md"
+      handoff: "docs/implementation/handoffs/A02.md"
+    blocked_reason: null
+  - id: A03
+    title: "拆分 chat、command、progress、result 协议"
+    milestone: M0
+    status: integrated
+    priority: P0
+    estimate_person_days: 1.5
+    dependencies: [A01]
+    owner: "Poincare + Lagrange + Dalton (019f8d25-9e7a-7490-947b-a4d0a80e72c2)"
+    reviewer: "Lorentz (019f8d33-12bd-7492-91e5-abc578f2652d)"
+    claimed_at: "2026-07-22T22:55:00+08:00"
+    lease_until: "2026-07-23T20:00:00+08:00"
+    branch: "fix/a03-envelope-compat"
+    worktree: "/home/isp/wsps/cyf/.worktrees/a03-compat-api"
+    allowed_paths:
+      - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/common/AgentProtocolConstants.java"
+      - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentProtocolEnvelopeDTO.java"
+      - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentActionIntentDTO.java"
+      - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java"
+      - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java"
+      - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/handler/AgentProtocolMessageNormalizer.java"
+      - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/handler/AgentWebSocketHandler.java"
+      - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/JuyitingAgentRelayService.java"
+      - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/HallActionDispatcher.java"
+      - "api/chat/jia-chat-service/src/test/java/cn/jia/chat/handler/**"
+      - "api/chat/jia-chat-service/src/test/java/cn/jia/chat/service/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "/home/isp/apps/codex-ws-agent/**"
+      - "deliverables/**"
+    acceptance_summary: "服务端无歧义区分 chat/command/progress/result，普通聊天下行明确为 chat.message"
+    progress: "Lorentz 独立 Review ACCEPT；alias 修复与最终 WebSocket JSON 测试已集成并推送 api/develop，联合模块测试通过。"
+    evidence:
+      commits:
+        - "d79b5a32e5635531c721382a59a02aa4048ea3fc"
+        - "8a19fc02d7b55af3190e7615cd028567b981ff31"
+        - "99e225db16e082ca4abc39fc73f48ce9f4433369"
+        - "integrated api/develop after rebase: a86443c, 2b730ab, fccdf3a"
+        - "compatibility fix reviewed and superseded by integration: 5b261b41fcef287b8952764599db547a008083fb -> f1f43a8"
+        - "final websocket envelope tests: 105fb5a"
+        - "integrated api/develop: f1f43a8, b343e2c"
+      tests:
+        - "./gradlew :agent:jia-agent-core:compileJava :agent:jia-agent-service:compileJava :chat:jia-chat-service:compileJava: PASS"
+        - "./gradlew :chat:jia-chat-service:test (A03 targeted tests): PASS"
+        - "./gradlew :agent:jia-agent-service:test --tests cn.jia.agent.service.impl.AgentServiceImplTest: PASS"
+        - "./gradlew :agent:jia-agent-core:test :agent:jia-agent-service:test :chat:jia-chat-service:test: PASS"
+        - "A03 fix targeted chat tests: PASS"
+        - "A03 fix full modules: PASS (agent service 96, chat service 61)"
+        - "A03 alias fix targeted tests: PASS"
+        - "A03 alias fix chat service: PASS (64 tests)"
+        - "integrated develop: ./gradlew :agent:jia-agent-core:test :agent:jia-agent-mapper:test :agent:jia-agent-service:test :chat:jia-chat-service:test --no-daemon: PASS"
+        - "A03 final-envelope tests: chat service PASS (66 tests)"
+        - "integrated develop: agent core/mapper/service + chat service PASS"
+      files:
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/common/AgentProtocolConstants.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentProtocolEnvelopeDTO.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/handler/AgentProtocolMessageNormalizer.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/handler/AgentWebSocketHandler.java"
+        - "docs/implementation/handoffs/A03.md"
+      handoff: "docs/implementation/handoffs/A03.md"
+    blocked_reason: null
+  - id: A04
+    title: "WebSocket 按 tenant/client/task/target 过滤"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 2
+    dependencies: [A01, A03]
+    owner: "Lagrange (019f8a43-2c6b-7ee3-8e49-838e46fd56aa)"
+    reviewer: "Locke (019f8d95-f16a-7cd3-8e57-671fcebd7c1f)"
+    claimed_at: "2026-07-23T12:48:00+08:00"
+    lease_until: "2026-07-23T20:48:00+08:00"
+    branch: "feat/a04"
+    worktree: "/home/isp/wsps/cyf/.worktrees/a04-api"
+    allowed_paths:
+      - "api/chat/**"
+      - "api/agent/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "不再全量广播任务消息"
+    progress: "Locke 第三轮独立 Review ACCEPT；三项 commit 已集成 api/develop，低内存单 worker 联合测试通过并推送。"
+    evidence:
+      commits:
+        - "7f823d9a468fa2529dd7a4fae9dfde9a085c51f0"
+        - "7fb9c395c0f3909baab8d03427e10736d0b3e1fa"
+        - "ac94439af79b8d00e2ac897618106937b68f47b3"
+      tests:
+        - "A04 targeted tests: PASS"
+        - "chat service full: PASS (69 tests)"
+        - "agent mapper/service + chat service joint tests: PASS (35 + 123 + 69 tests)"
+        - "git diff HEAD^ HEAD --check: PASS"
+        - "Locke targeted review tests: PASS; manual review found multi-session and agentId overwrite gaps"
+        - "A04 R2 targeted + chat full 72 + agent mapper 35/service 123/chat 72: PASS"
+        - "git diff 7f823d9..7fb9c39 --check: PASS"
+        - "Locke R2: REJECT legacy task.assign confirmation bypasses safe scoped delivery"
+        - "A04 R3 targeted + chat full 76 + agent mapper 35/service 123/chat 76: PASS"
+        - "git diff 7fb9c39..ac94439 --check: PASS"
+        - "Locke R3 independent review: ACCEPT"
+        - "integrated api/develop: d135629, 3ca9682, 88a6a88"
+        - "first integrated joint test: Gradle daemon disappeared under concurrent memory pressure; not a test assertion failure"
+        - "integrated develop low-memory single-worker agent core/mapper/service + chat service: PASS"
+      files:
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/handler/AgentWebSocketHandler.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/HallActionDispatcher.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java"
+      handoff: "docs/implementation/handoffs/A04.md"
+    blocked_reason: null
+  - id: A05
+    title: "Agent 客户端持久 Inbox/队列"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 3
+    dependencies: [A03]
+    owner: "Poincare + Maxwell (019f8d26-3ed7-72e2-8c47-0d2a8d665174)"
+    reviewer: "Mill (019f8d29-3425-77a2-b13c-1f52a0b0c1cb)"
+    claimed_at: "2026-07-22T23:59:00+08:00"
+    lease_until: "2026-07-23T20:00:00+08:00"
+    branch: "feat/a05"
+    worktree: "/home/isp/wsps/cyf/.worktrees/a05-isp-install"
+    allowed_paths:
+      - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/**"
+      - "/home/isp/wsps/chcbz/isp-install/skills/codex-ws-agent-install/SKILL.md"
+      - "docs/implementation/handoffs/A05.md"
+    forbidden_paths:
+      - "/home/isp/apps/codex-ws-agent/**"
+      - "deliverables/**"
+    acceptance_summary: "持久队列使忙碌/重启不丢 command；chat 只回复 chat.message，event 不执行且不发送 task.report/work.result"
+    progress: "Mill 独立 Review ACCEPT；两项 commit 已集成并推送 isp-install/master，npm ci 后 17 tests 与 Node 20 validate 通过；未部署在线副本。"
+    evidence:
+      commits:
+        - "e200100b20f984f349f8ae428fb036d518213ac2"
+        - "31d76bb"
+        - "integrated isp-install/master: a0185f8, dd9a00a"
+      tests:
+        - "npm test: PASS (8 tests)"
+        - "node conf/codex-ws-agent/agent-client.mjs --validate: PASS"
+        - "A05 v2 npm test: PASS (17 tests)"
+        - "A05 v2 Node 20 no-global-WebSocket validate: PASS"
+        - "integrated master: npm ci + npm test PASS (17 tests)"
+        - "integrated master: OPENCLAW_API_KEY=test node agent-client.mjs --validate PASS"
+      files:
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/test/agent-client.test.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/README.md"
+        - "/home/isp/wsps/chcbz/isp-install/skills/codex-ws-agent-install/SKILL.md"
+        - "docs/implementation/handoffs/A05.md"
+      handoff: "docs/implementation/handoffs/A05.md"
+    blocked_reason: null
+  - id: A06
+    title: "Agent commandId/ACK/幂等协议"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 2
+    dependencies: [A03, A05]
+    owner: "Descartes -> Russell (019f8d4a-52e8-7962-a2f0-853ccd5ac7c0)"
+    reviewer: "Mill (019f8d29-3425-77a2-b13c-1f52a0b0c1cb)"
+    claimed_at: "2026-07-23T12:25:00+08:00"
+    lease_until: "2026-07-23T20:25:00+08:00"
+    branch: "feat/a06"
+    worktree: "/home/isp/wsps/cyf/.worktrees/a06-isp-install"
+    allowed_paths:
+      - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/**"
+      - "/home/isp/wsps/chcbz/isp-install/skills/codex-ws-agent-install/SKILL.md"
+      - "docs/implementation/handoffs/A06.md"
+    forbidden_paths:
+      - "/home/isp/apps/codex-ws-agent/**"
+      - "deliverables/**"
+    acceptance_summary: "重复命令只执行一次"
+    progress: "Mill 第七轮独立 Review ACCEPT；七项 commit 已集成并推送 isp-install/master，npm ci、54 tests、validate 通过；未部署在线副本。"
+    evidence:
+      commits:
+        - "b1d0524d47ccda6e122a497ebfbb4544428599f8"
+        - "007e0a3ed1599c25fd13c78eb60e6ffa587d627e"
+        - "136e8856444d4e2dbde370de75feafe210e0d915"
+        - "cfe29c2fb6f902682e9d170fdefcb03b2cc6b813"
+        - "46b36ac06b6a6e6e2351135e284e5cc4542b651c"
+        - "bddc6a7162232885792b69dc8af2329de14fb53c"
+        - "3a00b507383f3cf568d5740b06599bcd7c5d9df0"
+        - "integrated isp-install/master: 0890471, 81d5108, 60cfdc1, 855e5e4, 8568abb, 6ec93ad, bbf2c20"
+      tests:
+        - "npm test: PASS (32 tests)"
+        - "OPENCLAW_API_KEY=test node agent-client.mjs --validate: PASS"
+        - "git diff --check: PASS"
+        - "Mill fault injection: processing restart re-executes; terminal conflict overwritten; failed send marked emitted; corrupt ledger re-executed"
+        - "A06 R2 npm test: PASS (39 tests, including A05 17 regressions)"
+        - "A06 R2 validate + git diff --check: PASS"
+        - "Mill R2 fault injection: STARTED ACK persist failure still runs command; orphan RECEIVED ledger swallows redelivery"
+        - "A06 R3 npm test: PASS (41 tests)"
+        - "A06 R3 validate + git diff --check: PASS"
+        - "Mill R3 fault injection: same-ms UUID ordering and replay continue can send STARTED/SUCCEEDED before RECEIVED"
+        - "A06 R4 npm test: PASS (44 tests)"
+        - "A06 R4 validate + git diff --check: PASS"
+        - "Mill R4 fault injection: duplicate cross-instance sequence and legal sequence rollback; REJECT"
+        - "A06 R5 npm test: PASS (48 tests)"
+        - "A06 R5 validate + git diff --check: PASS"
+        - "Mill R5 TOCTOU fault injection: post-quarantine waiter still enqueue/replay; REJECT"
+        - "A06 R6 npm test: PASS (51 tests)"
+        - "A06 R6 validate + git diff --check: PASS"
+        - "Mill R6 live false-to-true fault injection: STARTED/SUCCEEDED before RECEIVED; REJECT"
+        - "A06 R7 npm test: PASS (54 tests)"
+        - "A06 R7 validate + git diff --check: PASS"
+        - "Mill R7 independent review: ACCEPT"
+        - "integrated master npm ci + npm test PASS (54 tests)"
+        - "integrated master OPENCLAW_API_KEY=test node agent-client.mjs --validate: PASS"
+      files:
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/test/agent-client.test.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/README.md"
+        - "/home/isp/wsps/chcbz/isp-install/skills/codex-ws-agent-install/SKILL.md"
+      handoff: "docs/implementation/handoffs/A06.md"
+    blocked_reason: null
+  - id: A07
+    title: "编码 Agent 独立 worktree 管理脚本"
+    milestone: M1
+    status: accepted
+    priority: P0
+    estimate_person_days: 2
+    dependencies: [A01, A05, A06]
+    owner: "Russell (019f8d4a-52e8-7962-a2f0-853ccd5ac7c0) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "adversarial_reviewer / DeepSeek V4 Pro High"
+    claimed_at: "2026-07-23T15:42:09+08:00"
+    lease_until: "2026-07-23T23:42:09+08:00"
+    branch: "feat/a07"
+    worktree: "/home/isp/wsps/cyf/.worktrees/a07-isp-install"
+    allowed_paths:
+      - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/**"
+      - "/home/isp/wsps/chcbz/isp-install/bin/codex_ws_agent.sh"
+      - "/home/isp/wsps/chcbz/isp-install/shell/codex_ws_agent_install.sh"
+      - "/home/isp/wsps/chcbz/isp-install/skills/codex-ws-agent-install/SKILL.md"
+      - "docs/implementation/handoffs/A07.md"
+    forbidden_paths:
+      - "/home/isp/apps/codex-ws-agent/**"
+      - "deliverables/**"
+    acceptance_summary: "每个 Agent 使用独立可验证工作树；archive/quarantine 保留且不执行 worktree remove/prune"
+    progress: "2026-07-29 adversarial_reviewer / DeepSeek V4 Pro High 最终 ACCEPT；七个提交关闭 archive TOCTOU、旧 policy fail-stop、Git 配置注入和迟到 dirty/unpushed commit 风险。M1 isp-install 集成保留每个 profile 的 codexModel，92/92 回归通过，未部署。"
+    evidence:
+      commits:
+        - "a7ff539bc090e246f45f02ae03a31783fa95501c"
+        - "8f6309756006383a355f1adeb613b5c097cbda38"
+        - "e23cbdc69aa0d5942bcbd7b1ba3d9f351105083a"
+        - "bc8f89499517192f2385346c0ba4690174caf1db"
+        - "c3859a5fd6b1912cd925b6e82742cf67ccb37cbb"
+        - "c934f407c585ca213645de727ad612391829282c"
+        - "cb408a8408652532fd630ad7c3f67462e9763ad5"
+        - "M1 isp-install integration: d1a71ccd46809fdc70716fab1f847ca8a24222ad"
+      tests:
+        - "adversarial_reviewer / DeepSeek V4 Pro High independent review: ACCEPT; writer/reviewer separated; no P0/P1"
+        - "M1 integrated conf/codex-ws-agent npm test: PASS (92/92; complete A05/A06/A07 attack, workspace and archive regressions)"
+        - "OPENCLAW_API_KEY=test node agent-client.mjs --validate: PASS"
+        - "workspace policy/install validation and shell/node syntax: PASS"
+        - "production code scan: no git worktree remove/prune; archived/quarantined worktrees remain registered"
+        - "per-Agent codexModel preservation test and profile validation: PASS"
+        - "git diff --check: PASS"
+      files:
+        - "/home/isp/wsps/chcbz/isp-install/bin/codex_ws_agent.sh"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/README.md"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/codex-profiles.conf"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/env.example"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/install-policy-check.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/test/agent-client.test.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/test/workspace-manager.test.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/workspace-manager.mjs"
+        - "/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/workspace-policies.example.json"
+        - "/home/isp/wsps/chcbz/isp-install/shell/codex_ws_agent_install.sh"
+        - "/home/isp/wsps/chcbz/isp-install/skills/codex-ws-agent-install/SKILL.md"
+      handoff: "docs/implementation/handoffs/A07.md"
+    blocked_reason: null
+  - id: A08
+    title: "补齐稳定身份签发、解析与运行时授权"
+    milestone: M1
+    status: accepted
+    priority: P0
+    estimate_person_days: 2.5
+    dependencies: [A01, A02, A04]
+    owner: "Darwin (019fa8d9-29b6-7342-abdf-7f2074a0258d) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "adversarial_reviewer / DeepSeek V4 Pro High"
+    claimed_at: "2026-07-28T21:10:00+08:00"
+    lease_until: "2026-07-29T05:10:00+08:00"
+    branch: "feat/a08-identity-runtime"
+    worktree: "/home/isp/wsps/cyf/.worktrees/a08-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "新身份使用 opaque canonical ID；legacy 仅凭显式 registry/alias 兼容并在事务内持有 identity locks"
+    progress: "2026-07-29 adversarial_reviewer / DeepSeek V4 Pro High 最终 ACCEPT；稳定身份签发、byte-exact 解析、legacy manifest/apply、binding/runtime 投影与事务锁闭环完成。M1 集成同时保留 A08 与 B09 initializer validation，未执行生产身份迁移或部署。"
+    evidence:
+      commits:
+        - "eea866ed7291aa8f98b2f4988cfef1acd1a7852f"
+        - "M1 API cherry-pick: f28300ffb22cb561ee995e2e799d23e1131027d9"
+        - "M1 API integration gate: 0907762eb6578987d1765c3f16dddeed0e545a45"
+        - "M1 release_guard fix: c49d148da40bc1f2998954cef27feee7c6b77b57"
+      tests:
+        - "adversarial_reviewer / DeepSeek V4 Pro High independent review: ACCEPT; writer/reviewer separated; no P0/P1"
+        - "AgentIdentityLegacyApplySchemaTest and A08 schema/runtime targeted suites: PASS"
+        - "AgentIdentityRuntimeMySqlTest on isolated MySQL 8.0.21: PASS (4/4)"
+        - "AgentIdentityRuntimeRealTransactionTest: PASS (5/5)"
+        - "A08 legacy identity apply MySQL 8.0.21 probe: PASS"
+        - "fresh/repeated identity and source initializer install: PASS"
+        - "M1 full agent regression: mapper 66 PASS; service 333 tests, 15 environment-conditional skipped, 0 failures/errors"
+        - "git diff --check: PASS"
+      files:
+        - "api/agent/docs/identity-runtime-a08.md"
+        - "api/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentIdentityService.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/common/AgentConstants.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentIdentityAliasEntity.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentIdentityRegistryEntity.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentIdentityAliasDao.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentIdentityRegistryDao.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentPersonaBindingDao.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentIdentityAliasDaoImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentIdentityRegistryDaoImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentPersonaBindingDaoImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/IdentityExactQuerySupport.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentIdentityAliasMapper.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentIdentityRegistryMapper.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentPersonaBindingMapper.java"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-legacy-apply.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-legacy-manifest-schema.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-legacy-manifest-template.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-legacy-snapshot.sql"
+        - "api/agent/jia-agent-mapper/src/test/java/cn/jia/agent/schema/AgentIdentityLegacyApplySchemaTest.java"
+        - "api/agent/jia-agent-mapper/src/test/resources/db/a08-identity-legacy-apply-mysql-probe.sh"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentIdentityServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentIdentityRuntimeMySqlTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentIdentityRuntimeRealTransactionTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentIdentityServiceImplTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java"
+      handoff: "docs/implementation/handoffs/A08.md"
+    blocked_reason: null
+  - id: B01
+    title: "新增 member/work item/request/artifact 表"
+    milestone: M0
+    status: integrated
+    priority: P0
+    estimate_person_days: 2
+    dependencies: [A01]
+    owner: "Copernicus (019f8a40-63b0-72e0-aaec-e1874fbbe32c)"
+    reviewer: "Lagrange (019f8a43-2c6b-7ee3-8e49-838e46fd56aa)"
+    claimed_at: "2026-07-22T22:55:00+08:00"
+    lease_until: "2026-07-23T06:55:00+08:00"
+    branch: "feat/b01"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b01-api"
+    allowed_paths:
+      - "api/agent/jia-agent-mapper/src/main/resources/db/schema.sql"
+      - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-schema.sql"
+      - "api/agent/jia-agent-mapper/src/test/**"
+      - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java"
+      - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentSchemaInitializerTest.java"
+      - "docs/DEPLOYMENT.md"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "api/agent/**/entity/**"
+      - "api/agent/**/dao/**"
+      - "api/chat/**"
+      - "deliverables/**"
+    acceptance_summary: "四张协作表、task meta 扩展、SQL、Initializer、索引约束测试和迁移说明一致"
+    progress: "Lagrange Review ACCEPT；commit 已 cherry-pick 到 api/develop，联合模块测试通过。"
+    evidence:
+      commits:
+        - "eb8a0cff94b8c83ff0104035896528d288487ab3"
+        - "integrated api/develop after rebase: da8a153"
+      tests:
+        - "./gradlew :agent:jia-agent-mapper:test --tests cn.jia.agent.schema.AgentTaskCollaborationSchemaTest --no-daemon: PASS"
+        - "./gradlew :agent:jia-agent-service:test --tests cn.jia.agent.config.AgentSchemaInitializerTest --no-daemon: PASS"
+        - "./gradlew :agent:jia-agent-mapper:test :agent:jia-agent-service:test --no-daemon: PASS (22 + 99 tests)"
+        - "integrated develop: ./gradlew :agent:jia-agent-core:test :agent:jia-agent-mapper:test :agent:jia-agent-service:test :chat:jia-chat-service:test --no-daemon: PASS"
+      files:
+        - "api/agent/jia-agent-mapper/src/main/resources/db/schema.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-schema.sql"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java"
+        - "docs/DEPLOYMENT.md"
+        - "docs/implementation/handoffs/B01.md"
+      handoff: "docs/implementation/handoffs/B01.md"
+    blocked_reason: null
+  - id: B02
+    title: "新增 Entity/DAO/DTO/Mapper"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 3
+    dependencies: [B01]
+    owner: "Copernicus + Godel (019f8d2c-6c94-7362-9157-68d08d99f1f4)"
+    reviewer: "main-gpt-5.6-sol"
+    claimed_at: "2026-07-22T23:59:00+08:00"
+    lease_until: "2026-07-23T07:59:00+08:00"
+    branch: "feat/b02"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b02-api"
+    allowed_paths:
+      - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTask*"
+      - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/**"
+      - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/**"
+      - "api/agent/jia-agent-mapper/src/test/java/cn/jia/agent/dao/**"
+      - "docs/implementation/handoffs/B02.md"
+    forbidden_paths:
+      - "api/agent/jia-agent-mapper/src/main/resources/db/**"
+      - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java"
+      - "api/chat/**"
+      - "deliverables/**"
+    acceptance_summary: "四类协作 Entity/DTO/Mapper/DAO 完整，所有业务查询显式带 tenant/client scope，并有作用域与并发更新测试"
+    progress: "Feynman 独立 Review ACCEPT；已 cherry-pick 到 api/develop，联合模块测试通过。"
+    evidence:
+      commits:
+        - "10fa1c3b2d4b0154e2c36c4ef9ae94a36bc35587"
+        - "integrated api/develop: 0603de1"
+      tests:
+        - "./gradlew :agent:jia-agent-mapper:test --tests cn.jia.agent.dao.AgentTaskCollaborationDaoTest --rerun-tasks --no-daemon: PASS (9 tests)"
+        - "./gradlew :agent:jia-agent-core:test :agent:jia-agent-mapper:test --no-daemon: PASS (mapper 31 tests)"
+        - "integrated develop: ./gradlew :agent:jia-agent-core:test :agent:jia-agent-mapper:test :agent:jia-agent-service:test :chat:jia-chat-service:test --no-daemon: PASS"
+      files:
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTask*"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/**"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/**"
+        - "docs/implementation/handoffs/B02.md"
+      handoff: "docs/implementation/handoffs/B02.md"
+    blocked_reason: null
+  - id: B03
+    title: "实现任务与成员状态机"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 3
+    dependencies: [B02, A03]
+    owner: "Copernicus + Godel (019f8d2c-6c94-7362-9157-68d08d99f1f4)"
+    reviewer: "main-gpt-5.6-sol"
+    claimed_at: "2026-07-22T23:59:30+08:00"
+    lease_until: "2026-07-23T20:00:00+08:00"
+    branch: "feat/b03"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b03-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "非法转换和并发冲突有测试"
+    progress: "主控第二轮独立 Review ACCEPT：真实 H2/Spring 事务回滚与提交均验证，assignee 和持久状态 fail closed；已集成并推送 api/develop。"
+    evidence:
+      commits:
+        - "2fbe6ae755d7c856f8a59415736f10cd283862b0"
+        - "a357bebee1f60ee27d21303ddc122bbc126ef752"
+        - "integrated api/develop: 408d029, 790d282"
+      tests:
+        - "AgentTaskStateServiceRealTransactionTest: PASS (2 tests, H2 + SpringManagedTransactionFactory + DataSourceTransactionManager)"
+        - "worktree ./gradlew :agent:jia-agent-core:test :agent:jia-agent-mapper:test :agent:jia-agent-service:test --rerun-tasks --no-daemon: PASS"
+        - "integrated develop ./gradlew :agent:jia-agent-core:test :agent:jia-agent-mapper:test :agent:jia-agent-service:test :chat:jia-chat-service:test --no-daemon: PASS"
+      files:
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/state/**"
+        - "api/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskStateService.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskStateServiceImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentTaskMetaDao.java"
+        - "docs/implementation/handoffs/B03.md"
+      handoff: "docs/implementation/handoffs/B03.md"
+    blocked_reason: null
+  - id: B04
+    title: "实现 work item claim/lease/heartbeat"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 3
+    dependencies: [B02, B03]
+    owner: "Godel (019f8d2c-6c94-7362-9157-68d08d99f1f4)"
+    reviewer: "Erdos (019f8d95-ebad-7491-900c-0ee8e3e20ee0)"
+    claimed_at: "2026-07-23T13:56:00+08:00"
+    lease_until: "2026-07-23T21:56:00+08:00"
+    branch: "feat/b04"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b04-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "CAS、续期、过期重派通过"
+    progress: "Erdos 独立 Review ACCEPT；commit 已 cherry-pick 到 api/develop，联合模块测试通过并推送。"
+    evidence:
+      commits:
+        - "717d198da0b9ecf2aebee7c667cd47fbd972071c"
+        - "integrated api/develop: 367d7dc"
+      tests:
+        - "B04 DAO 4 + service 18 + real DB 7 tests: PASS"
+        - "agent mapper 39 + service 147 + chat service 66 tests: PASS"
+        - "git diff HEAD^ HEAD --check: PASS"
+        - "Erdos independent review: ACCEPT"
+        - "integrated develop agent core/mapper/service + chat service: PASS"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentWorkItemLeaseServiceImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskWorkItemMapper.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentWorkItemLeaseRealDatabaseTest.java"
+      handoff: "docs/implementation/handoffs/B04.md"
+    blocked_reason: null
+  - id: B05
+    title: "实现任务聚合状态计算"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 2
+    dependencies: [B03, B04]
+    owner: "Godel (019f8d2c-6c94-7362-9157-68d08d99f1f4)"
+    reviewer: "Erdos (019f8d95-ebad-7491-900c-0ee8e3e20ee0)"
+    claimed_at: "2026-07-23T14:34:34+08:00"
+    lease_until: "2026-07-23T22:34:34+08:00"
+    branch: "feat/b05"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b05-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "单成员完成不误完成整队"
+    progress: "Erdos 第五轮独立 Review ACCEPT；parent gate 并发、byte-exact scope/status、索引与无关任务锁隔离均通过；已集成 api/develop 并推送。"
+    evidence:
+      commits:
+        - "d585ca7cce0953c3bde8fd4cd8ec07a27f4baa66"
+        - "4f539e0"
+        - "f581fb7"
+        - "872b20f"
+        - "f06ed0e7835d11e4509cb078b6425e01b1da8f76"
+        - "integrated api/develop: d230e00..3d9b7e4"
+      tests:
+        - "AgentTaskAggregationCalculatorTest: PASS"
+        - "AgentTaskAggregationRealDatabaseTest: PASS (17 tests)"
+        - "AgentTaskWorkItemParentGateDaoTest: PASS (2 tests)"
+        - "MySQL 8.0.21 parent gate/index/concurrency: PASS (5 tests + independent probe)"
+        - "Erdos fifth independent review: ACCEPT"
+        - "integrated develop agent core/mapper/service + chat service: PASS"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskAggregationServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskAggregationCalculator.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskAggregationRealDatabaseTest.java"
+      handoff: "docs/implementation/handoffs/B05.md"
+    blocked_reason: null
+  - id: B06
+    title: "实现诉求和成果服务"
+    milestone: M1
+    status: integrated
+    priority: P0
+    estimate_person_days: 2.5
+    dependencies: [B02, B03]
+    owner: "James (019f8da8-c0cc-7ae0-86d2-e26e41c657f8)"
+    reviewer: "Locke (019f8d95-f16a-7cd3-8e57-671fcebd7c1f)"
+    claimed_at: "2026-07-23T14:27:38+08:00"
+    lease_until: "2026-07-23T22:27:38+08:00"
+    branch: "feat/b06"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b06-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "ACL、版本、关联工作项完整"
+    progress: "Locke 第三轮独立 Review ACCEPT；ACL 过滤下推、501+ 行可达、UTF-8 边界及 duplicate 异常分类均通过；已在 B05 后集成 api/develop 并推送。"
+    evidence:
+      commits:
+        - "961aaa8d07cef81ebb0290dfca1ce2c662341135"
+        - "2fed7ae"
+        - "ac4af1233dbd93f53e773a1cf20aab18b5aba752"
+        - "integrated api/develop: 0abe246..9a160ca"
+      tests:
+        - "B06 service/result/real transaction tests: PASS (45 tests)"
+        - "501+ row request/artifact visibility boundary: PASS"
+        - "UTF-8/code point and storage URI boundary: PASS"
+        - "duplicate mapping: only DuplicateKeyException/SQLState 23505/MySQL 1062"
+        - "Locke independent review: ACCEPT"
+        - "integrated develop agent core/mapper/service + chat service: PASS"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskCollaborationServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentWorkItemResultCommitServiceImpl.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskCollaborationServiceRealTransactionTest.java"
+      handoff: "docs/implementation/handoffs/B06.md"
+    blocked_reason: null
+  - id: B07
+    title: "建立 task-thread 与共享会话"
+    milestone: M1
+    status: accepted
+    priority: P0
+    estimate_person_days: 1.5
+    dependencies: [B02, B03]
+    owner: "Turing / critical_worker (019fad31-7fdf-7363-8fef-a03b142bed98)"
+    reviewer: "Kant the 2nd / adversarial_reviewer (019fad3f-7203-7720-ba43-d7ab363e7d0f)"
+    claimed_at: "2026-07-23T16:08:00+08:00"
+    lease_until: null
+    branch: "feat/b07"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b07-api"
+    allowed_paths:
+      - "api/chat/**"
+      - "api/agent/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "成员共享且非成员不可访问；长期记忆、generic chat、sender、TOCTOU 和 byte-exact scope 均 fail closed"
+    progress: "2026-07-29 DeepSeek V4 Pro High 最终 ACCEPT；首轮六项 P0/P1 与两项遗留 P2 已关闭，317 tests 全绿。MySQL byte-exact 消息查询实库 probe 留待集成门禁。"
+    evidence:
+      commits:
+        - "68233d19ad8244e6226eb03308df74775d59e3e5"
+        - "1c33eb49054cf2e9aa970ae21cc9205fcac04635"
+        - "5ea234e1c1dcf2a614d8fae64c207d2265f55ccd"
+      tests:
+        - "agent mapper 44 + chat mapper 8 + agent service 165 + chat service 100: PASS (317 tests)"
+        - "task-thread memory/generic chat/sender/ACL TOCTOU/schema attacks: PASS"
+        - "byte-exact message scope case/space/NUL/padding and stable latest-limit ordering: PASS"
+        - "DeepSeek V4 Pro High independent final review: ACCEPT"
+      files:
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/impl/AgentTaskThreadServiceImpl.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/impl/ChatConversationServiceImpl.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSchemaInitializer.java"
+        - "api/chat/jia-chat-mapper/src/main/java/cn/jia/chat/mapper/ChatMessageMapper.java"
+      handoff: "docs/implementation/handoffs/B07.md"
+    blocked_reason: null
+  - id: B08
+    title: "改造旧 assign/report 兼容层"
+    milestone: M1
+    status: accepted
+    priority: P0
+    estimate_person_days: 3
+    dependencies: [B03, B04, B05, B06]
+    owner: "Knuth the 2nd / critical_worker (019fada5-566d-7500-a2c2-182c87abce21)"
+    reviewer: "Hume the 2nd / adversarial_reviewer (019fade0-e177-7bc1-b890-9bb7a4b5392d)"
+    claimed_at: "2026-07-23T16:56:00+08:00"
+    lease_until: null
+    branch: "feat/b08"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b08-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "旧前端和单 Agent 流程不破坏"
+    progress: "2026-07-29 DeepSeek V4 Pro High 最终 ACCEPT；P1 suspended/retired 聚合阻塞及 4 项 P2 已关闭，mapper 55 + service 311 回归与隔离 MySQL 11 项通过。生产 agent_task_meta scoped UNIQUE 漂移登记为集成强制门禁。"
+    evidence:
+      commits:
+        - "c975e10 feat(agent): [B08] adapt legacy task collaboration APIs"
+        - "4206a03b841c81282a25730e3399a931e53a2075 fix(agent): [B08] harden legacy task compatibility"
+        - "2794bd4a1a1d600a155571b16dc171f00b09c232 fix(agent): [B08] close independent review findings"
+      tests:
+        - "compileJava + compileTestJava with single worker/Xmx384m: PASS"
+        - "targeted: meta scoped DAO 3 + ability 3 + identity unit 15 + A08 transaction 5 + identity/task race 7 + compatibility DB 22 + service 45 + aggregation DB 17: PASS"
+        - "isolated MySQL 8.0.21: identity runtime 4 + root/parent gate 7 = 11 PASS, temp DB residue 0"
+        - "full agent mapper/service regression: mapper 55 PASS; service 311 tests, 11 environment-conditional skipped, 0 failures/errors"
+        - "git diff --check: PASS"
+        - "DeepSeek V4 Pro High independent final review: ACCEPT; no P0/P1"
+      files:
+        - "api/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentIdentityService.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/common/AgentConstants.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentTaskMetaDao.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskMetaMapper.java"
+        - "api/agent/jia-agent-mapper/src/test/java/cn/jia/agent/dao/AgentTaskMetaScopedDaoTest.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AbilityEvaluationServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentIdentityServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentLegacyTaskCompatibilityService.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskAggregationServiceImpl.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AbilityEvaluationServiceImplTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentIdentityRuntimeMySqlTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentIdentityServiceImplTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentLegacyTaskCompatibilityRealDatabaseTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentLegacyTaskIdentityRaceRealTransactionTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskAggregationRealDatabaseTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskWorkItemParentGateMySqlTest.java"
+        - "docs/implementation/handoffs/B08.md"
+      handoff: "docs/implementation/handoffs/B08.md"
+    blocked_reason: null
+  - id: B09
+    title: "历史任务成员/工作项回填"
+    milestone: M1
+    status: accepted
+    priority: P0
+    estimate_person_days: 2
+    dependencies: [B01, A02, B02]
+    owner: "Copernicus (019f8a40-63b0-72e0-aaec-e1874fbbe32c) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "adversarial_reviewer / DeepSeek V4 Pro High"
+    claimed_at: "2026-07-23T16:08:00+08:00"
+    lease_until: "2026-07-24T00:08:00+08:00"
+    branch: "feat/b09"
+    worktree: "/home/isp/wsps/cyf/.worktrees/b09-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "普通、JSON 和异常历史 ID 均以 sealed manifest、最小权限 routines 与不可变 audit 证据处理"
+    progress: "2026-07-29 adversarial_reviewer / DeepSeek V4 Pro High 最终 ACCEPT；四轮提交关闭审计伪造、SQL 归一化碰撞、旧三表升级和 GROUP_CONCAT 截断风险。M1 release_guard 随后发现 initializer bootstrap 计数引用两个旧名，已由 c49d148 修复并用隔离 MySQL 8.0.21 回归关闭。未执行生产回填或部署。"
+    evidence:
+      commits:
+        - "d5a8656a61883aca24631de277e667a17d0ca642"
+        - "d359f4411c86091286ff3157fae5ddb8b98a62e6"
+        - "fa4179c1df62b69df27c78c2f951766780c91eac"
+        - "9438f5da52c275928a8758a53bbfce95f8190a15"
+        - "M1 API cherry-picks: b493c99014e2cbb6c864dd05be9be21a564e582b, 2683d31053ab4aef4de607beb7da8c20d7ca9766, 3b10571cf7df1ba93b509c4d869e13965ac768f8, d5c6aa1ab5426656365f9dde28be4932a74a138a"
+        - "M1 release_guard fix: c49d148da40bc1f2998954cef27feee7c6b77b57"
+      tests:
+        - "adversarial_reviewer / DeepSeek V4 Pro High independent review: ACCEPT; writer/reviewer separated; no P0/P1"
+        - "AgentTaskCollaborationBackfillSchemaTest targeted: PASS (11 tests at task acceptance)"
+        - "AgentSchemaInitializerTest targeted: PASS (33 tests at task acceptance)"
+        - "isolated MySQL 8.0.21 B09 probe: PASS; restricted direct DML denied; approval/apply EXECUTE succeeds; old three-table upgrade twice; 12 ACTION_STATEMENT exact; group_concat_max_len=4"
+        - "M1 no_update trigger regression on isolated MySQL 8.0.21: PASS (4/4 AgentSchemaInitializerMySqlTest)"
+        - "M1 full agent regression after release_guard fix: mapper 66 PASS; service 333 tests, 15 environment-conditional skipped, 0 failures/errors"
+        - "git diff --check: PASS"
+      files:
+        - "api/agent/jia-agent-mapper/src/main/resources/db/schema.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-backfill-approve.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-backfill-audit-schema.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-backfill-dry-run.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-backfill-manifest.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-backfill-routines.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-backfill-staging.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/task-collaboration-backfill.sql"
+        - "api/agent/jia-agent-mapper/src/test/java/cn/jia/agent/schema/AgentTaskCollaborationBackfillSchemaTest.java"
+        - "api/agent/jia-agent-mapper/src/test/scripts/task-collaboration-backfill-mysql-probe.sh"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentSchemaInitializerTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentSchemaInitializerMySqlTest.java"
+      handoff: "docs/implementation/handoffs/B09.md"
+    blocked_reason: null
+  - id: M2-00
+    title: "M2 基线收敛与安全启动门禁"
+    milestone: M2
+    status: accepted
+    priority: P0
+    estimate_person_days: 0.5
+    dependencies: [B09]
+    owner: "main-gpt-5.6-sol / main_orchestrator"
+    reviewer: "Kant / adversarial_reviewer / deepseek-v4-pro high (019fc7ff-66f9-7182-a839-4138526e59cc)"
+    claimed_at: "2026-08-03T21:20:53+08:00"
+    lease_until: "2026-08-04T05:20:53+08:00"
+    branch: null
+    worktree: "/home/isp/wsps/cyf"
+    control_plane: true
+    allowed_paths:
+      - "docs/implementation/**"
+      - ".codex/**"
+    forbidden_paths:
+      - "api/**"
+      - "web/**"
+      - "deliverables/**"
+    acceptance_summary: "锁定干净基线、dirty checksum、stash 对象 SHA、协议/B09 状态和 >=5GiB 资源门禁证据"
+    progress: "2026-08-03 Kant 独立只读 Review ACCEPT；两项 P1 证据修订已关闭。DeepSeek V4 Pro 完成分区门禁处理；API/Web 累计 clean base 保持 clean；API 399 tests、Web 497 tests 与 production build 通过；44 项 dirty 与两个 stash SHA 未变化；退出资源门禁 >=5GiB。"
+    evidence:
+      commits: []
+      tests:
+        - "TASKS.yaml/MODEL_ROUTING.yaml parse: PASS"
+        - "M2 task IDs, dependencies, routes and roles consistency: PASS"
+        - ".codex TOML parse and registrations: PASS"
+        - "independent release_guard third review: PLAN-GO"
+        - "API agent mapper/service: 399 tests, 0 failures/errors, 15 skipped"
+        - "Web npm test: 497 passing"
+        - "Web npm build: PASS"
+        - "API dirty manifest: 44 entries, content checksum failures=0"
+        - "M2 API/Web cumulative base HEAD exact and clean: PASS"
+        - "Kant independent read-only review: ACCEPT"
+        - "Reviewer P1 evidence corrections: CLOSED"
+        - "final root free-space gate: >=5 GiB"
+      files:
+        - "docs/implementation/M2_EXECUTION_PLAN.md"
+        - "docs/implementation/MASTER_PLAN.md"
+        - "docs/implementation/TASKS.yaml"
+        - "docs/implementation/MODEL_ROUTING.yaml"
+        - "docs/implementation/DECISIONS.md"
+        - ".codex/config.toml"
+        - ".codex/agents/deepseek-pro-worker.toml"
+        - ".codex/agents/deepseek-flash-worker.toml"
+        - ".codex/agents/sol-reviewer.toml"
+        - ".codex/agents/deepseek-pro-reviewer.toml"
+        - "docs/implementation/preflight/M2-00.md"
+        - "docs/implementation/preflight/M2-00-archived-sessions-deleted.txt"
+        - "docs/implementation/preflight/M2-00-control-plane.sha256"
+        - "docs/implementation/handoffs/M2-00.md"
+      handoff: "docs/implementation/handoffs/M2-00.md"
+    blocked_reason: null
+  - id: C01
+    title: "新增 task event 表和版本分配"
+    milestone: M2
+    status: integrated
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [M2-00, B02, B03]
+    owner: "Cicero / deepseek-v4-pro high (019fe2ae-883a-7203-abdb-ba71c2008f4a)"
+    reviewer: "Code: Socrates / gpt-5.6-sol high ACCEPT; Integration: Popper / deepseek-v4-pro high (019fe347-6fa9-72c0-8a4b-653a9290cfef) ACCEPT"
+    claimed_at: "2026-08-08T23:00:00+08:00"
+    lease_until: "2026-08-10T23:00:00+08:00"
+    branch: "feat/c01-task-event-schema"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c01-api"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "event_version/current_event_version 单调唯一并与 task_version CAS 明确分离"
+    progress: "2026-08-08 C01 已 integrated：Sol integration Writer 以 no-ff merge `76c857ea5f6c9cbf4fbe59d24d695cf75d0a0f4e` 合入 `feat/m2-api-base-20260803`，集成 tree 与 accepted C01 byte-exact；DeepSeek V4 Pro 独立复核 ACCEPT。未推送、未合 develop、未部署。"
+    evidence:
+      commits:
+        - "87b25df958f44aaa916ca86cb32407f652904853"
+        - "1e9bd9dfa8fce7229b128708c9b006f95360efb1"
+        - "da9e6c5500b37cb33078e7d41356ddfd1dc7b638"
+        - "2986b8b6bf2f33eb3ec6e7d0560fbabbfd7a7cff"
+        - "201a79391c0d70a194fc2aad063a25aab6fda20c"
+        - "76c857ea5f6c9cbf4fbe59d24d695cf75d0a0f4e"
+      tests:
+        - "C01 claim resource/base/stash/init gate: PASS"
+        - "DeepSeek V4 Flash independent rerun: mapper 77 + service 370 = 447 tests, 0 failures/errors, 22 conditional skips"
+        - "C01 schema suite: 11/11 PASS"
+        - "C01 real transaction suite: 30/30 PASS"
+        - "C01 conditional isolated MySQL drift tests: present, not executed without approved A08_MYSQL_URL"
+        - "git diff --check and clean worktree: PASS"
+        - "DeepSeek V4 Flash isolated MySQL 8.0.21 rerun: 16/16 PASS, 0 skips; engine/auto_increment/extra UNIQUE/TOCTOU/drift covered"
+        - "DeepSeek V4 Flash final forced rerun: mapper 77 + service 383 = 460 tests, 0 failures/errors, 27 conditional skips"
+        - "Sol integration Writer: no-ff parents/base/source exact; integration tree=a9a67e2a9dcad1600feb42b8517f1a611afb67b9 byte-exact with C01"
+        - "DeepSeek V4 Pro integration review: ACCEPT; develop dirty=44 and stash objects unchanged"
+      files:
+        - "docs/implementation/preflight/C01.md"
+        - "docs/implementation/handoffs/C01.md"
+        - "agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskEventWriter.java"
+        - "agent/jia-agent-core/src/main/java/cn/jia/agent/common/TaskEventType.java"
+        - "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskEventEntity.java"
+        - "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskEventWriteCommand.java"
+        - "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskEventWriteResult.java"
+        - "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentTaskEventDao.java"
+        - "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentTaskEventDaoImpl.java"
+        - "agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskEventMapper.java"
+        - "agent/jia-agent-mapper/src/main/resources/db/schema.sql"
+        - "agent/jia-agent-mapper/src/main/resources/db/task-event-schema.sql"
+        - "agent/jia-agent-mapper/src/test/java/cn/jia/agent/schema/AgentTaskEventSchemaTest.java"
+        - "agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java"
+        - "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskEventWriterImpl.java"
+        - "agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentSchemaInitializerMySqlTest.java"
+        - "agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentSchemaInitializerTest.java"
+        - "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskEventRealTransactionTest.java"
+      handoff: "docs/implementation/handoffs/C01.md"
+    blocked_reason: null
+  - id: C01B
+    title: "接入全部协作业务写路径的状态 + task event 原子写入"
+    milestone: M2
+    status: draft
+    priority: P0
+    estimate_person_days: 3
+    dependencies: [C01, B03, B04, B05, B06, B07, B08]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c01b-task-event-mutations"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "状态机、claim/lease、聚合、诉求、成果、会话、legacy assign/report 等成功写入均在同事务产生唯一 task event"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C01H
+    title: "建立 B09 历史任务 event baseline 与幂等迁移"
+    milestone: M2
+    status: draft
+    priority: P0
+    estimate_person_days: 2
+    dependencies: [C01, C01B, B09]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c01h-historical-event-baseline"
+    worktree: null
+    allowed_paths:
+      - "api/agent/jia-agent-mapper/src/main/resources/db/**"
+      - "api/agent/jia-agent-mapper/src/test/**"
+      - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/**"
+      - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/**"
+      - "docs/DEPLOYMENT.md"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "api/agent/**/service/impl/**"
+      - "api/chat/**"
+      - "deliverables/**"
+    acceptance_summary: "B09 后受影响历史任务可幂等建立 baseline event/current_event_version，迁移顺序、计数、回滚和人工审批边界明确"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C02
+    title: "实现 TaskEventBroker 和 after-commit 唤醒"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [C01B, C01H]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c02-task-event-broker"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "仅对已持久并提交的事件 after-commit 唤醒一次，回滚不发布"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C03
+    title: "实现历史 replay、连续性检查、resync"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 3
+    dependencies: [C02]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c03-task-event-replay"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "复用 scene event 可靠模式"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C04
+    title: "实现 workspace snapshot API"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 2.5
+    dependencies: [M2-00, B03, B04, B05, B06, B07, C01, C03]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c04-task-workspace"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "返回一致版本快照"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C05
+    title: "实现 task events SSE API"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [C03, C04]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c05-task-event-sse"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "支持 Last-Event-ID"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C05F
+    title: "实现 M2 后端 feature flag 与默认关闭策略"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 0.5
+    dependencies: [C05]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c05f-m2-backend-flag"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/starter/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "M2 workspace/SSE 能力默认关闭，可按测试 scope 开启并明确关闭/回滚行为"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C06
+    title: "实现前端 useTaskEventStream"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 3
+    dependencies: [C04, C05, C05F]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c06-task-event-stream"
+    worktree: null
+    allowed_paths:
+      - "web/src/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "重连、补发、gap 恢复"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C07A
+    title: "接入 TaskWorkspace 数据、连接状态和恢复状态"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 1.5
+    dependencies: [C04, C06]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c07a-task-workspace-state"
+    worktree: null
+    allowed_paths:
+      - "web/src/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "TaskWorkspace 只消费冻结 composable，完整展示 loading/live/reconnecting/degraded/resync/error 状态"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C07B
+    title: "实现 TaskWorkspace/Timeline 纯展示 UI"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 1.5
+    dependencies: [C07A]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c07b-task-workspace-ui"
+    worktree: null
+    allowed_paths:
+      - "web/src/components/juyiting/**"
+      - "web/src/assets/juyiting/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "web/src/composables/**"
+      - "deliverables/**"
+    acceptance_summary: "可看成员、工作项、诉求、成果和 Timeline，且不复制状态机或修改 API 语义"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C07C
+    title: "完成 TaskWorkspace 响应式、可访问性和组件测试"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 1
+    dependencies: [C07A]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c07c-task-workspace-quality"
+    worktree: null
+    allowed_paths:
+      - "web/src/components/juyiting/**"
+      - "web/src/components/world/JuyiHall.vue"
+      - "web/src/assets/juyiting/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "web/src/composables/**"
+      - "deliverables/**"
+    acceptance_summary: "响应式、键盘可用、长文本/空状态稳定，组件测试和生产 build 通过"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C07
+    title: "TaskWorkspace/Timeline 前端集成门禁"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 0.5
+    dependencies: [C07B, C07C]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c07-task-workspace-integration"
+    worktree: null
+    allowed_paths:
+      - "web/src/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "C07A/B/C 集成通过，Juyi Hall 数据流、显式分派、测试和 build 无回归"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C07F
+    title: "实现 M2 前端 feature flag 与安全降级入口"
+    milestone: M2
+    status: draft
+    priority: P1
+    estimate_person_days: 0.5
+    dependencies: [C05F, C07]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/c07f-m2-frontend-flag"
+    worktree: null
+    allowed_paths:
+      - "web/src/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "前端 M2 默认关闭，可按测试 scope 开启；关闭时保持 M1 页面和旧流程可用"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C08A
+    title: "M2 API 累计基线集成与回归门禁"
+    milestone: M2
+    status: draft
+    priority: P0
+    estimate_person_days: 0.75
+    dependencies: [C01, C01B, C01H, C02, C03, C04, C05, C05F]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/m2-api-base-20260803"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-api-base"
+    allowed_paths:
+      - "api/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "web/**"
+      - "deliverables/**"
+    acceptance_summary: "clean API 累计基线、迁移、原子事件、replay/SSE、ACL 和 feature flag 联合回归通过"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C08W
+    title: "M2 Web 累计基线集成与回归门禁"
+    milestone: M2
+    status: draft
+    priority: P0
+    estimate_person_days: 0.75
+    dependencies: [C06, C07, C07F]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/m2-web-base-20260803"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-web-base"
+    allowed_paths:
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "api/**"
+      - "deliverables/**"
+    acceptance_summary: "clean Web 累计基线、reducer、工作台、flag、Juyi Hall 回归、test 和 build 通过"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: C08
+    title: "M2 部署候选最终 GO/NO-GO"
+    milestone: M2
+    status: draft
+    priority: P0
+    estimate_person_days: 0.5
+    dependencies: [C08A, C08W]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: null
+    worktree: "/home/isp/wsps/cyf"
+    control_plane: true
+    allowed_paths:
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "api/**"
+      - "web/**"
+      - "deliverables/**"
+    acceptance_summary: "双仓 SHA、跨模块恢复 smoke、flag 灰度、部署/关闭/回滚证据齐全并由 release_guard 输出 GO/NO-GO"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D01
+    title: "新增 outbox/inbox/delivery 表"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [B01, A03]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d01"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "唯一键和发布索引完整"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D02
+    title: "业务事务写 task event + delivery + outbox"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 3
+    dependencies: [C01, D01]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d02"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "故障注入验证原子性"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D03
+    title: "实现 Outbox Relay"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 3
+    dependencies: [D02]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d03"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "批量领取、confirm、退避重试"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D04
+    title: "配置 RabbitMQ exchange/queue/retry/DLQ"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [D03]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d04"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "durable、manual ACK、TTL DLX"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D05
+    title: "实现 Rabbit command consumer + WS dispatcher"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 3
+    dependencies: [D04, A04]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d05"
+    worktree: null
+    allowed_paths:
+      - "api/chat/**"
+      - "api/agent/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "正确目标 Agent 收到命令"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D06
+    title: "实现 WAITING_AGENT 和重连补投"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 2.5
+    dependencies: [D05, A06]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d06"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "离线不热循环、不丢命令"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D07
+    title: "实现服务端 Inbox 幂等"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [D05, D01]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d07"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "重复消息无重复副作用"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D08
+    title: "替换 HallActionDispatcher 内存 mailbox"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [D01, D03, D05, D06]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d08"
+    worktree: null
+    allowed_paths:
+      - "api/chat/**"
+      - "api/agent/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "API 重启后 mailbox 仍在"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: D09
+    title: "Rabbit 运维指标、DLQ 查询和重放工具"
+    milestone: M3
+    status: draft
+    priority: P1
+    estimate_person_days: 2
+    dependencies: [D04]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/d09"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "可查看、告警、人工重放"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E01
+    title: "统一候选硬约束和评分"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: [B03, B05]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e01"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "返回评分明细和排除原因"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E02
+    title: "实现多 Agent 贪心组队算法"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2.5
+    dependencies: [E01]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e02"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "能力覆盖、人数和 reviewer 约束"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E03
+    title: "实现自动拆解工作项接口和人工确认"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [B04, B06]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e03"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "可编辑后再执行"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E04
+    title: "实现依赖解析和 ready 调度"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2.5
+    dependencies: [B04, E03]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e04"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "无环、依赖完成后自动解锁"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E05
+    title: "实现超时、失败和重派策略"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2.5
+    dependencies: [B04, D06]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e05"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "不无限重试，有人工接管"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E06
+    title: "实现自主等级和风险策略"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: [E01, E02, E03, E04, E05]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e06"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "L0/L1 默认，高风险需审批"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E07
+    title: "实现前端团队推荐/确认/解释 UI"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [E01, E02, C07]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e07"
+    worktree: null
+    allowed_paths:
+      - "web/src/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "用户可覆盖自动选择"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: E08
+    title: "实现前端工作项看板与协作操作"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 5
+    dependencies: [B04, B05, B06, C06, C07]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/e08"
+    worktree: null
+    allowed_paths:
+      - "web/src/**"
+      - "web/tests/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "完成主要协作闭环"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: F01
+    title: "实现 Context Pack 生成器"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [B06, B07, C01]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/f01"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/common/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "Agent 收到一致、可追溯上下文"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: F02
+    title: "实现 artifact 文件存储和 hash 策略"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: [B06]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/f02"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/common/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "大文件不塞数据库，版本可追溯"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: F03
+    title: "修复 Elasticsearch 服务和 prod 配置"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: []
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/f03"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/common/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "健康检查和检索可用"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: F04
+    title: "实现任务级 ACL 语义索引"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [F01, F02, F03]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/f04"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/common/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "强制 tenant/client/task 过滤"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: F05
+    title: "实现派生索引重试和全量重建工具"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: [F04, D03]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/f05"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/common/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "ES 清空后可重建"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: F06
+    title: "实现成果冲突、accepted/superseded 标记"
+    milestone: M4
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: [B06]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/f06"
+    worktree: null
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/common/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "Context Pack 不混入废弃成果"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G01
+    title: "建设后端状态机/ACL/幂等测试套件"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 4
+    dependencies: [B03, B04, B05, B06, D07]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g01"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "核心分支覆盖"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G02
+    title: "建设 Rabbit 故障注入和恢复测试"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [D03, D04, D05, D06, D07]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g02"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "broker/API/Agent 重启可恢复"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G03
+    title: "建设前端协作流测试"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [C06, C07, E07, E08]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g03"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "reducer、重连、交互覆盖"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G04
+    title: "建设 E2E 多 Agent 场景"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [A06, B08, C07, D08, E08, F01]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g04"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "10 个验收场景通过"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G05
+    title: "实现灰度 feature flags 和回退开关"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: [B03, C02, D03]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g05"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "可逐租户启用"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G06
+    title: "编写数据迁移执行手册"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 1
+    dependencies: [B09]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g06"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "可验证、可重跑、可审计"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G07
+    title: "建设 Dashboard 和告警"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 2
+    dependencies: [D09]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g07"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "backlog、DLQ、ACK 延迟可见"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null
+  - id: G08
+    title: "安全审计和容量压测"
+    milestone: M5
+    status: draft
+    priority: P2
+    estimate_person_days: 3
+    dependencies: [G01, G02, G03, G04, G05, G06, G07]
+    owner: null
+    reviewer: null
+    claimed_at: null
+    lease_until: null
+    branch: "feat/g08"
+    worktree: null
+    allowed_paths:
+      - "api/**"
+      - "web/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "无越权，容量基线明确"
+    progress: null
+    evidence:
+      commits: []
+      tests: []
+      files: []
+      handoff: null
+    blocked_reason: null

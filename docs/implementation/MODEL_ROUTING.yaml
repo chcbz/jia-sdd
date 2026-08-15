@@ -1,0 +1,262 @@
+schema_version: 2
+updated_at: "2026-08-03"
+execution_policy:
+  task_mode: serial
+  max_active_tasks: 1
+  max_active_writers: 1
+  writer_reviewer_separation: true
+  prefer_cross_model_review: true
+  one_writer_per_worktree: true
+  reviewer_read_only: true
+  control_plane_writer: main_orchestrator
+  gradle_lock: /tmp/cyf-gradle.lock
+  production_changes_require_explicit_task: true
+
+roles:
+  main_orchestrator:
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_code: false
+    writes_control_plane: true
+    task_types: [task_ledger, control_plane, claim, integration_coordination, progress_reporting]
+  architect:
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_code: false
+    task_types: [architecture, state_machine, migration_design, risk_analysis]
+  critical_worker:
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_code: true
+    task_types: [identity, acl, concurrency, transaction, migration, p0]
+  balanced_worker:
+    model: gpt-5.6-terra
+    reasoning_effort: medium
+    writes_code: true
+    task_types: [backend, frontend, api, mapper, integration]
+  routine_worker:
+    model: gpt-5.6-luna
+    reasoning_effort: medium
+    writes_code: true
+    task_types: [dto, fixture, repetitive_test, documentation, bounded_fix]
+  deepseek_pro_worker:
+    model: deepseek-v4-pro
+    reasoning_effort: high
+    writes_code: true
+    task_types: [m2_core, transaction, task_event, snapshot, sse, recovery_reducer]
+  deepseek_flash_worker:
+    model: deepseek-v4-flash
+    reasoning_effort: medium
+    writes_code: true
+    task_types: [dto, fixture, repetitive_test, probe, presentation_ui, accessibility]
+    escalation_required_for: [architecture, acl, concurrency, transaction, migration, versioning, replay_order]
+  sol_reviewer:
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_code: false
+    task_types: [deepseek_code_review, architecture_review, transaction_review, frontend_state_review]
+  deepseek_pro_reviewer:
+    model: deepseek-v4-pro
+    reasoning_effort: high
+    writes_code: false
+    task_types: [flash_code_review, ui_contract_review, test_review, sol_integration_review, merge_review, control_plane_review]
+  adversarial_reviewer:
+    model: deepseek-v4-pro
+    reasoning_effort: high
+    writes_code: false
+    task_types: [security_review, sql_review, concurrency_review, migration_review]
+  explorer:
+    model: gpt-5.6-terra
+    reasoning_effort: medium
+    writes_code: false
+    task_types: [code_map, dependency_map, conflict_scan]
+  fast_query:
+    model: gpt-5.4-mini
+    reasoning_effort: medium
+    writes_code: false
+    task_types: [narrow_lookup, bounded_summary, fact_extraction]
+  test_runner:
+    model: deepseek-v4-flash
+    reasoning_effort: medium
+    writes_code: false
+    task_types: [build, test, probe, smoke]
+  vision_reviewer:
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_code: false
+    multimodal: true
+    task_types: [visual_baseline_review, prop_anchor_review, fragment_boundary_review, mask_semantics_review, screenshot_regression_review]
+  release_guard:
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_code: false
+    task_types: [integration_gate, migration_gate, deployment_gate]
+
+m2_routing:
+  M2-00:
+    writer: main_orchestrator
+    support: explorer
+    reviewer: deepseek_pro_reviewer
+  C01:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C01B:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C01H:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C02:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C03:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C04:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C05:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C05F:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C06:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C07A:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C07B:
+    writer: deepseek_flash_worker
+    support: null
+    reviewer: deepseek_pro_reviewer
+  C07C:
+    writer: deepseek_flash_worker
+    support: null
+    reviewer: deepseek_pro_reviewer
+  C07:
+    writer: critical_worker
+    support: test_runner
+    reviewer: deepseek_pro_reviewer
+    final_gate: release_guard
+  C07F:
+    writer: deepseek_pro_worker
+    support: test_runner
+    reviewer: sol_reviewer
+  C08A:
+    writer: critical_worker
+    support: test_runner
+    reviewer: deepseek_pro_reviewer
+  C08W:
+    writer: critical_worker
+    support: test_runner
+    reviewer: deepseek_pro_reviewer
+  C08:
+    writer: main_orchestrator
+    support: test_runner
+    reviewer: deepseek_pro_reviewer
+    final_gate: release_guard
+
+routing:
+  - match: [M2_core, task_event, snapshot, sse, recovery_reducer]
+    writer: deepseek_pro_worker
+    reviewer: sol_reviewer
+  - match: [M2_presentation_ui, M2_fixture, M2_probe, M2_repetitive_test]
+    writer: deepseek_flash_worker
+    reviewer: deepseek_pro_reviewer
+  - match: [P0, identity, acl, transaction, concurrency, migration]
+    writer: critical_worker
+    reviewer: adversarial_reviewer
+  - match: [backend, frontend, api, mapper]
+    writer: balanced_worker
+    reviewer: adversarial_reviewer
+  - match: [dto, fixture, documentation, repetitive_test]
+    writer: routine_worker
+    reviewer: architect
+  - match: [repository_exploration, dependency_analysis, conflict_analysis]
+    writer: explorer
+    reviewer: null
+  - match: [narrow_lookup, bounded_summary, fact_extraction]
+    writer: fast_query
+    reviewer: null
+  - match: [integration, production_release]
+    writer: critical_worker
+    reviewer: release_guard
+
+visual_policy:
+  review_model: gpt-5.6-sol
+  review_role: vision_reviewer
+  multimodal_review: required
+  required_gates: [V0_baseline, V1_props, V2_fragments, V3_masks, V4_full_map, V5_release_sample]
+  evidence_operator: test_runner
+  implementation_owner: deepseek_pro_worker
+  image_generation_model: gpt-image-2
+  image_generation_default_budget: 0
+  image_generation_trigger: explicit_user_approval_for_new_or_repainted_art_only
+  forbidden_image_generation_tasks: [atlas_crop, pixel_ownership, rgba_reconstruction, mask_validation, fragment_validation, ordinary_occlusion_fix]
+  default_for_architecture_diagrams: mermaid
+  critical_path: true
+  final_asset_path: web/src/assets/juyiting/
+  build_verification_required: true
+
+handoff_required:
+  - task_id
+  - writer_role
+  - writer_model
+  - reviewer_role
+  - reviewer_model
+  - branch
+  - worktree
+  - base_commit
+  - commit
+  - changed_files
+  - test_commands
+  - test_results
+  - residual_risks
+  - next_dependency_unlocked
+
+juyiting_e17_e18_routing:
+  updated_at: "2026-08-14"
+  policy: quality_first_gpt_budget_restored
+  E17_evidence:
+    owner: test_runner
+    model: deepseek-v4-flash
+    reasoning_effort: medium
+    writes_code: false
+  E17_adversarial_review:
+    owner: adversarial_reviewer
+    model: deepseek-v4-pro
+    reasoning_effort: high
+    writes_code: false
+  E17_E18_control_plane:
+    owner: main_orchestrator
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_control_plane: true
+  E18_visual_review:
+    owner: vision_reviewer
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    multimodal: true
+    verdict: APPROVE
+  E18_release_guard:
+    owner: release_guard
+    model: gpt-5.6-sol
+    reasoning_effort: high
+    writes_code: false
+  E18_deploy_smoke:
+    coordinator: main_orchestrator
+    evidence_operator: test_runner
+    evidence_operator_model: deepseek-v4-flash
+    deploy_only_after: release_guard_GO

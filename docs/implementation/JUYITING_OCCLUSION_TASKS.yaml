@@ -1,0 +1,335 @@
+schema_version: 1
+initiative: juyiting-occlusion-v2
+updated_at: "2026-08-14T23:59:00+08:00"
+execution_policy:
+  mode: serial
+  max_active_tasks: 1
+  max_active_writers: 1
+  one_writer_per_worktree: true
+  reviewer_read_only: true
+  writer_reviewer_separation: true
+  quality_priority: true
+repository:
+  git_root: /home/isp/wsps/cyf/web
+  branch: codex/juyiting-occlusion-v2
+  worktree: /home/isp/wsps/cyf/.worktrees/juyiting-occlusion-v2
+  base_branch: origin/develop
+  base_commit: 2424f51f375814f403ca70a9a6e9948728e595b1
+control_documents:
+  design: /home/isp/wsps/cyf/docs/juyiting-occlusion-system-design.md
+  execution_plan: /home/isp/wsps/cyf/docs/juyiting-occlusion-system-execution-plan.md
+  visual_v0: /home/isp/wsps/cyf/docs/juyiting-occlusion-visual-review-v0.md
+  routing: /home/isp/wsps/cyf/docs/implementation/MODEL_ROUTING.yaml
+  completion_audit: /home/isp/wsps/cyf/docs/implementation/JUYITING_OCCLUSION_COMPLETION_AUDIT.md
+status_values: [draft, ready, claimed, in_progress, review, accepted, integrated, done, rejected, blocked, cancelled]
+
+tasks:
+  - id: E0
+    title: execution-preparation-and-routing
+    status: accepted
+    dependencies: []
+    owner: main_orchestrator
+    owner_model: gpt-5.6-sol
+    reviewer: adversarial_reviewer
+    reviewer_model: deepseek-v4-pro
+    allowed_paths:
+      - /home/isp/wsps/cyf/.codex/config.toml
+      - /home/isp/wsps/cyf/.codex/agents/
+      - /home/isp/wsps/cyf/docs/implementation/MODEL_ROUTING.yaml
+      - /home/isp/wsps/cyf/docs/implementation/JUYITING_OCCLUSION_TASKS.yaml
+      - /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E0.md
+      - /home/isp/wsps/cyf/docs/juyiting-occlusion-system-execution-plan.md
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E0.md
+    next_on_accept: E1
+
+  - id: E1
+    title: production-equivalent-baseline-and-v0
+    status: accepted
+    dependencies: [E0]
+    owner: deepseek_flash_worker
+    writer: deepseek_flash_worker
+    writer_model: deepseek-v4-flash
+    commit: 37d7263a7aa8a124b8150a710a91648d1007afcb
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E1.md
+    visual_reviewer: vision_reviewer
+    visual_reviewer_model: gpt-5.6-sol
+    technical_reviewer: adversarial_reviewer
+    technical_reviewer_model: deepseek-v4-pro
+    allowed_paths: [web/public/juyiting/, web/scripts/juyiting/, web/tests/, docs/implementation/handoffs/juyiting-occlusion/, docs/juyiting-occlusion-visual-review-v0.md]
+
+  - id: E2
+    title: scene-schema-and-canonical-ir
+    status: accepted
+    dependencies: [E1]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer
+    commit: 245a07cb14420a0f2f8f0fc35a3752d1dc19cbfa
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E2.md
+  - id: E3
+    title: runtime-agent-adapter
+    status: accepted
+    dependencies: [E2]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer
+    commit: 7fc2098
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E3.md
+  - id: E4
+    title: polygon-geometry-hysteresis-validator
+    status: accepted
+    dependencies: [E3]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer
+    commit: 9031ba8
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E4.md
+  - id: E5
+    title: world-order-constraint-resolver-spatial-grid
+    status: accepted
+    dependencies: [E4]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer
+    commit: 9dbd977
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E5.md
+  - id: E6
+    title: shadow-renderer-debug-overlay
+    status: accepted
+    dependencies: [E5]
+    writer: deepseek_pro_worker
+    evidence_operator: test_runner
+    reviewer: adversarial_reviewer
+    commit: b46949b
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E6.md
+  - id: E7
+    title: atomic-activation-module
+    status: accepted
+    dependencies: [E6]
+    writer: critical_worker
+    writer_model: gpt-5.6-sol
+    reviewer: adversarial_reviewer
+    commit: 7144d9260b3905ce0335d037d3b1a3589d3a88a1
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E7.md
+  - id: E8A
+    title: five-prop-ordering-spec
+    status: accepted
+    dependencies: [E7]
+    writer: deepseek_pro_worker
+    visual_reviewer: vision_reviewer
+    reviewer: adversarial_reviewer
+    commit: da3d9600bd322e3a85d93ebfeaf07cd04a76f33d
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E8A.md
+  - id: E8B
+    title: five-prop-tmx-manifest-migration
+    status: accepted
+    dependencies: [E8A]
+    writer: deepseek_flash_worker
+    provenance_followup_writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer
+    commit: a700d1c57a15026a362db535f97fb6baff47e9f7
+    commits:
+      - d53187cda2174053e3611560bda0d882943d82a8
+      - 5ccbf7293afb66d3b99904bacc97285919f39182
+      - a700d1c57a15026a362db535f97fb6baff47e9f7
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E8B.md
+  - id: E9A
+    title: fragment-ownership-atlas-input-spec
+    status: accepted
+    dependencies: [E8B]
+    writer: deepseek_pro_worker
+    visual_reviewer: vision_reviewer
+    reviewer: adversarial_reviewer
+    commit: 47b7242341c1353e779b56dd1bd2aaca9736e5bf
+    commits:
+      - 672f522005b425bb4713d1865616e1a5424a194f
+      - 61d3da07ccaea19a5065f05d9e0b0032e60c4870
+      - 47b7242341c1353e779b56dd1bd2aaca9736e5bf
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E9A.md
+  - id: E9B
+    title: six-atlases-and-rgba-golden
+    status: accepted_with_findings
+    dependencies: [E9A]
+    writer: deepseek_flash_worker
+    reviewer: adversarial_reviewer
+    commit: b8adb0988cd17f777e44064cf79c376cd9254b92
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E9B.md
+  - id: E10A
+    title: thirty-seven-mask-visual-migration-spec
+    status: accepted_with_findings
+    dependencies: [E9B]
+    writer: deepseek_pro_worker
+    visual_reviewer: vision_reviewer
+    visual_verdict: ACCEPT-V3
+    reviewer: adversarial_reviewer
+    reviewer_verdict: ACCEPT_WITH_FINDINGS
+    commit: 7404d361daba8f0af0dea98ab9db38cbbf01b286
+    commits:
+      - 3817a14
+      - 7404d361daba8f0af0dea98ab9db38cbbf01b286
+    generation_id: fc855f90cbfc13c5ad8b24659825bc1dccaa03ec17866735fd923452dbdc7611
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E10A.md
+  - id: E10B
+    title: tmx-manifest-mechanical-migration
+    status: accepted
+    dependencies: [E10A]
+    writer: deepseek_flash_worker
+    reviewer: adversarial_reviewer
+    reviewer_verdict: ACCEPT
+    commit: 72f05e7b07fcea9ac2187da6ccfe7d625cbf2b51
+    commits:
+      - fa0e311ba004a3080baa96fd6b1fd5f3c1ff8bc9
+      - 72f05e7b07fcea9ac2187da6ccfe7d625cbf2b51
+    tmx_sha256: 4f94e3a52da71369d9c29d96e0ac0ceb2126a1a441b6cd63911701957e1ed49b
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E10B.md
+  - id: E11
+    title: occlusion-constraint-zone-calibration
+    status: accepted
+    dependencies: [E10B]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer
+    reviewer_verdict: ACCEPT
+    commit: 9e87f15f7b696ee4e58fc819cc90e2a60b2ffc9c
+    commits:
+      - e364685dcf9bdc99ace8f07b8d5b9b788ff1dfe3
+      - fdf39268c5f52ed8760ab568cc83af6d62055e2b
+      - 9e87f15f7b696ee4e58fc819cc90e2a60b2ffc9c
+    report_sha256: cb9c70d67bb917d2efa51c52d0dc332efb5737341b107aa1be2bd8b74464455d
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E11.md
+  - id: E12
+    title: hall-scene-full-integration
+    status: accepted
+    dependencies: [E11]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer
+    reviewer_verdict: ACCEPT
+    commit: 5308d7c
+    commits:
+      - 88e2a56
+      - 6e38f10
+      - b80b67c
+      - dc99df1
+      - 16d9574
+      - 8f8c89b
+      - e11c03d
+      - 5308d7c
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E12.md
+  - id: E13
+    title: full-map-visual-calibration-v4
+    status: accepted
+    dependencies: [E12]
+    evidence_operator: test_runner
+    fix_writer: deepseek_pro_worker
+    visual_reviewer: vision_reviewer
+    visual_verdict: APPROVE
+    technical_reviewer: adversarial_reviewer
+    technical_reviewer_verdict: ACCEPT_VIA_E17
+    implementation_commits: [9f2c67f, 9015945, fba4c05, b008186, 3b5459a, ad4a234, 932c219]
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E13.md
+    machine_gate: 48-of-48-pass
+    deferred_browser_smoke: CLOSED_BY_E18_PASS
+  - id: E14
+    title: one-hundred-eight-agent-performance-gate
+    status: accepted_with_finding
+    dependencies: [E13]
+    evidence_operator: local_machine_gates
+    optimization_writer: main_orchestrator
+    reviewer: deepseek_pro_reviewer_accept_with_finding
+    implementation_commits: [0ee9ee1, 4499b47, fdec5a5]
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E14.md
+    formal_report: tests/fixtures/juyiting/occlusion-e14/benchmark-report.json
+    chromium_gate:
+      date: 2026-08-14
+      engine: chromium-133-cdp-pipe-restricted-host
+      process_model: single-process-no-zygote
+      p95_ms: 1.800
+      p99_ms: 2.300
+      full_grid_scans: 0
+      pass: true
+    finding: normal-host-multiprocess-baseline-deferred-nonblocking
+    next_command: npm run test:juyiting-occlusion-e14
+    gpt_usage: none
+  - id: E15
+    title: atomic-v2-switch
+    status: accepted
+    dependencies: [E14]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer_accept
+    started_at: 2026-08-13
+    completed_at: 2026-08-13
+    implementation_commits: [638b531, 20879cb, 05cf9df, b3f397f, 0ed2c06]
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E15.md
+    gpt_usage: none
+  - id: E16A
+    title: legacy-runtime-and-test-cleanup
+    status: accepted
+    dependencies: [E15]
+    writer: deepseek_pro_worker
+    reviewer: adversarial_reviewer_accept
+    started_at: 2026-08-13
+    completed_at: 2026-08-13
+    implementation_commits: [0dddbb9, 928e30a]
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E16A.md
+    gpt_usage: none
+  - id: E16B
+    title: legacy-resource-and-reference-cleanup
+    status: accepted
+    dependencies: [E16A]
+    writer: deepseek_flash_worker
+    reviewer: adversarial_reviewer
+    reviewer_verdict: ACCEPT
+    branch: codex/juyiting-occlusion-v2
+    worktree: /home/isp/wsps/cyf/.worktrees/juyiting-occlusion-v2
+    started_at: 2026-08-13
+    implementation_commits: [76afa82, 2ed6020]
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E16B.md
+    p2: not_applicable
+    gpt_usage: none
+  - id: E17
+    title: full-verification-and-adversarial-review
+    status: accepted
+    dependencies: [E16B]
+    evidence_operator: test_runner
+    evidence_operator_model: deepseek-v4-flash
+    reviewer: adversarial_reviewer
+    reviewer_model: deepseek-v4-pro
+    reviewer_verdict: ACCEPT
+    reviewer_findings: P0-0_P1-0_P2-6-nonblocking
+    integration_reviewer: sol_reviewer
+    integration_reviewer_model: gpt-5.6-sol
+    integration_reviewer_verdict: APPROVE
+    branch: develop
+    worktree: /home/isp/wsps/cyf/web
+    started_at: 2026-08-14
+    completed_at: 2026-08-14
+    commit: 4127e7af8fe5c5325d0715fbfc826937f48f41bb
+    implementation_commits: [9a379e0, e9139eb, 57f4610, 5d3f1a0, 7d26b30, f2af916, 5a7f384, 4127e7a]
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E17.md
+    test_summary: 1482-full-tests-790-game-tests-build-typecheck-map-sprite-pass
+    performance_summary: chromium-p95-1.8ms-p99-2.3ms-scanCount-0
+    visual_summary: v5-12-screenshots-gpt-approve-no-findings
+  - id: E18
+    title: v5-release-guard-deploy-push
+    status: done
+    dependencies: [E17]
+    visual_reviewer: vision_reviewer
+    visual_reviewer_model: gpt-5.6-sol
+    visual_verdict: APPROVE
+    release_guard: release_guard
+    release_guard_model: gpt-5.6-sol
+    release_guard_verdict: GO
+    release_executor: main_orchestrator
+    smoke_operator: test_runner
+    smoke_operator_model: deepseek-v4-flash
+    candidate_commit: 4127e7af8fe5c5325d0715fbfc826937f48f41bb
+    handoff: /home/isp/wsps/cyf/docs/implementation/handoffs/juyiting-occlusion/E18.md
+    security_exception: /home/isp/wsps/cyf/docs/implementation/JUYITING_E18_SECURITY_EXCEPTION.md
+    pinned_release_script_sha256: 642bbd512f7a78a1b892920ddd839f85df06af272f6a3f5546237fcbe947c981
+    rollback_script_sha256: b7f64cf622800fc98ab2f679ad14b8f7a1188b5e360c10e56e11a08a8529e266
+    completed_at: 2026-08-14
+    release_record: /home/isp/hosts/cyf/web/bak/release-records/kit_release_20260815_003122_4127e7a.json
+    rollback_backup: /home/isp/hosts/cyf/web/bak/kit_bak_20260815_003122_4127e7a
+    deployed_tree_sha256: 15ef96f8acca26b09e086a8241f206c6b93d71d00b2a431be33a0abd962b89a7
+    entry_asset: /static/index-BW4ZUe0h.js
+    smoke_report: /tmp/cyf-e18-smoke-4127e7a.json
+    smoke_verdict: PASS
+    remote_develop: 4127e7af8fe5c5325d0715fbfc826937f48f41bb
+    push_verdict: PASS
+    security_exception_verdict: ACCEPTED_UNTIL_2026-09-14
+    residual_findings: E17-P2-6-open-nonblocking
