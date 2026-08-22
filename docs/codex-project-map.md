@@ -81,5 +81,6 @@ npm run test
 
 When a future task uncovers stable project knowledge that would save repeated exploration, update this file or the relevant runbook in the same change.
 
-- `docs/knowledge-base/README.md`: current-state code, API, data, and integration reference.
+- `docs/knowledge-base/README.md`: task-routed entry point for current-state code, API, data, and integration reference.
+- `docs/knowledge-base/04-backend-api-index.md`: compact Controller/base-path index; use the full API inventory only for method-level details.
 - `docs/sdd-workflow.md`: multi-repository SDD lifecycle and integration gate.

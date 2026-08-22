@@ -25,4 +25,4 @@
 
 ## 更新本知识库
 
-功能变更若影响接口、模块、数据边界或运维命令，必须同步更新对应 KB 文档和 [`04-backend-api-inventory.md`](04-backend-api-inventory.md)。若静态接口清单需要重新生成，应保留“生成时 SHA”和生成方法，避免把手工编辑的摘要与自动提取清单混淆。
+功能变更若影响接口、模块、数据边界或运维命令，必须同步更新对应 KB 文档。接口变化需同时更新 [`04-backend-api-index.md`](04-backend-api-index.md) 与 [`04-backend-api-inventory.md`](04-backend-api-inventory.md)；重新生成后更新 [`BASELINE.yaml`](BASELINE.yaml) 的日期、api/web SHA 和计数。应保留生成方法，避免把手工摘要与自动提取清单混淆。
