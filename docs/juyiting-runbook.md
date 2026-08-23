@@ -31,6 +31,7 @@ For the current GPT multimodal visual baseline verdict and required contact shee
 - Task search calls `POST /agent/tasks/search`.
 - Task assignment calls `POST /agent/tasks/{taskId}/assign` with an explicit `agentId`.
 - 宋江首领自动协同 uses `GET /agent/capabilities`, `POST /agent/tasks/{taskId}/recommend`, and `POST /agent/tasks/{taskId}/auto-assign`; recommendation results should remain explainable and manual assignment remains the fallback.
+- Runtime abilities are client-owned snapshots: `agent.register` and `agent.presence` may refresh `agent_runtime.abilities`; persona abilities are fallback defaults only.
 - Juyi Hall chat sends through `POST /chat/stream` and receives events from `GET /chat/conversation/events`.
 - 招贤令 binding calls `POST /agent/personas/{personaCode}/bind`; `mode=server` provisions `/home/isp/apps/codex-ws-agent` and `/home/isp/hosts/cyf/agent-clients/{agent}`, while `mode=local` returns user-side install/config guidance.
 - Do not use `/agent/active` for Juyi Hall.

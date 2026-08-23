@@ -38,7 +38,7 @@ GET ws://<host>:10018/ws/agent/channel?api_key=<API_KEY>
 | type | 说明 | 关键字段 |
 |------|------|---------|
 | `agent.register` | 注册 | `agentId`,`name`,`personaName`,`abilities[]` |
-| `agent.status` | 更新状态 | `agentId`,`status`(online/busy/offline/error),`currentTask?` |
+| `agent.status` / `agent.presence` | 更新状态并刷新能力 | `agentId`,`status`(online/busy/offline/error),`abilities[]`,`currentTask?` |
 | `agent.message` | 发送回复 | `agentId`,`conversationId`,`conversationType`,`content`,`senderName` |
 | `agent.message.delta` | 流式增量 | `agentId`,`conversationId`,`content` |
 | `task.report` | 任务回报 | `agentId`,`taskId`,`status`,`output`,`errorMessage?`,`durationMs` |
@@ -109,6 +109,8 @@ Agent ──task.report──> Server     {taskId, status: "completed"}
 
 **重连**：断开后指数退避重连 (1s→2s→4s→8s→16s→30s)，error 后 1s 内无 close 则强制重连，防止卡死。
 
+**能力刷新**：客户端在注册和每次 presence 心跳时，重新合并基础能力、profile 的 `abilities`/`skills` 配置，以及 profile `CODEX_HOME`、插件缓存和工作区内发现的 `SKILL.md` 名称。后端将其写入 `agent_runtime.abilities`；persona abilities 只用于旧客户端首次接入 fallback。
+
 **Profile 热加载**：运行中监听 `CODEX_PROFILES_FILE`，新增 `[agent.*]` 自动接入，删除 profile 自动发送 `offline` 并关闭连接，变更关键配置时仅重连对应 profile。配置写坏或半写入时跳过本次重载，继续使用上一份有效配置。
 
 **Codex 调用**：收到 `agent_direct_message` 或 `task_assigned` 后，通过 `spawn(codexBin, ["exec","--cd",workdir,"--skip-git-repo-check",prompt])` 执行，结果通过 WebSocket 回报。
@@ -139,6 +141,9 @@ codexSandbox=workspace-write
 codexApproval=never
 codexSessionMode=resume
 codexTimeoutMs=900000
+# 可选补充标签；已安装 SKILL.md 会自动发现
+abilities=backend,review
+skills=cyf-quick-iterate
 
 [agent.wuyong]
 agentId=wuyong
