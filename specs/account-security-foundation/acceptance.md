@@ -51,4 +51,4 @@
 - Root integration: immutable commit `c9cf4d800b20c0bd60a12c532300dcecfe1431cf` (tree `6174ad0b070d278fadfceb62d297e8ca5d365199`) pins `api=261ee9eb61769c6fd79b1bb1368dde799e1563c8`, `web=7bc80de75f83d4cb7ca288380c3ed9eab1bc111a`, root base `752b4dfceea2b6d3061d921a426dddba5410b90c`; `./sddw verify` passed.
 - Production migration backup/checksum: pending; fixture evidence is not a production backup.
 - Production deployment/smoke: pending.
-- Result: implementation, independent review, immutable root integration and SDD pin/verify accepted; production release remains pending.
+- Result: accepted integration baseline; production release remains pending.
