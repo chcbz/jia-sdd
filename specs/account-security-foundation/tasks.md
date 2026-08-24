@@ -27,6 +27,6 @@
 - [ ] 对生产 OAuth client 原行做权限 600 字节级备份，生成精确 rollback SQL，并完成目标字段迁移。
 - [ ] 在线验证 PKCE authorization-code 登录、10 分钟 token、5 分钟 code、`client_credentials`/refresh/secret/Postman/localhost callback 拒绝。
 - [x] API/Web 分别提交并推送；执行 `./sddw pin account-security-foundation` 与 `./sddw verify account-security-foundation`。
-- [ ] 精确提交根 SDD 与 api/web gitlinks，不包含并行 control-plane、E13 或 `.bak` 改动。
+- [x] 精确提交根 SDD 与 api/web gitlinks，不包含并行 control-plane、E13 或 `.bak` 改动；不可变集成提交为 `c9cf4d800b20c0bd60a12c532300dcecfe1431cf`。
 - [ ] 按备份 → production preflight → user schema → API → Web → OAuth client → smoke 顺序部署，记录备份、部署和线上 revoke 证据。
-- [ ] 创建下一阶段 `account-self-service-closure` SDD，不复用危险的通用 delete endpoint。
+- [x] 创建下一阶段 `account-self-service-closure` SDD，不复用危险的通用 delete endpoint。
