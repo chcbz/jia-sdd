@@ -28,4 +28,4 @@
 - [x] Push accepted API and Web commits.
 - [x] Pin and verify submodule revisions with `./sddw`.
 - [x] Record implementation, verification, compatibility, and rollback evidence.
-- [ ] Record production deployment and online smoke evidence.
+- [x] Record production deployment and online smoke evidence.
