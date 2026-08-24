@@ -1,0 +1,19 @@
+feature_id: oauth-public-client-hardening
+status: integration-ready
+owners:
+  api: critical_worker
+  web: balanced_worker
+contract:
+  api_or_event_changes: "Adds exact GET /resource JWT-only identity projection; no event or database schema change."
+  compatibility: "Preserves configured resource URI chains, /user/my, /juyiting, public landing/demo, OAuth endpoint paths, and api_token storage."
+pinned_revisions:
+  api_commit: c4d8aebd77b122100e562576e40a158c26c1dff4
+  web_commit: 0ac7ea756ad59c91c1110e3d635846a4c665ece6
+  root_base_commit: 3cecd3c7db0289b0e79caa47a1ac8615da2bc3d9
+verification:
+  api: "13 focused tests passed; locked resource-module build passed."
+  web: "36 focused tests and 7 standalone transaction tests passed; targeted ESLint and production build passed."
+  integration: "Independent sol_reviewer ACCEPT with no P0-P3 findings; production release smoke pending."
+acceptance:
+  status: accepted-for-integration
+  evidence: "See acceptance.md; no DB migration; rollback by restoring gitlinks and redeploying artifacts."
