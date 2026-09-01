@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-01T14:49:24+08:00",
+    "updated_at": "2026-09-01T15:13:55+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -227,8 +227,8 @@ runtime_ledger_json: |
         },
         "current_gate": "blocked_root_cause",
         "blocker": {
-          "category": "r30_targeted_verifier_postpublish_consumed_staging_source_path_assumption",
-          "summary": "R30 targeted static verifier stopped after Bash/POSIX parser PASS because it required prepublication compile-report source paths to remain under the sealed builder after atomic PREP publication consumed that subtree.",
+          "category": "r31_retry_first_failure_digest_transcription_mismatch",
+          "summary": "The sole R31 retry construction failed closed before creating a retry root because its first-failure evidence binding used a transcribed SHA-256 that did not equal the preserved file digest.",
           "consecutive_failures": 2,
           "attempts": [
             {
@@ -391,10 +391,24 @@ runtime_ledger_json: |
               "evidence": "/var/tmp/cyf-pwa-api-r19-static-verification-YmSRO40R/failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verification-YmSRO40R/diagnostic.json; R30 builder root 548d4a3e30fba4424219a1276d418d20ae3c0e499eb86640e07fa5428d17fe85; package root 1cb1e29414b5d3adf90d306308d525693208bb24062bd413cab0b3a1738bb5fb",
               "root_cause": "The verifier conflated syntax-proof provenance with postpublication source-location persistence. Atomic renameat2(RENAME_NOREPLACE) intentionally moved the staged preparation directory to the final PREP path; five compiled Python sources and the POSIX Gradle copy therefore no longer existed at builder-local source paths, while explicit external cfiles remained and final package bytes were already bound by activation/package manifests.",
               "remediation": "Second consecutive R30 failure: stop. Preserve the successful static package, activation record, unit, both R30 builders, verification evidence, R29, R18 quarantine and R13 donor. Do not rerun verification, activation, R21, Gradle or runtime. Only separately authorized fresh R31 may verify consumed compile sources by digest-binding each prepublication source record to its corresponding final package path, without requiring moved staging paths to exist; then independently complete package/unit/activation review."
+            },
+            {
+              "at": "2026-09-01T15:09:56+08:00",
+              "category": "r31_orchestrator_fixture_staging_mode_applied_to_external_control_path",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verification-r31-qjygjoho/evidence/failure.json; verifier source sha256=2354f1ce7517b707b25b0c6fd1496ff862c35903310488ea14bf5150d8012e12; freeze sha256=066f442738048ccca4cd223930173d8433e0a1af86868b68d84569ae3678e832",
+              "root_cause": "The compile classification metadata describes the immutable R30 builder-local fixture copy. For prep/wrapper/sealer package publications, that metadata must match the published package path. The orchestrator fixture is different: the package manifest binds the live coordination-control file by digest, while its builder staging copy is intentionally root-owned mode 0555. R31 conflated those two ownership domains and rejected the correct live mode after confirming the digest.",
+              "remediation": "Preserve the first R31 root. Reread the sole ledger, then use the one fresh non-overwriting R31 retry bound to category r31_orchestrator_fixture_staging_mode_applied_to_external_control_path,count=1. Correct only metadata semantics: retain exact digest binding for the live orchestrator path and exact mode/uid/gid checks for its sealed staging fixture, while applying published metadata equality only to R30 package-owned prep/wrapper/sealer paths. Re-run the unchanged static assertions once; second R31 failure stops."
+            },
+            {
+              "at": "2026-09-01T15:13:55+08:00",
+              "category": "r31_retry_first_failure_digest_transcription_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verification-r31-retry-construction-failure-vjuqic8m/failure.json sha256=e594ec80542fcc7604fd3ddebbf7aa0c9a412a8d6214d9b2ae07e3aa4b0faedc; manifest_root=941ca29a426808cb3899a4181a96ec8a16cac4dfc7efd6df5c699a190f6fa954",
+              "root_cause": "The retry preparation hard-coded expected first-failure SHA-256 d63e643a... instead of loading/measuring the immutable preserved file. Its actual SHA-256 is 0007039f.... The fail-closed assertion ran before tempfile.mkdtemp, so no retry verifier/evidence root or source was created and no static retry executed.",
+              "remediation": "Second consecutive R31 failure: stop and preserve the first R31 verifier root plus the sealed retry-construction failure evidence. Create no Review request and do not run another R31 command. Only separately authorized fresh R32 may measure the preserved first-failure digest directly (never transcribe it), bind category/count=2 and the committed R31 matrix, then create one fresh non-overwriting verifier whose sole semantic code correction exempts only the live orchestrator control path from staging-copy mode equality while retaining digest binding and all package-owned metadata assertions. No R21, R30 mutation/rebuild, runtime, Gradle, network, DB, Rabbit, Chromium, production, deploy, or daemon reload."
             }
           ]
         },
-        "next_action": "Second consecutive R30 failure: stop. Preserve the successful static package, activation record, unit, both R30 builders, verification evidence, R29, R18 quarantine and R13 donor. Do not rerun verification, activation, R21, Gradle or runtime. Only separately authorized fresh R31 may verify consumed compile sources by digest-binding each prepublication source record to its corresponding final package path, without requiring moved staging paths to exist; then independently complete package/unit/activation review."
+        "next_action": "Second consecutive R31 failure: stop and preserve the first R31 verifier root plus the sealed retry-construction failure evidence. Create no Review request and do not run another R31 command. Only separately authorized fresh R32 may measure the preserved first-failure digest directly (never transcribe it), bind category/count=2 and the committed R31 matrix, then create one fresh non-overwriting verifier whose sole semantic code correction exempts only the live orchestrator control path from staging-copy mode equality while retaining digest binding and all package-owned metadata assertions. No R21, R30 mutation/rebuild, runtime, Gradle, network, DB, Rabbit, Chromium, production, deploy, or daemon reload."
       },
       "M3-IR": {
         "owner": null,
