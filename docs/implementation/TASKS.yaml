@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-01T15:44:57+08:00",
+    "updated_at": "2026-09-01T18:45:46+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -220,18 +220,34 @@ runtime_ledger_json: |
         "next_action": "R10 authoritative ACCEPT 0/0/0 remains exact. Lease-bound fast-forward source promotion completed: Web origin/develop 7bc80de75f83d4cb7ca288380c3ed9eab1bc111a -> 9d205884aaaa07b34aebe5aa6e4191d7dde2aa7e, post-push ls-remote exact; evidence /var/tmp/cyf-web-r10-source-promotion-20260829T1742/evidence.sha256 SHA 0bc0fce43754399c547af32bcd92492590056d2b31ee8edee0edd078ba4c3f6b. Source only; production deployment remains unauthorized."
       },
       "PWA-INTEGRATION-API-RC": {
-        "owner": {
-          "agent": "sol-pwa-integration-api-r32-review-20260901",
-          "profile": "sol_reviewer",
-          "mode": "reviewer"
-        },
+        "owner": null,
         "exact_sha_tree": {
           "commit_sha": "2599de3c2bdf5f1c3cf6e4faa8dcbb4048dffa4a",
           "tree_sha": "bad28da5c05d6448d805f88c4e88457f0f657a5e"
         },
-        "current_gate": "review",
-        "blocker": null,
-        "next_action": "Independent sol_reviewer review of exact product 2599de3c2bdf5f1c3cf6e4faa8dcbb4048dffa4a/tree bad28da5c05d6448d805f88c4e88457f0f657a5e and sealed R32 static PASS root /var/tmp/cyf-pwa-api-r19-static-verification-r32-retry-ujqf_8bw manifest root 800014ca8c405fc62b02d8be2a16b28b65e08585d0246c4185e8fc9984aef1eb; handoff docs/implementation/handoffs/PWA-INTEGRATION-API-R32-STATIC-VERIFIER.md. No runtime, Gradle, production, deploy, daemon reload, or unit start."
+        "current_gate": "blocked_root_cause",
+        "blocker": {
+          "category": "accepted_fixture_package_bytecode_mutation_between_attempts",
+          "summary": "Second consecutive R35 accepted static-verifier failure: first exact packaged fixture import created package-local __pycache__/runtime_prepare.cpython-36.pyc, so the single retry failed the sealed PACKAGE_PATHS metadata gate before fixture execution.",
+          "consecutive_failures": 2,
+          "attempts": [
+            {
+              "at": "2026-09-01T18:43:18+08:00",
+              "category": "static_fixture_simulation_ancestor_traversal_contract",
+              "evidence": "/run/cyf-pwa-api-r19-static-verification-r35-20260901T184205-2640563/failure.json and /run/cyf-pwa-api-r19-static-verifier-r35-builder-vn4qisr1/control/static-verifier.stderr",
+              "root_cause": "runtime_prepare correctly set simulated workspace root root:61019 mode0710 and children 61019:61019 mode0700, but tempfile.mkdtemp created its outer /run/r35-static-contract-* directory root:root mode0700. setpriv UID/GID 61019 therefore failed at the fixture-only ancestor before reaching the workspace contract.",
+              "remediation": "Use the single R35 retry to set the fixture outer temporary root to root:61019 mode0710 before creating the simulated workspace, regenerate exact package manifest/activation bindings under a fresh df -B1 root gate, then rerun the accepted verifier from a fresh evidence root exactly once. Do not run Gradle/runtime/network/DB/Rabbit/Chromium/deploy/daemon-reload."
+            },
+            {
+              "at": "2026-09-01T18:45:46+08:00",
+              "category": "accepted_fixture_package_bytecode_mutation_between_attempts",
+              "evidence": "/run/cyf-pwa-api-r19-static-verification-r35-retry-20260901T184431-2642261/failure.json; actual-only paths /run/cyf-pwa-api-r19-static-verifier-r35-preparation/__pycache__ and runtime_prepare.cpython-36.pyc; verifier stderr /run/cyf-pwa-api-r19-static-verifier-r35-builder-vn4qisr1/control/static-verifier-retry.stderr",
+              "root_cause": "The accepted verifier invokes the exact packaged fixture without PYTHONDONTWRITEBYTECODE=1 and the fixture imports package modules with importlib. Running as root against a 0555 package directory still allowed bytecode cache creation. The first attempt checked package metadata before executing the fixture, then left two unmanifested package paths when the later traversal assertion failed; the retry correctly detected that contamination. This is independent of the first fixture-ancestor traversal defect.",
+              "remediation": "Stop R35 at blocked_root_cause and preserve all R34/R35 bytes and both failed evidence roots. A separately authorized fresh R36 must ordinary-copy immutable R34 again, incorporate both fixes before publication (fixture ancestor root:61019 0710; sys.dont_write_bytecode=True plus PYTHONDONTWRITEBYTECODE=1), execute the exact packaged fixture with before/after package metadata equality, and use fresh non-overwriting roots and df -B1 gates. No R35 cleanup, mutation, retry, runtime, Gradle, network, DB/Rabbit/Chromium, deploy, daemon reload, or start."
+            }
+          ]
+        },
+        "next_action": "Stop R35 at blocked_root_cause and preserve all R34/R35 bytes and both failed evidence roots. A separately authorized fresh R36 must ordinary-copy immutable R34 again, incorporate both fixes before publication (fixture ancestor root:61019 0710; sys.dont_write_bytecode=True plus PYTHONDONTWRITEBYTECODE=1), execute the exact packaged fixture with before/after package metadata equality, and use fresh non-overwriting roots and df -B1 gates. No R35 cleanup, mutation, retry, runtime, Gradle, network, DB/Rabbit/Chromium, deploy, daemon reload, or start."
       },
       "M3-IR": {
         "owner": null,
