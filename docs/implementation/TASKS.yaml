@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-01T13:50:03+08:00",
+    "updated_at": "2026-09-01T14:15:21+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -227,8 +227,8 @@ runtime_ledger_json: |
         },
         "current_gate": "blocked_root_cause",
         "blocker": {
-          "category": "r28_retry_cleanup_digest_transcription_mismatch",
-          "summary": "The sole R28 retry failed closed before cleanup because its exact-file cleanup allowlist manually transcribed the sealer pyc SHA-256 incorrectly.",
+          "category": "r29_retry_shell_wrapper_misclassified_as_python",
+          "summary": "The sole R29 retry failed during staged-copy syntax checks because it unconditionally passed the Bash wrapper to Python py_compile.",
           "consecutive_failures": 2,
           "attempts": [
             {
@@ -363,10 +363,24 @@ runtime_ledger_json: |
               "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r28-builder-f206a1045bb5436e/control/failure-2.json sha256=6908e14dc73f23af93c05c2d788dd5c94e3ef7590042792104fa1a3fe9efecf2; root-cause-matrix sha256=c4b78a12f4a59ac9dc20790542acc6660bcbf514fdc37f67c3a6802b172e55ea",
               "root_cause": "The retry cleanup source hard-coded guessed pyc digests rather than loading the already sealed first-failure JSON. The first sorted target expected a3ba2f... but the sealed/measured digest is 61d1c3..., so the assertion stopped before any unlink or rmdir.",
               "remediation": "Second consecutive R28 failure: stop. Preserve both R28 builders and all R13-R27 evidence. Do not clean, construct, publish, start, or review R28. Only a separately authorized R29 may consume failure-1 JSON directly as the cleanup allowlist, prevalidate every exact candidate before any mutation, perform exact all-candidates-validated unlink plus empty-dir rmdir, record irrecoverable R18 directory ctime delta, prove R18 activation PASS, and then restart the fresh data-driven constructor. Never compile donor paths in place or rerun R21."
+            },
+            {
+              "at": "2026-09-01T14:02:33+08:00",
+              "category": "r29_freeze_literal_trailing_quote_syntax",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r29-builder-EaZLdnm4/control/failure-1.txt",
+              "root_cause": "The sensitive_payload_allowlist line ended with ],\\x27 instead of ], so Python raised SyntaxError before helper execution; only unique R29-owned empty builder directories and pointer exist.",
+              "remediation": "Preserve the first R29 builder, reread the ledger, then use one fresh non-overwriting retry; compile the corrected complete helper to an explicit R29 cfile before execution and stop on any second failure."
+            },
+            {
+              "at": "2026-09-01T14:10:29+08:00",
+              "category": "r29_retry_shell_wrapper_misclassified_as_python",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r29-retry-builder-z6o0zlTV/control/failure-2.txt",
+              "root_cause": "The staged wrapper is Bash (line 2: set -Eeuo pipefail), but the constructor appended wrapper and sealer unconditionally to its Python compile list; py_compile rejected the shell file. The outer tee path also had ambiguous nounset expansion, but no final publication occurred.",
+              "remediation": "Second consecutive R29 failure: stop and preserve both builders. Only separately authorized fresh R30 may classify copied scripts by shebang/type, externally py_compile Python copies, non-executingly parse the Bash copy, and use an unambiguous builder-local result path."
             }
           ]
         },
-        "next_action": "Second consecutive R28 failure: stop. Preserve both R28 builders and all R13-R27 evidence. Do not clean, construct, publish, start, or review R28. Only a separately authorized R29 may consume failure-1 JSON directly as the cleanup allowlist, prevalidate every exact candidate before any mutation, perform exact all-candidates-validated unlink plus empty-dir rmdir, record irrecoverable R18 directory ctime delta, prove R18 activation PASS, and then restart the fresh data-driven constructor. Never compile donor paths in place or rerun R21."
+        "next_action": "Second consecutive R29 failure: stop and preserve both builders. Only separately authorized fresh R30 may classify copied scripts by shebang/type, externally py_compile Python copies, non-executingly parse the Bash copy, and use an unambiguous builder-local result path."
       },
       "M3-IR": {
         "owner": null,
