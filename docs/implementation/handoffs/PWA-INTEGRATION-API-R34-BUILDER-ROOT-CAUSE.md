@@ -1,3 +1,5 @@
+> Historical stop record: this matrix was authoritative until the user explicitly reauthorized bounded R34 continuation on September 1, 2026 after an external cleanup. The final result is recorded in `PWA-INTEGRATION-API-R34-STATIC-PACKAGE.md`.
+
 # PWA API R34 builder root-cause matrix — 2026-09-01
 
 Task: `PWA-INTEGRATION-API-RC`  
