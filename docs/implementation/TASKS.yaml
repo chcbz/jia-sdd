@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-01T14:15:21+08:00",
+    "updated_at": "2026-09-01T14:49:24+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -227,8 +227,8 @@ runtime_ledger_json: |
         },
         "current_gate": "blocked_root_cause",
         "blocker": {
-          "category": "r29_retry_shell_wrapper_misclassified_as_python",
-          "summary": "The sole R29 retry failed during staged-copy syntax checks because it unconditionally passed the Bash wrapper to Python py_compile.",
+          "category": "r30_targeted_verifier_postpublish_consumed_staging_source_path_assumption",
+          "summary": "R30 targeted static verifier stopped after Bash/POSIX parser PASS because it required prepublication compile-report source paths to remain under the sealed builder after atomic PREP publication consumed that subtree.",
           "consecutive_failures": 2,
           "attempts": [
             {
@@ -377,10 +377,24 @@ runtime_ledger_json: |
               "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r29-retry-builder-z6o0zlTV/control/failure-2.txt",
               "root_cause": "The staged wrapper is Bash (line 2: set -Eeuo pipefail), but the constructor appended wrapper and sealer unconditionally to its Python compile list; py_compile rejected the shell file. The outer tee path also had ambiguous nounset expansion, but no final publication occurred.",
               "remediation": "Second consecutive R29 failure: stop and preserve both builders. Only separately authorized fresh R30 may classify copied scripts by shebang/type, externally py_compile Python copies, non-executingly parse the Bash copy, and use an unambiguous builder-local result path."
+            },
+            {
+              "at": "2026-09-01T14:36:10+08:00",
+              "category": "r30_transform_overlap_proof_nested_identity_alias_count_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r30-builder-6AFqOgTo.constructor.stderr; /var/tmp/cyf-pwa-api-r19-static-verifier-r30-builder-6AFqOgTo/control/freeze-result.json; no R30 final path published",
+              "root_cause": "The new unchanged-byte proof greedily selected non-overlapping token spans. In acceptance-coverage.json all 34 lowercase r13 occurrences are nested inside 33 complete identities plus one short identity, so selecting the enclosing spans correctly transformed those bytes but left the separate lowercase replacement counter at zero and tripped the expected (33,1,9,34) assertion.",
+              "remediation": "Preserve the first R30 builder and reread the sole ledger. Use the one fresh non-overwriting R30 retry with an equal-length positional identity proof: freeze all original cardinalities, apply the ordered complete/short/upper/lower replacements, require every byte outside the union of original target spans unchanged, and require final new-token cardinalities exact. Retain separate non-overlap segment proof for mount replacements, then rerun the same static construction once; second R30 failure stops."
+            },
+            {
+              "at": "2026-09-01T14:49:24+08:00",
+              "category": "r30_targeted_verifier_postpublish_consumed_staging_source_path_assumption",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verification-YmSRO40R/failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verification-YmSRO40R/diagnostic.json; R30 builder root 548d4a3e30fba4424219a1276d418d20ae3c0e499eb86640e07fa5428d17fe85; package root 1cb1e29414b5d3adf90d306308d525693208bb24062bd413cab0b3a1738bb5fb",
+              "root_cause": "The verifier conflated syntax-proof provenance with postpublication source-location persistence. Atomic renameat2(RENAME_NOREPLACE) intentionally moved the staged preparation directory to the final PREP path; five compiled Python sources and the POSIX Gradle copy therefore no longer existed at builder-local source paths, while explicit external cfiles remained and final package bytes were already bound by activation/package manifests.",
+              "remediation": "Second consecutive R30 failure: stop. Preserve the successful static package, activation record, unit, both R30 builders, verification evidence, R29, R18 quarantine and R13 donor. Do not rerun verification, activation, R21, Gradle or runtime. Only separately authorized fresh R31 may verify consumed compile sources by digest-binding each prepublication source record to its corresponding final package path, without requiring moved staging paths to exist; then independently complete package/unit/activation review."
             }
           ]
         },
-        "next_action": "Second consecutive R29 failure: stop and preserve both builders. Only separately authorized fresh R30 may classify copied scripts by shebang/type, externally py_compile Python copies, non-executingly parse the Bash copy, and use an unambiguous builder-local result path."
+        "next_action": "Second consecutive R30 failure: stop. Preserve the successful static package, activation record, unit, both R30 builders, verification evidence, R29, R18 quarantine and R13 donor. Do not rerun verification, activation, R21, Gradle or runtime. Only separately authorized fresh R31 may verify consumed compile sources by digest-binding each prepublication source record to its corresponding final package path, without requiring moved staging paths to exist; then independently complete package/unit/activation review."
       },
       "M3-IR": {
         "owner": null,
