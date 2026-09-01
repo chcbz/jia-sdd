@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-01T15:13:55+08:00",
+    "updated_at": "2026-09-01T15:44:57+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -220,195 +220,18 @@ runtime_ledger_json: |
         "next_action": "R10 authoritative ACCEPT 0/0/0 remains exact. Lease-bound fast-forward source promotion completed: Web origin/develop 7bc80de75f83d4cb7ca288380c3ed9eab1bc111a -> 9d205884aaaa07b34aebe5aa6e4191d7dde2aa7e, post-push ls-remote exact; evidence /var/tmp/cyf-web-r10-source-promotion-20260829T1742/evidence.sha256 SHA 0bc0fce43754399c547af32bcd92492590056d2b31ee8edee0edd078ba4c3f6b. Source only; production deployment remains unauthorized."
       },
       "PWA-INTEGRATION-API-RC": {
-        "owner": null,
+        "owner": {
+          "agent": "sol-pwa-integration-api-r32-review-20260901",
+          "profile": "sol_reviewer",
+          "mode": "reviewer"
+        },
         "exact_sha_tree": {
           "commit_sha": "2599de3c2bdf5f1c3cf6e4faa8dcbb4048dffa4a",
           "tree_sha": "bad28da5c05d6448d805f88c4e88457f0f657a5e"
         },
-        "current_gate": "blocked_root_cause",
-        "blocker": {
-          "category": "r31_retry_first_failure_digest_transcription_mismatch",
-          "summary": "The sole R31 retry construction failed closed before creating a retry root because its first-failure evidence binding used a transcribed SHA-256 that did not equal the preserved file digest.",
-          "consecutive_failures": 2,
-          "attempts": [
-            {
-              "at": "2026-08-31T01:42:11+08:00",
-              "category": "r20_probe_launch_wrapper_safety_rejection",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/control/probe-launch-wrapper-failure-1.txt",
-              "root_cause": "The post-probe controller wrapper used recursive directory removal. Command safety rejected the whole invocation before systemd-run, leaving the unique unit identity unused and the dedicated script intact.",
-              "remediation": "Retry once with the same frozen identity and topology, using allowlisted regular-file unlink plus exact os.rmdir for cleanup. If the actual probe fails, attribute and stop."
-            },
-            {
-              "at": "2026-08-31T01:44:22+08:00",
-              "category": "r20_probe_mount_writability_superblock_false_positive",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/control/probe-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/probe-evidence/runtime-mountinfo.full.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/probe-evidence/unit.journal.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/probe-evidence/probe-terminal.json",
-              "root_cause": "The probe defined writable as rw in per-mount options OR rw in superblock options. Mountinfo reported the root bind mount ro while its ext4 superblock remained rw, so the parser falsely classified the exact read-only root as broadly writable and stopped before behavioral probes.",
-              "remediation": "Second consecutive post-reset failure: stop R20, preserve evidence, create no package/review candidate, and require separate authorization for a fresh successor with per-mount ro/rw precedence before one new probe."
-            },
-            {
-              "at": "2026-08-31T02:14:39+08:00",
-              "category": "r21_source_creator_nested_triple_quote_syntax",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r21-builder-224a2d52998e47bba95baf4dda6b9b4f/control/source-construction-failure-1.txt",
-              "root_cause": "The source-construction controller embedded delegated_anchor and delegated_block as triple-single-quoted strings inside an outer triple-single-quoted runtime_fragment, producing a Python SyntaxError before execution.",
-              "remediation": "Retry source construction once after changing the outer runtime_fragment delimiter to triple double quotes and compiling the controller first. Preserve the successful live probe and all R18-R20 evidence; do not rerun the probe."
-            },
-            {
-              "at": "2026-08-31T02:16:03+08:00",
-              "category": "r21_activation_fragment_identity_cardinality_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r21-builder-224a2d52998e47bba95baf4dda6b9b4f/control/source-construction-failure-2.txt",
-              "root_cause": "The retry corrected the nested quoting and compiled, but its activation fragment transformation used replace_once for an identity token that appears in four exact activation-check paths. The cardinality guard rejected valid multiplicity after publishing only partial builder-owned source-staging files.",
-              "remediation": "Second consecutive failure: stop R21 and preserve the successful one-time probe plus partial builder evidence. A separately authorized fresh successor must use a new builder and a frozen explicit four-occurrence semantic/AST transformation; it must not rerun the R21 probe or mutate R18-R21."
-            },
-            {
-              "at": "2026-09-01T09:49:58+08:00",
-              "category": "r22_activation_inventory_inspection_python36_api_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r22-builder-584839eb2ff24243a97a4479fb9617df/control/activation-inventory-inspection-failure-1.txt",
-              "root_cause": "The host Python 3.6 AST API does not provide get_source_segment; the inventory helper used a post-3.6 convenience API.",
-              "remediation": "Use the sole bounded retry with Python-3.6-compatible line/token bounds and AST Constant-node enumeration, freeze exactly four semantic activation identity occurrences, then continue only if every cardinality and source-preservation assertion passes."
-            },
-            {
-              "at": "2026-09-01T09:57:05+08:00",
-              "category": "r22_sealed_r13_manifest_absolute_path_rejection",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r22-builder-584839eb2ff24243a97a4479fb9617df/control/freeze-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r22-builder-584839eb2ff24243a97a4479fb9617df/control/freeze-r22.py; /var/tmp/cyf-pwa-api-r19-static-verifier-r13-builder-20260830T135417+0800/SHA256SUMS.builder",
-              "root_cause": "The fresh R22 sealed-manifest verifier added a relative-only path-format assertion instead of preserving the predecessor-compatible rule that accepts absolute paths when normalized containment remains inside the exact sealed root.",
-              "remediation": "Second consecutive R22 failure: stop and seal R22 with no candidate. A separately authorized fresh non-overwriting successor must support absolute-under-root and relative-under-root manifest entries with normalized containment, then apply the frozen explicit four-occurrence AST/token activation identity rewrite; never rerun R21 probe or mutate R18-R22/R17-R13."
-            },
-            {
-              "at": "2026-09-01T10:56:23+08:00",
-              "category": "r23_python36_multiline_string_ast_location_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-05f8b70a850e460b93d0bddc2279d514/control/source-extraction-failure-1.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r13-builder-20260830T135417+0800/build-r13.py",
-              "root_cause": "The first R23 extractor assumed a Python 3.6 AST Str node start coordinate identifies the multiline STRING token. On this host the node reports the closing line and col_offset=-1; tokenize correctly reports the opening token on line 294.",
-              "remediation": "Retry once using an explicit tokenize assignment-state parser that binds NAME ACTIVATION_CHECK_TEXT, OP =, and one following STRING token, with AST literal-value equality and uniqueness assertions. Stop on any second R23 failure."
-            },
-            {
-              "at": "2026-09-01T10:58:14+08:00",
-              "category": "r23_retry_authorization_binding_stale_after_attribution",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-210cf855d8994bae886bd2cfca4f7b29/control/retry-authorization-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-210cf855d8994bae886bd2cfca4f7b29/control/prepare-r23.stderr; /var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-05f8b70a850e460b93d0bddc2279d514/control/source-extraction-failure-1.txt",
-              "root_cause": "The retry source fixed token extraction but did not update its authorization assertion from the R22 category/count=0 to the required first R23 failure category/count=1 established by the orchestrator.",
-              "remediation": "Second consecutive R23 failure: stop, seal both R23 builders, create no package/unit/activation/review candidate, and require separately authorized fresh R24 remediation bound to this matrix and the live attributed retry state."
-            },
-            {
-              "at": "2026-09-01T11:15:31+08:00",
-              "category": "r24_controller_command_safety_rejected_recursive_unlink",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-df78452d2d3846169ad3592f52500d59/control/controller-command-safety-failure-1.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-df78452d2d3846169ad3592f52500d59/SHA256SUMS.builder",
-              "root_cause": "The controller patch/compile wrapper bundled rm -f for a controller-owned pycache file. Host command safety rejected CreateProcess before source patching, builder construction, package publication, or final-path writes.",
-              "remediation": "Fetch and re-read the live ledger, then run one bounded retry in a new non-overwriting R24 builder explicitly bound to category=r24_controller_command_safety_rejected_recursive_unlink and consecutive_failures=1; omit cleanup commands and preserve all prior attempts."
-            },
-            {
-              "at": "2026-09-01T12:18:41+08:00",
-              "category": "r24_replacement_controller_anchor_cardinality_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-853c0fd7f9d1463094eba04f92883b5a/control/implementation-failure-1.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-853c0fd7f9d1463094eba04f92883b5a/SHA256SUMS.builder",
-              "root_cause": "The patch assumed two instances of the inherited required-category tuple, but its third occurrence is in a distinct generated-source construction context; the assertion stopped preparation before controller publication or any final-path write.",
-              "remediation": "Re-read the live ledger and bind the sole R24 retry to category=r24_replacement_controller_anchor_cardinality_mismatch and consecutive_failures=1. Use context-specific replacement for the outer authorization tuple and generated verify_authorization tuple, preserving the third outer sealed-spec tuple."
-            },
-            {
-              "at": "2026-09-01T12:23:42+08:00",
-              "category": "r24_post_rewrite_identity_locator_hardcoded_pre_identity",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-f16978f018be45918da9bc92b9c8f2e8/control/retry-failure-summary.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-f16978f018be45918da9bc92b9c8f2e8/control/prepare-r24.stderr; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-f16978f018be45918da9bc92b9c8f2e8/SHA256SUMS.builder",
-              "root_cause": "locate_activation_tokens computes all_identity with a fixed r13 identity even when rewrite_activation calls it after patching with reversed semantic values. The postcondition then compares the selected R24 tokens to an empty old-identity set and fails closed.",
-              "remediation": "Second consecutive R24 implementation failure: stop at blocked_root_cause, preserve both fresh R24 builders and all predecessors, and require a separately authorized R25 successor whose post-rewrite locator receives the expected identity as a parameter or derives it from semantic values; do not rerun R21 or mutate package/final paths."
-            },
-            {
-              "at": "2026-09-01T12:46:19+08:00",
-              "category": "r25_inherited_controller_digest_binding_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r25-builder-d74a4ce5fc5542d49799c7178c8732b4/control/construction-failure-1.json; builder manifest root 53f5cff3382964826369fdef3ebf9d478593386c42864c46c88fb139b7474b39",
-              "root_cause": "The fresh constructor bound the correct immutable R24 controller path but asserted SHA-256 08605e... instead of the measured immutable donor SHA-256 83a7d5537338c65858d3948a5418d8556522a75b58731ee25f18008f641a7b7f. The fail-closed check stopped before R25 controller/package/final-path publication.",
-              "remediation": "Reread the live ledger, preserve and do not edit this sealed first R25 builder, then use the sole retry in a new non-overwriting R25 builder explicitly bound to category=r25_inherited_controller_digest_binding_mismatch and consecutive_failures=1; correct only the donor digest binding before running the same parsed-role and identity-locator implementation."
-            },
-            {
-              "at": "2026-09-01T12:49:55+08:00",
-              "category": "r25_constructor_sealed_specs_anchor_cardinality_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r25-builder-f304a2b7760e449d9052af5433f64d1c/control/construction-failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r25-builder-f304a2b7760e449d9052af5433f64d1c/control/root-cause-matrix.json",
-              "root_cause": "insert_sealed_rows required source.count(\"sealed_specs=(\\\\n\")==1, but the inherited controller has two raw occurrences at that phase: the outer controller assignment and one inside the verify_auth generator-template STRING. This repeated the class of broad textual cardinality assumption that R25 was required to eliminate.",
-              "remediation": "Second consecutive R25 failure: stop and preserve both sealed R25 builders; create no package/unit/activation/review candidate. Only a separately authorized R26 may continue by locating the outer sealed_specs assignment with AST/token structure while excluding the verify_auth STRING span (or reinserting the patched template first), and by freezing outer/template/generated roles without raw textual marker counts."
-            },
-            {
-              "at": "2026-09-01T13:09:03+08:00",
-              "category": "r26_outer_sealed_specs_nonliteral_ast_value",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-fd43508cbd834b0c9c845527334af89a/control/construction-failure-1.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-fd43508cbd834b0c9c845527334af89a/SHA256SUMS.builder",
-              "root_cause": "The locator correctly isolated the sole outer module-level sealed_specs assignment with AST/token structure, but reused a tuple-value helper that calls ast.literal_eval. The outer tuple contains legitimate Name references (R23_RETRY/R22/R21/R18/R13), so evaluation failed before any controller/package/final-path publication.",
-              "remediation": "Reread the live ledger, preserve this sealed first R26 builder, and use the sole fresh non-overwriting R26 retry bound to category=r26_outer_sealed_specs_nonliteral_ast_value,count=1. Retain AST/token location and STRING-token exclusion; insert at the opening tuple token without evaluating the outer tuple, validate AST element-prefix structure, and keep literal evaluation only for the decoded verify_auth template."
-            },
-            {
-              "at": "2026-09-01T13:13:36+08:00",
-              "category": "r26_retry_ast_node_identity_reparse_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/control/in-memory-transformation-fixture-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/control/construction-failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/control/root-cause-matrix.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/SHA256SUMS.builder",
-              "root_cause": "The retry correctly avoided literal_eval for the outer Name-bearing sealed_specs tuple, but top_level_node_span reparsed the transformed source and then searched that new tree for the original AST node by object identity. Reparse creates different node objects, so the assertion failed before controller publication.",
-              "remediation": "Second consecutive R26 failure: stop, seal both R26 builders, create no package/unit/activation/review candidate, and require separately authorized fresh R27 bound to the committed R26 matrix. R27 must use same-tree indexes or stable AST coordinates for top-level spans while retaining nonliteral outer sealed_specs insertion, decoded template transformation, three representation-layer roles, parameterized four-span activation, and normalized manifest verification."
-            },
-            {
-              "at": "2026-09-01T13:24:54+08:00",
-              "category": "r27_resource_snapshot_df_option_conflict",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-fb25ba11049d4d5d956d069df29678d4/control/construction-failure-1.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-fb25ba11049d4d5d956d069df29678d4/SHA256SUMS.builder",
-              "root_cause": "The resource snapshot helper invoked df -Pi --output=iavail /var/tmp. GNU df rejects -i together with --output, so the fresh builder stopped before constructor/controller/package/final-path publication.",
-              "remediation": "Preserve this sealed first R27 builder; reread the live ledger; use the sole fresh non-overwriting R27 retry bound to category=r27_resource_snapshot_df_option_conflict,count=1 and call df --output=iavail without -i. Retain all R26 structural fixes and stop on any second R27 failure."
-            },
-            {
-              "at": "2026-09-01T13:33:07+08:00",
-              "category": "r27_retry_constructor_exact_text_block_anchor_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/control/source-generator-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/control/construction-failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/control/root-cause-matrix.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/SHA256SUMS.builder",
-              "root_cause": "The retry source generator searched for one exact multi-line prepend_assignment_rows implementation. The immutable R26 constructor differed from that whole-block string, so it raised prepend_block_missing before compile or O_EXCL publication of any R27 constructor/controller/package path.",
-              "remediation": "Second consecutive R27 failure: stop and preserve both sealed R27 builders plus R13-R26. Create no package/unit/activation/review candidate. Only a separately authorized fresh R28 may continue, using parsed AST/token spans or a complete newly authored constructor instead of whole-function exact-text anchors, while retaining all R26 structural requirements and never rerunning R21."
-            },
-            {
-              "at": "2026-09-01T13:45:25+08:00",
-              "category": "r28_preparation_inplace_pycompile_mutated_sealed_r18_package",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r28-builder-cc81626293034253/control/failure-1.json sha256=65d163147a86513013eaca1f328c067e3e2793823519609906260cc276aa74c6; builder_root=f233047439a325f25d55d334b4c2c23a3666feec1c25f36a3dabd0fcf6156b7c",
-              "root_cause": "The read-only inspection command used python3 -m py_compile without explicit external cfile destinations. Root therefore created __pycache__ next to sealed R18 scripts; regular donor bytes stayed exact, but package path-set and directory metadata were mutated.",
-              "remediation": "Reread the live ledger. Use the sole R28 retry in a fresh non-overwriting builder. Remove only the exact writer-created pyc files and remove each exact __pycache__ directory only if empty; record the irrecoverable directory ctime delta. Never compile a donor in place again: copy each measured donor file to fresh fixture/staging and compile only staged bytes with explicit external cfile paths. Continue only if R18 activation returns PASS and all regular donor SHA-256 values match the frozen manifest."
-            },
-            {
-              "at": "2026-09-01T13:48:47+08:00",
-              "category": "r28_retry_cleanup_digest_transcription_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r28-builder-f206a1045bb5436e/control/failure-2.json sha256=6908e14dc73f23af93c05c2d788dd5c94e3ef7590042792104fa1a3fe9efecf2; root-cause-matrix sha256=c4b78a12f4a59ac9dc20790542acc6660bcbf514fdc37f67c3a6802b172e55ea",
-              "root_cause": "The retry cleanup source hard-coded guessed pyc digests rather than loading the already sealed first-failure JSON. The first sorted target expected a3ba2f... but the sealed/measured digest is 61d1c3..., so the assertion stopped before any unlink or rmdir.",
-              "remediation": "Second consecutive R28 failure: stop. Preserve both R28 builders and all R13-R27 evidence. Do not clean, construct, publish, start, or review R28. Only a separately authorized R29 may consume failure-1 JSON directly as the cleanup allowlist, prevalidate every exact candidate before any mutation, perform exact all-candidates-validated unlink plus empty-dir rmdir, record irrecoverable R18 directory ctime delta, prove R18 activation PASS, and then restart the fresh data-driven constructor. Never compile donor paths in place or rerun R21."
-            },
-            {
-              "at": "2026-09-01T14:02:33+08:00",
-              "category": "r29_freeze_literal_trailing_quote_syntax",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r29-builder-EaZLdnm4/control/failure-1.txt",
-              "root_cause": "The sensitive_payload_allowlist line ended with ],\\x27 instead of ], so Python raised SyntaxError before helper execution; only unique R29-owned empty builder directories and pointer exist.",
-              "remediation": "Preserve the first R29 builder, reread the ledger, then use one fresh non-overwriting retry; compile the corrected complete helper to an explicit R29 cfile before execution and stop on any second failure."
-            },
-            {
-              "at": "2026-09-01T14:10:29+08:00",
-              "category": "r29_retry_shell_wrapper_misclassified_as_python",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r29-retry-builder-z6o0zlTV/control/failure-2.txt",
-              "root_cause": "The staged wrapper is Bash (line 2: set -Eeuo pipefail), but the constructor appended wrapper and sealer unconditionally to its Python compile list; py_compile rejected the shell file. The outer tee path also had ambiguous nounset expansion, but no final publication occurred.",
-              "remediation": "Second consecutive R29 failure: stop and preserve both builders. Only separately authorized fresh R30 may classify copied scripts by shebang/type, externally py_compile Python copies, non-executingly parse the Bash copy, and use an unambiguous builder-local result path."
-            },
-            {
-              "at": "2026-09-01T14:36:10+08:00",
-              "category": "r30_transform_overlap_proof_nested_identity_alias_count_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r30-builder-6AFqOgTo.constructor.stderr; /var/tmp/cyf-pwa-api-r19-static-verifier-r30-builder-6AFqOgTo/control/freeze-result.json; no R30 final path published",
-              "root_cause": "The new unchanged-byte proof greedily selected non-overlapping token spans. In acceptance-coverage.json all 34 lowercase r13 occurrences are nested inside 33 complete identities plus one short identity, so selecting the enclosing spans correctly transformed those bytes but left the separate lowercase replacement counter at zero and tripped the expected (33,1,9,34) assertion.",
-              "remediation": "Preserve the first R30 builder and reread the sole ledger. Use the one fresh non-overwriting R30 retry with an equal-length positional identity proof: freeze all original cardinalities, apply the ordered complete/short/upper/lower replacements, require every byte outside the union of original target spans unchanged, and require final new-token cardinalities exact. Retain separate non-overlap segment proof for mount replacements, then rerun the same static construction once; second R30 failure stops."
-            },
-            {
-              "at": "2026-09-01T14:49:24+08:00",
-              "category": "r30_targeted_verifier_postpublish_consumed_staging_source_path_assumption",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verification-YmSRO40R/failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verification-YmSRO40R/diagnostic.json; R30 builder root 548d4a3e30fba4424219a1276d418d20ae3c0e499eb86640e07fa5428d17fe85; package root 1cb1e29414b5d3adf90d306308d525693208bb24062bd413cab0b3a1738bb5fb",
-              "root_cause": "The verifier conflated syntax-proof provenance with postpublication source-location persistence. Atomic renameat2(RENAME_NOREPLACE) intentionally moved the staged preparation directory to the final PREP path; five compiled Python sources and the POSIX Gradle copy therefore no longer existed at builder-local source paths, while explicit external cfiles remained and final package bytes were already bound by activation/package manifests.",
-              "remediation": "Second consecutive R30 failure: stop. Preserve the successful static package, activation record, unit, both R30 builders, verification evidence, R29, R18 quarantine and R13 donor. Do not rerun verification, activation, R21, Gradle or runtime. Only separately authorized fresh R31 may verify consumed compile sources by digest-binding each prepublication source record to its corresponding final package path, without requiring moved staging paths to exist; then independently complete package/unit/activation review."
-            },
-            {
-              "at": "2026-09-01T15:09:56+08:00",
-              "category": "r31_orchestrator_fixture_staging_mode_applied_to_external_control_path",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verification-r31-qjygjoho/evidence/failure.json; verifier source sha256=2354f1ce7517b707b25b0c6fd1496ff862c35903310488ea14bf5150d8012e12; freeze sha256=066f442738048ccca4cd223930173d8433e0a1af86868b68d84569ae3678e832",
-              "root_cause": "The compile classification metadata describes the immutable R30 builder-local fixture copy. For prep/wrapper/sealer package publications, that metadata must match the published package path. The orchestrator fixture is different: the package manifest binds the live coordination-control file by digest, while its builder staging copy is intentionally root-owned mode 0555. R31 conflated those two ownership domains and rejected the correct live mode after confirming the digest.",
-              "remediation": "Preserve the first R31 root. Reread the sole ledger, then use the one fresh non-overwriting R31 retry bound to category r31_orchestrator_fixture_staging_mode_applied_to_external_control_path,count=1. Correct only metadata semantics: retain exact digest binding for the live orchestrator path and exact mode/uid/gid checks for its sealed staging fixture, while applying published metadata equality only to R30 package-owned prep/wrapper/sealer paths. Re-run the unchanged static assertions once; second R31 failure stops."
-            },
-            {
-              "at": "2026-09-01T15:13:55+08:00",
-              "category": "r31_retry_first_failure_digest_transcription_mismatch",
-              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verification-r31-retry-construction-failure-vjuqic8m/failure.json sha256=e594ec80542fcc7604fd3ddebbf7aa0c9a412a8d6214d9b2ae07e3aa4b0faedc; manifest_root=941ca29a426808cb3899a4181a96ec8a16cac4dfc7efd6df5c699a190f6fa954",
-              "root_cause": "The retry preparation hard-coded expected first-failure SHA-256 d63e643a... instead of loading/measuring the immutable preserved file. Its actual SHA-256 is 0007039f.... The fail-closed assertion ran before tempfile.mkdtemp, so no retry verifier/evidence root or source was created and no static retry executed.",
-              "remediation": "Second consecutive R31 failure: stop and preserve the first R31 verifier root plus the sealed retry-construction failure evidence. Create no Review request and do not run another R31 command. Only separately authorized fresh R32 may measure the preserved first-failure digest directly (never transcribe it), bind category/count=2 and the committed R31 matrix, then create one fresh non-overwriting verifier whose sole semantic code correction exempts only the live orchestrator control path from staging-copy mode equality while retaining digest binding and all package-owned metadata assertions. No R21, R30 mutation/rebuild, runtime, Gradle, network, DB, Rabbit, Chromium, production, deploy, or daemon reload."
-            }
-          ]
-        },
-        "next_action": "Second consecutive R31 failure: stop and preserve the first R31 verifier root plus the sealed retry-construction failure evidence. Create no Review request and do not run another R31 command. Only separately authorized fresh R32 may measure the preserved first-failure digest directly (never transcribe it), bind category/count=2 and the committed R31 matrix, then create one fresh non-overwriting verifier whose sole semantic code correction exempts only the live orchestrator control path from staging-copy mode equality while retaining digest binding and all package-owned metadata assertions. No R21, R30 mutation/rebuild, runtime, Gradle, network, DB, Rabbit, Chromium, production, deploy, or daemon reload."
+        "current_gate": "review",
+        "blocker": null,
+        "next_action": "Independent sol_reviewer review of exact product 2599de3c2bdf5f1c3cf6e4faa8dcbb4048dffa4a/tree bad28da5c05d6448d805f88c4e88457f0f657a5e and sealed R32 static PASS root /var/tmp/cyf-pwa-api-r19-static-verification-r32-retry-ujqf_8bw manifest root 800014ca8c405fc62b02d8be2a16b28b65e08585d0246c4185e8fc9984aef1eb; handoff docs/implementation/handoffs/PWA-INTEGRATION-API-R32-STATIC-VERIFIER.md. No runtime, Gradle, production, deploy, daemon reload, or unit start."
       },
       "M3-IR": {
         "owner": null,
