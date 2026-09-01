@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-01T18:45:46+08:00",
+    "updated_at": "2026-09-01T19:32:41+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -225,29 +225,9 @@ runtime_ledger_json: |
           "commit_sha": "2599de3c2bdf5f1c3cf6e4faa8dcbb4048dffa4a",
           "tree_sha": "bad28da5c05d6448d805f88c4e88457f0f657a5e"
         },
-        "current_gate": "blocked_root_cause",
-        "blocker": {
-          "category": "accepted_fixture_package_bytecode_mutation_between_attempts",
-          "summary": "Second consecutive R35 accepted static-verifier failure: first exact packaged fixture import created package-local __pycache__/runtime_prepare.cpython-36.pyc, so the single retry failed the sealed PACKAGE_PATHS metadata gate before fixture execution.",
-          "consecutive_failures": 2,
-          "attempts": [
-            {
-              "at": "2026-09-01T18:43:18+08:00",
-              "category": "static_fixture_simulation_ancestor_traversal_contract",
-              "evidence": "/run/cyf-pwa-api-r19-static-verification-r35-20260901T184205-2640563/failure.json and /run/cyf-pwa-api-r19-static-verifier-r35-builder-vn4qisr1/control/static-verifier.stderr",
-              "root_cause": "runtime_prepare correctly set simulated workspace root root:61019 mode0710 and children 61019:61019 mode0700, but tempfile.mkdtemp created its outer /run/r35-static-contract-* directory root:root mode0700. setpriv UID/GID 61019 therefore failed at the fixture-only ancestor before reaching the workspace contract.",
-              "remediation": "Use the single R35 retry to set the fixture outer temporary root to root:61019 mode0710 before creating the simulated workspace, regenerate exact package manifest/activation bindings under a fresh df -B1 root gate, then rerun the accepted verifier from a fresh evidence root exactly once. Do not run Gradle/runtime/network/DB/Rabbit/Chromium/deploy/daemon-reload."
-            },
-            {
-              "at": "2026-09-01T18:45:46+08:00",
-              "category": "accepted_fixture_package_bytecode_mutation_between_attempts",
-              "evidence": "/run/cyf-pwa-api-r19-static-verification-r35-retry-20260901T184431-2642261/failure.json; actual-only paths /run/cyf-pwa-api-r19-static-verifier-r35-preparation/__pycache__ and runtime_prepare.cpython-36.pyc; verifier stderr /run/cyf-pwa-api-r19-static-verifier-r35-builder-vn4qisr1/control/static-verifier-retry.stderr",
-              "root_cause": "The accepted verifier invokes the exact packaged fixture without PYTHONDONTWRITEBYTECODE=1 and the fixture imports package modules with importlib. Running as root against a 0555 package directory still allowed bytecode cache creation. The first attempt checked package metadata before executing the fixture, then left two unmanifested package paths when the later traversal assertion failed; the retry correctly detected that contamination. This is independent of the first fixture-ancestor traversal defect.",
-              "remediation": "Stop R35 at blocked_root_cause and preserve all R34/R35 bytes and both failed evidence roots. A separately authorized fresh R36 must ordinary-copy immutable R34 again, incorporate both fixes before publication (fixture ancestor root:61019 0710; sys.dont_write_bytecode=True plus PYTHONDONTWRITEBYTECODE=1), execute the exact packaged fixture with before/after package metadata equality, and use fresh non-overwriting roots and df -B1 gates. No R35 cleanup, mutation, retry, runtime, Gradle, network, DB/Rabbit/Chromium, deploy, daemon reload, or start."
-            }
-          ]
-        },
-        "next_action": "Stop R35 at blocked_root_cause and preserve all R34/R35 bytes and both failed evidence roots. A separately authorized fresh R36 must ordinary-copy immutable R34 again, incorporate both fixes before publication (fixture ancestor root:61019 0710; sys.dont_write_bytecode=True plus PYTHONDONTWRITEBYTECODE=1), execute the exact packaged fixture with before/after package metadata equality, and use fresh non-overwriting roots and df -B1 gates. No R35 cleanup, mutation, retry, runtime, Gradle, network, DB/Rabbit/Chromium, deploy, daemon reload, or start."
+        "current_gate": "review",
+        "blocker": null,
+        "next_action": "Independent sol_reviewer must review exact R36 sealed builder /var/tmp/cyf-pwa-api-r19-static-verifier-r36-builder-ZwabUscc root 271722718143b92dfdb090e6e59dd1d6e0a3afa806233678c1389be33677143a, final package root e94730ebfc64b8e99ec140545a914ef60a776130e985afd489fcace2ee7df779, preserved attributed first attempt, and accepted static evidence /var/tmp/cyf-pwa-api-r19-static-verification-r36-retry-20260901T192716-2687397 key 23da733bfd918945d2b979457aa4e29e9f94a64117a4145dc97dbd8c05f4fe9c manifest root 0c8b6291912bd494928a8316af8605352acfec366f054b74063a8e484f7d3827. Static only; runtime/Gradle/daemon reload/network/DB/Rabbit/Chromium/production/deploy remain unauthorized."
       },
       "M3-IR": {
         "owner": null,
