@@ -1,8 +1,525 @@
-schema_version: 1
-updated_at: "2026-08-03"
+schema_version: 4
+updated_at: "2026-08-25"
 source_design: "docs/juyiting-multi-agent-collaboration-design.md"
+# BEGIN CYF_RUNTIME_LEDGER_JSON
+runtime_ledger_json: |
+  {
+    "schema_version": 2,
+    "updated_at": "2026-09-01T13:50:03+08:00",
+    "critical_path": [
+      "D06",
+      "D08",
+      "D09",
+      "M3-IR",
+      "M3-RG",
+      "H06"
+    ],
+    "tasks": {
+      "D06": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "f02bb1167fd09825b02ec399c077699933b144a6",
+          "tree_sha": "3b5b519c201047d71eaf212c61fb53deb743ffb3"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "D06 R8 authoritative ACCEPT 0/0/0 on exact API f02bb1167fd09825b02ec399c077699933b144a6/tree 3b5b519c201047d71eaf212c61fb53deb743ffb3 paired with A06 test-only 4db501816abf/tree 527c02ce9e13. Source Writer released. D08 stale candidate remains non-promotable and must be rebuilt later; no deployment is authorized."
+      },
+      "D08": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "cc5e03205d7842768892c0c962d103a5e6f90022",
+          "tree_sha": "0efc5a51dca6085936306764d6d302a607e1ba64"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "D08 remains accepted on exact cc5e03205d7842768892c0c962d103a5e6f90022/tree 0efc5a51dca6085936306764d6d302a607e1ba64 with focused ownership-denial evidence 5ae746d20350a332f271cf5809ce3f16a0d1dc45aeea468289d614cdb8099c6e and isolated MySQL restart/concurrency evidence 0af7529498cbc1a806c1e7dd6d999e487cc067aa96458f5ee7d5a6536da36ca3. Cleanup removed only an unregistered stale fixture; no source/test/production action."
+      },
+      "D09": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "2d935f64ccaf760192321e348c321b74c07c2414",
+          "tree_sha": "f4ff2d9a444bce66f7bc6cb017746753cd29b4dc"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Authoritative sol_reviewer 01a03f09-9b7f-7921-baef-3d16d78742e0 ACCEPT P0/P1/P2=0/0/0 on exact 2d935f64/tree f4ff2d9a with fresh isolated MySQL evidence fixture 1737656840f1 and XML 5/0/0/0; R8-2 accepted, R8-3/4 remain forbidden. Dependencies D06/D08/D09 are now accepted, so M3-RG may run read-only."
+      },
+      "M3-RG": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "828ef2e2f35ce249246a8da059fd5b9cfcedd1d5",
+          "tree_sha": "f7e53c955734f9a166ac3480a34b0bec0b0bfa0f"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "M3-RG release_guard GO 0/0/0 and exact source promoter 01a03f9d-80ac-7d02-b29f-d3d57c29c9af completed lease-bound fast-forward source promotion: remote develop 261ee9eb -> 828ef2e2, post-push ls-remote confirmed. Source only; production deployment/restart/migration/flags/Rabbit/DML remain NO-GO and require separate gates."
+      },
+      "H06": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "66f30bc530f9dc2c96960998bc9e089d1220eed7",
+          "tree_sha": "56cc82235e51409bea320c3f4cf931448267a366"
+        },
+        "current_gate": "waiting_dependency",
+        "blocker": {
+          "category": "offline_dependency_cache_incomplete",
+          "summary": "Attempt18 exact-tree preflight passed, but the authoritative offline selector stopped before test execution because the shared Gradle cache lacked the currently resolved Spring/Kotlin/Jackson/Spring-AI/Netty and related compileClasspath artifacts.",
+          "consecutive_failures": 1,
+          "attempts": [
+            {
+              "at": "2026-08-29T23:10:46+08:00",
+              "category": "offline_dependency_cache_incomplete",
+              "evidence": "/var/tmp/cyf-h06-r48-focused-verifier-attempt18; terminal sha list /var/tmp/cyf-h06-r48-attempt18-terminal-sha256-20260829T2309+0800.txt; log sha c9755b9d2465cce19866e377f0ad3c0341477499091e3b696e317b6986a2e84f",
+              "root_cause": "Attempt9 online hydration timed out before dependency closure. The later remediation assumed its partial shared cache was sufficient and authorized an offline-only Attempt18, but exact dependency resolution now proves dozens of required artifacts absent. This is verifier cache preparation failure; source compile/test assertions did not execute.",
+              "remediation": "Preserve Attempt18 immutable and do not rerun it. Use the already-sealed independent PWA R19 verifier, after its static Review ALLOW, for its own bounded official-repository online hydration plus offline verification under the same serialized systemd/Gradle controls. Only after that terminal may a fresh non-overwriting H06 Attempt19 preflight prove the missing coordinates are cached and run the unchanged exact H06 selector offline once. No standalone blind H06 hydration, source change, cleanup, or production action."
+            }
+          ]
+        },
+        "next_action": "Wait for the currently authorized fresh PWA static-package successor to pass independent static Review and then complete its single sealed runtime. After that runtime terminal, independently byte-copy the named sealed PWA Gradle home into fresh Attempt19-owned UID/GID 61006:61006 paths with donor pre/post metadata and no-hardlink proof; preserve Attempt18; enforce free-bytes >= 5368709120; run exact ArchiveContentImporterTest offline once via orchestrator; then fresh independent Review. No standalone hydration, cleanup, source change, or production action."
+      },
+      "ASF-COOKIE-P1": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": null,
+          "tree_sha": null
+        },
+        "current_gate": "waiting_user_sha_approval",
+        "blocker": {
+          "category": "user_sha_approval",
+          "summary": "WORKING_NOT_RELEASED: ALLOW 0/0/0 with 4/4 closed, manifest 34/34 PASS and offline network-isolated regressions 28/28 PASS; production action remains blocked on separate user approval bound to the recorded manifest and manifest-root SHA-256 values.",
+          "consecutive_failures": 0,
+          "attempts": [
+            {
+              "at": "2026-08-25T21:13:41+08:00",
+              "category": "ledger_schema_normalization",
+              "evidence": {
+                "binding": {
+                  "manifest_path": "evidence/smoke-cookie-p1-remediation-candidate-20260825T210144+0800.sha256",
+                  "manifest_sha256": "017e147eadafda4f87b35b3b4fa6bbafaf27334614452adefcccef37124cfc39",
+                  "manifest_root_path": "evidence/smoke-cookie-p1-remediation-candidate-20260825T210144+0800.sha256.sha256",
+                  "manifest_root_file_sha256": "a6e085773b75a100230cf4a32b59353e18000e479bdf9dfa3e8b055990a58845"
+                },
+                "release_status": "WORKING_NOT_RELEASED",
+                "verification": {
+                  "reviewer": "01a03905-c010-7e93-b26b-af3a32c44a6f",
+                  "verdict": "ALLOW",
+                  "p0": 0,
+                  "p1": 0,
+                  "p2": 0,
+                  "closed_items": "4/4",
+                  "manifest_entries": "34/34 PASS",
+                  "offline_network_isolated_regressions": "28/28 PASS"
+                }
+              },
+              "root_cause": "Concurrent control update added fields outside the five-field runtime-ledger schema.",
+              "remediation": "Fold artifact binding, release status and verification into blocker evidence/next_action without changing release state."
+            }
+          ]
+        },
+        "next_action": "Wait for separate user approval explicitly bound to manifest SHA 017e147eadafda4f87b35b3b4fa6bbafaf27334614452adefcccef37124cfc39 and manifest-root file SHA a6e085773b75a100230cf4a32b59353e18000e479bdf9dfa3e8b055990a58845. Until then remain WORKING_NOT_RELEASED and do not perform production smoke, deployment, provision, DB/OAuth/API/health/Chromium access, or key rotation."
+      },
+      "PWA-HOSTED-P0": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "790f2e98b1b8dabdd256e9470c90e637120ae599",
+          "tree_sha": "5bef450d3e0da8049ec6dec8de6d00c9660c9e1f"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Accepted candidate remains unchanged. Both exact confirmed-stale disposable PWA MySQL fixture roots were safely removed after separate no-reference checks. No source/test/Gradle/production/cross-task action."
+      },
+      "PWA-TASK-ACL-P0": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "ae3e04f00675cf6adb99d8caa283b01748b9d3fd",
+          "tree_sha": "532d662020d44b5e607d76a57c956631989dd0e8"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Fresh sol_reviewer 01a03a63-0c30-7a11-ada4-c96ec1fc9265 ACCEPT 0/0/0 on exact ae3e04f00675cf6adb99d8caa283b01748b9d3fd/tree 532d662020d44b5e607d76a57c956631989dd0e8, reusing focused evidence d56899ef. Test-only R1 closes authentication-before-DAO and contaminated-result regressions; owners released. No production access or deployment authorized."
+      },
+      "PWA-PREFLIGHT-SAFETY-P1": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "8034f4bdcc9e37961fe397494159b65dd6e51ac6",
+          "tree_sha": "e5ae35694f5e5a5fb217ca8f4e22d61c95ce5cd2"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "ACCEPT 0/0/0 by fresh sol_reviewer 01a03a01-be64-72d3-8f78-b8a85bd10e93 on exact 8034f4bdcc9e37961fe397494159b65dd6e51ac6/tree e5ae35694f5e5a5fb217ca8f4e22d61c95ce5cd2; offline 44/44 and targeted close/barrier/liveness 4/4 PASS. Source/reviewer owners released. Real Chromium remains a later separately authorized fail-closed availability gate; no deployment authorized."
+      },
+      "PWA-ONBOARDING-V1": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "a9034be7d4bce6a7e0f39eae7e6d3c91f1e35441",
+          "tree_sha": "7ffae26a8bdda4a1786801228543afd3026d6027"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Fresh sol_reviewer 01a03b4a-184d-76c3-bc0e-31ddb4fd3341 ALLOW 0/0/0 on exact onboarding a9034be/tree 7ffae26 after independent executable 19/19 PASS. All original P1/P2 plus R2 phase/reflection/Escape findings are closed; owner released. Real Chromium remains a separate SHA-bound availability gate; no production/deployment action authorized."
+      },
+      "O00": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "d289f120cbdc333449e06214b015223160bea6fb",
+          "tree_sha": "afa783a950158ffb6f24f1c2b4ad59aa34d33f45"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "O00 remains authoritative ACCEPT 0/0/0 on exact d289f120/tree afa783a9. Its clean registered worktree was safely removed non-force, freeing 256266240 bytes while preserving branch refs/heads/codex/o00-juyiting-web-convergence and commit/tree. No source/test/process/deploy action."
+      },
+      "O01": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "832dc9fd5c803f04652f5cdd0482fd575db3e505",
+          "tree_sha": "27b5c44904a23ac202dc117c77a8dffd3f485852"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "O01-R5 authoritative ACCEPT 0/0/0 by Godel the 3rd 01a03a64-b677-7093-9418-d6f100ab512f on exact 832dc9fd/tree 27b5c449. Dependency-free R4/R5 probes passed; one missing-timestamp legacy probe is obsolete under the accepted R4 fail-closed contract. Official Mocha remains pre-load infra-blocked with 0 executions. O02 may be claimed from this exact base."
+      },
+      "O02": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "fd515acf22d6989074b56834211930abe3c0e144",
+          "tree_sha": "78779a6fc8a182490d8a6c6bd220183fb52a6ef6"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "O02 remains authoritative ACCEPT 0/0/0 on exact fd515acf/tree 78779a6f. Two fail-closed cleanup probes removed nothing; /tmp/o02-verifier-ad33b112b3f1e6a5664b0dde66eea5088d2abd31 is intentionally preserved. O03 progression remains independent; no source/test/deploy action."
+      },
+      "O03": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "0f8c243a7e3233554862a5bf04da7e03bf90f746",
+          "tree_sha": "ada2b911ff85a6ee2fedf7b9b49da94fe33a9290"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "O03 R5 authoritative ACCEPT 0/0/0 by unique sol_reviewer 01a04065-60c8-7821-a10f-e6faa58a27ac on exact 0f8c243a/tree ada2b911. Accepted evidence: V1 9/9 selectors, 144 identities, imports13 and zero resources; V2 16/0; V3 COW bundle build GO with donor/O03 identity and cleanup PASS. Owner released; O04 dependency is now satisfied and may enter read-only preparation."
+      },
+      "O04": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "965d60393fcc589f691dfa1533e4855b5c13ff20",
+          "tree_sha": "f31118c5b522ddbf3c4355abc466323030d7fd0f"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Fresh independent sol_reviewer 01a0467e-ecd5-7d20-a776-cbb39c6d5a32 ALLOW P0/P1/P2=0/0/0 on exact O04 commit 965d60393fcc589f691dfa1533e4855b5c13ff20/tree f31118c5b522ddbf3c4355abc466323030d7fd0f. Accepted R5 COPY_PASS key 3a75e513c20a9ad424fb3bbb68d1a14c408d57a3dada2f2d67980e6f6c388756 (23458 entries, digest c33a60be47b3a234669de2f4706ba0cf7d1a920dcff695b5283c83969cd6917d) and Gate 12.2 key 5c8bf63e8c4432e807d33b7771dcb8ea58edda784b3eb69eb8a0f6b0972558a9/artifact SHA 89d35d12c7cf60baedbdc5ef8d3638cf4daeb5377c77fde0fdec0ed209a34e8b/result 56/0/0. Durable contract ends at fresh Gate 12.2 review; no speculative Gate 12.3 is authorized. Owner released; no production action."
+      },
+      "PWA-INTEGRATION-WEB-RC": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "9d205884aaaa07b34aebe5aa6e4191d7dde2aa7e",
+          "tree_sha": "9bd0051f85b0ec412088b8155fd9e6d2f04e0fe6"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "R10 authoritative ACCEPT 0/0/0 remains exact. Lease-bound fast-forward source promotion completed: Web origin/develop 7bc80de75f83d4cb7ca288380c3ed9eab1bc111a -> 9d205884aaaa07b34aebe5aa6e4191d7dde2aa7e, post-push ls-remote exact; evidence /var/tmp/cyf-web-r10-source-promotion-20260829T1742/evidence.sha256 SHA 0bc0fce43754399c547af32bcd92492590056d2b31ee8edee0edd078ba4c3f6b. Source only; production deployment remains unauthorized."
+      },
+      "PWA-INTEGRATION-API-RC": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "2599de3c2bdf5f1c3cf6e4faa8dcbb4048dffa4a",
+          "tree_sha": "bad28da5c05d6448d805f88c4e88457f0f657a5e"
+        },
+        "current_gate": "blocked_root_cause",
+        "blocker": {
+          "category": "r28_retry_cleanup_digest_transcription_mismatch",
+          "summary": "The sole R28 retry failed closed before cleanup because its exact-file cleanup allowlist manually transcribed the sealer pyc SHA-256 incorrectly.",
+          "consecutive_failures": 2,
+          "attempts": [
+            {
+              "at": "2026-08-31T01:42:11+08:00",
+              "category": "r20_probe_launch_wrapper_safety_rejection",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/control/probe-launch-wrapper-failure-1.txt",
+              "root_cause": "The post-probe controller wrapper used recursive directory removal. Command safety rejected the whole invocation before systemd-run, leaving the unique unit identity unused and the dedicated script intact.",
+              "remediation": "Retry once with the same frozen identity and topology, using allowlisted regular-file unlink plus exact os.rmdir for cleanup. If the actual probe fails, attribute and stop."
+            },
+            {
+              "at": "2026-08-31T01:44:22+08:00",
+              "category": "r20_probe_mount_writability_superblock_false_positive",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/control/probe-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/probe-evidence/runtime-mountinfo.full.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/probe-evidence/unit.journal.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r20-builder-5c75a1c98662458b/probe-evidence/probe-terminal.json",
+              "root_cause": "The probe defined writable as rw in per-mount options OR rw in superblock options. Mountinfo reported the root bind mount ro while its ext4 superblock remained rw, so the parser falsely classified the exact read-only root as broadly writable and stopped before behavioral probes.",
+              "remediation": "Second consecutive post-reset failure: stop R20, preserve evidence, create no package/review candidate, and require separate authorization for a fresh successor with per-mount ro/rw precedence before one new probe."
+            },
+            {
+              "at": "2026-08-31T02:14:39+08:00",
+              "category": "r21_source_creator_nested_triple_quote_syntax",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r21-builder-224a2d52998e47bba95baf4dda6b9b4f/control/source-construction-failure-1.txt",
+              "root_cause": "The source-construction controller embedded delegated_anchor and delegated_block as triple-single-quoted strings inside an outer triple-single-quoted runtime_fragment, producing a Python SyntaxError before execution.",
+              "remediation": "Retry source construction once after changing the outer runtime_fragment delimiter to triple double quotes and compiling the controller first. Preserve the successful live probe and all R18-R20 evidence; do not rerun the probe."
+            },
+            {
+              "at": "2026-08-31T02:16:03+08:00",
+              "category": "r21_activation_fragment_identity_cardinality_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r21-builder-224a2d52998e47bba95baf4dda6b9b4f/control/source-construction-failure-2.txt",
+              "root_cause": "The retry corrected the nested quoting and compiled, but its activation fragment transformation used replace_once for an identity token that appears in four exact activation-check paths. The cardinality guard rejected valid multiplicity after publishing only partial builder-owned source-staging files.",
+              "remediation": "Second consecutive failure: stop R21 and preserve the successful one-time probe plus partial builder evidence. A separately authorized fresh successor must use a new builder and a frozen explicit four-occurrence semantic/AST transformation; it must not rerun the R21 probe or mutate R18-R21."
+            },
+            {
+              "at": "2026-09-01T09:49:58+08:00",
+              "category": "r22_activation_inventory_inspection_python36_api_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r22-builder-584839eb2ff24243a97a4479fb9617df/control/activation-inventory-inspection-failure-1.txt",
+              "root_cause": "The host Python 3.6 AST API does not provide get_source_segment; the inventory helper used a post-3.6 convenience API.",
+              "remediation": "Use the sole bounded retry with Python-3.6-compatible line/token bounds and AST Constant-node enumeration, freeze exactly four semantic activation identity occurrences, then continue only if every cardinality and source-preservation assertion passes."
+            },
+            {
+              "at": "2026-09-01T09:57:05+08:00",
+              "category": "r22_sealed_r13_manifest_absolute_path_rejection",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r22-builder-584839eb2ff24243a97a4479fb9617df/control/freeze-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r22-builder-584839eb2ff24243a97a4479fb9617df/control/freeze-r22.py; /var/tmp/cyf-pwa-api-r19-static-verifier-r13-builder-20260830T135417+0800/SHA256SUMS.builder",
+              "root_cause": "The fresh R22 sealed-manifest verifier added a relative-only path-format assertion instead of preserving the predecessor-compatible rule that accepts absolute paths when normalized containment remains inside the exact sealed root.",
+              "remediation": "Second consecutive R22 failure: stop and seal R22 with no candidate. A separately authorized fresh non-overwriting successor must support absolute-under-root and relative-under-root manifest entries with normalized containment, then apply the frozen explicit four-occurrence AST/token activation identity rewrite; never rerun R21 probe or mutate R18-R22/R17-R13."
+            },
+            {
+              "at": "2026-09-01T10:56:23+08:00",
+              "category": "r23_python36_multiline_string_ast_location_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-05f8b70a850e460b93d0bddc2279d514/control/source-extraction-failure-1.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r13-builder-20260830T135417+0800/build-r13.py",
+              "root_cause": "The first R23 extractor assumed a Python 3.6 AST Str node start coordinate identifies the multiline STRING token. On this host the node reports the closing line and col_offset=-1; tokenize correctly reports the opening token on line 294.",
+              "remediation": "Retry once using an explicit tokenize assignment-state parser that binds NAME ACTIVATION_CHECK_TEXT, OP =, and one following STRING token, with AST literal-value equality and uniqueness assertions. Stop on any second R23 failure."
+            },
+            {
+              "at": "2026-09-01T10:58:14+08:00",
+              "category": "r23_retry_authorization_binding_stale_after_attribution",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-210cf855d8994bae886bd2cfca4f7b29/control/retry-authorization-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-210cf855d8994bae886bd2cfca4f7b29/control/prepare-r23.stderr; /var/tmp/cyf-pwa-api-r19-static-verifier-r23-builder-05f8b70a850e460b93d0bddc2279d514/control/source-extraction-failure-1.txt",
+              "root_cause": "The retry source fixed token extraction but did not update its authorization assertion from the R22 category/count=0 to the required first R23 failure category/count=1 established by the orchestrator.",
+              "remediation": "Second consecutive R23 failure: stop, seal both R23 builders, create no package/unit/activation/review candidate, and require separately authorized fresh R24 remediation bound to this matrix and the live attributed retry state."
+            },
+            {
+              "at": "2026-09-01T11:15:31+08:00",
+              "category": "r24_controller_command_safety_rejected_recursive_unlink",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-df78452d2d3846169ad3592f52500d59/control/controller-command-safety-failure-1.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-df78452d2d3846169ad3592f52500d59/SHA256SUMS.builder",
+              "root_cause": "The controller patch/compile wrapper bundled rm -f for a controller-owned pycache file. Host command safety rejected CreateProcess before source patching, builder construction, package publication, or final-path writes.",
+              "remediation": "Fetch and re-read the live ledger, then run one bounded retry in a new non-overwriting R24 builder explicitly bound to category=r24_controller_command_safety_rejected_recursive_unlink and consecutive_failures=1; omit cleanup commands and preserve all prior attempts."
+            },
+            {
+              "at": "2026-09-01T12:18:41+08:00",
+              "category": "r24_replacement_controller_anchor_cardinality_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-853c0fd7f9d1463094eba04f92883b5a/control/implementation-failure-1.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-853c0fd7f9d1463094eba04f92883b5a/SHA256SUMS.builder",
+              "root_cause": "The patch assumed two instances of the inherited required-category tuple, but its third occurrence is in a distinct generated-source construction context; the assertion stopped preparation before controller publication or any final-path write.",
+              "remediation": "Re-read the live ledger and bind the sole R24 retry to category=r24_replacement_controller_anchor_cardinality_mismatch and consecutive_failures=1. Use context-specific replacement for the outer authorization tuple and generated verify_authorization tuple, preserving the third outer sealed-spec tuple."
+            },
+            {
+              "at": "2026-09-01T12:23:42+08:00",
+              "category": "r24_post_rewrite_identity_locator_hardcoded_pre_identity",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-f16978f018be45918da9bc92b9c8f2e8/control/retry-failure-summary.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-f16978f018be45918da9bc92b9c8f2e8/control/prepare-r24.stderr; /var/tmp/cyf-pwa-api-r19-static-verifier-r24-builder-f16978f018be45918da9bc92b9c8f2e8/SHA256SUMS.builder",
+              "root_cause": "locate_activation_tokens computes all_identity with a fixed r13 identity even when rewrite_activation calls it after patching with reversed semantic values. The postcondition then compares the selected R24 tokens to an empty old-identity set and fails closed.",
+              "remediation": "Second consecutive R24 implementation failure: stop at blocked_root_cause, preserve both fresh R24 builders and all predecessors, and require a separately authorized R25 successor whose post-rewrite locator receives the expected identity as a parameter or derives it from semantic values; do not rerun R21 or mutate package/final paths."
+            },
+            {
+              "at": "2026-09-01T12:46:19+08:00",
+              "category": "r25_inherited_controller_digest_binding_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r25-builder-d74a4ce5fc5542d49799c7178c8732b4/control/construction-failure-1.json; builder manifest root 53f5cff3382964826369fdef3ebf9d478593386c42864c46c88fb139b7474b39",
+              "root_cause": "The fresh constructor bound the correct immutable R24 controller path but asserted SHA-256 08605e... instead of the measured immutable donor SHA-256 83a7d5537338c65858d3948a5418d8556522a75b58731ee25f18008f641a7b7f. The fail-closed check stopped before R25 controller/package/final-path publication.",
+              "remediation": "Reread the live ledger, preserve and do not edit this sealed first R25 builder, then use the sole retry in a new non-overwriting R25 builder explicitly bound to category=r25_inherited_controller_digest_binding_mismatch and consecutive_failures=1; correct only the donor digest binding before running the same parsed-role and identity-locator implementation."
+            },
+            {
+              "at": "2026-09-01T12:49:55+08:00",
+              "category": "r25_constructor_sealed_specs_anchor_cardinality_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r25-builder-f304a2b7760e449d9052af5433f64d1c/control/construction-failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r25-builder-f304a2b7760e449d9052af5433f64d1c/control/root-cause-matrix.json",
+              "root_cause": "insert_sealed_rows required source.count(\"sealed_specs=(\\\\n\")==1, but the inherited controller has two raw occurrences at that phase: the outer controller assignment and one inside the verify_auth generator-template STRING. This repeated the class of broad textual cardinality assumption that R25 was required to eliminate.",
+              "remediation": "Second consecutive R25 failure: stop and preserve both sealed R25 builders; create no package/unit/activation/review candidate. Only a separately authorized R26 may continue by locating the outer sealed_specs assignment with AST/token structure while excluding the verify_auth STRING span (or reinserting the patched template first), and by freezing outer/template/generated roles without raw textual marker counts."
+            },
+            {
+              "at": "2026-09-01T13:09:03+08:00",
+              "category": "r26_outer_sealed_specs_nonliteral_ast_value",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-fd43508cbd834b0c9c845527334af89a/control/construction-failure-1.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-fd43508cbd834b0c9c845527334af89a/SHA256SUMS.builder",
+              "root_cause": "The locator correctly isolated the sole outer module-level sealed_specs assignment with AST/token structure, but reused a tuple-value helper that calls ast.literal_eval. The outer tuple contains legitimate Name references (R23_RETRY/R22/R21/R18/R13), so evaluation failed before any controller/package/final-path publication.",
+              "remediation": "Reread the live ledger, preserve this sealed first R26 builder, and use the sole fresh non-overwriting R26 retry bound to category=r26_outer_sealed_specs_nonliteral_ast_value,count=1. Retain AST/token location and STRING-token exclusion; insert at the opening tuple token without evaluating the outer tuple, validate AST element-prefix structure, and keep literal evaluation only for the decoded verify_auth template."
+            },
+            {
+              "at": "2026-09-01T13:13:36+08:00",
+              "category": "r26_retry_ast_node_identity_reparse_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/control/in-memory-transformation-fixture-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/control/construction-failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/control/root-cause-matrix.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r26-builder-6654390d8ba848bdae07244c460b7bb6/SHA256SUMS.builder",
+              "root_cause": "The retry correctly avoided literal_eval for the outer Name-bearing sealed_specs tuple, but top_level_node_span reparsed the transformed source and then searched that new tree for the original AST node by object identity. Reparse creates different node objects, so the assertion failed before controller publication.",
+              "remediation": "Second consecutive R26 failure: stop, seal both R26 builders, create no package/unit/activation/review candidate, and require separately authorized fresh R27 bound to the committed R26 matrix. R27 must use same-tree indexes or stable AST coordinates for top-level spans while retaining nonliteral outer sealed_specs insertion, decoded template transformation, three representation-layer roles, parameterized four-span activation, and normalized manifest verification."
+            },
+            {
+              "at": "2026-09-01T13:24:54+08:00",
+              "category": "r27_resource_snapshot_df_option_conflict",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-fb25ba11049d4d5d956d069df29678d4/control/construction-failure-1.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-fb25ba11049d4d5d956d069df29678d4/SHA256SUMS.builder",
+              "root_cause": "The resource snapshot helper invoked df -Pi --output=iavail /var/tmp. GNU df rejects -i together with --output, so the fresh builder stopped before constructor/controller/package/final-path publication.",
+              "remediation": "Preserve this sealed first R27 builder; reread the live ledger; use the sole fresh non-overwriting R27 retry bound to category=r27_resource_snapshot_df_option_conflict,count=1 and call df --output=iavail without -i. Retain all R26 structural fixes and stop on any second R27 failure."
+            },
+            {
+              "at": "2026-09-01T13:33:07+08:00",
+              "category": "r27_retry_constructor_exact_text_block_anchor_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/control/source-generator-failure-2.txt; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/control/construction-failure-2.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/control/root-cause-matrix.json; /var/tmp/cyf-pwa-api-r19-static-verifier-r27-builder-8afc311c21bb42a4b849771a6bfc5b9d/SHA256SUMS.builder",
+              "root_cause": "The retry source generator searched for one exact multi-line prepend_assignment_rows implementation. The immutable R26 constructor differed from that whole-block string, so it raised prepend_block_missing before compile or O_EXCL publication of any R27 constructor/controller/package path.",
+              "remediation": "Second consecutive R27 failure: stop and preserve both sealed R27 builders plus R13-R26. Create no package/unit/activation/review candidate. Only a separately authorized fresh R28 may continue, using parsed AST/token spans or a complete newly authored constructor instead of whole-function exact-text anchors, while retaining all R26 structural requirements and never rerunning R21."
+            },
+            {
+              "at": "2026-09-01T13:45:25+08:00",
+              "category": "r28_preparation_inplace_pycompile_mutated_sealed_r18_package",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r28-builder-cc81626293034253/control/failure-1.json sha256=65d163147a86513013eaca1f328c067e3e2793823519609906260cc276aa74c6; builder_root=f233047439a325f25d55d334b4c2c23a3666feec1c25f36a3dabd0fcf6156b7c",
+              "root_cause": "The read-only inspection command used python3 -m py_compile without explicit external cfile destinations. Root therefore created __pycache__ next to sealed R18 scripts; regular donor bytes stayed exact, but package path-set and directory metadata were mutated.",
+              "remediation": "Reread the live ledger. Use the sole R28 retry in a fresh non-overwriting builder. Remove only the exact writer-created pyc files and remove each exact __pycache__ directory only if empty; record the irrecoverable directory ctime delta. Never compile a donor in place again: copy each measured donor file to fresh fixture/staging and compile only staged bytes with explicit external cfile paths. Continue only if R18 activation returns PASS and all regular donor SHA-256 values match the frozen manifest."
+            },
+            {
+              "at": "2026-09-01T13:48:47+08:00",
+              "category": "r28_retry_cleanup_digest_transcription_mismatch",
+              "evidence": "/var/tmp/cyf-pwa-api-r19-static-verifier-r28-builder-f206a1045bb5436e/control/failure-2.json sha256=6908e14dc73f23af93c05c2d788dd5c94e3ef7590042792104fa1a3fe9efecf2; root-cause-matrix sha256=c4b78a12f4a59ac9dc20790542acc6660bcbf514fdc37f67c3a6802b172e55ea",
+              "root_cause": "The retry cleanup source hard-coded guessed pyc digests rather than loading the already sealed first-failure JSON. The first sorted target expected a3ba2f... but the sealed/measured digest is 61d1c3..., so the assertion stopped before any unlink or rmdir.",
+              "remediation": "Second consecutive R28 failure: stop. Preserve both R28 builders and all R13-R27 evidence. Do not clean, construct, publish, start, or review R28. Only a separately authorized R29 may consume failure-1 JSON directly as the cleanup allowlist, prevalidate every exact candidate before any mutation, perform exact all-candidates-validated unlink plus empty-dir rmdir, record irrecoverable R18 directory ctime delta, prove R18 activation PASS, and then restart the fresh data-driven constructor. Never compile donor paths in place or rerun R21."
+            }
+          ]
+        },
+        "next_action": "Second consecutive R28 failure: stop. Preserve both R28 builders and all R13-R27 evidence. Do not clean, construct, publish, start, or review R28. Only a separately authorized R29 may consume failure-1 JSON directly as the cleanup allowlist, prevalidate every exact candidate before any mutation, perform exact all-candidates-validated unlink plus empty-dir rmdir, record irrecoverable R18 directory ctime delta, prove R18 activation PASS, and then restart the fresh data-driven constructor. Never compile donor paths in place or rerun R21."
+      },
+      "M3-IR": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "828ef2e2f35ce249246a8da059fd5b9cfcedd1d5",
+          "tree_sha": "f7e53c955734f9a166ac3480a34b0bec0b0bfa0f"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Authoritative sol_reviewer 01a03f8f-a8df-75a3-a108-ff76f9a95fe2 ACCEPT P0/P1/P2=0/0/0 on exact 828ef2e2/tree f7e53c95 with immutable addendum fc393688, fixture=N/A evidence f1c42469, XML 82/0/0/0, 50 executed tasks and BUILD SUCCESSFUL. M3-RG is now unblocked for one fresh release_guard; no deployment/activation is authorized."
+      },
+      "OPS-RESOURCE-TELEMETRY": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "d136cb7abf76a8f87b367a11d16165591d1e162c",
+          "tree_sha": "bc88c1b0239a698b9f0b50c3f02a64050e6b4261"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "R16 exact d136cb7a/tree bc88c1b0 accepted: fresh sol_reviewer ACCEPT 0/0/0 and fresh gpt_test_runner 58/58 PASS, Python 3.6 py_compile PASS, git diff --check PASS; verifier evidence /var/tmp/cyf-ops-resource-telemetry-r16-verifier-20260829T144208Z. First command-path failure remains attributed and preserved. Owner released; controller promotion may proceed without host probes or production action."
+      },
+      "FINAL-RELEASE-PREP-R1": {
+        "owner": {
+          "agent": "gpt-5.6-sol-final-release-prep-r7",
+          "profile": "critical_worker",
+          "mode": "writer"
+        },
+        "exact_sha_tree": {
+          "commit_sha": "5e2f1deb8e4c5e1ca4f01fad5df0d2c072655dfe",
+          "tree_sha": "ff766eb14038ef3c8a24ad556e690664365ddd43"
+        },
+        "current_gate": "remediating",
+        "blocker": {
+          "category": "source_edit_test_syntax_error",
+          "summary": "R7 direct recovery test file was created, but initial py_compile failed before any focused test executed.",
+          "consecutive_failures": 1,
+          "attempts": [
+            {
+              "at": "2026-09-01T13:15:11+08:00",
+              "category": "source_edit_heredoc_delimiter_collision",
+              "evidence": "functions exec session 40467: Python SyntaxError EOF in triple-quoted string; shell heredoc delimiter collided with embedded PY marker; no deploy/runtime/Gradle/npm/DB/Rabbit/systemd action.",
+              "root_cause": "The outer shell heredoc used delimiter PY, identical to an embedded heredoc terminator in the intended Bash source body, so the command was truncated and the remainder was interpreted by the shell.",
+              "remediation": "Retry once using a unique outer heredoc delimiter that cannot occur in the embedded script; verify deploy-pair bytes and bash -n immediately."
+            },
+            {
+              "at": "2026-09-01T13:22:53+08:00",
+              "category": "source_edit_command_policy_rejection",
+              "evidence": "Tool rejection: rm -f style commands are not permitted; deploy-pair.sh remained unchanged; no runtime/deploy action.",
+              "root_cause": "The retry command included cleanup using rm -f, which the command guard rejected before process creation.",
+              "remediation": "Stop at blocked_root_cause. A separately authorized successor must rewrite deploy-pair without prohibited cleanup commands and restart verification."
+            },
+            {
+              "at": "2026-09-01T13:26:51+08:00",
+              "category": "status_output_parse_mismatch",
+              "evidence": "authorize-remediation emitted remediation_authorized notification id 146c7ccc696d4c579daeb3d93697ab342a94c91307b4a3d28de1c22dd1939e95; subsequent json.load failed Extra data at line 1 column 2; no source write or runtime action occurred.",
+              "root_cause": "The follow-up assumed orchestrator status stdout was a bare JSON document, but the command emits human-readable framing/non-JSON content.",
+              "remediation": "Treat authorization as successful, record this first R6 command-observation failure, reread the sole TASKS.yaml ledger directly, and avoid parsing status as bare JSON."
+            },
+            {
+              "at": "2026-09-01T13:40:02+08:00",
+              "category": "source_edit_python_string_delimiter_collision",
+              "evidence": "Python SyntaxError at embedded COMMON Bash text because the outer triple-single-quoted source string collided with nested triple-single-quoted fixture strings; ops/release/tests/test_deploy_pair_recovery.py was not created. Follow-on sha256sum/py_compile reported missing file. No Gradle/npm/DB/Rabbit/Chromium/systemd/deploy/production action occurred.",
+              "root_cause": "The bounded Python descriptor-write command reused the same triple-single-quote delimiter for the outer generated file and inner embedded fixture constants, prematurely terminating the outer string.",
+              "remediation": "Stop R6 at blocked_root_cause after the second recorded R6 failure. Preserve all successful deploy-pair/final-release/component/schema/unit-test partial edits. A separately authorized successor must create the fault test with non-colliding quoting or apply_patch, then finish specs/H06 pins/offline verification."
+            },
+            {
+              "at": "2026-09-01T13:50:03+08:00",
+              "category": "source_edit_test_syntax_error",
+              "evidence": "ops/release/tests/test_deploy_pair_recovery.py:29 Python SyntaxError invalid syntax; the direct apply_patch succeeded; no Gradle/npm/DB/Rabbit/Chromium/systemd/deploy/production action occurred.",
+              "root_cause": "Four COMMON_LINES case-arm string entries accidentally retained an extraneous closing parenthesis outside the Python string literal.",
+              "remediation": "Reread the sole runtime ledger, remove only the four stray parentheses with one bounded patch, rerun py_compile and the new focused recovery tests once; a second R7 failure must stop."
+            }
+          ]
+        },
+        "next_action": "Reread the sole runtime ledger, remove only the four stray parentheses with one bounded patch, rerun py_compile and the new focused recovery tests once; a second R7 failure must stop."
+      },
+      "JVC-API": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "828ef2e2f35ce249246a8da059fd5b9cfcedd1d5",
+          "tree_sha": "f7e53c955734f9a166ac3480a34b0bec0b0bfa0f"
+        },
+        "current_gate": "blocked_root_cause",
+        "blocker": {
+          "category": "critical_worker_auth_unavailable",
+          "summary": "The one permitted retry failed with the same GPT-5.6 Sol auth_unavailable condition; stop blind retries.",
+          "consecutive_failures": 2,
+          "attempts": [
+            {
+              "at": "2026-09-01T12:17:38+08:00",
+              "category": "critical_worker_auth_unavailable",
+              "evidence": "Initial critical_worker run 01a05ae7-5200-7e81-ae7a-57a37a3df56f ended with HTTP 503 auth_unavailable for model gpt-5.6-sol; partial uncommitted API files remain in isolated worktree.",
+              "root_cause": "External Codex provider authentication/availability failure, not a source-code or test failure.",
+              "remediation": "Perform exactly one bounded resume of the same critical_worker; preserve the isolated worktree and partial files."
+            },
+            {
+              "at": "2026-09-01T12:17:57+08:00",
+              "category": "critical_worker_auth_unavailable",
+              "evidence": "resume_agent(01a05ae7-5200-7e81-ae7a-57a37a3df56f) on 2026-09-01 returned HTTP 503 auth_unavailable for providers=codex, model=gpt-5.6-sol.",
+              "root_cause": "Persistent external authentication outage on the mandated P0 critical_worker route.",
+              "remediation": "Keep JVC-API at blocked_root_cause. Resume only after explicit remediation authorization and Sol route recovery; do not reroute JWT/identity/security ownership to a weaker model."
+            }
+          ]
+        },
+        "next_action": "Keep JVC-API at blocked_root_cause. Resume only after explicit remediation authorization and Sol route recovery; do not reroute JWT/identity/security ownership to a weaker model."
+      },
+      "JVC-WEB": {
+        "owner": {
+          "agent": "01a05ae7-59de-74d2-ada6-90fc15dce3e8",
+          "profile": "balanced_worker",
+          "mode": "writer"
+        },
+        "exact_sha_tree": {
+          "commit_sha": "97b2c4e28e994444713cfa3f4b19c9ebbf52e66c",
+          "tree_sha": "94cc089766b6966cdb0e6bc779b605bdd3d38635"
+        },
+        "current_gate": "remediating",
+        "blocker": null,
+        "next_action": "Remediate independent review P1/P2 findings with behavioral tests; commit a new exact candidate; no deployment."
+      },
+      "JVC-INT": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "ad25c613eb516468e14e7c3bf94e9433d2ecd28b",
+          "tree_sha": "707e83888912b8314175ea264792305c90552a41"
+        },
+        "current_gate": "waiting_dependency",
+        "blocker": {
+          "category": "source_candidates_pending",
+          "summary": "Wait for independently owned JVC-API and JVC-WEB candidates and reviews.",
+          "consecutive_failures": 0,
+          "attempts": []
+        },
+        "next_action": "After API/Web candidates commit, run serialized verification and independent reviews, then pin SDD; production deployment/provider activation remain unauthorized."
+      }
+    }
+  }
+# END CYF_RUNTIME_LEDGER_JSON
 policy:
-  max_parallel_writers: 1
+  max_parallel_writers: 6
+  execution_mode: task_worktree_path_scoped_parallel_writers
+  max_parallel_read_only_support: 3
+  automatic_promotion_after_acceptance: true
+  per_task_user_confirmation_required: false
+  active_progress_reporting: true
+  reporting_mode: "task_terminal_or_exception_or_user_action"
+  runtime_ledger: "runtime_ledger_json; per-task fields are owner/exact_sha_tree/current_gate/blocker/next_action"
+  failure_retry_policy: "attribute before retry; second consecutive failure blocks; only matrix-bound authorize-remediation may resume"
+  notification_policy: "durable outbox + optional delivery hook on completion, abnormality, or required user action"
+  control_plane_writer: main_orchestrator
+  provider_health_fallback: "DeepSeek 503/auth_unavailable -> GPT route; one probe per bundle boundary"
+  evidence_key: "git_tree_sha + test_selector + db_fixture_digest"
+  heavy_verification_disk_soft_gate: "disabled_by_user_2026_08_28; telemetry_only"
   task_lease_hours: 8
   review_required: true
   integration_required: true
@@ -947,43 +1464,91 @@ tasks:
   - id: C01B
     title: "接入全部协作业务写路径的状态 + task event 原子写入"
     milestone: M2
-    status: draft
+    status: integrated
     priority: P0
     estimate_person_days: 3
     dependencies: [C01, B03, B04, B05, B06, B07, B08]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
+    planned_writer: "critical_worker"
+    planned_reviewer: "adversarial_reviewer"
+    planned_support: [explorer, fast_query, test_runner]
+    routing_status: integrated
+    owner: "Knuth (01a004a5-26af-7f20-98ec-10dd3a6d25c6) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Raman (01a005f8-d242-7cd1-8f8d-df42eb94e3fb) / sol_reviewer fallback / GPT-5.6 Sol High ACCEPT; integration: Shannon (01a00603-c551-7fc2-886b-7d46e8838823) / critical_worker"
+    claimed_at: "2026-08-15T17:09:14+08:00"
+    lease_until: "2026-08-16T01:09:14+08:00"
     branch: "feat/c01b-task-event-mutations"
-    worktree: null
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c01b-api"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
     forbidden_paths:
+      - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/**"
+      - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/api/**"
+      - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/handler/**"
+      - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/tool/**"
       - "deliverables/**"
     acceptance_summary: "状态机、claim/lease、聚合、诉求、成果、会话、legacy assign/report 等成功写入均在同事务产生唯一 task event"
-    progress: null
+    progress: "2026-08-15：C01B 已 integrated。R3 源 6cb8a805 / tree bbc727d1 经独立 module-wide 662 与隔离 MySQL 29/29 验证、Sol High fallback 终审 ACCEPT（0 P0/P1/P2），随后以 byte-exact no-ff merge 7a199341 合入 feat/m2-api-base-20260803；未推送、未合 develop、未部署或迁移。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "cfe4794200f6da459ee3360d584545c09567b760"
+        - "fa6f6efce6854b674b2d32b07d4af4505ba47cc0"
+        - "60b6b4669063d15b39de50f9b3f0bda40b7a54b9"
+        - "d26fa3f9b8231a20adaff9a855e6bb0272251933"
+        - "d74bf0b84a351fdce3e22dcf8273d5ec8ba6ad24"
+        - "46534bdbf3a7d3a3e0ab0bd9f7661190a63d2d34"
+        - "1af0dab9609a6b2553e6d263ee5f5ca0ff1787b5"
+        - "6cb8a8059abb00eb4adb67f5d56cbf5e6ed9b3d1"
+        - "7a199341df899c8cad912627c48db0a8bf0e408e"
+      tests:
+        - "C01B-1 targeted: 98 tests, 0 failures/errors/skips; Gradle lock + single worker + low memory"
+        - "C01B-2 targeted: 78 tests, 0 failures/errors/skips; Gradle lock + single worker + 384 MiB heap"
+        - "C01B-3 targeted: 89 tests, 0 failures/errors/skips; Gradle lock + single worker + low memory"
+        - "C01B-2 stage review: REJECT (P0 release compatibility, P1 byte-exact root lookup)"
+        - "C01B-2R targeted: 84 selected, 80 passed, 4 conditional MySQL skipped, 0 failures/errors"
+        - "C01B-2R DeepSeek Pro re-review: ACCEPT; 4 isolated MySQL tests remain final gate"
+        - "C01B-4 targeted: 114 tests, 0 failures/errors/skips; Gradle lock + single worker + 384 MiB heap"
+        - "C01B-5 selected: 354 total, 341 passed, 13 conditional MySQL skipped, 0 failures/errors"
+        - "Independent module-wide: 645 tests, 0 failures/errors, 33 conditional skipped"
+        - "Isolated MySQL 8.0.21: 29/29 passed, 0 skipped; 13 C01B + 16 schema initializer"
+        - "Evidence key: tree 1ebe2c38077bbd27097f1967b5b4fb8c92a3bda0 + selectors + fixture 0038eee0cf5a806a48471813a9273e04cc602dc780c4a37a8405568a1ab987c4"
+        - "Final review fallback (Sol High; DeepSeek auth unavailable): REJECT, 0 P0 / 5 P1"
+        - "C01B-R2 targeted: 176 tests, 0 failures/skips; all 5 P1 remediation scenarios covered"
+        - "R2 independent module-wide: 655 tests, 0 failures/errors, 33 conditional skips"
+        - "R2 isolated MySQL 8.0.21: 29/29 passed, 0 skipped; 13 C01B + 16 initializer"
+        - "R2 evidence key: tree 8b9504405a8613f97192b55aca8242bfe3369f9b + selectors + fixture 46bdfd992f6e25c795172f818ede67bed63198a77d2b4085a93dd8a782095c99"
+        - "R2 independent final review: REJECT, 0 P0 / 2 P1 (numeric final-ID collision rollback; ID-aware payload sensitivity)"
+        - "C01B-R3 remediation assigned to the single Writer; archive Long.MAX_VALUE overflow regression included"
+        - "C01B-R3 targeted: 141 tests, 0 failures/errors/skips; commit 6cb8a805, tree bbc727d13c07f2198b350289a9d13b49526f10a0"
+        - "R3 independent module-wide: 662 tests, 0 failures/errors, 33 conditional skips"
+        - "R3 isolated MySQL 8.0.21: 29/29 passed, 0 skipped; all schemas/datadir removed; production 3306 untouched"
+        - "R3 evidence key: tree bbc727d13c07f2198b350289a9d13b49526f10a0 + selectors + fixture a23ac41ff179f28b696f1b1a7a3668937d8d18058f773d79dd2e0d6c12bc61ac"
+        - "R3 verification report SHA-256: c5de8bbada96ea0446e1481989acfeeca354232a67023ee73f0edf9ec2ce470f"
+        - "DeepSeek V4 Pro/Flash auth unavailable; independent Sol High fallback final review: ACCEPT, 0 P0/P1/P2"
+        - "Integration merge 7a199341: parents/base/source exact, result tree byte-exact, path manifest dca0d7d1b9c1730463e125d5f071ffba23df6e2d77ebbf13ec4eb7c798e43554"
+      files:
+        - "docs/implementation/preflight/C01B.md"
+        - "docs/implementation/handoffs/C01B.md"
+      handoff: "docs/implementation/handoffs/C01B.md"
     blocked_reason: null
   - id: C01H
     title: "建立 B09 历史任务 event baseline 与幂等迁移"
     milestone: M2
-    status: draft
+    status: integrated
     priority: P0
     estimate_person_days: 2
     dependencies: [C01, C01B, B09]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
+    planned_writer: "critical_worker"
+    planned_reviewer: "adversarial_reviewer"
+    planned_support: [explorer, fast_query, test_runner]
+    routing_status: integrated
+    owner: "Turing (01a0061c-3b09-7c43-bc76-7c1e3d376bf3) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Godel the 2nd (01a00689-dbf3-77a0-bb0f-1004570db4e6) / sol_reviewer fallback / GPT-5.6 Sol High ACCEPT; integration: Shannon the 2nd (01a006ba-e100-7630-835e-e9fba37b2bc8)"
+    claimed_at: "2026-08-15T23:48:39+08:00"
+    lease_until: "2026-08-16T07:48:39+08:00"
     branch: "feat/c01h-historical-event-baseline"
-    worktree: null
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c01h-api"
     allowed_paths:
       - "api/agent/jia-agent-mapper/src/main/resources/db/**"
       - "api/agent/jia-agent-mapper/src/test/**"
@@ -996,26 +1561,51 @@ tasks:
       - "api/chat/**"
       - "deliverables/**"
     acceptance_summary: "B09 后受影响历史任务可幂等建立 baseline event/current_event_version，迁移顺序、计数、回滚和人工审批边界明确"
-    progress: null
+    progress: "2026-08-15：C01H 已 integrated。R2 source 1e374621/tree 1e0b7818 经独立 module-wide 586、initializer MySQL 11/11、完整与补充 probe 验证和 Sol High终审ACCEPT（0 P0/P1/P2），byte-exact no-ff merge 71e243df 合入累计API基线；未推送、未合develop、未部署或迁移。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "070a6a7e5577fb3b9bef11b8d47e9ad8506a5243"
+        - "424311694fa0bcca6ca724fa43706326724713a3"
+        - "edcdcb492cf032fd74b903a5310cc5db9f2ff769"
+        - "b7533643b64137baee00c0ac9024bb5fa9ec9640"
+        - "1e374621aa2bede1604bd89dad78d5ebb48fef1a"
+        - "71e243df4d06e787c3aa6cdbf0f3bc243a6f56a2"
+      tests:
+        - "Writer targeted: mapper 12 + initializer 44 passed; probe shell syntax PASS"
+        - "Independent module-wide: 585 tests, 0 failures/errors, 44 conditional skips"
+        - "Initializer MySQL C01H selectors: 11/11 PASS"
+        - "Historical baseline MySQL probe: NO-GO, manifest CTE missing task_version_snapshot; report SHA-256 444bc28f05dad48a02557ec570db6eca88a2037f4fd21f12bfe29d627fad62f0"
+        - "C01H-R1 Writer: targeted mapper 13/13 and complete isolated MySQL probe PASS; independent exact-tree rerun pending"
+        - "C01H-R1 independent verification: module-wide 586, initializer MySQL 11/11, complete/adversarial probe PASS; report SHA-256 cae646e3b1ef912aeaa2e34e1cfb5a9bcc5325973a1341774e9b808eab91f2eb"
+        - "C01H-R1 final review: REJECT, 1 P1 cross-task event-id preemption/noop; 1 P2 missing input domain tag; R2 assigned"
+        - "C01H-R2 Writer: targeted mapper 13/13 + full isolated MySQL probe PASS"
+        - "C01H-R2 independent: module-wide 586, initializer MySQL 11/11, official + adversarial probes PASS; report SHA-256 f9772eeffe60de18d13e695eedf8424195c78d818aa9f00a8a4a0b388174034c"
+        - "C01H-R2 Sol High fallback final review: ACCEPT, 0 P0/P1/P2"
+        - "Integration merge 71e243df: parents exact, result tree byte-exact 1e0b78183719d55402b1854f3942bc6eaebe5ca8, 13-path audit PASS"
+      files:
+        - "docs/implementation/preflight/C01H.md"
+        - "docs/implementation/handoffs/C01H.md"
+      handoff: "docs/implementation/handoffs/C01H.md"
     blocked_reason: null
   - id: C02
     title: "实现 TaskEventBroker 和 after-commit 唤醒"
     milestone: M2
-    status: draft
+    execution_bundle: "BE1"
+    bundle_sequence: 1
+    status: accepted
     priority: P1
     estimate_person_days: 2
     dependencies: [C01B, C01H]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c02-task-event-broker"
-    worktree: null
+    planned_writer: "critical_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [explorer, fast_query, gpt_test_runner]
+    routing_status: accepted
+    owner: "Shannon (01a00886-c3f6-7df0-9313-69f95269301a) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Godel the 2nd (01a0091e-d828-7e11-8f57-4f6775f5a9ad) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-16T11:04:13+08:00"
+    lease_until: "2026-08-16T19:04:13+08:00"
+    branch: "feat/c02-c03-task-event-core"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c02c03-api"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
@@ -1023,26 +1613,47 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "仅对已持久并提交的事件 after-commit 唤醒一次，回滚不发布"
-    progress: null
+    progress: "2026-08-16：C02-R3 final commit 1f6a27e/tree 50c87ab ACCEPT。Lazy 单 synchronization、rollback-safe savepoint A′、异步有界 wakeup、subscription lease cancellation 与 lifecycle race 已关闭；独立 mapper 95、agent service 524（44 conditional skips）、chat 105、隔离 MySQL 8.0.21 2/2 PASS；Sol High Review 0 P0/P1。C03 ACCEPT 后已随 BE1 merge 21a55db 一次性集成至累计 API 基线，result tree 81533ca。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "c61d9f513037ba078f84b0dca524d264e8a3aaad"
+        - "5caa3958f50a1df2259cd09496c07438aff92149"
+        - "4302719cd42a825696a73342a704942e3db30a42"
+        - "1f6a27ec044cd328aab162045fedd5b31c7b5e9d"
+      tests:
+        - "exact tree 50c87ab: mapper 95, agent service 524 with 44 conditional skips, chat 105; 0 failures/errors"
+        - "isolated MySQL 8.0.21 port 33309: concurrency + duplicate-ID rollback/no-gap 2/2 PASS; report SHA-256 05a452b9d10d3c02a5d6fb5edd17471ceba5e31b68480d8b066314e8e960ba8d"
+        - "Sol High independent final review: ACCEPT, 0 P0/P1"
+        - "teardown noise and git diff --check: PASS"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/AgentTaskEventAfterCommitPublisher.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/AgentTaskEventBroker.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskEventWriterImpl.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/AgentTaskEventAfterCommitPublisherTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/AgentTaskEventBrokerTest.java"
+        - "docs/implementation/preflight/C02.md"
+        - "docs/implementation/handoffs/C02.md"
+      handoff: "docs/implementation/handoffs/C02.md"
     blocked_reason: null
   - id: C03
     title: "实现历史 replay、连续性检查、resync"
     milestone: M2
-    status: draft
+    execution_bundle: "BE1"
+    bundle_sequence: 2
+    status: accepted
     priority: P1
     estimate_person_days: 3
     dependencies: [C02]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c03-task-event-replay"
-    worktree: null
+    planned_writer: "critical_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [explorer, fast_query, gpt_test_runner]
+    routing_status: accepted
+    owner: "Shannon (01a00886-c3f6-7df0-9313-69f95269301a) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Leibniz the 4th (01a009e5-c7fa-7572-9592-21fd919e3779) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-16T14:10:10+08:00"
+    lease_until: "2026-08-16T22:10:10+08:00"
+    branch: "feat/c02-c03-task-event-core"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c02c03-api"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
@@ -1050,26 +1661,50 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "复用 scene event 可靠模式"
-    progress: null
+    progress: "2026-08-16：C03-R5 final commit 4d404a3/tree 81533ca ACCEPT。Live-first、周期 durable high-water、bounded paging/continuity/resync、隔离 delivery 与 start/close lifecycle 已关闭；replay 41、DAO 4、独立综合 110、隔离 MySQL 3/3 PASS。BE1 已以 merge 21a55db byte-exact 集成累计 API 基线。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "fb1345a134e591005c30af904d5193a1f1dba02d"
+        - "233cd165a7e6ed9021727d7fefcae9595a4b45e6"
+        - "9ff5a9f49a62fecc030c39a1ba2a36315d07d640"
+        - "17f475eccda9b10e4181b7861ce4280efb45ad94"
+        - "042facdea7e030f453d58d4f20d0699a96b8d470"
+        - "4d404a3e2d9b89fe2e8baa8f9adf14c71992bf90"
+        - "BE1 cumulative merge: 21a55db7ece9170db3e9c6ee9874ffdb3a313e6f"
+      tests:
+        - "exact tree 81533ca: replay 41/41, DAO 4/4, independent combined C02/C03 110/110 PASS"
+        - "isolated MySQL 8.0.21 port 33309: concurrency/no-gap 3/3 PASS; fixture e02515dbcaa4a5b09217a430d5ae48e4533b4a70e9059bea5cb29ca02be08906"
+        - "Sol High independent final review: ACCEPT, 0 P0/P1, one non-production executor-injection P2"
+        - "BE1 merge parents/source/result tree and git diff --check: PASS"
+      files:
+        - "api/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskEventReplayService.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentTaskEventDao.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentTaskEventDaoImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskEventMapper.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskEventReplayServiceImpl.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskEventReplayServiceImplTest.java"
+        - "docs/implementation/handoffs/C03.md"
+      handoff: "docs/implementation/handoffs/C03.md"
     blocked_reason: null
   - id: C04
     title: "实现 workspace snapshot API"
     milestone: M2
-    status: draft
+    execution_bundle: "BE2"
+    bundle_sequence: 1
+    status: accepted
     priority: P1
     estimate_person_days: 2.5
     dependencies: [M2-00, B03, B04, B05, B06, B07, C01, C03]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
+    planned_writer: "critical_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [explorer, fast_query, gpt_test_runner]
+    routing_status: accepted
+    owner: "critical_worker / GPT-5.6 Sol High"
+    reviewer: "Raman the 2nd (01a024bf-3946-7940-9899-fdcc719fc7de) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-16T17:52:39+08:00"
+    lease_until: "2026-08-17T05:52:39+08:00"
     branch: "feat/c04-task-workspace"
-    worktree: null
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c04-api"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
@@ -1077,26 +1712,43 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "返回一致版本快照"
-    progress: null
+    progress: "2026-08-21：C04-R6 final commit f1cb375/tree 7a84a3c ACCEPT。显式 canonical Agent ACL、runtime 投影解耦、单一 RR 只读快照、连续/脱敏 timeline、精确版本字符串、Unicode/padding byte-exact 合同均闭合；独立 mapper 105、service 628（52 skip）、隔离 MySQL 8/8 PASS。已以 merge f8707b2 byte-exact 集成累计 API 基线。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "f1cb375d84c8b1c553c3c4c694db412499ee6923"
+        - "C04 cumulative merge: f8707b22bb840216d937f0ffe017aa3e2ed9c08e"
+      tests:
+        - "exact tree 7a84a3c: mapper 105/0, agent service 628/0 with 52 conditional skips"
+        - "isolated MySQL 8.0.21 port 33307: 8/8 PASS; fixture c3f841162ea109ec8cd77c9a920cd9d8a97eacf85b717d01f6183a3680ec4931"
+        - "Sol High independent final review: ACCEPT, 0 P0/P1; DataSource three-state context smoke retained as P2"
+        - "merge parents/source/result tree and git diff --check: PASS"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskWorkspaceController.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskWorkspaceServiceImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskWorkspaceMapper.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskWorkspaceDTO.java"
+        - "docs/implementation/handoffs/C04.md"
+      handoff: "docs/implementation/handoffs/C04.md"
     blocked_reason: null
   - id: C05
     title: "实现 task events SSE API"
     milestone: M2
-    status: draft
+    execution_bundle: "BE3"
+    bundle_sequence: 1
+    status: accepted
     priority: P1
     estimate_person_days: 2
     dependencies: [C03, C04]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c05-task-event-sse"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [explorer, fast_query, gpt_test_runner]
+    routing_status: accepted_sol_fallback
+    owner: "Knuth the 2nd (01a024df-8bbf-7341-a8fc-7e946025f2cf) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Leibniz the 2nd (01a0250e-0770-7713-96fd-31eb38e24813) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-21T23:08:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c05-c05f-task-event-edge"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c05-api"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
@@ -1104,26 +1756,47 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "支持 Last-Event-ID"
-    progress: null
+    progress: "2026-08-21：C05 final commit 361c3a3/tree 9f8a7fa ACCEPT。Spark 连续三次 clean-worktree stream disconnect 后切换 Sol High；BIGINT wire、partial-write EOF、内部 ACL transaction、matrix-path no-store 三轮独立 Review 闭合。当前树 module-wide PASS、focused 117/117、隔离 MySQL 8/8；C05F ACCEPT 后已以 merge e45ba39 byte-exact 集成累计 API 基线。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "fbbc773aba194044f356b1d328e97032a16c41de"
+        - "247515752be47ecffd7cff130da66f04b2b4c4ba"
+        - "361c3a3953a9f50ac8d7945fea8ccd48403d0099"
+        - "BE3 cumulative merge: e45ba398f116a210091c892abb9fbc8111dcc411"
+      tests:
+        - "exact tree 9f8a7fa: agent-service module-wide PASS; focused C05+C04 touched 117/117 PASS"
+        - "isolated MySQL workspace gate 8/8 PASS; fixture bd7c5b5e11f0e4c3224fa08490dba4ca192a2d373eeda66e749c0b2fae179c2a"
+        - "C03 frozen digest and C04 public API SHA match; architecture forbidden-dependency gate PASS"
+        - "Sol High independent final review: ACCEPT, 0 P0/P1/P2"
+        - "BE3 merge parents/source/result tree and git diff --check: PASS"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskEventStreamController.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskEventProjection.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskWorkspaceCacheControlFilter.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/AgentTaskEventAccessService.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskWorkspaceServiceImpl.java"
+        - "docs/implementation/handoffs/C05.md"
+      handoff: "docs/implementation/handoffs/C05.md"
     blocked_reason: null
   - id: C05F
     title: "实现 M2 后端 feature flag 与默认关闭策略"
     milestone: M2
-    status: draft
+    execution_bundle: "BE3"
+    bundle_sequence: 2
+    status: accepted
     priority: P1
     estimate_person_days: 0.5
     dependencies: [C05]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c05f-m2-backend-flag"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [fast_query, gpt_test_runner]
+    routing_status: accepted_sol_fallback
+    owner: "Knuth the 2nd (01a024df-8bbf-7341-a8fc-7e946025f2cf) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Leibniz the 2nd (01a0250e-0770-7713-96fd-31eb38e24813) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c05-c05f-task-event-edge"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c05-api"
     allowed_paths:
       - "api/agent/**"
       - "api/starter/**"
@@ -1131,26 +1804,48 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "M2 workspace/SSE 能力默认关闭，可按测试 scope 开启并明确关闭/回滚行为"
-    progress: null
+    progress: "2026-08-21：C05F commit de9332c/tree 8b80bf3 ACCEPT。workspace/events 共用 immutable exact-scope gate，默认关闭，启动非法配置 fail-fast，请求顺序与 disabled 零分配闭合；module-wide、focused/M1/chat 与独立 binder/wiring probes PASS。已以 merge e45ba39 byte-exact 集成累计 API 基线。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "de9332c33dee6ac3b003d6d0e43a400cd45e9f3e"
+        - "BE3 cumulative merge: e45ba398f116a210091c892abb9fbc8111dcc411"
+      tests:
+        - "exact tree 8b80bf3: agent-service module-wide PASS; focused C05F/C05/C04/M1 PASS"
+        - "chat regression 13/13 PASS; ApplicationContextRunner and independent binder/wiring probes PASS"
+        - "C03 frozen hashes, C04 public API SHA and C05 forbidden-dependency gate PASS"
+        - "Sol High independent final review: ACCEPT, 0 P0/P1/P2"
+        - "BE3 merge parents/source/result tree and git diff --check: PASS"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskEventsConfiguration.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskEventsGate.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskEventsProperties.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskWorkspaceController.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskEventStreamController.java"
+        - "api/starter/src/main/resources/application-dev.properties"
+        - "api/starter/src/main/resources/application-grey.properties"
+        - "api/starter/src/main/resources/application-prod.properties"
+        - "docs/implementation/handoffs/C05F.md"
+      handoff: "docs/implementation/handoffs/C05F.md"
     blocked_reason: null
   - id: C06
     title: "实现前端 useTaskEventStream"
     milestone: M2
-    status: draft
+    execution_bundle: "FE1"
+    bundle_sequence: 1
+    status: accepted
     priority: P1
     estimate_person_days: 3
     dependencies: [C04, C05, C05F]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c06-task-event-stream"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [explorer, fast_query, gpt_test_runner]
+    routing_status: spark_stream_unavailable_fallback_terra
+    owner: "Curie the 3rd (01a025a2-8f85-7010-9f08-74ecc4cb9b35) / balanced_worker / GPT-5.6 Terra Medium"
+    reviewer: "Leibniz the 7th (01a02647-dfc3-7380-92c2-1e67c0a3cce0) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c06-c07a-task-workspace-state"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c06c07a-web"
     allowed_paths:
       - "web/src/**"
       - "web/tests/**"
@@ -1158,26 +1853,52 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "重连、补发、gap 恢复"
-    progress: null
+    progress: "2026-08-21：C06 final e76b51e/tree e1e3530 ACCEPT。严格 decimal-string/BigInt reducer、snapshot/SSE generation fencing、bounded parser/retry/poll/timeout、Vue whole-state replacement 与 fail-safe cleanup 闭合；34 focused、531 full tests、build、targeted ESLint 和独立 Sol High Review PASS。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "949e958f7ad1bc7d3606a51de96dea7679261276"
+        - "fe842c2855e8e52e923f07f0f3c9bda6860da78f"
+        - "45e962475b7f9eadb36deee3190ec6da2bda2780"
+        - "b7d91e1361a37eb1bbe5ca74e508bb456ff5e05d"
+        - "4b6fd30877811611095f856095ce5c3724918a73"
+        - "bc8d4877c9dbb127f24d2a144b22b1feb9a0f6ca"
+        - "f33b315aaf8d805f5284437224ca53974d78b1ff"
+        - "8bafdb0c78e8dc5c9a5853addf63a85a85801ea2"
+        - "e76b51e90dcc6672270589d436674220427099ec"
+      tests:
+        - "final tree e1e3530: C06 focused 34/34 PASS"
+        - "final tree e1e3530: full npm test 531 PASS"
+        - "final tree e1e3530: npm run build PASS"
+        - "targeted production-composable ESLint PASS"
+        - "Sol High independent final review: ACCEPT, 0 P0/P1/P2"
+      files:
+        - "web/src/composables/juyiting/taskEventVersion.js"
+        - "web/src/composables/juyiting/taskWorkspaceReducer.js"
+        - "web/src/composables/juyiting/useTaskEventStream.js"
+        - "web/src/composables/juyiting/useTaskWorkspace.js"
+        - "web/tests/juyiting-task-workspace-state.test.js"
+        - "docs/implementation/handoffs/C06.md"
+      handoff: "docs/implementation/handoffs/C06.md"
     blocked_reason: null
   - id: C07A
     title: "接入 TaskWorkspace 数据、连接状态和恢复状态"
     milestone: M2
-    status: draft
+    execution_bundle: "FE1"
+    bundle_sequence: 2
+    status: accepted
     priority: P1
     estimate_person_days: 1.5
     dependencies: [C04, C06]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c07a-task-workspace-state"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [fast_query, gpt_test_runner]
+    routing_status: spark_stream_unavailable_fallback_terra
+    owner: "Curie the 3rd (01a025a2-8f85-7010-9f08-74ecc4cb9b35) / balanced_worker / GPT-5.6 Terra Medium"
+    reviewer: "Godel the 8th (01a0267c-3d8b-78d3-b40b-a4813e598fe6) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c06-c07a-task-workspace-state"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c06c07a-web"
     allowed_paths:
       - "web/src/**"
       - "web/tests/**"
@@ -1185,26 +1906,45 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "TaskWorkspace 只消费冻结 composable，完整展示 loading/live/reconnecting/degraded/resync/error 状态"
-    progress: null
+    progress: "2026-08-21：C07A final commit 3f92a694/tree 7c47db07 ACCEPT；TaskWorkspace wiring 保持显式 task/actor 输入与 M1 数据流不变，移除 coordinator/assignee/roster/last-selected fallback，并明确 assignment 前清 provenance、完成后不自动授权 workspace、conversation 仅 association-only。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "3f92a694c1393a1b63c1d5c9bf93ac27e5991550"
+      tests:
+        - "final tree 7c47db07: full npm test 541 PASS"
+        - "final tree 7c47db07: npm run build PASS"
+        - "targeted C07A tests PASS"
+        - "Reviewer Godel the 8th (01a0267c-3d8b-78d3-b40b-a4813e598fe6): ACCEPT, 0 P0/P1/P2"
+        - "Test runner Ohm the 8th (01a0267c-0860-70f0-9855-074c79d26a05)"
+        - "source parent 9c99a387e6334f8746b150184a0ab69338447594 and final tree 7c47db07 verified"
+      files:
+        - "web/src/components/world/JuyiHall.vue"
+        - "web/src/composables/juyiting/useTaskWorkspaceBinding.js"
+        - "web/tests/juyiting-selected-agent-card.test.js"
+        - "web/tests/juyiting-task-workspace-wiring.test.js"
+        - "docs/implementation/handoffs/C07A.md"
+      handoff: "docs/implementation/handoffs/C07A.md"
     blocked_reason: null
   - id: C07B
     title: "实现 TaskWorkspace/Timeline 纯展示 UI"
     milestone: M2
-    status: draft
+    execution_bundle: "FE2"
+    bundle_sequence: 1
+    status: accepted
     priority: P1
     estimate_person_days: 1.5
     dependencies: [C07A]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c07b-task-workspace-ui"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [explorer, gpt_test_runner]
+    routing_status: accepted_terra
+    owner: "Curie the 3rd (01a025a2-8f85-7010-9f08-74ecc4cb9b35) / balanced_worker / Terra Medium"
+    reviewer: "Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146) / sol_reviewer ACCEPT, 0 P0/P1/P2"
+    test_runner: "Ohm the 10th (01a026d8-04bb-7193-bab1-bde7d5f9e73b) / gpt_test_runner"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c07bcf-task-workspace-surface"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c07bcf-web"
     allowed_paths:
       - "web/src/components/juyiting/**"
       - "web/src/assets/juyiting/**"
@@ -1214,26 +1954,45 @@ tasks:
       - "web/src/composables/**"
       - "deliverables/**"
     acceptance_summary: "可看成员、工作项、诉求、成果和 Timeline，且不复制状态机或修改 API 语义"
-    progress: null
+    progress: "2026-08-21：C07B source cdc1b31/tree c4ac81e ACCEPT；TaskWorkspace/Timeline 纯展示 UI 完成。FE2 final HEAD 429d7f4/tree dfc6286。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "44f5c8e14dbacb26327a1447b4e83b5a5b9d8c46 (tree f775657...)"
+        - "fa54ea4797844d9f891b40ad96c7c5456e15eac4 (tree dab7ae5...)"
+        - "8cca8d02dbbedf021858c0ba3134ccae8fdd1a95 (tree ba7ed4f...)"
+        - "cdc1b31ba54404ccb9cc8a5dcb09538d936892ab"
+      tests:
+        - "C08W final merge HEAD 266583f2e59d5f1362ed4d653f58d02b78a0e6b5 / tree ba7ed4f167c43b3af8a7f07d34d626308496cd36; parents 6c2f514... + 8cca8d0...; byte-exact"
+        - "FE2 final tree dfc62861: isolated C07C 4/4 PASS; focused 61/61 PASS; full 561/561 PASS; build default+flag-on PASS; 94 targeted PASS"
+        - "runtime link/actor/state/error/retry PASS; requiredAbilities aligned with C04 JSON String; bounded parsing; accessible full label; components.d.ts converged"
+        - "final source reviewer Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146): ACCEPT, 0 P0/P1/P2"
+      files:
+        - "web/src/components/juyiting/TaskTimeline.vue"
+        - "web/src/components/juyiting/TaskWorkspacePanel.vue"
+        - "web/tests/juyiting-task-workspace-panel.test.js"
+        - "docs/implementation/handoffs/C07B.md"
+      handoff: "docs/implementation/handoffs/C07B.md"
     blocked_reason: null
   - id: C07C
     title: "完成 TaskWorkspace 响应式、可访问性和组件测试"
     milestone: M2
-    status: draft
+    execution_bundle: "FE2"
+    bundle_sequence: 2
+    status: accepted
     priority: P1
     estimate_person_days: 1
     dependencies: [C07A]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c07c-task-workspace-quality"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [fast_query, gpt_test_runner]
+    routing_status: accepted_terra
+    owner: "Curie the 3rd (01a025a2-8f85-7010-9f08-74ecc4cb9b35) / balanced_worker / Terra Medium"
+    reviewer: "Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146) / sol_reviewer ACCEPT, 0 P0/P1/P2"
+    test_runner: "Ohm the 10th (01a026d8-04bb-7193-bab1-bde7d5f9e73b) / gpt_test_runner"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c07bcf-task-workspace-surface"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c07bcf-web"
     allowed_paths:
       - "web/src/components/juyiting/**"
       - "web/src/components/world/JuyiHall.vue"
@@ -1244,26 +2003,49 @@ tasks:
       - "web/src/composables/**"
       - "deliverables/**"
     acceptance_summary: "响应式、键盘可用、长文本/空状态稳定，组件测试和生产 build 通过"
-    progress: null
+    progress: "2026-08-21：C07C source caa6cb8/tree c0e6821 ACCEPT；repair 429d7f4 后 FE2 final HEAD/tree dfc6286。nested-reference P1 与 test-global P2 已修复。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "44f5c8e14dbacb26327a1447b4e83b5a5b9d8c46 (tree f775657...)"
+        - "fa54ea4797844d9f891b40ad96c7c5456e15eac4 (tree dab7ae5...)"
+        - "8cca8d02dbbedf021858c0ba3134ccae8fdd1a95 (tree ba7ed4f...)"
+        - "caa6cb8b71806cc2ff29145b46ff7c126d74f535"
+        - "429d7f4964cfbb53ebfcd61b4253a9af6b456f8d"
+        - "FE2 final HEAD: 429d7f4 / tree dfc62861e4043d2b7a4706befda62602fec35959"
+      tests:
+        - "C08W final merge HEAD 266583f2e59d5f1362ed4d653f58d02b78a0e6b5 / tree ba7ed4f167c43b3af8a7f07d34d626308496cd36; parents 6c2f514... + 8cca8d0...; byte-exact"
+        - "isolated C07C: 4/4 PASS; focused FE2: 61/61 PASS; full Web: 561/561 PASS; build default+flag-on PASS; 94 targeted PASS"
+        - "runtime link/actor/state/error/retry PASS; requiredAbilities aligned with C04 JSON String; bounded parsing; accessible full label; components.d.ts converged"
+        - "flag-off production scan: agent/tasks=0 /workspace=0 / timers/markers=0"
+        - "final source reviewer Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146): ACCEPT, 0 P0/P1/P2; generated src/components.d.ts residual is non-blocking because explicit imports are used"
+      files:
+        - "web/src/components/juyiting/TaskTimeline.vue"
+        - "web/src/components/juyiting/TaskWorkspacePanel.vue"
+        - "web/tests/juyiting-task-workspace-a11y.test.js"
+        - "web/tests/juyiting-task-workspace-feature-flag.test.js"
+        - "docs/implementation/handoffs/C07C.md"
+      handoff: "docs/implementation/handoffs/C07C.md"
     blocked_reason: null
   - id: C07
     title: "TaskWorkspace/Timeline 前端集成门禁"
     milestone: M2
-    status: draft
+    execution_bundle: "FE2"
+    bundle_sequence: 3
+    status: accepted
     priority: P1
     estimate_person_days: 0.5
     dependencies: [C07B, C07C]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c07-task-workspace-integration"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [gpt_test_runner]
+    routing_status: accepted_terra
+    owner: "Curie the 3rd (01a025a2-8f85-7010-9f08-74ecc4cb9b35) / balanced_worker / Terra Medium"
+    reviewer: "Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146) / sol_reviewer ACCEPT, 0 P0/P1/P2"
+    test_runner: "Ohm the 10th (01a026d8-04bb-7193-bab1-bde7d5f9e73b) / gpt_test_runner"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c07bcf-task-workspace-surface"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c07bcf-web"
     allowed_paths:
       - "web/src/**"
       - "web/tests/**"
@@ -1271,51 +2053,100 @@ tasks:
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "C07A/B/C 集成通过，Juyi Hall 数据流、显式分派、测试和 build 无回归"
-    progress: null
+    progress: "2026-08-21：C07 source e96d4ba/tree 29b1706 ACCEPT；repair b72354c 后 FE2 final HEAD/tree dfc6286。Juyi Hall 集成、显式 actor/link/state/error/retry 回归通过。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "44f5c8e14dbacb26327a1447b4e83b5a5b9d8c46 (tree f775657...)"
+        - "fa54ea4797844d9f891b40ad96c7c5456e15eac4 (tree dab7ae5...)"
+        - "8cca8d02dbbedf021858c0ba3134ccae8fdd1a95 (tree ba7ed4f...)"
+        - "e96d4bada1cc539a98d67ac80d57797dcd108ad2"
+        - "b72354c8ef24a4d9c2e08434705e1b8051e7dfef"
+        - "FE2 final HEAD: 429d7f4 / tree dfc62861e4043d2b7a4706befda62602fec35959"
+      tests:
+        - "C08W final merge HEAD 266583f2e59d5f1362ed4d653f58d02b78a0e6b5 / tree ba7ed4f167c43b3af8a7f07d34d626308496cd36; parents 6c2f514... + 8cca8d0...; byte-exact"
+        - "focused FE2: 61/61 PASS; full Web: 561/561 PASS; build default+flag-on PASS; 94 targeted PASS"
+        - "runtime link/actor/state/error/retry PASS; requiredAbilities aligned with C04 JSON String; bounded parsing; accessible full label; components.d.ts converged"
+        - "final source reviewer Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146): ACCEPT, 0 P0/P1/P2"
+      files:
+        - "web/src/components/world/JuyiHall.vue"
+        - "web/src/composables/juyiting/useTaskWorkspaceView.js"
+        - "web/tests/juyiting-task-workspace-integration.test.js"
+        - "web/tests/juyiting-task-workspace-wiring.test.js"
+        - "docs/implementation/handoffs/C07.md"
+      handoff: "docs/implementation/handoffs/C07.md"
     blocked_reason: null
   - id: C07F
     title: "实现 M2 前端 feature flag 与安全降级入口"
     milestone: M2
-    status: draft
+    execution_bundle: "FE2"
+    bundle_sequence: 4
+    status: accepted
     priority: P1
     estimate_person_days: 0.5
     dependencies: [C05F, C07]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
-    branch: "feat/c07f-m2-frontend-flag"
-    worktree: null
+    planned_writer: "spark_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [fast_query, gpt_test_runner]
+    routing_status: accepted_terra
+    owner: "Curie the 3rd (01a025a2-8f85-7010-9f08-74ecc4cb9b35) / balanced_worker / Terra Medium"
+    reviewer: "Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146) / sol_reviewer ACCEPT, 0 P0/P1/P2"
+    test_runner: "Ohm the 10th (01a026d8-04bb-7193-bab1-bde7d5f9e73b) / gpt_test_runner"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
+    branch: "feat/c07bcf-task-workspace-surface"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-c07bcf-web"
     allowed_paths:
+      - "web/.env*"
       - "web/src/**"
       - "web/tests/**"
       - "docs/implementation/**"
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "前端 M2 默认关闭，可按测试 scope 开启；关闭时保持 M1 页面和旧流程可用"
-    progress: null
+    progress: "2026-08-21：C07F source 45ac8c2/tree 58148f2 ACCEPT；FE2 final HEAD 429d7f4/tree dfc6286。默认关闭 production scan 与 runtime/build 门禁通过。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "44f5c8e14dbacb26327a1447b4e83b5a5b9d8c46 (tree f775657...)"
+        - "fa54ea4797844d9f891b40ad96c7c5456e15eac4 (tree dab7ae5...)"
+        - "8cca8d02dbbedf021858c0ba3134ccae8fdd1a95 (tree ba7ed4f...)"
+        - "45ac8c2d96915a556a2c3560de97967d7905e128"
+        - "FE2 final HEAD: 429d7f4 / tree dfc62861e4043d2b7a4706befda62602fec35959"
+        - "FE2 cumulative merge: 6c2f514bc2a76c5040ee3f55c22f4543b0cbf7b8; parents 93c18d980... + 429d7f4...; result tree dfc62861e4043d2b7a4706befda62602fec35959"
+      tests:
+        - "C08W final merge HEAD 266583f2e59d5f1362ed4d653f58d02b78a0e6b5 / tree ba7ed4f167c43b3af8a7f07d34d626308496cd36; parents 6c2f514... + 8cca8d0...; byte-exact"
+        - "isolated C07C: 4/4 PASS; focused FE2: 61/61 PASS; full Web: 561/561 PASS; build default+flag-on PASS; 94 targeted PASS"
+        - "runtime link/actor/state/error/retry PASS; requiredAbilities aligned with C04 JSON String; bounded parsing; accessible full label; components.d.ts converged"
+        - "flag-off production scan: agent/tasks=0 /workspace=0 / timers/markers=0"
+        - "final source reviewer Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146): ACCEPT, 0 P0/P1/P2; generated src/components.d.ts residual is non-blocking because explicit imports are used"
+      files:
+        - "web/.env"
+        - "web/.env.production"
+        - "web/src/components/world/JuyiHall.vue"
+        - "web/src/composables/juyiting/taskWorkspaceFeature.js"
+        - "web/tests/juyiting-task-workspace-feature-flag.test.js"
+        - "web/tests/juyiting-task-workspace-integration.test.js"
+        - "web/tests/juyiting-task-workspace-wiring.test.js"
+        - "docs/implementation/handoffs/C07F.md"
+      handoff: "docs/implementation/handoffs/C07F.md"
     blocked_reason: null
   - id: C08A
     title: "M2 API 累计基线集成与回归门禁"
     milestone: M2
-    status: draft
+    execution_bundle: "AG"
+    execution_mode: "read_only_gate_unless_conflict"
+    status: accepted
     priority: P0
     estimate_person_days: 0.75
     dependencies: [C01, C01B, C01H, C02, C03, C04, C05, C05F]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
+    planned_writer: "critical_worker_if_conflict"
+    planned_executor: "gpt_test_runner"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [fast_query]
+    routing_status: accepted_read_only_gate
+    owner: "Ampere the 4th (01a025a2-d094-7a42-839f-493ada28dab5) / gpt_test_runner / GPT-5.4 Mini Medium"
+    reviewer: "Godel the 4th (01a025c0-e590-7fc0-937a-8952ba032204) / sol_reviewer / GPT-5.6 Sol High ACCEPT"
+    claimed_at: "2026-08-21T23:59:00+08:00"
+    lease_until: "2026-08-21T23:59:59+08:00"
     branch: "feat/m2-api-base-20260803"
     worktree: "/home/isp/wsps/cyf/.worktrees/m2-api-base"
     allowed_paths:
@@ -1325,24 +2156,40 @@ tasks:
       - "web/**"
       - "deliverables/**"
     acceptance_summary: "clean API 累计基线、迁移、原子事件、replay/SSE、ACL 和 feature flag 联合回归通过"
-    progress: null
+    progress: "2026-08-21：累计 API base e45ba39/tree 8b80bf3 通过 ancestry/tree/frozen-hash/profile/startup/schema/chat/隔离 MySQL 门禁；两次 broad Gradle aggregate 由宿主 OOM 终止且无断言失败，独立 Sol High Review 评定证据充分并 ACCEPT。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "e45ba398f116a210091c892abb9fbc8111dcc411"
+      tests:
+        - "startup/configuration/architecture: 22/22 PASS"
+        - "isolated MySQL 8.0.21 service gate: 40/40 PASS; fixture digest 57008fc95020b895a092ee36e6409749b84c5ac89f7a9b278a19fb2bc96d9d16"
+        - "event schema: 11/11 PASS; reused exact-tree C01B mutation MySQL: 29/29 PASS"
+        - "chat regression XML: 105 tests, 0 failures/errors/skips"
+        - "broad aggregate Gradle attempts: host OOM termination, no assertion failure; independent reviewer accepted split evidence"
+        - "Sol High independent C08A review: ACCEPT, 0 P0/P1, 2 non-blocking P2"
+      files:
+        - "docs/implementation/handoffs/C08A.md"
+      handoff: "docs/implementation/handoffs/C08A.md"
     blocked_reason: null
   - id: C08W
     title: "M2 Web 累计基线集成与回归门禁"
     milestone: M2
-    status: draft
+    execution_bundle: "WG"
+    execution_mode: "read_only_gate_unless_conflict"
+    status: accepted
     priority: P0
     estimate_person_days: 0.75
     dependencies: [C06, C07, C07F]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
+    planned_writer: "balanced_worker_if_conflict"
+    planned_executor: "gpt_test_runner"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [fast_query]
+    routing_status: accepted_read_only_gate
+    owner: "Volta the 10th (01a026e2-c5aa-7a70-809f-75549201eda7) / gpt_test_runner"
+    reviewer: "Raman the 10th (01a026e2-c6a0-7aa1-9520-c61fcc53b039) / sol_reviewer ACCEPT, 0 P0/P1/P2"
+    test_runner: "Ohm the 10th (01a026d8-04bb-7193-bab1-bde7d5f9e73b)"
+    claimed_at: "2026-08-22T00:00:00+08:00"
+    lease_until: "2026-08-22T23:59:59+08:00"
     branch: "feat/m2-web-base-20260803"
     worktree: "/home/isp/wsps/cyf/.worktrees/m2-web-base"
     allowed_paths:
@@ -1352,229 +2199,572 @@ tasks:
       - "api/**"
       - "deliverables/**"
     acceptance_summary: "clean Web 累计基线、reducer、工作台、flag、Juyi Hall 回归、test 和 build 通过"
-    progress: null
+    progress: "2026-08-22：C08W accepted。FE2/C08W follow-up commits 44f5c8e/tree f775657..., fa54ea4/tree dab7ae5..., 8cca8d0/tree ba7ed4f...；requiredAbilities 对齐 C04 JSON String、有界解析、accessible full label、components.d.ts 收敛。最终 merge HEAD 266583f2e59d5f1362ed4d653f58d02b78a0e6b5，tree ba7ed4f167c43b3af8a7f07d34d626308496cd36，parents 6c2f514... + 8cca8d0...，byte-exact。C08 仍保持 draft，不提前 GO。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "44f5c8e14dbacb26327a1447b4e83b5a5b9d8c46 (tree f775657...)"
+        - "fa54ea4797844d9f891b40ad96c7c5456e15eac4 (tree dab7ae5...)"
+        - "8cca8d02dbbedf021858c0ba3134ccae8fdd1a95 (tree ba7ed4f...)"
+        - "C08W cumulative final merge: 266583f2e59d5f1362ed4d653f58d02b78a0e6b5"
+        - "C08W cumulative final tree: ba7ed4f167c43b3af8a7f07d34d626308496cd36"
+        - "parents: 6c2f514... + 8cca8d0...; byte-exact"
+      tests:
+        - "exact final tree: full Web 561/561 PASS"
+        - "build: PASS with default flag and flag-on"
+        - "94 targeted PASS"
+        - "flag-off zero runtime paths: agent/tasks=0 /workspace=0 / timers/markers=0"
+        - "clean/diff-check PASS; git diff --check PASS"
+        - "source reviewer Godel the 10th (01a026d8-05e4-71d3-8c54-8bcf7c44c146): ACCEPT, 0 P0/P1/P2"
+        - "executor Volta the 10th (01a026e2-c5aa-7a70-809f-75549201eda7): ACCEPT"
+        - "gate reviewer Raman the 10th (01a026e2-c6a0-7aa1-9520-c61fcc53b039): ACCEPT, 0 P0/P1/P2"
+      files:
+        - "docs/implementation/handoffs/C08W.md"
+      handoff: "docs/implementation/handoffs/C08W.md"
     blocked_reason: null
   - id: C08
     title: "M2 部署候选最终 GO/NO-GO"
     milestone: M2
-    status: draft
+    execution_bundle: "RG"
+    status: accepted
     priority: P0
     estimate_person_days: 0.5
     dependencies: [C08A, C08W]
-    owner: null
-    reviewer: null
-    claimed_at: null
-    lease_until: null
+    planned_writer: "main_orchestrator"
+    planned_reviewer: "deepseek_pro_reviewer"
+    planned_support: [fast_query, gpt_test_runner, release_guard]
+    routing_status: accepted_release_gate_no_auto_deploy
+    owner: "main_orchestrator / GPT-5.6 Sol High"
+    reviewer: "Popper (01a029ba-f928-72a0-bc0f-219b2b8cbcb2) / DeepSeek V4 Pro High / final runner ACCEPT, 0 P0/P1/P2"
+    release_guard: "Locke (01a02a83-6e50-72b2-a3d5-054a9ad54b1b) / GPT-5.6 Sol High / GO, 0 P0/P1/P2"
+    claimed_at: "2026-08-22T00:00:00+08:00"
+    lease_until: "2026-08-22T23:59:59+08:00"
     branch: null
     worktree: "/home/isp/wsps/cyf"
     control_plane: true
     allowed_paths:
+      - "ops/release/**"
+      - "deliverables/releases/m2-c08-r6/**"
+      - "deliverables/m2-c08-20260822/**"
       - "docs/implementation/**"
     forbidden_paths:
       - "api/**"
       - "web/**"
-      - "deliverables/**"
-    acceptance_summary: "双仓 SHA、跨模块恢复 smoke、flag 灰度、部署/关闭/回滚证据齐全并由 release_guard 输出 GO/NO-GO"
-    progress: null
+      - "production DB/RabbitMQ"
+      - "dirty develop/master merge"
+    acceptance_summary: "M2 r6 冻结候选最终 GO；API deploy/rollback failure-path drill 与真实 Chromium/Nginx/backend combined smoke 全部通过。仅允许 C08 accepted，不授权自动生产部署、迁移或 dirty 分支合并。"
+    progress: "2026-08-22：既有旧生产 API 已保持 PID 3382302/start-ticks 2897184880/JAR 8b8f2e7d.../health UP。API drill v3 最终 runner ec88c51c...、MANIFEST 08123fec...、241/241 PASS，覆盖 normal deploy/rollback、failed deploy auto-restore、failed rollback candidate rescue 和 final rollback；schema transitions 6/8、launches 4/5。Combined smoke v3 最终 runner 4b394bf0...、MANIFEST 90bb93f1...、56/56 PASS，覆盖 Chromium/Nginx/backend、snapshot、SSE replay/resync/restart、旧 JWT 和 ACL。DeepSeek 对最终 runner 均 ACCEPT(0/0/0)，Sol High release_guard 最终 GO(0/0/0)。生产 DB/RabbitMQ/candidate deployment、dirty develop/master merge 均 NOT_PERFORMED。"
     evidence:
-      commits: []
-      tests: []
+      commits:
+        - "API HEAD e45ba398f116a210091c892abb9fbc8111dcc411 / tree 8b80bf35c418b2ca0cead919f805db5bb70166eb"
+        - "Web HEAD 266583f2e59d5f1362ed4d653f58d02b78a0e6b5 / tree ba7ed4f167c43b3af8a7f07d34d626308496cd36"
+      tests:
+        - "r6 verify-release PASS；API/Web artifact SHA c71b3ff2.../911a9479...；input/release-record/release-tool SHA 797767b9.../d39cfc7c.../0cd8f06f..."
+        - "isolated API deploy/rollback drill v3: MANIFEST 08123fec..., 241/241 PASS；normal deploy/rollback、deploy fault auto-restore old、rollback fault rescue candidate、final rollback PASS"
+        - "API drill schema transitions candidate/old=6/8；launches candidate/old=4/5；DB dump/restore/schema/rows/accounts/drift fail-closed PASS"
+        - "isolated combined smoke v3: MANIFEST 90bb93f1..., 56/56 PASS；Chromium/Nginx/candidate API/r6 health/snapshot/SSE replay-resync-restart/JWT/ACL PASS"
+        - "DeepSeek final API runner review ACCEPT 0/0/0；combined runner review ACCEPT 0/0/0"
+        - "GPT-5.6 Sol High release_guard final GO 0/0/0"
+        - "production old API PID/start-ticks/JAR/health unchanged；production DB/RabbitMQ/candidate deployment NOT_PERFORMED"
+      files:
+        - "ops/release/m2-c08-r6-input.json"
+        - "ops/release/tests/run-isolated-api-deploy-rollback-drill.sh"
+        - "ops/release/tests/run-isolated-combined-smoke.sh"
+        - "deliverables/releases/m2-c08-r6/**"
+        - "deliverables/m2-c08-20260822/isolated-api-deploy-rollback-drill-v3/**"
+        - "deliverables/m2-c08-20260822/isolated-combined-smoke-v3/**"
+        - "deliverables/m2-c08-20260822/records/r22-deepseek-attempt9-owner-status-review-accept.log"
+        - "deliverables/m2-c08-20260822/records/r23-deepseek-combined-final-manifest-review-accept.log"
+        - "deliverables/m2-c08-20260822/records/r24-release-guard-final-go.log"
+        - "deliverables/m2-c08-20260822/records/r25-c08-completion-audit.log"
+        - "docs/implementation/handoffs/C08.md"
+    handoff: "docs/implementation/handoffs/C08.md"
+    blocked_reason: null
+  - id: C09A
+    title: "M2 API develop successor 收敛"
+    milestone: M2
+    status: accepted
+    priority: P0
+    estimate_person_days: 1
+    dependencies: [C08]
+    owner: "main_orchestrator + Knuth the 3rd (01a02d40-9dec-7f02-abef-0e269b0cc9b0) / critical_worker"
+    reviewer: "Leibniz the 4th (01a02d5d-759b-7ff0-95bc-4b40d638b6c4) / sol_reviewer / ACCEPT 0/0/0"
+    claimed_at: "2026-08-23T10:01:53+08:00"
+    lease_until: null
+    branch: "codex/m2-api-successor-integration-20260823"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-api-successor-integration-20260823"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/common/**"
+      - "api/oauth/jia-oauth-resource/**"
+    forbidden_paths:
+      - "production DB/RabbitMQ"
+      - "deploy/release artifacts"
+      - "dirty api/develop"
+    acceptance_summary: "M2/agent-skill successor 保持 exact-scope；OAuth /resource 使用 byte-exact allowlisted JWT identity，scope absent 为空列表，malformed fail closed"
+    progress: "2026-08-23：原 C09A 3450055 ACCEPT 后，合入 agent-skill develop 形成 b99ec209（295 targeted PASS），再合入最新 OAuth develop 50dc8535。OAuth 初审与 Web 合并为 REJECT 0/4/0；critical_worker 在 successor 上关闭 identity trim 与 scope absent 两项 API P1，最终 HEAD cbd4716/tree 6863d7a，OAuth focused 10/10 PASS，sol_reviewer ACCEPT 0/0/0。未部署、未执行生产 DDL/DML/RabbitMQ。"
+    evidence:
+      commits:
+        - "original C09A accepted 345005519327f69a8272138482eb5751f46acbb3 / tree bb1541f8717814957091f7a4a60191568aeddba1"
+        - "agent-skill successor b99ec209641be2556cbcf8d893b2f06ea31314b5 / tree 77a4f31dec28a78f67e786d0fe8e450c9bfb5c6d"
+        - "OAuth merge ee1fca6af71d95d723766e27c169991684df9384 / tree 1ad4e6b4b396ee95b4a9a84f25abbc8ea7473ea1"
+        - "accepted HEAD cbd4716d39be55328a613e2ac2f50504b86b901a / tree 6863d7afaed194dc1f169e54da5f389c43be2820"
+      tests:
+        - "agent-skill successor: compileTestJava PASS; Agent 114 + Chat handler 33 + Agent focused 148 = 295 PASS"
+        - "OAuth fix focused: AuthenticationControllerTest 5 + AuthenticationResourceSecurityTest 5 = 10/10 PASS"
+        - "all Gradle commands held /tmp/cyf-gradle.lock"
+        - "final sol_reviewer: ACCEPT P0/P1/P2=0/0/0"
+        - "git diff --check PASS; worktree clean"
       files: []
-      handoff: null
+    handoff: "docs/implementation/handoffs/C09A.md"
+    blocked_reason: null
+  - id: C09W
+    title: "M2 Web develop successor 收敛与回归门禁"
+    milestone: M2
+    status: accepted
+    priority: P0
+    estimate_person_days: 1
+    dependencies: [C08]
+    owner: "main_orchestrator + Knuth the 3rd (01a02d40-9dec-7f02-abef-0e269b0cc9b0) / critical_worker"
+    reviewer: "Leibniz the 4th (01a02d5d-759b-7ff0-95bc-4b40d638b6c4) / sol_reviewer / ACCEPT 0/0/0"
+    claimed_at: "2026-08-23T09:40:00+08:00"
+    lease_until: null
+    branch: "codex/m2-web-successor-integration-20260823"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m2-web-successor-integration-20260823"
+    allowed_paths:
+      - "web/**"
+    forbidden_paths:
+      - "dirty web/develop"
+      - "production deployment"
+    acceptance_summary: "M2+E13+OAuth successor 无回退；transaction runtime-bound/one-time，callback fail-closed，受保护 SSE 缺 token 时 fetch=0"
+    progress: "2026-08-23：accepted M2+E13 successor cafcad8 合入最新 OAuth develop 78c8309，形成 74dc245；EOF mechanical follow-up ff7ecb6。OAuth 初审 REJECT 0/4/0 后，critical_worker 关闭 transaction 未绑定配置与 Chat/Hall SSE 匿名 fetch 两项 Web P1，最终 HEAD 549fbd0/tree 7e354b9。修复后 OAuth/SSE/Hall/PWA 32/32、M2 impacted 27/27、默认与 flag-on build PASS；sol_reviewer ACCEPT 0/0/0。未部署、未触碰 dirty web/develop。"
+    evidence:
+      commits:
+        - "accepted M2+E13 successor cafcad8837e4f2128d177d35b9aaf1fb3076066b / tree 5fa5291ec61afeb36376c0281d39228a4780ef97"
+        - "OAuth merge 74dc245013b2ae6ab3272b94e6951d294ddce0d6"
+        - "EOF follow-up ff7ecb6cb774870404e36989ab0991680944bddd / tree 55a3a25380fae761b5e38325fd9cf8b04d73b41f"
+        - "accepted HEAD 549fbd0fc8a3c40b5524a49e4f48d19369672cc8 / tree 7e354b98a231c862bea22c0e8f12240e11c7001f"
+      tests:
+        - "predecessor M2 90; E13 26/26 + machines 48/48; combined 116; PWA 5"
+        - "OAuth/SSE/Hall/PWA focused: 32/32 PASS"
+        - "M2 impacted collaboration-flow + hall-conversation: 27/27 PASS"
+        - "npm run build PASS; VITE_JUYITING_TASK_WORKSPACE_ENABLED=true npm run build PASS"
+        - "final sol_reviewer: ACCEPT P0/P1/P2=0/0/0"
+        - "git diff --check PASS; worktree clean"
+      files: []
+    handoff: "docs/implementation/handoffs/C09W.md"
+    blocked_reason: null
+  - id: C09
+    title: "M2 develop 合流总门禁与 root pin 准备"
+    milestone: M2
+    status: accepted
+    priority: P0
+    estimate_person_days: 0.5
+    dependencies: [C09A, C09W]
+    owner: "main_orchestrator"
+    reviewer: "Locke the 4th (01a02d64-072c-7e92-a100-1e1427c125f8) / release_guard / GO 0/0/2"
+    claimed_at: "2026-08-23T13:40:00+08:00"
+    lease_until: null
+    branch: "master (control-plane working tree only; no direct merge)"
+    worktree: "/home/isp/wsps/cyf"
+    allowed_paths:
+      - "docs/implementation/**"
+      - "synthetic temporary git index"
+    forbidden_paths:
+      - "production deployment/DB/RabbitMQ"
+      - "dirty develop/master direct merge"
+      - "real root index gitlink mutation"
+    acceptance_summary: "API/Web clean accepted successors 生成可复现 synthetic root pin；release_guard GO 前不 promotion，不自动推进 develop/master 或生产"
+    progress: "2026-08-23：最新 API cbd4716/tree 6863d7a 与 Web 549fbd0/tree 7e354b9 已 clean、包含当前 develop parents，并经 OAuth 修复后独立 Review ACCEPT 0/0/0。旧 synthetic tree ded803a 已因修复失效；基于 root HEAD 6d5dfce 两次独立临时 index 均生成 tree 57a7dfb，真实 root index gitlinks 未变化；release_guard GO 0/0/2，仅接受 preparation 并解锁 M3-00 离线安全门禁。"
+    evidence:
+      commits:
+        - "API candidate cbd4716d39be55328a613e2ac2f50504b86b901a / tree 6863d7afaed194dc1f169e54da5f389c43be2820"
+        - "Web candidate 549fbd0fc8a3c40b5524a49e4f48d19369672cc8 / tree 7e354b98a231c862bea22c0e8f12240e11c7001f"
+        - "root base 6d5dfced4a7cfcd0d489615a6605ac345947fcab / tree 255f07c29d236a8deae3d5453ef9e223aeb41970"
+        - "synthetic root-pin tree 57a7dfb8600d389ea422907f70a687f8c8862890 (generated twice; gitlinks API cbd4716 / Web 549fbd0)"
+      tests:
+        - "API OAuth fix 10/10 PASS; predecessor API evidence reused by exact blobs"
+        - "Web OAuth/PWA 32/32 + M2 impacted 27/27 + dual build PASS; predecessor M2/E13 evidence reused by exact blobs"
+        - "final successor sol_reviewer ACCEPT 0/0/0"
+        - "synthetic root-pin generated twice with identical tree; real index gitlinks unchanged"
+      files:
+        - "docs/implementation/handoffs/C09A.md"
+        - "docs/implementation/handoffs/C09W.md"
+        - "docs/implementation/handoffs/C09.md"
+    handoff: "docs/implementation/handoffs/C09.md"
+    blocked_reason: null
+  - id: M3-00
+    title: "M3 基线、离线 Rabbit 隔离与启动状态门禁"
+    milestone: M3
+    status: accepted
+    priority: P0
+    estimate_person_days: 1.5
+    dependencies: [C09]
+    owner: "Turing the 4th / critical_worker / 01a02d77-0e8b-79b1-9d51-14f7611b0a15"
+    reviewer: "Godel the 4th / sol_reviewer / 01a02d9a-d17f-72f1-ab19-85f12d0291d3"
+    claimed_at: "2026-08-23T15:11:38+08:00"
+    lease_until: null
+    branch: "codex/m3-00-rabbit-safety-gate"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-00-rabbit-safety-gate"
+    allowed_paths:
+      - "api/agent/**"
+      - "api/chat/**"
+      - "api/starter/**"
+      - "api/sms/jia-sms-mapper/src/test/resources/application-test.properties"
+      - "api/sms/jia-sms-service/src/test/resources/application-test.properties"
+      - "api/common/jia-common-test/**"
+      - "docs/implementation/**"
+    forbidden_paths:
+      - "production RabbitMQ/DB"
+      - "fixed localhost:5672 or remote Rabbit in tests"
+      - "production credentials/default vhost"
+    acceptance_summary: "flags 全关零副作用、非法组合 fail-fast、Testcontainers 随机隔离、生产 Rabbit fail-closed"
+    progress: "2026-08-23：M3-00 最终 HEAD 637becaf/tree fd90cb3a，worktree clean。实现 flags/state gate、独立 broker fail-closed、dispatch scope lazy conditional binding、四 profile all-false、三 test profile Rabbit 隔离与安全 Testcontainers helper。主线程/Reviewer final-tree Agent 55/55 PASS，Loader 8/8 PASS，opt-in smoke 默认 1 SKIP；sol_reviewer 最终 ACCEPT 0/0/0。显式 Docker smoke 因 registry mirror manifest unknown 与 Docker Hub 443 timeout 外部阻断，未创建容器/镜像；宿主 Rabbit PID 8150 与 5672/15672 listener 未变化。源码 accepted，但 Rabbit 基础设施启用前必须补真实容器 smoke。未部署、未 push、未访问生产 DB/Rabbit。"
+    evidence:
+      commits:
+        - "M3-00 implementation 7a1670699fec5afa5cd583e23dfdba1a2874b5e4"
+        - "credential/smoke fix 637998d9f83bcf73c8c6daf5ec443f044848c99b / superseded tree 84fdbef13d175ad8f56f81f85ec7cf301ec9772a"
+        - "accepted lazy-scope fix 637becaf62d34851b76e34201ea7f944716db141 / tree fd90cb3a3ae475924d8d20cba8dac9b64af58d82"
+      tests:
+        - "final-tree Agent safety/profile/task-events regression: 55/55 PASS"
+        - "RabbitMqServerLoader non-Docker: 8/8 PASS; opt-in smoke default 1 SKIPPED"
+        - "explicit Docker smoke external-blocked by registry mirror manifest unknown + Docker Hub 443 timeout; no container/image created"
+        - "host Rabbit PID 8150 and 5672/15672 listeners unchanged"
+        - "Godel the 4th sol_reviewer final ACCEPT 0/0/0; prior malformed/sparse disabled-dispatch binding P1 closed"
+      files:
+        - "docs/implementation/M3_EXECUTION_PLAN.md"
+        - "docs/implementation/handoffs/M3-00.md"
+      handoff: "docs/implementation/handoffs/M3-00.md"
     blocked_reason: null
   - id: D01
     title: "新增 outbox/inbox/delivery 表"
     milestone: M3
-    status: draft
+    status: accepted
     priority: P1
     estimate_person_days: 2
-    dependencies: [B01, A03]
-    owner: null
-    reviewer: null
-    claimed_at: null
+    dependencies: [M3-00, B01, A03]
+    owner: critical_worker
+    reviewer: sol_reviewer
+    claimed_at: "2026-08-23T18:39:06+08:00"
     lease_until: null
-    branch: "feat/d01"
-    worktree: null
+    branch: "codex/m3-d01-transport-schema"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d01-transport-schema"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "唯一键和发布索引完整"
-    progress: null
+    progress: "2026-08-23：GPT-only D01 accepted。权威表名 agent_command_delivery/agent_outbox_event/agent_consumer_inbox；scoped unique、MEDIUMBLOB+BINARY(32)、retry/lease/CAS/expiry/fence、confirm/return、WAITING_AGENT、replay审计已冻结。独立 conditional initializer 实现 flags-off 零访问、0/3 create+validate、3/3 validate-only、partial/drift fail-closed、无DML/backfill，并拒绝同/跨 schema 任意入向或出向 FK。最终 HEAD 5dcdbcd3/tree e623b9b1，sol_reviewer ACCEPT 0/0/0。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "18efce24227250782bd267d3ae404df578728f79"
+        - "2a27dbc61aabd75b9cffa19f6eb8e0d1010dc0c5"
+        - "5dcdbcd3dfe74b78d74164d577f7b9411b473221"
+      tests:
+        - "final GPT verification: D01 initializer + Rabbit safety + mapper schema contract BUILD SUCCESSFUL"
+        - "isolated MySQL 8.0.21 fresh/upgrade/repeat/partial/drift/FK matrix 9/9 PASS"
+        - "fixture digest 5a360c8065b4d402e46a4623e3de576b0bfe31c25f6a67a0e2da3ec5d6771802"
+        - "sol_reviewer cumulative ACCEPT P0/P1/P2=0/0/0"
+      files:
+        - "api/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql"
+        - "api/agent/jia-agent-mapper/src/main/resources/db/schema.sql"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandTransportSchemaInitializer.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandTransportSchemaConfiguration.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandOutboxEnabledCondition.java"
+      handoff: "docs/implementation/handoffs/D01.md"
     blocked_reason: null
   - id: D02
     title: "业务事务写 task event + delivery + outbox"
     milestone: M3
-    status: draft
+    status: accepted
     priority: P1
     estimate_person_days: 3
-    dependencies: [C01, D01]
-    owner: null
-    reviewer: null
-    claimed_at: null
+    dependencies: [C01B, D01]
+    owner: critical_worker
+    reviewer: sol_reviewer
+    claimed_at: "2026-08-23T20:52:26+08:00"
     lease_until: null
-    branch: "feat/d02"
-    worktree: null
+    branch: "codex/m3-d02-transactional-command"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d02-transactional-command"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
-    acceptance_summary: "故障注入验证原子性"
-    progress: null
+    acceptance_summary: "TASK_INVITE 的 domain mutation + task event + delivery + outbox 单 REQUIRED 事务；故障注入验证原子性"
+    progress: "2026-08-23：GPT-only D02 accepted。changed legacy assignment 是首批唯一 producer，每个 target 写一条 TASK_INVITE；真实 TASK_ASSIGNED eventId 作为 causationId，deterministic commandId 与 random message/outbox eventId 分离。canonical business/wire bytes+SHA-256、exact duplicate 幂等、conflict fail-closed、DB_SHADOW DEAD marker、flags-off 零访问及 enabled missing-writer fail-closed 已冻结。最终 HEAD 2645ed13/tree 624e3f3a；agent module 831/831、chat normalizer 17/17、隔离 MySQL 8.0.21 原子性矩阵 7/7；sol_reviewer ACCEPT 0/0/0。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "80a7237716bb8c7d94154dd9ad40a38077eb6770"
+        - "26e0772793f6b289d7333b57da65723d0c729422"
+        - "3ae48ab30851a536704033189ef998cd72266fac"
+        - "2645ed13bee449e2d3690b6c3f8df7673d5d9cb7"
+      tests:
+        - "D02 focused command/capture/transaction/assignment tests 85/85 PASS"
+        - "identity race real transaction 7/7 PASS"
+        - "agent jia-agent-service module-wide 831 tests, 0 failures/errors, 68 environment-gated skipped"
+        - "chat command wire + protocol normalizer 17/17 PASS"
+        - "isolated MySQL 8.0.21 atomicity/trigger/idempotency/concurrency matrix 7/7 PASS"
+        - "fixture digest 4dc19dc259958a9e7edd937b148c4a317855f0a1269a429562c113567b37d7a0"
+        - "sol_reviewer cumulative ACCEPT P0/P1/P2=0/0/0"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandCanonicalCodec.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandTransportWriterImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandTransportCapture.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentLegacyTaskCompatibilityService.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentCommandTransportMapper.java"
+        - "api/agent/jia-agent-service/src/test/scripts/run-d02-isolated-mysql.sh"
+        - "api/chat/jia-chat-service/src/test/java/cn/jia/chat/handler/AgentCommandWireNormalizerContractTest.java"
+      handoff: "docs/implementation/handoffs/D02.md"
     blocked_reason: null
   - id: D03
     title: "实现 Outbox Relay"
     milestone: M3
-    status: draft
+    status: accepted
     priority: P1
     estimate_person_days: 3
-    dependencies: [D02]
-    owner: null
-    reviewer: null
-    claimed_at: null
+    dependencies: [D02, D04]
+    owner: critical_worker
+    reviewer: sol_reviewer
+    claimed_at: "2026-08-23T23:59:00+08:00"
     lease_until: null
-    branch: "feat/d03"
-    worktree: null
+    branch: "codex/m3-d03-outbox-relay"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d03-outbox-relay"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "批量领取、confirm、退避重试"
-    progress: null
+    progress: "2026-08-24：GPT-only D03 accepted。Relay 采用 unlocked bounded discovery + delivery→outbox 短事务 claim、事务外 persistent/mandatory Rabbit publish、correlated confirm/return 后 fenced settle；四态 admission、exact scope、D04 canonical topology digest、13 个 typed AMQP headers、eventId/deliveryId/raw hash provenance 已冻结。corruption lane 可终态化 poison head；MAX/MAX-1 饱和 quarantine，MAX-2 双 claimant 仅一个 winner，败者零 mutation，ACK 可安全结算到 PUBLISHED/MAX。最终 HEAD 8d822996/tree 098bf948；独立 targeted 46/46、mapper 126/126、service 967（80 environment-gated skipped）、隔离 MySQL 8.0.21 19/19；sol_reviewer ACCEPT 0/0/0。真实隔离 Rabbit smoke 因无安全本地镜像而跳过，禁止宿主 5672 fallback；源码未部署、未开 flag。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "ca99539fea0522ff51782b52836fa7face10717c"
+        - "4778c0a11754b71967b2839ae0e636da84bcce47"
+        - "0d1cc75b0a1945f907b8323be7e20a944342832f"
+        - "6633be9eea7c9c67238bc80dbf4a59729545ca29"
+        - "8d82299670aa8ff19b17614c4cc4cf9e00c9755b"
+      tests:
+        - "D03 independent targeted relay/MAX-2 concurrency tests 46/46 PASS"
+        - "jia-agent-mapper module-wide 126/126 PASS"
+        - "jia-agent-service module-wide 967 tests, 0 failures/errors, 80 environment-gated skipped"
+        - "isolated MySQL 8.0.21 relay transaction/concurrency matrix 19/19 PASS"
+        - "fixture digest cd417f4d0bf3b718831c90c48da092ad9cae52ba3b63a6f00c4e2146478b79c6"
+        - "wire/D04/freeze digests matched; evidence manifest root 416258f9a10e918df26bc53416552a5657942cdf3749ab33041d779d11fec1e1"
+        - "sol_reviewer ACCEPT P0/P1/P2=0/0/0"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentOutboxRelayServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentOutboxRelayScheduler.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentConfirmedRabbitPublisherImpl.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/common/AgentCommandAmqpContract.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentOutboxRelayMapper.java"
+        - "api/agent/jia-agent-service/src/test/scripts/run-d03-isolated-mysql.sh"
+      handoff: "docs/implementation/handoffs/D03.md"
     blocked_reason: null
   - id: D04
     title: "配置 RabbitMQ exchange/queue/retry/DLQ"
     milestone: M3
-    status: draft
+    status: accepted
     priority: P1
     estimate_person_days: 2
-    dependencies: [D03]
-    owner: null
-    reviewer: null
-    claimed_at: null
+    dependencies: [M3-00]
+    owner: critical_worker
+    reviewer: sol_reviewer
+    claimed_at: "2026-08-23T23:55:00+08:00"
     lease_until: null
-    branch: "feat/d04"
-    worktree: null
+    branch: "codex/m3-d04-rabbit-topology"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d04-rabbit-topology"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "durable、manual ACK、TTL DLX"
-    progress: null
+    progress: "2026-08-23：ACCEPT。实现 canonical 2 exchanges/5 queues/8 bindings topology、dedicated non-default Rabbit infrastructure、显式 provision、有限 passive existence readiness 与 manual-ACK listener factory；独立验证 57/57 PASS，manifest SHA-256=96fd7d32aba468eacbcf96dfa5d441fd938f0d0cb5c6dafcdcae9e797fb4110e，宿主 Rabbit PID/listeners 前后不变；Sol Review ACCEPT 0/0/0。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "bbb4fcc061b565dbc23187939b499f414163fd26"
+        - "3ecc5605d0adbaf10e7723f98fb3ab5f9eea381e"
+      tests:
+        - "agent Rabbit topology/safety/config targeted: 57 tests, 0 failures/errors/skipped"
+        - "manifest exact 2/5/8 and SHA-256 96fd7d32aba468eacbcf96dfa5d441fd938f0d0cb5c6dafcdcae9e797fb4110e"
+        - "evidence closure: 18/18 SHA-256 PASS; root c0d94451950d29eeeec0a6b00b8d2948d1ca81ef548641dc567cc8debae930e5"
+        - "host Rabbit PID 8150 and listeners 5672/15672 unchanged; no broker/database connection"
+        - "independent review: ACCEPT, P0/P1/P2=0/0/0"
+      files:
+        - "api/agent/jia-agent-service/build.gradle"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitSafetyConfiguration.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyConfiguration.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyEnabledCondition.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyManifest.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyOperationException.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyProvisioner.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyReadiness.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentRabbitTopologyConfigurationTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentRabbitTopologyManifestTest.java"
+        - "api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentRabbitTopologyProvisionerTest.java"
+      handoff: "docs/implementation/handoffs/D04.md"
     blocked_reason: null
   - id: D05
     title: "实现 Rabbit command consumer + WS dispatcher"
     milestone: M3
-    status: draft
+    status: accepted
     priority: P1
     estimate_person_days: 3
-    dependencies: [D04, A04]
-    owner: null
-    reviewer: null
-    claimed_at: null
+    dependencies: [D03, D04, D07, A04]
+    owner: critical_worker
+    reviewer: sol_reviewer
+    claimed_at: "2026-08-24T12:20:10+08:00"
     lease_until: null
-    branch: "feat/d05"
-    worktree: null
+    branch: "codex/m3-d05-command-consumer"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d05-command-consumer"
     allowed_paths:
       - "api/chat/**"
       - "api/agent/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "正确目标 Agent 收到命令"
-    progress: null
+    progress: "2026-08-24：ACCEPT。实现 strict Rabbit decoder、D04 manual-ACK consumer、D07 Inbox claim/complete、exact ACL/presence、byte-exact WS dispatch、offline WAITING_AGENT、confirmed bounded transient parking及canonical D03 CLAIMED source race；五轮独立对抗审查关闭 publish-before-settle、orphan retry、ACL transient、poison validation/provenance与mapper projection风险。最终 HEAD f50b7062/tree 7688c6e6；targeted 126/126、starter compile PASS、module-wide 1251（1170 pass/81 skip/0 fail）、隔离MySQL13/13；sol_reviewer ACCEPT 0/0/0。生产dispatch仍false，未部署。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "6f39db6c84a7d098c77d8b764323250f976b5efa"
+        - "11701409df55d3395004d2d36e17848d0d449665"
+        - "7320919424febedc925f5cf8973ec63e06e4218a"
+        - "5d1b56992468b495c50f38ddaecafdd84c11767c"
+        - "f50b7062ef8abdc28ac892b227633d89f2853056"
+      tests:
+        - "targeted mapper/service/chat: 126 tests, 0 failures/errors/skipped"
+        - "starter compileJava: PASS, 10 warnings, 0 errors"
+        - "module-wide mapper/service/chat: 1251 tests, 1170 passed, 81 environment-gated skipped, 0 failures/errors"
+        - "isolated MySQL 8.0.21 AgentCommandInboxMySqlTest: 13/13 PASS; fixture 0d79dcb0965586bd34ff75307c8d2138953e6abc38438b3427f216b0c4e1e0c4"
+        - "final manifest SHA-256 cfb14b6b3ddbfdbeca6626eff94b679d1a7345b6328e3599ea82faf1a8fb3a55"
+        - "independent review: ACCEPT, P0/P1/P2=0/0/0; host Rabbit/MySQL listeners unchanged"
+      files:
+        - "api/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentRawCommandDispatcher.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentInboxSourceNotSettledException.java"
+        - "api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentRawCommandDispatchResult.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentCommandInboxMapper.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandRabbitConsumer.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandRabbitMessageDecoder.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/handler/AgentWebSocketHandler.java"
+      handoff: "docs/implementation/handoffs/D05.md"
     blocked_reason: null
   - id: D06
     title: "实现 WAITING_AGENT 和重连补投"
     milestone: M3
-    status: draft
+    status: accepted
     priority: P1
     estimate_person_days: 2.5
-    dependencies: [D05, A06]
-    owner: null
-    reviewer: null
-    claimed_at: null
+    dependencies: [D02, D03, D05, A06]
+    owner: critical_worker
+    reviewer: "Godel / sol_reviewer 01a03921-d3cc / R8 authoritative ACCEPT 0 P0, 0 P1, 0 P2"
+    claimed_at: "2026-08-24T18:59:43+08:00"
     lease_until: null
-    branch: "feat/d06"
-    worktree: null
+    branch: "codex/m3-d06-waiting-agent-reissue"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d06-waiting-agent-reissue"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
-    acceptance_summary: "离线不热循环、不丢命令"
-    progress: null
+    acceptance_summary: "R5 shape fences、R7 automatic nonterminal fence、R8 direct replay-parent terminal convergence 均关闭；exact-once 且无 M3"
+    progress: "2026-08-25 21:46：R8 API f02bb116/tree 3b5b519 + A06 test-only 4db50181/tree 527c02ce；fresh focused 43/43 PASS，A06 targeted 1/1 PASS；唯一权威 Review ACCEPT 0/0/0。R5/R7/R8 阻断全部关闭，D06 正式 accepted，D06 任务 Owner 释放；旧 D08 candidate 仍 stale，禁止复用。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "cc300379"
+        - "a3ffc20e"
+        - "738408fc"
+        - "02a77ee3"
+        - "f5371881"
+        - "c28fbf818f6fbfe76d9fdfeef41fe49d94b33325"
+        - "f100810a3690ab69be0d2f4a3c59e1b6be67149c / tree bb0ce1c2bd03079d820035334462da171796d2bd"
+        - "8845da5ce709cdc0c8bf35d8d6d8b03ecb52e617 / tree 872e7a1267ad6148bb67490c4e98c6783ee24ec4 (R6.1 rejected candidate)"
+        - "ca72fb0e397a18eac7fafc2997a78d5bc189621a / tree 9aaf9a5843c6703613c20bd30a5c59bb3a92d1ba (R7 rejected candidate)"
+        - "f02bb1167fd09825b02ec399c077699933b144a6 / tree 3b5b519c201047d71eaf212c61fb53deb743ffb3 (R8 accepted API)"
+        - "A06 test-only 4db501816abf642b1b2ed6607c5084d2697c6f93 / tree 527c02ce9e13385a92ccb1a63eb3066896a1f6f8"
+      tests:
+        - "Writer R2 focused 227 executions PASS; R3 expiry-fence 35/35 PASS; diff-check PASS"
+        - "Independent final focused 120/120 PASS"
+        - "Module-wide mapper 132/132 PASS; service 1057 total, 976 pass, 81 environment-gated skip, 0 failure/error"
+        - "R2 Review REJECT 0/1/0 expired SENT late ACK; R3 final Review ACCEPT 0/0/0"
+        - "R4 independent Review on same f100/tree bb0ce1c2: REJECT 0/2/1; R3 ACCEPT superseded by later broader A06 compatibility review"
+        - "R5 candidate f508f16f/tree 0657f4e independent Review: REJECT 0/2/0; settled ACK and ACK-before-SENT shape fences incomplete"
+        - "R6.1 exact-tree focused: 39/39 PASS, 0 failure/error/skip; XML under D06 jia-agent-service build/test-results/test; Gradle BUILD SUCCESSFUL, shutdown-hook file-contention stack classified as infrastructure exit noise"
+        - "R6.1 authoritative Review: REJECT 0/1/0; prior R5 blockers 2/2 closed, automatic nonterminal replay can strand executed command in RECEIVED"
+        - "R7 exact-tree focused 41/41 PASS + A06 targeted 1/1 PASS; authoritative Review REJECT 0/1/0 because direct replay-parent M1 terminal still required M3"
+        - "R8 exact-tree focused 43/43 PASS, 0 failure/error/skip; evidence key 9b65677fd008061a606de2de97a38c72c6914430ea918a66aa88c39fb0223acd"
+        - "R8 authoritative Review 01a03921-d3cc: ACCEPT 0/0/0; direct parent terminal converges, M2 nonterminal zero mutation, no M3; supplementary duplicate reviewer also ACCEPT"
+        - "Isolated MySQL attempt is non-acceptance evidence: 13 guarded skips reused, script exit 143; instance cleaned and host 3306 unchanged"
+      files:
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandAckServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandReissueServiceImpl.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandAutomaticReplayProvenance.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandInboxServiceImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentCommandRecoveryMapper.java"
+      handoff: "docs/implementation/handoffs/D06.md"
     blocked_reason: null
   - id: D07
     title: "实现服务端 Inbox 幂等"
     milestone: M3
-    status: draft
+    status: accepted
     priority: P1
     estimate_person_days: 2
-    dependencies: [D05, D01]
-    owner: null
-    reviewer: null
-    claimed_at: null
+    dependencies: [D01]
+    owner: critical_worker
+    reviewer: sol_reviewer
+    claimed_at: "2026-08-23T23:16:00+08:00"
     lease_until: null
-    branch: "feat/d07"
-    worktree: null
+    branch: "codex/m3-d07-inbox-idempotency"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d07-inbox-idempotency"
     allowed_paths:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
-    acceptance_summary: "重复消息无重复副作用"
-    progress: null
+    acceptance_summary: "exact message/hash prior result，claim/complete 与 delivery disposition 单 REQUIRED 事务，重复消息无重复副作用"
+    progress: "2026-08-23：GPT-only D07 accepted。固定 consumer agent-command-dispatch-v1；delivery→outbox→inbox 锁序、raw bytes自算SHA-256、来源证明、exact duplicate prior/in-flight、identity/hash conflict fail-closed、PROCESSING lease/reclaim/fence、expired/stale/terminal stored-shape、DB_SHADOW/flags zero-access 已冻结。claim 将 Inbox+delivery PUBLISHED→CONSUMED 原子提交，complete 将 fenced Inbox+delivery disposition 原子提交；SENT 不等于 RECEIVED。最终 HEAD 8be1e16f/tree 67dcc66b；service878、mapper119、隔离MySQL8.0.21 12/12；sol_reviewer ACCEPT 0/0/0。"
     evidence:
-      commits: []
-      tests: []
-      files: []
-      handoff: null
+      commits:
+        - "179ee7229c460865e4ad2862dec1c92626add224"
+        - "12ad669c4cc69d88acbdf725f770112dec33953b"
+        - "8be1e16fecce125218200e124dbe88b0a9569cc3"
+      tests:
+        - "final targeted inbox/safety/config/H2 67 PASS plus mapper contract 4/4 PASS"
+        - "agent jia-agent-service module-wide 878 tests, 0 failures/errors, 80 environment-gated skipped"
+        - "agent jia-agent-mapper module-wide 119/119 PASS"
+        - "isolated MySQL 8.0.21 provenance/claim/complete/rollback/duplicate/conflict/concurrency/fence/corruption matrix 12/12 PASS"
+        - "fixture digest a094374974105bc31c73774913960a7cc13a30afd92cf0fa7750b3fafebe5403"
+        - "sol_reviewer cumulative ACCEPT P0/P1/P2=0/0/0"
+      files:
+        - "api/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentCommandInboxService.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandInboxServiceImpl.java"
+        - "api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentCommandInboxMapper.java"
+        - "api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandInboxConfiguration.java"
+        - "api/agent/jia-agent-service/src/test/scripts/run-d07-isolated-mysql.sh"
+      handoff: "docs/implementation/handoffs/D07.md"
     blocked_reason: null
   - id: D08
     title: "替换 HallActionDispatcher 内存 mailbox"
@@ -1582,34 +2772,42 @@ tasks:
     status: draft
     priority: P1
     estimate_person_days: 2
-    dependencies: [D01, D03, D05, D06]
+    dependencies: [D01, D02, D03, D05, D06, D07]
+    planned_writer: "critical_worker"
+    planned_reviewer: "sol_reviewer"
+    planned_support: [gpt_test_runner]
+    routing_status: blocked_dependency
     owner: null
     reviewer: null
     claimed_at: null
     lease_until: null
-    branch: "feat/d08"
-    worktree: null
+    branch: "codex/m3-d08-durable-hall-mailbox"
+    worktree: "/home/isp/wsps/cyf/.worktrees/m3-d08-durable-hall-mailbox"
     allowed_paths:
       - "api/chat/**"
       - "api/agent/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "API 重启后 mailbox 仍在"
-    progress: null
+    progress: "2026-08-25 18:24：28ec48db/tree 3d6e455b 候选基于已被更新 R4 Review REJECT 的 D06 f100，且不包含 D06 新修复 f508f16f，因此 STALE_DEPENDENCY；Writer/Runner/Reviewer 已停止，等待 D06 新候选正式 ACCEPT 后再收敛。"
     evidence:
-      commits: []
-      tests: []
+      commits:
+        - "STALE only: 28ec48db7ca92b4642ef70216455b3dee4b08fb1 / tree 3d6e455b929ff5b081c17487bc65546bb70985f9; based on rejected D06 f100"
+      tests:
+        - "Cancelled before acceptance: candidate has stale D06 dependency; no test/review result may promote it"
       files: []
       handoff: null
-    blocked_reason: null
+    blocked_reason: "D06 f508f16f/0657f4e requires final-tree verification and independent ACCEPT; existing D08 28ec48db is stale and must not be promoted"
   - id: D09
     title: "Rabbit 运维指标、DLQ 查询和重放工具"
     milestone: M3
     status: draft
     priority: P1
     estimate_person_days: 2
-    dependencies: [D04]
+    dependencies: [D03, D04, D06, D07]
     owner: null
     reviewer: null
     claimed_at: null
@@ -1620,6 +2818,8 @@ tasks:
       - "api/agent/**"
       - "api/chat/**"
       - "docs/implementation/**"
+      - "api/starter/**"
+      - "api/common/jia-common-test/**"
     forbidden_paths:
       - "deliverables/**"
     acceptance_summary: "可查看、告警、人工重放"
@@ -2230,3 +3430,442 @@ tasks:
       files: []
       handoff: null
     blocked_reason: null
+
+  - id: H01
+    title: "冻结案卷阁阅读契约与120回内容包"
+    milestone: ARCHIVE-MVP
+    status: accepted
+    priority: P0
+    estimate_person_days: 4
+    dependencies: []
+    owner: "main-gpt-5.6-sol / main_orchestrator"
+    reviewer: "Raman (01a02830-2862-70d1-a8f5-9d17a03435ae) / sol_reviewer / GPT-5.6 Sol High R7 ACCEPT"
+    claimed_at: "2026-08-22T00:00:00+08:00"
+    lease_until: "2026-08-22T08:00:00+08:00"
+    branch: null
+    worktree: "/home/isp/wsps/cyf"
+    control_plane: true
+    allowed_paths:
+      - "specs/archive-pavilion-reader-mvp/**"
+      - "docs/implementation/TASKS.yaml"
+      - "docs/implementation/DECISIONS.md"
+      - "docs/implementation/handoffs/H01.md"
+    forbidden_paths:
+      - "api/**"
+      - "web/**"
+      - "deliverables/**"
+    acceptance_summary: "冻结独立 /archive/v1 契约、120回来源/hash、稳定ID、ACL/CAS/幂等、失败矩阵和分周期Review"
+    progress: "R7 independent Review ACCEPT，0 P0/P1/P2；8/8 focused tests、artifact byte equality、HTTP ETag grammar exhaustive probe及feature tree SHA均通过。H01已接受，可进入H02。"
+    evidence:
+      commits: []
+      tests:
+        - "H01 content unittest R7: PASS (8/8)"
+        - "manifest generator repeat + checked-in artifact byte comparison: PASS"
+        - "R7 independent Review: ACCEPT (0 P0/P1/P2)"
+        - "reviewed feature tree SHA: fcb90526bdaba643c2e925b06d9b7d439aa0015b"
+        - "source SHA-256: 1023e78e50df0b0902b47ea2f29f0901aa14e55b6d243bd1ce8cfa3202440b47"
+        - "manifest internal SHA-256: 1656be0bc81b6d73a9bd2bf44121df36ae5a5a66f39f34114bf108e91e317ccc"
+      files:
+        - "specs/archive-pavilion-reader-mvp/spec.md"
+        - "specs/archive-pavilion-reader-mvp/design.md"
+        - "specs/archive-pavilion-reader-mvp/tasks.md"
+        - "specs/archive-pavilion-reader-mvp/acceptance.md"
+        - "specs/archive-pavilion-reader-mvp/integration.yaml"
+        - "docs/implementation/DECISIONS.md"
+        - "specs/archive-pavilion-reader-mvp/content/source/shuihu_raw.txt"
+        - "specs/archive-pavilion-reader-mvp/content/ATTRIBUTION.md"
+        - "specs/archive-pavilion-reader-mvp/content/manifest.json"
+        - "specs/archive-pavilion-reader-mvp/content/golden-summary.json"
+        - "specs/archive-pavilion-reader-mvp/content/tools/generate_manifest.py"
+        - "specs/archive-pavilion-reader-mvp/content/tests/test_generate_manifest.py"
+      handoff: "docs/implementation/handoffs/H01.md"
+    blocked_reason: null
+  - id: H02
+    title: "实现案卷阁正文schema、确定性导入与catalog API"
+    milestone: ARCHIVE-MVP
+    status: accepted
+    priority: P0
+    estimate_person_days: 7
+    dependencies: [H01]
+    owner: "Shannon (01a02841-eea8-7ce1-a811-f9615118fc27) / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Raman the 2nd (01a02893-ae89-72a3-9d28-2d4af418dfd5) / sol_reviewer / R4 ACCEPT (0 P0/P1/P2)"
+    claimed_at: "2026-08-22T14:57:05+08:00"
+    lease_until: "2026-08-23T02:57:05+08:00"
+    branch: "codex/h02-archive-catalog"
+    worktree: "/home/isp/wsps/cyf/.worktrees/h02-archive-catalog-api"
+    allowed_paths:
+      - "api/chat/jia-chat-core/**"
+      - "api/chat/jia-chat-api/**"
+      - "api/chat/jia-chat-mapper/**"
+      - "api/chat/jia-chat-service/**"
+      - "api/chat/jia-chat-starter/**"
+      - "api/starter/src/main/resources/application-dev.properties"
+      - "api/starter/src/main/resources/application-prod.properties"
+      - "api/starter/src/main/resources/application-grey.properties"
+    forbidden_paths:
+      - "api/agent/**"
+      - "api/task/**"
+      - "web/**"
+      - "deliverables/**"
+    acceptance_summary: "120回不可变正文、稳定ID/hash、STAGING验证激活、catalog/chapter/ETag和默认关闭flag"
+    progress: "R4独立Review ACCEPT且独立MySQL 8.0.21 PASS；120/11/3666/3677、ACTIVE版、并发重入、篡改拒绝和schema drift证据闭合。H02已接受，放行H03。"
+    evidence:
+      commits:
+        - "69fe142efeb16f995c3c573a640792c8d88bbf67"
+        - "e346b88a8d5e1f861c7cd76dfeeb944152e76819"
+        - "fb854a128d61668954b606e5055ad03f19e86874"
+        - "3aa6cdf7c2baaae9bc503c8a3b0aff9821b88237"
+      tests:
+        - "Writer focused mapper/service archive + compatibility selectors: PASS (33 tests, MySQL guard skipped)"
+        - "R1 independent Review: REJECT (0 P0, 3 P1, 2 P2)"
+        - "Independent module-wide: FAIL in unrelated common:jia-common-test ClassCircularityError; mapper/service archive tests passed"
+        - "candidate tree R1: bdc848af72ebc89ed042f00e07949c5e7119dfb3"
+        - "R1 remediation focused: PASS (40 tests, 0 failures/errors, 1 guarded MySQL skip)"
+        - "R2 candidate tree: 55c0ad87fb7d9ccf9d8a585f7ea8dac52151c173"
+        - "R2 independent Review: REJECT (0 P0, 1 P1, 0 P2); isolated MySQL blocked by missing com.mysql.cj.jdbc.Driver"
+        - "R2 remediation focused: PASS (41 tests, 0 failures/errors, 1 guarded MySQL skip)"
+        - "R3 candidate tree: 25b464d504c5774628c22c8bfc286a9b148051a9"
+        - "R3 independent Review: ACCEPT (0 P0/P1/P2)"
+        - "R3 isolated MySQL 8.0.21: FAIL before import on archive_edition CHECK-clause charset-introducer normalization"
+        - "R3 remediation writer focused: PASS (45 tests, 0 failures/errors, 1 guard skip)"
+        - "Writer disposable MySQL 8.0.21 reproduction: PASS (1 integration test); independent rerun pending"
+        - "R4 candidate tree: 7f20390cf6b8ac10ffb2e64470e7b9700993ed1b"
+        - "R4 independent Review: ACCEPT (0 P0/P1/P2)"
+        - "R4 isolated MySQL 8.0.21: PASS (1/1, 0 skipped); 120 chapters, 11 preface, 3666 chapter paragraphs, 3677 total"
+        - "R4 focused verification: service 38/38, mapper 10/10"
+        - "Evidence key: tree 7f20390cf6b8ac10ffb2e64470e7b9700993ed1b + archive/compat selectors + fixture fe2c1cfd/1023e78e/a601e368"
+        - "manifest file SHA: fe2c1cfd551e29ebc70665b121bf3480d1941728d8fa0cd0fa3f68d584335210"
+      files:
+        - "api/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/**"
+        - "api/chat/jia-chat-api/src/main/java/cn/jia/chat/archive/**"
+        - "api/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/**"
+        - "api/chat/jia-chat-mapper/src/main/resources/db/archive-schema.sql"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/**"
+        - "api/chat/jia-chat-service/src/main/resources/archive/shuihuzhuan-zh-120-v1/**"
+      handoff: "docs/implementation/handoffs/H02.md"
+    blocked_reason: null
+  - id: H03
+    title: "实现阅读进度、书签和私人手札 exact-scope API"
+    milestone: ARCHIVE-MVP
+    status: accepted
+    priority: P0
+    estimate_person_days: 8
+    dependencies: [H02]
+    owner: "Shannon + Shannon the 2nd / critical_worker / GPT-5.6 Sol High"
+    reviewer: "Leibniz the 2nd (01a02908-2df3-7491-82ac-131909f00d67) / R7 ACCEPT (0 P0/P1/P2)"
+    claimed_at: "2026-08-22T17:36:33+08:00"
+    lease_until: "2026-08-23T05:36:33+08:00"
+    branch: "codex/h03-archive-reader-data"
+    worktree: "/home/isp/wsps/cyf/.worktrees/h02-archive-catalog-api"
+    allowed_paths:
+      - "api/chat/jia-chat-core/**"
+      - "api/chat/jia-chat-api/**"
+      - "api/chat/jia-chat-mapper/**"
+      - "api/chat/jia-chat-service/**"
+    forbidden_paths:
+      - "api/agent/**"
+      - "api/task/**"
+      - "web/**"
+      - "deliverables/**"
+    acceptance_summary: "进度/书签/手札按tenant+client+owner精确隔离，CAS、幂等、tombstone和冲突语义闭合"
+    progress: "R7 final commit b4158f7/tree 3839154 ACCEPT。非ASCII progress path在Controller/service幂等前统一404且MySQL零残留；fresh MySQL 8.0.21 exact 1/1、module-wide 161 tests（2 guarded skips）及独立Review 0 P0/P1/P2闭合。H03已接受，放行H04。"
+    evidence:
+      commits:
+        - "346df881eebcd3639beeee398770d0e2b9698863"
+        - "f9728df0059d8f1f1a02c0fb40d8875e69d770d7"
+        - "043b021337ec30576afd5027e90fd105045f7772"
+        - "07b6a31c2cc3ab5b567b5e9deabbe0fee729fd2b"
+        - "277af63566162fa477f384f7f331e11c53d85919"
+        - "c89cd359572ab2b33ada3f2317b0a3d240e502f9"
+        - "b4158f7fc61f4785a941a8b4012abebf3453b305"
+      tests:
+        - "Writer focused mapper/service H03: PASS (20 tests, 0 failures/errors, 1 guarded MySQL skip)"
+        - "candidate tree: 849d9beff1d6cc22f44c59f5a1c44646fc576bd5"
+        - "R1 independent Review: REJECT (0 P0, 2 P1, 3 P2)"
+        - "Independent focused: PASS 18/18; chat-service module-wide PASS 149 tests, 2 guarded MySQL skips"
+        - "Independent MySQL: not started; post-test free disk 48,578,560 bytes below 6.5GiB gate"
+        - "R1 remediation focused: PASS (25 tests, 0 failures/errors, 1 guarded MySQL skip)"
+        - "R2 candidate tree: bfbe3819eb5b703f8b233f64add31e5ffdf1e3fd"
+        - "R2 independent Review: REJECT (0 P0, 1 P1, 0 P2); missing/null primitive offsets accepted as zero"
+        - "R2 focused: PASS 25 tests, 1 guarded MySQL skip"
+        - "R2 MySQL fixture digest: 871c9fa684b6b1825886603df7c1603d1d21e8798eb8c5111d301009ceb4d0d3; execution blocked below disk gate"
+        - "R2 remediation exact regression + focused service: PASS (10 tests total across runs)"
+        - "R3 candidate tree: 2577e838420b5a026a374559bd8aa5a10ea400d9"
+        - "R3 isolated MySQL 8.0.21: FAIL before data scenarios on REGEXP operator rendered as REGEXP_LIKE"
+        - "R3 fixture digest: 871c9fa684b6b1825886603df7c1603d1d21e8798eb8c5111d301009ceb4d0d3; schema digest d9863df01731c2b402aa3247d82520a7affe39b46fb18c830939cb53df799ad3"
+        - "R3 metadata remediation focused: PASS (5 tests)"
+        - "R4 candidate tree: 253fe75f8b93d6e30fcec608377075ad1df6dd8f"
+        - "R4 isolated MySQL 8.0.21: FAIL before data scenarios; auto-created fk_archive_note_block index absent from expected catalog"
+        - "R5 candidate tree: 78360ccd33f89208ed68f23fa30fdb1511ef214d"
+        - "R5 Writer focused mapper/schema initializer: PASS 8/8; git diff --check PASS"
+        - "R5 isolated MySQL 8.0.21: FAIL before data scenarios; chk_archive_note_text_bytes expected OCTET_LENGTH(text), actual LENGTH(text)"
+        - "R5 fixture digest: 871c9fa684b6b1825886603df7c1603d1d21e8798eb8c5111d301009ceb4d0d3; schema digest 7e27f46576ef4569b658c94928ea97392f68a171d6e052ea1686740c860f4d60"
+        - "R6 candidate tree: eb4e8f7e165fa290d4650fc7dfe59cb22e73abdd"
+        - "R6 Writer focused schema initializer: PASS 8/8; token-aware LENGTH alias adversarial checks and diff-check PASS"
+        - "R6 isolated MySQL 8.0.21 port 33319 / DB cyf_h03_r6_main_20260822: PASS 1/1, 0 skipped; all exact-scope/replay/CAS/tombstone/completion/zero-write/concurrency/drift scenarios executed"
+        - "R6 evidence key: tree eb4e8f7e165fa290d4650fc7dfe59cb22e73abdd + exact MySQL selector + fixture 871c9fa684b6b1825886603df7c1603d1d21e8798eb8c5111d301009ceb4d0d3 + schema 7e27f46576ef4569b658c94928ea97392f68a171d6e052ea1686740c860f4d60"
+        - "R6 isolated server/database/datadir removed; production 3306/33060 and /home/isp/apps/mysql data untouched"
+        - "R6 independent full Review: REJECT (0 P0, 0 P1, 1 P2); non-ASCII progress editionId may hit ascii canonical_path and escape as 500 before authoritative 404"
+        - "R6 Review confirmed all R1-R5 findings closed; remediation requires controlled 404 + zero idempotency residue + no uncaught DataAccessException"
+        - "R7 candidate tree: 38391540b41fcf957c9cd28cfdf9d53a5a9ca16f"
+        - "R7 focused: Controller 6 + Service 10 PASS; guarded MySQL selector 1 skipped"
+        - "R7 isolated MySQL 8.0.21 port 33320 / DB cyf_h03_r7_main_20260822: PASS 1/1, 0 skipped; non-ASCII path 404 and archive_idempotency zero-residue included"
+        - "R7 evidence key: tree 38391540b41fcf957c9cd28cfdf9d53a5a9ca16f + exact MySQL selector + fixture 6ccd3fb5ac53c0b3cf4304f273630391e7e9865dd60f50ca288edd5b9a23a282 + schema 7e27f46576ef4569b658c94928ea97392f68a171d6e052ea1686740c860f4d60"
+        - "R7 chat-service module-wide: 161 tests, 0 failures/errors, 2 guarded MySQL skips"
+        - "R7 independent final Review: ACCEPT (0 P0/P1/P2); no extra H03 verification required for unchanged evidence key"
+        - "R7 isolated server/database/datadir removed; production 3306/33060 and /home/isp/apps/mysql data untouched"
+      files:
+        - "api/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/**"
+        - "api/chat/jia-chat-api/src/main/java/cn/jia/chat/archive/**"
+        - "api/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/**"
+        - "api/chat/jia-chat-mapper/src/main/resources/db/archive-reader-data-schema.sql"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/**"
+      handoff: "docs/implementation/handoffs/H03.md"
+    blocked_reason: null
+  - id: H04
+    title: "实现案卷阁完整阅读垂直切片"
+    milestone: ARCHIVE-MVP
+    status: accepted
+    priority: P1
+    estimate_person_days: 8
+    dependencies: [H03]
+    owner: "Curie the 2nd / balanced_worker / 01a029aa-9975-7bd3-89a8-7b57eea57cb1"
+    reviewer: "Leibniz the 5th / sol_reviewer / R7 ACCEPT"
+    claimed_at: "2026-08-22T21:30:55+08:00"
+    lease_until: null
+    branch: "codex/h04-archive-reader-web"
+    worktree: "/home/isp/wsps/cyf/.worktrees/h04-archive-reader-web"
+    allowed_paths:
+      - "web/src/components/juyiting/LibraryPanel.vue"
+      - "web/src/components/juyiting/archive/**"
+      - "web/src/composables/juyiting/useArchiveReader.js"
+      - "web/src/composables/useHttp.js"
+      - "web/tests/**archive*"
+      - "web/tests/juyiting-component-behavior.test.js"
+      - "web/tests/juyiting-collaboration-flow.test.js"
+    forbidden_paths:
+      - "api/**"
+      - "deliverables/**"
+    acceptance_summary: "双页签、目录/正文/继续阅读、进度、书签、手札、并发冲突、响应式与可访问性"
+    progress: "R7 final commit 59325d4/tree 2464cc3 ACCEPT。目录/引首/120回阅读、精确继续/滚动、进度串行CAS、书签、私人手札、幂等重放/冲突草稿、responsive/a11y及生命周期闭合；100项定向测试、五文件ESLint、SFC compile、最终production build与独立Review 0 P0/P1/P2通过。"
+    evidence:
+      commits:
+        - "3f08899ab2653782452043cc4ac16ddc609d2b23"
+        - "81338def4026c418c53dd492b6160d7307139d3c"
+        - "21c5f9f6f29c88c8010c5ec11e9e6f598662b305"
+        - "8fb138b370b4e7fe49dd01eacb44b22c78e01327"
+        - "b90e338e435e8b71d31dc400ac3322d8daca4d73"
+        - "56645f8e0b0b76038fcf445e9c6d796b1d9186a0"
+        - "59325d48bed5724de4a92b11e0b873f6d6443fd7"
+      tests:
+        - "R1 targeted archive/Juyi Hall: PASS 84"
+        - "R1 production build: PASS, built in 33.40s; pre-build free 6980227072 >= 6979321856"
+        - "R1 npm run lint: FAIL 183 errors; changed-file targeted lint 66 errors"
+        - "R1 independent Review: REJECT (0 P0, 5 P1, 4 P2)"
+        - "R2 Writer targeted: PASS 92; four-file targeted ESLint/SFC compile/diff-check PASS"
+        - "R2 verification attempt: build/test pending disk gate at 6846234624 bytes; no checks run"
+        - "R2 independent Review: REJECT (0 P0, 3 P1, 1 P2)"
+        - "R3 Writer targeted: PASS 94; five-file ESLint/SFC compile/diff-check PASS"
+        - "R3 independent archive 16 + Juyi Hall behavior/collaboration 78 PASS; five-file ESLint PASS"
+        - "R3 independent Review: REJECT (0 P0, 1 P1, 1 P2)"
+        - "R3 build pending disk gate: 6939025408 < 6979321856 bytes"
+        - "R4 independent targeted: PASS 96; five-file ESLint/SFC/diff-check PASS"
+        - "R4 independent Review: REJECT (0 P0, 1 P1, 1 P2)"
+        - "R4 build pending disk gate: 6911455232 < 6979321856 bytes"
+        - "R5 independent targeted: PASS 99; five-file ESLint/SFC/diff-check PASS; Review REJECT (0 P0, 1 P1, 0 P2)"
+        - "R6 independent targeted: PASS 99; five-file ESLint/SFC/diff-check PASS; Review REJECT (0 P0, 1 P1, 0 P2)"
+        - "R7 independent targeted: PASS 100; five-file ESLint, two-SFC compile and diff-check PASS"
+        - "R7 independent final Review: ACCEPT (0 P0/P1/P2)"
+        - "R7 production build: PASS in 34.77s; pre-build free 7069048832 >= 6979321856; final tree clean"
+      files:
+        - "web/src/components/juyiting/LibraryPanel.vue"
+        - "web/src/components/juyiting/archive/ArchiveReader.vue"
+        - "web/src/composables/juyiting/useArchiveReader.js"
+        - "web/tests/archive-reader.test.js"
+        - "web/tests/juyiting-component-behavior.test.js"
+      handoff: "docs/implementation/handoffs/H04.md"
+    blocked_reason: null
+  - id: H05A
+    title: "实现选文问案卷书吏后端与持久恢复"
+    milestone: ARCHIVE-MVP
+    status: accepted
+    priority: P0
+    estimate_person_days: 6
+    dependencies: [H04]
+    owner: "Knuth the 5th + Turing the 5th / critical_worker"
+    reviewer: "Raman the 5th / sol_reviewer / 01a02d0e-18b0-78c3-811e-0a50fe48d8d9"
+    claimed_at: "2026-08-22T23:59:00+08:00"
+    lease_until: "2026-08-23T11:59:00+08:00"
+    branch: "codex/h05a-archive-question-api"
+    worktree: "/home/isp/wsps/cyf/.worktrees/h05a-archive-question-api"
+    allowed_paths:
+      - "api/chat/**"
+    forbidden_paths:
+      - "api/agent/**"
+      - "api/task/**"
+      - "web/**"
+      - "deliverables/**"
+    acceptance_summary: "服务端校验选文、案卷书吏fallback、问题幂等/outbox/fencing/SSE replay；不得冒充吴用或接受目标Agent"
+    progress: "2026-08-23 R11 exact tree 完成 final service/mapper、隔离 MySQL 8.0.21 和独立 Review；Raman the 5th ACCEPT，0 P0/P1/P2。R11 用 ASCII-only UTF-8 CHECK 关闭 MySQL 8.0.21 中文 literal metadata 双重编码，同时保持 R9 transaction/SSE/worker blob 不变。"
+    evidence:
+      commits:
+        - "R9 candidate: 50d2b9961dd3b6398a0b0c2e12cba8a01d06c653 / tree 13b7e1f91d38e21d22b2a3f6b02f90175aba03e4"
+        - "R10 superseded test-only attempt: fd65d9a9fcbe96df6c2dc7473d7d96e778b3db50"
+        - "R11 accepted: 8298b027c9c48ca42b0e0c819106b0d5e20008f2 / tree 226cd7985a141a06e00f0c9d8441fb83b085c39b"
+      tests:
+        - "R9 lightweight Java 21/manual suites: PASS 100/100"
+        - "R11 :chat:jia-chat-service:test: PASS 257 tests, 0 failure/error, 3 guarded MySQL skips"
+        - "R11 :chat:jia-chat-mapper:test: PASS 20/20"
+        - "R11 isolated MySQL 8.0.21 ArchiveQuestionMySqlIntegrationTest: PASS 1/1, 0 skipped; port 33321; database cyf_h05a_final_r11_20260823"
+        - "R11 schema digest bdcea93c3187e69552fb9576d96b9a79c3ed36881f392cba7f261d60353e4c06; fixture digest aa3ef26a424e07d91c00aba35a4ff3cd3a853c57e45aed087481c8d7cc465425"
+        - "Raman the 5th independent final Review: ACCEPT, 0 P0 / 0 P1 / 0 P2"
+        - "isolated server/database/datadir removed; production PID 2958797 and ports 3306/33060 unchanged"
+      files:
+        - "api/chat/jia-chat-mapper/src/main/resources/db/archive-question-schema.sql"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/http/ArchiveQuestionController.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/service/ArchiveQuestionServiceImpl.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/service/ArchiveQuestionWorker.java"
+        - "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/service/ArchiveQuestionSseService.java"
+        - "docs/implementation/handoffs/H05A.md"
+      handoff: "docs/implementation/handoffs/H05A.md"
+    blocked_reason: null
+  - id: H05W
+    title: "实现选文问案卷书吏前端与断线恢复"
+    milestone: ARCHIVE-MVP
+    status: accepted
+    priority: P1
+    estimate_person_days: 3
+    dependencies: [H05A]
+    owner: "Faraday the 5th + Curie the 6th / balanced_worker OpenAI fallback / 01a02e24-426d-77c3-8dc1-9581512a449c"
+    reviewer: "Godel the 6th R2 REJECT; Leibniz the 6th / sol_reviewer / 01a02e2d-7a8a-7c80-95b6-6f2bc812291b / R3 ACCEPT (0 P0/P1/P2)"
+    claimed_at: "2026-08-23T14:58:36+08:00"
+    lease_until: "2026-08-24T02:58:36+08:00"
+    branch: "codex/h05w-archive-question-web"
+    worktree: "/home/isp/wsps/cyf/.worktrees/h05w-archive-question-web"
+    allowed_paths:
+      - "web/src/components/juyiting/archive/**"
+      - "web/src/composables/juyiting/useArchiveReader.js"
+      - "web/tests/**archive*"
+    forbidden_paths:
+      - "api/**"
+      - "web/src/components/world/JuyiHall.vue"
+      - "deliverables/**"
+    acceptance_summary: "decimal-string sequence、live/replay/resync reducer、reader/timer清理；不得读取selectedAgent"
+    progress: "R3 final commit 0b3d930/tree 2ba166c ACCEPT. Stale same-question stream callbacks, duplicate SSE fields, retry-409 UX, split CRLF parsing and exact 16-segment/8192-byte boundaries are closed; independent 116-test/lint/build verification and Sol High Review 0 P0/P1/P2 passed. H05W accepted and H06 dependency released."
+    evidence:
+      commits:
+        - "R1 candidate: a7b711d9a18b153b0c5a1c9f1aa2677b6d1a8607 / tree aaef72856231c3c2ff3e73434191b2cd6d2b985e"
+        - "R2 candidate: 9f8816375018bab8cf1d2d5f759f396e5a4c0a0a / tree b7339ff18d9fc4c50b443ece5bd893efc0b2887e"
+        - "R3 candidate: 0b3d93041faaf6c3212a8a9f45a1ba64acd2108f / tree 2ba166c2771175ef658e442b782a28992c81c8c3"
+      tests:
+        - "R2 independent archive-reader + Juyi Hall behavior/collaboration: PASS 112"
+        - "R2 changed-file ESLint: PASS"
+        - "R2 production build: PASS, 1122 modules, built in 38.18s; generated components.d.ts restored; worktree clean"
+        - "R2 evidence key: tree b7339ff18d9fc4c50b443ece5bd893efc0b2887e + exact selectors; DB fixture N/A"
+        - "R2 independent Review: REJECT, 0 P0 / 2 P1 / 3 P2"
+        - "R3 Writer focused archive/Juyi Hall: PASS 116; changed-file ESLint, production build and diff-check PASS"
+        - "R3 independent exact Mocha command: PASS 116 in 9.83s; final worktree clean"
+        - "R3 independent ESLint and production build: PASS; 1122 modules, Review build 35.20s"
+        - "R3 evidence key: tree 2ba166c2771175ef658e442b782a28992c81c8c3 + exact selectors; DB fixture N/A"
+        - "R3 independent final Review: ACCEPT, 0 P0 / 0 P1 / 0 P2"
+      files:
+        - "web/src/components/juyiting/archive/ArchiveReader.vue"
+        - "web/src/composables/juyiting/useArchiveReader.js"
+        - "web/tests/archive-reader.test.js"
+      handoff: "docs/implementation/handoffs/H05W.md"
+    blocked_reason: null
+  - id: H06
+    title: "案卷阁阅读MVP集成与发布门禁"
+    milestone: ARCHIVE-MVP
+    status: in_progress
+    priority: P0
+    estimate_person_days: 5
+    dependencies: [H02, H03, H04, H05A, H05W]
+    owner: "critical_worker / GPT-5.6 Sol High / OpenAI-only"
+    reviewer: null
+    claimed_at: "2026-08-23T18:48:57+08:00"
+    lease_until: "2026-08-24T06:48:57+08:00"
+    branch: null
+    worktree: "/home/isp/wsps/cyf"
+    allowed_paths:
+      - "specs/archive-pavilion-reader-mvp/**"
+      - "docs/implementation/**"
+      - "ops/**"
+    forbidden_paths:
+      - "deliverables/**"
+    acceptance_summary: "真实MySQL/浏览器/Agent/ES降级、120回hash、两身份两client ACL、SHA-pinned制品和restore drill通过"
+    progress: "All dependencies accepted; OpenAI-only H06 ops Writer is implementing repository-external isolated MySQL/browser/ES-down/SHA-pinned restore and feature-flag rollback gates. Production operations remain forbidden without separate approval."
+    evidence: {commits: [], tests: [], files: [], handoff: null}
+    blocked_reason: null
+  - id: O00
+    title: "聚义厅横竖屏 Web 高风险收敛基线"
+    milestone: JY-ORIENTATION
+    status: review
+    priority: P0
+    estimate_person_days: 2
+    dependencies: []
+    planned_writer: critical_worker
+    owner: "Shannon / critical_worker / 01a03980-6a99-7440-ae00-94b9e7ecd300"
+    planned_reviewer: sol_reviewer
+    planned_support: [gpt_test_runner]
+    branch: "codex/o00-juyiting-web-convergence"
+    worktree: "/home/isp/wsps/cyf/.worktrees/o00-juyiting-web-convergence"
+    allowed_paths:
+      - "web paths in specs/juyiting-dual-orientation-experience/o00-c09w-source-delta.txt"
+      - "web paths in specs/juyiting-dual-orientation-experience/o00-h05w-source-delta.txt"
+      - "semantic edits only in specs/juyiting-dual-orientation-experience/o00-semantic-conflicts.txt"
+    forbidden_paths:
+      - "api/**"
+      - "deliverables/**"
+      - "web/scripts/juyiting/e13/**"
+      - "web/tests/fixtures/juyiting/occlusion-e13/**"
+      - "web/tests/fixtures/juyiting/occlusion-v2-constraint/**"
+    acceptance_summary: "origin/develop + C09W + H05W manifest convergence；保护路径 byte-exact parent；clean exact commit/tree 与独立 Review ACCEPT"
+    progress: "O00 candidate 4ab34b56/tree 10f5d5bf clean；manifest/protected/static evidence complete；唯一 fresh sol_reviewer Godel 审查中。"
+    evidence: {commits: [], tests: [], files: [], handoff: null}
+    blocked_reason: null
+  - id: O01
+    title: "唯一体验模式与真实方向请求"
+    milestone: JY-ORIENTATION
+    status: blocked_dependency
+    priority: P1
+    dependencies: [O00]
+    planned_writer: balanced_worker
+    planned_reviewer: sol_reviewer
+    acceptance_summary: "唯一方向监听者、真实物理方向、无 CSS rotate、请求竞态与卸载清理"
+    evidence: {commits: [], tests: [], files: [], handoff: null}
+    blocked_reason: "等待 O00 accepted"
+  - id: O02
+    title: "竖屏轻应用首页"
+    milestone: JY-ORIENTATION
+    status: blocked_dependency
+    priority: P1
+    dependencies: [O01]
+    planned_writer: balanced_worker
+    planned_reviewer: sol_reviewer
+    acceptance_summary: "竖屏首次不 mount melonJS；快捷入口、上下文和显式 Agent 派单"
+    evidence: {commits: [], tests: [], files: [], handoff: null}
+    blocked_reason: "等待 O01 accepted"
+  - id: O03
+    title: "地图 destroy/remount、camera 恢复与目标聚焦"
+    milestone: JY-ORIENTATION
+    status: blocked_dependency
+    priority: P1
+    dependencies: [O02]
+    planned_writer: balanced_worker
+    planned_reviewer: sol_reviewer
+    acceptance_summary: "generation fence、suspend 零回调、稳定 viewport、camera/selected 恢复和 target once"
+    evidence: {commits: [], tests: [], files: [], handoff: null}
+    blocked_reason: "等待 O02 accepted"
+  - id: O04
+    title: "Panel 状态、可访问性与横竖屏集成门禁"
+    milestone: JY-ORIENTATION
+    status: blocked_dependency
+    priority: P1
+    dependencies: [O03]
+    planned_writer: balanced_worker
+    planned_reviewer: sol_reviewer
+    planned_support: [gpt_test_runner]
+    acceptance_summary: "共享业务状态不 remount；targeted/typecheck/lint/build 与 iOS/Android 微信 H5 smoke"
+    evidence: {commits: [], tests: [], files: [], handoff: null}
+    blocked_reason: "等待 O03 accepted"
