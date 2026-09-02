@@ -50,3 +50,23 @@ python3 /home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py gradle \
 ```
 
 All orchestrator options precede `JVC-API`; everything after `JVC-API` is the positional Gradle command. No pseudo-options are permitted. This addendum does not authorize a retry by the failed successor.
+
+## Publishing-placeholder addendum after root evaluation failure
+
+The byte-explicit command reached Gradle but omitted repository-local non-secret placeholders required by the root `publishing` block. The next matrix-bound successor must use the same command with exactly these additional Gradle project properties before the task path:
+
+```text
+-PrepoUsername=unused -PrepoPassword=unused
+```
+
+These are the established non-secret test placeholders used by repository scripts such as `agent/jia-agent-service/src/test/scripts/run-d09-isolated-mysql.sh`; they do not authorize publication and no publish task is invoked. The fully corrected tail is:
+
+```bash
+JVC-API ./gradlew --no-daemon --max-workers=1 \
+  -I /home/isp/wsps/cyf/.worktrees/juyiting-voice-conversation-integration/docs/implementation/handoffs/JVC-API-R3-LOWMEM.init.gradle \
+  "-Dorg.gradle.jvmargs=-Xmx256m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=64m -Xss256k -Dfile.encoding=UTF-8" \
+  -PrepoUsername=unused -PrepoPassword=unused \
+  :chat:jia-chat-service:test --tests 'cn.jia.chat.voice.*'
+```
+
+The failed successor is not authorized to retry. A fresh successor may execute the fully corrected command once after task-local ignored outputs are removed and exact clean state is re-established.
