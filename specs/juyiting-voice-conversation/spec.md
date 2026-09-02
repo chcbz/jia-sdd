@@ -14,7 +14,7 @@
 
 1. 在三种讨论范围（public/private/bounty）的 Composer 中提供按键录音。
 2. 在横屏且聊天面板关闭时提供紧凑语音 HUD。
-3. 使用浏览器 `getUserMedia + MediaRecorder` 采集最长 45 秒、最大 5 MiB 的单声道短音频。
+3. 使用浏览器 `getUserMedia + MediaRecorder` 以唯一的 V1 格式 `audio/webm;codecs=opus` 采集最长 45 秒、最大 5 MiB 的单声道短音频；仅支持 MP4/AAC 的浏览器 fail-closed 并保留文本聊天。
 4. 音频通过独立认证接口转写；转写接口不创建会话、不写消息、不调用 Agent。
 5. 支持手动采用转写，以及用户显式开启后的 1.5 秒倒计时自动发送。
 6. 自动发送必须使用录音开始时冻结的显式会话上下文；发生任何上下文或草稿冲突时降级为手动预览。
@@ -59,4 +59,4 @@ V1 不实现：
 - `getUserMedia` 权限 Promise 不可可靠中止，取消通过 generation fence 实现；迟到 stream 必须立即停止 tracks。
 - 当前 `EsContextHolder` 是未见 finally 清理的 ThreadLocal；新端点不得读取它。
 - 当前全局 Nginx body limit 和 `/chat` timeout 对语音过宽；生产启用前需要精确 endpoint 配置，但不在 V1 源码交付中直接修改生产配置。
-- 当前 OpenAI-compatible chat base URL 不保证支持音频端点；默认开关关闭，供应商能力需单独灰度验证。
+- 当前 OpenAI-compatible chat base URL 不保证支持音频端点；默认开关关闭，供应商能力需单独灰度验证。Safari/MP4/AAC 属于后续里程碑，须先取得真实浏览器 fixture 并完成安全/兼容验证。

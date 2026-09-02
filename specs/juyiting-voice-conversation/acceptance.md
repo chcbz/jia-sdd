@@ -17,7 +17,7 @@
 ## Lifecycle and limit acceptance
 
 - [ ] 45-second client hard stop and 5 MiB client hard stop are enforced.
-- [ ] Backend rejects actual audio bytes above 5 MiB and unsupported media.
+- [ ] Backend accepts only the exact `audio/webm;codecs=opus` upload profile; actual audio bytes above 5 MiB and all other media types, including MP4/AAC, are rejected before provider dispatch.
 - [ ] Cancel/unmount/pagehide/hidden/track-ended paths stop every MediaStream track.
 - [ ] Permission, recorder, upload and TTS late callbacks are generation-fenced.
 - [ ] Upload and TTS AbortControllers are released and stale results ignored.
@@ -55,7 +55,7 @@
 
 - [ ] Built-in stream completion and external final `agent_message` are distinguished; delta/delivery events are never spoken.
 - [ ] Exactly one finalized reply message is synthesized at most once per active voice turn.
-- [ ] WebM and MP4 duration parsers reject unknown/malformed/over-45-second media before provider dispatch.
+- [ ] Allowlisted WebM/Opus duration validation rejects unknown/malformed/over-45-second media before provider dispatch; retained MP4/AAC parser hardening is not an upload allowlist entry.
 - [ ] Redis state transitions, lease token release, TTLs and replay/conflict/unknown behavior match design section 9.3.
 - [ ] Every JSON error has matching HTTP/status, sanitized requestId echo and no provider detail.
 - [ ] JWT identity tests prove byte-exact length-prefixed HMAC scoping and no API-key/CTX fallback.
@@ -65,5 +65,6 @@
 - [ ] Auto-send is disabled while an earlier Hall reply is streaming/awaiting, and final reply correlation uses local sequence rather than server timestamps.
 - [ ] JWT whitespace and exact UTF-8 byte-limit cases match design section 10.2 without normalizing accepted values.
 - [ ] Successful idempotent replay requires the exact identity/operation/requestId/digest tuple.
-- [ ] Positive WebM/Opus and MP4/AAC MediaRecorder fixtures pass, malformed/unknown/overlong variants fail closed.
+- [ ] A real browser WebM/Opus MediaRecorder fixture with declared `audio/webm;codecs=opus` passes; MP4/AAC (including `audio/mp4`) and fallback MIME fixtures are rejected fail-closed, while malformed/unknown/overlong WebM/Opus variants fail before provider dispatch.
+- [ ] Safari/MP4/AAC remains disabled in V1 and is enabled only in a later milestone after a real browser fixture plus security and compatibility validation.
 - [ ] STT response 256 KiB and TTS 8 MiB provider/cache/client bounds are enforced.

@@ -211,7 +211,7 @@ A dedicated exception handler returns real HTTP status and never exposes provide
 - Default disabled providers and `enabled=false` configuration.
 - Dedicated HTTP client with connect timeout <= 3s and total deadline <= 25s; no transparent retry or cross-provider fallback.
 - Streaming/spooled multipart handling; no repeated full-file byte-array copies.
-- Byte size, allowlisted declared MIME and container signature validation. Browser output compatibility is runtime-probed; unsupported input fails closed.
+- Byte size, exact allowlisted declared MIME/codec and container signature validation. V1 upload allowlist contains only `audio/webm;codecs=opus`; unsupported input fails closed before provider dispatch.
 - Per-identity concurrency 1, per-minute 6, per-hour 60, bounded global provider concurrency. Redis unavailability fails closed for voice only.
 - Idempotency key scope binds HMAC(identity), requestId, language/voice parameters and content hash. State: `IN_PROGRESS`, `SUCCEEDED`, `FAILED_KNOWN`, `FAILED_UNKNOWN`.
 - A successful result may be encrypted in Redis for <= 10 minutes solely for idempotent replay. No DB/object-storage/business-log persistence.
@@ -219,14 +219,9 @@ A dedicated exception handler returns real HTTP status and never exposes provide
 
 ## 6. Compatibility and configuration
 
-Frontend feature flag and backend flag default to off. Browser support is detected at runtime. MIME preference:
+Frontend feature flag and backend flag default to off. Browser support is detected at runtime. V1 selects `audio/webm;codecs=opus` only: the client must use that exact MediaRecorder MIME/codec profile, and the server allowlist must reject MP4/AAC, Ogg, WAV, MP3 and other fallbacks with `VOICE_UNSUPPORTED_MEDIA` before provider dispatch. If a browser does not support `audio/webm;codecs=opus` (including Safari deployments that expose only MP4/AAC), voice recording remains unavailable and the existing text chat stays usable.
 
-1. `audio/webm;codecs=opus`
-2. `audio/mp4`
-3. `audio/ogg;codecs=opus`
-4. supported safe fallback
-
-Existing text input remains available in every error/unsupported state.
+Safari/MP4/AAC support is a later milestone, not a V1 fallback. It may be enabled only after a real browser-produced MP4/AAC fixture and separate security and compatibility validation are recorded. No V1 client capability probe or server configuration may enable it implicitly.
 
 Spring multipart request limit must exceed 5 MiB for envelope overhead, while service byte validation remains 5 MiB. Production enablement requires an exact Nginx location for `/chat/speech/transcriptions` with approximately 6 MiB body limit and a shorter timeout, without changing `/chat/stream` behavior.
 
@@ -243,6 +238,7 @@ Allowed telemetry: stable error code, latency, byte/duration buckets, provider a
 5. Voice endpoints do not bind to or mutate conversations.
 6. No DB migration.
 7. Production deployment and provider activation require a separate release task.
+8. V1 browser uploads are limited to `audio/webm;codecs=opus`; Safari/MP4/AAC is a later milestone gated by real-browser fixture, security and compatibility validation.
 
 ## 9. Frozen clarifications from architecture gate
 
@@ -270,12 +266,13 @@ This frontend serialization is required because the existing Agent event contrac
 
 ### 9.2 Trusted server duration validation
 
-V1 accepts only browser-recorded WebM and MP4 containers for transcription. `audio/ogg` and arbitrary WAV/MP3 uploads are not enabled until an equivalent bounded duration inspector exists.
+V1 accepts only browser-recorded WebM containing Opus audio and declared exactly as `audio/webm;codecs=opus` for transcription. The upload entry point rejects MP4/AAC (including `audio/mp4`), `audio/ogg` and arbitrary WAV/MP3 with `VOICE_UNSUPPORTED_MEDIA` before provider dispatch. A browser that supports only MP4/AAC therefore fails closed while text chat remains available.
 
-Before provider dispatch, an `AudioDurationInspector` parses container metadata with bounded reads:
+Before provider dispatch, an `AudioDurationInspector` parses the allowlisted WebM container metadata with bounded reads:
 
-- WebM: EBML `Info` duration and timecode scale;
-- MP4/M4A: bounded box walk to `moov/mvhd` timescale and duration.
+- WebM/Opus: EBML `Info` duration and timecode scale.
+
+The backend may retain hardened MP4/M4A duration-parser code and isolated parser tests for a future milestone, but that parser is not an upload allowlist entry in V1 and must not make MP4/AAC uploads succeed by itself. Safari/MP4/AAC enablement requires a real browser-produced fixture plus separate security and compatibility validation.
 
 Unknown duration, malformed metadata, integer overflow, non-finite values or duration greater than 45,000 ms fail closed with `VOICE_INVALID_AUDIO` or `VOICE_TOO_LONG`. The parser has a fixed metadata read/box/depth budget and never decodes or transcodes the full media. `durationMs` from the client is diagnostic only.
 
@@ -377,12 +374,11 @@ A different requestId always creates a distinct operation subject to rate/concur
 
 ### 10.4 Concrete media fixtures and output bounds
 
-Tests include positive fixture files produced by supported-browser MediaRecorder behavior:
+Tests include a positive fixture produced by a browser MediaRecorder using the V1 profile:
 
-- valid WebM/Opus with known duration below 45 seconds;
-- valid MP4/AAC with known duration below 45 seconds.
+- valid WebM/Opus declared as `audio/webm;codecs=opus`, with known duration below 45 seconds, accepted by the upload allowlist and duration validation.
 
-They also include malformed, missing-duration and over-45-second variants for each container.
+Upload-contract fixtures also prove that MP4/AAC (including `audio/mp4`), Ogg, WAV, MP3 and other fallback types are rejected with `VOICE_UNSUPPORTED_MEDIA` before provider dispatch. Malformed, missing-duration and over-45-second WebM/Opus variants fail closed. Positive MP4/AAC fixtures, if retained for hardened parser unit coverage, are parser-only evidence and do not authorize the V1 upload path; they become an enablement prerequisite only for the later Safari/MP4/AAC milestone.
 
 TTS limits are fixed as follows:
 

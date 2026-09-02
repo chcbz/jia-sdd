@@ -4,11 +4,11 @@
 
 - [ ] `JVC-A01` Add immutable voice request/result/error domain types and provider SPIs.
 - [ ] `JVC-A02` Add strict JWT identity resolver with no `EsContextHolder` fallback.
-- [ ] `JVC-A03` Add transcription multipart controller, validation, timeout, cleanup and stable errors.
+- [ ] `JVC-A03` Add transcription multipart controller with an exact V1 `audio/webm;codecs=opus` allowlist, reject MP4/AAC and all fallbacks before provider dispatch, plus duration validation, timeout, cleanup and stable errors.
 - [ ] `JVC-A04` Add synthesis controller, bounded request validation and audio response.
 - [ ] `JVC-A05` Add Redis-backed rate/concurrency/idempotency control with fail-closed behavior.
 - [ ] `JVC-A06` Add disabled/default and OpenAI-compatible provider adapters behind default-off properties.
-- [ ] `JVC-A07` Add focused controller/service/provider/security tests using stubs only.
+- [ ] `JVC-A07` Add focused controller/service/provider/security tests using stubs only, including positive browser WebM/Opus and fail-closed MP4/AAC/fallback fixtures.
 - [ ] `JVC-A08` Record exact API commit/tree SHA and verification evidence.
 
 Owned source paths are limited to `api/chat/**`, API starter voice configuration/tests and the minimum required build files. Do not modify unrelated Agent, task, conversation or memory behavior.
@@ -34,3 +34,4 @@ Owned source paths are limited to `web/src/components/world/JuyiHall.vue`, `web/
 - [ ] `JVC-I05` Run `./sddw verify juyiting-voice-conversation` and update acceptance evidence.
 - [ ] `JVC-I06` Commit/push implementation branches and root integration candidate after review acceptance.
 - [ ] `JVC-I07` Do not deploy production or enable provider flags without a separate production release task.
+- [ ] `JVC-I08` Keep Safari/MP4/AAC disabled in V1; enable it only as a later milestone after a real browser fixture and completed security/compatibility validation.

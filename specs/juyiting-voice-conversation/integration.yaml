@@ -4,8 +4,8 @@ owners:
   api: critical_worker
   web: balanced_worker
 contract:
-  api_or_event_changes: "POST /chat/speech/transcriptions and POST /chat/speech/synthesis; existing /chat/stream remains compatible"
-  compatibility: "additive, feature-flagged off by default, no DB migration"
+  api_or_event_changes: "POST /chat/speech/transcriptions accepts only audio/webm;codecs=opus in V1 and rejects MP4/AAC before provider dispatch; POST /chat/speech/synthesis; existing /chat/stream remains compatible"
+  compatibility: "additive, feature-flagged off by default, no DB migration; Safari/MP4/AAC is a later milestone gated by real-browser fixture plus security/compatibility validation"
 pinned_revisions:
   api_commit: null
   web_commit: null
