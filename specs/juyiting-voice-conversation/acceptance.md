@@ -53,7 +53,7 @@
 - Independent reviews: API security/concurrency review ACCEPT `0/0/0`; frontend feature review ACCEPT `0/0/0`; supplemental selected-component run `4 pass/2 fail/incomplete`, with fresh attribution review ACCEPT `0/0/0`.
 - Supplemental failures are non-blocking baseline/harness debt (stale destroy/loading assertion and incomplete `visualViewport` evidence). The complete orientation/keyboard-resize/focus-trap/map-interaction regression criterion is intentionally **not** claimed as passed.
 - Integration pin: `./sddw pin juyiting-voice-conversation` completed for the revisions above; `./sddw verify juyiting-voice-conversation` PASS.
-- Result: integration-ready; final accepted status remains with the independent integration review.
+- Result: source integration accepted; root/API/Web feature branches pushed. Production release and Provider activation remain unauthorized. The disclosed non-blocking baseline UI harness gap remains open.
 
 ## Architecture-gate closure
 

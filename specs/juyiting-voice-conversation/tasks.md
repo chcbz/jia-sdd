@@ -32,6 +32,6 @@ Owned source paths are limited to `web/src/components/world/JuyiHall.vue`, `web/
 - [x] `JVC-I03` Verify no regression to `/chat/stream`, map/roster split and explicit target assignment.
 - [x] `JVC-I04` Pin exact candidate SHAs with `./sddw pin juyiting-voice-conversation`.
 - [x] `JVC-I05` Run `./sddw verify juyiting-voice-conversation` and update acceptance evidence.
-- [ ] `JVC-I06` Commit/push implementation branches and root integration candidate after review acceptance.
+- [x] `JVC-I06` Commit/push implementation branches and root integration candidate after review acceptance.
 - [x] `JVC-I07` Do not deploy production or enable provider flags without a separate production release task.
 - [x] `JVC-I08` Keep Safari/MP4/AAC disabled in V1; enable it only as a later milestone after a real browser fixture and completed security/compatibility validation.

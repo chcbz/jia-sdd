@@ -1,7 +1,7 @@
 # 聚义厅语音对话
 
 - Feature ID: `juyiting-voice-conversation`
-- Status: Ready for implementation
+- Status: Source accepted; production release not authorized
 - Contract freeze date: 2026-09-01
 
 ## Problem
