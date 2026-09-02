@@ -1,0 +1,9 @@
+allprojects {
+    tasks.withType(org.gradle.api.tasks.testing.Test).configureEach {
+        minHeapSize = '64m'
+        maxHeapSize = '256m'
+        maxParallelForks = 1
+        forkEvery = 1
+        jvmArgs '-Xss256k', '-XX:MaxMetaspaceSize=160m', '-XX:MaxDirectMemorySize=64m'
+    }
+}
