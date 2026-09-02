@@ -29,7 +29,7 @@ Owned source paths are limited to `web/src/components/world/JuyiHall.vue`, `web/
 
 - [x] `JVC-I01` Independent API security/concurrency review.
 - [x] `JVC-I02` Independent frontend state/context/interaction review.
-- [ ] `JVC-I03` Verify no regression to `/chat/stream`, map/roster split and explicit target assignment.
+- [x] `JVC-I03` Verify no regression to `/chat/stream`, map/roster split and explicit target assignment.
 - [x] `JVC-I04` Pin exact candidate SHAs with `./sddw pin juyiting-voice-conversation`.
 - [x] `JVC-I05` Run `./sddw verify juyiting-voice-conversation` and update acceptance evidence.
 - [ ] `JVC-I06` Commit/push implementation branches and root integration candidate after review acceptance.
