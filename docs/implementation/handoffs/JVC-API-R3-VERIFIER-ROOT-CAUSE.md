@@ -30,3 +30,23 @@ The only permitted successor is one fresh `gpt_test_runner` executing the same e
 ## Promotion gate
 
 After a successful low-memory selector, assign one fresh `sol_reviewer` to exact commit/tree. Only a `0/0/0 ACCEPT` may promote JVC-API to accepted and unblock integration pinning.
+
+## CLI addendum after the pre-Gradle schema failure
+
+The first authorized low-memory successor did not invoke Gradle: it invented `--tree`, `--gradle-args`, and `--tasks` options. A fresh successor must execute this shell command shape byte-for-byte, changing no option names or ordering:
+
+```bash
+python3 /home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py gradle \
+  --heavy \
+  --cwd /home/isp/wsps/cyf/.worktrees/juyiting-voice-conversation-api \
+  --tree-sha ef888807fb3b190b65d813286a0733795763b411 \
+  --selector JVC-API-R3-all-voice-focused-lowmem \
+  --fixture-digest 44547c9e422ad0ca70123edffbd5261030d502644048693f1d77aae7df1384b9 \
+  JVC-API \
+  ./gradlew --no-daemon --max-workers=1 \
+  -I /home/isp/wsps/cyf/.worktrees/juyiting-voice-conversation-integration/docs/implementation/handoffs/JVC-API-R3-LOWMEM.init.gradle \
+  "-Dorg.gradle.jvmargs=-Xmx256m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=64m -Xss256k -Dfile.encoding=UTF-8" \
+  :chat:jia-chat-service:test --tests 'cn.jia.chat.voice.*'
+```
+
+All orchestrator options precede `JVC-API`; everything after `JVC-API` is the positional Gradle command. No pseudo-options are permitted. This addendum does not authorize a retry by the failed successor.
