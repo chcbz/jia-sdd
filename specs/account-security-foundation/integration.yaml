@@ -1,0 +1,29 @@
+feature_id: account-security-foundation
+status: accepted
+owners:
+  api: critical_worker
+  web: balanced_worker
+contract:
+  api_or_event_changes: >-
+    Add account_state/auth_epoch, uid/token_kind JWT account validation, Bearer-user-only
+    POST /user/me/sessions/revoke-all, login/refresh/API-key gates, context and CORS hardening.
+  compatibility: >-
+    Legacy user JWTs without auth_epoch remain valid only after byte-exact unique jiacn resolution to ACTIVE/epoch zero;
+    only explicit machine tokens and a strict legacy machine shape bypass user lookup. Additive columns remain on code rollback.
+  migration: implemented_and_mysql8_fixture_verified_production_pending
+  acl_risk: p0
+pinned_revisions:
+  api_commit: 261ee9eb61769c6fd79b1bb1368dde799e1563c8
+  web_commit: 7bc80de75f83d4cb7ca288380c3ed9eab1bc111a
+  root_base_commit: 752b4dfceea2b6d3061d921a426dddba5410b90c
+verification:
+  architect: accepted_2026-08-24
+  independent_security_review: accepted_api_and_web
+  api: focused_gradle_30_pass_tree_399b9f048f073cc8d47f97d8f71b8e2cc7636129
+  migration: mysql_8_0_46_pass_digests_a99594f5_and_39c022e4
+  web: focused_mocha_102_pass_eslint_build_diffcheck_pass
+  integration: root_commit_c9cf4d800b20c0bd60a12c532300dcecfe1431cf_verified
+  production_oauth_client: pending_backup_migration_and_live_smoke
+acceptance:
+  status: accepted_release_pending
+  evidence: acceptance.md
