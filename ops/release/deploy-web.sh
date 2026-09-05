@@ -5,7 +5,11 @@ umask 077
 export PATH='/usr/sbin:/usr/bin:/sbin:/bin'
 export LC_ALL='C'
 export HOME='/var/empty' CURL_HOME='/var/empty' GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL='/dev/null'
-unset BASH_ENV ENV CDPATH GLOBIGNORE PYTHONPATH PYTHONHOME PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH
+unset BASH_ENV ENV CDPATH GLOBIGNORE PYTHONPATH PYTHONHOME PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH \
+  HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy \
+  CURL_CA_BUNDLE REQUESTS_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR GIT_SSL_CAINFO GIT_SSL_CAPATH \
+  GIT_CONFIG_COUNT GIT_SSL_NO_VERIFY GIT_PROXY_COMMAND OPENSSL_CONF OPENSSL_MODULES \
+  AWS_CA_BUNDLE NODE_EXTRA_CA_CERTS
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=common.sh
@@ -30,7 +34,7 @@ parse_common_args "$@"
 if (( SHOW_HELP == 1 )); then usage; exit 0; fi
 ((${#POSITIONAL[@]} == 0)) || die "unexpected positional arguments"
 web_adapter_select_default_input
-for command in git python3 sha256sum curl realpath stat grep mv flock mktemp sync find id; do require_command "$command"; done
+for command in git /usr/bin/python3 sha256sum curl realpath stat grep mv flock mktemp sync find id; do require_command "$command"; done
 web_adapter_load_input "$INPUT_FILE"
 web_adapter_verify_guard 1
 APPROVED_GUARD_SHA="$WEB_GUARD_SHA"
@@ -70,27 +74,69 @@ STAGE_DIR="$WEB_LIVE_PARENT/.kit-stage-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE
 BACKUP_DIR="$WEB_BACKUP_ROOT/kit-backup-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}"
 FAILED_DIR="$WEB_BACKUP_ROOT/kit-failed-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}"
 DEPLOY_RECORD="$WEB_RECORD_ROOT/web-deploy-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}.json"
+RECOVERY_RECORD="$WEB_RECORD_ROOT/web-recovery-deploy-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}.json"
 RECORD_TEMP=''
 BACKED_UP=0
 INSTALLED=0
+WEB_ADAPTER_RECORD_PRESERVE_LIVE=0
 
 restore_web_on_error() {
-  local exit_code=$?
+  local exit_code=$? recovery_failed=0 reason='' move_rc=0 restored_entry=''
   trap - EXIT
   set +e
-  if (( INSTALLED == 1 )) && [[ -d "$WEB_LIVE_DIR" && ! -e "$FAILED_DIR" ]]; then
-    web_adapter_move recovery-failed "$WEB_LIVE_DIR" "$FAILED_DIR"
+  if (( WEB_ADAPTER_RECORD_PRESERVE_LIVE == 1 )); then
+    log 'CRITICAL: immutable deploy record could not be safely withdrawn; preserving the matching deployed Web live tree'
+    [[ -z "$RECORD_TEMP" || ! -e "$RECORD_TEMP" ]] || rm -f -- "$RECORD_TEMP"
+    [[ ! -e "$STAGE_DIR" ]] || rm -rf --one-file-system -- "$STAGE_DIR"
+    exit "$exit_code"
   fi
-  if (( BACKED_UP == 1 )) && [[ -d "$BACKUP_DIR" && ! -e "$WEB_LIVE_DIR" ]]; then
-    web_adapter_move recovery-restore "$BACKUP_DIR" "$WEB_LIVE_DIR"
-    if restored_entry="$(web_adapter_health "$WEB_LIVE_DIR" "$WEB_HEALTH_TIMEOUT" "${WEB_HEALTH_URLS[@]}")"; then
-      log "automatic Web restore health check PASS: entry_asset=$restored_entry"
+  if (( INSTALLED == 1 )) && [[ -d "$WEB_LIVE_DIR" ]]; then
+    if [[ -e "$FAILED_DIR" ]]; then
+      recovery_failed=1; reason="${reason:+$reason,}failed-candidate-path-occupied"
+      log 'CRITICAL: Web failed-candidate path already exists'
+    elif web_adapter_move recovery-failed "$WEB_LIVE_DIR" "$FAILED_DIR"; then
+      INSTALLED=0
     else
-      log 'CRITICAL: automatic Web restore health check failed'
+      move_rc=$?; recovery_failed=1
+      reason="${reason:+$reason,}candidate-removal-rc${move_rc}"
+      log "CRITICAL: failed to move the rejected Web candidate aside: rc=$move_rc"
+    fi
+  fi
+  if (( BACKED_UP == 1 )); then
+    if [[ -d "$BACKUP_DIR" && ! -e "$WEB_LIVE_DIR" ]]; then
+      if web_adapter_move recovery-restore "$BACKUP_DIR" "$WEB_LIVE_DIR"; then
+        BACKED_UP=0
+        if restored_entry="$(web_adapter_health "$WEB_LIVE_DIR" "$WEB_HEALTH_TIMEOUT" "${WEB_HEALTH_URLS[@]}")"; then
+          log "automatic Web restore health check PASS: entry_asset=$restored_entry"
+        else
+          recovery_failed=1; reason="${reason:+$reason,}restored-health"
+          log 'CRITICAL: automatic Web restore health check failed'
+        fi
+      else
+        move_rc=$?; recovery_failed=1
+        reason="${reason:+$reason,}backup-restore-rc${move_rc}"
+        log "CRITICAL: automatic Web backup restore failed: rc=$move_rc"
+      fi
+    elif [[ ! -e "$WEB_LIVE_DIR" ]]; then
+      recovery_failed=1; reason="${reason:+$reason,}backup-missing"
+      log 'CRITICAL: automatic Web restore cannot find the backup directory'
+    elif (( INSTALLED == 0 )); then
+      recovery_failed=1; reason="${reason:+$reason,}live-path-occupied"
+      log 'CRITICAL: automatic Web restore found an unexpected live path'
+    else
+      recovery_failed=1
     fi
   fi
   [[ -z "$RECORD_TEMP" || ! -e "$RECORD_TEMP" ]] || rm -f -- "$RECORD_TEMP"
   [[ ! -e "$STAGE_DIR" ]] || rm -rf --one-file-system -- "$STAGE_DIR"
+  if (( recovery_failed == 1 )); then
+    if web_adapter_publish_recovery_failure deploy "$RECOVERY_RECORD" "$CHANGE_ID" "$exit_code" \
+      "$reason" "$WEB_LIVE_DIR" "$BACKUP_DIR" '' "$FAILED_DIR"; then
+      log "FAILED_MANUAL_RECOVERY_REQUIRED: durable evidence=$RECOVERY_RECORD"
+    else
+      log "CRITICAL: FAILED_MANUAL_RECOVERY_REQUIRED evidence publication failed: $RECOVERY_RECORD"
+    fi
+  fi
   exit "$exit_code"
 }
 trap restore_web_on_error EXIT
@@ -101,7 +147,8 @@ assert_not_symlink 'Web record root' "$WEB_RECORD_ROOT"
 [[ "$(stat -c %d -- "$WEB_LIVE_PARENT")" == "$(stat -c %d -- "$WEB_BACKUP_ROOT")" ]] \
   || die "Web live, staging and backup paths must share one filesystem"
 [[ ! -e "$STAGE_DIR" && ! -e "$BACKUP_DIR" && ! -e "$FAILED_DIR" \
-   && ! -e "$DEPLOY_RECORD" && ! -e "${DEPLOY_RECORD}.sha256" ]] \
+   && ! -e "$DEPLOY_RECORD" && ! -e "${DEPLOY_RECORD}.sha256" \
+   && ! -e "$RECOVERY_RECORD" && ! -e "${RECOVERY_RECORD}.sha256" ]] \
   || die "Web staging, backup, or record path already exists"
 mkdir -- "$STAGE_DIR"
 web_adapter_archive_operation "$STAGE_DIR" >/dev/null
@@ -125,7 +172,7 @@ ENTRY_ASSET="$(web_adapter_health "$WEB_LIVE_DIR" "$WEB_HEALTH_TIMEOUT" "${WEB_H
   || die "Web health check failed"
 
 RECORD_TEMP="$(mktemp "$WEB_RECORD_ROOT/.web-deploy-record.XXXXXX")"
-python3 -B - "$RECORD_TEMP" "$RELEASE_ID" "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$WEB_HEAD" \
+/usr/bin/python3 -I -B - "$RECORD_TEMP" "$RELEASE_ID" "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$WEB_HEAD" \
   "$WEB_TREE" "$WEB_ARTIFACT" "$ARCHIVE_SHA" "$CANDIDATE_TREE_SHA" \
   "$CURRENT_TREE_SHA" "$WEB_LIVE_DIR" "$BACKUP_DIR" "$ENTRY_ASSET" \
   "$RELEASE_INPUT_SHA" "$WEB_ADAPTER_TOOL_SHA" "$WEB_GUARD" "$WEB_GUARD_SHA" \

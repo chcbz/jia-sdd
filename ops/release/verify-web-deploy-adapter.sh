@@ -5,7 +5,11 @@ umask 077
 export PATH='/usr/sbin:/usr/bin:/sbin:/bin'
 export LC_ALL='C'
 export HOME='/var/empty' CURL_HOME='/var/empty' GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL='/dev/null'
-unset BASH_ENV ENV CDPATH GLOBIGNORE PYTHONPATH PYTHONHOME PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH
+unset BASH_ENV ENV CDPATH GLOBIGNORE PYTHONPATH PYTHONHOME PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH \
+  HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy \
+  CURL_CA_BUNDLE REQUESTS_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR GIT_SSL_CAINFO GIT_SSL_CAPATH \
+  GIT_CONFIG_COUNT GIT_SSL_NO_VERIFY GIT_PROXY_COMMAND OPENSSL_CONF OPENSSL_MODULES \
+  AWS_CA_BUNDLE NODE_EXTRA_CA_CERTS
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=common.sh
@@ -19,7 +23,7 @@ parse_common_args "$@"
 (( SHOW_HELP == 0 )) || { usage; exit 0; }
 (( EXECUTE == 0 && ${#POSITIONAL[@]} == 0 )) || die "Web adapter verifier accepts only --input"
 web_adapter_select_default_input
-for command in git python3 sha256sum realpath stat find id; do require_command "$command"; done
+for command in git /usr/bin/python3 sha256sum realpath stat find id; do require_command "$command"; done
 web_adapter_load_input "$INPUT_FILE"
 assert_clean_candidate 'Web' "$WEB_REPO" "$WEB_REF" "$WEB_HEAD" "$WEB_TREE"
 web_adapter_validate_activation_proof

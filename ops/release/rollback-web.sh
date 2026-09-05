@@ -5,7 +5,11 @@ umask 077
 export PATH='/usr/sbin:/usr/bin:/sbin:/bin'
 export LC_ALL='C'
 export HOME='/var/empty' CURL_HOME='/var/empty' GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL='/dev/null'
-unset BASH_ENV ENV CDPATH GLOBIGNORE PYTHONPATH PYTHONHOME PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH
+unset BASH_ENV ENV CDPATH GLOBIGNORE PYTHONPATH PYTHONHOME PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH \
+  HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy \
+  CURL_CA_BUNDLE REQUESTS_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR GIT_SSL_CAINFO GIT_SSL_CAPATH \
+  GIT_CONFIG_COUNT GIT_SSL_NO_VERIFY GIT_PROXY_COMMAND OPENSSL_CONF OPENSSL_MODULES \
+  AWS_CA_BUNDLE NODE_EXTRA_CA_CERTS
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=common.sh
@@ -30,7 +34,7 @@ parse_common_args "$@"
 if (( SHOW_HELP == 1 )); then usage; exit 0; fi
 ((${#POSITIONAL[@]} == 1)) || die "one Web deploy record path is required"
 web_adapter_select_default_input
-for command in python3 sha256sum realpath stat grep mv cp flock mktemp sync find id; do require_command "$command"; done
+for command in /usr/bin/python3 sha256sum realpath stat grep mv cp flock mktemp sync find id; do require_command "$command"; done
 web_adapter_load_input "$INPUT_FILE"
 web_adapter_verify_guard 0
 APPROVED_GUARD_SHA="$WEB_GUARD_SHA"
@@ -93,35 +97,78 @@ STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 CHANGE_ID="$CYF_RELEASE_APPROVAL_ID"
 STAGE_DIR="$WEB_LIVE_PARENT/.kit-rollback-stage-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}"
 RESCUE_DIR="$WEB_BACKUP_ROOT/kit-rescue-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}"
+ROLLBACK_FAILED_DIR="$WEB_BACKUP_ROOT/kit-rollback-failed-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}"
 ROLLBACK_RECORD="$WEB_RECORD_ROOT/web-rollback-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}.json"
+RECOVERY_RECORD="$WEB_RECORD_ROOT/web-recovery-rollback-${STAMP}-${WEB_HEAD}-${WEB_TREE}-${CHANGE_ID}.json"
 RECORD_TEMP=''
 CURRENT_MOVED=0
 RESTORED_INSTALLED=0
+WEB_ADAPTER_RECORD_PRESERVE_LIVE=0
 
 restore_candidate_on_error() {
-  local exit_code=$?
+  local exit_code=$? recovery_failed=0 reason='' move_rc=0 rescued_entry=''
   trap - EXIT
   set +e
-  if (( RESTORED_INSTALLED == 1 )) && [[ -d "$WEB_LIVE_DIR" ]]; then
-    local failed="$WEB_BACKUP_ROOT/kit-rollback-failed-${STAMP}-${WEB_HEAD}-${CHANGE_ID}"
-    [[ -e "$failed" ]] || web_adapter_move recovery-rollback-failed "$WEB_LIVE_DIR" "$failed"
+  if (( WEB_ADAPTER_RECORD_PRESERVE_LIVE == 1 )); then
+    log 'CRITICAL: immutable rollback record could not be safely withdrawn; preserving the matching restored Web live tree'
+    [[ -z "$RECORD_TEMP" || ! -e "$RECORD_TEMP" ]] || rm -f -- "$RECORD_TEMP"
+    [[ ! -e "$STAGE_DIR" ]] || rm -rf --one-file-system -- "$STAGE_DIR"
+    exit "$exit_code"
   fi
-  if (( CURRENT_MOVED == 1 )) && [[ -d "$RESCUE_DIR" && ! -e "$WEB_LIVE_DIR" ]]; then
-    web_adapter_move recovery-rescue "$RESCUE_DIR" "$WEB_LIVE_DIR"
-    if rescued_entry="$(web_adapter_health "$WEB_LIVE_DIR" "$WEB_HEALTH_TIMEOUT" "${WEB_HEALTH_URLS[@]}")"; then
-      log "pre-rollback Web candidate restore health check PASS: entry_asset=$rescued_entry"
+  if (( RESTORED_INSTALLED == 1 )) && [[ -d "$WEB_LIVE_DIR" ]]; then
+    if [[ -e "$ROLLBACK_FAILED_DIR" ]]; then
+      recovery_failed=1; reason="${reason:+$reason,}rollback-failed-path-occupied"
+      log 'CRITICAL: rollback recovery failed path already exists'
+    elif web_adapter_move recovery-rollback-failed "$WEB_LIVE_DIR" "$ROLLBACK_FAILED_DIR"; then
+      RESTORED_INSTALLED=0
     else
-      log 'CRITICAL: pre-rollback Web candidate restore health check failed'
+      move_rc=$?; recovery_failed=1
+      reason="${reason:+$reason,}restored-removal-rc${move_rc}"
+      log "CRITICAL: failed to move the rejected rollback tree aside: rc=$move_rc"
+    fi
+  fi
+  if (( CURRENT_MOVED == 1 )); then
+    if [[ -d "$RESCUE_DIR" && ! -e "$WEB_LIVE_DIR" ]]; then
+      if web_adapter_move recovery-rescue "$RESCUE_DIR" "$WEB_LIVE_DIR"; then
+        CURRENT_MOVED=0
+        if rescued_entry="$(web_adapter_health "$WEB_LIVE_DIR" "$WEB_HEALTH_TIMEOUT" "${WEB_HEALTH_URLS[@]}")"; then
+          log "pre-rollback Web candidate restore health check PASS: entry_asset=$rescued_entry"
+        else
+          recovery_failed=1; reason="${reason:+$reason,}rescued-health"
+          log 'CRITICAL: pre-rollback Web candidate restore health check failed'
+        fi
+      else
+        move_rc=$?; recovery_failed=1
+        reason="${reason:+$reason,}rescue-restore-rc${move_rc}"
+        log "CRITICAL: pre-rollback Web candidate restore failed: rc=$move_rc"
+      fi
+    elif [[ ! -e "$WEB_LIVE_DIR" ]]; then
+      recovery_failed=1; reason="${reason:+$reason,}rescue-missing"
+      log 'CRITICAL: rollback recovery cannot find the rescue directory'
+    elif (( RESTORED_INSTALLED == 0 )); then
+      recovery_failed=1; reason="${reason:+$reason,}live-path-occupied"
+      log 'CRITICAL: rollback recovery found an unexpected live path'
+    else
+      recovery_failed=1
     fi
   fi
   [[ -z "$RECORD_TEMP" || ! -e "$RECORD_TEMP" ]] || rm -f -- "$RECORD_TEMP"
   [[ ! -e "$STAGE_DIR" ]] || rm -rf --one-file-system -- "$STAGE_DIR"
+  if (( recovery_failed == 1 )); then
+    if web_adapter_publish_recovery_failure rollback "$RECOVERY_RECORD" "$CHANGE_ID" "$exit_code" \
+      "$reason" "$WEB_LIVE_DIR" "$BACKUP_DIR" "$RESCUE_DIR" "$ROLLBACK_FAILED_DIR"; then
+      log "FAILED_MANUAL_RECOVERY_REQUIRED: durable evidence=$RECOVERY_RECORD"
+    else
+      log "CRITICAL: FAILED_MANUAL_RECOVERY_REQUIRED evidence publication failed: $RECOVERY_RECORD"
+    fi
+  fi
   exit "$exit_code"
 }
 trap restore_candidate_on_error EXIT
 
-[[ ! -e "$STAGE_DIR" && ! -e "$RESCUE_DIR" && ! -e "$ROLLBACK_RECORD" \
-   && ! -e "${ROLLBACK_RECORD}.sha256" ]] \
+[[ ! -e "$STAGE_DIR" && ! -e "$RESCUE_DIR" && ! -e "$ROLLBACK_FAILED_DIR" \
+   && ! -e "$ROLLBACK_RECORD" && ! -e "${ROLLBACK_RECORD}.sha256" \
+   && ! -e "$RECOVERY_RECORD" && ! -e "${RECOVERY_RECORD}.sha256" ]] \
   || die "Web rollback staging, rescue, or record path already exists"
 mkdir -- "$STAGE_DIR"
 cp -a -- "$BACKUP_DIR/." "$STAGE_DIR/"
@@ -140,7 +187,7 @@ ENTRY_ASSET="$(web_adapter_health "$WEB_LIVE_DIR" "$WEB_HEALTH_TIMEOUT" "${WEB_H
   || die "Web rollback health check failed"
 
 RECORD_TEMP="$(mktemp "$WEB_RECORD_ROOT/.web-rollback-record.XXXXXX")"
-python3 -B - "$RECORD_TEMP" "$RELEASE_ID" "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$WEB_HEAD" "$WEB_TREE" \
+/usr/bin/python3 -I -B - "$RECORD_TEMP" "$RELEASE_ID" "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$WEB_HEAD" "$WEB_TREE" \
   "$DEPLOY_RECORD" "$EXPECTED_OLD_TREE" "$EXPECTED_CURRENT_TREE" "$BACKUP_DIR" \
   "$RESCUE_DIR" "$ENTRY_ASSET" "$RELEASE_INPUT_SHA" "$WEB_ADAPTER_TOOL_SHA" \
   "$WEB_GUARD" "$WEB_GUARD_SHA" "$ACTIVATION_PROOF_SHA" <<'PY'

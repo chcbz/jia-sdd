@@ -14,6 +14,7 @@ readonly WEB_ADAPTER_EXPECTED_ARCHIVE='/tmp/jvc-oai-web-artifact-r1.B9dEVE/jvc-o
 readonly WEB_ADAPTER_EXPECTED_ARCHIVE_SHA='86d3fd759cdf95050ff7520c4bdccf762eaca1f0be2a58c03f5a9970914df93f'
 readonly WEB_ADAPTER_DEFAULT_INPUT="$CYF_RELEASE_SCRIPT_DIR/jvc-oai-web-deploy-r1-input.json"
 readonly WEB_ADAPTER_TOOL_FILES=(
+  'common.sh'
   'lib/web-deploy-adapter.sh'
   'verify-web-deploy-adapter.sh'
   'deploy-web.sh'
@@ -31,7 +32,7 @@ web_adapter_select_default_input() {
 }
 
 web_adapter_stable_sha256() {
-  python3 -B - "$1" <<'PY'
+  /usr/bin/python3 -I -B - "$1" <<'PY'
 import hashlib, os, stat, sys
 path = sys.argv[1]
 fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
@@ -60,14 +61,31 @@ PY
 web_adapter_tool_sha256() {
   (
     cd -- "$CYF_RELEASE_SCRIPT_DIR"
-    local file
+    local file physical
     for file in "${WEB_ADAPTER_TOOL_FILES[@]}"; do
-      [[ -f "$file" && ! -L "$file" && "$(stat -Lc %h -- "$file")" == 1 ]] \
-        || die "Web adapter tool file is missing or unsafe: $file"
+      physical="$file"
+      if [[ "$file" == common.sh && -n "${CYF_WEB_DEPLOY_ADAPTER_TEST_COMMON_SH:-}" ]]; then
+        web_adapter_fixture_mode || die "Web adapter common dependency override is test-only"
+        physical="$(normalize_absolute_path 'fixture common.sh dependency' \
+          "$CYF_WEB_DEPLOY_ADAPTER_TEST_COMMON_SH")"
+        assert_path_within 'fixture common.sh dependency' "$physical" "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT"
+      fi
+      [[ -f "$physical" && ! -L "$physical" && "$(stat -Lc %h -- "$physical")" == 1 ]] \
+        || die "Web adapter tool file is missing or unsafe: $physical"
       printf '%s\0' "$file"
-      web_adapter_stable_sha256 "$file"
+      web_adapter_stable_sha256 "$physical"
     done
   ) | sha256sum | awk '{print $1}'
+}
+
+web_adapter_fault_enabled() {
+  local point="$1" spec="${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}"
+  web_adapter_fixture_mode || return 1
+  [[ -n "$spec" ]] || return 1
+  case ",$spec," in
+    *",$point,"*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 web_adapter_secure_root() {
@@ -84,7 +102,7 @@ web_adapter_load_input() {
   RELEASE_INPUT="$(normalize_absolute_path 'Web adapter input' "$requested")"
   [[ -f "$RELEASE_INPUT" && ! -L "$RELEASE_INPUT" && "$(stat -Lc %h -- "$RELEASE_INPUT")" == 1 ]] \
     || die "Web adapter input must be a regular nlink1 file: $RELEASE_INPUT"
-  mapfile -d '' -t fields < <(python3 -B - "$RELEASE_INPUT" <<'PY'
+  mapfile -d '' -t fields < <(/usr/bin/python3 -I -B - "$RELEASE_INPUT" <<'PY'
 import hashlib, json, os, re, stat, sys
 path = sys.argv[1]
 fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
@@ -188,7 +206,6 @@ PY
     [[ "$url" =~ ^https://[^[:space:]]+$ ]] || die "Web health URL must use HTTPS: $url"
   done
   require_sha256 'release input' "$RELEASE_INPUT_SHA"
-  WEB_ADAPTER_TOOL_SHA="$(web_adapter_tool_sha256)"
   ACTIVATION_PROOF="$ACTIVATION_PROOF_ROOT/${ACTIVATION_PROOF_SCHEMA}.json"
   WEB_GUARD="$WEB_GUARD_ROOT/web-guard-${RELEASE_ID}-${WEB_HEAD}-${WEB_TREE}.json"
   # Historical M1 capacity thresholds are cancelled; common.sh records observation only.
@@ -197,6 +214,9 @@ PY
   if web_adapter_fixture_mode; then
     CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$(normalize_absolute_path 'Web adapter fixture root' "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT")"
     web_adapter_secure_root 'Web adapter fixture root' "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT"
+    [[ -z "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" \
+       || "${CYF_WEB_DEPLOY_ADAPTER_FAULT}" =~ ^[A-Za-z0-9-]+(,[A-Za-z0-9-]+)*$ ]] \
+      || die "Web adapter fault list is invalid"
     local path
     for path in "$RELEASE_INPUT" "$WEB_ARTIFACT" "$WEB_REPO" "$WEB_LIVE_DIR" \
       "$WEB_BACKUP_ROOT" "$WEB_RECORD_ROOT" "$ACTIVATION_PROOF_ROOT" "$WEB_GUARD_ROOT"; do
@@ -223,11 +243,12 @@ PY
   web_adapter_secure_root 'API activation proof root' "$ACTIVATION_PROOF_ROOT"
   [[ "$WEB_GUARD_ROOT" == "$ACTIVATION_PROOF_ROOT" ]] \
     || die "Web guard and activation proof must share the trusted controller root"
+  WEB_ADAPTER_TOOL_SHA="$(web_adapter_tool_sha256)"
 }
 
 web_adapter_validate_activation_proof() {
   local -a facts=()
-  mapfile -d '' -t facts < <(python3 -B - "$ACTIVATION_PROOF_ROOT" \
+  mapfile -d '' -t facts < <(/usr/bin/python3 -I -B - "$ACTIVATION_PROOF_ROOT" \
     "$(basename -- "$ACTIVATION_PROOF")" "$RELEASE_ID" "$API_HEAD" "$API_TREE" \
     "$API_DEPLOYED_JAR_SHA" "$(web_adapter_fixture_mode && id -u || printf 0)" <<'PY'
 import hashlib, json, os, re, stat, sys
@@ -299,16 +320,37 @@ web_adapter_archive_operation() {
     [[ -d "$destination" && ! -L "$destination" ]] || die "Web extraction root is unsafe: $destination"
     [[ -z "$(find "$destination" -mindepth 1 -print -quit)" ]] || die "Web extraction root is not empty"
   fi
-  [[ "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" != archive-read ]] || die "injected Web archive read failure"
-  local mutation_window=0
-  if web_adapter_fixture_mode && [[ "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" == archive-mutation-window ]]; then mutation_window=1; fi
-  python3 -B - "$WEB_ARTIFACT" "$WEB_ARCHIVE_SHA_EXPECTED" "$mode" "$destination" "$mutation_window" <<'PY'
+  web_adapter_fault_enabled archive-read && die "injected Web archive read failure"
+  local mutation_ready='' mutation_continue=''
+  if web_adapter_fault_enabled archive-mutation-window; then
+    mutation_ready="$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT/archive-mutation.ready"
+    mutation_continue="$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT/archive-mutation.continue"
+    [[ ! -e "$mutation_ready" && ! -e "$mutation_continue" ]] \
+      || die "archive mutation handshake path already exists"
+  fi
+  /usr/bin/python3 -I -B - "$WEB_ARTIFACT" "$WEB_ARCHIVE_SHA_EXPECTED" "$mode" "$destination" \
+    "$mutation_ready" "$mutation_continue" <<'PY'
 import hashlib, os, posixpath, stat, sys, tarfile, time
-archive, expected, mode, destination, mutation_window = sys.argv[1:]
+archive, expected, mode, destination, mutation_ready, mutation_continue = sys.argv[1:]
 fd = os.open(archive, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
 try:
     before = os.fstat(fd)
-    if mutation_window == '1': time.sleep(0.25)
+    if mutation_ready:
+        readyfd = os.open(mutation_ready, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
+                          getattr(os, 'O_NOFOLLOW', 0), 0o600)
+        try:
+            os.write(readyfd, b'READY\n'); os.fsync(readyfd)
+        finally:
+            os.close(readyfd)
+        deadline = time.monotonic() + 10.0
+        while not os.path.exists(mutation_continue):
+            if time.monotonic() >= deadline:
+                raise SystemExit('archive mutation handshake timed out')
+            time.sleep(0.01)
+        continue_info = os.stat(mutation_continue, follow_symlinks=False)
+        if (not stat.S_ISREG(continue_info.st_mode) or continue_info.st_nlink != 1
+                or stat.S_IMODE(continue_info.st_mode) != 0o600):
+            raise SystemExit('archive mutation continue marker is unsafe')
     if (not stat.S_ISREG(before.st_mode) or stat.S_IMODE(before.st_mode) != 0o444
             or before.st_nlink != 1):
         raise SystemExit('Web archive must be immutable 0444 regular nlink1')
@@ -390,14 +432,15 @@ try:
 finally:
     os.close(fd)
 PY
-  [[ "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" != extraction || "$mode" != extract ]] \
-    || die "injected Web extraction failure"
+  if [[ "$mode" == extract ]] && web_adapter_fault_enabled extraction; then
+    die "injected Web extraction failure"
+  fi
 }
 
 web_adapter_write_guard() {
   local extracted_tree="$1"
   require_sha256 'extracted Web tree' "$extracted_tree"
-  python3 -B - "$WEB_GUARD_ROOT" "$(basename -- "$WEB_GUARD")" "$RELEASE_ID" \
+  /usr/bin/python3 -I -B - "$WEB_GUARD_ROOT" "$(basename -- "$WEB_GUARD")" "$RELEASE_ID" \
     "$RELEASE_INPUT_SHA" "$WEB_ADAPTER_TOOL_SHA" "$WEB_ARTIFACT" "$WEB_ARCHIVE_SHA_EXPECTED" \
     "$extracted_tree" "$WEB_HEAD" "$WEB_TREE" "$ACTIVATION_PROOF_SCHEMA" \
     "$ACTIVATION_PROOF_SHA" "$API_HEAD" "$API_TREE" "$API_DEPLOYED_JAR_SHA" \
@@ -450,7 +493,7 @@ web_adapter_verify_guard() {
   local -a values=()
   current_tool="$(web_adapter_tool_sha256)"
   [[ "$current_tool" == "$WEB_ADAPTER_TOOL_SHA" ]] || die "Web adapter tool changed after input load"
-  mapfile -d '' -t values < <(python3 -B - "$WEB_GUARD_ROOT" "$(basename -- "$WEB_GUARD")" \
+  mapfile -d '' -t values < <(/usr/bin/python3 -I -B - "$WEB_GUARD_ROOT" "$(basename -- "$WEB_GUARD")" \
     "$RELEASE_ID" "$RELEASE_INPUT_SHA" "$WEB_ADAPTER_TOOL_SHA" "$WEB_ARTIFACT" \
     "$WEB_ARCHIVE_SHA_EXPECTED" "$WEB_HEAD" "$WEB_TREE" "$ACTIVATION_PROOF_SCHEMA" \
     "$API_HEAD" "$API_TREE" "$API_DEPLOYED_JAR_SHA" <<'PY'
@@ -544,7 +587,7 @@ web_adapter_require_execute_approval() {
 web_adapter_health() {
   local live_dir="$1" timeout="$2"; shift 2
   if web_adapter_fixture_mode; then
-    [[ -z "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" || "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" != health ]] || return 1
+    web_adapter_fault_enabled health && return 1
     [[ -d "$live_dir" && ! -L "$live_dir" && -f "$live_dir/index.html" && ! -e "$live_dir/.health-fail" ]] || return 1
     local entry
     entry="$(grep -oE '/static/index-[A-Za-z0-9_-]+\.js' "$live_dir/index.html" | head -1)"
@@ -557,7 +600,7 @@ web_adapter_health() {
 
 web_adapter_move() {
   local operation="$1" source="$2" destination="$3"
-  if web_adapter_fixture_mode && [[ "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" == "$operation" ]]; then
+  if web_adapter_fault_enabled "$operation"; then
     return 91
   fi
   mv -T -- "$source" "$destination"
@@ -565,14 +608,14 @@ web_adapter_move() {
 
 web_adapter_maybe_fault() {
   local point="$1"
-  if web_adapter_fixture_mode && [[ "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" == "$point" ]]; then
+  if web_adapter_fault_enabled "$point"; then
     die "injected Web adapter fault: $point"
   fi
 }
 
 web_adapter_read_deploy_record() {
   local deploy_record="$1"
-  python3 -B - "$deploy_record" "$RELEASE_ID" "$RELEASE_INPUT_SHA" "$WEB_ADAPTER_TOOL_SHA" \
+  /usr/bin/python3 -I -B - "$deploy_record" "$RELEASE_ID" "$RELEASE_INPUT_SHA" "$WEB_ADAPTER_TOOL_SHA" \
     "$WEB_ARCHIVE_SHA_EXPECTED" "$WEB_GUARD" "$WEB_GUARD_SHA" "$ACTIVATION_PROOF_SHA" \
     "$API_HEAD" "$API_TREE" "$WEB_HEAD" "$WEB_TREE" <<'PY'
 import json,os,re,stat,sys
@@ -623,59 +666,113 @@ PY
 }
 
 web_adapter_publish_immutable_with_sidecar() {
-  local source="$1" destination="$2"
-  web_adapter_maybe_fault record-write
-  python3 -B - "$source" "$destination" <<'PY'
+  local source="$1" destination="$2" publication_kind="${3:-record}"
+  local fault_spec='' output rc
+  WEB_ADAPTER_RECORD_PRESERVE_LIVE=0
+  if [[ "$publication_kind" == record ]]; then
+    web_adapter_maybe_fault record-write
+    if web_adapter_fixture_mode; then fault_spec="${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}"; fi
+  elif [[ "$publication_kind" != recovery ]]; then
+    die "unknown immutable record publication kind: $publication_kind"
+  fi
+  if output="$(/usr/bin/python3 -I -B - "$source" "$destination" "$fault_spec" <<'PY'
 import hashlib, os, stat, sys
-source, destination = sys.argv[1:]
+source, destination, fault_spec = sys.argv[1:]
+faults = set(fault_spec.split(',')) if fault_spec else set()
+class PublicationFault(Exception):
+    pass
+def fault(point):
+    if point in faults:
+        raise PublicationFault('injected immutable record publication fault: {}'.format(point))
 parent = os.path.dirname(destination)
 if os.path.dirname(source) != parent:
     raise SystemExit('record staging and destination must share one directory')
 rootfd = os.open(parent, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0) | getattr(os, 'O_NOFOLLOW', 0))
 sname, dname = os.path.basename(source), os.path.basename(destination)
-fd = os.open(sname, os.O_RDWR | getattr(os, 'O_NOFOLLOW', 0), dir_fd=rootfd)
-try:
-    info = os.fstat(fd)
-    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-        raise SystemExit('record staging file is unsafe')
-    digest = hashlib.sha256()
-    while True:
-        block = os.read(fd, 1024 * 1024)
-        if not block: break
-        digest.update(block)
-    os.fchmod(fd, 0o400); os.fsync(fd)
-finally: os.close(fd)
 side_name = dname + '.sha256'
-side_content = '{}  {}\n'.format(digest.hexdigest(), dname).encode('ascii')
+linked = False
+source_unlinked = False
+side_created = False
 try:
-    sidefd = os.open(side_name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_NOFOLLOW', 0), 0o400, dir_fd=rootfd)
-except FileExistsError:
-    sidefd = os.open(side_name, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0), dir_fd=rootfd)
+    fd = os.open(sname, os.O_RDWR | getattr(os, 'O_NOFOLLOW', 0), dir_fd=rootfd)
     try:
-        sinfo = os.fstat(sidefd)
-        if (not stat.S_ISREG(sinfo.st_mode) or stat.S_IMODE(sinfo.st_mode) != 0o400
-                or sinfo.st_nlink != 1 or os.read(sidefd, len(side_content) + 1) != side_content):
-            raise SystemExit('existing record sidecar is unsafe or mismatched')
-    finally: os.close(sidefd)
-else:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise SystemExit('record staging file is unsafe')
+        digest = hashlib.sha256()
+        while True:
+            block = os.read(fd, 1024 * 1024)
+            if not block: break
+            digest.update(block)
+        os.fchmod(fd, 0o400); os.fsync(fd)
+    finally:
+        os.close(fd)
+    if os.path.lexists(destination) or os.path.lexists(os.path.join(parent, side_name)):
+        raise SystemExit('immutable record destination or sidecar already exists')
+    fault('record-sidecar')
+    side_content = '{}  {}\n'.format(digest.hexdigest(), dname).encode('ascii')
+    sidefd = os.open(side_name, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
+                     getattr(os, 'O_NOFOLLOW', 0), 0o400, dir_fd=rootfd)
+    side_created = True
     try:
         view=memoryview(side_content)
         while view:
             written=os.write(sidefd,view); view=view[written:]
         os.fchmod(sidefd,0o400); os.fsync(sidefd)
-    finally: os.close(sidefd)
-if os.path.lexists(destination):
-    raise SystemExit('immutable record destination already exists')
-os.link(sname, dname, src_dir_fd=rootfd, dst_dir_fd=rootfd, follow_symlinks=False)
-os.unlink(sname, dir_fd=rootfd)
-os.fsync(rootfd); os.close(rootfd)
+    finally:
+        os.close(sidefd)
+    fault('record-final-link')
+    os.link(sname, dname, src_dir_fd=rootfd, dst_dir_fd=rootfd, follow_symlinks=False)
+    linked = True
+    fault('record-post-link-unlink')
+    os.unlink(sname, dir_fd=rootfd)
+    source_unlinked = True
+    fault('record-directory-fsync')
+    os.fsync(rootfd)
+except BaseException as error:
+    preserve_live = False
+    if linked and not source_unlinked:
+        try:
+            os.unlink(dname, dir_fd=rootfd)
+            linked = False
+        except OSError:
+            try:
+                os.unlink(sname, dir_fd=rootfd)
+                source_unlinked = True
+            except OSError:
+                pass
+    if linked:
+        preserve_live = True
+    elif side_created:
+        try:
+            os.unlink(side_name, dir_fd=rootfd)
+            side_created = False
+        except OSError:
+            pass
+    try:
+        os.fsync(rootfd)
+    except OSError:
+        if linked:
+            preserve_live = True
+    sys.stderr.write('{}\n'.format(error))
+    raise SystemExit(92 if preserve_live else 1)
+finally:
+    os.close(rootfd)
 print(digest.hexdigest())
 PY
+  )"; then
+    printf '%s\n' "$output"
+    return 0
+  else
+    rc=$?
+    if (( rc == 92 )); then WEB_ADAPTER_RECORD_PRESERVE_LIVE=1; fi
+    return "$rc"
+  fi
 }
 
 web_adapter_verify_immutable_with_sidecar() {
   local path="$1"
-  python3 -B - "$path" <<'PY'
+  /usr/bin/python3 -I -B - "$path" <<'PY'
 import hashlib, os, stat, sys
 path=sys.argv[1]; parent=os.path.dirname(path); name=os.path.basename(path)
 rootfd=os.open(parent,os.O_RDONLY|getattr(os,'O_DIRECTORY',0)|getattr(os,'O_NOFOLLOW',0))
@@ -705,6 +802,60 @@ if side!='{}  {}\n'.format(digest,name).encode('ascii'):
     raise SystemExit('immutable record sidecar mismatch')
 print(digest)
 PY
+}
+
+web_adapter_publish_recovery_failure() {
+  local operation="$1" destination="$2" change_id="$3" original_exit="$4" reason="$5"
+  local live_dir="$6" backup_dir="$7" rescue_dir="$8" failed_dir="$9"
+  local temp rc live_state backup_state rescue_state failed_state
+  case "$operation" in deploy|rollback) ;; *) return 2 ;; esac
+  assert_path_within 'Web manual recovery record' "$destination" "$WEB_RECORD_ROOT"
+  live_state="$([[ -e "$live_dir" ]] && printf PRESENT || printf ABSENT)"
+  backup_state="$([[ -n "$backup_dir" && -e "$backup_dir" ]] && printf PRESENT || printf ABSENT)"
+  rescue_state="$([[ -n "$rescue_dir" && -e "$rescue_dir" ]] && printf PRESENT || printf ABSENT)"
+  failed_state="$([[ -n "$failed_dir" && -e "$failed_dir" ]] && printf PRESENT || printf ABSENT)"
+  temp="$(mktemp "$WEB_RECORD_ROOT/.web-recovery-record.XXXXXX")" || return 1
+  if /usr/bin/python3 -I -B - "$temp" "$operation" "$RELEASE_ID" "$change_id" \
+    "$original_exit" "$reason" "$live_dir" "$live_state" "$backup_dir" "$backup_state" \
+    "$rescue_dir" "$rescue_state" "$failed_dir" "$failed_state" "$RELEASE_INPUT_SHA" \
+    "$WEB_ADAPTER_TOOL_SHA" "$WEB_GUARD" "$WEB_GUARD_SHA" "$ACTIVATION_PROOF_SHA" <<'PY'
+import json, os, sys
+(path, operation, release_id, change_id, original_exit, reason, live_dir, live_state,
+ backup_dir, backup_state, rescue_dir, rescue_state, failed_dir, failed_state,
+ input_sha, tool_sha, guard, guard_sha, proof_sha) = sys.argv[1:]
+record = {
+  'schema': 'cyf-web-recovery-record-v1',
+  'status': 'FAILED_MANUAL_RECOVERY_REQUIRED',
+  'operation': operation, 'releaseId': release_id, 'changeId': change_id,
+  'originalExitCode': int(original_exit), 'failureReason': reason,
+  'liveDir': live_dir, 'liveState': live_state,
+  'backupDir': backup_dir, 'backupState': backup_state,
+  'rescueDir': rescue_dir, 'rescueState': rescue_state,
+  'failedDir': failed_dir, 'failedState': failed_state,
+  'releaseInputSha256': input_sha, 'adapterToolSha256': tool_sha,
+  'webGuard': guard, 'webGuardSha256': guard_sha,
+  'activationProofSha256': proof_sha,
+  'databaseOperation': 'NOT_PERFORMED', 'rabbitMqOperation': 'NOT_PERFORMED',
+  'apiActivationOperation': 'NOT_PERFORMED'
+}
+with open(path, 'w', encoding='utf-8') as stream:
+    json.dump(record, stream, sort_keys=True, indent=2); stream.write('\n')
+    stream.flush(); os.fsync(stream.fileno())
+PY
+  then
+    :
+  else
+    rc=$?
+    rm -f -- "$temp"
+    return "$rc"
+  fi
+  if web_adapter_publish_immutable_with_sidecar "$temp" "$destination" recovery >/dev/null; then
+    return 0
+  else
+    rc=$?
+    rm -f -- "$temp"
+    return "$rc"
+  fi
 }
 
 web_adapter_acquire_execution_lock() {

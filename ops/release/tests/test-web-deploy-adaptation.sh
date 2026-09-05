@@ -4,7 +4,11 @@ IFS=$'\n\t'
 umask 077
 export PATH='/usr/sbin:/usr/bin:/sbin:/bin'
 export LC_ALL='C'
-unset BASH_ENV ENV CDPATH GLOBIGNORE
+unset BASH_ENV ENV CDPATH GLOBIGNORE PYTHONPATH PYTHONHOME PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH \
+  HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy \
+  CURL_CA_BUNDLE REQUESTS_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR GIT_SSL_CAINFO GIT_SSL_CAPATH \
+  GIT_CONFIG_COUNT GIT_SSL_NO_VERIFY GIT_PROXY_COMMAND OPENSSL_CONF OPENSSL_MODULES \
+  AWS_CA_BUNDLE NODE_EXTRA_CA_CERTS
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
 VERIFY="$ROOT/ops/release/verify-web-deploy-adapter.sh"
@@ -37,7 +41,7 @@ CASE_INDEX=0
 
 write_archive() {
   local archive="$1" variant="${2:-safe}"
-  python3 -B - "$archive" "$variant" <<'PY'
+  /usr/bin/python3 -I -B - "$archive" "$variant" <<'PY'
 import io, os, tarfile, sys
 path, variant = sys.argv[1:]
 def add_file(bundle, name, content=b'x', kind=None, link=''):
@@ -63,7 +67,7 @@ PY
 write_proof() {
   local status="${1:-ACTIVATED_HEALTHY}" stt="${2:-PASS}" tts="${3:-PASS}"
   local routes="${4:-PASS}" deny="${5:-PASS}" loopback="${6:-127.0.0.1}"
-  python3 -B - "$PROOF" "$RELEASE_ID" "$API_HEAD" "$API_TREE" "$JAR_SHA" \
+  /usr/bin/python3 -I -B - "$PROOF" "$RELEASE_ID" "$API_HEAD" "$API_TREE" "$JAR_SHA" \
     "$status" "$stt" "$tts" "$routes" "$deny" "$loopback" <<'PY'
 import json,os,sys
 (path,release_id,api_head,api_tree,jar_sha,status,stt,tts,routes,deny,loopback)=sys.argv[1:]
@@ -80,7 +84,7 @@ PY
 write_input() {
   local archive_sha
   archive_sha="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
-  python3 -B - "$INPUT" "$RELEASE_ID" "$ARCHIVE" "$archive_sha" "$REPO" "$WEB_REF" \
+  /usr/bin/python3 -I -B - "$INPUT" "$RELEASE_ID" "$ARCHIVE" "$archive_sha" "$REPO" "$WEB_REF" \
     "$WEB_HEAD" "$WEB_TREE" "$LIVE" "$BACKUP" "$RECORDS" "$API_HEAD" "$API_TREE" \
     "$JAR_SHA" "$CONTROLLER" <<'PY'
 import json,sys
@@ -99,10 +103,63 @@ with open(path,'x',encoding='utf-8') as stream: json.dump(data,stream,sort_keys=
 PY
 }
 
+rewrite_json_field() {
+  local path="$1" field="$2" value="$3" sidecar="${4:-}"
+  /usr/bin/python3 -I -B - "$path" "$field" "$value" "$sidecar" <<'PY'
+import hashlib, json, os, sys
+path, field, value, sidecar = sys.argv[1:]
+os.chmod(path, 0o600)
+with open(path, encoding='utf-8') as stream:
+    data = json.load(stream)
+data[field] = value
+with open(path, 'w', encoding='utf-8') as stream:
+    json.dump(data, stream, sort_keys=True, indent=2); stream.write('\n')
+    stream.flush(); os.fsync(stream.fileno())
+os.chmod(path, 0o400)
+if sidecar:
+    content = open(path, 'rb').read()
+    payload = '{}  {}\n'.format(hashlib.sha256(content).hexdigest(), os.path.basename(path))
+    os.chmod(sidecar, 0o600)
+    with open(sidecar, 'w', encoding='ascii') as stream:
+        stream.write(payload); stream.flush(); os.fsync(stream.fileno())
+    os.chmod(sidecar, 0o400)
+PY
+}
+
+assert_no_success_record() {
+  local prefix="$1"
+  [[ -z "$(find "$RECORDS" -maxdepth 1 -name "${prefix}-*.json" -print -quit)" ]] \
+    || fail "failed operation left a committed $prefix record"
+}
+
+assert_manual_recovery_record() {
+  local operation="$1" record digest
+  record="$(find "$RECORDS" -maxdepth 1 -name "web-recovery-${operation}-*.json" -print -quit)"
+  [[ -n "$record" && -f "$record" && -f "${record}.sha256" ]] \
+    || fail "missing durable manual recovery record for $operation"
+  [[ "$(stat -Lc '%a:%h' "$record")" == '400:1' \
+     && "$(stat -Lc '%a:%h' "${record}.sha256")" == '400:1' ]] \
+    || fail "manual recovery record is not immutable nlink1 for $operation"
+  digest="$(sha256sum "$record" | awk '{print $1}')"
+  [[ "$(cat -- "${record}.sha256")" == "$digest  $(basename -- "$record")" ]] \
+    || fail "manual recovery record sidecar mismatch for $operation"
+  /usr/bin/python3 -I -B - "$record" "$operation" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as stream:
+    data = json.load(stream)
+if data.get('schema') != 'cyf-web-recovery-record-v1':
+    raise SystemExit('wrong recovery record schema')
+if data.get('status') != 'FAILED_MANUAL_RECOVERY_REQUIRED':
+    raise SystemExit('wrong recovery record status')
+if data.get('operation') != sys.argv[2]:
+    raise SystemExit('wrong recovery operation')
+PY
+}
+
 new_case() {
   CASE_INDEX=$((CASE_INDEX+1)); CASE="$RUN/case-$CASE_INDEX"; mkdir -m 0700 "$CASE"
   export CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE"
-  unset CYF_WEB_DEPLOY_ADAPTER_FAULT
+  unset CYF_WEB_DEPLOY_ADAPTER_FAULT CYF_WEB_DEPLOY_ADAPTER_TEST_COMMON_SH
   CONTROLLER="$CASE/controller"; REPO="$CASE/repo"; LIVE_PARENT="$CASE/host/web"
   LIVE="$LIVE_PARENT/kit"; BACKUP="$LIVE_PARENT/bak"; RECORDS="$BACKUP/release-records"
   ARCHIVE="$CASE/web.tar.gz"; INPUT="$CASE/input.json"
@@ -134,7 +191,7 @@ verify_case() {
   [[ -f "$GUARD" && -f "${GUARD}.sha256" ]] || fail 'verifier did not publish complete guard'
   GUARD_SHA="$(sha256sum "$GUARD" | awk '{print $1}')"
   PROOF_SHA="$(sha256sum "$PROOF" | awk '{print $1}')"
-  CANDIDATE_TREE="$(python3 -B - "$GUARD" <<'PY'
+  CANDIDATE_TREE="$(/usr/bin/python3 -I -B - "$GUARD" <<'PY'
 import json,sys
 with open(sys.argv[1],encoding='utf-8') as stream: print(json.load(stream)['extractedTreeSha256'])
 PY
@@ -161,17 +218,31 @@ assert_live_tree() {
   [[ "$(hash_tree "$LIVE")" == "$1" ]] || fail "unexpected live tree: expected=$1"
 }
 
+assert_path_tree() {
+  local path="$1" expected="$2" label="$3"
+  [[ -d "$path" && ! -L "$path" ]] || fail "$label path is unavailable: $path"
+  [[ "$(hash_tree "$path")" == "$expected" ]] || fail "$label tree mismatch: $path"
+}
+
 run_static() {
   local script
   for script in "$VERIFY" "$DEPLOY" "$ROLLBACK" "$ROOT/ops/release/lib/web-deploy-adapter.sh" "$0"; do
     head -1 "$script" | grep -Eq '^#!/bin/bash( -p)?$' || fail "non-absolute Bash entrypoint: $script"
   done
-  python3 -B - "$ROOT/ops/release/tests/test-web-deploy-adaptation.sh" <<'PY'
+  /usr/bin/python3 -I -B - "$ROOT/ops/release/tests/test-web-deploy-adaptation.sh" <<'PY'
 import pathlib,sys
 text=pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')
 for token in ('/dev/'+'shm', 'ev'+'al ', 'npm'+' ', 'gra'+'dle', 'system'+'ctl', 'p'+'kill'):
     if token in text: raise SystemExit('forbidden fixture-test token: {}'.format(token))
 PY
+  for script in "$VERIFY" "$DEPLOY" "$ROLLBACK"; do
+    grep -Fq 'HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy' "$script" \
+      || fail "proxy environment is not cleared by $script"
+    grep -Fq 'CURL_CA_BUNDLE REQUESTS_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR GIT_SSL_CAINFO GIT_SSL_CAPATH' "$script" \
+      || fail "CA override environment is not cleared by $script"
+  done
+  grep -Fq "'common.sh'" "$ROOT/ops/release/lib/web-deploy-adapter.sh" \
+    || fail 'common.sh is absent from the Web adapter tool digest'
   grep -Fq "MINIMUM_FREE_BYTES=0" "$ROOT/ops/release/lib/web-deploy-adapter.sh" \
     || fail 'cancelled legacy resource threshold was reactivated'
   pass 'static privileged-entrypoint and forbidden-mechanism fences'
@@ -179,20 +250,49 @@ PY
 
 run_proof() {
   new_case; rm "$PROOF"; expect_fail 'compiler flag without external proof' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
-  local field value
-  for field in status stt tts routes deny loopback; do
-    new_case; rm "$PROOF"
+  local field value hostile marker
+  for field in schema releaseId apiHead apiTree deployedJarSha256 status authenticatedStt \
+    authenticatedTts nginxRoutes nginxDenyClosed loopbackBinding; do
+    new_case
     case "$field" in
-      status) write_proof UNHEALTHY;; stt) write_proof ACTIVATED_HEALTHY FAIL;;
-      tts) write_proof ACTIVATED_HEALTHY PASS FAIL;; routes) write_proof ACTIVATED_HEALTHY PASS PASS FAIL;;
-      deny) write_proof ACTIVATED_HEALTHY PASS PASS PASS FAIL;;
-      loopback) write_proof ACTIVATED_HEALTHY PASS PASS PASS PASS 0.0.0.0;;
+      schema) value=wrong-schema;; releaseId) value=wrong-release;;
+      apiHead|apiTree) value="$(printf 'd%.0s' {1..40})";;
+      deployedJarSha256) value="$(printf 'e%.0s' {1..64})";;
+      status) value=UNHEALTHY;; loopbackBinding) value=0.0.0.0;;
+      *) value=FAIL;;
     esac
-    expect_fail "wrong activation proof $field" env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
+    rewrite_json_field "$PROOF" "$field" "$value"
+    expect_fail "wrong activation proof $field" env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" \
+      "$VERIFY" --input "$INPUT"
+  done
+  for field in finalAcceptedHostIdentitySha256 finalAcceptedLifecycleSha256 activationRecordSha256; do
+    new_case; rewrite_json_field "$PROOF" "$field" invalid
+    expect_fail "invalid activation proof digest $field" env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" \
+      "$VERIFY" --input "$INPUT"
   done
   new_case; chmod 0600 "$PROOF"; expect_fail 'mutable proof mode' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
   new_case; ln "$PROOF" "$CASE/proof-hardlink"; expect_fail 'hardlinked proof' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
   new_case; mv "$PROOF" "$CASE/proof-real"; ln -s ../proof-real "$PROOF"; expect_fail 'symlinked proof' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
+
+  new_case
+  hostile="$CASE/hostile"; marker="$CASE/injected"; mkdir -m 0700 "$hostile"
+  printf 'import os\nopen(os.environ["INJECT_MARKER"], "w").write("python")\n' > "$hostile/json.py"
+  cp -- "$hostile/json.py" "$hostile/tarfile.py"
+  printf 'printf shell > "$INJECT_MARKER"\n' > "$hostile/bash-env"
+  (cd -- "$hostile" && env INJECT_MARKER="$marker" PYTHONPATH="$hostile" PYTHONHOME="$hostile" \
+    HOME="$hostile" BASH_ENV="$hostile/bash-env" ENV="$hostile/bash-env" \
+    HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 ALL_PROXY=http://127.0.0.1:9 \
+    NO_PROXY='*' http_proxy=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 \
+    all_proxy=http://127.0.0.1:9 no_proxy='*' CURL_CA_BUNDLE="$hostile/ca.pem" \
+    REQUESTS_CA_BUNDLE="$hostile/ca.pem" SSL_CERT_FILE="$hostile/ca.pem" \
+    SSL_CERT_DIR="$hostile" GIT_SSL_CAINFO="$hostile/ca.pem" GIT_SSL_CAPATH="$hostile" \
+    GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.proxy GIT_CONFIG_VALUE_0=http://127.0.0.1:9 \
+    GIT_SSL_NO_VERIFY=true GIT_PROXY_COMMAND="$hostile/proxy" OPENSSL_CONF="$hostile/openssl.cnf" \
+    OPENSSL_MODULES="$hostile" \
+    "$VERIFY" --input "$INPUT" > "$CASE/hostile.out")
+  [[ ! -e "$marker" ]] || fail 'hostile shell/Python startup injection executed'
+  [[ -f "$GUARD" ]] || fail 'isolated hostile-environment verification did not publish a guard'
+  pass 'entrypoint clears proxy/CA injection and isolates Python imports from HOME/PYTHONPATH/CWD'
 }
 
 run_archive() {
@@ -208,10 +308,16 @@ run_archive() {
   new_case; mv "$ARCHIVE" "$CASE/archive-real"; ln -s archive-real "$ARCHIVE"
   expect_fail 'symlinked archive' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
   new_case
-  ( sleep 0.05; touch "$ARCHIVE" ) & mutator=$!
-  expect_fail 'archive mutation while held open' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" \
-    CYF_WEB_DEPLOY_ADAPTER_FAULT=archive-mutation-window "$VERIFY" --input "$INPUT"
-  wait "$mutator"
+  env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" CYF_WEB_DEPLOY_ADAPTER_FAULT=archive-mutation-window \
+    "$VERIFY" --input "$INPUT" > "$CASE/out" 2> "$CASE/err" & verifier_pid=$!
+  deadline=$((SECONDS + 10))
+  until [[ -f "$CASE/archive-mutation.ready" ]]; do
+    (( SECONDS < deadline )) || { wait "$verifier_pid" || true; fail 'mutation ready handshake timed out'; }
+  done
+  touch "$ARCHIVE"
+  (umask 077; printf 'CONTINUE\n' > "$CASE/archive-mutation.continue")
+  if wait "$verifier_pid"; then fail 'archive mutation while held open unexpectedly succeeded'; fi
+  pass 'archive mutation while held open fails through deterministic handshake'
 }
 
 run_guard() {
@@ -220,15 +326,37 @@ run_guard() {
     || fail 'guard publication is not immutable complete nlink1'
   chmod 0600 "$GUARD"
   expect_fail 'mutable guard' approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  new_case; verify_case; ln "$GUARD" "$CASE/guard-hardlink"
+  expect_fail 'hardlinked guard' approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  new_case; verify_case; rewrite_json_field "$GUARD" schema wrong-schema "${GUARD}.sha256"
+  expect_fail 'guard semantic mismatch' approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  new_case; verify_case; chmod 0600 "${GUARD}.sha256"
+  expect_fail 'mutable guard sidecar' approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  new_case; verify_case; ln "${GUARD}.sha256" "$CASE/guard-sidecar-hardlink"
+  expect_fail 'hardlinked guard sidecar' approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  new_case; verify_case; chmod 0600 "${GUARD}.sha256"; printf '0  wrong\n' > "${GUARD}.sha256"; chmod 0400 "${GUARD}.sha256"
+  expect_fail 'guard sidecar hash mismatch' approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  new_case; verify_case; chmod 0600 "$GUARD"; printf '\n' >> "$GUARD"; chmod 0400 "$GUARD"
+  expect_fail 'guard content hash mismatch' approval_env "$DEPLOY" --input "$INPUT" --dry-run
   new_case; verify_case; printf '\n' >> "$INPUT"
   expect_fail 'input changed after guard' approval_env "$DEPLOY" --input "$INPUT" --dry-run
   new_case; verify_case; chmod 0600 "$ARCHIVE"; printf x >> "$ARCHIVE"; chmod 0444 "$ARCHIVE"
   expect_fail 'archive changed after guard' approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  for field in finalAcceptedHostIdentitySha256 finalAcceptedLifecycleSha256 activationRecordSha256; do
+    new_case; verify_case; rewrite_json_field "$PROOF" "$field" "$(printf '9%.0s' {1..64})"
+    expect_fail "activation proof guard mismatch $field" approval_env "$DEPLOY" --input "$INPUT" --dry-run
+  done
+  new_case
+  cp -- "$ROOT/ops/release/common.sh" "$CASE/common.sh"; chmod 0400 "$CASE/common.sh"
+  export CYF_WEB_DEPLOY_ADAPTER_TEST_COMMON_SH="$CASE/common.sh"
+  verify_case
+  chmod 0600 "$CASE/common.sh"; printf '\n# fixture mutation\n' >> "$CASE/common.sh"; chmod 0400 "$CASE/common.sh"
+  expect_fail 'common.sh tool digest mutation' approval_env "$DEPLOY" --input "$INPUT" --dry-run
 }
 
 run_deploy() {
   new_case; verify_case
-  local binding
+  local binding var fault record backup failed
   for binding in approved id api-head api-tree web-head web-tree artifact guard proof; do
     case "$binding" in
       approved) expect_fail 'approval YES binding' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$DEPLOY" --input "$INPUT" --execute;;
@@ -248,16 +376,60 @@ run_deploy() {
   new_case; verify_case; deploy_case; assert_live_tree "$CANDIDATE_TREE"
   pass 'actual deploy entrypoint preserves exact candidate tree and immutable record'
 
-  local fault
   for fault in extraction staged-tree backup-rename cutover-rename health record-write; do
     new_case; verify_case
     expect_fail "deploy recovery $fault" approval_env env CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" "$DEPLOY" --input "$INPUT" --execute
     assert_live_tree "$OLD_TREE"
-    [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json' -print -quit)" ]] || fail "failed deploy $fault left a committed record"
+    assert_no_success_record web-deploy
   done
+
+  for fault in record-sidecar record-final-link record-post-link-unlink; do
+    new_case; verify_case
+    expect_fail "deploy record terminal cleanup $fault" approval_env env \
+      CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" "$DEPLOY" --input "$INPUT" --execute
+    assert_live_tree "$OLD_TREE"
+    assert_no_success_record web-deploy
+    [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json.sha256' -print -quit)" ]] \
+      || fail "failed deploy $fault left a success sidecar"
+  done
+
+
+  new_case; verify_case
+  expect_fail 'deploy record directory fsync preserves matching live state' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-directory-fsync "$DEPLOY" --input "$INPUT" --execute
+  assert_live_tree "$CANDIDATE_TREE"
+  record="$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json' -print -quit)"
+  [[ -n "$record" && -f "$record" && -f "${record}.sha256" ]] \
+    || fail 'directory-fsync terminal deploy did not preserve complete matching evidence'
+  approval_env "$ROLLBACK" --input "$INPUT" --dry-run "$record" > "$CASE/terminal-deploy-record.out"
+  backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+  assert_path_tree "$backup" "$OLD_TREE" 'terminal deploy backup'
+
+  new_case; verify_case
+  expect_fail 'compound deploy candidate removal failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=health,recovery-failed "$DEPLOY" --input "$INPUT" --execute
+  assert_live_tree "$CANDIDATE_TREE"
+  backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+  assert_path_tree "$backup" "$OLD_TREE" 'compound deploy backup'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-failed-*' -print -quit)" ]] \
+    || fail 'candidate-removal failure unexpectedly created a failed-candidate directory'
+  assert_no_success_record web-deploy
+  assert_manual_recovery_record deploy
+
+  new_case; verify_case
+  expect_fail 'compound deploy backup restore failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=health,recovery-restore "$DEPLOY" --input "$INPUT" --execute
+  [[ ! -e "$LIVE" ]] || fail 'backup-restore failure unexpectedly left a live directory'
+  backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+  failed="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-failed-*' -print -quit)"
+  assert_path_tree "$backup" "$OLD_TREE" 'compound deploy retained backup'
+  assert_path_tree "$failed" "$CANDIDATE_TREE" 'compound deploy failed candidate'
+  assert_no_success_record web-deploy
+  assert_manual_recovery_record deploy
 }
 
 run_rollback() {
+  local fault record rescue failed
   new_case; verify_case; deploy_case; assert_live_tree "$CANDIDATE_TREE"
   rm "$PROOF"
   approval_env "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD" >"$CASE/rollback.out"
@@ -276,14 +448,59 @@ run_rollback() {
     "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
   assert_live_tree "$CANDIDATE_TREE"
 
-  local fault
   for fault in rollback-staged-tree rollback-rescue-rename rollback-cutover-rename health record-write; do
     new_case; verify_case; deploy_case
     expect_fail "rollback rescue $fault" approval_env env CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" \
       "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
     assert_live_tree "$CANDIDATE_TREE"
-    [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json' -print -quit)" ]] || fail "failed rollback $fault left a committed record"
+    assert_no_success_record web-rollback
   done
+
+  for fault in record-sidecar record-final-link record-post-link-unlink; do
+    new_case; verify_case; deploy_case
+    expect_fail "rollback record terminal cleanup $fault" approval_env env \
+      CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+    assert_live_tree "$CANDIDATE_TREE"
+    assert_no_success_record web-rollback
+    [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json.sha256' -print -quit)" ]] \
+      || fail "failed rollback $fault left a success sidecar"
+  done
+
+
+  new_case; verify_case; deploy_case
+  expect_fail 'rollback record directory fsync preserves matching live state' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-directory-fsync \
+    "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  assert_live_tree "$OLD_TREE"
+  record="$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json' -print -quit)"
+  [[ -n "$record" && -f "$record" && -f "${record}.sha256" ]] \
+    || fail 'directory-fsync terminal rollback did not preserve complete matching evidence'
+  rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+  assert_path_tree "$rescue" "$CANDIDATE_TREE" 'terminal rollback rescue'
+
+  new_case; verify_case; deploy_case
+  expect_fail 'compound rollback restored-tree removal failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=health,recovery-rollback-failed \
+    "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  assert_live_tree "$OLD_TREE"
+  rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+  assert_path_tree "$rescue" "$CANDIDATE_TREE" 'compound rollback rescue'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rollback-failed-*' -print -quit)" ]] \
+    || fail 'restored-tree removal failure unexpectedly created a rollback-failed directory'
+  assert_no_success_record web-rollback
+  assert_manual_recovery_record rollback
+
+  new_case; verify_case; deploy_case
+  expect_fail 'compound rollback rescue restore failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=health,recovery-rescue \
+    "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  [[ ! -e "$LIVE" ]] || fail 'rescue-restore failure unexpectedly left a live directory'
+  rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+  failed="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rollback-failed-*' -print -quit)"
+  assert_path_tree "$rescue" "$CANDIDATE_TREE" 'compound rollback retained rescue'
+  assert_path_tree "$failed" "$OLD_TREE" 'compound rollback failed restored tree'
+  assert_no_success_record web-rollback
+  assert_manual_recovery_record rollback
 }
 
 case "$SELECTOR" in
