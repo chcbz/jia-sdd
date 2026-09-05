@@ -228,7 +228,8 @@ test_locks() {
     cd -- "$HOSTILE_PYTHON"
     export PYTHONPATH="$HOSTILE_PYTHON" PYTHONHOME="$HOSTILE_PYTHON" PYTHONSTARTUP="$HOSTILE_PYTHON/sitecustomize.py"
     exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; flock -n 8
-    d="$(stat -Lc %d /proc/$$/fd/8)"; i="$(stat -Lc %i /proc/$$/fd/8)"
+    owner_pid="$BASHPID"
+    d="$(stat -Lc %d /proc/$owner_pid/fd/8)"; i="$(stat -Lc %i /proc/$owner_pid/fd/8)"
     env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" \
       CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$d" CYF_RELEASE_LOCK_INODE="$i" \
       CYF_RELEASE_LOCK_HELD=1 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null
@@ -237,15 +238,16 @@ test_locks() {
     expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null
   )
   [[ ! -e "$HOSTILE_PYTHON_MARKER" ]] || fail "canonical lock validation imported ambient Python code"
-  (exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; d="$(stat -Lc %d /proc/$$/fd/8)"; i="$(stat -Lc %i /proc/$$/fd/8)"; expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$d" CYF_RELEASE_LOCK_INODE="$i" CYF_RELEASE_LOCK_HELD=1 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null)
+  (exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; owner_pid="$BASHPID"; d="$(stat -Lc %d /proc/$owner_pid/fd/8)"; i="$(stat -Lc %i /proc/$owner_pid/fd/8)"; expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$d" CYF_RELEASE_LOCK_INODE="$i" CYF_RELEASE_LOCK_HELD=1 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null)
   (
     exec 7<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; flock -n 7
     exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"
-    d="$(stat -Lc %d /proc/$$/fd/8)"; i="$(stat -Lc %i /proc/$$/fd/8)"
+    owner_pid="$BASHPID"
+    d="$(stat -Lc %d /proc/$owner_pid/fd/8)"; i="$(stat -Lc %i /proc/$owner_pid/fd/8)"
     expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$d" CYF_RELEASE_LOCK_INODE="$i" CYF_RELEASE_LOCK_HELD=1 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null
   )
   (
-    exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; flock -n 8; d="$(stat -Lc %d /proc/$$/fd/8)"; i="$(stat -Lc %i /proc/$$/fd/8)"
+    exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; flock -n 8; owner_pid="$BASHPID"; d="$(stat -Lc %d /proc/$owner_pid/fd/8)"; i="$(stat -Lc %i /proc/$owner_pid/fd/8)"
     mv "$CANONICAL_LOCK_ROOT/cyf-release-api.lock" "$CANONICAL_LOCK_ROOT/replaced.lock"; : > "$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; chmod 0660 "$CANONICAL_LOCK_ROOT/cyf-release-api.lock"
     expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$d" CYF_RELEASE_LOCK_INODE="$i" CYF_RELEASE_LOCK_HELD=1 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null
   )
