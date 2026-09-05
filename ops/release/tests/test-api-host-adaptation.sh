@@ -215,28 +215,17 @@ test_trusted_grep() {
   (( rc >= 2 )) || fail "trusted grep input error was not distinguished: $rc"
 }
 
-test_build_contract() {
-  test_common_args
-  test_trusted_grep
-  /usr/bin/python3 -I -B - "$RELEASE/build-api.sh" <<'PY'
+assert_orchestrator_delegation_contract() {
+  /usr/bin/python3 -I -B - "$RELEASE/lib/api-host-transaction.sh" "$RELEASE/build-api.sh" <<'PY'
 import pathlib, shlex, sys
 
-text = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')
-lines = text.splitlines()
-start_token = '"$ORCHESTRATOR_PATH" gradle ' + chr(92)
-starts = [index for index, line in enumerate(lines) if line == start_token]
-if len(starts) != 1:
-    raise SystemExit('canonical orchestrator call boundary is not unique')
-call_lines = []
-for line in lines[starts[0]:]:
-    continued = line.endswith(chr(92))
-    call_lines.append(line[:-1] if continued else line)
-    if not continued:
-        break
-else:
-    raise SystemExit('canonical orchestrator call is unterminated')
-argv = shlex.split(' '.join(call_lines), posix=True)
-expected = (
+canonical = '/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py'
+helper = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')
+builder = pathlib.Path(sys.argv[2]).read_text(encoding='utf-8')
+pin_clause = "if orch['path'] != '{}':\n    raise SystemExit('orchestrator path is not canonical')".format(canonical)
+validation_call = 'host_validate_input "$load_release_input_path" || die "invalid host release input"'
+load_statement = 'ORCHESTRATOR_PATH="$(json_get "$RELEASE_INPUT" api.orchestrator.path)"'
+expected_argv = (
     '$ORCHESTRATOR_PATH', 'gradle',
     '--cwd', '$API_REPO',
     '--tree-sha', '$API_TREE',
@@ -247,15 +236,69 @@ expected = (
     '--no-daemon', '--max-workers=1', '--no-build-cache',
     '-PrepoUsername=unused', '-PrepoPassword=unused', '$API_GRADLE_TASK',
 )
-if tuple(argv) != expected:
-    raise SystemExit('canonical orchestrator admission/build argv or ordering changed')
-if 'TEMP_METADATA="$(mktemp ' not in text:
-    raise SystemExit('metadata does not use a secure pre-created temporary file')
-if "with open(path, 'w', encoding='utf-8')" not in text:
-    raise SystemExit('metadata writer does not open the pre-created file')
-if "with open(path, 'x', encoding='utf-8')" in text:
-    raise SystemExit('metadata writer incorrectly exclusive-opens an existing mktemp file')
+
+def validate(helper_text, builder_text):
+    validation_start = helper_text.index('host_validate_input() {')
+    load_start = helper_text.index('\nhost_load_input() {', validation_start)
+    digest_start = helper_text.index('\nhost_tool_digest() {', load_start)
+    validation = helper_text[validation_start:load_start]
+    loader = helper_text[load_start:digest_start]
+    if validation.count(pin_clause) != 1:
+        raise ValueError('canonical orchestrator path pin is missing or ambiguous')
+    if loader.count(load_statement) != 1:
+        raise ValueError('validated orchestrator path is not loaded exactly once')
+    if loader.count(validation_call) != 1 or loader.index(validation_call) > loader.index(load_statement):
+        raise ValueError('orchestrator path is loaded before input validation')
+    lines = builder_text.splitlines()
+    start_token = '"$ORCHESTRATOR_PATH" gradle ' + chr(92)
+    starts = [index for index, line in enumerate(lines) if line == start_token]
+    if len(starts) != 1:
+        raise ValueError('canonical orchestrator call boundary is not unique')
+    call_lines = []
+    for line in lines[starts[0]:]:
+        continued = line.endswith(chr(92))
+        call_lines.append(line[:-1] if continued else line)
+        if not continued:
+            break
+    else:
+        raise ValueError('canonical orchestrator call is unterminated')
+    if tuple(shlex.split(' '.join(call_lines), posix=True)) != expected_argv:
+        raise ValueError('canonical orchestrator admission/build argv or ordering changed')
+    if 'TEMP_METADATA="$(mktemp ' not in builder_text:
+        raise ValueError('metadata does not use a secure pre-created temporary file')
+    if "with open(path, 'w', encoding='utf-8')" not in builder_text:
+        raise ValueError('metadata writer does not open the pre-created file')
+    if "with open(path, 'x', encoding='utf-8')" in builder_text:
+        raise ValueError('metadata writer incorrectly exclusive-opens an existing mktemp file')
+
+def mutate_once(text, old, new):
+    if text.count(old) != 1:
+        raise SystemExit('delegation mutation target is not unique')
+    return text.replace(old, new, 1)
+
+def expect_invalid(label, helper_text, builder_text):
+    try:
+        validate(helper_text, builder_text)
+    except ValueError:
+        return
+    raise SystemExit('delegation negative mutation accepted: ' + label)
+
+try:
+    validate(helper, builder)
+except ValueError as error:
+    raise SystemExit(str(error))
+expect_invalid('wrong path', mutate_once(helper, canonical, '/tmp/noncanonical-orchestrator.py'), builder)
+expect_invalid('missing pin', mutate_once(helper, pin_clause, ''), builder)
+expect_invalid('missing load', mutate_once(helper, load_statement, ''), builder)
+wrong_call = mutate_once(builder, '"$ORCHESTRATOR_PATH" gradle ', '"$WRONG_ORCHESTRATOR" gradle ')
+expect_invalid('wrong call', helper, wrong_call)
 PY
+}
+
+test_build_contract() {
+  test_common_args
+  test_trusted_grep
+  assert_orchestrator_delegation_contract
   hostile="$TMP/hostile-bin"; mkdir -m 0700 -- "$hostile"
   marker="$TMP/hostile-environment-executed"
   cat > "$TMP/hostile-bash-env" <<EOF
@@ -772,6 +815,7 @@ PY
 }
 
 test_activation_installer_nginx() {
+  assert_orchestrator_delegation_contract
   reset_fixture; make_valid_config; printf 'audio' > "$TMP/audio.webm"; chmod 0444 "$TMP/audio.webm"
   ok_sha="$(printf ok | sha256sum | awk '{print $1}')"
   output="$(run_release "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --dry-run 2>&1)"
@@ -870,7 +914,6 @@ test_activation_installer_nginx() {
 
   test_real_curl_contract
   assert_nginx_contract
-  /usr/bin/grep -q -- 'ops/orchestration/cyf_orchestrator.py' "$RELEASE/build-api.sh" || fail "orchestrator delegation"
   assert_no_trusted_grep_match "custom OPENAI_API_KEY" -En -- \
     '(^|[^A-Z_])OPENAI_API_KEY' "$RELEASE/activate-api-voice.sh" "$RELEASE/host/cyf-api-kit"
 
