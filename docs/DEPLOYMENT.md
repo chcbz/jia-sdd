@@ -1,16 +1,17 @@
 # CYF 项目部署说明
 
-> ## M1 发布强制门禁（2026-07-29）
+> ## M1 历史发布约束与当前限制（更新：2026-09-05）
 >
-> 当前磁盘门禁已临时清理通过（2026-08-01 17:48 CST：`/dev/vda1` 可用约 5.8 GiB；
-> `jia` 库 data+index 估算约 0.64 GiB，当前要求取 `max(5 GiB, 2 * estimated database dump + build/rollback reserve)` = 5 GiB）。
-> 后续发布前仍必须重新执行 runbook 第 1 节门禁，且 M1 API 禁止从脏 `/home/isp/wsps/cyf/api` 构建，也禁止使用下文默认
-> `/home/isp/bin/cyf_api_kit_start.sh` 的 pull/build 路径。唯一允许 source 为
+> M1 发布流程的固定资源阈值已于 2026-08-28 取消；资源快照仅用于观测，不把旧 5 GiB 阈值作为当前发布阻断条件。
+> 后续源码发布前必须先完成 release pipeline 的新安全路径适配与独立验收；资源与数据库快照可参考历史 runbook 第 1 节，但不得直接执行其中旧部署命令。M1 API 禁止从脏 `/home/isp/wsps/cyf/api` 构建。
+> `/home/isp/bin/cyf_api_kit.sh` 统一提供已部署 JAR 的生命周期入口；旧 `*_start.sh`/`*_deploy.sh`
+> 仅作兼容转发，不再 pull/build。直接 source-to-production 快捷部署已禁用。M1 发布仍只能使用
+> `ops/release/` 的 SHA-pinned pipeline，并将唯一允许 source 设为
 > `/home/isp/wsps/cyf/.worktrees/m1-integration-api`，expected HEAD
 > `c024126ae297f2a8b31c674d8b6530a8f96db556`；发布前必须断言 clean/HEAD，构建并记录 JAR SHA-256。
 > codex-ws-agent source 锁定 `/home/isp/wsps/cyf/.worktrees/m1-integration-isp-install`，expected HEAD
 > `d1a71ccd46809fdc70716fab1f847ca8a24222ad`。
-> 磁盘门禁必须先于任何 Gradle/npm/dump/tar/备份，并逐一覆盖 source、release、backup、deploy、agent backup 所在的不同文件系统；
+> 资源观测应覆盖 source、release、backup、deploy、agent backup 所在文件系统；维护窗口、SHA、备份和审批约束不变。
 > 完整停写、备份、restore drill、迁移顺序、forward-only scoped UNIQUE、获批 DROP+CREATE 全量恢复和 fail-closed smoke 见
 > [`docs/implementation/M1_RELEASE_RUNBOOK.md`](implementation/M1_RELEASE_RUNBOOK.md)。第二轮 release guard 只要求修订该 runbook，API/isp-install HEAD 不变。
 
@@ -50,13 +51,13 @@
 
 | 组件 | 路径/配置 |
 |------|----------|
-| JDK | `/home/isp/apps/jdk21` (Java 21) |
+| 后端运行时 | `/opt/cyf/runtime/temurin-21-jre` (Java 21, root-owned) |
 | Node.js | `/home/isp/apps/node/bin/node` (v20) |
 | Gradle | `/root/.codex/memories/gradle-9.3.1/bin/gradle` |
 | MySQL | socket: `/home/isp/apps/mysql/mysql.sock`, port 3306 |
 | Redis | 127.0.0.1:6379 |
 | Nginx | `/home/isp/apps/nginx` |
-| 部署目录 | `/home/isp/hosts/cyf/api` (后端), `/home/isp/hosts/cyf/web/kit` (前端) |
+| 部署目录 | `/opt/cyf/service/api` (后端), `/home/isp/hosts/cyf/web/kit` (前端) |
 
 ---
 
@@ -64,29 +65,57 @@
 
 ### 后端
 
-> **以下快捷命令不适用于 M1。** M1 必须使用顶部锁定的 clean integration worktree 和
-> `implementation/M1_RELEASE_RUNBOOK.md`；不得让脚本自行 pull/build。
+生命周期操作与源码发布已拆分。`isp` 用户统一使用 `/home/isp/bin/cyf_api_kit.sh`；该脚本通过
+受限 NOPASSWD sudo 调用 root-owned canonical 命令。`/home/isp/bin` 位于 `isp` 可写父路径，只是非特权
+便捷入口，不属于 root 信任边界；脚本内的 root 拒绝仅防误用。root/自动化必须只解析并执行
+`/usr/local/sbin/cyf-api-kit`，不得执行 `/home/isp/bin` 下的脚本：
 
 ```bash
-# 常规非 M1 快速路径：拉代码 → 构建 → 部署 → 重启
-bash /home/isp/bin/cyf_api_kit_start.sh
+# isp 用户统一入口；无参数默认 restart
+/home/isp/bin/cyf_api_kit.sh status
+/home/isp/bin/cyf_api_kit.sh start
+/home/isp/bin/cyf_api_kit.sh restart
+/home/isp/bin/cyf_api_kit.sh stop
+/home/isp/bin/cyf_api_kit.sh --help
+
+# deploy 子命令当前 fail-closed，仅输出迁移提示，不执行发布
+/home/isp/bin/cyf_api_kit.sh deploy
+
+# root/自动化入口；默认动作是 restart，不拉代码、不执行 Gradle
+/usr/local/sbin/cyf-api-kit status
+/usr/local/sbin/cyf-api-kit start
+/usr/local/sbin/cyf-api-kit restart
+/usr/local/sbin/cyf-api-kit stop
+
+# 源码发布必须使用 SHA-pinned release input 和不可变制品流程
+ops/release/build-api.sh --input <release-input.json>
+ops/release/verify-release.sh --input <release-input.json>
+ops/release/deploy-api.sh --input <release-input.json> --dry-run
+# --execute 还需要脚本帮助中列出的 SHA-bound 审批变量
 ```
 
-**脚本内部做了什么：**
-1. `git pull` 拉取 develop 分支最新代码
-2. `gradle :starter:bootJar -x test --no-daemon` 构建 JAR
-3. `tar zcf package.tgz` 打包
-4. 解压 → 替换 `cyf-api-kit.jar`
-5. 停止旧进程 → 启动新进程（nohup+setsid）
+`/usr/local/sbin/cyf-api-kit` 使用精确 Java/JAR 进程识别、PID/制品 SHA 运行记录、统一发布锁、
+内存/磁盘门禁和 `/actuator/health` 健康门禁；冷启动最长等待 1200 秒。注意当前已安装生命周期核心仍有资源拒绝逻辑，
+这与 M1 runbook 的非阻断资源观测不是同一实现；本次仅统一入口，不调整该核心的资源策略。Java 使用 root-owned
+Temurin 21 JRE，并降权为独立的 `cyf-api` 账号运行；可信 JAR 与密钥位于 root-owned
+`/opt/cyf/service/api/`，运行记录位于 `/run/cyf-api/`，不会从 `isp` 可写目录执行或写入 root 临时文件。
+Jasypt 密钥不暴露给交互账号 `isp`，生命周期日志写入 `/var/log/cyf-api/`。`/tmp` 下的 API 锁和
+`/run/cyf-api/` 由 `/etc/tmpfiles.d/cyf-api-locks.conf` 以 root 身份预创建。
+旧 `/home/isp/bin/cyf_api_kit_start.sh` 与 `/home/isp/bin/cyf_api_kit_deploy.sh` 仅兼容转发到统一入口；
+`deploy` 子命令保持 fail-closed，禁止绕过不可变制品、独立验证、自动回滚和生产审批门禁。
+历史 `ops/release/m2-c08*.json` 仍指向旧的 `/home/isp/hosts/cyf/api`
+运行路径，不得用于新的 `--execute`；下一次源码发布前必须先将 release pipeline 适配 root-owned JAR、
+`cyf-api` 运行身份和 `/run/cyf-api/` 记录路径，并重新独立验收。
+`implementation/M1_RELEASE_RUNBOOK.md` 当前仅保留历史门禁与迁移约束，路径适配完成前不可按其中旧部署命令执行。
 
 **JVM 参数：**
 ```
--Xms128m -Xmx512m -Xss256k -XX:MaxMetaspaceSize=192m -XX:+UseG1GC
+-Xms128m -Xmx384m -Xss256k -XX:MaxMetaspaceSize=192m -XX:MaxDirectMemorySize=64m -XX:+UseG1GC
 ```
 
 **启动参数：**
 ```
---server.port=10018 --spring.profiles.active=prod
+--server.port=10018 --server.address=0.0.0.0 --spring.profiles.active=prod
 ```
 
 ### 前端
@@ -138,8 +167,8 @@ ps -ef | grep agent-client | grep -v grep
 ### 查看日志
 
 ```bash
-# 后端启动日志
-ls -t /home/isp/hosts/cyf/api/logs/startlog_*.log | head -1 | xargs tail -50
+# 后端启动日志（仅 root 读取；isp 使用统一入口 status）
+ls -t /var/log/cyf-api/startlog_*.log | head -1 | xargs tail -50
 
 # agent 日志
 tail -f /home/isp/apps/codex-ws-agent/logs/startlog_*.log
@@ -215,7 +244,7 @@ SHOW INDEX FROM agent_task_artifact;
 | 检查项 | 命令/位置 |
 |--------|----------|
 | 后端进程 | `ps -ef \| grep cyf-api-kit` |
-| 后端端口 | `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:10018/actuator` |
+| 后端健康 | `curl -fsS http://127.0.0.1:10018/actuator/health` |
 | agent 连接 | `tail -2 /home/isp/apps/codex-ws-agent/logs/startlog_*.log` 含 `connected` |
 | 前端页面 | `curl -k -s -o /dev/null -w "%{http_code}" https://kit.chaoyoufan.cn/` |
 | nginx | `/home/isp/apps/nginx/sbin/nginx -t` |
@@ -228,9 +257,9 @@ SHOW INDEX FROM agent_task_artifact;
 |------|------|
 | 前端 500 | nginx 日志 `access.log`；文件权限 `chmod -R a+rX /home/isp/hosts/cyf/web/kit/` |
 | agent 连不上 | 检查 `tail -20 /home/isp/apps/codex-ws-agent/logs/*.log`；确认 `curl -I http://127.0.0.1:10018/ws/agent/channel?api_key=...` |
-| API 500 | `tail -100 /home/isp/hosts/cyf/api/logs/startlog_*.log \| grep ERROR` |
+| API 500/502 | root 查看 `/var/log/cyf-api/startlog_*.log`；isp 执行 `/home/isp/bin/cyf_api_kit.sh status`，root 执行 `/usr/local/sbin/cyf-api-kit status` |
 | 数据库报错 | 检查断新字段是否已执行迁移 SQL |
-| JVM OOM | `dmesg -T \| grep -i oom`；调整 `-Xmx512m` |
+| JVM OOM | `dmesg -T \| grep -i oom`；当前上限 `-Xmx384m`，调整前先复核主机资源 |
 
 ### A02 持久 Agent 身份 Schema 迁移
 
