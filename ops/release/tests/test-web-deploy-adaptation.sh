@@ -178,7 +178,10 @@ new_case() {
   ARCHIVE="$CASE/web.tar.gz"; INPUT="$CASE/input.json"
   RELEASE_ID="fixture-$CASE_INDEX"; API_HEAD="$(printf 'a%.0s' {1..40})"; API_TREE="$(printf 'b%.0s' {1..40})"
   JAR_SHA="$(printf 'c%.0s' {1..64})"
-  mkdir -m 0700 "$CONTROLLER" "$REPO" "$LIVE_PARENT" "$LIVE" "$BACKUP" "$RECORDS"
+  mkdir -m 0700 "$CONTROLLER" "$REPO" "$CASE/host"
+  mkdir -m 0700 "$LIVE_PARENT"
+  mkdir -m 0700 "$LIVE" "$BACKUP"
+  mkdir -m 0700 "$RECORDS"
   git -C "$REPO" init -q
   git -C "$REPO" config user.name fixture
   git -C "$REPO" config user.email fixture@example.invalid
