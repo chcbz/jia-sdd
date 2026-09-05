@@ -58,6 +58,12 @@ deploy_failure() {
       host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null || true
       host_finalize_record "$RECORD" 2>/dev/null || true
       ;;
+    STOP_RECORDING)
+      if ! host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null; then
+        host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
+      fi
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
     STOP_ATTEMPTED|STOPPED|CANDIDATE_INSTALLED)
       if host_call_lifecycle stop >/dev/null 2>&1 \
           && host_copy_exclusive "$BACKUP_JAR" "$RESTORE_STAGE" 0640 "$OLD_SHA" \
@@ -85,6 +91,7 @@ deploy_failure() {
 }
 trap deploy_failure EXIT
 
+PHASE=STOP_RECORDING
 host_record_state "$RECORD" STOP_ATTEMPTED
 PHASE=STOP_ATTEMPTED
 host_call_lifecycle stop

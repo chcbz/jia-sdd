@@ -265,6 +265,7 @@ PY
 latest_record() { find "$TEST_ROOT/opt/cyf/service/api/release-records" -type f -name "$1" -print | sort | tail -1; }
 record_status() { /usr/bin/python3 -I -B -c 'import json,sys;print(json.load(open(sys.argv[1]))["status"])' "$1"; }
 assert_fixture_running() { [[ -f "$TEST_ROOT/control/running" ]] || fail "$1 left fixture runtime stopped"; }
+assert_no_lifecycle_calls() { [[ ! -s "$TEST_ROOT/control/lifecycle.log" ]] || fail "$1 unexpectedly called canonical lifecycle"; }
 
 run_release_fault() {
   local name="$1" value="$2"; shift 2
@@ -284,6 +285,18 @@ test_transactions() {
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$old_sha" ]] || fail "rollback old artifact"
   assert_fixture_running "successful rollback"
 
+  for fault_variable in CYF_RELEASE_FAULT_RECORD_STATE CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE; do
+    reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"
+    if [[ "$fault_variable" == CYF_RELEASE_FAULT_RECORD_STATE ]]; then window=before-replace; else window=after-replace; fi
+    expect_fail run_release_fault "$fault_variable" STOP_ATTEMPTED "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
+    boundary_record="$(latest_record 'api-deploy-*.json')"
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$prior" ]] || fail "deploy STOP_ATTEMPTED $window fault changed selected artifact"
+    [[ "$(record_status "$boundary_record")" == ABORTED_BEFORE_STOP && "$(stat -Lc %a "$boundary_record")" == 444 ]] \
+      || fail "deploy STOP_ATTEMPTED $window fault lacks immutable terminal receipt"
+    assert_no_lifecycle_calls "deploy STOP_ATTEMPTED $window fault"
+    assert_fixture_running "deploy STOP_ATTEMPTED $window fault"
+  done
+
   reset_fixture; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"; : > "$TEST_ROOT/control/fail-next-start"
   expect_fail run_release "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "failed rollback did not restore rescue candidate"
@@ -293,6 +306,19 @@ test_transactions() {
   expect_fail env CYF_RELEASE_FAULT_REPLACE_MATCH=.cyf-api-rollback CYF_RELEASE_OFFLINE_TEST=YES CYF_RELEASE_TEST_ROOT="$TEST_ROOT" CYF_RELEASE_ALLOW_OFFLINE_EXECUTE=YES CYF_RELEASE_APPROVED=YES CYF_RELEASE_APPROVAL_ID=test-r1 CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "rollback rename fault lost rescue candidate"
   assert_fixture_running "rollback replace-fault recovery"
+
+  for fault_variable in CYF_RELEASE_FAULT_RECORD_STATE CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE; do
+    reset_fixture; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
+    deploy_record="$(latest_record 'api-deploy-*.json')"; : > "$TEST_ROOT/control/lifecycle.log"
+    if [[ "$fault_variable" == CYF_RELEASE_FAULT_RECORD_STATE ]]; then window=before-replace; else window=after-replace; fi
+    expect_fail run_release_fault "$fault_variable" STOP_ATTEMPTED "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
+    boundary_record="$(latest_record 'api-rollback-*.json')"
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "rollback STOP_ATTEMPTED $window fault changed selected artifact"
+    [[ "$(record_status "$boundary_record")" == ABORTED_BEFORE_STOP && "$(stat -Lc %a "$boundary_record")" == 444 ]] \
+      || fail "rollback STOP_ATTEMPTED $window fault lacks immutable terminal receipt"
+    assert_no_lifecycle_calls "rollback STOP_ATTEMPTED $window fault"
+    assert_fixture_running "rollback STOP_ATTEMPTED $window fault"
+  done
 
   reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; : > "$TEST_ROOT/control/fail-stop"
   expect_fail run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
@@ -642,6 +668,19 @@ test_activation_installer_nginx() {
     "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
   [[ -f "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env" ]] || fail "activation config missing"
   assert_fixture_running "successful activation"
+
+  for fault_variable in CYF_RELEASE_FAULT_RECORD_STATE CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE; do
+    reset_fixture; printf 'prior-config\n' > "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"; chmod 0600 "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"
+    prior_config_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')"; make_valid_config
+    if [[ "$fault_variable" == CYF_RELEASE_FAULT_RECORD_STATE ]]; then window=before-replace; else window=after-replace; fi
+    expect_fail run_release_fault "$fault_variable" STOP_ATTEMPTED "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
+    boundary_record="$(latest_record 'voice-activation-*.json')"
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$prior_config_sha" ]] || fail "activation STOP_ATTEMPTED $window fault changed selected config"
+    [[ "$(record_status "$boundary_record")" == ABORTED_BEFORE_STOP && "$(stat -Lc %a "$boundary_record")" == 444 ]] \
+      || fail "activation STOP_ATTEMPTED $window fault lacks immutable terminal receipt"
+    assert_no_lifecycle_calls "activation STOP_ATTEMPTED $window fault"
+    assert_fixture_running "activation STOP_ATTEMPTED $window fault"
+  done
 
   reset_fixture; printf 'prior-config\n' > "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"; chmod 0600 "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"
   prior_config_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')"; make_valid_config

@@ -74,6 +74,12 @@ activation_failure() {
       host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null || true
       host_finalize_record "$RECORD" 2>/dev/null || true
       ;;
+    STOP_RECORDING)
+      if ! host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null; then
+        host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
+      fi
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
     STOP_ATTEMPTED|STOPPED|CANDIDATE_INSTALLED|STARTED_PENDING_SMOKE)
       restore_ok=0
       if host_call_lifecycle stop >/dev/null 2>&1; then
@@ -103,7 +109,9 @@ activation_failure() {
   exit "$rc"
 }
 trap activation_failure EXIT
-host_record_state "$RECORD" STOP_ATTEMPTED; PHASE=STOP_ATTEMPTED
+PHASE=STOP_RECORDING
+host_record_state "$RECORD" STOP_ATTEMPTED
+PHASE=STOP_ATTEMPTED
 host_call_lifecycle stop; PHASE=STOPPED; host_record_state "$RECORD" STOPPED
 host_replace_durable "$STAGE" "$VOICE_LIVE"; PHASE=CANDIDATE_INSTALLED; host_record_state "$RECORD" CANDIDATE_INSTALLED
 host_call_lifecycle start
