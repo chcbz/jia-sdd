@@ -19,10 +19,10 @@ source "$ROOT/ops/release/common.sh"
 
 SELECTOR='all'
 if (($#)); then
-  [[ "$1" == --selector && $# == 2 ]] || { printf 'Usage: %s [--selector all|proof|archive|guard|deploy|rollback|static]\n' "$0" >&2; exit 2; }
+  [[ "$1" == --selector && $# == 2 ]] || { printf 'Usage: %s [--selector all|proof|archive|archive-mutation|guard|deploy|rollback|static]\n' "$0" >&2; exit 2; }
   SELECTOR="$2"
 fi
-case "$SELECTOR" in all|proof|archive|guard|deploy|rollback|static) ;; *) printf 'unknown selector: %s\n' "$SELECTOR" >&2; exit 2 ;; esac
+case "$SELECTOR" in all|proof|archive|archive-mutation|guard|deploy|rollback|static) ;; *) printf 'unknown selector: %s\n' "$SELECTOR" >&2; exit 2 ;; esac
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 pass() { printf 'PASS: %s\n' "$*"; }
@@ -32,9 +32,138 @@ expect_fail() {
   pass "$label fails closed"
 }
 
+# Begin mutation handshake helpers (also used by the pure fake microprobe).
+mutation_start_child() {
+  MUTATION_STARTED=$SECONDS
+  MUTATION_PHASE=STARTED
+  MUTATION_ACTIVE=1
+  MUTATION_DIAGNOSTICS=1
+  (
+    trap - EXIT
+    if "$@" > "$CASE/out" 2> "$CASE/err"; then child_rc=0; else child_rc=$?; fi
+    printf '%s %s\n' "$child_rc" "$((SECONDS - MUTATION_STARTED))" > "$CASE/mutation-child.done.tmp"
+    mv -- "$CASE/mutation-child.done.tmp" "$CASE/mutation-child.done"
+  ) &
+  MUTATION_PID=$!
+}
+
+mutation_wait_for_marker() {
+  local marker="$1" bound="$2" started=$SECONDS
+  while :; do
+    [[ ! -f "$marker" ]] || return 0
+    if [[ -f "$CASE/mutation-child.done" ]]; then
+      MUTATION_PHASE=CHILD_EXIT_BEFORE_MARKER
+      return 1
+    fi
+    if (( SECONDS - started >= bound )); then
+      MUTATION_PHASE=MARKER_TIMEOUT
+      return 1
+    fi
+    sleep 0.01
+  done
+}
+
+mutation_reap_completed() {
+  [[ -f "$CASE/mutation-child.done" ]] || return 1
+  IFS=' ' read -r MUTATION_CHILD_RC MUTATION_CHILD_ELAPSED < "$CASE/mutation-child.done" || return 1
+  [[ "$MUTATION_CHILD_RC" =~ ^[0-9]+$ && "$MUTATION_CHILD_ELAPSED" =~ ^[0-9]+$ ]] || return 1
+  if wait "$MUTATION_PID"; then
+    MUTATION_ACTIVE=0
+  else
+    MUTATION_ACTIVE=0
+    return 1
+  fi
+}
+
+mutation_report() {
+  local child_rc=UNRESOLVED child_elapsed=UNRESOLVED
+  if [[ -f "$CASE/mutation-child.done" ]]; then
+    IFS=' ' read -r child_rc child_elapsed < "$CASE/mutation-child.done" || true
+  fi
+  printf 'MUTATION_DIAGNOSTIC phase=%s child_rc=%s child_elapsed_seconds=%s elapsed_seconds=%s ready=%s fixture=%s\n' \
+    "$MUTATION_PHASE" "$child_rc" "$child_elapsed" "$((SECONDS - MUTATION_STARTED))" \
+    "$([[ -f "$CASE/archive-mutation.ready" ]] && printf PRESENT || printf ABSENT)" "$CASE" >&2
+  printf '%s\n' 'MUTATION_CHILD_STDOUT_BEGIN' >&2
+  [[ ! -f "$CASE/out" ]] || cat -- "$CASE/out" >&2
+  printf '%s\n' 'MUTATION_CHILD_STDOUT_END' 'MUTATION_CHILD_STDERR_BEGIN' >&2
+  [[ ! -f "$CASE/err" ]] || cat -- "$CASE/err" >&2
+  printf '%s\n' 'MUTATION_CHILD_STDERR_END' >&2
+}
+
+run_handshake_microtests() {
+  local RUN CASE mode marker
+  local MUTATION_STARTED MUTATION_PHASE MUTATION_ACTIVE MUTATION_DIAGNOSTICS MUTATION_PID
+  local MUTATION_CHILD_RC MUTATION_CHILD_ELAPSED
+  RUN="$(mktemp -d /tmp/cyf-web-handshake-micro.XXXXXX)"
+  printf 'HANDSHAKE_MICRO_ROOT=%s\n' "$RUN"
+  for mode in ready premature delayed timeout; do
+    CASE="$RUN/$mode"; mkdir -m 0700 "$CASE"
+    marker="$CASE/archive-mutation.ready"
+    mutation_start_child /bin/bash -p -c '
+      printf "fake stdout %s\n" "$1"
+      printf "fake stderr %s\n" "$1" >&2
+      case "$1" in
+        ready) printf "READY\n" > "$2";;
+        premature) exit 23;;
+        delayed) sleep 0.2; printf "READY\n" > "$2";;
+        timeout) sleep 2; exit 24;;
+      esac
+    ' fake "$mode" "$marker"
+    case "$mode" in
+      ready|delayed)
+        mutation_wait_for_marker "$marker" 5 || return 1
+        ;;
+      premature)
+        if mutation_wait_for_marker "$marker" 5; then return 1; fi
+        [[ "$MUTATION_PHASE" == CHILD_EXIT_BEFORE_MARKER ]] || return 1
+        ;;
+      timeout)
+        if mutation_wait_for_marker "$marker" 1; then return 1; fi
+        [[ "$MUTATION_PHASE" == MARKER_TIMEOUT ]] || return 1
+        mutation_report 2> "$CASE/timeout-report"
+        grep -Fq 'child_rc=UNRESOLVED' "$CASE/timeout-report" || return 1
+        ;;
+    esac
+    mutation_wait_for_marker "$CASE/mutation-child.done" 5 || return 1
+    mutation_reap_completed || return 1
+    case "$mode:$MUTATION_CHILD_RC" in ready:0|delayed:0|premature:23|timeout:24) ;; *) return 1;; esac
+    mutation_report 2> "$CASE/report"
+    grep -Fq "child_rc=$MUTATION_CHILD_RC" "$CASE/report" || return 1
+    grep -Fq "fake stdout $mode" "$CASE/report" || return 1
+    grep -Fq "fake stderr $mode" "$CASE/report" || return 1
+    grep -Fq 'elapsed_seconds=' "$CASE/report" || return 1
+    printf 'HANDSHAKE_MICRO=PASS case=%s child_rc=%s\n' "$mode" "$MUTATION_CHILD_RC"
+    for marker in out err report timeout-report archive-mutation.ready mutation-child.done; do
+      [[ ! -f "$CASE/$marker" ]] || unlink "$CASE/$marker"
+    done
+    rmdir -- "$CASE"
+  done
+  rmdir -- "$RUN"
+}
+# End mutation handshake helpers.
+
+cleanup_test_run() {
+  local exit_code=$?
+  trap - EXIT
+  set +e
+  if (( ${MUTATION_DIAGNOSTICS:-0} == 1 )); then
+    # Copy diagnostics before any fixture removal, including setup/mutation failures.
+    mutation_report
+    if (( ${MUTATION_ACTIVE:-0} == 1 )); then
+      mutation_reap_completed
+      if (( MUTATION_ACTIVE == 1 )); then
+        printf 'MUTATION_CHILD_PENDING: retaining %s; no signal or unbounded wait; logs are a snapshot\n' "$RUN" >&2
+        exit "$exit_code"
+      fi
+    fi
+  fi
+  rm -rf --one-file-system -- "$RUN"
+  exit "$exit_code"
+}
+
 RUN="$(mktemp -d /tmp/cyf-web-adapter-test.XXXXXX)"
 chmod 0700 "$RUN"
-trap 'rm -rf --one-file-system -- "$RUN"' EXIT
+trap cleanup_test_run EXIT
 export HOME="$RUN/home" GIT_CONFIG_NOSYSTEM=1
 mkdir -m 0700 "$HOME"
 CASE_INDEX=0
@@ -335,16 +464,31 @@ run_archive() {
   expect_fail 'hardlinked archive' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
   new_case; mv "$ARCHIVE" "$CASE/archive-real"; ln -s archive-real "$ARCHIVE"
   expect_fail 'symlinked archive' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
+  run_archive_mutation
+}
+
+run_archive_mutation() {
   new_case
-  env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" CYF_WEB_DEPLOY_ADAPTER_FAULT=archive-mutation-window \
-    "$VERIFY" --input "$INPUT" > "$CASE/out" 2> "$CASE/err" & verifier_pid=$!
-  deadline=$((SECONDS + 10))
-  until [[ -f "$CASE/archive-mutation.ready" ]]; do
-    (( SECONDS < deadline )) || { wait "$verifier_pid" || true; fail 'mutation ready handshake timed out'; }
-  done
+  # Ten seconds to readiness and ten to completion, each yielding between polls.
+  # A still-running child at either deadline retains its fixture and reports UNKNOWN,
+  # rather than pretending to have an exit code or waiting/signalling indefinitely.
+  mutation_start_child env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" CYF_WEB_DEPLOY_ADAPTER_FAULT=archive-mutation-window \
+    "$VERIFY" --input "$INPUT"
+  mutation_wait_for_marker "$CASE/archive-mutation.ready" 10 \
+    || fail 'mutation ready handshake failed; child diagnostics follow'
+  MUTATION_PHASE=READY
+  printf 'MUTATION_READY elapsed_seconds=%s\n' "$((SECONDS - MUTATION_STARTED))"
   touch "$ARCHIVE"
   (umask 077; printf 'CONTINUE\n' > "$CASE/archive-mutation.continue")
-  if wait "$verifier_pid"; then fail 'archive mutation while held open unexpectedly succeeded'; fi
+  mutation_wait_for_marker "$CASE/mutation-child.done" 10 \
+    || fail 'mutation completion timed out; child diagnostics follow'
+  mutation_reap_completed || fail 'mutation child outcome unavailable'
+  MUTATION_PHASE=COMPLETED
+  (( MUTATION_CHILD_RC != 0 )) || fail 'archive mutation while held open unexpectedly succeeded'
+  grep -Fxq 'Web archive changed while held open' "$CASE/err" \
+    || fail 'child failed without the required archive mutation rejection'
+  mutation_report
+  MUTATION_DIAGNOSTICS=0
   pass 'archive mutation while held open fails through deterministic handshake'
 }
 
@@ -682,7 +826,7 @@ run_rollback() {
 
 case "$SELECTOR" in
   static) run_static;; proof) run_proof;; archive) run_archive;; guard) run_guard;;
-  deploy) run_deploy;; rollback) run_rollback;;
+  archive-mutation) run_archive_mutation;; deploy) run_deploy;; rollback) run_rollback;;
   all) run_static; run_proof; run_archive; run_guard; run_deploy; run_rollback;;
 esac
 printf 'WEB_DEPLOY_ADAPTATION_TESTS=PASS\n'
