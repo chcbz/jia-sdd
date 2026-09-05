@@ -604,6 +604,7 @@ acquire_execution_lock() {
 parse_common_args() {
   INPUT_FILE="$CYF_RELEASE_DEFAULT_INPUT"
   EXECUTE=0
+  SHOW_HELP=0
   POSITIONAL=()
   while (($#)); do
     case "$1" in

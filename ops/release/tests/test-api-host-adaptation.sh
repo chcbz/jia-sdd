@@ -151,7 +151,49 @@ run_canonical_lock_validation() {
     "$RELEASE/host/cyf-api-kit" validate-lock-contract
 }
 
+test_common_args() {
+  env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin /bin/bash -p -s -- "$RELEASE/common.sh" <<'SH'
+set -Eeuo pipefail
+source "$1"
+
+assert_parse_state() {
+  local label="$1" expected_input="$2" expected_execute="$3" expected_help="$4" expected_positionals="$5"
+  [[ "$INPUT_FILE" == "$expected_input" && "$EXECUTE" == "$expected_execute" \
+      && "$SHOW_HELP" == "$expected_help" && "${#POSITIONAL[@]}" == "$expected_positionals" ]] \
+    || { printf 'common parser state mismatch: %s\n' "$label" >&2; exit 1; }
+}
+
+INPUT_FILE=stale
+EXECUTE=7
+SHOW_HELP=7
+POSITIONAL=(stale)
+parse_common_args
+assert_parse_state noargs "$CYF_RELEASE_DEFAULT_INPUT" 0 0 0
+
+parse_common_args --input /tmp/cyf-r8-input.json
+assert_parse_state input /tmp/cyf-r8-input.json 0 0 0
+
+parse_common_args --dry-run
+assert_parse_state dry-run "$CYF_RELEASE_DEFAULT_INPUT" 0 0 0
+
+parse_common_args --execute
+assert_parse_state execute "$CYF_RELEASE_DEFAULT_INPUT" 1 0 0
+
+parse_common_args --help
+assert_parse_state help "$CYF_RELEASE_DEFAULT_INPUT" 0 1 0
+
+parse_common_args -h
+assert_parse_state short-help "$CYF_RELEASE_DEFAULT_INPUT" 0 1 0
+
+parse_common_args --help
+assert_parse_state repeated-help "$CYF_RELEASE_DEFAULT_INPUT" 0 1 0
+parse_common_args --input /tmp/cyf-r8-normal.json
+assert_parse_state repeated-normal /tmp/cyf-r8-normal.json 0 0 0
+SH
+}
+
 test_build_contract() {
+  test_common_args
   /usr/bin/python3 -I -B - "$RELEASE/build-api.sh" <<'PY'
 import pathlib, shlex, sys
 
