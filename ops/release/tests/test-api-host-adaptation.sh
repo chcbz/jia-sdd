@@ -14,7 +14,16 @@ pass() { printf 'PASS: %s\n' "$*"; }
 expect_fail() { local output; set +e; output="$("$@" 2>&1)"; local rc=$?; set -e; ((rc != 0)) || fail "expected failure: $*"; printf '%s' "$output"; }
 
 TMP="$(mktemp -d /tmp/cyf-host-adapt-test.XXXXXX)"
-trap 'rm -rf -- "$TMP"' EXIT
+OWNED_LOOPBACK_PIDS=()
+cleanup() {
+  local pid
+  set +e
+  for pid in "${OWNED_LOOPBACK_PIDS[@]}"; do
+    wait "$pid" 2>/dev/null
+  done
+  rm -rf -- "$TMP"
+}
+trap cleanup EXIT
 TEST_ROOT="$TMP/root"
 HEAD=34b67fed96061bf9c3132106ca219fc6f5f6ba05
 TREE=fb42c46c1f63299a37b44d7e55c6a303ddf016f1
@@ -22,6 +31,7 @@ TREE=fb42c46c1f63299a37b44d7e55c6a303ddf016f1
 make_fake_lifecycle() {
   mkdir -p "$TEST_ROOT/usr/local/sbin" "$TEST_ROOT/opt/cyf/service/api/backups" \
     "$TEST_ROOT/opt/cyf/service/api/release-records" "$TEST_ROOT/tmp" "$TEST_ROOT/control"
+  : > "$TEST_ROOT/control/running"
   : > "$TEST_ROOT/tmp/cyf-release-api.lock"; chmod 0660 "$TEST_ROOT/tmp/cyf-release-api.lock"
   : > "$TEST_ROOT/tmp/cyf-api-lifecycle.lock"; chmod 0600 "$TEST_ROOT/tmp/cyf-api-lifecycle.lock"
   cat > "$TEST_ROOT/usr/local/sbin/cyf-api-kit" <<'SH'
@@ -33,12 +43,18 @@ exec 9<>"$root/tmp/cyf-api-lifecycle.lock"; flock -n 9 || exit 36
 printf 'lifecycle-held:%s\n' "$1" >> "$root/control/lifecycle.log"
 if [[ "$1" == stop && -e "$root/control/partial-stop-next" ]]; then
   rm -f -- "$root/control/partial-stop-next"
+  rm -f -- "$root/control/running"
   printf 'partial-stop:%s\n' "$1" >> "$root/control/lifecycle.log"
   exit 40
 fi
 if [[ "$1" == stop && -e "$root/control/fail-stop" ]]; then exit 41; fi
 if [[ "$1" == start && -e "$root/control/fail-next-start" ]]; then rm -f "$root/control/fail-next-start"; exit 42; fi
-case "$1" in stop|start|status) ;; *) exit 43 ;; esac
+case "$1" in
+  stop) rm -f -- "$root/control/running" ;;
+  start) : > "$root/control/running" ;;
+  status) ;;
+  *) exit 43 ;;
+esac
 SH
   chmod 0755 "$TEST_ROOT/usr/local/sbin/cyf-api-kit"
 }
@@ -47,7 +63,7 @@ make_input_and_artifact() {
   local artifact_root="$TMP/artifacts"
   mkdir -p "$artifact_root/api"
   INPUT="$TMP/input.json"
-  python3 -B - "$RELEASE/jvc-oai-r1-input.json" "$INPUT" "$artifact_root" <<'PY'
+  /usr/bin/python3 -I -B - "$RELEASE/jvc-oai-r1-input.json" "$INPUT" "$artifact_root" <<'PY'
 import json,sys
 source,target,artifact=sys.argv[1:]
 with open(source,encoding='utf-8') as stream: data=json.load(stream)
@@ -55,7 +71,7 @@ data['artifactRoot']=artifact
 with open(target,'w',encoding='utf-8') as stream: json.dump(data,stream,indent=2); stream.write('\n')
 PY
   ARTIFACT="$artifact_root/api/cyf-api-$HEAD-$TREE.jar"
-  python3 -B - "$ARTIFACT" <<'PY'
+  /usr/bin/python3 -I -B - "$ARTIFACT" <<'PY'
 import sys,zipfile
 with zipfile.ZipFile(sys.argv[1],'x',zipfile.ZIP_STORED) as jar:
     jar.writestr('META-INF/MANIFEST.MF','Manifest-Version: 1.0\nMain-Class: org.springframework.boot.loader.launch.JarLauncher\nStart-Class: cn.jia.Application\n\n')
@@ -88,7 +104,7 @@ EOF
   printf '%s  %s\n' "$SHA" "$(basename "$ARTIFACT")" > "$ARTIFACT.sha256"; chmod 0444 "$ARTIFACT.sha256"
   local meta_sha; meta_sha="$(sha256sum "$ARTIFACT.json"|awk '{print $1}')"
   printf '%s  %s\n' "$meta_sha" "$(basename "$ARTIFACT.json")" > "$ARTIFACT.json.sha256"; chmod 0444 "$ARTIFACT.json.sha256"
-  python3 -B - "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar" <<'PY'
+  /usr/bin/python3 -I -B - "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar" <<'PY'
 import sys,zipfile
 with zipfile.ZipFile(sys.argv[1],'x',zipfile.ZIP_STORED) as jar:
     jar.writestr('META-INF/MANIFEST.MF','Manifest-Version: 1.0\nMain-Class: org.springframework.boot.loader.launch.JarLauncher\nStart-Class: cn.jia.Application\n\n')
@@ -106,6 +122,22 @@ run_release() {
 
 reset_fixture() { rm -rf -- "$TEST_ROOT" "$TMP/artifacts"; make_fake_lifecycle; make_input_and_artifact; }
 
+make_hostile_python_fixture() {
+  HOSTILE_PYTHON="$TMP/hostile-python"
+  HOSTILE_PYTHON_MARKER="$TMP/hostile-python-executed"
+  rm -rf -- "$HOSTILE_PYTHON"; rm -f -- "$HOSTILE_PYTHON_MARKER"
+  mkdir -m 0700 -- "$HOSTILE_PYTHON"
+  local module
+  for module in json pathlib hashlib tempfile sitecustomize; do
+    cat > "$HOSTILE_PYTHON/$module.py" <<EOF
+with open('$HOSTILE_PYTHON_MARKER', 'a') as stream:
+    stream.write('$module\\n')
+raise RuntimeError('ambient Python module executed')
+EOF
+    chmod 0600 "$HOSTILE_PYTHON/$module.py"
+  done
+}
+
 make_canonical_lock_fixture() {
   CANONICAL_LOCK_ROOT="$TMP/canonical-locks"
   rm -rf -- "$CANONICAL_LOCK_ROOT"
@@ -120,7 +152,7 @@ run_canonical_lock_validation() {
 }
 
 test_build_contract() {
-  python3 -B - "$RELEASE/build-api.sh" <<'PY'
+  /usr/bin/python3 -I -B - "$RELEASE/build-api.sh" <<'PY'
 import pathlib, sys
 
 text = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')
@@ -167,6 +199,17 @@ EOF
     env -i PATH="$hostile" BASH_ENV="$TMP/hostile-bash-env" "$RELEASE/$script" --help >/dev/null
   done
   [[ ! -e "$marker" ]] || fail "privileged entrypoint accepted hostile PATH/BASH_ENV"
+
+  reset_fixture; make_valid_config; printf 'audio' > "$TMP/python-audio.webm"; chmod 0444 "$TMP/python-audio.webm"
+  make_hostile_python_fixture
+  (
+    cd -- "$HOSTILE_PYTHON"
+    export PYTHONPATH="$HOSTILE_PYTHON" PYTHONHOME="$HOSTILE_PYTHON" PYTHONSTARTUP="$HOSTILE_PYTHON/sitecustomize.py"
+    run_release "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" \
+      --audio-fixture "$TMP/python-audio.webm" \
+      --expected-transcript-sha256 "$(printf ok | sha256sum | awk '{print $1}')" --dry-run >/dev/null
+  )
+  [[ ! -e "$HOSTILE_PYTHON_MARKER" ]] || fail "actual host validation imported ambient Python code"
   pass build-contract
 }
 
@@ -174,7 +217,10 @@ test_locks() {
   make_canonical_lock_fixture
   output="$(run_canonical_lock_validation)"
   [[ "$output" == *'LOCK_CONTRACT=PASS'* && "$output" == *'LOCK_ORDER=FD8,FD9'* ]] || fail "canonical direct lock order"
+  make_hostile_python_fixture
   (
+    cd -- "$HOSTILE_PYTHON"
+    export PYTHONPATH="$HOSTILE_PYTHON" PYTHONHOME="$HOSTILE_PYTHON" PYTHONSTARTUP="$HOSTILE_PYTHON/sitecustomize.py"
     exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; flock -n 8
     d="$(stat -Lc %d /proc/$$/fd/8)"; i="$(stat -Lc %i /proc/$$/fd/8)"
     env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" \
@@ -184,6 +230,7 @@ test_locks() {
     expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$d" CYF_RELEASE_LOCK_INODE=1 CYF_RELEASE_LOCK_HELD=1 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null
     expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null
   )
+  [[ ! -e "$HOSTILE_PYTHON_MARKER" ]] || fail "canonical lock validation imported ambient Python code"
   (exec 8<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; d="$(stat -Lc %d /proc/$$/fd/8)"; i="$(stat -Lc %i /proc/$$/fd/8)"; expect_fail env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$CANONICAL_LOCK_ROOT" CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$d" CYF_RELEASE_LOCK_INODE="$i" CYF_RELEASE_LOCK_HELD=1 "$RELEASE/host/cyf-api-kit" validate-lock-contract >/dev/null)
   (
     exec 7<>"$CANONICAL_LOCK_ROOT/cyf-release-api.lock"; flock -n 7
@@ -201,7 +248,7 @@ test_locks() {
   while [[ ! -e "$CANONICAL_LOCK_ROOT/holder-ready" ]]; do sleep 0.01; done
   expect_fail run_canonical_lock_validation >/dev/null
   wait "$holder"
-  python3 -B - "$RELEASE/host/cyf-api-kit" <<'PY'
+  /usr/bin/python3 -I -B - "$RELEASE/host/cyf-api-kit" <<'PY'
 from pathlib import Path
 import sys
 text=Path(sys.argv[1]).read_text(encoding='utf-8')
@@ -216,7 +263,8 @@ PY
 }
 
 latest_record() { find "$TEST_ROOT/opt/cyf/service/api/release-records" -type f -name "$1" -print | sort | tail -1; }
-record_status() { python3 -B -c 'import json,sys;print(json.load(open(sys.argv[1]))["status"])' "$1"; }
+record_status() { /usr/bin/python3 -I -B -c 'import json,sys;print(json.load(open(sys.argv[1]))["status"])' "$1"; }
+assert_fixture_running() { [[ -f "$TEST_ROOT/control/running" ]] || fail "$1 left fixture runtime stopped"; }
 
 run_release_fault() {
   local name="$1" value="$2"; shift 2
@@ -229,23 +277,28 @@ test_transactions() {
   reset_fixture; old_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"
   run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "candidate swap"
+  assert_fixture_running "successful deploy"
   deploy_record="$(latest_record 'api-deploy-*.json')"
-  [[ "$(python3 -B -c 'import json,sys;print(json.load(open(sys.argv[1]))["status"])' "$deploy_record")" == COMMITTED ]] || fail "deploy commit state"
+  [[ "$(/usr/bin/python3 -I -B -c 'import json,sys;print(json.load(open(sys.argv[1]))["status"])' "$deploy_record")" == COMMITTED ]] || fail "deploy commit state"
   run_release "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$old_sha" ]] || fail "rollback old artifact"
+  assert_fixture_running "successful rollback"
 
   reset_fixture; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"; : > "$TEST_ROOT/control/fail-next-start"
   expect_fail run_release "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "failed rollback did not restore rescue candidate"
+  assert_fixture_running "rollback start-fault recovery"
 
   reset_fixture; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"
   expect_fail env CYF_RELEASE_FAULT_REPLACE_MATCH=.cyf-api-rollback CYF_RELEASE_OFFLINE_TEST=YES CYF_RELEASE_TEST_ROOT="$TEST_ROOT" CYF_RELEASE_ALLOW_OFFLINE_EXECUTE=YES CYF_RELEASE_APPROVED=YES CYF_RELEASE_APPROVAL_ID=test-r1 CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "rollback rename fault lost rescue candidate"
+  assert_fixture_running "rollback replace-fault recovery"
 
   reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; : > "$TEST_ROOT/control/fail-stop"
   expect_fail run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$prior" ]] || fail "stop fault changed artifact"
   [[ "$(record_status "$(latest_record 'api-deploy-*.json')")" == FAILED_MANUAL_RECOVERY_REQUIRED ]] || fail "unrecovered stop fault claimed health"
+  assert_fixture_running "deploy stop-fault state"
 
   reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; : > "$TEST_ROOT/control/partial-stop-next"
   expect_fail run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
@@ -255,47 +308,79 @@ test_transactions() {
   [[ "$(rg -c '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
       && "$(rg -c '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
     || fail "partial stop recovery did not canonical stop/restore/start"
+  assert_fixture_running "deploy partial-stop recovery"
 
   reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; : > "$TEST_ROOT/control/fail-next-start"
   expect_fail run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$prior" ]] || fail "start fault did not restore"
+  assert_fixture_running "deploy start-fault recovery"
 
   reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"
   expect_fail env CYF_RELEASE_FAULT_REPLACE_MATCH=.cyf-api-stage CYF_RELEASE_OFFLINE_TEST=YES CYF_RELEASE_TEST_ROOT="$TEST_ROOT" CYF_RELEASE_ALLOW_OFFLINE_EXECUTE=YES CYF_RELEASE_APPROVED=YES CYF_RELEASE_APPROVAL_ID=test-r1 CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$prior" ]] || fail "rename fault changed artifact"
+  assert_fixture_running "deploy replace-fault recovery"
 
   for terminal_state in STARTED_HEALTHY COMMITTED; do
     reset_fixture
     expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE "$terminal_state" "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
     [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "terminal receipt fault rolled back healthy candidate"
     [[ "$(record_status "$(latest_record 'api-deploy-*.json')")" == FAILED_MANUAL_RECOVERY_REQUIRED ]] || fail "terminal receipt fault has stale state"
+    assert_fixture_running "deploy $terminal_state pre-replace receipt fault"
   done
   reset_fixture
   expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE STARTED_HEALTHY "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "post-replace healthy receipt fault rolled back selected candidate"
   [[ "$(record_status "$(latest_record 'api-deploy-*.json')")" == FAILED_MANUAL_RECOVERY_REQUIRED ]] || fail "post-replace healthy receipt fault has stale state"
+  assert_fixture_running "deploy STARTED_HEALTHY post-replace receipt fault"
 
   reset_fixture
   expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE COMMITTED "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "post-replace commit receipt fault rolled back selected candidate"
   [[ "$(record_status "$(latest_record 'api-deploy-*.json')")" == COMMITTED ]] || fail "post-replace commit receipt fault obscured durable commit"
+  assert_fixture_running "deploy COMMITTED post-replace receipt fault"
 
   for finalize_fault in before-chmod file-fsync dir-fsync; do
     reset_fixture
     expect_fail run_release_fault CYF_RELEASE_FAULT_FINALIZE "$finalize_fault" "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
     [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "finalize fault rolled back committed candidate"
     [[ "$(record_status "$(latest_record 'api-deploy-*.json')")" == COMMITTED ]] || fail "finalize fault left stale committed selection"
+    assert_fixture_running "deploy $finalize_fault finalize fault"
   done
 
-  reset_fixture; final_old_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"
-  expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE STARTED_HEALTHY "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
-  [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$final_old_sha" ]] || fail "rollback terminal receipt fault restored rescue candidate"
-  [[ "$(record_status "$(latest_record 'api-rollback-*.json')")" == FAILED_MANUAL_RECOVERY_REQUIRED ]] || fail "rollback terminal receipt fault has stale state"
+  reset_fixture; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"
+  : > "$TEST_ROOT/control/lifecycle.log"; : > "$TEST_ROOT/control/partial-stop-next"
+  expect_fail run_release "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
+  [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "rollback partial stop did not retain rescue candidate"
+  [[ "$(record_status "$(latest_record 'api-rollback-*.json')")" == ROLLED_BACK_HEALTHY ]] || fail "rollback partial stop lacks truthful recovery receipt"
+  [[ "$(rg -c '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
+      && "$(rg -c '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
+    || fail "rollback partial stop recovery did not canonical stop/restore/start"
+  assert_fixture_running "rollback partial-stop recovery"
 
-  reset_fixture; final_old_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"
-  expect_fail run_release_fault CYF_RELEASE_FAULT_FINALIZE dir-fsync "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
-  [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$final_old_sha" ]] || fail "rollback finalize fault restored stale rescue candidate"
-  [[ "$(record_status "$(latest_record 'api-rollback-*.json')")" == COMMITTED ]] || fail "rollback finalize fault obscured committed selection"
+  for terminal_state in STARTED_HEALTHY COMMITTED; do
+    reset_fixture; final_old_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"
+    expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE "$terminal_state" "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$final_old_sha" ]] || fail "rollback terminal receipt fault restored stale rescue candidate"
+    [[ "$(record_status "$(latest_record 'api-rollback-*.json')")" == FAILED_MANUAL_RECOVERY_REQUIRED ]] || fail "rollback terminal receipt fault has stale state"
+    assert_fixture_running "rollback $terminal_state pre-replace receipt fault"
+  done
+
+  for terminal_state in STARTED_HEALTHY COMMITTED; do
+    reset_fixture; final_old_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"
+    expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE "$terminal_state" "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$final_old_sha" ]] || fail "rollback post-replace receipt fault restored stale rescue candidate"
+    if [[ "$terminal_state" == STARTED_HEALTHY ]]; then expected_status=FAILED_MANUAL_RECOVERY_REQUIRED; else expected_status=COMMITTED; fi
+    [[ "$(record_status "$(latest_record 'api-rollback-*.json')")" == "$expected_status" ]] || fail "rollback post-replace receipt fault obscured selected state"
+    assert_fixture_running "rollback $terminal_state post-replace receipt fault"
+  done
+
+  for finalize_fault in before-chmod file-fsync dir-fsync; do
+    reset_fixture; final_old_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"
+    expect_fail run_release_fault CYF_RELEASE_FAULT_FINALIZE "$finalize_fault" "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$final_old_sha" ]] || fail "rollback finalize fault restored stale rescue candidate"
+    [[ "$(record_status "$(latest_record 'api-rollback-*.json')")" == COMMITTED ]] || fail "rollback finalize fault obscured committed selection"
+    assert_fixture_running "rollback $finalize_fault finalize fault"
+  done
 
   reset_fixture; ln "$ARTIFACT" "$TMP/artifact-hardlink"; expect_fail run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; rm "$TMP/artifact-hardlink"
   chmod 0644 "$ARTIFACT"; expect_fail run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; chmod 0444 "$ARTIFACT"
@@ -315,7 +400,7 @@ test_transactions() {
 }
 
 make_valid_config() {
-  cache="$(python3 -B -c 'import base64;print(base64.b64encode(b"C"*32).decode())')"
+  cache="$(/usr/bin/python3 -I -B -c 'import base64;print(base64.b64encode(b"C"*32).decode())')"
   cat > "$TMP/voice.env" <<EOF
 JIA_CHAT_VOICE_ENABLED=true
 JIA_CHAT_VOICE_IDENTITY_HMAC_SECRET=IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
@@ -340,6 +425,13 @@ make_fake_curl() {
 #!/bin/bash -p
 set -Eeuo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+[[ "${1:-}" == -q ]] || exit 59
+shift
+[[ "${1:-}" == --noproxy && "${2:-}" == '*' ]] || exit 60
+shift 2
+for name in CURL_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR http_proxy https_proxy ftp_proxy all_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY ALL_PROXY NO_PROXY; do
+  [[ -z "${!name+x}" ]] || exit 58
+done
 auth=''; IFS= read -r auth || true
 body=''; dump_headers=''; url=''; data=''; forms=(); request_headers=()
 while (($#)); do
@@ -370,7 +462,7 @@ if [[ "$url" == http://127.0.0.1:10018/chat/speech/transcriptions ]]; then
 elif [[ "$url" == http://127.0.0.1:10018/chat/speech/synthesis ]]; then
   [[ ${#forms[@]} == 0 && "${request_headers[1]:-}" == 'Content-Type: application/json' \
       && "$data" == @* && -f "${data#@}" && -n "$dump_headers" ]] || exit 66
-  request_id="$(python3 -B - "${data#@}" "$root/control/stt-request-id" <<'PY'
+  request_id="$(/usr/bin/python3 -I -B - "${data#@}" "$root/control/stt-request-id" <<'PY'
 import json,re,sys
 with open(sys.argv[1],encoding='utf-8') as stream: data=json.load(stream)
 if set(data) != {'requestId','text','voice','format'}: raise SystemExit(1)
@@ -391,8 +483,97 @@ SH
   chmod 0755 "$TMP/fake-curl"
 }
 
+start_owned_loopback_server() {
+  local name="$1" mode="$2" requests="$3" control="$4"
+  /usr/bin/python3 -I -B - "$mode" "$requests" "$control/$name.port" "$control/trap-hit" <<'PY' &
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import os, sys, time
+
+mode, maximum, port_path, trap_path = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.server.served += 1
+        if mode == 'target' and self.path == '/health':
+            body = b'{"status":"UP"}\n'
+            self.send_response(200)
+        else:
+            fd = os.open(trap_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+            with os.fdopen(fd, 'ab') as stream:
+                stream.write((self.path + '\n').encode('ascii', 'backslashreplace'))
+            body = b'trap\n'
+            self.send_response(502)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+    def log_message(self, format, *args):
+        pass
+
+server = HTTPServer(('127.0.0.1', 0), Handler)
+server.served = 0
+fd = os.open(port_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+with os.fdopen(fd, 'w', encoding='ascii') as stream:
+    stream.write(str(server.server_port) + '\n')
+    stream.flush()
+    os.fsync(stream.fileno())
+deadline = time.monotonic() + 5
+while server.served < maximum and time.monotonic() < deadline:
+    server.timeout = max(0.05, deadline - time.monotonic())
+    server.handle_request()
+server.server_close()
+PY
+  printf -v "${name}_pid" '%s' "$!"
+  OWNED_LOOPBACK_PIDS+=("$!")
+  local attempt
+  for attempt in $(seq 1 200); do
+    [[ -s "$control/$name.port" ]] && return 0
+    sleep 0.01
+  done
+  fail "owned loopback $name server did not publish a port"
+}
+
+test_real_curl_contract() {
+  local control="$TMP/real-curl"
+  mkdir -m 0700 -- "$control"
+  start_owned_loopback_server target target 3 "$control"
+  start_owned_loopback_server trap trap 1 "$control"
+  local target_port trap_port target_pid_value trap_pid_value
+  target_port="$(cat "$control/target.port")"; trap_port="$(cat "$control/trap.port")"
+  target_pid_value="$target_pid"; trap_pid_value="$trap_pid"
+  cat > "$control/.curlrc" <<EOF
+url = "http://127.0.0.1:$trap_port/trap"
+proxy = "http://127.0.0.1:$trap_port"
+EOF
+  chmod 0600 "$control/.curlrc"
+  (
+    cd -- "$control"
+    export HOME="$control" CURL_HOME="$control" XDG_CONFIG_HOME="$control"
+    proxy_url="http://127.0.0.1:$trap_port"
+    export http_proxy="$proxy_url" HTTP_PROXY="$proxy_url"
+    export https_proxy="$proxy_url" HTTPS_PROXY="$proxy_url"
+    export all_proxy="$proxy_url" ALL_PROXY="$proxy_url" no_proxy='' NO_PROXY=''
+    export CURL_CA_BUNDLE="$control/untrusted-ca.pem"
+    export SSL_CERT_FILE="$control/untrusted-cert.pem" SSL_CERT_DIR="$control/untrusted-certs"
+    source "$RELEASE/common.sh"
+    source "$RELEASE/lib/api-host-transaction.sh"
+    wait_for_health "http://127.0.0.1:$target_port/health" '"status":"UP"' 2 \
+      || fail "common wait_for_health missed owned loopback target"
+    host_loopback_curl /usr/bin/curl --proto '=http' --silent --show-error --max-time 5 \
+      "http://127.0.0.1:$target_port/health" > "$control/helper.body"
+    env CYF_RELEASE_OFFLINE_TEST=YES CYF_API_KIT_VALIDATION_ROOT="$control" \
+      CYF_API_KIT_VALIDATION_URL="http://127.0.0.1:$target_port/health" \
+      "$RELEASE/host/cyf-api-kit" validate-curl-contract > "$control/canonical.out"
+  )
+  wait "$target_pid_value"
+  wait "$trap_pid_value"
+  OWNED_LOOPBACK_PIDS=()
+  grep -qx '{"status":"UP"}' "$control/helper.body" || fail "shared real curl missed owned loopback target"
+  rg -q '^CURL_CONTRACT=PASS$' "$control/canonical.out" || fail "canonical real curl contract failed"
+  [[ ! -e "$control/trap-hit" ]] || fail "curl config/proxy remapped an owned loopback request"
+}
+
 assert_nginx_contract() {
-  python3 -B - "$RELEASE/nginx/juyiting-voice-http.conf" \
+  /usr/bin/python3 -I -B - "$RELEASE/nginx/juyiting-voice-http.conf" \
     "$RELEASE/nginx/juyiting-voice-server.conf" "$RELEASE/nginx/juyiting-voice-deny.conf" <<'PY'
 from pathlib import Path
 import sys
@@ -454,36 +635,72 @@ test_activation_installer_nginx() {
   cp "$TMP/voice.env" "$TMP/duplicate.env"; printf 'JIA_CHAT_VOICE_ENABLED=true\n' >> "$TMP/duplicate.env"; chmod 0600 "$TMP/duplicate.env"
   expect_fail run_release "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/duplicate.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --dry-run >/dev/null
   make_fake_curl
-  env CYF_RELEASE_FAKE_CURL="$TMP/fake-curl" CYF_RELEASE_OFFLINE_TEST=YES CYF_RELEASE_TEST_ROOT="$TEST_ROOT" CYF_RELEASE_ALLOW_OFFLINE_EXECUTE=YES CYF_RELEASE_APPROVED=YES CYF_RELEASE_APPROVAL_ID=test-r1 CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
+  env CYF_RELEASE_FAKE_CURL="$TMP/fake-curl" CYF_RELEASE_OFFLINE_TEST=YES CYF_RELEASE_TEST_ROOT="$TEST_ROOT" CYF_RELEASE_ALLOW_OFFLINE_EXECUTE=YES CYF_RELEASE_APPROVED=YES CYF_RELEASE_APPROVAL_ID=test-r1 CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" \
+    CURL_CA_BUNDLE="$TMP/untrusted-ca.pem" SSL_CERT_FILE="$TMP/untrusted-cert.pem" SSL_CERT_DIR="$TMP/untrusted-certs" \
+    http_proxy=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 all_proxy=http://127.0.0.1:9 no_proxy='' \
+    HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 ALL_PROXY=http://127.0.0.1:9 NO_PROXY='' \
+    "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
   [[ -f "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env" ]] || fail "activation config missing"
+  assert_fixture_running "successful activation"
 
-  reset_fixture; make_valid_config; make_fake_curl
-  config_sha="$(sha256sum "$TMP/voice.env"|awk '{print $1}')"
-  export CYF_RELEASE_FAKE_CURL="$TMP/fake-curl"
-  expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE STARTED_HEALTHY "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
-  unset CYF_RELEASE_FAKE_CURL
-  [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$config_sha" ]] || fail "activation terminal receipt fault rolled back healthy config"
-  [[ "$(record_status "$(latest_record 'voice-activation-*.json')")" == FAILED_MANUAL_RECOVERY_REQUIRED ]] || fail "activation terminal receipt fault has stale state"
+  reset_fixture; printf 'prior-config\n' > "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"; chmod 0600 "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"
+  prior_config_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')"; make_valid_config
+  : > "$TEST_ROOT/control/partial-stop-next"
+  expect_fail run_release "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
+  [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$prior_config_sha" ]] || fail "activation partial stop did not restore prior config"
+  [[ "$(record_status "$(latest_record 'voice-activation-*.json')")" == ROLLED_BACK_HEALTHY ]] || fail "activation partial stop lacks truthful recovery receipt"
+  [[ "$(rg -c '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
+      && "$(rg -c '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
+    || fail "activation partial stop recovery did not canonical stop/restore/start"
+  assert_fixture_running "activation partial-stop recovery"
 
-  reset_fixture; make_valid_config; make_fake_curl
-  config_sha="$(sha256sum "$TMP/voice.env"|awk '{print $1}')"
-  export CYF_RELEASE_FAKE_CURL="$TMP/fake-curl"
-  expect_fail run_release_fault CYF_RELEASE_FAULT_FINALIZE dir-fsync "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
-  unset CYF_RELEASE_FAKE_CURL
-  [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$config_sha" ]] || fail "activation finalize fault rolled back committed config"
-  [[ "$(record_status "$(latest_record 'voice-activation-*.json')")" == COMMITTED ]] || fail "activation finalize fault obscured committed selection"
+  for terminal_state in STARTED_HEALTHY COMMITTED; do
+    reset_fixture; make_valid_config; make_fake_curl
+    config_sha="$(sha256sum "$TMP/voice.env"|awk '{print $1}')"
+    export CYF_RELEASE_FAKE_CURL="$TMP/fake-curl"
+    expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE "$terminal_state" "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
+    unset CYF_RELEASE_FAKE_CURL
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$config_sha" ]] || fail "activation terminal receipt fault rolled back healthy config"
+    [[ "$(record_status "$(latest_record 'voice-activation-*.json')")" == FAILED_MANUAL_RECOVERY_REQUIRED ]] || fail "activation terminal receipt fault has stale state"
+    assert_fixture_running "activation $terminal_state pre-replace receipt fault"
+  done
+
+  for terminal_state in STARTED_HEALTHY COMMITTED; do
+    reset_fixture; make_valid_config; make_fake_curl
+    config_sha="$(sha256sum "$TMP/voice.env"|awk '{print $1}')"
+    export CYF_RELEASE_FAKE_CURL="$TMP/fake-curl"
+    expect_fail run_release_fault CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE "$terminal_state" "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
+    unset CYF_RELEASE_FAKE_CURL
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$config_sha" ]] || fail "activation post-replace receipt fault rolled back healthy config"
+    if [[ "$terminal_state" == STARTED_HEALTHY ]]; then expected_status=FAILED_MANUAL_RECOVERY_REQUIRED; else expected_status=COMMITTED; fi
+    [[ "$(record_status "$(latest_record 'voice-activation-*.json')")" == "$expected_status" ]] || fail "activation post-replace receipt fault obscured selected state"
+    assert_fixture_running "activation $terminal_state post-replace receipt fault"
+  done
+
+  for finalize_fault in before-chmod file-fsync dir-fsync; do
+    reset_fixture; make_valid_config; make_fake_curl
+    config_sha="$(sha256sum "$TMP/voice.env"|awk '{print $1}')"
+    export CYF_RELEASE_FAKE_CURL="$TMP/fake-curl"
+    expect_fail run_release_fault CYF_RELEASE_FAULT_FINALIZE "$finalize_fault" "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
+    unset CYF_RELEASE_FAKE_CURL
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$config_sha" ]] || fail "activation finalize fault rolled back committed config"
+    [[ "$(record_status "$(latest_record 'voice-activation-*.json')")" == COMMITTED ]] || fail "activation finalize fault obscured committed selection"
+    assert_fixture_running "activation $finalize_fault finalize fault"
+  done
 
   reset_fixture; printf 'prior-config\n' > "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"; chmod 0600 "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"; prior_config_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')"; : > "$TEST_ROOT/control/fail-smoke"
   expect_fail env CYF_RELEASE_FAKE_CURL="$TMP/fake-curl" CYF_RELEASE_OFFLINE_TEST=YES CYF_RELEASE_TEST_ROOT="$TEST_ROOT" CYF_RELEASE_ALLOW_OFFLINE_EXECUTE=YES CYF_RELEASE_APPROVED=YES CYF_RELEASE_APPROVAL_ID=test-r1 CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$prior_config_sha" ]] || fail "activation fault did not restore prior config"
+  assert_fixture_running "activation smoke-fault recovery"
 
+  test_real_curl_contract
   assert_nginx_contract
   rg -q 'ops/orchestration/cyf_orchestrator.py' "$RELEASE/build-api.sh" || fail "orchestrator delegation"
   ! rg -n '(^|[^A-Z_])OPENAI_API_KEY' "$RELEASE/activate-api-voice.sh" "$RELEASE/host/cyf-api-kit" || fail "custom OPENAI_API_KEY"
 
   make_fake_lifecycle
   installed_sha="$(sha256sum "$TEST_ROOT/usr/local/sbin/cyf-api-kit"|awk '{print $1}')"; candidate_sha="$(sha256sum "$RELEASE/host/cyf-api-kit"|awk '{print $1}')"
-  python3 -B - "$INPUT" "$installed_sha" "$candidate_sha" <<'PY'
+  /usr/bin/python3 -I -B - "$INPUT" "$installed_sha" "$candidate_sha" <<'PY'
 import json,sys
 path,installed,candidate=sys.argv[1:]
 data=json.load(open(path)); data['host']['installedLifecycleSha256']=installed; data['host']['candidateLifecycleSha256']=candidate

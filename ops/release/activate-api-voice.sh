@@ -121,12 +121,12 @@ STT_REQUEST_ID="host-stt-${STAMP}-${CHANGE_ID}"
 TTS_REQUEST_ID="host-tts-${STAMP}-${CHANGE_ID}"
 [[ "$STT_REQUEST_ID" != "$TTS_REQUEST_ID" ]] || die "voice smoke request IDs must be independent"
 STT_BODY="$SMOKE_DIR/stt.json"
-STT_CODE="$(printf 'Authorization: Bearer %s\n' "$TOKEN" | "$CURL" --header @- --silent --show-error \
+STT_CODE="$(printf 'Authorization: Bearer %s\n' "$TOKEN" | host_loopback_curl "$CURL" --header @- --silent --show-error \
   --output "$STT_BODY" --write-out '%{http_code}' --request POST \
   --form "audio=@$AUDIO" --form "requestId=$STT_REQUEST_ID" --form 'language=zh-CN' \
   http://127.0.0.1:10018/chat/speech/transcriptions)"
 [[ "$STT_CODE" == 200 ]] || die "authenticated STT smoke failed"
-python3 -B - "$STT_BODY" "$TRANSCRIPT_SHA" "$STT_REQUEST_ID" <<'PY'
+/usr/bin/python3 -I -B - "$STT_BODY" "$TRANSCRIPT_SHA" "$STT_REQUEST_ID" <<'PY'
 import hashlib, json, sys
 with open(sys.argv[1], 'r', encoding='utf-8') as stream: data=json.load(stream)
 payload=data.get('data',{})
@@ -136,7 +136,7 @@ if (not isinstance(value,str) or hashlib.sha256(value.encode('utf-8')).hexdigest
     raise SystemExit('STT transcript assertion failed')
 PY
 TTS_BODY="$SMOKE_DIR/tts.bin"; TTS_HEADERS="$SMOKE_DIR/tts.headers"; TTS_REQUEST="$SMOKE_DIR/tts-request.json"
-python3 -B - "$TTS_REQUEST" "$TTS_REQUEST_ID" <<'PY'
+/usr/bin/python3 -I -B - "$TTS_REQUEST" "$TTS_REQUEST_ID" <<'PY'
 import json, os, sys
 fd=os.open(sys.argv[1], os.O_WRONLY|os.O_CREAT|os.O_EXCL|getattr(os,'O_NOFOLLOW',0), 0o600)
 with os.fdopen(fd,'w',encoding='utf-8') as stream:
@@ -144,12 +144,12 @@ with os.fdopen(fd,'w',encoding='utf-8') as stream:
                'voice':'juyiting-default', 'format':'mp3'}, stream, sort_keys=True)
     stream.write('\n'); stream.flush(); os.fsync(stream.fileno())
 PY
-TTS_CODE="$(printf 'Authorization: Bearer %s\n' "$TOKEN" | "$CURL" --header @- --silent --show-error \
+TTS_CODE="$(printf 'Authorization: Bearer %s\n' "$TOKEN" | host_loopback_curl "$CURL" --header @- --silent --show-error \
   --dump-header "$TTS_HEADERS" --output "$TTS_BODY" --write-out '%{http_code}' --request POST \
   --header 'Content-Type: application/json' --data "@$TTS_REQUEST" \
   http://127.0.0.1:10018/chat/speech/synthesis)"
 [[ "$TTS_CODE" == 200 && -s "$TTS_BODY" ]] || die "authenticated TTS smoke failed"
-python3 -B - "$TTS_HEADERS" "$TTS_BODY" "$TTS_REQUEST_ID" <<'PY'
+/usr/bin/python3 -I -B - "$TTS_HEADERS" "$TTS_BODY" "$TTS_REQUEST_ID" <<'PY'
 from pathlib import Path
 import re, sys
 headers=Path(sys.argv[1]).read_text(encoding='iso-8859-1').replace('\r\n','\n').splitlines()

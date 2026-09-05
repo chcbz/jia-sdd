@@ -1,6 +1,6 @@
 # CYF 项目部署说明
 
-> ## JVC-OAI host adaptation R2 remediation source candidate（2026-09-05）
+> ## JVC-OAI host adaptation R3 remediation source candidate（2026-09-05）
 >
 > 新主机路径的源码候选位于 `ops/release/`，但本说明不构成生产安装、发布或语音启用授权。
 > API 输入固定为 `ops/release/jvc-oai-r1-input.json` 中的 commit
@@ -16,6 +16,10 @@
 > `/usr/local/sbin/cyf-api-kit`。发布驱动按 FD8 持有 `/tmp/cyf-release-api.lock`，canonical
 > 再按 FD9 获取 `/tmp/cyf-api-lifecycle.lock`；部署和回滚不得扫描、发送信号或直接启动 Java。
 > canonical 候选固定监听 `127.0.0.1:10018`，Java 子进程关闭 FD8/FD9。
+> 所有 host release Python 调用固定为 `/usr/bin/python3 -I -B`，不继承调用者的 Python 启动路径或模块环境。
+> release health、语音 loopback smoke 与 canonical health 的 curl 调用均以 `-q` 为首参数、显式
+> `--noproxy '*'`，并清除代理及 `CURL_CA_BUNDLE`/`SSL_CERT_FILE`/`SSL_CERT_DIR` 覆盖，使用系统默认 CA；
+> 不从调用者 CWD、curl 配置或环境改写目标与信任根。
 >
 > 制品状态机固定为 `PREPARED → STOP_ATTEMPTED → STOPPED → CANDIDATE_INSTALLED → STARTED_HEALTHY → COMMITTED`。
 > `STOP_ATTEMPTED` 必须在调用 canonical stop 前持久化；stop 返回失败时也按运行状态未知处理，恢复流程必须再次通过

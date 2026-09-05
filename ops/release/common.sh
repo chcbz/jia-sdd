@@ -84,7 +84,7 @@ assert_path_within() {
 
 json_get() {
   local file="$1" dotted="$2"
-  python3 - "$file" "$dotted" <<'PY'
+  /usr/bin/python3 -I -B - "$file" "$dotted" <<'PY'
 import json, sys
 path, dotted = sys.argv[1:]
 def unique_object(pairs):
@@ -114,7 +114,7 @@ PY
 
 json_array_lines() {
   local file="$1" dotted="$2"
-  python3 - "$file" "$dotted" <<'PY'
+  /usr/bin/python3 -I -B - "$file" "$dotted" <<'PY'
 import json, sys
 path, dotted = sys.argv[1:]
 def unique_object(pairs):
@@ -141,7 +141,7 @@ PY
 
 validate_input_shape() {
   local file="$1"
-  python3 - "$file" <<'PY'
+  /usr/bin/python3 -I -B - "$file" <<'PY'
 import json, os, re, sys
 path = sys.argv[1]
 def unique_object(pairs):
@@ -219,7 +219,7 @@ PY
 
 release_input_verification_profile() {
   local file="$1"
-  python3 - "$file" <<'PY'
+  /usr/bin/python3 -I -B - "$file" <<'PY'
 import json, sys
 with open(sys.argv[1], 'r', encoding='utf-8') as stream:
     data = json.load(stream)
@@ -395,7 +395,7 @@ install_immutable_file() {
 
 hash_tree() {
   local directory="$1"
-  python3 - "$directory" <<'PY'
+  /usr/bin/python3 -I -B - "$directory" <<'PY'
 import hashlib, os, stat, sys
 root = os.path.abspath(sys.argv[1])
 if not os.path.isdir(root) or os.path.islink(root):
@@ -431,7 +431,7 @@ PY
 
 validate_web_archive() {
   local archive="$1"
-  python3 - "$archive" <<'PY'
+  /usr/bin/python3 -I -B - "$archive" <<'PY'
 import posixpath, sys, tarfile
 archive = sys.argv[1]
 seen = set()
@@ -490,7 +490,7 @@ verify_component_metadata() {
   assert_mode_0444 "$component artifact metadata" "$metadata"
   assert_mode_0444 "$component artifact checksum" "${artifact}.sha256"
   assert_mode_0444 "$component metadata checksum" "${metadata}.sha256"
-  python3 - "$metadata" "$schema" "$RELEASE_ID" "$ref" "$head" "$tree" "$basename" \
+  /usr/bin/python3 -I -B - "$metadata" "$schema" "$RELEASE_ID" "$ref" "$head" "$tree" "$basename" \
     "$(artifact_sha256 "$artifact")" \
     "$(artifact_sha256 "$RELEASE_INPUT")" "$(release_tool_digest)" "$RELEASE_VERIFY_PROFILE" <<'PY'
 import json, sys
@@ -538,7 +538,7 @@ verify_release_record_component() {
   assert_mode_0444 "joint release record" "$RELEASE_RECORD"
   assert_mode_0444 "joint release record checksum" "${RELEASE_RECORD}.sha256"
   component_sha="$(artifact_sha256 "$component_artifact")"
-  python3 - "$RELEASE_RECORD" "$component" "$RELEASE_ID" \
+  /usr/bin/python3 -I -B - "$RELEASE_RECORD" "$component" "$RELEASE_ID" \
     "$API_HEAD" "$API_TREE" "$WEB_HEAD" "$WEB_TREE" \
     "$component_artifact_name" "$component_sha" \
     "$(release_tool_digest)" "$(artifact_sha256 "$RELEASE_INPUT")" "$RELEASE_VERIFY_PROFILE" <<'PY'
@@ -580,7 +580,7 @@ PY
 verify_release_record() {
   verify_release_record_component api
   verify_release_record_component web
-  python3 - "$RELEASE_RECORD" "$(json_get "${WEB_ARTIFACT}.json" distTreeSha256)" <<'PY'
+  /usr/bin/python3 -I -B - "$RELEASE_RECORD" "$(json_get "${WEB_ARTIFACT}.json" distTreeSha256)" <<'PY'
 import json, sys
 path, web_dist = sys.argv[1:]
 with open(path, 'r', encoding='utf-8') as stream:
@@ -660,7 +660,7 @@ print_mode() {
 
 process_start_ticks() {
   local pid="$1"
-  python3 - "$pid" <<'PY'
+  /usr/bin/python3 -I -B - "$pid" <<'PY'
 import sys
 pid = sys.argv[1]
 with open(f'/proc/{pid}/stat', 'r', encoding='utf-8') as stream:
@@ -761,11 +761,21 @@ launch_from_argv_backup() {
   ) || die "saved API process failed to launch"
 }
 
+release_direct_curl() {
+  local tool="$1"
+  shift
+  /usr/bin/env \
+    -u CURL_CA_BUNDLE -u SSL_CERT_FILE -u SSL_CERT_DIR \
+    -u http_proxy -u https_proxy -u ftp_proxy -u all_proxy -u no_proxy \
+    -u HTTP_PROXY -u HTTPS_PROXY -u FTP_PROXY -u ALL_PROXY -u NO_PROXY \
+    "$tool" -q --noproxy '*' "$@"
+}
+
 wait_for_health() {
   local url="$1" expected_regex="$2" timeout_seconds="$3"
   local deadline=$((SECONDS + timeout_seconds)) body
   while (( SECONDS < deadline )); do
-    body="$(curl --fail --silent --show-error --max-time 5 -- "$url" 2>/dev/null || true)"
+    body="$(release_direct_curl /usr/bin/curl --fail --silent --show-error --max-time 5 -- "$url" 2>/dev/null || true)"
     if [[ "$body" =~ $expected_regex ]]; then
       return 0
     fi
@@ -787,20 +797,20 @@ verify_web_health() {
     deadline=$((SECONDS + timeout_seconds))
     body=""
     while (( SECONDS < deadline )); do
-      body="$(curl --proto '=https' --tlsv1.2 --fail --silent --show-error --max-time 8 -- "$url" 2>/dev/null || true)"
+      body="$(release_direct_curl /usr/bin/curl --proto '=https' --tlsv1.2 --fail --silent --show-error --max-time 8 -- "$url" 2>/dev/null || true)"
       [[ "$body" == *"$entry_asset"* ]] && break
       sleep 2
     done
     [[ "$body" == *"$entry_asset"* ]] || return 1
   done
-  origin="$(python3 - "${urls[0]}" <<'PYWEB'
+  origin="$(/usr/bin/python3 -I -B - "${urls[0]}" <<'PYWEB'
 from urllib.parse import urlsplit
 import sys
 value = urlsplit(sys.argv[1])
 print(f'{value.scheme}://{value.netloc}')
 PYWEB
 )"
-  curl --proto '=https' --tlsv1.2 --fail --silent --show-error --max-time 10 \
+  release_direct_curl /usr/bin/curl --proto '=https' --tlsv1.2 --fail --silent --show-error --max-time 10 \
     --output /dev/null -- "$origin$entry_asset" || return 1
   printf '%s\n' "$entry_asset"
 }

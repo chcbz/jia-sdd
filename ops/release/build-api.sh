@@ -38,7 +38,7 @@ API_SHA="$(host_sha_regular "$API_ARTIFACT")"
 INPUT_SHA="$(host_sha_regular "$RELEASE_INPUT")"
 TOOL_SHA="$(host_tool_digest)"
 TEMP_METADATA="$(mktemp "$(dirname -- "$API_METADATA")/.metadata.XXXXXX")"
-python3 -B - "$TEMP_METADATA" "$RELEASE_ID" "$API_REF" "$API_HEAD" "$API_TREE" \
+/usr/bin/python3 -I -B - "$TEMP_METADATA" "$RELEASE_ID" "$API_REF" "$API_HEAD" "$API_TREE" \
   "$(basename -- "$API_ARTIFACT")" "$API_SHA" "$INPUT_SHA" "$TOOL_SHA" "$ORCHESTRATOR_TASK" \
   "$ORCHESTRATOR_SELECTOR" "$ORCHESTRATOR_FIXTURE" "$API_GRADLE_TASK" <<'PY'
 import json, os, sys

@@ -35,7 +35,7 @@ PROOF="$(normalize_absolute_path 'local-consumer proof' "$PROOF")"
 if host_offline; then PROOF_EXPECTED="444:$(id -u):$(id -g):1"; INSTALLED_EXPECTED="755:$(id -u):$(id -g):1"; else PROOF_EXPECTED=444:0:0:1; INSTALLED_EXPECTED=755:0:0:1; fi
 [[ -f "$PROOF" && ! -L "$PROOF" && "$(stat -Lc '%a:%u:%g:%h' "$PROOF")" == "$PROOF_EXPECTED" ]] \
   || die "consumer proof must be immutable root-owned nlink1"
-python3 -B - "$PROOF" "$CANDIDATE_LIFECYCLE_SHA" <<'PY'
+/usr/bin/python3 -I -B - "$PROOF" "$CANDIDATE_LIFECYCLE_SHA" <<'PY'
 import json, sys
 with open(sys.argv[1], 'r', encoding='utf-8') as stream: data=json.load(stream)
 expected = {'schema':'cyf-api-local-consumer-proof-v1', 'status':'ACCEPTED',
@@ -55,7 +55,7 @@ exec 9<>"$LIFECYCLE_LOCK"; flock -n 9 || die "lifecycle lock is held"
   || die "installed lifecycle does not match exact prior SHA"
 TEMP="$(dirname -- "$LIFECYCLE")/.cyf-api-kit.install.$$"
 [[ ! -e "$TEMP" ]] || die "installer staging path exists"
-python3 -B - "$CANDIDATE" "$TEMP" "$CANDIDATE_LIFECYCLE_SHA" <<'PY'
+/usr/bin/python3 -I -B - "$CANDIDATE" "$TEMP" "$CANDIDATE_LIFECYCLE_SHA" <<'PY'
 import hashlib, os, stat, sys
 source, target, expected = sys.argv[1:]
 sfd=os.open(source, os.O_RDONLY|getattr(os,'O_NOFOLLOW',0)); dfd=None

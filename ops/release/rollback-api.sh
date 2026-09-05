@@ -22,7 +22,7 @@ case "$DEPLOY_RECORD" in
   *) die "deploy record is outside canonical record root" ;;
 esac
 if host_offline; then RECORD_UID="$(id -u)"; else RECORD_UID=0; fi
-mapfile -t RECORD_FIELDS < <(python3 -B - "$DEPLOY_RECORD" "$API_HEAD" "$API_TREE" "$RECORD_UID" <<'PY'
+mapfile -t RECORD_FIELDS < <(/usr/bin/python3 -I -B - "$DEPLOY_RECORD" "$API_HEAD" "$API_TREE" "$RECORD_UID" <<'PY'
 import json, os, stat, sys
 path, head, tree, expected_uid = sys.argv[1:]
 info = os.lstat(path)

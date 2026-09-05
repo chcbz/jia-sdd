@@ -22,8 +22,12 @@ host_path() {
   fi
 }
 
+host_loopback_curl() {
+  release_direct_curl "$@"
+}
+
 host_validate_input() {
-  python3 -B - "$1" <<'PY'
+  /usr/bin/python3 -I -B - "$1" <<'PY'
 import json, os, re, sys
 
 def unique(pairs):
@@ -153,7 +157,7 @@ host_verify_artifact_metadata() {
     [[ -f "$path" && ! -L "$path" && "$(stat -Lc '%a:%h' "$path")" == 444:1 ]] \
       || die "immutable artifact publication is unsafe: $path"
   done
-  python3 -B - "$API_METADATA" "$RELEASE_ID" "$API_REF" "$API_HEAD" "$API_TREE" \
+  /usr/bin/python3 -I -B - "$API_METADATA" "$RELEASE_ID" "$API_REF" "$API_HEAD" "$API_TREE" \
     "$(basename -- "$API_ARTIFACT")" "$digest" "$input_sha" "$tool_sha" \
     "$ORCHESTRATOR_TASK" "$ORCHESTRATOR_SELECTOR" "$ORCHESTRATOR_FIXTURE" "$API_GRADLE_TASK" <<'PY'
 import json, sys
@@ -229,7 +233,7 @@ host_call_lifecycle() {
 }
 
 host_sha_regular() {
-  python3 -B - "$1" <<'PY'
+  /usr/bin/python3 -I -B - "$1" <<'PY'
 import hashlib, os, stat, sys
 fd = os.open(sys.argv[1], os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
 try:
@@ -253,7 +257,7 @@ PY
 }
 
 host_validate_boot_jar() {
-  python3 -B - "$1" <<'PY'
+  /usr/bin/python3 -I -B - "$1" <<'PY'
 import pathlib, stat, sys, zipfile
 path=sys.argv[1]
 with zipfile.ZipFile(path) as archive:
@@ -333,7 +337,7 @@ host_copy_exclusive() {
   else
     uid=0; gid="$(id -g isp)"
   fi
-  python3 -B - "$source" "$destination" "$mode" "$uid" "$gid" "$expected_sha" <<'PY'
+  /usr/bin/python3 -I -B - "$source" "$destination" "$mode" "$uid" "$gid" "$expected_sha" <<'PY'
 import hashlib, os, stat, sys
 source, destination, mode_text, uid_text, gid_text, expected = sys.argv[1:]
 sfd = os.open(source, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
@@ -385,7 +389,7 @@ host_replace_durable() {
       && "$(basename -- "$1")" == *"$CYF_RELEASE_FAULT_REPLACE_MATCH"* ]]; then
     return 91
   fi
-  python3 -B - "$1" "$2" <<'PY'
+  /usr/bin/python3 -I -B - "$1" "$2" <<'PY'
 import os, sys
 source, destination = sys.argv[1:]
 if os.stat(source, follow_symlinks=False).st_dev != os.stat(os.path.dirname(destination), follow_symlinks=False).st_dev:
@@ -400,7 +404,7 @@ PY
 }
 
 host_fsync_dir() {
-  python3 -B - "$1" <<'PY'
+  /usr/bin/python3 -I -B - "$1" <<'PY'
 import os,sys
 fd=os.open(sys.argv[1], os.O_RDONLY|getattr(os,'O_DIRECTORY',0))
 try: os.fsync(fd)
@@ -409,7 +413,7 @@ PY
 }
 
 host_remove_durable() {
-  python3 -B - "$1" <<'PY'
+  /usr/bin/python3 -I -B - "$1" <<'PY'
 import os, sys
 path=sys.argv[1]
 if os.path.lexists(path):
@@ -424,7 +428,7 @@ PY
 }
 
 host_record_init() {
-  python3 -B - "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" <<'PY'
+  /usr/bin/python3 -I -B - "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" <<'PY'
 import json, os, sys
 path, kind, change_id, api_head, api_tree, backup, previous_sha, candidate_sha = sys.argv[1:]
 record = {'schema': 'cyf-api-host-transaction-v1', 'kind': kind, 'changeId': change_id,
@@ -447,7 +451,7 @@ host_record_state() {
     return 92
   fi
   if host_offline; then after_replace_fault="${CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE:-}"; fi
-  python3 -B - "$1" "$2" "$after_replace_fault" <<'PY'
+  /usr/bin/python3 -I -B - "$1" "$2" "$after_replace_fault" <<'PY'
 import json, os, sys, tempfile
 path, state, after_replace_fault = sys.argv[1:]
 with open(path, 'r', encoding='utf-8') as stream:
@@ -488,7 +492,7 @@ host_finalize_record() {
   if [[ "$fault" == file-fsync ]]; then
     return 94
   fi
-  python3 -B - "$1" "$fault" <<'PY'
+  /usr/bin/python3 -I -B - "$1" "$fault" <<'PY'
 import os, sys
 fd = os.open(sys.argv[1], os.O_RDONLY)
 try: os.fsync(fd)
@@ -502,7 +506,7 @@ PY
 }
 
 host_parse_voice_config() {
-  python3 -B - "$1" "${2:-java}" <<'PY'
+  /usr/bin/python3 -I -B - "$1" "${2:-java}" <<'PY'
 from pathlib import Path
 from urllib.parse import urlsplit
 import base64, hmac, re, sys

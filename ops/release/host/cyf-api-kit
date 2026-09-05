@@ -49,24 +49,62 @@ die() {
   exit 1
 }
 
+canonical_loopback_curl() {
+  /usr/bin/env \
+    -u CURL_CA_BUNDLE -u SSL_CERT_FILE -u SSL_CERT_DIR \
+    -u http_proxy -u https_proxy -u ftp_proxy -u all_proxy -u no_proxy \
+    -u HTTP_PROXY -u HTTPS_PROXY -u FTP_PROXY -u ALL_PROXY -u NO_PROXY \
+    /usr/bin/curl -q --noproxy '*' "$@"
+}
+
+load_validation_root() {
+  VALIDATION_ROOT="$(realpath -e -- "${CYF_API_KIT_VALIDATION_ROOT:-/nonexistent}")" \
+    || die "离线验证 root 不存在"
+  case "$VALIDATION_ROOT" in /tmp/*) ;; *) die "离线验证 root 必须位于私有 /tmp 子目录" ;; esac
+  [[ -d "$VALIDATION_ROOT" && ! -L "$VALIDATION_ROOT" \
+      && "$(stat -Lc '%a:%u' "$VALIDATION_ROOT")" == "700:$(id -u)" ]] \
+    || die "离线验证 root 必须为调用者私有 0700 目录"
+}
+
 if (( $# > 1 )); then
   usage >&2
   die "参数过多"
 fi
 case "$ACTION" in
   -h|--help) usage; exit 0 ;;
-  start|restart|stop|status|validate-lock-contract) ;;
+  start|restart|stop|status|validate-lock-contract|validate-curl-contract) ;;
   *) usage >&2; exit 2 ;;
 esac
-if [[ "$ACTION" == validate-lock-contract ]]; then
-  [[ "${CYF_RELEASE_OFFLINE_TEST:-}" == YES ]] || die "锁契约验证动作仅允许私有离线 fixture"
+if [[ "$ACTION" == validate-lock-contract || "$ACTION" == validate-curl-contract ]]; then
+  [[ "${CYF_RELEASE_OFFLINE_TEST:-}" == YES ]] || die "验证动作仅允许私有离线 fixture"
 else
   (( EUID == 0 )) || die "必须使用 root 运行，例如 sudo $0 $ACTION"
 fi
 
-for command in awk base64 basename cat chmod chown curl date df flock grep id kill mktemp mv nohup ps python3 realpath rm sed seq setpriv setsid sha256sum sleep ss stat tail; do
+for command in awk base64 basename cat chmod chown date df flock grep id kill mktemp mv nohup ps realpath rm sed seq setpriv setsid sha256sum sleep ss stat tail; do
   command -v "$command" >/dev/null 2>&1 || die "缺少命令：$command"
 done
+[[ -x /usr/bin/curl ]] || die "缺少可信 curl：/usr/bin/curl"
+
+if [[ "$ACTION" == validate-curl-contract ]]; then
+  load_validation_root
+  VALIDATION_URL="${CYF_API_KIT_VALIDATION_URL:-}"
+  [[ "$VALIDATION_URL" =~ ^http://127\.0\.0\.1:([1-9][0-9]{0,4})/health$ ]] \
+    || die "curl 验证 URL 必须为 127.0.0.1 临时端口 /health"
+  (( 10#${BASH_REMATCH[1]} <= 65535 )) || die "curl 验证端口无效"
+  VALIDATION_BODY="$(mktemp "$VALIDATION_ROOT/.curl-body.XXXXXX")"
+  trap 'rm -f -- "$VALIDATION_BODY"' EXIT
+  VALIDATION_CODE="$(canonical_loopback_curl --proto '=http' --silent --show-error --max-time 5 \
+    --output "$VALIDATION_BODY" --write-out '%{http_code}' "$VALIDATION_URL")" \
+    || die "curl 验证请求失败"
+  [[ "$VALIDATION_CODE" == 200 ]] || die "curl 验证状态失败"
+  grep -qx '{"status":"UP"}' "$VALIDATION_BODY" || die "curl 验证响应失败"
+  rm -f -- "$VALIDATION_BODY"
+  trap - EXIT
+  printf 'CURL_CONTRACT=PASS\nCURL_TARGET=LOOPBACK\n'
+  exit 0
+fi
+
 if [[ "$ACTION" != validate-lock-contract ]]; then
   RUNTIME_UID="$(id -u "$RUNTIME_USER" 2>/dev/null)" || die "运行账号不存在：$RUNTIME_USER"
   RUNTIME_GID="$(id -g "$RUNTIME_USER" 2>/dev/null)" || die "无法解析运行账号主组：$RUNTIME_USER"
@@ -80,7 +118,7 @@ if [[ "$ACTION" != validate-lock-contract ]]; then
 fi
 
 validate_trusted_runtime() {
-  /usr/bin/python3 -I - "$(dirname "$(dirname "$JAVA")")" "$JAVA" "$TRUSTED_JRE_TREE_SHA256" <<'PY'
+  /usr/bin/python3 -I -B - "$(dirname "$(dirname "$JAVA")")" "$JAVA" "$TRUSTED_JRE_TREE_SHA256" <<'PY'
 from pathlib import Path
 import hashlib, os, stat, sys
 root = Path(sys.argv[1])
@@ -155,7 +193,7 @@ load_voice_environment() {
   [[ -f "$VOICE_ENV_FILE" && ! -L "$VOICE_ENV_FILE" ]] || die "语音运行配置必须是物理常规文件"
   [[ "$(stat -Lc '%a %U %G %h' "$VOICE_ENV_FILE")" == "600 root root 1" ]] \
     || die "语音运行配置必须为 600 root:root 且链接数为 1"
-  if ! VOICE_ENV_ENCODED="$(/usr/bin/python3 -I - "$VOICE_ENV_FILE" <<'PY'
+  if ! VOICE_ENV_ENCODED="$(/usr/bin/python3 -I -B - "$VOICE_ENV_FILE" <<'PY'
 from pathlib import Path
 from urllib.parse import urlsplit
 import base64, hmac, re, sys
@@ -281,7 +319,7 @@ acquire_release_lock_contract() {
     verify_lock_fd 8 "$RELEASE_LOCK_FILE"
     [[ "$(stat -Lc '%d:%i' /proc/$$/fd/8)" == "$CYF_RELEASE_LOCK_DEVICE:$CYF_RELEASE_LOCK_INODE" ]] \
       || die "继承发布锁设备/ inode 证明不匹配"
-    /usr/bin/python3 -I - "$RELEASE_LOCK_FILE" <<'PY' || die "继承 FD8 没有可证明的排他 flock"
+    /usr/bin/python3 -I -B - "$RELEASE_LOCK_FILE" <<'PY' || die "继承 FD8 没有可证明的排他 flock"
 import os, sys
 path = os.stat(sys.argv[1])
 descriptor = os.fstat(8)
@@ -319,12 +357,7 @@ acquire_lifecycle_lock_contract() {
 }
 
 if [[ "$ACTION" == validate-lock-contract ]]; then
-  VALIDATION_ROOT="$(realpath -e -- "${CYF_API_KIT_VALIDATION_ROOT:-/nonexistent}")" \
-    || die "离线锁验证 root 不存在"
-  case "$VALIDATION_ROOT" in /tmp/*) ;; *) die "离线锁验证 root 必须位于私有 /tmp 子目录" ;; esac
-  [[ -d "$VALIDATION_ROOT" && ! -L "$VALIDATION_ROOT" \
-      && "$(stat -Lc '%a:%u' "$VALIDATION_ROOT")" == "700:$(id -u)" ]] \
-    || die "离线锁验证 root 必须为调用者私有 0700 目录"
+  load_validation_root
   RELEASE_LOCK_FILE="$VALIDATION_ROOT/cyf-release-api.lock"
   LOCK_FILE="$VALIDATION_ROOT/cyf-api-lifecycle.lock"
   validate_lock_file "$RELEASE_LOCK_FILE" "660:$(id -u):$(id -g):1"
@@ -341,7 +374,7 @@ if [[ "$ACTION" == validate-lock-contract ]]; then
 fi
 
 proc_start_ticks() {
-  /usr/bin/python3 -I - "$1" <<'PY'
+  /usr/bin/python3 -I -B - "$1" <<'PY'
 from pathlib import Path
 import sys
 text = (Path('/proc') / sys.argv[1] / 'stat').read_text()
@@ -354,7 +387,7 @@ PY
 
 process_generation_alive() {
   local pid="$1" ticks="$2"
-  /usr/bin/python3 -I - "$pid" "$ticks" <<'PY'
+  /usr/bin/python3 -I -B - "$pid" "$ticks" <<'PY'
 from pathlib import Path
 import sys
 try:
@@ -376,7 +409,7 @@ confirm_port_free() {
 
 exact_api_process() {
   local pid="$1" ticks="$2" signal_name="${3:-}"
-  /usr/bin/python3 -I - "$pid" "$ticks" "$JAR" "$JAVA" "$RUNTIME_UID" "$RUNTIME_GID" "$signal_name" <<'PY'
+  /usr/bin/python3 -I -B - "$pid" "$ticks" "$JAR" "$JAVA" "$RUNTIME_UID" "$RUNTIME_GID" "$signal_name" <<'PY'
 from pathlib import Path
 import os, signal, sys
 pid_text, expected_ticks, jar_text, java_text, uid_text, gid_text, signal_name = sys.argv[1:]
@@ -418,7 +451,7 @@ PY
 }
 
 find_api_pids() {
-  /usr/bin/python3 -I - "$JAR" "$JAVA" <<'PY'
+  /usr/bin/python3 -I -B - "$JAR" "$JAVA" <<'PY'
 from pathlib import Path
 import os, sys
 jar = sys.argv[1].encode()
@@ -474,7 +507,7 @@ port_listener_line() {
 listener_snapshot_owned_by() {
   local pid="$1" snapshot="$2"
   [[ -n "$snapshot" ]] || return 1
-  /usr/bin/python3 -I - "$pid" "$snapshot" <<'PY'
+  /usr/bin/python3 -I -B - "$pid" "$snapshot" <<'PY'
 import re, sys
 expected = int(sys.argv[1])
 lines = [line for line in sys.argv[2].splitlines() if line.strip()]
@@ -516,8 +549,8 @@ process_owned_by_runtime_user() {
 health_up() {
   local body code
   body="$(mktemp /tmp/cyf-api-health.XXXXXX.json)"
-  code="$(curl --noproxy '*' --silent --show-error --max-time 5 --output "$body" --write-out '%{http_code}' "$HEALTH_URL" 2>/dev/null || true)"
-  if [[ "$code" == 200 ]] && /usr/bin/python3 -I - "$body" <<'PY'
+  code="$(canonical_loopback_curl --silent --show-error --max-time 5 --output "$body" --write-out '%{http_code}' "$HEALTH_URL" 2>/dev/null || true)"
+  if [[ "$code" == 200 ]] && /usr/bin/python3 -I -B - "$body" <<'PY'
 import json, sys
 try:
     payload = json.load(open(sys.argv[1], encoding='utf-8'))
@@ -560,7 +593,7 @@ runtime_record_matches() {
   local pid="$1" ticks="$2" jar_sha="$3"
   [[ -f "$RUNTIME_RECORD" && ! -L "$RUNTIME_RECORD" ]] || return 2
   [[ "$(stat -Lc '%a %U %G' "$RUNTIME_RECORD" 2>/dev/null || true)" == "644 root root" ]] || return 1
-  /usr/bin/python3 -I - "$RUNTIME_RECORD" "$pid" "$ticks" "$jar_sha" <<'PY'
+  /usr/bin/python3 -I -B - "$RUNTIME_RECORD" "$pid" "$ticks" "$jar_sha" <<'PY'
 from pathlib import Path
 import sys
 path, pid, ticks, jar_sha = sys.argv[1:]
