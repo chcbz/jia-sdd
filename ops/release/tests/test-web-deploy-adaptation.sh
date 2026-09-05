@@ -265,6 +265,8 @@ PY
 }
 
 run_proof() {
+  new_case; mv "$CONTROLLER" "$CASE/controller-real"; ln -s controller-real "$CONTROLLER"
+  expect_fail 'symlinked activation-proof and guard root' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
   new_case; rm "$PROOF"; expect_fail 'compiler flag without external proof' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
   local field value hostile marker
   for field in schema releaseId apiHead apiTree deployedJarSha256 status authenticatedStt \
@@ -313,6 +315,16 @@ run_proof() {
 
 run_archive() {
   local variant
+  new_case; mv "$INPUT" "$CASE/input-real.json"; ln -s input-real.json "$INPUT"
+  expect_fail 'symlinked adapter input' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
+  new_case; mv "$REPO" "$CASE/repo-real"; ln -s repo-real "$REPO"
+  expect_fail 'symlinked Web candidate repo' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
+  new_case; mv "$LIVE" "$CASE/live-real"; ln -s "$CASE/live-real" "$LIVE"
+  expect_fail 'symlinked Web live directory' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
+  new_case; mv "$BACKUP" "$CASE/backup-real"; ln -s "$CASE/backup-real" "$BACKUP"
+  expect_fail 'symlinked Web backup root' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
+  new_case; mv "$RECORDS" "$CASE/records-real"; ln -s "$CASE/records-real" "$RECORDS"
+  expect_fail 'symlinked Web record root' env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
   for variant in traversal duplicate symlink hardlink device fifo missing-index; do
     new_case; chmod 0600 "$ARCHIVE"; rm "$ARCHIVE"; write_archive "$ARCHIVE" "$variant"; rm "$INPUT"; write_input
     expect_fail "unsafe archive $variant" env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" "$VERIFY" --input "$INPUT"
@@ -532,6 +544,12 @@ run_rollback() {
     CYF_RELEASE_APPROVED_WEB_GUARD_SHA256="$GUARD_SHA" \
     CYF_RELEASE_APPROVED_API_ACTIVATION_PROOF_SHA256="$PROOF_SHA" \
     "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  assert_live_tree "$CANDIDATE_TREE"
+
+  new_case; verify_case; deploy_case
+  mv "$DEPLOY_RECORD" "${DEPLOY_RECORD}.real"
+  ln -s "$(basename -- "${DEPLOY_RECORD}.real")" "$DEPLOY_RECORD"
+  expect_fail 'symlinked Web deploy record' approval_env "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
   assert_live_tree "$CANDIDATE_TREE"
 
   for fault in rollback-staged-tree rollback-rescue-rename rollback-cutover-rename health; do

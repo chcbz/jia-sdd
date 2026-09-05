@@ -31,6 +31,39 @@ web_adapter_select_default_input() {
   fi
 }
 
+web_adapter_lexical_absolute_path() {
+  local label="$1" value="$2"
+  /usr/bin/python3 -I -B - "$label" "$value" <<'PY'
+import posixpath, sys
+label, value = sys.argv[1:]
+if not value.startswith('/'):
+    raise SystemExit('{} must be an absolute path'.format(label))
+if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
+    raise SystemExit('{} contains a control character'.format(label))
+normalized = posixpath.normpath(value)
+if normalized.startswith('//'):
+    normalized = '/' + normalized.lstrip('/')
+if not normalized.startswith('/'):
+    raise SystemExit('{} did not normalize to an absolute path'.format(label))
+print(normalized)
+PY
+}
+
+web_adapter_assert_path_within() {
+  local label="$1" path root
+  path="$(web_adapter_lexical_absolute_path "$label" "$2")"
+  root="$(web_adapter_lexical_absolute_path "$label root" "$3")"
+  case "$path" in
+    "$root"|"$root"/*) ;;
+    *) die "$label is outside the approved root: path=$path root=$root" ;;
+  esac
+}
+
+web_adapter_reject_symbolic_path() {
+  local label="$1" path="$2"
+  [[ ! -L "$path" ]] || die "$label must not be a symbolic link: $path"
+}
+
 web_adapter_stable_sha256() {
   /usr/bin/python3 -I -B - "$1" <<'PY'
 import hashlib, os, stat, sys
@@ -66,9 +99,9 @@ web_adapter_tool_sha256() {
       physical="$file"
       if [[ "$file" == common.sh && -n "${CYF_WEB_DEPLOY_ADAPTER_TEST_COMMON_SH:-}" ]]; then
         web_adapter_fixture_mode || die "Web adapter common dependency override is test-only"
-        physical="$(normalize_absolute_path 'fixture common.sh dependency' \
+        physical="$(web_adapter_lexical_absolute_path 'fixture common.sh dependency' \
           "$CYF_WEB_DEPLOY_ADAPTER_TEST_COMMON_SH")"
-        assert_path_within 'fixture common.sh dependency' "$physical" "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT"
+        web_adapter_assert_path_within 'fixture common.sh dependency' "$physical" "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT"
       fi
       [[ -f "$physical" && ! -L "$physical" && "$(stat -Lc %h -- "$physical")" == 1 ]] \
         || die "Web adapter tool file is missing or unsafe: $physical"
@@ -99,7 +132,7 @@ web_adapter_secure_root() {
 web_adapter_load_input() {
   local requested="$1" count index
   local -a fields=()
-  RELEASE_INPUT="$(normalize_absolute_path 'Web adapter input' "$requested")"
+  RELEASE_INPUT="$(web_adapter_lexical_absolute_path 'Web adapter input' "$requested")"
   [[ -f "$RELEASE_INPUT" && ! -L "$RELEASE_INPUT" && "$(stat -Lc %h -- "$RELEASE_INPUT")" == 1 ]] \
     || die "Web adapter input must be a regular nlink1 file: $RELEASE_INPUT"
   mapfile -d '' -t fields < <(/usr/bin/python3 -I -B - "$RELEASE_INPUT" <<'PY'
@@ -174,18 +207,18 @@ PY
   )
   ((${#fields[@]} >= 20)) || die "invalid Web adapter input: $RELEASE_INPUT"
   RELEASE_ID="${fields[0]}"
-  WEB_ARTIFACT="$(normalize_absolute_path 'Web archive' "${fields[1]}")"
+  WEB_ARTIFACT="$(web_adapter_lexical_absolute_path 'Web archive' "${fields[1]}")"
   WEB_ARCHIVE_SHA_EXPECTED="${fields[2]}"
-  WEB_REPO="$(normalize_absolute_path 'Web candidate repo' "${fields[3]}")"
+  WEB_REPO="$(web_adapter_lexical_absolute_path 'Web candidate repo' "${fields[3]}")"
   WEB_REF="${fields[4]}"; WEB_HEAD="${fields[5]}"; WEB_TREE="${fields[6]}"
-  WEB_LIVE_DIR="$(normalize_absolute_path 'Web live directory' "${fields[7]}")"
-  WEB_BACKUP_ROOT="$(normalize_absolute_path 'Web backup root' "${fields[8]}")"
-  WEB_RECORD_ROOT="$(normalize_absolute_path 'Web record root' "${fields[9]}")"
+  WEB_LIVE_DIR="$(web_adapter_lexical_absolute_path 'Web live directory' "${fields[7]}")"
+  WEB_BACKUP_ROOT="$(web_adapter_lexical_absolute_path 'Web backup root' "${fields[8]}")"
+  WEB_RECORD_ROOT="$(web_adapter_lexical_absolute_path 'Web record root' "${fields[9]}")"
   WEB_HEALTH_TIMEOUT="${fields[10]}"
   API_HEAD="${fields[11]}"; API_TREE="${fields[12]}"; API_DEPLOYED_JAR_SHA="${fields[13]}"
   ACTIVATION_PROOF_SCHEMA="${fields[14]}"
-  ACTIVATION_PROOF_ROOT="$(normalize_absolute_path 'API activation proof root' "${fields[15]}")"
-  WEB_GUARD_ROOT="$(normalize_absolute_path 'Web guard root' "${fields[16]}")"
+  ACTIVATION_PROOF_ROOT="$(web_adapter_lexical_absolute_path 'API activation proof root' "${fields[15]}")"
+  WEB_GUARD_ROOT="$(web_adapter_lexical_absolute_path 'Web guard root' "${fields[16]}")"
   RELEASE_INPUT_SHA="${fields[17]}"
   count="${fields[18]}"
   [[ "$count" =~ ^[1-9][0-9]{0,2}$ && ${#fields[@]} -eq $((19 + count)) ]] \
@@ -206,13 +239,20 @@ PY
     [[ "$url" =~ ^https://[^[:space:]]+$ ]] || die "Web health URL must use HTTPS: $url"
   done
   require_sha256 'release input' "$RELEASE_INPUT_SHA"
+  web_adapter_reject_symbolic_path 'Web archive' "$WEB_ARTIFACT"
+  web_adapter_reject_symbolic_path 'Web candidate repo' "$WEB_REPO"
+  web_adapter_reject_symbolic_path 'Web live directory' "$WEB_LIVE_DIR"
+  web_adapter_reject_symbolic_path 'Web backup root' "$WEB_BACKUP_ROOT"
+  web_adapter_reject_symbolic_path 'Web record root' "$WEB_RECORD_ROOT"
+  web_adapter_reject_symbolic_path 'API activation proof root' "$ACTIVATION_PROOF_ROOT"
+  web_adapter_reject_symbolic_path 'Web guard root' "$WEB_GUARD_ROOT"
   ACTIVATION_PROOF="$ACTIVATION_PROOF_ROOT/${ACTIVATION_PROOF_SCHEMA}.json"
   WEB_GUARD="$WEB_GUARD_ROOT/web-guard-${RELEASE_ID}-${WEB_HEAD}-${WEB_TREE}.json"
   # Historical M1 capacity thresholds are cancelled; common.sh records observation only.
   MINIMUM_FREE_BYTES=0
 
   if web_adapter_fixture_mode; then
-    CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$(normalize_absolute_path 'Web adapter fixture root' "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT")"
+    CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$(web_adapter_lexical_absolute_path 'Web adapter fixture root' "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT")"
     web_adapter_secure_root 'Web adapter fixture root' "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT"
     [[ -z "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" \
        || "${CYF_WEB_DEPLOY_ADAPTER_FAULT}" =~ ^[A-Za-z0-9-]+(,[A-Za-z0-9-]+)*$ ]] \
@@ -220,7 +260,7 @@ PY
     local path
     for path in "$RELEASE_INPUT" "$WEB_ARTIFACT" "$WEB_REPO" "$WEB_LIVE_DIR" \
       "$WEB_BACKUP_ROOT" "$WEB_RECORD_ROOT" "$ACTIVATION_PROOF_ROOT" "$WEB_GUARD_ROOT"; do
-      assert_path_within 'fixture-owned Web adapter path' "$path" "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT"
+      web_adapter_assert_path_within 'fixture-owned Web adapter path' "$path" "$CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT"
     done
   else
     [[ -z "${CYF_WEB_DEPLOY_ADAPTER_FAULT:-}" ]] || die "Web adapter fault injection is test-only"
@@ -850,7 +890,7 @@ web_adapter_publish_recovery_failure() {
   local publication_expected_sha="${WEB_ADAPTER_RECORD_EXPECTED_SHA:-NOT_APPLICABLE}"
   local publication_live_validation="${WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION:-NOT_APPLICABLE}"
   case "$operation" in deploy|rollback) ;; *) return 2 ;; esac
-  assert_path_within 'Web manual recovery record' "$destination" "$WEB_RECORD_ROOT"
+  web_adapter_assert_path_within 'Web manual recovery record' "$destination" "$WEB_RECORD_ROOT"
   live_state="$([[ -e "$live_dir" ]] && printf PRESENT || printf ABSENT)"
   backup_state="$([[ -n "$backup_dir" && -e "$backup_dir" ]] && printf PRESENT || printf ABSENT)"
   rescue_state="$([[ -n "$rescue_dir" && -e "$rescue_dir" ]] && printf PRESENT || printf ABSENT)"

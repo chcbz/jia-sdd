@@ -53,8 +53,8 @@ ARCHIVE_SHA="$(web_adapter_archive_operation)"
   || die "live Web kit must be one physical directory: $WEB_LIVE_DIR"
 WEB_LIVE_PARENT="$(dirname -- "$WEB_LIVE_DIR")"
 [[ -d "$WEB_LIVE_PARENT" && ! -L "$WEB_LIVE_PARENT" ]] || die "Web live parent is unavailable or symlinked"
-assert_path_within 'Web backup root' "$WEB_BACKUP_ROOT" "$WEB_LIVE_PARENT"
-assert_path_within 'Web record root' "$WEB_RECORD_ROOT" "$WEB_BACKUP_ROOT"
+web_adapter_assert_path_within 'Web backup root' "$WEB_BACKUP_ROOT" "$WEB_LIVE_PARENT"
+web_adapter_assert_path_within 'Web record root' "$WEB_RECORD_ROOT" "$WEB_BACKUP_ROOT"
 assert_disk_gate "$WEB_LIVE_PARENT" 'Web deploy filesystem'
 assert_disk_gate "$WEB_BACKUP_ROOT" 'Web backup filesystem'
 

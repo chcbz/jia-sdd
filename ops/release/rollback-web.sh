@@ -46,13 +46,16 @@ web_adapter_verify_guard 0
 [[ "$WEB_GUARD_SHA" == "$APPROVED_GUARD_SHA" && "$ACTIVATION_PROOF_SHA" == "$APPROVED_PROOF_SHA" ]] \
   || die "Web guard binding changed before the execution lock"
 
-DEPLOY_RECORD="$(normalize_absolute_path 'Web deploy record' "${POSITIONAL[0]}")"
-assert_path_within 'Web deploy record' "$DEPLOY_RECORD" "$WEB_RECORD_ROOT"
+DEPLOY_RECORD="$(web_adapter_lexical_absolute_path 'Web deploy record' "${POSITIONAL[0]}")"
+web_adapter_reject_symbolic_path 'Web deploy record' "$DEPLOY_RECORD"
+web_adapter_assert_path_within 'Web deploy record' "$DEPLOY_RECORD" "$WEB_RECORD_ROOT"
 web_adapter_verify_immutable_with_sidecar "$DEPLOY_RECORD" >/dev/null
 mapfile -d '' -t DEPLOY_FACTS < <(web_adapter_read_deploy_record "$DEPLOY_RECORD")
 ((${#DEPLOY_FACTS[@]} == 6)) || die "Web deploy record facts are incomplete"
-BACKUP_DIR="$(normalize_absolute_path 'Web backup directory' "${DEPLOY_FACTS[0]}")"
-RECORDED_LIVE_DIR="$(normalize_absolute_path 'recorded Web live directory' "${DEPLOY_FACTS[1]}")"
+BACKUP_DIR="$(web_adapter_lexical_absolute_path 'Web backup directory' "${DEPLOY_FACTS[0]}")"
+RECORDED_LIVE_DIR="$(web_adapter_lexical_absolute_path 'recorded Web live directory' "${DEPLOY_FACTS[1]}")"
+web_adapter_reject_symbolic_path 'Web backup directory' "$BACKUP_DIR"
+web_adapter_reject_symbolic_path 'recorded Web live directory' "$RECORDED_LIVE_DIR"
 EXPECTED_CURRENT_TREE="${DEPLOY_FACTS[2]}"
 EXPECTED_OLD_TREE="${DEPLOY_FACTS[3]}"
 EXPECTED_ARCHIVE_SHA="${DEPLOY_FACTS[4]}"
@@ -70,7 +73,7 @@ if (( EXECUTE == 1 )); then
   [[ "$CYF_RELEASE_APPROVAL_ID" == "$RECORD_CHANGE_ID" ]] \
     || die "rollback approval ID must match the original deploy record changeId"
 fi
-assert_path_within 'Web backup directory' "$BACKUP_DIR" "$WEB_BACKUP_ROOT"
+web_adapter_assert_path_within 'Web backup directory' "$BACKUP_DIR" "$WEB_BACKUP_ROOT"
 [[ -d "$BACKUP_DIR" && ! -L "$BACKUP_DIR" ]] || die "Web backup directory is unavailable or symlinked"
 [[ -d "$WEB_LIVE_DIR" && ! -L "$WEB_LIVE_DIR" ]] || die "live Web kit is unavailable or symlinked"
 [[ "$(hash_tree "$WEB_LIVE_DIR")" == "$EXPECTED_CURRENT_TREE" ]] \
@@ -79,8 +82,8 @@ assert_path_within 'Web backup directory' "$BACKUP_DIR" "$WEB_BACKUP_ROOT"
   || die "Web backup tree checksum mismatch"
 WEB_LIVE_PARENT="$(dirname -- "$WEB_LIVE_DIR")"
 [[ -d "$WEB_LIVE_PARENT" && ! -L "$WEB_LIVE_PARENT" ]] || die "Web live parent is unavailable or symlinked"
-assert_path_within 'Web backup root' "$WEB_BACKUP_ROOT" "$WEB_LIVE_PARENT"
-assert_path_within 'Web record root' "$WEB_RECORD_ROOT" "$WEB_BACKUP_ROOT"
+web_adapter_assert_path_within 'Web backup root' "$WEB_BACKUP_ROOT" "$WEB_LIVE_PARENT"
+web_adapter_assert_path_within 'Web record root' "$WEB_RECORD_ROOT" "$WEB_BACKUP_ROOT"
 assert_disk_gate "$WEB_LIVE_PARENT" 'Web rollback filesystem'
 assert_disk_gate "$WEB_BACKUP_ROOT" 'Web rollback backup filesystem'
 [[ "$(stat -c %d -- "$WEB_LIVE_PARENT")" == "$(stat -c %d -- "$WEB_BACKUP_ROOT")" ]] \
