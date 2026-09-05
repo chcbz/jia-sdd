@@ -12,6 +12,16 @@ case "$SELECTOR" in build-contract|locks|transactions|activation-installer-nginx
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 pass() { printf 'PASS: %s\n' "$*"; }
 expect_fail() { local output; set +e; output="$("$@" 2>&1)"; local rc=$?; set -e; ((rc != 0)) || fail "expected failure: $*"; printf '%s' "$output"; }
+assert_no_trusted_grep_match() {
+  local label="$1" rc
+  shift
+  if /usr/bin/grep "$@"; then
+    fail "$label"
+  else
+    rc=$?
+  fi
+  (( rc == 1 )) || fail "$label (trusted grep error rc=$rc)"
+}
 
 TMP="$(mktemp -d /tmp/cyf-host-adapt-test.XXXXXX)"
 OWNED_LOOPBACK_PIDS=()
@@ -192,8 +202,22 @@ assert_parse_state repeated-normal /tmp/cyf-r8-normal.json 0 0 0
 SH
 }
 
+test_trusted_grep() {
+  local probe="$TMP/trusted-grep.txt" count rc
+  local -a grep_cmd=(/usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin /usr/bin/grep)
+  printf 'expected\nexpected\nother\n' > "$probe"
+  count="$("${grep_cmd[@]}" -c -- '^expected$' "$probe")"
+  [[ "$count" == 2 ]] || fail "trusted grep count mismatch"
+  "${grep_cmd[@]}" -q -- '^other$' "$probe" || fail "trusted grep missed expected match"
+  if "${grep_cmd[@]}" -q -- '^absent$' "$probe"; then rc=0; else rc=$?; fi
+  (( rc == 1 )) || fail "trusted grep no-match rc mismatch: $rc"
+  if "${grep_cmd[@]}" -q -- '^absent$' "$TMP/missing-grep-input" 2>/dev/null; then rc=0; else rc=$?; fi
+  (( rc >= 2 )) || fail "trusted grep input error was not distinguished: $rc"
+}
+
 test_build_contract() {
   test_common_args
+  test_trusted_grep
   /usr/bin/python3 -I -B - "$RELEASE/build-api.sh" <<'PY'
 import pathlib, shlex, sys
 
@@ -427,8 +451,8 @@ test_transactions() {
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$prior" ]] || fail "partial stop did not restore prior artifact"
   partial_record="$(latest_record 'api-deploy-*.json')"
   [[ "$(record_status "$partial_record")" == ROLLED_BACK_HEALTHY ]] || fail "partial stop recovery lacks truthful terminal receipt"
-  [[ "$(rg -c '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
-      && "$(rg -c '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
+  [[ "$(/usr/bin/grep -c -- '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
+      && "$(/usr/bin/grep -c -- '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
     || fail "partial stop recovery did not canonical stop/restore/start"
   assert_fixture_running "deploy partial-stop recovery"
 
@@ -474,8 +498,8 @@ test_transactions() {
   expect_fail run_release "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record" >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "rollback partial stop did not retain rescue candidate"
   [[ "$(record_status "$(latest_record 'api-rollback-*.json')")" == ROLLED_BACK_HEALTHY ]] || fail "rollback partial stop lacks truthful recovery receipt"
-  [[ "$(rg -c '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
-      && "$(rg -c '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
+  [[ "$(/usr/bin/grep -c -- '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
+      && "$(/usr/bin/grep -c -- '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
     || fail "rollback partial stop recovery did not canonical stop/restore/start"
   assert_fixture_running "rollback partial-stop recovery"
 
@@ -517,7 +541,8 @@ test_transactions() {
       expect_fail bash -c 'source "$1/common.sh"; source "$1/lib/api-host-transaction.sh"; CYF_RELEASE_OFFLINE_TEST=YES; CYF_RELEASE_TEST_ROOT="$2"; host_replace_durable "$3" "$4"' _ "$RELEASE" "$TEST_ROOT" "$cross_stage" "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar" >/dev/null
     )
   fi
-  ! rg -n '\b(kill|pkill|pgrep|ps|java|nohup|setsid)\b' "$RELEASE/deploy-api.sh" "$RELEASE/rollback-api.sh" || fail "direct process control in transaction drivers"
+  assert_no_trusted_grep_match "direct process control in transaction drivers" -En -- \
+    '\b(kill|pkill|pgrep|ps|java|nohup|setsid)\b' "$RELEASE/deploy-api.sh" "$RELEASE/rollback-api.sh"
   pass transactions
 }
 
@@ -690,7 +715,7 @@ EOF
   wait "$trap_pid_value"
   OWNED_LOOPBACK_PIDS=()
   grep -qx '{"status":"UP"}' "$control/helper.body" || fail "shared real curl missed owned loopback target"
-  rg -q '^CURL_CONTRACT=PASS$' "$control/canonical.out" || fail "canonical real curl contract failed"
+  /usr/bin/grep -q -- '^CURL_CONTRACT=PASS$' "$control/canonical.out" || fail "canonical real curl contract failed"
   [[ ! -e "$control/trap-hit" ]] || fail "curl config/proxy remapped an owned loopback request"
 }
 
@@ -799,8 +824,8 @@ test_activation_installer_nginx() {
   expect_fail run_release "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$prior_config_sha" ]] || fail "activation partial stop did not restore prior config"
   [[ "$(record_status "$(latest_record 'voice-activation-*.json')")" == ROLLED_BACK_HEALTHY ]] || fail "activation partial stop lacks truthful recovery receipt"
-  [[ "$(rg -c '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
-      && "$(rg -c '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
+  [[ "$(/usr/bin/grep -c -- '^lifecycle-held:stop$' "$TEST_ROOT/control/lifecycle.log")" == 2 \
+      && "$(/usr/bin/grep -c -- '^lifecycle-held:start$' "$TEST_ROOT/control/lifecycle.log")" == 1 ]] \
     || fail "activation partial stop recovery did not canonical stop/restore/start"
   assert_fixture_running "activation partial-stop recovery"
 
@@ -845,8 +870,9 @@ test_activation_installer_nginx() {
 
   test_real_curl_contract
   assert_nginx_contract
-  rg -q 'ops/orchestration/cyf_orchestrator.py' "$RELEASE/build-api.sh" || fail "orchestrator delegation"
-  ! rg -n '(^|[^A-Z_])OPENAI_API_KEY' "$RELEASE/activate-api-voice.sh" "$RELEASE/host/cyf-api-kit" || fail "custom OPENAI_API_KEY"
+  /usr/bin/grep -q -- 'ops/orchestration/cyf_orchestrator.py' "$RELEASE/build-api.sh" || fail "orchestrator delegation"
+  assert_no_trusted_grep_match "custom OPENAI_API_KEY" -En -- \
+    '(^|[^A-Z_])OPENAI_API_KEY' "$RELEASE/activate-api-voice.sh" "$RELEASE/host/cyf-api-kit"
 
   make_fake_lifecycle
   installed_sha="$(sha256sum "$TEST_ROOT/usr/local/sbin/cyf-api-kit"|awk '{print $1}')"; candidate_sha="$(sha256sum "$RELEASE/host/cyf-api-kit"|awk '{print $1}')"
