@@ -274,7 +274,24 @@ run_release_fault() {
     CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" "$@"
 }
 
+run_release_compound_terminal_fault() {
+  local name="$1" value="$2"; shift 2
+  env "$name=$value" CYF_RELEASE_FAULT_TERMINAL_RECOVERY=BOTH \
+    CYF_RELEASE_OFFLINE_TEST=YES CYF_RELEASE_TEST_ROOT="$TEST_ROOT" \
+    CYF_RELEASE_ALLOW_OFFLINE_EXECUTE=YES CYF_RELEASE_APPROVED=YES CYF_RELEASE_APPROVAL_ID=test-r1 \
+    CYF_RELEASE_APPROVED_API_HEAD="$HEAD" CYF_RELEASE_APPROVED_API_TREE="$TREE" "$@"
+}
+
 test_transactions() {
+  direct_record="$TMP/direct-nonterminal-record.json"
+  bash -c 'source "$1/common.sh"; source "$1/lib/api-host-transaction.sh"; host_record_init "$2" deploy direct "$3" "$4" ABSENT old new' \
+    _ "$RELEASE" "$direct_record" "$HEAD" "$TREE"
+  output="$(expect_fail bash -c 'source "$1/common.sh"; source "$1/lib/api-host-transaction.sh"; host_finalize_record "$2"' \
+    _ "$RELEASE" "$direct_record")"
+  [[ "$output" == *'transaction record is not terminal'* ]] || fail "central finalizer did not reject PREPARED"
+  [[ "$(record_status "$direct_record")" == PREPARED && "$(stat -Lc %a "$direct_record")" == 600 ]] \
+    || fail "central finalizer made PREPARED immutable"
+
   reset_fixture; old_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"
   run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
   [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "candidate swap"
@@ -295,6 +312,20 @@ test_transactions() {
       || fail "deploy STOP_ATTEMPTED $window fault lacks immutable terminal receipt"
     assert_no_lifecycle_calls "deploy STOP_ATTEMPTED $window fault"
     assert_fixture_running "deploy STOP_ATTEMPTED $window fault"
+
+    reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"
+    output="$(expect_fail run_release_compound_terminal_fault "$fault_variable" STOP_ATTEMPTED "$RELEASE/deploy-api.sh" --input "$INPUT" --execute)"
+    boundary_record="$(latest_record 'api-deploy-*.json')"
+    if [[ "$window" == before-replace ]]; then expected_status=PREPARED; else expected_status=STOP_ATTEMPTED; fi
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$prior" ]] || fail "deploy compound $window fault changed selected artifact"
+    [[ "$(record_status "$boundary_record")" == "$expected_status" && "$(stat -Lc %a "$boundary_record")" == 600 ]] \
+      || fail "deploy compound $window fault made nonterminal receipt immutable"
+    [[ "$output" == *'ERROR=TERMINAL_RECEIPT_FINALIZATION_FAILED'* \
+        && "$output" == *'MANUAL_RECOVERY_REQUIRED=YES'* \
+        && "$output" == *'RECORD_MUTABLE_OR_DURABILITY_UNKNOWN=YES'* ]] \
+      || fail "deploy compound $window fault lacks explicit manual result"
+    assert_no_lifecycle_calls "deploy compound $window fault"
+    assert_fixture_running "deploy compound $window fault"
   done
 
   reset_fixture; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null; deploy_record="$(latest_record 'api-deploy-*.json')"; : > "$TEST_ROOT/control/fail-next-start"
@@ -318,6 +349,21 @@ test_transactions() {
       || fail "rollback STOP_ATTEMPTED $window fault lacks immutable terminal receipt"
     assert_no_lifecycle_calls "rollback STOP_ATTEMPTED $window fault"
     assert_fixture_running "rollback STOP_ATTEMPTED $window fault"
+
+    reset_fixture; run_release "$RELEASE/deploy-api.sh" --input "$INPUT" --execute >/dev/null
+    deploy_record="$(latest_record 'api-deploy-*.json')"; : > "$TEST_ROOT/control/lifecycle.log"
+    output="$(expect_fail run_release_compound_terminal_fault "$fault_variable" STOP_ATTEMPTED "$RELEASE/rollback-api.sh" --input "$INPUT" --execute "$deploy_record")"
+    boundary_record="$(latest_record 'api-rollback-*.json')"
+    if [[ "$window" == before-replace ]]; then expected_status=PREPARED; else expected_status=STOP_ATTEMPTED; fi
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')" == "$SHA" ]] || fail "rollback compound $window fault changed selected artifact"
+    [[ "$(record_status "$boundary_record")" == "$expected_status" && "$(stat -Lc %a "$boundary_record")" == 600 ]] \
+      || fail "rollback compound $window fault made nonterminal receipt immutable"
+    [[ "$output" == *'ERROR=TERMINAL_RECEIPT_FINALIZATION_FAILED'* \
+        && "$output" == *'MANUAL_RECOVERY_REQUIRED=YES'* \
+        && "$output" == *'RECORD_MUTABLE_OR_DURABILITY_UNKNOWN=YES'* ]] \
+      || fail "rollback compound $window fault lacks explicit manual result"
+    assert_no_lifecycle_calls "rollback compound $window fault"
+    assert_fixture_running "rollback compound $window fault"
   done
 
   reset_fixture; prior="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/cyf-api-kit.jar"|awk '{print $1}')"; : > "$TEST_ROOT/control/fail-stop"
@@ -680,6 +726,21 @@ test_activation_installer_nginx() {
       || fail "activation STOP_ATTEMPTED $window fault lacks immutable terminal receipt"
     assert_no_lifecycle_calls "activation STOP_ATTEMPTED $window fault"
     assert_fixture_running "activation STOP_ATTEMPTED $window fault"
+
+    reset_fixture; printf 'prior-config\n' > "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"; chmod 0600 "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"
+    prior_config_sha="$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')"; make_valid_config
+    output="$(expect_fail run_release_compound_terminal_fault "$fault_variable" STOP_ATTEMPTED "$RELEASE/activate-api-voice.sh" --input "$INPUT" --config "$TMP/voice.env" --audio-fixture "$TMP/audio.webm" --expected-transcript-sha256 "$ok_sha" --execute)"
+    boundary_record="$(latest_record 'voice-activation-*.json')"
+    if [[ "$window" == before-replace ]]; then expected_status=PREPARED; else expected_status=STOP_ATTEMPTED; fi
+    [[ "$(sha256sum "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"|awk '{print $1}')" == "$prior_config_sha" ]] || fail "activation compound $window fault changed selected config"
+    [[ "$(record_status "$boundary_record")" == "$expected_status" && "$(stat -Lc %a "$boundary_record")" == 600 ]] \
+      || fail "activation compound $window fault made nonterminal receipt immutable"
+    [[ "$output" == *'ERROR=TERMINAL_RECEIPT_FINALIZATION_FAILED'* \
+        && "$output" == *'MANUAL_RECOVERY_REQUIRED=YES'* \
+        && "$output" == *'RECORD_MUTABLE_OR_DURABILITY_UNKNOWN=YES'* ]] \
+      || fail "activation compound $window fault lacks explicit manual result"
+    assert_no_lifecycle_calls "activation compound $window fault"
+    assert_fixture_running "activation compound $window fault"
   done
 
   reset_fixture; printf 'prior-config\n' > "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"; chmod 0600 "$TEST_ROOT/opt/cyf/service/api/.voice-runtime.env"

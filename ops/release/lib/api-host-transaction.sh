@@ -447,6 +447,10 @@ PY
 
 host_record_state() {
   local after_replace_fault=''
+  if host_offline && [[ "${CYF_RELEASE_FAULT_TERMINAL_RECOVERY:-}" == BOTH \
+      && ( "$2" == ABORTED_BEFORE_STOP || "$2" == FAILED_MANUAL_RECOVERY_REQUIRED ) ]]; then
+    return 97
+  fi
   if host_offline && [[ "${CYF_RELEASE_FAULT_RECORD_STATE:-}" == "$2" ]]; then
     return 92
   fi
@@ -485,24 +489,42 @@ PY
 host_finalize_record() {
   local fault=''
   if host_offline; then fault="${CYF_RELEASE_FAULT_FINALIZE:-}"; fi
-  if [[ "$fault" == before-chmod ]]; then
-    return 93
-  fi
-  chmod 0444 "$1"
-  if [[ "$fault" == file-fsync ]]; then
-    return 94
-  fi
   /usr/bin/python3 -I -B - "$1" "$fault" <<'PY'
-import os, sys
-fd = os.open(sys.argv[1], os.O_RDONLY)
-try: os.fsync(fd)
-finally: os.close(fd)
-if sys.argv[2] == 'dir-fsync':
+import json, os, stat, sys
+path, fault = sys.argv[1:]
+fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
+try:
+    info = os.fstat(fd)
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise SystemExit('transaction record is unsafe')
+    with os.fdopen(os.dup(fd), 'r', encoding='utf-8') as stream:
+        record = json.load(stream)
+    terminal = {'ABORTED_BEFORE_STOP', 'ROLLED_BACK_HEALTHY',
+                'FAILED_MANUAL_RECOVERY_REQUIRED', 'COMMITTED'}
+    if record.get('status') not in terminal:
+        raise SystemExit('transaction record is not terminal')
+    if fault == 'before-chmod':
+        raise SystemExit(93)
+    os.fchmod(fd, 0o444)
+    if fault == 'file-fsync':
+        raise SystemExit(94)
+    os.fsync(fd)
+finally:
+    os.close(fd)
+if fault == 'dir-fsync':
     raise SystemExit(95)
-parent = os.open(os.path.dirname(sys.argv[1]), os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+parent = os.open(os.path.dirname(path), os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
 try: os.fsync(parent)
 finally: os.close(parent)
 PY
+}
+
+host_finalize_record_or_report() {
+  if host_finalize_record "$1"; then
+    return 0
+  fi
+  printf 'ERROR=TERMINAL_RECEIPT_FINALIZATION_FAILED\nMANUAL_RECOVERY_REQUIRED=YES\nRECORD_MUTABLE_OR_DURABILITY_UNKNOWN=YES\nRECORD=%s\n' "$1" >&2
+  return 1
 }
 
 host_parse_voice_config() {

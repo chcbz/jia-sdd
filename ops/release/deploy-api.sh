@@ -56,13 +56,13 @@ deploy_failure() {
   case "$PHASE" in
     PREPARED)
       host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null || true
-      host_finalize_record "$RECORD" 2>/dev/null || true
+      host_finalize_record_or_report "$RECORD" || true
       ;;
     STOP_RECORDING)
       if ! host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null; then
         host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
       fi
-      host_finalize_record "$RECORD" 2>/dev/null || true
+      host_finalize_record_or_report "$RECORD" || true
       ;;
     STOP_ATTEMPTED|STOPPED|CANDIDATE_INSTALLED)
       if host_call_lifecycle stop >/dev/null 2>&1 \
@@ -75,14 +75,14 @@ deploy_failure() {
       else
         host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
       fi
-      host_finalize_record "$RECORD" 2>/dev/null || true
+      host_finalize_record_or_report "$RECORD" || true
       ;;
     STARTED_HEALTHY|COMMITTING)
       host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
-      host_finalize_record "$RECORD" 2>/dev/null || true
+      host_finalize_record_or_report "$RECORD" || true
       ;;
     COMMITTED)
-      host_finalize_record "$RECORD" 2>/dev/null || true
+      host_finalize_record_or_report "$RECORD" || true
       ;;
   esac
   [[ ! -e "$STAGE_JAR" ]] || rm -f -- "$STAGE_JAR"
