@@ -827,6 +827,13 @@ def notice_body(event, now, incident_id, components, extra=""):
     return "\n".join(lines)
 
 
+def _coalesced_notice_count(item):
+    if item.get("event") != "digest":
+        return 1
+    match = re.search(r"coalesced_count=(\d+)", item.get("body", ""))
+    return int(match.group(1)) if match else 1
+
+
 def enqueue_notice(state, notice_id, event, subject, body, now):
     if notice_id in state["notice_ids"]:
         return False
@@ -837,6 +844,33 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
         "body": body[:2000], "created_at": int(now), "attempts": 0,
         "next_attempt_at": int(now), "last_error": "",
     }
+    if len(state["outbox"]) >= MAX_OUTBOX and event == "recovery_attempted":
+        digest = next((pending for pending in state["outbox"]
+                       if pending["event"] == "digest"), None)
+        if digest is None:
+            replaced = [state["outbox"].pop(0), state["outbox"].pop(0)]
+            count = sum(_coalesced_notice_count(pending) for pending in replaced)
+            digest = {
+                "id": "outbox-digest", "event": "digest",
+                "subject": "CYF health monitor pending event digest",
+                "body": "coalesced_count=%d latest=%s" %
+                        (count, replaced[-1]["event"][:40]),
+                "created_at": int(now), "attempts": 0, "next_attempt_at": int(now),
+                "last_error": "",
+            }
+            state["outbox"].insert(0, digest)
+        else:
+            digest_index = state["outbox"].index(digest)
+            victim_index = next((index for index, pending in enumerate(state["outbox"])
+                                 if index != digest_index and pending["event"] != "digest"),
+                                1 if digest_index == 0 else 0)
+            replaced = state["outbox"].pop(victim_index)
+            count = _coalesced_notice_count(digest) + _coalesced_notice_count(replaced)
+            digest["body"] = ("coalesced_count=%d latest=%s" %
+                              (count, replaced["event"][:40]))
+            digest["next_attempt_at"] = min(digest["next_attempt_at"], int(now))
+        state["outbox"].append(item)
+        return True
     if len(state["outbox"]) >= MAX_OUTBOX:
         for index, pending in enumerate(state["outbox"]):
             if pending["event"] == "reminder":

@@ -13,7 +13,7 @@ STATE_DIR=/var/lib/cyf-juyiting-health
 CRON=/etc/cron.d/cyf-juyiting-health
 CANONICAL=/usr/local/sbin/cyf-api-kit
 CANONICAL_SHA=56537824cd33f6333f199ea1cebda90b127b39c079e08daad6d164607f788ef5
-CANDIDATE_MONITOR_SHA=c3829e017ccac6758b98f869ae0ebdf6c8db67e9ea46b2d87f629535d65b5fd0
+CANDIDATE_MONITOR_SHA=1793461628c0ac215aa56d207b4f1c6963650d40d170c79c3b20c9288f638480
 
 fail() { echo "ERROR: $*" >&2; exit 2; }
 [ "$(id -u)" = 0 ] || fail "root required"

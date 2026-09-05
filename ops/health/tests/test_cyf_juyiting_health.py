@@ -312,6 +312,39 @@ class MonitorTests(unittest.TestCase):
         self.assertTrue(effects.mail_calls[0][0].startswith("CYF API recovery attempt selected"))
         self.assertEqual(["start"], effects.recoveries)
 
+    def test_full_outbox_preserves_failed_priority_recovery_notice(self):
+        effects = FakeEffects([stopped(), stopped(), up()])
+        effects.mail_results = [(False, "helper_failed")]
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        for number in range(health.MAX_OUTBOX):
+            health.enqueue_notice(
+                state, "old-%d" % number, "recovery_result",
+                "old recovery result", "old body", self.clock.now)
+
+        def observe(subject, body):
+            if subject.startswith("CYF API recovery attempt selected"):
+                durable = self.persisted[-1]["outbox"]
+                self.assertTrue(any(item["event"] == "digest" for item in durable))
+                self.assertTrue(any(item["event"] == "recovery_attempted"
+                                    for item in durable))
+        effects.mail_observer = observe
+        self.monitor(effects).check_once(state, self.config)
+
+        self.assertEqual(["start"], effects.recoveries)
+        self.assertTrue(effects.mail_calls[0][0].startswith(
+            "CYF API recovery attempt selected"))
+        current = [item for item in state["outbox"]
+                   if item["event"] == "recovery_attempted"]
+        self.assertEqual(1, len(current))
+        self.assertIn("action=start attempt=1", current[0]["body"])
+        self.assertEqual(1, current[0]["attempts"])
+        self.assertGreater(current[0]["next_attempt_at"], self.clock.now)
+        self.assertEqual("helper_failed", current[0]["last_error"])
+        self.assertTrue(any(subject == "CYF health monitor pending event digest"
+                            for subject, _ in effects.mail_calls[1:]))
+        self.assertLessEqual(len(state["outbox"]), health.MAX_OUTBOX)
+
     def test_resource_deferred_notice_persisted_before_delivery(self):
         effects = FakeEffects([stopped()])
         effects.resource_result = {"healthy": False,
