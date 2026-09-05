@@ -1,8 +1,9 @@
 # CYF Juyi Hall bounded health monitor
 
 `cyf-juyiting-health.py` is a Python 3.6 stdlib cron monitor. It checks the
-public Juyi Hall HTML entry, the unauthenticated public API/auth boundary, the
-canonical local API status, MySQL/Redis reachability, and the Codex Agent unit.
+public Juyi Hall HTML entry, the unauthenticated public API/auth boundary (including
+the fixed endpoint's production empty-401 contract), the canonical local API status,
+MySQL/Redis reachability, and the Codex Agent unit.
 Only the API can be recovered, through the exact accepted canonical command.
 
 It does **not** prove authenticated map/roster/business behavior, SMTP inbox
@@ -25,9 +26,16 @@ monitor. Redis `-NOAUTH`/`-NOPERM` proves reachability only.
   lacks a complete runtime-identity assertion and is deliberately alert-only.
 - Three trusted API-UP observations reset the circuit. `--reset-circuit` is an
   explicit alternative. Public web/API, dependencies, and Agent are alert-only.
-- Incident/recovery mail is queued durably and attempted before entering a long
-  recovery wait. Failure remains queued with bounded retry/dedup. No credential
-  file content is read by the monitor.
+- Incident/recovery mail is queued durably. The current recovery-attempt notice is
+  tried ahead of old mail, then canonical status is read again: restart requires the
+  same trusted PID to remain MATCH/LISTENING/NOT_READY and at least 25 minutes old.
+  Healthy/PID-changed/identity-changed results cancel recovery without consuming an
+  attempt. Mail failure remains queued with bounded retry/dedup.
+- `/usr/bin/python3` symlinks are accepted only through a root-owned, non-writable
+  lstat chain ending at a trusted executable. Credential file content is never read.
+- Cron suppresses ordinary output mail. Exceptional `fail_closed` guards alone write
+  a fixed sanitized event through root-trusted `/usr/bin/logger`; no response body,
+  argv, environment or credential is logged.
 
 ## CLI
 
@@ -69,9 +77,12 @@ bundle to a root-owned staging directory, review it, then run:
 ```
 
 `install` copies code/config and explicitly initializes absent state. It does
-not install cron, probe services, send mail, or recover API. `install-cron`
-installs the one-minute root cron file but does not restart `crond` or run an
-immediate check. Existing config/state are never overwritten or repaired.
+not install cron, probe services, send mail, or recover API. The installer validates
+the complete root-owned/non-writable staging parent chain and every payload.
+`install-cron` requires the installed monitor's owner/mode/link count and SHA-256 to
+match the reviewed candidate embedded in the installer, then byte-verifies the cron
+copy. It does not restart `crond` or run an immediate check. Existing config/state
+are never overwritten or repaired.
 
 ## Tests
 

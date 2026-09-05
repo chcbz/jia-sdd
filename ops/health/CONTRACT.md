@@ -9,9 +9,11 @@ Only these read-only observations exist:
 
 1. `GET https://kit.chaoyoufan.cn/juyiting`: HTTP 200, `text/html`, configured
    bounded HTML marker present.
-2. `GET https://api.chaoyoufan.cn/agent/map`: HTTP 401/403, JSON object, fixed
-   authentication-denial evidence. This proves only that the public API/auth boundary
-   responds; it does not prove authenticated map or roster semantics.
+2. `GET https://api.chaoyoufan.cn/agent/map`: either the production contract's exact
+   HTTP 401 with empty Content-Type and zero-byte body, or HTTP 401/403 with a JSON
+   authentication-denial object. This proves only that the fixed public API/auth
+   boundary responds; HTML 403/502 and HTML 200 SPA responses fail, and authenticated
+   map or roster semantics are not proved.
 3. `/usr/local/sbin/cyf-api-kit status`: exact canonical status authority. Exit 0 is
    trusted UP only with the required identity/artifact/listener fields; exit 3 is
    stopped only with an unowned-port-free stopped result; exit 4 can be recovery-safe
@@ -45,12 +47,15 @@ deploy, pull, DML, Gradle, business write, or Agent recovery is configurable.
 5. Validate maintenance marker.
 6. Run bounded read-only probes.
 7. Persist state atomically before any recovery command.
-8. Persist attempt count, timestamp, in-flight fence and attempted-mail event before
-   invoking recovery.
-9. Keep the same monitor flock for the complete synchronous canonical recovery wait;
+8. Persist the selected recovery-attempt notice, deliver that current notice ahead
+   of older queued mail, then read canonical status again. Restart proceeds only when
+   the same trusted PID is still MATCH/LISTENING/NOT_READY and at least 1500 seconds
+   old; a healthy result, PID change, or identity change cancels the command.
+9. Persist actual attempt count, timestamp and in-flight fence immediately before the
+   canonical lifecycle command. Keep the same monitor flock for the complete wait;
    the monitor does not impose a timeout or signal that subprocess.
-10. Run a fresh canonical status, persist result, then attempt at most two queued mail
-    deliveries and persist delivery outcomes.
+10. Run a fresh canonical status and persist the result. Every notice, including
+    resource-deferred notices, is durable before it becomes delivery-eligible.
 
 Cron overlap therefore defers immediately and cannot overlap a cold start that may
 last 9-13 minutes (canonical maximum 1200 seconds).
@@ -99,9 +104,13 @@ tokens, email-env contents, passwords, cookies, authorization headers, or arbitr
 exception text. Error details are reduced to fixed exception class labels.
 
 The durable outbox is bounded and deduplicated. Delivery failure remains pending with
-bounded retry backoff. When full, pending events are coalesced into a bounded digest
+bounded retry backoff. The current recovery-attempt notice is prioritized before the
+long canonical wait. When full, pending events are coalesced into a bounded digest
 rather than silently dropped. SMTP acceptance is reported only as helper acceptance,
-never inbox delivery.
+never inbox delivery. `/usr/bin/python3` may be a symlink only when every lstat hop and
+parent is root-trusted and the final target is a safe executable. Exceptional
+`fail_closed` guards emit only a fixed sanitized message through a root-trusted
+`/usr/bin/logger`; normal ticks are not sent to syslog.
 
 ## Acceptance-to-test mapping
 
@@ -117,7 +126,12 @@ never inbox delivery.
 | dependency gate | `test_dependency_down_blocks_recovery` |
 | startup grace/full rc4 identity | `test_not_ready_requires_grace_and_full_identity`, `test_rc4_without_runtime_identity_is_alert_only` |
 | command exit is not success | `test_exit_zero_without_fresh_up_is_failure` |
-| mail retry/dedup/bounds | `MailQueueTests` |
-| web marker and JSON auth denial | `ProbeContractTests` |
+| mail retry/dedup/bounds/current-attempt priority and durable defer | `MailQueueTests`, `test_current_attempt_mail_is_durable_and_prioritized`, `test_resource_deferred_notice_persisted_before_delivery` |
+| web marker, empty 401, JSON denial and HTML rejection | `ProbeContractTests` |
+| safe Python symlink chain | `TrustedExecutableTests` |
+| post-mail same-PID restart fencing | `test_post_mail_restart_revalidation_*` |
+| exceptional guard syslog only | `test_guard_logging_uses_fixed_sanitized_syslog_command`, `test_cron_syntax_contract` |
+| installer staging/activation trust | `test_installer_trust_and_activation_contract` |
+| maintenance directory durability | `test_pause_resume_marker_and_directory_fsync` |
 | fixed config/command/security and cron syntax | `ConfigSecurityTests`, `StaticContractTests` |
 | no real side effects | all monitor tests inject `FakeEffects`; static tests reject shell/configurable commands |

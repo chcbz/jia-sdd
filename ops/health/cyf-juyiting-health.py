@@ -32,6 +32,7 @@ MAIL_PYTHON = "/usr/bin/python3"
 MAIL_HELPER = "/root/.local/bin/cyf-task-email"
 MAIL_HELPER_SHA256 = "ddc540f1d450880af5bb707751cf6cd68b6492e58cb702436b19580867d3ae99"
 MAIL_ENV = "/root/.config/cyf-task-monitor/email.env"
+LOGGER = "/usr/bin/logger"
 WEB_URL = "https://kit.chaoyoufan.cn/juyiting"
 API_URL = "https://api.chaoyoufan.cn/agent/map"
 USER_AGENT = "CYF-HealthMonitor/1.0"
@@ -142,6 +143,36 @@ def validate_regular(path, expected_mode=None, expected_uid=0, maximum=None,
     if require_executable and not mode & 0o100:
         raise MonitorError("file_not_executable")
     return info
+
+
+def validate_trusted_executable(path, expected_uid=0, validate_parents=True, maximum=128 * 1024 * 1024):
+    current = os.path.abspath(path)
+    visited = set()
+    for _ in range(9):
+        if current in visited:
+            raise MonitorError("executable_symlink_cycle")
+        visited.add(current)
+        if validate_parents:
+            validate_parent_chain(current, expected_uid)
+        try:
+            info = os.lstat(current)
+        except OSError:
+            raise MonitorError("missing_executable")
+        if info.st_uid != expected_uid:
+            raise MonitorError("unsafe_executable_owner")
+        if stat.S_ISLNK(info.st_mode):
+            target = os.readlink(current)
+            current = os.path.normpath(target if os.path.isabs(target)
+                                       else os.path.join(os.path.dirname(current), target))
+            if not os.path.isabs(current):
+                raise MonitorError("unsafe_executable_target")
+            continue
+        mode = stat.S_IMODE(info.st_mode)
+        if not stat.S_ISREG(info.st_mode) or mode & 0o022 or not mode & 0o100 \
+                or info.st_size > maximum:
+            raise MonitorError("unsafe_executable_target")
+        return current
+    raise MonitorError("executable_symlink_depth")
 
 
 def validate_directory(path, expected_mode=0o700, expected_uid=0, validate_parents=True):
@@ -312,7 +343,7 @@ def validate_state(data):
                 or not isinstance(snapshot["overall_healthy"], bool):
             raise MonitorError("state_snapshot_fields_invalid")
         checks = snapshot["checks"]
-        allowed_checks = set(COMPONENTS) | {"local_api_post_recovery"}
+        allowed_checks = set(COMPONENTS) | {"local_api_revalidation", "local_api_post_recovery"}
         if not isinstance(checks, dict) or not set(COMPONENTS).issubset(set(checks)) \
                 or not set(checks).issubset(allowed_checks):
             raise MonitorError("state_snapshot_checks_invalid")
@@ -476,6 +507,11 @@ class StateStore(object):
             os.fsync(fd)
         finally:
             os.close(fd)
+        directory_fd = os.open(self.state_dir, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
 
     def resume(self):
         if not os.path.lexists(self.maintenance_path):
@@ -649,7 +685,9 @@ class Effects(object):
     def public_api(self):
         try:
             status_code, content_type, body, classification = self._http(API_URL)
-            valid = False
+            valid_empty_401 = classification == "completed" and status_code == 401 \
+                and content_type == "" and body == b""
+            valid_json_denial = False
             if classification == "completed" and status_code in (401, 403) \
                     and content_type in ("application/json", "application/problem+json"):
                 try:
@@ -664,9 +702,12 @@ class Effects(object):
                     joined = " ".join(values)
                     markers = ("401", "403", "unauthorized", "forbidden", "authentication",
                                "access denied", "未认证", "未授权", "登录", "token")
-                    valid = any(marker in joined for marker in markers)
+                    valid_json_denial = any(marker in joined for marker in markers)
+            valid = valid_empty_401 or valid_json_denial
+            classification_label = "auth_boundary_empty_401" if valid_empty_401 else \
+                ("auth_boundary_json_denial" if valid_json_denial else "auth_boundary_invalid")
             return {"healthy": valid,
-                    "classification": "auth_boundary_ok" if valid else "auth_boundary_invalid",
+                    "classification": classification_label,
                     "http_status": status_code, "content_type": content_type[:80]}
         except Exception as exc:
             return {"healthy": False, "classification": "public_api_%s" % safe_label(type(exc).__name__)}
@@ -724,7 +765,7 @@ class Effects(object):
 
     def send_email(self, subject, body):
         try:
-            validate_regular(MAIL_PYTHON, 0o755, 0, 1024 * 1024, True, True)
+            validate_trusted_executable(MAIL_PYTHON, 0, True)
             validate_regular(MAIL_HELPER, 0o700, 0, 1024 * 1024, True, False)
             validate_regular(MAIL_ENV, 0o600, 0, 8192, True, False)
             if sha256_file(MAIL_HELPER) != MAIL_HELPER_SHA256:
@@ -733,6 +774,29 @@ class Effects(object):
             return result["returncode"] == 0, "helper_accepted" if result["returncode"] == 0 else "helper_failed"
         except Exception as exc:
             return False, "mail_%s" % safe_label(type(exc).__name__)
+
+
+def _guard_logger_exec(argv):
+    process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, cwd="/", env=dict(FIXED_ENV))
+    try:
+        return process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+        return 124
+
+
+def guard_log(reason, validator=None, executor=None):
+    validate = validator or validate_trusted_executable
+    execute = executor or _guard_logger_exec
+    try:
+        validate(LOGGER, 0, True)
+        execute([LOGGER, "-p", "daemon.err", "-t", "cyf-juyiting-health",
+                 "fail_closed reason=%s" % safe_label(reason)])
+        return True
+    except Exception:
+        return False
 
 
 def sanitized_result(result):
@@ -800,9 +864,14 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
     return True
 
 
-def flush_outbox(state, effects, config, now, limit=2):
+def flush_outbox(state, effects, config, now, limit=2, preferred_id=None):
     if not config["email_enabled"]:
         return 0
+    if preferred_id is not None:
+        for index, item in enumerate(state["outbox"]):
+            if item["id"] == preferred_id:
+                state["outbox"].insert(0, state["outbox"].pop(index))
+                break
     delivered = 0
     examined = 0
     index = 0
@@ -918,55 +987,102 @@ class Monitor(object):
                                notice_body("recovery_deferred_resources", now, incident_id,
                                            ["local_api"], "canonical minimum resources not met"), now)
                 state["last_snapshot"]["recovery"]["decision"] = "resources_blocked"
+                state["updated_at"] = now
+                self.persist(state)  # notification must be durable before any delivery eligibility
                 action = None
         if action:
             recovery = state["recovery"]
             attempt = recovery["attempts"] + 1
-            recovery["attempts"] = attempt
-            recovery["last_attempt_at"] = now
-            recovery["in_flight"] = {"action": action, "attempt": attempt, "at": now}
             incident_id = state["incident"]["id"] if state["incident"] else "unconfirmed"
-            enqueue_notice(state, "incident:%s:recovery:%d:attempted" % (incident_id, attempt),
-                           "recovery_attempted", "CYF API recovery attempted",
-                           notice_body("recovery_attempted", now, incident_id, ["local_api"],
-                                       "action=%s attempt=%d" % (action, attempt)), now)
+            attempt_notice_id = "incident:%s:recovery:%d:attempted:%d" % \
+                (incident_id, attempt, now)
+            enqueue_notice(state, attempt_notice_id, "recovery_attempted",
+                           "CYF API recovery attempt selected",
+                           notice_body("recovery_attempt_selected", now, incident_id, ["local_api"],
+                                       "action=%s attempt=%d; identity revalidation pending" %
+                                       (action, attempt)), now)
             state["updated_at"] = now
-            self.persist(state)  # durable attempt fence before canonical lifecycle command
-            pre_recovery_mail_accepted = flush_outbox(state, self.effects, config, now, 2)
-            self.persist(state)  # delivery outcome is durable before the long canonical wait
-            try:
-                command_result = self.effects.recover(action)
-                if not isinstance(command_result, dict) or not isinstance(command_result.get("returncode"), int):
-                    raise MonitorError("recovery_result_invalid")
-            except Exception as exc:
-                command_result = {"returncode": 126,
-                                  "classification": "recovery_%s" % safe_label(type(exc).__name__)}
-            fresh = self._probe(self.effects.canonical_status, "canonical_post_recovery")
-            success = command_result.get("returncode") == 0 and fresh.get("healthy") is True
-            classification = "success_health_up" if success else "failed_fresh_health_not_up"
-            recovery["in_flight"] = None
-            recovery["last_result"] = {"at": now, "action": action, "attempt": attempt,
-                                       "classification": classification}
-            if success:
-                recovery["last_success_at"] = now
-                state["api_healthy_streak"] = 1
-                state["component_streaks"]["local_api"] = 0
-            if recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
-                recovery["circuit_latched"] = True
-            state["last_snapshot"]["checks"]["local_api_post_recovery"] = sanitized_result(fresh)
-            state["last_snapshot"]["recovery"]["result"] = classification
-            enqueue_notice(state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
-                           "recovery_result", "CYF API recovery result",
-                           notice_body("recovery_result", now, incident_id, ["local_api"],
-                                       "action=%s attempt=%d result=%s" %
-                                       (action, attempt, classification)), now)
-            self.persist(state)
+            self.persist(state)  # current attempt notice is durable before priority delivery
+            pre_recovery_mail_accepted = flush_outbox(
+                state, self.effects, config, now, 1, preferred_id=attempt_notice_id)
+            self.persist(state)  # failed priority delivery remains durable before revalidation
+
+            rechecked = self._probe(self.effects.canonical_status, "canonical_pre_recovery")
+            state["last_snapshot"]["checks"]["local_api_revalidation"] = sanitized_result(rechecked)
+            revalidation = self._revalidate_recovery(action, status, rechecked)
+            if not revalidation.get("permitted"):
+                classification = revalidation["classification"]
+                state["last_snapshot"]["recovery"]["decision"] = classification
+                state["last_snapshot"]["recovery"]["result"] = "not_attempted_after_revalidation"
+                enqueue_notice(state,
+                               "incident:%s:recovery:%d:revalidation:%s" %
+                               (incident_id, attempt, classification),
+                               "recovery_deferred", "CYF API recovery deferred after revalidation",
+                               notice_body("recovery_deferred_revalidation", now, incident_id,
+                                           ["local_api"], "action=%s reason=%s" %
+                                           (action, classification)), now)
+                state["updated_at"] = now
+                self.persist(state)
+                action = None
+            else:
+                recovery["attempts"] = attempt
+                recovery["last_attempt_at"] = now
+                recovery["in_flight"] = {"action": action, "attempt": attempt, "at": now}
+                state["last_snapshot"]["recovery"]["decision"] = revalidation["classification"]
+                state["updated_at"] = now
+                self.persist(state)  # durable actual-command fence immediately before lifecycle execution
+                try:
+                    command_result = self.effects.recover(action)
+                    if not isinstance(command_result, dict) or not isinstance(command_result.get("returncode"), int):
+                        raise MonitorError("recovery_result_invalid")
+                except Exception as exc:
+                    command_result = {"returncode": 126,
+                                      "classification": "recovery_%s" % safe_label(type(exc).__name__)}
+                fresh = self._probe(self.effects.canonical_status, "canonical_post_recovery")
+                success = command_result.get("returncode") == 0 and fresh.get("healthy") is True
+                classification = "success_health_up" if success else "failed_fresh_health_not_up"
+                recovery["in_flight"] = None
+                recovery["last_result"] = {"at": now, "action": action, "attempt": attempt,
+                                           "classification": classification}
+                if success:
+                    recovery["last_success_at"] = now
+                    state["api_healthy_streak"] = 1
+                    state["component_streaks"]["local_api"] = 0
+                if recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
+                    recovery["circuit_latched"] = True
+                state["last_snapshot"]["checks"]["local_api_post_recovery"] = sanitized_result(fresh)
+                state["last_snapshot"]["recovery"]["result"] = classification
+                enqueue_notice(state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
+                               "recovery_result", "CYF API recovery result",
+                               notice_body("recovery_result", now, incident_id, ["local_api"],
+                                           "action=%s attempt=%d result=%s" %
+                                           (action, attempt, classification)), now)
+                self.persist(state)
         delivered = pre_recovery_mail_accepted + flush_outbox(state, self.effects, config, now, 2)
         state["updated_at"] = now
         self.persist(state)
         return {"healthy": all_healthy, "maintenance": bool(maintenance),
                 "recovery": state["last_snapshot"]["recovery"],
                 "mail_accepted": delivered, "mail_pending": len(state["outbox"])}
+
+    def _revalidate_recovery(self, action, initial, current):
+        if current.get("healthy"):
+            return {"permitted": False, "classification": "revalidation_became_healthy"}
+        if action == "start":
+            permitted = current.get("classification") == "stopped" and current.get("recovery_safe") is True
+            return {"permitted": permitted,
+                    "classification": "start_revalidated" if permitted else "revalidation_start_state_changed"}
+        if action == "restart":
+            if current.get("classification") != "not_ready_trusted" \
+                    or current.get("recovery_safe") is not True:
+                return {"permitted": False, "classification": "revalidation_restart_identity_incomplete"}
+            if initial.get("pid") is None or current.get("pid") != initial.get("pid"):
+                return {"permitted": False, "classification": "revalidation_restart_pid_changed"}
+            age = current.get("elapsed_seconds")
+            if age is None or age < STARTUP_GRACE_SECONDS:
+                return {"permitted": False, "classification": "revalidation_startup_grace"}
+            return {"permitted": True, "classification": "restart_revalidated"}
+        return {"permitted": False, "classification": "revalidation_action_invalid"}
 
     def _recovery_decision(self, state, status, results, maintenance, now):
         if maintenance:
@@ -1096,12 +1212,15 @@ def main(argv=None):
         print(json.dumps({"status": "deferred", "reason": "monitor_lock_busy"}, sort_keys=True))
         return 75
     except MonitorError as exc:
-        print(json.dumps({"status": "fail_closed", "reason": safe_label(str(exc))}, sort_keys=True),
+        reason = safe_label(str(exc))
+        guard_log(reason)
+        print(json.dumps({"status": "fail_closed", "reason": reason}, sort_keys=True),
               file=sys.stderr)
         return 2
     except Exception as exc:
-        print(json.dumps({"status": "fail_closed", "reason": "unexpected_%s" % safe_label(type(exc).__name__)},
-                         sort_keys=True), file=sys.stderr)
+        reason = "unexpected_%s" % safe_label(type(exc).__name__)
+        guard_log(reason)
+        print(json.dumps({"status": "fail_closed", "reason": reason}, sort_keys=True), file=sys.stderr)
         return 2
     finally:
         store.release()

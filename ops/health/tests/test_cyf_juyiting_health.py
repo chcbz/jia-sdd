@@ -5,6 +5,7 @@ import shutil
 import stat
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODULE_PATH = os.path.join(HERE, "cyf-juyiting-health.py")
@@ -33,10 +34,10 @@ def unsafe():
             "recovery_safe": False, "returncode": 5, "pid": None, "elapsed_seconds": None}
 
 
-def not_ready(age=1600, safe=True):
+def not_ready(age=1600, safe=True, pid=123):
     return {"healthy": False,
             "classification": "not_ready_trusted" if safe else "not_ready_identity_incomplete",
-            "recovery_safe": safe, "returncode": 4, "pid": 123,
+            "recovery_safe": safe, "returncode": 4, "pid": pid,
             "elapsed_seconds": age}
 
 
@@ -54,6 +55,7 @@ class FakeEffects(object):
         self.mail_results = []
         self.mail_calls = []
         self.events = []
+        self.mail_observer = None
 
     def canonical_status(self):
         self.events.append("status")
@@ -93,6 +95,8 @@ class FakeEffects(object):
     def send_email(self, subject, body):
         self.events.append("mail")
         self.mail_calls.append((subject, body))
+        if self.mail_observer is not None:
+            self.mail_observer(subject, body)
         if self.mail_results:
             return self.mail_results.pop(0)
         return True, "helper_accepted"
@@ -117,7 +121,7 @@ class MonitorTests(unittest.TestCase):
         return health.Monitor(effects, lambda state: self.persisted.append(json.loads(json.dumps(state))), self.clock)
 
     def test_stopped_threshold_starts_on_third_failure(self):
-        effects = FakeEffects([stopped(), stopped(), stopped(), up()])
+        effects = FakeEffects([stopped(), stopped(), stopped(), stopped(), up()])
         state = health.initial_state(self.clock.now)
         monitor = self.monitor(effects)
         monitor.check_once(state, self.config)
@@ -191,7 +195,7 @@ class MonitorTests(unittest.TestCase):
         self.assertIsNotNone(state["recovery"]["in_flight"])
 
     def test_second_failure_latches_circuit(self):
-        effects = FakeEffects([stopped(), stopped()])
+        effects = FakeEffects([stopped(), stopped(), stopped()])
         state = health.initial_state(self.clock.now)
         state["component_streaks"]["local_api"] = 2
         state["recovery"]["attempts"] = 1
@@ -202,7 +206,7 @@ class MonitorTests(unittest.TestCase):
         self.assertTrue(state["recovery"]["circuit_latched"])
 
     def test_second_success_still_latches_until_three_up_observations(self):
-        effects = FakeEffects([stopped(), up()])
+        effects = FakeEffects([stopped(), stopped(), up()])
         state = health.initial_state(self.clock.now)
         state["component_streaks"]["local_api"] = 2
         state["recovery"]["attempts"] = 1
@@ -242,7 +246,7 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual("startup_grace", result["recovery"]["decision"])
         self.assertEqual([], effects.recoveries)
 
-        effects = FakeEffects([not_ready(1500), up()])
+        effects = FakeEffects([not_ready(1500), not_ready(1600), up()])
         state = health.initial_state(self.clock.now)
         state["component_streaks"]["local_api"] = 2
         self.monitor(effects).check_once(state, self.config)
@@ -257,12 +261,72 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual("identity_or_status_not_recovery_safe", result["recovery"]["decision"])
 
     def test_exit_zero_without_fresh_up_is_failure(self):
-        effects = FakeEffects([stopped(), not_ready(1700)])
+        effects = FakeEffects([stopped(), stopped(), not_ready(1700)])
         state = health.initial_state(self.clock.now)
         state["component_streaks"]["local_api"] = 2
         result = self.monitor(effects).check_once(state, self.config)
         self.assertEqual("failed_fresh_health_not_up", result["recovery"]["result"])
         self.assertIsNone(state["recovery"]["last_success_at"])
+
+    def test_post_mail_restart_revalidation_healthy_skips_command(self):
+        effects = FakeEffects([not_ready(1600), up()])
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        result = self.monitor(effects).check_once(state, self.config)
+        self.assertEqual([], effects.recoveries)
+        self.assertEqual(0, state["recovery"]["attempts"])
+        self.assertEqual("revalidation_became_healthy", result["recovery"]["decision"])
+
+    def test_post_mail_restart_revalidation_pid_change_skips_command(self):
+        effects = FakeEffects([not_ready(1600, pid=123), not_ready(1700, pid=124)])
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        result = self.monitor(effects).check_once(state, self.config)
+        self.assertEqual([], effects.recoveries)
+        self.assertEqual(0, state["recovery"]["attempts"])
+        self.assertEqual("revalidation_restart_pid_changed", result["recovery"]["decision"])
+
+    def test_post_mail_restart_same_identity_executes(self):
+        effects = FakeEffects([not_ready(1600, pid=123), not_ready(1700, pid=123), up()])
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        self.monitor(effects).check_once(state, self.config)
+        self.assertEqual(["restart"], effects.recoveries)
+        first_mail = effects.events.index("mail")
+        second_status = effects.events.index("status", effects.events.index("status") + 1)
+        self.assertLess(first_mail, second_status)
+        self.assertLess(second_status, effects.events.index("recover:restart"))
+
+    def test_current_attempt_mail_is_durable_and_prioritized(self):
+        effects = FakeEffects([stopped(), stopped(), up()])
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        health.enqueue_notice(state, "old-1", "incident_confirmed", "old one", "body", self.clock.now)
+        health.enqueue_notice(state, "old-2", "incident_confirmed", "old two", "body", self.clock.now)
+        def observe(subject, body):
+            self.assertTrue(any(
+                any(item["event"] == "recovery_attempted" for item in snapshot["outbox"])
+                for snapshot in self.persisted))
+        effects.mail_observer = observe
+        self.monitor(effects).check_once(state, self.config)
+        self.assertTrue(effects.mail_calls[0][0].startswith("CYF API recovery attempt selected"))
+        self.assertEqual(["start"], effects.recoveries)
+
+    def test_resource_deferred_notice_persisted_before_delivery(self):
+        effects = FakeEffects([stopped()])
+        effects.resource_result = {"healthy": False,
+                                   "classification": "resources_below_canonical_minimum"}
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        def observe(subject, body):
+            if subject == "CYF API recovery deferred by resources":
+                self.assertTrue(any(
+                    any(item["event"] == "recovery_deferred" for item in snapshot["outbox"])
+                    for snapshot in self.persisted))
+        effects.mail_observer = observe
+        self.monitor(effects).check_once(state, self.config)
+        self.assertTrue(any(subject == "CYF API recovery deferred by resources"
+                            for subject, _ in effects.mail_calls))
 
     def test_resource_gate_does_not_consume_attempt(self):
         effects = FakeEffects([stopped()])
@@ -342,12 +406,39 @@ class StateStoreSecurityTests(unittest.TestCase):
             second.acquire()
         second.release()
 
-    def test_pause_resume_marker(self):
+    def test_pause_resume_marker_and_directory_fsync(self):
         self.store.write(health.initial_state(10))
-        self.store.pause(10)
+        with mock.patch.object(health.os, "fsync", wraps=health.os.fsync) as fsync:
+            self.store.pause(10)
+        self.assertGreaterEqual(fsync.call_count, 2)
         self.assertTrue(self.store.maintenance())
         self.store.resume()
         self.assertFalse(self.store.maintenance())
+
+
+class TrustedExecutableTests(unittest.TestCase):
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="cyf-health-exec-")
+        self.target = os.path.join(self.root, "python-real")
+        self.link = os.path.join(self.root, "python3")
+        with open(self.target, "w") as stream:
+            stream.write("#!/bin/sh\n")
+        os.chmod(self.target, 0o755)
+        os.symlink("python-real", self.link)
+
+    def tearDown(self):
+        shutil.rmtree(self.root)
+
+    def test_root_owned_safe_python_symlink_chain_allowed(self):
+        resolved = health.validate_trusted_executable(
+            self.link, expected_uid=os.getuid(), validate_parents=False)
+        self.assertEqual(self.target, resolved)
+
+    def test_python_symlink_writable_final_executable_rejected(self):
+        os.chmod(self.target, 0o775)
+        with self.assertRaises(health.MonitorError):
+            health.validate_trusted_executable(
+                self.link, expected_uid=os.getuid(), validate_parents=False)
 
 
 class ConfigSecurityTests(unittest.TestCase):
@@ -423,10 +514,23 @@ class ProbeContractTests(unittest.TestCase):
         self.assertFalse(parsed["recovery_safe"])
         self.assertEqual("not_ready_identity_incomplete", parsed["classification"])
 
-    def test_public_api_requires_json_auth_denial(self):
+    def test_public_api_allows_exact_empty_401_boundary(self):
         effects = health.Effects()
-        effects._http = lambda url: (403, "text/html", b"nginx forbidden", "completed")
-        self.assertFalse(effects.public_api()["healthy"])
+        effects._http = lambda url: (401, "", b"", "completed")
+        result = effects.public_api()
+        self.assertTrue(result["healthy"])
+        self.assertEqual("auth_boundary_empty_401", result["classification"])
+
+    def test_public_api_rejects_html_403_502_and_spa_200(self):
+        effects = health.Effects()
+        for response in ((403, "text/html", b"nginx forbidden", "completed"),
+                         (502, "text/html", b"bad gateway", "completed"),
+                         (200, "text/html", b'<div id="app"></div>', "completed")):
+            effects._http = lambda url, value=response: value
+            self.assertFalse(effects.public_api()["healthy"])
+
+    def test_public_api_accepts_json_auth_denial(self):
+        effects = health.Effects()
         effects._http = lambda url: (403, "application/json", b'{"message":"Forbidden"}', "completed")
         self.assertTrue(effects.public_api()["healthy"])
 
@@ -445,8 +549,32 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn('[CANONICAL, "status"]', source)
         self.assertIn('[CANONICAL, action]', source)
         self.assertIn('[MAIL_PYTHON, "-I", MAIL_HELPER', source)
+        self.assertIn("validate_trusted_executable(MAIL_PYTHON", source)
         self.assertNotIn("shell=True", source)
         self.assertNotIn("/home/isp/bin", source)
+
+    def test_guard_logging_uses_fixed_sanitized_syslog_command(self):
+        captured = []
+        validated = []
+        self.assertTrue(health.guard_log(
+            "unsafe\npayload", validator=lambda *args: validated.append(args),
+            executor=lambda argv: captured.append(argv)))
+        self.assertEqual(health.LOGGER, validated[0][0])
+        self.assertEqual([health.LOGGER, "-p", "daemon.err", "-t", "cyf-juyiting-health",
+                          "fail_closed reason=unsafe_payload"], captured[0])
+
+    def test_installer_trust_and_activation_contract(self):
+        path = os.path.join(HERE, "install.sh")
+        with open(path, "r") as stream:
+            text = stream.read()
+        self.assertIn("stat.S_ISLNK", text)
+        self.assertIn("info.st_uid != 0 or info.st_gid != 0", text)
+        self.assertIn("stat.S_IMODE(info.st_mode) & 0o022", text)
+        self.assertIn("info.st_nlink != 1", text)
+        monitor_digest = health.sha256_file(MODULE_PATH)
+        self.assertIn("CANDIDATE_MONITOR_SHA=" + monitor_digest, text)
+        self.assertIn("installed monitor is not the reviewed candidate", text)
+        self.assertIn("755:0:0:1", text)
 
     def test_cron_syntax_contract(self):
         path = os.path.join(HERE, "cyf-juyiting-health.cron")
@@ -456,6 +584,9 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn(command, text)
         self.assertNotIn("systemd-run", text)
         self.assertNotIn("curl", text)
+        with open(MODULE_PATH, "r") as stream:
+            source = stream.read()
+        self.assertEqual(2, source.count("guard_log(reason)"))
 
 
 if __name__ == "__main__":
