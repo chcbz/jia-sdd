@@ -684,6 +684,9 @@ class PublicationFault(Exception):
 def fault(point):
     if point in faults:
         raise PublicationFault('injected immutable record publication fault: {}'.format(point))
+def cleanup_fault(point):
+    if point in faults:
+        raise OSError('injected immutable record cleanup fault: {}'.format(point))
 parent = os.path.dirname(destination)
 if os.path.dirname(source) != parent:
     raise SystemExit('record staging and destination must share one directory')
@@ -723,6 +726,7 @@ try:
         os.close(sidefd)
     fault('record-final-link')
     os.link(sname, dname, src_dir_fd=rootfd, dst_dir_fd=rootfd, follow_symlinks=False)
+    fault('record-link-no-feedback')
     linked = True
     fault('record-post-link-unlink')
     os.unlink(sname, dir_fd=rootfd)
@@ -733,6 +737,7 @@ except BaseException as error:
     preserve_live = False
     if linked and not source_unlinked:
         try:
+            cleanup_fault('record-cleanup-final-unlink')
             os.unlink(dname, dir_fd=rootfd)
             linked = False
         except OSError:
@@ -745,11 +750,13 @@ except BaseException as error:
         preserve_live = True
     elif side_created:
         try:
+            cleanup_fault('record-cleanup-sidecar-unlink')
             os.unlink(side_name, dir_fd=rootfd)
             side_created = False
         except OSError:
             pass
     try:
+        cleanup_fault('record-cleanup-directory-fsync')
         os.fsync(rootfd)
     except OSError:
         if linked:
@@ -804,10 +811,44 @@ print(digest)
 PY
 }
 
+web_adapter_reconcile_publication_failure() {
+  local source="$1" destination="$2" expected_sha="$3" observed_sha=''
+  require_sha256 'expected immutable record' "$expected_sha"
+  WEB_ADAPTER_PUBLICATION_FINAL_STATE=ABSENT
+  WEB_ADAPTER_PUBLICATION_SIDECAR_STATE=ABSENT
+  WEB_ADAPTER_PUBLICATION_SOURCE_STATE=ABSENT
+  WEB_ADAPTER_PUBLICATION_INTEGRITY=ABSENT_UNCONFIRMED
+  [[ ! -e "$destination" && ! -L "$destination" ]] \
+    || WEB_ADAPTER_PUBLICATION_FINAL_STATE=PRESENT
+  [[ ! -e "${destination}.sha256" && ! -L "${destination}.sha256" ]] \
+    || WEB_ADAPTER_PUBLICATION_SIDECAR_STATE=PRESENT
+  [[ ! -e "$source" && ! -L "$source" ]] \
+    || WEB_ADAPTER_PUBLICATION_SOURCE_STATE=PRESENT
+  if [[ "$WEB_ADAPTER_PUBLICATION_FINAL_STATE" == PRESENT \
+     && "$WEB_ADAPTER_PUBLICATION_SIDECAR_STATE" == PRESENT ]]; then
+    if observed_sha="$(web_adapter_verify_immutable_with_sidecar "$destination" 2>/dev/null)" \
+      && [[ "$observed_sha" == "$expected_sha" ]]; then
+      WEB_ADAPTER_PUBLICATION_INTEGRITY=COMPLETE_EXPECTED
+    else
+      WEB_ADAPTER_PUBLICATION_INTEGRITY=PARTIAL_OR_INVALID
+    fi
+  elif [[ "$WEB_ADAPTER_PUBLICATION_FINAL_STATE" == PRESENT \
+       || "$WEB_ADAPTER_PUBLICATION_SIDECAR_STATE" == PRESENT ]]; then
+    WEB_ADAPTER_PUBLICATION_INTEGRITY=PARTIAL_OR_INVALID
+  fi
+  log "immutable publication reconciliation: final=$WEB_ADAPTER_PUBLICATION_FINAL_STATE sidecar=$WEB_ADAPTER_PUBLICATION_SIDECAR_STATE source=$WEB_ADAPTER_PUBLICATION_SOURCE_STATE integrity=$WEB_ADAPTER_PUBLICATION_INTEGRITY expected_sha256=$expected_sha"
+}
+
 web_adapter_publish_recovery_failure() {
   local operation="$1" destination="$2" change_id="$3" original_exit="$4" reason="$5"
   local live_dir="$6" backup_dir="$7" rescue_dir="$8" failed_dir="$9"
   local temp rc live_state backup_state rescue_state failed_state
+  local publication_final="${WEB_ADAPTER_PUBLICATION_FINAL_STATE:-NOT_APPLICABLE}"
+  local publication_sidecar="${WEB_ADAPTER_PUBLICATION_SIDECAR_STATE:-NOT_APPLICABLE}"
+  local publication_source="${WEB_ADAPTER_PUBLICATION_SOURCE_STATE:-NOT_APPLICABLE}"
+  local publication_integrity="${WEB_ADAPTER_PUBLICATION_INTEGRITY:-NOT_APPLICABLE}"
+  local publication_expected_sha="${WEB_ADAPTER_RECORD_EXPECTED_SHA:-NOT_APPLICABLE}"
+  local publication_live_validation="${WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION:-NOT_APPLICABLE}"
   case "$operation" in deploy|rollback) ;; *) return 2 ;; esac
   assert_path_within 'Web manual recovery record' "$destination" "$WEB_RECORD_ROOT"
   live_state="$([[ -e "$live_dir" ]] && printf PRESENT || printf ABSENT)"
@@ -818,11 +859,15 @@ web_adapter_publish_recovery_failure() {
   if /usr/bin/python3 -I -B - "$temp" "$operation" "$RELEASE_ID" "$change_id" \
     "$original_exit" "$reason" "$live_dir" "$live_state" "$backup_dir" "$backup_state" \
     "$rescue_dir" "$rescue_state" "$failed_dir" "$failed_state" "$RELEASE_INPUT_SHA" \
-    "$WEB_ADAPTER_TOOL_SHA" "$WEB_GUARD" "$WEB_GUARD_SHA" "$ACTIVATION_PROOF_SHA" <<'PY'
+    "$WEB_ADAPTER_TOOL_SHA" "$WEB_GUARD" "$WEB_GUARD_SHA" "$ACTIVATION_PROOF_SHA" \
+    "$publication_final" "$publication_sidecar" "$publication_source" \
+    "$publication_integrity" "$publication_expected_sha" "$publication_live_validation" <<'PY'
 import json, os, sys
 (path, operation, release_id, change_id, original_exit, reason, live_dir, live_state,
  backup_dir, backup_state, rescue_dir, rescue_state, failed_dir, failed_state,
- input_sha, tool_sha, guard, guard_sha, proof_sha) = sys.argv[1:]
+ input_sha, tool_sha, guard, guard_sha, proof_sha, publication_final,
+ publication_sidecar, publication_source, publication_integrity,
+ publication_expected_sha, publication_live_validation) = sys.argv[1:]
 record = {
   'schema': 'cyf-web-recovery-record-v1',
   'status': 'FAILED_MANUAL_RECOVERY_REQUIRED',
@@ -835,6 +880,12 @@ record = {
   'releaseInputSha256': input_sha, 'adapterToolSha256': tool_sha,
   'webGuard': guard, 'webGuardSha256': guard_sha,
   'activationProofSha256': proof_sha,
+  'publicationFinalState': publication_final,
+  'publicationSidecarState': publication_sidecar,
+  'publicationSourceState': publication_source,
+  'publicationIntegrity': publication_integrity,
+  'publicationExpectedSha256': publication_expected_sha,
+  'publicationLiveValidation': publication_live_validation,
   'databaseOperation': 'NOT_PERFORMED', 'rabbitMqOperation': 'NOT_PERFORMED',
   'apiActivationOperation': 'NOT_PERFORMED'
 }

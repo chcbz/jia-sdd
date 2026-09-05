@@ -133,7 +133,9 @@ assert_no_success_record() {
 }
 
 assert_manual_recovery_record() {
-  local operation="$1" record digest
+  local operation="$1" expected_integrity="${2:-}" expected_live="${3:-}"
+  local expected_final="${4:-}" expected_sidecar="${5:-}" expected_source="${6:-}"
+  local record digest
   record="$(find "$RECORDS" -maxdepth 1 -name "web-recovery-${operation}-*.json" -print -quit)"
   [[ -n "$record" && -f "$record" && -f "${record}.sha256" ]] \
     || fail "missing durable manual recovery record for $operation"
@@ -143,7 +145,8 @@ assert_manual_recovery_record() {
   digest="$(sha256sum "$record" | awk '{print $1}')"
   [[ "$(cat -- "${record}.sha256")" == "$digest  $(basename -- "$record")" ]] \
     || fail "manual recovery record sidecar mismatch for $operation"
-  /usr/bin/python3 -I -B - "$record" "$operation" <<'PY'
+  /usr/bin/python3 -I -B - "$record" "$operation" "$expected_integrity" "$expected_live" \
+    "$expected_final" "$expected_sidecar" "$expected_source" <<'PY'
 import json, sys
 with open(sys.argv[1], encoding='utf-8') as stream:
     data = json.load(stream)
@@ -153,6 +156,16 @@ if data.get('status') != 'FAILED_MANUAL_RECOVERY_REQUIRED':
     raise SystemExit('wrong recovery record status')
 if data.get('operation') != sys.argv[2]:
     raise SystemExit('wrong recovery operation')
+checks = {
+    'publicationIntegrity': sys.argv[3],
+    'publicationLiveValidation': sys.argv[4],
+    'publicationFinalState': sys.argv[5],
+    'publicationSidecarState': sys.argv[6],
+    'publicationSourceState': sys.argv[7],
+}
+for key, expected in checks.items():
+    if expected and data.get(key) != expected:
+        raise SystemExit('{} mismatch: {} != {}'.format(key, data.get(key), expected))
 PY
 }
 
@@ -376,23 +389,27 @@ run_deploy() {
   new_case; verify_case; deploy_case; assert_live_tree "$CANDIDATE_TREE"
   pass 'actual deploy entrypoint preserves exact candidate tree and immutable record'
 
-  for fault in extraction staged-tree backup-rename cutover-rename health record-write; do
+  for fault in extraction staged-tree backup-rename cutover-rename health; do
     new_case; verify_case
     expect_fail "deploy recovery $fault" approval_env env CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" "$DEPLOY" --input "$INPUT" --execute
     assert_live_tree "$OLD_TREE"
     assert_no_success_record web-deploy
   done
 
-  for fault in record-sidecar record-final-link record-post-link-unlink; do
+  for fault in record-write record-sidecar record-final-link record-post-link-unlink; do
     new_case; verify_case
-    expect_fail "deploy record terminal cleanup $fault" approval_env env \
+    expect_fail "deploy conservative publication boundary $fault" approval_env env \
       CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" "$DEPLOY" --input "$INPUT" --execute
-    assert_live_tree "$OLD_TREE"
+    assert_live_tree "$CANDIDATE_TREE"
     assert_no_success_record web-deploy
     [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json.sha256' -print -quit)" ]] \
       || fail "failed deploy $fault left a success sidecar"
+    backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+    assert_path_tree "$backup" "$OLD_TREE" "publication boundary $fault backup"
+    [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-deploy-record.*' -print -quit)" ]] \
+      || fail "publication boundary $fault did not retain the source record"
+    assert_manual_recovery_record deploy ABSENT_UNCONFIRMED MATCHING_HEALTHY ABSENT ABSENT PRESENT
   done
-
 
   new_case; verify_case
   expect_fail 'deploy record directory fsync preserves matching live state' approval_env env \
@@ -404,6 +421,72 @@ run_deploy() {
   approval_env "$ROLLBACK" --input "$INPUT" --dry-run "$record" > "$CASE/terminal-deploy-record.out"
   backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
   assert_path_tree "$backup" "$OLD_TREE" 'terminal deploy backup'
+  assert_manual_recovery_record deploy COMPLETE_EXPECTED MATCHING_HEALTHY PRESENT PRESENT ABSENT
+
+  new_case; verify_case
+  expect_fail 'deploy link success before child feedback' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-link-no-feedback "$DEPLOY" --input "$INPUT" --execute
+  assert_live_tree "$CANDIDATE_TREE"
+  record="$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json' -print -quit)"
+  [[ -n "$record" && -f "$record" && ! -e "${record}.sha256" ]] \
+    || fail 'link-no-feedback deploy did not retain the expected final-only record state'
+  [[ "$(stat -Lc %h "$record")" == 2 ]] || fail 'link-no-feedback deploy final record is not nlink2'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-deploy-record.*' -print -quit)" ]] \
+    || fail 'link-no-feedback deploy did not retain the linked source record'
+  backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+  assert_path_tree "$backup" "$OLD_TREE" 'link-no-feedback deploy backup'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-failed-*' -print -quit)" ]] \
+    || fail 'link-no-feedback deploy attempted reverse rollback'
+  assert_manual_recovery_record deploy PARTIAL_OR_INVALID MATCHING_HEALTHY PRESENT ABSENT PRESENT
+
+  new_case; verify_case
+  expect_fail 'deploy cleanup final unlink failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-post-link-unlink,record-cleanup-final-unlink \
+    "$DEPLOY" --input "$INPUT" --execute
+  assert_live_tree "$CANDIDATE_TREE"
+  record="$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json' -print -quit)"
+  [[ -n "$record" && -f "${record}.sha256" && "$(stat -Lc %h "$record")" == 1 ]] \
+    || fail 'cleanup-final-unlink deploy did not preserve complete nlink1 evidence'
+  [[ -z "$(find "$RECORDS" -maxdepth 1 -name '.web-deploy-record.*' -print -quit)" ]] \
+    || fail 'cleanup-final-unlink deploy unexpectedly retained the source record'
+  backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+  assert_path_tree "$backup" "$OLD_TREE" 'cleanup-final-unlink deploy backup'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-failed-*' -print -quit)" ]] \
+    || fail 'cleanup-final-unlink deploy attempted reverse rollback'
+  assert_manual_recovery_record deploy COMPLETE_EXPECTED MATCHING_HEALTHY PRESENT PRESENT ABSENT
+
+  new_case; verify_case
+  expect_fail 'deploy cleanup sidecar unlink failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-final-link,record-cleanup-sidecar-unlink \
+    "$DEPLOY" --input "$INPUT" --execute
+  assert_live_tree "$CANDIDATE_TREE"
+  [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink deploy unexpectedly retained a final record'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json.sha256' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink deploy did not retain the sidecar'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-deploy-record.*' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink deploy did not retain the source record'
+  backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+  assert_path_tree "$backup" "$OLD_TREE" 'cleanup-sidecar-unlink deploy backup'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-failed-*' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink deploy attempted reverse rollback'
+  assert_manual_recovery_record deploy PARTIAL_OR_INVALID MATCHING_HEALTHY ABSENT PRESENT PRESENT
+
+  new_case; verify_case
+  expect_fail 'deploy cleanup directory fsync failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-post-link-unlink,record-cleanup-directory-fsync \
+    "$DEPLOY" --input "$INPUT" --execute
+  assert_live_tree "$CANDIDATE_TREE"
+  assert_no_success_record web-deploy
+  [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-deploy-*.json.sha256' -print -quit)" ]] \
+    || fail 'cleanup-directory-fsync deploy retained a visible sidecar'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-deploy-record.*' -print -quit)" ]] \
+    || fail 'cleanup-directory-fsync deploy did not retain the source record'
+  backup="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-backup-*' -print -quit)"
+  assert_path_tree "$backup" "$OLD_TREE" 'cleanup-directory-fsync deploy backup'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-failed-*' -print -quit)" ]] \
+    || fail 'cleanup-directory-fsync deploy attempted reverse rollback'
+  assert_manual_recovery_record deploy ABSENT_UNCONFIRMED MATCHING_HEALTHY ABSENT ABSENT PRESENT
 
   new_case; verify_case
   expect_fail 'compound deploy candidate removal failure' approval_env env \
@@ -448,7 +531,7 @@ run_rollback() {
     "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
   assert_live_tree "$CANDIDATE_TREE"
 
-  for fault in rollback-staged-tree rollback-rescue-rename rollback-cutover-rename health record-write; do
+  for fault in rollback-staged-tree rollback-rescue-rename rollback-cutover-rename health; do
     new_case; verify_case; deploy_case
     expect_fail "rollback rescue $fault" approval_env env CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" \
       "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
@@ -456,16 +539,22 @@ run_rollback() {
     assert_no_success_record web-rollback
   done
 
-  for fault in record-sidecar record-final-link record-post-link-unlink; do
+  for fault in record-write record-sidecar record-final-link record-post-link-unlink; do
     new_case; verify_case; deploy_case
-    expect_fail "rollback record terminal cleanup $fault" approval_env env \
+    expect_fail "rollback conservative publication boundary $fault" approval_env env \
       CYF_WEB_DEPLOY_ADAPTER_FAULT="$fault" "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
-    assert_live_tree "$CANDIDATE_TREE"
+    assert_live_tree "$OLD_TREE"
     assert_no_success_record web-rollback
     [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json.sha256' -print -quit)" ]] \
       || fail "failed rollback $fault left a success sidecar"
+    rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+    assert_path_tree "$rescue" "$CANDIDATE_TREE" "publication boundary $fault rescue"
+    [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-rollback-record.*' -print -quit)" ]] \
+      || fail "publication boundary $fault did not retain the source rollback record"
+    [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rollback-failed-*' -print -quit)" ]] \
+      || fail "publication boundary $fault attempted reverse rollback"
+    assert_manual_recovery_record rollback ABSENT_UNCONFIRMED MATCHING_HEALTHY ABSENT ABSENT PRESENT
   done
-
 
   new_case; verify_case; deploy_case
   expect_fail 'rollback record directory fsync preserves matching live state' approval_env env \
@@ -477,6 +566,73 @@ run_rollback() {
     || fail 'directory-fsync terminal rollback did not preserve complete matching evidence'
   rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
   assert_path_tree "$rescue" "$CANDIDATE_TREE" 'terminal rollback rescue'
+  assert_manual_recovery_record rollback COMPLETE_EXPECTED MATCHING_HEALTHY PRESENT PRESENT ABSENT
+
+  new_case; verify_case; deploy_case
+  expect_fail 'rollback link success before child feedback' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-link-no-feedback \
+    "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  assert_live_tree "$OLD_TREE"
+  record="$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json' -print -quit)"
+  [[ -n "$record" && -f "$record" && ! -e "${record}.sha256" ]] \
+    || fail 'link-no-feedback rollback did not retain the expected final-only record state'
+  [[ "$(stat -Lc %h "$record")" == 2 ]] || fail 'link-no-feedback rollback final record is not nlink2'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-rollback-record.*' -print -quit)" ]] \
+    || fail 'link-no-feedback rollback did not retain the linked source record'
+  rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+  assert_path_tree "$rescue" "$CANDIDATE_TREE" 'link-no-feedback rollback rescue'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rollback-failed-*' -print -quit)" ]] \
+    || fail 'link-no-feedback rollback attempted reverse rollback'
+  assert_manual_recovery_record rollback PARTIAL_OR_INVALID MATCHING_HEALTHY PRESENT ABSENT PRESENT
+
+  new_case; verify_case; deploy_case
+  expect_fail 'rollback cleanup final unlink failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-post-link-unlink,record-cleanup-final-unlink \
+    "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  assert_live_tree "$OLD_TREE"
+  record="$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json' -print -quit)"
+  [[ -n "$record" && -f "${record}.sha256" && "$(stat -Lc %h "$record")" == 1 ]] \
+    || fail 'cleanup-final-unlink rollback did not preserve complete nlink1 evidence'
+  [[ -z "$(find "$RECORDS" -maxdepth 1 -name '.web-rollback-record.*' -print -quit)" ]] \
+    || fail 'cleanup-final-unlink rollback unexpectedly retained the source record'
+  rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+  assert_path_tree "$rescue" "$CANDIDATE_TREE" 'cleanup-final-unlink rollback rescue'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rollback-failed-*' -print -quit)" ]] \
+    || fail 'cleanup-final-unlink rollback attempted reverse rollback'
+  assert_manual_recovery_record rollback COMPLETE_EXPECTED MATCHING_HEALTHY PRESENT PRESENT ABSENT
+
+  new_case; verify_case; deploy_case
+  expect_fail 'rollback cleanup sidecar unlink failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-final-link,record-cleanup-sidecar-unlink \
+    "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  assert_live_tree "$OLD_TREE"
+  [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink rollback unexpectedly retained a final record'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json.sha256' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink rollback did not retain the sidecar'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-rollback-record.*' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink rollback did not retain the source record'
+  rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+  assert_path_tree "$rescue" "$CANDIDATE_TREE" 'cleanup-sidecar-unlink rollback rescue'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rollback-failed-*' -print -quit)" ]] \
+    || fail 'cleanup-sidecar-unlink rollback attempted reverse rollback'
+  assert_manual_recovery_record rollback PARTIAL_OR_INVALID MATCHING_HEALTHY ABSENT PRESENT PRESENT
+
+  new_case; verify_case; deploy_case
+  expect_fail 'rollback cleanup directory fsync failure' approval_env env \
+    CYF_WEB_DEPLOY_ADAPTER_FAULT=record-post-link-unlink,record-cleanup-directory-fsync \
+    "$ROLLBACK" --input "$INPUT" --execute "$DEPLOY_RECORD"
+  assert_live_tree "$OLD_TREE"
+  assert_no_success_record web-rollback
+  [[ -z "$(find "$RECORDS" -maxdepth 1 -name 'web-rollback-*.json.sha256' -print -quit)" ]] \
+    || fail 'cleanup-directory-fsync rollback retained a visible sidecar'
+  [[ -n "$(find "$RECORDS" -maxdepth 1 -name '.web-rollback-record.*' -print -quit)" ]] \
+    || fail 'cleanup-directory-fsync rollback did not retain the source record'
+  rescue="$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rescue-*' -print -quit)"
+  assert_path_tree "$rescue" "$CANDIDATE_TREE" 'cleanup-directory-fsync rollback rescue'
+  [[ -z "$(find "$BACKUP" -maxdepth 1 -type d -name 'kit-rollback-failed-*' -print -quit)" ]] \
+    || fail 'cleanup-directory-fsync rollback attempted reverse rollback'
+  assert_manual_recovery_record rollback ABSENT_UNCONFIRMED MATCHING_HEALTHY ABSENT ABSENT PRESENT
 
   new_case; verify_case; deploy_case
   expect_fail 'compound rollback restored-tree removal failure' approval_env env \

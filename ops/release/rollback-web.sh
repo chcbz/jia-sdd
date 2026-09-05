@@ -104,15 +104,42 @@ RECORD_TEMP=''
 CURRENT_MOVED=0
 RESTORED_INSTALLED=0
 WEB_ADAPTER_RECORD_PRESERVE_LIVE=0
+WEB_ADAPTER_RECORD_COMMIT_ATTEMPTED=0
+WEB_ADAPTER_RECORD_EXPECTED_SHA=''
+WEB_ADAPTER_PUBLICATION_FINAL_STATE=NOT_APPLICABLE
+WEB_ADAPTER_PUBLICATION_SIDECAR_STATE=NOT_APPLICABLE
+WEB_ADAPTER_PUBLICATION_SOURCE_STATE=NOT_APPLICABLE
+WEB_ADAPTER_PUBLICATION_INTEGRITY=NOT_APPLICABLE
+WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION=NOT_APPLICABLE
 
 restore_candidate_on_error() {
-  local exit_code=$? recovery_failed=0 reason='' move_rc=0 rescued_entry=''
+  local exit_code=$? recovery_failed=0 reason='' move_rc=0 rescued_entry='' observed_tree=''
   trap - EXIT
   set +e
-  if (( WEB_ADAPTER_RECORD_PRESERVE_LIVE == 1 )); then
-    log 'CRITICAL: immutable rollback record could not be safely withdrawn; preserving the matching restored Web live tree'
-    [[ -z "$RECORD_TEMP" || ! -e "$RECORD_TEMP" ]] || rm -f -- "$RECORD_TEMP"
-    [[ ! -e "$STAGE_DIR" ]] || rm -rf --one-file-system -- "$STAGE_DIR"
+  if (( WEB_ADAPTER_RECORD_COMMIT_ATTEMPTED == 1 )); then
+    web_adapter_reconcile_publication_failure "$RECORD_TEMP" "$ROLLBACK_RECORD" \
+      "$WEB_ADAPTER_RECORD_EXPECTED_SHA"
+    WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION=MISSING_OR_UNSAFE
+    if [[ -d "$WEB_LIVE_DIR" && ! -L "$WEB_LIVE_DIR" ]]; then
+      observed_tree="$(hash_tree "$WEB_LIVE_DIR" 2>/dev/null)"
+      if [[ "$observed_tree" == "$EXPECTED_OLD_TREE" ]]; then
+        if rescued_entry="$(web_adapter_health "$WEB_LIVE_DIR" "$WEB_HEALTH_TIMEOUT" "${WEB_HEALTH_URLS[@]}")"; then
+          WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION=MATCHING_HEALTHY
+        else
+          WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION=MATCHING_UNHEALTHY
+        fi
+      else
+        WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION=TREE_MISMATCH
+      fi
+    fi
+    reason="publication-uncertain-${WEB_ADAPTER_PUBLICATION_INTEGRITY}-${WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION}"
+    if web_adapter_publish_recovery_failure rollback "$RECOVERY_RECORD" "$CHANGE_ID" "$exit_code" \
+      "$reason" "$WEB_LIVE_DIR" "$BACKUP_DIR" "$RESCUE_DIR" "$ROLLBACK_FAILED_DIR"; then
+      log "FAILED_MANUAL_RECOVERY_REQUIRED: durable evidence=$RECOVERY_RECORD"
+    else
+      log "CRITICAL: FAILED_MANUAL_RECOVERY_REQUIRED evidence publication failed: $RECOVERY_RECORD"
+    fi
+    log "CRITICAL: publication failed after the parent commit-attempt boundary; preserving restored Web live state without reverse rollback: live_validation=$WEB_ADAPTER_PUBLICATION_LIVE_VALIDATION"
     exit "$exit_code"
   fi
   if (( RESTORED_INSTALLED == 1 )) && [[ -d "$WEB_LIVE_DIR" ]]; then
@@ -212,6 +239,8 @@ with open(path, 'w', encoding='utf-8') as stream:
     json.dump(record, stream, sort_keys=True, indent=2); stream.write('\n')
     stream.flush(); os.fsync(stream.fileno())
 PY
+WEB_ADAPTER_RECORD_EXPECTED_SHA="$(web_adapter_stable_sha256 "$RECORD_TEMP")"
+WEB_ADAPTER_RECORD_COMMIT_ATTEMPTED=1
 web_adapter_publish_immutable_with_sidecar "$RECORD_TEMP" "$ROLLBACK_RECORD" >/dev/null
 RECORD_TEMP=''
 trap - EXIT
