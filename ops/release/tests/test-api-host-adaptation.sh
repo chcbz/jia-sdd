@@ -153,30 +153,36 @@ run_canonical_lock_validation() {
 
 test_build_contract() {
   /usr/bin/python3 -I -B - "$RELEASE/build-api.sh" <<'PY'
-import pathlib, sys
+import pathlib, shlex, sys
 
 text = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')
-start = text.index('"$ORCHESTRATOR_PATH" gradle \\\n')
-end = text.index('\n\nBUILT_JAR=', start)
-call = text[start:end]
-required_options = (
-    '--cwd "$API_REPO"',
-    '--tree-sha "$API_TREE"',
-    '--selector "$ORCHESTRATOR_SELECTOR"',
-    '--fixture-digest "$ORCHESTRATOR_FIXTURE"',
-    '--artifact "$API_REPO/$API_JAR_RELATIVE_PATH"',
+lines = text.splitlines()
+start_token = '"$ORCHESTRATOR_PATH" gradle ' + chr(92)
+starts = [index for index, line in enumerate(lines) if line == start_token]
+if len(starts) != 1:
+    raise SystemExit('canonical orchestrator call boundary is not unique')
+call_lines = []
+for line in lines[starts[0]:]:
+    continued = line.endswith(chr(92))
+    call_lines.append(line[:-1] if continued else line)
+    if not continued:
+        break
+else:
+    raise SystemExit('canonical orchestrator call is unterminated')
+argv = shlex.split(' '.join(call_lines), posix=True)
+expected = (
+    '$ORCHESTRATOR_PATH', 'gradle',
+    '--cwd', '$API_REPO',
+    '--tree-sha', '$API_TREE',
+    '--selector', '$ORCHESTRATOR_SELECTOR',
+    '--fixture-digest', '$ORCHESTRATOR_FIXTURE',
+    '--artifact', '$API_REPO/$API_JAR_RELATIVE_PATH',
+    '$ORCHESTRATOR_TASK', '--', '$API_REPO/gradlew',
+    '--no-daemon', '--max-workers=1', '--no-build-cache',
+    '-PrepoUsername=unused', '-PrepoPassword=unused', '$API_GRADLE_TASK',
 )
-task = '"$ORCHESTRATOR_TASK" -- \\n'
-gradlew = '"$API_REPO/gradlew"'
-task_at = call.index(task)
-if any(call.index(option) > task_at for option in required_options):
-    raise SystemExit('orchestrator admission option appears after task ID')
-if call.index(gradlew) < task_at:
-    raise SystemExit('Gradle argv appears before orchestrator task/separator')
-for argument in ('--max-workers=1', '--no-build-cache',
-                 '-PrepoUsername=unused', '-PrepoPassword=unused'):
-    if argument not in call:
-        raise SystemExit('missing bounded nonpublishing build argument: ' + argument)
+if tuple(argv) != expected:
+    raise SystemExit('canonical orchestrator admission/build argv or ordering changed')
 if 'TEMP_METADATA="$(mktemp ' not in text:
     raise SystemExit('metadata does not use a secure pre-created temporary file')
 if "with open(path, 'w', encoding='utf-8')" not in text:
