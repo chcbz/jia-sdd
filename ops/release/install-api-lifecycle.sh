@@ -1,7 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash -p
 set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 source "$SCRIPT_DIR/common.sh"
@@ -21,14 +23,7 @@ while (($#)); do
 done
 host_load_input "$INPUT_FILE"
 if ! host_offline; then (( EUID == 0 )) || die "lifecycle installation requires root"; fi
-if ! host_offline; then
-  for path in /usr /usr/local /usr/local/sbin; do
-    [[ -d "$path" && ! -L "$path" && "$(stat -Lc %U "$path")" == root ]] \
-      || die "lifecycle destination path is not trusted: $path"
-    (( (8#$(stat -Lc %a "$path") & 8#022) == 0 )) \
-      || die "lifecycle destination path is writable by group/other: $path"
-  done
-fi
+host_validate_lifecycle_destination_chain
 [[ -n "$PROOF" ]] || die "local-consumer proof is required"
 [[ ! -L "$CANDIDATE" && ! -L "$PROOF" ]] || die "installer inputs must not be symlinks"
 CANDIDATE="$(normalize_absolute_path 'lifecycle candidate' "$CANDIDATE")"

@@ -55,23 +55,29 @@ if (( $# > 1 )); then
 fi
 case "$ACTION" in
   -h|--help) usage; exit 0 ;;
-  start|restart|stop|status) ;;
+  start|restart|stop|status|validate-lock-contract) ;;
   *) usage >&2; exit 2 ;;
 esac
-(( EUID == 0 )) || die "必须使用 root 运行，例如 sudo $0 $ACTION"
+if [[ "$ACTION" == validate-lock-contract ]]; then
+  [[ "${CYF_RELEASE_OFFLINE_TEST:-}" == YES ]] || die "锁契约验证动作仅允许私有离线 fixture"
+else
+  (( EUID == 0 )) || die "必须使用 root 运行，例如 sudo $0 $ACTION"
+fi
 
-for command in awk base64 basename cat chmod chown curl date df flock grep id kill mktemp mv nohup ps python3 rm sed seq setpriv setsid sha256sum sleep ss stat tail; do
+for command in awk base64 basename cat chmod chown curl date df flock grep id kill mktemp mv nohup ps python3 realpath rm sed seq setpriv setsid sha256sum sleep ss stat tail; do
   command -v "$command" >/dev/null 2>&1 || die "缺少命令：$command"
 done
-RUNTIME_UID="$(id -u "$RUNTIME_USER" 2>/dev/null)" || die "运行账号不存在：$RUNTIME_USER"
-RUNTIME_GID="$(id -g "$RUNTIME_USER" 2>/dev/null)" || die "无法解析运行账号主组：$RUNTIME_USER"
-[[ "$RUNTIME_UID" =~ ^[0-9]+$ && "$RUNTIME_GID" =~ ^[0-9]+$ ]] || die "运行账号 UID/GID 无效"
+if [[ "$ACTION" != validate-lock-contract ]]; then
+  RUNTIME_UID="$(id -u "$RUNTIME_USER" 2>/dev/null)" || die "运行账号不存在：$RUNTIME_USER"
+  RUNTIME_GID="$(id -g "$RUNTIME_USER" 2>/dev/null)" || die "无法解析运行账号主组：$RUNTIME_USER"
+  [[ "$RUNTIME_UID" =~ ^[0-9]+$ && "$RUNTIME_GID" =~ ^[0-9]+$ ]] || die "运行账号 UID/GID 无效"
 
-[[ -d "$DEPLOY_DIR" && ! -L "$DEPLOY_DIR" ]] || die "部署目录不存在或不是物理目录：$DEPLOY_DIR"
-[[ "$STOP_TIMEOUT_SECONDS" =~ ^[0-9]+$ && "$STOP_TIMEOUT_SECONDS" -ge 1 ]] || die "CYF_API_STOP_TIMEOUT 必须为正整数"
-[[ "$HEALTH_TIMEOUT_SECONDS" =~ ^[0-9]+$ && "$HEALTH_TIMEOUT_SECONDS" -ge 1 ]] || die "CYF_API_HEALTH_TIMEOUT 必须为正整数"
-[[ "$MIN_MEMORY_AVAILABLE_BYTES" =~ ^[0-9]+$ ]] || die "CYF_API_MIN_MEMORY_AVAILABLE_BYTES 必须为非负整数"
-[[ "$MIN_DISK_AVAILABLE_BYTES" =~ ^[0-9]+$ ]] || die "CYF_API_MIN_DISK_AVAILABLE_BYTES 必须为非负整数"
+  [[ -d "$DEPLOY_DIR" && ! -L "$DEPLOY_DIR" ]] || die "部署目录不存在或不是物理目录：$DEPLOY_DIR"
+  [[ "$STOP_TIMEOUT_SECONDS" =~ ^[0-9]+$ && "$STOP_TIMEOUT_SECONDS" -ge 1 ]] || die "CYF_API_STOP_TIMEOUT 必须为正整数"
+  [[ "$HEALTH_TIMEOUT_SECONDS" =~ ^[0-9]+$ && "$HEALTH_TIMEOUT_SECONDS" -ge 1 ]] || die "CYF_API_HEALTH_TIMEOUT 必须为正整数"
+  [[ "$MIN_MEMORY_AVAILABLE_BYTES" =~ ^[0-9]+$ ]] || die "CYF_API_MIN_MEMORY_AVAILABLE_BYTES 必须为非负整数"
+  [[ "$MIN_DISK_AVAILABLE_BYTES" =~ ^[0-9]+$ ]] || die "CYF_API_MIN_DISK_AVAILABLE_BYTES 必须为非负整数"
+fi
 
 validate_trusted_runtime() {
   /usr/bin/python3 -I - "$(dirname "$(dirname "$JAVA")")" "$JAVA" "$TRUSTED_JRE_TREE_SHA256" <<'PY'
@@ -264,19 +270,18 @@ verify_lock_fd() {
   [[ "$path_identity" == "$fd_identity" ]] || die "锁文件在打开期间发生变化：$path"
 }
 
-validate_lock_file "$RELEASE_LOCK_FILE" "660:0:$(id -g isp):1"
-validate_lock_file "$LOCK_FILE" "600:0:0:1"
-if [[ -n "${CYF_RELEASE_LOCK_INHERITED_FD:-}${CYF_RELEASE_LOCK_DEVICE:-}${CYF_RELEASE_LOCK_INODE:-}${CYF_RELEASE_LOCK_HELD:-}" ]]; then
-  [[ "${CYF_RELEASE_LOCK_INHERITED_FD:-}" == 8 \
-      && "${CYF_RELEASE_LOCK_DEVICE:-}" =~ ^[0-9]+$ \
-      && "${CYF_RELEASE_LOCK_INODE:-}" =~ ^[0-9]+$ \
-      && "${CYF_RELEASE_LOCK_HELD:-}" == 1 ]] \
-    || die "继承发布锁标记不完整或无效"
-  [[ -e /proc/$$/fd/8 ]] || die "继承发布锁 FD8 不存在"
-  verify_lock_fd 8 "$RELEASE_LOCK_FILE"
-  [[ "$(stat -Lc '%d:%i' /proc/$$/fd/8)" == "$CYF_RELEASE_LOCK_DEVICE:$CYF_RELEASE_LOCK_INODE" ]] \
-    || die "继承发布锁设备/ inode 证明不匹配"
-  /usr/bin/python3 -I - "$RELEASE_LOCK_FILE" <<'PY' || die "继承 FD8 没有可证明的排他 flock"
+acquire_release_lock_contract() {
+  if [[ -n "${CYF_RELEASE_LOCK_INHERITED_FD:-}${CYF_RELEASE_LOCK_DEVICE:-}${CYF_RELEASE_LOCK_INODE:-}${CYF_RELEASE_LOCK_HELD:-}" ]]; then
+    [[ "${CYF_RELEASE_LOCK_INHERITED_FD:-}" == 8 \
+        && "${CYF_RELEASE_LOCK_DEVICE:-}" =~ ^[0-9]+$ \
+        && "${CYF_RELEASE_LOCK_INODE:-}" =~ ^[0-9]+$ \
+        && "${CYF_RELEASE_LOCK_HELD:-}" == 1 ]] \
+      || die "继承发布锁标记不完整或无效"
+    [[ -e /proc/$$/fd/8 ]] || die "继承发布锁 FD8 不存在"
+    verify_lock_fd 8 "$RELEASE_LOCK_FILE"
+    [[ "$(stat -Lc '%d:%i' /proc/$$/fd/8)" == "$CYF_RELEASE_LOCK_DEVICE:$CYF_RELEASE_LOCK_INODE" ]] \
+      || die "继承发布锁设备/ inode 证明不匹配"
+    /usr/bin/python3 -I - "$RELEASE_LOCK_FILE" <<'PY' || die "继承 FD8 没有可证明的排他 flock"
 import os, sys
 path = os.stat(sys.argv[1])
 descriptor = os.fstat(8)
@@ -299,15 +304,41 @@ with open('/proc/self/fdinfo/8', 'r', encoding='ascii') as stream:
                 break
 raise SystemExit(0 if found else 1)
 PY
+  else
+    unset CYF_RELEASE_LOCK_INHERITED_FD CYF_RELEASE_LOCK_DEVICE CYF_RELEASE_LOCK_INODE CYF_RELEASE_LOCK_HELD
+    exec 8<>"$RELEASE_LOCK_FILE"
+    verify_lock_fd 8 "$RELEASE_LOCK_FILE"
+    flock -n 8 || die "API 发布/回滚正在进行，拒绝并发生命周期操作"
+  fi
+}
+
+acquire_lifecycle_lock_contract() {
+  exec 9<>"$LOCK_FILE"
+  verify_lock_fd 9 "$LOCK_FILE"
+  flock -n 9 || die "另一个 API 启停操作正在进行"
+}
+
+if [[ "$ACTION" == validate-lock-contract ]]; then
+  VALIDATION_ROOT="$(realpath -e -- "${CYF_API_KIT_VALIDATION_ROOT:-/nonexistent}")" \
+    || die "离线锁验证 root 不存在"
+  case "$VALIDATION_ROOT" in /tmp/*) ;; *) die "离线锁验证 root 必须位于私有 /tmp 子目录" ;; esac
+  [[ -d "$VALIDATION_ROOT" && ! -L "$VALIDATION_ROOT" \
+      && "$(stat -Lc '%a:%u' "$VALIDATION_ROOT")" == "700:$(id -u)" ]] \
+    || die "离线锁验证 root 必须为调用者私有 0700 目录"
+  RELEASE_LOCK_FILE="$VALIDATION_ROOT/cyf-release-api.lock"
+  LOCK_FILE="$VALIDATION_ROOT/cyf-api-lifecycle.lock"
+  validate_lock_file "$RELEASE_LOCK_FILE" "660:$(id -u):$(id -g):1"
+  validate_lock_file "$LOCK_FILE" "600:$(id -u):$(id -g):1"
 else
-  unset CYF_RELEASE_LOCK_INHERITED_FD CYF_RELEASE_LOCK_DEVICE CYF_RELEASE_LOCK_INODE CYF_RELEASE_LOCK_HELD
-  exec 8<>"$RELEASE_LOCK_FILE"
-  verify_lock_fd 8 "$RELEASE_LOCK_FILE"
-  flock -n 8 || die "API 发布/回滚正在进行，拒绝并发生命周期操作"
+  validate_lock_file "$RELEASE_LOCK_FILE" "660:0:$(id -g isp):1"
+  validate_lock_file "$LOCK_FILE" "600:0:0:1"
 fi
-exec 9<>"$LOCK_FILE"
-verify_lock_fd 9 "$LOCK_FILE"
-flock -n 9 || die "另一个 API 启停操作正在进行"
+acquire_release_lock_contract
+acquire_lifecycle_lock_contract
+if [[ "$ACTION" == validate-lock-contract ]]; then
+  printf 'LOCK_CONTRACT=PASS\nLOCK_ORDER=FD8,FD9\n'
+  exit 0
+fi
 
 proc_start_ticks() {
   /usr/bin/python3 -I - "$1" <<'PY'

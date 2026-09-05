@@ -1,7 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash -p
 set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 source "$SCRIPT_DIR/common.sh"
@@ -73,25 +75,39 @@ host_record_init "$RECORD" rollback "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$RESCU
 PHASE=PREPARED
 rollback_failure() {
   local rc=$?; trap - EXIT; set +e
-  if [[ "$PHASE" == STOPPED || "$PHASE" == CANDIDATE_INSTALLED ]]; then
-    [[ "$PHASE" == CANDIDATE_INSTALLED ]] && host_call_lifecycle stop >/dev/null 2>&1
-    host_copy_exclusive "$RESCUE_JAR" "$RESCUE_STAGE" 0640 "$CURRENT_SHA" \
-      && host_replace_durable "$RESCUE_STAGE" "$LIVE_JAR" \
-      && host_call_lifecycle start >/dev/null 2>&1
-    if (( $? == 0 )); then
-      host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null || true
-    else
+  case "$PHASE" in
+    PREPARED)
+      host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null || true
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
+    STOP_ATTEMPTED|STOPPED|CANDIDATE_INSTALLED)
+      if host_call_lifecycle stop >/dev/null 2>&1 \
+          && host_copy_exclusive "$RESCUE_JAR" "$RESCUE_STAGE" 0640 "$CURRENT_SHA" \
+          && host_replace_durable "$RESCUE_STAGE" "$LIVE_JAR" \
+          && host_call_lifecycle start >/dev/null 2>&1; then
+        if ! host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null; then
+          host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
+        fi
+      else
+        host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
+      fi
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
+    STARTED_HEALTHY|COMMITTING)
       host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
-    fi
-  else
-    host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null || true
-  fi
-  host_finalize_record "$RECORD" 2>/dev/null || true
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
+    COMMITTED)
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
+  esac
   [[ ! -e "$OLD_STAGE" ]] || rm -f -- "$OLD_STAGE"
   [[ ! -e "$RESCUE_STAGE" ]] || rm -f -- "$RESCUE_STAGE"
   exit "$rc"
 }
 trap rollback_failure EXIT
+host_record_state "$RECORD" STOP_ATTEMPTED
+PHASE=STOP_ATTEMPTED
 host_call_lifecycle stop
 PHASE=STOPPED
 host_record_state "$RECORD" STOPPED
@@ -100,8 +116,11 @@ PHASE=CANDIDATE_INSTALLED
 host_record_state "$RECORD" CANDIDATE_INSTALLED
 [[ "$(host_sha_regular "$LIVE_JAR")" == "$OLD_SHA" ]] || die "restored JAR digest mismatch"
 host_call_lifecycle start
+PHASE=STARTED_HEALTHY
 host_record_state "$RECORD" STARTED_HEALTHY
+PHASE=COMMITTING
 host_record_state "$RECORD" COMMITTED
+PHASE=COMMITTED
 host_finalize_record "$RECORD"
-trap - EXIT; PHASE=COMMITTED
+trap - EXIT
 printf 'ROLLBACK_API=PASS\nSTATUS=COMMITTED\nRESTORED_SHA256=%s\nRECORD=%s\n' "$OLD_SHA" "$RECORD"

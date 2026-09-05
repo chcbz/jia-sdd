@@ -1,6 +1,6 @@
 # CYF 项目部署说明
 
-> ## JVC-OAI host adaptation R1 source candidate（2026-09-05）
+> ## JVC-OAI host adaptation R2 remediation source candidate（2026-09-05）
 >
 > 新主机路径的源码候选位于 `ops/release/`，但本说明不构成生产安装、发布或语音启用授权。
 > API 输入固定为 `ops/release/jvc-oai-r1-input.json` 中的 commit
@@ -17,9 +17,13 @@
 > 再按 FD9 获取 `/tmp/cyf-api-lifecycle.lock`；部署和回滚不得扫描、发送信号或直接启动 Java。
 > canonical 候选固定监听 `127.0.0.1:10018`，Java 子进程关闭 FD8/FD9。
 >
-> 制品状态机固定为 `PREPARED → STOPPED → CANDIDATE_INSTALLED → STARTED_HEALTHY → COMMITTED`。
-> 失败时通过 canonical 恢复 durable prior artifact，并记录 `ROLLED_BACK_HEALTHY`；恢复失败记录
-> `FAILED_MANUAL_RECOVERY_REQUIRED`。构建只能委托绝对路径
+> 制品状态机固定为 `PREPARED → STOP_ATTEMPTED → STOPPED → CANDIDATE_INSTALLED → STARTED_HEALTHY → COMMITTED`。
+> `STOP_ATTEMPTED` 必须在调用 canonical stop 前持久化；stop 返回失败时也按运行状态未知处理，恢复流程必须再次通过
+> canonical stop、恢复 durable prior artifact/config、canonical start 及其健康门禁，成功后记录
+> `ROLLED_BACK_HEALTHY`，否则记录 `FAILED_MANUAL_RECOVERY_REQUIRED`。若 canonical start 和语音 smoke（如适用）
+> 已成功，则后续 receipt 写入、replace/fsync 或 finalize 失败不得回滚已健康的选择：durable receipt 尚未提交时保守记录
+> `FAILED_MANUAL_RECOVERY_REQUIRED`，若 `COMMITTED` replacement 已发生则保留真实 `COMMITTED` 记录并仅重试 finalize。
+> 构建只能委托绝对路径
 > `/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py gradle`，且控制面必须先把对应任务绑定到
 > API exact tree 和 verification gate；不得直接运行 Gradle。
 >

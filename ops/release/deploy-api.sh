@@ -1,7 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash -p
 set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 source "$SCRIPT_DIR/common.sh"
@@ -51,27 +53,40 @@ deploy_failure() {
   local rc=$?
   trap - EXIT
   set +e
-  if [[ "$PHASE" == STOPPED || "$PHASE" == CANDIDATE_INSTALLED ]]; then
-    if [[ "$PHASE" == CANDIDATE_INSTALLED ]]; then host_call_lifecycle stop >/dev/null 2>&1; fi
-    host_copy_exclusive "$BACKUP_JAR" "$RESTORE_STAGE" 0640 "$OLD_SHA" \
-      && host_replace_durable "$RESTORE_STAGE" "$LIVE_JAR" \
-      && host_call_lifecycle start >/dev/null 2>&1
-    if (( $? == 0 )); then
-      host_record_state "$RECORD" ROLLED_BACK_HEALTHY && host_finalize_record "$RECORD"
-    else
+  case "$PHASE" in
+    PREPARED)
+      host_record_state "$RECORD" ABORTED_BEFORE_STOP 2>/dev/null || true
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
+    STOP_ATTEMPTED|STOPPED|CANDIDATE_INSTALLED)
+      if host_call_lifecycle stop >/dev/null 2>&1 \
+          && host_copy_exclusive "$BACKUP_JAR" "$RESTORE_STAGE" 0640 "$OLD_SHA" \
+          && host_replace_durable "$RESTORE_STAGE" "$LIVE_JAR" \
+          && host_call_lifecycle start >/dev/null 2>&1; then
+        if ! host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null; then
+          host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
+        fi
+      else
+        host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
+      fi
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
+    STARTED_HEALTHY|COMMITTING)
       host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
       host_finalize_record "$RECORD" 2>/dev/null || true
-    fi
-  else
-    host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null || true
-    host_finalize_record "$RECORD" 2>/dev/null || true
-  fi
+      ;;
+    COMMITTED)
+      host_finalize_record "$RECORD" 2>/dev/null || true
+      ;;
+  esac
   [[ ! -e "$STAGE_JAR" ]] || rm -f -- "$STAGE_JAR"
   [[ ! -e "$RESTORE_STAGE" ]] || rm -f -- "$RESTORE_STAGE"
   exit "$rc"
 }
 trap deploy_failure EXIT
 
+host_record_state "$RECORD" STOP_ATTEMPTED
+PHASE=STOP_ATTEMPTED
 host_call_lifecycle stop
 PHASE=STOPPED
 host_record_state "$RECORD" STOPPED
@@ -80,9 +95,11 @@ PHASE=CANDIDATE_INSTALLED
 host_record_state "$RECORD" CANDIDATE_INSTALLED
 [[ "$(host_sha_regular "$LIVE_JAR")" == "$NEW_SHA" ]] || die "installed candidate digest mismatch"
 host_call_lifecycle start
+PHASE=STARTED_HEALTHY
 host_record_state "$RECORD" STARTED_HEALTHY
+PHASE=COMMITTING
 host_record_state "$RECORD" COMMITTED
+PHASE=COMMITTED
 host_finalize_record "$RECORD"
 trap - EXIT
-PHASE=COMMITTED
 printf 'DEPLOY_API=PASS\nSTATUS=COMMITTED\nCANDIDATE_SHA256=%s\nRECORD=%s\n' "$NEW_SHA" "$RECORD"

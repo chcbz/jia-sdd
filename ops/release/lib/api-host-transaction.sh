@@ -306,6 +306,23 @@ host_prepare_transaction_dirs() {
   [[ "$(stat -Lc '%a:%U:%G' "$RECORD_ROOT")" == 750:root:isp ]] || die "unsafe record root"
 }
 
+host_validate_lifecycle_destination_chain() {
+  local root expected_uid path
+  if host_offline; then
+    root="${CYF_RELEASE_TEST_ROOT%/}"
+    expected_uid="$(id -u)"
+  else
+    root=''
+    expected_uid=0
+  fi
+  for path in "$root/usr" "$root/usr/local" "$root/usr/local/sbin"; do
+    [[ -d "$path" && ! -L "$path" && "$(stat -Lc %u "$path")" == "$expected_uid" ]] \
+      || die "lifecycle destination path is not trusted: $path"
+    (( (8#$(stat -Lc %a "$path") & 8#022) == 0 )) \
+      || die "lifecycle destination path is writable by group/other: $path"
+  done
+}
+
 host_copy_exclusive() {
   local source="$1" destination="$2" mode="$3" expected_sha="$4"
   local uid gid
@@ -425,16 +442,22 @@ PY
 }
 
 host_record_state() {
-  python3 -B - "$1" "$2" <<'PY'
+  local after_replace_fault=''
+  if host_offline && [[ "${CYF_RELEASE_FAULT_RECORD_STATE:-}" == "$2" ]]; then
+    return 92
+  fi
+  if host_offline; then after_replace_fault="${CYF_RELEASE_FAULT_RECORD_STATE_AFTER_REPLACE:-}"; fi
+  python3 -B - "$1" "$2" "$after_replace_fault" <<'PY'
 import json, os, sys, tempfile
-path, state = sys.argv[1:]
+path, state, after_replace_fault = sys.argv[1:]
 with open(path, 'r', encoding='utf-8') as stream:
     record = json.load(stream)
 allowed = {
- 'PREPARED': {'STOPPED', 'ROLLED_BACK_HEALTHY', 'FAILED_MANUAL_RECOVERY_REQUIRED'},
+ 'PREPARED': {'STOP_ATTEMPTED', 'ABORTED_BEFORE_STOP', 'FAILED_MANUAL_RECOVERY_REQUIRED'},
+ 'STOP_ATTEMPTED': {'STOPPED', 'ROLLED_BACK_HEALTHY', 'FAILED_MANUAL_RECOVERY_REQUIRED'},
  'STOPPED': {'CANDIDATE_INSTALLED', 'ROLLED_BACK_HEALTHY', 'FAILED_MANUAL_RECOVERY_REQUIRED'},
  'CANDIDATE_INSTALLED': {'STARTED_HEALTHY', 'ROLLED_BACK_HEALTHY', 'FAILED_MANUAL_RECOVERY_REQUIRED'},
- 'STARTED_HEALTHY': {'COMMITTED'},
+ 'STARTED_HEALTHY': {'COMMITTED', 'FAILED_MANUAL_RECOVERY_REQUIRED'},
 }
 if state not in allowed.get(record['status'], set()):
     raise SystemExit('invalid transaction transition')
@@ -445,6 +468,8 @@ try:
         json.dump(record, stream, sort_keys=True, indent=2); stream.write('\n'); stream.flush(); os.fsync(stream.fileno())
     os.chmod(temp, 0o600)
     os.replace(temp, path)
+    if after_replace_fault == state:
+        raise SystemExit(96)
     parent = os.open(os.path.dirname(path), os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
     try: os.fsync(parent)
     finally: os.close(parent)
@@ -454,12 +479,22 @@ PY
 }
 
 host_finalize_record() {
+  local fault=''
+  if host_offline; then fault="${CYF_RELEASE_FAULT_FINALIZE:-}"; fi
+  if [[ "$fault" == before-chmod ]]; then
+    return 93
+  fi
   chmod 0444 "$1"
-  python3 -B - "$1" <<'PY'
+  if [[ "$fault" == file-fsync ]]; then
+    return 94
+  fi
+  python3 -B - "$1" "$fault" <<'PY'
 import os, sys
 fd = os.open(sys.argv[1], os.O_RDONLY)
 try: os.fsync(fd)
 finally: os.close(fd)
+if sys.argv[2] == 'dir-fsync':
+    raise SystemExit(95)
 parent = os.open(os.path.dirname(sys.argv[1]), os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
 try: os.fsync(parent)
 finally: os.close(parent)
