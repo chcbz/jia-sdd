@@ -33,18 +33,39 @@ expect_fail() {
 }
 
 # Begin mutation handshake helpers (also used by the pure fake microprobe).
+mutation_child_exit() {
+  local child_rc=$?
+  trap - EXIT
+  set +e
+  if printf '%s %s\n' "$child_rc" "$((SECONDS - MUTATION_STARTED))" > "$CASE/mutation-child.done.tmp" \
+    && mv -- "$CASE/mutation-child.done.tmp" "$CASE/mutation-child.done"; then
+    :
+  else
+    printf 'MUTATION_CHILD_TERMINAL_WRITE_FAILED child_pid=%s child_rc=%s fixture=%s\n' \
+      "$BASHPID" "$child_rc" "$CASE" >&2
+    (( child_rc != 0 )) || child_rc=125
+  fi
+  exit "$child_rc"
+}
+
 mutation_start_child() {
   MUTATION_STARTED=$SECONDS
+  MUTATION_PARENT_PID=$BASHPID
   MUTATION_PHASE=STARTED
+  # Only the reaping owner removes this marker, never the child. Unknown stays unknown.
+  printf 'STARTING\n' > "$CASE/mutation-child.unresolved" || return 1
   MUTATION_ACTIVE=1
   MUTATION_DIAGNOSTICS=1
   (
-    trap - EXIT
-    if "$@" > "$CASE/out" 2> "$CASE/err"; then child_rc=0; else child_rc=$?; fi
-    printf '%s %s\n' "$child_rc" "$((SECONDS - MUTATION_STARTED))" > "$CASE/mutation-child.done.tmp"
-    mv -- "$CASE/mutation-child.done.tmp" "$CASE/mutation-child.done"
+    trap mutation_child_exit EXIT
+    # Do not call a shell function in an if/|| context: that disables its errexit.
+    set -Eeuo pipefail
+    "$@" > "$CASE/out" 2> "$CASE/err"
   ) &
   MUTATION_PID=$!
+  printf 'child_pid=%s parent_pid=%s started_seconds=%s role=operation-subshell\n' \
+    "$MUTATION_PID" "$MUTATION_PARENT_PID" "$MUTATION_STARTED" > "$CASE/mutation-child.pid"
+  cat -- "$CASE/mutation-child.pid"
 }
 
 mutation_wait_for_marker() {
@@ -64,15 +85,14 @@ mutation_wait_for_marker() {
 }
 
 mutation_reap_completed() {
+  local wait_rc=0
   [[ -f "$CASE/mutation-child.done" ]] || return 1
   IFS=' ' read -r MUTATION_CHILD_RC MUTATION_CHILD_ELAPSED < "$CASE/mutation-child.done" || return 1
   [[ "$MUTATION_CHILD_RC" =~ ^[0-9]+$ && "$MUTATION_CHILD_ELAPSED" =~ ^[0-9]+$ ]] || return 1
-  if wait "$MUTATION_PID"; then
-    MUTATION_ACTIVE=0
-  else
-    MUTATION_ACTIVE=0
-    return 1
-  fi
+  if wait "$MUTATION_PID"; then :; else wait_rc=$?; fi
+  MUTATION_ACTIVE=0
+  [[ "$wait_rc" == "$MUTATION_CHILD_RC" ]] || return 1
+  unlink "$CASE/mutation-child.unresolved"
 }
 
 mutation_report() {
@@ -80,8 +100,9 @@ mutation_report() {
   if [[ -f "$CASE/mutation-child.done" ]]; then
     IFS=' ' read -r child_rc child_elapsed < "$CASE/mutation-child.done" || true
   fi
-  printf 'MUTATION_DIAGNOSTIC phase=%s child_rc=%s child_elapsed_seconds=%s elapsed_seconds=%s ready=%s fixture=%s\n' \
-    "$MUTATION_PHASE" "$child_rc" "$child_elapsed" "$((SECONDS - MUTATION_STARTED))" \
+  printf 'MUTATION_DIAGNOSTIC phase=%s child_pid=%s parent_pid=%s child_rc=%s child_elapsed_seconds=%s elapsed_seconds=%s ready=%s fixture=%s\n' \
+    "$MUTATION_PHASE" "${MUTATION_PID:-NOT_STARTED}" "${MUTATION_PARENT_PID:-NOT_STARTED}" \
+    "$child_rc" "$child_elapsed" "$((SECONDS - MUTATION_STARTED))" \
     "$([[ -f "$CASE/archive-mutation.ready" ]] && printf PRESENT || printf ABSENT)" "$CASE" >&2
   printf '%s\n' 'MUTATION_CHILD_STDOUT_BEGIN' >&2
   [[ ! -f "$CASE/out" ]] || cat -- "$CASE/out" >&2
@@ -91,9 +112,9 @@ mutation_report() {
 }
 
 run_handshake_microtests() {
-  local RUN CASE mode marker
+  local RUN CASE mode marker preflight_pid preflight_rc
   local MUTATION_STARTED MUTATION_PHASE MUTATION_ACTIVE MUTATION_DIAGNOSTICS MUTATION_PID
-  local MUTATION_CHILD_RC MUTATION_CHILD_ELAPSED
+  local MUTATION_CHILD_RC MUTATION_CHILD_ELAPSED MUTATION_PARENT_PID
   RUN="$(mktemp -d /tmp/cyf-web-handshake-micro.XXXXXX)"
   printf 'HANDSHAKE_MICRO_ROOT=%s\n' "$RUN"
   for mode in ready premature delayed timeout; do
@@ -109,6 +130,7 @@ run_handshake_microtests() {
         timeout) sleep 2; exit 24;;
       esac
     ' fake "$mode" "$marker"
+    grep -Fq "child_pid=$MUTATION_PID parent_pid=$MUTATION_PARENT_PID" "$CASE/mutation-child.pid" || return 1
     case "$mode" in
       ready|delayed)
         mutation_wait_for_marker "$marker" 5 || return 1
@@ -126,26 +148,70 @@ run_handshake_microtests() {
     esac
     mutation_wait_for_marker "$CASE/mutation-child.done" 5 || return 1
     mutation_reap_completed || return 1
+    [[ ! -e "$CASE/mutation-child.unresolved" ]] || return 1
     case "$mode:$MUTATION_CHILD_RC" in ready:0|delayed:0|premature:23|timeout:24) ;; *) return 1;; esac
     mutation_report 2> "$CASE/report"
     grep -Fq "child_rc=$MUTATION_CHILD_RC" "$CASE/report" || return 1
+    grep -Fq "child_pid=$MUTATION_PID" "$CASE/report" || return 1
     grep -Fq "fake stdout $mode" "$CASE/report" || return 1
     grep -Fq "fake stderr $mode" "$CASE/report" || return 1
     grep -Fq 'elapsed_seconds=' "$CASE/report" || return 1
     printf 'HANDSHAKE_MICRO=PASS case=%s child_rc=%s\n' "$mode" "$MUTATION_CHILD_RC"
-    for marker in out err report timeout-report archive-mutation.ready mutation-child.done; do
+    for marker in out err report timeout-report archive-mutation.ready mutation-child.done mutation-child.pid; do
       [[ ! -f "$CASE/$marker" ]] || unlink "$CASE/$marker"
     done
     rmdir -- "$CASE"
   done
+  # Exercise function dispatch too: conditional invocation would swallow this error.
+  CASE="$RUN/function-failure"; mkdir -m 0700 "$CASE"
+  mutation_fake_function_failure() {
+    /bin/bash -p -c 'printf "fake function failure\n" >&2; exit 25'
+    printf 'UNREACHABLE\n'
+  }
+  mutation_start_child mutation_fake_function_failure
+  mutation_wait_for_marker "$CASE/mutation-child.done" 5 || return 1
+  mutation_reap_completed || return 1
+  [[ "$MUTATION_CHILD_RC" == 25 && ! -s "$CASE/out" ]] || return 1
+  grep -Fxq 'fake function failure' "$CASE/err" || return 1
+  printf 'HANDSHAKE_MICRO=PASS case=function-failure child_rc=%s\n' "$MUTATION_CHILD_RC"
+  for marker in out err mutation-child.done mutation-child.pid; do unlink "$CASE/$marker"; done
+  rmdir -- "$CASE"
+  unset -f mutation_fake_function_failure
+  CASE="$RUN/preflight-failure"; mkdir -m 0700 "$CASE"
+  (
+    MUTATION_CASE_ONLY=1
+    MUTATION_PHASE=PREFLIGHT
+    MUTATION_PREFLIGHT_STARTED=$SECONDS
+    MUTATION_DIAGNOSTICS=0
+    exec 3>&1 4>&2
+    trap 'cleanup_test_run >&3 2>&4' EXIT
+    {
+      /bin/bash -p -c 'printf "fake preflight failure\n" >&2; exit 26'
+    } > "$CASE/preflight.out" 2> "$CASE/preflight.err"
+    mutation_start_child /bin/bash -p -c 'printf "UNREACHABLE\n"'
+  ) > "$CASE/report" 2>&1 & preflight_pid=$!
+  if wait "$preflight_pid"; then preflight_rc=0; else preflight_rc=$?; fi
+  [[ "$preflight_rc" == 26 && ! -e "$CASE/mutation-child.pid" \
+     && ! -e "$CASE/mutation-child.unresolved" ]] || return 1
+  grep -Fq 'MUTATION_PREFLIGHT_FAILED rc=26' "$CASE/report" || return 1
+  grep -Fq 'child_pid=NOT_STARTED' "$CASE/report" || return 1
+  grep -Fxq 'fake preflight failure' "$CASE/report" || return 1
+  printf 'HANDSHAKE_MICRO=PASS case=preflight-failure rc=26 mutation_child=NOT_STARTED\n'
+  for marker in preflight.out preflight.err report; do unlink "$CASE/$marker"; done
+  rmdir -- "$CASE"
   rmdir -- "$RUN"
 }
-# End mutation handshake helpers.
 
 cleanup_test_run() {
   local exit_code=$?
   trap - EXIT
   set +e
+  if [[ "${MUTATION_PHASE:-}" == PREFLIGHT ]]; then
+    printf 'MUTATION_PREFLIGHT_FAILED rc=%s elapsed_seconds=%s child_pid=NOT_STARTED fixture=%s\n' \
+      "$exit_code" "$((SECONDS - MUTATION_PREFLIGHT_STARTED))" "$CASE" >&2
+    [[ ! -f "$CASE/preflight.out" ]] || cat -- "$CASE/preflight.out" >&2
+    [[ ! -f "$CASE/preflight.err" ]] || cat -- "$CASE/preflight.err" >&2
+  fi
   if (( ${MUTATION_DIAGNOSTICS:-0} == 1 )); then
     # Copy diagnostics before any fixture removal, including setup/mutation failures.
     mutation_report
@@ -157,9 +223,16 @@ cleanup_test_run() {
       fi
     fi
   fi
+  if [[ -n "${CASE:-}" && -e "$CASE/mutation-child.unresolved" ]]; then
+    printf 'MUTATION_UNRESOLVED: retaining %s; no terminal outcome inferred\n' "$RUN" >&2
+    exit "$exit_code"
+  fi
+  # The per-case subshell reports/reaps only; the outer test owner cleans the run.
+  (( ${MUTATION_CASE_ONLY:-0} == 0 )) || exit "$exit_code"
   rm -rf --one-file-system -- "$RUN"
   exit "$exit_code"
 }
+# End mutation handshake helpers.
 
 RUN="$(mktemp -d /tmp/cyf-web-adapter-test.XXXXXX)"
 chmod 0700 "$RUN"
@@ -390,6 +463,10 @@ PY
     || fail 'common.sh is absent from the Web adapter tool digest'
   grep -Fq "MINIMUM_FREE_BYTES=0" "$ROOT/ops/release/lib/web-deploy-adapter.sh" \
     || fail 'cancelled legacy resource threshold was reactivated'
+  grep -Fq 'source "$SCRIPT_DIR/lib/web-deploy-adapter.sh"' "$VERIFY" \
+    || fail 'verifier no longer sources the production archive primitive'
+  grep -Fq 'web_adapter_archive_operation "$VERIFY_DIR" >/dev/null' "$VERIFY" \
+    || fail 'verifier no longer calls the mutation-tested production archive primitive'
   pass 'static privileged-entrypoint and forbidden-mechanism fences'
 }
 
@@ -469,11 +546,30 @@ run_archive() {
 
 run_archive_mutation() {
   new_case
+  (
+  # Isolate helper readonly globals and fault state from later normal entrypoint tests.
+  MUTATION_CASE_ONLY=1
+  MUTATION_PHASE=PREFLIGHT
+  MUTATION_PREFLIGHT_STARTED=$SECONDS
+  # Preserve the caller log descriptors even if errexit fires inside a redirected block.
+  exec 3>&1 4>&2
+  trap 'cleanup_test_run >&3 2>&4' EXIT
+  {
+    source "$ROOT/ops/release/lib/web-deploy-adapter.sh"
+    web_adapter_load_input "$INPUT"
+    assert_clean_candidate 'Web' "$WEB_REPO" "$WEB_REF" "$WEB_HEAD" "$WEB_TREE"
+    web_adapter_validate_activation_proof
+    MUTATION_EXTRACT_DIR="$(mktemp -d "$CASE/archive-mutation-extract.XXXXXX")"
+  } > "$CASE/preflight.out" 2> "$CASE/preflight.err"
+  printf 'MUTATION_PREFLIGHT=PASS elapsed_seconds=%s fixture=%s\n' \
+    "$((SECONDS - MUTATION_PREFLIGHT_STARTED))" "$CASE"
+  export CYF_WEB_DEPLOY_ADAPTER_FAULT=archive-mutation-window
+  # Composed coverage: real primitive invariant + normal entrypoint/preflight cases.
+  # This does not establish a full-entrypoint mutation PASS for any historical run.
   # Ten seconds to readiness and ten to completion, each yielding between polls.
   # A still-running child at either deadline retains its fixture and reports UNKNOWN,
   # rather than pretending to have an exit code or waiting/signalling indefinitely.
-  mutation_start_child env CYF_WEB_DEPLOY_ADAPTER_TEST_ROOT="$CASE" CYF_WEB_DEPLOY_ADAPTER_FAULT=archive-mutation-window \
-    "$VERIFY" --input "$INPUT"
+  mutation_start_child web_adapter_archive_operation "$MUTATION_EXTRACT_DIR"
   mutation_wait_for_marker "$CASE/archive-mutation.ready" 10 \
     || fail 'mutation ready handshake failed; child diagnostics follow'
   MUTATION_PHASE=READY
@@ -489,7 +585,8 @@ run_archive_mutation() {
     || fail 'child failed without the required archive mutation rejection'
   mutation_report
   MUTATION_DIAGNOSTICS=0
-  pass 'archive mutation while held open fails through deterministic handshake'
+  pass 'production archive primitive rejects held-FD mutation (composed coverage, not full-entrypoint mutation)'
+  )
 }
 
 run_guard() {
