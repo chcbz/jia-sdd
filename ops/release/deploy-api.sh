@@ -3,202 +3,86 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
 
-# shellcheck source=common.sh
-source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)/common.sh"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/common.sh"
+source "$SCRIPT_DIR/lib/api-host-transaction.sh"
 
-usage() {
-  cat <<'USAGE'
-Usage: deploy-api.sh [--input PATH] [--dry-run|--execute]
-
-Default is read-only dry-run. Execution additionally requires:
-  CYF_RELEASE_APPROVED=YES
-  CYF_RELEASE_APPROVAL_ID=<auditable-change-id>
-  CYF_RELEASE_APPROVED_API_HEAD=<full SHA>
-  CYF_RELEASE_APPROVED_API_TREE=<full tree SHA>
-  CYF_RELEASE_APPROVED_WEB_HEAD=<full SHA>
-  CYF_RELEASE_APPROVED_WEB_TREE=<full tree SHA>
-
-The script never performs database or RabbitMQ operations. It backs up the
-physical live JAR and the exact NUL-delimited process argv with checksums,
-atomically installs the verified artifact, restarts with the saved argv, and
-requires the configured health check to pass.
-USAGE
-}
-
-SHOW_HELP=0
+usage() { printf 'Usage: %s --input <jvc-oai-r1-input.json> [--dry-run|--execute]\n' "$0"; }
 parse_common_args "$@"
-if (( SHOW_HELP == 1 )); then usage; exit 0; fi
-((${#POSITIONAL[@]} == 0)) || die "unexpected positional arguments"
-for command in git python3 sha256sum curl realpath stat cp mv sync flock nohup mktemp; do require_command "$command"; done
-load_release_input "$INPUT_FILE"
-require_execute_approval
-print_mode
-acquire_execution_lock api
-assert_clean_candidate "API" "$API_REPO" "$API_REF" "$API_HEAD" "$API_TREE"
-verify_release_record
-
-API_LIVE_JAR="$(normalize_absolute_path 'API live JAR' "$(json_get "$RELEASE_INPUT" api.deploy.liveJar)")"
-API_PID_FILE="$(normalize_absolute_path 'API PID file' "$(json_get "$RELEASE_INPUT" api.deploy.pidFile)")"
-API_WORK_DIR="$(normalize_absolute_path 'API work directory' "$(json_get "$RELEASE_INPUT" api.deploy.workDir)")"
-API_BACKUP_ROOT="$(normalize_absolute_path 'API backup root' "$(json_get "$RELEASE_INPUT" api.deploy.backupRoot)")"
-API_RECORD_ROOT="$(normalize_absolute_path 'API record root' "$(json_get "$RELEASE_INPUT" api.deploy.recordRoot)")"
-API_HEALTH_URL="$(json_get "$RELEASE_INPUT" api.deploy.healthUrl)"
-API_HEALTH_REGEX="$(json_get "$RELEASE_INPUT" api.deploy.healthExpectedRegex)"
-API_STOP_TIMEOUT="$(json_get "$RELEASE_INPUT" api.deploy.stopTimeoutSeconds)"
-API_HEALTH_TIMEOUT="$(json_get "$RELEASE_INPUT" api.deploy.healthTimeoutSeconds)"
-[[ "$API_STOP_TIMEOUT" =~ ^[1-9][0-9]{0,3}$ && "$API_HEALTH_TIMEOUT" =~ ^[1-9][0-9]{0,3}$ ]] \
-  || die "API timeout configuration is invalid"
-[[ "$API_HEALTH_URL" =~ ^https?://[^[:space:]]+$ ]] || die "API health URL is invalid"
-[[ -d "$API_WORK_DIR" && ! -L "$API_WORK_DIR" ]] || die "API work directory is unavailable or symlinked"
-[[ -f "$API_LIVE_JAR" && ! -L "$API_LIVE_JAR" ]] || die "live API JAR is unavailable or symlinked"
-assert_path_within "API live JAR" "$API_LIVE_JAR" "$API_WORK_DIR"
-assert_path_within "API PID file" "$API_PID_FILE" "$API_WORK_DIR"
-API_LOG_DIR="$(normalize_absolute_path 'API log directory' "$API_WORK_DIR/logs")"
-assert_path_within "API log directory" "$API_LOG_DIR" "$API_WORK_DIR"
-assert_disk_gate "$API_WORK_DIR" "API deploy filesystem"
-assert_disk_gate "$API_BACKUP_ROOT" "API backup filesystem"
-
-OLD_PID="$(find_single_java_jar_pid "$API_LIVE_JAR")"
-OLD_TICKS="$(process_start_ticks "$OLD_PID")"
-OLD_JAR_SHA="$(artifact_sha256 "$API_LIVE_JAR")"
-OLD_ARGV_SHA="$(proc_argv_sha256 "$OLD_PID")"
-NEW_JAR_SHA="$(artifact_sha256 "$API_ARTIFACT")"
-log "API dry-run evidence: live_pid=$OLD_PID live_jar_sha256=$OLD_JAR_SHA argv_sha256=$OLD_ARGV_SHA"
-log "API candidate artifact_sha256=$NEW_JAR_SHA"
+(( SHOW_HELP == 0 )) || { usage; exit 0; }
+((${#POSITIONAL[@]} == 0)) || die "deploy-api accepts no positional arguments"
+host_load_input "$INPUT_FILE"
+host_require_execute_approval
+verify_sha256_sidecar "$API_ARTIFACT"
+verify_sha256_sidecar "$API_METADATA"
+NEW_SHA="$(host_sha_regular "$API_ARTIFACT")"
+host_validate_boot_jar "$API_ARTIFACT" || die "candidate is not an executable Spring Boot JAR"
+host_verify_artifact_metadata
 
 if (( EXECUTE == 0 )); then
-  printf 'DRY_RUN=PASS\nCOMPONENT=api\nLIVE_PID=%s\nLIVE_JAR_SHA256=%s\nSAVED_ARGV_SHA256=%s\nCANDIDATE_SHA256=%s\n' \
-    "$OLD_PID" "$OLD_JAR_SHA" "$OLD_ARGV_SHA" "$NEW_JAR_SHA"
+  printf 'DRY_RUN=PASS\nCOMPONENT=api\nCANONICAL_LIFECYCLE=%s\nLIVE_JAR=%s\nCANDIDATE_SHA256=%s\n' \
+    "$CYF_HOST_LIFECYCLE" "$CYF_HOST_LIVE_JAR" "$NEW_SHA"
   exit 0
 fi
 
-mkdir -p -- "$API_LOG_DIR"
-assert_not_symlink "API log directory" "$API_LOG_DIR"
-
+host_prepare_transaction_dirs
+host_acquire_release_lock
+host_validate_live_jar
+host_validate_boot_jar "$LIVE_JAR" || die "current live JAR is not a valid Spring Boot rescue candidate"
+OLD_SHA="$(host_sha_regular "$LIVE_JAR")"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 CHANGE_ID="$CYF_RELEASE_APPROVAL_ID"
-BACKUP_DIR="$API_BACKUP_ROOT/api-${STAMP}-${API_HEAD}-${API_TREE}-${CHANGE_ID}"
-DEPLOY_RECORD="$API_RECORD_ROOT/api-deploy-${STAMP}-${API_HEAD}-${API_TREE}-${CHANGE_ID}.json"
-DEPLOY_RECORD_COMPLETE_TEMP="${DEPLOY_RECORD}.complete.tmp"
-STAGE_JAR="$(dirname -- "$API_LIVE_JAR")/.cyf-api-stage-${API_HEAD}-${API_TREE}-${CHANGE_ID}.jar"
-RESTORE_STAGE_JAR="$(dirname -- "$API_LIVE_JAR")/.cyf-api-restore-${API_HEAD}-${API_TREE}-${CHANGE_ID}.jar"
-LAUNCH_LOG="$API_LOG_DIR/release-${STAMP}-${API_HEAD}-${CHANGE_ID}.log"
-NEW_PID_FILE="$BACKUP_DIR/new.pid"
-DEPLOY_CHANGED=0
-NEW_PID=""
-OLD_JAR_NAME=""
+BACKUP_DIR="$BACKUP_ROOT/api-${STAMP}-${API_HEAD}-${CHANGE_ID}"
+BACKUP_JAR="$BACKUP_DIR/cyf-api-kit-${OLD_SHA}.jar"
+STAGE_JAR="$(dirname -- "$LIVE_JAR")/.cyf-api-stage-${CHANGE_ID}"
+RESTORE_STAGE="$(dirname -- "$LIVE_JAR")/.cyf-api-restore-${CHANGE_ID}"
+RECORD="$RECORD_ROOT/api-deploy-${STAMP}-${API_HEAD}-${CHANGE_ID}.json"
+[[ ! -e "$BACKUP_DIR" && ! -e "$STAGE_JAR" && ! -e "$RESTORE_STAGE" && ! -e "$RECORD" ]] \
+  || die "transaction destination already exists"
+mkdir -m 0750 -- "$BACKUP_DIR"
+if ! host_offline; then chown root:isp "$BACKUP_DIR"; fi
+host_fsync_dir "$BACKUP_ROOT"
+host_copy_exclusive "$LIVE_JAR" "$BACKUP_JAR" 0440 "$OLD_SHA"
+host_copy_exclusive "$API_ARTIFACT" "$STAGE_JAR" 0640 "$NEW_SHA"
+host_record_init "$RECORD" deploy "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$BACKUP_JAR" "$OLD_SHA" "$NEW_SHA"
 
-[[ ! -e "$BACKUP_DIR" && ! -L "$BACKUP_DIR" ]] || die "API backup path already exists"
-[[ ! -e "$DEPLOY_RECORD" && ! -L "$DEPLOY_RECORD" ]] || die "API deploy record path already exists"
-[[ ! -e "$DEPLOY_RECORD_COMPLETE_TEMP" && ! -L "$DEPLOY_RECORD_COMPLETE_TEMP" ]] \
-  || die "API completed-record staging path already exists"
-[[ ! -e "$STAGE_JAR" && ! -L "$STAGE_JAR" ]] || die "API staging path already exists"
-[[ ! -e "$RESTORE_STAGE_JAR" && ! -L "$RESTORE_STAGE_JAR" ]] || die "API restore staging path already exists"
-
-restore_old_on_error() {
-  local exit_code=$?
+PHASE=PREPARED
+deploy_failure() {
+  local rc=$?
   trap - EXIT
   set +e
-  if (( DEPLOY_CHANGED == 1 )); then
-    log "deployment failed; attempting automatic API artifact/runtime restore"
-    if [[ -n "$NEW_PID" ]] && kill -0 "$NEW_PID" 2>/dev/null; then
-      kill -TERM "$NEW_PID" 2>/dev/null
-      for _ in {1..30}; do
-        kill -0 "$NEW_PID" 2>/dev/null || break
-        sleep 1
-      done
-    fi
-    atomic_install_jar "$BACKUP_DIR/$OLD_JAR_NAME" "$API_LIVE_JAR" "$RESTORE_STAGE_JAR"
-    launch_from_argv_backup "$BACKUP_DIR/old.argv.nul" "$BACKUP_DIR/old.cwd" \
-      "$API_LIVE_JAR" "$LAUNCH_LOG.restore" "$BACKUP_DIR/restored.pid"
-    local restored_pid="$(cat -- "$BACKUP_DIR/restored.pid")"
-    if wait_for_health "$API_HEALTH_URL" "$API_HEALTH_REGEX" "$API_HEALTH_TIMEOUT"; then
-      printf '%s\n' "$restored_pid" > "$API_PID_FILE"
-      log "automatic API restore health check PASS; restored_pid=$restored_pid"
+  if [[ "$PHASE" == STOPPED || "$PHASE" == CANDIDATE_INSTALLED ]]; then
+    if [[ "$PHASE" == CANDIDATE_INSTALLED ]]; then host_call_lifecycle stop >/dev/null 2>&1; fi
+    host_copy_exclusive "$BACKUP_JAR" "$RESTORE_STAGE" 0640 "$OLD_SHA" \
+      && host_replace_durable "$RESTORE_STAGE" "$LIVE_JAR" \
+      && host_call_lifecycle start >/dev/null 2>&1
+    if (( $? == 0 )); then
+      host_record_state "$RECORD" ROLLED_BACK_HEALTHY && host_finalize_record "$RECORD"
     else
-      log "CRITICAL: automatic API restore health check failed"
+      host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
+      host_finalize_record "$RECORD" 2>/dev/null || true
     fi
+  else
+    host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null || true
+    host_finalize_record "$RECORD" 2>/dev/null || true
   fi
-  rm -f -- "$STAGE_JAR" "$RESTORE_STAGE_JAR" "$DEPLOY_RECORD_COMPLETE_TEMP"
-  exit "$exit_code"
+  [[ ! -e "$STAGE_JAR" ]] || rm -f -- "$STAGE_JAR"
+  [[ ! -e "$RESTORE_STAGE" ]] || rm -f -- "$RESTORE_STAGE"
+  exit "$rc"
 }
-trap restore_old_on_error EXIT
+trap deploy_failure EXIT
 
-mkdir -p -- "$API_BACKUP_ROOT" "$API_RECORD_ROOT" "$API_WORK_DIR/logs"
-assert_not_symlink "API backup root" "$API_BACKUP_ROOT"
-assert_not_symlink "API record root" "$API_RECORD_ROOT"
-mapfile -t CAPTURE < <(capture_api_runtime "$API_LIVE_JAR" "$OLD_PID" "$BACKUP_DIR")
-((${#CAPTURE[@]} == 3)) || die "API runtime backup did not return complete evidence"
-[[ "${CAPTURE[0]}" == "$OLD_JAR_SHA" && "${CAPTURE[2]}" == "$OLD_TICKS" ]] \
-  || die "API runtime changed before backup completed"
-OLD_JAR_NAME="${CAPTURE[1]}"
-
-python3 - "$DEPLOY_RECORD" "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$WEB_HEAD" \
-  "$WEB_TREE" "$API_ARTIFACT" "$NEW_JAR_SHA" "$API_LIVE_JAR" "$OLD_JAR_SHA" \
-  "$BACKUP_DIR" "$OLD_JAR_NAME" "$OLD_ARGV_SHA" "$OLD_PID" "$API_HEALTH_URL" "$STAMP" <<'PY'
-import json, sys
-(path, change_id, api_head, api_tree, web_head, web_tree, artifact,
- artifact_sha, live_jar, old_jar_sha, backup_dir, backup_jar, argv_sha,
- old_pid, health_url, stamp) = sys.argv[1:]
-record = {
-  "schema": "cyf-api-deploy-record-v1",
-  "status": "PREPARED",
-  "changeId": change_id,
-  "apiHead": api_head, "apiTree": api_tree,
-  "webHead": web_head, "webTree": web_tree,
-  "artifact": artifact, "artifactSha256": artifact_sha,
-  "liveJar": live_jar, "previousLiveJarSha256": old_jar_sha,
-  "backupDir": backup_dir, "backupJar": backup_jar,
-  "savedArgvSha256": argv_sha, "oldPid": int(old_pid),
-  "healthUrl": health_url, "preparedAt": stamp,
-  "databaseOperation": "NOT_PERFORMED", "rabbitMqOperation": "NOT_PERFORMED"
-}
-with open(path, 'x', encoding='utf-8') as stream:
-    json.dump(record, stream, sort_keys=True, indent=2); stream.write("\n")
-PY
-chmod 0600 "$DEPLOY_RECORD"
-
-stop_process "$OLD_PID" "$OLD_TICKS" "$API_STOP_TIMEOUT"
-DEPLOY_CHANGED=1
-atomic_install_jar "$API_ARTIFACT" "$API_LIVE_JAR" "$STAGE_JAR"
-[[ "$(artifact_sha256 "$API_LIVE_JAR")" == "$NEW_JAR_SHA" ]] || die "installed API JAR checksum mismatch"
-launch_from_argv_backup "$BACKUP_DIR/old.argv.nul" "$BACKUP_DIR/old.cwd" \
-  "$API_LIVE_JAR" "$LAUNCH_LOG" "$NEW_PID_FILE"
-NEW_PID="$(cat -- "$NEW_PID_FILE")"
-[[ "$NEW_PID" =~ ^[0-9]+$ ]] || die "new API PID is invalid"
-sleep 2
-kill -0 "$NEW_PID" 2>/dev/null || die "new API process exited before health check"
-[[ "$(find_single_java_jar_pid "$API_LIVE_JAR")" == "$NEW_PID" ]] \
-  || die "new API process identity is ambiguous"
-wait_for_health "$API_HEALTH_URL" "$API_HEALTH_REGEX" "$API_HEALTH_TIMEOUT" \
-  || die "new API failed the configured health check"
-PID_TEMP="$(mktemp "$(dirname -- "$API_PID_FILE")/.tmp.$(basename -- "$API_PID_FILE").XXXXXX")"
-printf '%s\n' "$NEW_PID" > "$PID_TEMP"
-chmod 0644 "$PID_TEMP"
-mv -fT -- "$PID_TEMP" "$API_PID_FILE"
-
-python3 - "$DEPLOY_RECORD" "$DEPLOY_RECORD_COMPLETE_TEMP" "$NEW_PID" <<'PY'
-import json, os, sys
-path, temporary, pid = sys.argv[1:]
-with open(path, 'r', encoding='utf-8') as stream:
-    record = json.load(stream)
-record['status'] = 'DEPLOYED_HEALTHY'
-record['newPid'] = int(pid)
-record['completedAt'] = __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
-with open(temporary, 'x', encoding='utf-8') as stream:
-    json.dump(record, stream, sort_keys=True, indent=2); stream.write('\n')
-    stream.flush(); os.fsync(stream.fileno())
-os.chmod(temporary, 0o600)
-os.replace(temporary, path)
-directory = os.open(os.path.dirname(path), os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
-try:
-    os.fsync(directory)
-finally:
-    os.close(directory)
-PY
-chmod 0444 "$DEPLOY_RECORD"
-write_sha256_sidecar "$DEPLOY_RECORD" >/dev/null
+host_call_lifecycle stop
+PHASE=STOPPED
+host_record_state "$RECORD" STOPPED
+host_replace_durable "$STAGE_JAR" "$LIVE_JAR"
+PHASE=CANDIDATE_INSTALLED
+host_record_state "$RECORD" CANDIDATE_INSTALLED
+[[ "$(host_sha_regular "$LIVE_JAR")" == "$NEW_SHA" ]] || die "installed candidate digest mismatch"
+host_call_lifecycle start
+host_record_state "$RECORD" STARTED_HEALTHY
+host_record_state "$RECORD" COMMITTED
+host_finalize_record "$RECORD"
 trap - EXIT
-DEPLOY_CHANGED=0
-printf 'DEPLOY_API=PASS\nPID=%s\nBACKUP_DIR=%s\nDEPLOY_RECORD=%s\nARTIFACT_SHA256=%s\n' \
-  "$NEW_PID" "$BACKUP_DIR" "$DEPLOY_RECORD" "$NEW_JAR_SHA"
+PHASE=COMMITTED
+printf 'DEPLOY_API=PASS\nSTATUS=COMMITTED\nCANDIDATE_SHA256=%s\nRECORD=%s\n' "$NEW_SHA" "$RECORD"

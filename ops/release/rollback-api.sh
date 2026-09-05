@@ -3,202 +3,105 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
 
-# shellcheck source=common.sh
-source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)/common.sh"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/common.sh"
+source "$SCRIPT_DIR/lib/api-host-transaction.sh"
 
-usage() {
-  cat <<'USAGE'
-Usage: rollback-api.sh [--input PATH] [--dry-run|--execute] DEPLOY_RECORD.json
-
-Default is read-only dry-run. Execution requires the same SHA-bound approval
-variables as deploy-api.sh. The deploy record, old JAR, exact argv backup and
-all SHA-256 sidecars are verified before rollback. The current release is also
-backed up so a failed rollback can be reversed.
-USAGE
-}
-
-SHOW_HELP=0
+usage() { printf 'Usage: %s --input <jvc-oai-r1-input.json> [--dry-run|--execute] <deploy-record.json>\n' "$0"; }
 parse_common_args "$@"
-if (( SHOW_HELP == 1 )); then usage; exit 0; fi
-((${#POSITIONAL[@]} == 1)) || die "one API deploy record path is required"
-for command in git python3 sha256sum curl realpath stat cp mv flock nohup mktemp sync; do require_command "$command"; done
-load_release_input "$INPUT_FILE"
-require_execute_approval
-print_mode
-acquire_execution_lock api
-verify_release_record_component api
-
-API_LIVE_JAR="$(normalize_absolute_path 'API live JAR' "$(json_get "$RELEASE_INPUT" api.deploy.liveJar)")"
-API_PID_FILE="$(normalize_absolute_path 'API PID file' "$(json_get "$RELEASE_INPUT" api.deploy.pidFile)")"
-API_WORK_DIR="$(normalize_absolute_path 'API work directory' "$(json_get "$RELEASE_INPUT" api.deploy.workDir)")"
-API_BACKUP_ROOT="$(normalize_absolute_path 'API backup root' "$(json_get "$RELEASE_INPUT" api.deploy.backupRoot)")"
-API_RECORD_ROOT="$(normalize_absolute_path 'API record root' "$(json_get "$RELEASE_INPUT" api.deploy.recordRoot)")"
-API_HEALTH_URL="$(json_get "$RELEASE_INPUT" api.deploy.healthUrl)"
-API_HEALTH_REGEX="$(json_get "$RELEASE_INPUT" api.deploy.healthExpectedRegex)"
-API_STOP_TIMEOUT="$(json_get "$RELEASE_INPUT" api.deploy.stopTimeoutSeconds)"
-API_HEALTH_TIMEOUT="$(json_get "$RELEASE_INPUT" api.deploy.healthTimeoutSeconds)"
-DEPLOY_RECORD="$(normalize_absolute_path 'API deploy record' "${POSITIONAL[0]}")"
-assert_path_within "API deploy record" "$DEPLOY_RECORD" "$API_RECORD_ROOT"
-[[ -f "$DEPLOY_RECORD" && ! -L "$DEPLOY_RECORD" ]] || die "API deploy record is unavailable or symlinked"
-verify_sha256_sidecar "$DEPLOY_RECORD"
-assert_mode_0444 "API deploy record" "$DEPLOY_RECORD"
-assert_mode_0444 "API deploy record checksum" "${DEPLOY_RECORD}.sha256"
-
-BACKUP_DIR="$(normalize_absolute_path 'API backup directory' "$(json_get "$DEPLOY_RECORD" backupDir)")"
-BACKUP_JAR_NAME="$(json_get "$DEPLOY_RECORD" backupJar)"
-EXPECTED_CURRENT_SHA="$(json_get "$DEPLOY_RECORD" artifactSha256)"
-EXPECTED_OLD_SHA="$(json_get "$DEPLOY_RECORD" previousLiveJarSha256)"
-EXPECTED_OLD_ARGV_SHA="$(json_get "$DEPLOY_RECORD" savedArgvSha256)"
-RECORD_STATUS="$(json_get "$DEPLOY_RECORD" status)"
-RECORD_CHANGE_ID="$(json_get "$DEPLOY_RECORD" changeId)"
-RECORD_API_HEAD="$(json_get "$DEPLOY_RECORD" apiHead)"
-RECORD_API_TREE="$(json_get "$DEPLOY_RECORD" apiTree)"
-RECORD_WEB_HEAD="$(json_get "$DEPLOY_RECORD" webHead)"
-RECORD_WEB_TREE="$(json_get "$DEPLOY_RECORD" webTree)"
-require_sha256 "deployed API artifact" "$EXPECTED_CURRENT_SHA"
-require_sha256 "old API artifact" "$EXPECTED_OLD_SHA"
-require_sha256 "saved API argv" "$EXPECTED_OLD_ARGV_SHA"
-[[ "$EXPECTED_CURRENT_SHA" == "$(artifact_sha256 "$API_ARTIFACT")" ]] \
-  || die "API deploy record artifact does not match the verified release artifact"
-[[ "$RECORD_STATUS" == "DEPLOYED_HEALTHY" ]] || die "API deploy record is not a healthy deployment"
-require_safe_id "API deploy record changeId" "$RECORD_CHANGE_ID"
-if (( EXECUTE == 1 )); then
-  [[ "$CYF_RELEASE_APPROVAL_ID" == "$RECORD_CHANGE_ID" ]] \
-    || die "rollback approval ID must match the original deploy record changeId"
-fi
-[[ "$RECORD_API_HEAD" == "$API_HEAD" && "$RECORD_API_TREE" == "$API_TREE" ]] \
-  || die "API deploy record does not match the pinned candidate"
-[[ "$RECORD_WEB_HEAD" == "$WEB_HEAD" && "$RECORD_WEB_TREE" == "$WEB_TREE" ]] \
-  || die "API deploy record does not match the jointly verified Web candidate"
-assert_path_within "API backup directory" "$BACKUP_DIR" "$API_BACKUP_ROOT"
-[[ -d "$BACKUP_DIR" && ! -L "$BACKUP_DIR" ]] || die "API backup directory is unavailable or symlinked"
-[[ "$BACKUP_JAR_NAME" =~ ^cyf-api-old-[0-9a-f]{64}\.jar$ ]] || die "API backup JAR name is invalid"
-OLD_JAR="$BACKUP_DIR/$BACKUP_JAR_NAME"
-[[ -f "$OLD_JAR" && ! -L "$OLD_JAR" ]] || die "old API JAR backup is unavailable"
-verify_sha256_sidecar "$OLD_JAR"
-verify_sha256_sidecar "$BACKUP_DIR/old.argv.nul"
-verify_sha256_sidecar "$BACKUP_DIR/old.cwd"
-verify_sha256_sidecar "$BACKUP_DIR/old.exe"
-verify_sha256_sidecar "$BACKUP_DIR/old.pid"
-verify_sha256_sidecar "$BACKUP_DIR/old.start-ticks"
-[[ "$(artifact_sha256 "$OLD_JAR")" == "$EXPECTED_OLD_SHA" ]] || die "old API JAR does not match deploy record"
-[[ "$(artifact_sha256 "$BACKUP_DIR/old.argv.nul")" == "$EXPECTED_OLD_ARGV_SHA" ]] \
-  || die "saved API argv does not match deploy record"
-[[ "$(artifact_sha256 "$API_LIVE_JAR")" == "$EXPECTED_CURRENT_SHA" ]] \
-  || die "current API JAR does not match the deployment being rolled back"
-[[ "$API_STOP_TIMEOUT" =~ ^[1-9][0-9]{0,3}$ && "$API_HEALTH_TIMEOUT" =~ ^[1-9][0-9]{0,3}$ ]] \
-  || die "API timeout configuration is invalid"
-[[ "$API_HEALTH_URL" =~ ^https?://[^[:space:]]+$ ]] || die "API health URL is invalid"
-[[ -d "$API_WORK_DIR" && ! -L "$API_WORK_DIR" ]] || die "API work directory is unavailable or symlinked"
-[[ -f "$API_LIVE_JAR" && ! -L "$API_LIVE_JAR" ]] || die "live API JAR is unavailable or symlinked"
-assert_path_within "API live JAR" "$API_LIVE_JAR" "$API_WORK_DIR"
-assert_path_within "API PID file" "$API_PID_FILE" "$API_WORK_DIR"
-API_LOG_DIR="$(normalize_absolute_path 'API log directory' "$API_WORK_DIR/logs")"
-assert_path_within "API log directory" "$API_LOG_DIR" "$API_WORK_DIR"
-assert_disk_gate "$API_WORK_DIR" "API rollback filesystem"
-assert_disk_gate "$API_BACKUP_ROOT" "API rollback backup filesystem"
-
-CURRENT_PID="$(find_single_java_jar_pid "$API_LIVE_JAR")"
-CURRENT_TICKS="$(process_start_ticks "$CURRENT_PID")"
-CURRENT_ARGV_SHA="$(proc_argv_sha256 "$CURRENT_PID")"
-log "API rollback dry-run evidence: pid=$CURRENT_PID current_sha256=$EXPECTED_CURRENT_SHA old_sha256=$EXPECTED_OLD_SHA argv_sha256=$CURRENT_ARGV_SHA"
+(( SHOW_HELP == 0 )) || { usage; exit 0; }
+((${#POSITIONAL[@]} == 1)) || die "rollback-api requires one deploy record"
+host_load_input "$INPUT_FILE"
+host_require_execute_approval
+[[ ! -L "${POSITIONAL[0]}" ]] || die "deploy record must not be a symlink"
+DEPLOY_RECORD="$(normalize_absolute_path 'deploy record' "${POSITIONAL[0]}")"
+case "$DEPLOY_RECORD" in
+  "$RECORD_ROOT"/api-deploy-*.json) ;;
+  *) die "deploy record is outside canonical record root" ;;
+esac
+if host_offline; then RECORD_UID="$(id -u)"; else RECORD_UID=0; fi
+mapfile -t RECORD_FIELDS < <(python3 -B - "$DEPLOY_RECORD" "$API_HEAD" "$API_TREE" "$RECORD_UID" <<'PY'
+import json, os, stat, sys
+path, head, tree, expected_uid = sys.argv[1:]
+info = os.lstat(path)
+if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) != 0o444 or info.st_uid != int(expected_uid)):
+    raise SystemExit('deploy record is not immutable')
+with open(path, 'r', encoding='utf-8') as stream: data = json.load(stream)
+if data.get('schema') != 'cyf-api-host-transaction-v1' or data.get('kind') != 'deploy' \
+        or data.get('status') != 'COMMITTED' or data.get('apiHead') != head or data.get('apiTree') != tree:
+    raise SystemExit('deploy record is not an exact committed candidate')
+for key in ('backupArtifact', 'previousJarSha256', 'candidateJarSha256'):
+    if not isinstance(data.get(key), str) or not data[key]: raise SystemExit('deploy record field missing')
+print(data['backupArtifact']); print(data['previousJarSha256']); print(data['candidateJarSha256'])
+PY
+)
+((${#RECORD_FIELDS[@]} == 3)) || die "deploy record validation failed"
+BACKUP_JAR="${RECORD_FIELDS[0]}"; OLD_SHA="${RECORD_FIELDS[1]}"; EXPECTED_CURRENT_SHA="${RECORD_FIELDS[2]}"
+[[ "$BACKUP_JAR" == "$BACKUP_ROOT"/* ]] || die "backup artifact is outside canonical backup root"
+require_sha256 "previous JAR SHA" "$OLD_SHA"
+require_sha256 "candidate JAR SHA" "$EXPECTED_CURRENT_SHA"
+if host_offline; then BACKUP_EXPECTED="440:$(id -u):$(id -g):1"; else BACKUP_EXPECTED="440:0:$(id -g isp):1"; fi
+[[ -f "$BACKUP_JAR" && ! -L "$BACKUP_JAR" && "$(stat -Lc '%a:%u:%g:%h' "$BACKUP_JAR")" == "$BACKUP_EXPECTED" ]] \
+  || die "backup artifact metadata is unsafe"
+[[ "$(host_sha_regular "$BACKUP_JAR")" == "$OLD_SHA" ]] || die "backup artifact digest mismatch"
+host_validate_boot_jar "$BACKUP_JAR" || die "backup artifact is not a Spring Boot JAR"
 if (( EXECUTE == 0 )); then
-  printf 'DRY_RUN=PASS\nCOMPONENT=api-rollback\nCURRENT_PID=%s\nCURRENT_SHA256=%s\nRESTORE_SHA256=%s\n' \
-    "$CURRENT_PID" "$EXPECTED_CURRENT_SHA" "$EXPECTED_OLD_SHA"
+  printf 'DRY_RUN=PASS\nCOMPONENT=api-rollback\nRESTORE_SHA256=%s\n' "$OLD_SHA"
   exit 0
 fi
 
-mkdir -p -- "$API_LOG_DIR"
-assert_not_symlink "API log directory" "$API_LOG_DIR"
-
-STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-CHANGE_ID="$CYF_RELEASE_APPROVAL_ID"
-RESCUE_DIR="$API_BACKUP_ROOT/api-rescue-${STAMP}-${API_HEAD}-${API_TREE}-${CHANGE_ID}"
-ROLLBACK_RECORD="$API_RECORD_ROOT/api-rollback-${STAMP}-${API_HEAD}-${API_TREE}-${CHANGE_ID}.json"
-STAGE_JAR="$(dirname -- "$API_LIVE_JAR")/.cyf-api-rollback-stage-${CHANGE_ID}.jar"
-RESCUE_STAGE_JAR="$(dirname -- "$API_LIVE_JAR")/.cyf-api-rescue-stage-${API_HEAD}-${API_TREE}-${CHANGE_ID}.jar"
-ROLLBACK_LOG="$API_LOG_DIR/rollback-${STAMP}-${API_HEAD}-${CHANGE_ID}.log"
-RESTORED_PID=""
-ROLLBACK_CHANGED=0
-RESCUE_JAR_NAME=""
-
-[[ ! -e "$RESCUE_DIR" && ! -L "$RESCUE_DIR" ]] || die "API rescue backup path already exists"
-[[ ! -e "$ROLLBACK_RECORD" && ! -L "$ROLLBACK_RECORD" ]] || die "API rollback record path already exists"
-[[ ! -e "$STAGE_JAR" && ! -L "$STAGE_JAR" ]] || die "API rollback staging path already exists"
-[[ ! -e "$RESCUE_STAGE_JAR" && ! -L "$RESCUE_STAGE_JAR" ]] || die "API rescue staging path already exists"
-
-restore_candidate_on_error() {
-  local exit_code=$?
-  trap - EXIT
-  set +e
-  if (( ROLLBACK_CHANGED == 1 )); then
-    log "rollback failed; attempting to restore the pre-rollback API candidate"
-    if [[ -n "$RESTORED_PID" ]] && kill -0 "$RESTORED_PID" 2>/dev/null; then
-      kill -TERM "$RESTORED_PID" 2>/dev/null
-      for _ in {1..30}; do kill -0 "$RESTORED_PID" 2>/dev/null || break; sleep 1; done
-    fi
-    atomic_install_jar "$RESCUE_DIR/$RESCUE_JAR_NAME" "$API_LIVE_JAR" "$RESCUE_STAGE_JAR"
-    launch_from_argv_backup "$RESCUE_DIR/old.argv.nul" "$RESCUE_DIR/old.cwd" \
-      "$API_LIVE_JAR" "$ROLLBACK_LOG.rescue" "$RESCUE_DIR/rescued.pid"
-    local rescued_pid="$(cat -- "$RESCUE_DIR/rescued.pid")"
-    if wait_for_health "$API_HEALTH_URL" "$API_HEALTH_REGEX" "$API_HEALTH_TIMEOUT"; then
-      printf '%s\n' "$rescued_pid" > "$API_PID_FILE"
-      log "pre-rollback API candidate restored; pid=$rescued_pid"
+host_prepare_transaction_dirs
+host_acquire_release_lock
+host_validate_live_jar
+host_validate_boot_jar "$LIVE_JAR" || die "current rescue JAR is not a valid Spring Boot artifact"
+CURRENT_SHA="$(host_sha_regular "$LIVE_JAR")"
+[[ "$CURRENT_SHA" == "$EXPECTED_CURRENT_SHA" ]] || die "live JAR no longer matches deploy record"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"; CHANGE_ID="$CYF_RELEASE_APPROVAL_ID"
+RESCUE_DIR="$BACKUP_ROOT/rescue-${STAMP}-${API_HEAD}-${CHANGE_ID}"
+RESCUE_JAR="$RESCUE_DIR/cyf-api-kit-${CURRENT_SHA}.jar"
+OLD_STAGE="$(dirname -- "$LIVE_JAR")/.cyf-api-rollback-${CHANGE_ID}"
+RESCUE_STAGE="$(dirname -- "$LIVE_JAR")/.cyf-api-rescue-${CHANGE_ID}"
+RECORD="$RECORD_ROOT/api-rollback-${STAMP}-${API_HEAD}-${CHANGE_ID}.json"
+[[ ! -e "$RESCUE_DIR" && ! -e "$OLD_STAGE" && ! -e "$RESCUE_STAGE" && ! -e "$RECORD" ]] \
+  || die "rollback destination already exists"
+mkdir -m 0750 -- "$RESCUE_DIR"; if ! host_offline; then chown root:isp "$RESCUE_DIR"; fi
+host_fsync_dir "$BACKUP_ROOT"
+host_copy_exclusive "$LIVE_JAR" "$RESCUE_JAR" 0440 "$CURRENT_SHA"
+host_copy_exclusive "$BACKUP_JAR" "$OLD_STAGE" 0640 "$OLD_SHA"
+host_record_init "$RECORD" rollback "$CHANGE_ID" "$API_HEAD" "$API_TREE" "$RESCUE_JAR" "$CURRENT_SHA" "$OLD_SHA"
+PHASE=PREPARED
+rollback_failure() {
+  local rc=$?; trap - EXIT; set +e
+  if [[ "$PHASE" == STOPPED || "$PHASE" == CANDIDATE_INSTALLED ]]; then
+    [[ "$PHASE" == CANDIDATE_INSTALLED ]] && host_call_lifecycle stop >/dev/null 2>&1
+    host_copy_exclusive "$RESCUE_JAR" "$RESCUE_STAGE" 0640 "$CURRENT_SHA" \
+      && host_replace_durable "$RESCUE_STAGE" "$LIVE_JAR" \
+      && host_call_lifecycle start >/dev/null 2>&1
+    if (( $? == 0 )); then
+      host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null || true
     else
-      log "CRITICAL: pre-rollback API candidate restore health check failed"
+      host_record_state "$RECORD" FAILED_MANUAL_RECOVERY_REQUIRED 2>/dev/null || true
     fi
+  else
+    host_record_state "$RECORD" ROLLED_BACK_HEALTHY 2>/dev/null || true
   fi
-  rm -f -- "$STAGE_JAR" "$RESCUE_STAGE_JAR"
-  exit "$exit_code"
+  host_finalize_record "$RECORD" 2>/dev/null || true
+  [[ ! -e "$OLD_STAGE" ]] || rm -f -- "$OLD_STAGE"
+  [[ ! -e "$RESCUE_STAGE" ]] || rm -f -- "$RESCUE_STAGE"
+  exit "$rc"
 }
-trap restore_candidate_on_error EXIT
-
-mapfile -t RESCUE_CAPTURE < <(capture_api_runtime "$API_LIVE_JAR" "$CURRENT_PID" "$RESCUE_DIR")
-((${#RESCUE_CAPTURE[@]} == 3)) || die "API rescue backup did not return complete evidence"
-[[ "${RESCUE_CAPTURE[0]}" == "$EXPECTED_CURRENT_SHA" && "${RESCUE_CAPTURE[2]}" == "$CURRENT_TICKS" ]] \
-  || die "current API runtime changed before rescue backup completed"
-RESCUE_JAR_NAME="${RESCUE_CAPTURE[1]}"
-
-stop_process "$CURRENT_PID" "$CURRENT_TICKS" "$API_STOP_TIMEOUT"
-ROLLBACK_CHANGED=1
-atomic_install_jar "$OLD_JAR" "$API_LIVE_JAR" "$STAGE_JAR"
-[[ "$(artifact_sha256 "$API_LIVE_JAR")" == "$EXPECTED_OLD_SHA" ]] || die "restored API JAR checksum mismatch"
-launch_from_argv_backup "$BACKUP_DIR/old.argv.nul" "$BACKUP_DIR/old.cwd" \
-  "$API_LIVE_JAR" "$ROLLBACK_LOG" "$BACKUP_DIR/rollback.pid"
-RESTORED_PID="$(cat -- "$BACKUP_DIR/rollback.pid")"
-sleep 2
-kill -0 "$RESTORED_PID" 2>/dev/null || die "rolled-back API exited before health check"
-[[ "$(find_single_java_jar_pid "$API_LIVE_JAR")" == "$RESTORED_PID" ]] || die "rolled-back API process identity is ambiguous"
-wait_for_health "$API_HEALTH_URL" "$API_HEALTH_REGEX" "$API_HEALTH_TIMEOUT" \
-  || die "rolled-back API failed the configured health check"
-PID_TEMP="$(mktemp "$(dirname -- "$API_PID_FILE")/.tmp.$(basename -- "$API_PID_FILE").XXXXXX")"
-printf '%s\n' "$RESTORED_PID" > "$PID_TEMP"
-chmod 0644 "$PID_TEMP"
-mv -fT -- "$PID_TEMP" "$API_PID_FILE"
-
-python3 - "$ROLLBACK_RECORD" "$CHANGE_ID" "$API_HEAD" "$API_TREE" \
-  "$DEPLOY_RECORD" "$EXPECTED_OLD_SHA" "$EXPECTED_CURRENT_SHA" "$BACKUP_DIR" \
-  "$RESCUE_DIR" "$RESTORED_PID" <<'PY'
-import datetime, json
-import sys
-(path, change_id, api_head, api_tree, deploy_record, restored_sha,
- replaced_sha, original_backup, rescue_backup, restored_pid) = sys.argv[1:]
-record = {
-  "schema": "cyf-api-rollback-record-v1", "status": "ROLLED_BACK_HEALTHY",
-  "changeId": change_id, "completedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-  "apiHead": api_head, "apiTree": api_tree,
-  "rolledBackDeployRecord": deploy_record,
-  "restoredJarSha256": restored_sha, "replacedJarSha256": replaced_sha,
-  "originalBackupDir": original_backup, "rescueBackupDir": rescue_backup,
-  "restoredPid": int(restored_pid),
-  "databaseOperation": "NOT_PERFORMED", "rabbitMqOperation": "NOT_PERFORMED"
-}
-with open(path, 'x', encoding='utf-8') as stream:
-    json.dump(record, stream, sort_keys=True, indent=2); stream.write("\n")
-PY
-chmod 0444 "$ROLLBACK_RECORD"
-write_sha256_sidecar "$ROLLBACK_RECORD" >/dev/null
-trap - EXIT
-ROLLBACK_CHANGED=0
-printf 'ROLLBACK_API=PASS\nPID=%s\nRESTORED_SHA256=%s\nRESCUE_DIR=%s\nROLLBACK_RECORD=%s\n' \
-  "$RESTORED_PID" "$EXPECTED_OLD_SHA" "$RESCUE_DIR" "$ROLLBACK_RECORD"
+trap rollback_failure EXIT
+host_call_lifecycle stop
+PHASE=STOPPED
+host_record_state "$RECORD" STOPPED
+host_replace_durable "$OLD_STAGE" "$LIVE_JAR"
+PHASE=CANDIDATE_INSTALLED
+host_record_state "$RECORD" CANDIDATE_INSTALLED
+[[ "$(host_sha_regular "$LIVE_JAR")" == "$OLD_SHA" ]] || die "restored JAR digest mismatch"
+host_call_lifecycle start
+host_record_state "$RECORD" STARTED_HEALTHY
+host_record_state "$RECORD" COMMITTED
+host_finalize_record "$RECORD"
+trap - EXIT; PHASE=COMMITTED
+printf 'ROLLBACK_API=PASS\nSTATUS=COMMITTED\nRESTORED_SHA256=%s\nRECORD=%s\n' "$OLD_SHA" "$RECORD"

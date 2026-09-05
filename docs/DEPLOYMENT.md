@@ -1,5 +1,38 @@
 # CYF 项目部署说明
 
+> ## JVC-OAI host adaptation R1 source candidate（2026-09-05）
+>
+> 新主机路径的源码候选位于 `ops/release/`，但本说明不构成生产安装、发布或语音启用授权。
+> API 输入固定为 `ops/release/jvc-oai-r1-input.json` 中的 commit
+> `34b67fed96061bf9c3132106ca219fc6f5f6ba05` / tree
+> `fb42c46c1f63299a37b44d7e55c6a303ddf016f1`。Web 临时身份固定为 commit
+> `6d88a3419d894c0abd0c9c3e96ea2e732890922b` / tree
+> `c2a6a192199c702ef3be9d48c8c4b4f4c86e51ba`，并标记为 `PROVISIONAL_DO_NOT_BUILD_OR_DEPLOY`；
+> npm 输入使用解析后的常规可执行文件 `npm-cli.js`，不用 npm 符号链接。待横屏高度候选最终晋升后必须刷新
+> Web pin；R1 不构建或部署该临时 Web。
+>
+> 主机契约只有一个运行账号 `cyf-api`、一个常规文件
+> `/opt/cyf/service/api/cyf-api-kit.jar`（`0640 root:isp`、链接数 1）和一个生命周期入口
+> `/usr/local/sbin/cyf-api-kit`。发布驱动按 FD8 持有 `/tmp/cyf-release-api.lock`，canonical
+> 再按 FD9 获取 `/tmp/cyf-api-lifecycle.lock`；部署和回滚不得扫描、发送信号或直接启动 Java。
+> canonical 候选固定监听 `127.0.0.1:10018`，Java 子进程关闭 FD8/FD9。
+>
+> 制品状态机固定为 `PREPARED → STOPPED → CANDIDATE_INSTALLED → STARTED_HEALTHY → COMMITTED`。
+> 失败时通过 canonical 恢复 durable prior artifact，并记录 `ROLLED_BACK_HEALTHY`；恢复失败记录
+> `FAILED_MANUAL_RECOVERY_REQUIRED`。构建只能委托绝对路径
+> `/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py gradle`，且控制面必须先把对应任务绑定到
+> API exact tree 和 verification gate；不得直接运行 Gradle。
+>
+> 语音默认关闭；`/opt/cyf/service/api/.voice-runtime.env` 不存在即全部 false。启用文件必须是
+> `0600 root:root` 常规单链接文件，只接受脚本内冻结的 Spring AI/JIA allowlist，禁止 `source`、
+> `eval`、未知名、重复名及自定义 `OPENAI_API_KEY`。启用事务必须完成 authenticated STT/TTS smoke；
+> 兼容网关的文本能力不等于音频能力。Nginx 仅开放两个精确 POST 路由，并用 deny snippet 关闭其余
+> `/api/chat/speech/` 路径。
+>
+> 独立验收后的顺序必须是：安装 reviewed canonical candidate → orchestrated immutable API build/verify →
+> flags-off API deploy → Nginx 精确路由与 deny closure → 安全配置及 authenticated STT/TTS smoke →
+> 最后部署刷新后的 enabled Web。任何一步失败均不得跳到下一步。
+
 > ## M1 历史发布约束与当前限制（更新：2026-09-05）
 >
 > M1 发布流程的固定资源阈值已于 2026-08-28 取消；资源快照仅用于观测，不把旧 5 GiB 阈值作为当前发布阻断条件。
