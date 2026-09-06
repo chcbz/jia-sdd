@@ -24,3 +24,14 @@
 - 新候选fresh P1 Review待准入；已按orchestrator发送只读槽位冲突告警，不抢占其他任务或创建超额Reviewer。
 - P2仍需原共享路径正式交接，并与新布局任务核对不重叠；计划承接已部署d81/d712或主控正式确认的被接受后继，保留reader与SCREEN修复。
 - P1基础包不等于动态地图功能完成，不证明单Canvas/运动连续/真实20fps/浏览器滚动；整功能接入、最终构建、集成Review与发布仍待完成。
+
+## 后续独立验收回执（2026-09-06T13:25:58+08:00）
+
+此段更新前述“本候选尚无独立ACCEPT”的历史状态，不更改旧tree的REJECT或失败证据。
+- 唯一 fresh 权威 Reviewer：`01a07526-9aac-7381-bce0-b2828aa3f7d5`（Raman4）。
+- exact `a4962c4f191c48ab008780bd147026ce5109a914` / tree `e76e0a293062928c2dd8a7572cc4958c37c43d96` 获 **P1_FOUNDATION ACCEPT，P0/P1/P2=0/0/0**。
+- 旧 findings **2/2 关闭**：IO首回调前不制造可见、无IO降级及disposed晚回调保护；width/height商再次验证并对Infinity/0回退。
+- Reviewer独立核对源码blob/clean/四新增路径和R4共享9/9测试证据；没有重复运行test/build或修改源码。
+- **仅P1基础子门禁通过；整个功能未完成、未构建发布、未证明真实Canvas或人物运动。**
+- P2仍等待包含reader/SCREEN及新LAYOUT的被接受累计后继与exact共享路径回执。旧d81是历史已部署参考，不能作为覆盖后续已接受布局修改的依据。
+- 已主动回报主控，请在唯一ledger登记子门禁及释放已完成Reviewer；后续仍由原Terra实施，最终集成另作fresh独立Review。
