@@ -39,8 +39,8 @@ USER_AGENT = "CYF-HealthMonitor/1.0"
 EXPECTED_RUNTIME_IDENTITY = "cyf-api(987:1000)"
 FAILURE_THRESHOLD = 3
 HEALTHY_RESET_THRESHOLD = 3
-MAX_RECOVERY_ATTEMPTS = 2
-COOLDOWN_SECONDS = 30 * 60
+MAX_RECOVERY_ATTEMPTS = 3
+COOLDOWN_SECONDS = 60
 STARTUP_GRACE_SECONDS = 25 * 60
 MIN_MEMORY_BYTES = 1024 * 1024 * 1024
 MIN_DISK_BYTES = 5 * 1024 * 1024 * 1024
@@ -57,6 +57,17 @@ FIXED_ENV = {
     "USER": "root",
     "LOGNAME": "root",
 }
+RECOVERY_ENV_OVERRIDES = {
+    "CYF_API_MIN_MEMORY_AVAILABLE_BYTES": "0",
+    "CYF_API_MIN_DISK_AVAILABLE_BYTES": "0",
+}
+
+
+def command_environment(recovery=False):
+    env = dict(FIXED_ENV)
+    if recovery:
+        env.update(RECOVERY_ENV_OVERRIDES)
+    return env
 
 
 class MonitorError(Exception):
@@ -71,10 +82,33 @@ def utc_text(epoch):
     return datetime.datetime.utcfromtimestamp(int(epoch)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def asia_shanghai_text(epoch):
+    local = datetime.datetime.utcfromtimestamp(int(epoch)) + datetime.timedelta(hours=8)
+    return local.strftime("%Y-%m-%d %H:%M:%S Asia/Shanghai")
+
+
 def safe_label(value, fallback="error"):
     text = str(value or fallback).lower()
     text = re.sub(r"[^a-z0-9_.:-]+", "_", text).strip("_")
     return (text or fallback)[:80]
+
+
+def sanitize_mail_subject(value):
+    text = re.sub(r"[\x00-\x20\x7f]+", " ", str(value or "")).strip()
+    return text[:160]
+
+
+def sanitize_mail_body(value):
+    text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
+    text = "".join(char for char in text if char in ("\n", "\t") or
+                   (ord(char) >= 0x20 and ord(char) != 0x7f and
+                    not 0x80 <= ord(char) <= 0x9f))
+    return text[:2000]
+
+
+def sanitize_notice_id(value):
+    text = re.sub(r"[^A-Za-z0-9_.:-]+", "_", str(value or "notice")).strip("_")
+    return (text or "notice")[:128]
 
 
 def json_no_duplicates(pairs):
@@ -309,13 +343,15 @@ def validate_state(data):
         flight = recovery["in_flight"]
         if not isinstance(flight, dict) or set(flight) != {"action", "attempt", "at"} \
                 or flight["action"] not in ("start", "restart") \
-                or not _is_int(flight["attempt"], 1) or not _is_int(flight["at"]):
+                or not _is_int(flight["attempt"], 1) \
+                or flight["attempt"] > MAX_RECOVERY_ATTEMPTS or not _is_int(flight["at"]):
             raise MonitorError("state_in_flight_invalid")
     if recovery["last_result"] is not None:
         result = recovery["last_result"]
         if not isinstance(result, dict) or set(result) != {"at", "action", "attempt", "classification"} \
                 or result["action"] not in ("start", "restart") \
                 or not _is_int(result["at"]) or not _is_int(result["attempt"], 1) \
+                or result["attempt"] > MAX_RECOVERY_ATTEMPTS \
                 or not isinstance(result["classification"], str) or len(result["classification"]) > 80:
             raise MonitorError("state_recovery_result_invalid")
     outbox = data.get("outbox")
@@ -363,7 +399,9 @@ def validate_state(data):
                                              or len(result["content_type"]) > 80):
                 raise MonitorError("state_snapshot_content_type_invalid")
         recovery_snapshot = snapshot["recovery"]
-        allowed_recovery = {"decision", "result", "resource_preflight"}
+        # resource_preflight is retained for already-installed schema-v1 state.
+        # New snapshots use resource_observation because capacity is warning-only.
+        allowed_recovery = {"decision", "result", "resource_preflight", "resource_observation"}
         if not isinstance(recovery_snapshot, dict) or set(recovery_snapshot) - allowed_recovery \
                 or not {"decision", "result"}.issubset(set(recovery_snapshot)) \
                 or any(not isinstance(value, str) or len(value) > 80
@@ -611,9 +649,13 @@ def parse_canonical_status(returncode, stdout):
 
 
 class Effects(object):
-    def _run(self, argv, timeout):
+    def _run(self, argv, timeout, recovery=False):
+        if recovery:
+            if argv not in ([CANONICAL, "start"], [CANONICAL, "restart"]):
+                raise MonitorError("recovery_env_command_invalid")
         process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, cwd="/", env=dict(FIXED_ENV),
+                                   stderr=subprocess.PIPE, cwd="/",
+                                   env=command_environment(recovery),
                                    universal_newlines=True)
         try:
             stdout, stderr = process.communicate(timeout=timeout)
@@ -646,7 +688,7 @@ class Effects(object):
     def recover(self, action):
         if action not in ("start", "restart") or not self._trusted_canonical():
             return {"returncode": 126, "classification": "canonical_file_untrusted"}
-        result = self._run([CANONICAL, action], None)
+        result = self._run([CANONICAL, action], None, recovery=True)
         return {"returncode": result["returncode"],
                 "classification": "exit_%d" % result["returncode"]}
 
@@ -770,7 +812,8 @@ class Effects(object):
             validate_regular(MAIL_ENV, 0o600, 0, 8192, True, False)
             if sha256_file(MAIL_HELPER) != MAIL_HELPER_SHA256:
                 return False, "mail_helper_hash_mismatch"
-            result = self._run([MAIL_PYTHON, "-I", MAIL_HELPER, subject[:160], body[:2000]], 30)
+            result = self._run([MAIL_PYTHON, "-I", MAIL_HELPER,
+                                sanitize_mail_subject(subject), sanitize_mail_body(body)], 30)
             return result["returncode"] == 0, "helper_accepted" if result["returncode"] == 0 else "helper_failed"
         except Exception as exc:
             return False, "mail_%s" % safe_label(type(exc).__name__)
@@ -813,18 +856,89 @@ def sanitized_result(result):
     return clean
 
 
+COMPONENT_NAMES_ZH = {
+    "local_api": "本机 API",
+    "web": "聚义厅网页",
+    "public_api": "公网 API 鉴权边界",
+    "mysql": "MySQL",
+    "redis": "Redis",
+    "agent": "Agent 服务",
+}
+ACTION_NAMES_ZH = {"start": "启动", "restart": "重启"}
+
+
+def component_text_zh(components):
+    return "、".join(COMPONENT_NAMES_ZH.get(item, safe_label(item))
+                    for item in sorted(components)) if components else "无"
+
+
 def notice_body(event, now, incident_id, components, extra=""):
-    component_text = ",".join(sorted(components)) if components else "none"
-    lines = [
-        "CYF Juyi Hall health monitor event: %s" % event,
-        "time_utc=%s" % utc_text(now),
-        "incident=%s" % (incident_id or "none"),
-        "components=%s" % component_text,
-    ]
+    component_text = component_text_zh(components)
+    content = {
+        "incident_confirmed": (
+            "检测到持续故障，请尽快确认服务影响。",
+            "建议：先核对本机 API 规范状态和依赖可达性；不要绕过身份、锁或制品校验。"),
+        "resolved_after_three_healthy_checks": (
+            "连续三次检查均正常，本次故障已自动标记为恢复。",
+            "建议：无需操作；如用户仍受影响，请按新的故障单独排查。"),
+        "restrained_reminder": (
+            "故障仍未解除，请继续跟进。",
+            "建议：查看最近一次受控状态摘要；不要依据本邮件执行盲目重启。"),
+        "recovery_attempt_selected": (
+            "已选择一次受控 API 恢复，执行前仍会重新校验身份和状态。",
+            "建议：如正在人工恢复，请保持维护模式，避免与自动恢复并发。"),
+        "recovery_deferred_revalidation": (
+            "恢复执行前的重新校验未通过，本次没有调用生命周期命令。",
+            "建议：确认当前 PID、监听归属和规范状态后再处理。"),
+        "recovery_result": (
+            "一次受控 API 恢复已结束，请根据恢复后健康结果决定后续动作。",
+            "建议：仅在规范健康明确为 UP 时视为恢复成功。"),
+        "explicit_notify_test": (
+            "这是聚义厅健康监控的人工通知测试。",
+            "建议：无需处理生产服务；仅确认通知链路配置。"),
+    }
+    summary, action = content.get(event, (
+        "聚义厅健康监控产生了一条受控通知。",
+        "建议：按事件编号核对状态，不要依据邮件执行未授权操作。"))
+    lines = [summary, action]
     if extra:
-        lines.append(extra[:500])
-    lines.append("SMTP helper acceptance does not prove inbox delivery.")
-    return "\n".join(lines)
+        lines.append(sanitize_mail_body(extra)[:700])
+    lines.extend([
+        "",
+        "时间（Asia/Shanghai）：%s" % asia_shanghai_text(now),
+        "事件：%s" % safe_label(event),
+        "故障编号：%s" % (incident_id or "无"),
+        "涉及组件：%s" % component_text,
+        "邮件状态说明：本机邮件助手接受请求不代表收件箱已送达。",
+    ])
+    return sanitize_mail_body("\n".join(lines))
+
+
+def recovery_exhausted_body(now, incident_id, action, attempt, command_result,
+                            initial_status, fresh_status, results, resource_observation):
+    return sanitize_mail_body("\n".join([
+        "恢复失败，已停止自动重试（3/3）。",
+        "服务影响：聚义厅 API 尚未确认恢复，相关页面和接口请求可能失败。",
+        "下一步：请人工核对受控生命周期收据与服务健康；查明原因后，按审批流程同步次数并解除熔断。",
+        "已确认：初始规范状态=%s；MySQL=%s；Redis=%s；资源观测=%s。" % (
+            safe_label(initial_status.get("classification")),
+            safe_label(results["mysql"].get("classification")),
+            safe_label(results["redis"].get("classification")),
+            safe_label(resource_observation)),
+        "未知原因：监控未读取或转发原始日志，具体失败根因仍未知。",
+        "本次结果：尝试=%d/%d；动作=%s；返回码=%d；恢复后健康=%s（%s）。" % (
+            attempt, MAX_RECOVERY_ATTEMPTS, ACTION_NAMES_ZH.get(action, "未知"),
+            command_result.get("returncode"),
+            "UP" if fresh_status.get("healthy") else "未确认",
+            safe_label(fresh_status.get("classification"))),
+        "资源说明：仅恢复命令固定传入 CYF_API_MIN_MEMORY_AVAILABLE_BYTES=0 和 "
+        "CYF_API_MIN_DISK_AVAILABLE_BYTES=0；资源观测只告警、不阻止恢复，status 不带这些覆盖。",
+        "",
+        "时间（Asia/Shanghai）：%s" % asia_shanghai_text(now),
+        "故障编号：%s" % (incident_id or "无"),
+        "事件：recovery_exhausted",
+        "邮件状态说明：本机邮件助手接受请求不代表收件箱已送达。",
+    ]))
 
 
 def _coalesced_notice_count(item):
@@ -835,26 +949,38 @@ def _coalesced_notice_count(item):
 
 
 def enqueue_notice(state, notice_id, event, subject, body, now):
-    if notice_id in state["notice_ids"]:
+    stored_id = sanitize_notice_id(notice_id)
+    if notice_id in state["notice_ids"] or stored_id in state["notice_ids"]:
         return False
-    state["notice_ids"].append(notice_id)
+    state["notice_ids"].append(stored_id)
     state["notice_ids"] = state["notice_ids"][-MAX_NOTICE_IDS:]
     item = {
-        "id": notice_id[:128], "event": event[:40], "subject": subject[:160],
-        "body": body[:2000], "created_at": int(now), "attempts": 0,
+        "id": stored_id, "event": safe_label(event)[:40],
+        "subject": sanitize_mail_subject(subject), "body": sanitize_mail_body(body),
+        "created_at": int(now), "attempts": 0,
         "next_attempt_at": int(now), "last_error": "",
     }
-    if len(state["outbox"]) >= MAX_OUTBOX and event == "recovery_attempted":
+    if len(state["outbox"]) >= MAX_OUTBOX and event in ("recovery_attempted", "recovery_exhausted"):
         digest = next((pending for pending in state["outbox"]
                        if pending["event"] == "digest"), None)
         if digest is None:
-            replaced = [state["outbox"].pop(0), state["outbox"].pop(0)]
+            victim_indices = [index for index, pending in enumerate(state["outbox"])
+                              if pending["event"] != "recovery_exhausted"][:2]
+            if len(victim_indices) < 2:
+                victim_indices.extend(
+                    index for index in range(len(state["outbox"]))
+                    if index not in victim_indices)
+                victim_indices = victim_indices[:2]
+            replaced = [state["outbox"][index] for index in victim_indices]
+            for index in reversed(victim_indices):
+                state["outbox"].pop(index)
             count = sum(_coalesced_notice_count(pending) for pending in replaced)
             digest = {
                 "id": "outbox-digest", "event": "digest",
-                "subject": "CYF health monitor pending event digest",
-                "body": "coalesced_count=%d latest=%s" %
-                        (count, replaced[-1]["event"][:40]),
+                "subject": "【聚义厅监控】待处理通知摘要",
+                "body": "较早通知已合并，请优先处理当前恢复事件。\n\n"
+                        "时间（Asia/Shanghai）：%s\ncoalesced_count=%d\n最新事件=%s" %
+                        (asia_shanghai_text(now), count, replaced[-1]["event"][:40]),
                 "created_at": int(now), "attempts": 0, "next_attempt_at": int(now),
                 "last_error": "",
             }
@@ -862,12 +988,16 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
         else:
             digest_index = state["outbox"].index(digest)
             victim_index = next((index for index, pending in enumerate(state["outbox"])
-                                 if index != digest_index and pending["event"] != "digest"),
-                                1 if digest_index == 0 else 0)
+                                 if index != digest_index and pending["event"] not in
+                                 ("digest", "recovery_exhausted")), None)
+            if victim_index is None:
+                victim_index = next(index for index in range(len(state["outbox"]))
+                                    if index != digest_index)
             replaced = state["outbox"].pop(victim_index)
             count = _coalesced_notice_count(digest) + _coalesced_notice_count(replaced)
-            digest["body"] = ("coalesced_count=%d latest=%s" %
-                              (count, replaced["event"][:40]))
+            digest["body"] = ("较早通知已合并，请优先处理当前恢复事件。\n\n"
+                              "时间（Asia/Shanghai）：%s\ncoalesced_count=%d\n最新事件=%s" %
+                              (asia_shanghai_text(now), count, replaced["event"][:40]))
             digest["next_attempt_at"] = min(digest["next_attempt_at"], int(now))
         state["outbox"].append(item)
         return True
@@ -879,11 +1009,17 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
     if len(state["outbox"]) >= MAX_OUTBOX:
         digest = next((pending for pending in state["outbox"] if pending["event"] == "digest"), None)
         if digest is None:
-            replaced = state["outbox"].pop(0)
+            victim_index = next((index for index, pending in enumerate(state["outbox"])
+                                 if pending["event"] != "recovery_exhausted"), None)
+            if victim_index is None:
+                return False
+            replaced = state["outbox"].pop(victim_index)
             digest = {
                 "id": "outbox-digest", "event": "digest",
-                "subject": "CYF health monitor pending event digest",
-                "body": "coalesced_count=2 latest=%s,%s" % (replaced["event"], event),
+                "subject": "【聚义厅监控】待处理通知摘要",
+                "body": "较早通知已合并，请查看当前状态。\n\n"
+                        "时间（Asia/Shanghai）：%s\ncoalesced_count=2\n最新事件=%s,%s" %
+                        (asia_shanghai_text(now), replaced["event"], safe_label(event)),
                 "created_at": int(now), "attempts": 0, "next_attempt_at": int(now),
                 "last_error": "",
             }
@@ -891,7 +1027,9 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
         else:
             match = re.search(r"coalesced_count=(\d+)", digest["body"])
             count = int(match.group(1)) + 1 if match else 2
-            digest["body"] = "coalesced_count=%d latest=%s" % (count, event[:40])
+            digest["body"] = ("较早通知已合并，请查看当前状态。\n\n"
+                              "时间（Asia/Shanghai）：%s\ncoalesced_count=%d\n最新事件=%s" %
+                              (asia_shanghai_text(now), count, safe_label(event)))
             digest["next_attempt_at"] = min(digest["next_attempt_at"], int(now))
         return True
     state["outbox"].append(item)
@@ -901,6 +1039,10 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
 def flush_outbox(state, effects, config, now, limit=2, preferred_id=None):
     if not config["email_enabled"]:
         return 0
+    if preferred_id is None:
+        priority = next((item for item in state["outbox"]
+                         if item["event"] == "recovery_exhausted"), None)
+        preferred_id = priority["id"] if priority is not None else None
     if preferred_id is not None:
         for index, item in enumerate(state["outbox"]):
             if item["id"] == preferred_id:
@@ -978,14 +1120,14 @@ class Monitor(object):
             state["incident"] = {"id": incident_id, "opened_at": now,
                                  "components": confirmed, "last_reminder_slot": 0}
             enqueue_notice(state, "incident:%s:confirmed" % incident_id, "incident_confirmed",
-                           "CYF Juyi Hall incident confirmed",
+                           "【聚义厅监控】持续故障已确认",
                            notice_body("incident_confirmed", now, incident_id, confirmed), now)
         elif state["incident"] is not None:
             state["incident"]["components"] = confirmed or state["incident"]["components"]
             if state["all_healthy_streak"] >= HEALTHY_RESET_THRESHOLD:
                 incident = state["incident"]
                 enqueue_notice(state, "incident:%s:resolved" % incident["id"], "resolved",
-                               "CYF Juyi Hall incident resolved",
+                               "【聚义厅监控】故障已恢复",
                                notice_body("resolved_after_three_healthy_checks", now,
                                            incident["id"], incident["components"]), now)
                 state["incident"] = None
@@ -995,7 +1137,7 @@ class Monitor(object):
                 if slot > incident["last_reminder_slot"]:
                     incident["last_reminder_slot"] = slot
                     enqueue_notice(state, "incident:%s:reminder:%d" % (incident["id"], slot),
-                                   "reminder", "CYF Juyi Hall incident reminder",
+                                   "reminder", "【聚义厅监控】故障仍未解除",
                                    notice_body("restrained_reminder", now, incident["id"],
                                                incident["components"]), now)
         state["last_snapshot"] = {
@@ -1010,20 +1152,13 @@ class Monitor(object):
         state["last_snapshot"]["recovery"]["decision"] = decision["classification"]
         action = decision.get("action")
         pre_recovery_mail_accepted = 0
+        resource_observation = "not_observed"
         if action:
             resources = self._probe(self.effects.resources, "resources")
-            state["last_snapshot"]["recovery"]["resource_preflight"] = safe_label(resources["classification"])
-            if not resources["healthy"]:
-                incident_id = state["incident"]["id"] if state["incident"] else "unconfirmed"
-                slot = now // COOLDOWN_SECONDS
-                enqueue_notice(state, "incident:%s:resources:%d" % (incident_id, slot),
-                               "recovery_deferred", "CYF API recovery deferred by resources",
-                               notice_body("recovery_deferred_resources", now, incident_id,
-                                           ["local_api"], "canonical minimum resources not met"), now)
-                state["last_snapshot"]["recovery"]["decision"] = "resources_blocked"
-                state["updated_at"] = now
-                self.persist(state)  # notification must be durable before any delivery eligibility
-                action = None
+            resource_observation = "%s:%s" % (
+                "ok" if resources["healthy"] else "warning",
+                safe_label(resources["classification"]))
+            state["last_snapshot"]["recovery"]["resource_observation"] = resource_observation
         if action:
             recovery = state["recovery"]
             attempt = recovery["attempts"] + 1
@@ -1031,10 +1166,12 @@ class Monitor(object):
             attempt_notice_id = "incident:%s:recovery:%d:attempted:%d" % \
                 (incident_id, attempt, now)
             enqueue_notice(state, attempt_notice_id, "recovery_attempted",
-                           "CYF API recovery attempt selected",
+                           "【聚义厅监控】准备第%d/%d次 API 恢复" %
+                           (attempt, MAX_RECOVERY_ATTEMPTS),
                            notice_body("recovery_attempt_selected", now, incident_id, ["local_api"],
-                                       "action=%s attempt=%d; identity revalidation pending" %
-                                       (action, attempt)), now)
+                                       "本次：动作=%s；尝试=%d/%d；资源观测=%s；身份重新校验待完成。" %
+                                       (ACTION_NAMES_ZH[action], attempt, MAX_RECOVERY_ATTEMPTS,
+                                        safe_label(resource_observation))), now)
             state["updated_at"] = now
             self.persist(state)  # current attempt notice is durable before priority delivery
             pre_recovery_mail_accepted = flush_outbox(
@@ -1051,10 +1188,10 @@ class Monitor(object):
                 enqueue_notice(state,
                                "incident:%s:recovery:%d:revalidation:%s" %
                                (incident_id, attempt, classification),
-                               "recovery_deferred", "CYF API recovery deferred after revalidation",
+                               "recovery_deferred", "【聚义厅监控】本次 API 恢复已跳过",
                                notice_body("recovery_deferred_revalidation", now, incident_id,
-                                           ["local_api"], "action=%s reason=%s" %
-                                           (action, classification)), now)
+                                           ["local_api"], "本次：动作=%s；原因=%s；尝试次数未增加。" %
+                                           (ACTION_NAMES_ZH[action], safe_label(classification))), now)
                 state["updated_at"] = now
                 self.persist(state)
                 action = None
@@ -1073,27 +1210,53 @@ class Monitor(object):
                     command_result = {"returncode": 126,
                                       "classification": "recovery_%s" % safe_label(type(exc).__name__)}
                 fresh = self._probe(self.effects.canonical_status, "canonical_post_recovery")
+                completed_at = int(self.clock())
                 success = command_result.get("returncode") == 0 and fresh.get("healthy") is True
                 classification = "success_health_up" if success else "failed_fresh_health_not_up"
                 recovery["in_flight"] = None
-                recovery["last_result"] = {"at": now, "action": action, "attempt": attempt,
+                recovery["last_result"] = {"at": completed_at, "action": action, "attempt": attempt,
                                            "classification": classification}
                 if success:
-                    recovery["last_success_at"] = now
+                    recovery["last_success_at"] = completed_at
                     state["api_healthy_streak"] = 1
                     state["component_streaks"]["local_api"] = 0
-                if recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
+                if not success and recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
                     recovery["circuit_latched"] = True
                 state["last_snapshot"]["checks"]["local_api_post_recovery"] = sanitized_result(fresh)
                 state["last_snapshot"]["recovery"]["result"] = classification
-                enqueue_notice(state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
-                               "recovery_result", "CYF API recovery result",
-                               notice_body("recovery_result", now, incident_id, ["local_api"],
-                                           "action=%s attempt=%d result=%s" %
-                                           (action, attempt, classification)), now)
-                self.persist(state)
-        delivered = pre_recovery_mail_accepted + flush_outbox(state, self.effects, config, now, 2)
-        state["updated_at"] = now
+                state["updated_at"] = completed_at
+                if recovery["circuit_latched"]:
+                    exhausted_notice_id = "incident:%s:recovery-exhausted" % incident_id
+                    enqueue_notice(
+                        state, exhausted_notice_id, "recovery_exhausted",
+                        "【紧急】恢复失败，已停止自动重试（3/3）",
+                        recovery_exhausted_body(
+                            completed_at, incident_id, action, attempt, command_result,
+                            status, fresh, results, resource_observation), completed_at)
+                    self.persist(state)  # latch and urgent notice are durable before delivery
+                    pre_recovery_mail_accepted += flush_outbox(
+                        state, self.effects, config, completed_at, 1,
+                        preferred_id=exhausted_notice_id)
+                    self.persist(state)  # mail failure never clears the circuit or notice
+                else:
+                    enqueue_notice(
+                        state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
+                        "recovery_result",
+                        "【聚义厅监控】API 恢复%s（%d/%d）" %
+                        ("成功" if success else "未成功", attempt, MAX_RECOVERY_ATTEMPTS),
+                        notice_body(
+                            "recovery_result", completed_at, incident_id, ["local_api"],
+                            "本次：动作=%s；尝试=%d/%d；返回码=%d；恢复后健康=%s（%s）。" %
+                            (ACTION_NAMES_ZH[action], attempt, MAX_RECOVERY_ATTEMPTS,
+                             command_result.get("returncode"),
+                             "UP" if fresh.get("healthy") else "未确认",
+                             safe_label(fresh.get("classification")))), completed_at)
+                    state["updated_at"] = completed_at
+                    self.persist(state)
+        finish_now = int(self.clock())
+        delivered = pre_recovery_mail_accepted + flush_outbox(
+            state, self.effects, config, finish_now, 2)
+        state["updated_at"] = finish_now
         self.persist(state)
         return {"healthy": all_healthy, "maintenance": bool(maintenance),
                 "recovery": state["last_snapshot"]["recovery"],
@@ -1229,7 +1392,7 @@ def main(argv=None):
         effects = Effects()
         if args.notify_test:
             notice_id = "notify-test:%d" % now
-            enqueue_notice(state, notice_id, "notify_test", "CYF health monitor test",
+            enqueue_notice(state, notice_id, "notify_test", "【聚义厅监控】人工通知测试",
                            notice_body("explicit_notify_test", now, None, []), now)
             store.write(state)
             accepted = flush_outbox(state, effects, config, now, 1)

@@ -18,8 +18,16 @@ monitor. Redis `-NOAUTH`/`-NOPERM` proves reachability only.
   by a nonblocking singleton flock held through the full synchronous canonical
   recovery (cold start is normally 9-13 minutes and can wait up to 1200s).
 - Recovery needs 3 consecutive local API failures, healthy MySQL/Redis, no
-  maintenance marker, canonical-minimum resources, a 30-minute cooldown, and
-  has at most 2 attempts before circuit latch.
+  maintenance marker and a 60-second cooldown. Memory/disk observations are
+  warnings rather than blockers. Recovery alone invokes the trusted canonical with
+  fixed `CYF_API_MIN_MEMORY_AVAILABLE_BYTES=0` and
+  `CYF_API_MIN_DISK_AVAILABLE_BYTES=0`; status and other commands do not receive
+  those overrides or inherited environment values.
+- At most 3 actual attempts are persisted per incident. The count/in-flight fence is
+  durable immediately before invocation, including an invocation exception. The
+  third failed attempt persists a circuit latch and a prioritized single Chinese
+  `恢复失败，已停止自动重试（3/3）` alert; no fourth attempt occurs. A third-attempt
+  success does not send that alert or latch the circuit.
 - STOPPED may start. NOT_READY may restart only after 25 minutes when canonical
   output explicitly includes matching artifact, owned listener, PID/age and
   `RUNTIME_IDENTITY=cyf-api(987:1000)`. The canonical rc4 no-listener branch
@@ -31,6 +39,13 @@ monitor. Redis `-NOAUTH`/`-NOPERM` proves reachability only.
   same trusted PID to remain MATCH/LISTENING/NOT_READY and at least 25 minutes old.
   Healthy/PID-changed/identity-changed results cancel recovery without consuming an
   attempt. Mail failure remains queued with bounded retry/dedup.
+- New incident, recovery, resolution, reminder, digest and test mail is concise
+  Chinese with the action first and bounded metadata after it. The final exhausted
+  alert includes Asia/Shanghai time, impact, confirmed classifications versus unknown
+  cause, attempt/action/return code/fresh health, manual next action and the resource
+  override explanation. Recovery-result time is captured after the lifecycle call and
+  fresh health check. A later reminder cannot evict the exhausted alert from a full
+  outbox. Mail contains no raw logs, secrets or inbox-delivery claim.
 - `/usr/bin/python3` symlinks are accepted only through a root-owned, non-writable
   lstat chain ending at a trusted executable. Credential file content is never read.
 - Cron suppresses ordinary output mail. Exceptional `fail_closed` guards alone write
@@ -65,6 +80,13 @@ tick without touching the monitor/canonical processes:
 The next normal tick validates that marker and reports checks while suppressing
 recovery. Remove it with `--resume` after the singleton lock is available.
 
+Manual and automatic recovery share one three-attempt incident budget. There is no
+general manual-import CLI. A separately authorized exact monitor Owner may, while
+maintenance is active and under the monitor lock, reconcile a trusted manual receipt
+monotonically into the existing schema-v1 recovery fields as specified in
+`CONTRACT.md`. Installation, reconciliation, mail execution and resume each require
+their own runtime authorization.
+
 ## Staged installation (not executed by this task)
 
 Never execute repository scripts as root below `/home/isp`. First copy this
@@ -76,7 +98,9 @@ bundle to a root-owned staging directory, review it, then run:
 /root/cyf-juyiting-health-stage/install.sh install-cron
 ```
 
-`install` copies code/config and explicitly initializes absent state. It does
+`install` atomically replaces the monitor from a fully written, fsynced same-directory
+temporary file, so an active cron reader sees either the old or new complete bytes.
+It copies config and explicitly initializes absent state. It does
 not install cron, probe services, send mail, or recover API. The installer validates
 the complete root-owned/non-writable staging parent chain and every payload.
 `install-cron` requires the installed monitor's owner/mode/link count and SHA-256 to

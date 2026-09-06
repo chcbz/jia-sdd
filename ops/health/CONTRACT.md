@@ -1,7 +1,8 @@
-# OPS-JUYITING-HEALTHMON frozen implementation contract
+# OPS-HEALTHMON-AVAILABILITY-20260906 frozen implementation contract
 
-Frozen on 2026-09-05 before product source edits. This file is implementation input,
-not deployment authorization.
+Frozen on 2026-09-06 before the availability-policy source change. This file is
+implementation input and review material, not installation, resume, mail, or API
+lifecycle authorization.
 
 ## Event and API catalog
 
@@ -24,18 +25,25 @@ Only these read-only observations exist:
    `PING` on 127.0.0.1:6379 where `+PONG`, `-NOAUTH`, or `-NOPERM` proves reachability
    only.
 5. `/usr/bin/systemctl is-active codex-ws-agent.service`: alert-only.
+6. Bounded MemAvailable and API-filesystem availability observations: warning-only,
+   never recovery admission blockers under this availability policy.
 
 Only these mutations exist:
 
 - Atomic monitor state/maintenance updates below `/var/lib/cyf-juyiting-health`.
 - Exact API recovery command `/usr/local/sbin/cyf-api-kit start` for trusted STOPPED,
   or `restart` for the fully trusted LISTENING/NOT_READY branch after 25 minutes.
+  Recovery alone receives the exact fixed environment additions
+  `CYF_API_MIN_MEMORY_AVAILABLE_BYTES=0` and
+  `CYF_API_MIN_DISK_AVAILABLE_BYTES=0`; canonical `status`, mail, systemctl and every
+  other child retain the original fixed environment without those additions.
 - Exact mail command `/usr/bin/python3 -I /root/.local/bin/cyf-task-email SUBJECT BODY`.
 - Explicit CLI administration: `--init`, `--pause`, `--resume`, `--reset-circuit`, and
   `--notify-test`.
 
 No URL, executable, argv, shell fragment, credential, token, PID, signal, build,
-deploy, pull, DML, Gradle, business write, or Agent recovery is configurable.
+deploy, pull, DML, Gradle, business write, arbitrary inherited environment, or Agent
+recovery is configurable.
 
 ## Lock order and singleton boundary
 
@@ -46,21 +54,29 @@ deploy, pull, DML, Gradle, business write, or Agent recovery is configurable.
    unknown-schema state fails closed.
 5. Validate maintenance marker.
 6. Run bounded read-only probes.
-7. Persist state atomically before any recovery command.
+7. Persist the current snapshot, including warning-only resource classification.
 8. Persist the selected recovery-attempt notice, deliver that current notice ahead
    of older queued mail, then read canonical status again. Restart proceeds only when
    the same trusted PID is still MATCH/LISTENING/NOT_READY and at least 1500 seconds
-   old; a healthy result, PID change, or identity change cancels the command.
+   old; a healthy result, PID change, identity change, dependency failure, maintenance,
+   or other precondition skip never consumes an attempt.
 9. Persist actual attempt count, timestamp and in-flight fence immediately before the
-   canonical lifecycle command. Keep the same monitor flock for the complete wait;
-   the monitor does not impose a timeout or signal that subprocess.
-10. Run a fresh canonical status and persist the result. Every notice, including
-    resource-deferred notices, is durable before it becomes delivery-eligible.
+   canonical lifecycle invocation. Invocation exceptions consume that already-durable
+   attempt.
+10. Invoke only the exact canonical action with the two fixed recovery-only resource
+    threshold overrides. Keep the same monitor flock for the complete wait; the
+    monitor does not impose a timeout or signal that subprocess.
+11. Run a fresh canonical status and persist the result with the actual completion
+    time after the potentially long lifecycle call, not the pre-invocation time. A third failure persists the
+    circuit and the single urgent Chinese exhausted notice before delivery is tried.
+    Mail failure leaves both circuit and notice durable. Third-attempt success persists
+    success without the exhausted notice or circuit latch.
 
 Cron overlap therefore defers immediately and cannot overlap a cold start that may
-last 9-13 minutes (canonical maximum 1200 seconds).
+last 9-13 minutes (canonical maximum 1200 seconds). The 60-second cooldown aligns with
+the next one-minute cron opportunity and never creates an internal busy loop.
 
-## State transaction boundaries
+## State transaction boundaries and compatibility
 
 State is a root-owned 0600 regular file, one link, atomically replaced from a 0600
 same-directory temporary file and followed by file and directory `fsync`. Attempt and
@@ -69,69 +85,99 @@ attempt consumes its attempt slot and is fenced by cooldown/max-attempt controls
 Recovery success requires both command exit 0 and a fresh fully trusted canonical UP
 status. A healthy observation never depends on lifecycle command exit alone.
 
-Default absence is accepted only by explicit `--init` (or an installer action that
-explicitly calls it). `--status` is read-only and never creates, repairs, retries mail,
-or probes services.
+Schema version remains `1`; the strict outer state keys and existing recovery fields
+are unchanged. Existing `resource_preflight` snapshots remain valid, while new
+snapshots may use optional `resource_observation`. Existing incidents, attempts,
+circuit state, outbox and notice IDs are loaded without reset during upgrade. Default
+absence is accepted only by explicit `--init` (or an installer action that explicitly
+calls it). `--status` is read-only and never creates, repairs, retries mail, probes
+services, or receives recovery-only environment overrides.
 
 ## Recovery state machine
 
 - Only local canonical API STOPPED or fully trusted LISTENING/NOT_READY failures count
   toward API auto-recovery eligibility.
-- Three consecutive API failures are required.
-- STOPPED -> `start`.
+- Three consecutive API failures are required. STOPPED -> `start`.
 - NOT_READY -> `restart` only with `ARTIFACT_ATTESTATION=MATCH`, exact PID,
   `RUNTIME_IDENTITY=cyf-api(987:1000)`, `PORT_10018=LISTENING_BY_PID`, and trusted
-  elapsed age >=1500 seconds. The rc4 no-listener branch is intentionally alert-only.
-- MySQL and Redis must be reachable; maintenance must be absent; resource preflight
-  must meet at least 1 GiB MemAvailable and 5 GiB filesystem availability.
-- Cooldown is >=1800 seconds. Maximum is two persisted attempts per incident, then a
-  circuit latch.
+  elapsed age >=1500 seconds. The rc4 no-listener branch is alert-only.
+- MySQL and Redis must be reachable; maintenance must be absent. Resource observations
+  are retained as warnings but do not block the exact recovery action.
+- Cooldown is >=60 seconds. Maximum is three persisted actual attempts per incident.
+  The third failed attempt latches the circuit; no fourth automatic attempt exists.
+  Third-attempt success does not send the exhausted alert and does not latch.
 - Three observed fully trusted API-UP checks reset the attempt/circuit fence. Explicit
-  `--reset-circuit` also resets it without probing or recovery.
+  `--reset-circuit` remains an authorized-only alternative.
 - Public web, public API/auth, dependencies, and Agent service are alert-only. An
   external-only failure can never restart a locally healthy API.
 - rc1, rc5, unknown identity, malformed output, missing identity, foreign listener,
   and insecure/corrupt files are fail-closed and never recover.
 
-## Sensitive-payload allowlist
+## Manual/automatic shared-attempt reconciliation contract
 
-Durable snapshots, stdout and mail may contain only: UTC timestamps, component names,
-boolean health, bounded classification labels, HTTP status/content type, trusted PID,
-trusted elapsed seconds, recovery action/attempt/result, incident ID, queue counts,
-and fixed operational guidance. They must never contain response bodies, canonical
-stdout/stderr/argv rows, process command lines, environment values, credentials,
-tokens, email-env contents, passwords, cookies, authorization headers, or arbitrary
-exception text. Error details are reduced to fixed exception class labels.
+There is no broad manual-import CLI. While maintenance remains active, a separately
+authorized exact monitor Owner may reconcile an independently persisted manual
+lifecycle receipt under the monitor's own lock. The reconciliation must verify the
+same incident ID, trusted receipt digest, exact action/time/result, `in_flight=null`,
+and a monotonic combined attempt number equal to current attempts or current attempts
+plus one; it must never decrement, skip, reset, or grant three manual plus three
+automatic attempts. An exact duplicate is idempotent; conflicting or gapped input
+fails closed. Existing schema-v1 recovery fields are updated atomically. Manual
+failure number three persists the same circuit and single urgent notice; manual
+success number three does not latch. Resume/install/mail execution requires a later
+separate authorization.
 
+## Sensitive-payload and mail allowlist
+
+Durable snapshots, stdout and mail may contain only: UTC/Asia-Shanghai timestamps,
+component names, boolean health, bounded classification labels, HTTP status/content
+type, trusted PID, trusted elapsed seconds, recovery action/attempt/result/return code,
+incident ID, queue counts, the two public fixed override names/zero values, and fixed
+operational guidance. They must never contain response bodies, canonical stdout/stderr
+or argv rows, process command lines, arbitrary environment values, credentials,
+tokens, email recipient/config contents, passwords, cookies, authorization headers,
+raw logs, or arbitrary exception text. Error details are reduced to fixed exception
+class labels.
+
+All new incident, recovery, resolved, reminder, digest and test notices use concise
+Chinese: actionable summary first, bounded metadata after it. Subject CR/LF/control
+characters and body controls are sanitized; subject/body limits remain 160/2000.
 The durable outbox is bounded and deduplicated. Delivery failure remains pending with
-bounded retry backoff. The current recovery-attempt notice is prioritized before the
-long canonical wait. When full, pending events are coalesced into a bounded digest
-rather than silently dropped. SMTP acceptance is reported only as helper acceptance,
-never inbox delivery. `/usr/bin/python3` may be a symlink only when every lstat hop and
-parent is root-trusted and the final target is a safe executable. Exceptional
-`fail_closed` guards emit only a fixed sanitized message through a root-trusted
-`/usr/bin/logger`; normal ticks are not sent to syslog.
+bounded retry backoff. Current attempt and exhausted notices are prioritized. When
+full, pending events are coalesced into a bounded Chinese digest rather than silently
+dropped; a later reminder cannot evict an exhausted alert. Helper acceptance is stated only as local helper acceptance, never as inbox
+delivery. `/usr/bin/python3` may be a symlink only when every lstat hop and parent is
+root-trusted and the final target is a safe executable. Exceptional `fail_closed`
+guards emit only a fixed sanitized message through a root-trusted `/usr/bin/logger`;
+normal ticks are not sent to syslog.
 
 ## Acceptance-to-test mapping
 
 | Acceptance | Test coverage |
 | --- | --- |
 | three-failure threshold and exact start | `test_stopped_threshold_starts_on_third_failure` |
+| three actual failures -> persistent latch -> no fourth | `test_three_failures_latch_and_never_invoke_a_fourth_recovery` |
+| third success has no failure alert/latch | `test_third_success_does_not_latch_or_send_exhausted_failure` |
+| attempt persisted immediately; invocation exception counted | `test_stopped_threshold_starts_on_third_failure`, `test_recovery_exception_consumes_third_actual_attempt_and_latches` |
+| precondition/revalidation skips not counted | `test_precondition_and_revalidation_skips_do_not_consume_attempts`, dependency/revalidation tests |
+| warning-only resources and recovery env overrides | `test_resource_warning_does_not_block_recovery`, `test_recovery_env_has_only_fixed_threshold_overrides_and_status_has_none` |
+| old schema-v1 incident/attempt/circuit retained | `test_schema_v1_old_state_load_preserves_attempts_incident_and_circuit` |
+| urgent Chinese mail content/priority/dedup/send failure | `test_third_failure_alert_is_durable_prioritized_deduped_and_survives_mail_failure` |
+| completion timestamp and exhausted-alert outbox protection | `test_recovery_result_mail_uses_actual_completion_time`, `test_full_outbox_reminder_never_evicts_exhausted_alert` |
+| Chinese actionable mail and injection/limits | `MailQueueTests` |
 | rc1 busy and rc5/foreign fail closed | `test_rc1_busy_never_recovers`, `test_rc5_foreign_identity_never_recovers` |
 | external-only failure no restart | `test_external_only_failure_never_recovers_healthy_api` |
 | maintenance pause | `test_maintenance_reports_but_pauses_recovery` |
 | corrupt/missing/insecure state/config | `StateStoreSecurityTests`, `ConfigSecurityTests` |
-| cooldown and interrupted fencing | `test_cooldown_blocks_second_attempt`, `test_interrupted_attempt_is_fenced` |
-| max two/circuit and three-UP reset | `test_second_failure_latches_circuit`, `test_three_healthy_checks_reset_circuit` |
+| 60-second cooldown and interrupted fencing | `test_cooldown_blocks_second_attempt`, `test_interrupted_attempt_is_fenced`, `test_cooldown_is_one_cron_interval_without_busy_loop` |
 | dependency gate | `test_dependency_down_blocks_recovery` |
 | startup grace/full rc4 identity | `test_not_ready_requires_grace_and_full_identity`, `test_rc4_without_runtime_identity_is_alert_only` |
 | command exit is not success | `test_exit_zero_without_fresh_up_is_failure` |
-| mail retry/dedup/bounds/current-attempt priority and durable defer | `MailQueueTests`, `test_current_attempt_mail_is_durable_and_prioritized`, `test_resource_deferred_notice_persisted_before_delivery` |
+| mail retry/dedup/bounds/current-attempt priority | `MailQueueTests`, `test_current_attempt_mail_is_durable_and_prioritized` |
 | web marker, empty 401, JSON denial and HTML rejection | `ProbeContractTests` |
 | safe Python symlink chain | `TrustedExecutableTests` |
 | post-mail same-PID restart fencing | `test_post_mail_restart_revalidation_*` |
 | exceptional guard syslog only | `test_guard_logging_uses_fixed_sanitized_syslog_command`, `test_cron_syntax_contract` |
 | installer staging/activation trust | `test_installer_trust_and_activation_contract` |
 | maintenance directory durability | `test_pause_resume_marker_and_directory_fsync` |
-| fixed config/command/security and cron syntax | `ConfigSecurityTests`, `StaticContractTests` |
-| no real side effects | all monitor tests inject `FakeEffects`; static tests reject shell/configurable commands |
+| fixed config/command/security and no real side effects | `ConfigSecurityTests`, `StaticContractTests`, injected `FakeEffects` tests |
