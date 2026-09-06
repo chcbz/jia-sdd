@@ -60,3 +60,23 @@ Teleport 只改变 HallStage 的祖先位置；它的内部地图容器保持不
 新增状态式测试：同 HallStage/Canvas/Scene 身份跨模式保留；移动中位置连续；冷热缓存；独立镜头；preview 与其他锁叠加；冷预览零业务、首次横屏单驱动；draw 节流不改变 update/命令计数；卸载/重进恢复旧 SCREEN 回归。
 最终需真实浏览器 Canvas 至少10次往返及非空帧/角色位置证据；production build + fresh integrated Reviewer。微信真机未验证仍明确标未验收。
 P1 基础包 ACCEPT 仅说明新组件/策略可用于接入，不能把整个 JY-LIVE-PREVIEW 标记完成、发布或解锁绕过上述门禁。
+
+## 7. 提请主控交接的最小新增 owned paths
+以下是在 P1 原四路径之外申请的 P2 白名单；未获回执前仅可读，非自行授权。
+
+```text
+src/components/world/JuyiHall.vue
+src/components/juyiting/HallPortraitHome.vue
+src/components/juyiting/HallStage.vue
+src/game/JuyitingGame.js
+src/game/scenes/HallScene.js
+src/game/camera/cameraController.ts
+tests/juyiting-live-map-preview-integration.test.js
+tests/juyiting-live-map-preview-runtime.test.js
+tests/juyiting-portrait-home.test.js
+tests/juyiting-experience-mode.test.js
+tests/game/camera/camera-controller.test.ts
+```
+
+前六项为共享实现路径；两项 live-map-preview 测试为新增；末三项仅更新与新需求直接冲突的旧契约或扩展 contain 回归，不删除原横屏交互验收。其余 SCREEN 回归先只运行、不修改；如确需更改其他路径须另报原因和清单。
+已知原 SCREEN 源码 Owner 为 `01a0741c-b852-7d00-9d2c-0d89808251ba`；当前共享交接文件没有明确登记其源主控 thread ID，协调者不据此编造身份或声称已获路径释放。
