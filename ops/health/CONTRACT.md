@@ -86,7 +86,10 @@ attempt consumes its attempt slot and is fenced by cooldown/max-attempt controls
 persisted attempt three has no trustworthy terminal receipt, the next tick clears the
 in-flight marker into an explicit UNKNOWN terminal result, latches the circuit and
 durably queues one deduplicated urgent notice without claiming a confirmed command
-failure or success; no fourth invocation is permitted.
+failure or success; no fourth invocation is permitted. For interrupted attempt one or
+two, three later trusted canonical-UP observations clear the stale in-flight fence and
+old incident budget without guessing the missing native terminal, so a later incident
+starts with its own three-attempt budget.
 Recovery success requires both command exit 0 and a fresh fully trusted canonical UP
 status. A healthy observation never depends on lifecycle command exit alone.
 
@@ -174,6 +177,7 @@ normal ticks are not sent to syslog.
 | old schema-v1 incident/attempt/circuit retained | `test_schema_v1_old_state_load_preserves_attempts_incident_and_circuit` |
 | urgent Chinese mail content/priority/dedup/send failure | `test_third_failure_alert_is_durable_prioritized_deduped_and_survives_mail_failure` |
 | interrupted third attempt -> UNKNOWN latch/urgent/no fourth | `test_interrupted_third_attempt_latches_unknown_alert_and_never_invokes_fourth` |
+| three trusted UP checks isolate early interrupted attempt from next incident | `test_three_trusted_up_checks_clear_early_interruption_before_new_incident` |
 | per-probe timestamps in mixed observation window | `test_each_mixed_window_probe_has_its_actual_observation_time` |
 | completion timestamp and exhausted-alert outbox protection | `test_recovery_result_mail_uses_actual_completion_time`, `test_full_outbox_reminder_never_evicts_exhausted_alert`, `test_new_priority_never_evicts_existing_exhausted_alerts`, `test_new_exhausted_alert_evicts_only_noncritical_items` |
 | Chinese actionable mail and injection/limits | `MailQueueTests` |

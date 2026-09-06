@@ -48,7 +48,9 @@ monitor. Redis `-NOAUTH`/`-NOPERM` proves reachability only.
   timestamp is the window start. After attempt mail, maintenance, MySQL, Redis and
   canonical identity are all rechecked before the attempt is counted or invoked.
   A persisted interrupted third attempt becomes an explicit UNKNOWN terminal latch
-  with one durable urgent notice and no fourth invocation. A later reminder or
+  with one durable urgent notice and no fourth invocation. Interrupted attempts one
+  or two retain their fence until three trusted UP checks, which then clear the old
+  incident budget without guessing the missing native result. A later reminder or
   priority insertion cannot evict an exhausted alert from a full outbox. Mail contains
   no raw logs, secrets or inbox-delivery claim.
 - `/usr/bin/python3` symlinks are accepted only through a root-owned, non-writable

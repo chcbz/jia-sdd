@@ -1214,8 +1214,11 @@ class Monitor(object):
             state["api_healthy_streak"] += 1
         else:
             state["api_healthy_streak"] = 0
+        flight = state["recovery"]["in_flight"]
+        early_interruption = flight is not None \
+            and flight["attempt"] < MAX_RECOVERY_ATTEMPTS
         if state["api_healthy_streak"] >= HEALTHY_RESET_THRESHOLD \
-                and state["recovery"]["in_flight"] is None:
+                and (flight is None or early_interruption):
             state["recovery"].update({
                 "attempts": 0, "circuit_latched": False, "last_attempt_at": None,
                 "in_flight": None, "last_result": None,

@@ -212,6 +212,41 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual(1, state["recovery"]["attempts"])
         self.assertIsNotNone(state["recovery"]["in_flight"])
 
+    def test_three_trusted_up_checks_clear_early_interruption_before_new_incident(self):
+        for interrupted_attempt in (1, 2):
+            with self.subTest(interrupted_attempt=interrupted_attempt):
+                effects = FakeEffects([up()])
+                state = health.initial_state(self.clock.now)
+                state["incident"] = {
+                    "id": "I000017-1788676023", "opened_at": self.clock.now - 600,
+                    "components": ["local_api"], "last_reminder_slot": 0,
+                }
+                state["recovery"].update({
+                    "attempts": interrupted_attempt,
+                    "last_attempt_at": self.clock.now - 120,
+                    "in_flight": {"action": "start", "attempt": interrupted_attempt,
+                                  "at": self.clock.now - 120},
+                })
+                monitor = self.monitor(effects)
+
+                for _ in range(3):
+                    monitor.check_once(state, self.config)
+
+                self.assertIsNone(state["incident"])
+                self.assertEqual(0, state["recovery"]["attempts"])
+                self.assertFalse(state["recovery"]["circuit_latched"])
+                self.assertIsNone(state["recovery"]["in_flight"])
+                self.assertIsNone(state["recovery"]["last_result"])
+                self.assertFalse(any(item["event"] == "recovery_exhausted"
+                                     for item in state["outbox"]))
+
+                effects.statuses = [stopped(), stopped(), up()]
+                state["component_streaks"]["local_api"] = 2
+                monitor.check_once(state, self.config)
+                self.assertEqual(["start"], effects.recoveries)
+                self.assertEqual(1, state["recovery"]["attempts"])
+                self.assertNotEqual("I000017-1788676023", state["incident"]["id"])
+
     def test_three_failures_latch_and_never_invoke_a_fourth_recovery(self):
         effects = FakeEffects([stopped()] * 12)
         effects.recovery_rc = 1
