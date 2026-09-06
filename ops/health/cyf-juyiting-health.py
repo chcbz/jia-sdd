@@ -47,6 +47,7 @@ MIN_DISK_BYTES = 5 * 1024 * 1024 * 1024
 MAX_STATE_BYTES = 128 * 1024
 MAX_HTTP_BODY = 256 * 1024
 MAX_OUTBOX = 24
+MAX_PRIORITY_OUTBOX = 32
 MAX_NOTICE_IDS = 64
 COMPONENTS = ("local_api", "web", "public_api", "mysql", "redis", "agent")
 FIXED_ENV = {
@@ -355,7 +356,7 @@ def validate_state(data):
                 or not isinstance(result["classification"], str) or len(result["classification"]) > 80:
             raise MonitorError("state_recovery_result_invalid")
     outbox = data.get("outbox")
-    if not isinstance(outbox, list) or len(outbox) > MAX_OUTBOX:
+    if not isinstance(outbox, list) or len(outbox) > MAX_PRIORITY_OUTBOX:
         raise MonitorError("state_outbox_invalid")
     notice_keys = {"id", "event", "subject", "body", "created_at", "attempts", "next_attempt_at", "last_error"}
     for item in outbox:
@@ -379,12 +380,16 @@ def validate_state(data):
                 or not isinstance(snapshot["overall_healthy"], bool):
             raise MonitorError("state_snapshot_fields_invalid")
         checks = snapshot["checks"]
-        allowed_checks = set(COMPONENTS) | {"local_api_revalidation", "local_api_post_recovery"}
+        allowed_checks = set(COMPONENTS) | {
+            "resource_observation", "maintenance_revalidation",
+            "mysql_revalidation", "redis_revalidation",
+            "local_api_revalidation", "local_api_post_recovery",
+        }
         if not isinstance(checks, dict) or not set(COMPONENTS).issubset(set(checks)) \
                 or not set(checks).issubset(allowed_checks):
             raise MonitorError("state_snapshot_checks_invalid")
         allowed_result = {"healthy", "classification", "http_status", "pid", "elapsed_seconds",
-                          "returncode", "content_type"}
+                          "returncode", "content_type", "observed_at"}
         for result in checks.values():
             if not isinstance(result, dict) or not {"healthy", "classification"}.issubset(set(result)) \
                     or not set(result).issubset(allowed_result) \
@@ -395,6 +400,8 @@ def validate_state(data):
             for key in ("http_status", "pid", "elapsed_seconds", "returncode"):
                 if key in result and (not isinstance(result[key], int) or isinstance(result[key], bool)):
                     raise MonitorError("state_snapshot_number_invalid")
+            if "observed_at" in result and not _is_int(result["observed_at"]):
+                raise MonitorError("state_snapshot_observed_at_invalid")
             if "content_type" in result and (not isinstance(result["content_type"], str)
                                              or len(result["content_type"]) > 80):
                 raise MonitorError("state_snapshot_content_type_invalid")
@@ -842,7 +849,7 @@ def guard_log(reason, validator=None, executor=None):
         return False
 
 
-def sanitized_result(result):
+def sanitized_result(result, observed_at=None):
     clean = {
         "healthy": bool(result.get("healthy")),
         "classification": safe_label(result.get("classification")),
@@ -853,6 +860,8 @@ def sanitized_result(result):
             clean[key] = value
     if isinstance(result.get("content_type"), str):
         clean["content_type"] = safe_label(result["content_type"], "unknown")
+    if _is_int(observed_at):
+        clean["observed_at"] = int(observed_at)
     return clean
 
 
@@ -941,6 +950,31 @@ def recovery_exhausted_body(now, incident_id, action, attempt, command_result,
     ]))
 
 
+def interrupted_recovery_exhausted_body(now, incident_id, flight, current_status, results):
+    current_health = "UP" if current_status.get("healthy") else "未确认"
+    return sanitize_mail_body("\n".join([
+        "第3次恢复没有可信终态，结果为 UNKNOWN；已停止自动重试（3/3）。",
+        "服务影响：当前聚义厅 API 健康=%s（%s）；在人工确认前不得启动第4次自动恢复。" % (
+            current_health, safe_label(current_status.get("classification"))),
+        "下一步：请人工核对受控生命周期收据和当前规范健康；确认结果后按审批流程处理熔断。",
+        "已确认：尝试=%d/%d；动作=%s；开始时间=%s；MySQL=%s；Redis=%s。" % (
+            flight["attempt"], MAX_RECOVERY_ATTEMPTS,
+            ACTION_NAMES_ZH.get(flight["action"], "未知"),
+            asia_shanghai_text(flight["at"]),
+            safe_label(results["mysql"].get("classification")),
+            safe_label(results["redis"].get("classification"))),
+        "未知终态：监控中断后没有可信返回码或紧邻调用完成时的健康结果；"
+        "本通知不把中断推断为已确认命令失败或成功。",
+        "资源说明：恢复命令仅允许固定传入 CYF_API_MIN_MEMORY_AVAILABLE_BYTES=0 和 "
+        "CYF_API_MIN_DISK_AVAILABLE_BYTES=0；本次收口未重新执行生命周期命令。",
+        "",
+        "检测时间（Asia/Shanghai）：%s" % asia_shanghai_text(now),
+        "故障编号：%s" % (incident_id or "无"),
+        "事件：recovery_exhausted_unknown",
+        "邮件状态说明：本机邮件助手接受请求不代表收件箱已送达。",
+    ]))
+
+
 def _coalesced_notice_count(item):
     if item.get("event") != "digest":
         return 1
@@ -948,12 +982,15 @@ def _coalesced_notice_count(item):
     return int(match.group(1)) if match else 1
 
 
+def _remember_notice_id(state, stored_id):
+    state["notice_ids"].append(stored_id)
+    state["notice_ids"] = state["notice_ids"][-MAX_NOTICE_IDS:]
+
+
 def enqueue_notice(state, notice_id, event, subject, body, now):
     stored_id = sanitize_notice_id(notice_id)
     if notice_id in state["notice_ids"] or stored_id in state["notice_ids"]:
         return False
-    state["notice_ids"].append(stored_id)
-    state["notice_ids"] = state["notice_ids"][-MAX_NOTICE_IDS:]
     item = {
         "id": stored_id, "event": safe_label(event)[:40],
         "subject": sanitize_mail_subject(subject), "body": sanitize_mail_body(body),
@@ -967,10 +1004,19 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
             victim_indices = [index for index, pending in enumerate(state["outbox"])
                               if pending["event"] != "recovery_exhausted"][:2]
             if len(victim_indices) < 2:
-                victim_indices.extend(
-                    index for index in range(len(state["outbox"]))
-                    if index not in victim_indices)
-                victim_indices = victim_indices[:2]
+                if not victim_indices:
+                    if len(state["outbox"]) < MAX_PRIORITY_OUTBOX:
+                        state["outbox"].append(item)
+                        _remember_notice_id(state, stored_id)
+                        return True
+                    return False
+                # Preserve every exhausted alert. If only one lower-priority item
+                # exists, discard that item rather than manufacturing room by
+                # evicting a critical alert merely to add a digest.
+                state["outbox"].pop(victim_indices[0])
+                state["outbox"].append(item)
+                _remember_notice_id(state, stored_id)
+                return True
             replaced = [state["outbox"][index] for index in victim_indices]
             for index in reversed(victim_indices):
                 state["outbox"].pop(index)
@@ -991,8 +1037,11 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
                                  if index != digest_index and pending["event"] not in
                                  ("digest", "recovery_exhausted")), None)
             if victim_index is None:
-                victim_index = next(index for index in range(len(state["outbox"]))
-                                    if index != digest_index)
+                if len(state["outbox"]) < MAX_PRIORITY_OUTBOX:
+                    state["outbox"].append(item)
+                    _remember_notice_id(state, stored_id)
+                    return True
+                return False
             replaced = state["outbox"].pop(victim_index)
             count = _coalesced_notice_count(digest) + _coalesced_notice_count(replaced)
             digest["body"] = ("较早通知已合并，请优先处理当前恢复事件。\n\n"
@@ -1000,6 +1049,7 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
                               (asia_shanghai_text(now), count, replaced["event"][:40]))
             digest["next_attempt_at"] = min(digest["next_attempt_at"], int(now))
         state["outbox"].append(item)
+        _remember_notice_id(state, stored_id)
         return True
     if len(state["outbox"]) >= MAX_OUTBOX:
         for index, pending in enumerate(state["outbox"]):
@@ -1031,8 +1081,10 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
                               "时间（Asia/Shanghai）：%s\ncoalesced_count=%d\n最新事件=%s" %
                               (asia_shanghai_text(now), count, safe_label(event)))
             digest["next_attempt_at"] = min(digest["next_attempt_at"], int(now))
+        _remember_notice_id(state, stored_id)
         return True
     state["outbox"].append(item)
+    _remember_notice_id(state, stored_id)
     return True
 
 
@@ -1071,10 +1123,11 @@ def flush_outbox(state, effects, config, now, limit=2, preferred_id=None):
 
 
 class Monitor(object):
-    def __init__(self, effects, persist, clock=None):
+    def __init__(self, effects, persist, clock=None, maintenance_check=None):
         self.effects = effects
         self.persist = persist
         self.clock = clock or time.time
+        self.maintenance_check = maintenance_check
 
     def _probe(self, function, fallback):
         try:
@@ -1085,17 +1138,71 @@ class Monitor(object):
         except Exception as exc:
             return {"healthy": False, "classification": "%s_%s" % (fallback, safe_label(type(exc).__name__))}
 
+    def _probe_with_time(self, function, fallback):
+        result = self._probe(function, fallback)
+        return result, int(self.clock())
+
+    def _maintenance_observation(self):
+        try:
+            if self.maintenance_check is None:
+                raise MonitorError("maintenance_revalidation_unavailable")
+            active = self.maintenance_check()
+            if not isinstance(active, bool):
+                raise MonitorError("maintenance_revalidation_invalid")
+            result = {
+                "healthy": not active,
+                "classification": "maintenance_absent" if not active else "maintenance_enabled",
+            }
+        except Exception as exc:
+            result = {"healthy": False,
+                      "classification": "maintenance_%s" % safe_label(type(exc).__name__)}
+        return result, int(self.clock())
+
+    def _finalize_interrupted_exhaustion(self, state, incident_id, status, results, now):
+        recovery = state["recovery"]
+        flight = recovery.get("in_flight")
+        if flight is None or recovery["attempts"] != MAX_RECOVERY_ATTEMPTS \
+                or flight.get("attempt") != MAX_RECOVERY_ATTEMPTS:
+            return None
+        recovery["circuit_latched"] = True
+        recovery["in_flight"] = None
+        recovery["last_result"] = {
+            "at": int(now), "action": flight["action"], "attempt": flight["attempt"],
+            "classification": "unknown_interrupted_no_terminal_receipt",
+        }
+        state["last_snapshot"]["recovery"]["decision"] = "circuit_latched"
+        state["last_snapshot"]["recovery"]["result"] = \
+            "unknown_interrupted_no_terminal_receipt"
+        notice_id = "incident:%s:recovery-exhausted" % incident_id
+        queued = enqueue_notice(
+            state, notice_id, "recovery_exhausted",
+            "【紧急】恢复终态未知，已停止自动重试（3/3）",
+            interrupted_recovery_exhausted_body(
+                now, incident_id, flight, status, results), now)
+        if not queued and notice_id not in state["notice_ids"]:
+            raise MonitorError("recovery_exhausted_notice_not_durable")
+        state["updated_at"] = int(now)
+        self.persist(state)
+        return sanitize_notice_id(notice_id)
+
     def check_once(self, state, config, maintenance=False):
         now = int(self.clock())
-        status = self._probe(self.effects.canonical_status, "canonical")
-        results = {
-            "local_api": status,
-            "web": self._probe(lambda: self.effects.web(config["web_marker"]), "web"),
-            "public_api": self._probe(self.effects.public_api, "public_api"),
-            "mysql": self._probe(self.effects.mysql, "mysql"),
-            "redis": self._probe(self.effects.redis, "redis"),
-            "agent": self._probe(self.effects.agent, "agent"),
-        }
+        results = {}
+        observed_at = {}
+        results["local_api"], observed_at["local_api"] = self._probe_with_time(
+            self.effects.canonical_status, "canonical")
+        status = results["local_api"]
+        results["web"], observed_at["web"] = self._probe_with_time(
+            lambda: self.effects.web(config["web_marker"]), "web")
+        results["public_api"], observed_at["public_api"] = self._probe_with_time(
+            self.effects.public_api, "public_api")
+        results["mysql"], observed_at["mysql"] = self._probe_with_time(
+            self.effects.mysql, "mysql")
+        results["redis"], observed_at["redis"] = self._probe_with_time(
+            self.effects.redis, "redis")
+        results["agent"], observed_at["agent"] = self._probe_with_time(
+            self.effects.agent, "agent")
+        recovery_incident_id = state["incident"]["id"] if state["incident"] else "unconfirmed"
         for name in COMPONENTS:
             if results[name]["healthy"]:
                 state["component_streaks"][name] = 0
@@ -1107,7 +1214,8 @@ class Monitor(object):
             state["api_healthy_streak"] += 1
         else:
             state["api_healthy_streak"] = 0
-        if state["api_healthy_streak"] >= HEALTHY_RESET_THRESHOLD:
+        if state["api_healthy_streak"] >= HEALTHY_RESET_THRESHOLD \
+                and state["recovery"]["in_flight"] is None:
             state["recovery"].update({
                 "attempts": 0, "circuit_latched": False, "last_attempt_at": None,
                 "in_flight": None, "last_result": None,
@@ -1142,11 +1250,16 @@ class Monitor(object):
                                                incident["components"]), now)
         state["last_snapshot"] = {
             "at": now, "maintenance": bool(maintenance), "overall_healthy": all_healthy,
-            "checks": {name: sanitized_result(results[name]) for name in COMPONENTS},
+            "checks": {name: sanitized_result(results[name], observed_at[name])
+                       for name in COMPONENTS},
             "recovery": {"decision": "none", "result": "not_attempted"},
         }
-        state["updated_at"] = now
+        latest_observation_at = max(observed_at.values())
+        state["updated_at"] = latest_observation_at
         self.persist(state)
+
+        interrupted_notice_id = self._finalize_interrupted_exhaustion(
+            state, recovery_incident_id, status, results, latest_observation_at)
 
         decision = self._recovery_decision(state, status, results, maintenance, now)
         state["last_snapshot"]["recovery"]["decision"] = decision["classification"]
@@ -1154,53 +1267,90 @@ class Monitor(object):
         pre_recovery_mail_accepted = 0
         resource_observation = "not_observed"
         if action:
-            resources = self._probe(self.effects.resources, "resources")
+            resources, resources_at = self._probe_with_time(self.effects.resources, "resources")
             resource_observation = "%s:%s" % (
                 "ok" if resources["healthy"] else "warning",
                 safe_label(resources["classification"]))
             state["last_snapshot"]["recovery"]["resource_observation"] = resource_observation
+            state["last_snapshot"]["checks"]["resource_observation"] = \
+                sanitized_result(resources, resources_at)
         if action:
             recovery = state["recovery"]
             attempt = recovery["attempts"] + 1
             incident_id = state["incident"]["id"] if state["incident"] else "unconfirmed"
             attempt_notice_id = "incident:%s:recovery:%d:attempted:%d" % \
                 (incident_id, attempt, now)
-            enqueue_notice(state, attempt_notice_id, "recovery_attempted",
-                           "【聚义厅监控】准备第%d/%d次 API 恢复" %
-                           (attempt, MAX_RECOVERY_ATTEMPTS),
-                           notice_body("recovery_attempt_selected", now, incident_id, ["local_api"],
-                                       "本次：动作=%s；尝试=%d/%d；资源观测=%s；身份重新校验待完成。" %
-                                       (ACTION_NAMES_ZH[action], attempt, MAX_RECOVERY_ATTEMPTS,
-                                        safe_label(resource_observation))), now)
-            state["updated_at"] = now
+            attempt_notice_queued = enqueue_notice(
+                state, attempt_notice_id, "recovery_attempted",
+                "【聚义厅监控】准备第%d/%d次 API 恢复" %
+                (attempt, MAX_RECOVERY_ATTEMPTS),
+                notice_body("recovery_attempt_selected", now, incident_id, ["local_api"],
+                            "本次：动作=%s；尝试=%d/%d；资源观测=%s；身份重新校验待完成。" %
+                            (ACTION_NAMES_ZH[action], attempt, MAX_RECOVERY_ATTEMPTS,
+                             safe_label(resource_observation))), now)
+            if not attempt_notice_queued:
+                state["last_snapshot"]["recovery"]["decision"] = \
+                    "recovery_notice_queue_protected"
+                state["last_snapshot"]["recovery"]["result"] = "not_attempted"
+                state["updated_at"] = int(self.clock())
+                self.persist(state)
+                action = None
+        if action:
+            state["updated_at"] = max(state["updated_at"], resources_at)
             self.persist(state)  # current attempt notice is durable before priority delivery
             pre_recovery_mail_accepted = flush_outbox(
                 state, self.effects, config, now, 1, preferred_id=attempt_notice_id)
             self.persist(state)  # failed priority delivery remains durable before revalidation
 
-            rechecked = self._probe(self.effects.canonical_status, "canonical_pre_recovery")
-            state["last_snapshot"]["checks"]["local_api_revalidation"] = sanitized_result(rechecked)
-            revalidation = self._revalidate_recovery(action, status, rechecked)
+            maintenance_result, maintenance_at = self._maintenance_observation()
+            mysql_rechecked, mysql_at = self._probe_with_time(
+                self.effects.mysql, "mysql_pre_recovery")
+            redis_rechecked, redis_at = self._probe_with_time(
+                self.effects.redis, "redis_pre_recovery")
+            rechecked, rechecked_at = self._probe_with_time(
+                self.effects.canonical_status, "canonical_pre_recovery")
+            state["last_snapshot"]["checks"]["maintenance_revalidation"] = \
+                sanitized_result(maintenance_result, maintenance_at)
+            state["last_snapshot"]["checks"]["mysql_revalidation"] = \
+                sanitized_result(mysql_rechecked, mysql_at)
+            state["last_snapshot"]["checks"]["redis_revalidation"] = \
+                sanitized_result(redis_rechecked, redis_at)
+            state["last_snapshot"]["checks"]["local_api_revalidation"] = \
+                sanitized_result(rechecked, rechecked_at)
+            state["last_snapshot"]["maintenance"] = not maintenance_result["healthy"]
+            if not maintenance_result["healthy"]:
+                revalidation = {"permitted": False,
+                                "classification": "revalidation_maintenance_active_or_unknown"}
+            elif not mysql_rechecked["healthy"] or not redis_rechecked["healthy"]:
+                revalidation = {"permitted": False,
+                                "classification": "revalidation_dependencies_unreachable"}
+            else:
+                revalidation = self._revalidate_recovery(action, status, rechecked)
             if not revalidation.get("permitted"):
                 classification = revalidation["classification"]
+                revalidation_at = max(maintenance_at, mysql_at, redis_at, rechecked_at)
                 state["last_snapshot"]["recovery"]["decision"] = classification
                 state["last_snapshot"]["recovery"]["result"] = "not_attempted_after_revalidation"
                 enqueue_notice(state,
                                "incident:%s:recovery:%d:revalidation:%s" %
                                (incident_id, attempt, classification),
                                "recovery_deferred", "【聚义厅监控】本次 API 恢复已跳过",
-                               notice_body("recovery_deferred_revalidation", now, incident_id,
+                               notice_body("recovery_deferred_revalidation", revalidation_at, incident_id,
                                            ["local_api"], "本次：动作=%s；原因=%s；尝试次数未增加。" %
-                                           (ACTION_NAMES_ZH[action], safe_label(classification))), now)
-                state["updated_at"] = now
+                                           (ACTION_NAMES_ZH[action], safe_label(classification))),
+                               revalidation_at)
+                state["updated_at"] = revalidation_at
                 self.persist(state)
                 action = None
             else:
+                attempt_started_at = max(
+                    int(self.clock()), maintenance_at, mysql_at, redis_at, rechecked_at)
                 recovery["attempts"] = attempt
-                recovery["last_attempt_at"] = now
-                recovery["in_flight"] = {"action": action, "attempt": attempt, "at": now}
+                recovery["last_attempt_at"] = attempt_started_at
+                recovery["in_flight"] = {
+                    "action": action, "attempt": attempt, "at": attempt_started_at}
                 state["last_snapshot"]["recovery"]["decision"] = revalidation["classification"]
-                state["updated_at"] = now
+                state["updated_at"] = attempt_started_at
                 self.persist(state)  # durable actual-command fence immediately before lifecycle execution
                 try:
                     command_result = self.effects.recover(action)
@@ -1209,8 +1359,9 @@ class Monitor(object):
                 except Exception as exc:
                     command_result = {"returncode": 126,
                                       "classification": "recovery_%s" % safe_label(type(exc).__name__)}
-                fresh = self._probe(self.effects.canonical_status, "canonical_post_recovery")
-                completed_at = int(self.clock())
+                fresh, completed_at = self._probe_with_time(
+                    self.effects.canonical_status, "canonical_post_recovery")
+                completed_at = max(completed_at, attempt_started_at)
                 success = command_result.get("returncode") == 0 and fresh.get("healthy") is True
                 classification = "success_health_up" if success else "failed_fresh_health_not_up"
                 recovery["in_flight"] = None
@@ -1222,7 +1373,8 @@ class Monitor(object):
                     state["component_streaks"]["local_api"] = 0
                 if not success and recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
                     recovery["circuit_latched"] = True
-                state["last_snapshot"]["checks"]["local_api_post_recovery"] = sanitized_result(fresh)
+                state["last_snapshot"]["checks"]["local_api_post_recovery"] = \
+                    sanitized_result(fresh, completed_at)
                 state["last_snapshot"]["recovery"]["result"] = classification
                 state["updated_at"] = completed_at
                 if recovery["circuit_latched"]:
@@ -1254,11 +1406,13 @@ class Monitor(object):
                     state["updated_at"] = completed_at
                     self.persist(state)
         finish_now = int(self.clock())
+        preferred_id = interrupted_notice_id
         delivered = pre_recovery_mail_accepted + flush_outbox(
-            state, self.effects, config, finish_now, 2)
+            state, self.effects, config, finish_now, 2, preferred_id=preferred_id)
         state["updated_at"] = finish_now
         self.persist(state)
-        return {"healthy": all_healthy, "maintenance": bool(maintenance),
+        return {"healthy": all_healthy,
+                "maintenance": bool(state["last_snapshot"]["maintenance"]),
                 "recovery": state["last_snapshot"]["recovery"],
                 "mail_accepted": delivered, "mail_pending": len(state["outbox"])}
 
@@ -1401,7 +1555,7 @@ def main(argv=None):
             print(json.dumps({"status": "notify_test_processed", "helper_accepted": accepted,
                               "mail_pending": len(state["outbox"])}, sort_keys=True))
             return 0 if accepted else 1
-        monitor = Monitor(effects, store.write)
+        monitor = Monitor(effects, store.write, maintenance_check=store.maintenance)
         summary = monitor.check_once(state, config, maintenance)
         print(json.dumps(summary, sort_keys=True, separators=(",", ":")))
         return 0 if summary["healthy"] else 1

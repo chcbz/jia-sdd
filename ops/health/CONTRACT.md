@@ -55,11 +55,12 @@ recovery is configurable.
 5. Validate maintenance marker.
 6. Run bounded read-only probes.
 7. Persist the current snapshot, including warning-only resource classification.
-8. Persist the selected recovery-attempt notice, deliver that current notice ahead
-   of older queued mail, then read canonical status again. Restart proceeds only when
-   the same trusted PID is still MATCH/LISTENING/NOT_READY and at least 1500 seconds
-   old; a healthy result, PID change, identity change, dependency failure, maintenance,
-   or other precondition skip never consumes an attempt.
+8. Persist the selected recovery-attempt notice and deliver that current notice ahead
+   of older queued mail. Before counting or invoking, read the maintenance marker,
+   MySQL, Redis and canonical status again. Restart proceeds only when the same trusted
+   PID is still MATCH/LISTENING/NOT_READY and at least 1500 seconds old; maintenance,
+   dependency loss, a healthy result, PID change, identity change or another
+   precondition skip never consumes an attempt.
 9. Persist actual attempt count, timestamp and in-flight fence immediately before the
    canonical lifecycle invocation. Invocation exceptions consume that already-durable
    attempt.
@@ -81,13 +82,19 @@ the next one-minute cron opportunity and never creates an internal busy loop.
 State is a root-owned 0600 regular file, one link, atomically replaced from a 0600
 same-directory temporary file and followed by file and directory `fsync`. Attempt and
 `last_attempt_at` are durable before lifecycle execution. An interrupted `in_flight`
-attempt consumes its attempt slot and is fenced by cooldown/max-attempt controls.
+attempt consumes its attempt slot and is fenced by cooldown/max-attempt controls. If
+persisted attempt three has no trustworthy terminal receipt, the next tick clears the
+in-flight marker into an explicit UNKNOWN terminal result, latches the circuit and
+durably queues one deduplicated urgent notice without claiming a confirmed command
+failure or success; no fourth invocation is permitted.
 Recovery success requires both command exit 0 and a fresh fully trusted canonical UP
 status. A healthy observation never depends on lifecycle command exit alone.
 
 Schema version remains `1`; the strict outer state keys and existing recovery fields
 are unchanged. Existing `resource_preflight` snapshots remain valid, while new
-snapshots may use optional `resource_observation`. Existing incidents, attempts,
+snapshots may use optional `resource_observation`. New check results carry their own
+integer `observed_at`; `last_snapshot.at` is the observation-window start and never
+pretends that earlier component checks occurred after a long recovery call. Existing incidents, attempts,
 circuit state, outbox and notice IDs are loaded without reset during upgrade. Default
 absence is accepted only by explicit `--init` (or an installer action that explicitly
 calls it). `--status` is read-only and never creates, repairs, retries mail, probes
@@ -143,9 +150,12 @@ All new incident, recovery, resolved, reminder, digest and test notices use conc
 Chinese: actionable summary first, bounded metadata after it. Subject CR/LF/control
 characters and body controls are sanitized; subject/body limits remain 160/2000.
 The durable outbox is bounded and deduplicated. Delivery failure remains pending with
-bounded retry backoff. Current attempt and exhausted notices are prioritized. When
-full, pending events are coalesced into a bounded Chinese digest rather than silently
-dropped; a later reminder cannot evict an exhausted alert. Helper acceptance is stated only as local helper acceptance, never as inbox
+bounded retry backoff. Current attempt and exhausted notices are prioritized. A small
+bounded priority reserve permits critical insertion without evicting an existing
+exhausted alert; if even that reserve is full of protected alerts, a new attempted
+notice fails closed rather than invoking without durable notice. Other full-queue
+events are coalesced into a bounded Chinese digest; reminders and later priority
+insertion cannot evict an exhausted alert. Helper acceptance is stated only as local helper acceptance, never as inbox
 delivery. `/usr/bin/python3` may be a symlink only when every lstat hop and parent is
 root-trusted and the final target is a safe executable. Exceptional `fail_closed`
 guards emit only a fixed sanitized message through a root-trusted `/usr/bin/logger`;
@@ -159,11 +169,13 @@ normal ticks are not sent to syslog.
 | three actual failures -> persistent latch -> no fourth | `test_three_failures_latch_and_never_invoke_a_fourth_recovery` |
 | third success has no failure alert/latch | `test_third_success_does_not_latch_or_send_exhausted_failure` |
 | attempt persisted immediately; invocation exception counted | `test_stopped_threshold_starts_on_third_failure`, `test_recovery_exception_consumes_third_actual_attempt_and_latches` |
-| precondition/revalidation skips not counted | `test_precondition_and_revalidation_skips_do_not_consume_attempts`, dependency/revalidation tests |
+| post-mail maintenance/dependency/identity revalidation skips not counted | `test_post_mail_maintenance_change_rechecks_dependencies_and_skips_without_count`, `test_post_mail_dependency_change_skips_without_count`, `test_precondition_and_revalidation_skips_do_not_consume_attempts`, identity revalidation tests |
 | warning-only resources and recovery env overrides | `test_resource_warning_does_not_block_recovery`, `test_recovery_env_has_only_fixed_threshold_overrides_and_status_has_none` |
 | old schema-v1 incident/attempt/circuit retained | `test_schema_v1_old_state_load_preserves_attempts_incident_and_circuit` |
 | urgent Chinese mail content/priority/dedup/send failure | `test_third_failure_alert_is_durable_prioritized_deduped_and_survives_mail_failure` |
-| completion timestamp and exhausted-alert outbox protection | `test_recovery_result_mail_uses_actual_completion_time`, `test_full_outbox_reminder_never_evicts_exhausted_alert` |
+| interrupted third attempt -> UNKNOWN latch/urgent/no fourth | `test_interrupted_third_attempt_latches_unknown_alert_and_never_invokes_fourth` |
+| per-probe timestamps in mixed observation window | `test_each_mixed_window_probe_has_its_actual_observation_time` |
+| completion timestamp and exhausted-alert outbox protection | `test_recovery_result_mail_uses_actual_completion_time`, `test_full_outbox_reminder_never_evicts_exhausted_alert`, `test_new_priority_never_evicts_existing_exhausted_alerts`, `test_new_exhausted_alert_evicts_only_noncritical_items` |
 | Chinese actionable mail and injection/limits | `MailQueueTests` |
 | rc1 busy and rc5/foreign fail closed | `test_rc1_busy_never_recovers`, `test_rc5_foreign_identity_never_recovers` |
 | external-only failure no restart | `test_external_only_failure_never_recovers_healthy_api` |

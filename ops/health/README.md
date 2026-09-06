@@ -44,8 +44,13 @@ monitor. Redis `-NOAUTH`/`-NOPERM` proves reachability only.
   alert includes Asia/Shanghai time, impact, confirmed classifications versus unknown
   cause, attempt/action/return code/fresh health, manual next action and the resource
   override explanation. Recovery-result time is captured after the lifecycle call and
-  fresh health check. A later reminder cannot evict the exhausted alert from a full
-  outbox. Mail contains no raw logs, secrets or inbox-delivery claim.
+  fresh health check. Every stored probe has its own observation time; the snapshot
+  timestamp is the window start. After attempt mail, maintenance, MySQL, Redis and
+  canonical identity are all rechecked before the attempt is counted or invoked.
+  A persisted interrupted third attempt becomes an explicit UNKNOWN terminal latch
+  with one durable urgent notice and no fourth invocation. A later reminder or
+  priority insertion cannot evict an exhausted alert from a full outbox. Mail contains
+  no raw logs, secrets or inbox-delivery claim.
 - `/usr/bin/python3` symlinks are accepted only through a root-owned, non-writable
   lstat chain ending at a trusted executable. Credential file content is never read.
 - Cron suppresses ordinary output mail. Exceptional `fail_closed` guards alone write

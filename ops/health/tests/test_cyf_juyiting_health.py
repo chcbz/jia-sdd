@@ -116,6 +116,16 @@ class Clock(object):
         return self.now
 
 
+class AdvancingClock(object):
+    def __init__(self, now=2000000000):
+        self.now = now
+
+    def __call__(self):
+        value = self.now
+        self.now += 1
+        return value
+
+
 class MonitorTests(unittest.TestCase):
     def setUp(self):
         self.clock = Clock()
@@ -123,8 +133,10 @@ class MonitorTests(unittest.TestCase):
                        "email_enabled": True, "reminder_interval_seconds": 21600}
         self.persisted = []
 
-    def monitor(self, effects):
-        return health.Monitor(effects, lambda state: self.persisted.append(json.loads(json.dumps(state))), self.clock)
+    def monitor(self, effects, maintenance_check=None):
+        return health.Monitor(
+            effects, lambda state: self.persisted.append(json.loads(json.dumps(state))),
+            self.clock, maintenance_check or (lambda: False))
 
     def test_stopped_threshold_starts_on_third_failure(self):
         effects = FakeEffects([stopped(), stopped(), stopped(), stopped(), up()])
@@ -357,6 +369,75 @@ class MonitorTests(unittest.TestCase):
         self.assertLess(first_mail, second_status)
         self.assertLess(second_status, effects.events.index("recover:restart"))
 
+    def test_post_mail_maintenance_change_rechecks_dependencies_and_skips_without_count(self):
+        effects = FakeEffects([stopped(), stopped()])
+        maintenance = [False]
+        effects.mail_observer = lambda subject, body: maintenance.__setitem__(0, True)
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+
+        result = self.monitor(effects, lambda: maintenance[0]).check_once(state, self.config)
+
+        self.assertEqual([], effects.recoveries)
+        self.assertEqual(0, state["recovery"]["attempts"])
+        self.assertEqual("revalidation_maintenance_active_or_unknown",
+                         result["recovery"]["decision"])
+        self.assertEqual(2, effects.events.count("mysql"))
+        self.assertEqual(2, effects.events.count("redis"))
+        self.assertTrue(state["last_snapshot"]["maintenance"])
+        self.assertEqual("maintenance_enabled",
+                         state["last_snapshot"]["checks"]
+                         ["maintenance_revalidation"]["classification"])
+
+    def test_post_mail_dependency_change_skips_without_count(self):
+        for dependency in ("mysql", "redis"):
+            with self.subTest(dependency=dependency):
+                effects = FakeEffects([stopped(), stopped()])
+                def change_dependency(subject, body, target=dependency):
+                    setattr(effects, target + "_result",
+                            {"healthy": False, "classification": target + "_refused"})
+                effects.mail_observer = change_dependency
+                state = health.initial_state(self.clock.now)
+                state["component_streaks"]["local_api"] = 2
+
+                result = self.monitor(effects).check_once(state, self.config)
+
+                self.assertEqual([], effects.recoveries)
+                self.assertEqual(0, state["recovery"]["attempts"])
+                self.assertEqual("revalidation_dependencies_unreachable",
+                                 result["recovery"]["decision"])
+                self.assertFalse(state["last_snapshot"]["checks"]
+                                 [dependency + "_revalidation"]["healthy"])
+
+    def test_each_mixed_window_probe_has_its_actual_observation_time(self):
+        clock = AdvancingClock(self.clock.now)
+        effects = FakeEffects([stopped(), stopped(), up()])
+        state = health.initial_state(clock.now)
+        state["component_streaks"]["local_api"] = 2
+        persisted = []
+        monitor = health.Monitor(
+            effects, lambda value: persisted.append(json.loads(json.dumps(value))),
+            clock, lambda: False)
+
+        monitor.check_once(state, self.config)
+
+        snapshot = state["last_snapshot"]
+        checks = snapshot["checks"]
+        for name in health.COMPONENTS:
+            self.assertIn("observed_at", checks[name])
+        ordered = [
+            checks["local_api"]["observed_at"],
+            checks["resource_observation"]["observed_at"],
+            checks["maintenance_revalidation"]["observed_at"],
+            checks["mysql_revalidation"]["observed_at"],
+            checks["redis_revalidation"]["observed_at"],
+            checks["local_api_revalidation"]["observed_at"],
+            checks["local_api_post_recovery"]["observed_at"],
+        ]
+        self.assertLess(snapshot["at"], ordered[0])
+        self.assertEqual(sorted(ordered), ordered)
+        self.assertEqual(len(ordered), len(set(ordered)))
+
     def test_current_attempt_mail_is_durable_and_prioritized(self):
         effects = FakeEffects([stopped(), stopped(), up()])
         state = health.initial_state(self.clock.now)
@@ -470,6 +551,42 @@ class MonitorTests(unittest.TestCase):
                                 for item in state["notice_ids"]))
         self.assertNotIn("recovery_exhausted", [item["event"] for item in state["outbox"]])
 
+    def test_interrupted_third_attempt_latches_unknown_alert_and_never_invokes_fourth(self):
+        effects = FakeEffects([stopped()])
+        effects.mail_results = [(False, "helper_failed")]
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        state["incident"] = {"id": "I000017-1788676023", "opened_at": self.clock.now - 600,
+                             "components": ["local_api"], "last_reminder_slot": 0}
+        state["recovery"].update({
+            "attempts": 3, "last_attempt_at": self.clock.now - 120,
+            "in_flight": {"action": "start", "attempt": 3, "at": self.clock.now - 120},
+        })
+        monitor = self.monitor(effects)
+
+        monitor.check_once(state, self.config)
+
+        self.assertEqual([], effects.recoveries)
+        self.assertTrue(state["recovery"]["circuit_latched"])
+        self.assertIsNone(state["recovery"]["in_flight"])
+        self.assertEqual("unknown_interrupted_no_terminal_receipt",
+                         state["recovery"]["last_result"]["classification"])
+        urgent = [item for item in state["outbox"]
+                  if item["event"] == "recovery_exhausted"]
+        self.assertEqual(1, len(urgent))
+        self.assertEqual("【紧急】恢复终态未知，已停止自动重试（3/3）",
+                         urgent[0]["subject"])
+        self.assertIn("UNKNOWN", urgent[0]["body"])
+        self.assertIn("不把中断推断为已确认命令失败或成功", urgent[0]["body"])
+        self.assertEqual("helper_failed", urgent[0]["last_error"])
+
+        self.clock.now = urgent[0]["next_attempt_at"]
+        effects.mail_results = [(True, "helper_accepted")]
+        monitor.check_once(state, self.config)
+        self.assertEqual([], effects.recoveries)
+        self.assertEqual(1, sum(item.endswith("recovery-exhausted")
+                                for item in state["notice_ids"]))
+
 
 class MailQueueTests(unittest.TestCase):
     def test_email_retry_and_dedup(self):
@@ -514,6 +631,42 @@ class MailQueueTests(unittest.TestCase):
         self.assertEqual(1, len(urgent))
         self.assertEqual("关键告警", urgent[0]["body"])
         self.assertTrue(any(item["event"] == "digest" for item in state["outbox"]))
+
+    def test_new_priority_never_evicts_existing_exhausted_alerts(self):
+        state = health.initial_state(1)
+        for number in range(health.MAX_PRIORITY_OUTBOX):
+            self.assertTrue(health.enqueue_notice(
+                state, "urgent-%d" % number, "recovery_exhausted",
+                "【紧急】恢复失败，已停止自动重试（3/3）", "关键告警%d" % number,
+                number + 1))
+        before = [item["id"] for item in state["outbox"]]
+
+        added = health.enqueue_notice(
+            state, "new-attempt", "recovery_attempted",
+            "【聚义厅监控】准备第1/3次 API 恢复", "新优先通知", 100)
+
+        self.assertFalse(added)
+        self.assertEqual(before, [item["id"] for item in state["outbox"]])
+        self.assertNotIn("new-attempt", state["notice_ids"])
+
+    def test_new_exhausted_alert_evicts_only_noncritical_items(self):
+        state = health.initial_state(1)
+        health.enqueue_notice(
+            state, "old-urgent", "recovery_exhausted",
+            "【紧急】恢复失败，已停止自动重试（3/3）", "旧关键告警", 1)
+        for number in range(health.MAX_OUTBOX - 1):
+            health.enqueue_notice(state, "ordinary-%d" % number, "recovery_result",
+                                  "普通通知", "普通正文", number + 2)
+
+        self.assertTrue(health.enqueue_notice(
+            state, "new-urgent", "recovery_exhausted",
+            "【紧急】恢复终态未知，已停止自动重试（3/3）", "新关键告警", 100))
+
+        critical = {item["id"]: item["body"] for item in state["outbox"]
+                    if item["event"] == "recovery_exhausted"}
+        self.assertEqual("旧关键告警", critical["old-urgent"])
+        self.assertEqual("新关键告警", critical["new-urgent"])
+        self.assertLessEqual(len(state["outbox"]), health.MAX_PRIORITY_OUTBOX)
 
     def test_mail_fields_are_sanitized_and_bounded(self):
         state = health.initial_state(1)
