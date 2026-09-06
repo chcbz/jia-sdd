@@ -154,7 +154,12 @@ class labels.
 
 All new incident, recovery, resolved, reminder, digest and test notices use concise
 Chinese: actionable summary first, bounded metadata after it. Subject CR/LF/control
-characters and body controls are sanitized; subject/body limits remain 160/2000.
+characters and body controls are sanitized. Schema-v1 loading continues to accept a
+legacy stored subject of at most 160 characters and a body of at most 2000 characters,
+so upgrades do not invalidate the existing outbox. Every newly queued subject and every
+subject immediately before helper delivery is re-sanitized to at most 40 UTF-8 bytes;
+all current templates fit that byte bound without Python 3.6 encoded-word folding, and
+the urgent failure/unknown titles retain `3/3`. Bodies remain bounded to 2000 characters.
 The durable outbox is bounded and deduplicated. Delivery failure remains pending with
 bounded retry backoff. Current attempt and exhausted notices are prioritized. A small
 bounded priority reserve permits critical insertion without evicting an existing
@@ -183,8 +188,8 @@ normal ticks are not sent to syslog.
 | three trusted UP checks isolate early interrupted attempt from next incident | `test_three_trusted_up_checks_clear_early_interruption_before_new_incident` |
 | per-probe timestamps in mixed observation window | `test_each_mixed_window_probe_has_its_actual_observation_time` |
 | completion timestamp and exhausted-alert outbox protection | `test_recovery_result_mail_uses_actual_completion_time`, `test_full_outbox_reminder_never_evicts_exhausted_alert`, `test_new_priority_never_evicts_existing_exhausted_alerts`, `test_new_exhausted_alert_evicts_only_noncritical_items` |
-| Chinese actionable mail and injection/limits | `MailQueueTests` |
-| isolated Python 3.6 Chinese MIME construction and mail-only UTF-8 locale | `test_real_isolated_python_builds_chinese_mime_with_mail_environment`, `test_recovery_env_has_only_fixed_threshold_overrides_and_status_has_none` |
+| concise Chinese templates, urgent `3/3`, injection controls, new 40-byte subjects and legacy 160-character state acceptance | `test_mail_fields_are_sanitized_and_bounded`, `test_subject_templates_are_short_utf8_and_keep_urgent_attempt_count`, `test_legacy_long_subject_is_bounded_again_at_delivery_time`, `test_schema_v1_old_state_load_preserves_attempts_incident_and_circuit` |
+| exact old long subject after send-time sanitization plus every current title flattens with ASCII From/To, CRLF and no encoded-word continuation under isolated Python 3.6; mail-only UTF-8 locale | `test_real_isolated_python36_flattens_all_bounded_subjects_without_folding`, `test_recovery_env_has_only_fixed_threshold_overrides_and_status_has_none` |
 | rc1 busy and rc5/foreign fail closed | `test_rc1_busy_never_recovers`, `test_rc5_foreign_identity_never_recovers` |
 | external-only failure no restart | `test_external_only_failure_never_recovers_healthy_api` |
 | maintenance pause | `test_maintenance_reports_but_pauses_recovery` |
