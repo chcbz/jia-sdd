@@ -51,8 +51,10 @@ monitor. Redis `-NOAUTH`/`-NOPERM` proves reachability only.
   with one durable urgent notice and no fourth invocation. Interrupted attempts one
   or two retain their fence until three trusted UP checks, which then clear the old
   incident budget without guessing the missing native result. A later reminder or
-  priority insertion cannot evict an exhausted alert from a full outbox. Mail contains
-  no raw logs, secrets or inbox-delivery claim.
+  priority insertion cannot evict an exhausted alert from a full outbox. The fixed
+  mail-helper child alone uses `LC_ALL=C.UTF-8` and `LANG=C.UTF-8` so sanitized Chinese
+  argv can be encoded by Python 3.6; canonical status/recovery and other children stay
+  on the fixed `C` locale. Mail contains no raw logs, secrets or inbox-delivery claim.
 - `/usr/bin/python3` symlinks are accepted only through a root-owned, non-writable
   lstat chain ending at a trusted executable. Credential file content is never read.
 - Cron suppresses ordinary output mail. Exceptional `fail_closed` guards alone write

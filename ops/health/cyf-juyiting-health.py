@@ -62,12 +62,20 @@ RECOVERY_ENV_OVERRIDES = {
     "CYF_API_MIN_MEMORY_AVAILABLE_BYTES": "0",
     "CYF_API_MIN_DISK_AVAILABLE_BYTES": "0",
 }
+MAIL_ENV_OVERRIDES = {
+    "LC_ALL": "C.UTF-8",
+    "LANG": "C.UTF-8",
+}
 
 
-def command_environment(recovery=False):
+def command_environment(recovery=False, mail=False):
+    if recovery and mail:
+        raise MonitorError("command_environment_mode_invalid")
     env = dict(FIXED_ENV)
     if recovery:
         env.update(RECOVERY_ENV_OVERRIDES)
+    if mail:
+        env.update(MAIL_ENV_OVERRIDES)
     return env
 
 
@@ -656,13 +664,23 @@ def parse_canonical_status(returncode, stdout):
 
 
 class Effects(object):
-    def _run(self, argv, timeout, recovery=False):
+    def _run(self, argv, timeout, recovery=False, mail=False):
+        mail_prefix = [MAIL_PYTHON, "-I", MAIL_HELPER]
+        is_mail_command = len(argv) >= len(mail_prefix) \
+            and argv[:len(mail_prefix)] == mail_prefix
         if recovery:
             if argv not in ([CANONICAL, "start"], [CANONICAL, "restart"]):
                 raise MonitorError("recovery_env_command_invalid")
+        if mail:
+            if recovery or len(argv) != 5 or not is_mail_command \
+                    or argv[3] != sanitize_mail_subject(argv[3]) \
+                    or argv[4] != sanitize_mail_body(argv[4]):
+                raise MonitorError("mail_env_command_invalid")
+        elif is_mail_command:
+            raise MonitorError("mail_command_without_mail_env")
         process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, cwd="/",
-                                   env=command_environment(recovery),
+                                   env=command_environment(recovery, mail),
                                    universal_newlines=True)
         try:
             stdout, stderr = process.communicate(timeout=timeout)
@@ -820,7 +838,8 @@ class Effects(object):
             if sha256_file(MAIL_HELPER) != MAIL_HELPER_SHA256:
                 return False, "mail_helper_hash_mismatch"
             result = self._run([MAIL_PYTHON, "-I", MAIL_HELPER,
-                                sanitize_mail_subject(subject), sanitize_mail_body(body)], 30)
+                                sanitize_mail_subject(subject), sanitize_mail_body(body)],
+                               30, mail=True)
             return result["returncode"] == 0, "helper_accepted" if result["returncode"] == 0 else "helper_failed"
         except Exception as exc:
             return False, "mail_%s" % safe_label(type(exc).__name__)

@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -944,10 +945,26 @@ class StaticContractTests(unittest.TestCase):
         self.assertNotIn("shell=True", source)
         self.assertNotIn("/home/isp/bin", source)
 
+        effects = health.Effects()
+        with self.assertRaises(health.MonitorError):
+            effects._run([health.MAIL_PYTHON, "-I", "/tmp/not-reviewed", "主题", "正文"],
+                         1, mail=True)
+        with self.assertRaises(health.MonitorError):
+            effects._run([health.MAIL_PYTHON, "-I", health.MAIL_HELPER, "主题", "正文"], 1)
+        with mock.patch.object(health, "validate_trusted_executable"), \
+                mock.patch.object(health, "validate_regular"), \
+                mock.patch.object(health, "sha256_file", return_value=health.MAIL_HELPER_SHA256), \
+                mock.patch.object(effects, "_run", return_value={"returncode": 0}) as runner:
+            self.assertEqual((True, "helper_accepted"), effects.send_email("主题", "正文"))
+        runner.assert_called_once_with(
+            [health.MAIL_PYTHON, "-I", health.MAIL_HELPER, "主题", "正文"],
+            30, mail=True)
+
     def test_recovery_env_has_only_fixed_threshold_overrides_and_status_has_none(self):
         with mock.patch.dict(os.environ, {"CYF_SECRET_SHOULD_NOT_LEAK": "secret"}):
             status_env = health.command_environment(False)
             recovery_env = health.command_environment(True)
+            mail_env = health.command_environment(mail=True)
         self.assertEqual(health.FIXED_ENV, status_env)
         self.assertNotIn("CYF_API_MIN_MEMORY_AVAILABLE_BYTES", status_env)
         self.assertNotIn("CYF_API_MIN_DISK_AVAILABLE_BYTES", status_env)
@@ -956,12 +973,36 @@ class StaticContractTests(unittest.TestCase):
         self.assertEqual(set(health.FIXED_ENV) | set(health.RECOVERY_ENV_OVERRIDES),
                          set(recovery_env))
         self.assertNotIn("CYF_SECRET_SHOULD_NOT_LEAK", recovery_env)
+        self.assertEqual("C.UTF-8", mail_env["LC_ALL"])
+        self.assertEqual("C.UTF-8", mail_env["LANG"])
+        self.assertEqual(set(health.FIXED_ENV), set(mail_env))
+        self.assertNotIn("CYF_API_MIN_MEMORY_AVAILABLE_BYTES", mail_env)
+        self.assertNotIn("CYF_API_MIN_DISK_AVAILABLE_BYTES", mail_env)
+        self.assertNotIn("CYF_SECRET_SHOULD_NOT_LEAK", mail_env)
+        self.assertEqual("C", status_env["LC_ALL"])
+        self.assertEqual("C", recovery_env["LC_ALL"])
+        with self.assertRaises(health.MonitorError):
+            health.command_environment(recovery=True, mail=True)
 
         effects = health.Effects()
         with mock.patch.object(effects, "_trusted_canonical", return_value=True), \
                 mock.patch.object(effects, "_run", return_value={"returncode": 0}) as runner:
             effects.recover("start")
         runner.assert_called_once_with([health.CANONICAL, "start"], None, recovery=True)
+
+    def test_real_isolated_python_builds_chinese_mime_with_mail_environment(self):
+        script = ("from email.message import EmailMessage; import sys; "
+                  "message=EmailMessage(); message['Subject']=sys.argv[1]; "
+                  "message.set_content(sys.argv[2]); payload=message.as_bytes(); "
+                  "assert b'utf-8' in payload.lower(); print('MIME_BUILD_OK')")
+        process = subprocess.Popen(
+            [health.MAIL_PYTHON, "-I", "-c", script,
+             "【聚义厅监控】监控策略已更新并启用", "中文正文：服务状态需继续排查。"],
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            cwd="/", env=health.command_environment(mail=True), universal_newlines=True)
+        stdout, stderr = process.communicate(timeout=10)
+        self.assertEqual(0, process.returncode, stderr)
+        self.assertEqual("MIME_BUILD_OK", stdout.strip())
 
     def test_cooldown_is_one_cron_interval_without_busy_loop(self):
         self.assertEqual(60, health.COOLDOWN_SECONDS)

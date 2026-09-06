@@ -38,6 +38,9 @@ Only these mutations exist:
   `CYF_API_MIN_DISK_AVAILABLE_BYTES=0`; canonical `status`, mail, systemctl and every
   other child retain the original fixed environment without those additions.
 - Exact mail command `/usr/bin/python3 -I /root/.local/bin/cyf-task-email SUBJECT BODY`.
+  Only this exact mail-helper child receives fixed `LC_ALL=C.UTF-8` and `LANG=C.UTF-8`
+  so sanitized Chinese argv remains encodable on Python 3.6. Canonical status/recovery
+  and every other child retain the fixed `C` locale; no inherited environment is added.
 - Explicit CLI administration: `--init`, `--pause`, `--resume`, `--reset-circuit`, and
   `--notify-test`.
 
@@ -181,6 +184,7 @@ normal ticks are not sent to syslog.
 | per-probe timestamps in mixed observation window | `test_each_mixed_window_probe_has_its_actual_observation_time` |
 | completion timestamp and exhausted-alert outbox protection | `test_recovery_result_mail_uses_actual_completion_time`, `test_full_outbox_reminder_never_evicts_exhausted_alert`, `test_new_priority_never_evicts_existing_exhausted_alerts`, `test_new_exhausted_alert_evicts_only_noncritical_items` |
 | Chinese actionable mail and injection/limits | `MailQueueTests` |
+| isolated Python 3.6 Chinese MIME construction and mail-only UTF-8 locale | `test_real_isolated_python_builds_chinese_mime_with_mail_environment`, `test_recovery_env_has_only_fixed_threshold_overrides_and_status_has_none` |
 | rc1 busy and rc5/foreign fail closed | `test_rc1_busy_never_recovers`, `test_rc5_foreign_identity_never_recovers` |
 | external-only failure no restart | `test_external_only_failure_never_recovers_healthy_api` |
 | maintenance pause | `test_maintenance_reports_but_pauses_recovery` |
