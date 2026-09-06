@@ -280,9 +280,11 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual(3, state["recovery"]["attempts"])
         self.assertFalse(state["recovery"]["circuit_latched"])
         self.assertEqual(1, state["api_healthy_streak"])
-        self.assertFalse(any("恢复失败，已停止自动重试" in subject
-                             for subject, _ in effects.mail_calls))
-        self.assertTrue(any("API 恢复成功（3/3）" in subject
+        self.assertFalse(any(subject in (
+            health.SUBJECT_RECOVERY_EXHAUSTED,
+            health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
+        ) for subject, _ in effects.mail_calls))
+        self.assertTrue(any("恢复成功（3/3）" in subject
                             for subject, _ in effects.mail_calls))
 
     def test_three_healthy_checks_reset_circuit(self):
@@ -372,7 +374,7 @@ class MonitorTests(unittest.TestCase):
         completed_at = started_at + 11 * 60
         self.assertEqual(completed_at, state["recovery"]["last_result"]["at"])
         result_bodies = [body for subject, body in effects.mail_calls
-                         if "API 恢复成功" in subject]
+                         if "恢复成功" in subject]
         self.assertEqual(1, len(result_bodies))
         self.assertIn(health.asia_shanghai_text(completed_at), result_bodies[0])
 
@@ -486,7 +488,7 @@ class MonitorTests(unittest.TestCase):
                 for snapshot in self.persisted))
         effects.mail_observer = observe
         self.monitor(effects).check_once(state, self.config)
-        self.assertTrue(effects.mail_calls[0][0].startswith("【聚义厅监控】准备第1/3次"))
+        self.assertTrue(effects.mail_calls[0][0].startswith("【监控】准备恢复（1/3）"))
         self.assertEqual(["start"], effects.recoveries)
 
     def test_full_outbox_preserves_failed_priority_recovery_notice(self):
@@ -500,7 +502,7 @@ class MonitorTests(unittest.TestCase):
                 "old recovery result", "old body", self.clock.now)
 
         def observe(subject, body):
-            if subject.startswith("【聚义厅监控】准备第1/3次"):
+            if subject.startswith("【监控】准备恢复（1/3）"):
                 durable = self.persisted[-1]["outbox"]
                 self.assertTrue(any(item["event"] == "digest" for item in durable))
                 self.assertTrue(any(item["event"] == "recovery_attempted"
@@ -510,7 +512,7 @@ class MonitorTests(unittest.TestCase):
 
         self.assertEqual(["start"], effects.recoveries)
         self.assertTrue(effects.mail_calls[0][0].startswith(
-            "【聚义厅监控】准备第1/3次"))
+            "【监控】准备恢复（1/3）"))
         current = [item for item in state["outbox"]
                    if item["event"] == "recovery_attempted"]
         self.assertEqual(1, len(current))
@@ -518,7 +520,7 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual(1, current[0]["attempts"])
         self.assertGreater(current[0]["next_attempt_at"], self.clock.now)
         self.assertEqual("helper_failed", current[0]["last_error"])
-        self.assertTrue(any(subject == "【聚义厅监控】待处理通知摘要"
+        self.assertTrue(any(subject == health.SUBJECT_DIGEST
                             for subject, _ in effects.mail_calls[1:]))
         self.assertLessEqual(len(state["outbox"]), health.MAX_OUTBOX)
 
@@ -561,7 +563,7 @@ class MonitorTests(unittest.TestCase):
         self.monitor(effects).check_once(state, self.config)
 
         self.assertTrue(state["recovery"]["circuit_latched"])
-        self.assertEqual("【紧急】恢复失败，已停止自动重试（3/3）",
+        self.assertEqual(health.SUBJECT_RECOVERY_EXHAUSTED,
                          effects.mail_calls[1][0])
         body = effects.mail_calls[1][1]
         self.assertIn("恢复失败，已停止自动重试（3/3）", body)
@@ -610,7 +612,7 @@ class MonitorTests(unittest.TestCase):
         urgent = [item for item in state["outbox"]
                   if item["event"] == "recovery_exhausted"]
         self.assertEqual(1, len(urgent))
-        self.assertEqual("【紧急】恢复终态未知，已停止自动重试（3/3）",
+        self.assertEqual(health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
                          urgent[0]["subject"])
         self.assertIn("UNKNOWN", urgent[0]["body"])
         self.assertIn("不把中断推断为已确认命令失败或成功", urgent[0]["body"])
@@ -654,13 +656,13 @@ class MailQueueTests(unittest.TestCase):
         state = health.initial_state(1)
         health.enqueue_notice(
             state, "urgent", "recovery_exhausted",
-            "【紧急】恢复失败，已停止自动重试（3/3）", "关键告警", 1)
+            health.SUBJECT_RECOVERY_EXHAUSTED, "关键告警", 1)
         for number in range(health.MAX_OUTBOX - 1):
             health.enqueue_notice(state, "old-%d" % number, "recovery_result",
                                   "旧通知", "旧正文", number + 2)
         self.assertEqual(health.MAX_OUTBOX, len(state["outbox"]))
         health.enqueue_notice(state, "later-reminder", "reminder",
-                              "【聚义厅监控】故障仍未解除", "提醒正文", 100)
+                              health.SUBJECT_REMINDER, "提醒正文", 100)
         self.assertEqual(health.MAX_OUTBOX, len(state["outbox"]))
         urgent = [item for item in state["outbox"]
                   if item["event"] == "recovery_exhausted"]
@@ -673,13 +675,13 @@ class MailQueueTests(unittest.TestCase):
         for number in range(health.MAX_PRIORITY_OUTBOX):
             self.assertTrue(health.enqueue_notice(
                 state, "urgent-%d" % number, "recovery_exhausted",
-                "【紧急】恢复失败，已停止自动重试（3/3）", "关键告警%d" % number,
+                health.SUBJECT_RECOVERY_EXHAUSTED, "关键告警%d" % number,
                 number + 1))
         before = [item["id"] for item in state["outbox"]]
 
         added = health.enqueue_notice(
             state, "new-attempt", "recovery_attempted",
-            "【聚义厅监控】准备第1/3次 API 恢复", "新优先通知", 100)
+            health.SUBJECT_RECOVERY_ATTEMPT % (1, 3), "新优先通知", 100)
 
         self.assertFalse(added)
         self.assertEqual(before, [item["id"] for item in state["outbox"]])
@@ -689,14 +691,14 @@ class MailQueueTests(unittest.TestCase):
         state = health.initial_state(1)
         health.enqueue_notice(
             state, "old-urgent", "recovery_exhausted",
-            "【紧急】恢复失败，已停止自动重试（3/3）", "旧关键告警", 1)
+            health.SUBJECT_RECOVERY_EXHAUSTED, "旧关键告警", 1)
         for number in range(health.MAX_OUTBOX - 1):
             health.enqueue_notice(state, "ordinary-%d" % number, "recovery_result",
                                   "普通通知", "普通正文", number + 2)
 
         self.assertTrue(health.enqueue_notice(
             state, "new-urgent", "recovery_exhausted",
-            "【紧急】恢复终态未知，已停止自动重试（3/3）", "新关键告警", 100))
+            health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN, "新关键告警", 100))
 
         critical = {item["id"]: item["body"] for item in state["outbox"]
                     if item["event"] == "recovery_exhausted"}
@@ -714,8 +716,56 @@ class MailQueueTests(unittest.TestCase):
         self.assertNotIn("\r", notice["subject"])
         self.assertNotIn("\n", notice["subject"])
         self.assertNotIn("\x00", notice["body"])
-        self.assertLessEqual(len(notice["subject"]), 160)
+        self.assertLessEqual(len(notice["subject"].encode("utf-8")),
+                             health.MAIL_SUBJECT_MAX_BYTES)
         self.assertLessEqual(len(notice["body"]), 2000)
+
+    def test_subject_templates_are_short_utf8_and_keep_urgent_attempt_count(self):
+        subjects = (
+            health.SUBJECT_DIGEST,
+            health.SUBJECT_INCIDENT_CONFIRMED,
+            health.SUBJECT_RESOLVED,
+            health.SUBJECT_REMINDER,
+            health.SUBJECT_RECOVERY_ATTEMPT % (3, 3),
+            health.SUBJECT_RECOVERY_DEFERRED,
+            health.SUBJECT_RECOVERY_RESULT % ("成功", 3, 3),
+            health.SUBJECT_RECOVERY_RESULT % ("未成功", 3, 3),
+            health.SUBJECT_RECOVERY_EXHAUSTED,
+            health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
+            health.SUBJECT_NOTIFY_TEST,
+        )
+        for subject in subjects:
+            with self.subTest(subject=subject):
+                self.assertEqual(subject, health.sanitize_mail_subject(subject))
+                self.assertLessEqual(len(subject.encode("utf-8")),
+                                     health.MAIL_SUBJECT_MAX_BYTES)
+        self.assertIn("3/3", health.SUBJECT_RECOVERY_EXHAUSTED)
+        self.assertIn("3/3", health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN)
+
+    def test_legacy_long_subject_is_bounded_again_at_delivery_time(self):
+        old_subject = "【聚义厅监控】“三次恢复失败即停止重试”策略已安装；持锁待查"
+        state = health.initial_state(1)
+        state["outbox"].append({
+            "id": "legacy-long", "event": "recovery_result",
+            "subject": old_subject, "body": "旧正文", "created_at": 1,
+            "attempts": 0, "next_attempt_at": 1, "last_error": "",
+        })
+        state["notice_ids"].append("legacy-long")
+        health.validate_state(state)  # The pre-upgrade state remains loadable.
+        effects = FakeEffects()
+        effects.mail_results = [(False, "helper_failed")]
+
+        self.assertEqual(0, health.flush_outbox(
+            state, effects, {"email_enabled": True}, 1, 1,
+            preferred_id="legacy-long"))
+
+        bounded = health.sanitize_mail_subject(old_subject)
+        self.assertEqual(bounded, effects.mail_calls[0][0])
+        self.assertEqual(bounded, state["outbox"][0]["subject"])
+        self.assertLessEqual(len(bounded.encode("utf-8")),
+                             health.MAIL_SUBJECT_MAX_BYTES)
+        self.assertEqual(1, state["outbox"][0]["attempts"])
+        self.assertEqual("helper_failed", state["outbox"][0]["last_error"])
 
     def test_chinese_incident_recovery_resolved_reminder_and_test_bodies_are_action_first(self):
         events = (
@@ -990,19 +1040,52 @@ class StaticContractTests(unittest.TestCase):
             effects.recover("start")
         runner.assert_called_once_with([health.CANONICAL, "start"], None, recovery=True)
 
-    def test_real_isolated_python_builds_chinese_mime_with_mail_environment(self):
-        script = ("from email.message import EmailMessage; import sys; "
-                  "message=EmailMessage(); message['Subject']=sys.argv[1]; "
-                  "message.set_content(sys.argv[2]); payload=message.as_bytes(); "
-                  "assert b'utf-8' in payload.lower(); print('MIME_BUILD_OK')")
+    def test_real_isolated_python36_flattens_all_bounded_subjects_without_folding(self):
+        old_subject = "【聚义厅监控】“三次恢复失败即停止重试”策略已安装；持锁待查"
+        subjects = [
+            health.sanitize_mail_subject(old_subject),
+            health.SUBJECT_DIGEST,
+            health.SUBJECT_INCIDENT_CONFIRMED,
+            health.SUBJECT_RESOLVED,
+            health.SUBJECT_REMINDER,
+            health.SUBJECT_RECOVERY_ATTEMPT % (1, 3),
+            health.SUBJECT_RECOVERY_ATTEMPT % (3, 3),
+            health.SUBJECT_RECOVERY_DEFERRED,
+            health.SUBJECT_RECOVERY_RESULT % ("成功", 3, 3),
+            health.SUBJECT_RECOVERY_RESULT % ("未成功", 3, 3),
+            health.SUBJECT_RECOVERY_EXHAUSTED,
+            health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
+            health.SUBJECT_NOTIFY_TEST,
+        ]
+        script = r"""from email import policy
+from email.generator import BytesGenerator
+from email.message import EmailMessage
+from io import BytesIO
+import json, sys
+subjects=json.loads(sys.argv[1])
+for subject in subjects:
+    message=EmailMessage()
+    message['From']='monitor@example.invalid'
+    message['To']='ops@example.invalid'
+    message['Subject']=subject
+    message.set_content('中文正文：服务状态需继续排查。', charset='utf-8')
+    output=BytesIO()
+    BytesGenerator(output, policy=policy.SMTP).flatten(message, linesep='\r\n')
+    headers=output.getvalue().split(b'\r\n\r\n',1)[0].split(b'\r\n')
+    index=next(i for i,line in enumerate(headers) if line.startswith(b'Subject:'))
+    assert index + 1 == len(headers) or not headers[index + 1].startswith((b' ',b'\t'))
+print('MIME_SUBJECTS_OK:%d' % len(subjects))
+"""
         process = subprocess.Popen(
             [health.MAIL_PYTHON, "-I", "-c", script,
-             "【聚义厅监控】监控策略已更新并启用", "中文正文：服务状态需继续排查。"],
+             json.dumps(subjects, ensure_ascii=False)],
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             cwd="/", env=health.command_environment(mail=True), universal_newlines=True)
-        stdout, stderr = process.communicate(timeout=10)
+        stdout, stderr = process.communicate(timeout=5)
         self.assertEqual(0, process.returncode, stderr)
-        self.assertEqual("MIME_BUILD_OK", stdout.strip())
+        self.assertEqual("MIME_SUBJECTS_OK:%d" % len(subjects), stdout.strip())
+        self.assertLessEqual(len(subjects[0].encode("utf-8")),
+                             health.MAIL_SUBJECT_MAX_BYTES)
 
     def test_cooldown_is_one_cron_interval_without_busy_loop(self):
         self.assertEqual(60, health.COOLDOWN_SECONDS)

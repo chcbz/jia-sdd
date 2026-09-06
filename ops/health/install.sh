@@ -13,7 +13,7 @@ STATE_DIR=/var/lib/cyf-juyiting-health
 CRON=/etc/cron.d/cyf-juyiting-health
 CANONICAL=/usr/local/sbin/cyf-api-kit
 CANONICAL_SHA=56537824cd33f6333f199ea1cebda90b127b39c079e08daad6d164607f788ef5
-CANDIDATE_MONITOR_SHA=2dfa473927ed4a9c3344804e96eda1b469ac08cd69488f828ab8bda2921851d4
+CANDIDATE_MONITOR_SHA=33cd70472019aa79b6b6538f8095e92558c106cf225c9fe0937e12549fd5f634
 
 fail() { echo "ERROR: $*" >&2; exit 2; }
 

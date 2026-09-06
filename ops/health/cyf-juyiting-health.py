@@ -49,6 +49,17 @@ MAX_HTTP_BODY = 256 * 1024
 MAX_OUTBOX = 24
 MAX_PRIORITY_OUTBOX = 32
 MAX_NOTICE_IDS = 64
+MAIL_SUBJECT_MAX_BYTES = 40
+SUBJECT_DIGEST = "【监控】待处理摘要"
+SUBJECT_INCIDENT_CONFIRMED = "【监控】持续故障已确认"
+SUBJECT_RESOLVED = "【监控】故障已恢复"
+SUBJECT_REMINDER = "【监控】故障仍未解除"
+SUBJECT_RECOVERY_ATTEMPT = "【监控】准备恢复（%d/%d）"
+SUBJECT_RECOVERY_DEFERRED = "【监控】恢复已跳过"
+SUBJECT_RECOVERY_RESULT = "【监控】恢复%s（%d/%d）"
+SUBJECT_RECOVERY_EXHAUSTED = "【紧急】恢复失败（3/3）"
+SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN = "【紧急】终态未知（3/3）"
+SUBJECT_NOTIFY_TEST = "【监控】人工通知测试"
 COMPONENTS = ("local_api", "web", "public_api", "mysql", "redis", "agent")
 FIXED_ENV = {
     "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
@@ -104,7 +115,10 @@ def safe_label(value, fallback="error"):
 
 def sanitize_mail_subject(value):
     text = re.sub(r"[\x00-\x20\x7f]+", " ", str(value or "")).strip()
-    return text[:160]
+    # Python 3.6's header folding can stall on long UTF-8 encoded words. Bound
+    # the serialized input by bytes, without splitting a UTF-8 code point.
+    encoded = text.encode("utf-8", "ignore")[:MAIL_SUBJECT_MAX_BYTES]
+    return encoded.decode("utf-8", "ignore")
 
 
 def sanitize_mail_body(value):
@@ -1042,7 +1056,7 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
             count = sum(_coalesced_notice_count(pending) for pending in replaced)
             digest = {
                 "id": "outbox-digest", "event": "digest",
-                "subject": "【聚义厅监控】待处理通知摘要",
+                "subject": SUBJECT_DIGEST,
                 "body": "较早通知已合并，请优先处理当前恢复事件。\n\n"
                         "时间（Asia/Shanghai）：%s\ncoalesced_count=%d\n最新事件=%s" %
                         (asia_shanghai_text(now), count, replaced[-1]["event"][:40]),
@@ -1085,7 +1099,7 @@ def enqueue_notice(state, notice_id, event, subject, body, now):
             replaced = state["outbox"].pop(victim_index)
             digest = {
                 "id": "outbox-digest", "event": "digest",
-                "subject": "【聚义厅监控】待处理通知摘要",
+                "subject": SUBJECT_DIGEST,
                 "body": "较早通知已合并，请查看当前状态。\n\n"
                         "时间（Asia/Shanghai）：%s\ncoalesced_count=2\n最新事件=%s,%s" %
                         (asia_shanghai_text(now), replaced["event"], safe_label(event)),
@@ -1128,6 +1142,10 @@ def flush_outbox(state, effects, config, now, limit=2, preferred_id=None):
             index += 1
             continue
         examined += 1
+        # Re-sanitize at delivery time so pre-upgrade queued subjects also use
+        # the bounded Python 3.6-safe representation.
+        item["subject"] = sanitize_mail_subject(item["subject"])
+        item["body"] = sanitize_mail_body(item["body"])
         accepted, classification = effects.send_email(item["subject"], item["body"])
         if accepted:
             state["outbox"].pop(index)
@@ -1195,7 +1213,7 @@ class Monitor(object):
         notice_id = "incident:%s:recovery-exhausted" % incident_id
         queued = enqueue_notice(
             state, notice_id, "recovery_exhausted",
-            "【紧急】恢复终态未知，已停止自动重试（3/3）",
+            SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
             interrupted_recovery_exhausted_body(
                 now, incident_id, flight, status, results), now)
         if not queued and notice_id not in state["notice_ids"]:
@@ -1250,14 +1268,14 @@ class Monitor(object):
             state["incident"] = {"id": incident_id, "opened_at": now,
                                  "components": confirmed, "last_reminder_slot": 0}
             enqueue_notice(state, "incident:%s:confirmed" % incident_id, "incident_confirmed",
-                           "【聚义厅监控】持续故障已确认",
+                           SUBJECT_INCIDENT_CONFIRMED,
                            notice_body("incident_confirmed", now, incident_id, confirmed), now)
         elif state["incident"] is not None:
             state["incident"]["components"] = confirmed or state["incident"]["components"]
             if state["all_healthy_streak"] >= HEALTHY_RESET_THRESHOLD:
                 incident = state["incident"]
                 enqueue_notice(state, "incident:%s:resolved" % incident["id"], "resolved",
-                               "【聚义厅监控】故障已恢复",
+                               SUBJECT_RESOLVED,
                                notice_body("resolved_after_three_healthy_checks", now,
                                            incident["id"], incident["components"]), now)
                 state["incident"] = None
@@ -1267,7 +1285,7 @@ class Monitor(object):
                 if slot > incident["last_reminder_slot"]:
                     incident["last_reminder_slot"] = slot
                     enqueue_notice(state, "incident:%s:reminder:%d" % (incident["id"], slot),
-                                   "reminder", "【聚义厅监控】故障仍未解除",
+                                   "reminder", SUBJECT_REMINDER,
                                    notice_body("restrained_reminder", now, incident["id"],
                                                incident["components"]), now)
         state["last_snapshot"] = {
@@ -1304,7 +1322,7 @@ class Monitor(object):
                 (incident_id, attempt, now)
             attempt_notice_queued = enqueue_notice(
                 state, attempt_notice_id, "recovery_attempted",
-                "【聚义厅监控】准备第%d/%d次 API 恢复" %
+                SUBJECT_RECOVERY_ATTEMPT %
                 (attempt, MAX_RECOVERY_ATTEMPTS),
                 notice_body("recovery_attempt_selected", now, incident_id, ["local_api"],
                             "本次：动作=%s；尝试=%d/%d；资源观测=%s；身份重新校验待完成。" %
@@ -1356,7 +1374,7 @@ class Monitor(object):
                 enqueue_notice(state,
                                "incident:%s:recovery:%d:revalidation:%s" %
                                (incident_id, attempt, classification),
-                               "recovery_deferred", "【聚义厅监控】本次 API 恢复已跳过",
+                               "recovery_deferred", SUBJECT_RECOVERY_DEFERRED,
                                notice_body("recovery_deferred_revalidation", revalidation_at, incident_id,
                                            ["local_api"], "本次：动作=%s；原因=%s；尝试次数未增加。" %
                                            (ACTION_NAMES_ZH[action], safe_label(classification))),
@@ -1403,7 +1421,7 @@ class Monitor(object):
                     exhausted_notice_id = "incident:%s:recovery-exhausted" % incident_id
                     enqueue_notice(
                         state, exhausted_notice_id, "recovery_exhausted",
-                        "【紧急】恢复失败，已停止自动重试（3/3）",
+                        SUBJECT_RECOVERY_EXHAUSTED,
                         recovery_exhausted_body(
                             completed_at, incident_id, action, attempt, command_result,
                             status, fresh, results, resource_observation), completed_at)
@@ -1416,7 +1434,7 @@ class Monitor(object):
                     enqueue_notice(
                         state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
                         "recovery_result",
-                        "【聚义厅监控】API 恢复%s（%d/%d）" %
+                        SUBJECT_RECOVERY_RESULT %
                         ("成功" if success else "未成功", attempt, MAX_RECOVERY_ATTEMPTS),
                         notice_body(
                             "recovery_result", completed_at, incident_id, ["local_api"],
@@ -1568,7 +1586,7 @@ def main(argv=None):
         effects = Effects()
         if args.notify_test:
             notice_id = "notify-test:%d" % now
-            enqueue_notice(state, notice_id, "notify_test", "【聚义厅监控】人工通知测试",
+            enqueue_notice(state, notice_id, "notify_test", SUBJECT_NOTIFY_TEST,
                            notice_body("explicit_notify_test", now, None, []), now)
             store.write(state)
             accepted = flush_outbox(state, effects, config, now, 1)
