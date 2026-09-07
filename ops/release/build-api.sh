@@ -26,7 +26,9 @@ assert_clean_candidate api "$API_REPO" "$API_REF" "$API_HEAD" "$API_TREE"
   --artifact "$API_REPO/$API_JAR_RELATIVE_PATH" \
   "$ORCHESTRATOR_TASK" -- \
   "$API_REPO/gradlew" --no-daemon --max-workers=1 --no-build-cache \
-  -PrepoUsername=unused -PrepoPassword=unused "$API_GRADLE_TASK"
+  -PrepoUsername=unused -PrepoPassword=unused \
+  -Dorg.gradle.jvmargs='-Xms128m -Xmx384m -XX:MaxMetaspaceSize=192m -XX:MaxDirectMemorySize=64m -Dfile.encoding=UTF-8' \
+  "$API_GRADLE_TASK"
 
 assert_clean_candidate api-after-build "$API_REPO" "$API_REF" "$API_HEAD" "$API_TREE"
 BUILT_JAR="$API_REPO/$API_JAR_RELATIVE_PATH"
