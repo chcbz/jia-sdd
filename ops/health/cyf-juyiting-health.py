@@ -29,7 +29,8 @@ MAINTENANCE_PATH = STATE_DIR + "/maintenance"
 CANONICAL = "/usr/local/sbin/cyf-api-kit"
 CANONICAL_SHA256 = "b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525"
 SYSTEMD_RUN = "/usr/bin/systemd-run"
-RECOVERY_SWAPPINESS_PROPERTY = "MemorySwappiness=60"
+RECOVERY_CARRIER = "/usr/local/libexec/cyf-juyiting-recovery-carrier.py"
+RECOVERY_CARRIER_SHA256 = "1c7137e34cd16ae18ce69aaaa5d37d36e4620cac4e77b87c45fd7cd5252ba6a0"
 MAIL_PYTHON = "/usr/bin/python3"
 MAIL_HELPER = "/root/.local/bin/cyf-task-email"
 MAIL_HELPER_SHA256 = "ddc540f1d450880af5bb707751cf6cd68b6492e58cb702436b19580867d3ae99"
@@ -94,10 +95,9 @@ def recovery_carrier_argv(action, incident_id, attempt):
     if action not in ("start", "restart"):
         raise MonitorError("recovery_action_invalid")
     return [
-        SYSTEMD_RUN, "--quiet", "--scope",
+        SYSTEMD_RUN, "--quiet", "--scope", "--slice=system.slice",
         "--unit=" + recovery_scope_unit(incident_id, attempt),
-        "--property=" + RECOVERY_SWAPPINESS_PROPERTY,
-        CANONICAL, action,
+        MAIL_PYTHON, "-I", RECOVERY_CARRIER, action, incident_id, str(attempt),
     ]
 
 
@@ -386,18 +386,33 @@ def validate_state(data):
             raise MonitorError("state_recovery_time_invalid")
     if recovery["in_flight"] is not None:
         flight = recovery["in_flight"]
-        if not isinstance(flight, dict) or set(flight) != {"action", "attempt", "at"} \
+        flight_keys = {"action", "attempt", "at"}
+        if not isinstance(flight, dict) or not flight_keys.issubset(set(flight)) \
+                or set(flight) - (flight_keys | {"native_invoked_at"}) \
                 or flight["action"] not in ("start", "restart") \
                 or not _is_int(flight["attempt"], 1) \
-                or flight["attempt"] > MAX_RECOVERY_ATTEMPTS or not _is_int(flight["at"]):
+                or flight["attempt"] > MAX_RECOVERY_ATTEMPTS or not _is_int(flight["at"]) \
+                or ("native_invoked_at" in flight \
+                    and not _is_int(flight["native_invoked_at"])):
             raise MonitorError("state_in_flight_invalid")
     if recovery["last_result"] is not None:
         result = recovery["last_result"]
-        if not isinstance(result, dict) or set(result) != {"at", "action", "attempt", "classification"} \
+        result_keys = {"at", "action", "attempt", "classification"}
+        optional_result_keys = {"native_invoked", "native_returncode", "carrier_returncode"}
+        if not isinstance(result, dict) or not result_keys.issubset(set(result)) \
+                or set(result) - (result_keys | optional_result_keys) \
                 or result["action"] not in ("start", "restart") \
                 or not _is_int(result["at"]) or not _is_int(result["attempt"], 1) \
                 or result["attempt"] > MAX_RECOVERY_ATTEMPTS \
-                or not isinstance(result["classification"], str) or len(result["classification"]) > 80:
+                or not isinstance(result["classification"], str) or len(result["classification"]) > 80 \
+                or ("native_invoked" in result \
+                    and not isinstance(result["native_invoked"], bool)) \
+                or ("native_returncode" in result and result["native_returncode"] is not None \
+                    and (not isinstance(result["native_returncode"], int) \
+                         or isinstance(result["native_returncode"], bool))) \
+                or ("carrier_returncode" in result \
+                    and (not isinstance(result["carrier_returncode"], int) \
+                         or isinstance(result["carrier_returncode"], bool))):
             raise MonitorError("state_recovery_result_invalid")
     outbox = data.get("outbox")
     if not isinstance(outbox, list) or len(outbox) > MAX_PRIORITY_OUTBOX:
@@ -701,18 +716,12 @@ def parse_canonical_status(returncode, stdout):
 
 
 class Effects(object):
-    def _run(self, argv, timeout, recovery=None, mail=False):
+    def _run(self, argv, timeout, mail=False):
         mail_prefix = [MAIL_PYTHON, "-I", MAIL_HELPER]
         is_mail_command = len(argv) >= len(mail_prefix) \
             and argv[:len(mail_prefix)] == mail_prefix
-        if recovery is not None:
-            if not isinstance(recovery, tuple) or len(recovery) != 3:
-                raise MonitorError("recovery_contract_invalid")
-            action, incident_id, attempt = recovery
-            if argv != recovery_carrier_argv(action, incident_id, attempt):
-                raise MonitorError("recovery_env_command_invalid")
         if mail:
-            if recovery or len(argv) != 5 or not is_mail_command \
+            if len(argv) != 5 or not is_mail_command \
                     or argv[3] != sanitize_mail_subject(argv[3]) \
                     or argv[4] != sanitize_mail_body(argv[4]):
                 raise MonitorError("mail_env_command_invalid")
@@ -720,7 +729,7 @@ class Effects(object):
             raise MonitorError("mail_command_without_mail_env")
         process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, cwd="/",
-                                   env=command_environment(recovery is not None, mail),
+                                   env=command_environment(mail=mail),
                                    universal_newlines=True)
         try:
             stdout, stderr = process.communicate(timeout=timeout)
@@ -756,19 +765,90 @@ class Effects(object):
             if not self._trusted_canonical():
                 return {"permitted": False, "classification": "canonical_file_untrusted"}
             validate_trusted_executable(SYSTEMD_RUN, 0, True)
-            return {"permitted": True, "classification": "recovery_scope_ready"}
+            validate_trusted_executable(MAIL_PYTHON, 0, True)
+            validate_regular(RECOVERY_CARRIER, 0o755, 0, 1024 * 1024, True, True)
+            if sha256_file(RECOVERY_CARRIER) != RECOVERY_CARRIER_SHA256:
+                return {"permitted": False,
+                        "classification": "recovery_carrier_hash_mismatch"}
+            return {"permitted": True,
+                    "classification": "recovery_carrier_files_ready"}
         except (MonitorError, OSError) as exc:
             return {"permitted": False,
                     "classification": "recovery_carrier_%s" % safe_label(str(exc))}
 
-    def recover(self, action, incident_id, attempt):
+    def _run_recovery_carrier(self, argv, action, incident_id, attempt,
+                              native_invoked_callback):
+        expected = recovery_carrier_argv(action, incident_id, attempt)
+        if argv != expected:
+            raise MonitorError("recovery_env_command_invalid")
+        process = subprocess.Popen(
+            argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL, cwd="/", env=command_environment(recovery=True),
+            universal_newlines=True)
+        native_invoked = False
+        native_returncode = None
+        protocol_invalid = False
+        invocation_persist_failed = False
+        for line in process.stdout:
+            marker = line.rstrip("\n")
+            if marker == "CYF_HEALTHMON_NATIVE_INVOKED=1":
+                if native_invoked or native_returncode is not None:
+                    protocol_invalid = True
+                    continue
+                native_invoked = True
+                try:
+                    native_invoked_callback()
+                except Exception:
+                    invocation_persist_failed = True
+            elif re.match(r"^CYF_HEALTHMON_NATIVE_RESULT=-?[0-9]+$", marker):
+                if not native_invoked or native_returncode is not None:
+                    protocol_invalid = True
+                    continue
+                native_returncode = int(marker.split("=", 1)[1])
+            elif marker:
+                protocol_invalid = True
+        carrier_returncode = int(process.wait())
+        if not native_invoked:
+            return {
+                "returncode": carrier_returncode,
+                "carrier_returncode": carrier_returncode,
+                "native_invoked": False, "native_returncode": None,
+                "classification": "carrier_failed_exit_%d" % carrier_returncode,
+            }
+        if native_returncode is None or protocol_invalid:
+            return {
+                "returncode": carrier_returncode,
+                "carrier_returncode": carrier_returncode,
+                "native_invoked": True, "native_returncode": None,
+                "classification": "native_result_unknown",
+            }
+        return {
+            "returncode": native_returncode,
+            "carrier_returncode": carrier_returncode,
+            "native_invoked": True, "native_returncode": native_returncode,
+            "classification": ("native_exit_%d_invocation_persist_deferred" %
+                               native_returncode) if invocation_persist_failed else
+                              ("native_exit_%d" % native_returncode),
+        }
+
+    def recover(self, action, incident_id, attempt, native_invoked_callback):
         precondition = self.recovery_precondition(action, incident_id, attempt)
         if not precondition.get("permitted"):
-            raise MonitorError(precondition.get("classification"))
+            return {
+                "returncode": 126, "carrier_returncode": 126,
+                "native_invoked": False, "native_returncode": None,
+                "classification": safe_label(precondition.get("classification")),
+            }
         argv = recovery_carrier_argv(action, incident_id, attempt)
-        result = self._run(argv, None, recovery=(action, incident_id, attempt))
-        return {"returncode": result["returncode"],
-                "classification": "native_exit_%d" % result["returncode"]}
+        try:
+            return self._run_recovery_carrier(
+                argv, action, incident_id, attempt, native_invoked_callback)
+        except (MonitorError, OSError, subprocess.SubprocessError) as exc:
+            return {
+                "returncode": 126, "carrier_returncode": 126,
+                "native_invoked": False, "native_returncode": None,
+                "classification": "carrier_%s" % safe_label(type(exc).__name__),
+            }
 
     def _http(self, url):
         req = urlrequest.Request(url, headers={
@@ -1456,6 +1536,8 @@ class Monitor(object):
                     self.persist(state)
                     action = None
             if action:
+                previous_attempts = recovery["attempts"]
+                previous_last_attempt_at = recovery["last_attempt_at"]
                 attempt_started_at = max(
                     int(self.clock()), maintenance_at, mysql_at, redis_at, rechecked_at)
                 recovery["attempts"] = attempt
@@ -1464,62 +1546,127 @@ class Monitor(object):
                     "action": action, "attempt": attempt, "at": attempt_started_at}
                 state["last_snapshot"]["recovery"]["decision"] = revalidation["classification"]
                 state["updated_at"] = attempt_started_at
-                self.persist(state)  # durable actual-command fence immediately before lifecycle execution
+                self.persist(state)  # durable reservation immediately before carrier execution
+
+                def record_native_invocation():
+                    flight = recovery.get("in_flight")
+                    if not isinstance(flight, dict) \
+                            or flight.get("action") != action \
+                            or flight.get("attempt") != attempt:
+                        raise MonitorError("native_invocation_fence_changed")
+                    invoked_at = max(int(self.clock()), attempt_started_at)
+                    flight["native_invoked_at"] = invoked_at
+                    state["updated_at"] = invoked_at
+                    self.persist(state)
+
                 try:
-                    command_result = self.effects.recover(action, incident_id, attempt)
-                    if not isinstance(command_result, dict) or not isinstance(command_result.get("returncode"), int):
+                    command_result = self.effects.recover(
+                        action, incident_id, attempt, record_native_invocation)
+                    if not isinstance(command_result, dict) \
+                            or not isinstance(command_result.get("returncode"), int) \
+                            or isinstance(command_result.get("returncode"), bool) \
+                            or not isinstance(command_result.get("carrier_returncode"), int) \
+                            or isinstance(command_result.get("carrier_returncode"), bool) \
+                            or not isinstance(command_result.get("native_invoked"), bool) \
+                            or (command_result.get("native_returncode") is not None \
+                                and (not isinstance(command_result.get("native_returncode"), int) \
+                                     or isinstance(command_result.get("native_returncode"), bool))):
                         raise MonitorError("recovery_result_invalid")
                 except Exception as exc:
-                    command_result = {"returncode": 126,
-                                      "classification": "recovery_%s" % safe_label(type(exc).__name__)}
-                fresh, completed_at = self._probe_with_time(
-                    self.effects.canonical_status, "canonical_post_recovery")
-                completed_at = max(completed_at, attempt_started_at)
-                success = command_result.get("returncode") == 0 and fresh.get("healthy") is True
-                classification = "success_health_up" if success else "failed_fresh_health_not_up"
-                recovery["in_flight"] = None
-                recovery["last_result"] = {"at": completed_at, "action": action, "attempt": attempt,
-                                           "classification": classification}
-                if success:
-                    recovery["last_success_at"] = completed_at
-                    state["api_healthy_streak"] = 1
-                    state["component_streaks"]["local_api"] = 0
-                if not success and recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
-                    recovery["circuit_latched"] = True
-                state["last_snapshot"]["checks"]["local_api_post_recovery"] = \
-                    sanitized_result(fresh, completed_at)
-                state["last_snapshot"]["recovery"]["result"] = classification
-                state["last_snapshot"]["recovery"]["native_result"] = safe_label(
-                    command_result.get("classification"))
-                state["updated_at"] = completed_at
-                if recovery["circuit_latched"]:
-                    exhausted_notice_id = "incident:%s:recovery-exhausted" % incident_id
+                    command_result = {
+                        "returncode": 126, "carrier_returncode": 126,
+                        "native_invoked": None, "native_returncode": None,
+                        "classification": "recovery_%s" % safe_label(type(exc).__name__),
+                    }
+
+                if command_result.get("native_invoked") is False:
+                    completed_at = max(int(self.clock()), attempt_started_at)
+                    recovery["attempts"] = previous_attempts
+                    recovery["last_attempt_at"] = previous_last_attempt_at
+                    recovery["in_flight"] = None
+                    recovery["last_result"] = {
+                        "at": completed_at, "action": action, "attempt": attempt,
+                        "classification": "carrier_failed_not_invoked",
+                        "native_invoked": False, "native_returncode": None,
+                        "carrier_returncode": command_result["carrier_returncode"],
+                    }
+                    state["last_snapshot"]["recovery"]["decision"] = \
+                        "carrier_failed_not_invoked"
+                    state["last_snapshot"]["recovery"]["result"] = \
+                        "not_attempted_carrier_failed"
+                    state["last_snapshot"]["recovery"]["native_result"] = safe_label(
+                        command_result.get("classification"))
                     enqueue_notice(
-                        state, exhausted_notice_id, "recovery_exhausted",
-                        SUBJECT_RECOVERY_EXHAUSTED,
-                        recovery_exhausted_body(
-                            completed_at, incident_id, action, attempt, command_result,
-                            status, fresh, results, resource_observation), completed_at)
-                    self.persist(state)  # latch and urgent notice are durable before delivery
-                    pre_recovery_mail_accepted += flush_outbox(
-                        state, self.effects, config, completed_at, 1,
-                        preferred_id=exhausted_notice_id)
-                    self.persist(state)  # mail failure never clears the circuit or notice
-                else:
-                    enqueue_notice(
-                        state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
-                        "recovery_result",
-                        SUBJECT_RECOVERY_RESULT %
-                        ("成功" if success else "未成功", attempt, MAX_RECOVERY_ATTEMPTS),
+                        state,
+                        "incident:%s:recovery:%d:carrier-terminal:%s" %
+                        (incident_id, attempt,
+                         safe_label(command_result.get("classification"))),
+                        "recovery_deferred", SUBJECT_RECOVERY_DEFERRED,
                         notice_body(
-                            "recovery_result", completed_at, incident_id, ["local_api"],
-                            "本次：动作=%s；尝试=%d/%d；返回码=%d；恢复后健康=%s（%s）。" %
-                            (ACTION_NAMES_ZH[action], attempt, MAX_RECOVERY_ATTEMPTS,
-                             command_result.get("returncode"),
-                             "UP" if fresh.get("healthy") else "未确认",
-                             safe_label(fresh.get("classification")))), completed_at)
+                            "recovery_deferred_revalidation", completed_at,
+                            incident_id, ["local_api"],
+                            "本次：carrier 未启动规范 API；原因=%s；实际恢复次数未增加。" %
+                            safe_label(command_result.get("classification"))),
+                        completed_at)
                     state["updated_at"] = completed_at
                     self.persist(state)
+                else:
+                    fresh, completed_at = self._probe_with_time(
+                        self.effects.canonical_status, "canonical_post_recovery")
+                    completed_at = max(completed_at, attempt_started_at)
+                    native_returncode = command_result.get("native_returncode")
+                    success = command_result.get("native_invoked") is True \
+                        and native_returncode == 0 and fresh.get("healthy") is True
+                    classification = "success_health_up" if success else \
+                        "failed_fresh_health_not_up"
+                    recovery["in_flight"] = None
+                    recovery["last_result"] = {
+                        "at": completed_at, "action": action, "attempt": attempt,
+                        "classification": classification,
+                        "native_invoked": command_result.get("native_invoked") is True,
+                        "native_returncode": native_returncode,
+                        "carrier_returncode": command_result.get("carrier_returncode", 126),
+                    }
+                    if success:
+                        recovery["last_success_at"] = completed_at
+                        state["api_healthy_streak"] = 1
+                        state["component_streaks"]["local_api"] = 0
+                    if not success and recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
+                        recovery["circuit_latched"] = True
+                    state["last_snapshot"]["checks"]["local_api_post_recovery"] = \
+                        sanitized_result(fresh, completed_at)
+                    state["last_snapshot"]["recovery"]["result"] = classification
+                    state["last_snapshot"]["recovery"]["native_result"] = safe_label(
+                        command_result.get("classification"))
+                    state["updated_at"] = completed_at
+                    if recovery["circuit_latched"]:
+                        exhausted_notice_id = "incident:%s:recovery-exhausted" % incident_id
+                        enqueue_notice(
+                            state, exhausted_notice_id, "recovery_exhausted",
+                            SUBJECT_RECOVERY_EXHAUSTED,
+                            recovery_exhausted_body(
+                                completed_at, incident_id, action, attempt, command_result,
+                                status, fresh, results, resource_observation), completed_at)
+                        self.persist(state)  # latch and urgent notice are durable before delivery
+                        pre_recovery_mail_accepted += flush_outbox(
+                            state, self.effects, config, completed_at, 1,
+                            preferred_id=exhausted_notice_id)
+                        self.persist(state)  # mail failure never clears the circuit or notice
+                    else:
+                        enqueue_notice(
+                            state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
+                            "recovery_result",
+                            SUBJECT_RECOVERY_RESULT %
+                            ("成功" if success else "未成功", attempt, MAX_RECOVERY_ATTEMPTS),
+                            notice_body(
+                                "recovery_result", completed_at, incident_id, ["local_api"],
+                                "本次：动作=%s；尝试=%d/%d；规范返回码=%s；恢复后健康=%s（%s）。" %
+                                (ACTION_NAMES_ZH[action], attempt, MAX_RECOVERY_ATTEMPTS,
+                                 str(native_returncode) if native_returncode is not None else "UNKNOWN",
+                                 "UP" if fresh.get("healthy") else "未确认",
+                                 safe_label(fresh.get("classification")))), completed_at)
+                        state["updated_at"] = completed_at
+                        self.persist(state)
         finish_now = int(self.clock())
         preferred_id = interrupted_notice_id
         delivered = pre_recovery_mail_accepted + flush_outbox(

@@ -8,17 +8,19 @@ ACTION=${1-}
 SELF=$(readlink -f -- "$0")
 BASE=$(dirname -- "$SELF")
 MONITOR=/usr/local/libexec/cyf-juyiting-health.py
+CARRIER=/usr/local/libexec/cyf-juyiting-recovery-carrier.py
 CONFIG=/etc/cyf-juyiting-health.json
 STATE_DIR=/var/lib/cyf-juyiting-health
 CRON=/etc/cron.d/cyf-juyiting-health
 CANONICAL=/usr/local/sbin/cyf-api-kit
 CANONICAL_SHA=b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525
-CANDIDATE_MONITOR_SHA=6bee63aedd88159884c5fd349d9280d9b364a98eedab022f1ca9c4442dc66915
+CANDIDATE_MONITOR_SHA=da668306284437b743e893f64949276f005946ec38410238dc90b96a53422d49
+CANDIDATE_CARRIER_SHA=1c7137e34cd16ae18ce69aaaa5d37d36e4620cac4e77b87c45fd7cd5252ba6a0
 
 fail() { echo "ERROR: $*" >&2; exit 2; }
 
-install_monitor_atomically() {
-  /usr/bin/python3 -I - "$BASE/cyf-juyiting-health.py" "$MONITOR" "$CANDIDATE_MONITOR_SHA" <<'PY'
+install_payload_atomically() {
+  /usr/bin/python3 -I - "$1" "$2" "$3" <<'PY'
 import hashlib, os, stat, sys, tempfile
 source, target, expected_sha = sys.argv[1:]
 target_dir = os.path.dirname(target)
@@ -79,19 +81,29 @@ finally:
 PY
 }
 
+install_monitor_atomically() {
+  install_payload_atomically "$BASE/cyf-juyiting-health.py" "$MONITOR" "$CANDIDATE_MONITOR_SHA"
+}
+
+install_carrier_atomically() {
+  install_payload_atomically "$BASE/cyf-juyiting-recovery-carrier.py" "$CARRIER" "$CANDIDATE_CARRIER_SHA"
+}
+
 [ "$(id -u)" = 0 ] || fail "root required"
 case "$SELF" in /home/isp/*) fail "copy this bundle to a root-owned staging directory before root execution";; esac
 
 /usr/bin/python3 -I - "$BASE" "$SELF" \
-  "$BASE/cyf-juyiting-health.py" "$BASE/cyf-juyiting-health.json.example" \
-  "$BASE/cyf-juyiting-health.cron" <<'PY' || fail "staging chain or payload metadata unsafe"
+  "$BASE/cyf-juyiting-health.py" "$BASE/cyf-juyiting-recovery-carrier.py" \
+  "$BASE/cyf-juyiting-health.json.example" "$BASE/cyf-juyiting-health.cron" <<'PY' \
+  || fail "staging chain or payload metadata unsafe"
 import os, stat, sys
 base = os.path.abspath(sys.argv[1])
 expected = {
     os.path.abspath(sys.argv[2]): 0o755,
     os.path.abspath(sys.argv[3]): 0o755,
-    os.path.abspath(sys.argv[4]): 0o600,
-    os.path.abspath(sys.argv[5]): 0o644,
+    os.path.abspath(sys.argv[4]): 0o755,
+    os.path.abspath(sys.argv[5]): 0o600,
+    os.path.abspath(sys.argv[6]): 0o644,
 }
 current = base
 while True:
@@ -112,6 +124,8 @@ PY
 
 [ "$(sha256sum "$BASE/cyf-juyiting-health.py" | awk '{print $1}')" = "$CANDIDATE_MONITOR_SHA" ] \
   || fail "monitor candidate digest is not the reviewed digest"
+[ "$(sha256sum "$BASE/cyf-juyiting-recovery-carrier.py" | awk '{print $1}')" = "$CANDIDATE_CARRIER_SHA" ] \
+  || fail "carrier candidate digest is not the reviewed digest"
 [ "$(sha256sum "$CANONICAL" | awk '{print $1}')" = "$CANONICAL_SHA" ] \
   || fail "canonical API lifecycle hash mismatch"
 
@@ -119,6 +133,9 @@ case "$ACTION" in
   install)
     [ -d /usr/local/libexec ] && [ ! -L /usr/local/libexec ] || fail "/usr/local/libexec missing/unsafe"
     [ "$(stat -Lc '%a:%u:%g' /usr/local/libexec)" = "755:0:0" ] || fail "/usr/local/libexec metadata mismatch"
+    install_carrier_atomically || fail "atomic carrier activation failed"
+    [ "$(stat -Lc '%a:%u:%g:%h' "$CARRIER")" = "755:0:0:1" ] || fail "installed carrier metadata mismatch"
+    [ "$(sha256sum "$CARRIER" | awk '{print $1}')" = "$CANDIDATE_CARRIER_SHA" ] || fail "installed carrier digest mismatch"
     install_monitor_atomically || fail "atomic monitor activation failed"
     [ "$(stat -Lc '%a:%u:%g:%h' "$MONITOR")" = "755:0:0:1" ] || fail "installed monitor metadata mismatch"
     [ "$(sha256sum "$MONITOR" | awk '{print $1}')" = "$CANDIDATE_MONITOR_SHA" ] || fail "installed monitor digest mismatch"
@@ -143,6 +160,9 @@ case "$ACTION" in
     echo "installed without cron activation or service restart"
     ;;
   install-cron)
+    [ -f "$CARRIER" ] && [ ! -L "$CARRIER" ] || fail "install carrier first"
+    [ "$(stat -Lc '%a:%u:%g:%h' "$CARRIER")" = "755:0:0:1" ] || fail "installed carrier metadata mismatch"
+    [ "$(sha256sum "$CARRIER" | awk '{print $1}')" = "$CANDIDATE_CARRIER_SHA" ] || fail "installed carrier is not the reviewed candidate"
     [ -f "$MONITOR" ] && [ ! -L "$MONITOR" ] || fail "install monitor first"
     [ "$(stat -Lc '%a:%u:%g:%h' "$MONITOR")" = "755:0:0:1" ] || fail "installed monitor metadata mismatch"
     [ "$(sha256sum "$MONITOR" | awk '{print $1}')" = "$CANDIDATE_MONITOR_SHA" ] || fail "installed monitor is not the reviewed candidate"
@@ -157,6 +177,9 @@ case "$ACTION" in
     echo "cron file installed; no daemon restart and no immediate check executed"
     ;;
   verify)
+    [ -f "$CARRIER" ] && [ ! -L "$CARRIER" ] || fail "carrier missing/unsafe"
+    [ "$(stat -Lc '%a:%u:%g:%h' "$CARRIER")" = "755:0:0:1" ] || fail "carrier metadata mismatch"
+    [ "$(sha256sum "$CARRIER" | awk '{print $1}')" = "$CANDIDATE_CARRIER_SHA" ] || fail "carrier digest mismatch"
     [ -f "$MONITOR" ] && [ ! -L "$MONITOR" ] || fail "monitor missing/unsafe"
     [ "$(stat -Lc '%a:%u:%g:%h' "$MONITOR")" = "755:0:0:1" ] || fail "monitor metadata mismatch"
     [ "$(sha256sum "$MONITOR" | awk '{print $1}')" = "$CANDIDATE_MONITOR_SHA" ] || fail "monitor digest mismatch"

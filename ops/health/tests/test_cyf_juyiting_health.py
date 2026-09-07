@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -10,9 +11,14 @@ from unittest import mock
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODULE_PATH = os.path.join(HERE, "cyf-juyiting-health.py")
+CARRIER_PATH = os.path.join(HERE, "cyf-juyiting-recovery-carrier.py")
 SPEC = importlib.util.spec_from_file_location("cyf_juyiting_health", MODULE_PATH)
 health = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(health)
+CARRIER_SPEC = importlib.util.spec_from_file_location(
+    "cyf_juyiting_recovery_carrier", CARRIER_PATH)
+carrier_module = importlib.util.module_from_spec(CARRIER_SPEC)
+CARRIER_SPEC.loader.exec_module(carrier_module)
 
 
 def stopped():
@@ -48,8 +54,10 @@ class FakeEffects(object):
         self.recoveries = []
         self.recovery_calls = []
         self.recovery_rc = 0
+        self.carrier_rc = None
+        self.native_invoked = True
         self.recovery_precondition_result = {
-            "permitted": True, "classification": "recovery_scope_ready"}
+            "permitted": True, "classification": "recovery_carrier_files_ready"}
         self.recovery_exception = None
         self.recovery_observer = None
         self.web_result = {"healthy": True, "classification": "web_ok"}
@@ -73,7 +81,7 @@ class FakeEffects(object):
         self.events.append("recovery_precondition")
         return dict(self.recovery_precondition_result)
 
-    def recover(self, action, incident_id, attempt):
+    def recover(self, action, incident_id, attempt, native_invoked_callback):
         self.events.append("recover:" + action)
         self.recoveries.append(action)
         self.recovery_calls.append((action, incident_id, attempt))
@@ -81,7 +89,19 @@ class FakeEffects(object):
             self.recovery_observer(action, incident_id, attempt)
         if self.recovery_exception is not None:
             raise self.recovery_exception
-        return {"returncode": self.recovery_rc, "classification": "native_exit_%d" % self.recovery_rc}
+        carrier_rc = self.recovery_rc if self.carrier_rc is None else self.carrier_rc
+        if not self.native_invoked:
+            return {
+                "returncode": carrier_rc, "carrier_returncode": carrier_rc,
+                "native_invoked": False, "native_returncode": None,
+                "classification": "carrier_failed_exit_%d" % carrier_rc,
+            }
+        native_invoked_callback()
+        return {
+            "returncode": self.recovery_rc, "carrier_returncode": carrier_rc,
+            "native_invoked": True, "native_returncode": self.recovery_rc,
+            "classification": "native_exit_%d" % self.recovery_rc,
+        }
 
     def web(self, marker):
         self.events.append("web")
@@ -161,6 +181,9 @@ class MonitorTests(unittest.TestCase):
         self.assertIn("mail", effects.events[:recovery_index])
         fenced = [item for item in self.persisted if item["recovery"]["in_flight"]]
         self.assertEqual(1, fenced[-1]["recovery"]["attempts"])
+        native_fenced = [item for item in fenced
+                         if "native_invoked_at" in item["recovery"]["in_flight"]]
+        self.assertEqual(1, len(native_fenced))
 
     def test_rc1_busy_never_recovers(self):
         effects = FakeEffects([busy()])
@@ -365,6 +388,8 @@ class MonitorTests(unittest.TestCase):
                                  result["recovery"]["result"])
                 self.assertEqual("native_exit_1",
                                  result["recovery"]["native_result"])
+                self.assertTrue(state["recovery"]["last_result"]["native_invoked"])
+                self.assertEqual(1, state["recovery"]["last_result"]["native_returncode"])
                 self.assertIsNone(state["recovery"]["last_success_at"])
 
                 self.clock.now += health.COOLDOWN_SECONDS
@@ -388,6 +413,33 @@ class MonitorTests(unittest.TestCase):
                          result["recovery"]["result"])
         self.assertEqual("recovery_carrier_unsafe_executable_owner",
                          result["recovery"]["decision"])
+
+    def test_carrier_failure_before_native_rolls_back_reserved_third_attempt(self):
+        effects = FakeEffects([stopped(), stopped()])
+        effects.native_invoked = False
+        effects.carrier_rc = 1
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        state["recovery"]["attempts"] = 2
+        previous_attempt_at = self.clock.now - health.COOLDOWN_SECONDS
+        state["recovery"]["last_attempt_at"] = previous_attempt_at
+
+        result = self.monitor(effects).check_once(state, self.config)
+
+        self.assertEqual(["start"], effects.recoveries)
+        self.assertEqual(2, effects.events.count("status"))
+        self.assertEqual(2, state["recovery"]["attempts"])
+        self.assertEqual(previous_attempt_at, state["recovery"]["last_attempt_at"])
+        self.assertFalse(state["recovery"]["circuit_latched"])
+        self.assertIsNone(state["recovery"]["in_flight"])
+        self.assertEqual("carrier_failed_not_invoked",
+                         state["recovery"]["last_result"]["classification"])
+        self.assertFalse(state["recovery"]["last_result"]["native_invoked"])
+        self.assertIsNone(state["recovery"]["last_result"]["native_returncode"])
+        self.assertEqual(1, state["recovery"]["last_result"]["carrier_returncode"])
+        self.assertEqual("not_attempted_carrier_failed", result["recovery"]["result"])
+        self.assertFalse(any(item["event"] == "recovery_exhausted"
+                             for item in state["outbox"]))
 
     def test_recovery_exception_consumes_third_actual_attempt_and_latches(self):
         effects = FakeEffects([stopped(), stopped(), stopped()])
@@ -1033,13 +1085,89 @@ class ProbeContractTests(unittest.TestCase):
         self.assertFalse(effects.web('<div id="app"></div>')["healthy"])
 
 
+class RecoveryCarrierHelperTests(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_fixed_own_cgroup_swappiness_write_and_readback(self):
+        unit = carrier_module.scope_unit("I000056-1788792725", 2)
+        root = os.path.join(self.tempdir, "memory")
+        directory = os.path.join(root, "system.slice", unit)
+        os.makedirs(directory)
+        control = os.path.join(directory, "memory.swappiness")
+        with open(control, "wb") as stream:
+            stream.write(b"0\n")
+        os.chmod(control, 0o644)
+        proc_path = os.path.join(self.tempdir, "self.cgroup")
+        with open(proc_path, "w") as stream:
+            stream.write("4:memory:/system.slice/%s\n" % unit)
+
+        carrier_module.configure_own_swappiness(unit, root, proc_path)
+
+        with open(control, "rb") as stream:
+            self.assertEqual(b"60", stream.read().strip())
+
+    def test_foreign_cgroup_and_arbitrary_action_are_rejected(self):
+        unit = carrier_module.scope_unit("I000056-1788792725", 2)
+        root = os.path.join(self.tempdir, "memory")
+        directory = os.path.join(root, "system.slice", unit)
+        os.makedirs(directory)
+        control = os.path.join(directory, "memory.swappiness")
+        with open(control, "wb") as stream:
+            stream.write(b"0\n")
+        os.chmod(control, 0o644)
+        proc_path = os.path.join(self.tempdir, "self.cgroup")
+        with open(proc_path, "w") as stream:
+            stream.write("4:memory:/system.slice/foreign.scope\n")
+        with self.assertRaises(carrier_module.CarrierError):
+            carrier_module.configure_own_swappiness(unit, root, proc_path)
+        with self.assertRaises(carrier_module.CarrierError):
+            carrier_module.run("stop", "I000056-1788792725", 2)
+
+    def test_helper_fixed_environment_and_safe_marker_order(self):
+        class Native(object):
+            returncode = 1
+
+            def wait(self):
+                return self.returncode
+
+        output = io.StringIO()
+        with mock.patch.object(carrier_module, "configure_own_swappiness") as configure, \
+                mock.patch.object(carrier_module, "validate_canonical") as validate, \
+                mock.patch.object(carrier_module.subprocess, "Popen",
+                                  return_value=Native()) as popen, \
+                mock.patch.object(carrier_module.sys, "stdout", output):
+            rc = carrier_module.run("start", "I000056-1788792725", 2)
+        self.assertEqual(1, rc)
+        configure.assert_called_once_with(
+            "cyf-api-healthmon-i000056-1788792725-a2.scope")
+        validate.assert_called_once_with()
+        popen.assert_called_once_with(
+            [carrier_module.CANONICAL, "start"],
+            stdin=carrier_module.subprocess.DEVNULL,
+            stdout=carrier_module.subprocess.DEVNULL,
+            stderr=carrier_module.subprocess.DEVNULL, cwd="/",
+            env=carrier_module.FIXED_RECOVERY_ENV, close_fds=True)
+        self.assertEqual([carrier_module.MARKER_NATIVE_INVOKED,
+                          carrier_module.MARKER_NATIVE_RESULT + "1"],
+                         output.getvalue().splitlines())
+        self.assertEqual("0", carrier_module.FIXED_RECOVERY_ENV[
+            "CYF_API_MIN_MEMORY_AVAILABLE_BYTES"])
+        self.assertEqual("0", carrier_module.FIXED_RECOVERY_ENV[
+            "CYF_API_MIN_DISK_AVAILABLE_BYTES"])
+
+
 class StaticContractTests(unittest.TestCase):
     def test_fixed_recovery_and_mail_commands(self):
         with open(MODULE_PATH, "r") as stream:
             source = stream.read()
         self.assertIn('[CANONICAL, "status"]', source)
-        self.assertIn('SYSTEMD_RUN, "--quiet", "--scope"', source)
-        self.assertIn('"--property=" + RECOVERY_SWAPPINESS_PROPERTY', source)
+        self.assertIn('SYSTEMD_RUN, "--quiet", "--scope", "--slice=system.slice"', source)
+        self.assertIn('MAIL_PYTHON, "-I", RECOVERY_CARRIER', source)
+        self.assertNotIn("MemorySwappiness=60", source)
         self.assertNotIn("Type=oneshot", source)
         self.assertNotIn("KillMode=control-group", source)
         self.assertIn('[MAIL_PYTHON, "-I", MAIL_HELPER', source)
@@ -1089,26 +1217,38 @@ class StaticContractTests(unittest.TestCase):
         effects = health.Effects()
         incident_id = "I000056-1788792725"
         expected = [
-            health.SYSTEMD_RUN, "--quiet", "--scope",
+            health.SYSTEMD_RUN, "--quiet", "--scope", "--slice=system.slice",
             "--unit=cyf-api-healthmon-i000056-1788792725-a2.scope",
-            "--property=MemorySwappiness=60", health.CANONICAL, "start",
+            health.MAIL_PYTHON, "-I", health.RECOVERY_CARRIER,
+            "start", incident_id, "2",
         ]
         with mock.patch.object(effects, "_trusted_canonical", return_value=True), \
                 mock.patch.object(health, "validate_trusted_executable") as validator, \
-                mock.patch.object(effects, "_run", return_value={"returncode": 1}) as runner:
-            result = effects.recover("start", incident_id, 2)
-        self.assertEqual({"returncode": 1, "classification": "native_exit_1"}, result)
-        validator.assert_called_once_with(health.SYSTEMD_RUN, 0, True)
+                mock.patch.object(health, "validate_regular"), \
+                mock.patch.object(health, "sha256_file",
+                                  return_value=health.RECOVERY_CARRIER_SHA256), \
+                mock.patch.object(effects, "_run_recovery_carrier",
+                                  return_value={
+                                      "returncode": 1, "carrier_returncode": 1,
+                                      "native_invoked": True, "native_returncode": 1,
+                                      "classification": "native_exit_1",
+                                  }) as runner:
+            result = effects.recover("start", incident_id, 2, lambda: None)
+        self.assertEqual("native_exit_1", result["classification"])
+        self.assertEqual([mock.call(health.SYSTEMD_RUN, 0, True),
+                          mock.call(health.MAIL_PYTHON, 0, True)],
+                         validator.call_args_list)
         runner.assert_called_once_with(
-            expected, None, recovery=("start", incident_id, 2))
+            expected, "start", incident_id, 2, mock.ANY)
 
     def test_recovery_scope_contract_rejects_arbitrary_inputs(self):
         incident_id = "I000056-1788792725"
         expected = health.recovery_carrier_argv("restart", incident_id, 3)
         self.assertEqual([
-            health.SYSTEMD_RUN, "--quiet", "--scope",
+            health.SYSTEMD_RUN, "--quiet", "--scope", "--slice=system.slice",
             "--unit=cyf-api-healthmon-i000056-1788792725-a3.scope",
-            "--property=MemorySwappiness=60", health.CANONICAL, "restart",
+            health.MAIL_PYTHON, "-I", health.RECOVERY_CARRIER,
+            "restart", incident_id, "3",
         ], expected)
         for action, incident, attempt in (
                 ("stop", incident_id, 1),
@@ -1121,14 +1261,43 @@ class StaticContractTests(unittest.TestCase):
 
         effects = health.Effects()
         malicious = list(expected)
-        malicious[4] = "--property=KillMode=control-group"
+        malicious[3] = "--slice=foreign.slice"
         with self.assertRaises(health.MonitorError):
-            effects._run(malicious, 1, recovery=("restart", incident_id, 3))
-        with self.assertRaises(health.MonitorError):
-            effects._run([health.CANONICAL, "restart"], 1,
-                         recovery=("restart", incident_id, 3))
-        with self.assertRaises(health.MonitorError):
-            effects._run(expected, 1, recovery=True)
+            effects._run_recovery_carrier(
+                malicious, "restart", incident_id, 3, lambda: None)
+
+    def test_carrier_protocol_distinguishes_launcher_failure_from_native_result(self):
+        class Process(object):
+            def __init__(self, output, returncode):
+                self.stdout = io.StringIO(output)
+                self.returncode = returncode
+
+            def wait(self):
+                return self.returncode
+
+        effects = health.Effects()
+        incident_id = "I000056-1788792725"
+        argv = health.recovery_carrier_argv("start", incident_id, 2)
+        callbacks = []
+        with mock.patch.object(health.subprocess, "Popen",
+                               return_value=Process("", 1)):
+            failed = effects._run_recovery_carrier(
+                argv, "start", incident_id, 2, lambda: callbacks.append(True))
+        self.assertFalse(failed["native_invoked"])
+        self.assertIsNone(failed["native_returncode"])
+        self.assertEqual("carrier_failed_exit_1", failed["classification"])
+        self.assertEqual([], callbacks)
+
+        output = ("CYF_HEALTHMON_NATIVE_INVOKED=1\n"
+                  "CYF_HEALTHMON_NATIVE_RESULT=1\n")
+        with mock.patch.object(health.subprocess, "Popen",
+                               return_value=Process(output, 1)):
+            native = effects._run_recovery_carrier(
+                argv, "start", incident_id, 2, lambda: callbacks.append(True))
+        self.assertTrue(native["native_invoked"])
+        self.assertEqual(1, native["native_returncode"])
+        self.assertEqual("native_exit_1", native["classification"])
+        self.assertEqual([True], callbacks)
 
     def test_real_isolated_python36_flattens_all_bounded_subjects_without_folding(self):
         old_subject = "【聚义厅监控】“三次恢复失败即停止重试”策略已安装；持锁待查"
@@ -1204,8 +1373,11 @@ print('MIME_SUBJECTS_OK:%d' % len(subjects))
         self.assertIn("os.fsync(directory_fd)", text)
         self.assertIn("install_monitor_atomically", text)
         monitor_digest = health.sha256_file(MODULE_PATH)
+        carrier_digest = health.sha256_file(CARRIER_PATH)
         self.assertIn("CANDIDATE_MONITOR_SHA=" + monitor_digest, text)
+        self.assertIn("CANDIDATE_CARRIER_SHA=" + carrier_digest, text)
         self.assertIn("installed monitor is not the reviewed candidate", text)
+        self.assertIn("installed carrier is not the reviewed candidate", text)
         self.assertIn("CANONICAL_SHA=" + health.CANONICAL_SHA256, text)
         self.assertIn("755:0:0:1", text)
 
