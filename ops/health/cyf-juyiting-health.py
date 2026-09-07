@@ -45,6 +45,7 @@ HEALTHY_RESET_THRESHOLD = 3
 MAX_RECOVERY_ATTEMPTS = 3
 COOLDOWN_SECONDS = 60
 STARTUP_GRACE_SECONDS = 25 * 60
+CANONICAL_STATUS_TIMEOUT_SECONDS = 45
 MIN_MEMORY_BYTES = 1024 * 1024 * 1024
 MIN_DISK_BYTES = 5 * 1024 * 1024 * 1024
 MAX_STATE_BYTES = 128 * 1024
@@ -775,7 +776,7 @@ class Effects(object):
             return {"healthy": False, "classification": "canonical_file_untrusted",
                     "recovery_safe": False, "returncode": None, "pid": None,
                     "elapsed_seconds": None}
-        result = self._run([CANONICAL, "status"], 15)
+        result = self._run([CANONICAL, "status"], CANONICAL_STATUS_TIMEOUT_SECONDS)
         if result["classification"] == "timeout":
             return {"healthy": False, "classification": "canonical_status_timeout",
                     "recovery_safe": False, "returncode": 124, "pid": None,

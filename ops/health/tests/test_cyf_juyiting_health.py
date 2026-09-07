@@ -1184,6 +1184,33 @@ class ProbeContractTests(unittest.TestCase):
         self.assertFalse(parsed["recovery_safe"])
         self.assertEqual("not_ready_identity_incomplete", parsed["classification"])
 
+    def test_canonical_status_uses_45_second_observation_budget(self):
+        effects = health.Effects()
+        completed = {"returncode": 4, "classification": "completed",
+                     "stdout": self.canonical_output("NOT_READY"), "stderr": ""}
+        with mock.patch.object(effects, "_trusted_canonical", return_value=True), \
+                mock.patch.object(effects, "_run", return_value=completed) as runner:
+            result = effects.canonical_status()
+        self.assertEqual(45, health.CANONICAL_STATUS_TIMEOUT_SECONDS)
+        runner.assert_called_once_with(
+            [health.CANONICAL, "status"], health.CANONICAL_STATUS_TIMEOUT_SECONDS)
+        self.assertEqual("not_ready_trusted", result["classification"])
+        self.assertTrue(result["recovery_safe"])
+
+    def test_canonical_status_timeout_at_45_seconds_remains_fail_closed(self):
+        effects = health.Effects()
+        timed_out = {"returncode": 124, "classification": "timeout",
+                     "stdout": "", "stderr": ""}
+        with mock.patch.object(effects, "_trusted_canonical", return_value=True), \
+                mock.patch.object(effects, "_run", return_value=timed_out) as runner:
+            result = effects.canonical_status()
+        runner.assert_called_once_with(
+            [health.CANONICAL, "status"], health.CANONICAL_STATUS_TIMEOUT_SECONDS)
+        self.assertEqual("canonical_status_timeout", result["classification"])
+        self.assertEqual(124, result["returncode"])
+        self.assertFalse(result["healthy"])
+        self.assertFalse(result["recovery_safe"])
+
     def test_public_api_allows_exact_empty_401_boundary(self):
         effects = health.Effects()
         effects._http = lambda url: (401, "", b"", "completed")
