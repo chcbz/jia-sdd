@@ -55,7 +55,9 @@ class FakeEffects(object):
         self.recovery_calls = []
         self.recovery_rc = 0
         self.carrier_rc = None
+        self.dispatch_confirmed = True
         self.native_invoked = True
+        self.terminal_confirmed = True
         self.recovery_precondition_result = {
             "permitted": True, "classification": "recovery_carrier_files_ready"}
         self.recovery_exception = None
@@ -81,7 +83,8 @@ class FakeEffects(object):
         self.events.append("recovery_precondition")
         return dict(self.recovery_precondition_result)
 
-    def recover(self, action, incident_id, attempt, native_invoked_callback):
+    def recover(self, action, incident_id, attempt, dispatch_callback,
+                native_invoked_callback):
         self.events.append("recover:" + action)
         self.recoveries.append(action)
         self.recovery_calls.append((action, incident_id, attempt))
@@ -90,17 +93,27 @@ class FakeEffects(object):
         if self.recovery_exception is not None:
             raise self.recovery_exception
         carrier_rc = self.recovery_rc if self.carrier_rc is None else self.carrier_rc
-        if not self.native_invoked:
+        if self.dispatch_confirmed is True:
+            dispatch_callback()
+        if self.native_invoked is True:
+            native_invoked_callback()
+        if self.dispatch_confirmed is False:
             return {
                 "returncode": carrier_rc, "carrier_returncode": carrier_rc,
-                "native_invoked": False, "native_returncode": None,
+                "dispatch_confirmed": False, "native_invoked": False,
+                "native_returncode": None, "terminal_confirmed": True,
                 "classification": "carrier_failed_exit_%d" % carrier_rc,
             }
-        native_invoked_callback()
+        native_returncode = self.recovery_rc if self.native_invoked is True else None
         return {
-            "returncode": self.recovery_rc, "carrier_returncode": carrier_rc,
-            "native_invoked": True, "native_returncode": self.recovery_rc,
-            "classification": "native_exit_%d" % self.recovery_rc,
+            "returncode": self.recovery_rc if native_returncode is not None else 126,
+            "carrier_returncode": carrier_rc if self.terminal_confirmed else None,
+            "dispatch_confirmed": self.dispatch_confirmed,
+            "native_invoked": self.native_invoked,
+            "native_returncode": native_returncode,
+            "terminal_confirmed": self.terminal_confirmed,
+            "classification": "native_exit_%d" % self.recovery_rc
+            if native_returncode is not None else "native_result_unknown",
         }
 
     def web(self, marker):
@@ -183,7 +196,15 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual(1, fenced[-1]["recovery"]["attempts"])
         native_fenced = [item for item in fenced
                          if "native_invoked_at" in item["recovery"]["in_flight"]]
+        dispatch_fenced = [item for item in fenced
+                           if "dispatch_at" in item["recovery"]["in_flight"]]
+        dispatch_only = [item for item in dispatch_fenced
+                         if "native_invoked_at" not in item["recovery"]["in_flight"]]
+        self.assertEqual(1, len(dispatch_only))
         self.assertEqual(1, len(native_fenced))
+        self.assertLessEqual(
+            dispatch_only[0]["recovery"]["in_flight"]["dispatch_at"],
+            native_fenced[0]["recovery"]["in_flight"]["native_invoked_at"])
 
     def test_rc1_busy_never_recovers(self):
         effects = FakeEffects([busy()])
@@ -414,8 +435,9 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual("recovery_carrier_unsafe_executable_owner",
                          result["recovery"]["decision"])
 
-    def test_carrier_failure_before_native_rolls_back_reserved_third_attempt(self):
+    def test_definitive_prelaunch_failure_rolls_back_reserved_third_attempt(self):
         effects = FakeEffects([stopped(), stopped()])
+        effects.dispatch_confirmed = False
         effects.native_invoked = False
         effects.carrier_rc = 1
         state = health.initial_state(self.clock.now)
@@ -434,6 +456,7 @@ class MonitorTests(unittest.TestCase):
         self.assertIsNone(state["recovery"]["in_flight"])
         self.assertEqual("carrier_failed_not_invoked",
                          state["recovery"]["last_result"]["classification"])
+        self.assertFalse(state["recovery"]["last_result"]["dispatch_confirmed"])
         self.assertFalse(state["recovery"]["last_result"]["native_invoked"])
         self.assertIsNone(state["recovery"]["last_result"]["native_returncode"])
         self.assertEqual(1, state["recovery"]["last_result"]["carrier_returncode"])
@@ -441,7 +464,84 @@ class MonitorTests(unittest.TestCase):
         self.assertFalse(any(item["event"] == "recovery_exhausted"
                              for item in state["outbox"]))
 
-    def test_recovery_exception_consumes_third_actual_attempt_and_latches(self):
+    def test_post_dispatch_missing_native_marker_retains_attempt_as_unknown(self):
+        effects = FakeEffects([stopped(), stopped(), stopped()])
+        effects.dispatch_confirmed = True
+        effects.native_invoked = None
+        effects.carrier_rc = 1
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+
+        result = self.monitor(effects).check_once(state, self.config)
+
+        self.assertEqual(["start"], effects.recoveries)
+        self.assertEqual(1, state["recovery"]["attempts"])
+        self.assertIsNone(state["recovery"]["in_flight"])
+        self.assertEqual("unknown_dispatch_or_terminal",
+                         state["recovery"]["last_result"]["classification"])
+        self.assertTrue(state["recovery"]["last_result"]["dispatch_confirmed"])
+        self.assertIsNone(state["recovery"]["last_result"]["native_invoked"])
+        self.assertIsNone(state["recovery"]["last_result"]["native_returncode"])
+        self.assertEqual("unknown_dispatch_or_terminal",
+                         result["recovery"]["result"])
+        unknown_mails = [(subject, body) for subject, body in effects.mail_calls
+                         if "恢复未确认" in subject]
+        self.assertEqual(1, len(unknown_mails))
+        self.assertIn("已保留本次预算与执行围栏", unknown_mails[0][1])
+
+    def test_stream_unknown_keeps_inflight_fence_and_prevents_second_actor(self):
+        effects = FakeEffects([stopped(), stopped(), stopped()])
+        effects.dispatch_confirmed = None
+        effects.native_invoked = None
+        effects.terminal_confirmed = False
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        monitor = self.monitor(effects)
+
+        monitor.check_once(state, self.config)
+
+        self.assertEqual(1, state["recovery"]["attempts"])
+        self.assertIsNotNone(state["recovery"]["in_flight"])
+        self.clock.now += health.COOLDOWN_SECONDS
+        monitor.check_once(state, self.config)
+        self.assertEqual(["start"], effects.recoveries)
+        self.assertEqual("recovery_in_flight",
+                         state["last_snapshot"]["recovery"]["decision"])
+
+    def test_third_post_dispatch_unknown_latches_alert_and_never_calls_fourth(self):
+        effects = FakeEffects([stopped()] * 5)
+        effects.dispatch_confirmed = True
+        effects.native_invoked = None
+        effects.carrier_rc = 1
+        effects.mail_results = [(True, "helper_accepted"), (False, "helper_failed")]
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+        state["recovery"]["attempts"] = 2
+        state["recovery"]["last_attempt_at"] = self.clock.now - health.COOLDOWN_SECONDS
+        monitor = self.monitor(effects)
+
+        monitor.check_once(state, self.config)
+
+        self.assertEqual(3, state["recovery"]["attempts"])
+        self.assertTrue(state["recovery"]["circuit_latched"])
+        self.assertIsNone(state["recovery"]["in_flight"])
+        self.assertEqual("unknown_dispatch_or_terminal",
+                         state["recovery"]["last_result"]["classification"])
+        urgent = [item for item in state["outbox"]
+                  if item["event"] == "recovery_exhausted"]
+        self.assertEqual(1, len(urgent))
+        self.assertEqual(health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
+                         urgent[0]["subject"])
+        self.assertIn("结果为 UNKNOWN；已停止自动重试（3/3）", urgent[0]["body"])
+        self.assertIn("不推断命令失败或成功", urgent[0]["body"])
+
+        self.clock.now += health.COOLDOWN_SECONDS
+        monitor.check_once(state, self.config)
+        self.assertEqual(["start"], effects.recoveries)
+        self.assertEqual("circuit_latched",
+                         state["last_snapshot"]["recovery"]["decision"])
+
+    def test_recovery_exception_is_unknown_third_attempt_and_latches(self):
         effects = FakeEffects([stopped(), stopped(), stopped()])
         effects.recovery_exception = RuntimeError("must not escape into durable payload")
         state = health.initial_state(self.clock.now)
@@ -457,8 +557,10 @@ class MonitorTests(unittest.TestCase):
         self.monitor(effects).check_once(state, self.config)
         self.assertEqual(3, state["recovery"]["attempts"])
         self.assertTrue(state["recovery"]["circuit_latched"])
-        self.assertEqual("failed_fresh_health_not_up",
+        self.assertEqual("unknown_dispatch_or_terminal",
                          state["recovery"]["last_result"]["classification"])
+        self.assertIsNone(state["recovery"]["last_result"]["dispatch_confirmed"])
+        self.assertIsNone(state["recovery"]["last_result"]["native_invoked"])
         exhausted = [item for item in state["notice_ids"]
                      if item.endswith("recovery-exhausted")]
         self.assertEqual(1, len(exhausted))
@@ -831,6 +933,7 @@ class MailQueueTests(unittest.TestCase):
             health.SUBJECT_RECOVERY_DEFERRED,
             health.SUBJECT_RECOVERY_RESULT % ("成功", 3, 3),
             health.SUBJECT_RECOVERY_RESULT % ("未成功", 3, 3),
+            health.SUBJECT_RECOVERY_RESULT % ("未确认", 3, 3),
             health.SUBJECT_RECOVERY_EXHAUSTED,
             health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
             health.SUBJECT_NOTIFY_TEST,
@@ -927,6 +1030,30 @@ class StateStoreSecurityTests(unittest.TestCase):
         self.assertTrue(loaded["recovery"]["circuit_latched"])
         self.assertEqual("resources_below_canonical_minimum",
                          loaded["last_snapshot"]["recovery"]["resource_preflight"])
+
+    def test_state_round_trip_preserves_unknown_dispatch_fence(self):
+        state = health.initial_state(10)
+        state["recovery"].update({
+            "attempts": 1,
+            "last_attempt_at": 20,
+            "in_flight": {"action": "start", "attempt": 1, "at": 20,
+                          "dispatch_at": 21},
+            "last_result": {
+                "at": 22, "action": "start", "attempt": 1,
+                "classification": "unknown_dispatch_or_terminal",
+                "dispatch_confirmed": None, "native_invoked": None,
+                "native_returncode": None, "carrier_returncode": None,
+                "terminal_confirmed": False,
+            },
+        })
+        self.store.write(state)
+
+        loaded = self.store.read()
+
+        self.assertEqual(1, loaded["recovery"]["attempts"])
+        self.assertEqual(21, loaded["recovery"]["in_flight"]["dispatch_at"])
+        self.assertIsNone(loaded["recovery"]["last_result"]["native_invoked"])
+        self.assertFalse(loaded["recovery"]["last_result"]["terminal_confirmed"])
 
     def test_fail_closed_missing_and_corrupt_state(self):
         with self.assertRaises(health.MonitorError):
@@ -1151,13 +1278,26 @@ class RecoveryCarrierHelperTests(unittest.TestCase):
             stdout=carrier_module.subprocess.DEVNULL,
             stderr=carrier_module.subprocess.DEVNULL, cwd="/",
             env=carrier_module.FIXED_RECOVERY_ENV, close_fds=True)
-        self.assertEqual([carrier_module.MARKER_NATIVE_INVOKED,
+        self.assertEqual([carrier_module.MARKER_NATIVE_DISPATCH,
+                          carrier_module.MARKER_NATIVE_INVOKED,
                           carrier_module.MARKER_NATIVE_RESULT + "1"],
                          output.getvalue().splitlines())
         self.assertEqual("0", carrier_module.FIXED_RECOVERY_ENV[
             "CYF_API_MIN_MEMORY_AVAILABLE_BYTES"])
         self.assertEqual("0", carrier_module.FIXED_RECOVERY_ENV[
             "CYF_API_MIN_DISK_AVAILABLE_BYTES"])
+
+    def test_helper_preflight_failure_emits_no_dispatch_marker(self):
+        output = io.StringIO()
+        with mock.patch.object(
+                carrier_module, "configure_own_swappiness",
+                side_effect=carrier_module.CarrierError("preflight")), \
+                mock.patch.object(carrier_module.subprocess, "Popen") as popen, \
+                mock.patch.object(carrier_module.sys, "stdout", output):
+            rc = carrier_module.main(["start", "I000056-1788792725", "2"])
+        self.assertEqual(125, rc)
+        popen.assert_not_called()
+        self.assertEqual("", output.getvalue())
 
 
 class StaticContractTests(unittest.TestCase):
@@ -1230,16 +1370,19 @@ class StaticContractTests(unittest.TestCase):
                 mock.patch.object(effects, "_run_recovery_carrier",
                                   return_value={
                                       "returncode": 1, "carrier_returncode": 1,
+                                      "dispatch_confirmed": True,
                                       "native_invoked": True, "native_returncode": 1,
+                                      "terminal_confirmed": True,
                                       "classification": "native_exit_1",
                                   }) as runner:
-            result = effects.recover("start", incident_id, 2, lambda: None)
+            result = effects.recover(
+                "start", incident_id, 2, lambda: None, lambda: None)
         self.assertEqual("native_exit_1", result["classification"])
         self.assertEqual([mock.call(health.SYSTEMD_RUN, 0, True),
                           mock.call(health.MAIL_PYTHON, 0, True)],
                          validator.call_args_list)
         runner.assert_called_once_with(
-            expected, "start", incident_id, 2, mock.ANY)
+            expected, "start", incident_id, 2, mock.ANY, mock.ANY)
 
     def test_recovery_scope_contract_rejects_arbitrary_inputs(self):
         incident_id = "I000056-1788792725"
@@ -1264,7 +1407,8 @@ class StaticContractTests(unittest.TestCase):
         malicious[3] = "--slice=foreign.slice"
         with self.assertRaises(health.MonitorError):
             effects._run_recovery_carrier(
-                malicious, "restart", incident_id, 3, lambda: None)
+                malicious, "restart", incident_id, 3,
+                lambda: None, lambda: None)
 
     def test_carrier_protocol_distinguishes_launcher_failure_from_native_result(self):
         class Process(object):
@@ -1280,24 +1424,123 @@ class StaticContractTests(unittest.TestCase):
         argv = health.recovery_carrier_argv("start", incident_id, 2)
         callbacks = []
         with mock.patch.object(health.subprocess, "Popen",
+                               side_effect=OSError("prelaunch")):
+            prelaunch = effects._run_recovery_carrier(
+                argv, "start", incident_id, 2,
+                lambda: callbacks.append("unexpected-dispatch"),
+                lambda: callbacks.append("unexpected-invoked"))
+        self.assertFalse(prelaunch["dispatch_confirmed"])
+        self.assertFalse(prelaunch["native_invoked"])
+        self.assertTrue(prelaunch["terminal_confirmed"])
+        self.assertEqual("carrier_prelaunch_failed", prelaunch["classification"])
+
+        with mock.patch.object(health.subprocess, "Popen",
                                return_value=Process("", 1)):
-            failed = effects._run_recovery_carrier(
-                argv, "start", incident_id, 2, lambda: callbacks.append(True))
-        self.assertFalse(failed["native_invoked"])
-        self.assertIsNone(failed["native_returncode"])
-        self.assertEqual("carrier_failed_exit_1", failed["classification"])
+            missing = effects._run_recovery_carrier(
+                argv, "start", incident_id, 2,
+                lambda: callbacks.append("dispatch"),
+                lambda: callbacks.append("invoked"))
+        self.assertIsNone(missing["dispatch_confirmed"])
+        self.assertIsNone(missing["native_invoked"])
+        self.assertIsNone(missing["native_returncode"])
+        self.assertTrue(missing["terminal_confirmed"])
+        self.assertEqual("carrier_output_missing_unknown", missing["classification"])
         self.assertEqual([], callbacks)
 
-        output = ("CYF_HEALTHMON_NATIVE_INVOKED=1\n"
+        with mock.patch.object(
+                effects, "recovery_precondition",
+                return_value={"permitted": False,
+                              "classification": "known_preflight_failed"}):
+            preflight = effects.recover(
+                "start", incident_id, 2,
+                lambda: callbacks.append("unexpected-dispatch"),
+                lambda: callbacks.append("unexpected-invoked"))
+        self.assertFalse(preflight["dispatch_confirmed"])
+        self.assertFalse(preflight["native_invoked"])
+        self.assertTrue(preflight["terminal_confirmed"])
+        self.assertEqual("known_preflight_failed", preflight["classification"])
+
+        output = ("CYF_HEALTHMON_NATIVE_DISPATCH=1\n"
+                  "CYF_HEALTHMON_NATIVE_INVOKED=1\n"
                   "CYF_HEALTHMON_NATIVE_RESULT=1\n")
         with mock.patch.object(health.subprocess, "Popen",
                                return_value=Process(output, 1)):
             native = effects._run_recovery_carrier(
-                argv, "start", incident_id, 2, lambda: callbacks.append(True))
+                argv, "start", incident_id, 2,
+                lambda: callbacks.append("dispatch"),
+                lambda: callbacks.append("invoked"))
+        self.assertTrue(native["dispatch_confirmed"])
         self.assertTrue(native["native_invoked"])
         self.assertEqual(1, native["native_returncode"])
         self.assertEqual("native_exit_1", native["classification"])
-        self.assertEqual([True], callbacks)
+        self.assertEqual(["dispatch", "invoked"], callbacks)
+
+    def test_carrier_post_dispatch_missing_marker_and_stream_error_are_unknown(self):
+        class StreamError(object):
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                raise OSError("synthetic stream failure")
+
+            next = __next__
+
+        class Process(object):
+            def __init__(self, output, returncode=1):
+                self.stdout = output
+                self.returncode = returncode
+
+            def wait(self):
+                return self.returncode
+
+        effects = health.Effects()
+        incident_id = "I000056-1788792725"
+        argv = health.recovery_carrier_argv("start", incident_id, 2)
+        callbacks = []
+        with mock.patch.object(
+                health.subprocess, "Popen",
+                return_value=Process(io.StringIO(
+                    "CYF_HEALTHMON_NATIVE_DISPATCH=1\n"))):
+            missing = effects._run_recovery_carrier(
+                argv, "start", incident_id, 2,
+                lambda: callbacks.append("dispatch"),
+                lambda: callbacks.append("invoked"))
+        self.assertTrue(missing["dispatch_confirmed"])
+        self.assertIsNone(missing["native_invoked"])
+        self.assertTrue(missing["terminal_confirmed"])
+        self.assertEqual("native_result_unknown", missing["classification"])
+
+        with mock.patch.object(
+                health.subprocess, "Popen",
+                return_value=Process(StreamError())):
+            stream = effects._run_recovery_carrier(
+                argv, "start", incident_id, 2,
+                lambda: callbacks.append("unexpected-dispatch"),
+                lambda: callbacks.append("unexpected-invoked"))
+        self.assertIsNone(stream["dispatch_confirmed"])
+        self.assertIsNone(stream["native_invoked"])
+        self.assertTrue(stream["terminal_confirmed"])
+        self.assertEqual("carrier_transport_unknown", stream["classification"])
+        self.assertEqual(["dispatch"], callbacks)
+
+        class WaitError(Process):
+            def wait(self):
+                raise OSError("synthetic wait failure")
+
+        with mock.patch.object(
+                health.subprocess, "Popen",
+                return_value=WaitError(io.StringIO(
+                    "CYF_HEALTHMON_NATIVE_DISPATCH=1\n"))):
+            wait = effects._run_recovery_carrier(
+                argv, "start", incident_id, 2,
+                lambda: callbacks.append("wait-dispatch"),
+                lambda: callbacks.append("unexpected-invoked"))
+        self.assertTrue(wait["dispatch_confirmed"])
+        self.assertIsNone(wait["native_invoked"])
+        self.assertFalse(wait["terminal_confirmed"])
+        self.assertIsNone(wait["carrier_returncode"])
+        self.assertEqual("carrier_transport_unknown", wait["classification"])
+        self.assertEqual(["dispatch", "wait-dispatch"], callbacks)
 
     def test_real_isolated_python36_flattens_all_bounded_subjects_without_folding(self):
         old_subject = "【聚义厅监控】“三次恢复失败即停止重试”策略已安装；持锁待查"
@@ -1312,6 +1555,7 @@ class StaticContractTests(unittest.TestCase):
             health.SUBJECT_RECOVERY_DEFERRED,
             health.SUBJECT_RECOVERY_RESULT % ("成功", 3, 3),
             health.SUBJECT_RECOVERY_RESULT % ("未成功", 3, 3),
+            health.SUBJECT_RECOVERY_RESULT % ("未确认", 3, 3),
             health.SUBJECT_RECOVERY_EXHAUSTED,
             health.SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN,
             health.SUBJECT_NOTIFY_TEST,

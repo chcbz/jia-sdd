@@ -23,6 +23,7 @@ FIXED_RECOVERY_ENV = {
     "CYF_API_MIN_MEMORY_AVAILABLE_BYTES": "0",
     "CYF_API_MIN_DISK_AVAILABLE_BYTES": "0",
 }
+MARKER_NATIVE_DISPATCH = "CYF_HEALTHMON_NATIVE_DISPATCH=1"
 MARKER_NATIVE_INVOKED = "CYF_HEALTHMON_NATIVE_INVOKED=1"
 MARKER_NATIVE_RESULT = "CYF_HEALTHMON_NATIVE_RESULT="
 
@@ -135,6 +136,9 @@ def run(action, incident_id, attempt):
     unit = scope_unit(incident_id, attempt)
     configure_own_swappiness(unit)
     validate_canonical()
+    # Once this marker is flushed the parent must retain the reserved attempt:
+    # canonical dispatch is imminent and a later transport failure is ambiguous.
+    emit(MARKER_NATIVE_DISPATCH)
     process = subprocess.Popen(
         [CANONICAL, action], stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,

@@ -30,7 +30,7 @@ CANONICAL = "/usr/local/sbin/cyf-api-kit"
 CANONICAL_SHA256 = "b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525"
 SYSTEMD_RUN = "/usr/bin/systemd-run"
 RECOVERY_CARRIER = "/usr/local/libexec/cyf-juyiting-recovery-carrier.py"
-RECOVERY_CARRIER_SHA256 = "1c7137e34cd16ae18ce69aaaa5d37d36e4620cac4e77b87c45fd7cd5252ba6a0"
+RECOVERY_CARRIER_SHA256 = "fd626334a7d491acbf42c0a10d221b771f0e07b0a0b74f46e415cc6bc5173f6a"
 MAIL_PYTHON = "/usr/bin/python3"
 MAIL_HELPER = "/root/.local/bin/cyf-task-email"
 MAIL_HELPER_SHA256 = "ddc540f1d450880af5bb707751cf6cd68b6492e58cb702436b19580867d3ae99"
@@ -388,32 +388,55 @@ def validate_state(data):
         flight = recovery["in_flight"]
         flight_keys = {"action", "attempt", "at"}
         if not isinstance(flight, dict) or not flight_keys.issubset(set(flight)) \
-                or set(flight) - (flight_keys | {"native_invoked_at"}) \
+                or set(flight) - (flight_keys | {"dispatch_at", "native_invoked_at"}) \
                 or flight["action"] not in ("start", "restart") \
                 or not _is_int(flight["attempt"], 1) \
                 or flight["attempt"] > MAX_RECOVERY_ATTEMPTS or not _is_int(flight["at"]) \
+                or ("dispatch_at" in flight and not _is_int(flight["dispatch_at"])) \
                 or ("native_invoked_at" in flight \
                     and not _is_int(flight["native_invoked_at"])):
             raise MonitorError("state_in_flight_invalid")
     if recovery["last_result"] is not None:
         result = recovery["last_result"]
         result_keys = {"at", "action", "attempt", "classification"}
-        optional_result_keys = {"native_invoked", "native_returncode", "carrier_returncode"}
+        optional_result_keys = {
+            "dispatch_confirmed", "native_invoked", "native_returncode",
+            "carrier_returncode", "terminal_confirmed",
+        }
         if not isinstance(result, dict) or not result_keys.issubset(set(result)) \
                 or set(result) - (result_keys | optional_result_keys) \
                 or result["action"] not in ("start", "restart") \
                 or not _is_int(result["at"]) or not _is_int(result["attempt"], 1) \
                 or result["attempt"] > MAX_RECOVERY_ATTEMPTS \
                 or not isinstance(result["classification"], str) or len(result["classification"]) > 80 \
-                or ("native_invoked" in result \
+                or ("dispatch_confirmed" in result \
+                    and result["dispatch_confirmed"] is not None \
+                    and not isinstance(result["dispatch_confirmed"], bool)) \
+                or ("native_invoked" in result and result["native_invoked"] is not None \
                     and not isinstance(result["native_invoked"], bool)) \
                 or ("native_returncode" in result and result["native_returncode"] is not None \
                     and (not isinstance(result["native_returncode"], int) \
                          or isinstance(result["native_returncode"], bool))) \
-                or ("carrier_returncode" in result \
+                or ("carrier_returncode" in result and result["carrier_returncode"] is not None \
                     and (not isinstance(result["carrier_returncode"], int) \
-                         or isinstance(result["carrier_returncode"], bool))):
+                         or isinstance(result["carrier_returncode"], bool))) \
+                or ("terminal_confirmed" in result \
+                    and not isinstance(result["terminal_confirmed"], bool)):
             raise MonitorError("state_recovery_result_invalid")
+        if "dispatch_confirmed" in result \
+                and result.get("native_invoked") is True \
+                and result.get("dispatch_confirmed") is not True:
+            raise MonitorError("state_recovery_result_order_invalid")
+        if result.get("native_returncode") is not None \
+                and result.get("native_invoked") is not True:
+            raise MonitorError("state_recovery_result_native_invalid")
+        if result.get("dispatch_confirmed") is False \
+                and (result.get("native_invoked") is not False \
+                     or result.get("terminal_confirmed") is not True):
+            raise MonitorError("state_recovery_result_prelaunch_invalid")
+        if result.get("terminal_confirmed") is False \
+                and result.get("carrier_returncode") is not None:
+            raise MonitorError("state_recovery_result_terminal_invalid")
     outbox = data.get("outbox")
     if not isinstance(outbox, list) or len(outbox) > MAX_PRIORITY_OUTBOX:
         raise MonitorError("state_outbox_invalid")
@@ -776,78 +799,147 @@ class Effects(object):
             return {"permitted": False,
                     "classification": "recovery_carrier_%s" % safe_label(str(exc))}
 
+    @staticmethod
+    def _carrier_result(classification, carrier_returncode=None,
+                        dispatch_confirmed=None, native_invoked=None,
+                        native_returncode=None, terminal_confirmed=False):
+        return {
+            "returncode": native_returncode if native_returncode is not None else 126,
+            "carrier_returncode": carrier_returncode,
+            "dispatch_confirmed": dispatch_confirmed,
+            "native_invoked": native_invoked,
+            "native_returncode": native_returncode,
+            "terminal_confirmed": terminal_confirmed,
+            "classification": classification,
+        }
+
     def _run_recovery_carrier(self, argv, action, incident_id, attempt,
-                              native_invoked_callback):
+                              dispatch_callback, native_invoked_callback):
         expected = recovery_carrier_argv(action, incident_id, attempt)
         if argv != expected:
             raise MonitorError("recovery_env_command_invalid")
-        process = subprocess.Popen(
-            argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL, cwd="/", env=command_environment(recovery=True),
-            universal_newlines=True)
+        try:
+            process = subprocess.Popen(
+                argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL, cwd="/", env=command_environment(recovery=True),
+                universal_newlines=True)
+        except (OSError, subprocess.SubprocessError):
+            return self._carrier_result(
+                "carrier_prelaunch_failed", carrier_returncode=126,
+                dispatch_confirmed=False, native_invoked=False,
+                terminal_confirmed=True)
+        dispatch_confirmed = False
         native_invoked = False
         native_returncode = None
         protocol_invalid = False
+        dispatch_persist_failed = False
         invocation_persist_failed = False
-        for line in process.stdout:
-            marker = line.rstrip("\n")
-            if marker == "CYF_HEALTHMON_NATIVE_INVOKED=1":
-                if native_invoked or native_returncode is not None:
-                    protocol_invalid = True
-                    continue
-                native_invoked = True
-                try:
-                    native_invoked_callback()
-                except Exception:
-                    invocation_persist_failed = True
-            elif re.match(r"^CYF_HEALTHMON_NATIVE_RESULT=-?[0-9]+$", marker):
-                if not native_invoked or native_returncode is not None:
-                    protocol_invalid = True
-                    continue
-                native_returncode = int(marker.split("=", 1)[1])
-            elif marker:
-                protocol_invalid = True
-        carrier_returncode = int(process.wait())
-        if not native_invoked:
-            return {
-                "returncode": carrier_returncode,
-                "carrier_returncode": carrier_returncode,
-                "native_invoked": False, "native_returncode": None,
-                "classification": "carrier_failed_exit_%d" % carrier_returncode,
-            }
-        if native_returncode is None or protocol_invalid:
-            return {
-                "returncode": carrier_returncode,
-                "carrier_returncode": carrier_returncode,
-                "native_invoked": True, "native_returncode": None,
-                "classification": "native_result_unknown",
-            }
-        return {
-            "returncode": native_returncode,
-            "carrier_returncode": carrier_returncode,
-            "native_invoked": True, "native_returncode": native_returncode,
-            "classification": ("native_exit_%d_invocation_persist_deferred" %
-                               native_returncode) if invocation_persist_failed else
-                              ("native_exit_%d" % native_returncode),
-        }
 
-    def recover(self, action, incident_id, attempt, native_invoked_callback):
+        def record_dispatch():
+            nonlocal dispatch_confirmed, dispatch_persist_failed
+            if dispatch_confirmed:
+                return
+            dispatch_confirmed = True
+            try:
+                dispatch_callback()
+            except Exception:
+                dispatch_persist_failed = True
+
+        def record_invocation():
+            nonlocal native_invoked, invocation_persist_failed
+            record_dispatch()
+            if native_invoked:
+                return
+            native_invoked = True
+            try:
+                native_invoked_callback()
+            except Exception:
+                invocation_persist_failed = True
+
+        stream_failed = False
+        try:
+            for line in process.stdout:
+                marker = line.rstrip("\n")
+                if marker == "CYF_HEALTHMON_NATIVE_DISPATCH=1":
+                    if dispatch_confirmed or native_invoked or native_returncode is not None:
+                        protocol_invalid = True
+                        continue
+                    record_dispatch()
+                elif marker == "CYF_HEALTHMON_NATIVE_INVOKED=1":
+                    if native_invoked or native_returncode is not None:
+                        protocol_invalid = True
+                        continue
+                    if not dispatch_confirmed:
+                        protocol_invalid = True
+                    record_invocation()
+                elif re.match(r"^CYF_HEALTHMON_NATIVE_RESULT=-?[0-9]+$", marker):
+                    if not native_invoked or native_returncode is not None:
+                        protocol_invalid = True
+                        record_invocation()
+                    native_returncode = int(marker.split("=", 1)[1])
+                elif marker:
+                    protocol_invalid = True
+        except (OSError, ValueError, UnicodeError):
+            stream_failed = True
+        try:
+            carrier_returncode = int(process.wait())
+            terminal_confirmed = True
+        except (OSError, ValueError, subprocess.SubprocessError):
+            carrier_returncode = None
+            terminal_confirmed = False
+        if stream_failed or not terminal_confirmed:
+            return self._carrier_result(
+                "carrier_transport_unknown", carrier_returncode=carrier_returncode,
+                dispatch_confirmed=True if dispatch_confirmed else None,
+                native_invoked=True if native_invoked else None,
+                native_returncode=None, terminal_confirmed=terminal_confirmed)
+        if protocol_invalid:
+            return self._carrier_result(
+                "carrier_protocol_unknown", carrier_returncode=carrier_returncode,
+                dispatch_confirmed=True if dispatch_confirmed else None,
+                native_invoked=True if native_invoked else None,
+                native_returncode=None, terminal_confirmed=True)
+        if not dispatch_confirmed:
+            return self._carrier_result(
+                "carrier_output_missing_unknown",
+                carrier_returncode=carrier_returncode,
+                dispatch_confirmed=None, native_invoked=None,
+                terminal_confirmed=True)
+        if not native_invoked or native_returncode is None:
+            return self._carrier_result(
+                "native_result_unknown", carrier_returncode=carrier_returncode,
+                dispatch_confirmed=True, native_invoked=None,
+                terminal_confirmed=True)
+        classification = "native_exit_%d" % native_returncode
+        if dispatch_persist_failed or invocation_persist_failed:
+            classification += "_fence_persist_deferred"
+        return self._carrier_result(
+            classification, carrier_returncode=carrier_returncode,
+            dispatch_confirmed=True, native_invoked=True,
+            native_returncode=native_returncode, terminal_confirmed=True)
+
+    def recover(self, action, incident_id, attempt, dispatch_callback,
+                native_invoked_callback):
         precondition = self.recovery_precondition(action, incident_id, attempt)
         if not precondition.get("permitted"):
             return {
                 "returncode": 126, "carrier_returncode": 126,
-                "native_invoked": False, "native_returncode": None,
+                "dispatch_confirmed": False, "native_invoked": False,
+                "native_returncode": None, "terminal_confirmed": True,
                 "classification": safe_label(precondition.get("classification")),
             }
         argv = recovery_carrier_argv(action, incident_id, attempt)
         try:
             return self._run_recovery_carrier(
-                argv, action, incident_id, attempt, native_invoked_callback)
-        except (MonitorError, OSError, subprocess.SubprocessError) as exc:
+                argv, action, incident_id, attempt,
+                dispatch_callback, native_invoked_callback)
+        except Exception as exc:
             return {
-                "returncode": 126, "carrier_returncode": 126,
-                "native_invoked": False, "native_returncode": None,
-                "classification": "carrier_%s" % safe_label(type(exc).__name__),
+                "returncode": 126, "carrier_returncode": None,
+                "dispatch_confirmed": None, "native_invoked": None,
+                "native_returncode": None, "terminal_confirmed": False,
+                "classification": "carrier_transport_%s" %
+                safe_label(type(exc).__name__),
             }
 
     def _http(self, url):
@@ -1054,6 +1146,9 @@ def notice_body(event, now, incident_id, components, extra=""):
         "recovery_result": (
             "一次受控 API 恢复已结束，请根据恢复后健康结果决定后续动作。",
             "建议：仅在规范健康明确为 UP 时视为恢复成功。"),
+        "recovery_unknown": (
+            "一次受控 API 恢复的调度或终态未能确认，已保留本次预算与执行围栏。",
+            "建议：先核对规范健康和受控收据；不要并发启动第二个恢复执行。"),
         "explicit_notify_test": (
             "这是聚义厅健康监控的人工通知测试。",
             "建议：无需处理生产服务；仅确认通知链路配置。"),
@@ -1119,6 +1214,31 @@ def interrupted_recovery_exhausted_body(now, incident_id, flight, current_status
         "本通知不把中断推断为已确认命令失败或成功。",
         "资源说明：恢复命令仅允许固定传入 CYF_API_MIN_MEMORY_AVAILABLE_BYTES=0 和 "
         "CYF_API_MIN_DISK_AVAILABLE_BYTES=0；本次收口未重新执行生命周期命令。",
+        "",
+        "检测时间（Asia/Shanghai）：%s" % asia_shanghai_text(now),
+        "故障编号：%s" % (incident_id or "无"),
+        "事件：recovery_exhausted_unknown",
+        "邮件状态说明：本机邮件助手接受请求不代表收件箱已送达。",
+    ]))
+
+
+def uncertain_recovery_exhausted_body(now, incident_id, action, attempt,
+                                      command_result, current_status, results):
+    return sanitize_mail_body("\n".join([
+        "第3次恢复的调度或返回终态不完整，结果为 UNKNOWN；已停止自动重试（3/3）。",
+        "服务影响：当前聚义厅 API 健康=%s（%s）；在人工确认前不得启动第4次自动恢复。" % (
+            "UP" if current_status.get("healthy") else "未确认",
+            safe_label(current_status.get("classification"))),
+        "下一步：请人工核对受控 carrier、规范生命周期收据和当前健康，再按审批流程处理熔断。",
+        "已确认：尝试=%d/%d；动作=%s；调度围栏=%s；carrier终态=%s；MySQL=%s；Redis=%s。" % (
+            attempt, MAX_RECOVERY_ATTEMPTS, ACTION_NAMES_ZH.get(action, "未知"),
+            "已确认" if command_result.get("dispatch_confirmed") is True else "未知",
+            "已确认" if command_result.get("terminal_confirmed") is True else "未知",
+            safe_label(results["mysql"].get("classification")),
+            safe_label(results["redis"].get("classification"))),
+        "未知终态：未取得可信规范返回码；本通知不推断命令失败或成功。",
+        "资源说明：恢复命令仅允许固定传入 CYF_API_MIN_MEMORY_AVAILABLE_BYTES=0 和 "
+        "CYF_API_MIN_DISK_AVAILABLE_BYTES=0；资源观测只告警、不阻止恢复。",
         "",
         "检测时间（Asia/Shanghai）：%s" % asia_shanghai_text(now),
         "故障编号：%s" % (incident_id or "无"),
@@ -1548,11 +1668,23 @@ class Monitor(object):
                 state["updated_at"] = attempt_started_at
                 self.persist(state)  # durable reservation immediately before carrier execution
 
-                def record_native_invocation():
+                def record_dispatch():
                     flight = recovery.get("in_flight")
                     if not isinstance(flight, dict) \
                             or flight.get("action") != action \
                             or flight.get("attempt") != attempt:
+                        raise MonitorError("native_dispatch_fence_changed")
+                    dispatched_at = max(int(self.clock()), attempt_started_at)
+                    flight["dispatch_at"] = dispatched_at
+                    state["updated_at"] = dispatched_at
+                    self.persist(state)
+
+                def record_native_invocation():
+                    flight = recovery.get("in_flight")
+                    if not isinstance(flight, dict) \
+                            or flight.get("action") != action \
+                            or flight.get("attempt") != attempt \
+                            or "dispatch_at" not in flight:
                         raise MonitorError("native_invocation_fence_changed")
                     invoked_at = max(int(self.clock()), attempt_started_at)
                     flight["native_invoked_at"] = invoked_at
@@ -1561,25 +1693,43 @@ class Monitor(object):
 
                 try:
                     command_result = self.effects.recover(
-                        action, incident_id, attempt, record_native_invocation)
+                        action, incident_id, attempt,
+                        record_dispatch, record_native_invocation)
                     if not isinstance(command_result, dict) \
                             or not isinstance(command_result.get("returncode"), int) \
                             or isinstance(command_result.get("returncode"), bool) \
-                            or not isinstance(command_result.get("carrier_returncode"), int) \
-                            or isinstance(command_result.get("carrier_returncode"), bool) \
-                            or not isinstance(command_result.get("native_invoked"), bool) \
+                            or (command_result.get("carrier_returncode") is not None \
+                                and (not isinstance(command_result.get("carrier_returncode"), int) \
+                                     or isinstance(command_result.get("carrier_returncode"), bool))) \
+                            or (command_result.get("dispatch_confirmed") is not None \
+                                and not isinstance(command_result.get("dispatch_confirmed"), bool)) \
+                            or (command_result.get("native_invoked") is not None \
+                                and not isinstance(command_result.get("native_invoked"), bool)) \
                             or (command_result.get("native_returncode") is not None \
                                 and (not isinstance(command_result.get("native_returncode"), int) \
-                                     or isinstance(command_result.get("native_returncode"), bool))):
+                                     or isinstance(command_result.get("native_returncode"), bool))) \
+                            or not isinstance(command_result.get("terminal_confirmed"), bool) \
+                            or (command_result.get("dispatch_confirmed") is False \
+                                and (command_result.get("native_invoked") is not False \
+                                     or not command_result.get("terminal_confirmed"))) \
+                            or (command_result.get("native_invoked") is True \
+                                and command_result.get("dispatch_confirmed") is not True) \
+                            or (command_result.get("native_returncode") is not None \
+                                and command_result.get("native_invoked") is not True):
                         raise MonitorError("recovery_result_invalid")
                 except Exception as exc:
                     command_result = {
-                        "returncode": 126, "carrier_returncode": 126,
-                        "native_invoked": None, "native_returncode": None,
+                        "returncode": 126, "carrier_returncode": None,
+                        "dispatch_confirmed": None, "native_invoked": None,
+                        "native_returncode": None, "terminal_confirmed": False,
                         "classification": "recovery_%s" % safe_label(type(exc).__name__),
                     }
 
-                if command_result.get("native_invoked") is False:
+                definitive_prelaunch_failure = \
+                    command_result.get("dispatch_confirmed") is False \
+                    and command_result.get("native_invoked") is False \
+                    and command_result.get("terminal_confirmed") is True
+                if definitive_prelaunch_failure:
                     completed_at = max(int(self.clock()), attempt_started_at)
                     recovery["attempts"] = previous_attempts
                     recovery["last_attempt_at"] = previous_last_attempt_at
@@ -1587,8 +1737,10 @@ class Monitor(object):
                     recovery["last_result"] = {
                         "at": completed_at, "action": action, "attempt": attempt,
                         "classification": "carrier_failed_not_invoked",
+                        "dispatch_confirmed": False,
                         "native_invoked": False, "native_returncode": None,
                         "carrier_returncode": command_result["carrier_returncode"],
+                        "terminal_confirmed": True,
                     }
                     state["last_snapshot"]["recovery"]["decision"] = \
                         "carrier_failed_not_invoked"
@@ -1615,17 +1767,27 @@ class Monitor(object):
                         self.effects.canonical_status, "canonical_post_recovery")
                     completed_at = max(completed_at, attempt_started_at)
                     native_returncode = command_result.get("native_returncode")
+                    unknown_terminal = command_result.get("native_invoked") is not True \
+                        or native_returncode is None
                     success = command_result.get("native_invoked") is True \
                         and native_returncode == 0 and fresh.get("healthy") is True
-                    classification = "success_health_up" if success else \
-                        "failed_fresh_health_not_up"
-                    recovery["in_flight"] = None
+                    if success:
+                        classification = "success_health_up"
+                    elif unknown_terminal:
+                        classification = "unknown_dispatch_or_terminal"
+                    else:
+                        classification = "failed_fresh_health_not_up"
+                    if command_result.get("terminal_confirmed") \
+                            or attempt >= MAX_RECOVERY_ATTEMPTS:
+                        recovery["in_flight"] = None
                     recovery["last_result"] = {
                         "at": completed_at, "action": action, "attempt": attempt,
                         "classification": classification,
-                        "native_invoked": command_result.get("native_invoked") is True,
+                        "dispatch_confirmed": command_result.get("dispatch_confirmed"),
+                        "native_invoked": command_result.get("native_invoked"),
                         "native_returncode": native_returncode,
-                        "carrier_returncode": command_result.get("carrier_returncode", 126),
+                        "carrier_returncode": command_result.get("carrier_returncode"),
+                        "terminal_confirmed": command_result.get("terminal_confirmed"),
                     }
                     if success:
                         recovery["last_success_at"] = completed_at
@@ -1641,25 +1803,35 @@ class Monitor(object):
                     state["updated_at"] = completed_at
                     if recovery["circuit_latched"]:
                         exhausted_notice_id = "incident:%s:recovery-exhausted" % incident_id
+                        exhausted_unknown = unknown_terminal
                         enqueue_notice(
                             state, exhausted_notice_id, "recovery_exhausted",
+                            SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN if exhausted_unknown else
                             SUBJECT_RECOVERY_EXHAUSTED,
+                            uncertain_recovery_exhausted_body(
+                                completed_at, incident_id, action, attempt,
+                                command_result, fresh, results) if exhausted_unknown else
                             recovery_exhausted_body(
                                 completed_at, incident_id, action, attempt, command_result,
-                                status, fresh, results, resource_observation), completed_at)
+                                status, fresh, results, resource_observation),
+                            completed_at)
                         self.persist(state)  # latch and urgent notice are durable before delivery
                         pre_recovery_mail_accepted += flush_outbox(
                             state, self.effects, config, completed_at, 1,
                             preferred_id=exhausted_notice_id)
                         self.persist(state)  # mail failure never clears the circuit or notice
                     else:
+                        notice_unknown = unknown_terminal
                         enqueue_notice(
                             state, "incident:%s:recovery:%d:result" % (incident_id, attempt),
-                            "recovery_result",
+                            "recovery_unknown" if notice_unknown else "recovery_result",
                             SUBJECT_RECOVERY_RESULT %
-                            ("成功" if success else "未成功", attempt, MAX_RECOVERY_ATTEMPTS),
+                            ("成功" if success else
+                             ("未确认" if notice_unknown else "未成功"),
+                             attempt, MAX_RECOVERY_ATTEMPTS),
                             notice_body(
-                                "recovery_result", completed_at, incident_id, ["local_api"],
+                                "recovery_unknown" if notice_unknown else "recovery_result",
+                                completed_at, incident_id, ["local_api"],
                                 "本次：动作=%s；尝试=%d/%d；规范返回码=%s；恢复后健康=%s（%s）。" %
                                 (ACTION_NAMES_ZH[action], attempt, MAX_RECOVERY_ATTEMPTS,
                                  str(native_returncode) if native_returncode is not None else "UNKNOWN",
@@ -1707,6 +1879,8 @@ class Monitor(object):
         if not results["mysql"]["healthy"] or not results["redis"]["healthy"]:
             return {"classification": "dependencies_unreachable"}
         recovery = state["recovery"]
+        if recovery["in_flight"] is not None:
+            return {"classification": "recovery_in_flight"}
         if recovery["circuit_latched"] or recovery["attempts"] >= MAX_RECOVERY_ATTEMPTS:
             recovery["circuit_latched"] = True
             return {"classification": "circuit_latched"}
