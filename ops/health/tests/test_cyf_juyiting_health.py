@@ -46,7 +46,10 @@ class FakeEffects(object):
     def __init__(self, statuses=None):
         self.statuses = list(statuses or [up()])
         self.recoveries = []
+        self.recovery_calls = []
         self.recovery_rc = 0
+        self.recovery_precondition_result = {
+            "permitted": True, "classification": "recovery_scope_ready"}
         self.recovery_exception = None
         self.recovery_observer = None
         self.web_result = {"healthy": True, "classification": "web_ok"}
@@ -66,14 +69,19 @@ class FakeEffects(object):
             return self.statuses.pop(0)
         return self.statuses[0]
 
-    def recover(self, action):
+    def recovery_precondition(self, action, incident_id, attempt):
+        self.events.append("recovery_precondition")
+        return dict(self.recovery_precondition_result)
+
+    def recover(self, action, incident_id, attempt):
         self.events.append("recover:" + action)
         self.recoveries.append(action)
+        self.recovery_calls.append((action, incident_id, attempt))
         if self.recovery_observer is not None:
-            self.recovery_observer(action)
+            self.recovery_observer(action, incident_id, attempt)
         if self.recovery_exception is not None:
             raise self.recovery_exception
-        return {"returncode": self.recovery_rc, "classification": "exit_%d" % self.recovery_rc}
+        return {"returncode": self.recovery_rc, "classification": "native_exit_%d" % self.recovery_rc}
 
     def web(self, marker):
         self.events.append("web")
@@ -270,7 +278,7 @@ class MonitorTests(unittest.TestCase):
         state["component_streaks"]["local_api"] = 2
         state["recovery"]["attempts"] = 2
         state["recovery"]["last_attempt_at"] = self.clock.now - health.COOLDOWN_SECONDS
-        def observe(action):
+        def observe(action, incident_id, attempt):
             fenced = self.persisted[-1]["recovery"]
             self.assertEqual(3, fenced["attempts"])
             self.assertEqual({"action": "start", "attempt": 3, "at": self.clock.now},
@@ -340,6 +348,47 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual("failed_fresh_health_not_up", result["recovery"]["result"])
         self.assertIsNone(state["recovery"]["last_success_at"])
 
+    def test_native_rc1_with_surviving_trusted_java_is_recorded_without_second_actor(self):
+        for fresh in (up(), not_ready(1200)):
+            with self.subTest(fresh=fresh["classification"]):
+                effects = FakeEffects([stopped(), stopped(), fresh])
+                effects.recovery_rc = 1
+                state = health.initial_state(self.clock.now)
+                state["component_streaks"]["local_api"] = 2
+                monitor = self.monitor(effects)
+
+                result = monitor.check_once(state, self.config)
+
+                self.assertEqual(["start"], effects.recoveries)
+                self.assertEqual(1, state["recovery"]["attempts"])
+                self.assertEqual("failed_fresh_health_not_up",
+                                 result["recovery"]["result"])
+                self.assertEqual("native_exit_1",
+                                 result["recovery"]["native_result"])
+                self.assertIsNone(state["recovery"]["last_success_at"])
+
+                self.clock.now += health.COOLDOWN_SECONDS
+                monitor.check_once(state, self.config)
+                self.assertEqual(["start"], effects.recoveries)
+
+    def test_untrusted_recovery_carrier_is_precondition_skip_not_attempt(self):
+        effects = FakeEffects([stopped(), stopped()])
+        effects.recovery_precondition_result = {
+            "permitted": False,
+            "classification": "recovery_carrier_unsafe_executable_owner",
+        }
+        state = health.initial_state(self.clock.now)
+        state["component_streaks"]["local_api"] = 2
+
+        result = self.monitor(effects).check_once(state, self.config)
+
+        self.assertEqual([], effects.recoveries)
+        self.assertEqual(0, state["recovery"]["attempts"])
+        self.assertEqual("not_attempted_after_carrier_precondition",
+                         result["recovery"]["result"])
+        self.assertEqual("recovery_carrier_unsafe_executable_owner",
+                         result["recovery"]["decision"])
+
     def test_recovery_exception_consumes_third_actual_attempt_and_latches(self):
         effects = FakeEffects([stopped(), stopped(), stopped()])
         effects.recovery_exception = RuntimeError("must not escape into durable payload")
@@ -347,7 +396,7 @@ class MonitorTests(unittest.TestCase):
         state["component_streaks"]["local_api"] = 2
         state["recovery"]["attempts"] = 2
         state["recovery"]["last_attempt_at"] = self.clock.now - health.COOLDOWN_SECONDS
-        def observe(action):
+        def observe(action, incident_id, attempt):
             fenced = self.persisted[-1]["recovery"]
             self.assertEqual(3, fenced["attempts"])
             self.assertEqual({"action": "start", "attempt": 3, "at": self.clock.now},
@@ -367,7 +416,7 @@ class MonitorTests(unittest.TestCase):
         state = health.initial_state(self.clock.now)
         state["component_streaks"]["local_api"] = 2
         started_at = self.clock.now
-        def complete_after_long_start(action):
+        def complete_after_long_start(action, incident_id, attempt):
             self.clock.now += 11 * 60
         effects.recovery_observer = complete_after_long_start
         self.monitor(effects).check_once(state, self.config)
@@ -989,7 +1038,10 @@ class StaticContractTests(unittest.TestCase):
         with open(MODULE_PATH, "r") as stream:
             source = stream.read()
         self.assertIn('[CANONICAL, "status"]', source)
-        self.assertIn('[CANONICAL, action]', source)
+        self.assertIn('SYSTEMD_RUN, "--quiet", "--scope"', source)
+        self.assertIn('"--property=" + RECOVERY_SWAPPINESS_PROPERTY', source)
+        self.assertNotIn("Type=oneshot", source)
+        self.assertNotIn("KillMode=control-group", source)
         self.assertIn('[MAIL_PYTHON, "-I", MAIL_HELPER', source)
         self.assertIn("validate_trusted_executable(MAIL_PYTHON", source)
         self.assertNotIn("shell=True", source)
@@ -1035,10 +1087,48 @@ class StaticContractTests(unittest.TestCase):
             health.command_environment(recovery=True, mail=True)
 
         effects = health.Effects()
+        incident_id = "I000056-1788792725"
+        expected = [
+            health.SYSTEMD_RUN, "--quiet", "--scope",
+            "--unit=cyf-api-healthmon-i000056-1788792725-a2.scope",
+            "--property=MemorySwappiness=60", health.CANONICAL, "start",
+        ]
         with mock.patch.object(effects, "_trusted_canonical", return_value=True), \
-                mock.patch.object(effects, "_run", return_value={"returncode": 0}) as runner:
-            effects.recover("start")
-        runner.assert_called_once_with([health.CANONICAL, "start"], None, recovery=True)
+                mock.patch.object(health, "validate_trusted_executable") as validator, \
+                mock.patch.object(effects, "_run", return_value={"returncode": 1}) as runner:
+            result = effects.recover("start", incident_id, 2)
+        self.assertEqual({"returncode": 1, "classification": "native_exit_1"}, result)
+        validator.assert_called_once_with(health.SYSTEMD_RUN, 0, True)
+        runner.assert_called_once_with(
+            expected, None, recovery=("start", incident_id, 2))
+
+    def test_recovery_scope_contract_rejects_arbitrary_inputs(self):
+        incident_id = "I000056-1788792725"
+        expected = health.recovery_carrier_argv("restart", incident_id, 3)
+        self.assertEqual([
+            health.SYSTEMD_RUN, "--quiet", "--scope",
+            "--unit=cyf-api-healthmon-i000056-1788792725-a3.scope",
+            "--property=MemorySwappiness=60", health.CANONICAL, "restart",
+        ], expected)
+        for action, incident, attempt in (
+                ("stop", incident_id, 1),
+                ("start", "../foreign.service", 1),
+                ("start", incident_id, 0),
+                ("start", incident_id, 4)):
+            with self.subTest(action=action, incident=incident, attempt=attempt):
+                with self.assertRaises(health.MonitorError):
+                    health.recovery_carrier_argv(action, incident, attempt)
+
+        effects = health.Effects()
+        malicious = list(expected)
+        malicious[4] = "--property=KillMode=control-group"
+        with self.assertRaises(health.MonitorError):
+            effects._run(malicious, 1, recovery=("restart", incident_id, 3))
+        with self.assertRaises(health.MonitorError):
+            effects._run([health.CANONICAL, "restart"], 1,
+                         recovery=("restart", incident_id, 3))
+        with self.assertRaises(health.MonitorError):
+            effects._run(expected, 1, recovery=True)
 
     def test_real_isolated_python36_flattens_all_bounded_subjects_without_folding(self):
         old_subject = "【聚义厅监控】“三次恢复失败即停止重试”策略已安装；持锁待查"
@@ -1116,6 +1206,7 @@ print('MIME_SUBJECTS_OK:%d' % len(subjects))
         monitor_digest = health.sha256_file(MODULE_PATH)
         self.assertIn("CANDIDATE_MONITOR_SHA=" + monitor_digest, text)
         self.assertIn("installed monitor is not the reviewed candidate", text)
+        self.assertIn("CANONICAL_SHA=" + health.CANONICAL_SHA256, text)
         self.assertIn("755:0:0:1", text)
 
     def test_cron_syntax_contract(self):

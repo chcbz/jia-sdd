@@ -27,7 +27,9 @@ STATE_PATH = STATE_DIR + "/state.json"
 LOCK_PATH = STATE_DIR + "/monitor.lock"
 MAINTENANCE_PATH = STATE_DIR + "/maintenance"
 CANONICAL = "/usr/local/sbin/cyf-api-kit"
-CANONICAL_SHA256 = "56537824cd33f6333f199ea1cebda90b127b39c079e08daad6d164607f788ef5"
+CANONICAL_SHA256 = "b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525"
+SYSTEMD_RUN = "/usr/bin/systemd-run"
+RECOVERY_SWAPPINESS_PROPERTY = "MemorySwappiness=60"
 MAIL_PYTHON = "/usr/bin/python3"
 MAIL_HELPER = "/root/.local/bin/cyf-task-email"
 MAIL_HELPER_SHA256 = "ddc540f1d450880af5bb707751cf6cd68b6492e58cb702436b19580867d3ae99"
@@ -77,6 +79,26 @@ MAIL_ENV_OVERRIDES = {
     "LC_ALL": "C.UTF-8",
     "LANG": "C.UTF-8",
 }
+
+
+def recovery_scope_unit(incident_id, attempt):
+    if not isinstance(incident_id, str) \
+            or not re.match(r"^I[0-9]{6,12}-[0-9]{1,20}$", incident_id):
+        raise MonitorError("recovery_incident_invalid")
+    if not _is_int(attempt, 1) or attempt > MAX_RECOVERY_ATTEMPTS:
+        raise MonitorError("recovery_attempt_invalid")
+    return "cyf-api-healthmon-%s-a%d.scope" % (incident_id.lower(), attempt)
+
+
+def recovery_carrier_argv(action, incident_id, attempt):
+    if action not in ("start", "restart"):
+        raise MonitorError("recovery_action_invalid")
+    return [
+        SYSTEMD_RUN, "--quiet", "--scope",
+        "--unit=" + recovery_scope_unit(incident_id, attempt),
+        "--property=" + RECOVERY_SWAPPINESS_PROPERTY,
+        CANONICAL, action,
+    ]
 
 
 def command_environment(recovery=False, mail=False):
@@ -430,7 +452,8 @@ def validate_state(data):
         recovery_snapshot = snapshot["recovery"]
         # resource_preflight is retained for already-installed schema-v1 state.
         # New snapshots use resource_observation because capacity is warning-only.
-        allowed_recovery = {"decision", "result", "resource_preflight", "resource_observation"}
+        allowed_recovery = {"decision", "result", "resource_preflight", "resource_observation",
+                            "native_result"}
         if not isinstance(recovery_snapshot, dict) or set(recovery_snapshot) - allowed_recovery \
                 or not {"decision", "result"}.issubset(set(recovery_snapshot)) \
                 or any(not isinstance(value, str) or len(value) > 80
@@ -678,12 +701,15 @@ def parse_canonical_status(returncode, stdout):
 
 
 class Effects(object):
-    def _run(self, argv, timeout, recovery=False, mail=False):
+    def _run(self, argv, timeout, recovery=None, mail=False):
         mail_prefix = [MAIL_PYTHON, "-I", MAIL_HELPER]
         is_mail_command = len(argv) >= len(mail_prefix) \
             and argv[:len(mail_prefix)] == mail_prefix
-        if recovery:
-            if argv not in ([CANONICAL, "start"], [CANONICAL, "restart"]):
+        if recovery is not None:
+            if not isinstance(recovery, tuple) or len(recovery) != 3:
+                raise MonitorError("recovery_contract_invalid")
+            action, incident_id, attempt = recovery
+            if argv != recovery_carrier_argv(action, incident_id, attempt):
                 raise MonitorError("recovery_env_command_invalid")
         if mail:
             if recovery or len(argv) != 5 or not is_mail_command \
@@ -694,7 +720,7 @@ class Effects(object):
             raise MonitorError("mail_command_without_mail_env")
         process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, cwd="/",
-                                   env=command_environment(recovery, mail),
+                                   env=command_environment(recovery is not None, mail),
                                    universal_newlines=True)
         try:
             stdout, stderr = process.communicate(timeout=timeout)
@@ -724,12 +750,25 @@ class Effects(object):
                     "elapsed_seconds": None}
         return parse_canonical_status(result["returncode"], result["stdout"])
 
-    def recover(self, action):
-        if action not in ("start", "restart") or not self._trusted_canonical():
-            return {"returncode": 126, "classification": "canonical_file_untrusted"}
-        result = self._run([CANONICAL, action], None, recovery=True)
+    def recovery_precondition(self, action, incident_id, attempt):
+        try:
+            recovery_carrier_argv(action, incident_id, attempt)
+            if not self._trusted_canonical():
+                return {"permitted": False, "classification": "canonical_file_untrusted"}
+            validate_trusted_executable(SYSTEMD_RUN, 0, True)
+            return {"permitted": True, "classification": "recovery_scope_ready"}
+        except (MonitorError, OSError) as exc:
+            return {"permitted": False,
+                    "classification": "recovery_carrier_%s" % safe_label(str(exc))}
+
+    def recover(self, action, incident_id, attempt):
+        precondition = self.recovery_precondition(action, incident_id, attempt)
+        if not precondition.get("permitted"):
+            raise MonitorError(precondition.get("classification"))
+        argv = recovery_carrier_argv(action, incident_id, attempt)
+        result = self._run(argv, None, recovery=(action, incident_id, attempt))
         return {"returncode": result["returncode"],
-                "classification": "exit_%d" % result["returncode"]}
+                "classification": "native_exit_%d" % result["returncode"]}
 
     def _http(self, url):
         req = urlrequest.Request(url, headers={
@@ -1383,6 +1422,40 @@ class Monitor(object):
                 self.persist(state)
                 action = None
             else:
+                try:
+                    carrier = self.effects.recovery_precondition(
+                        action, incident_id, attempt)
+                    if not isinstance(carrier, dict) \
+                            or not isinstance(carrier.get("permitted"), bool) \
+                            or not isinstance(carrier.get("classification"), str):
+                        raise MonitorError("recovery_carrier_precondition_invalid")
+                except Exception as exc:
+                    carrier = {
+                        "permitted": False,
+                        "classification": "recovery_carrier_%s" %
+                        safe_label(type(exc).__name__),
+                    }
+                if not carrier["permitted"]:
+                    classification = safe_label(carrier["classification"])
+                    carrier_at = int(self.clock())
+                    state["last_snapshot"]["recovery"]["decision"] = classification
+                    state["last_snapshot"]["recovery"]["result"] = \
+                        "not_attempted_after_carrier_precondition"
+                    enqueue_notice(
+                        state,
+                        "incident:%s:recovery:%d:carrier:%s" %
+                        (incident_id, attempt, classification),
+                        "recovery_deferred", SUBJECT_RECOVERY_DEFERRED,
+                        notice_body(
+                            "recovery_deferred_revalidation", carrier_at,
+                            incident_id, ["local_api"],
+                            "本次：动作=%s；原因=%s；尝试次数未增加。" %
+                            (ACTION_NAMES_ZH[action], classification)),
+                        carrier_at)
+                    state["updated_at"] = carrier_at
+                    self.persist(state)
+                    action = None
+            if action:
                 attempt_started_at = max(
                     int(self.clock()), maintenance_at, mysql_at, redis_at, rechecked_at)
                 recovery["attempts"] = attempt
@@ -1393,7 +1466,7 @@ class Monitor(object):
                 state["updated_at"] = attempt_started_at
                 self.persist(state)  # durable actual-command fence immediately before lifecycle execution
                 try:
-                    command_result = self.effects.recover(action)
+                    command_result = self.effects.recover(action, incident_id, attempt)
                     if not isinstance(command_result, dict) or not isinstance(command_result.get("returncode"), int):
                         raise MonitorError("recovery_result_invalid")
                 except Exception as exc:
@@ -1416,6 +1489,8 @@ class Monitor(object):
                 state["last_snapshot"]["checks"]["local_api_post_recovery"] = \
                     sanitized_result(fresh, completed_at)
                 state["last_snapshot"]["recovery"]["result"] = classification
+                state["last_snapshot"]["recovery"]["native_result"] = safe_label(
+                    command_result.get("classification"))
                 state["updated_at"] = completed_at
                 if recovery["circuit_latched"]:
                     exhausted_notice_id = "incident:%s:recovery-exhausted" % incident_id
