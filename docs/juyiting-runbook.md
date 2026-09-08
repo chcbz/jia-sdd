@@ -52,6 +52,7 @@ For the current GPT multimodal visual baseline verdict and required contact shee
 - Bounty assignment should receive the target agent from the clicked row or explicit action payload.
 - Chat context should preserve selected agent, mentioned agents, selected task, and `scene: 'juyiting'` metadata.
 - Keep map controls and fixed-format UI elements dimensionally stable to avoid layout jumps.
+- Reader capsule avoidance is in `web/src/components/juyiting/archive/ArchiveReader.vue`: normal/native layouts reserve the right edge; virtual 90-degree landscape reserves the logical left and rotates safe-area mapping. Verify the lazy Juyi Hall CSS, not just index CSS; [Flow 85 release evidence](releases/2026-09-09-reader-flow85.md).
 - Onboarding follows the actual `portrait-command` / `landscape-map` experience (including virtual landscape), with separate steps. Keep portrait `data-tour` anchors aligned with their buttons; map steps must use runtime hotspot bounds and canonical map IDs, not fixed screen coordinates. Preserve replay, versioned dismissal, and modal focus restoration.
 - Onboarding geometry is isolated in `web/src/components/juyiting/hallOnboardingGeometry.js`; verify it with `web/tests/hall-onboarding.test.mjs` (Node test runner) and `web/tests/juyiting-hall-onboarding-geometry.test.js` (Mocha component tests).
 
