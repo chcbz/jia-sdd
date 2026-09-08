@@ -21,6 +21,7 @@ For the current GPT multimodal visual baseline verdict and required contact shee
 | Movement/positioning | `web/src/composables/juyiting/useHallScene.js`, `web/src/game/scenes/HallScene.js`, `web/src/game/entities/HallAgent.js` |
 | Role portraits | `web/src/composables/juyiting/useWaterMarginRoles.js` |
 | Constants and role metadata | `web/src/constants/juyiting.js` |
+| Guided onboarding | `web/src/components/juyiting/HallOnboarding.vue`, `web/src/composables/juyiting/useHallOnboarding.js` |
 | Visual assets | `web/src/assets/juyiting/` |
 
 ## Current Data Boundaries
@@ -51,6 +52,8 @@ For the current GPT multimodal visual baseline verdict and required contact shee
 - Bounty assignment should receive the target agent from the clicked row or explicit action payload.
 - Chat context should preserve selected agent, mentioned agents, selected task, and `scene: 'juyiting'` metadata.
 - Keep map controls and fixed-format UI elements dimensionally stable to avoid layout jumps.
+- Onboarding follows the actual `portrait-command` / `landscape-map` experience (including virtual landscape), with separate steps. Keep portrait `data-tour` anchors aligned with their buttons; map steps must use runtime hotspot bounds and canonical map IDs, not fixed screen coordinates. Preserve replay, versioned dismissal, and modal focus restoration.
+- Onboarding geometry is isolated in `web/src/components/juyiting/hallOnboardingGeometry.js`; verify it with `web/tests/hall-onboarding.test.mjs` (Node test runner) and `web/tests/juyiting-hall-onboarding-geometry.test.js` (Mocha component tests).
 
 ## Backend Areas
 
@@ -69,10 +72,13 @@ rg -n "juyiting|conversation_type|chat/stream|conversation/events" api/chat
 
 ## Verification Checklist
 
-For source changes under `web/`:
+Formal frontend builds run in the Alibaba Cloud pipeline after pushing the reviewed code to the remote `develop` and `master` branches. Do not treat a local build as a production release or run local production builds by default. Local verification uses targeted tests; update the root `web` gitlink only after the frontend commit is pushed.
+
+For onboarding changes, run the local behavior checks from `web/`:
 
 ```bash
-cd web && npm run build
+node --test tests/hall-onboarding.test.mjs
+node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter dot --exit tests/juyiting-hall-onboarding-geometry.test.js
 ```
 
 For behavior changes, also inspect relevant tests under `web/tests/`. Useful search:
