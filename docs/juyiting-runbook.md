@@ -55,6 +55,13 @@ For the current GPT multimodal visual baseline verdict and required contact shee
 - Onboarding follows the actual `portrait-command` / `landscape-map` experience (including virtual landscape), with separate steps. Keep portrait `data-tour` anchors aligned with their buttons; map steps must use runtime hotspot bounds and canonical map IDs, not fixed screen coordinates. Preserve replay, versioned dismissal, and modal focus restoration.
 - Onboarding geometry is isolated in `web/src/components/juyiting/hallOnboardingGeometry.js`; verify it with `web/tests/hall-onboarding.test.mjs` (Node test runner) and `web/tests/juyiting-hall-onboarding-geometry.test.js` (Mocha component tests).
 
+## Mini Program Public Entry
+
+- Cold launch loads `https://kit.chaoyoufan.cn/?nativeOrientation=portrait&entry=direct`; `/` explains the product to guests (valid logged-in sessions follow the existing redirect to `/juyiting`), `/demo` is a local simulation, and `/juyiting` is the authenticated workbench.
+- Public links use `web/src/utils/publicEntryNavigation.js` to preserve only portrait context and allowlisted entry markers, never source URL credentials or arbitrary redirects.
+- Keep fixed native landscape navigation unchanged. The portrait fallback `entry=fallback` must load `/juyiting`, not the introduction.
+- The paired shell is at `C:/Users/Think/WeChatProjects/juyiting`; run paired tests with `MINIPROGRAM_PROJECT` set to that checkout. Release and physical-device acceptance remain separate gates; see `specs/miniprogram-public-entry/acceptance.md`.
+
 ## Backend Areas
 
 | Concern | Backend path |
