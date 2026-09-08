@@ -25,7 +25,7 @@ assert_clean_candidate api "$API_REPO" "$API_REF" "$API_HEAD" "$API_TREE"
   --fixture-digest "$ORCHESTRATOR_FIXTURE" \
   --artifact "$API_REPO/$API_JAR_RELATIVE_PATH" \
   "$ORCHESTRATOR_TASK" -- \
-  "$API_REPO/gradlew" --no-daemon --max-workers=1 --no-build-cache --offline --info \
+  "$API_REPO/gradlew" --no-daemon --max-workers=1 --no-build-cache --info \
   -PrepoUsername=unused -PrepoPassword=unused \
   -Dorg.gradle.jvmargs='-Xms128m -Xmx384m -XX:MaxMetaspaceSize=192m -XX:MaxDirectMemorySize=64m -Dfile.encoding=UTF-8' \
   "$API_GRADLE_TASK"
