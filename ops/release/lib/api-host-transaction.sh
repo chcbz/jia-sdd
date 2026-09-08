@@ -568,26 +568,39 @@ if len(identity) < 32: raise SystemExit('invalid identity key')
 try: cache = base64.b64decode(values.get('JIA_CHAT_VOICE_CACHE_ENCRYPTION_KEY',''), validate=True)
 except (ValueError, TypeError): cache = b''
 if len(cache) != 32: raise SystemExit('invalid cache key')
-common_key = values.get('SPRING_AI_OPENAI_API_KEY','')
-tkey = values.get('SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_API_KEY', common_key)
-skey = values.get('SPRING_AI_OPENAI_AUDIO_SPEECH_API_KEY', common_key)
-if not tkey or not skey: raise SystemExit('provider API keys are missing')
-for secret in (tkey.encode(), skey.encode(), cache, values.get('JIA_CHAT_VOICE_CACHE_ENCRYPTION_KEY','').encode()):
+provider_key_names = ('SPRING_AI_OPENAI_API_KEY',
+ 'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_API_KEY', 'SPRING_AI_OPENAI_AUDIO_SPEECH_API_KEY')
+for name in provider_key_names:
+    if name in values and not values[name].strip(): raise SystemExit('explicit provider API key is blank')
+    if name in values and hmac.compare_digest(identity, values[name].encode()):
+        raise SystemExit('credentials must be independent')
+for secret in (cache, values.get('JIA_CHAT_VOICE_CACHE_ENCRYPTION_KEY','').encode()):
     if hmac.compare_digest(identity, secret): raise SystemExit('credentials must be independent')
-common_url = values.get('SPRING_AI_OPENAI_BASE_URL','')
-urls = [values.get('SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_BASE_URL', common_url),
-        values.get('SPRING_AI_OPENAI_AUDIO_SPEECH_BASE_URL', common_url)]
-for url in urls:
-    parsed=urlsplit(url); segments=parsed.path[1:].split('/') if parsed.path.startswith('/') else []
+provider_url_names = ('SPRING_AI_OPENAI_BASE_URL',
+ 'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_BASE_URL', 'SPRING_AI_OPENAI_AUDIO_SPEECH_BASE_URL')
+provided_urls = []
+for name in provider_url_names:
+    if name not in values: continue
+    url=values[name]; parsed=urlsplit(url)
+    segments=parsed.path[1:].split('/') if parsed.path.startswith('/') else []
     if (parsed.scheme.lower()!='https' or not parsed.hostname or parsed.username or parsed.password
             or parsed.query or parsed.fragment or parsed.path=='/' or not segments
             or any(part in ('','.','..') for part in segments) or url.endswith('/')
             or any(ch in url for ch in ('%','\\',';')) or parsed.geturl()!=url):
-        raise SystemExit('unsafe provider gateway')
+        raise SystemExit('explicit provider gateway is unsafe')
+    provided_urls.append(url)
 allowlist = set(filter(None, values.get('JIA_CHAT_VOICE_COMPATIBILITY_GATEWAY_ALLOWLIST',
                                         'https://api.openai.com/v1').split(',')))
-if not set(urls).issubset(allowlist): raise SystemExit('provider gateway is not allowlisted')
+if not set(provided_urls).issubset(allowlist): raise SystemExit('provider gateway is not allowlisted')
 if not values.get('CYF_VOICE_SMOKE_BEARER_TOKEN'): raise SystemExit('smoke credential is missing')
+common_key_provided = 'SPRING_AI_OPENAI_API_KEY' in values
+common_url_provided = 'SPRING_AI_OPENAI_BASE_URL' in values
+connection_deferred = any(name not in values and not common_key_provided for name in (
+ 'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_API_KEY', 'SPRING_AI_OPENAI_AUDIO_SPEECH_API_KEY')) or any(
+ name not in values and not common_url_provided for name in (
+ 'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_BASE_URL', 'SPRING_AI_OPENAI_AUDIO_SPEECH_BASE_URL'))
+if connection_deferred:
+    print('VOICE_PROVIDER_CONNECTION_VALIDATION=APPLICATION_STARTUP_REQUIRED', file=sys.stderr)
 names = sorted(values if output_mode == 'all' else java_names & set(values))
 for name in names:
     print(base64.b64encode((name+'='+values[name]).encode('utf-8')).decode('ascii'))
