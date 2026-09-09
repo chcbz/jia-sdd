@@ -67,6 +67,8 @@ Agent HTTP Authorization 使用该 ticket；用户 JWT 不能调用 Agent 写接
 
 鉴权引导例外：尚无主体时，只允许用服务端计算的 bearer SHA-256 精确查询 `BINARY(32) ticket_hash`，由持久行建立 scope；请求传入的 tenant/client/run/binding 不得决定主体。此后资源和业务查询必须使用行派生的精确 scope 并动态校验授权，仍遵守同一未撤销 binding 的新 runtime 恢复规则。普通资源 ID 不享有无 scope 查询例外。签发限频在同一精确 binding 行锁下完成窗口计数与 ticket 插入，可添加非唯一索引 `(tenant_id,client_id,binding_id,created_at)`。
 
+身份事务锁顺序：业务 source root → output_source_binding → output_run_binding → agent_persona_binding → agent_identity_registry → agent_runtime。TASK 先锁 task root 与精确 member，CONVERSATION 先锁持久 owner 行；非锁投影仅用于发现键，持锁后重读授权信息。该顺序保留既有注册/解绑/status 的 binding → identity → runtime 前缀；已持身份锁的路径不得反向获取 source/run 锁。具体依据及并发验证要求见 [identity-lock-order-review.md](evidence/OD01/identity-lock-order-review.md)。
+
 ## 5. 数据模型与唯一约束
 
 [schema-contract.yaml](schema-contract.yaml) 定义每表字段类型、可空性、索引、阶段和不可变字段，是生成 mapper/迁移审查清单的输入，**不是可执行迁移**。所有表 InnoDB，同数据源；时间为 epoch ms BIGINT，所有 bigint/version 在线协议为十进制字符串。业务审计、错误码限制长度；正文 TEXT/MEDIUMTEXT 仅用于受大小限制的文本，不保存二进制。
