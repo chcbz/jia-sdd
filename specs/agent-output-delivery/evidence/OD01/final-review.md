@@ -44,3 +44,9 @@ The original writer owns all three repairs and the affected targeted tests. Each
 - Review the multi-target order explicitly: preparing target B's source/run after taking target A's runtime lock must not introduce an unproven reverse lock sequence. Prefer preparing all affected source/run locks before ordered identity/runtime validation, or substantiate the same-source serialization argument and overlapping-target behavior. Prewritten membership/work-item facts and command bytes must roll back with failed authorization; no external side effect may escape before commit.
 
 This is the writer's bounded implementation direction, not evidence that the findings are repaired.
+
+## Repair integration milestone — tests and re-review pending
+
+The sole writer reports that assignment and Hall command capture now freeze trusted context before initial wire/hash persistence; reissue inherits the stored context; raw dispatch sends the supplied bytes. Task/raw and conversation paths resolve the current dispatch runtime and filter registered sessions by runtime ID. Ticket reissuance validates generation/binding without the dispatch TTL.
+
+The batch API is restricted to a single business source. Prior-run recovery and dispatch-runtime resolution both recheck the recovery deadline after identity/runtime lock waits. These edits are not yet a frozen candidate: compilation, affected codec/writer/capture/auth/raw/chat tests and real MySQL verification are next. The verdict remains CHANGES_REQUIRED until the new committed candidate receives independent review.
