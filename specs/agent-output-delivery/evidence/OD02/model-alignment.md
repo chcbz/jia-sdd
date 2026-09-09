@@ -12,7 +12,7 @@ Agreed with the sole API writer:
 - Use a scoped non-null SHA-256 cleanup identity instead of a nullable or oversized composite storage-key index. Persist the complete storage identity. Lease owner columns are bounded binary identifiers.
 - `completeUpload` hashes a server-owned canonical run/upload/operation envelope. Authentication and current receipt matching remain inside the mutation transaction, after OD01 source/identity locks.
 
-Pending narrow independent architecture check: a cancelled client socket followed by a fixed grace period and DELETE/HEAD does not itself establish that the object server cannot later commit an earlier PUT. `safe_after` is a scheduling bound only. The storage fence and cleanup-release proof must be resolved in the implementation and tests before OD02 approval. The writer continues the remaining schema, service and fixture path while this check runs.
+The narrow independent architecture check confirmed a blocker in the original grace/DELETE/HEAD proposal. The agreed repair is atomic create-only data PUT plus a permanent zero-byte tombstone fence, for both abandoned epochs and final object GC. See `storage-fence-review.md`; real MinIO and quota evidence are still required to close the finding. `safe_after` remains a scheduling bound only. The writer continues implementation and the real fixture path.
 
 No production installation, migration or deployment is authorized by this model note. Local dependency substitutions retain the OD00 limitations.
 

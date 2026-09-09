@@ -308,8 +308,10 @@ tables:
     - quota_charge_kind NONE/RESERVED; reservation ownership transfers atomically from upload to abandoned
       job without releasing physical quota
     - safe_after is only a scheduling lower bound, not proof that a late storage PUT cannot commit
-    - DONE and quota release require storage write fencing and confirmed removal; network error retains
-      retry state and charge
+    - every data PUT is atomic create-only; cleanup overwrites its exact key with a zero-byte service
+      tombstone and confirms matching cleanup identity and zero size with strongly consistent HEAD
+    - DONE and quota release require the verified tombstone fence; network error retains retry state
+      and charge; ordinary GC never deletes or reuses tombstone keys
   output_upload_session:
     release: R1
     columns:
@@ -479,6 +481,8 @@ tables:
     - PASSED+READY requires trusted actual bytes/hash/type and scan result
     - staging keys unique per upload/epoch; permanent object never overwritten
     - retained immutable keys must not be subject to bucket expiry rules
+    - object GC replaces bytes with a verified zero-byte tombstone; DELETED retains that permanent
+      storage fence; R1 bucket must never have enabled versioning
     primary_key: *id006
   output_object_reference:
     release: R1

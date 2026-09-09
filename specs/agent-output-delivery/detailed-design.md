@@ -119,7 +119,7 @@ POST 操作统一 Idempotency-Key（16～100 ASCII）；request hash 对严格�
 
 OD01 身份锁在 run 后、receipt 前完成，HTTP filter 不替代 mutation 事务内的动态授权。OD02 quota 子序为 scope → binding → run-upload-quota；只触及所需行。cleanup 与 upload/object 的锁顺序须统一，不能由清理 worker 先锁 job 再反向进入业务事务。无正文的 `completeUpload` receipt 使用服务端构造的 `{"runId":"…","uploadId":"…","operation":"completeUpload"}` 做 canonical JSON hash，避免同 key 被移到另一条 upload 路由；public POST 不新增正文或分支选择参数。
 
-所有引用更改与 object DELETING CAS 在同一对象锁下串行；GC 检查无 ACTIVE 有效引用/pin/hold 和无活跃上传，标 DELETING 提交后删存储版本，完成后 DELETED tombstone 并释放实际配额。失败重试不复活对象；生成新引用只允许 PASSED/READY。到期引用转 EXPIRED 后不能借其他来源仍保存对象而恢复访问。
+所有引用更改与 object DELETING CAS 在同一对象锁下串行；GC 检查无 ACTIVE 有效引用/pin/hold 和无活跃上传，标 DELETING 提交后清除存储字节，完成后 DELETED 并释放实际配额。OD02 单 PUT 存储协议通过同 key 的零字节 tombstone 替换并核验来清除字节，防止迟到写入重建；它与 SQL 的 DELETED 状态是两个不同层次的记录。失败重试不复活对象；生成新引用只允许 PASSED/READY。到期引用转 EXPIRED 后不能借其他来源仍保存对象而恢复访问。
 
 下载先校验业务权限/版本有效期/对象状态，建立 READ_PIN。流下载硬上限 10 分钟，pin 默认 11 分钟、每 30 秒续至传输期限；完成即释放，进程崩溃自动到期，过期不会无限占用。业务撤权后新请求拒绝；已开始的流最多持续当前传输期限，在产品契约说明。首次版本不生成签名 URL，减少泄漏及撤销窗口。
 
@@ -191,5 +191,7 @@ R2恢复接口补充：`GET /agent/tasks/{taskId}/work-items/{workItemId}/lease`
 run状态的业务终态与身份撤销分开：RESULT_SUBMITTED允许在恢复期内、身份仍有效时读取原submit receipt/status，禁止新增发布/claim/submit；CLOSED同样允许读取已完成回执但不重新执行。先做身份/来源/操作授权，再在允许回执读取的状态下重放，未命中receipt才校验新mutation所需ACTIVE状态。REVOKED、binding撤销或scope不符始终拒绝。不得因“先把run结束”造成成功提交的丢ACK重试永久失败。
 
 上传临时对象资源边界：每upload最多10个writer epoch、最多2个尚未清理的staging key并存；新epoch须先回收更旧staging或等待。OD02 采用 READY 保留原 immutable key 的方案，该 bucket/key 前缀不配置自动删除生命周期，统一由持久 cleanup/GC 管理；不能把 24h 临时文件规则施加到已发布文件。单个run累计上传请求/重试字节设置配置上限；超限429而非无限重新创建upload session。cleanup 的 `safe_after` 只是调度下界，不能单凭客户端超时或固定宽限时间认定存储端已不可能迟到提交；释放配额前须有写入隔离与清理确认，具体实现需通过 OD02 独立评审。
+
+OD02 单 PUT 写入隔离：所有数据 PUT 由服务端强制原子 `If-None-Match: *`，不使用 SDK 自动 multipart。废弃 epoch 及 READY 对象最终 GC 均向同一唯一 key 写入零字节服务端 tombstone，metadata 绑定 cleanup identity；强一致 HEAD 确认 key、零长度、identity 后才 CAS 释放该条预留或实际占用。普通 GC 永不删除或复用 tombstone，首发只接受从未启用 versioning 的私有 bucket，不能接受可能保留旧版本的 Suspended 状态。需记录长期对象元数据成本；未来回收须另有能证明所有旧 writer 已失效的停写维护设计。当前 epoch 验证成功可独立 READY 并将基础 reserved 转 stored，旧 epoch 各自的预留继续计入额度，无需等待它们全部清理后才能 READY。真实 MinIO 与生产 adapter 的条件写并发验证通过前，该协议不视为已实现或通过验收，评审要求见 `evidence/OD02/storage-fence-review.md`。
 
 能力协商落点：新增注册/心跳字段 `outputCapabilities`，仅允许 `output.http.v1`、`task.owner-share.v1`、`task.delivery-http.v1`。写入runtime的独立 `output_capabilities_json`、`output_capabilities_runtime_id`、`output_capabilities_updated_at` 可空列，由已认证当前runtime/binding的CAS更新；不复用业务 `abilities`，不影响map/roster现有来源。旧客户端缺失视为不支持；当前在线runtime匹配且能力快照90秒内有效才允许新建run/派发policy1任务。能力是调度门槛，不代替API授权；来源/租约/撤销校验仍必需。R1注册仅公布前两项，R2处理器/依赖/客户端完整就绪才公布第三项。
