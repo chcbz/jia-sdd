@@ -1,0 +1,45 @@
+{
+  "observed_at": "2026-09-09T22:18:06.830635+00:00",
+  "kind": "clamav_scan_limit_probe",
+  "checks": [
+    {
+      "case": "clean",
+      "expected_response_contains": " OK",
+      "status": "PASS",
+      "input_bytes": 13,
+      "sha256": "72212ad8affba3bdfe46fc6406cd7a98aabbeeebc25f5a77e5e8f05070eab0b9",
+      "response": "stream: OK",
+      "elapsed_seconds": 0.042
+    },
+    {
+      "case": "eicar",
+      "expected_response_contains": " FOUND",
+      "status": "PASS",
+      "input_bytes": 68,
+      "sha256": "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f",
+      "response": "stream: Eicar-Test-Signature FOUND",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "case": "member_61_mib",
+      "expected_response_contains": "Heuristics.Limits.Exceeded",
+      "status": "FAIL",
+      "input_bytes": 62306,
+      "sha256": "a7e6665db7b8d121892b85f79e720a85a06f664a6eab89221173be4b8c7880ed",
+      "response": "stream: OK",
+      "elapsed_seconds": 36.848
+    },
+    {
+      "case": "aggregate_110_mib",
+      "expected_response_contains": "Heuristics.Limits.Exceeded",
+      "status": "PASS",
+      "input_bytes": 112348,
+      "sha256": "68b9332900651660274d0b35c7d84293962bd2f963547e946e83953cd3add70b",
+      "response": "stream: Heuristics.Limits.Exceeded.MaxScanSize FOUND",
+      "elapsed_seconds": 37.919
+    }
+  ],
+  "timeout_seconds": 180,
+  "scope": "Real local ClamAV INSTREAM protocol; not application upload/READY evidence",
+  "result": "NOT_PASSED"
+}
