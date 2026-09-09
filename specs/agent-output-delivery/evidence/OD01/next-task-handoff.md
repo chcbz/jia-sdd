@@ -30,3 +30,5 @@ Preparation only: OD02 is not started. Start after the OD01 candidate commit, re
 | Recovery and bounds | Restart can resume verification/cleanup; staged object limits and upload deadlines enforced; deletion failure retains retry state and does not release quota prematurely |
 
 Use the existing local development dependency init only with its recorded limitation; keep every Gradle command under `/tmp/cyf-gradle.lock`. Reuse passing evidence until a change or unresolved concern justifies rerunning it. This handoff adds no acceptance criteria beyond the frozen contracts.
+
+For frozen-candidate source correspondence, root can run `python3 specs/agent-output-delivery/tools/verify-test-evidence.py --repo <worktree> --candidate <commit> <observation.json> ...`. It checks archived report hashes/counters and recorded source hashes against Git objects without running Gradle or changing the worktree. A successful check proves that correspondence only; reviewers still assess coverage and recorded test/dependency limits.
