@@ -7,6 +7,7 @@ Preparation only: OD02 is not started. Start after the OD01 candidate commit, re
 - Canonical behavior: `../../detailed-design.md` sections 6–7, `../../openapi.yaml` upload routes, `../../schema-contract.yaml`, and `../../fixtures.json`.
 - OD01 source/run/ticket authorization and strict source SPI remain the write boundary. Use `repeatable-read-review.md` for current reads, lock order and original-POST terminal receipt lookup.
 - Existing local MySQL, private MinIO and ClamAV probes are documented in `../OD00/prerequisites.md`; do not reinstall or restart working services. Installer reference remains the isolated `output-client` checkout of `isp-install`.
+- Repository lookup found no existing MinIO/S3 client dependency in module `build.gradle` files. API path `isp/jia-isp-service/src/main/java/cn/jia/isp/service/impl/FileServiceImpl.java` stores ISP metadata and downloads URL content into a byte array/local path; it is not the private streaming output-storage adapter. Keep new storage dependencies in the Agent implementation module and the storage interface in Agent API as designed. Dependency catalogs originate in the included `plugin` build, not a root `gradle/libs.versions.toml`.
 - Production HTTP security integration and deployment-only gates are in `../OD00/downstream-gates.md`. Endpoint/controller tests alone do not prove the filter chain.
 - Copy applicable canonical fixtures into API test resources with their source and digest; tests must run without an absolute root-repository dependency.
 
