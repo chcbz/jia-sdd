@@ -1,6 +1,6 @@
-# OD01 candidate review — interim blocking finding
+# OD01 candidate review — initial finding record
 
-Candidate: `8e009b9d241979abb072d4b5b12d42b0476450dc`. Independent reviewer: `/root/output_design_review`, read-only. Review is still in progress; this is not its final report or approval.
+Candidate: `8e009b9d241979abb072d4b5b12d42b0476450dc`. Independent reviewer: `/root/output_design_review`, read-only. This preserves the first reported finding; the completed CHANGES_REQUIRED verdict and all three blockers are in `final-review.md`.
 
 ## Command bytes are rewritten after persistence
 
