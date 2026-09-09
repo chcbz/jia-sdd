@@ -1,0 +1,129 @@
+{
+  "candidate_commit": "6647ed53fac06c8c7478cf58579c4eadf6f689d0",
+  "provenance": "Corrected writer-reported execution arguments and exit codes; report selectors independently matched to archived XML. Not a captured raw terminal transcript.",
+  "workdir": "/home/chc/wsps/cyf-worktrees/output-api",
+  "gradle_lock": "/tmp/cyf-gradle.lock",
+  "java_home": "/home/chc/.local/share/cyf-output-tools/java",
+  "execution_wrapper": "Non-MySQL: flock lock env JAVA_HOME=... followed by Gradle argv. MySQL: a lock-held Python wrapper reads local credentials and injects the named environment variables before exec; values omitted.",
+  "commands": [
+    {
+      "batch": "agent-final",
+      "gradle_argv": [
+        "./gradlew",
+        ":agent:jia-agent-service:test",
+        "--no-daemon",
+        "--max-workers=1",
+        "--init-script",
+        "/home/chc/.local/share/cyf-output-tools/od00-development-opencv-substitution.init.gradle",
+        "-Dorg.gradle.jvmargs=-Xmx512m -XX:MaxMetaspaceSize=256m",
+        "--tests",
+        "cn.jia.agent.output.service.OutputRunAuthorizationServiceImplTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandCanonicalCodecTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandTransportWriterImplTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandTransportCaptureTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandRecoveryServiceTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandReissueCoordinatorTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentServiceImplTest"
+      ],
+      "reported_exit_code": 0,
+      "observation": "agent-final/observation.json",
+      "required_private_environment_variables": []
+    },
+    {
+      "batch": "chat",
+      "gradle_argv": [
+        "./gradlew",
+        ":chat:jia-chat-service:test",
+        "--no-daemon",
+        "--max-workers=1",
+        "--init-script",
+        "/home/chc/.local/share/cyf-output-tools/od00-development-opencv-substitution.init.gradle",
+        "-Dorg.gradle.jvmargs=-Xmx512m -XX:MaxMetaspaceSize=256m",
+        "--tests",
+        "cn.jia.chat.handler.AgentWebSocketRawCommandDispatchTest",
+        "--tests",
+        "cn.jia.chat.handler.AgentWebSocketOutputContextDispatchTest",
+        "--tests",
+        "cn.jia.chat.handler.AgentWebSocketOutputAuthorizationTest",
+        "--tests",
+        "cn.jia.chat.service.JuyitingAgentRelayOutputContextTest"
+      ],
+      "reported_exit_code": 0,
+      "observation": "chat/observation.json",
+      "required_private_environment_variables": []
+    },
+    {
+      "batch": "transport",
+      "gradle_argv": [
+        "./gradlew",
+        ":agent:jia-agent-service:test",
+        "--no-daemon",
+        "--max-workers=1",
+        "--init-script",
+        "/home/chc/.local/share/cyf-output-tools/od00-development-opencv-substitution.init.gradle",
+        "-Dorg.gradle.jvmargs=-Xmx512m -XX:MaxMetaspaceSize=256m",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandInboxServiceImplTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandRabbitConsumerTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandRabbitMessageDecoderTest"
+      ],
+      "reported_exit_code": 0,
+      "observation": "transport/observation.json",
+      "required_private_environment_variables": []
+    },
+    {
+      "batch": "mysql",
+      "gradle_argv": [
+        "./gradlew",
+        ":agent:jia-agent-service:test",
+        "--no-daemon",
+        "--max-workers=1",
+        "--init-script",
+        "/home/chc/.local/share/cyf-output-tools/od00-development-opencv-substitution.init.gradle",
+        "-Dorg.gradle.jvmargs=-Xmx512m -XX:MaxMetaspaceSize=256m",
+        "--tests",
+        "cn.jia.agent.output.service.OutputAuthorizationMySqlConcurrencyTest"
+      ],
+      "reported_exit_code": 0,
+      "observation": "mysql/observation.json",
+      "required_private_environment_variables": [
+        "OD01_MYSQL_URL",
+        "OD01_MYSQL_USER",
+        "OD01_MYSQL_PASSWORD"
+      ]
+    },
+    {
+      "batch": "h2-transactional",
+      "gradle_argv": [
+        "./gradlew",
+        ":agent:jia-agent-service:test",
+        "--no-daemon",
+        "--max-workers=1",
+        "--init-script",
+        "/home/chc/.local/share/cyf-output-tools/od00-development-opencv-substitution.init.gradle",
+        "-Dorg.gradle.jvmargs=-Xmx512m -XX:MaxMetaspaceSize=256m",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentLegacyTaskCompatibilityRealDatabaseTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentLegacyTaskCompatibilityEventTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentLegacyTaskIdentityRaceRealTransactionTest",
+        "--tests",
+        "cn.jia.agent.service.impl.AgentCommandTransportRealTransactionTest",
+        "--tests",
+        "cn.jia.agent.config.AgentCommandTransportWriterConfigurationTest"
+      ],
+      "reported_exit_code": 0,
+      "observation": "h2-transactional/observation.json",
+      "required_private_environment_variables": []
+    }
+  ]
+}
