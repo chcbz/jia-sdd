@@ -35,3 +35,12 @@ Required verification: stale-capability same-generation reissuance succeeds; dis
 Candidate/source association is closed separately: the frozen candidate passed seven authorization unit tests and six real MySQL tests with no failures/errors/skips; see `candidate-8e009b9d-test-results/observation.json`. Those results do not override the three findings.
 
 The original writer owns all three repairs and the affected targeted tests. Each Gradle test task holds `/tmp/cyf-gradle.lock` and archives its XML before the next task. A new committed candidate must receive independent read-only re-review before OD01 is accepted for development or OD02 starts. Canonical packaging and actual production topology remain OD06/OD11 gates.
+
+## Writer repair approach — implementation pending verification
+
+- Prepare assignment context within the existing transaction after task/member facts are available and before identity/runtime locking; pass it as a trusted writer/codec argument before durable encoding. Context-free constructors and wire bytes remain compatible.
+- Resolve a current dispatch runtime internally from the persisted run and select the matching registered session for raw/direct/conversation delivery. No new public context or schema field is proposed.
+- Use current generation/binding authorization for ticket issuance and retain freshness only for dispatch.
+- Review the multi-target order explicitly: preparing target B's source/run after taking target A's runtime lock must not introduce an unproven reverse lock sequence. Prefer preparing all affected source/run locks before ordered identity/runtime validation, or substantiate the same-source serialization argument and overlapping-target behavior. Prewritten membership/work-item facts and command bytes must roll back with failed authorization; no external side effect may escape before commit.
+
+This is the writer's bounded implementation direction, not evidence that the findings are repaired.
