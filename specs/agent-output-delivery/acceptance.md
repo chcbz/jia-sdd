@@ -1,6 +1,6 @@
 # 产物交付验收计划
 
-当前状态：仅静态源码分析，以下场景均为待执行。未运行构建、自动化测试、数据库迁移、对象存储探测或线上验收；文档阶段不需要业务构建。
+当前状态：OD00 本地依赖探测、Agent/Chat 针对性编译和真实 MySQL 跨模块事务测试已通过，使用已评审的本地依赖替换；证据见 [evidence/OD00/downstream-gates.md](evidence/OD00/downstream-gates.md)。OD01 实施中，以下端到端业务验收场景仍待执行；尚未进行生产迁移或线上验收。逐项状态见 [task-ledger.yaml](task-ledger.yaml)。
 
 ## 必须通过的可观察场景
 

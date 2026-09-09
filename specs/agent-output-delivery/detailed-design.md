@@ -1,6 +1,6 @@
 # 产物交付详细设计 v1.1
 
-设计状态：已细化并通过独立只读复核，无设计级阻塞；实现状态：未启动。本文是 [design.md](design.md) 的实施细化；v1.1 的交付范围与传输取舍以本文为准。机器可读契约见 [openapi.yaml](openapi.yaml)、[schema-contract.yaml](schema-contract.yaml)、[fixtures.json](fixtures.json)。
+设计状态：已细化并通过独立只读复核，无设计级阻塞；实现状态：OD00 开发前置验证通过，OD01 实施中，详见 [task-ledger.yaml](task-ledger.yaml)。本文是 [design.md](design.md) 的实施细化；v1.1 的交付范围与传输取舍以本文为准。机器可读契约见 [openapi.yaml](openapi.yaml)、[schema-contract.yaml](schema-contract.yaml)、[fixtures.json](fixtures.json)。
 
 ## 1. 两个可独立验收的版本
 
