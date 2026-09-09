@@ -1,0 +1,49 @@
+// DEVELOPMENT-ONLY OD00 validation bootstrap. This is intentionally external
+// to the repository and must not be used for release or production builds.
+// It exposes the local settings plugin and replaces only the unavailable
+// compileOnly OpenCV coordinate with OpenPnP's public OpenCV 4.5.5 repackaging.
+// The legacy JAI Image I/O coordinate has no public JAR under its original
+// group, so it is mapped only for local validation to the same-version OSGeo
+// repackaging after package-level API verification.
+System.setProperty('org.gradle.internal.http.connectionTimeout', '10000')
+System.setProperty('org.gradle.internal.http.socketTimeout', '30000')
+
+gradle.beforeSettings { settings ->
+    settings.pluginManagement {
+        includeBuild('/home/chc/wsps/cyf-worktrees/output-api/plugin')
+    }
+}
+
+def localPublishRepository = new File('/home/chc/.local/share/cyf-output-tools/maven-publish-placeholder').toURI().toString()
+gradle.beforeProject { project ->
+    if (project == project.rootProject) {
+        project.extensions.extraProperties.set('repoUsername', '')
+        project.extensions.extraProperties.set('repoPassword', '')
+        project.extensions.extraProperties.set('snapshotsRepoUrl', localPublishRepository)
+        project.extensions.extraProperties.set('releasesRepoUrl', localPublishRepository)
+    }
+    project.repositories {
+        exclusiveContent {
+            forRepository {
+                maven {
+                    url = uri('https://repo.osgeo.org/repository/release')
+                }
+            }
+            filter {
+                includeModule('javax.media', 'jai_imageio')
+                includeModule('javax.media', 'jai_core')
+            }
+        }
+        mavenCentral()
+    }
+    project.configurations.configureEach { configuration ->
+        configuration.resolutionStrategy.dependencySubstitution {
+            substitute module('org.opencv:opencv:4.5.5') using module('org.openpnp:opencv:4.5.5-1')
+            substitute module('com.sun.media:jai_imageio:1.1') using module('javax.media:jai_imageio:1.1')
+        }
+    }
+    project.tasks.withType(org.gradle.api.tasks.testing.Test).configureEach {
+        maxHeapSize = '512m'
+        maxParallelForks = 1
+    }
+}

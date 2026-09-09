@@ -4,7 +4,7 @@ Independent architect decision (2026-09-09): OD00 may become **development prere
 
 | Gate | Owner / due | Current evidence |
 | --- | --- | --- |
-| Local agent/chat targeted compilation and application-component cross-module transaction commit/rollback | OD00 verifier, before OD01 | JDK/wrapper ready; compile bootstrap running; opt-in real MySQL probe being added |
+| Local agent/chat targeted compilation and application-component cross-module transaction commit/rollback | OD00 verifier, before OD01 | PASS with reviewed local dependency deviations: targeted agent/chat compilation and real MySQL commit/rollback; 1 test, 0 failures/errors/skips |
 | Canonical contract/fixtures load | OD00 verifier, before OD01 | design static schema/example/reference checks passed; implementation tests must consume applicable fixtures |
 | Strict source owner, no tenant=0 fallback, persisted trusted conversation and bounty run dispatch, WS auth unicast and revoked/cross-binding negatives | OD01 writer/reviewer, before OD01 accepted | not implemented |
 | Real private storage and clean/infected/oversized scanner transport | OD00 verifier, before OD02 | real local probes PASS; see prerequisites.md |

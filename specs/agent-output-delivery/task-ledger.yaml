@@ -7,7 +7,7 @@ buffer_person_days:
   max: 3
 tasks:
 - id: OD00
-  status: in_progress
+  status: accepted_for_development
   release: R1
   title: 契约与真实依赖核对
   ownership: api/web/client部署和版本记录
@@ -22,13 +22,24 @@ tasks:
   - O26
   owner: main_orchestrator
   started_at: '2026-09-09T11:38:49.153936+00:00'
-  progress: local MySQL/MinIO/ClamAV probes passed; Gradle bootstrap and real agent/chat
-    transaction probe in progress
+  progress: real local dependency probes and agent/chat MySQL transaction test passed;
+    independent source review APPROVE; canonical build and deployment gates remain
+    assigned to OD06/OD11
   evidence:
   - evidence/OD00/prerequisites.md
   - evidence/OD00/downstream-gates.md
+  - evidence/OD00/implementation-decisions.md
+  - evidence/OD00/transaction-review.md
+  - evidence/OD00/transaction-test-result.xml
+  - evidence/OD00/build-execution.md
+  accepted_for_development_at: '2026-09-09T12:54:08.998525+00:00'
+  commit: f418e3f5bf7afcdbddf9c1ecec1b293f657c977c
+  unlocks:
+  - OD01
+  review_status: approve
+  verification: local_dependency_deviation; tests=1 failures=0 errors=0 skipped=0
 - id: OD01
-  status: not_started
+  status: in_progress
   release: R1
   title: 来源归属、run绑定和WS ticket交换
   ownership: agent output身份；chat relay/owner DAO/WS
@@ -45,6 +56,9 @@ tasks:
   - O09
   - O23
   - O26
+  base_commit: f418e3f5bf7afcdbddf9c1ecec1b293f657c977c
+  owner: critical_worker
+  started_at: '2026-09-09T12:58:24.818716+00:00'
 - id: OD02
   status: not_started
   release: R1

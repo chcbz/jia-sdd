@@ -44,3 +44,5 @@ R1合计7～10人日，R2追加5～7.5人日，工程总计12～17.5人日（对
 - [ ] P3-06：按实际需要增加WS artifact.publish/work.result适配；必须委托已有唯一应用事务。
 
 未列为本轮的增强工作不因名称相近被默认混入任务。若需求新增，更新契约和关键路径再估算。
+
+OD00状态`accepted_for_development`表示本地开发证据和独立评审通过，仅解锁OD01；它不是生产验收完成。延后门槛及责任阶段见[evidence/OD00/downstream-gates.md](evidence/OD00/downstream-gates.md)。

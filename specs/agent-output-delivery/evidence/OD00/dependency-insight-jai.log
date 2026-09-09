@@ -1,0 +1,29 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :plugin:jia-gradle-plugin:compileJava UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:processResources UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:classes UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:jar UP-TO-DATE
+
+> Task :common:jia-common-core:dependencyInsight
+javax.media:jai_imageio:1.1 (selected by rule)
+  Variant compile:
+    | Attribute Name                 | Provided | Requested    |
+    |--------------------------------|----------|--------------|
+    | org.gradle.status              | release  |              |
+    | org.gradle.category            | library  | library      |
+    | org.gradle.libraryelements     | jar      | classes      |
+    | org.gradle.usage               | java-api | java-api     |
+    | org.gradle.dependency.bundling |          | external     |
+    | org.gradle.jvm.environment     |          | standard-jvm |
+    | org.gradle.jvm.version         |          | 21           |
+
+com.sun.media:jai_imageio:1.1 -> javax.media:jai_imageio:1.1
+\--- compileClasspath
+
+A web-based, searchable dependency report is available by adding the --scan option.
+
+BUILD SUCCESSFUL in 56s
+5 actionable tasks: 1 executed, 4 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.3.1/userguide/configuration_cache_enabling.html
