@@ -1,0 +1,14 @@
+# OD01 MySQL repeatable-read review — implementation fixes pending
+
+The writer's concurrent MySQL harness observed 70 successful issuances where the contract permits 60 per binding/minute. Earlier nonlocking projections establish a repeatable-read snapshot; serializing on the binding row does not make a later plain `COUNT(*)` observe newly committed tickets. This is a real invariant failure, not a passing production-mapper integration result. The writer is replacing the harness's SQL substitutes with production mappers and preserving the 70-attempt/60-success boundary with a resource-bounded worker count.
+
+Independent architect decisions:
+
+1. Approve a bounded current read using the existing binding-window index and `LIMIT 60 FOR UPDATE`; count returned rows after holding the canonical active binding lock. Rollback must consume no issuance quota.
+2. Extend the lock order to business source root → output source → output run → persona binding → identity → runtime → exact/range access ticket. Ticket-only revoke/GC can run separately; a transaction holding a ticket lock must not then acquire earlier locks.
+3. Keep hash-only ticket bootstrap nonlocking. After the canonical source/run/identity/runtime locks, use an exact hash current locking read of the ticket, compare immutable routing and operations with bootstrap, and validate locked revocation, expiry and permissions.
+4. Validate the locked run again, including scope/run/source/producer/binding consistency, recovery deadline and state. REVOKED/unknown state always rejects; successful terminal state permits only receipt-safe authorization. Refresh the clock after lock waits before deciding expiry/recovery validity.
+5. Existing canonical identity locking is sufficient under RR: it compares observed and locked registry ID/binding, then checks locked lifecycle/binding. No unrelated identity-module rewrite is needed.
+6. Terminal runs need same-active-binding reissuance after bridge restart because bearers are not persisted. Reissued terminal tickets carry only `status`; the service also rejects terminal `upload`/`publish` authorization using an older full-permission ticket, even if a caller mistakenly requests receipt replay. Task source authorization needs an explicit receipt-read mode, retaining exact historical membership checks and rejecting LEFT/REJECTED/revoked identities.
+
+Required evidence: N+1 issuance using current reads; rollback; revocation between bootstrap/projection and lock acquisition; ACTIVE→REVOKED/terminal races; expiry during lock waits; same-binding terminal restart with status-only receipt authorization; rejection of new writes and changed bindings. Receipt lookup and canonical body comparison are implemented in downstream OD02/OD08, not this identity task.
