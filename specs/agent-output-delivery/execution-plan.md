@@ -106,6 +106,8 @@ npm run build
 
 后端阶段回归还应包含现有identity、task-result、workspace/replay及legacy兼容相关测试（具体类在任务中记录）；client回归现有agent-client/workspace-manager；Web回归会话切换/任务工作台。持锁的Gradle命令串行执行，测试结果只写真实退出状态。
 
+三仓测试须可在各自仓库独立运行，不依赖本机 root 绝对路径。需要公共 fixture 时，将本目录的契约快照原样放入该仓测试资源，记录来源与 SHA-256；OD06/OD11 比对快照与 root 契约的一致性。契约变更时同步更新受影响快照，避免独立 CI 与本地联调使用不同示例。
+
 证据建议写 `specs/agent-output-delivery/evidence/R1/`、`R2/`（实现时创建），包括命令、commit、测试报告索引、下载hash和演示说明。不得保存token、密钥、用户文件正文或含签名URL的网络日志。
 
 ## 9. 发布门槛与暂停规则
