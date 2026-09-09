@@ -39,7 +39,7 @@ tasks:
   review_status: approve
   verification: local_dependency_deviation; tests=1 failures=0 errors=0 skipped=0
 - id: OD01
-  status: in_progress
+  status: accepted_for_development
   release: R1
   title: 来源归属、run绑定和WS ticket交换
   ownership: agent output身份；chat relay/owner DAO/WS
@@ -60,10 +60,9 @@ tasks:
   candidate_commit: c5330dd50da6c03e55edca0744485a1b95385552
   owner: critical_worker
   started_at: '2026-09-09T12:58:24.818716+00:00'
-  progress: B4 repair candidate frozen; enriched and legacy promotion plus rehashed
-    source tamper cases pass; bounded service32 and mapper6 pass;
-    de-duplicated latest evidence has 280 tests and matching candidate sources;
-    independent final re-review is in progress
+  progress: independent APPROVE for development on c5330dd5; B1/B2/B3/B4 closed;
+    latest scoped repair evidence verifies 280 tests and candidate correspondence;
+    OD02 unlocked, live dependency/topology and packaging gates remain later
   evidence:
   - evidence/OD01/claim.md
   - evidence/OD01/ticket-contract-review.md
@@ -92,11 +91,16 @@ tasks:
   - evidence/OD01/shadow-promotion-test-results/execution-notes.md
   - evidence/OD01/candidate-c5330dd5-observation.json
   - evidence/OD01/candidate-c5330dd5-association.json
+  - evidence/OD01/accepted-review-c5330dd5.md
   - evidence/OD01/candidate-review-findings.md
   - evidence/OD01/final-review.md
-  review_status: changes_required; shadow_promotion_repair_independent_review
+  review_status: approve_for_development
+  commit: c5330dd50da6c03e55edca0744485a1b95385552
+  accepted_for_development_at: '2026-09-09T20:51:50Z'
+  unlocks:
+  - OD02
 - id: OD02
-  status: not_started
+  status: in_progress
   release: R1
   title: 字节对象、配额、上传校验和GC
   ownership: agent-api/core/mapper/service output存储与M001
@@ -116,6 +120,13 @@ tasks:
   - O25
   - O27
   - O28
+  owner: critical_worker
+  base_commit: c5330dd50da6c03e55edca0744485a1b95385552
+  started_at: '2026-09-09T20:51:50Z'
+  progress: claimed after OD01 approval; implement exact HTTP uploads and persistent
+    object verification/quota/cleanup with existing local dependencies
+  evidence:
+  - evidence/OD02/claim.md
 - id: OD03
   status: not_started
   release: R1

@@ -1,6 +1,6 @@
 # 产物交付验收计划
 
-当前状态：OD00 本地依赖探测、Agent/Chat 针对性编译和真实 MySQL 跨模块事务测试已通过，使用已评审的本地依赖替换；证据见 [evidence/OD00/downstream-gates.md](evidence/OD00/downstream-gates.md)。OD01 实施中，以下端到端业务验收场景仍待执行；尚未进行生产迁移或线上验收。逐项状态见 [task-ledger.yaml](task-ledger.yaml)。
+当前状态：OD00 本地依赖与跨模块事务开发门槛已通过；OD01 在 `c5330dd5` 获独立开发门槛 APPROVE，最新去重修复证据为 280 项通过，见 [evidence/OD01/accepted-review-c5330dd5.md](evidence/OD01/accepted-review-c5330dd5.md)。OD02 上传与对象链路实施中，以下端到端取件/交付场景仍待执行；尚未进行生产迁移或线上验收。本地依赖替换与后续门槛见 [evidence/OD00/downstream-gates.md](evidence/OD00/downstream-gates.md)，逐项状态见 [task-ledger.yaml](task-ledger.yaml)。
 
 ## 必须通过的可观察场景
 
