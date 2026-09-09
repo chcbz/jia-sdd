@@ -6,7 +6,7 @@ This is a handoff checklist, **not passing test evidence**. The sole API writer 
 | --- | --- |
 | Persisted source owner | Real task/conversation owner accepted; wrong owner, tenant=0 fallback, case/trailing-space variants and cross-client requests denied. No historical owner backfill. |
 | Trusted dispatch | Actual authorized conversation relay and explicitly targeted task command carry server-created context. Forged client context cannot establish source/run/producer. Non-relayed model chat creates no output run. |
-| Redelivery | Repeated command/message origin preserves the run and command inbox hash/ACK behavior. Revoked, expired or terminal origin cannot silently start another execution; explicit dispatch uses a new origin. |
+| Redelivery | Repeated command/message origin preserves the run and command inbox hash/ACK behavior. Revoked, expired or terminal origin cannot silently start another execution; explicit dispatch uses a new origin. A WS send error with unknown delivery outcome must not revoke a run the Agent may already be executing; verify recovery using the original context. |
 | Capability registration | Default-disabled code works against the old schema. Generic runtime ORM writes cannot overwrite capability snapshots. New registration clears stale capability data, including old clients without the extension; delayed old presence cannot restore it. |
 | Capability dispatch | Missing, stale (>90 seconds), wrong-runtime and premature R2 capability snapshots cannot enable output dispatch. Existing map/roster abilities remain independent. |
 | WS authentication | Only a bound, successfully registered current session obtains a unicast receipt. Raw bearer is absent from database, chat/event broadcasts, prompt and logs. |
