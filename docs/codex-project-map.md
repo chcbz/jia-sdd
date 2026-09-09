@@ -84,4 +84,4 @@ When a future task uncovers stable project knowledge that would save repeated ex
 - `docs/knowledge-base/README.md`: task-routed entry point for current-state code, API, data, and integration reference.
 - `docs/knowledge-base/04-backend-api-index.md`: compact Controller/base-path index; use the full API inventory only for method-level details.
 - `docs/sdd-workflow.md`: multi-repository SDD lifecycle and integration gate.
-- `specs/agent-output-delivery/spec.md`: Agent output feasibility; `detailed-design.md`, `openapi.yaml`, and `execution-plan.md` in the same directory define the reviewed HTTP-first R1/R2 design and serial delivery plan; implementation has not started.
+- `specs/agent-output-delivery/spec.md`: Agent output feasibility; `detailed-design.md`, `openapi.yaml`, and `execution-plan.md` in the same directory define the reviewed HTTP-first R1/R2 design and serial delivery plan; implementation is underway, with current status in `task-ledger.yaml`.
