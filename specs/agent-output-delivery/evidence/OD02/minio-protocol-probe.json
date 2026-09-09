@@ -1,0 +1,32 @@
+{
+  "kind": "real_minio_protocol_probe",
+  "bucket": "cyf-od02-fence-probe-afb96192afdf4332",
+  "started_at": "2026-09-09T21:32:41.190272+00:00",
+  "limitations": [
+    "Python protocol probe, not production Java adapter",
+    "No SQL quota, HTTP application auth, scan or READY proof",
+    "Isolated zero-byte tombstones retained after probe"
+  ],
+  "checks": [
+    {
+      "name": "in_flight_create_only_vs_tombstone",
+      "server_100_continue_observed": true,
+      "bytes_sent_before_marker": 65536,
+      "marker_completed_before_body_resumed": false,
+      "old_put_status": 200,
+      "result": "PASS"
+    },
+    {
+      "name": "replay_old_signed_put_after_fence",
+      "status": 412,
+      "result": "PASS"
+    },
+    {
+      "name": "completed_put_then_idempotent_tombstone",
+      "result": "PASS"
+    }
+  ],
+  "versioning": "never_enabled",
+  "result": "PASS",
+  "finished_at": "2026-09-09T21:32:43.355020+00:00"
+}
