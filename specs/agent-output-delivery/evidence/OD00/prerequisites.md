@@ -6,7 +6,7 @@ User authorized continuous OD00–OD11 implementation on 2026-09-09 and directed
 | --- | --- | --- |
 | API/Web/client bases | `492adc7e` / `77666e8` / `a100a50` | isolated worktrees ready |
 | Workstation | Debian 13 Linux aarch64; 7.8 GiB RAM; ~2.7 GiB disk free after provisioning; `/tmp` tmpfs constrained | user-space tools only; large downloads kept off `/tmp` |
-| Java / Gradle | official checksum-verified Temurin 21.0.10+7; Gradle wrapper 9.3.1 cached | Java PASS; repository build bootstrap in progress |
+| Java / Gradle | official checksum-verified Temurin 21.0.10+7; Gradle wrapper 9.3.1 and local settings plugin compiled; legacy image dependencies require repository setup | Java/plugin PASS; targeted application build pending, see implementation-decisions.md for local substitutions and private-repository TLS gate |
 | Database | isolated MySQL 8.0.45 ARM, matching isp-install version; `utf8mb4 / utf8mb4_0900_ai_ci`; InnoDB rollback and `BINARY` case-sensitive ownership predicates passed | engine PASS; application transaction wiring test pending |
 | Object storage | MinIO `RELEASE.2025-09-07T16-13-09Z`; private bucket put/head/get/delete passed, 34,816 bytes hash matched; anonymous GET returned 403 | local adapter dependency PASS; production backup/restore and credentials pending release gate |
 | Scanner | ClamAV 1.4.3; official daily 28118/main 63/bytecode 339 databases downloaded and validated; TCP INSTREAM clean `OK`, EICAR `FOUND`, PING passed; oversized stream rejected with `INSTREAM size limit exceeded. ERROR`; 60 MiB stream limit, 2 worker threads | real local scanner PASS; application unavailable-scanner retry/fail-closed test belongs to OD02 |
@@ -22,6 +22,7 @@ Tool root: `/home/chc/.local/share/cyf-output-tools` (outside Git). Services lis
 
 - `python3 /home/chc/.local/share/cyf-output-tools/od00-services-probe.py`: creates/drops a uniquely named disposable database and bucket; checks rollback, exact ownership predicates, object hash and anonymous denial. It does not prove Spring transaction wiring.
 - `python3 /home/chc/.local/share/cyf-output-tools/od00-clamav-probe.py`: actual clamd PING/INSTREAM normal and EICAR checks. It does not prove application scan-retry behavior.
+- The verified task-owned JDK archive was removed after installation and checksum recheck to recover ~196 MiB; the installed runtime and checksum record remain.
 - JDK official SHA-256: `357fee29fb0d5c079f6730db98b28942df13a6eed426f6c61cd4ad703ab27b9a`.
 - MySQL official CDN ARM archive local SHA-256: `2bbbdd107bc02bd6a135d5140b6a790de5ed4d4ff5389803600c26c79e208d2a` (recorded provenance, not an independently fetched checksum). Selected server/client/share/private-library contents extracted; only the task-owned archive was then removed to recover disk.
 - MySQL needs `libaio.so.1`; a task-local link targets installed ARM64 `libaio.so.1t64`. MySQL version, initialization, startup, and SQL probes passed with that local library path.

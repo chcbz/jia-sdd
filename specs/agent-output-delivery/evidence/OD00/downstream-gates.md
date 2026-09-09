@@ -9,6 +9,7 @@ Independent architect decision (2026-09-09): OD00 may become **development prere
 | Strict source owner, no tenant=0 fallback, persisted trusted conversation and bounty run dispatch, WS auth unicast and revoked/cross-binding negatives | OD01 writer/reviewer, before OD01 accepted | not implemented |
 | Real private storage and clean/infected/oversized scanner transport | OD00 verifier, before OD02 | real local probes PASS; see prerequisites.md |
 | Scanner unavailable cannot mark upload READY; durable verification retry and resource bounds | OD02 writer/reviewer, before OD02 accepted or any file publication enabled | no file writer exists yet; application negative test pending |
+| Canonical dependency production build without local OpenCV/JAI substitutions | OD06 release guard | Maven configuration located; private repository TLS identity cannot currently be verified; trusted CA/endpoint pending |
 | Actual deployment agent/chat same database + transaction manager; migrations on disposable production-version schema | OD06 release guard, repeated for OD11 | local slice is not proof of production configuration |
 | Actual production private bucket credentials/policy, scanner health/signatures, backup/restore/retention | OD06 release guard | local development services only; production pending |
 | Effective output route body size >=50 MiB + overhead, hard upload timeout 10 minutes, same-origin API | OD06 release guard | installer template body size known; effective deployment config pending |
