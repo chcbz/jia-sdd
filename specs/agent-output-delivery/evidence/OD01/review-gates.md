@@ -18,3 +18,5 @@ This is a handoff checklist, **not passing test evidence**. The sole API writer 
 | Compatibility | Deferred WS file/result handlers and HTTP file writing remain disabled in OD01. Existing command/auth/chat regressions run where affected. |
 
 Build evidence must identify the local dependency substitutions and lock-held Gradle command. Local MySQL tests do not establish deployed datasource routing or canonical production packaging; those remain OD06/OD11 release gates.
+
+Run each Gradle `test` task with its own selectors in a separate lock-held invocation. A mixed Agent/Chat invocation applied `--tests` only to the last task and accidentally started unrelated Rabbit integration tests; that interrupted batch is excluded from OD01 passing evidence. The subsequent single-task authorization batch passed 12 tests; its working-tree reports and source digests are in `authorization-unit-test-results/observation.json`.
