@@ -2,6 +2,8 @@
 
 Reviewed candidate: `8e009b9d241979abb072d4b5b12d42b0476450dc`, against `f418e3f5bf7afcdbddf9c1ecec1b293f657c977c`.
 
+Latest review: candidate `6647ed53` closes B1/B2/B3, but MQ-shadow-to-canary promotion still rejects enriched wire. See [repair-review-6647ed53.md](repair-review-6647ed53.md) for the current B4 blocker and bounded repair; OD01 remains in progress.
+
 Independent read-only reviewer: `/root/output_design_review`. The reviewer changed no files and ran no Gradle command. The original writer is now responsible for a bounded repair and a new candidate; OD02 remains unopened.
 
 ## B1 — command bytes rewritten after durable capture
