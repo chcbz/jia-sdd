@@ -28,3 +28,17 @@ The archived dependency insight logs verify `org.opencv:opencv:4.5.5 → org.ope
 The user identified `/home/chc/.m2/settings.xml` for private repository settings. Its endpoint failed TLS verification with a self-signed `comhostnew-proxy / CN=localhost` certificate; no credentials were sent past that failed handshake, TLS verification was not disabled, and fetched certificates were not automatically trusted. Canonical packaging requires a trusted CA/endpoint or separately reviewed dependency changes and remains an OD06 gate.
 
 A subsequent credential-free direct-socket check with the system CA store also rejected `repo.rdc.aliyun.com` as self-signed, while `maven.aliyun.com` verified successfully. No HTTP(S)/ALL proxy environment variables were set for that check. The failure is therefore not limited to the Gradle/Java trust store; changing Java alone is not an evidenced fix.
+
+### Endpoint diagnostic, 2026-09-09 19:08 UTC
+
+Credential-free Python system-CA/socket probes found:
+
+| Probe | Observed result |
+| --- | --- |
+| Local DNS for `repo.rdc.aliyun.com` | `194.104.147.24`, `45.11.104.33`, `45.131.69.52`; TLS verification rejected the self-signed certificate |
+| Verified HTTPS `dns.alidns.com/resolve?name=repo.rdc.aliyun.com&type=A` | DNS status `3` (NXDOMAIN), no answers |
+| `packages.aliyun.com` | System-CA hostname verification passed; GlobalSign-issued certificate expires 2027-02-17 |
+| `maven.aliyun.com` | System-CA hostname verification passed; GlobalSign-issued certificate expires 2027-01-22 |
+| Independent Google/Cloudflare DNS-over-HTTPS attempts | Network unreachable / connection reset; no corroborating DNS evidence |
+
+The discrepancy does not establish its cause, repository migration, or a valid replacement repository path. It does establish that blindly importing the presented certificate is not a justified repair. A new asynchronous request asks for the current Packages console Maven configuration path or repository URL; development continues without waiting. No private credentials or repository identifiers were sent to an alternative host, no machine DNS/trust configuration was changed, and no Gradle build was run for these diagnostics. Canonical packaging remains pending.
