@@ -95,13 +95,15 @@ MySQL RR 下，签发限频不能在早期投影已建立快照后使用普通 C
 ## 6. 上传与登记：可恢复步骤
 
 1. `POST output-uploads`：校验 ticket/source/run、name（仅 basename）、size/hash、配额。在短事务内锁 source → run → 幂等行 → scope 配额行，预留 expectedBytes，创建上传/对象槽位；返回 uploadId 和相对同源 uploadUrl。拒绝客户端传 bucket/key/URI。
-2. `PUT .../content`：短事务 CAS 领取上传 writerEpoch（5 分钟可续的写入期限，整次硬上限 10 分钟），提交后流式读取，边读边哈希/限额/类型探测，将 bytes 写到包含 uploadId/epoch 的唯一 staging key；写入不覆盖其他 epoch。读不持 SQL 锁。
-3. 完成后以 writerEpoch、sessionVersion CAS 写 size/hash/object key；当前 binding/run 已失效或 epoch 丢失则只留下可清理 staging，不得 READY。校验失败 REJECTED 并释放配额；中断可由新 epoch 全文件重试，原文件快照不重新生成。
+2. `PUT .../content`：短事务 CAS 领取上传 writerEpoch，并预登记该 epoch 的持久清理行后才允许外部写入。`writer_until` 为 5 分钟可续租约，`writer_deadline_at` 固定为该 epoch 首次领取后 10 分钟、续租不得越过；upload 的 24h 会话期限固定于 create。提交后流式读取，边读边哈希/限额/类型探测，将 bytes 写到包含 uploadId/epoch 的唯一 key；写入不覆盖其他 epoch。读不持 SQL 锁。
+3. 完成后以 writerEpoch、sessionVersion CAS 写 size/hash/object key；当前 binding/run 已失效或 epoch 丢失则只留下可清理 staging，不得 READY。校验失败 REJECTED；未写入的预留可释放，已写入或仍可能被迟到 writer 写入的存储占用须待物理清理确认后释放。中断可由新 epoch 全文件重试，原文件快照不重新生成。
 4. `POST complete` 触发/查询持久验证 job；已 READY 幂等返回。摘要不符/格式不符 422，扫描服务不可用保持 VERIFYING 并重试，不能旁路通过。超过 24h 会话过期，客户端可在有效 run 下创建新 uploadId 重传同一快照。
 5. READY 后 `POST artifacts` 或 `POST outputs` 登记：统一锁序，校验对象 PASSED/READY、同 run/source/producer、版本 predecessor、publishToOwner；原子写业务版本、引用和 receipt。task 复用已有 ARTIFACT_PUBLISHED 事件类型及严格 payload 格式；不创建任意新类型使旧回放失败。
 6. chat 首发不依赖持久事件推送，消息卡片通过 runId/conversationId 的列表请求发现。HTTP 成功丢包由相同幂等键重放返回确切版本；客户端不得擅自 version++。
 
 默认限制：50 MiB/文件、200 MiB/run、100 文件/run；scope 暂存+正式对象总额 1 GiB，2 个并发上传/binding、8 个/scope，均配置化；scope 聚合配额需要数据库行锁/CAS，不能先 count 后无锁插入。预留 → 实际占用 → 物理删除后释放；重复重试不重复计费/占额度。30 天对话/OWNER_SHARE 引用，SUBMITTED 无自动到期，ACCEPTED 至少 90 天，hold 优先。
+
+OD02 内部持久模型补充：binding 配额行保证空集合下的并发名额原子性；run 配额行分别累计 create 成功数与领取 epoch 的 expected_size，默认上限为 `run.max_files*10` 和 `run.max_bytes*10`，失败不退、receipt 重放不增加，零字节及未开始 PUT 的请求同样受请求数限制。文件业务额度只预留一次，但每个尚未物理清理的旧 epoch 都保留独立 scope 预留；转移给 cleanup job 时不释放，删除失败继续占用。验证和删除的 attempts/next/lease 字段存库，重启可重新领取。字段与索引见 `schema-contract.yaml`。
 
 R1 使用受限 MIME allowlist：纯文本/Markdown/CSV/JSON、PNG/JPEG/WebP、PDF、ZIP、DOCX/XLSX/PPTX。内容探测与扩展名不符拒绝；Office ZIP 结构识别需有界读取，禁止宏类型；杀毒扫描接入一个部署就绪的隔离扫描器（建议 ClamAV sidecar），流式接口/资源限制在 OD00 锁定。未部署扫描器时功能不宣告 READY，不能用“只下载”替代扫描。HTML/SVG/可执行文件本轮不接收；PDF/Office/ZIP 只下载，不在主站预览。所有格式仍可能包含业务敏感信息，manifest 显式发布是必需边界。
 
@@ -114,6 +116,8 @@ POST 操作统一 Idempotency-Key（16～100 ASCII）；request hash 对严格�
 先鉴权再查 receipt；同参数成功重放返回原 HTTP status/body（不得含 output bearer/存储签名 URL），同键异参 409 IDEMPOTENCY_CONFLICT。成功/终结性业务拒绝写 receipt，409 VERSION_CONFLICT 含调用者已获授权的 currentVersion，修正业务意图需新 key；503 与传输失败不记终结性 receipt。lease/upload receipt 保留到 run 恢复截止后7天，成果登记/提交/审核 receipt 至少保留到资源保留期结束后7天，R2 提交/验收审计不得因去重缓存过期重做。
 
 统一事务锁序：source 根 → run（需要时）→ 幂等 receipt → workItem（需要时）→ delivery（需要时）→ quota（需要时）→ upload（需要时）→ 排序后的 object → reference。同一 task 的 source 根就是现有 task root；CONVERSATION 则是 source_binding。引入任何复用 service 前检查它是否反向锁以上行；不能只依赖文档声称不死锁。外部网络调用一律放事务外。GC 只按 quota → object → reference 的后缀顺序锁行，决不反查并锁 source/workItem。
+
+OD01 身份锁在 run 后、receipt 前完成，HTTP filter 不替代 mutation 事务内的动态授权。OD02 quota 子序为 scope → binding → run-upload-quota；只触及所需行。cleanup 与 upload/object 的锁顺序须统一，不能由清理 worker 先锁 job 再反向进入业务事务。无正文的 `completeUpload` receipt 使用服务端构造的 `{"runId":"…","uploadId":"…","operation":"completeUpload"}` 做 canonical JSON hash，避免同 key 被移到另一条 upload 路由；public POST 不新增正文或分支选择参数。
 
 所有引用更改与 object DELETING CAS 在同一对象锁下串行；GC 检查无 ACTIVE 有效引用/pin/hold 和无活跃上传，标 DELETING 提交后删存储版本，完成后 DELETED tombstone 并释放实际配额。失败重试不复活对象；生成新引用只允许 PASSED/READY。到期引用转 EXPIRED 后不能借其他来源仍保存对象而恢复访问。
 
@@ -186,6 +190,6 @@ R2恢复接口补充：`GET /agent/tasks/{taskId}/work-items/{workItemId}/lease`
 
 run状态的业务终态与身份撤销分开：RESULT_SUBMITTED允许在恢复期内、身份仍有效时读取原submit receipt/status，禁止新增发布/claim/submit；CLOSED同样允许读取已完成回执但不重新执行。先做身份/来源/操作授权，再在允许回执读取的状态下重放，未命中receipt才校验新mutation所需ACTIVE状态。REVOKED、binding撤销或scope不符始终拒绝。不得因“先把run结束”造成成功提交的丢ACK重试永久失败。
 
-上传临时对象资源边界：每upload最多10个writer epoch、最多2个尚未清理的staging key并存；新epoch须先回收更旧staging或等待。失败/过期epoch列入持久清理job，bucket仅对专用staging前缀另设24h兜底生命周期，不作用于已发布对象。单个run累计上传请求/重试字节设置配置上限；超限429而非无限重新创建upload session。
+上传临时对象资源边界：每upload最多10个writer epoch、最多2个尚未清理的staging key并存；新epoch须先回收更旧staging或等待。OD02 采用 READY 保留原 immutable key 的方案，该 bucket/key 前缀不配置自动删除生命周期，统一由持久 cleanup/GC 管理；不能把 24h 临时文件规则施加到已发布文件。单个run累计上传请求/重试字节设置配置上限；超限429而非无限重新创建upload session。cleanup 的 `safe_after` 只是调度下界，不能单凭客户端超时或固定宽限时间认定存储端已不可能迟到提交；释放配额前须有写入隔离与清理确认，具体实现需通过 OD02 独立评审。
 
 能力协商落点：新增注册/心跳字段 `outputCapabilities`，仅允许 `output.http.v1`、`task.owner-share.v1`、`task.delivery-http.v1`。写入runtime的独立 `output_capabilities_json`、`output_capabilities_runtime_id`、`output_capabilities_updated_at` 可空列，由已认证当前runtime/binding的CAS更新；不复用业务 `abilities`，不影响map/roster现有来源。旧客户端缺失视为不支持；当前在线runtime匹配且能力快照90秒内有效才允许新建run/派发policy1任务。能力是调度门槛，不代替API授权；来源/租约/撤销校验仍必需。R1注册仅公布前两项，R2处理器/依赖/客户端完整就绪才公布第三项。

@@ -180,8 +180,136 @@ tables:
     indexes: []
     invariants:
     - all counters nonnegative; reserved+stored <= max
-    - atomic reservation; retry epoch does not reserve business quota twice
+    - atomic reservation; business file accounting is once per upload, but every
+      uncleaned physical staging copy retains a separate scope reservation
     primary_key: *id004
+  output_binding_upload_quota:
+    release: R1
+    columns:
+      binding_id:
+        type: VARBINARY(400)
+        nullable: false
+      active_uploads:
+        type: INT
+        nullable: false
+      max_active_uploads:
+        type: INT
+        nullable: false
+    primary_key:
+    - tenant_id
+    - client_id
+    - binding_id
+    unique: []
+    indexes: []
+    invariants:
+    - atomic binding upload slots, including the initially empty population; default limit 2
+    - nonnegative active_uploads <= max_active_uploads; never reset a revoked binding to reuse its slots
+  output_run_upload_quota:
+    release: R1
+    columns:
+      run_id:
+        type: VARBINARY(100)
+        nullable: false
+      upload_requests:
+        type: BIGINT
+        nullable: false
+      max_upload_requests:
+        type: BIGINT
+        nullable: false
+      attempt_bytes:
+        type: BIGINT
+        nullable: false
+      max_attempt_bytes:
+        type: BIGINT
+        nullable: false
+    primary_key:
+    - tenant_id
+    - client_id
+    - run_id
+    unique: []
+    indexes: []
+    invariants:
+    - successful create increments upload_requests once; exact receipt replay does not increment
+    - each claimed epoch adds expected_size to attempt_bytes, including failed attempts; neither counter
+      refunded
+    - default request bound run.max_files*10 and byte bound run.max_bytes*10; configurable with checked
+      arithmetic
+    - request bound also limits zero-byte and never-started upload sessions
+  output_storage_cleanup_job:
+    release: R1
+    columns:
+      cleanup_id:
+        type: BINARY(32)
+        nullable: false
+      object_id:
+        type: VARBINARY(100)
+        nullable: false
+      upload_id:
+        type: VARBINARY(100)
+        nullable: false
+      writer_epoch:
+        type: BIGINT
+        nullable: false
+      bucket:
+        type: VARCHAR(100)
+        nullable: false
+      storage_key:
+        type: VARCHAR(512)
+        nullable: false
+      storage_version:
+        type: VARCHAR(200)
+        nullable: true
+      state:
+        type: VARCHAR(16)
+        nullable: false
+      quota_charge_kind:
+        type: VARCHAR(16)
+        nullable: false
+      quota_charge_bytes:
+        type: BIGINT
+        nullable: false
+      safe_after:
+        type: BIGINT
+        nullable: false
+      attempts:
+        type: INT
+        nullable: false
+        default: 0
+      next_attempt_at:
+        type: BIGINT
+        nullable: false
+      lease_owner:
+        type: VARBINARY(100)
+        nullable: true
+      lease_until:
+        type: BIGINT
+        nullable: true
+      last_error:
+        type: VARCHAR(80)
+        nullable: true
+    primary_key:
+    - tenant_id
+    - client_id
+    - cleanup_id
+    unique: []
+    indexes:
+    - - state
+      - next_attempt_at
+      - lease_until
+    - - tenant_id
+      - client_id
+      - upload_id
+      - state
+    invariants:
+    - cleanup_id is SHA-256 of length-prefixed UTF-8 tenant/client/bucket/key/version-or-empty; full identity
+      remains persisted
+    - HELD job is committed with epoch reservation before external PUT; current successful key becomes RETAINED;
+      abandoned keys become PENDING
+    - quota_charge_kind NONE/RESERVED; reservation ownership transfers atomically from upload to abandoned
+      job without releasing physical quota
+    - safe_after is only a scheduling lower bound, not proof that a late storage PUT cannot commit
+    - DONE and quota release require storage write fencing and confirmed removal; network error retains
+      retry state and charge
   output_upload_session:
     release: R1
     columns:
@@ -224,6 +352,32 @@ tables:
       error_code:
         type: VARCHAR(80)
         nullable: true
+      binding_id:
+        type: VARBINARY(400)
+        nullable: false
+      writer_started_at:
+        type: BIGINT
+        nullable: true
+      writer_deadline_at:
+        type: BIGINT
+        nullable: true
+      slot_released:
+        type: BOOLEAN
+        nullable: false
+        default: false
+      verification_attempts:
+        type: INT
+        nullable: false
+        default: 0
+      verification_next_at:
+        type: BIGINT
+        nullable: true
+      verification_lease_owner:
+        type: VARBINARY(100)
+        nullable: true
+      verification_lease_until:
+        type: BIGINT
+        nullable: true
     unique:
     - &id005
       - tenant_id
@@ -238,9 +392,15 @@ tables:
     - - tenant_id
       - client_id
       - run_id
+    - - state
+      - verification_next_at
+      - verification_lease_until
     invariants:
     - CREATED/UPLOADING/VERIFYING/READY/REJECTED/EXPIRED
     - writer epoch CAS fences late writers; upload tied to one immutable object
+    - writer_deadline_at is immutable within each epoch; session expiry stays fixed at create+24h
+    - at most 10 epochs and 2 uncleaned HELD/PENDING staging keys per upload
+    - slot_released prevents repeated active-upload counter release
     primary_key: *id005
   output_object:
     release: R1
@@ -290,6 +450,19 @@ tables:
       error_code:
         type: VARCHAR(80)
         nullable: true
+      delete_attempts:
+        type: INT
+        nullable: false
+        default: 0
+      delete_next_at:
+        type: BIGINT
+        nullable: true
+      delete_lease_owner:
+        type: VARBINARY(100)
+        nullable: true
+      delete_lease_until:
+        type: BIGINT
+        nullable: true
     unique:
     - &id006
       - tenant_id
@@ -298,10 +471,14 @@ tables:
     indexes:
     - - lifecycle_status
       - delete_after
+    - - lifecycle_status
+      - delete_next_at
+      - delete_lease_until
     invariants:
     - PENDING/PASSED/REJECTED distinct from STAGED/READY/DELETING/DELETED
     - PASSED+READY requires trusted actual bytes/hash/type and scan result
     - staging keys unique per upload/epoch; permanent object never overwritten
+    - retained immutable keys must not be subject to bucket expiry rules
     primary_key: *id006
   output_object_reference:
     release: R1
@@ -407,6 +584,8 @@ tables:
       same authenticated run ticket
     - ephemeral lease/upload receipts expire after run recovery+7d; submit/review
       retained with audit
+    - completeUpload hashes server-owned canonical JSON of runId/uploadId/operation;
+      its public POST has no request body and cannot choose another route identity
     primary_key: *id008
   chat_output:
     release: R1

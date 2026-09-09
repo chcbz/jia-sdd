@@ -1,6 +1,6 @@
-# OD02 launch handoff — pending OD01 acceptance
+# OD02 launch handoff — activated after OD01 acceptance
 
-Preparation only: OD02 is not started. Start after the OD01 candidate commit, required tests and independent final review pass. Record that exact commit as the OD02 base; retain one API writer in `/home/chc/wsps/cyf-worktrees/output-api`.
+Activated after independent OD01 APPROVE on `c5330dd50da6c03e55edca0744485a1b95385552`; see `accepted-review-c5330dd5.md`. OD02 is in progress with that base and one API writer in `/home/chc/wsps/cyf-worktrees/output-api`; the active ownership record is `../OD02/claim.md`.
 
 ## Reuse before adding infrastructure
 
