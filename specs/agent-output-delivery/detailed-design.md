@@ -97,7 +97,7 @@ MySQL RR 下，签发限频不能在早期投影已建立快照后使用普通 C
 1. `POST output-uploads`：校验 ticket/source/run、name（仅 basename）、size/hash、配额。在短事务内锁 source → run → 幂等行 → scope 配额行，预留 expectedBytes，创建上传/对象槽位；返回 uploadId 和相对同源 uploadUrl。拒绝客户端传 bucket/key/URI。
 2. `PUT .../content`：短事务 CAS 领取上传 writerEpoch，并预登记该 epoch 的持久清理行后才允许外部写入。`writer_until` 为 5 分钟可续租约，`writer_deadline_at` 固定为该 epoch 首次领取后 10 分钟、续租不得越过；upload 的 24h 会话期限固定于 create。提交后流式读取，边读边哈希/限额/类型探测，将 bytes 写到包含 uploadId/epoch 的唯一 key；写入不覆盖其他 epoch。读不持 SQL 锁。
 3. 完成后以 writerEpoch、sessionVersion CAS 写 size/hash/object key；当前 binding/run 已失效或 epoch 丢失则只留下可清理 staging，不得 READY。校验失败 REJECTED；未写入的预留可释放，已写入或仍可能被迟到 writer 写入的存储占用须待物理清理确认后释放。中断可由新 epoch 全文件重试，原文件快照不重新生成。
-4. `POST complete` 触发/查询持久验证 job；已 READY 幂等返回。摘要不符/格式不符 422，扫描服务不可用保持 VERIFYING 并重试，不能旁路通过。超过 24h 会话过期，客户端可在有效 run 下创建新 uploadId 重传同一快照。
+4. `POST complete` 触发持久验证 job，并固化该请求的 HTTP 状态与响应正文；相同幂等键始终返回原回执（如首次 202/VERIFYING），即使对象后来已 READY。客户端通过 `GET upload` 查询后续状态。摘要不符返回 422，格式拒绝按 OpenAPI 返回 415/422；扫描服务不可用保持 VERIFYING 并重试，不能旁路通过。超过 24h 会话过期，客户端可在有效 run 下创建新 uploadId 重传同一快照。
 5. READY 后 `POST artifacts` 或 `POST outputs` 登记：统一锁序，校验对象 PASSED/READY、同 run/source/producer、版本 predecessor、publishToOwner；原子写业务版本、引用和 receipt。task 复用已有 ARTIFACT_PUBLISHED 事件类型及严格 payload 格式；不创建任意新类型使旧回放失败。
 6. chat 首发不依赖持久事件推送，消息卡片通过 runId/conversationId 的列表请求发现。HTTP 成功丢包由相同幂等键重放返回确切版本；客户端不得擅自 version++。
 

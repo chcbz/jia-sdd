@@ -31,3 +31,5 @@ Command: `python3 specs/agent-output-delivery/tools/probe-clamav-scan-limits.py 
 - ZIP containing two 55-MiB zero-filled members: `Heuristics.Limits.Exceeded.MaxScanSize FOUND` (37.919 seconds).
 
 Daemon startup log confirms archive scanning, heuristic alerts and scan-limit alerting are enabled. Configuration presence is insufficient to close this gate. The single-member result remains under independent investigation; it is not proof that an EICAR-bearing archive would bypass scanning. No unscanned-file safety claim or OD02 acceptance is made.
+
+A supplemental INSTREAM framing check announced one `60 * 1024 * 1024 + 1` byte chunk (command plus network-order length header, no body sent). clamd immediately returned `INSTREAM size limit exceeded. ERROR`. This proves early rejection of an oversized announced chunk only; it is not a transmitted 60-MiB payload or application failure-state test.
