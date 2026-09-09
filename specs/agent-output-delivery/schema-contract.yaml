@@ -21,7 +21,10 @@ common_columns:
 scope_prefix:
 - tenant_id
 - client_id
-sql_rule: Byte-exact scope/IDs; binary identifiers hold UTF-8 bytes; no unscoped DAO
+sql_rule: >-
+  Byte-exact scope/IDs; binary identifiers hold UTF-8 bytes; no unscoped ordinary-resource DAO.
+  The sole authentication-bootstrap exception is exact BINARY(32) lookup of a server-computed
+  bearer SHA-256 in output_access_ticket; all subsequent authorization uses persisted row-derived scope.
 tables:
   output_source_binding:
     release: R1
@@ -141,6 +144,10 @@ tables:
       - ticket_hash
     indexes:
     - - expires_at
+    - - tenant_id
+      - client_id
+      - binding_id
+      - created_at
     invariants:
     - no raw bearer persisted; scope and active binding rechecked on mutation
     primary_key: *id003
