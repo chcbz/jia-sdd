@@ -67,7 +67,11 @@ Agent HTTP Authorization 使用该 ticket；用户 JWT 不能调用 Agent 写接
 
 鉴权引导例外：尚无主体时，只允许用服务端计算的 bearer SHA-256 精确查询 `BINARY(32) ticket_hash`，由持久行建立 scope；请求传入的 tenant/client/run/binding 不得决定主体。此后资源和业务查询必须使用行派生的精确 scope 并动态校验授权，仍遵守同一未撤销 binding 的新 runtime 恢复规则。普通资源 ID 不享有无 scope 查询例外。签发限频在同一精确 binding 行锁下完成窗口计数与 ticket 插入，可添加非唯一索引 `(tenant_id,client_id,binding_id,created_at)`。
 
-身份事务锁顺序：业务 source root → output_source_binding → output_run_binding → agent_persona_binding → agent_identity_registry → agent_runtime。TASK 先锁 task root 与精确 member，CONVERSATION 先锁持久 owner 行；非锁投影仅用于发现键，持锁后重读授权信息。该顺序保留既有注册/解绑/status 的 binding → identity → runtime 前缀；已持身份锁的路径不得反向获取 source/run 锁。具体依据及并发验证要求见 [identity-lock-order-review.md](evidence/OD01/identity-lock-order-review.md)。
+身份事务锁顺序：业务 source root → output_source_binding → output_run_binding → agent_persona_binding → agent_identity_registry → agent_runtime → output_access_ticket 精确行/窗口范围。TASK 先锁 task root 与精确 member；任务关联会话先锁 task/member，再锁会话持久 owner 行。非锁投影仅用于发现键，持锁后重读授权信息。该顺序保留既有注册/解绑/status 的 binding → identity → runtime 前缀；已持身份锁的路径不得反向获取 source/run 锁。具体依据见 [identity-lock-order-review.md](evidence/OD01/identity-lock-order-review.md) 与 [repeatable-read-review.md](evidence/OD01/repeatable-read-review.md)。
+
+MySQL RR 下，签发限频不能在早期投影已建立快照后使用普通 COUNT；持同一 canonical binding 锁后，按 binding-window 索引执行有界 `LIMIT 60 FOR UPDATE` 当前读并计行数。HTTP 鉴权完成 source/run/identity/runtime 锁后，再以同一 hash 当前锁读 ticket；核对两次读取的不可变 scope/run/source/producer/binding/operations，依据 locked run/ticket 重验状态、撤销与权限，并在锁等待后重新取时钟检查 expiresAt/recoveryUntil。纯 ticket 撤销/清理可以独立执行，但不得持 ticket 锁后回取前序锁。
+
+终态恢复：RESULT_SUBMITTED/CLOSED 在恢复期内允许同一未撤销 binding 的已认证新 runtime 换取仅含 `status` 的 ticket。来源 SPI 使用显式只读回执模式，允许具有精确 READ_ONLY 历史成员权限的来源，仍拒绝 LEFT/REJECTED/越界或已撤销身份。终态服务鉴权仅接受内部 `requiredOperation=status, receiptReplay=true`；旧 ACTIVE 时签发的全权限 ticket 也不能再授权 upload/publish/submit。
 
 ## 5. 数据模型与唯一约束
 
@@ -104,6 +108,8 @@ R1 使用受限 MIME allowlist：纯文本/Markdown/CSV/JSON、PNG/JPEG/WebP、P
 ## 7. 幂等、锁序与 GC
 
 POST 操作统一 Idempotency-Key（16～100 ASCII）；request hash 对严格解析后的已知字段用 RFC 8785 canonical JSON 再 SHA-256，拒绝重复 JSON key、未知字段、重复 items 和非法数字。lease回执含业务leaseToken，允许在受保护receipt中保留，只对同一合法run-ticket重放，不进入用户接口/日志；output auth bearer不落receipt。文件字节另用流 hash；PUT 由 uploadId+expectedHash+writerEpoch 管理，不另造业务幂等键。
+
+终态的原 POST 重放不新增 HTTP 端点：服务端由路由固定 originalOperation，并由持久 ticket/run 推导只读回执候选分支，以 `status + receiptReplay` 鉴权，锁后再次确认终态。随后在 run 锁之后用当前/锁读查既有 receipt，精确匹配 scope/run/originalOperation/idempotencyKey/canonical body hash 及资源/actor 绑定后原样返回。缺失或不符即拒绝，不创建 receipt、不转入 mutation，也不在同事务升级为 WRITE 模式。客户端不能提交 readMode/receiptReplay/originalOperation 来选择该分支。ACTIVE 新请求仍使用原操作权限与 WRITE 来源授权；成功状态变化与 receipt 同事务提交。具体实现归 OD02/OD08。
 
 先鉴权再查 receipt；同参数成功重放返回原 HTTP status/body（不得含 output bearer/存储签名 URL），同键异参 409 IDEMPOTENCY_CONFLICT。成功/终结性业务拒绝写 receipt，409 VERSION_CONFLICT 含调用者已获授权的 currentVersion，修正业务意图需新 key；503 与传输失败不记终结性 receipt。lease/upload receipt 保留到 run 恢复截止后7天，成果登记/提交/审核 receipt 至少保留到资源保留期结束后7天，R2 提交/验收审计不得因去重缓存过期重做。
 

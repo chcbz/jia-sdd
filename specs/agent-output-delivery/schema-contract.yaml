@@ -150,6 +150,10 @@ tables:
       - created_at
     invariants:
     - no raw bearer persisted; scope and active binding rechecked on mutation
+    - terminal reissued tickets contain status only; original POST receipts are read
+      by exact server-owned operation/key/body identity without granting new writes
+    - current locking ticket read follows runtime locks; bootstrap hash read alone
+      does not establish current revocation or expiry validity
     primary_key: *id003
   output_scope_quota:
     release: R1
