@@ -1,15 +1,15 @@
 {
   "observed_at": "2026-09-09T17:47:00.101152+00:00",
-  "scope": "Partial working-tree real MySQL evidence; six tests passed. Output source/run/ticket/runtime use production mappers/DAOs; business-source and canonical identity boundaries remain controlled fixtures. Not full deployed authorization topology or final OD01 acceptance. Local dependency substitutions apply.",
+  "scope": "Partial working-tree real MySQL evidence; seven tests across the current two reports passed. Output source/run/ticket/runtime use production mappers/DAOs; business-source and canonical identity boundaries remain controlled fixtures. Not full deployed authorization topology or final OD01 acceptance. Local dependency substitutions apply.",
   "verified_behaviors": [
     "70 concurrent attempts with eight workers commit exactly 60 tickets",
     "post-insert rollback consumes no quota",
     "run/ticket current-read revocation and expiry fences",
     "terminal restart status-only recovery and old full-ticket mutation rejection",
-    "generic runtime ORM insert/select/update without output capability columns"
+    "generic runtime ORM insert/select/update without output capability columns",
+    "production capability CAS clears registration; stale runtime presence updates zero rows while the current runtime succeeds"
   ],
   "remaining_gates": [
-    "production runtime capability CAS SQL",
     "production exact-owner conversation mapper SQL and locking",
     "affected regressions and portable fixtures",
     "candidate commit and independent final review"
@@ -17,16 +17,16 @@
   "reports": [
     {
       "file": "mysql-auth-concurrency.xml",
-      "sha256": "4986e408bb34b19b816b84cc0742062a5de47801c2ad4235a0280fff22ac5b49",
+      "sha256": "dcab31c8f318873fec60ade17baa289967ad12e90705024e71f87ce585ecbb09",
       "suite": {
         "name": "cn.jia.agent.output.service.OutputAuthorizationMySqlConcurrencyTest",
-        "tests": "5",
+        "tests": "6",
         "skipped": "0",
         "failures": "0",
         "errors": "0",
-        "timestamp": "2026-09-09T17:45:16.910Z",
+        "timestamp": "2026-09-09T17:50:08.490Z",
         "hostname": "Eva",
-        "time": "18.846"
+        "time": "24.354"
       }
     },
     {
@@ -79,5 +79,12 @@
     "agent/jia-agent-service/src/main/java/cn/jia/agent/output/service/TaskOutputSourceAuthorizer.java": "db531243d541fb4dab5d31c31a2d3718f16abf66ee6a97829dc5c46afc284f28",
     "agent/jia-agent-service/src/test/java/cn/jia/agent/output/service/AgentRuntimeLegacySchemaMySqlTest.java": "2d25fe7f0ef9bf5c268dadf8bd7f9055c764b536280ea4b6429468cd3f59c2c8",
     "agent/jia-agent-service/src/test/java/cn/jia/agent/output/service/OutputAuthorizationMySqlConcurrencyTest.java": "eaa123686790f94005c9049438df7e96d70917f8ab57c0783f3b8ff4725fd839"
-  }
+  },
+  "report_updates": [
+    {
+      "observed_at": "2026-09-09T17:52:16.344354+00:00",
+      "file": "mysql-auth-concurrency.xml",
+      "reason": "Supersedes earlier report for this same class; do not sum repeated executions."
+    }
+  ]
 }
