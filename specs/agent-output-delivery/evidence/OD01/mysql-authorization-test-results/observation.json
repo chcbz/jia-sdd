@@ -1,0 +1,83 @@
+{
+  "observed_at": "2026-09-09T17:47:00.101152+00:00",
+  "scope": "Partial working-tree real MySQL evidence; six tests passed. Output source/run/ticket/runtime use production mappers/DAOs; business-source and canonical identity boundaries remain controlled fixtures. Not full deployed authorization topology or final OD01 acceptance. Local dependency substitutions apply.",
+  "verified_behaviors": [
+    "70 concurrent attempts with eight workers commit exactly 60 tickets",
+    "post-insert rollback consumes no quota",
+    "run/ticket current-read revocation and expiry fences",
+    "terminal restart status-only recovery and old full-ticket mutation rejection",
+    "generic runtime ORM insert/select/update without output capability columns"
+  ],
+  "remaining_gates": [
+    "production runtime capability CAS SQL",
+    "production exact-owner conversation mapper SQL and locking",
+    "affected regressions and portable fixtures",
+    "candidate commit and independent final review"
+  ],
+  "reports": [
+    {
+      "file": "mysql-auth-concurrency.xml",
+      "sha256": "4986e408bb34b19b816b84cc0742062a5de47801c2ad4235a0280fff22ac5b49",
+      "suite": {
+        "name": "cn.jia.agent.output.service.OutputAuthorizationMySqlConcurrencyTest",
+        "tests": "5",
+        "skipped": "0",
+        "failures": "0",
+        "errors": "0",
+        "timestamp": "2026-09-09T17:45:16.910Z",
+        "hostname": "Eva",
+        "time": "18.846"
+      }
+    },
+    {
+      "file": "mysql-legacy-runtime-orm.xml",
+      "sha256": "39e07eec49c7a5e6956bed55b870dc5842f62a29ef7c22a95d9060ce78526a04",
+      "suite": {
+        "name": "cn.jia.agent.output.service.AgentRuntimeLegacySchemaMySqlTest",
+        "tests": "1",
+        "skipped": "0",
+        "failures": "0",
+        "errors": "0",
+        "timestamp": "2026-09-09T17:45:12.869Z",
+        "hostname": "Eva",
+        "time": "4.022"
+      }
+    }
+  ],
+  "source_sha256": {
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/AgentOutputRuntimeCapabilityService.java": "ecc6152bf8c3cd7725c250d19705ab93f46a7a559bb0dc05b94ae337b567b686",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputAuthorizationException.java": "ad4fbc50f4bd5784e0267dd8fa88029d839ccd483ecf7bc4c9070749f791bbac",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputRunAuthorizationService.java": "7b5bad00c30143e963aa3f702048a1c4d8622872d687f07d528b06a195ce6891",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputRunRequest.java": "2240de83ab33965d57b5aa9246ec40b20f736499cecfc4e76e6659f9908a76d8",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputSourceAccessMode.java": "abf444fdcc3706b3cdeb6b775c497de47731f773e2380016ab9d57487571ac13",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputSourceAuthorization.java": "14181564884d78b7c5f2c875a435b91b276cf961a9193234af502e834617397c",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputSourceAuthorizer.java": "56deee53e3abf217240defaec00c9dcd173eb16bc61b3f73b49c0cf48486216f",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputTicketAuthorization.java": "fe9d0cb631e1d9a5829dfddfdab887c25f24d47abd5a7e5db33feeeee0759d67",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentRuntimeEntity.java": "823119b758aa608ed7765a79b1b24ce8260b8231e33221b97eb1fcfb55c9b48b",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/output/OutputConstants.java": "7a33d55ed00a27917b177366a7235b007f7d4ef22d8b7bd1274295cd4dfff3d9",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/output/dto/OutputAuthReceiptDTO.java": "b6d48d23acf6004a1695b51bec03555b02c23dc077104ba0b4bdb4cadb46d455",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/output/dto/OutputContextDTO.java": "fcb166d3e079670fef18b83390d2299a436cc17a177682704968d1709d27c1f2",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/output/dto/OutputSourceDTO.java": "7e39b43ea27ad6d80624113dde5e641813ca17dee2ee0b0d252e6ab1d704c91a",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/output/entity/OutputAccessTicketEntity.java": "98eb2a4b61424cfc187dc99ddafc7a526e96e038d868dad29257b1cfba052ed2",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/output/entity/OutputRunBindingEntity.java": "2ef05617f5bd81f5e2da98e8382f2690ccc514b8e8a1e4f3b86f529fe4416424",
+    "agent/jia-agent-core/src/main/java/cn/jia/agent/output/entity/OutputSourceBindingEntity.java": "ca3b9028f410322746697aa89691af58f7d6847ac6f87d1cffae64cb5abeaefb",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentRuntimeDaoImpl.java": "6e27216c709a71dd5f47fd6c550f136c4edd30cf786bf0ff48e28dc17040f214",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentRuntimeMapper.java": "8c16b0f192c63279f242bfaf3cc2bb10f93757c711a08947eb4654eab1645179",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/OutputAccessTicketDao.java": "f5ca557dce7098ab01a5da9fb14d1a23c4a8931feabf983433b3aae264299e0b",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/OutputRunBindingDao.java": "0eda38a387363deeb0e9cbb2a8abfe6b193eeadee43296239b2610bcb23bc478",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/OutputSourceBindingDao.java": "588bf630188ecb32bea4e39591106c2fcdfa6d32f7cc1cc6a7a155690741d360",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/impl/OutputAccessTicketDaoImpl.java": "623731161a91d77d522f7b92c6dfa6ee804eff9cfbb9964bc22595e73f4b3081",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/impl/OutputRunBindingDaoImpl.java": "86d530b88f1be3fc5c52e083335895033a5c3ad0e9381875754fda84ce1eaa63",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/impl/OutputSourceBindingDaoImpl.java": "3ab85f3bc6b78d7efb93546476136165750e90e9e6e0d330eedc147526b820da",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/mapper/OutputAccessTicketMapper.java": "fc575ffccad41af9f1ec7b344a779ac362375a7886dbdd1dd32b57ba8a9fe391",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/mapper/OutputRunBindingMapper.java": "6d1fe0f20c44b64577f4c94164391ca437544a193bb6bb28fa3fcaf8fa467334",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/mapper/OutputSourceBindingMapper.java": "3dadaf8e347b81718102b28806a79af095e97e3c156968a5156de6f487365db6",
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/config/OutputDeliverySchemaInitializer.java": "dfb0aff53d8c53e99fdf08902c14c60ae4da64d4dd073ca87dfa97c8a20343ea",
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/output/service/AgentOutputRuntimeCapabilityServiceImpl.java": "d258117ca6ad217b1c8f790c18478a8415055f81b5c98a94f746aeb60f0331f9",
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/output/service/OutputRunAuthorizationServiceImpl.java": "debeb64d928bf7be7f4559cf19acf1bfb406f0099bc19b6250ddc0994638b68f",
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/output/service/OutputSourceAuthorizerRegistry.java": "393762dcdeeb54a98b2b1c271740d534bb1356a2546b03eb5b78d04128716ba3",
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/output/service/TaskOutputSourceAuthorizer.java": "db531243d541fb4dab5d31c31a2d3718f16abf66ee6a97829dc5c46afc284f28",
+    "agent/jia-agent-service/src/test/java/cn/jia/agent/output/service/AgentRuntimeLegacySchemaMySqlTest.java": "2d25fe7f0ef9bf5c268dadf8bd7f9055c764b536280ea4b6429468cd3f59c2c8",
+    "agent/jia-agent-service/src/test/java/cn/jia/agent/output/service/OutputAuthorizationMySqlConcurrencyTest.java": "eaa123686790f94005c9049438df7e96d70917f8ab57c0783f3b8ff4725fd839"
+  }
+}
