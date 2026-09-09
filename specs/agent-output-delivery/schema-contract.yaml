@@ -1,0 +1,678 @@
+schema_version: '1.1'
+status: design_contract_not_executable_migration
+engine: InnoDB
+common_columns:
+  tenant_id:
+    type: VARBINARY(200)
+    nullable: false
+  client_id:
+    type: VARBINARY(200)
+    nullable: false
+  created_at:
+    type: BIGINT
+    nullable: false
+  updated_at:
+    type: BIGINT
+    nullable: false
+  row_version:
+    type: BIGINT
+    nullable: false
+    default: 0
+scope_prefix:
+- tenant_id
+- client_id
+sql_rule: Byte-exact scope/IDs; binary identifiers hold UTF-8 bytes; no unscoped DAO
+tables:
+  output_source_binding:
+    release: R1
+    columns:
+      source_type:
+        type: VARCHAR(20)
+        nullable: false
+      source_id:
+        type: VARBINARY(400)
+        nullable: false
+      owner_jiacn:
+        type: VARBINARY(200)
+        nullable: false
+      ownership_state:
+        type: VARCHAR(24)
+        nullable: false
+    unique:
+    - &id001
+      - tenant_id
+      - client_id
+      - source_type
+      - source_id
+    indexes: []
+    invariants:
+    - owner immutable; exact persisted ownership required
+    - TASK source locking uses task root; CONVERSATION uses this row
+    primary_key: *id001
+  output_run_binding:
+    release: R1
+    columns:
+      run_id:
+        type: VARBINARY(100)
+        nullable: false
+      source_type:
+        type: VARCHAR(20)
+        nullable: false
+      source_id:
+        type: VARBINARY(400)
+        nullable: false
+      producer_agent_id:
+        type: VARBINARY(400)
+        nullable: false
+      binding_id:
+        type: VARBINARY(400)
+        nullable: false
+      original_runtime_id:
+        type: VARBINARY(400)
+        nullable: false
+      origin_type:
+        type: VARCHAR(20)
+        nullable: false
+      origin_id:
+        type: VARBINARY(400)
+        nullable: false
+      state:
+        type: VARCHAR(24)
+        nullable: false
+      policy_version:
+        type: INT
+        nullable: false
+      recovery_until:
+        type: BIGINT
+        nullable: false
+      max_bytes:
+        type: BIGINT
+        nullable: false
+      max_files:
+        type: INT
+        nullable: false
+      work_item_id:
+        type: VARBINARY(400)
+        nullable: true
+    unique:
+    - &id002
+      - tenant_id
+      - client_id
+      - run_id
+    indexes:
+    - - tenant_id
+      - client_id
+      - source_type
+      - source_id
+      - created_at
+    invariants:
+    - server-originated binding; never infer source from client fallback IDs
+    - source/producer/binding immutable; revoked source/run rejects mutations
+    - ACTIVE/RESULT_SUBMITTED/CLOSED/REVOKED; successful terminal permits authenticated
+      receipt replay only
+    - work_item_id server-derived; currently dispatched run verified before claim
+    primary_key: *id002
+  output_access_ticket:
+    release: R1
+    columns:
+      ticket_hash:
+        type: BINARY(32)
+        nullable: false
+      run_id:
+        type: VARBINARY(100)
+        nullable: false
+      binding_id:
+        type: VARBINARY(400)
+        nullable: false
+      issued_runtime_id:
+        type: VARBINARY(400)
+        nullable: false
+      operations_json:
+        type: JSON
+        nullable: false
+      expires_at:
+        type: BIGINT
+        nullable: false
+      revoked_at:
+        type: BIGINT
+        nullable: true
+    unique:
+    - &id003
+      - ticket_hash
+    indexes:
+    - - expires_at
+    invariants:
+    - no raw bearer persisted; scope and active binding rechecked on mutation
+    primary_key: *id003
+  output_scope_quota:
+    release: R1
+    columns:
+      reserved_bytes:
+        type: BIGINT
+        nullable: false
+      stored_bytes:
+        type: BIGINT
+        nullable: false
+      max_bytes:
+        type: BIGINT
+        nullable: false
+      active_uploads:
+        type: INT
+        nullable: false
+      max_active_uploads:
+        type: INT
+        nullable: false
+    unique:
+    - &id004
+      - tenant_id
+      - client_id
+    indexes: []
+    invariants:
+    - all counters nonnegative; reserved+stored <= max
+    - atomic reservation; retry epoch does not reserve business quota twice
+    primary_key: *id004
+  output_upload_session:
+    release: R1
+    columns:
+      upload_id:
+        type: VARBINARY(100)
+        nullable: false
+      run_id:
+        type: VARBINARY(100)
+        nullable: false
+      object_id:
+        type: VARBINARY(100)
+        nullable: false
+      file_name:
+        type: VARCHAR(255)
+        nullable: false
+      expected_size:
+        type: BIGINT
+        nullable: false
+      expected_sha256:
+        type: BINARY(32)
+        nullable: false
+      declared_mime:
+        type: VARCHAR(100)
+        nullable: false
+      state:
+        type: VARCHAR(24)
+        nullable: false
+      writer_epoch:
+        type: BIGINT
+        nullable: false
+      writer_until:
+        type: BIGINT
+        nullable: true
+      expires_at:
+        type: BIGINT
+        nullable: false
+      reserved_bytes:
+        type: BIGINT
+        nullable: false
+      error_code:
+        type: VARCHAR(80)
+        nullable: true
+    unique:
+    - &id005
+      - tenant_id
+      - client_id
+      - upload_id
+    - - tenant_id
+      - client_id
+      - object_id
+    indexes:
+    - - state
+      - expires_at
+    - - tenant_id
+      - client_id
+      - run_id
+    invariants:
+    - CREATED/UPLOADING/VERIFYING/READY/REJECTED/EXPIRED
+    - writer epoch CAS fences late writers; upload tied to one immutable object
+    primary_key: *id005
+  output_object:
+    release: R1
+    columns:
+      object_id:
+        type: VARBINARY(100)
+        nullable: false
+      run_id:
+        type: VARBINARY(100)
+        nullable: false
+      bucket:
+        type: VARCHAR(100)
+        nullable: false
+      storage_key:
+        type: VARCHAR(512)
+        nullable: true
+      storage_version:
+        type: VARCHAR(200)
+        nullable: true
+      actual_sha256:
+        type: BINARY(32)
+        nullable: true
+      actual_size:
+        type: BIGINT
+        nullable: true
+      actual_mime:
+        type: VARCHAR(100)
+        nullable: true
+      verification_status:
+        type: VARCHAR(16)
+        nullable: false
+      lifecycle_status:
+        type: VARCHAR(16)
+        nullable: false
+      scan_engine_version:
+        type: VARCHAR(100)
+        nullable: true
+      verified_at:
+        type: BIGINT
+        nullable: true
+      delete_after:
+        type: BIGINT
+        nullable: true
+      deleted_at:
+        type: BIGINT
+        nullable: true
+      error_code:
+        type: VARCHAR(80)
+        nullable: true
+    unique:
+    - &id006
+      - tenant_id
+      - client_id
+      - object_id
+    indexes:
+    - - lifecycle_status
+      - delete_after
+    invariants:
+    - PENDING/PASSED/REJECTED distinct from STAGED/READY/DELETING/DELETED
+    - PASSED+READY requires trusted actual bytes/hash/type and scan result
+    - staging keys unique per upload/epoch; permanent object never overwritten
+    primary_key: *id006
+  output_object_reference:
+    release: R1
+    columns:
+      reference_key:
+        type: BINARY(32)
+        nullable: false
+      object_id:
+        type: VARBINARY(100)
+        nullable: false
+      source_type:
+        type: VARCHAR(20)
+        nullable: false
+      source_id:
+        type: VARBINARY(400)
+        nullable: false
+      output_id:
+        type: VARBINARY(400)
+        nullable: false
+      output_version:
+        type: BIGINT
+        nullable: false
+      reference_kind:
+        type: VARCHAR(24)
+        nullable: false
+      delivery_id:
+        type: VARBINARY(100)
+        nullable: true
+      state:
+        type: VARCHAR(16)
+        nullable: false
+      retain_until:
+        type: BIGINT
+        nullable: true
+      hold:
+        type: BOOLEAN
+        nullable: false
+      hold_reason:
+        type: VARCHAR(255)
+        nullable: true
+      released_at:
+        type: BIGINT
+        nullable: true
+    unique:
+    - &id007
+      - tenant_id
+      - client_id
+      - reference_key
+    indexes:
+    - - tenant_id
+      - client_id
+      - object_id
+      - state
+    - - state
+      - retain_until
+    invariants:
+    - kinds ROLE_CANDIDATE/OWNER_SHARE/DELIVERY_PIN/READ_PIN
+    - reference key hashes canonical reference identity; read request IDs distinct
+    - ACTIVE/EXPIRED/RELEASED; hold overrides expiry; READ_PIN grants no new ACL
+    - DELIVERY_PIN active with null retain_until while awaiting review; accepted at
+      least 90d
+    primary_key: *id007
+  output_mutation_receipt:
+    release: R1
+    columns:
+      actor_kind:
+        type: VARCHAR(16)
+        nullable: false
+      actor_id:
+        type: VARBINARY(400)
+        nullable: false
+      operation:
+        type: VARCHAR(80)
+        nullable: false
+      idempotency_key:
+        type: VARBINARY(100)
+        nullable: false
+      request_hash:
+        type: BINARY(32)
+        nullable: false
+      http_status:
+        type: INT
+        nullable: false
+      response_json:
+        type: JSON
+        nullable: false
+      retain_until:
+        type: BIGINT
+        nullable: false
+    unique:
+    - &id008
+      - tenant_id
+      - client_id
+      - actor_kind
+      - actor_id
+      - operation
+      - idempotency_key
+    indexes:
+    - - retain_until
+    invariants:
+    - no receipt returned before auth; same key different body conflict
+    - no output bearer or storage-signed URL; business leaseToken allowed only for
+      same authenticated run ticket
+    - ephemeral lease/upload receipts expire after run recovery+7d; submit/review
+      retained with audit
+    primary_key: *id008
+  chat_output:
+    release: R1
+    columns:
+      conversation_id:
+        type: BIGINT
+        nullable: false
+      output_id:
+        type: VARBINARY(400)
+        nullable: false
+      output_version:
+        type: BIGINT
+        nullable: false
+      run_id:
+        type: VARBINARY(100)
+        nullable: false
+      producer_agent_id:
+        type: VARBINARY(400)
+        nullable: false
+      title:
+        type: VARCHAR(255)
+        nullable: false
+      file_name:
+        type: VARCHAR(255)
+        nullable: true
+      artifact_type:
+        type: VARCHAR(30)
+        nullable: false
+      content:
+        type: MEDIUMTEXT
+        nullable: true
+      object_id:
+        type: VARBINARY(100)
+        nullable: true
+      content_hash:
+        type: BINARY(32)
+        nullable: false
+      state:
+        type: VARCHAR(20)
+        nullable: false
+      retain_until:
+        type: BIGINT
+        nullable: false
+    unique:
+    - &id009
+      - tenant_id
+      - client_id
+      - output_id
+      - output_version
+    indexes:
+    - - tenant_id
+      - client_id
+      - conversation_id
+      - created_at
+      - output_id
+      - output_version
+    invariants:
+    - exactly one content/object_id; inline <=262144 UTF-8 bytes
+    - published versions immutable; expiry does not change content hash
+    primary_key: *id009
+  task_delivery:
+    release: R2
+    columns:
+      delivery_id:
+        type: VARBINARY(100)
+        nullable: false
+      task_id:
+        type: VARBINARY(400)
+        nullable: false
+      work_item_id:
+        type: VARBINARY(400)
+        nullable: false
+      revision:
+        type: BIGINT
+        nullable: false
+      supersedes_delivery_id:
+        type: VARBINARY(100)
+        nullable: true
+      producer_agent_id:
+        type: VARBINARY(400)
+        nullable: false
+      run_id:
+        type: VARBINARY(100)
+        nullable: false
+      summary:
+        type: TEXT
+        nullable: false
+      state:
+        type: VARCHAR(24)
+        nullable: false
+      submitted_at:
+        type: BIGINT
+        nullable: false
+      reviewed_at:
+        type: BIGINT
+        nullable: true
+      manifest_artifact_id:
+        type: VARBINARY(400)
+        nullable: false
+      manifest_artifact_version:
+        type: BIGINT
+        nullable: false
+    unique:
+    - &id010
+      - tenant_id
+      - client_id
+      - delivery_id
+    - - tenant_id
+      - client_id
+      - task_id
+      - revision
+    indexes:
+    - - tenant_id
+      - client_id
+      - task_id
+      - submitted_at
+    invariants:
+    - SUBMITTED/ACCEPTED/CHANGES_REQUESTED; no server-side draft
+    - single required work item for policy1; frozen immutable items
+    primary_key: *id010
+  task_delivery_item:
+    release: R2
+    columns:
+      delivery_id:
+        type: VARBINARY(100)
+        nullable: false
+      artifact_id:
+        type: VARBINARY(400)
+        nullable: false
+      artifact_version:
+        type: BIGINT
+        nullable: false
+      content_hash:
+        type: BINARY(32)
+        nullable: false
+      object_id:
+        type: VARBINARY(100)
+        nullable: true
+      purpose:
+        type: VARCHAR(255)
+        nullable: false
+      item_order:
+        type: INT
+        nullable: false
+    unique:
+    - &id011
+      - tenant_id
+      - client_id
+      - delivery_id
+      - artifact_id
+      - artifact_version
+    indexes:
+    - - tenant_id
+      - client_id
+      - delivery_id
+      - item_order
+    invariants:
+    - same task/source; exact version and actual hash; cannot resolve latest at review
+    primary_key: *id011
+  task_delivery_review:
+    release: R2
+    columns:
+      delivery_id:
+        type: VARBINARY(100)
+        nullable: false
+      reviewer_jiacn:
+        type: VARBINARY(200)
+        nullable: false
+      decision:
+        type: VARCHAR(24)
+        nullable: false
+      reason:
+        type: TEXT
+        nullable: true
+      reviewed_at:
+        type: BIGINT
+        nullable: false
+    unique:
+    - &id012
+      - tenant_id
+      - client_id
+      - delivery_id
+    indexes: []
+    invariants:
+    - one final review per immutable batch; user owner only
+    - review receipt and work-item/aggregate mutation same transaction
+    primary_key: *id012
+existing_table_extensions:
+  agent_task_artifact:
+    release: R1
+    columns:
+      object_id:
+        type: VARBINARY(100)
+        nullable: true
+      run_id:
+        type: VARBINARY(100)
+        nullable: true
+      file_name:
+        type: VARCHAR(255)
+        nullable: true
+      content_byte_length:
+        type: BIGINT
+        nullable: true
+      mime_type:
+        type: VARCHAR(100)
+        nullable: true
+      owner_shared_at:
+        type: BIGINT
+        nullable: true
+      retain_until:
+        type: BIGINT
+        nullable: true
+    invariants:
+    - keep existing logical version unique key
+    - content/storage_uri/object_id exactly one for new validated rows
+    - owner share immutable true per version; inline share must check owner_shared_at/retention
+  agent_task_meta:
+    release: R2
+    columns:
+      delivery_policy_version:
+        type: INT
+        nullable: false
+      current_delivery_id:
+        type: VARBINARY(100)
+        nullable: true
+      delivery_revision:
+        type: BIGINT
+        nullable: false
+      delivery_requirement_json:
+        type: JSON
+        nullable: true
+    defaults:
+      delivery_policy_version: 0
+      delivery_revision: 0
+    invariants:
+    - old tasks stay 0; server creates allowlisted new single-work-item tasks as1
+    - requirement includes mode=text/files/mixed, minFiles, requiredNames, maxReviewRevisions=3
+  agent_task_work_item:
+    release: R2
+    columns:
+      result_delivery_id:
+        type: VARBINARY(100)
+        nullable: true
+      execution_run_id:
+        type: VARBINARY(100)
+        nullable: true
+      dispatched_run_id:
+        type: VARBINARY(100)
+        nullable: true
+    invariants:
+    - policy1 submitted/completed must reference exact current delivery
+    - 'changes requested: submitted->ready, clear result refs, preserve immutable
+      history'
+    - claim must match dispatched_run_id; active mutations also match execution_run_id
+    - submitted->ready clears execution_run_id and old dispatched_run_id; explicit
+      rework sets new dispatched_run_id
+  agent_runtime:
+    release: R1
+    columns:
+      output_capabilities_json:
+        type: JSON
+        nullable: true
+      output_capabilities_runtime_id:
+        type: VARBINARY(400)
+        nullable: true
+      output_capabilities_updated_at:
+        type: BIGINT
+        nullable: true
+    invariants:
+    - separate from business abilities; missing means unsupported
+    - only current authenticated binding/runtime CAS can update; stale runtime or
+      >90s snapshot cannot gate new dispatch
+migration_order:
+- M001 common output and chat tables
+- M002 nullable artifact extensions
+- M003 R2 delivery tables and policy/work-item fields
+gc_lock_order:
+- quota
+- object_sorted
+- reference

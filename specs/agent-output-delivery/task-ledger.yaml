@@ -1,0 +1,239 @@
+schema_version: 1
+execution_mode: serial
+max_writers: 1
+implementation_started: true
+buffer_person_days:
+  min: 2
+  max: 3
+tasks:
+- id: OD00
+  status: in_progress
+  release: R1
+  title: 契约与真实依赖核对
+  ownership: api/web/client部署和版本记录
+  writer_role: main_orchestrator
+  reviewer_role: architect
+  depends_on: []
+  estimate_person_days:
+    min: 0.5
+    max: 0.5
+  exit_gate: 事务/存储/扫描器/run证据，契约冲突清零
+  acceptance:
+  - O26
+  owner: main_orchestrator
+  started_at: '2026-09-09T11:38:49.153936+00:00'
+- id: OD01
+  status: not_started
+  release: R1
+  title: 来源归属、run绑定和WS ticket交换
+  ownership: agent output身份；chat relay/owner DAO/WS
+  writer_role: critical_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD00
+  estimate_person_days:
+    min: 1
+    max: 1.5
+  exit_gate: 错误owner、tenant=0、过期binding拒绝，ticket不入聊天
+  acceptance:
+  - O07
+  - O09
+  - O23
+  - O26
+- id: OD02
+  status: not_started
+  release: R1
+  title: 字节对象、配额、上传校验和GC
+  ownership: agent-api/core/mapper/service output存储与M001
+  writer_role: critical_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD01
+  estimate_person_days:
+    min: 1
+    max: 1.5
+  exit_gate: 真实字节上传/校验；epoch隔离、配额CAS、GC负向
+  acceptance:
+  - O10
+  - O11
+  - O12
+  - O20
+  - O25
+  - O27
+  - O28
+- id: OD03
+  status: not_started
+  release: R1
+  title: 任务/对话成果发布、列表和鉴权下载
+  ownership: agent artifact M002；chat_output；精确ACL与代理读
+  writer_role: critical_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD02
+  estimate_person_days:
+    min: 1
+    max: 1.5
+  exit_gate: OWNER_SHARE显式；private隔离；离线取件hash一致
+  acceptance:
+  - O03
+  - O06
+  - O07
+  - O08
+  - O09
+  - O19
+  - O29
+- id: OD04
+  status: not_started
+  release: R1
+  title: 客户端manifest、安全快照、持久恢复
+  ownership: isp-install/conf/codex-ws-agent/output-*.mjs及执行finish
+  writer_role: critical_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD03
+  estimate_person_days:
+    min: 1.5
+    max: 2
+  exit_gate: 两个执行模式；重启继续已有快照，不重跑模型
+  acceptance:
+  - O01
+  - O04
+  - O10
+  - O22
+  - O30
+- id: OD05
+  status: not_started
+  release: R1
+  title: 共用成果UI与两个入口
+  ownership: web/components/outputs与chat/bounty/workspace、useOutputs
+  writer_role: balanced_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD04
+  estimate_person_days:
+    min: 1
+    max: 1.5
+  exit_gate: 用户切换/source切换不串数据；下载、分页、过期提示
+  acceptance:
+  - O01
+  - O05
+  - O06
+  - O08
+  - O21
+- id: OD06
+  status: not_started
+  release: R1
+  title: R1集成、发布候选和演示
+  ownership: 只读验证；root evidence/integration更新
+  writer_role: main_orchestrator
+  reviewer_role: release_guard
+  depends_on:
+  - OD05
+  estimate_person_days:
+    min: 1
+    max: 1.5
+  exit_gate: API/Web/client版本及R1矩阵通过，等待发布授权
+  acceptance:
+  - R1_GATE
+- id: OD07
+  status: not_started
+  release: R2
+  title: HTTP租约和policy1全部入口禁入
+  ownership: agent lease/assign/legacy/aggregation与client心跳
+  writer_role: critical_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD06
+  estimate_person_days:
+    min: 1
+    max: 1.5
+  exit_gate: claim/start/heartbeat/release可用；单工作项/旧路径硬限制
+  acceptance:
+  - O13
+  - O16
+  - O22
+  - O24
+  - O31
+- id: OD08
+  status: not_started
+  release: R2
+  title: 唯一正式提交事务
+  ownership: agent task_delivery M003/TaskDeliverySubmissionService
+  writer_role: critical_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD07
+  estimate_person_days:
+    min: 1.5
+    max: 2
+  exit_gate: 固定版本、delivery pin、submitted CAS和事件同事务
+  acceptance:
+  - O14
+  - O15
+  - O16
+  - O17
+  - O24
+  - O25
+- id: OD09
+  status: not_started
+  release: R2
+  title: 人工验收、要求修改和显式返工派发
+  ownership: agent review/rework/aggregation与client新run接入
+  writer_role: critical_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD08
+  estimate_person_days:
+    min: 1
+    max: 2
+  exit_gate: submitted->ready返工；新run/lease；重复/旧批次拒绝
+  acceptance:
+  - O17
+  - O18
+  - O20
+  - O32
+  - O33
+- id: OD10
+  status: not_started
+  release: R2
+  title: 交付要求与验收UI
+  ownership: web榜文表单、批次/审核/重新执行面板
+  writer_role: balanced_worker
+  reviewer_role: adversarial_reviewer
+  depends_on:
+  - OD09
+  estimate_person_days:
+    min: 0.75
+    max: 1
+  exit_gate: 409与结果未知恢复；展示确切批次及审核者权限
+  acceptance:
+  - O13
+  - O14
+  - O15
+  - O17
+  - O18
+  - O33
+- id: OD11
+  status: not_started
+  release: R2
+  title: R2事务和三仓集成验收
+  ownership: 只读验证；root证据和候选三仓版本
+  writer_role: main_orchestrator
+  reviewer_role: release_guard
+  depends_on:
+  - OD10
+  estimate_person_days:
+    min: 0.75
+    max: 1
+  exit_gate: R2矩阵/负向路径/迁移/开关和演示证据齐备
+  acceptance:
+  - R2_GATE
+authorization:
+  source: 'user instruction 2026-09-09: 落实下去并持续跟进直到所有任务完成'
+  scope: OD00-OD11; serial execution and independent reviews; defer P3
+  continuation: already authorized; do not request repeated routine implementation
+    confirmations
+worktrees:
+  api: /home/chc/wsps/cyf-worktrees/output-api
+  web: /home/chc/wsps/cyf-worktrees/output-web
+  client: /home/chc/wsps/cyf-worktrees/output-client

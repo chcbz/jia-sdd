@@ -1,0 +1,1695 @@
+openapi: 3.1.0
+info:
+  title: CYF Output Delivery v1.1
+  version: 1.1.0
+  description: DESIGN CONTRACT ONLY. HTTP-first R1/R2; no implementation or deployment
+    claimed. All decimal bigint values are strings.
+paths:
+  /agent/output-capabilities:
+    get:
+      operationId: getOutputCapabilities
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters: []
+      responses:
+        '400': &id001
+          description: Invalid fields or manifest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401': &id002
+          description: Missing/expired credential
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403': &id003
+          description: Credential lacks operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': &id004
+          description: Missing or inaccessible resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409': &id005
+          description: Version/state/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410': &id006
+          description: Expired resource, only after authorization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413': &id007
+          description: File/run quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415': &id008
+          description: Unsupported type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422': &id009
+          description: Integrity or delivery requirements failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429': &id010
+          description: Rate/concurrency quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503': &id011
+          description: Dependency unavailable; retry safely
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitiesResponse'
+  /agent/output-uploads:
+    post:
+      operationId: createUpload
+      x-release: R1
+      security:
+      - RunTicket: []
+      description: ''
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadCreate'
+  /agent/output-uploads/{uploadId}/content:
+    put:
+      operationId: putUploadBytes
+      x-release: R1
+      security:
+      - RunTicket: []
+      description: Writer epoch fencing; whole-file retry; no business idempotency
+        header.
+      parameters:
+      - name: uploadId
+        in: path
+        required: true
+        schema: &id012
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^\S+$
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+  /agent/output-uploads/{uploadId}/complete:
+    post:
+      operationId: completeUpload
+      x-release: R1
+      security:
+      - RunTicket: []
+      description: ''
+      parameters:
+      - name: uploadId
+        in: path
+        required: true
+        schema: *id012
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '202':
+          description: Verification pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+  /agent/output-uploads/{uploadId}:
+    get:
+      operationId: getUpload
+      x-release: R1
+      security:
+      - RunTicket: []
+      description: ''
+      parameters:
+      - name: uploadId
+        in: path
+        required: true
+        schema: *id012
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+  /agent/tasks/{taskId}/artifacts:
+    post:
+      operationId: publishTaskOutput
+      x-release: R1
+      security:
+      - RunTicket: []
+      description: Exact run/source/producer and version checks. Task publishToOwner
+        is an explicit release; never marks task accepted.
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputSummaryResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPublish'
+    get:
+      operationId: listTaskOutputs
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputPageResponse'
+  /agent/tasks/{taskId}/artifacts/{artifactId}/versions:
+    get:
+      operationId: listTaskOutputVersions
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: artifactId
+        in: path
+        required: true
+        schema: *id012
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionPageResponse'
+  /agent/tasks/{taskId}/artifacts/{artifactId}/versions/{version}:
+    get:
+      operationId: getTaskOutputVersion
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: artifactId
+        in: path
+        required: true
+        schema: *id012
+      - name: version
+        in: path
+        required: true
+        schema: &id013
+          type: string
+          pattern: ^[1-9][0-9]*$
+          maxLength: 19
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputDetailResponse'
+  /agent/tasks/{taskId}/artifacts/{artifactId}/versions/{version}/download:
+    get:
+      operationId: downloadTaskOutputVersion
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: artifactId
+        in: path
+        required: true
+        schema: *id012
+      - name: version
+        in: path
+        required: true
+        schema: *id013
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Authorized immutable bytes; no-store, attachment, nosniff
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: private, no-store
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /chat/conversations/{conversationId}/outputs:
+    post:
+      operationId: publishChatOutput
+      x-release: R1
+      security:
+      - RunTicket: []
+      description: Exact run/source/producer and version checks. Task publishToOwner
+        is an explicit release; never marks task accepted.
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema: *id012
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputSummaryResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatPublish'
+    get:
+      operationId: listChatOutputs
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema: *id012
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputPageResponse'
+  /chat/conversations/{conversationId}/outputs/{outputId}/versions:
+    get:
+      operationId: listChatOutputVersions
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema: *id012
+      - name: outputId
+        in: path
+        required: true
+        schema: *id012
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionPageResponse'
+  /chat/conversations/{conversationId}/outputs/{outputId}/versions/{version}:
+    get:
+      operationId: getChatOutputVersion
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema: *id012
+      - name: outputId
+        in: path
+        required: true
+        schema: *id012
+      - name: version
+        in: path
+        required: true
+        schema: *id013
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputDetailResponse'
+  /chat/conversations/{conversationId}/outputs/{outputId}/versions/{version}/download:
+    get:
+      operationId: downloadChatOutputVersion
+      x-release: R1
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema: *id012
+      - name: outputId
+        in: path
+        required: true
+        schema: *id012
+      - name: version
+        in: path
+        required: true
+        schema: *id013
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Authorized immutable bytes; no-store, attachment, nosniff
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: private, no-store
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /agent/tasks/{taskId}/work-items/{workItemId}/lease/{action}:
+    post:
+      operationId: mutateWorkLease
+      x-release: R2
+      security: &id014
+      - RunTicket: []
+      description: claim requires duration; start/heartbeat/release require leaseToken;
+        heartbeat requires duration. Identity from run ticket. Response matches existing
+        lease service. Invalid missing action-specific fields return 400. R1/R2 release
+        receipts may carry failed status when attempts exhausted.
+      parameters:
+      - &id015
+        name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - &id016
+        name: workItemId
+        in: path
+        required: true
+        schema: *id012
+      - name: action
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - claim
+          - start
+          - heartbeat
+          - release
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses: &id017
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaseResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaseRequest'
+  /agent/tasks/{taskId}/deliveries:
+    post:
+      operationId: submitDelivery
+      x-release: R2
+      security:
+      - RunTicket: []
+      description: Single authoritative transaction; policy1 one required work item;
+        frozen item versions and active lease required.
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverySubmit'
+    get:
+      operationId: listDeliveries
+      x-release: R2
+      security:
+      - UserJwt: []
+      description: ''
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryPageResponse'
+  /agent/tasks/{taskId}/deliveries/{deliveryId}/review:
+    post:
+      operationId: reviewDelivery
+      x-release: R2
+      security:
+      - UserJwt: []
+      description: Source owner only. request_changes requires nonempty reason; one
+        final decision per batch.
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: deliveryId
+        in: path
+        required: true
+        schema: *id012
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+  /agent/tasks/{taskId}/deliveries/{deliveryId}/rework:
+    post:
+      operationId: dispatchRework
+      x-release: R2
+      security:
+      - UserJwt: []
+      description: Explicit owner action after CHANGES_REQUESTED; atomically queues
+        one command. Max 3 review revisions, respect execution attempt cap.
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: *id012
+      - name: deliveryId
+        in: path
+        required: true
+        schema: *id012
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 100
+      responses:
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '410': *id006
+        '413': *id007
+        '415': *id008
+        '422': *id009
+        '429': *id010
+        '503': *id011
+        '200':
+          description: Success or exact idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReworkReceiptResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReworkRequest'
+  /agent/tasks/{taskId}/work-items/{workItemId}/lease:
+    get:
+      operationId: getWorkLease
+      x-release: R2
+      security: *id014
+      description: Current work-item state for authorized dispatched/execution run.
+        Active leaseToken only if execution_run_id matches ticket run. No user JWT.
+      parameters:
+      - *id015
+      - *id016
+      responses: *id017
+components:
+  securitySchemes:
+    UserJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: User JWT with exact jiacn/client_id and persisted source owner
+    RunTicket:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque-run-ticket
+      description: Short-lived ticket exchanged through authenticated Agent WS, dynamic
+        binding check
+  schemas:
+    Source:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum:
+          - TASK
+          - CONVERSATION
+        id: *id012
+      required:
+      - type
+      - id
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        retryable:
+          type: boolean
+        requestId: *id012
+        details:
+          type: object
+          additionalProperties: true
+      required:
+      - code
+      - message
+      - retryable
+      - requestId
+    UploadCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        runId: *id012
+        source:
+          $ref: '#/components/schemas/Source'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: basename only; no separators/control chars
+        size: &id018
+          type: string
+          pattern: ^(0|[1-9][0-9]*)$
+          maxLength: 19
+        sha256: &id022
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        mime:
+          type: string
+          maxLength: 100
+      required:
+      - runId
+      - source
+      - name
+      - size
+      - sha256
+      - mime
+    Upload:
+      type: object
+      additionalProperties: false
+      properties:
+        uploadId: *id012
+        state:
+          type: string
+          enum:
+          - CREATED
+          - UPLOADING
+          - VERIFYING
+          - READY
+          - REJECTED
+          - EXPIRED
+        uploadUrl:
+          type: string
+          description: same-origin relative path
+        expiresAt: *id018
+        objectId: *id012
+        errorCode:
+          type: string
+      required:
+      - uploadId
+      - state
+      - expiresAt
+    TaskPublish:
+      type: object
+      additionalProperties: false
+      properties:
+        runId: *id012
+        expectedPreviousVersion: *id018
+        title: &id019
+          type: string
+          minLength: 1
+          maxLength: 255
+        artifactType: &id020
+          type: string
+          enum:
+          - summary
+          - document
+          - patch
+          - commit
+          - test_report
+          - analysis
+          - dataset
+          - link
+        content: &id021
+          type: string
+          maxLength: 262144
+          description: also enforce 256KiB UTF-8
+        objectId: *id012
+        artifactId: *id012
+        artifactVersion: *id013
+        workItemId: *id012
+        visibility:
+          type: string
+          enum:
+          - task_members
+          - reviewer
+          - private
+          default: task_members
+        publishToOwner:
+          type: boolean
+          default: false
+      required:
+      - runId
+      - expectedPreviousVersion
+      - title
+      - artifactType
+      - artifactId
+      - artifactVersion
+      oneOf:
+      - required:
+        - content
+        not:
+          required:
+          - objectId
+      - required:
+        - objectId
+        not:
+          required:
+          - content
+    ChatPublish:
+      type: object
+      additionalProperties: false
+      properties:
+        runId: *id012
+        expectedPreviousVersion: *id018
+        title: *id019
+        artifactType: *id020
+        content: *id021
+        objectId: *id012
+        outputId: *id012
+        version: *id013
+      required:
+      - runId
+      - expectedPreviousVersion
+      - title
+      - artifactType
+      - outputId
+      - version
+      oneOf:
+      - required:
+        - content
+        not:
+          required:
+          - objectId
+      - required:
+        - objectId
+        not:
+          required:
+          - content
+    OutputSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        source:
+          $ref: '#/components/schemas/Source'
+        outputId: *id012
+        version: *id013
+        title:
+          type: string
+        name:
+          type: string
+        mime:
+          type: string
+        size: *id018
+        sha256: *id022
+        createdAt: *id018
+        state:
+          type: string
+          enum:
+          - AVAILABLE
+          - EXPIRED
+          - UNAVAILABLE
+          - EXTERNAL_UNVERIFIED
+        publicationKind:
+          type: string
+          enum:
+          - CONVERSATION_OUTPUT
+          - OWNER_SHARE
+          - INTERNAL
+          - DELIVERY
+        previewKind:
+          type: string
+          enum:
+          - TEXT
+          - IMAGE
+          - NONE
+        canDownload:
+          type: boolean
+        producerName:
+          type: string
+      required:
+      - source
+      - outputId
+      - version
+      - title
+      - createdAt
+      - state
+      - publicationKind
+      - previewKind
+      - canDownload
+    OutputDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        item:
+          $ref: '#/components/schemas/OutputSummary'
+        content:
+          type: string
+      required:
+      - item
+    OutputPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputSummary'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+        snapshotAt: *id018
+      required:
+      - items
+      - nextCursor
+      - snapshotAt
+    VersionPage:
+      $ref: '#/components/schemas/OutputPage'
+    LeaseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        runId: *id012
+        expectedVersion: *id018
+        leaseToken:
+          type: string
+          maxLength: 100
+        leaseDurationMillis: *id018
+      required:
+      - runId
+      - expectedVersion
+    Lease:
+      type: object
+      additionalProperties: false
+      properties:
+        workItemId: *id012
+        status:
+          type: string
+          enum:
+          - pending
+          - ready
+          - claimed
+          - running
+          - blocked
+          - submitted
+          - completed
+          - failed
+          - cancelled
+        version: *id018
+        leaseToken:
+          type: string
+        leaseUntil: *id018
+      required:
+      - workItemId
+      - status
+      - version
+    DeliveryItem:
+      type: object
+      additionalProperties: false
+      properties:
+        artifactId: *id012
+        version: *id013
+        purpose:
+          type: string
+          maxLength: 255
+      required:
+      - artifactId
+      - version
+    DeliverySubmit:
+      type: object
+      additionalProperties: false
+      properties:
+        runId: *id012
+        workItemId: *id012
+        expectedTaskVersion: *id018
+        expectedWorkItemVersion: *id018
+        leaseToken:
+          type: string
+          maxLength: 100
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 16384
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/DeliveryItem'
+      required:
+      - runId
+      - workItemId
+      - expectedTaskVersion
+      - expectedWorkItemVersion
+      - leaseToken
+      - summary
+      - items
+    ReviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        decision:
+          type: string
+          enum:
+          - accept
+          - request_changes
+        reason:
+          type: string
+          maxLength: 16384
+        expectedDeliveryVersion: *id018
+        expectedTaskVersion: *id018
+      required:
+      - decision
+      - expectedDeliveryVersion
+      - expectedTaskVersion
+      allOf:
+      - if:
+          properties:
+            decision:
+              const: request_changes
+          required:
+          - decision
+        then:
+          required:
+          - reason
+          properties:
+            reason:
+              type: string
+              minLength: 1
+    ReworkRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedTaskVersion: *id018
+        instruction:
+          type: string
+          minLength: 1
+          maxLength: 16384
+      required:
+      - expectedTaskVersion
+    Delivery:
+      type: object
+      additionalProperties: false
+      properties:
+        deliveryId: *id012
+        taskId: *id012
+        revision: *id013
+        version: *id018
+        taskVersion: *id018
+        state:
+          type: string
+          enum:
+          - SUBMITTED
+          - ACCEPTED
+          - CHANGES_REQUESTED
+        summary:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryItem'
+        reviewActions:
+          type: array
+          items:
+            type: string
+            enum:
+            - accept
+            - request_changes
+            - rework
+      required:
+      - deliveryId
+      - taskId
+      - revision
+      - version
+      - taskVersion
+      - state
+      - summary
+      - items
+      - reviewActions
+    DeliveryPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Delivery'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+        snapshotAt: *id018
+      required:
+      - items
+      - nextCursor
+      - snapshotAt
+    ReworkReceipt:
+      type: object
+      additionalProperties: false
+      properties:
+        commandId: *id012
+        taskId: *id012
+        taskVersion: *id018
+        state:
+          const: QUEUED
+      required:
+      - commandId
+      - taskId
+      - taskVersion
+      - state
+    Capabilities:
+      type: object
+      additionalProperties: false
+      properties:
+        outputUploadV1:
+          type: boolean
+        outputReadV1:
+          type: boolean
+        taskOwnerShareV1:
+          type: boolean
+        taskDeliveryHttpV1:
+          type: boolean
+        maxFileBytes: *id018
+        maxRunBytes: *id018
+        maxFiles:
+          type: integer
+          minimum: 1
+        supportedMimeTypes:
+          type: array
+          items:
+            type: string
+      required:
+      - outputUploadV1
+      - outputReadV1
+      - taskOwnerShareV1
+      - taskDeliveryHttpV1
+      - maxFileBytes
+      - maxRunBytes
+      - maxFiles
+      - supportedMimeTypes
+    UploadResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/Upload'
+      required:
+      - code
+      - data
+    OutputSummaryResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/OutputSummary'
+      required:
+      - code
+      - data
+    OutputDetailResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/OutputDetail'
+      required:
+      - code
+      - data
+    OutputPageResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/OutputPage'
+      required:
+      - code
+      - data
+    VersionPageResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/VersionPage'
+      required:
+      - code
+      - data
+    LeaseResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/Lease'
+      required:
+      - code
+      - data
+    DeliveryResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/Delivery'
+      required:
+      - code
+      - data
+    DeliveryPageResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/DeliveryPage'
+      required:
+      - code
+      - data
+    ReworkReceiptResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/ReworkReceipt'
+      required:
+      - code
+      - data
+    CapabilitiesResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          const: E0
+        data:
+          $ref: '#/components/schemas/Capabilities'
+      required:
+      - code
+      - data
+    ManifestItem:
+      type: object
+      additionalProperties: false
+      properties:
+        outputId: &id023
+          type: string
+          minLength: 1
+          maxLength: 100
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        relativePath:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: relative to this run export root; no traversal/symlink
+        artifactType: *id020
+        publishToOwner:
+          type: boolean
+          default: false
+      required:
+      - outputId
+      - title
+      - relativePath
+      - artifactType
+    Manifest:
+      type: object
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          const: 1
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ManifestItem'
+      required:
+      - schemaVersion
+      - items
+    OutputContext:
+      type: object
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          const: 1
+        runId: *id023
+        source:
+          $ref: '#/components/schemas/Source'
+        maxFileBytes: &id024
+          type: string
+          pattern: ^(0|[1-9][0-9]*)$
+          maxLength: 19
+        maxBatchBytes: *id024
+        manifestRelativePath:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+      required:
+      - schemaVersion
+      - runId
+      - source
+      - maxFileBytes
+      - maxBatchBytes
+      - manifestRelativePath
+      - capabilities
+    OutputAuthRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          const: 1
+        messageId: *id023
+        runId: *id023
+      required:
+      - schemaVersion
+      - messageId
+      - runId
+    OutputAuthReceipt:
+      type: object
+      additionalProperties: false
+      properties:
+        causationId: *id023
+        runId: *id023
+        token:
+          type: string
+          minLength: 32
+        expiresAt: *id024
+        operations:
+          type: array
+          items:
+            type: string
+            enum:
+            - upload
+            - publish
+            - status
+            - lease
+            - submit
+      required:
+      - causationId
+      - runId
+      - token
+      - expiresAt
+      - operations
+    DeliveryRequirements:
+      type: object
+      additionalProperties: false
+      properties:
+        mode:
+          type: string
+          enum:
+          - text
+          - files
+          - mixed
+        minFiles:
+          type: integer
+          minimum: 0
+          maximum: 100
+        requiredNames:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            maxLength: 255
+        instructions:
+          type: string
+          maxLength: 16384
+        maxReviewRevisions:
+          type: integer
+          enum:
+          - 3
+      required:
+      - mode
+x-existing-contract-extensions:
+  POST /agent/tasks:
+    release: R2
+    new_optional_field: deliveryRequirements
+    schema:
+      $ref: '#/components/schemas/DeliveryRequirements'
+    invariants:
+    - No field preserves legacy policy0; configured allowlist may require requirements
+      for new tasks
+    - requirements + server capability allowlist => policy1; no client-supplied policyVersion
+    - policy1 server creates exactly one required work item, initializes READY and
+      non-legacy lease semantics
+    - files/mixed require at least 1 downloadable object; text requires valid inline
+      result; mixed requires both
+    - all fields in legacy AgentTaskCreateDTO remain supported; no funds contract
+      change
+    response_additions:
+      deliveryPolicyVersion: decimal string
+      deliveryRequirements: validated requirements; absent/null on legacy tasks
+    idempotency: Idempotency-Key required when deliveryRequirements is supplied; preserve
+      legacy callers without requirements
+x-agent-registration-extension:
+  field: outputCapabilities
+  schema:
+    type: array
+    uniqueItems: true
+    maxItems: 3
+    items:
+      type: string
+      enum:
+      - output.http.v1
+      - task.owner-share.v1
+      - task.delivery-http.v1
+  authorization: current authenticated runtime/binding only; server stamped update
+    time
+  missing_behavior: unsupported; do not change business abilities
