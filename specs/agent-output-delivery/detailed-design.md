@@ -107,6 +107,10 @@ OD02 内部持久模型补充：binding 配额行保证空集合下的并发名�
 
 R1 使用受限 MIME allowlist：纯文本/Markdown/CSV/JSON、PNG/JPEG/WebP、PDF、ZIP、DOCX/XLSX/PPTX。内容探测与扩展名不符拒绝；Office ZIP 结构识别需有界读取，禁止宏类型；杀毒扫描接入一个部署就绪的隔离扫描器（建议 ClamAV sidecar），流式接口/资源限制在 OD00 锁定。未部署扫描器时功能不宣告 READY，不能用“只下载”替代扫描。HTML/SVG/可执行文件本轮不接收；PDF/Office/ZIP 只下载，不在主站预览。所有格式仍可能包含业务敏感信息，manifest 显式发布是必需边界。
 
+OD02 扫描资源边界：ZIP/OOXML 每成员实际展开不超过 50 MiB；全树总扫描预算默认 90 MiB，按“上传对象本身字节 + 每一层各成员实际解出字节”累计，不能只加叶子或每层重置。全树最多 2048 条目，根 ZIP 为第 1 层、最大 3 层；应用配置与部署扫描器能力配套，不能单独放大。ZIP 嵌套按 magic 识别并递归共享预算；其他已识别且不支持的压缩/归档格式、加密、损坏与不支持方法拒绝。成员声明大小只能辅助，实际读取计数才是门槛。200 MiB/run 的业务字节配额不变。
+
+展开采用顺序有界流；需递归的单个 ZIP 成员才暂存到私有目录/随机临时文件（目录 0700、文件 0600），绝不按 entry path 落盘，深度优先完成后立即删除。总展开内容不累积到 heap。确定性格式/资源错误进入 REJECTED；临时 I/O 故障保留 VERIFYING 供持久重试。工作在验证 lease 领取后的外部处理阶段，不持 SQL 锁，最终 READY 仍需确认 scanner clean 及当前业务授权。部署至少核验 ClamAV `MaxFileSize 60M`、`MaxScanSize 100M`、`StreamMaxLength 60M`、`AlertExceedsMax yes` 与实际行为；扫描器更紧时须同步收紧应用，未核对前不得启用 READY。依据与限制见 `evidence/OD02/clamav-limit-review.md`。
+
 ## 7. 幂等、锁序与 GC
 
 POST 操作统一 Idempotency-Key（16～100 ASCII）；request hash 对严格解析后的已知字段用 RFC 8785 canonical JSON 再 SHA-256，拒绝重复 JSON key、未知字段、重复 items 和非法数字。lease回执含业务leaseToken，允许在受保护receipt中保留，只对同一合法run-ticket重放，不进入用户接口/日志；output auth bearer不落receipt。文件字节另用流 hash；PUT 由 uploadId+expectedHash+writerEpoch 管理，不另造业务幂等键。

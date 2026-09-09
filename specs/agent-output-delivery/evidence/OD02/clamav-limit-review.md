@@ -33,3 +33,25 @@ Command: `python3 specs/agent-output-delivery/tools/probe-clamav-scan-limits.py 
 Daemon startup log confirms archive scanning, heuristic alerts and scan-limit alerting are enabled. Configuration presence is insufficient to close this gate. The single-member result remains under independent investigation; it is not proof that an EICAR-bearing archive would bypass scanning. No unscanned-file safety claim or OD02 acceptance is made.
 
 A supplemental INSTREAM framing check announced one `60 * 1024 * 1024 + 1` byte chunk (command plus network-order length header, no body sent). clamd immediately returned `INSTREAM size limit exceeded. ERROR`. This proves early rejection of an oversized announced chunk only; it is not a transmitted 60-MiB payload or application failure-state test.
+
+## Independent defensive resource review and selected repair
+
+The expanded boundary investigation was interrupted by the review tool. The follow-up was limited to defensive bounded-resource design; the architect confirmed feasibility and provided the source references below. No code acceptance or repaired execution is claimed by that review.
+
+Selected application policy (implementation pending):
+
+- Each actually expanded member: at most 50 MiB.
+- Shared whole-tree byte budget: at most 90 MiB, **including the root uploaded object and every member's expanded bytes at every level**. ClamAV counts an archive plus its extracted contents; do not reset this budget per nested archive.
+- At most 2048 entries across the tree; root ZIP depth 1, maximum depth 3.
+- Recursively inspect ZIP magic (including OOXML); reject recognized other unsupported compression/archive formats, encryption, invalid structures and unsupported methods. Declared entry sizes are not authoritative.
+- Stream counters with checked arithmetic. Spool only a nested ZIP member, bounded by the shared budget, to a private 0700 directory and random 0600 file. Never extract paths from entry names. Use depth-first traversal and delete files promptly; avoid aggregating expanded contents in heap.
+- Deterministic format/limit failures reject; temporary I/O failure remains VERIFYING for recovery. Both execute outside SQL transactions and before the final READY mutation.
+- Keep external scanner verification mandatory and `AlertExceedsMax yes`. Configurable application byte bounds and effective daemon bounds must be checked together at OD06. The 200-MiB run business quota is unchanged.
+
+Reviewer source references: ClamAV tag `clamav-1.4.3`, commit `d8b053865fd5995f7af98bfbcd98c9a5644bfe2b`:
+
+- `https://github.com/Cisco-Talos/clamav/blob/clamav-1.4.3/libclamav/unzip.c#L217-L240`: the DEFLATE path maps an exceeded output bound to stream end; the temporary result is scanned later (lines 345–359).
+- `https://github.com/Cisco-Talos/clamav/blob/clamav-1.4.3/libclamav/others.c#L1125-L1161`: explicit common limit checks append heuristic alerts.
+- `https://github.com/Cisco-Talos/clamav/blob/clamav-1.4.3/libclamav/scanners.c#L5697-L5727`: descriptor-size limit checking operates on the supplied descriptor.
+
+Observed config SHA-256: `dc2cce4d4e475a538f23beb4015c70a4c31dbb2bd583baf73c795d7a6045a35d`. Probe script SHA-256 at execution: `452e60ae97c991b76b03afeaf7a33bac32f1e7ccb6f104cea402e28c972b946b`. These hashes identify local evidence only; deployed configuration remains unverified.
