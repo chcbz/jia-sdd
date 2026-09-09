@@ -33,7 +33,7 @@
 ### Production OAuth client and release
 
 - [ ] 生产 `jiafewnnv58ec2379c` 已实际收敛为 `none + authorization_code + openid + PKCE`，生产 callback 精确，localhost/Postman/secret/client_credentials/refresh 均不可用。
-- [ ] 生产 access token TTL 已实际验证为 `PT10M`，authorization code TTL 已实际验证为 `PT5M`。
+- [ ] 生产 access token TTL 已实际验证为 `PT24H`，authorization code TTL 已实际验证为 `PT5M`。
 - [ ] 生产迁移前备份权限 600，包含原 DDL/统计/client 行和可执行的精确 rollback SQL。
 - [ ] 独立安全 Review、focused API/Web tests、Gradle layering、定向 lint/build 和线上 smoke 全部通过。（除线上 smoke 外均已通过；全量 Web lint 的 118 个错误为既有基线。）
 - [ ] API/Web commit 已推送，root integration pin 可复现，部署证据已记录。（API/Web 已推送；root pin 与部署待完成。）
@@ -52,3 +52,19 @@
 - Production migration backup/checksum: pending; fixture evidence is not a production backup.
 - Production deployment/smoke: pending.
 - Result: accepted integration baseline; production release remains pending.
+
+## TOKEN-TTL-24H candidate evidence (2026-09-09)
+
+本节记录 24 小时 TTL 调整的本地验证；以上历史 commit/tree、30 项 API 和 MySQL 8 验收记录不覆盖此次修改，提交推送状态见下。
+
+- JUnit: `D:/tmp/cyf-token-ttl24h-20260909/verify-junit.ps1` 用 Java 21 和缓存 JUnit 6.0.2 直接编译/运行 `AccountSecuritySqlContractTest`，7/7 通过。首次运行的 2 个换行断言失败已通过测试资源 CRLF/CR 归一化修复后重跑消除。未执行 Gradle，也未声称全模块构建通过。
+- SQL: `D:/tmp/cyf-token-ttl24h-20260909/verify-mysql.py`，独立 MySQL 5.7.19、禁用 TCP、专用 named pipe 与数据目录；14/14 通过。测试库显式声明可空 TIMESTAMP 以适配 5.7 默认行为；这不是生产 MySQL 8 或真实 OAuth 签发验收。
+- SQL 覆盖：10 分钟到 24 小时；其他 JSON 键、client 列与其他 client 保留；重复执行；缺失/大小写/重复/尾空格碰撞；NULL/非法/数组/标量 JSON；非 InnoDB；后置校验失败回滚；新安装收敛及重跑、授权码 PT5M 保留。
+- 本地日志与 fixture：`D:/tmp/cyf-token-ttl24h-20260909/`。独立 `sol_reviewer`（Raman，01a084ae-3315-7c01-9166-24fb662acb6a）评审 ACCEPT，无必须修复项；核对三份 API 文件与 `candidate-sha256.json` 一致。首选 cross-model reviewer 服务不可用，不计为完成评审。隔离实例已停止；生产 DB 未访问或修改，生产迁移、新 token 与 revoke smoke 待确认执行。
+
+### TOKEN-TTL-24H source delivery (2026-09-09)
+
+- API commit `010b18cb04eda645ec991078dfde41e3251f4431` 已推送到 `origin/codex/token-ttl-24h-20260909`，远端 SHA 核对一致；此分支基于根仓库原 API pin，不包含当前 develop 的额外变更，不用它替换生产整包。
+- 推送前再次核对三份 API 文件与独立评审 SHA-256 manifest 一致，并重跑 JUnit 7/7 通过。源代码内容与此前 MySQL fixture/独立评审一致。
+- 根仓库先快进到 `bda6f44bbfc886f47af3079e6351fb8390996bf8`，保留其中 reader 发布说明和已发布 Web pin；本次只更新 API pin 与本功能文档。当前 integration.yaml 记录本次候选 API/Web/base SHA，`sddw verify account-security-foundation` 用于检查一致性，不等于生产验收。
+- 生产 DB、流水线、服务均未操作；生产 MySQL 8 对齐、备份、TTL-only 执行及新 token/撤销 smoke 仍待授权执行。

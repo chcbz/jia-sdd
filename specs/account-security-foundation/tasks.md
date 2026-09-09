@@ -25,8 +25,16 @@
 - [x] 所有 Gradle 命令使用 `flock /tmp/cyf-gradle.lock`；记录 API tree SHA、test selector 与 DB fixture digest。
 - [x] 在隔离、禁网、production-shaped MySQL 8.0.46 验证 fresh/upgrade/repeat、rollback prerequisite、Long.MAX、未知 state、双并发 CAS、OAuth 原子迁移/重跑/失败回滚和 MySQL 8 `ONLY_FULL_GROUP_BY` preflight。
 - [ ] 对生产 OAuth client 原行做权限 600 字节级备份，生成精确 rollback SQL，并完成目标字段迁移。
-- [ ] 在线验证 PKCE authorization-code 登录、10 分钟 token、5 分钟 code、`client_credentials`/refresh/secret/Postman/localhost callback 拒绝。
+- [ ] 在线验证 PKCE authorization-code 登录、24 小时 token、5 分钟 code、`client_credentials`/refresh/secret/Postman/localhost callback 拒绝。
 - [x] API/Web 分别提交并推送；执行 `./sddw pin account-security-foundation` 与 `./sddw verify account-security-foundation`。
 - [x] 精确提交根 SDD 与 api/web gitlinks，不包含并行 control-plane、E13 或 `.bak` 改动；不可变集成提交为 `c9cf4d800b20c0bd60a12c532300dcecfe1431cf`。
 - [ ] 按备份 → production preflight → user schema → API → Web → OAuth client → smoke 顺序部署，记录备份、部署和线上 revoke 证据。
 - [x] 创建下一阶段 `account-self-service-closure` SDD，不复用危险的通用 delete endpoint。
+
+## TOKEN-TTL-24H (2026-09-09)
+
+- [x] 更新新安装收敛 TTL 为 PT24H，新增既有实例专用 TTL-only SQL；不修改 Web 或身份校验代码。
+- [x] 本地 JUnit SQL 契约 7/7；隔离 MySQL 5.7.19 fixture 14/14，包含重复执行、其他字段/客户不变、碰撞拒绝和后置校验失败回滚。
+- [x] 独立只读 `sol_reviewer` 评审当前候选变更：ACCEPT，无必须修复项；首选 cross-model reviewer 服务不可用后改由独立只读 reviewer 完成。
+- [x] API 提交并推送到 `codex/token-ttl-24h-20260909`，根 SDD 更新候选 API/Web/base pin；源码交付与线上应用分开记录。
+- [ ] MySQL 8 版本对齐验证、生产备份与 TTL-only 迁移、新签发 token TTL/业务访问/撤销 smoke。

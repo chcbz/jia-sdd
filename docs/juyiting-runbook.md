@@ -106,3 +106,7 @@ cd web && npm run dev -- --host 0.0.0.0
 - Keep this runbook short and operational.
 - Put detailed flow diagrams or long explanations in `docs/juyiting-feature-guide.md`.
 - When fixing a repeated issue, add one sentence here under the relevant section so future sessions do not rediscover it.
+
+## Login token lifetime
+
+Access-token TTL 的当前调整目标为 24 小时（PT24H），授权码仍为 5 分钟；配置来自 OAuth client 数据库，不是在前端延长本地缓存。已上线实例使用 `api/user/jia-user-mapper/src/main/resources/db/account-security-access-token-ttl-24h.sql`，先备份并只更新目标 client 的 TTL。只影响新签发 token；本地候选验证与生产生效状态见 `specs/account-security-foundation/acceptance.md` 的 TOKEN-TTL-24H 节。

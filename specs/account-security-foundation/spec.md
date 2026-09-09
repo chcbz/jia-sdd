@@ -15,7 +15,7 @@
 - 非 ACTIVE 用户不能使用交互登录、第三方登录、用户 JWT 或已有 API Key。
 - 修复 `EsContextHolder` 请求间身份泄漏、JWT/CTX 优先级与 CTX Cookie 基础属性。
 - Web 个人中心提供清晰的“退出当前设备”和“退出所有设备”。
-- 将生产 Web OAuth client 收敛为无 secret、PKCE、authorization-code-only、无 refresh/client-credentials 的短时 access token 客户端。
+- 将生产 Web OAuth client 收敛为无 secret、PKCE、authorization-code-only、无 refresh/client-credentials 的 24 小时 access token 客户端（2026-09-09 TTL 调整；保留账户状态与 auth_epoch 校验）。
 
 ## Non-goals
 

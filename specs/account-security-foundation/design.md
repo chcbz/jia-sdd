@@ -152,7 +152,7 @@ Client ID `jiafewnnv58ec2379c` 目标状态：
 - redirect URIs：仅 `https://kit.chaoyoufan.cn/oauth2/callback`；移除 localhost 与 Postman callback。开发回调使用独立非生产 client。
 - scopes：仅 `openid`。
 - `require-proof-key=true`；`require-authorization-consent` 保持现状，除非浏览器 smoke 证明需另立产品决策。
-- access-token TTL `PT10M`；authorization-code TTL `PT5M`。
+- access-token TTL `PT24H`（24 小时，2026-09-09 调整目标）；authorization-code TTL `PT5M` 不变。
 - refresh grant 禁用，Web 不接收或使用 refresh token。
 
 应用前保存原字段字节值并生成精确 rollback SQL；应用后逐字段验证，并确认 `client_credentials`、secret token exchange、refresh、localhost/Postman callback 均被拒绝。
@@ -174,4 +174,20 @@ Client ID `jiafewnnv58ec2379c` 目标状态：
 - 使用显式 `token_kind` 正向分类；仅严格结构的旧 machine token 获得临时兼容。
 - 选择 per-user `auth_epoch`，不使用 JWT denylist；撤销是单行 CAS，资源请求执行权威账户读取。
 - 自助注销延后为独立 `account-self-service-closure`，必须覆盖 immediate deactivation、epoch increment、API Key/Agent 停用、幂等请求、PII/outbox/外部清理与留存。
-- 公共 Web client 不使用 refresh token；短 access token + auth epoch 是公测基线。
+- 公共 Web client 不使用 refresh token；24 小时 access token + auth epoch 为当前目标，不引入 BFF 或新的续期机制。
+
+## Access token TTL adjustment (2026-09-09)
+
+- 为减少聚义厅反复授权，将目标 Web client 的 access token 从 10 分钟延长到 24 小时；不改变 PKCE、grant、scope、callback、授权码 5 分钟有效期及账户/epoch 校验。
+- 新安装的安全收敛使用更新后的 `api/user/jia-user-mapper/src/main/resources/db/account-security-foundation-oauth-client.sql`；已有实例先备份目标 client 原行和精确恢复 SQL，再使用同目录 `account-security-access-token-ttl-24h.sql`，只改 token_settings 内的 access-token TTL，不重跑整个收敛覆盖其他设置。迁移串行执行，失败后检查过程对象再重试。
+- 配置存于数据库，提交代码或部署 JAR 本身不代表配置已应用。仅迁移后的新签发 token 使用新 TTL；既有 token 不会被延长。前端继续遵循服务端 `expires_in`，不得伪造本地过期时间。
+- 风险：未被撤销的被盗 access token 最长可使用 24 小时；保留现有账户状态与 auth_epoch 校验。“退出当前设备”仍仅本地清理，不等于服务端撤销；“退出所有设备”保持既有 epoch 撤销语义。此调整不能解决非到期原因的 401 或网络等待。
+- 本次 24 小时调整不继承此前 10 分钟配置的生产/集成验收结论；生产仍需确认安全基础已生效、备份、MySQL 8 验证，并用新签发 token 的 `expires_in`（约 86400 秒）与 `exp - iat`、受保护请求和撤销结果验收。不得输出原始 token。
+
+### Production TTL-only procedure
+
+1. 先确认真实生产库、目标 client `jiafewnnv58ec2379c` 的现有 TTL 及账户状态/auth_epoch 安全基础已启用；不是预期 10 分钟时先核实差异，不盲改。执行账号需 SQL 脚本注释列出的存储过程和查询/更新权限，并先完成生产同版本 MySQL 8 验证。
+2. 使用 `account-security-foundation-preflight.sql` 只读抓取原行和其输出的精确恢复 SQL，完整输出重定向到非公开、权限 600 的备份文件；不得打印或分享包含 client secret 的备份。不要用全量客户端安全收敛脚本代替 TTL-only 脚本。
+3. 从已推送 API 提交提取 `user/jia-user-mapper/src/main/resources/db/account-security-access-token-ttl-24h.sql`，在已确认的数据库上串行执行；不要使用 `mysql --force`。成功输出应为更新行数 0/1、验证行数 1、access_token_ttl=PT24H。非零退出时检查错误并停止，不继续后续上线动作。
+4. 重新授权取得新 token，私下核验 expires_in 约 86400 秒、exp-iat 为 24 小时、正常受保护访问；按已授权测试账号验证全局退出撤销。既有 token 按原到期时间继续，当前浏览器可退出后重新登录获取新期限。不要清空全站缓存、全员退出或重启服务来强迫换 token。
+5. 按当前源码，RegisteredClientRepository 在签发链路读取数据库 token_settings；本次不需要为改 TTL 部署旧基线 API 整包或改前端。实际生效以新 token 验证为准；若不符，排查线上 client/库/版本或缓存差异后再决定动作。
