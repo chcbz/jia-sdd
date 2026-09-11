@@ -1,4 +1,5 @@
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -6,6 +7,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from unittest import mock
 
 from ops.performance.inventory import canonical_sha256, main, reconcile, scan_source, _runtime_routes
 
@@ -535,6 +538,74 @@ class InventoryTest(unittest.TestCase):
         codes = set(item["code"] for item in result["diagnostics"])
         self.assertIn("inventory_file_hash_mismatch", codes)
         self.assertIn("runtime_file_hash_mismatch", codes)
+
+    def test_reconcile_snapshots_each_artifact_once_before_path_swap(self):
+        root = tempfile.mkdtemp()
+        self.roots.append(root)
+        inventory_path = os.path.join(root, "inventory.json")
+        runtime_path = os.path.join(root, "runtime.json")
+        original_inventory = inventory_artifact()
+        original_runtime = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+        )
+        forged_inventory = json.loads(json.dumps(original_inventory))
+        forged_inventory["routes"][0]["path"] = "/forged"
+        forged_runtime = runtime(
+            [structured(["GET"], ["/forged"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+        )
+        with open(inventory_path, "wb") as output_file:
+            output_file.write(json_bytes(original_inventory))
+        with open(runtime_path, "wb") as output_file:
+            output_file.write(json_bytes(original_runtime))
+
+        replacements = {
+            inventory_path: json_bytes(forged_inventory),
+            runtime_path: json_bytes(forged_runtime),
+        }
+        open_counts = {inventory_path: 0, runtime_path: 0}
+        real_open = open
+
+        def swap_after_open(path, *args, **kwargs):
+            handle = real_open(path, *args, **kwargs)
+            normalized = os.path.abspath(path)
+            if normalized in replacements:
+                open_counts[normalized] += 1
+                if open_counts[normalized] == 1:
+                    replacement_path = normalized + ".replacement"
+                    with real_open(replacement_path, "wb") as replacement_file:
+                        replacement_file.write(replacements[normalized])
+                    os.replace(replacement_path, normalized)
+            return handle
+
+        stdout = io.StringIO()
+        with mock.patch("builtins.open", side_effect=swap_after_open), redirect_stdout(stdout):
+            rc = main(
+                [
+                    "reconcile",
+                    "--inventory",
+                    inventory_path,
+                    "--runtime",
+                    runtime_path,
+                    "--profile",
+                    "grey",
+                    "--expected-api-commit",
+                    COMMIT,
+                    "--expected-api-tree",
+                    TREE,
+                    "--inventory-sha256",
+                    artifact_sha256(original_inventory),
+                    "--runtime-sha256",
+                    artifact_sha256(original_runtime),
+                ]
+            )
+
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(0, rc, result)
+        self.assertEqual({inventory_path: 1, runtime_path: 1}, open_counts)
+        self.assertEqual(["/x"], [route["path"] for route in result["static"]])
+        self.assertNotIn("/forged", json.dumps(result, sort_keys=True))
 
     def test_json_media_is_not_stream_exemption(self):
         root = self.source(

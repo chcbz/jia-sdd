@@ -462,15 +462,10 @@ def sha256_files(root, files):
 
 
 
-def sha256_file(path):
-    h = hashlib.sha256()
+def load_json_artifact(path):
     with open(path, "rb") as source_file:
-        while True:
-            chunk = source_file.read(1024 * 1024)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
+        content = source_file.read()
+    return json.loads(content.decode("utf-8")), hashlib.sha256(content).hexdigest()
 
 def canonical_sha256(value):
     try:
@@ -1057,8 +1052,8 @@ def main(argv=None):
                 if not pattern.match(value):
                     raise InventoryError("%s has an invalid lowercase full-length value" % label)
             expected = {"commit": args.expected_api_commit, "tree": args.expected_api_tree}
-            inventory_hash = sha256_file(args.inventory)
-            runtime_hash = sha256_file(args.runtime)
+            inventory, inventory_hash = load_json_artifact(args.inventory)
+            runtime, runtime_hash = load_json_artifact(args.runtime)
             artifact_diagnostics = []
             if inventory_hash != args.inventory_sha256:
                 artifact_diagnostics.append(
@@ -1068,8 +1063,6 @@ def main(argv=None):
                 artifact_diagnostics.append(
                     _diag("runtime_file_hash_mismatch", "runtime JSON file SHA-256 does not match trusted pin")
                 )
-            inventory = load_json(args.inventory)
-            runtime = load_json(args.runtime)
             routes, manifest, carried, inventory_diagnostics = _validated_inventory(
                 inventory, expected, args.profile
             )
