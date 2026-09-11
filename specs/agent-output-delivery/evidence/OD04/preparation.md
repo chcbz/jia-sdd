@@ -19,3 +19,7 @@ OD04 must test the actual finish → command outcome/ledger → report ordering 
 Installer repository rules require Bash syntax checking for changed scripts, template/path checks and targeted install validation. Do not invoke broad installation on this development host: existing local MySQL/MinIO/ClamAV are already installed and evidenced under OD00/OD02. `install.sh` has no MinIO/ClamAV component mapping at this baseline, and `shell/mysql_install.sh` has an x86_64 binary URL; these are deployment planning facts, not reasons to rerun or replace working ARM development services. Effective production storage/scanner configuration remains OD06's gate, including the paired archive limits in OD02/clamav-limit-review.md.
 
 No client source was edited or test/build executed by this preparation.
+
+## Installed development dependencies
+
+On unchanged client candidate `a100a5007621dbb66717544f6332108fb7b4e5e7`, `npm ci --no-audit --no-fund` in `/home/chc/wsps/cyf-worktrees/output-client/conf/codex-ws-agent` exited 0 and installed three packages (Node v22.22.0, npm 11.17.0). The worktree remains clean; package-lock SHA-256 is `3197e9c19030098c274ad802c95b0b37a2427bd7c6aa52a4a6d82c2ec328c015`. This was dependency preparation only; no client feature test or host installer was run.
