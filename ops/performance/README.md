@@ -10,12 +10,27 @@ python3 ops/performance/inventory.py scan \
   --profile grey --api-commit SHA --api-tree TREE \
   --framework-manifest framework-grey.json --output inventory-grey.json
 python3 ops/performance/inventory.py reconcile \
-  --inventory inventory-grey.json --runtime runtime-grey.json --profile grey
+  --inventory inventory-grey.json --runtime runtime-grey.json --profile grey \
+  --expected-api-commit SHA --expected-api-tree TREE \
+  --inventory-sha256 TRUSTED_INVENTORY_FILE_SHA256 \
+  --runtime-sha256 TRUSTED_RUNTIME_FILE_SHA256
 ```
 
-The scanner supports only literal `@RequestMapping` and Spring's verb mappings, literal `path` **or** `value`, literal string/string-array paths, and `RequestMethod` arrays. A mapping without a method is `ANY`. It scans production Java sources (excluding standard test-source roots) so controllers not named `*Controller.java` and custom annotation declarations cannot disappear solely because of filenames. Unknown annotations on relevant type/method declarations, custom composed mappings, aliases, inheritance, conditional expressions, and unsupported grammar are fatal diagnostics; they are never inferred.
+The scanner supports only literal `@RequestMapping` and Spring's verb mappings, literal `path` **or** `value`, literal string/string-array paths, and `RequestMethod` arrays. A mapping without a method is `ANY`. It scans production Java sources (excluding standard test-source roots) so controllers not named `*Controller.java` and custom annotation declarations cannot disappear solely because of filenames. Unknown type/meta-annotations are diagnosed before filename relevance filtering; this catches a dependency-defined marker such as `@GM class OddEndpoint` without attempting dependency resolution. Unknown annotations on relevant methods, custom composed mappings, aliases, inheritance, conditional expressions, and unsupported grammar are also fatal diagnostics; they are never inferred.
 
-The explicit non-mapping annotation allowlist is `KNOWN_NON_MAPPING_ANNOTATIONS` in `inventory.py`. Extending it is a source-reviewed change: an unrecognized annotation may be a composed route mapping and therefore fails closed.
+The explicit non-mapping annotation allowlist is `KNOWN_NON_MAPPING_ANNOTATIONS` in `inventory.py`. Extending it is a source-reviewed change: an unrecognized annotation may be a composed route mapping and therefore fails closed. This remains a bounded literal parser, not a Java compiler or Spring annotation resolver.
+
+## Inventory schema and trusted pins
+
+Scan output uses strict inventory schema version 3. Reconciliation rejects unknown/missing top-level fields, unknown or severity-altered diagnostic codes, malformed or unsorted controller records, a dirty source flag, malformed source/API digests, inconsistent `ok` status, and an embedded framework manifest whose canonical content hash does not match its source binding.
+
+The following reconcile values are **trusted external pins**, not values discovered from the artifacts being checked:
+
+- `--expected-api-commit` and `--expected-api-tree` come from the independently approved API source handoff.
+- `--inventory-sha256` comes from the independently approved scan-artifact handoff.
+- `--runtime-sha256` comes from the independently approved capture-artifact handoff.
+
+Do not calculate one of these expected hashes from the candidate file and immediately treat that result as approval. The command computes actual file hashes only for comparison with caller-supplied pins. The inventory file hash binds its routes, diagnostics, clean-source assertion, Java-content digest, and embedded framework-manifest digest. A matching hash proves identity with the externally pinned artifact; it does not by itself prove that the original scan or capture process was trustworthy.
 
 ## Declared surfaces
 
@@ -35,7 +50,7 @@ Legacy `routes`/`mappings`, empty arrays, unknown fields, malformed records, dir
 
 ## Trusted runtime envelope
 
-A raw actuator export is not runtime evidence. The capture owner must provide an externally trusted envelope:
+A raw actuator export is not runtime evidence. The capture owner must provide this strict envelope:
 
 ```json
 {
@@ -50,6 +65,6 @@ A raw actuator export is not runtime evidence. The capture owner must provide an
 }
 ```
 
-The hash is mandatory and verified over UTF-8 JSON serialized with sorted keys and compact separators. Both payload surfaces must enumerate at least one route. Direct strict route arrays and Actuator mappings are supported. Spring Boot 4 `details.requestMappingConditions.methods` plus `patterns` are expanded as a Cartesian product; malformed methods, paths, records, sections, or unknown shapes are rejected rather than skipped. Application/framework and management surfaces are compared independently, so moving a route between lists cannot conceal a mismatch.
+The internal payload hash is mandatory and verified over UTF-8 JSON serialized with sorted keys and compact separators. The independently supplied `--runtime-sha256` additionally binds the complete transport file. Both payload surfaces must enumerate at least one route. Direct strict route arrays and Actuator mappings are supported. Spring Boot 4 `details.requestMappingConditions.methods` plus `patterns` are expanded as a Cartesian product; malformed methods, paths, records, sections, or unknown shapes are rejected rather than skipped. Application/framework and management surfaces are compared independently, so moving a route between lists cannot conceal a mismatch.
 
-An optional CLI `--runtime-sha256` checks the transport file bytes separately from the mandatory canonical payload hash. This slice provides no live capture, no YAML parser, and no claim that any real grey/prod runtime has passed reconciliation.
+This slice provides no live capture, no YAML parser, and no claim that any real grey/prod runtime has passed reconciliation.

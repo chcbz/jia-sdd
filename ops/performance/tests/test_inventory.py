@@ -1,7 +1,9 @@
+import hashlib
 import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -10,6 +12,15 @@ from ops.performance.inventory import canonical_sha256, main, reconcile, scan_so
 
 COMMIT = "c" * 40
 TREE = "d" * 40
+SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "inventory.py"))
+
+
+def json_bytes(value):
+    return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode("utf-8")
+
+
+def artifact_sha256(value):
+    return hashlib.sha256(json_bytes(value)).hexdigest()
 
 
 def manifest(framework=None, management=None, profile="grey", commit=COMMIT, tree=TREE):
@@ -55,6 +66,36 @@ def runtime(framework_records, management_records, profile="grey", commit=COMMIT
     }
 
 
+def inventory_artifact(profile="grey", commit=COMMIT, tree=TREE):
+    declared = manifest(profile=profile, commit=commit, tree=tree)
+    source = "starter/src/main/java/example/OddEndpoint.java"
+    return {
+        "schema_version": 3,
+        "profile": profile,
+        "source": {
+            "root": "/trusted/api",
+            "api_commit": commit,
+            "api_tree": tree,
+            "dirty": False,
+            "java_content_sha256": "a" * 64,
+            "framework_manifest_content_sha256": canonical_sha256(declared),
+        },
+        "routes": [
+            {
+                "kind": "controller",
+                "method": "GET",
+                "path": "/x",
+                "handler": source + ":x",
+                "source": source,
+                "line": 7,
+            }
+        ],
+        "framework_manifest": declared,
+        "diagnostics": [],
+        "ok": True,
+    }
+
+
 def structured(methods, patterns, handler="Handler"):
     return {
         "handler": handler,
@@ -87,6 +128,57 @@ class InventoryTest(unittest.TestCase):
         with open(os.path.join(root, filename), "w") as source_file:
             source_file.write(text)
         return root
+
+    def reconcile_cli(
+        self,
+        inventory_value,
+        runtime_value,
+        inventory_sha256=None,
+        runtime_sha256=None,
+        expected_commit=COMMIT,
+        expected_tree=TREE,
+    ):
+        root = tempfile.mkdtemp()
+        self.roots.append(root)
+        inventory_path = os.path.join(root, "inventory.json")
+        runtime_path = os.path.join(root, "runtime.json")
+        with open(inventory_path, "wb") as output_file:
+            output_file.write(json_bytes(inventory_value))
+        with open(runtime_path, "wb") as output_file:
+            output_file.write(json_bytes(runtime_value))
+        if inventory_sha256 is None:
+            inventory_sha256 = artifact_sha256(inventory_value)
+        if runtime_sha256 is None:
+            runtime_sha256 = artifact_sha256(runtime_value)
+        env = dict(os.environ)
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                SCRIPT,
+                "reconcile",
+                "--inventory",
+                inventory_path,
+                "--runtime",
+                runtime_path,
+                "--profile",
+                "grey",
+                "--expected-api-commit",
+                expected_commit,
+                "--expected-api-tree",
+                expected_tree,
+                "--inventory-sha256",
+                inventory_sha256,
+                "--runtime-sha256",
+                runtime_sha256,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        stdout, stderr = process.communicate()
+        parsed = json.loads(stdout.decode("utf-8")) if stdout else None
+        return process.returncode, parsed, stderr.decode("utf-8")
 
     def test_arrays_and_comments(self):
         root = self.source(
@@ -134,6 +226,16 @@ class InventoryTest(unittest.TestCase):
             routes, diagnostics, _ = scan_source(root)
             self.assertEqual([], routes)
             self.assertTrue(any(item["code"] == "unknown_declaration_annotation" for item in diagnostics))
+
+    def test_dependency_defined_type_marker_is_diagnosed_before_filename_filter(self):
+        root = self.source(
+            '@GM\nclass OddEndpoint { public void x() {} }',
+            filename="OddEndpoint.java",
+        )
+        routes, diagnostics, files = scan_source(root)
+        self.assertEqual([], routes)
+        self.assertTrue(any(item["code"] == "unknown_declaration_annotation" for item in diagnostics))
+        self.assertTrue(any(path.endswith("OddEndpoint.java") for path in files))
 
     def test_composed_annotation_definition_outside_controller_filename_is_detected(self):
         root = self.source(
@@ -310,6 +412,129 @@ class InventoryTest(unittest.TestCase):
             result = json.load(input_file)
         self.assertFalse(result["ok"])
         self.assertTrue(any(item["code"] in ("binding_missing", "manifest_shape") for item in result["diagnostics"]))
+
+    def test_real_reconcile_cli_accepts_independently_pinned_valid_fixture(self):
+        inventory_value = inventory_artifact()
+        runtime_value = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+        )
+        trusted_inventory_hash = artifact_sha256(inventory_value)
+        trusted_runtime_hash = artifact_sha256(runtime_value)
+        rc, result, stderr = self.reconcile_cli(
+            inventory_value,
+            runtime_value,
+            inventory_sha256=trusted_inventory_hash,
+            runtime_sha256=trusted_runtime_hash,
+        )
+        self.assertEqual("", stderr)
+        self.assertEqual(0, rc, result)
+        self.assertTrue(result["ok"], result["diagnostics"])
+
+    def test_real_reconcile_cli_original_pin_binds_routes_diagnostics_and_source_digest(self):
+        original = inventory_artifact()
+        trusted_hash = artifact_sha256(original)
+        runtime_value = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+        )
+        mutations = []
+        routes = json.loads(json.dumps(original))
+        routes["routes"][0]["path"] = "/tampered"
+        mutations.append(("routes", routes))
+        diagnostics = json.loads(json.dumps(original))
+        diagnostics["diagnostics"] = [
+            {"code": "class_path_array", "message": "tampered diagnostic", "fatal": False}
+        ]
+        mutations.append(("diagnostics", diagnostics))
+        source_digest = json.loads(json.dumps(original))
+        source_digest["source"]["java_content_sha256"] = "b" * 64
+        mutations.append(("source digest", source_digest))
+
+        for label, tampered in mutations:
+            rc, result, _stderr = self.reconcile_cli(
+                tampered, runtime_value, inventory_sha256=trusted_hash
+            )
+            self.assertEqual(2, rc, label)
+            self.assertTrue(
+                any(item["code"] == "inventory_file_hash_mismatch" for item in result["diagnostics"]),
+                (label, result),
+            )
+
+    def test_real_reconcile_cli_rejects_strict_inventory_mutations(self):
+        runtime_value = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+        )
+        cases = []
+
+        pins = inventory_artifact()
+        pins["source"]["api_commit"] = "e" * 40
+        pins["framework_manifest"]["api_commit"] = "e" * 40
+        pins["source"]["framework_manifest_content_sha256"] = canonical_sha256(pins["framework_manifest"])
+        cases.append(("pins", pins, "binding_mismatch"))
+
+        schema = inventory_artifact()
+        schema["schema_version"] = 99
+        cases.append(("schema", schema, "inventory_schema"))
+
+        diagnostics = inventory_artifact()
+        diagnostics["diagnostics"] = [{"code": "forged_diagnostic", "message": "forged", "fatal": False}]
+        cases.append(("diagnostics", diagnostics, "inventory_diagnostics_shape"))
+
+        dirty = inventory_artifact()
+        dirty["source"]["dirty"] = True
+        cases.append(("dirty", dirty, "source_dirty"))
+
+        source_digest = inventory_artifact()
+        source_digest["source"]["java_content_sha256"] = "not-a-sha256"
+        cases.append(("source digest", source_digest, "inventory_source_shape"))
+
+        content = inventory_artifact()
+        content["framework_manifest"]["framework_routes"][0]["path"] = "/changed"
+        cases.append(("content", content, "inventory_content_mismatch"))
+
+        for label, inventory_value, code in cases:
+            rc, result, _stderr = self.reconcile_cli(inventory_value, runtime_value)
+            self.assertEqual(2, rc, label)
+            self.assertTrue(any(item["code"] == code for item in result["diagnostics"]), (label, result))
+
+    def test_real_reconcile_cli_rejects_capture_binding_tamper(self):
+        inventory_value = inventory_artifact()
+        runtime_value = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+            tree="e" * 40,
+        )
+        rc, result, _stderr = self.reconcile_cli(inventory_value, runtime_value)
+        self.assertEqual(2, rc)
+        self.assertTrue(any(item["code"] == "binding_mismatch" for item in result["diagnostics"]))
+
+    def test_real_reconcile_cli_rejects_coherently_forged_pair_against_original_artifact_pins(self):
+        original_inventory = inventory_artifact()
+        original_runtime = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+        )
+        trusted_inventory_hash = artifact_sha256(original_inventory)
+        trusted_runtime_hash = artifact_sha256(original_runtime)
+
+        forged_inventory = json.loads(json.dumps(original_inventory))
+        forged_inventory["routes"][0]["path"] = "/forged"
+        forged_runtime = runtime(
+            [structured(["GET"], ["/forged"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+        )
+        rc, result, _stderr = self.reconcile_cli(
+            forged_inventory,
+            forged_runtime,
+            inventory_sha256=trusted_inventory_hash,
+            runtime_sha256=trusted_runtime_hash,
+        )
+        self.assertEqual(2, rc)
+        codes = set(item["code"] for item in result["diagnostics"])
+        self.assertIn("inventory_file_hash_mismatch", codes)
+        self.assertIn("runtime_file_hash_mismatch", codes)
 
     def test_json_media_is_not_stream_exemption(self):
         root = self.source(

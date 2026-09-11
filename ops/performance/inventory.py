@@ -36,6 +36,39 @@ KNOWN_NON_MAPPING_ANNOTATIONS = set(
 )
 KNOWN_MAPPING_NAMES = set(MAPPING_ANN) | set(["RequestMapping"])
 KNOWN_RUNTIME_MAPPING_SECTIONS = set(["dispatcherServlets", "servletFilters", "servlets"])
+INVENTORY_SCHEMA_VERSION = 3
+INVENTORY_FIELDS = set(
+    ["schema_version", "profile", "source", "routes", "framework_manifest", "diagnostics", "ok"]
+)
+INVENTORY_SOURCE_FIELDS = set(
+    ["root", "api_commit", "api_tree", "dirty", "java_content_sha256", "framework_manifest_content_sha256"]
+)
+INVENTORY_ROUTE_FIELDS = set(["kind", "method", "path", "handler", "source", "line"])
+INVENTORY_DIAGNOSTIC_FIELDS = set(["code", "message", "fatal", "file", "line"])
+# Scan diagnostics are an integrity-sensitive catalog. Reconciliation accepts no
+# unknown code or altered severity from an inventory artifact.
+INVENTORY_DIAGNOSTIC_FATALITY = {
+    "unresolved_annotation": True,
+    "unknown_declaration_annotation": True,
+    "unsupported_composed_mapping": True,
+    "unsupported_mapping": True,
+    "class_path_array": False,
+    "unsupported_inheritance": True,
+    "unresolved_class_mapping": True,
+    "static_surface_empty": True,
+    "source_binding_missing": True,
+    "source_binding_mismatch": True,
+    "source_dirty": True,
+    "binding_missing": True,
+    "binding_invalid": True,
+    "profile_mismatch": True,
+    "binding_mismatch": True,
+    "manifest_shape": True,
+    "registry_shape": True,
+    "registry_wildcard": True,
+    "registry_missing": True,
+    "registry_unknown": True,
+}
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 GIT_OBJECT_ID = re.compile(r"^[0-9a-f]{40}$")
 
@@ -266,6 +299,27 @@ def _looks_path_like(args):
     return bool(vals and any(v.startswith("/") for v in vals))
 
 
+def _unknown_declaration_diagnostics(clean, annotations, rel):
+    """Diagnose unknown type/meta-annotations before filename relevance can discard the source."""
+    diagnostics = []
+    diagnosed_starts = set()
+    for name, _args, line, end, start, _raw_end in annotations:
+        if name is None or name in KNOWN_MAPPING_NAMES or name in KNOWN_NON_MAPPING_ANNOTATIONS:
+            continue
+        kind, _match = _annotation_target(clean, end)
+        if kind in ("type", "annotation"):
+            diagnostics.append(
+                _diag(
+                    "unknown_declaration_annotation",
+                    "unknown annotation @%s may be an unsupported composed/aliased mapping" % name,
+                    rel,
+                    line,
+                )
+            )
+            diagnosed_starts.add(start)
+    return diagnostics, diagnosed_starts
+
+
 def _is_relevant_source(filename, clean, annotations):
     if filename.endswith("Controller.java"):
         return True
@@ -276,7 +330,7 @@ def _is_relevant_source(filename, clean, annotations):
         if name in KNOWN_MAPPING_NAMES or (name in ("Controller", "RestController") and kind == "type"):
             return True
         if kind in ("type", "method", "annotation") and name not in KNOWN_NON_MAPPING_ANNOTATIONS:
-            if name.endswith("Mapping") or _looks_path_like(args):
+            if kind in ("type", "annotation") or name.endswith("Mapping") or _looks_path_like(args):
                 return True
     return False
 
@@ -301,13 +355,16 @@ def scan_source(root):
         with open(filename, "r", encoding="utf-8") as source_file:
             clean = _strip_comments(source_file.read())
         annotations = _annotation_records(clean)
-        if _is_relevant_source(filename, clean, annotations):
-            sources.append((filename, clean, annotations))
+        rel = os.path.relpath(filename, root).replace(os.sep, "/")
+        preflight, diagnosed_starts = _unknown_declaration_diagnostics(clean, annotations, rel)
+        diagnostics.extend(preflight)
+        if diagnosed_starts or _is_relevant_source(filename, clean, annotations):
+            sources.append((filename, clean, annotations, diagnosed_starts))
 
-    for filename, clean, annotations in sources:
+    for filename, clean, annotations, diagnosed_starts in sources:
         rel = os.path.relpath(filename, root).replace(os.sep, "/")
         class_prefixes = [""]
-        for name, args, line, end, _start, _raw_end in annotations:
+        for name, args, line, end, start, _raw_end in annotations:
             if name is None:
                 diagnostics.append(_diag("unresolved_annotation", end, rel, line))
                 continue
@@ -315,14 +372,15 @@ def scan_source(root):
             if kind not in ("type", "method", "annotation"):
                 continue
             if name not in KNOWN_MAPPING_NAMES and name not in KNOWN_NON_MAPPING_ANNOTATIONS:
-                diagnostics.append(
-                    _diag(
-                        "unknown_declaration_annotation",
-                        "unknown annotation @%s may be an unsupported composed/aliased mapping" % name,
-                        rel,
-                        line,
+                if start not in diagnosed_starts:
+                    diagnostics.append(
+                        _diag(
+                            "unknown_declaration_annotation",
+                            "unknown annotation @%s may be an unsupported composed/aliased mapping" % name,
+                            rel,
+                            line,
+                        )
                     )
-                )
                 continue
             if name not in KNOWN_MAPPING_NAMES:
                 continue
@@ -692,6 +750,163 @@ def _runtime_surfaces(runtime, expected, profile):
     return framework, management, diagnostics
 
 
+def _strict_inventory_routes(value):
+    if not isinstance(value, list) or not value:
+        raise InventoryError("inventory routes must be a non-empty array")
+    routes = []
+    for index, route in enumerate(value):
+        label = "inventory.routes[%d]" % index
+        if not isinstance(route, dict) or set(route) != INVENTORY_ROUTE_FIELDS:
+            raise InventoryError("%s must contain exactly %s" % (label, sorted(INVENTORY_ROUTE_FIELDS)))
+        if route.get("kind") != "controller":
+            raise InventoryError("%s kind must be controller" % label)
+        method = route.get("method")
+        path = route.get("path")
+        handler = route.get("handler")
+        source = route.get("source")
+        line = route.get("line")
+        if not isinstance(method, str) or method not in METHODS | set(["ANY"]):
+            raise InventoryError("%s method is unsupported" % label)
+        if not isinstance(path, str) or not path.startswith("/") or _join("", path) != path:
+            raise InventoryError("%s path must be absolute and normalized" % label)
+        if (
+            not isinstance(source, str)
+            or not source
+            or source.startswith("/")
+            or source.endswith("/")
+            or ".." in source.split("/")
+            or not source.endswith(".java")
+        ):
+            raise InventoryError("%s source must be a relative Java path" % label)
+        if not isinstance(handler, str) or not handler.startswith(source + ":"):
+            raise InventoryError("%s handler must be bound to its source path" % label)
+        method_name = handler[len(source) + 1 :]
+        if not re.match(r"^[A-Za-z_$][\w$]*$", method_name):
+            raise InventoryError("%s handler method name is invalid" % label)
+        if isinstance(line, bool) or not isinstance(line, int) or line < 1:
+            raise InventoryError("%s line must be a positive integer" % label)
+        routes.append(dict(route))
+    keys = [(route["method"], route["path"], route["handler"]) for route in routes]
+    if len(keys) != len(set(keys)):
+        raise InventoryError("inventory routes contain duplicate records")
+    if routes != sorted(routes, key=lambda route: (route["method"], route["path"], route["handler"])):
+        raise InventoryError("inventory routes must use deterministic sort order")
+    return routes
+
+
+def _strict_inventory_diagnostics(value):
+    if not isinstance(value, list):
+        raise InventoryError("inventory diagnostics must be an array")
+    diagnostics = []
+    for index, item in enumerate(value):
+        label = "inventory.diagnostics[%d]" % index
+        if not isinstance(item, dict):
+            raise InventoryError("%s must be an object" % label)
+        if not set(item).issubset(INVENTORY_DIAGNOSTIC_FIELDS) or not set(["code", "message", "fatal"]).issubset(item):
+            raise InventoryError("%s has an invalid diagnostic shape" % label)
+        code = item.get("code")
+        message = item.get("message")
+        fatal = item.get("fatal")
+        if code not in INVENTORY_DIAGNOSTIC_FATALITY:
+            raise InventoryError("%s uses an unknown diagnostic code" % label)
+        if not isinstance(message, str) or not message:
+            raise InventoryError("%s message must be non-empty" % label)
+        if not isinstance(fatal, bool) or fatal != INVENTORY_DIAGNOSTIC_FATALITY[code]:
+            raise InventoryError("%s severity does not match the diagnostic catalog" % label)
+        if "file" in item and (not isinstance(item["file"], str) or not item["file"] or item["file"].startswith("/")):
+            raise InventoryError("%s file must be a relative non-empty path" % label)
+        if "line" in item and (
+            isinstance(item["line"], bool) or not isinstance(item["line"], int) or item["line"] < 1
+        ):
+            raise InventoryError("%s line must be a positive integer" % label)
+        diagnostics.append(dict(item))
+    return diagnostics
+
+
+def _validated_inventory(inventory, expected, profile):
+    diagnostics = []
+    routes = []
+    manifest = None
+    carried_diagnostics = []
+    if not isinstance(inventory, dict):
+        return routes, manifest, carried_diagnostics, [_diag("inventory_schema", "inventory must be an object")]
+    if set(inventory) != INVENTORY_FIELDS:
+        diagnostics.append(
+            _diag("inventory_schema", "inventory must contain exactly %s" % sorted(INVENTORY_FIELDS))
+        )
+    version = inventory.get("schema_version")
+    if isinstance(version, bool) or version != INVENTORY_SCHEMA_VERSION:
+        diagnostics.append(
+            _diag("inventory_schema", "inventory schema_version must be %d" % INVENTORY_SCHEMA_VERSION)
+        )
+    inventory_profile = inventory.get("profile")
+    if not isinstance(inventory_profile, str) or not inventory_profile:
+        diagnostics.append(_diag("inventory_schema", "inventory profile must be a non-empty string"))
+    elif inventory_profile != profile:
+        diagnostics.append(_diag("profile_mismatch", "inventory profile does not match requested profile"))
+
+    source = inventory.get("source")
+    if not isinstance(source, dict) or set(source) != INVENTORY_SOURCE_FIELDS:
+        diagnostics.append(
+            _diag("inventory_source_shape", "inventory source must contain exactly %s" % sorted(INVENTORY_SOURCE_FIELDS))
+        )
+        source = source if isinstance(source, dict) else {}
+    root = source.get("root")
+    if not isinstance(root, str) or not root or not os.path.isabs(root):
+        diagnostics.append(_diag("inventory_source_shape", "inventory source root must be absolute"))
+    for key in ("api_commit", "api_tree"):
+        value = source.get(key)
+        if not isinstance(value, str) or not GIT_OBJECT_ID.match(value):
+            diagnostics.append(
+                _diag("inventory_source_shape", "inventory source %s must be a full lowercase Git object ID" % key)
+            )
+    if source.get("api_commit") != expected.get("commit"):
+        diagnostics.append(_diag("binding_mismatch", "inventory source API commit does not match trusted pin"))
+    if source.get("api_tree") != expected.get("tree"):
+        diagnostics.append(_diag("binding_mismatch", "inventory source API tree does not match trusted pin"))
+    if source.get("dirty") is not False:
+        diagnostics.append(_diag("source_dirty", "inventory source checkout was not clean"))
+    java_digest = source.get("java_content_sha256")
+    if not isinstance(java_digest, str) or not HEX_SHA256.match(java_digest):
+        diagnostics.append(
+            _diag("inventory_source_shape", "inventory java_content_sha256 must be a lowercase SHA-256")
+        )
+
+    manifest = inventory.get("framework_manifest")
+    manifest_digest = source.get("framework_manifest_content_sha256")
+    if not isinstance(manifest_digest, str) or not HEX_SHA256.match(manifest_digest):
+        diagnostics.append(
+            _diag(
+                "inventory_source_shape",
+                "inventory framework_manifest_content_sha256 must be a lowercase SHA-256",
+            )
+        )
+    if isinstance(manifest, dict) and isinstance(manifest_digest, str) and HEX_SHA256.match(manifest_digest):
+        try:
+            if canonical_sha256(manifest) != manifest_digest:
+                diagnostics.append(
+                    _diag("inventory_content_mismatch", "embedded framework manifest content SHA-256 mismatch")
+                )
+        except InventoryError as exc:
+            diagnostics.append(_diag("inventory_content_mismatch", str(exc)))
+
+    try:
+        routes = _strict_inventory_routes(inventory.get("routes"))
+    except InventoryError as exc:
+        diagnostics.append(_diag("inventory_route_shape", str(exc)))
+    try:
+        carried_diagnostics = _strict_inventory_diagnostics(inventory.get("diagnostics"))
+    except InventoryError as exc:
+        diagnostics.append(_diag("inventory_diagnostics_shape", str(exc)))
+    status = inventory.get("ok")
+    expected_status = not any(item.get("fatal", True) for item in carried_diagnostics)
+    if not isinstance(status, bool) or status != expected_status:
+        diagnostics.append(
+            _diag("inventory_status_mismatch", "inventory ok must match its strict diagnostic catalog")
+        )
+    return routes, manifest, carried_diagnostics, diagnostics
+
+
 def validate_registry(registry, routes):
     """Validate only the documented normalized JSON shape; this is not YAML parsing."""
     diagnostics = []
@@ -789,7 +1004,10 @@ def main(argv=None):
     rec.add_argument("--inventory", required=True)
     rec.add_argument("--runtime", required=True)
     rec.add_argument("--profile", required=True)
-    rec.add_argument("--runtime-sha256")
+    rec.add_argument("--expected-api-commit", required=True)
+    rec.add_argument("--expected-api-tree", required=True)
+    rec.add_argument("--inventory-sha256", required=True)
+    rec.add_argument("--runtime-sha256", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "scan":
@@ -810,7 +1028,7 @@ def main(argv=None):
             if args.registry_json:
                 diagnostics.extend(validate_registry(load_json(args.registry_json), routes))
             result = {
-                "schema_version": 2,
+                "schema_version": INVENTORY_SCHEMA_VERSION,
                 "profile": args.profile,
                 "source": {
                     "root": os.path.abspath(args.source_root),
@@ -818,7 +1036,7 @@ def main(argv=None):
                     "api_tree": binding["tree"],
                     "dirty": binding["dirty"],
                     "java_content_sha256": sha256_files(args.source_root, files),
-                    "framework_manifest_sha256": sha256_file(args.framework_manifest),
+                    "framework_manifest_content_sha256": canonical_sha256(manifest),
                 },
                 "routes": routes,
                 "framework_manifest": manifest,
@@ -830,26 +1048,41 @@ def main(argv=None):
                 output_file.write("\n")
             return 0 if result["ok"] else 2
         if args.command == "reconcile":
+            for value, label, pattern in (
+                (args.expected_api_commit, "--expected-api-commit", GIT_OBJECT_ID),
+                (args.expected_api_tree, "--expected-api-tree", GIT_OBJECT_ID),
+                (args.inventory_sha256, "--inventory-sha256", HEX_SHA256),
+                (args.runtime_sha256, "--runtime-sha256", HEX_SHA256),
+            ):
+                if not pattern.match(value):
+                    raise InventoryError("%s has an invalid lowercase full-length value" % label)
+            expected = {"commit": args.expected_api_commit, "tree": args.expected_api_tree}
+            inventory_hash = sha256_file(args.inventory)
+            runtime_hash = sha256_file(args.runtime)
+            artifact_diagnostics = []
+            if inventory_hash != args.inventory_sha256:
+                artifact_diagnostics.append(
+                    _diag("inventory_file_hash_mismatch", "inventory JSON file SHA-256 does not match trusted pin")
+                )
+            if runtime_hash != args.runtime_sha256:
+                artifact_diagnostics.append(
+                    _diag("runtime_file_hash_mismatch", "runtime JSON file SHA-256 does not match trusted pin")
+                )
             inventory = load_json(args.inventory)
             runtime = load_json(args.runtime)
-            if inventory.get("profile") != args.profile:
-                raise InventoryError("inventory profile mismatch")
-            source = inventory.get("source", {})
-            expected = {"commit": source.get("api_commit"), "tree": source.get("api_tree")}
+            routes, manifest, carried, inventory_diagnostics = _validated_inventory(
+                inventory, expected, args.profile
+            )
             result = reconcile(
-                inventory.get("routes"),
-                inventory.get("framework_manifest"),
+                routes,
+                manifest,
                 runtime,
                 expected,
                 args.profile,
-                inventory.get("diagnostics"),
+                artifact_diagnostics + inventory_diagnostics + carried,
             )
-            with open(args.runtime, "rb") as runtime_file:
-                runtime_hash = hashlib.sha256(runtime_file.read()).hexdigest()
+            result["inventory_file_sha256"] = inventory_hash
             result["runtime_file_sha256"] = runtime_hash
-            if args.runtime_sha256 and runtime_hash != args.runtime_sha256:
-                result["diagnostics"].append(_diag("file_hash_mismatch", "runtime JSON file SHA-256 mismatch"))
-                result["ok"] = False
             print(json.dumps(result, sort_keys=True, indent=2))
             return 0 if result["ok"] else 2
         parser.error("a command is required")
