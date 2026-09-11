@@ -1,9 +1,9 @@
-# OD02 repair candidate 010a1022 — review in progress
+# OD02 repair candidate 010a1022 — REQUEST_CHANGES
 
 - Frozen API commit: `010a102217d105f6e6f5dd94dc3d01a8a4e5ffcc`; worktree confirmed clean by root and writer.
 - Previous candidate `0ac3921` received REQUEST_CHANGES; accepted development base remains `c5330dd5`.
-- Original critical worker owns repairs R01–R08; independent read-only architect `/root/output_design_review` is re-reviewing the immutable candidate. Preferred adversarial provider remains unavailable as recorded in the previous review packet; this is not cross-model approval.
-- The combined targeted regression on this commit passed 64/64 with no failures/errors/skips. Root rechecked all reports, command/exit and 17 changed source hashes; see `repair-010a1022-test-results/execution-notes.md` and `root-association.json`. No independent verdict or OD02 acceptance is claimed yet.
+- Original critical worker owns repairs R01–R08; independent read-only architect `/root/output_design_review` reviewed the immutable candidate and returned REQUEST_CHANGES; see `review-010a1022-findings.md`. Preferred adversarial provider remains unavailable as recorded in the previous review packet; this is not cross-model approval.
+- The combined targeted regression on this commit passed 64/64 with no failures/errors/skips. Root rechecked all reports, command/exit and 17 changed source hashes; see `repair-010a1022-test-results/execution-notes.md` and `root-association.json`. The verdict leaves R01/R04/R06 open and closes R02/R03/R05/R07/R08. OD02 is not accepted.
 
 ## Repair and evidence index
 
