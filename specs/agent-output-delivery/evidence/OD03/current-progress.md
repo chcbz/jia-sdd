@@ -11,3 +11,9 @@ Observed intermediate service regression: 185 tests, 11 failures and 8 skips. Fa
 A worker turn was interrupted by model-provider 503 `auth_unavailable`; root recovered the same writer without replacing or reverting its changes. Work resumed. This was an execution-provider interruption, not a product failure or authorization-review rejection.
 
 Root's extended live HTTP helper is independently approved for tool correctness (`http-probe-review.md`); only synthetic controls have run. It is ready for a numeric-loopback development harness and cannot itself mint trusted runs or establish distinct user identities.
+
+## Continuation on 2026-09-12
+
+The shared root checkout now belongs to another task (`codex/hall-question-history`). Output-delivery coordination resumes in the dedicated root worktree `/home/chc/wsps/cyf-worktrees/output-root`, on `codex/agent-output-delivery` from `eae405d`; API/Web/client worktrees are unchanged. Do not switch or commit unrelated work in the shared root checkout.
+
+Root inspected the real-dependency HTTP harness XML at timestamp `2026-09-11T15:53:46.643Z`: one test, one failure, no skips/errors. The current failure is Spring test-context setup (`BeanFactory not initialized or already closed`, `setUp:270`), superseding the older mapper-reflection failure. The sole writer remains active to repair and rerun it. This is failed intermediate evidence, not an accepted endpoint run. OD03 remains implementing and OD04–OD11 remain pending.
