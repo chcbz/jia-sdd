@@ -3,7 +3,7 @@
 - Frozen API commit: `010a102217d105f6e6f5dd94dc3d01a8a4e5ffcc`; worktree confirmed clean by root and writer.
 - Previous candidate `0ac3921` received REQUEST_CHANGES; accepted development base remains `c5330dd5`.
 - Original critical worker owns repairs R01–R08; independent read-only architect `/root/output_design_review` is re-reviewing the immutable candidate. Preferred adversarial provider remains unavailable as recorded in the previous review packet; this is not cross-model approval.
-- Writer is running a combined targeted regression on this commit and preparing exact commands, exits, reports and source association. No final verdict or OD02 acceptance is claimed.
+- The combined targeted regression on this commit passed 64/64 with no failures/errors/skips. Root rechecked all reports, command/exit and 17 changed source hashes; see `repair-010a1022-test-results/execution-notes.md` and `root-association.json`. No independent verdict or OD02 acceptance is claimed yet.
 
 ## Repair and evidence index
 
@@ -16,6 +16,6 @@
 | R06 | Output-specific success/error envelopes and shared filter rendering | Actual-chain/controller tests are in the preceding targeted batch; final wire/source verification pending |
 | R08 | Deterministic short/long PUT size mismatch classified as permanent integrity failure | Included in the 20-case real-dependency suite; final independent review must verify state/quota semantics |
 
-Stage originals are `/tmp/cyf-od02-evidence/repair-*-{command,exit,log,result.xml}`. Root directly read the final schema/auth/real-dependency XML counts and exits. The earlier schema failures remain historical evidence: normal index ordering and JSON-column charset/collation representation initially mismatched the expectation; both were repaired while retaining strict metadata checks. The final combined candidate run will provide the acceptance association; stage pass counts alone do not establish it.
+Stage originals are `/tmp/cyf-od02-evidence/repair-*-{command,exit,log,result.xml}`. Root directly read the final schema/auth/real-dependency XML counts and exits. The earlier schema failures remain historical evidence: normal index ordering and JSON-column charset/collation representation initially mismatched the expectation; both were repaired while retaining strict metadata checks. The final combined candidate run now supplies source/report association, while stage pass counts alone do not establish it.
 
 The independent reviewer must assess closure against `review-0ac3921-findings.md`, not infer correctness from these counts. Previously documented component/mock boundaries remain applicable. No owner publication/download endpoint, client queue, Web entrypoint, integrated release or production migration is accepted by this checkpoint. OD03 remains gated on the completed review and necessary verification.
