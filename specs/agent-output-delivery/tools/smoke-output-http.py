@@ -5,6 +5,8 @@ Requires an already authenticated, active server-created run, OUTPUT_SMOKE_RUN_T
 and OUTPUT_SMOKE_USER_TOKEN in the environment. --read-only needs only the user token
 and an existing --output-id; use it after independently stopping the Agent to collect
 offline-retrieval evidence. This tool does not stop an Agent or prove client/UI flows.
+--check-other-user additionally checks all four read routes with the separately
+supplied OUTPUT_SMOKE_OTHER_USER_TOKEN; use an authenticated unrelated user.
 Only numeric loopback HTTP(S) origins are accepted, and redirects are never followed.
 Requires PyYAML and jsonschema >= 4. Writes a small synthetic file in publish mode.
 """
@@ -48,6 +50,7 @@ def main():
     parser.add_argument("--run-id")
     parser.add_argument("--output-id")
     parser.add_argument("--read-only", action="store_true")
+    parser.add_argument("--check-other-user", action="store_true")
     args = parser.parse_args()
     origin = urlsplit(args.base_url)
     require(origin.scheme in ("http", "https") and origin.hostname is not None
@@ -60,7 +63,10 @@ def main():
     require(args.read_only or args.run_id is not None, "Publication needs a trusted run ID")
     owner = os.environ.get("OUTPUT_SMOKE_USER_TOKEN", "")
     ticket = os.environ.get("OUTPUT_SMOKE_RUN_TICKET", "")
+    other_user = os.environ.get("OUTPUT_SMOKE_OTHER_USER_TOKEN", "")
     require(bool(owner) and (args.read_only or bool(ticket)), "Required credentials missing from environment")
+    require(not args.check_other_user or bool(other_user) and other_user != owner,
+            "Cross-user checks need a separate credential in the environment")
     base = args.base_url.rstrip("/")
     spec_root = Path(__file__).resolve().parents[1]
     contract_raw = (spec_root / "openapi.yaml").read_bytes()
@@ -81,7 +87,7 @@ def main():
     opener = build_opener(ProxyHandler({}), NoRedirect())
     observations = []
 
-    def request(operation, method, path, token, body=None, key=None, binary=False):
+    def request(operation, method, path, token, body=None, key=None, binary=False, expect_denial=False):
         expected_method, pattern, operation_schema = operations[operation]
         require(method == expected_method and re.fullmatch(pattern, path) is not None,
                 "Probe method/path does not match the frozen operation")
@@ -105,6 +111,8 @@ def main():
             require(len(raw) <= 1024 * 1024, "Probe response exceeded one MiB")
             observations.append({"operationId": operation, "httpStatus": status,
                                  "responseSha256": hashlib.sha256(raw).hexdigest()})
+            if expect_denial:
+                require(status == 404, "Unrelated user must receive the inaccessible-resource response")
             if binary and status == 200:
                 require(response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
                         == "application/octet-stream", "Download media type differs from the contract")
@@ -125,6 +133,10 @@ def main():
             envelope = json.loads(raw)
             validator = Draft202012Validator(dict(schema["schema"], components=contract["components"]))
             require(validator.is_valid(envelope), "Response violates frozen JSON schema")
+            if expect_denial:
+                require(envelope["retryable"] is False and envelope.get("details") in (None, {}),
+                        "Inaccessible-resource response must be permanent and omit resource details")
+                return envelope, raw
             require(status in (200, 202), "HTTP operation failed; response body withheld")
             return envelope["data"], raw
 
@@ -175,6 +187,16 @@ def main():
             _, replay = request("publish" + kind + "Output", "POST", prefix, ticket, body, publish_key)
             require(original == replay, "Publication did not replay its original response bytes")
         detail_path = prefix + f"/{oid}/versions/1"
+        versions_path = prefix + f"/{oid}/versions"
+        listed, _ = request("list" + kind + "Outputs", "GET", prefix, owner)
+        require(all(item["source"] == source for item in listed["items"]),
+                "Source list contains a different source")
+        versions, _ = request("list" + kind + "OutputVersions", "GET", versions_path, owner)
+        require(all(item["source"] == source and item["outputId"] == output_id for item in versions["items"]),
+                "Version list contains a different source or output")
+        if not args.read_only:
+            require(all(any(item["outputId"] == output_id and item["version"] == "1" for item in page["items"])
+                        for page in (listed, versions)), "New publication is missing from the first-page lists")
         detail, _ = request("get" + kind + "OutputVersion", "GET", detail_path, owner)
         item = detail["item"]
         require(item["outputId"] == output_id and item["version"] == "1" and item["source"] == source,
@@ -185,11 +207,19 @@ def main():
         require(item["publicationKind"] == ("OWNER_SHARE" if task else "CONVERSATION_OUTPUT"),
                 "Output lacks the expected explicit owner publication")
         request("download" + kind + "OutputVersion", "GET", detail_path + "/download", owner, binary=True)
+        if args.check_other_user:
+            request("getOutputCapabilities", "GET", "/agent/output-capabilities", other_user)
+            for operation, path in [("list" + kind + "Outputs", prefix),
+                                    ("list" + kind + "OutputVersions", versions_path),
+                                    ("get" + kind + "OutputVersion", detail_path),
+                                    ("download" + kind + "OutputVersion", detail_path + "/download")]:
+                request(operation, "GET", path, other_user, expect_denial=True)
         print(json.dumps({"passed": True, "mode": "read_only" if args.read_only else "publish_and_read",
+                          "crossUserReadsDenied": args.check_other_user,
                           "outputId": output_id, "version": "1", "byteLength": len(payload),
                           "sha256": expected_hash, "contractSha256": hashlib.sha256(contract_raw).hexdigest(),
                           "observations": observations,
-                          "limit": "Synthetic live HTTP only; Agent offline state, ACL/conflict negatives, pagination and UI require separate evidence."},
+                          "limit": "Synthetic live HTTP only; Agent offline state, private-output/conflict negatives, pagination beyond the first page and UI require separate evidence."},
                          indent=2))
         return 0
     except (ProbeFailure, URLError, ValueError, KeyError, TimeoutError, OSError):

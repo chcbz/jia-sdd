@@ -17,8 +17,8 @@ spec.loader.exec_module(probe)
 
 
 class Response(io.BytesIO):
-    def __init__(self, body, status=200, binary=False):
-        super().__init__(body if binary else json.dumps({"code": "E0", "data": body}).encode())
+    def __init__(self, body, status=200, binary=False, error=False):
+        super().__init__(body if binary else json.dumps(body if error else {"code": "E0", "data": body}).encode())
         self.status = status
         self.headers = {"Content-Type": "application/octet-stream" if binary else "application/json",
                         "Cache-Control": "private, no-store", "Content-Disposition": "attachment; filename=report.md",
@@ -35,6 +35,16 @@ class Transport:
     def open(self, request, timeout):
         self.calls.append(request)
         path = probe.urlsplit(request.full_url).path
+        if path == "/agent/output-capabilities" and self.fault != "other_unauthenticated":
+            return Response({"outputUploadV1": True, "outputReadV1": True, "taskOwnerShareV1": True,
+                             "taskDeliveryHttpV1": False, "maxFileBytes": "52428800", "maxRunBytes": "209715200",
+                             "maxFiles": 100, "supportedMimeTypes": ["text/markdown"]})
+        if request.get_header("Authorization") == "Bearer synthetic-other-secret" and self.fault != "acl_leak":
+            body = {"code": "OUTPUT_NOT_FOUND", "message": "Resource unavailable", "retryable": False,
+                    "requestId": "synthetic-request"}
+            if self.fault == "acl_details":
+                body["details"] = {"title": "Synthetic"}
+            return Response(body, status=401 if self.fault == "other_unauthenticated" else 404, error=True)
         if path.endswith("/download"):
             response = Response(b"wrong" if self.fault == "bytes" else b"hello world!\n", binary=True)
         elif "/output-uploads" in path:
@@ -57,23 +67,36 @@ class Transport:
                     "size": "13", "mime": "text/markdown", "sha256": hashlib.sha256(b"hello world!\n").hexdigest()}
             if self.fault == "metadata":
                 item["size"] = "14"
-            response = Response(item if request.method == "POST" else {"item": item})
+            if request.method == "POST":
+                body = item
+            elif path.endswith(("/artifacts", "/outputs", "/versions")):
+                body = {"items": [item], "nextCursor": None, "snapshotAt": "1800000000000"}
+                if self.fault == "empty_list":
+                    body["items"] = []
+                if self.fault == "list_source":
+                    item["source"] = {"type": self.source["type"], "id": "another-source"}
+            else:
+                body = {"item": item}
+            response = Response(body)
         if self.fault == "cache":
             response.headers.pop("Cache-Control")
         return response
 
 
 class Controls(unittest.TestCase):
-    def run_case(self, source_type="TASK", fault=None, read_only=False, base="http://127.0.0.1:18080"):
+    def run_case(self, source_type="TASK", fault=None, read_only=False, base="http://127.0.0.1:18080", cross_user=False):
         transport = Transport(source_type, fault)
         args = ["probe", "--base-url", base, "--source-type", source_type, "--source-id", "source-test",
                 "--output-id", "output-test"] + (["--read-only"] if read_only else ["--run-id", "run-test"])
+        if cross_user:
+            args.append("--check-other-user")
         captured = io.StringIO()
         with patch("sys.argv", args), patch.dict("os.environ", {"OUTPUT_SMOKE_USER_TOKEN": "synthetic-user-secret",
-                "OUTPUT_SMOKE_RUN_TICKET": "synthetic-run-secret"}), patch.object(probe, "build_opener", return_value=transport), contextlib.redirect_stdout(captured):
+                "OUTPUT_SMOKE_RUN_TICKET": "synthetic-run-secret", "OUTPUT_SMOKE_OTHER_USER_TOKEN": "synthetic-other-secret"}), patch.object(probe, "build_opener", return_value=transport), contextlib.redirect_stdout(captured):
             result = probe.main()
         self.assertNotIn("synthetic-user-secret", captured.getvalue())
         self.assertNotIn("synthetic-run-secret", captured.getvalue())
+        self.assertNotIn("synthetic-other-secret", captured.getvalue())
         return result, transport
 
     def test_publish_both_sources_and_read_only(self):
@@ -85,9 +108,22 @@ class Controls(unittest.TestCase):
                     self.assertTrue(all(r.method == "GET" for r in transport.calls))
 
     def test_status_bytes_metadata_and_cache_faults_fail(self):
-        for fault in ("replay_status", "bytes", "metadata", "cache"):
+        for fault in ("replay_status", "bytes", "metadata", "cache", "list_source", "empty_list"):
             with self.subTest(fault=fault):
                 self.assertEqual(1, self.run_case(fault=fault)[0])
+
+    def test_cross_user_reads_and_leak_controls(self):
+        for kind in ("TASK", "CONVERSATION"):
+            with self.subTest(kind=kind):
+                result, transport = self.run_case(kind, cross_user=True)
+                self.assertEqual(0, result)
+                denied = [r for r in transport.calls if r.get_header("Authorization") == "Bearer synthetic-other-secret"
+                          and probe.urlsplit(r.full_url).path != "/agent/output-capabilities"]
+                self.assertEqual(4, len(denied))
+                self.assertTrue(all(r.method == "GET" for r in denied))
+        for fault in ("acl_leak", "acl_details", "other_unauthenticated"):
+            with self.subTest(fault=fault):
+                self.assertEqual(1, self.run_case(cross_user=True, fault=fault)[0])
 
     def test_path_prefix_and_remote_origin_fail_before_transport(self):
         for origin in ("http://127.0.0.1/api", "https://192.0.2.1"):
