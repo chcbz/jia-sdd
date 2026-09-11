@@ -25,3 +25,9 @@ Reviewer reported snapshot hash prefixes: DAO `e14a1def`, DAO impl `5d95c409`, s
 ## Clarification: removing protection remains allowed after deletion starts
 
 The reviewer independently confirmed on 2026-09-11 that only creation or enhancement of protection requires PASSED/READY. Release, expiry with no hold, and clearing hold still lock object then exact reference, but may run with READY/DELETING/DELETED. They must only shorten or remove protection, never extend retain time, revive a terminal reference or rebind source/object/version. This avoids stranded historical pin metadata while retaining GC's irreversible lifecycle decision. Expiry rereads exact identity/state/hold/deadline under lock; a missing object row is a consistency error, not permission to skip locking.
+
+## Repair execution observed 2026-09-11
+
+The expanded real-dependency suite passed 15 tests (0 failures/errors/skips), including focused G01, G02 and G03 regressions. It retains DELETING across a failed HEAD and recovers with a new service worker; reclaims manually expired CLAIMED/DELETING leases; old-epoch cleanup retains STAGED/current-key charge until current-key cleanup; two recovery workers release one charge once. See `gc-recovery-test-results/observation.json` for hashes and limitations. These are repair observations pending candidate association and independent closure, not an automatic APPROVE.
+
+The concurrent READ_PIN case demonstrates the pin-first ordering through test SQL and the production GC service. Real publication/READ_PIN APIs and the full bidirectional reference lifecycle protocol must be verified when implemented in OD03. A replacement service object plus persisted expired leases is the restart model used here; no OS process was killed.
