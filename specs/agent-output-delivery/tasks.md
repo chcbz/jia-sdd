@@ -8,7 +8,7 @@
 | OD01 | R1 | **来源归属、run绑定和WS ticket交换**；agent output身份；chat relay/owner DAO/WS | critical_worker → adversarial_reviewer | 1～1.5 | 错误owner、tenant=0、过期binding拒绝，ticket不入聊天；O07,O09,O23,O26 |
 | OD02 | R1 | **字节对象、配额、上传校验和GC**；agent-api/core/mapper/service output存储与M001 | critical_worker → adversarial_reviewer | 1～1.5 | 真实字节上传/校验；epoch隔离、配额CAS、GC负向；O10,O11,O12,O20,O25,O27,O28 |
 | OD03 | R1 | **任务/对话成果发布、列表和鉴权下载**；agent artifact M002；chat_output；精确ACL与代理读 | critical_worker → adversarial_reviewer | 1～1.5 | OWNER_SHARE显式；private隔离；离线取件hash一致；O03,O06,O07,O08,O09,O19,O29 |
-| OD04 | R1 | **客户端manifest、安全快照、持久恢复**；isp-install/conf/codex-ws-agent/output-*.mjs及执行finish | critical_worker → adversarial_reviewer | 1.5～2 | 两个执行模式；重启继续已有快照，不重跑模型；O01,O04,O10,O22,O30 |
+| OD04 | R1 | **客户端manifest、安全快照、持久恢复**；isp-install/conf/codex-ws-agent/output-*.mjs及执行finish | critical_worker → adversarial_reviewer | 1.5～2 | 两个执行模式；manifest指定代码包取件；重启继续已有快照，不重跑模型；O01,O02,O04,O10,O22,O30 |
 | OD05 | R1 | **共用成果UI与两个入口**；web/components/outputs与chat/bounty/workspace、useOutputs | balanced_worker → adversarial_reviewer | 1～1.5 | 用户切换/source切换不串数据；下载、分页、过期提示；O01,O05,O06,O08,O21 |
 | OD06 | R1 | **R1集成、发布候选和演示**；只读验证；root evidence/integration更新 | main_orchestrator → release_guard | 1～1.5 | API/Web/client版本及R1矩阵通过，等待发布授权；R1_GATE |
 | OD07 | R2 | **HTTP租约和policy1全部入口禁入**；agent lease/assign/legacy/aggregation与client心跳 | critical_worker → adversarial_reviewer | 1～1.5 | claim/start/heartbeat/release可用；单工作项/旧路径硬限制；O13,O16,O22,O24,O31 |
