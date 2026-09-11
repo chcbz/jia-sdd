@@ -28,3 +28,14 @@ Independent exact-source harness for `956ee6d0/94409ca5` native1 at javac: test 
 Independent source Reviewer also REJECT1P1+2P2: separate custom2048/Boot1024 caps silently deny normal/OVERFLOW meters; disabled feature still unconditionally changes Boot cap; exporter p95/p99 comment overclaims configured-only histogram. Exact A02 source/unit slice independently ACCEPT0/0/0 remains separate.
 
 Main authorizes bounded A01 repair after stop: ONLY the same three owned metrics config/test/property paths, fix missing helper, one authoritative URI cap (or validate mismatch fails startup), disabled configuration must not change Boot metrics defaults, remove exporter availability claims. Prefer a single Boot property and conditional fallback when feature enabled; no public endpoint/security/dependency/filter/runtime changes. Add real test cases for mismatched/invalid caps, disabled baseline, HTTP-only histogram and overflow counters. Commit first; independent verifier executes cached harness once afterward, no Writer build/test or Gradle. This is not source acceptance of the currently rejected candidate.
+
+## PERF-01 R2 stop / next bounded remediation plan
+
+Independent source review failed twice; runtime parent gate is `blocked_root_cause`. Unit19PASS remains valid scoped evidence but cannot close source-completeness/input-trust defects.
+
+| Defect | Confirmed cause | Next bounded change / acceptance |
+| --- | --- | --- |
+| `@GM class OddEndpoint` silently omitted | `_is_relevant_source` rejects non-Controller-suffix class before inspecting unknown declaration annotations; previous test filename masked it | Diagnose unknown potentially composed type annotations before relevance filtering; add dependency-defined marker/non-Controller filename tests. Preserve explicit literal-parser limitations. |
+| Mutable inventory can redefine expected pins/routes | Reconcile derives expected commit/tree from inventory itself and does not revalidate source identity/schema/dirty flag/content provenance | Require independent caller-supplied expected API commit/tree and inventory artifact hash, validate strict inventory schema/dirty/source digest and capture binding; reject tampered routes, pins, schema, diagnostics and coherently forged matching envelopes in real CLI tests. Do not derive expected hash from the artifact under test. |
+
+No new Writer admitted after this stop. The next controller action is review/authorize this bounded matrix with a dedicated `critical_worker`, same `ops/performance/**` ownership; then independent Python verification and read-only delta review. Do not expand into an ad-hoc general Java compiler or promote incomplete inventory. This is not waiting for a production credential or authorization, and does not block promotion of independent accepted API slices.

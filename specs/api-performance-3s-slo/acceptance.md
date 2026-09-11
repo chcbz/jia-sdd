@@ -79,3 +79,10 @@
 - 干净集成分支 `codex/perf-api-integration-20260911` 已推送，tree 与 accepted candidate byte-exact；不是 develop/部署/整体集成验收。
 - 失败历史：CLI 参数顺序 prelaunch rc2；修正后实际 Gradle rc1（root publishing config 缺 repoUsername），未执行模块测试。定向 harness 通过不能改写为 Gradle PASS。
 - 清单工具和 histogram 各自仍在有界修复/独立验收中；详见 `../../docs/implementation/handoffs/PERF-FIRST-BATCH-20260911.md`、`../../docs/implementation/handoffs/PERF-VERIFY-R2-ROOT-CAUSE-20260911.md`。全部顶层性能验收仍 pending。
+
+### 同日首批结束补充
+
+- `PERF-A01-HIST`: API `99c820216adaa608e98ff120c7e4fe637fcd8812` / tree `ac02104c1e5a21f52146b92593a2af7a03d680db`，独立 source + cached-JDK21 javac/JUnit 5/5PASS ACCEPT0/0/0；证据 `/var/tmp/cyf-perf-verify-r4-RSmqXQ`，key `ad55b2efab8755434b524dffda6d154e0256ea65728278e94d62f060ccb27c1f`。
+- 两项 accepted API 切片已无冲突合入并推送 `5571d183fe7c612f2d5ebb272548aa5bfad77e90` / tree `b993a925464701b5a17c93461cf3f558036f5d13`；6 文件 blob 与对应原候选一致。这里的6+5测试为两个原树的 scoped evidence，不是合并树新跑11项或整体构建证明。
+- `PERF-01-TOOLS`: `609cd1c` 的19项独立测试通过，但最终 source REJECT0/2/0；停止认领，保留修复矩阵。CLI对 exact API `014fb7e` 的440条 supported mapping 只是部分静态诊断，返回预期非零，并非 inventory PASS。
+- 未发布；完整 Gradle 模块构建、运行时清单、跨链路观测、隔离压测、热点查询优化和全API≤3秒仍 pending。

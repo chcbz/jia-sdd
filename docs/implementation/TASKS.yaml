@@ -5,14 +5,22 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-01T19:32:41+08:00",
+    "updated_at": "2026-09-11T10:03:08+08:00",
     "critical_path": [
       "D06",
       "D08",
       "D09",
       "M3-IR",
       "M3-RG",
-      "H06"
+      "H06",
+      "PERF-00",
+      "PERF-01",
+      "PERF-A02",
+      "PERF-A01",
+      "PERF-REVIEW-01",
+      "PERF-01-TOOLS",
+      "PERF-A01-HIST",
+      "PERF-A02-LOG"
     ],
     "tasks": {
       "D06": {
@@ -362,6 +370,173 @@ runtime_ledger_json: |
           "attempts": []
         },
         "next_action": "After API/Web candidates commit, run serialized verification and independent reviews, then pin SDD; production deployment/provider activation remain unauthorized."
+      },
+      "PERF-00": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "c953802b4e7b719900ef531ebed37c309a882805",
+          "tree_sha": "f254017c3e94db2b2302b49da5ff839b2faa1683"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Contract R4 independent ACCEPT retained; first-batch exact API e7da0a43 source-base and disjoint paths frozen. Not source/runtime SLO acceptance; execute PERF-01/A01/A02."
+      },
+      "PERF-01": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "609cd1c46e9fe50a641270e56c0901f36ba634e5",
+          "tree_sha": "00b861cdcb7e56be561d33c7d2fb75e8f5f2fe6f"
+        },
+        "current_gate": "blocked_root_cause",
+        "blocker": {
+          "category": "inventory_alias_and_input_trust",
+          "summary": "R2 independent SOURCE REJECT2P1 despite19tests: unknown composed controller marker filtered by filename relevance; reconcile self-trusts mutable inventory pins/routes and accepts coherent forgery.",
+          "consecutive_failures": 2,
+          "attempts": [
+            {
+              "at": "2026-09-11T09:03:52+08:00",
+              "category": "inventory_false_acceptance",
+              "evidence": "docs/implementation/handoffs/PERF-FIRST-BATCH-20260911.md",
+              "root_cause": "Literal-only parser and permissive envelope coercion lacked negative schema/completeness checks; seven initial tests insufficient.",
+              "remediation": "Critical bounded Writer repair only ops/performance/** with adversarial regression tests; retain R1 history, no runtime inventory acceptance."
+            },
+            {
+              "at": "2026-09-11T09:58:26+08:00",
+              "category": "inventory_alias_and_input_trust",
+              "evidence": "docs/implementation/handoffs/PERF-FIRST-BATCH-20260911.md",
+              "root_cause": "R1 tests only placed alias on Controller-suffixed filename; reconciliation expected binding derived from same untrusted artifact instead of independently supplied hash/source pins.",
+              "remediation": "STOP aftersecondsourcefailure. Freeze minimal matrix: inspect unknown annotations before source relevance filtering; require independent inventory artifact hash/source API pins/schema/dirty/content validation and adversarial CLI tests. No inventory promotion meanwhile."
+            }
+          ]
+        },
+        "next_action": "STOP aftersecondsourcefailure. Freeze minimal matrix: inspect unknown annotations before source relevance filtering; require independent inventory artifact hash/source API pins/schema/dirty/content validation and adversarial CLI tests. No inventory promotion meanwhile."
+      },
+      "PERF-A02": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "014fb7edaa53928aa5ca309ea4c8537889763563",
+          "tree_sha": "4de32d4ccdb1efe06dd38ee2ff4009532d5300ab"
+        },
+        "current_gate": "awaiting_filter_trace_integration",
+        "blocker": {
+          "category": "build_configuration_missing_property",
+          "summary": "Actual bounded offline Gradle attempt failed during root-project configuration before tests because repoUsername extra property is absent | authorized remediation: docs/implementation/handoffs/PERF-VERIFY-R2-ROOT-CAUSE-20260911.md",
+          "consecutive_failures": 0,
+          "attempts": [
+            {
+              "at": "2026-09-11T08:52:44+08:00",
+              "category": "orchestrator_invocation",
+              "evidence": "/var/tmp/cyf-perf-verify-20260911-T7Yu/owned-log sha256=45d19370f6ca3b7694c78208cc4276f60fd37751eb87d8ad6d10fd752ea96fbd native_exit=2",
+              "root_cause": "cyf_orchestrator.py gradle defines task_id before a REMAINDER command positional; the prompt-ordered form placed --cwd/--tree-sha/--selector/--fixture-digest after PERF-A02, so argparse assigned them to command and reported the required options missing before lock acquisition or Gradle subprocess execution",
+              "remediation": "Main must retransfer PERF-A02 verifier gate and explicitly authorize the parser-compatible form with orchestrator options before task_id; then run the same one bounded offline selector. This was not an offline dependency failure and no Gradle attempt occurred."
+            },
+            {
+              "at": "2026-09-11T08:59:10+08:00",
+              "category": "build_configuration_missing_property",
+              "evidence": "/var/tmp/cyf-perf-verify-20260911-T7Yu/owned-log-r2 sha256=66fb185e036f4fefac4daf65f6a81ff9e8a67915208fcadc71c61f8d523a1875 native_exit=1 xml=none distinct_tests=0",
+              "root_cause": "Root build.gradle line 65 eagerly evaluates publishing credentials username=rootProject.ext.repoUsername during project configuration; no repoUsername extra property exists in the clean candidate environment. The failure occurred after Gradle lock acquisition but before :common:jia-common-service:test execution and is not a test assertion or offline dependency-resolution failure.",
+              "remediation": "STOP after the second consecutive attributed failure. Main must review the root-cause matrix and separately authorize either a credential-free sanitized placeholder-property invocation that does not disclose secrets, or the previously proposed exact-source javac+JUnit cache-jar harness; do not claim module/full Spring runtime proof from a harness."
+            }
+          ]
+        },
+        "next_action": "Child PERF-A02-LOG ACCEPT source+6unitPASS, auto-promote code; parent remains pending full ingress request-ID/trace correlation and module/runtime verification."
+      },
+      "PERF-A01": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "99c820216adaa608e98ff120c7e4fe637fcd8812",
+          "tree_sha": "ac02104c1e5a21f52146b92593a2af7a03d680db"
+        },
+        "current_gate": "awaiting_runtime_observability",
+        "blocker": {
+          "category": "metric_cap_and_toggle_contract",
+          "summary": "Independent source REJECT1P1+2P2: mismatched caps silently drop metrics; disabled feature mutates global cap; exporter comment overclaims. Prior independent javac missing helper already attributed. | authorized remediation: docs/implementation/handoffs/PERF-VERIFY-R2-ROOT-CAUSE-20260911.md",
+          "consecutive_failures": 0,
+          "attempts": [
+            {
+              "at": "2026-09-11T09:02:59+08:00",
+              "category": "harness_classpath_setup",
+              "evidence": "docs/implementation/handoffs/PERF-VERIFY-R2-ROOT-CAUSE-20260911.md#A01; Writer tool disclosure only",
+              "root_cause": "Classpath shell assembly assumed removed Spring7 artifact; no javac yet. Writer did not record attribution at occurrence.",
+              "remediation": "Stop unauthorized Writer execution; independent verifier uses actual cached artifact inventory, no fabricated logs."
+            },
+            {
+              "at": "2026-09-11T09:03:00+08:00",
+              "category": "source_compile_and_harness_classpath",
+              "evidence": "docs/implementation/handoffs/PERF-VERIFY-R2-ROOT-CAUSE-20260911.md#A01; Writer tool disclosure only",
+              "root_cause": "Wrong source API plus incomplete harness classpath; two-failure stop was not followed. Candidate requires independent full diff review and actual clean verification.",
+              "remediation": "Blocked root cause; closed Writer. Main-reviewed matrix permits a separate independent scoped verifier after A02, no Gradle or source edits."
+            },
+            {
+              "at": "2026-09-11T09:15:04+08:00",
+              "category": "source_compile_missing_helper",
+              "evidence": "/var/tmp/cyf-perf-verify-20260911-T7Yu/a01-exact-source-junit-r3/harness.log sha256=bde3dd8da6e7778ca70d652c7c3dea255c63a958df4684da8d6c135eccfe0f03 harness_exit=1 javac_exit=1 junit=NOT_RUN tests_executed=0",
+              "root_cause": "ApiPerformanceMetricsConfigTest.java lines 32 and 35 invoke id(String, Meter.Type, String), but the committed test declares no such method and has no applicable static import. javac reported two cannot-find-symbol errors. The required Boot4.0.1 spring-boot-micrometer-metrics, JUnit platform commons, AssertJ, Micrometer1.16.1 and Spring7.0.2 cached jars were present; this is an exact candidate test-source defect, not a missing-classpath failure.",
+              "remediation": "STOP with no harness retry or verifier source edit. Return the candidate to its Writer/reviewer to add or replace the missing Meter.Id construction helper in an allowed test path, commit a new exact tree, then independently reauthorize one scoped harness. Full Gradle/module/application startup remains NOT RUN."
+            },
+            {
+              "at": "2026-09-11T09:20:14+08:00",
+              "category": "metric_cap_and_toggle_contract",
+              "evidence": "docs/implementation/handoffs/PERF-VERIFY-R2-ROOT-CAUSE-20260911.md",
+              "root_cause": "Two independent cap sources and unconditional global property override violate overflow/toggle contract; tests miss mismatch/disabled baseline and do not compile.",
+              "remediation": "STOP then approved bounded critical Writer repair same3paths, authoritative cap/toggle+test helper; independent cached harness later, no Gradle/deployment."
+            }
+          ]
+        },
+        "next_action": "ChildHIST source+5unit ACCEPT and auto-promote; remaining exporter/dashboard/inflight/deadline/production metrics and module build not accepted."
+      },
+      "PERF-REVIEW-01": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "99c820216adaa608e98ff120c7e4fe637fcd8812",
+          "tree_sha": "ac02104c1e5a21f52146b92593a2af7a03d680db"
+        },
+        "current_gate": "rejected",
+        "blocker": {
+          "category": "agent_capacity",
+          "summary": "Fresh independent root reviewer spawn denied by thread limit; prior own agent IDs report not_found to wait/send/close. No new reviewer started.",
+          "consecutive_failures": 1,
+          "attempts": [
+            {
+              "at": "2026-09-11T09:24:08+08:00",
+              "category": "agent_capacity",
+              "evidence": "Main tool outcomes 2026-09-11; source609cd1c unchanged",
+              "root_cause": "Agent runtime admission limit despite completed agent handles not addressable; not source or test failure.",
+              "remediation": "Do not repeat spawn blindly. Finish known-live Turing bounded task, explicitly release its slot, then request one fresh independent verification/review worker; meanwhile preserve accepted A02 and root repair candidate."
+            }
+          ]
+        },
+        "next_action": "Final source/evidence review complete: A01-HIST ACCEPT0/0/0, A02 previousACCEPT retained; rootTOOLS REJECT2P1, overall firstbatch not fullyaccepted. Promote independent acceptedAPI only."
+      },
+      "PERF-01-TOOLS": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "609cd1c46e9fe50a641270e56c0901f36ba634e5",
+          "tree_sha": "00b861cdcb7e56be561d33c7d2fb75e8f5f2fe6f"
+        },
+        "current_gate": "rejected",
+        "blocker": null,
+        "next_action": "Independent R2 REJECT2P1; parentPERF-01 stopped_root_cause.19testPASS not sufficient; do not promote this tooling candidate."
+      },
+      "PERF-A01-HIST": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "99c820216adaa608e98ff120c7e4fe637fcd8812",
+          "tree_sha": "ac02104c1e5a21f52146b92593a2af7a03d680db"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Independent final SOURCE+5unit ACCEPT0/0/0, verified25jar/evidence hashes. Auto-promote byte-exact metrics3paths alongside accepted logging6tests; full module/runtime/exporter/SLO pending."
+      },
+      "PERF-A02-LOG": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "014fb7edaa53928aa5ca309ea4c8537889763563",
+          "tree_sha": "4de32d4ccdb1efe06dd38ee2ff4009532d5300ab"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Independent Godel ACCEPT0/0/0 exact source plus javac/JUnit6PASS verified manifests26jars. Auto-promote this bounded logging slice to clean API integration branch; no module/runtime/SLO claims."
       }
     }
   }

@@ -46,3 +46,26 @@ Bounded remediation owned `ops/performance/**`: conservative unknown-annotation 
 ## A02 actual independent unit evidence
 
 Exact candidate `014fb7e/4de32d4`: JDK21 cached-jar javac native0; JUnit Launcher native0,6found/6executed/6PASS,0skip/fail/abort. Evidence `/var/tmp/cyf-perf-verify-20260911-T7Yu/a02-exact-source-junit-r3`; source manifest `4b6afc693fe0fc706ebfdec30a41d9f6fe70a62b09bed1899178f7152cc50218`,26jar manifest `020fcf14bc905715841580c755f6b8ce344156142f79c09b4f679a35d02e5cec`; cache key `13c9ddf4824b54e4260663f540085dde1ed0992e16a8bec73b1ae96563ca3c6c`. Main verified all13 evidence-sha256 entries and clean exact tree. This covers changed source/unit behavior only: attempted full-module Gradle failed configuration before tests, Boot wiring/runtime/performance not verified.
+
+## Repaired candidates awaiting independent final gates
+
+- Inventory `609cd1c46e9fe50a641270e56c0901f36ba634e5` / tree `00b861cdcb7e56be561d33c7d2fb75e8f5f2fe6f`: bounded critical repair of3P1, Writer19tests PASS, no independent final acceptance yet. Diagnostic numbers reported by Writer were not bound to released profile and must not replace full inventory acceptance.
+- Histogram `99c820216adaa608e98ff120c7e4fe637fcd8812` / tree `ac02104c1e5a21f52146b92593a2af7a03d680db`: critical repair candidate,5test methods, no Writer tests/build. Independent cached javac/JUnit5test harness authorized (new evidence directory), no Gradle/runtime.
+- Old reviewer/verifier handles became unaddressable; fresh reviewer admission hit pool cap once. Known-live Turing was explicitly closed after committed handoff; fresh independent verifier admitted. Verification and final read-only review are now sequential to respect available slots; no foreign task/process intervention.
+
+## Independent repaired-candidate verification
+
+- A01 `99c8202/ac02104`: independent cached JDK21 javac/JUnit native0,5expected/found/executed/PASS,0failed/skipped/aborted. Evidence `/var/tmp/cyf-perf-verify-r4-RSmqXQ`, manifest `b5889218af252c13eb052678ae0cb640492e7910f83ee62fc33eb2026b2c3fd4`, key `ad55b2efab8755434b524dffda6d154e0256ea65728278e94d62f060ccb27c1f`; main23 evidence refs checked. Only scoped source/context-unit proof, not full Gradle/module/application/runtime/SLO.
+- PERF-01 `609cd1c/00b861`: independent Python3.6.8 unittest native0,19/19PASS,CLIhelp0. Diagnostic against clean API `014fb7e/4de32d4` found440supported method/path records,53sourcefiles,434handlers; expected native2 from3unknownannotations+2deliberately empty framework/management surfaces. No route inventory PASS, runtime capture, registry validation,DB ornetwork. Evidence `/var/tmp/cyf-perf-verify-r4-RSmqXQ/perf-01-Hlgdvz`, manifest `413694af100992ecfff1f34bae22e90e43df029c0ea94f9128bfbc55169859c9`, key `92945534bb84e3fb82fffcef4e074a5fa57b9c1a397a43864426933f0446f744`. Main evidence manifest checked; both source trees clean and no Python bytecode added.
+- Fresh final independent reviewer `01a08e24-c806-78c1-9899-2688d3d37840` admitted after verifier explicitly closed; final source/evidence decisions pending.
+
+## Final independent R2 decisions
+
+Reviewer `01a08e24-c806-78c1-9899-2688d3d37840`:
+
+- `PERF-A01-HIST` exact `99c8202/ac02104` ACCEPT0/0/0, source plus independent5unitPASS,25jar/source/resource/evidence hashes rechecked. Authoritative cap, disabled baseline, overflow, scope, test helper and comments accepted. Eligible for byte-exact source promotion, not full module/runtime/SLO acceptance.
+- `PERF-01-TOOLS` exact `609cd1c/00b861` REJECT0/2/0 despite19unitPASS: dependency-defined unknown controller marker `@GM class OddEndpoint` is discarded by `_is_relevant_source` before diagnostics (filename-dependent test missed it); reconcile trusts inventory's own expected commit/tree and routes without independently verifying schema/dirty flag/content/source binding, so coherently forged inventory/runtime can PASS. Second source-review failure requires STOP/root-cause matrix. Existing static diagnostics remain valid negative evidence only.
+
+## Accepted API source promotion
+
+Clean API integration branch `codex/perf-api-integration-20260911` pushed at `5571d183fe7c612f2d5ebb272548aa5bfad77e90` / tree `b993a925464701b5a17c93461cf3f558036f5d13`; parents `014fb7edaa53928aa5ca309ea4c8537889763563` and `99c820216adaa608e98ff120c7e4fe637fcd8812`. All6 changed source/test/resource blobs are byte-exact to their independently accepted candidates. Reused evidence is explicitly scoped to those original source trees (6 logging tests +5 histogram tests), not a newly executed combined-tree suite. No push to develop, JAR build, deployment, DB or production load test occurred. Dirty main/root/API/Web checkouts remain untouched except this task's own control docs/ledger.
