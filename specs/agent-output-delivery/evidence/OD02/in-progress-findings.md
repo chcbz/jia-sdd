@@ -33,3 +33,9 @@ The expanded suite passed 7 tests (no failures/errors/skips), superseding its ea
 `archive-scanner-test-results/observation.json` retains 4 content tests plus 1 controlled-socket scanner-response test. Nested shared budgets, depth rejection and a permitted depth-3 ZIP now have passing focused evidence. The content suite supersedes its earlier 2-test run for counting. I06 remains open for candidate association, per-member/root-inclusive boundary tests, deterministic malformed/encrypted input and temporary-I/O service state behavior; these 5 checks do not prove the entire deployed scanning contract.
 
 GC review blockers G01–G03 are tracked separately in `gc-recovery-review.md`; they are not closed by the earlier 7-test expanded service suite.
+
+## HTTP coexistence and selected authorization enlistment
+
+Three passing tests now load the production output/OAuth/default user chains and the production upload controller. They verify the mocked VERIFYING service result maps to HTTP 202/no-store, session/user bearer cannot replace a run ticket, and resource versus session fallback routes remain isolated. See `security-coexistence-test-results/observation.json`. This supplements the earlier output-only chain suite; it does not execute a complete upload or persisted receipt replay over HTTP.
+
+One selected real-MySQL test now invokes actual ticket issuance/authorization and an upload create transaction, observes revocation pending while create is paused after authorization, then confirms the revocation completes after create and rejects a subsequent mutation. The source authorizer uses a synthetic locked root row; storage/scanner are not involved in create. See `authorization-enlistment-test-results/observation.json`. This is the selected ticket-lock enlistment interaction, not all task/chat ACL paths or the entire concurrency suite. Candidate association and final review remain pending.
