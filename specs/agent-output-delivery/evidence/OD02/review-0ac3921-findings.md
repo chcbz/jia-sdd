@@ -1,0 +1,25 @@
+# Independent OD02 review — REQUEST_CHANGES
+
+Candidate: `0ac392156627d231ceb2fcb408e938bd877271b4`; accepted base: `c5330dd50da6c03e55edca0744485a1b95385552`.
+Read-only reviewer: `/root/output_design_review`, architect, GPT-5.6 Sol High. This fallback follows the preferred adversarial provider failure recorded in `candidate-0ac3921-review.md`; it is not cross-model approval. Root transcribed the review; the reviewer wrote no product code. Original API writer owns repairs. Verdict applies only to the OD02 development gate.
+
+Paths are relative to the candidate API repository. Service shorthand is `agent/jia-agent-service/src/main/java/cn/jia/agent/output/service/OutputUploadServiceImpl.java`.
+
+| ID | Priority | Finding and minimum acceptance |
+| --- | --- | --- |
+| R01 | P0 | Service lines 160–164: final READY transaction does not revalidate current source/run/identity/binding after external scan. Add persisted internal business authorization without a bearer and enlist it before quota/upload/object locks in the accepted lock order. Real MySQL scan-barrier test revokes authorization during scanning; no READY or reserved-to-stored transfer may occur. Rejection or temporary unavailability must be deterministic. |
+| R02 | P0 | Service lines 119–124, 144–164: epoch 1 settles and points to RETAINED bytes; replacement epoch 2 marks epoch 1 PENDING; epoch 2 failure clears its lease but leaves the object pointing at epoch 1. Complete can verify bytes concurrently tombstoned by cleanup and commit READY. Require current successfully settled epoch and exact storage/cleanup identity at complete and final commit, or atomically invalidate superseded identity. Test cleanup before and after scan; neither ordering may produce READY to deleted bytes. |
+| R03 | P1 | `OutputUploadDaoImpl.countOpenCleanup` excludes RETAINED. PENDING + RETAINED permits a new HELD epoch and leaves three uncleaned keys. Count projected physical occupancy under the upload lock, including RETAINED. Test rejection until one cleanup becomes DONE. |
+| R04 | P1 | `OutputContentInspector.java` lines 53–89: PK prefix plus `ZipInputStream` does not prove complete archive structure; malformed/zero-entry/truncated central directories can pass. Directory-named entries skip actual-byte accounting and nested checks. Validate complete structure; consume every entry through shared budget and reject nonempty directory entries. Test PK garbage, truncated directory, over-limit directory entry and nested/active content carried by directory entry. |
+| R05 | P1 | `OutputObjectSchemaInitializer.java` lines 41–68 checks column names/order, table engine/collation and PK but accepts type/null/default/column-collation/index/CHECK drift. Match all eight tables against exact metadata, without mutating partial installations. Real MySQL tests must cover each drift category and missing unique/ordinary indexes/constraints. |
+| R06 | P1 | `OutputUploadController.java` lines 39–62 and `OutputUploadSecurityConfiguration.java` line 48 use legacy `JsonResult`. Success adds forbidden msg/status; errors omit required message/retryable/requestId. Use output-specific envelopes and shared exception/filter rendering with stable request IDs and correct retryability. Validate upload success/error/401 wire responses against frozen OpenAPI closed schemas; existing tests assert the wrong shape. |
+| R07 | P2 | Service line 163 uses a shared JSON parser without EOF enforcement. Concatenated JSON can become READY. Use a dedicated strict content parser and test trailing tokens; duplicate-key policy must follow the frozen contract. |
+| R08 | P2 | Service lines 99–103 maps deterministic extra-byte/size mismatch to storage failure 503. Return permanent client 4xx/422 for size mismatch, preserving 503 for transport/dependency failure. Test overlong body and retained cleanup/quota accounting. |
+
+## Confirmed closures and evidence limits
+
+Prior G01–G03 are closed in this candidate: uncertain delete remains DELETING, expired CLAIMED/DELETING leases are recoverable, and cleanup lifecycle mutation checks the current key/version. Exact clamd clean response, ordinary-entry archive counters, filter-chain isolation, S3 versioning rejection and Agent/Chat module separation also passed source review. These do not close R01–R08.
+
+The candidate-associated 16 output suites contain 69 non-skipped passing tests with 66 matching source snapshots. Full regression is preserved separately: mapper 153 pass; service 1236 tests, 1 failure, 103 skipped. The unchanged Rabbit executable prerequisite failure does not drive this verdict. Exact full-run shell command/process exit were unavailable and are not reconstructed. See `full-module-regression-0ac3921/execution-notes.md`.
+
+OD03 remains gated. Its reference protocol remains object then reference locking: creation/renewal/adding hold requires PASSED/READY; monotonic release/expiry may proceed through READY/DELETING/DELETED. Reference count provides retention, never ACL. No owner download, client/UI, integrated release or production acceptance is implied here.

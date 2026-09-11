@@ -1,6 +1,6 @@
 # OD02 review packet
 
-Candidate is `0ac392156627d231ceb2fcb408e938bd877271b4`; final source association and full regression are pending. This document is a review entrypoint, not an acceptance result. Review a named immutable API commit when supplied, and do not confuse the live worktree with that commit.
+Candidate is `0ac392156627d231ceb2fcb408e938bd877271b4`; source association now passes for 69 non-skipped output tests. Full regression has one unchanged Rabbit prerequisite failure and 103 skipped service tests. Independent review is REQUEST_CHANGES (`review-0ac3921-findings.md`). This document is a review entrypoint, not an acceptance result. Review a named immutable API commit when supplied, and do not confuse the live worktree with that commit.
 
 ## Scope to approve
 

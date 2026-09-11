@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-09-11T05:53:48.853Z" hostname="Eva" time="3.122">
+  <properties/>
+  <testcase name="completeCommitsBothTablesAndOuterCallbackCanRollItBack()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.876"/>
+  <testcase name="claimAndDeliveryCommitTogether()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.15"/>
+  <testcase name="outerRequiredCallbackFailureRollsBackClaimAndDelivery()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.207"/>
+  <testcase name="concurrentExpiredLeaseReclaimHasSingleWinnerAndOldTokenIsStale()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.252"/>
+  <testcase name="concurrentFirstClaimHasSingleWinnerAndNoDuplicateSideEffect()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.186"/>
+  <testcase name="failureOnEitherCompletionSideRollsBackTheOtherSide()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.195"/>
+  <testcase name="inboxInsertFailureAndDeliveryClaimFailureEachRollBackBothSides()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.236"/>
+  <testcase name="staleMarkerAndTerminalShapeCorruptionPreserveRows()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.418"/>
+  <testcase name="expiredCompletionUsesAuthoritativeBoundaryAndRollsBackEarlyAttempt()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.223"/>
+  <testcase name="duplicateReturnsPriorResultAndConflictPreservesDurableRows()" classname="cn.jia.agent.service.impl.AgentCommandInboxRealTransactionTest" time="0.321"/>
+  <system-out><![CDATA[13:53:49.061 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:49.830 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:49.990 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:50.175 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:50.446 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:50.637 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:50.720 [Test worker] WARN cn.jia.agent.service.impl.AgentCommandInboxServiceImpl -- event=AGENT_INBOX_IDENTITY_CONFLICT reason=COMPLETION_DELIVERY_DISPOSITION_CAS_0 consumerName=agent-command-dispatch-v1 tenantId=tenant-a clientId=client-a messageId=msg-1 eventId=evt-1 commandId=cmd-1 deliveryId=1
+13:53:50.874 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:50.996 [Test worker] WARN cn.jia.agent.service.impl.AgentCommandInboxServiceImpl -- event=AGENT_INBOX_IDENTITY_CONFLICT reason=DELIVERY_CONSUME_CAS_0 consumerName=agent-command-dispatch-v1 tenantId=tenant-a clientId=client-a messageId=msg-1 eventId=evt-1 commandId=cmd-1 deliveryId=1
+13:53:51.065 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:51.170 [Test worker] WARN cn.jia.agent.service.impl.AgentCommandInboxServiceImpl -- event=AGENT_INBOX_IDENTITY_CONFLICT reason=STALE_MARKER_ACTIVE_SOURCE_CORRUPT consumerName=agent-command-dispatch-v1 tenantId=tenant-a clientId=client-a messageId=msg-1 eventId=evt-1 commandId=cmd-1 deliveryId=1
+13:53:51.413 [Test worker] WARN cn.jia.agent.service.impl.AgentCommandInboxServiceImpl -- event=AGENT_INBOX_IDENTITY_CONFLICT reason=TERMINAL_FENCE_SHAPE_CORRUPT consumerName=agent-command-dispatch-v1 tenantId=tenant-a clientId=client-a messageId=msg-1 eventId=evt-1 commandId=cmd-1 deliveryId=1
+13:53:51.529 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:51.719 [Test worker] WARN com.baomidou.mybatisplus.core.toolkit.Sequence -- Unable to get network interface for Eva/127.0.1.1
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+13:53:51.960 [Test worker] WARN cn.jia.agent.service.impl.AgentCommandInboxServiceImpl -- event=AGENT_INBOX_IDENTITY_CONFLICT reason=WIRE_CANONICAL_PROVENANCE_INVALID consumerName=agent-command-dispatch-v1 tenantId=tenant-a clientId=client-a messageId=msg-1 eventId=evt-1 commandId=cmd-1 deliveryId=1
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
