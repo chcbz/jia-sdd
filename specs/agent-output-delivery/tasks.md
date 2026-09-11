@@ -28,6 +28,16 @@ R1合计7～10人日，R2追加5～7.5人日，工程总计12～17.5人日（对
 
 ## 特别责任边界
 
+冻结 OpenAPI 共 21 个 HTTP operation，按下面的责任分配验收，避免只接写接口而遗漏查询/能力入口；这张表表示任务范围，不表示已实现。
+
+| 任务 | operation 数 | 接口责任 |
+| --- | ---: | --- |
+| OD02 | 4 | createUpload、putUploadBytes、completeUpload、getUpload |
+| OD03 | 11 | getOutputCapabilities；task/chat 各自的 publish、list、listVersions、getVersion、downloadVersion |
+| OD07 | 2 | mutateWorkLease、getWorkLease |
+| OD08 | 2 | submitDelivery、listDeliveries |
+| OD09 | 2 | reviewDelivery、dispatchRework |
+
 - main_orchestrator仅写root计划/证据/集成控制文件；OD00/OD06/OD11如需执行验证由test_runner承担单一验证子任务，发布门槛由release_guard判定。
 - P0代码、迁移、权限、租约与并发由critical_worker写；balanced_worker仅在冻结契约后负责普通Vue/接口接线。
 - Client独立仓为 `/home/chc/wsps/isp-install`；不把其源码复制进root，不由root的API/Web gitlink代替client版本记录。
