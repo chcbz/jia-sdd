@@ -27,3 +27,9 @@ I06 status: application resource-budget repair design has a narrow independent f
 ## Expanded real-dependency observation
 
 The expanded suite passed 7 tests (no failures/errors/skips), superseding its earlier 4-test run for counting. I02 now has a cross-upload same-complete-key conflict check; I01 has mocked CLOSED/status-only receipt replay plus create/PUT refusal, but old full-operation tickets and actual OD01 authorization remain unproven. The old-writer check uses real MySQL and gated in-memory storage; real MinIO fencing is separate adapter/protocol evidence. GC preserves an ACTIVE held reference, then tombstones and releases quota after explicit reference release; it does not yet isolate hold-only, expiry, or concurrent reference insertion protection. See `real-dependencies-expanded-test-results/observation.json`.
+
+## I06 partial repair evidence (observed 2026-09-11)
+
+`archive-scanner-test-results/observation.json` retains 4 content tests plus 1 controlled-socket scanner-response test. Nested shared budgets, depth rejection and a permitted depth-3 ZIP now have passing focused evidence. The content suite supersedes its earlier 2-test run for counting. I06 remains open for candidate association, per-member/root-inclusive boundary tests, deterministic malformed/encrypted input and temporary-I/O service state behavior; these 5 checks do not prove the entire deployed scanning contract.
+
+GC review blockers G01–G03 are tracked separately in `gc-recovery-review.md`; they are not closed by the earlier 7-test expanded service suite.

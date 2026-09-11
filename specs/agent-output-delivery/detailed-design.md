@@ -125,6 +125,8 @@ OD01 身份锁在 run 后、receipt 前完成，HTTP filter 不替代 mutation �
 
 所有引用更改与 object DELETING CAS 在同一对象锁下串行；GC 检查无 ACTIVE 有效引用/pin/hold 和无活跃上传，标 DELETING 提交后清除存储字节，完成后 DELETED 并释放实际配额。OD02 单 PUT 存储协议通过同 key 的零字节 tombstone 替换并核验来清除字节，防止迟到写入重建；它与 SQL 的 DELETED 状态是两个不同层次的记录。失败重试不复活对象；生成新引用只允许 PASSED/READY。到期引用转 EXPIRED 后不能借其他来源仍保存对象而恢复访问。
 
+引用锁协议补充：新建引用/READ_PIN、续期或加 hold 都属于增加保护，须在精确 object 锁下重验 PASSED/READY，再锁写 reference。释放、无 hold 到期转 EXPIRED、清除 hold 只允许单调减少保护，可在 READY/DELETING/DELETED 下于 object → reference 锁序幂等执行；不得顺带延长期限、复活终态引用或改绑对象。expiry worker 无锁枚举后必须锁下重读 scope/object/key、ACTIVE、hold=false 和到期时间。DELETED 对象行保留供这些操作串行化；异常缺失作为一致性错误，不能绕过锁。cleanup finalize 使用 scope quota → object → cleanup job，过期 CLAIMED/DELETING lease 可由新 worker CAS 重领，旧 epoch 清理仅释放其自身占用，只有确切当前 bucket/key/version 的 fence 才能推进对象 DELETED。
+
 下载先校验业务权限/版本有效期/对象状态，建立 READ_PIN。流下载硬上限 10 分钟，pin 默认 11 分钟、每 30 秒续至传输期限；完成即释放，进程崩溃自动到期，过期不会无限占用。业务撤权后新请求拒绝；已开始的流最多持续当前传输期限，在产品契约说明。首次版本不生成签名 URL，减少泄漏及撤销窗口。
 
 ## 8. 文件清单与客户端行为
