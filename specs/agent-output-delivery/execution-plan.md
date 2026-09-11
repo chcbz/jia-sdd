@@ -1,6 +1,6 @@
 # 实施计划、步骤与交付效率 v1.1
 
-状态：OD00、OD01 开发门槛与独立评审已通过，OD02 上传与对象链路实施中，尚未部署。实际状态与证据见 [task-ledger.yaml](task-ledger.yaml)；依赖 [detailed-design.md](detailed-design.md) 与 [tasks.md](tasks.md) 的逐项任务。
+状态：OD00～OD02 开发门槛与独立评审已通过，OD03 发布与鉴权取件实施中，尚未部署。实际状态与证据见 [task-ledger.yaml](task-ledger.yaml)；依赖 [detailed-design.md](detailed-design.md) 与 [tasks.md](tasks.md) 的逐项任务。
 
 ## 1. 交付目标与估算口径
 

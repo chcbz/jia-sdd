@@ -100,7 +100,7 @@ tasks:
   unlocks:
   - OD02
 - id: OD02
-  status: in_progress
+  status: accepted_for_development
   release: R1
   title: 字节对象、配额、上传校验和GC
   ownership: agent-api/core/mapper/service output存储与M001
@@ -122,17 +122,19 @@ tasks:
   - O28
   owner: critical_worker
   base_commit: c5330dd50da6c03e55edca0744485a1b95385552
-  candidate_commit: 7701a5564fd1ab8ec1a3b84568e383d8b7aaf587
+  candidate_commit: a04c2feb634643fc7e52289aa2b4a98ddf61bbb3
   started_at: '2026-09-09T20:51:50Z'
-  review_status: request_changes
+  review_status: approve_for_development
   progress: >-
-    Candidate 7701a556 scoped regression passed 83/83; root archived eight XML
-    reports and verified candidate source correspondence (post-run snapshots,
-    not compiled dependency closure). Independent review closes R04/R06 and
-    R01 expected-identity-denial subcase, but requests R01 fresh recovery clock
-    after identity/runtime lock waits plus real MySQL expiry barrier. Original
-    writer repairing this bounded residual; OD03 remains gated.
+    Independent development APPROVE on a04c2feb; R01-R08 closed. Final affected
+    authorization regression22/22 passed with verified source/report association;
+    parent7701a556 scoped83/83 retained separately without relabeling or summing.
+    OD03 unlocked. Canonical build, deployment/configuration/load and user-facing
+    integration remain OD06/OD11 gates; prior full-regression limits preserved.
   evidence:
+  - evidence/OD02/accepted-review-a04c2feb.md
+  - evidence/OD02/repair-a04c2feb-test-results/root-association.json
+  - evidence/OD02/repair-a04c2feb-test-results/writer-association.json
   - evidence/OD02/review-7701a556-findings.md
   - evidence/OD02/repair-7701a556-test-results/execution-notes.md
   - evidence/OD02/repair-7701a556-test-results/root-association.json
@@ -178,8 +180,12 @@ tasks:
   - evidence/OD02/gc-recovery-review.md
   - evidence/OD02/gc-recovery-test-results/observation.json
   - evidence/OD02/gc-recovery-review-observation.json
+  commit: a04c2feb634643fc7e52289aa2b4a98ddf61bbb3
+  accepted_for_development_at: '2026-09-11T08:11:21.569356+00:00'
+  unlocks:
+  - OD03
 - id: OD03
-  status: not_started
+  status: in_progress
   release: R1
   title: 任务/对话成果发布、列表和鉴权下载
   ownership: agent artifact M002；chat_output；精确ACL与代理读
@@ -200,6 +206,13 @@ tasks:
   - O09
   - O19
   - O29
+  owner: critical_worker
+  base_commit: a04c2feb634643fc7e52289aa2b4a98ddf61bbb3
+  started_at: '2026-09-11T08:11:21.569356+00:00'
+  progress: sole API writer implementing eleven publication/capability/read operations
+  evidence:
+  - evidence/OD03/claim.md
+  - evidence/OD03/implementation-handoff.md
 - id: OD04
   status: not_started
   release: R1

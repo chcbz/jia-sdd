@@ -1,6 +1,6 @@
 # 可执行任务清单 v1.1
 
-实施状态：OD00、OD01 已通过开发门槛与独立评审，OD02 上传与对象链路实施中，后续任务尚未启动；逐项状态以 [task-ledger.yaml](task-ledger.yaml) 为准。每项只有一个写入者，验证后独立只读评审。用户已授权持续推进 OD00～OD11，无需重复确认常规实施；发布仍须满足实际发布门槛。流程与命令见 [execution-plan.md](execution-plan.md)，技术契约见 [detailed-design.md](detailed-design.md)。
+实施状态：OD00～OD02 已通过开发门槛与独立评审，OD03 发布与鉴权取件实施中；逐项状态以 [task-ledger.yaml](task-ledger.yaml) 为准。每项只有一个写入者，验证后独立只读评审。用户已授权持续推进 OD00～OD11，无需重复确认常规实施；发布仍须满足实际发布门槛。流程与命令见 [execution-plan.md](execution-plan.md)，技术契约见 [detailed-design.md](detailed-design.md)。
 
 | ID | 版本 | 工作项与文件责任 | 写入角色 → 只读评审 | 人日 | 解锁条件/验收 |
 | --- | --- | --- | --- | --- | --- |
