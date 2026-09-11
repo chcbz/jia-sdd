@@ -18,6 +18,8 @@ Paths below are relative to the API repository.
 
 ## First observable slice
 
+Also implement the frozen UserJwt `GET /agent/output-capabilities` response while wiring the owner read API. OD01 provides runtime registration/heartbeat capability persistence, but the API candidate has no controller mapping for this HTTP operation. Keep these two capability surfaces distinct, report actual enabled/read/upload policy, and leave `taskDeliveryHttpV1` false until R2 is implemented. Reuse the repaired output envelopes for all new routes so client/UI integration does not discover a missing capability endpoint later.
+
 Using the accepted OD02 real-byte fixture, publish one exact task artifact version with explicit OWNER_SHARE and one conversation output. Obtain each through the frozen UserJwt list/detail/download route, close the Agent connection and download again; hash must match the stored fixture. Then prove that changing user/scope/version or omitting OWNER_SHARE rejects access without exposing title/count. These are OD03 checks within the existing O03/O06/O07/O08/O09/O19/O29 scope, not a claim of end-to-end client/Web acceptance.
 
 Implement durable publication receipt, exact source/run/producer/object binding, predecessor CAS and reference creation in one transaction. Wire READ_PIN creation/renewal/release to the accepted OD02 object locking and tombstone GC; no network stream while SQL locks are held. Reuse the canonical signed cursor, expiry and error-envelope rules; never export bucket/key, absolute workspace path or credentials.
