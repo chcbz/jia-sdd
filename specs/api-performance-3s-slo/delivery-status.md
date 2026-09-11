@@ -23,8 +23,10 @@
 
 ## 下一步
 
-先实施并审查不启动应用的隔离预检包，冻结运行工件、profile、数据夹具和可信采集链；完成真实声明/运行时清单对账后，再启动六个热点接口的未优化基线和查询优化。不得用合成测试替代真实清单或压测，不得生产压测。
+用户已明确改为低资源直接发布：不新建隔离环境、不本地重构建或压测，先将已验收日志/指标切片交由现有发布 Owner 做云端制品核验和发布，上线仅轻量 smoke/被动观测。当前等待同一 API 发布任务协调，尚未发布；完整清单、热点优化及3秒 SLO 仍未验收。
 
 证据与失败矩阵：`../../docs/implementation/handoffs/PERF-CONTINUE-R3-20260911.md`；此前证据见 `PERF-FIRST-BATCH-20260911.md` 和 `PERF-VERIFY-R2-ROOT-CAUSE-20260911.md`。
 
 本轮构建证据、元数据补证和保留失败历史：`../../docs/implementation/handoffs/PERF-RUNTIME-PREP-20260911.md`。仅补证、未重复构建；后采集的 orchestrator hash 不冒充执行前证明。
+
+最新发布授权与协调入口：`../../docs/implementation/handoffs/PERF-DIRECT-RELEASE-20260911.md`；此前隔离预检执行计划暂停，不再作为本轮实现任务。

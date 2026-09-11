@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-11T12:19:44+08:00",
+    "updated_at": "2026-09-11T13:08:29+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -23,7 +23,8 @@ runtime_ledger_json: |
       "PERF-A02-LOG",
       "PERF-BUILD-01",
       "PERF-CAPTURE-PREP",
-      "PERF-BUILD-02"
+      "PERF-BUILD-02",
+      "PERF-RELEASE-01"
     ],
     "tasks": {
       "D06": {
@@ -572,9 +573,9 @@ runtime_ledger_json: |
           "commit_sha": "5571d183fe7c612f2d5ebb272548aa5bfad77e90",
           "tree_sha": "b993a925464701b5a17c93461cf3f558036f5d13"
         },
-        "current_gate": "prepared",
+        "current_gate": "deferred",
         "blocker": null,
-        "next_action": "Read-only packet reviewed; classes prerequisite accepted. Next admit bounded no-launch containment preflight: artifact/classpath provenance, minimal mount/PID/network isolation, sanitized route/profile manifest, ordered fixture hashes and negative host-socket/egress checks. No DB/application start or mappings host exposure."
+        "next_action": "User 2026-09-11 explicitly cancelled new isolated environment due resource pressure. Do not implement namespace/DB/baseline preflight now. Deliver accepted logging+histogram via existing reviewed release path; lightweight post-release checks, full3s SLO still unproven."
       },
       "PERF-BUILD-02": {
         "owner": null,
@@ -585,6 +586,29 @@ runtime_ledger_json: |
         "current_gate": "accepted",
         "blocker": null,
         "next_action": "R2 independent ACCEPT0/0/0 on exact API b993a925 tree: :starter:classes native0, 80 actionable75executed5uptodate, NOT_RUN tests; key68feb19828d94bf6a65833732ba425be03373f953b8ef1a1ec3123cc87a2618f. Reuse no rerun. Freeze reviewed no-launch containment preflight before runtime; prior failures and post-run provenance limitations retained in PERF-RUNTIME-PREP-20260911.md."
+      },
+      "PERF-RELEASE-01": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "5571d183fe7c612f2d5ebb272548aa5bfad77e90",
+          "tree_sha": "b993a925464701b5a17c93461cf3f558036f5d13"
+        },
+        "current_gate": "awaiting_release_coordination",
+        "blocker": {
+          "category": "release_reviewer_admission",
+          "summary": "Extra read-only release reviewer could not be registered: global read-only slots full and initial gate must be review. No ledger save or release operation occurred.",
+          "consecutive_failures": 1,
+          "attempts": [
+            {
+              "at": "2026-09-11T13:06:33+08:00",
+              "category": "release_reviewer_admission",
+              "evidence": "Controller admission output 2026-09-11 13:02+08; provisional agent 01a08ed4-fd5a-7bf0-b006-2f2d1c4c084b was stopped/closed, not formal acceptance.",
+              "root_cause": "Controller attempted new reviewer before checking global support capacity. Existing FLOW release already owns target. Provisional findings do not replace release gate.",
+              "remediation": "Do not spawn/retry or preempt. Route exact PERF candidate to existing FLOW-CI-BACKEND-R4-RUN owner through conflict-alert, retaining user no-isolation authorization."
+            }
+          ]
+        },
+        "next_action": "Existing FLOW-CI-BACKEND-R4-RUN owner: take PERF5571d183/b993a925, verify remote develop still ancestor, fast-forward exact accepted candidate when own window ready; fresh cloud artifact ticket + release guard + root-owned deployment; no local Gradle/isolated environment/load test. User explicitly authorized deployment."
       }
     }
   }
