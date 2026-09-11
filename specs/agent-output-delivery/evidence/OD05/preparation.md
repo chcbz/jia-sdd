@@ -12,3 +12,7 @@ Read-only map at Web `77666e8fc1b2060ff3db8374b5de4539a5e5e53d`, worktree `/home
 - Relevant regression seams include `tests/juyiting-hall-conversation.test.js`, `juyiting-task-workspace-wiring.test.js`, `juyiting-task-workspace-feature-flag.test.js`, `juyiting-task-workspace-panel.test.js` and `juyiting-task-workspace-integration.test.js`. Add the shared output behavior tests defined by OD05, then perform the frontend build required by the user's workspace instructions; a local build is not production-release evidence.
 
 Preserve separate map/roster data flows and explicit target Agent assignment. Initial R1 labels distinguish shared output from formal acceptance; R2 delivery/review actions remain OD10.
+
+## Installed development dependencies
+
+Preparation completed on the unchanged web candidate `77666e8fc1b2060ff3db8374b5de4539a5e5e53d`: `npm ci --no-audit --no-fund` in `/home/chc/wsps/cyf-worktrees/output-web` exited 0 and installed 678 packages (Node v22.22.0, npm 11.17.0). The worktree remains clean and Vite is available. `package-lock.json` SHA-256 is `c69c07a9b41b963b78f7d8bbc033b7e029ae5df3e3d82054990bb2cd7df1d7e3`. This is dependency preparation only; no frontend feature test or build has run.
