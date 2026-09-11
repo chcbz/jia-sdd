@@ -1,0 +1,41 @@
+{
+  "candidate": "7701a5564fd1ab8ec1a3b84568e383d8b7aaf587",
+  "source_sha256": {
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/output/service/OutputContentInspector.java": "ec67d0beb061af1654460a9df00ac94f83e7ee953cb003db324144fddb5dd013",
+    "agent/jia-agent-api/src/main/java/cn/jia/agent/output/OutputUploadException.java": "428f692c04a875b03a058bbb7763708fcf782435f16fa01d2d54d56a22b89a98"
+  },
+  "fixtures_sha256": {
+    "/home/chc/wsps/cyf/specs/agent-output-delivery/evidence/OD02/zip-structure-010a1022/ZipStructureProbe.java": "e835968d3c8eff734602a22d07193a4d486c285d7deea8610f502a9064bc7625",
+    "/home/chc/wsps/cyf/specs/agent-output-delivery/evidence/OD02/zip-structure-010a1022/valid-two-members.zip": "6e3c70e0b1fc015dd4407d7617694e34020340e43e227a0adafcd5afa8fe2259",
+    "/home/chc/wsps/cyf/specs/agent-output-delivery/evidence/OD02/zip-structure-010a1022/unlisted-local-member.zip": "d1a723e9d0797d0e9b693fd35a5dc77465ffbf8cd40af04fab1bca391fc727b6"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/home/chc/.local/share/cyf-output-tools/java/bin/javac",
+        "-d",
+        "/tmp/cyf-od02-zip-structure-7701a556/classes",
+        "/tmp/cyf-od02-zip-structure-7701a556/OutputContentInspector.java",
+        "/tmp/cyf-od02-zip-structure-7701a556/OutputUploadException.java",
+        "/home/chc/wsps/cyf/specs/agent-output-delivery/evidence/OD02/zip-structure-010a1022/ZipStructureProbe.java"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/chc/.local/share/cyf-output-tools/java/bin/java",
+        "-cp",
+        "/tmp/cyf-od02-zip-structure-7701a556/classes",
+        "cn.jia.agent.output.service.ZipStructureProbe",
+        "/home/chc/wsps/cyf/specs/agent-output-delivery/evidence/OD02/zip-structure-010a1022/valid-two-members.zip",
+        "/home/chc/wsps/cyf/specs/agent-output-delivery/evidence/OD02/zip-structure-010a1022/unlisted-local-member.zip"
+      ],
+      "exit_code": 0,
+      "stdout": "valid-two-members.zip central=2 local=2 REJECTED OUTPUT_ARCHIVE_LIMIT\nunlisted-local-member.zip central=1 local=2 REJECTED OUTPUT_ARCHIVE_INVALID\n",
+      "stderr": ""
+    }
+  ],
+  "limit": "Standalone exact-candidate inspector regression of prior harmless ZIP counterexample; no Gradle, DB, storage, scanner, HTTP or feature acceptance."
+}
