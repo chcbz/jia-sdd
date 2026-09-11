@@ -1,0 +1,56 @@
+{
+  "candidate": "0ac392156627d231ceb2fcb408e938bd877271b4",
+  "groups": [
+    {
+      "observation": "specs/agent-output-delivery/evidence/OD02/gc-recovery-test-results/observation.json",
+      "totals": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_snapshots": 22
+    },
+    {
+      "observation": "specs/agent-output-delivery/evidence/OD02/authorization-enlistment-test-results/observation.json",
+      "totals": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_snapshots": 30
+    },
+    {
+      "observation": "specs/agent-output-delivery/evidence/OD02/archive-scanner-final-test-results/observation.json",
+      "totals": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_snapshots": 7
+    },
+    {
+      "observation": "specs/agent-output-delivery/evidence/OD02/security-coexistence-final-test-results/observation.json",
+      "totals": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_snapshots": 7
+    }
+  ],
+  "correspondence_valid": false,
+  "failures": [
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/OutputUploadDao.java: archived source differs from candidate",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/impl/OutputUploadDaoImpl.java: archived source differs from candidate",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/OutputUploadDao.java: archived source differs from candidate",
+    "agent/jia-agent-mapper/src/main/java/cn/jia/agent/output/dao/impl/OutputUploadDaoImpl.java: archived source differs from candidate"
+  ],
+  "limit": "Source/report association only; no coverage or release verdict.",
+  "verifier_exit_code": 1,
+  "observed_at": "2026-09-11T05:51:58.246048+00:00",
+  "writer_explanation": "After GC15/auth1 execution, the writer removed the unused markObjectDeleting interface declaration and implementation. Active GC already uses claimObjectDelete to enter DELETING atomically. This explains the two path differences but does not change the recorded mismatch into a hash match. Full candidate regression is running with OD01/OD02 test environments enabled."
+}
