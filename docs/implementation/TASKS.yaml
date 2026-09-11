@@ -5,7 +5,7 @@ source_design: "docs/juyiting-multi-agent-collaboration-design.md"
 runtime_ledger_json: |
   {
     "schema_version": 2,
-    "updated_at": "2026-09-11T10:03:08+08:00",
+    "updated_at": "2026-09-11T11:04:00+08:00",
     "critical_path": [
       "D06",
       "D08",
@@ -20,7 +20,8 @@ runtime_ledger_json: |
       "PERF-REVIEW-01",
       "PERF-01-TOOLS",
       "PERF-A01-HIST",
-      "PERF-A02-LOG"
+      "PERF-A02-LOG",
+      "PERF-BUILD-01"
     ],
     "tasks": {
       "D06": {
@@ -384,14 +385,14 @@ runtime_ledger_json: |
       "PERF-01": {
         "owner": null,
         "exact_sha_tree": {
-          "commit_sha": "609cd1c46e9fe50a641270e56c0901f36ba634e5",
-          "tree_sha": "00b861cdcb7e56be561d33c7d2fb75e8f5f2fe6f"
+          "commit_sha": "43e0e46f8d9a07797713adb432c3bcab770dd8b0",
+          "tree_sha": "e0a9c30fa385c1ff0ae42d2f70f97dd5d87bc3b9"
         },
-        "current_gate": "blocked_root_cause",
+        "current_gate": "awaiting_runtime_capture_and_registry",
         "blocker": {
-          "category": "inventory_alias_and_input_trust",
-          "summary": "R2 independent SOURCE REJECT2P1 despite19tests: unknown composed controller marker filtered by filename relevance; reconcile self-trusts mutable inventory pins/routes and accepts coherent forgery.",
-          "consecutive_failures": 2,
+          "category": "metadata_validator_false_skip_match",
+          "summary": "Metadata-only completion validator exited native 1 before receipt/cache completion because its skip check searched the word skipped in verbose test names and falsely matched test_malformed_runtime_records_are_rejected_not_skipped; no tests, inventory CLI, Gradle, source, or failed wrapper were rerun or modified. | authorized remediation: docs/implementation/handoffs/PERF-CONTINUE-R3-20260911.md#R4-metadata-second-failure",
+          "consecutive_failures": 0,
           "attempts": [
             {
               "at": "2026-09-11T09:03:52+08:00",
@@ -406,10 +407,38 @@ runtime_ledger_json: |
               "evidence": "docs/implementation/handoffs/PERF-FIRST-BATCH-20260911.md",
               "root_cause": "R1 tests only placed alias on Controller-suffixed filename; reconciliation expected binding derived from same untrusted artifact instead of independently supplied hash/source pins.",
               "remediation": "STOP aftersecondsourcefailure. Freeze minimal matrix: inspect unknown annotations before source relevance filtering; require independent inventory artifact hash/source API pins/schema/dirty/content validation and adversarial CLI tests. No inventory promotion meanwhile."
+            },
+            {
+              "at": "2026-09-11T10:36:47+08:00",
+              "category": "verifier_handle_unavailable",
+              "evidence": "docs/implementation/handoffs/PERF-CONTINUE-R3-20260911.md",
+              "root_cause": "Agent service no longer addresses completed verifier ID;25unitPASS remains valid, source unchanged. Not a code or test failure.",
+              "remediation": "Do not repeat dispatch or spawn blindly; independent live reviewer may execute two tiny CLI reproduction fixtures as read-only source review, or release its slot before a new verifier. No repo edits/heavy resources."
+            },
+            {
+              "at": "2026-09-11T10:42:36+08:00",
+              "category": "artifact_hash_parse_toctou",
+              "evidence": "docs/implementation/handoffs/PERF-CONTINUE-R3-20260911.md",
+              "root_cause": "inventory.py hashes paths then reopens them for JSON; external pins do not bind exact bytes consumed.25unit and2reviewCLI cases miss swap race.",
+              "remediation": "STOP at second attributed event, approve R4 minimal same-buffer single-read hash+parse for each artifact and swap regression, commit then independent stdlib verification/delta review."
+            },
+            {
+              "at": "2026-09-11T10:50:43+08:00",
+              "category": "verification_harness_expected_nonzero_handling",
+              "evidence": "/var/tmp/cyf-perf-inventory-r4-mkXwWD (unit.rc=0, cli-help.rc=0, positive-scan.rc=0, positive-reconcile.rc=0, negative-scan.rc=2; unit-counts expected/discovered/executed=26/26/26 skipped=0)",
+              "root_cause": "The task-owned shell harness used set +e around the command but restored set -e inside run_capture; when the deliberately failing unknown @GM scan returned the expected native 2, Bash exited at the function return before NEG_RC validation and final evidence assembly. This is verifier harness control-flow failure, not an inventory source or test assertion failure.",
+              "remediation": "STOP with no source repair or test retry. Preserve the fresh evidence directory read-only. Main may decide whether the already-executed raw outcomes are sufficient or separately authorize a new verifier/evidence-only completion; do not infer acceptance from this incomplete harness record."
+            },
+            {
+              "at": "2026-09-11T10:54:33+08:00",
+              "category": "metadata_validator_false_skip_match",
+              "evidence": "/var/tmp/cyf-perf-inventory-r4-mkXwWD/metadata-completion partial metadata; existing raw unit output still shows native0, Ran26, OK, and zero actual skipped result markers.",
+              "root_cause": "Verifier metadata parser used a lexical substring check over complete verbose test lines instead of checking unittest result suffixes. A test method name contains not_skipped, producing a metadata validation false positive despite the preserved raw suite result.",
+              "remediation": "STOP at the second consecutive verifier-side failure. Preserve raw and partial metadata evidence; no tests/CLI/source/wrapper retry or repair. Main must explicitly review the new root-cause matrix before any metadata-only continuation."
             }
           ]
         },
-        "next_action": "STOP aftersecondsourcefailure. Freeze minimal matrix: inspect unknown annotations before source relevance filtering; require independent inventory artifact hash/source API pins/schema/dirty/content validation and adversarial CLI tests. No inventory promotion meanwhile."
+        "next_action": "ChildTOOLS43e0e46f accepted source+26actualunitPASS+syntheticCLI, auto-promote. Parent still needs independently trusted realprofile frameworkmanifest/capture/registry100percent reconciliation before isolated baseline. Wrappermetadata failures retained, no cacheHIT invented."
       },
       "PERF-A02": {
         "owner": null,
@@ -488,35 +517,22 @@ runtime_ledger_json: |
       "PERF-REVIEW-01": {
         "owner": null,
         "exact_sha_tree": {
-          "commit_sha": "99c820216adaa608e98ff120c7e4fe637fcd8812",
-          "tree_sha": "ac02104c1e5a21f52146b92593a2af7a03d680db"
+          "commit_sha": "43e0e46f8d9a07797713adb432c3bcab770dd8b0",
+          "tree_sha": "e0a9c30fa385c1ff0ae42d2f70f97dd5d87bc3b9"
         },
-        "current_gate": "rejected",
-        "blocker": {
-          "category": "agent_capacity",
-          "summary": "Fresh independent root reviewer spawn denied by thread limit; prior own agent IDs report not_found to wait/send/close. No new reviewer started.",
-          "consecutive_failures": 1,
-          "attempts": [
-            {
-              "at": "2026-09-11T09:24:08+08:00",
-              "category": "agent_capacity",
-              "evidence": "Main tool outcomes 2026-09-11; source609cd1c unchanged",
-              "root_cause": "Agent runtime admission limit despite completed agent handles not addressable; not source or test failure.",
-              "remediation": "Do not repeat spawn blindly. Finish known-live Turing bounded task, explicitly release its slot, then request one fresh independent verification/review worker; meanwhile preserve accepted A02 and root repair candidate."
-            }
-          ]
-        },
-        "next_action": "Final source/evidence review complete: A01-HIST ACCEPT0/0/0, A02 previousACCEPT retained; rootTOOLS REJECT2P1, overall firstbatch not fullyaccepted. Promote independent acceptedAPI only."
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Final toolR4 source+actualevidence ACCEPT0/0/0; separate BUILD-EVIDENCE6GradlePASS accepted. Promote tooling43e0e46f byte-exact and docs; real inventory/runtime/SLO pending."
       },
       "PERF-01-TOOLS": {
         "owner": null,
         "exact_sha_tree": {
-          "commit_sha": "609cd1c46e9fe50a641270e56c0901f36ba634e5",
-          "tree_sha": "00b861cdcb7e56be561d33c7d2fb75e8f5f2fe6f"
+          "commit_sha": "43e0e46f8d9a07797713adb432c3bcab770dd8b0",
+          "tree_sha": "e0a9c30fa385c1ff0ae42d2f70f97dd5d87bc3b9"
         },
-        "current_gate": "rejected",
+        "current_gate": "accepted",
         "blocker": null,
-        "next_action": "Independent R2 REJECT2P1; parentPERF-01 stopped_root_cause.19testPASS not sufficient; do not promote this tooling candidate."
+        "next_action": "Final independent R4 ACCEPT0/0/0 exact43e0e46f/e0a9c30f:26actualunitPASS plus syntheticCLI positive/unknownnegative, immutable rawlogs+mainaudit verified despite preserved wrappermetadata failures/no fakecache. Auto-promote bounded tooling only."
       },
       "PERF-A01-HIST": {
         "owner": null,
@@ -537,6 +553,16 @@ runtime_ledger_json: |
         "current_gate": "accepted",
         "blocker": null,
         "next_action": "Independent Godel ACCEPT0/0/0 exact source plus javac/JUnit6PASS verified manifests26jars. Auto-promote this bounded logging slice to clean API integration branch; no module/runtime/SLO claims."
+      },
+      "PERF-BUILD-01": {
+        "owner": null,
+        "exact_sha_tree": {
+          "commit_sha": "5571d183fe7c612f2d5ebb272548aa5bfad77e90",
+          "tree_sha": "b993a925464701b5a17c93461cf3f558036f5d13"
+        },
+        "current_gate": "accepted",
+        "blocker": null,
+        "next_action": "Independent reviewer ACCEPT0/0/0 exact combined-tree selected logging Gradle6PASS; reuse evidence keyd5ebc588, record docs automatically. Full module/starter/runtime/SLO remain pending."
       }
     }
   }

@@ -86,3 +86,20 @@
 - 两项 accepted API 切片已无冲突合入并推送 `5571d183fe7c612f2d5ebb272548aa5bfad77e90` / tree `b993a925464701b5a17c93461cf3f558036f5d13`；6 文件 blob 与对应原候选一致。这里的6+5测试为两个原树的 scoped evidence，不是合并树新跑11项或整体构建证明。
 - `PERF-01-TOOLS`: `609cd1c` 的19项独立测试通过，但最终 source REJECT0/2/0；停止认领，保留修复矩阵。CLI对 exact API `014fb7e` 的440条 supported mapping 只是部分静态诊断，返回预期非零，并非 inventory PASS。
 - 未发布；完整 Gradle 模块构建、运行时清单、跨链路观测、隔离压测、热点查询优化和全API≤3秒仍 pending。
+
+
+### 同日 R3 独立验证补充
+
+- `PERF-BUILD-01`: 合并 API `5571d183fe7c612f2d5ebb272548aa5bfad77e90` / tree `b993a925464701b5a17c93461cf3f558036f5d13`，使用明确非敏感占位发布属性，经 orchestrator 单次 offline Gradle 执行 `:common:jia-common-service:test --tests cn.jia.core.interceptor.HttpRequestLogInterceptorTest`，native0、12/12任务执行、6/6测试PASS、零失败/错误/跳过。不是完整模块/starter/metrics测试或启动/性能证据；旧失败历史不改写。
+- 证据 `/var/tmp/cyf-perf-build-r3-fDNNWL`，key `d5ebc5886ad7954f3c6202eb268fafb2255c92dfb779ed97f880c5af3973ce43`，manifest `4a93fcf1f3229e9f68c800a4ef8bb1ac0362ec0a6cc7a489bbb6585246c978c9`；main复核15项hash；独立证据审查ACCEPT0/0/0，仅此定向Gradle证据切片验收通过。
+- `PERF-01-TOOLS` R3候选 `f2b9e65641c9ac72021666314dcc866568a0dfe4` / tree `414281d47cd0772830dfda1e24464f1416897e90`：独立Python3.6.8 25/25测试PASS、CLIhelp0、零跳过；key `bbbab4da6f2ecfc5f360ccfbff9979c24ec087a2fa6694057e83db4830ee9ff1`，证据 `/var/tmp/cyf-perf-inventory-r3-yLWLnu`，main复核21项hash。源码审查及真实CLI scan→reconcile正例/非Controller注解反例复核待完成；不得提前标为清单或SLO通过。
+- 执行合同/归因和后续审查记录：`../../docs/implementation/handoffs/PERF-CONTINUE-R3-20260911.md`。没有发布或生产压测。
+
+
+### 同日 R4 最终有界验收
+
+- `PERF-01-TOOLS`：最终 `43e0e46f8d9a07797713adb432c3bcab770dd8b0` / tree `e0a9c30fa385c1ff0ae42d2f70f97dd5d87bc3b9`，独立源码/实际测试证据 ACCEPT0/0/0。26 项实际单测PASS、零实际跳过；真实CLI合成 scan/reconcile 正例0/0，自定义注解负例预期2且含 fatal诊断。
+- 原始证据 `/var/tmp/cyf-perf-inventory-r4-mkXwWD`；main审计 `/var/tmp/cyf-perf-r4-main-audit-wxj3fs0x`，receipt SHA256 `90342e89d43860a83027ba827e486c70882e6f818210e46367daa1c6ed8362a3`，raw manifest SHA256 `b8fa0f47ce52f056c4e1d5a6dda96106dc3390b32231d3019a78b03c965bcf18`。独立 reviewer 复核原始结果/hash/clean exact identity。
+- 验证包装器误处理预期非零、元数据脚本误匹配测试名这两次失败保留；未重跑测试或伪造成功 wrapper/cache HIT。reviewer 将此格式缺口判为有界源码验收的非阻断项，不等于完整流水线成功。
+- 工具分支已推送，根专题分支 merge `45f5f07527e70d2fba9cc90f4ace9fdc95333825` 的4个工具文件 blob 与 accepted candidate 完全一致。复用原候选实际测试证据，不宣称新合并树跑过全套。
+- 本次新增实际 Gradle6PASS 和工具26PASS分属不同候选/selector，不能相加解释为32个API达标。完整清单、真实profile、registry、隔离压测及所有顶层性能验收继续 pending；未部署。

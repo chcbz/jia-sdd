@@ -1,22 +1,25 @@
 # API 3 秒性能治理 delivery status
 
-更新：2026-09-11。
+更新：2026-09-11。本文件是状态投影，当前 owner/gate 仅取 `docs/implementation/TASKS.yaml#runtime_ledger_json`。
 
-## 当前状态
+## 已交付的有界切片
 
-- 生命周期：`implementing`。
-- 已完成：建立跨 API/Web/Ops 的 SDD、3 秒 SLO 分层、声明/运行时双 inventory、首批聚义厅热点、受约束 route registry、operation v1 和验收门禁；独立 `sol_reviewer` R4 delta 已 ACCEPT（P0/P1/P2=0/0/0；R3 两项 P2 已收敛）。
-- 实施：PERF-01 离线清单工具、PERF-A01 histogram 基础、PERF-A02 请求日志优化已进入唯一运行台账，由独立 worktree Writer 实施。API 基线为 fresh remote 确认的 `e7da0a435acdff93ae64473223631b3f7d7cbdac`，不使用旧本地 checkout。
-- 已验收切片：`PERF-A02-LOG`，API `014fb7edaa53928aa5ca309ea4c8537889763563` / tree `4de32d4ccdb1efe06dd38ee2ff4009532d5300ab`；独立 source + 6 项定向单测 ACCEPT，已 byte-exact 推送 `codex/perf-api-integration-20260911`，未发布。
-- 已验收切片：`PERF-A01-HIST`，API `99c8202` / tree `ac02104`，独立 source + 5 项定向测试 ACCEPT0/0/0。与日志切片合并并推送为 `5571d183fe7c612f2d5ebb272548aa5bfad77e90` / tree `b993a925464701b5a17c93461cf3f558036f5d13`；6 个改动文件均与各自 accepted candidate byte-exact，未执行新的合并树完整测试。
-- 清单工具：`609cd1c` 虽独立 19 项测试通过，R2 仍被驳回 2 项 P1（非 Controller 命名的自定义注解漏检、清单输入信任边界不足），已进入 `blocked_root_cause`，不得推广或当作全量清单。修复矩阵已记录，尚未认领下一轮。原失败历史保留。
-- 未完成：完整模块构建（Gradle 在配置阶段因缺少 repoUsername 失败，未执行模块测试）、全量 route/runtime 清单、隔离环境基线、查询优化、全接口达标和生产发布。
-- 当前 checkout 只读静态观察为 42 个 Controller、约 401 条方法 mapping；该数字不是 accepted inventory，必须由 `PERF-01` 在 exact API tree 上确定性生成并绑定 hash。
+- 生命周期：`implementing`，整体验收尚未完成。SDD 合同独立 R4 审查 ACCEPT0/0/0。
+- `PERF-A02-LOG`：安全慢日志/单调计时，独立 source + 6 项定向单测 ACCEPT。
+- `PERF-A01-HIST`：HTTP histogram/1s、2.5s、3s buckets/URI 上限，独立 source + 5 项定向测试 ACCEPT。
+- 两项 API 切片已推送 `codex/perf-api-integration-20260911`：`5571d183fe7c612f2d5ebb272548aa5bfad77e90` / tree `b993a925464701b5a17c93461cf3f558036f5d13`，未发布。
+- `PERF-BUILD-01`：上述合并 API 的日志 selector 经真实 offline Gradle 6/6PASS、零跳过，独立证据审查 ACCEPT0/0/0。非敏感占位属性绕过历史 publishing 配置缺失；不是完整模块、starter/metrics测试或启动证明。
+- `PERF-01-TOOLS`：离线扫描/严格对账工具最终 R4 ACCEPT0/0/0，`43e0e46f8d9a07797713adb432c3bcab770dd8b0` / tree `e0a9c30fa385c1ff0ae42d2f70f97dd5d87bc3b9`。修复自定义注解漏检、外部可信工件绑定和哈希/解析竞态；26 项实际单测、真实 CLI 合成正反例通过。已推送工具分支，并 byte-exact 合入 `codex/perf-sdd-20260911`。
+- R4 验证包装器及元数据脚本各有一次失败；原始命令结果/源码身份/工件 hash 经 main 与独立 reviewer 复核，足以支持有界源码验收。未伪造成功 wrapper 或 verifier-cache HIT；失败历史保留。
 
-## 下一门禁
+## 尚未完成
 
-1. 按 `../../docs/implementation/handoffs/PERF-VERIFY-R2-ROOT-CAUSE-20260911.md` 的 PERF-01 R2 矩阵授权有界修复并补充独立负例验收；已 accepted 的 API 两切片不重复审查。
-2. 先完成声明/运行时 route inventory、观测和未优化基线，再允许热点源码 Writer 开工。
-3. 每个实现候选继续执行 gpt_test_runner 验证、sol_reviewer 独立审查和 release_guard 门禁。
+- 真实 grey/prod-profile 框架/管理面清单、受保护运行时采集、registry 全覆盖对账。
+- 完整模块构建、应用启动、跨链路 trace/inflight/依赖预算、隔离性能基线、热点查询优化、逐接口 3 秒达标及发布。
+- 旧 checkout 的42 Controller/约401 mapping，及后续 exact API `014fb7e` 的440条 supported mapping，均只是历史/非零诊断，不是 accepted 全量接口清单。
 
-本文件是状态投影，不是第二份执行台账。
+## 下一步
+
+冻结隔离环境 profile、数据夹具和可信采集链；完成真实声明/运行时清单对账后，再启动六个热点接口的未优化基线和查询优化。不得用合成测试替代真实清单或压测，不得生产压测。
+
+证据与失败矩阵：`../../docs/implementation/handoffs/PERF-CONTINUE-R3-20260911.md`；此前证据见 `PERF-FIRST-BATCH-20260911.md` 和 `PERF-VERIFY-R2-ROOT-CAUSE-20260911.md`。
