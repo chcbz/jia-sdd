@@ -28,3 +28,7 @@ Client candidate `e6091542977edf7bc6860e804bede2fc4998baa2` is frozen and under 
 The existing `/tmp/od04-npm-test.log` is an older failed run (283 tests,282 pass,1 fail), so root has requested the separate successful execution output/exit instead of mislabeling it. See `candidate-e609154/observation.json`. No acceptance is claimed until source review and accurate evidence handoff complete.
 
 The successful run footer has now been separately exported from the writer tool session (cell2023/session65870/chunk08ab5c) and inspected by root: exit0,283 pass,0 failures/skips,41377.744079ms. It is explicitly a footer archive, not a full TAP log. The prior failed file remains identified separately. See `candidate-e609154/npm-test-success-footer.txt`. Product review is still pending.
+
+## Independent review result
+
+REQUEST_CHANGES on e609154: complete-ACK-loss recovery (R01) and three queue/inbox/ledger partial-commit windows (R02). Original sole writer resumed bounded repairs. Local snapshot retention is now an explicit OD06 gate before R1 acceptance/release (R03). See `review-e609154.md` and `../OD06/client-retention-gate.md`.
