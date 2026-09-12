@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" tests="29" skipped="0" failures="1" errors="0" timestamp="2026-09-12T20:55:46.622Z" hostname="Eva" time="5.588">
+  <properties/>
+  <testcase name="unsupportedDeliveryPolicyFailsClosedBeforeStateAccess()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.09"/>
+  <testcase name="stateDefinitionsCoverRequiredTransitionsAndLegacyTaskStatuses()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.037"/>
+  <testcase name="workItemMutationResolvesAndLocksTaskRootBeforeChildRead()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.135"/>
+  <testcase name="combinedTransitionValidatesBothStatesBeforeTheFirstWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.082"/>
+  <testcase name="combinedTransitionRejectsBlankAssigneeBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.027"/>
+  <testcase name="persistedNoncanonicalTaskStatusEmptyIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.025"/>
+  <testcase name="combinedTransitionRejectsMismatchedAssigneeBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.029"/>
+  <testcase name="policy1BlocksAllDirectStateEntrypointsBeforeAggregateAccess()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.029"/>
+  <testcase name="requestedTargetStatusStillAcceptsNormalizedValues()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.027"/>
+  <testcase name="taskTransitionAppendsCanonicalBoundedEventAfterCas()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.032"/>
+  <testcase name="memberDoneUsesScopedCasAndNeverCompletesTask()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.029"/>
+  <testcase name="illegalAndTerminalTaskTransitionsFailClosedWithoutCasWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.026"/>
+  <testcase name="persistedNoncanonicalTaskStatusWhitespaceIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.029"/>
+  <testcase name="taskTransitionEventUsesDeterministicBoundedReasonCodeWithoutRawFailureReason()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.067"/>
+  <testcase name="secondCasConflictRollsBackTheCombinedMemberAndWorkItemTransaction()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="4.398"/>
+  <testcase name="persistedNoncanonicalWorkerItemStatusWhitespaceIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="persistedNoncanonicalMemberStatusIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="persistedNoncanonicalTaskStatusIsRejectedWithoutNormalization()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.021"/>
+  <testcase name="blockedAndFailedStatesRequireAReasonBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.025"/>
+  <testcase name="persistedNoncanonicalWorkItemStatusIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.019"/>
+  <testcase name="combinedTransitionRejectsEmptyStringAssigneeBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="claimSensitiveWorkItemTransitionsAreDefinedButReservedForB04()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.017"/>
+  <testcase name="staleVersionAndRacingCasReturnExplicitConflict()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="memberMutationEntersTaskRootBoundaryBeforeChildReadAndWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.03"/>
+  <testcase name="legalTaskTransitionUsesScopedTaskVersionCas()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.022"/>
+  <testcase name="stateMutationWithoutActorParameterUsesSystemWithoutFabricatingMemberAsActor()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.05"/>
+  <testcase name="combinedTransitionAppendsMemberThenWorkItemAndConflictAppendsNothing()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.021"/>
+  <testcase name="legalWorkItemTransitionsPreserveSnapshotAndSetSubmissionTime()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="scopeMissIsNotFoundWithoutLeakingOrWritingAcrossScope()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.144">
+    <failure message="org.mockito.exceptions.verification.WantedButNotInvoked: &#10;Wanted but not invoked:&#10;memberDao.findByTaskAndAgent(&#10;    &quot;tenant-wrong&quot;,&#10;    &quot;client-a&quot;,&#10;    &quot;task-1&quot;,&#10;    &quot;agt_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&quot;&#10;);&#10;-&gt; at cn.jia.agent.service.impl.AgentTaskStateServiceImplTest.scopeMissIsNotFoundWithoutLeakingOrWritingAcrossScope(AgentTaskStateServiceImplTest.java:290)&#10;Actually, there were zero interactions with this mock.&#10;" type="org.mockito.exceptions.verification.WantedButNotInvoked">Wanted but not invoked:
+memberDao.findByTaskAndAgent(
+    &quot;tenant-wrong&quot;,
+    &quot;client-a&quot;,
+    &quot;task-1&quot;,
+    &quot;agt_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&quot;
+);
+-&gt; at cn.jia.agent.service.impl.AgentTaskStateServiceImplTest.scopeMissIsNotFoundWithoutLeakingOrWritingAcrossScope(AgentTaskStateServiceImplTest.java:290)
+Actually, there were zero interactions with this mock.
+
+	at cn.jia.agent.service.impl.AgentTaskStateServiceImplTest.scopeMissIsNotFoundWithoutLeakingOrWritingAcrossScope(AgentTaskStateServiceImplTest.java:290)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
