@@ -33,3 +33,7 @@ Read-only follow-up against the unchanged client baseline: its canonical message
 ## Client baseline refresh before implementation
 
 On 2026-09-12 the original client `master` is clean at `f8c731d0cef38956bb3dabaa628c6188c0040bed`, three commits ahead of the untouched output-client baseline. Changes include conversation-bound session persistence (`96d765a`, `9888214`) in `agent-client.mjs` and its existing regression tests, plus directory mode correction in `shell/common.sh`. At OD04 start the sole client writer should verify cleanliness and ancestry, fast-forward only the feature worktree to this existing master commit, and record that implementation base. Preserve these committed fixes in output delivery; do not implement against the older session behavior and later overwrite them. This is preparation; no branch was advanced by root.
+
+## O02 format compatibility
+
+At accepted API `4c292cc3`, top-level text/plain accepts `.txt`/`.log`, not raw `.patch`/`.java`/`.py`. ZIP permits ordinary patch/README/code members but rejects `.js`, `.html`, `.svg`, executables and macro indicators even inside the archive. Use an explicit manifest-designated `changes.zip` containing `change.patch` and `README.md` as the common code-change delivery fixture; raw Java/Python may be included only under the existing ZIP rules. Client helper/docs must state these restrictions rather than promising arbitrary source archives or silently spoofing MIME types. O02 still requires actual snapshot/download hash evidence; this note does not claim the fixture was tested.

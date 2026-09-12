@@ -15,3 +15,9 @@ Observed branch tips are not themselves release approval. OD06 must integrate th
 `git merge-tree --write-tree --name-only --no-messages 683e8007 a9d3e741` in the API worktree returned 1 and reported 10 textual conflicts. It created only an unreferenced Git tree for analysis; no branch, index or working file was changed. Conflict locations: AgentRuntimeMapper, AgentCommandCanonicalCodec, AgentLegacyTaskCompatibilityService, AgentServiceImpl and its test; chat mapper/service build.gradle; ChatConversationMapper; AgentWebSocketHandler; JuyitingAgentRelayService.
 
 These are overlapping runtime/session and exact conversation authorization seams. OD06 needs explicit combined behavior and relevant dispatch/session/ACL regression, not choosing one side wholesale. The forecast uses the frozen OD03 candidate and the observed concurrent branch, not the final reviewed integration candidates.
+
+## Dedicated root pinning boundary
+
+`output-root/api` and `output-root/web` are uninitialized gitlink directories while implementation uses sibling worktrees. Do not run `sddw pin` there yet: `git -C api rev-parse HEAD` can walk upward to the root repository and yield the wrong SHA. At OD06, after accepted integration candidates are selected/pushed, create detached API/Web worktrees at those empty gitlink paths from the existing repositories (no source copies or new node_modules required for pinning). Verify each `--show-toplevel` and HEAD before running pin/verify and staging the gitlinks. Existing implementation worktrees and shared original checkouts stay intact.
+
+Disk observation during OD04 preparation: root filesystem had about 2.1 GiB free; API worktree about72 MiB, client2.2 MiB, Web484 MiB including installed node_modules. These are planning observations, not a reason to remove user caches or unrelated files.
