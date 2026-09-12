@@ -1,5 +1,13 @@
 # OD06 serial integration handoff
 
+## Current checkpoint (2026-09-13)
+
+Accepted API f1978b09 (binary log-wrapper repair30/30 + bootJar, independent APPROVE), Web212bfe4, client714b4aa. Runtime PID478651/startTicks56397314 uses immutable jar1438fa8d59e8de9e1ab8ab65c5c19698725d5b59e1031b7654f8b232e6a71f6d at127.0.0.1:10018. The task-only properties now include exact Vite15173 CORS plus the starter's25 JWT resource URI patterns. Root independently verified process/package/config correspondence.
+
+Real CONVERSATION3 Markdown and TASK3 text/PNG/ZIP publication plus Agent-offline downloads passed. Four source/snapshot/online/offline byte copies matched per TASK output. Browser4 runs/8 viewports all succeeded with actual hit-tested clicks, preview checks and SHA-matched downloads; all screenshots were inspected and task Chromium cleaned up. See live-bounty-task3-f1978b09 and browser-resource-pass-f1978b09. Earlier r3–r6 failures remain retained, not relabeled.
+
+The sole live operator is now the existing writer, executing recovery-and-unbind-handoff.md: one true complete-response-loss/Agent restart seam, followed by disposable persona unbind and retained-file reads. Root does not send live requests during this ownership. Full R1, OD07–OD11 and release are still unfinished. Do not restart an API merely to obtain a log, overwrite old attempt evidence, rerun canonical dependency probes or manually repair terminal fixture state.
+
 ## Current execution shortcut
 
 The accepted API baseline isf1978b09 (binary upload logging repair, affected30/30 plus bootJar, independently approved). Startup/binary publication verification is next; prior conversation text evidence remains tied to43e6bb94. The ERROR-dispatch repair and normal-config handshake matrix passed earlier. Real user OAuth and synthetic Agent registration succeeded, then the first conversation exposed create() writing tenant0 while output authorization requires exact owner tenant. That product mismatch is now independently reviewed and repaired for new conversations: final guard12+MySQL3=15/15, with legacy tenant0 output access still denied. The task API now runs an immutable jar copy; use fresh OAuth and forceNewConversation, without reseeding existing runtime fixtures. The first trusted conversation dispatch, accepted-client Markdown publication and offline retrieval passed; Root independently verified source/snapshot/online/offline byte correspondence. See live-conversation-text-43e6bb94/README.md. Bounty, other formats and recovery matrix remain active. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
