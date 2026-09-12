@@ -32,3 +32,11 @@ The successful run footer has now been separately exported from the writer tool 
 ## Independent review result
 
 REQUEST_CHANGES on e609154: complete-ACK-loss recovery (R01) and three queue/inbox/ledger partial-commit windows (R02). Original sole writer resumed bounded repairs. Local snapshot retention is now an explicit OD06 gate before R1 acceptance/release (R03). See `review-e609154.md` and `../OD06/client-retention-gate.md`.
+
+## Recovery repair tests
+
+Writer reports R01 output-queue10/10 and R02 agent-client83/83 passing, exit0, with actual tee logs `/tmp/od04-r01-output-queue.log` and `/tmp/od04-r02-agent-client.log`. A focused rerun of four cross-process boundary cases also passed (`/tmp/od04-r02-restart-rerun.log`), including the write-before-archive completed-inbox window. The four cases overlap the client suite and are not added to its total. Each case asserts model-count1, unique publication and published-before-terminal order. These are intermediate repair executions; final candidate/related regression and independent repair review remain pending.
+
+## Frozen recovery repair candidate
+
+`29aa70da8bb9f0476379dd6bd9e41731c5219457` is under independent read-only repair review. Root archived the actual full TAP log and exit file: 290/290 pass, exit 0, 65.595 seconds. All five repaired source/test hashes match both the writer's post-run manifest and candidate Git blobs; the worktree is clean. R01 focused10/10 and R02 focused6/6 overlap the full suite. See `repair-29aa70da/observation.json`. No live HTTP or final R1 acceptance is claimed.
