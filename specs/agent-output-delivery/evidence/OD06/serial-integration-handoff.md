@@ -2,7 +2,7 @@
 
 ## Current execution shortcut
 
-API integration is based on accepted4acf5770; the active repair is output configuration constructor binding plus any directly exposed startup issue. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
+The running API is accepted52cc2aae; actual startup succeeded and anonymous HTTP401 was observed. The active task is trusted conversation dispatch and accepted-client publication/offline retrieval. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
 
 ```bash
 # cwd=/home/chc/wsps/cyf-worktrees/output-api; helper owns flock/JDK/substitutions
