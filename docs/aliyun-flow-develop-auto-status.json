@@ -1,0 +1,162 @@
+{
+  "verifiedAt": "2026-09-12T10:56:04.334490+00:00",
+  "policy": "ready develop push -> cloud tests/build -> same-run artifact -> automatic deploy",
+  "per_run_human_ticket": false,
+  "per_run_reviewer": false,
+  "local_application_builds_run": false,
+  "local_control_tests": {
+    "passed": 15,
+    "failed": 0
+  },
+  "new_production_runs_started": [
+    {
+      "pipeline_id": "5260799",
+      "run": 20,
+      "status": "FAIL",
+      "phase": "cloud_test_fixture",
+      "commit": "2009380ca5eaa009ea7df0e680caa3ab12891865"
+    },
+    {
+      "pipeline_id": "5260799",
+      "run": 21,
+      "status": "FAIL",
+      "phase": "deployment_release_lock_busy",
+      "commit": "7ba431dcaedea3c71260717ca7c36b47a781cda1",
+      "cloud_tests_build": "SUCCESS",
+      "deploy_order": "69505514",
+      "production_lifecycle_invoked": false
+    },
+    {
+      "pipeline_id": "4403172",
+      "run": 92,
+      "status": "SUCCESS",
+      "commit": "1ac5cb1e4973919bacf054e961b43ff24d47e832",
+      "request_id": "01A09514-0A2D-5C76-B9CA-17FF8361FBAE",
+      "deploy_order": "69505789",
+      "phase": "deployed_online_verified",
+      "tests": {
+        "passed": 2117,
+        "pending": 2,
+        "failed": 0
+      },
+      "artifact_sha256": "ab289e2791709f70202e161b57db2a35e24e55271148a67114019d5ec1285741",
+      "installed_files_verified": 410,
+      "online_checks_matched": 9
+    },
+    {
+      "pipeline_id": "5260799",
+      "run": 22,
+      "status": "FAIL",
+      "commit": "a9a43056cad534c0fb6addb666ba2a9e5989c910",
+      "phase": "runtime_missing_javax_mail",
+      "cloud_tests_build": "SUCCESS",
+      "deploy_order": "69506083",
+      "recovery": "restored_healthy",
+      "restored_jar_sha256": "aa64ddf1be41147156236aa3d4f70121e2b95918d8dd2024d0cd3d0fec4df090"
+    },
+    {
+      "pipeline_id": "5260799",
+      "run": 23,
+      "status": "INIT",
+      "commit": "688a3e6546dcacba116f76cbec7e1d91f72764f4",
+      "phase": "returned_run_source_pending"
+    }
+  ],
+  "pipelines": [
+    {
+      "component": "backend",
+      "pipeline_id": "5260799",
+      "name": "cyf-api-kit-ci",
+      "cloud_flow_sha256": "9b75b03aad672cc5c22fde09b977c6bcdde0d4be60af651adddb57640cf4df25",
+      "candidate_sha256": "3af2a8227378f550d16f8168552fb552d4f465ac601b57e324241b6afba29afd",
+      "candidate_path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/templates/backend-develop-release.yaml",
+      "current_branch": "develop",
+      "current_events": [
+        "push"
+      ],
+      "current_branch_filter": "^develop$",
+      "webhook_present_in_flow_config": true,
+      "deployment_with_new_configuration_verified": false,
+      "state": "RUN23_STARTED_MAIL_RUNTIME_FIX",
+      "next_action": "Observe Run23 exact688a3e65; new main-runtime classloader test and physical bootJar mail/activation/provider check before artifact. Do not retry failed Run22. Old Run18 JAR automatically restored healthy.",
+      "test_selector_classes": 59,
+      "automatic_push_trigger_verified": false,
+      "current_run": {
+        "run": 22,
+        "commit": "a9a43056cad534c0fb6addb666ba2a9e5989c910",
+        "status": "FAIL",
+        "cloud_tests_build": "SUCCESS",
+        "deploy_order": 69506083,
+        "deployment_status": "Failed",
+        "queried_at": "2026-09-12T10:45:29.245Z",
+        "failure_phase": "application_startup",
+        "failure_class": "java.lang.NoClassDefFoundError: javax/mail/MessagingException",
+        "failure_component": "cn.jia.sms.config.SmsExternalEmailClient",
+        "previous_version_restored": true,
+        "restored_jar_sha256": "aa64ddf1be41147156236aa3d4f70121e2b95918d8dd2024d0cd3d0fec4df090",
+        "restored_health": "UP",
+        "health_evidence": "Flow deployment-machine log"
+      }
+    },
+    {
+      "component": "frontend",
+      "pipeline_id": "4403172",
+      "name": "cyf-web-kit",
+      "cloud_flow_sha256": "2ed02125feb71fb7ec0e4b5e64e8485fed4a1ee9fd51dace8ea985daf7531d34",
+      "candidate_sha256": "40e9d65a737dfa69325462c39ca9bd0d1708e7f44a715f1562d3b02b221e53fb",
+      "candidate_path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/templates/frontend-develop-release.yaml",
+      "current_branch": "develop",
+      "current_events": [
+        "push"
+      ],
+      "current_branch_filter": "^develop$",
+      "webhook_present_in_flow_config": true,
+      "deployment_with_new_configuration_verified": true,
+      "state": "DEVELOP_RUN92_DEPLOYED_ONLINE_VERIFIED",
+      "service_connection_name": "chcbz的码云服务连接",
+      "service_connection_id": "vyz9pea3uni64twx",
+      "next_action": "Manual develop Run92 verified:2117passed/2pending/0fail,410installedfiles and9onlinechecks match artifact. Push automation not enabled; future native Gitee source needs connection-use permission and verified webhook, not another same-SHA release.",
+      "automatic_push_trigger_verified": false,
+      "historical_service_connection_error_code": "1209300",
+      "service_connection_permission_resolved_at": "2026-09-12T10:44:34.284597+00:00",
+      "verified_deployment": {
+        "run": 92,
+        "status": "SUCCESS",
+        "commit": "1ac5cb1e4973919bacf054e961b43ff24d47e832",
+        "deploy_order": 69505789,
+        "host_status": "Success",
+        "host_client_status": "healthy",
+        "before_source_trigger_update": true
+      }
+    }
+  ],
+  "host_helpers": [
+    {
+      "path": "/usr/local/sbin/cyf-api-flow-deploy",
+      "sha256": "53c9a1e19a08c169e49713eebb775e516ed06785fc37ed026e969a8e1da1da57",
+      "new_file": true
+    },
+    {
+      "path": "/usr/local/sbin/cyf-web-flow-deploy",
+      "sha256": "17777e796b4f726d0c8503acfb0a510fe3e0ceec09c046e1dde5cba6c9c0c06c",
+      "new_file": true
+    }
+  ],
+  "notes": [
+    "Web develop Run92 actual release verified; automatic push remains disabled.",
+    "API Run22 failed runtime linkage despite cloud test/build PASS; automatically restored old JAR aa64ddf1 healthy.",
+    "New API688a3e65 fixes SMS runtime dependency; new59-selector config adds application-runtime classloader tests and actual bootJar mail/activation/provider presence check.",
+    "Run23 started exactly once, observe actual checkout/artifact/deploy/health; no old Run19/21/22 retry.",
+    "Host helper now reclaims only its same-run duplicate download after full identity/digest validation, retaining incoming/cloud/rollback;15 offline control tests PASS.",
+    "Cron monitors API21/22/23 andWeb92 with exactHEAD. Mail acceptance remains unconfirmed; do not promise delivery."
+  ],
+  "permission_resume": {
+    "verifiedAt": "2026-09-12T10:44:34.284597+00:00",
+    "operation": "UpdatePipeline source only",
+    "pipeline_id": "4403172",
+    "readback_match": true,
+    "test_build_deploy_stages_changed": false,
+    "new_run_started": false,
+    "backup_directory": "/tmp/cyf-connection-resume-20260912"
+  }
+}
