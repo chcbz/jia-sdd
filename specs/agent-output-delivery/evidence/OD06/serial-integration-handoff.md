@@ -1,5 +1,18 @@
 # OD06 serial integration handoff
 
+## Current execution shortcut
+
+API integration is based on accepted4acf5770; the active repair is output configuration constructor binding plus any directly exposed startup issue. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
+
+```bash
+# cwd=/home/chc/wsps/cyf-worktrees/output-api; helper owns flock/JDK/substitutions
+python3 /tmp/cyf-od02-evidence/run-gradle-with-od-env.py <affected-test-task> --tests '<affected-class>' :starter:bootJar
+```
+
+Use --offline only when that task's dependencies are already cached. Do not run canonical first as a trial. The fixed original dependency gate is already blocked by recorded old-host TLS/DNS and canonical-host403 observations; no new credential/provenance evidence has arrived. Root alone coordinates that external gate. Do not re-read settings.xml, transfer credentials across hosts, probe private endpoints or rerun unaffected verifier tests on each local fix.
+
+Local startup is part of implementation verification and may run before the final repair commit/review, without production traffic or user Agent changes. Freeze a coherent startup repair after the relevant tests and actual launch attempts, then obtain independent review before trusted-run acceptance. This avoids treating every safe local boot attempt as a separate approval step. Current isolated schema/bucket persist; do not recreate them blindly.
+
 OD06 starts after OD05 independent approval. OD05 development approval was recorded on2026-09-12; step1 client retention is accepted at714b4aa and step2 API reconciliation/build/preview is now active. Later steps remain queued and no R1 integration acceptance is claimed. OD06 now includes known bounded implementation repairs before read-only integration verification. Keep one active product writer throughout; root owns this sequence, evidence and pins.
 
 1. **Client retention repair** — sole critical writer in output-client, based on OD04 `29aa70da` (or its accepted descendant). Implement and independently review the complete R03 gate in `client-retention-gate.md`. Preserve immutable queue commandEvidence and terminal recovery. Freeze this candidate before changing another repository.
