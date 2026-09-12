@@ -1,0 +1,24 @@
+# OD10 queued UI handoff
+
+Preparation only; OD10 remains not_started until OD09 acceptance. Sole future Web writer uses the accepted Web212bfe4 descendant in output-web; no original checkout, API or client edits. Read docs/juyiting-runbook.md, detailed-design section10 and the frozen OD08/OD09 public responses before implementing. Root's current source inspection establishes locations, not UI acceptance.
+
+## Existing wiring to reuse
+
+- `src/components/juyiting/BountyPanel.vue` owns the create form, detail modal, explicit assignment actions and the shared OutputList. Add delivery requirements to the form and batch/review/rework presentation to details. Preserve retrieval without a connected Agent, source switching and the old policy0 display.
+- `src/composables/juyiting/useHallTaskActions.js` and `src/components/world/JuyiHall.vue` handle create-task acknowledgement, explicit Agent actions and selected task refresh. Keep Agent IDs explicit. Disable policy1 group/auto-assignment in the UI while retaining the server guards as authority; map/roster remain separate flows.
+- `src/composables/useOutputs.js`, `src/components/outputs/` and `src/utils/outputDownload.js` already implement source/version-bound list, preview and authenticated download. Reuse them for exact immutable delivery item versions; never substitute the latest artifact version into an older batch.
+- `src/utils/identityLifecycle.js` provides identity cleanup. `src/composables/juyiting/economyRequestIntent.js` is an example of actor-scoped uncertain-request persistence, but its existing economy namespace and records are for funded requests. Delivery decisions need their own task/batch/action identity and strict record checks; avoid changing funded behavior incidentally.
+
+## Required interactions
+
+Only offer creation when the frozen backend's taskDeliveryHttpV1 admission permits the current scope. Send deliveryRequirements with text/files/mixed mode, applicable file count/names and instructions; maxReviewRevisions is3. Do not send policyVersion. The existing form adds grossBountyAmountMicro and settlementPolicy only when funding is selected: preserve that omission for nonfunded delivery tasks, including requiredSkillRequirements. Even an empty skill requirements array selects the backend funding path. Policy1 plus funding remains unsupported; do not silently remove a user's funding choice to force submission.
+
+Load batches through user-authenticated GET deliveries. Render exact deliveryId/revision/version/taskVersion, summary, immutable items and SUBMITTED/ACCEPTED/CHANGES_REQUESTED state. Use server reviewActions for visible permissions; selected Agent or local task ownership guesses are not authority. Shared published files alone do not mean a formally submitted or accepted batch.
+
+Review posts target the selected deliveryId with decision and exact expected delivery/task versions. Require a nonblank reason for request_changes. Disable simultaneous decision actions while a request is unresolved. Persist the original body/key before transport; timeout or503 recovery replays that exact operation, never constructs a new key against a newer batch. A409 requires refreshing authorized state and an explicit new business decision when appropriate. Late replies from another actor, task or batch cannot update the current view.
+
+Rework is an explicit owner action after CHANGES_REQUESTED, using expectedTaskVersion and the selected old deliveryId. A QUEUED receipt means one command was queued, not execution completion. Do not dispatch automatically when a review succeeds, poll notices CHANGES_REQUESTED or the component mounts. Retain unresolved intent across navigation/reload within the same identity; do not reset execution attempts or the maximum revision limit.
+
+## Verification and freeze
+
+Add focused behavior tests for exact batch/version display, reviewActions, identity/source/batch late responses, double-click/timeout/reload recovery, stale409, explicit single rework and create request shape. Relevant existing suites include `tests/output-delivery.test.js`, `tests/juyiting-hall-task-actions.test.js`, `tests/economy-wallet-bounty.test.js` and `tests/funded-bounty-confirmation.test.js`; choose affected suites from actual changes rather than rerunning unrelated map tests. Run npm run build as required by user AGENTS, which overrides the old runbook preference. Freeze source/test/build evidence for independent review. Full Hall navigation and physical-device R1/R2 acceptance remain OD11 gates.
