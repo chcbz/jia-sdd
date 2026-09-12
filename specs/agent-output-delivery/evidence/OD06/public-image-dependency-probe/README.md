@@ -1,5 +1,7 @@
 # Public image dependency feasibility
 
+**Superseded build decision (2026-09-12):** integrated upstream `a9d3e741` now provides the canonical tracked `ops/ci/aliyun-flow/cold-init.gradle`, with the original `org.opencv:opencv:4.5.5` size/SHA pin and source-relative plugin build. Preserve that path and the public-artifact verifier. This historical replacement probe remains development evidence only; the former proposed catalog replacement below is not the current implementation instruction. See [integration-baseline-watch.md](../integration-baseline-watch.md) for the current build and push constraints.
+
 OD06 preparation only. No catalog, utility, deployment, native system library, or Gradle configuration was changed. This probe addresses the unresolved canonical build dependency gate; it is not OD02 evidence or production compatibility approval.
 
 The current catalog uses unavailable private coordinates `org.opencv:opencv:4.5.5` and `com.sun.media:jai_imageio:1.1`. The reviewed development init substitutes cached public `org.openpnp:opencv:4.5.5-1` and OSGeo `javax.media:jai_imageio:1.1`. Both utilities are common-core compileOnly/test dependencies. A permanent reviewed catalog/repository change is a possible OD06 repair, avoiding dependence on a developer's external substitution init.
