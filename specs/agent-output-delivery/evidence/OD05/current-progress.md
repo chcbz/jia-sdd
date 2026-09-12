@@ -45,3 +45,7 @@ Same reviewer closed R01/R03/R04 and the version-request fence on1889482. R02 re
 ## Source-denial review follow-up
 
 Same reviewer confirms exact-resource revalidation, but primary list and related source caches survive permanent source403. See `review-07d20ea.md`. Original writer resumed complete source invalidation/active-request protection, with denial-matrix regression required. No OD05 acceptance yet.
+
+## Source invalidation repair candidate
+
+`212bfe4f9441cc82262d98e7b0723d6c0800e3d9` is frozen clean under same-reviewer recheck. Root verified three hashes; output20 are included in related151, all pass, build/lint exit0. Complete source-denial matrix and active detail/preview/download fences are now tested. Evidence `repair-212bfe4/observation.json` retains mocked/live and manifest timing limits. No acceptance yet.

@@ -1,0 +1,54 @@
+{
+  "candidate": "212bfe4f9441cc82262d98e7b0723d6c0800e3d9",
+  "parent": "07d20ea72a8f18e00c3a184f801f16e34022b5ed",
+  "observed_at": "2026-09-12T09:36:34.202715+00:00",
+  "worktree_clean": true,
+  "source_association": [
+    {
+      "path": "src/components/outputs/OutputList.vue",
+      "sha256": "3c69a89a0ea548fcdd05064f0eff6dad2aecc7d0439c8101a59c313762be7328",
+      "manifest_candidate_and_worktree_match": true
+    },
+    {
+      "path": "src/composables/useOutputs.js",
+      "sha256": "183ec94a90dd0278006abae49cd2b02323d2c272333c142f909183dd283c8d71",
+      "manifest_candidate_and_worktree_match": true
+    },
+    {
+      "path": "tests/output-delivery.test.js",
+      "sha256": "c07a03e6bbe77e604dd8b5e17059d7714ccf1dd096978778c8819077dc770014",
+      "manifest_candidate_and_worktree_match": true
+    }
+  ],
+  "verification": [
+    {
+      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec --timeout 10000 tests/output-delivery.test.js",
+      "pass": 20,
+      "exit": 0
+    },
+    {
+      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec --timeout 10000 tests/output-delivery.test.js tests/juyiting-component-behavior.test.js tests/juyiting-hall-conversation.test.js tests/juyiting-task-workspace-wiring.test.js tests/juyiting-task-workspace-feature-flag.test.js tests/juyiting-task-workspace-panel.test.js tests/juyiting-task-workspace-integration.test.js",
+      "pass": 151,
+      "includes_output20": true,
+      "exit": 0
+    },
+    {
+      "command": "npm run build",
+      "exit": 0,
+      "duration_approx_seconds": 61
+    },
+    {
+      "command": "./node_modules/.bin/eslint src/composables/useOutputs.js src/components/outputs/OutputList.vue tests/output-delivery.test.js",
+      "exit": 0,
+      "errors": 0,
+      "warnings": 4
+    }
+  ],
+  "review_status": "repair_review_pending",
+  "limits": [
+    "Post-run/commit source association, not a pre/post-test manifest pair.",
+    "20 are included in151, not summed.",
+    "Controlled combination/mocked HTTP is not real API-browser/offline/WeChat evidence.",
+    "Old optional full npm suite was interrupted, not passed."
+  ]
+}
