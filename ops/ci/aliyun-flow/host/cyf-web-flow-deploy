@@ -1,0 +1,469 @@
+#!/usr/bin/python3
+"""Install verified same-run dist files, assets first and index.html last.
+
+The gzip tar is consumed once in stream order into a private staging directory.
+No source build, manual approval, or test reports enter the public web root.
+Old hashed assets remain available to already-open clients.
+"""
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import stat
+import sys
+import tarfile
+import tempfile
+import time
+import urllib.request
+
+ROOT = Path('/var/lib/cyf-web-flow')
+SITE = Path('/home/isp/hosts/cyf/web/kit')
+SITE_URL = 'https://kit.chaoyoufan.cn/'
+MAX_PACKAGE_SIZE = 1024 ** 3
+MAX_ARCHIVE_ENTRIES = 20000
+MAX_ARCHIVE_SIZE = 1024 ** 3
+MAX_MANIFEST_SIZE = 4 * 1024 ** 2
+CHUNK_SIZE = 1024 * 1024
+ONLINE_VERIFY_ATTEMPTS = 3
+ONLINE_VERIFY_DELAY_SECONDS = 2
+ONLINE_VERIFY_TIMEOUT_SECONDS = 30
+
+
+def fail(message):
+    raise SystemExit('cyf-web-flow-deploy: ' + message)
+
+
+def safe_dir(path):
+    st = path.lstat()
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != 0 or st.st_mode & 0o022:
+        fail('unsafe directory ' + str(path))
+
+
+def atomic(path, data, mode):
+    fd, name = tempfile.mkstemp(prefix='.cyf-', dir=str(path.parent))
+    try:
+        with os.fdopen(fd, 'wb') as handle:
+            os.fchmod(handle.fileno(), mode)
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(name, str(path))
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+
+def atomic_file(path, source, mode):
+    """Copy a staged file to a same-directory temporary, then replace atomically."""
+    fd, name = tempfile.mkstemp(prefix='.cyf-', dir=str(path.parent))
+    try:
+        with source.open('rb') as src, os.fdopen(fd, 'wb') as dst:
+            os.fchmod(dst.fileno(), mode)
+            while True:
+                block = src.read(CHUNK_SIZE)
+                if not block:
+                    break
+                dst.write(block)
+            dst.flush()
+            os.fsync(dst.fileno())
+        os.replace(name, str(path))
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+
+def file_digest(path):
+    digest = hashlib.sha256()
+    size = 0
+    with path.open('rb') as handle:
+        while True:
+            block = handle.read(CHUNK_SIZE)
+            if not block:
+                break
+            size += len(block)
+            digest.update(block)
+    return size, digest.hexdigest()
+
+
+def normalized_archive_name(member):
+    # GNU tar -C export . emits one real root-directory marker before ./release.json.
+    # Canonicalize only that exact zero-sized directory; it still participates in
+    # entry counting and duplicate detection as '.'.
+    if member.name in ('.', './'):
+        if not member.isdir() or member.size != 0:
+            fail('unsafe archive entry')
+        return '.'
+    name = member.name[2:] if member.name.startswith('./') else member.name
+    if member.isdir():
+        name = name.rstrip('/')
+    p = PurePosixPath(name)
+    if (not name or name == '.' or p.is_absolute() or '..' in p.parts or '\\' in name
+            or str(p) != name or not (member.isfile() or member.isdir())):
+        fail('unsafe archive entry')
+    return name
+
+
+def private_stage_target(staging, relative):
+    p = PurePosixPath(relative)
+    if not relative or p.is_absolute() or '..' in p.parts or str(p) != relative or '\\' in relative:
+        fail('unsafe archive entry')
+    parent = staging / 'dist'
+    try:
+        parent.mkdir(mode=0o700, exist_ok=True)
+        safe_dir(parent)
+        for part in p.parts[:-1]:
+            parent = parent / part
+            parent.mkdir(mode=0o700, exist_ok=True)
+            safe_dir(parent)
+    except OSError:
+        fail('unsafe archive entry')
+    return staging / 'dist' / relative
+
+
+def copy_archive_member(archive, member, target=None, keep=False):
+    digest = hashlib.sha256()
+    size = 0
+    chunks = [] if keep else None
+    extracted = archive.extractfile(member)
+    if extracted is None:
+        fail('invalid archive file entry')
+    output = None
+    try:
+        if target is not None:
+            try:
+                fd = os.open(str(target), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                output = os.fdopen(fd, 'wb')
+            except OSError:
+                fail('unsafe archive entry')
+        while True:
+            block = extracted.read(CHUNK_SIZE)
+            if not block:
+                break
+            size += len(block)
+            if size > member.size:
+                fail('archive member exceeds declared size')
+            digest.update(block)
+            if output is not None:
+                output.write(block)
+            if chunks is not None:
+                chunks.append(block)
+        if size != member.size:
+            fail('archive member size mismatch')
+        if output is not None:
+            output.flush()
+            os.fsync(output.fileno())
+    finally:
+        if output is not None:
+            output.close()
+        extracted.close()
+    return size, digest.hexdigest(), b''.join(chunks) if chunks is not None else None
+
+
+def scan_archive(fileobj, staging):
+    """Consume a gzip tar once without member catalogs or backward seeks."""
+    seen = set()
+    staged = {}
+    manifest_bytes = None
+    entry_count = 0
+    total = 0
+    try:
+        with tarfile.open(fileobj=fileobj, mode='r|gz') as archive:
+            for member in archive:
+                name = normalized_archive_name(member)
+                if name in seen:
+                    fail('unsafe archive entry')
+                seen.add(name)
+                entry_count += 1
+                if entry_count > MAX_ARCHIVE_ENTRIES:
+                    fail('archive exceeds entry limit')
+                if member.size < 0:
+                    fail('unsafe archive entry')
+                total += member.size
+                if total > MAX_ARCHIVE_SIZE:
+                    fail('archive exceeds size limit')
+                if member.isdir():
+                    continue
+                if name == 'release.json':
+                    if member.size > MAX_MANIFEST_SIZE:
+                        fail('missing or oversized release manifest')
+                    _, _, manifest_bytes = copy_archive_member(archive, member, keep=True)
+                elif name.startswith('dist/'):
+                    relative = name[len('dist/'):]
+                    target = private_stage_target(staging, relative)
+                    size, digest, _ = copy_archive_member(archive, member, target=target)
+                    staged[relative] = dict(path=target, size=size, sha256=digest)
+                else:
+                    # Reports and provenance stay private, but still consume and hash them boundedly.
+                    copy_archive_member(archive, member)
+    except (tarfile.TarError, EOFError, OSError):
+        fail('invalid or truncated package archive')
+    if manifest_bytes is None:
+        fail('missing or oversized release manifest')
+    return manifest_bytes, staged
+
+
+def unique_json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError('duplicate JSON key')
+        result[key] = value
+    return result
+
+
+def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
+    try:
+        manifest = json.loads(manifest_bytes.decode('utf-8'), object_pairs_hook=unique_json_object)
+    except (UnicodeDecodeError, ValueError):
+        fail('invalid release manifest')
+    if (not isinstance(manifest, dict) or isinstance(manifest.get('schema_version'), bool)
+            or manifest.get('schema_version') != 1
+            or manifest.get('pipeline_id') != pipeline or manifest.get('run_id') != run
+            or manifest.get('branch') != 'develop' or manifest.get('commit') != commit):
+        fail('manifest does not match this develop Flow run')
+    files = manifest.get('files')
+    if not isinstance(files, list) or not files or len(files) > MAX_ARCHIVE_ENTRIES:
+        fail('invalid manifest files')
+    expected = {}
+    ordered = []
+    for item in files:
+        if not isinstance(item, dict):
+            fail('invalid manifest files')
+        name = item.get('path', '')
+        p = PurePosixPath(name) if isinstance(name, str) else PurePosixPath('')
+        size = item.get('size')
+        digest = item.get('sha256', '')
+        if (not isinstance(name, str) or not name or p.is_absolute() or '..' in p.parts
+                or str(p) != name or '\\' in name or name in expected
+                or isinstance(size, bool) or not isinstance(size, int) or size < 0
+                or not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest)):
+            fail('invalid manifest path, size, or digest')
+        expected[name] = dict(size=size, sha256=digest)
+        ordered.append(name)
+    if 'index.html' not in expected or set(expected) != set(staged):
+        fail('dist differs from manifest')
+    for name, item in expected.items():
+        actual = staged[name]
+        if actual['size'] != item['size'] or actual['sha256'] != item['sha256']:
+            fail('dist digest mismatch: ' + name)
+        st = actual['path'].lstat()
+        if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1:
+            fail('unsafe staged file')
+    record = dict(schema_version=1, pipeline_id=pipeline, run_id=run, branch='develop', commit=commit,
+                  files=[dict(path=name, size=expected[name]['size'], sha256=expected[name]['sha256'])
+                         for name in ordered])
+    return record, expected
+
+
+def target_lstat(path):
+    try:
+        return path.lstat()
+    except FileNotFoundError:
+        return None
+
+
+def validate_site_targets(expected):
+    """Validate every existing public path before the first public mutation."""
+    safe_dir(SITE)
+    for name in expected:
+        parent = SITE
+        missing_parent = False
+        for part in PurePosixPath(name).parts[:-1]:
+            parent = parent / part
+            st = target_lstat(parent)
+            if st is None:
+                missing_parent = True
+                continue
+            if missing_parent or not stat.S_ISDIR(st.st_mode) or st.st_uid != 0 or st.st_mode & 0o022:
+                fail('unsafe directory ' + str(parent))
+        target = SITE / name
+        st = target_lstat(target)
+        if st is not None and not stat.S_ISREG(st.st_mode):
+            fail('unsafe site target')
+
+
+def ensure_public_parent(name):
+    parent = SITE
+    for part in PurePosixPath(name).parts[:-1]:
+        parent = parent / part
+        try:
+            parent.mkdir(mode=0o755, exist_ok=True)
+        except OSError:
+            fail('unsafe directory ' + str(parent))
+        safe_dir(parent)
+    return parent
+
+
+def publish_staged(staged, expected):
+    for name in sorted(expected, key=lambda value: (value == 'index.html', value)):
+        target = SITE / name
+        ensure_public_parent(name)
+        st = target_lstat(target)
+        if st is not None and not stat.S_ISREG(st.st_mode):
+            fail('unsafe site target')
+        atomic_file(target, staged[name]['path'], 0o644)
+
+
+def verify_installed(expected):
+    for name, item in expected.items():
+        target = SITE / name
+        st = target_lstat(target)
+        if st is None or not stat.S_ISREG(st.st_mode) or stat.S_ISLNK(st.st_mode):
+            fail('installed file mismatch')
+        size, digest = file_digest(target)
+        if size != item['size'] or digest != item['sha256']:
+            fail('installed file mismatch')
+
+
+def online_verification_log(attempt, pipeline, run, commit, status, size, expected, actual, match,
+                            error_type=None):
+    identity = pipeline + '/' + run + '/' + commit
+    event = dict(attempt=attempt, pipeline_id=pipeline, run_id=run, commit=commit,
+                 request_identity=identity, user_agent=('cyf-web-flow-deploy/stream-v1 pipeline/' + pipeline
+                                                        + ' run/' + run + ' commit/' + commit),
+                 cache_control='no-cache, no-store, max-age=0', accept_encoding='identity',
+                 status=status, length=size, expected_sha256=expected,
+                 actual_sha256=actual, match=match)
+    if error_type is not None:
+        event['error_type'] = error_type
+    print('CYF_WEB_FLOW_ONLINE_VERIFY ' + json.dumps(event, sort_keys=True), file=sys.stderr, flush=True)
+
+
+def verify_online_index(pipeline, run, commit, expected):
+    item = expected['index.html']
+    for attempt in range(1, ONLINE_VERIFY_ATTEMPTS + 1):
+        status = None
+        size = 0
+        actual = None
+        match = False
+        error_type = None
+        digest = hashlib.sha256()
+        try:
+            url = (SITE_URL + '?flow_pipeline=' + pipeline + '&flow_run=' + run
+                   + '&flow_commit=' + commit + '&flow_verify_attempt=' + str(attempt))
+            request = urllib.request.Request(url, headers={
+                'Accept-Encoding': 'identity',
+                'Cache-Control': 'no-cache, no-store, max-age=0',
+                'Pragma': 'no-cache',
+                'User-Agent': ('cyf-web-flow-deploy/stream-v1 pipeline/' + pipeline
+                               + ' run/' + run + ' commit/' + commit),
+                'X-CYF-Flow-Identity': pipeline + '/' + run + '/' + commit,
+            })
+            with urllib.request.urlopen(request, timeout=ONLINE_VERIFY_TIMEOUT_SECONDS) as response:
+                status = getattr(response, 'status', None)
+                if status is None and hasattr(response, 'getcode'):
+                    status = response.getcode()
+                while True:
+                    block = response.read(min(CHUNK_SIZE, item['size'] - size + 1))
+                    if not block:
+                        break
+                    size += len(block)
+                    digest.update(block)
+                    if size > item['size']:
+                        break
+            actual = digest.hexdigest()
+            match = status == 200 and size == item['size'] and actual == item['sha256']
+        except Exception as ex:
+            error_type = type(ex).__name__
+            status = getattr(ex, 'code', status)
+        actual = digest.hexdigest()
+        online_verification_log(attempt, pipeline, run, commit, status, size,
+                                item['sha256'], actual, match, error_type)
+        if match:
+            return
+        if attempt < ONLINE_VERIFY_ATTEMPTS:
+            time.sleep(ONLINE_VERIFY_DELAY_SECONDS)
+    fail('online index does not match the deployed artifact')
+
+
+def verified_package_handle(package, before):
+    try:
+        fd = os.open(str(package), os.O_RDONLY | os.O_NOFOLLOW)
+    except OSError:
+        fail('unsafe package')
+    try:
+        current = os.fstat(fd)
+        if (not stat.S_ISREG(current.st_mode) or current.st_uid != 0 or current.st_nlink != 1
+                or not 0 < current.st_size <= MAX_PACKAGE_SIZE
+                or (current.st_dev, current.st_ino, current.st_size) !=
+                (before.st_dev, before.st_ino, before.st_size)):
+            fail('unsafe package')
+        return os.fdopen(fd, 'rb')
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def installed_run(record):
+    st = target_lstat(record)
+    if st is None:
+        return 0
+    if (not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1
+            or st.st_size > MAX_MANIFEST_SIZE):
+        fail('unsafe deployment record')
+    try:
+        value = json.loads(record.read_text())
+        run = value.get('run_id', '0')
+        if not isinstance(run, str) or not re.fullmatch('[0-9]+', run):
+            fail('unsafe deployment record')
+        return int(run)
+    except (OSError, ValueError, AttributeError):
+        fail('unsafe deployment record')
+
+
+def deploy(pipeline, run, commit):
+    if (os.geteuid() != 0 or pipeline != '4403172' or not re.fullmatch('[1-9][0-9]*', run)
+            or not re.fullmatch('[0-9a-f]{40,64}', commit)):
+        fail('invalid execution identity')
+    safe_dir(ROOT)
+    safe_dir(SITE)
+    package = ROOT / 'downloads' / run / 'package.tgz'
+    safe_dir(package.parent.parent)
+    safe_dir(package.parent)
+    st = package.lstat()
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or not 0 < st.st_size <= MAX_PACKAGE_SIZE:
+        fail('unsafe package')
+    lock = os.open(str(ROOT / 'deploy.lock'), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    staging = None
+    try:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            fail('another deployment is active')
+        record_path = ROOT / 'record.json'
+        if installed_run(record_path) > int(run):
+            fail('refusing deployment older than the installed run')
+        staging = Path(tempfile.mkdtemp(prefix='.cyf-web-stage-', dir=str(ROOT)))
+        os.chmod(str(staging), 0o700)
+        safe_dir(staging)
+        with verified_package_handle(package, st) as package_handle:
+            manifest_bytes, staged = scan_archive(package_handle, staging)
+        record, expected = validate_manifest(manifest_bytes, staged, pipeline, run, commit)
+        validate_site_targets(expected)
+        # Transaction boundary: archive identity, coverage, sizes and hashes are all valid here.
+        publish_staged(staged, expected)
+        verify_installed(expected)
+        record['status'] = 'installed'
+        record['phase'] = 'installed'
+        atomic(record_path, (json.dumps(record, sort_keys=True) + '\n').encode(), 0o600)
+        verify_online_index(pipeline, run, commit, expected)
+        record['status'] = 'online_verified'
+        record['phase'] = 'online_verified'
+        atomic(record_path, (json.dumps(record, sort_keys=True) + '\n').encode(), 0o600)
+        print('CYF_WEB_FLOW_INSTALL=PASS ' + json.dumps(
+            dict(run_id=run, commit=commit, files=len(expected)), sort_keys=True))
+    finally:
+        try:
+            if staging is not None:
+                shutil.rmtree(str(staging))
+        finally:
+            os.close(lock)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 4:
+        fail('expected pipeline, run number, source commit')
+    deploy(*sys.argv[1:])
