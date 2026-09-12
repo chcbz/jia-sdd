@@ -16,3 +16,11 @@ Preserve separate map/roster data flows and explicit target Agent assignment. In
 ## Installed development dependencies
 
 Preparation completed on the unchanged web candidate `77666e8fc1b2060ff3db8374b5de4539a5e5e53d`: `npm ci --no-audit --no-fund` in `/home/chc/wsps/cyf-worktrees/output-web` exited 0 and installed 678 packages (Node v22.22.0, npm 11.17.0). The worktree remains clean and Vite is available. `package-lock.json` SHA-256 is `c69c07a9b41b963b78f7d8bbc033b7e029ae5df3e3d82054990bb2cd7df1d7e3`. This is dependency preparation only; no frontend feature test or build has run.
+
+## Baseline update before OD05
+
+Read-only follow-up on 2026-09-12: local remote-tracking `origin/develop` now points to `b31565f8741fdc6f986763dd86442a2c2a4345b0`, the committed conversation-history/deletion branch observed in the shared checkout. It descends from the untouched output-web baseline. Before OD05 edits, verify the still-clean feature worktree and choose the current committed development baseline, preserving these changes; record the actual base and do not switch the shared checkout. Local `origin/master` currently points to `e88425b` (reader fix), so neither branch name alone proves feature release.
+
+At `b31565f`, ChatPanel already declares `conversationId` and JuyiHall passes it through its panel variants. Reuse that explicit prop instead of duplicating the earlier baseline's missing wiring. Preserve history selection/deletion/busy behavior and ensure switching/deleting a conversation cancels and clears output requests. Include the history regression tests when attaching OutputList. This reduces duplicated wiring and later merge work.
+
+The user-provided AGENTS explicitly requires `npm run build` for frontend edits; follow that instruction even though the older runbook describes CI builds as the default. A local production build still does not establish deployment.
