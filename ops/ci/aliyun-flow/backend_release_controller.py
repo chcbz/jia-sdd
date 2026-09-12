@@ -34,6 +34,11 @@ SHA256 = re.compile(r"^[0-9a-f]{64}$")
 SAFE_TASK_ID = re.compile(r"^[A-Za-z0-9._:-]{1,160}$")
 TICKET_B64 = re.compile(r"(TICKET_ZLIB_B64\s*=\s*)'[^']*'")
 TICKET_SHA = re.compile(r"(TICKET_SHA256\s*=\s*)'[^']*'")
+AUTO_APPROVE_INVOCATION = re.compile(
+    r'((?:/usr/local/sbin/)?cyf-api-flow-auto-approve-install '
+    r'"\$PIPELINE_ID" "\$BUILD_NUMBER" "\$CI_COMMIT_SHA")'
+    r'(?: "[0-9a-f]{64}")?'
+)
 
 
 class ControllerError(RuntimeError):
@@ -61,7 +66,7 @@ def _safe_repository_url(value):
 
 def _git(repo, arguments, runner=subprocess.run):
     command = ["git", "-C", str(pathlib.Path(repo).resolve())] + list(arguments)
-    completed = runner(command, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    completed = runner(command, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if completed.returncode:
         detail = (completed.stderr or completed.stdout or "git command failed").strip()[-500:]
         raise ControllerError("git validation failed: {}".format(detail))
@@ -76,7 +81,7 @@ def read_remote_develop_sha(repository_url=REPOSITORY_URL, runner=subprocess.run
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
+        universal_newlines=True,
     )
     if completed.returncode:
         raise ControllerError("remote develop lookup failed: {}".format((completed.stderr or "").strip()[-500:]))
@@ -105,7 +110,7 @@ def validate_local_api_source(api_git_repo, commit_sha, repository_url=REPOSITOR
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
+        universal_newlines=True,
     )
     if ancestry.returncode:
         raise ControllerError("commit is not contained in origin/develop")
@@ -166,7 +171,7 @@ def issue_ticket_once(command, runner=subprocess.run):
     supplied_flags = command[5::2]
     if len(command[5:]) % 2 or set(supplied_flags) != allowed_flags or len(supplied_flags) != len(allowed_flags):
         raise ControllerError("refusing an unexpected ticket issue argument set")
-    completed = runner(command, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    completed = runner(command, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if completed.returncode:
         raise ControllerError("ticket issue failed once: {}".format((completed.stderr or completed.stdout or "").strip()[-500:]))
     return completed.stdout
@@ -183,6 +188,12 @@ def render_ticket_only_template(template_bytes, ticket_bytes):
     ticket_sha = sha256_bytes(ticket_bytes)
     text, b64_count = TICKET_B64.subn(r"\1'{}'".format(encoded), text)
     text, sha_count = TICKET_SHA.subn(r"\1'{}'".format(ticket_sha), text)
+    invocation_count = len(AUTO_APPROVE_INVOCATION.findall(text))
+    has_vm_deploy = "VMDeploy" in text
+    if invocation_count > 1 or has_vm_deploy and invocation_count != 1:
+        raise ControllerError("deploy template must contain exactly one automatic deploy invocation")
+    if invocation_count == 1:
+        text = AUTO_APPROVE_INVOCATION.sub(r'\1 "{}"'.format(ticket_sha), text)
     if b64_count != 1 or sha_count != 1:
         raise ControllerError("template must contain exactly one ticket transport and SHA literal")
     rendered = text.encode("utf-8")
@@ -203,6 +214,11 @@ def readback_summary(rendered_bytes, *, template_sha256, ticket_sha256):
         "trigger_events_empty": "triggerEvents: []" in text,
         "java_build_count": len(re.findall(r"^\s*step: JavaBuild\s*$", text, re.MULTILINE)),
         "deploy_step_absent": "VMDeploy" not in text and "StartPipelineRun" not in text,
+        "deploy_ticket_bound": (
+            "VMDeploy" not in text
+            or len(AUTO_APPROVE_INVOCATION.findall(text)) == 1
+            and '{} "{}"'.format('"$CI_COMMIT_SHA"', ticket_sha256) in text
+        ),
         "ticket_literals_present": len(TICKET_B64.findall(text)) == 1 and len(TICKET_SHA.findall(text)) == 1,
     }
 

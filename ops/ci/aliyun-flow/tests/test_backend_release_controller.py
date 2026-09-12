@@ -63,6 +63,33 @@ TICKET_SHA256 = 'old'
         self.assertTrue(summary["ticket_literals_present"])
         self.assertNotIn(ticket.decode(), rendered.decode())
 
+    def test_render_binds_deploy_invocation_to_same_ticket_sha(self):
+        template = b"""name: cyf-api-kit-ci
+branch: develop
+branchesFilter: develop
+triggerEvents: []
+PIPELINE = '5260799'
+step: JavaBuild
+TICKET_ZLIB_B64 = 'old'
+TICKET_SHA256 = 'old'
+component: VMDeploy
+run: /usr/local/sbin/cyf-api-flow-auto-approve-install "$PIPELINE_ID" "$BUILD_NUMBER" "$CI_COMMIT_SHA"
+"""
+        ticket = b'{"immutable":"next-ticket"}\n'
+        rendered, ticket_sha = controller.render_ticket_only_template(template, ticket)
+        text = rendered.decode()
+        self.assertIn(
+            'cyf-api-flow-auto-approve-install "$PIPELINE_ID" "$BUILD_NUMBER" "$CI_COMMIT_SHA" "{}"'.format(ticket_sha),
+            text,
+        )
+        summary = controller.readback_summary(
+            rendered,
+            template_sha256=hashlib.sha256(template).hexdigest(),
+            ticket_sha256=ticket_sha,
+        )
+        self.assertFalse(summary["deploy_step_absent"])
+        self.assertTrue(summary["deploy_ticket_bound"])
+
     def test_issue_command_is_fixed_to_orchestrator_and_runs_once(self):
         command = controller.build_issue_command(
             task_id="FLOW-CI-01",
@@ -98,6 +125,11 @@ TICKET_SHA256 = 'old'
         with self.assertRaisesRegex(controller.ControllerError, "exactly one"):
             controller.render_ticket_only_template(
                 b"branch: develop\nPIPELINE = '5260799'\nTICKET_ZLIB_B64 = 'a'\n", b"x"
+            )
+        with self.assertRaisesRegex(controller.ControllerError, "deploy template"):
+            controller.render_ticket_only_template(
+                b"branch: develop\nPIPELINE = '5260799'\nTICKET_ZLIB_B64 = 'a'\nTICKET_SHA256 = 'a'\ncomponent: VMDeploy\n",
+                b"x",
             )
 
 
