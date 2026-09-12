@@ -19,6 +19,13 @@ BACKUPS = ROOT / 'backups'
 INSTALLER = '/usr/local/sbin/cyf-api-flow-install'
 INSTALLER_SIZE = 47995
 INSTALLER_SHA256 = 'ecd726baf84c029153633f790757b69fc9d17b438381976efe962ef6fa553f13'
+SELF_SIZE = 10909
+LIFECYCLE = Path('/usr/local/sbin/cyf-api-kit')
+LIFECYCLE_SIZE = 37060
+LIFECYCLE_SHA256 = '63a7ba180603d021666af77e9535b93bdbdcedf0ce799d0b5e09e7718e8d0bcd'
+ATTESTER = Path('/usr/local/sbin/cyf-api-flow-write-attestation')
+ATTESTER_SIZE = 4645
+ATTESTER_SHA256 = 'ee5e591f60543ffa9ec6639e897736d96b954375a7e1d3ce24478d06db90895b'
 LOCK = '/tmp/cyf-api-flow-auto-approval.lock'
 EXPECTED_ORG = '5fb7d76ee6f9d07f148529c7'
 EXPECTED_PIPELINE = '5260799'
@@ -91,10 +98,10 @@ def safe_regular(path, uid=0, mode=None):
 def main():
     if os.geteuid() != 0:
         fail('must run as root')
-    if len(sys.argv) not in (4, 5):
-        fail('expected pipeline id, run number, source commit, and optional expected ticket SHA')
+    if len(sys.argv) not in (4, 5, 6):
+        fail('expected pipeline id, run number, source commit, optional expected ticket SHA, and optional own SHA')
     pipeline_id, run_id, source_commit = sys.argv[1:4]
-    if len(sys.argv) == 5:
+    if len(sys.argv) >= 5:
         expected_ticket = sys.argv[4]
     else:
         safe_regular(LEGACY_EXPECTED_TICKET_FILE, mode=0o600)
@@ -105,10 +112,32 @@ def main():
         fail('Flow execution identity mismatch')
     if not GIT_SHA.fullmatch(source_commit):
         fail('Flow source commit is invalid')
-    safe_regular(Path(__file__).resolve(), mode=0o755)
+    self_path = Path(__file__).resolve()
+    self_stat = safe_regular(self_path, mode=0o755)
+    if self_stat.st_gid != 0 or self_stat.st_size != SELF_SIZE:
+        fail('helper metadata changed')
+    if len(sys.argv) == 6:
+        expected_self_sha = sys.argv[5]
+        if not SHA256.fullmatch(expected_self_sha):
+            fail('expected helper SHA is invalid')
+        with self_path.open('rb') as self_handle:
+            if digest_fileobj(self_handle) != expected_self_sha:
+                fail('helper own digest changed')
+        lifecycle_stat = safe_regular(LIFECYCLE, mode=0o755)
+        if lifecycle_stat.st_gid != 0 or lifecycle_stat.st_size != LIFECYCLE_SIZE:
+            fail('lifecycle metadata changed')
+        with LIFECYCLE.open('rb') as lifecycle_handle:
+            if digest_fileobj(lifecycle_handle) != LIFECYCLE_SHA256:
+                fail('lifecycle digest changed')
+        attester_stat = safe_regular(ATTESTER, mode=0o755)
+        if attester_stat.st_gid != 0 or attester_stat.st_size != ATTESTER_SIZE:
+            fail('attester metadata changed')
+        with ATTESTER.open('rb') as attester_handle:
+            if digest_fileobj(attester_handle) != ATTESTER_SHA256:
+                fail('attester digest changed')
     installer_path = Path(INSTALLER)
     installer_stat = safe_regular(installer_path, mode=0o755)
-    if installer_stat.st_size != INSTALLER_SIZE:
+    if installer_stat.st_gid != 0 or installer_stat.st_size != INSTALLER_SIZE:
         fail('installer size changed')
     with installer_path.open('rb') as installer_handle:
         if digest_fileobj(installer_handle) != INSTALLER_SHA256:
