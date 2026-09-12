@@ -1,0 +1,63 @@
+{
+  "candidate": "188948293d97c69a97df55a37d09ecd10c245ad1",
+  "parent": "3af0c43383d5c5f064830937ea6801d92311ed72",
+  "observed_at": "2026-09-12T09:09:09.393869+00:00",
+  "worktree_clean": true,
+  "source_association": [
+    {
+      "path": "src/components/chat/Chat.vue",
+      "sha256": "fbdfa0df74f55474c1f5eccbc03bb6f369c8d303ea3170945a37e932aa17be2e",
+      "manifest_and_candidate_match": true
+    },
+    {
+      "path": "src/components/outputs/OutputList.vue",
+      "sha256": "66f800f0f9f949b2dc933c3aa810933e197c173093430566090a0e48093ec370",
+      "manifest_and_candidate_match": true
+    },
+    {
+      "path": "src/composables/useOutputs.js",
+      "sha256": "3bb83b2e2f88c6cfab56a1a84ff9654128b0fb27495a3173b958761a33f50224",
+      "manifest_and_candidate_match": true
+    },
+    {
+      "path": "src/utils/outputDownload.js",
+      "sha256": "cfff758ad5c269cddbbc4a874f26bff7521bc476f3b0dfdd1096b1da1a9b07b9",
+      "manifest_and_candidate_match": true
+    },
+    {
+      "path": "tests/output-delivery.test.js",
+      "sha256": "6040c116851a77695b960d3b0d3dd153a15aa2c6d5ab687fb7612f55fdb184a4",
+      "manifest_and_candidate_match": true
+    }
+  ],
+  "verification": [
+    {
+      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec --timeout 10000 tests/output-delivery.test.js",
+      "tests_passed": 18,
+      "exit": 0
+    },
+    {
+      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec --timeout 10000 tests/output-delivery.test.js tests/juyiting-component-behavior.test.js tests/juyiting-hall-conversation.test.js tests/juyiting-task-workspace-wiring.test.js tests/juyiting-task-workspace-feature-flag.test.js tests/juyiting-task-workspace-panel.test.js tests/juyiting-task-workspace-integration.test.js",
+      "tests_passed": 149,
+      "includes_output18": true,
+      "exit": 0
+    },
+    {
+      "command": "npm run build",
+      "exit": 0
+    },
+    {
+      "command": "npx eslint src/components/chat/Chat.vue src/components/outputs/OutputList.vue src/composables/useOutputs.js src/utils/outputDownload.js tests/output-delivery.test.js",
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2
+    }
+  ],
+  "review_status": "repair_review_pending",
+  "limits": [
+    "Pre-freeze/post-commit manifests, not pre/post-test manifests.",
+    "18 output tests are included in149, never summed.",
+    "Old optional full npm run was interrupted; no full-suite PASS claim.",
+    "Actual API/client/browser/offline/device gates remain OD06."
+  ]
+}

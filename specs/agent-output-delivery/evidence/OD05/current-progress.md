@@ -29,3 +29,7 @@ Existing architect reviewer failed twice with Connection failed before returning
 ## Independent review result
 
 REQUEST_CHANGES on3af0c43: four deterministic defects require repair before acceptance; see `review-3af0c43.md`. Root archived read-only counterexamples and resumed `/root/od01_source_auth` as the sole Web writer. The additional stale-version response case remains accurately labeled injected-transport-only. No OD06 implementation has started.
+
+## Frozen review repair
+
+Repair `188948293d97c69a97df55a37d09ecd10c245ad1` is frozen clean. Writer reports R01-R04 and version-request fence fixed; root verified five changed-file hashes against both manifests and candidate blobs. Output18 are included in related149, all pass; build and scoped lint exit0. Same independent reviewer is rechecking; see `repair-1889482/observation.json`. No acceptance yet.
