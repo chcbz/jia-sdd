@@ -166,8 +166,9 @@ from pathlib import Path
 m=importlib.machinery.SourceFileLoader('fixture',sys.argv[1]).load_module()
 s=Path(sys.argv[2]);m.ROOT=s;m.PACKAGE=s/'incoming/package.tgz';m.APPROVAL=s/'approval.json';m.BACKUPS=s/'backups';m.LOCK=str(s/'lock');m.INSTALLER=sys.argv[1]
 commit=sys.argv[3];sys.argv=['fixture','5260799','20',commit]
-def done(*args): raise SystemExit(0)
-m.os.execv=done
+def done(installer):
+    return 0
+m.invoke_installer=done
 m.main()
 """
         result=subprocess.run(['python3','-c',script,str(OPS/'host/cyf-api-flow-deploy'),str(state),commit],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -199,6 +200,34 @@ m.main()
         with self.assertRaisesRegex(SystemExit, 'download changed before'):
             self.api.discard_verified_download_copy(source, copy, old)
         self.assertTrue(source.exists())
+
+    def test_installer_child_does_not_inherit_coordinator_lock(self):
+        import fcntl
+        lock = self.root/'coordinator.lock'
+        fd = os.open(str(lock), os.O_RDWR | os.O_CREAT, 0o600)
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        os.set_inheritable(fd, True)  # exercise close_fds even against an unsafe caller
+        child = self.root/'installer-fixture'
+        child.write_text("#!/usr/bin/python3\nimport os,fcntl\np=" + repr(str(lock)) + "\n"
+                         "target=os.stat(p)\n"
+                         "for name in os.listdir('/proc/self/fd'):\n"
+                         " try: st=os.stat('/proc/self/fd/'+name)\n"
+                         " except OSError: continue\n"
+                         " assert (st.st_dev,st.st_ino)!=(target.st_dev,target.st_ino)\n"
+                         "fd=os.open(p,os.O_RDWR)\n"
+                         "try: fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)\n"
+                         "except BlockingIOError: pass\n"
+                         "else: raise SystemExit('parent lost mutex while child running')\n")
+        child.chmod(0o755)
+        try:
+            self.assertEqual(self.api.invoke_installer(str(child)), 0)
+        finally:
+            os.close(fd)
+
+    def test_installer_native_failure_is_preserved(self):
+        child = self.root/'failed-installer'
+        child.write_text('#!/bin/sh\nexit 7\n'); child.chmod(0o755)
+        self.assertEqual(self.api.invoke_installer(str(child)), 7)
 
     def test_templates_have_no_manual_gate_or_commit_ticket(self):
         for name in ['backend-develop-release.yaml','frontend-develop-release.yaml']:

@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import stat
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -21,7 +22,9 @@ PACKAGE = ROOT / 'incoming/package.tgz'
 APPROVAL = ROOT / 'approval.json'
 BACKUPS = ROOT / 'backups'
 INSTALLER = '/usr/local/sbin/cyf-api-flow-install'
-LOCK = '/tmp/cyf-api-flow-auto-approval.lock'
+# v1 was inherited into the restored JVM; keep its inode untouched.
+# The v2 parent owns this mutex for the entire installer lifetime.
+LOCK = '/tmp/cyf-api-flow-auto-approval-v2.lock'
 EXPECTED_ORG = '5fb7d76ee6f9d07f148529c7'
 EXPECTED_PIPELINE = '5260799'
 EXPECTED_JOB = 'cloud_ci.api_ci'
@@ -107,6 +110,12 @@ def discard_verified_download_copy(downloaded, package, original_stat):
     return {'bytes': current.st_size, 'sha256': source_hash}
 
 
+def invoke_installer(installer):
+    # The coordinator stays alive holding its mutex; only the installer acquires
+    # and passes the separate release/lifecycle locks under their existing contract.
+    return subprocess.run([installer], close_fds=True).returncode
+
+
 def main():
     if os.geteuid() != 0:
         fail('must run as root')
@@ -140,7 +149,7 @@ def main():
     except BlockingIOError:
         fail('another automatic approval is active')
 
-    os.set_inheritable(lock_fd, True)  # serialize approval through installer exit
+    os.set_inheritable(lock_fd, False)  # parent retains custody; never leak into the JVM
 
     record_path = ROOT / 'record.json'
     if record_path.exists():
@@ -256,7 +265,7 @@ def main():
                       'source_commit': source_commit, 'jar_sha256': approval['jar_sha256'],
                       'receipt_sha256': approval['receipt_sha256'],
                       'redundant_download_reclaimed': reclaimed}, sort_keys=True), flush=True)
-    os.execv(INSTALLER, [INSTALLER])
+    raise SystemExit(invoke_installer(INSTALLER))
 
 
 if __name__ == '__main__':
