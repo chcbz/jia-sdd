@@ -1,6 +1,6 @@
 # 实施计划、步骤与交付效率 v1.1
 
-状态：OD00～OD05 开发门槛与独立评审已通过；OD06 客户端保留清理已通过独立评审，API 集成候选在独立复审中发现会话软删除授权缺口，正在修复，真实联调与正式打包尚未验收，尚未部署。实际状态与证据见 [task-ledger.yaml](task-ledger.yaml)；依赖 [detailed-design.md](detailed-design.md) 与 [tasks.md](tasks.md) 的逐项任务。
+状态：OD00～OD05 开发门槛与独立评审已通过；OD06 已完成真实会话/悬赏发布、离线与解绑取件、响应丢失后重启恢复，以及确切资源地址的桌面/移动浏览器验证，正在独立复核完整 R1 矩阵与开发准入。OD07～OD11 尚未实施；canonical 构建、微信真机和生产发布尚未通过。实际状态与证据见 [task-ledger.yaml](task-ledger.yaml)；依赖 [detailed-design.md](detailed-design.md) 与 [tasks.md](tasks.md) 的逐项任务。
 
 ## 1. 交付目标与估算口径
 

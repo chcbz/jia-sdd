@@ -1,0 +1,112 @@
+{
+  "scope": "OD06 O04 recovery, O20 unbind retention, terminal failure read-only index",
+  "apiProcess": {
+    "pid": 478651,
+    "startTicks": "56397314",
+    "jarSha256": "1438fa8d59e8de9e1ab8ab65c5c19698725d5b59e1031b7654f8b232e6a71f6d",
+    "configPath": "/tmp/od06-api-live.properties"
+  },
+  "faultProxy": {
+    "execSessionId": 33780,
+    "pidBeforeStop": 525963,
+    "startTicksBeforeStop": "56463404",
+    "listen": "127.0.0.1:10019",
+    "upstream": "127.0.0.1:10018",
+    "script": "/tmp/od06-complete-response-loss-proxy-r1.py",
+    "releaseFile": "/tmp/od06-complete-response-loss-r1.release",
+    "mechanism": "Forwards real HTTP request and body to API 10018, reads committed upstream response, records status/hash only, drops the first POST /agent/output-uploads/{id}/complete response after upstream 202, then closess all HTTP transport until release.",
+    "authorizationPersisted": false,
+    "requestBodyPersisted": false
+  },
+  "clientRouting": {
+    "launcher": "/tmp/od06-launch-synthetic-agent-r3.py",
+    "client": "/tmp/od06-synthetic-agent-r2/agent-client.mjs",
+    "wsUrl": "ws://127.0.0.1:10018/ws/agent/channel",
+    "outputApiUrl": "http://127.0.0.1:10019",
+    "trustBoundary": "Command dispatch and registration stay on the real API WebSocket; only output HTTP create/upload/complete/publish traffic passes through the fault proxy."
+  },
+  "agentExecutionBoundaries": [
+    {
+      "phase": "initial execution and committed-response loss",
+      "execSessionId": 39202,
+      "launchedAt": "2026-09-13T01:53:06+08:00",
+      "registeredEvidenceAt": "2026-09-13T01:53:26+08:00",
+      "taskEventEvidenceAt": "2026-09-13T01:54:08+08:00",
+      "stoppedBy": "SIGINT",
+      "stopRequestedAt": "2026-09-13T01:54:18+08:00",
+      "osPidPersisted": false,
+      "modelGeneratorChildPid": 527336,
+      "postStopEvidence": "/tmp/od06-bounty-task4-lost-complete-pre-restart-r1.observation.json syntheticAgentProcessAbsent=true"
+    },
+    {
+      "phase": "persistent-queue recovery after transport release",
+      "execSessionId": 39550,
+      "launchedAt": "2026-09-13T01:55:10+08:00",
+      "registeredEvidenceAt": "2026-09-13T01:55:32+08:00",
+      "publishedEvidenceAt": "2026-09-13T01:56:08+08:00",
+      "stoppedBy": "SIGINT",
+      "stopConfirmedAt": "2026-09-13T01:58:16+08:00",
+      "osPidPersisted": false,
+      "processBoundarySource": "/home/chc/.codex/sessions/2026/09/09/rollout-2026-09-09T20-59-10-01a08640-362d-7960-9a43-c39aa3587e70.jsonl"
+    }
+  ],
+  "modelInvocationCounter": {
+    "wrapper": "/tmp/od06-synthetic-codex-counted-r3.py",
+    "generator": "/tmp/od06-synthetic-codex-r2.py",
+    "counterPath": "/tmp/od06-synthetic-codex-r3.invocations.log",
+    "count": 1,
+    "counterSha256": "2989c1defd8a3a90045a1b196921732cff1914728dd110748ec9d5734311b86f",
+    "persistenceReason": "Counter is outside the managed workspace and output queue. Wrapper appends under flock, flushes and fsyncs before exec of the generator; Agent restart and managed workspace recreation do not remove it."
+  },
+  "recovery": {
+    "taskId": "4",
+    "runId": "4326fd3446e4469dbc1e0c3221846ce5",
+    "preRestart": {
+      "queueState": "UPLOADING",
+      "retryCount": 5,
+      "modelInvocationCount": 1,
+      "firstSnapshotSha256": "2cf3aa025cf27c7d16eace9ce6098b759784fe4efe4b310bc7b0679cf8b9bd59"
+    },
+    "postRestart": {
+      "queueState": "PUBLISHED",
+      "terminalNotified": true,
+      "modelInvocationCount": 1,
+      "downloads": {
+        "changes.zip": "ea9a0f3fa0e294d706d136ed04c4efc91ebf7532b29b34c6065a75b6e40f59e5",
+        "evidence.png": "9b025392756598eb71e5d3a06d7904d170d4610ebb583d387e7e3db10868d61b",
+        "report.md": "2cf3aa025cf27c7d16eace9ce6098b759784fe4efe4b310bc7b0679cf8b9bd59"
+      }
+    },
+    "snapshotFiles": {
+      "0a55a2e1b33675a0be6dc4eb1cb4aaa5.md": {
+        "path": "/tmp/od06-synthetic-agent-r2/data/output-queue/6167745f6335383936316561663330393433613661663933306566653335306534353761/snapshots/4326fd3446e4469dbc1e0c3221846ce5/0a55a2e1b33675a0be6dc4eb1cb4aaa5.md",
+        "size": 125,
+        "sha256": "2cf3aa025cf27c7d16eace9ce6098b759784fe4efe4b310bc7b0679cf8b9bd59"
+      },
+      "20b906b745b6de8d6226b48e018985a9.zip": {
+        "path": "/tmp/od06-synthetic-agent-r2/data/output-queue/6167745f6335383936316561663330393433613661663933306566653335306534353761/snapshots/4326fd3446e4469dbc1e0c3221846ce5/20b906b745b6de8d6226b48e018985a9.zip",
+        "size": 377,
+        "sha256": "ea9a0f3fa0e294d706d136ed04c4efc91ebf7532b29b34c6065a75b6e40f59e5"
+      },
+      "3222f4198e62735380f234baf27fd481.png": {
+        "path": "/tmp/od06-synthetic-agent-r2/data/output-queue/6167745f6335383936316561663330393433613661663933306566653335306534353761/snapshots/4326fd3446e4469dbc1e0c3221846ce5/3222f4198e62735380f234baf27fd481.png",
+        "size": 109,
+        "sha256": "9b025392756598eb71e5d3a06d7904d170d4610ebb583d387e7e3db10868d61b"
+      }
+    },
+    "snapshotHashesMatchRecoveredDownloads": true
+  },
+  "task3AfterUnbind": {
+    "observation": "/tmp/od06-bounty-task3-owner-unbound-read-r4.observation.json",
+    "overallPass": true
+  },
+  "observationSha256": {
+    "/tmp/od06-complete-response-loss-r1.observation.json": "232a0eb27593496f6c25b6689d96f75ae79f2cf613d426bc7454cbb0b6795d74",
+    "/tmp/od06-bounty-task4-lost-complete-pre-restart-r1.observation.json": "b6811f8ddd0b82ccc444cb8e327d30df5ab1aec9dad8025e00f1d69899313fb7",
+    "/tmp/od06-bounty-task4-recovery-read-r1.observation.json": "838b17801e4f0d72587238977fdce7baf9ef26b384cc3a8ab9413100f1778385",
+    "/tmp/od06-bounty-task4-recovery-db-r1.observation.json": "b629d6a9ac309cc20f59ea9cf3a22e7d59184df9ca032b973411752da3266808",
+    "/tmp/od06-bounty-task3-owner-unbound-read-r4.observation.json": "d6972ee3acb6ea65ab2ba92caec55b450197745f1d7975ed6bb912db4d582470",
+    "/tmp/od06-synthetic-persona-unbind-db-r3.observation.json": "c0283d69ad0a49ed16c7d2bc63a4e56a731cb367350230f65f4cc02c4b204e03",
+    "/tmp/od06-task1-task2-terminal-readonly-r1.observation.json": "bc56bf5472c068562af874d8fca0f447ce3781be2860a3704a4a52aa553fe464"
+  }
+}
