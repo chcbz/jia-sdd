@@ -25,3 +25,7 @@ Critical fallback writer confirmed successful Web takeover with no blocking cond
 ## Independent reviewer availability fallback
 
 Existing architect reviewer failed twice with Connection failed before returning a verdict. Root switched to a new independent read-only fallback `/root/od05_review_fallback`, with no product write authority. The candidate remains frozen; network/provider failures are not approval. Review scope and remaining OD06 gates are unchanged.
+
+## Independent review result
+
+REQUEST_CHANGES on3af0c43: four deterministic defects require repair before acceptance; see `review-3af0c43.md`. Root archived read-only counterexamples and resumed `/root/od01_source_auth` as the sole Web writer. The additional stale-version response case remains accurately labeled injected-transport-only. No OD06 implementation has started.
