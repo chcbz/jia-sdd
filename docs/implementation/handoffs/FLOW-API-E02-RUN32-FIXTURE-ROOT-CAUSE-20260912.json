@@ -1,0 +1,30 @@
+{
+  "at": "2026-09-12T23:07:33.753426+08:00",
+  "pipeline": "5260799",
+  "run": 32,
+  "source": "00db9f077642b00ea58bb71ad07f21a85977f164",
+  "cloud_service_tests": {
+    "total": 257,
+    "failed": 2,
+    "skipped": 5
+  },
+  "failures": [
+    {
+      "selector": "recommendTaskTeamAcceptsZeroSlotBudgetButReturnsBlockedPreview",
+      "cause": "ownedAgent performs Mockito stubbing inside another unfinished when/thenReturn argument",
+      "fix": "construct ownedAgent before opening roster stub"
+    },
+    {
+      "selector": "getTaskProjectsExactStoredCoordinatorWithoutInferringOrWriting",
+      "cause": "new test expected1rootread; existing getTask projection also reads root for empty-membership legacy projection",
+      "fix": "assert exact2reads; no write/no event assertions retained"
+    }
+  ],
+  "candidate": "270ae18566dc901637ec87567083b69103a9ba63",
+  "tree": "9605b6390107ad8651339db5a7fcb8de4b26d0aa",
+  "production_source_changed": false,
+  "production_lifecycle_run32": false,
+  "selfcheck": "exact source call-chain and test fixture audit; gitdiffcheckPASS; no local Gradle",
+  "formal_verification": "next Flow required",
+  "evidence": "/var/tmp/cyf-api-e02-integrated-release-20260912/run32-full-build-log.json"
+}

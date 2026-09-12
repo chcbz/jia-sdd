@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-09-12T23:00:24.331954+08:00",
+  "verifiedAt": "2026-09-12T23:28:29.289875+08:00",
   "policy": "ready develop push -> cloud tests/build -> same-run artifact -> automatic deploy",
   "per_run_human_ticket": false,
   "per_run_reviewer": false,
@@ -218,6 +218,36 @@
       "initial_deploy_failure_preserved": 69510439,
       "selector_class_scope": 65,
       "evidence": "/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-RUN31-DEPLOYED-20260912.json"
+    },
+    {
+      "pipeline_id": "4403172",
+      "run": 94,
+      "status": "FAIL",
+      "commit": "1b3c2dd195757075ae7e8690d82b084af0d35060",
+      "phase": "cloud_parent_component_test_harness",
+      "tests": {
+        "passed": 2068,
+        "pending": 2,
+        "failed": 5
+      },
+      "deployment_started": false,
+      "correction": "d937e6e included610076",
+      "evidence": "/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-WEB-RUN94-HARNESS-ROOT-CAUSE-20260912.json"
+    },
+    {
+      "pipeline_id": "5260799",
+      "run": 32,
+      "status": "FAIL",
+      "commit": "00db9f077642b00ea58bb71ad07f21a85977f164",
+      "phase": "cloud_E02_test_fixtures",
+      "service_tests": {
+        "total": 257,
+        "failed": 2,
+        "skipped": 5
+      },
+      "deployment_started": false,
+      "correction": "270ae185",
+      "evidence": "/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-E02-RUN32-FIXTURE-ROOT-CAUSE-20260912.json"
     }
   ],
   "pipelines": [
@@ -235,22 +265,24 @@
       "current_branch_filter": "^develop$",
       "webhook_present_in_flow_config": true,
       "deployment_with_new_configuration_verified": false,
-      "state": "E02_RUN32_SOURCE_RECONCILING",
-      "next_action": "Observe Run32 only; do not repeat Start. Source exact metadata pending. Production remains verified Run31.",
+      "state": "E02_RUN33_CLOUD_VERIFIED_DEPLOY_RETRY",
+      "next_action": "Observe exact same-artifactRun33retry; no new build. Updateproductiononlyafterhealthyattestation.",
       "test_selector_classes": 66,
       "automatic_push_trigger_verified": false,
       "current_run": {
-        "state": "start_reconciling",
-        "expected_commit": "00db9f077642b00ea58bb71ad07f21a85977f164",
-        "expected_tree": "d860e4603ca95662ba61414fbbc6ca1be3abb0ba",
-        "selector_class_scope": 66,
-        "evidence": "/var/tmp/cyf-api-e02-integrated-release-20260912",
-        "run": 32,
+        "run": 33,
         "status": "RUNNING",
-        "source_metadata": "pending exact source; initial Start returned run32 with no head commit",
-        "build_job": 514230417,
-        "deploy_job": 514230418,
-        "manual_start_once": true
+        "expected_commit": "270ae18566dc901637ec87567083b69103a9ba63",
+        "expected_tree": "9605b6390107ad8651339db5a7fcb8de4b26d0aa",
+        "source_metadata": "matched",
+        "build_job": 514236296,
+        "build_status": "SUCCESS",
+        "first_deploy_order": 69511830,
+        "first_deploy_status": "FAIL_before_lifecycle_capacity",
+        "same_artifact_deploy_job_retry_once": true,
+        "jar_sha256": "12c29e32b13a35fdd41f07c93b56ec0ebeb648023d48120c59b1181c135e2d63",
+        "receipt_sha256": "52f23bad7b461f32935ddbae137fce45f909c2cea8bc34cd2b5972a48e521a7d",
+        "selector_class_scope": 66
       },
       "verified_deployment": {
         "pipeline_id": "5260799",
@@ -277,8 +309,8 @@
       "component": "frontend",
       "pipeline_id": "4403172",
       "name": "cyf-web-release",
-      "cloud_flow_sha256": "2ed02125feb71fb7ec0e4b5e64e8485fed4a1ee9fd51dace8ea985daf7531d34",
-      "candidate_sha256": "40e9d65a737dfa69325462c39ca9bd0d1708e7f44a715f1562d3b02b221e53fb",
+      "cloud_flow_sha256": "416ab6938483486f3f9a8e06b80d5c0a9b0a67a4381d7077038fb639d9cd811f",
+      "candidate_sha256": "286cfcc310a6dbf6f1ec1f99e3fde4b2c2633c49f86ac346e0928e6602fabe8f",
       "candidate_path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/templates/frontend-develop-release.yaml",
       "current_branch": "develop",
       "current_events": [
@@ -287,10 +319,10 @@
       "current_branch_filter": "^develop$",
       "webhook_present_in_flow_config": true,
       "deployment_with_new_configuration_verified": true,
-      "state": "E03_WEB_AUTO_RUN94",
+      "state": "E03_E07_COMBINED_PUSHED",
       "service_connection_name": "chcbz的码云服务连接",
       "service_connection_id": "vyz9pea3uni64twx",
-      "next_action": "Observe exact Run94 cloud tests/build/deployment; first production stream-helper use. Preserve failedRun93 history.",
+      "next_action": "Reconcile automatic newrunfor610076; main76targetedPASS; fulltestsandfirstnewbootstrap/helpercloudusagepending.",
       "automatic_push_trigger_verified": true,
       "historical_service_connection_error_code": "1209300",
       "service_connection_permission_resolved_at": "2026-09-12T10:44:34.284597+00:00",
@@ -316,15 +348,9 @@
         "evidence": "/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-WEB-RUN93-ONLINE-WITH-FAILURE-20260912.json"
       },
       "current_run": {
-        "pipeline_id": "4403172",
-        "run": 94,
-        "status": "RUNNING",
-        "expected_commit": "1b3c2dd195757075ae7e8690d82b084af0d35060",
-        "expected_tree": "4f9ca16bf6a49645324a4b4473c5531b9e0f2d19",
-        "build_job": 514228754,
-        "deploy_job": 514228756,
-        "manual_start_once": false,
-        "evidence": "/var/tmp/cyf-web-e03-release-20260912/run94-status.json"
+        "expected_commit": "610076091ad0d65fdc88ec10eb057ab80c11e06a",
+        "expected_tree": "2de79f4e605a6a95559f268ddf1d14f9199a967f",
+        "status": "push_reconciling"
       }
     }
   ],
