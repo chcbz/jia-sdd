@@ -1,0 +1,7 @@
+# Intermediate admission/dispatch repair checks
+
+Root independently parsed four retained XML reports:145 tests,0 failures/errors/skips, exit0. Codec9, transport capture5, AgentServiceImpl127 and OutputLeaseServiceImpl4 are this exact run's suites. Original logs/exit and XML were copied byte-for-byte from the operator's policy-admission-dispatch-r2-xml-1789245450 archive; archive.json records hashes. No tests were rerun or summed with earlier checks.
+
+This repairs the prior admission/dispatch run's outdated captureTaskInvites stub. The lease adapter suite includes ticketRunCannotAuthorizeAnotherRunBodyForAnyMutation: its observed implementation exercises claim/start/heartbeat/release with a mismatched run and verifies no core lease or receipt interaction. The corresponding adapter now rejects before receipt lookup and injects the current ticket's run into the core command. This is scoped component evidence; a real MySQL cross-run case and final frozen source association remain due.
+
+No null-omission response regression is included in this four-method adapter XML; that test was added afterward. Do not relabel the report using a later source method count. Remaining HTTP/security suites, current core regression, feature-off pre-M003A bootstrap/CRUD, real authenticated entry/dispatch and guard/funding transaction checks remain pending. Exact invocation and final candidate association are supplied in the frozen writer handoff. OD07 is not accepted by this intermediate result.
