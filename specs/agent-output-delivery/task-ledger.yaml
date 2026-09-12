@@ -60,9 +60,9 @@ tasks:
   candidate_commit: c5330dd50da6c03e55edca0744485a1b95385552
   owner: critical_worker
   started_at: '2026-09-09T12:58:24.818716+00:00'
-  progress: independent APPROVE for development on c5330dd5; B1/B2/B3/B4 closed;
-    latest scoped repair evidence verifies 280 tests and candidate correspondence;
-    OD02 unlocked, live dependency/topology and packaging gates remain later
+  progress: independent APPROVE for development on c5330dd5; B1/B2/B3/B4 closed; latest
+    scoped repair evidence verifies 280 tests and candidate correspondence; OD02 unlocked,
+    live dependency/topology and packaging gates remain later
   evidence:
   - evidence/OD01/claim.md
   - evidence/OD01/ticket-contract-review.md
@@ -125,8 +125,7 @@ tasks:
   candidate_commit: a04c2feb634643fc7e52289aa2b4a98ddf61bbb3
   started_at: '2026-09-09T20:51:50Z'
   review_status: approve_for_development
-  progress: >-
-    Independent development APPROVE on a04c2feb; R01-R08 closed. Final affected
+  progress: Independent development APPROVE on a04c2feb; R01-R08 closed. Final affected
     authorization regression22/22 passed with verified source/report association;
     parent7701a556 scoped83/83 retained separately without relabeling or summing.
     OD03 unlocked. Canonical build, deployment/configuration/load and user-facing
@@ -209,8 +208,8 @@ tasks:
   owner: critical_worker
   base_commit: a04c2feb634643fc7e52289aa2b4a98ddf61bbb3
   started_at: '2026-09-11T08:11:21.569356+00:00'
-  progress: Independent repair review APPROVE; R01-R03 closed. Targeted27/27 and layering pass;
-    changed source/report association verified. OD04 unlocked; live lifecycle/integration/release
+  progress: Independent repair review APPROVE; R01-R03 closed. Targeted27/27 and layering
+    pass; changed source/report association verified. OD04 unlocked; live lifecycle/integration/release
     gates remain.
   evidence:
   - evidence/OD03/current-progress.md
@@ -252,9 +251,8 @@ tasks:
   started_at: '2026-09-12T00:27:16.059671+00:00'
   base_commit: f8c731d0cef38956bb3dabaa628c6188c0040bed
   upstream_api_commit: 4c292cc35e4d82a23620a85296b721569ff59bd5
-  progress: >-
-    Independent repair APPROVE on29aa70da; R01/R02 closed. Full client290/290 and
-    candidate correspondence verified. OD05 unlocked; local retention and live
+  progress: Independent repair APPROVE on29aa70da; R01/R02 closed. Full client290/290
+    and candidate correspondence verified. OD05 unlocked; local retention and live
     integration remain mandatory OD06 gates.
   candidate_commit: 29aa70da8bb9f0476379dd6bd9e41731c5219457
   review_status: approve_for_development
@@ -272,7 +270,7 @@ tasks:
   unlocks:
   - OD05
 - id: OD05
-  status: in_progress
+  status: accepted_for_development
   release: R1
   title: 共用成果UI与两个入口
   ownership: web/components/outputs与chat/bounty/workspace、useOutputs
@@ -295,7 +293,9 @@ tasks:
   writer_agent: /root/od01_source_auth
   started_at: '2026-09-12T02:37:09.934080+00:00'
   base_commit: b31565f8741fdc6f986763dd86442a2c2a4345b0
-  progress: Repair212bfe4 adds complete source denial invalidation and active-response fence;20 output tests included in151 related tests plus build pass;three hashes verified; same reviewer rechecking.
+  progress: Independent APPROVE on212bfe4; all known source lifecycle/download/navigation
+    findings closed. Related151 include output20; build/lint and candidate association
+    pass. Live R1 integration remains OD06.
   evidence:
   - evidence/OD05/preparation.md
   - evidence/OD05/implementation-handoff.md
@@ -311,14 +311,22 @@ tasks:
   - evidence/OD05/review-07d20ea-counterexamples/observation.json
   - evidence/OD05/review-1889482-counterexamples/observation.json
   - evidence/OD05/review-3af0c43-counterexamples/observation.json
-  writer_fallback_reason: balanced provider503 auth_unavailable; preserve uncommitted Web changes
+  - evidence/OD05/accepted-review-212bfe4.md
+  - evidence/OD05/review-212bfe4-counterexamples/observation.json
+  writer_fallback_reason: balanced provider503 auth_unavailable; preserve uncommitted
+    Web changes
   candidate_commit: 212bfe4f9441cc82262d98e7b0723d6c0800e3d9
-  review_status: repair_review_pending
-  reviewer_fallback: independent_read_only_default; architect failed twice with Connection failed
+  review_status: approve_for_development
+  reviewer_fallback: independent_read_only_default; architect failed twice with Connection
+    failed
   candidate_evidence: evidence/OD05/repair-212bfe4/observation.json
   reviewer_agent: /root/od05_review_fallback
+  commit: 212bfe4f9441cc82262d98e7b0723d6c0800e3d9
+  accepted_for_development_at: '2026-09-12T09:40:33.165911+00:00'
+  unlocks:
+  - OD06
 - id: OD06
-  status: not_started
+  status: in_progress
   release: R1
   title: R1集成、发布候选和演示
   ownership: 串行client保留清理/API合并与构建修复；独立验证；root evidence/integration更新
@@ -337,6 +345,15 @@ tasks:
   - client_retention_R03
   - api_concurrent_baseline_reconciliation
   - canonical_build_dependency_resolution
+  owner: main_orchestrator
+  started_at: '2026-09-12T09:40:33.165911+00:00'
+  active_subtask: client_retention_R03
+  active_writer: /root/od01_source_auth
+  progress: Client retention implementation assigned to sole critical writer; independent
+    review follows before API reconciliation and live integration.
+  evidence:
+  - evidence/OD06/serial-integration-handoff.md
+  - evidence/OD06/client-retention-gate.md
 - id: OD07
   status: not_started
   release: R2
