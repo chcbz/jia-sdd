@@ -23,3 +23,7 @@ Root inspected the real-dependency HTTP harness XML at timestamp `2026-09-11T15:
 Candidate `683e8007` is clean. Root verified the saved real-dependency MockMvc XML: **1 test, 0 failures/errors/skips**, timestamp `2026-09-11T16:55:22.888Z`; the recorded command exited 0. Both task and conversation go through real MySQL, MinIO, ClamAV, RunTicket upload/publication and RSA UserJwt retrieval, comparing the 13-byte payload. The test source digest matches the frozen candidate. See [candidate-683e8007/observation.json](candidate-683e8007/observation.json). Archived XML omits captured logs/properties; its original hash is retained. This supersedes the earlier test-container setup failure.
 
 The candidate also changes OAuth resource handling for streaming ASYNC dispatch; the independent reviewer is explicitly checking its security scope. The preferred review provider failed with `reasoning_content` protocol errors; root assigned an independent read-only architect fallback. No cross-model review approval is claimed. Actual Agent disconnection, live HTTP deployment, client/Web and production gates remain open.
+
+## Independent review result
+
+`683e8007` received **REQUEST_CHANGES**, with three bounded repairs: snapshot pagination, UserJwt read error envelopes and deterministic request-hash collision. See [review-683e8007.md](review-683e8007.md). Original sole writer has resumed these repairs; OD03 remains unaccepted and OD04 has not started.

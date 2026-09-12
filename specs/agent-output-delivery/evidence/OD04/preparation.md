@@ -23,3 +23,13 @@ No client source was edited or test/build executed by this preparation.
 ## Installed development dependencies
 
 On unchanged client candidate `a100a5007621dbb66717544f6332108fb7b4e5e7`, `npm ci --no-audit --no-fund` in `/home/chc/wsps/cyf-worktrees/output-client/conf/codex-ws-agent` exited 0 and installed three packages (Node v22.22.0, npm 11.17.0). The worktree remains clean; package-lock SHA-256 is `3197e9c19030098c274ad802c95b0b37a2427bd7c6aa52a4a6d82c2ec328c015`. This was dependency preparation only; no client feature test or host installer was run.
+
+## OD03 candidate protocol seams
+
+Read-only follow-up against the unchanged client baseline: its canonical message allowlist does not yet include `output.auth.receipt`, so implement the ticket exchange and receipt routing before invoking HTTP. Keep receipts inside the bridge, out of model input and persisted raw messages. Registration and heartbeat must advertise R1 output capabilities only once snapshot/queue support is ready; keep R2 support false.
+
+`normalizeInboundMessage` merges outer/payload values; validate trusted `outputContext` consistently in both forms, reject conflicting copies, and retain it through persisted command recovery. `CommandFingerprint` currently includes nested business fields but its top-level compatibility list only contains prompt/content/instruction/description/title/currentTaskTitle. Include the canonical trusted output context in duplicate-command identity so an altered run/source cannot be mistaken for the same completed command. Test both supported envelope forms and conflicting context. Reconnect resumes registration before command drain in `resumeRegisteredProfile`; reattach output-queue recovery there with ticket re-exchange and no model restart.
+
+## Client baseline refresh before implementation
+
+On 2026-09-12 the original client `master` is clean at `f8c731d0cef38956bb3dabaa628c6188c0040bed`, three commits ahead of the untouched output-client baseline. Changes include conversation-bound session persistence (`96d765a`, `9888214`) in `agent-client.mjs` and its existing regression tests, plus directory mode correction in `shell/common.sh`. At OD04 start the sole client writer should verify cleanliness and ancestry, fast-forward only the feature worktree to this existing master commit, and record that implementation base. Preserve these committed fixes in output delivery; do not implement against the older session behavior and later overwrite them. This is preparation; no branch was advanced by root.
