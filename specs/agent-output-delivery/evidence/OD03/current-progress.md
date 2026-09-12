@@ -31,3 +31,7 @@ The candidate also changes OAuth resource handling for streaming ASYNC dispatch;
 ## Repair candidate frozen
 
 `4c292cc35e4d82a23620a85296b721569ff59bd5` repairs R01–R03. Root verified **27/27** targeted checks, no failures/errors/skips; eight changed source files match pre/post-run and candidate hashes. Layering also exited 0. See [repair-4c292cc3/observation.json](repair-4c292cc3/observation.json). The same independent reviewer is checking the repair; OD04 remains pending.
+
+## Development acceptance
+
+The independent reviewer approved `4c292cc3`; R01–R03 are closed. Root accepted OD03 for development and assigned OD04 to the sole client writer. See [accepted-review-4c292cc3.md](accepted-review-4c292cc3.md). Previous entries above are historical checkpoints. No production/end-to-end release approval is implied.

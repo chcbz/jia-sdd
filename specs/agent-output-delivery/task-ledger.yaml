@@ -185,7 +185,7 @@ tasks:
   unlocks:
   - OD03
 - id: OD03
-  status: in_progress
+  status: accepted_for_development
   release: R1
   title: 任务/对话成果发布、列表和鉴权下载
   ownership: agent artifact M002；chat_output；精确ACL与代理读
@@ -209,10 +209,9 @@ tasks:
   owner: critical_worker
   base_commit: a04c2feb634643fc7e52289aa2b4a98ddf61bbb3
   started_at: '2026-09-11T08:11:21.569356+00:00'
-  progress: >-
-    Repair candidate4c292cc3 fixes three review findings; targeted27/27 and layering pass.
-    All eight changed source hashes match pre/post-test manifests and candidate blobs.
-    Independent repair review pending; no OD03 acceptance or live deployment yet.
+  progress: Independent repair review APPROVE; R01-R03 closed. Targeted27/27 and layering pass;
+    changed source/report association verified. OD04 unlocked; live lifecycle/integration/release
+    gates remain.
   evidence:
   - evidence/OD03/current-progress.md
   - evidence/OD03/claim.md
@@ -220,11 +219,16 @@ tasks:
   - evidence/OD03/candidate-683e8007/observation.json
   - evidence/OD03/review-683e8007.md
   - evidence/OD03/repair-4c292cc3/observation.json
+  - evidence/OD03/accepted-review-4c292cc3.md
   candidate_commit: 4c292cc35e4d82a23620a85296b721569ff59bd5
-  review_status: repair_review_pending
+  review_status: approve_for_development
   reviewer_fallback: architect; preferred provider failed with reasoning_content errors
+  commit: 4c292cc35e4d82a23620a85296b721569ff59bd5
+  accepted_for_development_at: '2026-09-12T00:27:16.059671+00:00'
+  unlocks:
+  - OD04
 - id: OD04
-  status: not_started
+  status: in_progress
   release: R1
   title: 客户端manifest、安全快照、持久恢复
   ownership: isp-install/conf/codex-ws-agent/output-*.mjs及执行finish
@@ -244,6 +248,16 @@ tasks:
   - O10
   - O22
   - O30
+  owner: critical_worker
+  started_at: '2026-09-12T00:27:16.059671+00:00'
+  base_commit: f8c731d0cef38956bb3dabaa628c6188c0040bed
+  upstream_api_commit: 4c292cc35e4d82a23620a85296b721569ff59bd5
+  progress: Sole client writer assigned; verify clean fast-forward to existing client master
+    session fixes, then implement snapshot/queue/ticket and finish recovery. No client acceptance
+    yet.
+  evidence:
+  - evidence/OD04/preparation.md
+  - evidence/OD04/claim.md
 - id: OD05
   status: not_started
   release: R1
