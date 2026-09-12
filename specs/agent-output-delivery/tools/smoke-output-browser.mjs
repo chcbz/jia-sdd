@@ -3,6 +3,7 @@
 // expectedSha256, expectedText (optional). Resource route must use local Vite15173.
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
+import { withChromiumCloseCompatibility } from './output-browser-session.mjs'
 import { createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -34,6 +35,7 @@ const tokenExpires = Number(JSON.parse(Buffer.from(token.split('.')[1], 'base64u
 assert(tokenExpires > Date.now() + 180_000, 'Refresh the test OAuth token before this probe')
 const { CdpSession, stopChrome } = await import(pathToFileURL(resolve(
   config.webRoot, 'tests/juyiting-public-beta-ui-smoke.mjs')))
+const OutputBrowserSession = withChromiumCloseCompatibility(CdpSession)
 const WebSocketCtor = createRequire(resolve(config.webRoot, 'package.json'))('ws')
 const outputDirectory = resolve(config.outputDirectory)
 await mkdir(outputDirectory, { recursive: true, mode: 0o700 })
@@ -118,7 +120,7 @@ try {
   assert.equal(wsUrl.hostname, '127.0.0.1')
   assert.equal(Number(wsUrl.port), port)
   assert.equal(wsUrl.protocol, 'ws:')
-  cdp = new CdpSession({ guard, cdpCommandTimeoutMs: 20_000 }, wsUrl, WebSocketCtor)
+  cdp = new OutputBrowserSession({ guard, cdpCommandTimeoutMs: 20_000 }, wsUrl, WebSocketCtor)
   await cdp.open()
   await cdp.send('Page.enable')
   await cdp.send('Runtime.enable')
@@ -208,6 +210,7 @@ try {
   process.off('SIGTERM', onSignal)
   const report = { succeeded: succeeded && cleanupFailures.length === 0, step, observations,
     network, blockedResources, failureMessage, terminalErrors, cleanupFailures, cleanupMessages,
+    closeObservation: cdp?.closeObservation ?? null,
     eventCounts: Object.fromEntries([...new Set(cdp?.events.map(e => e.method) || [])].map(method =>
       [method, cdp.events.filter(e => e.method === method).length])),
     authentication: 'real OAuth token bootstrapped into isolated browser storage',
