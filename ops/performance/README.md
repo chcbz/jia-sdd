@@ -34,15 +34,16 @@ Do not calculate one of these expected hashes from the candidate file and immedi
 
 ## Declared surfaces
 
-The framework manifest is strict JSON bound to the exact profile/API commit/tree. Both route arrays are mandatory, non-empty, well formed, and independently reconciled:
+The framework manifest is strict JSON bound to the exact profile/API commit/tree. Framework, management, and error route arrays are mandatory, non-empty, well formed, and independently reconciled:
 
 ```json
 {
   "profile": "grey",
   "api_commit": "...",
   "api_tree": "...",
-  "framework_routes": [{"method": "GET", "path": "/error", "handler": "error"}],
-  "management_routes": [{"method": "GET", "path": "/actuator/health", "handler": "health"}]
+  "framework_routes": [{"method": "GET", "path": "/framework", "handler": "framework"}],
+  "management_routes": [{"method": "GET", "path": "/actuator/health", "handler": "health"}],
+  "error_routes": [{"method": "GET", "path": "/error", "handler": "error"}]
 }
 ```
 
@@ -60,11 +61,12 @@ A raw actuator export is not runtime evidence. The capture owner must provide th
   "capture_content_sha256": "lowercase SHA-256 of canonical payload JSON",
   "payload": {
     "framework_mappings": {"contexts": {}},
-    "management_mappings": {"contexts": {}}
+    "management_mappings": {"contexts": {}},
+    "error_mappings": {"contexts": {}}
   }
 }
 ```
 
-The internal payload hash is mandatory and verified over UTF-8 JSON serialized with sorted keys and compact separators. The independently supplied `--runtime-sha256` additionally binds the complete transport file. Both payload surfaces must enumerate at least one route. Direct strict route arrays and Actuator mappings are supported. Spring Boot 4 `details.requestMappingConditions.methods` plus `patterns` are expanded as a Cartesian product; malformed methods, paths, records, sections, or unknown shapes are rejected rather than skipped. Application/framework and management surfaces are compared independently, so moving a route between lists cannot conceal a mismatch.
+The internal payload hash is mandatory and verified over UTF-8 JSON serialized with sorted keys and compact separators. The independently supplied `--runtime-sha256` additionally binds the complete transport file. All three payload surfaces must enumerate at least one route. The error surface is kept separate from application/framework mappings, so moving `/error` between surfaces cannot cancel a mismatch. Direct strict route arrays and Actuator mappings are supported. Spring Boot 4 `details.requestMappingConditions.methods` plus `patterns` are expanded as a Cartesian product; malformed methods, paths, records, sections, or unknown shapes are rejected rather than skipped. Application/framework and management surfaces are compared independently, so moving a route between lists cannot conceal a mismatch.
 
-This slice provides no live capture, no YAML parser, and no claim that any real grey/prod runtime has passed reconciliation.
+A capture owner must export the real Spring Boot HandlerMapping/management mapping payload for one exact profile, then wrap it in this envelope; the tool performs no live capture itself. The optional normalized registry input is an exact four-surface projection (`kind` = `controller`, `framework`, `management`, or `error`; each entry contains only `kind`, `method`, `path`) and must cover every declared route with no unknown, wildcard, duplicate, or dynamic entry. This slice provides no YAML parser and no claim that any real grey/prod runtime has passed reconciliation until trusted capture and registry artifacts are supplied.

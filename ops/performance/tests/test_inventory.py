@@ -10,7 +10,7 @@ import unittest
 from contextlib import redirect_stdout
 from unittest import mock
 
-from ops.performance.inventory import canonical_sha256, main, reconcile, scan_source, _runtime_routes
+from ops.performance.inventory import canonical_sha256, main, reconcile, scan_source, validate_registry, _runtime_routes
 
 
 COMMIT = "c" * 40
@@ -28,7 +28,7 @@ def artifact_sha256(value):
 
 def manifest(framework=None, management=None, profile="grey", commit=COMMIT, tree=TREE):
     if framework is None:
-        framework = [{"method": "GET", "path": "/error", "handler": "error"}]
+        framework = [{"method": "GET", "path": "/framework", "handler": "framework"}]
     if management is None:
         management = [{"method": "GET", "path": "/actuator/health", "handler": "health"}]
     return {
@@ -37,6 +37,7 @@ def manifest(framework=None, management=None, profile="grey", commit=COMMIT, tre
         "api_tree": tree,
         "framework_routes": framework,
         "management_routes": management,
+        "error_routes": [{"method": "GET", "path": "/error", "handler": "error"}],
     }
 
 
@@ -55,10 +56,13 @@ def actuator(records):
     }
 
 
-def runtime(framework_records, management_records, profile="grey", commit=COMMIT, tree=TREE):
+def runtime(framework_records, management_records, error_records=None, profile="grey", commit=COMMIT, tree=TREE):
+    if error_records is None:
+        error_records = [structured(["GET"], ["/error"], handler="error")]
     payload = {
         "framework_mappings": actuator(framework_records),
         "management_mappings": actuator(management_records),
+        "error_mappings": actuator(error_records),
     }
     return {
         "profile": profile,
@@ -303,7 +307,7 @@ class InventoryTest(unittest.TestCase):
 
     def test_forged_or_missing_canonical_capture_hash_rejected(self):
         static = [{"method": "GET", "path": "/x", "handler": "x"}]
-        fw = [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])]
+        fw = [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])]
         mgmt = [structured(["GET"], ["/actuator/health"])]
         for claimed in ("f" * 64, None, "not-a-hash"):
             capture = runtime(fw, mgmt)
@@ -320,7 +324,7 @@ class InventoryTest(unittest.TestCase):
     def test_canonical_payload_hash_is_format_independent_and_valid(self):
         static = [{"method": "GET", "path": "/x", "handler": "x"}]
         capture = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         reparsed = json.loads(json.dumps(capture, indent=4, sort_keys=False))
@@ -330,7 +334,7 @@ class InventoryTest(unittest.TestCase):
     def test_manifest_requires_exact_binding_and_nonempty_distinct_lists(self):
         static = [{"method": "GET", "path": "/x", "handler": "x"}]
         capture = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         invalid = [
@@ -347,7 +351,7 @@ class InventoryTest(unittest.TestCase):
 
     def test_runtime_binding_and_nonempty_distinct_surfaces_required(self):
         static = [{"method": "GET", "path": "/x", "handler": "x"}]
-        good_fw = [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])]
+        good_fw = [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])]
         good_mgmt = [structured(["GET"], ["/actuator/health"])]
         captures = [
             runtime(good_fw, good_mgmt, profile="prod"),
@@ -364,7 +368,7 @@ class InventoryTest(unittest.TestCase):
         capture = runtime(
             [
                 structured(["GET"], ["/x"]),
-                structured(["GET"], ["/error"]),
+                structured(["GET"], ["/framework-other"]),
                 structured(["GET"], ["/actuator/health"]),
             ],
             [structured(["GET"], ["/management-other"])],
@@ -391,8 +395,11 @@ class InventoryTest(unittest.TestCase):
         self.roots.append(fixture_dir)
         manifest_path = os.path.join(fixture_dir, "manifest.json")
         output_path = os.path.join(fixture_dir, "inventory.json")
+        registry_path = os.path.join(fixture_dir, "registry.json")
         with open(manifest_path, "w") as output_file:
             json.dump({"profile": "grey", "routes": []}, output_file)
+        with open(registry_path, "w") as output_file:
+            json.dump({"routes": [{"kind": "controller", "method": "GET", "path": "/root/x"}]}, output_file)
         rc = main(
             [
                 "scan",
@@ -406,6 +413,8 @@ class InventoryTest(unittest.TestCase):
                 tree,
                 "--framework-manifest",
                 manifest_path,
+                "--registry-json",
+                registry_path,
                 "--output",
                 output_path,
             ]
@@ -419,7 +428,7 @@ class InventoryTest(unittest.TestCase):
     def test_real_reconcile_cli_accepts_independently_pinned_valid_fixture(self):
         inventory_value = inventory_artifact()
         runtime_value = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         trusted_inventory_hash = artifact_sha256(inventory_value)
@@ -438,7 +447,7 @@ class InventoryTest(unittest.TestCase):
         original = inventory_artifact()
         trusted_hash = artifact_sha256(original)
         runtime_value = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         mutations = []
@@ -466,7 +475,7 @@ class InventoryTest(unittest.TestCase):
 
     def test_real_reconcile_cli_rejects_strict_inventory_mutations(self):
         runtime_value = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         cases = []
@@ -505,7 +514,7 @@ class InventoryTest(unittest.TestCase):
     def test_real_reconcile_cli_rejects_capture_binding_tamper(self):
         inventory_value = inventory_artifact()
         runtime_value = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
             tree="e" * 40,
         )
@@ -516,7 +525,7 @@ class InventoryTest(unittest.TestCase):
     def test_real_reconcile_cli_rejects_coherently_forged_pair_against_original_artifact_pins(self):
         original_inventory = inventory_artifact()
         original_runtime = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         trusted_inventory_hash = artifact_sha256(original_inventory)
@@ -525,7 +534,7 @@ class InventoryTest(unittest.TestCase):
         forged_inventory = json.loads(json.dumps(original_inventory))
         forged_inventory["routes"][0]["path"] = "/forged"
         forged_runtime = runtime(
-            [structured(["GET"], ["/forged"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/forged"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         rc, result, _stderr = self.reconcile_cli(
@@ -546,13 +555,13 @@ class InventoryTest(unittest.TestCase):
         runtime_path = os.path.join(root, "runtime.json")
         original_inventory = inventory_artifact()
         original_runtime = runtime(
-            [structured(["GET"], ["/x"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         forged_inventory = json.loads(json.dumps(original_inventory))
         forged_inventory["routes"][0]["path"] = "/forged"
         forged_runtime = runtime(
-            [structured(["GET"], ["/forged"]), structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/forged"]), structured(["GET"], ["/framework"])],
             [structured(["GET"], ["/actuator/health"])],
         )
         with open(inventory_path, "wb") as output_file:
@@ -606,6 +615,49 @@ class InventoryTest(unittest.TestCase):
         self.assertEqual({inventory_path: 1, runtime_path: 1}, open_counts)
         self.assertEqual(["/x"], [route["path"] for route in result["static"]])
         self.assertNotIn("/forged", json.dumps(result, sort_keys=True))
+
+
+    def test_error_surface_is_required_and_reconciled_independently(self):
+        static = [{"method": "GET", "path": "/x", "handler": "x"}]
+        good = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"])],
+            [structured(["GET"], ["/actuator/health"])],
+            [structured(["GET"], ["/error"], handler="error")],
+        )
+        result = reconcile(static, manifest(), good, {"commit": COMMIT, "tree": TREE}, "grey")
+        self.assertTrue(result["ok"], result["diagnostics"])
+        moved = runtime(
+            [structured(["GET"], ["/x"]), structured(["GET"], ["/framework"]),
+             structured(["GET"], ["/error"])],
+            [structured(["GET"], ["/actuator/health"])],
+            [structured(["GET"], ["/other-error"], handler="error")],
+        )
+        result = reconcile(static, manifest(), moved, {"commit": COMMIT, "tree": TREE}, "grey")
+        self.assertFalse(result["ok"])
+        messages = "\n".join(item["message"] for item in result["diagnostics"])
+        self.assertIn("error declared route missing", messages)
+        self.assertIn("error runtime route not declared", messages)
+
+    def test_registry_is_an_exact_four_surface_projection(self):
+        surfaces = (
+            ("controller", [{"method": "GET", "path": "/x"}]),
+            ("framework", [{"method": "GET", "path": "/framework"}]),
+            ("management", [{"method": "GET", "path": "/actuator/health"}]),
+            ("error", [{"method": "GET", "path": "/error"}]),
+        )
+        good = {"routes": [
+            {"kind": kind, "method": route["method"], "path": route["path"]}
+            for kind, routes in surfaces for route in routes
+        ]}
+        self.assertEqual([], validate_registry(good, surfaces))
+        missing = {"routes": good["routes"][:-1]}
+        self.assertTrue(any(item["code"] == "registry_missing" for item in validate_registry(missing, surfaces)))
+        unknown = {"routes": good["routes"] + [{"kind": "framework", "method": "GET", "path": "/dynamic/{*path}"}]}
+        codes = {item["code"] for item in validate_registry(unknown, surfaces)}
+        self.assertIn("registry_wildcard", codes)
+        self.assertIn("registry_unknown", codes)
+        malformed = {"routes": [{"kind": "framework", "method": "GET", "path": "/framework", "extra": 1}]}
+        self.assertTrue(any(item["code"] == "registry_shape" for item in validate_registry(malformed, surfaces)))
 
     def test_json_media_is_not_stream_exemption(self):
         root = self.source(

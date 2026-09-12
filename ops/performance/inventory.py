@@ -685,30 +685,34 @@ def _declared_surfaces(manifest, expected, profile):
     diagnostics = _binding_diagnostics(manifest, expected, profile, "framework_manifest")
     framework = []
     management = []
+    error = []
     if isinstance(manifest, dict):
-        unknown = set(manifest) - set(["profile", "api_commit", "api_tree", "framework_routes", "management_routes"])
+        unknown = set(manifest) - set(["profile", "api_commit", "api_tree", "framework_routes", "management_routes", "error_routes"])
         if unknown:
             diagnostics.append(
                 _diag("manifest_shape", "framework manifest has unknown fields: %s" % sorted(unknown))
             )
-        for key, kind in (("framework_routes", "framework"), ("management_routes", "management")):
+        for key, kind in (("framework_routes", "framework"), ("management_routes", "management"), ("error_routes", "error")):
             try:
                 parsed = _direct_route_list(manifest.get(key), kind, "framework_manifest.%s" % key)
                 if kind == "framework":
                     framework = parsed
-                else:
+                elif kind == "management":
                     management = parsed
+                else:
+                    error = parsed
             except InventoryError as exc:
                 diagnostics.append(_diag("manifest_shape", str(exc)))
-    return framework, management, diagnostics
+    return framework, management, error, diagnostics
 
 
 def _runtime_surfaces(runtime, expected, profile):
     diagnostics = _binding_diagnostics(runtime, expected, profile, "runtime_capture")
     framework = []
     management = []
+    error = []
     if not isinstance(runtime, dict):
-        return framework, management, diagnostics
+        return framework, management, error, diagnostics
     allowed = set(["profile", "api_commit", "api_tree", "capture_content_sha256", "payload"])
     unknown = set(runtime) - allowed
     if unknown:
@@ -719,12 +723,12 @@ def _runtime_surfaces(runtime, expected, profile):
     payload = runtime.get("payload")
     if not isinstance(payload, dict):
         diagnostics.append(_diag("runtime_shape", "runtime capture payload must be an object"))
-        return framework, management, diagnostics
-    if set(payload) != set(["framework_mappings", "management_mappings"]):
+        return framework, management, error, diagnostics
+    if set(payload) != set(["framework_mappings", "management_mappings", "error_mappings"]):
         diagnostics.append(
             _diag(
                 "runtime_shape",
-                "runtime payload must contain exactly framework_mappings and management_mappings",
+                "runtime payload must contain exactly framework_mappings, management_mappings, and error_mappings",
             )
         )
     try:
@@ -733,16 +737,18 @@ def _runtime_surfaces(runtime, expected, profile):
             diagnostics.append(_diag("content_hash_mismatch", "runtime canonical payload SHA-256 mismatch"))
     except InventoryError as exc:
         diagnostics.append(_diag("runtime_shape", str(exc)))
-    for key, kind in (("framework_mappings", "runtime_framework"), ("management_mappings", "runtime_management")):
+    for key, kind in (("framework_mappings", "runtime_framework"), ("management_mappings", "runtime_management"), ("error_mappings", "runtime_error")):
         try:
             parsed = _boot_routes(payload.get(key), kind, "runtime.payload.%s" % key)
             if kind == "runtime_framework":
                 framework = parsed
-            else:
+            elif kind == "runtime_management":
                 management = parsed
+            else:
+                error = parsed
         except InventoryError as exc:
             diagnostics.append(_diag("runtime_shape", str(exc)))
-    return framework, management, diagnostics
+    return framework, management, error, diagnostics
 
 
 def _strict_inventory_routes(value):
@@ -902,26 +908,45 @@ def _validated_inventory(inventory, expected, profile):
     return routes, manifest, carried_diagnostics, diagnostics
 
 
-def validate_registry(registry, routes):
-    """Validate only the documented normalized JSON shape; this is not YAML parsing."""
+def validate_registry(registry, surfaces):
+    """Require an exact normalized registry projection of every declared surface."""
     diagnostics = []
-    if not isinstance(registry, dict) or not isinstance(registry.get("routes"), list):
-        return [_diag("registry_shape", "normalized registry JSON must contain a routes array")]
-    actual = _keys(routes)
-    declared = set()
-    for item in registry["routes"]:
-        if not isinstance(item, dict) or not isinstance(item.get("method"), str) or not isinstance(item.get("path"), str):
-            diagnostics.append(_diag("registry_shape", "each registry route requires string method and path"))
+    if not isinstance(registry, dict) or set(registry) != set(["routes"]):
+        return [_diag("registry_shape", "normalized registry JSON must contain only a routes array")]
+    records = registry.get("routes")
+    if not isinstance(records, list) or not records:
+        return [_diag("registry_shape", "normalized registry JSON routes must be non-empty")]
+    actual = set()
+    for index, item in enumerate(records):
+        label = "registry.routes[%d]" % index
+        if not isinstance(item, dict) or set(item) != set(["kind", "method", "path"]):
+            diagnostics.append(_diag("registry_shape", "%s must contain exactly kind, method, path" % label))
             continue
-        method = item["method"].upper()
+        kind = item["kind"]
+        method = item["method"]
         path = item["path"]
+        if kind not in ("controller", "framework", "management", "error"):
+            diagnostics.append(_diag("registry_shape", "%s kind is unsupported" % label))
+            continue
+        if not isinstance(method, str) or method.upper() not in METHODS | set(["ANY"]):
+            diagnostics.append(_diag("registry_shape", "%s method is unsupported" % label))
+            continue
+        if not isinstance(path, str) or not path.startswith("/") or _join("", path) != path:
+            diagnostics.append(_diag("registry_shape", "%s path must be absolute and normalized" % label))
+            continue
+        method = method.upper()
         if "*" in path or "{*" in path:
             diagnostics.append(_diag("registry_wildcard", "wildcard registry routes are forbidden: %s %s" % (method, path)))
-        declared.add((method, path))
-    for key in sorted(actual - declared):
-        diagnostics.append(_diag("registry_missing", "route missing from normalized registry: %s %s" % key))
-    for key in sorted(declared - actual):
-        diagnostics.append(_diag("registry_unknown", "normalized registry contains unknown route: %s %s" % key))
+        actual.add((kind, method, path))
+    expected = set()
+    for kind, routes in surfaces:
+        expected.update((kind, route["method"], route["path"]) for route in routes)
+    if len(actual) != len(records):
+        diagnostics.append(_diag("registry_shape", "normalized registry contains duplicate or malformed route records"))
+    for key in sorted(expected - actual):
+        diagnostics.append(_diag("registry_missing", "route missing from normalized registry: %s %s %s" % key))
+    for key in sorted(actual - expected):
+        diagnostics.append(_diag("registry_unknown", "normalized registry contains unknown route: %s %s %s" % key))
     return diagnostics
 
 
@@ -948,19 +973,20 @@ def reconcile(static, manifest, runtime, expected, profile, inventory_diagnostic
         except InventoryError as exc:
             diagnostics.append(_diag("static_shape", str(exc)))
             static = []
-    framework, management, manifest_diags = _declared_surfaces(manifest, expected, profile)
-    runtime_framework, runtime_management, runtime_diags = _runtime_surfaces(runtime, expected, profile)
+    framework, management, error, manifest_diags = _declared_surfaces(manifest, expected, profile)
+    runtime_framework, runtime_management, runtime_error, runtime_diags = _runtime_surfaces(runtime, expected, profile)
     diagnostics.extend(manifest_diags)
     diagnostics.extend(runtime_diags)
 
     declared_framework = static + framework
-    declared_keys = [(route["method"], route["path"]) for route in declared_framework + management]
+    declared_keys = [(route["method"], route["path"]) for route in declared_framework + management + error]
     if len(declared_keys) != len(set(declared_keys)):
         diagnostics.append(_diag("declared_duplicate", "declared controller/framework/management surfaces overlap"))
 
     comparisons = (
         (declared_framework, runtime_framework, "framework"),
         (management, runtime_management, "management"),
+        (error, runtime_error, "error"),
     )
     for declared, actual, surface in comparisons:
         declared_set = _keys(declared)
@@ -977,8 +1003,10 @@ def reconcile(static, manifest, runtime, expected, profile, inventory_diagnostic
         "static": static,
         "framework": framework,
         "management": management,
+        "error": error,
         "runtime_framework": runtime_framework,
         "runtime_management": runtime_management,
+        "runtime_error": runtime_error,
         "diagnostics": diagnostics,
         "ok": not any(item.get("fatal", True) for item in diagnostics),
     }
@@ -993,7 +1021,7 @@ def main(argv=None):
     scan.add_argument("--api-commit", required=True)
     scan.add_argument("--api-tree", required=True)
     scan.add_argument("--framework-manifest", required=True)
-    scan.add_argument("--registry-json")
+    scan.add_argument("--registry-json", required=True)
     scan.add_argument("--output", required=True)
     rec = sub.add_parser("reconcile")
     rec.add_argument("--inventory", required=True)
@@ -1018,10 +1046,19 @@ def main(argv=None):
             if binding["dirty"]:
                 diagnostics.append(_diag("source_dirty", "source checkout is dirty"))
             manifest = load_json(args.framework_manifest)
-            _framework, _management, manifest_diags = _declared_surfaces(manifest, expected, args.profile)
+            _framework, _management, _error, manifest_diags = _declared_surfaces(manifest, expected, args.profile)
             diagnostics.extend(manifest_diags)
             if args.registry_json:
-                diagnostics.extend(validate_registry(load_json(args.registry_json), routes))
+                declared_framework, declared_management, declared_error, _ = _declared_surfaces(
+                    manifest, expected, args.profile
+                )
+                diagnostics.extend(
+                    validate_registry(
+                        load_json(args.registry_json),
+                        (("controller", routes), ("framework", declared_framework),
+                         ("management", declared_management), ("error", declared_error)),
+                    )
+                )
             result = {
                 "schema_version": INVENTORY_SCHEMA_VERSION,
                 "profile": args.profile,
