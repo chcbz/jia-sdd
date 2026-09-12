@@ -16,7 +16,13 @@ import sys
 import tempfile
 
 FLOW_ORG = '5fb7d76ee6f9d07f148529c7'
-ALLOWED_PIPELINES = frozenset(('5260799', '4403172', '5263690', '5263692'))
+EXPECTED_REPOS = {
+    '5260799': 'https://gitee.com/chcbz/jia.git',
+    '5263690': 'https://gitee.com/chcbz/jia.git',
+    '4403172': 'https://gitee.com/chcbz/cyf-web-kit.git',
+    '5263692': 'https://gitee.com/chcbz/cyf-web-kit.git',
+}
+ALLOWED_PIPELINES = frozenset(EXPECTED_REPOS)
 FLOW_COMMAND = '/root/.codex/skills/aliyun-pipeline/scripts/flow.cjs'
 CREDENTIALS_FILE = '/root/.codex/auth.json'
 MAIL_COMMAND = '/root/.local/bin/cyf-task-email'
@@ -166,22 +172,28 @@ def _flow_status(target):
     status = result.get('status')
     if not isinstance(status, str):
         raise ObservationError('flow_status_invalid')
-    commits = []
-    sources = result.get('sources', [])
-    if not isinstance(sources, list):
+    # A history entry is not checkout identity. Require exactly one source
+    # from the fixed component repository and branch before trusting its HEAD.
+    sources = result.get('sources')
+    if not isinstance(sources, list) or len(sources) != 1:
         raise ObservationError('flow_sources_invalid')
-    for source in sources:
-        if not isinstance(source, dict):
-            raise ObservationError('flow_sources_invalid')
-        source_commits = source.get('commits')
-        if source_commits is None:
-            continue
-        if not isinstance(source_commits, list):
-            raise ObservationError('flow_sources_invalid')
-        for commit in source_commits:
-            if isinstance(commit, str) and SHA_RE.match(commit):
-                commits.append(commit.lower())
-    return status.upper(), sorted(set(commits))
+    source = sources[0]
+    if not isinstance(source, dict):
+        raise ObservationError('flow_sources_invalid')
+    if (source.get('repo') != EXPECTED_REPOS[target['pipeline']]
+            or source.get('branch') != 'develop'):
+        raise ObservationError('flow_source_identity_mismatch')
+    commits = source.get('commits')
+    if commits is None:
+        commits = []
+    if not isinstance(commits, list) or any(
+            not isinstance(commit, str) or not SHA_RE.fullmatch(commit)
+            for commit in commits):
+        # Do not filter an invalid first item and promote history to HEAD.
+        raise ObservationError('flow_sources_invalid')
+    # Match flow-control sourceSummary: the first commit is HEAD. Preserve
+    # ordering and duplicates; never sort or search history for expected SHA.
+    return status.upper(), [commit.lower() for commit in commits]
 
 
 def _send_email(subject, body):
@@ -227,13 +239,13 @@ def _terminal_notice(target, status, commits):
         target['task_id'], target['pipeline'], target['run'], status)
     if status == 'SUCCESS':
         success_text = 'Flow成功，线上版本/业务验收仍需主控核验。'
-        if target['expected_commit'] in commits:
+        if commits and commits[0] == target['expected_commit']:
             return ('success_expected_commit', title,
                     base + '提交 %s 已匹配。%s' % (target['expected_commit'], success_text))
         actual = commits[0] if commits else 'missing'
         return ('success_sha_mismatch', title + ' SHA不匹配',
-                base + '期望提交 %s；观察提交 %s。%s' %
-                (target['expected_commit'], actual, success_text))
+                base + '期望提交 %s；观察HEAD %s。源码未匹配，不视为发布成功；需主控核验。' %
+                (target['expected_commit'], actual))
     if status == 'WAIT' or status in APPROVAL_WAIT:
         return ('approval_wait', title + ' 等待审批', base + '等待审批；需主控处理。')
     return ('terminal_' + status.lower(), title, base + '需主控核验。')
@@ -253,12 +265,15 @@ def _observe_target(target, state_target):
         state_target['last_observation'] = {'kind': 'error', 'class': error_class}
         state_target['error_streak'] = streak
         if streak >= 3:
-            return _notice(
+            mail_failed = _notice(
                 target, state_target, 'observation_error_' + error_class,
                 'Flow %s %s 观察异常' % (target['pipeline'], target['run']),
                 '任务 %s；流水线 %s；运行 %s；观察阶段 %s 连续%d次异常。需主控核验。' %
                 (target['task_id'], target['pipeline'], target['run'], error_class, streak))
-        return False
+            if mail_failed:
+                return True
+        return error_class in ('flow_identity_mismatch', 'flow_sources_invalid',
+                               'flow_source_identity_mismatch')
 
     state_target['error_streak'] = 0
     observation = {'kind': 'status', 'status': status, 'commits': commits}
@@ -268,16 +283,18 @@ def _observe_target(target, state_target):
         notice = _terminal_notice(target, status, commits)
         if notice is not None:
             event, subject, body = notice
+            task_failed = status in ('FAIL', 'CANCELED') or event == 'success_sha_mismatch'
             # A stable Flow state is not re-notified after acceptance.  An SMTP
             # failure is the sole exception: retry its same pending notice up
             # to the fixed three-attempt cap.
             if previous == observation:
                 record = state_target.get('notices', {}).get(event, {})
                 if record.get('accepted'):
-                    return False
+                    return task_failed
                 if record.get('attempts', 0) <= 0:
-                    return False
-            return _notice(target, state_target, event, subject, body)
+                    return task_failed
+            mail_failed = _notice(target, state_target, event, subject, body)
+            return task_failed or mail_failed
     if previous == observation:
         return False
     return False

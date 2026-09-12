@@ -37,6 +37,111 @@ class FlowReleaseMonitorTest(unittest.TestCase):
     def state(self):
         return json.loads(self.path.read_text())
 
+    def source(self, commits=None, repo='https://gitee.com/chcbz/jia.git', branch='develop'):
+        return {'repo': repo, 'branch': branch,
+                'commits': ['a' * 40] if commits is None else commits}
+
+    def flow_process(self, sources, status='SUCCESS'):
+        process = mock.Mock(returncode=0)
+        process.communicate.return_value = (json.dumps({
+            'org': self.monitor.FLOW_ORG, 'pipeline': self.target['pipeline'],
+            'run': self.target['run'], 'status': status, 'sources': sources,
+        }).encode('utf-8'), b'')
+        return process
+
+    def test_expected_in_history_is_not_head_and_exits_two_after_mail_acceptance(self):
+        commits = ['b' * 40, 'a' * 40, 'b' * 40]
+        process = self.flow_process([self.source(commits=commits)])
+        with mock.patch.object(self.monitor.subprocess, 'Popen', return_value=process), \
+             mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
+            self.assertEqual(('SUCCESS', commits), self.monitor._flow_status(self.target))
+            self.assertEqual(2, self.monitor.check(self.config()))
+            self.assertEqual(2, self.monitor.check(self.config()))
+        mail.assert_called_once()
+        self.assertIn('SHA不匹配', mail.call_args[0][0])
+        self.assertNotIn('已匹配', mail.call_args[0][1])
+        notices = next(iter(self.state()['targets'].values()))['notices']
+        self.assertNotIn('success_expected_commit', notices)
+
+    def test_head_matches_with_unsorted_history_and_is_deduplicated(self):
+        process = self.flow_process([self.source(commits=['a' * 40, '0' * 40])])
+        with mock.patch.object(self.monitor.subprocess, 'Popen', return_value=process), \
+             mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
+            self.assertEqual(0, self.monitor.check(self.config()))
+            self.assertEqual(0, self.monitor.check(self.config()))
+        mail.assert_called_once()
+        self.assertIn('已匹配', mail.call_args[0][1])
+
+    def test_wrong_repo_or_branch_rejected_without_success_notification(self):
+        for source in [self.source(repo='https://gitee.com/chcbz/cyf-web-kit.git'),
+                       self.source(repo='https://other.invalid/chcbz/jia.git'),
+                       self.source(repo='https://gitee.com/other/jia.git'),
+                       self.source(branch='master'), self.source(branch=None)]:
+            with self.subTest(source=source):
+                process = self.flow_process([source])
+                with mock.patch.object(self.monitor.subprocess, 'Popen', return_value=process), \
+                     mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
+                    self.assertTrue(self.monitor._observe_target(self.target, {}))
+                mail.assert_not_called()
+
+    def test_missing_or_multiple_sources_are_ambiguous(self):
+        for sources in [None, [], [self.source(), self.source()],
+                        [self.source(), self.source(repo='https://other.invalid/jia.git')]]:
+            with self.subTest(sources=sources):
+                with mock.patch.object(self.monitor.subprocess, 'Popen',
+                                       return_value=self.flow_process(sources)), \
+                     mock.patch.object(self.monitor, '_send_email') as mail:
+                    self.assertTrue(self.monitor._observe_target(self.target, {}))
+                mail.assert_not_called()
+
+    def test_invalid_first_commit_cannot_promote_valid_history_to_head(self):
+        for commits in [[None, 'a' * 40], ['invalid', 'a' * 40], ['a' * 40 + '\n']]:
+            with self.subTest(commits=commits):
+                with mock.patch.object(self.monitor.subprocess, 'Popen',
+                                       return_value=self.flow_process([self.source(commits=commits)])):
+                    with self.assertRaisesRegex(self.monitor.ObservationError, 'flow_sources_invalid'):
+                        self.monitor._flow_status(self.target)
+
+    def test_missing_head_cannot_match_success(self):
+        with mock.patch.object(self.monitor.subprocess, 'Popen',
+                               return_value=self.flow_process([self.source(commits=[])])), \
+             mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
+            self.assertEqual(2, self.monitor.check(self.config()))
+        self.assertIn('SHA不匹配', mail.call_args[0][0])
+
+    def test_all_four_pipelines_require_their_component_repository(self):
+        for pipeline, repo in [('5260799', 'jia.git'), ('5263690', 'jia.git'),
+                               ('4403172', 'cyf-web-kit.git'), ('5263692', 'cyf-web-kit.git')]:
+            with self.subTest(pipeline=pipeline):
+                self.target['pipeline'] = pipeline
+                source = self.source(repo='https://gitee.com/chcbz/' + repo)
+                with mock.patch.object(self.monitor.subprocess, 'Popen',
+                                       return_value=self.flow_process([source])):
+                    self.assertEqual(('SUCCESS', ['a' * 40]), self.monitor._flow_status(self.target))
+
+    def test_failure_and_cancellation_exit_two_even_when_mail_accepted(self):
+        for status in ('FAIL', 'CANCELED'):
+            with self.subTest(status=status):
+                with mock.patch.object(self.monitor, '_flow_status', return_value=(status, ['a' * 40])), \
+                     mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
+                    self.assertEqual(2, self.monitor.check(self.config()))
+                    self.assertEqual(2, self.monitor.check(self.config()))
+                mail.assert_called_once()
+
+    def test_existing_three_attempt_receipt_is_preserved(self):
+        record = {'attempts': 3, 'accepted': False,
+                  'receipt': {'accepted_by_mail_helper': False, 'inbox_delivery': 'unknown'}}
+        state = {'version': 1, 'targets': {self.monitor._target_key(self.target): {
+            'last_observation': {'kind': 'status', 'status': 'FAIL', 'commits': ['0' * 40, 'a' * 40]},
+            'notices': {'terminal_fail': record}}}}
+        self.path.write_text(json.dumps(state))
+        with mock.patch.object(self.monitor.subprocess, 'Popen', return_value=self.flow_process(
+                [self.source(commits=['a' * 40, '0' * 40])], status='FAIL')), \
+             mock.patch.object(self.monitor, '_send_email') as mail:
+            self.assertEqual(2, self.monitor.check(self.config()))
+        mail.assert_not_called()
+        self.assertEqual(record, next(iter(self.state()['targets'].values()))['notices']['terminal_fail'])
+
     def test_success_is_deduplicated_and_receipt_is_not_inbox_claim(self):
         with mock.patch.object(self.monitor, '_flow_status', return_value=('SUCCESS', ['a' * 40])), \
              mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
@@ -52,8 +157,8 @@ class FlowReleaseMonitorTest(unittest.TestCase):
     def test_sha_mismatch_notifies_once_and_requires_controller(self):
         with mock.patch.object(self.monitor, '_flow_status', return_value=('SUCCESS', ['b' * 40])), \
              mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
-            self.assertEqual(0, self.monitor.check(self.config()))
-            self.assertEqual(0, self.monitor.check(self.config()))
+            self.assertEqual(2, self.monitor.check(self.config()))
+            self.assertEqual(2, self.monitor.check(self.config()))
         mail.assert_called_once()
         subject, body = mail.call_args[0]
         self.assertIn('SHA不匹配', subject)
@@ -96,7 +201,7 @@ class FlowReleaseMonitorTest(unittest.TestCase):
         flow = mock.Mock(returncode=0)
         flow.communicate.return_value = (json.dumps({
             'org': self.monitor.FLOW_ORG, 'pipeline': '5260799', 'run': '20',
-            'status': 'RUNNING', 'sources': []}).encode('utf-8'), b'untrusted')
+            'status': 'RUNNING', 'sources': [self.source(commits=[])]}).encode('utf-8'), b'untrusted')
         mail = mock.Mock(returncode=0)
         mail.communicate.return_value = (b'', b'')
         with mock.patch.object(self.monitor.subprocess, 'Popen', side_effect=[flow, mail]) as popen:
