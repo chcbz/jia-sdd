@@ -40,3 +40,7 @@ Writer reports R01 output-queue10/10 and R02 agent-client83/83 passing, exit0, w
 ## Frozen recovery repair candidate
 
 `29aa70da8bb9f0476379dd6bd9e41731c5219457` is under independent read-only repair review. Root archived the actual full TAP log and exit file: 290/290 pass, exit 0, 65.595 seconds. All five repaired source/test hashes match both the writer's post-run manifest and candidate Git blobs; the worktree is clean. R01 focused10/10 and R02 focused6/6 overlap the full suite. See `repair-29aa70da/observation.json`. No live HTTP or final R1 acceptance is claimed.
+
+## Development acceptance
+
+Independent repair review APPROVE on29aa70da; R01/R02 closed. Root accepted OD04 for development and started sole balanced writer `/root/od05_output_ui` for OD05. See `accepted-review-29aa70da.md`. R03 retention/live R1 integration remain open.

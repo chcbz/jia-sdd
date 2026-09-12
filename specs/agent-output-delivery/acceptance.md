@@ -1,6 +1,6 @@
 # 产物交付验收计划
 
-当前状态：OD00 本地依赖与跨模块事务开发门槛已通过；OD01 在 `c5330dd5` 获独立开发门槛 APPROVE，最新去重修复证据为 280 项通过，见 [evidence/OD01/accepted-review-c5330dd5.md](evidence/OD01/accepted-review-c5330dd5.md)。OD02 在 `a04c2feb` 已通过独立开发复审，见 [evidence/OD02/accepted-review-a04c2feb.md](evidence/OD02/accepted-review-a04c2feb.md)；OD03 在 `4c292cc3` 通过独立开发复审（[证据](evidence/OD03/accepted-review-4c292cc3.md)），OD04 客户端自动交付实施中；以下端到端取件/交付场景仍待执行；尚未进行生产迁移或线上验收。本地依赖替换与后续门槛见 [evidence/OD00/downstream-gates.md](evidence/OD00/downstream-gates.md)，逐项状态见 [task-ledger.yaml](task-ledger.yaml)。
+当前状态：OD00 本地依赖与跨模块事务开发门槛已通过；OD01 在 `c5330dd5` 获独立开发门槛 APPROVE，最新去重修复证据为 280 项通过，见 [evidence/OD01/accepted-review-c5330dd5.md](evidence/OD01/accepted-review-c5330dd5.md)。OD02 在 `a04c2feb` 已通过独立开发复审，见 [evidence/OD02/accepted-review-a04c2feb.md](evidence/OD02/accepted-review-a04c2feb.md)；OD03 在 `4c292cc3` 通过独立开发复审（[证据](evidence/OD03/accepted-review-4c292cc3.md)），OD04 在 `29aa70da` 通过独立开发复审（[证据](evidence/OD04/accepted-review-29aa70da.md)），OD05 共用成果前端实施中；以下端到端取件/交付场景仍待执行；尚未进行生产迁移或线上验收。本地依赖替换与后续门槛见 [evidence/OD00/downstream-gates.md](evidence/OD00/downstream-gates.md)，逐项状态见 [task-ledger.yaml](task-ledger.yaml)。
 
 ## 必须通过的可观察场景
 
