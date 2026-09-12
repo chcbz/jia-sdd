@@ -1,6 +1,7 @@
 // Live output resource-route smoke. No mocked API responses and no model dispatch.
 // Input JSON: webRoot, tokenFile, outputDirectory, resourceRoute, title,
-// expectedSha256, expectedText (optional). Resource route must use local Vite15173.
+// expectedSha256, expectedText or expectedImageSize {width,height} (optional).
+// Resource route must use local Vite15173.
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { withChromiumCloseCompatibility } from './output-browser-session.mjs'
@@ -29,6 +30,12 @@ const collection = sourceType === 'TASK'
 const downloadPath = `/api${collection}/${part('outputId')}/versions/${part('outputVersion')}/download`
 assert(/^[a-f0-9]{64}$/.test(config.expectedSha256))
 assert(typeof config.title === 'string' && config.title.length > 0)
+if (config.expectedImageSize !== undefined) {
+  assert(config.expectedText === undefined, 'Choose one expected preview type')
+  for (const dimension of ['width', 'height']) {
+    assert(Number.isInteger(config.expectedImageSize[dimension]) && config.expectedImageSize[dimension] > 0)
+  }
+}
 const token = JSON.parse(await readFile(config.tokenFile, 'utf8')).access_token
 assert(typeof token === 'string' && token.length > 0)
 const tokenExpires = Number(JSON.parse(Buffer.from(token.split('.')[1], 'base64url')).exp) * 1000
@@ -167,10 +174,16 @@ try {
     await poll(() => evaluate(`Boolean(${card})`))
     assert.equal(await evaluate('location.origin'), origin)
     await evaluate(`(${card}).scrollIntoView({ block: 'center' })`)
-    if (typeof config.expectedText === 'string') {
+    if (typeof config.expectedText === 'string' || config.expectedImageSize) {
       step = `${view.name}:preview`
       await click(`Array.from((${card}).querySelectorAll('button')).find(b => b.textContent.trim() === '预览')`)
-      await poll(() => evaluate(`document.querySelector('.output-preview pre')?.textContent === ${JSON.stringify(config.expectedText)}`))
+      if (typeof config.expectedText === 'string') {
+        await poll(() => evaluate(`document.querySelector('.output-preview pre')?.textContent === ${JSON.stringify(config.expectedText)}`))
+      } else {
+        await poll(() => evaluate(`(() => { const img = document.querySelector('.output-preview img');
+          return img?.complete && img.alt === ${JSON.stringify(config.title)} &&
+            img.naturalWidth === ${config.expectedImageSize.width} && img.naturalHeight === ${config.expectedImageSize.height}; })()`))
+      }
     }
     step = `${view.name}:download`
     await click(`Array.from((${card}).querySelectorAll('button')).find(b => b.textContent.trim() === '下载' && !b.disabled)`)
@@ -189,7 +202,9 @@ try {
     const shot = await cdp.send('Page.captureScreenshot', { format: 'png' })
     await writeFile(join(outputDirectory, `${view.name}.png`), Buffer.from(shot.data, 'base64'), { mode: 0o600 })
     observations.push({ viewport: view, bytes: bytes.length, sha256: hash, filename,
-      previewTextMatched: typeof config.expectedText === 'string', cardBounds: bounds })
+      previewTextMatched: typeof config.expectedText === 'string',
+      previewImageMatched: Boolean(config.expectedImageSize), expectedImageSize: config.expectedImageSize ?? null,
+      cardBounds: bounds })
   }
   await cdp.terminalBarrier()
   succeeded = true
