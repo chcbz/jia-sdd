@@ -1,11 +1,11 @@
 {
-  "verifiedAt": "2026-09-12T10:56:04.334490+00:00",
+  "verifiedAt": "2026-09-12T11:28:33.948834+00:00",
   "policy": "ready develop push -> cloud tests/build -> same-run artifact -> automatic deploy",
   "per_run_human_ticket": false,
   "per_run_reviewer": false,
   "local_application_builds_run": false,
   "local_control_tests": {
-    "passed": 15,
+    "passed": 17,
     "failed": 0
   },
   "new_production_runs_started": [
@@ -57,9 +57,22 @@
     {
       "pipeline_id": "5260799",
       "run": 23,
-      "status": "INIT",
+      "status": "SUCCESS",
       "commit": "688a3e6546dcacba116f76cbec7e1d91f72764f4",
-      "phase": "returned_run_source_pending"
+      "tree": "608e799ad81ab3c4876b376119af322901a903ef",
+      "phase": "deployed_online_verified",
+      "build_job": 514133208,
+      "deploy_job": 514138578,
+      "deploy_order": 69507020,
+      "jar_sha256": "a5cc9db17022291bc129b0536d5b8c785dac9efec4bf437ea503f3e183be721d",
+      "receipt_sha256": "c9559c37aec9b1010d17e54a577e0eb5079b38377cb3abd32367129602819c08",
+      "health": "UP",
+      "pid": 2607082,
+      "build_repeated": false,
+      "deploy_job_retries": 1,
+      "selector_class_scope": 59,
+      "physical_bootjar_mail_runtime_guard": "PASS",
+      "evidence": "/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-RUN23-DEPLOYED-20260912.json"
     }
   ],
   "pipelines": [
@@ -76,26 +89,30 @@
       ],
       "current_branch_filter": "^develop$",
       "webhook_present_in_flow_config": true,
-      "deployment_with_new_configuration_verified": false,
-      "state": "RUN23_STARTED_MAIL_RUNTIME_FIX",
-      "next_action": "Observe Run23 exact688a3e65; new main-runtime classloader test and physical bootJar mail/activation/provider check before artifact. Do not retry failed Run22. Old Run18 JAR automatically restored healthy.",
+      "deployment_with_new_configuration_verified": true,
+      "state": "DEVELOP_RUN23_DEPLOYED_ONLINE_VERIFIED",
+      "next_action": "Released688a3e65 exact Run23; no rebuild/redeploy. Parallel bounded A16/E01/F03 source work self-check then integrate develop for next Flow run; actual next push must reconcile Run source before any manual start.",
       "test_selector_classes": 59,
       "automatic_push_trigger_verified": false,
       "current_run": {
-        "run": 22,
-        "commit": "a9a43056cad534c0fb6addb666ba2a9e5989c910",
-        "status": "FAIL",
-        "cloud_tests_build": "SUCCESS",
-        "deploy_order": 69506083,
-        "deployment_status": "Failed",
-        "queried_at": "2026-09-12T10:45:29.245Z",
-        "failure_phase": "application_startup",
-        "failure_class": "java.lang.NoClassDefFoundError: javax/mail/MessagingException",
-        "failure_component": "cn.jia.sms.config.SmsExternalEmailClient",
-        "previous_version_restored": true,
-        "restored_jar_sha256": "aa64ddf1be41147156236aa3d4f70121e2b95918d8dd2024d0cd3d0fec4df090",
-        "restored_health": "UP",
-        "health_evidence": "Flow deployment-machine log"
+        "pipeline_id": "5260799",
+        "run": 23,
+        "status": "SUCCESS",
+        "commit": "688a3e6546dcacba116f76cbec7e1d91f72764f4",
+        "tree": "608e799ad81ab3c4876b376119af322901a903ef",
+        "phase": "deployed_online_verified",
+        "build_job": 514133208,
+        "deploy_job": 514138578,
+        "deploy_order": 69507020,
+        "jar_sha256": "a5cc9db17022291bc129b0536d5b8c785dac9efec4bf437ea503f3e183be721d",
+        "receipt_sha256": "c9559c37aec9b1010d17e54a577e0eb5079b38377cb3abd32367129602819c08",
+        "health": "UP",
+        "pid": 2607082,
+        "build_repeated": false,
+        "deploy_job_retries": 1,
+        "selector_class_scope": 59,
+        "physical_bootjar_mail_runtime_guard": "PASS",
+        "evidence": "/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-RUN23-DEPLOYED-20260912.json"
       }
     },
     {
@@ -115,7 +132,7 @@
       "state": "DEVELOP_RUN92_DEPLOYED_ONLINE_VERIFIED",
       "service_connection_name": "chcbz的码云服务连接",
       "service_connection_id": "vyz9pea3uni64twx",
-      "next_action": "Manual develop Run92 verified:2117passed/2pending/0fail,410installedfiles and9onlinechecks match artifact. Push automation not enabled; future native Gitee source needs connection-use permission and verified webhook, not another same-SHA release.",
+      "next_action": "Run92 exact1ac5cb1e installed410files/online9hashchecks match. Current Gitee develop push and webhook configuration verified by readback; trigger execution still unverified. Do not repeat Run92 to prove webhook.",
       "automatic_push_trigger_verified": false,
       "historical_service_connection_error_code": "1209300",
       "service_connection_permission_resolved_at": "2026-09-12T10:44:34.284597+00:00",
@@ -133,8 +150,10 @@
   "host_helpers": [
     {
       "path": "/usr/local/sbin/cyf-api-flow-deploy",
-      "sha256": "53c9a1e19a08c169e49713eebb775e516ed06785fc37ed026e969a8e1da1da57",
-      "new_file": true
+      "sha256": "d3c7bb4fa94c5628068bdac3b9ecb2b332031811c42dfd15a8b48e1113ccd311",
+      "new_file": true,
+      "mutex": "/tmp/cyf-api-flow-auto-approval-v2.lock",
+      "fd_inheritance": "coordinator parent retains lock; installer close_fds=True; new API JVM holds no coordinator mutex FD"
     },
     {
       "path": "/usr/local/sbin/cyf-web-flow-deploy",
@@ -143,12 +162,13 @@
     }
   ],
   "notes": [
-    "Web develop Run92 actual release verified; automatic push remains disabled.",
-    "API Run22 failed runtime linkage despite cloud test/build PASS; automatically restored old JAR aa64ddf1 healthy.",
-    "New API688a3e65 fixes SMS runtime dependency; new59-selector config adds application-runtime classloader tests and actual bootJar mail/activation/provider presence check.",
-    "Run23 started exactly once, observe actual checkout/artifact/deploy/health; no old Run19/21/22 retry.",
-    "Host helper now reclaims only its same-run duplicate download after full identity/digest validation, retaining incoming/cloud/rollback;15 offline control tests PASS.",
-    "Cron monitors API21/22/23 andWeb92 with exactHEAD. Mail acceptance remains unconfirmed; do not promise delivery."
+    "Web Run92 and API Run23 are deployed with exact source/artifact/host evidence; not a claim that every planned feature or business acceptance is complete.",
+    "Both current cloud configurations have Gitee develop push /^develop$/ and webhook present; actual automatic-trigger execution remains unverified. Earlier disabled-trigger notes are superseded by current readback.",
+    "Run22 runtime mail failure recovered old Run18; its historical FAIL is preserved. Run23 mail implementation dependency/main-runtime test/physical bootJar guard PASS.",
+    "Run23 original deploy failed before installer from inherited coordinator FD. Fixed parent-held v2 mutex and close_fds=True; 17 offline control tests PASS; retried only deployment once, reused successful build514133208.",
+    "Actual PID2607082/10018 health UP; canonical JARa5cc9db1 matches Run23; no inherited coordinator mutex. Anonymous public /agent/map responds401 under named probe UA; actuator only loopback verified.",
+    "Cron observed Run23 SUCCESS exactHEAD; mail helper rejected/unaccepted all3 bounded success-notice attempts. Inbox delivery unknown; do not reset or promise email.",
+    "Parallel A16/E01/F03 independent worktrees; owners self-check, no independent Reviewer; paid/authenticated external acceptance still pending."
   ],
   "permission_resume": {
     "verifiedAt": "2026-09-12T10:44:34.284597+00:00",

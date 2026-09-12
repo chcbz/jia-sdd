@@ -8,8 +8,8 @@
 
 | 组件 | 默认发布流水线 | 触发分支 | 云端验证 | 迁移状态 |
 | --- | --- | --- | --- | --- |
-| 后端 | `5260799 / cyf-api-kit-ci` | develop push（包括合并） | 59 个相关测试类、validateLayering、bootJar、私仓 OpenCV 摘要 | 已保存 readback；Run22 测试/构建成功；启动缺 javax.mail.MessagingException，发布失败，旧版已恢复且健康 |
-| 前端 | `4403172 / cyf-web-kit` | develop push（包括合并） | JavaScript 扫描、npm ci、完整 npm test、Vite build | 码云连接权限已恢复；develop push 已保存 readback，Run92 已测试/构建/部署成功 |
+| 后端 | `5260799 / cyf-api-kit-ci` | develop push（包括合并） | 59 个相关测试类、validateLayering、bootJar、私仓 OpenCV 摘要 | Run23 测试/构建/部署成功，精确制品与运行 PID/health 已核验；push 配置存在，触发行为仍待实际事件验收 |
+| 前端 | `4403172 / cyf-web-kit` | develop push（包括合并） | JavaScript 扫描、npm ci、完整 npm test、Vite build | develop push 配置已保存 readback，Run92 已测试/构建/部署成功；实际 push 触发仍待验收 |
 
 - 不再逐次签 ticket、改 YAML、排 Reviewer、人工放行或转 master 才发布。
 - 合并前可按需使用 `5263690` / `5263692` 的 CI-only 诊断，不是必经前置步骤；它们不监听 push，避免同提交自动重复构建。
@@ -106,3 +106,12 @@
 - API Run22：58 类范围的测试/构建成功，但启动缺 `javax.mail.MessagingException`，发布器已自动恢复旧 Run18 JAR，health UP；不是新功能上线成功。
 - 新候选 `688a3e65` 将 SMS mail 从 compileOnly 改为 implementation，新增隔离主运行 classpath 回归。Run23 已单次启动；59 类范围和 bootJar 实际 mail/activation/provider 类检查在制品导出前执行。未取得新运行健康证明前，不标后端发布完成。
 - 安装保留锁与回退；仅将瞬时锁冲突改为固定 60 秒等待。同 Run 下载副本在验证身份及完整摘要后回收，保留 incoming、云端制品和回退 JAR，不降低 5GiB 运行余量。
+
+## 2026-09-12 19:24 CST 发布闭环与并行推进
+
+- API `5260799 / Run23 SUCCESS`：develop `688a3e6546dcacba116f76cbec7e1d91f72764f4` / tree `608e799ad81ab3c4876b376119af322901a903ef`；59 类 selector 范围、bootJar 实际 mail/activation/provider 检查通过。Build `514133208` 复用，未重复构建；部署 Job `514138578` / order `69507020` 单机 Success/healthy。
+- JAR `a5cc9db17022291bc129b0536d5b8c785dac9efec4bf437ea503f3e183be721d` 与 canonical 文件一致；receipt `c9559c37aec9b1010d17e54a577e0eb5079b38377cb3abd32367129602819c08`；PID `2607082` 监听 10018，loopback `UP`。公开 `/agent/map` 命名只读探针获未登录 401；默认 curl 被既有 Nginx 规则拒绝，公网 actuator 未暴露，不能宣称已验证登录业务。
+- 原 Run23 deploy 在 installer 前因协调 FD 继承失败。修复父 coordinator 持有 v2 mutex、installer `close_fds=True`；17 项控制测试通过，单次只重试部署 Job，新 JVM 无协调 mutex FD。未解除旧锁或手动终止服务；生命周期由 Flow 安装器完成。helper SHA `d3c7bb4fa94c5628068bdac3b9ecb2b332031811c42dfd15a8b48e1113ccd311`。
+- 19:24 只读云端配置确认两组件均为 Gitee/develop/push/^develop$，webhook 已存在；此前“前端 push 未启用”描述已过时。配置存在不等于实际 push 自动触发已验收，下一次真实 push 先对账，不重复手动 Start。
+- API 发布包、A03/A16 只读增量及 mail 运行依赖修复已闭环；完整 A16、M4/M5、案卷阁登录验收及付费业务仍未完成。A16/E01/F03 已分别派给并行 Owner，无独立 Reviewer。邮件监控已观察 SUCCESS，但三次邮件 helper 未接受，不能宣称邮件已发达。
+- 完整精确证据：`/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-RUN23-DEPLOYED-20260912.json`。

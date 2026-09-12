@@ -1,5 +1,15 @@
 # Remaining executable backlog — 2026-09-12
 
+## 19:24 CST execution update (supersedes release-pending baseline below)
+
+- **P1 release increment done:** API5260799 Run23 SUCCESS for develop688a3e65/tree608e799; exact JARa5cc9db1, host/order69507020, PID2607082/10018 and loopback UP verified. The Run22 failure/recovery remains history; do not rerun it. WX-specific controlled MySQL/business-delay evidence remains distinct.
+- **P2 release done:** Web4403172 Run92 SUCCESS, exact1ac5cb1e, 410 installed files and9 online response hashes match. Current two-component Gitee/develop push+webhook configuration readback confirmed; actual automatic trigger not yet evidenced. No duplicate release.
+- **P3 assigned:** PERF-A16-ASYNC-20260912, owner01a09558-6985-74c3-9805-9bd2723858ab; one bounded async route-family source increment, independent worktree. Existing status projection remains partial.
+- **P4 foundations assigned in parallel:** M4-E01-CANDIDATE-20260912 owner01a09558-b6dc-7683-bbc2-e8f8e504bfc7; M5-F03-ES-20260912 owner01a09559-0cd2-79c3-af5b-9fabe1431c82. Non-overlapping scoring versus ES paths; downstream E/F/G work is not all claimed or completed.
+- **P5/P6 still external acceptance:** legitimate identities/browser/client ACK and explicitly bounded paid/provider authorization required; no fabricated successful acceptance.
+- All implementation owners self-check, main integrates candidates into develop and reconciles exact Flow release. No independent Reviewer or global source-write queue. Current owners/gates remain solely in TASKS.yaml; this is a dated projection.
+- Evidence: `/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-RUN23-DEPLOYED-20260912.json`.
+
 ## Scope and fact baseline
 
 This is a short reconciliation plan, not a runtime ledger, task claim, gate, or reviewer assignment. It does not alter `TASKS.yaml`, status files, contracts, Flow configuration, or production.
