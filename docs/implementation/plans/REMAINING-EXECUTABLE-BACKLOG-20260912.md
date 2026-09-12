@@ -1,5 +1,14 @@
 # Remaining executable backlog — 2026-09-12
 
+## 23:00 CST delta (supersedes earlier current-state projections)
+
+- API Run31/f6554168 is now cloud SUCCESS and independently reconciled with installed record, JAR c6fa5726, receipt0f6ba20f, PID2783320/10018 and healthUP. First disk-admission failure69510439 remains recorded; same-artifact retry69510726 succeeded. Login task owned lifecycle; main did not interrupt or duplicate it. A16/E03 default-off technical slices are deployed, not fully activated/business accepted.
+- E02 team preview/coordinator projection00db9f07 and E03Web1b3c2dd1 are pushed to develop. Web auto Run94 has exact source and is building. API Run32 was started once after a concurrent display-name-only change invalidated the first pre-write context; exact source metadata is pending. Cloud API config now66selectors, not the65 snapshot used by31. No duplicate Start or local build.
+- E04 dependency scheduling and E07 team UI continue in independent worktrees. E07 first candidate8676/6testsPASS needs a bounded same-Owner correction for local override coverage and same-task version invalidation before release. No independent Reviewer/global source queue.
+- Two more fully clean completed worktrees were removed without force (branches/commits retained), reclaiming509,734,912 allocated bytes. perf-w04-rum-entry had ignored content and was preserved; shared perf-w04-web dependencies and all active worktrees/evidence/runtime retained. Capacity after was6,051,725,312 bytes.
+- Exact run monitors94/32 registered without resetting previous email counters. SMTP acceptance remains unproven; no email-delivery claim. Business/provider/client ACK and activation boundaries in the remaining acceptance record still apply.
+
+
 ## 21:40 CST delta
 
 - A16 root cause reproduced: H2 2.4.240 generated IN retains closed DDL session; equivalent OR also fails, simple CASE succeeds with independent connections on both 2.3.232/2.4.240. Fixture-only correction518a052e retains generated uniqueness guards and all transaction assertions, with added guard regression. No production schema/dependency change. Run28 remains FAIL, not retried.
