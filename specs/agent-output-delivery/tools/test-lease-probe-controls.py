@@ -51,6 +51,12 @@ class FakeTransport:
             value["leaseToken"] = self.state["leaseToken"]
         elif self.fault == "backward-version":
             value["version"] = str(int(self.state["version"]) - 1)
+        elif self.fault == "unchanged-version":
+            value["version"] = self.state["version"]
+        elif self.fault == "missing-active-expiry":
+            value.pop("leaseUntil", None)
+        elif self.fault == "duplicate-version-step":
+            value["version"] = str(int(self.state["version"]) + 2)
         self.state = value
         self.receipts[key] = (dict(body), dict(value))
         return dict(value)
@@ -75,7 +81,8 @@ class LeaseProbeControls(unittest.TestCase):
     def test_invalid_or_changed_results_stop_the_sequence(self):
         for fault in ("wrong-initial-item", "changed-receipt", "missing-active-token",
                       "wrong-result-item", "numeric-version", "backward-version",
-                      "retained-release-token"):
+                      "retained-release-token", "unchanged-version", "missing-active-expiry",
+                      "duplicate-version-step"):
             with self.subTest(fault=fault), self.assertRaises(probe.ProbeFailure):
                 self.run_fixture(FakeTransport(fault))
 
@@ -111,6 +118,26 @@ class LeaseProbeControls(unittest.TestCase):
         with self.assertRaises(probe.ProbeFailure):
             probe.run_probe(transport.request, "task-example", "work-example", "invalid-run")
         self.assertEqual(transport.calls, [])
+        for value in (".", "..", "a/b", "a\\b", "%2e%2e", "a" * 101):
+            with self.subTest(identifier=value), self.assertRaises(probe.ProbeFailure):
+                probe.run_probe(transport.request, value, "work-example", "2" * 32)
+            self.assertEqual(transport.calls, [])
+
+    def test_first_claim_timeout_is_an_unknown_mutation(self):
+        observations = []
+        transport = probe.Transport("http://127.0.0.1:10018", "synthetic-bearer", observations)
+
+        class TimeoutOpener:
+            def open(self, request, timeout):
+                raise TimeoutError("Synthetic transport timeout")
+
+        transport.opener = TimeoutOpener()
+        with self.assertRaises(TimeoutError):
+            transport.request("POST", "/agent/tasks/task-example/work-items/work-example/lease/claim",
+                              {"runId": "2" * 32, "expectedVersion": "0", "leaseDurationMillis": "120000"},
+                              "synthetic-timeout-key")
+        self.assertTrue(any(row["method"] == "POST" for row in observations))
+        self.assertFalse(observations[0]["responseReceived"])
 
     def test_transport_schema_bounds_and_redaction(self):
         secret = "SYNTHETIC-SECRET-NEVER-IN-OBSERVATIONS"
@@ -132,6 +159,7 @@ class LeaseProbeControls(unittest.TestCase):
         for raw, status, success in ((json.dumps(data).encode(), 200, True),
                                      (json.dumps(data).encode(), 409, False),
                                      (b'{"code":"E0","data":{}}', 200, False),
+                                     (b'{"code":"E0","code":"E0","data":{}}', 200, False),
                                      (b'x' * 65537, 200, False)):
             with self.subTest(status=status, success=success, size=len(raw)):
                 observations = []

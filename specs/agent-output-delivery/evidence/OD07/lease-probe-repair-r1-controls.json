@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-09-12T19:08:01.340317+00:00",
+  "scope": "Root verification helper synthetic controls only; no CYF requests",
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 specs/agent-output-delivery/tools/test-lease-probe-controls.py",
+  "result": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "unittestOutcome": "OK"
+  },
+  "source_sha256": {
+    "tools/smoke-output-lease.py": "39a5d6992fbe34e6ad311e4d597fad15e5d4344b594826a152cab7050e3e77ce",
+    "tools/test-lease-probe-controls.py": "b5b6337586f363ffddb36f2c5b06da05ced994bdc14a70fbcd2bf410aeccee29"
+  },
+  "independentReview": "repair review pending",
+  "liveExecution": "not_run",
+  "repairs": [
+    "Record attempted mutations before transport so response-loss is unknown, never falsely no-active-lease.",
+    "Require every first action to advance version exactly once; identical receipt replay stays unchanged.",
+    "Reject >100-character IDs, dot segments, slash/backslash/percent path ambiguity before requests.",
+    "Reject duplicate JSON fields; require canonical positive active expiry."
+  ],
+  "limits": [
+    "Actual renewing heartbeat required; no-op heartbeat is not accepted as renewal evidence.",
+    "Unit result observed from tool output; no separately retained raw unittest stream.",
+    "No OD07 business test or live execution claim."
+  ]
+}

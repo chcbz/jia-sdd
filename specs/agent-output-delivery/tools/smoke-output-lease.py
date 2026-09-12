@@ -47,8 +47,10 @@ def origin(value):
 
 
 def identifier(value):
-    require(isinstance(value, str) and 0 < len(value) <= 400
+    require(isinstance(value, str) and 0 < len(value) <= 100
             and value == value.strip()
+            and value not in (".", "..")
+            and not any(c in value for c in ("/", "\\", "%"))
             and not any(ord(c) < 32 or ord(c) == 127 for c in value),
             "Exact nonempty identifier required")
     return value
@@ -61,6 +63,14 @@ def canonical(value):
 
 def sha(value):
     return hashlib.sha256(value).hexdigest()
+
+
+def unique_object(pairs):
+    value = {}
+    for key, item in pairs:
+        require(key not in value, "Duplicate JSON member in lease response")
+        value[key] = item
+    return value
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -89,20 +99,23 @@ class Transport:
         if key:
             headers["Idempotency-Key"] = key
         request = Request(self.base + path, data=payload, headers=headers, method=method)
+        row = {"method": method, "path": path, "attempted": True,
+               "requestSha256": sha(payload) if payload is not None else None,
+               "responseReceived": False}
+        # Once a POST enters transport, timeout can mean a committed unknown result.
+        self.observations.append(row)
         try:
             response = self.opener.open(request, timeout=20)
         except HTTPError as error:
             response = error
         with response:
+            row.update({"status": response.status, "responseReceived": True})
             raw = response.read(65537)
-            row = {"method": method, "path": path, "status": response.status,
-                   "requestSha256": sha(payload) if payload is not None else None,
-                   "responseSha256": sha(raw), "responseBytes": len(raw)}
-            self.observations.append(row)
+            row.update({"responseSha256": sha(raw), "responseBytes": len(raw)})
             require(len(raw) <= 65536, "Lease response exceeded64KiB")
             require(response.status == 200, "Lease request did not return HTTP200")
             try:
-                parsed = json.loads(raw)
+                parsed = json.loads(raw, object_pairs_hook=unique_object)
             except (ValueError, UnicodeError):
                 raise ProbeFailure("Lease response was not JSON") from None
             require(not list(self.validator.iter_errors(parsed)), "Lease response schema mismatch")
@@ -143,10 +156,14 @@ def run_probe(request, task_id, work_item_id, run_id):
         result = checked(request("POST", path + "/" + action, body, key), states)
         replay = checked(request("POST", path + "/" + action, body, key), states)
         require(result == replay, "Exact lease receipt replay changed the result")
-        require(int(result["version"]) >= int(current["version"]), "Lease version went backwards")
+        require(int(result["version"]) == int(current["version"]) + 1,
+                "Lease mutation did not advance the version exactly once")
         if action != "release":
             require(isinstance(result.get("leaseToken"), str) and bool(result["leaseToken"]),
                     "Active lease token missing")
+            require(isinstance(result.get("leaseUntil"), str)
+                    and re.fullmatch(r"[1-9][0-9]{0,18}", result["leaseUntil"]) is not None,
+                    "Active lease expiry missing or noncanonical")
         else:
             require(not result.get("leaseToken"), "Released response retained an active lease token")
         current = result
