@@ -10,3 +10,21 @@ Writer reports existing executions (intermediate, not frozen candidate evidence)
 - `node --test test/output-queue.test.mjs`: 6/6 pass.
 
 Commands ran in `conf/codex-ws-agent`; no final test log/source association has been handed off yet. Root has not rerun these tests. Actual inbox/ledger restart model-invocation-count-one, both command/chat modes, full HTTP transfer/receipt path, installer staging/syntax and independent review remain required. No OD04 acceptance or deployment is claimed.
+
+## Restart integration checkpoint
+
+Writer reports the two-process restart test passed: capture child invokes the mock model and persists delivery_pending; resume child shares only persistent state, completes mocked HTTP publication, and observes model-count1, terminal-report1, ledgerSUCCEEDED. This is a client lifecycle test with mocked HTTP, not the live CYF API/Agent deployment proof reserved for OD06.
+
+Chat targeted test exposed a queued setImmediate after temporary-state cleanup (ENOENT); writer stopped its queue in teardown and is rerunning the actual failure. Installer staging/README and final regressions remain before a frozen candidate and independent review.
+
+## Full client regression checkpoint
+
+Writer reports `npm test` in `conf/codex-ws-agent` exited successfully after guarding the child-process fixture against Node's argument-free test discovery. This supersedes the earlier cleanup failure; aggregate counts/logs are still awaiting handoff. Root has not relabeled the top-level TAP numbering as a final test count. Remaining work: validate/installer staging/static checks, frozen candidate, source/log association and independent read-only review.
+
+## Frozen candidate and evidence reconciliation
+
+Client candidate `e6091542977edf7bc6860e804bede2fc4998baa2` is frozen and under independent read-only review. Root compared all12 candidate file hashes with the post-run manifest. Writer reports final npm test283/283, zero failures/skips, plus config/syntax/staging checks passing.
+
+The existing `/tmp/od04-npm-test.log` is an older failed run (283 tests,282 pass,1 fail), so root has requested the separate successful execution output/exit instead of mislabeling it. See `candidate-e609154/observation.json`. No acceptance is claimed until source review and accurate evidence handoff complete.
+
+The successful run footer has now been separately exported from the writer tool session (cell2023/session65870/chunk08ab5c) and inspected by root: exit0,283 pass,0 failures/skips,41377.744079ms. It is explicitly a footer archive, not a full TAP log. The prior failed file remains identified separately. See `candidate-e609154/npm-test-success-footer.txt`. Product review is still pending.
