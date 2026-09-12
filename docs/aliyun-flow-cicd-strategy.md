@@ -8,8 +8,8 @@
 
 | 组件 | 默认发布流水线 | 触发分支 | 云端验证 | 迁移状态 |
 | --- | --- | --- | --- | --- |
-| 后端 | `5260799 / cyf-api-kit-ci` | develop push（包括合并） | 59 个相关测试类、validateLayering、bootJar、私仓 OpenCV 摘要 | Run23 测试/构建/部署成功，精确制品与运行 PID/health 已核验；push 配置存在，触发行为仍待实际事件验收 |
-| 前端 | `4403172 / cyf-web-kit` | develop push（包括合并） | JavaScript 扫描、npm ci、完整 npm test、Vite build | develop push 配置已保存 readback，Run92 已测试/构建/部署成功；实际 push 触发仍待验收 |
+| 后端 | `5260799 / cyf-api-kit-ci` | develop push（包括合并） | 63 个相关测试类、validateLayering、bootJar、私仓 OpenCV 摘要 | Run25 测试/构建/部署成功，精确制品及 PID2659818/health 已核验；push 配置存在，但最新 API push 仍未观察到自动触发 |
+| 前端 | `4403172 / cyf-web-kit` | develop push（包括合并） | JavaScript 扫描、npm ci、完整 npm test、Vite build | develop push 已实际自动触发 Run93；测试/构建成功，线上410文件及9响应匹配，但 Flow 最后首页检查失败，异常整改中 |
 
 - 不再逐次签 ticket、改 YAML、排 Reviewer、人工放行或转 master 才发布。
 - 合并前可按需使用 `5263690` / `5263692` 的 CI-only 诊断，不是必经前置步骤；它们不监听 push，避免同提交自动重复构建。
@@ -115,3 +115,9 @@
 - 19:24 只读云端配置确认两组件均为 Gitee/develop/push/^develop$，webhook 已存在；此前“前端 push 未启用”描述已过时。配置存在不等于实际 push 自动触发已验收，下一次真实 push 先对账，不重复手动 Start。
 - API 发布包、A03/A16 只读增量及 mail 运行依赖修复已闭环；完整 A16、M4/M5、案卷阁登录验收及付费业务仍未完成。A16/E01/F03 已分别派给并行 Owner，无独立 Reviewer。邮件监控已观察 SUCCESS，但三次邮件 helper 未接受，不能宣称邮件已发达。
 - 完整精确证据：`/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-RUN23-DEPLOYED-20260912.json`。
+
+## 2026-09-12 20:36 CST 增量
+
+- API Run25 SUCCESS：develop `ef1a9659`，JAR `ea9de1bd`，order69508149，PID2659818/healthUP。63类范围测试构建成功；E01评分及顺序修复已发布，F03仅增加默认健康隔离测试。完整证明见 `docs/implementation/handoffs/FLOW-API-RUN25-DEPLOYED-20260912.json`。
+- Web Run93 **Flow FAIL / installed+online verified**：develop `b58d3727`，2119pass/2pending；410安装文件及9线上哈希全部匹配。原20:23:23首页校验不匹配，之后同请求已匹配，原因尚未知；不改写失败、不重复部署。实际自动push触发已证实。详见 `docs/implementation/handoffs/FLOW-WEB-RUN93-ONLINE-WITH-FAILURE-20260912.json`。
+- Web安装器反复gzip随机seek的独立性能问题由Owner改为有界顺序staging，并补最终只读重验诊断；不降低制品、路径或身份校验。A16异步受理基础 `9672b4bc` 已push，保持default-off，不声称执行器已完成。

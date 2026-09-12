@@ -1,5 +1,15 @@
 # Remaining executable backlog — 2026-09-12
 
+## 20:36 CST execution update (supersedes dated projections below)
+
+- **E01 source/UI increment live:** API5260799 Run25 SUCCESS, exact develop `ef1a9659` / tree `d36fe144`, JAR `ea9de1bd`, order69508149, PID2659818/10018 and healthUP verified. Stable equal-score order regression fixed; prior Run24 failure retained, not retried.
+- **Web93 has a qualified closure, not a green Flow:** exact develop `b58d3727`; 2119 passing/2 pending/0 failures, 410 installed files and 9 online hashes match. Flow remains FAIL because the original final homepage digest check failed at20:23:23. Repeating that same read now matches; transient mechanism unknown. No reinstallation merely to hide this failure. Actual develop push automatically triggered93.
+- **A16 final source collected and integrated:** final Owner candidate `0a7eb60e` replaces old `a5a9cea8`; integrated/pushed as `9672b4bc` / tree `4016635a`. Owner released. Next exact Flow pending. This is only default-off async redrive acceptance with an independent disabled switch, not the executor/claim fence or complete A16.
+- **Two independent implementation Owners in parallel:** `FLOW-WEB-STREAM-INSTALL-20260912` fixes repeated gzip random seeks and bounded final hash diagnostics; `M4-E03-DECOMPOSE-20260912` implements the bounded work-item decomposition/manual confirmation package. They do not wait for API cloud build, and have disjoint source paths.
+- **F03 remains environment-dependent:** default production ES health isolation regression shipped inRun25; real ES health/index acceptance is not demonstrated. Full M4/M5, Archive authenticated acceptance, client ACK and bounded paid/provider validation remain open.
+- No independent Reviewer, no global source Writer queue, no local Gradle/Vite production build. Exact current Owners/gates are only in `TASKS.yaml`; these are timestamped facts, not another ledger.
+- Evidence: `handoffs/FLOW-API-RUN25-DEPLOYED-20260912.json`, `handoffs/FLOW-WEB-RUN93-ONLINE-WITH-FAILURE-20260912.json`.
+
 ## 19:24 CST execution update (supersedes release-pending baseline below)
 
 - **P1 release increment done:** API5260799 Run23 SUCCESS for develop688a3e65/tree608e799; exact JARa5cc9db1, host/order69507020, PID2607082/10018 and loopback UP verified. The Run22 failure/recovery remains history; do not rerun it. WX-specific controlled MySQL/business-delay evidence remains distinct.
