@@ -17,3 +17,11 @@ Balanced writer `/root/od05_output_ui` terminated with upstream503 auth_unavaila
 ## Active repair checkpoint
 
 Critical fallback writer confirmed successful Web takeover with no blocking condition. Core useOutputs repair is written: distinct list/version/preview/download cancellation, source/identity generation cleanup, history preservation, syncing/retryable polling and visibility handling, bounded10-minute download and token-free resource routing. Components and actual async behavior tests remain in progress; no frozen candidate or final test result yet.
+
+## Frozen candidate
+
+`3af0c43383d5c5f064830937ea6801d92311ed72` is under independent read-only architect review. Root confirmed clean Web, all12 changed-file hashes matching pre-freeze/post-commit manifests and Git candidate blobs. Related145 tests include14 output tests; final formatting/safe-filename micro-adjustments were followed by output14 tests and build, all exit0. Exact source timing and incomplete old full-suite limits remain explicit in `candidate-3af0c43/observation.json`. Resource navigation is implemented in the existing /chat route and has an actual exact-version consumer test. No OD05 acceptance is claimed yet.
+
+## Independent reviewer availability fallback
+
+Existing architect reviewer failed twice with Connection failed before returning a verdict. Root switched to a new independent read-only fallback `/root/od05_review_fallback`, with no product write authority. The candidate remains frozen; network/provider failures are not approval. Review scope and remaining OD06 gates are unchanged.
