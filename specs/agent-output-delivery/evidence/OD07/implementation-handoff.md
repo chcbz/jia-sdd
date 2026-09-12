@@ -19,6 +19,8 @@ Do not expose policy1 creation before all legacy/direct completion and multi-mem
 
 Keep API and client edits serial with a frozen handoff between repositories. Each Gradle invocation holds /tmp/cyf-gradle.lock. Run the affected checks once, archive their original reports immediately, then obtain an independent read-only review. Do not rerun unaffected passed checks merely to refresh timestamps or produce a new test count.
 
+Database evidence correction from source inspection: AgentWorkItemLeaseRealDatabaseTest, AgentServiceTaskEventRealTransactionTest, AgentCommandTransportRealTransactionTest and FundedBountyServiceRealTransactionTest's shared fixture use jdbc:h2:mem with MODE=MYSQL. Their names do not make them actual MySQL evidence; retain them as component transaction regressions only. Use the real connection facilities in OutputAuthorizationMySqlConcurrencyTest/M003A MySqlTest or a new isolated MySQL fixture for the required concurrency/entry/rollback gates. AgentCommandTransportMySqlTest requires D02_MYSQL_* plus a port check; the existing OD wrapper does not supply those variables automatically. Record actual JDBC engine and nonskipped counts, never count a conditional skipped suite as proof.
+
 OD06 exposed a source-creation integration gap that seeded authorization fixtures missed: generic conversation creation wrote tenant0, while output authorization correctly required the exact owner tenant. For OD07 positive lifecycle coverage, create the source through its real authenticated service entry before claiming/dispatching/submitting; do not use a manually idealized source/run row as the only proof that the entry and authorization contracts connect. Retain explicit raw fixtures for negative/corrupt-state tests.
 
 ## Client handoff preparation
