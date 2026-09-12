@@ -9,3 +9,9 @@ Read-only observation; no original checkout or gitlink changed.
 | Client | clean `master` at `f8c731d0cef38956bb3dabaa628c6188c0040bed` | Three commits after original output baseline; session fixes overlap OD04. Refresh the still-clean client feature baseline at OD04 start as described in its preparation. |
 
 Observed branch tips are not themselves release approval. OD06 must integrate the selected accepted API/Web changes in dedicated worktrees, test affected behavior, and record actual candidate commits. Feature-only pins must not silently roll back concurrent accepted changes.
+
+## Dry merge forecast
+
+`git merge-tree --write-tree --name-only --no-messages 683e8007 a9d3e741` in the API worktree returned 1 and reported 10 textual conflicts. It created only an unreferenced Git tree for analysis; no branch, index or working file was changed. Conflict locations: AgentRuntimeMapper, AgentCommandCanonicalCodec, AgentLegacyTaskCompatibilityService, AgentServiceImpl and its test; chat mapper/service build.gradle; ChatConversationMapper; AgentWebSocketHandler; JuyitingAgentRelayService.
+
+These are overlapping runtime/session and exact conversation authorization seams. OD06 needs explicit combined behavior and relevant dispatch/session/ACL regression, not choosing one side wholesale. The forecast uses the frozen OD03 candidate and the observed concurrent branch, not the final reviewed integration candidates.
