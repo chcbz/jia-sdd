@@ -6,7 +6,7 @@ Accepted API f1978b09 (binary log-wrapper repair30/30 + bootJar, independent APP
 
 Real CONVERSATION3 Markdown and TASK3 text/PNG/ZIP publication plus Agent-offline downloads passed. Four source/snapshot/online/offline byte copies matched per TASK output. Browser4 runs/8 viewports all succeeded with actual hit-tested clicks, preview checks and SHA-matched downloads; all screenshots were inspected and task Chromium cleaned up. See live-bounty-task3-f1978b09 and browser-resource-pass-f1978b09. Earlier r3–r6 failures remain retained, not relabeled.
 
-Real complete-response-loss/restart and persona-unbind retention now passed; see live-recovery-unbind-f1978b09. Writer is frozen and synthetic Agent/proxy stopped. Root archived safe reports and independently checked post-unbind bytes and recovery snapshots. Independent R1 development-gate/matrix assessment is next; full navigation/failure matrix and release remain explicit. OD07–OD11 are unfinished. Do not replay business writes merely to refresh evidence.
+Real complete-response-loss/restart and persona-unbind retention passed; see live-recovery-unbind-f1978b09. Synthetic Agent/proxy are stopped. Root archived safe reports and independently checked post-unbind bytes and recovery snapshots. Independent R1 development-gate/matrix ACCEPT is recorded in accepted-r1-development-review.md; full release gaps remain in r1-release-gates.md. The sole writer now owns OD07 API implementation under ../OD07/claim.md; no live requests or service restart is active. OD07–OD11 are unfinished. Do not replay business writes merely to refresh evidence.
 
 ## Earlier integration lessons and build shortcut
 
