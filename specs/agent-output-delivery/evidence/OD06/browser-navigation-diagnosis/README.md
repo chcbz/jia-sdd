@@ -7,3 +7,5 @@ A separate credential-free probe reproduced HTTP navigation timeout with and wit
 The Root probe now uses CDP mouse events after visibility and hit-target checks. Syntax checked only; this behavior still needs live verification. No OAuth headers or raw CDP event payloads are archived.
 
 A credential-free real Chromium data-URL probe observed a clean local close response with code1000 and empty reason. The shared helper rejects it because the generated reason was not echoed. `chromium-close-observation.json` preserves the exact safe fields. Task process/profile cleanup succeeded. Root is reviewing a probe-only compatibility adjustment; the original r5 result remains failed overall.
+
+The sole operator later compared real requests: chat list and task2 outputs returned200 without Origin,403 Invalid CORS request with Origin=http://127.0.0.1:15173. See cors-origin-compare-r1.json. Only the isolated properties gained the exact allowed origin, pending the next necessary API restart; product CORS/ACL are unchanged.
