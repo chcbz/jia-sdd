@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" tests="29" skipped="0" failures="1" errors="0" timestamp="2026-09-12T20:49:50.338Z" hostname="Eva" time="5.08">
+  <properties/>
+  <testcase name="unsupportedDeliveryPolicyFailsClosedBeforeStateAccess()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.051"/>
+  <testcase name="stateDefinitionsCoverRequiredTransitionsAndLegacyTaskStatuses()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.014"/>
+  <testcase name="workItemMutationResolvesAndLocksTaskRootBeforeChildRead()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.038"/>
+  <testcase name="combinedTransitionValidatesBothStatesBeforeTheFirstWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.073"/>
+  <testcase name="combinedTransitionRejectsBlankAssigneeBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.023"/>
+  <testcase name="persistedNoncanonicalTaskStatusEmptyIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.039"/>
+  <testcase name="combinedTransitionRejectsMismatchedAssigneeBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="policy1BlocksAllDirectStateEntrypointsBeforeAggregateAccess()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.024"/>
+  <testcase name="requestedTargetStatusStillAcceptsNormalizedValues()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="taskTransitionAppendsCanonicalBoundedEventAfterCas()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.022"/>
+  <testcase name="memberDoneUsesScopedCasAndNeverCompletesTask()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.023"/>
+  <testcase name="illegalAndTerminalTaskTransitionsFailClosedWithoutCasWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="persistedNoncanonicalTaskStatusWhitespaceIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.024"/>
+  <testcase name="taskTransitionEventUsesDeterministicBoundedReasonCodeWithoutRawFailureReason()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.02"/>
+  <testcase name="secondCasConflictRollsBackTheCombinedMemberAndWorkItemTransaction()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="4.328"/>
+  <testcase name="persistedNoncanonicalWorkerItemStatusWhitespaceIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.019"/>
+  <testcase name="persistedNoncanonicalMemberStatusIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.021"/>
+  <testcase name="persistedNoncanonicalTaskStatusIsRejectedWithoutNormalization()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.018"/>
+  <testcase name="blockedAndFailedStatesRequireAReasonBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.023"/>
+  <testcase name="persistedNoncanonicalWorkItemStatusIsRejected()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.024"/>
+  <testcase name="combinedTransitionRejectsEmptyStringAssigneeBeforeAnyWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.017"/>
+  <testcase name="claimSensitiveWorkItemTransitionsAreDefinedButReservedForB04()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.017"/>
+  <testcase name="staleVersionAndRacingCasReturnExplicitConflict()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.023"/>
+  <testcase name="memberMutationEntersTaskRootBoundaryBeforeChildReadAndWrite()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.023"/>
+  <testcase name="legalTaskTransitionUsesScopedTaskVersionCas()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.015"/>
+  <testcase name="stateMutationWithoutActorParameterUsesSystemWithoutFabricatingMemberAsActor()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.016"/>
+  <testcase name="combinedTransitionAppendsMemberThenWorkItemAndConflictAppendsNothing()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.023"/>
+  <testcase name="legalWorkItemTransitionsPreserveSnapshotAndSetSubmissionTime()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.017"/>
+  <testcase name="scopeMissIsNotFoundWithoutLeakingOrWritingAcrossScope()" classname="cn.jia.agent.service.impl.AgentTaskStateServiceImplTest" time="0.021">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;NOT_FOUND&gt; but was: &lt;INVALID_PERSISTED_STATE&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;NOT_FOUND&gt; but was: &lt;INVALID_PERSISTED_STATE&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:179)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1188)
+	at cn.jia.agent.service.impl.AgentTaskStateServiceImplTest.scopeMissIsNotFoundWithoutLeakingOrWritingAcrossScope(AgentTaskStateServiceImplTest.java:282)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
