@@ -1,0 +1,7 @@
+# Isolated Redis readiness
+
+The aggregate API declares Redis cache/Redisson dependencies. No Redis executable or listener was initially present. The user authorized base-component installation with isp-install as reference. Root read output-client/shell/redis_install.sh (Redis7.4.8, loopback configuration); its official source download returned HTTP403. Development installation instead uses Debian trixie ARM64 Redis8.0.2-3+deb13u2 and liblzf1, downloaded using apt-get download, verified against the authenticated APT metadata SHA256 values, and extracted only below the task-owned tools directory. No system package, service or production Redis was modified.
+
+Authenticated PING and a unique synthetic SET/GET/DEL passed; unauthenticated PING returned NOAUTH. Server binds only127.0.0.1:16379, with128MiB/noeviction and AOF persistence. This is dependency readiness, not API health, actual application transaction behavior, or Redis7.4.8/production-version acceptance. Source/version deviation remains explicit.
+
+Runtime: /home/chc/.local/share/cyf-output-tools/services/redis/runtime/usr/bin/redis-server. Private configuration and random credentials are under its sibling state directory, mode0600; they are not copied here. Process ownership PID and observation time are recorded in observation.json. For cleanup, verify the PID executable/start identity or use the authenticated loopback connection to stop this exact isolated server; never stop a generic Redis process.
