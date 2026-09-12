@@ -7,7 +7,7 @@ All rows below remain OPEN as of2026-09-13. OD06 development acceptance permits 
 | Canonical package and reproducible candidates | OD11 release_guard | Resolve checked-in OpenCV/JAI/catalog without development substitution, validate package and exact three-repository candidates; pins only after authorized reproducible remote source |
 | Hosted mode | OD11 integration operator | Trusted hosted dispatch through artifact retrieval, record actual deployment mode |
 | PUT and bounded large-file transport | OD11 integration operator | Actual interrupted upload/restart and configured size/timeout; retain original response/download bytes and Agent PID/startTicks |
-| Writes paused and dependency outage | OD11 integration operator | Existing owner reads remain usable while new writes fail closed; real isolated storage/scanner outage/recovery |
+| Writes paused and dependency outage | OD11 integration operator | Paused writes or scanner outage leave existing READY downloads usable; unavailable storage returns an explicit retryable read error until recovery, without deleting/revoking retained metadata or publishing unverified files |
 | Paging and lifecycle | OD11 integration/Web operator | >100 real outputs with cursor browsing, representative disconnect/reopen; expiry/hold/GC race coverage attributable to actual runtime or specifically justified test boundary |
 | Full user entry paths | OD11 Web operator | Hall, standalone chat, bounty detail, identity/history switch, no selectable Agent, workspace disabled; actual UI navigation and authorized downloads |
 | WeChat | Actual-device owner + OD11 coordinator | Physical WebView download or real same-account external-browser authorization and download; resource link has no token |
