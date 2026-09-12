@@ -7,37 +7,37 @@ This is a short reconciliation plan, not a runtime ledger, task claim, gate, or 
 Read-only facts used:
 
 - The SDD index still marks performance, Archive Pavilion, economy, voice, and advanced Juyi collaboration as unfinished; released historical features are excluded.
-- API `origin/develop` is `a9a43056cad534c0fb6addb666ba2a9e5989c910` (tree to be taken from the API repository at execution). It descends from WX integration `8fe0e096735fcd947ca58d43011de894825a0e50`; therefore the old WX wording `awaiting_final_verification` is **not** a reason to rewrite its already integrated source chain.
-- The deployed API evidence is Flow `5260799` Run 18 on `a8489561586400af049eee625d90b6e98e834f04`, not `a9a43056`. Run 21 tested/built `7ba431dcaedea3c71260717ca7c36b47a781cda1` but stopped before lifecycle because the release lock was busy. Thus neither Run 18 nor Run 21 proves deployment of WX `8fe0e096` or A16 `a9a43056`.
+- API `origin/develop` is `a9a43056cad534c0fb6addb666ba2a9e5989c910` (tree to be taken from the API repository at execution). WX integration `8fe0e096735fcd947ca58d43011de894825a0e50` is an ancestor of deployed Run 18 commit `a8489561586400af049eee625d90b6e98e834f04` (`merge-base --is-ancestor` returns 0). The WX-path diff from `8fe0e096` to `a848956` contains only later RequestId-filter additions, so the WX integration paths are retained in the deployed candidate. Old `awaiting_final_verification` wording is not a reason to rewrite or re-release WX source.
+- API Flow `5260799` Run 18 deployed `a8489561586400af049eee625d90b6e98e834f04`, proving the retained WX source is deployed but not proving the later A16 `a9a43056` increment. Run 21 tested/built `7ba431dcaedea3c71260717ca7c36b47a781cda1` but stopped before lifecycle because the release lock was busy. API Run 22 has now started with installer `0935738e` and the 58-selector configuration; its terminal exact checkout, test/build, artifact, deployment, and online evidence remain required before any newer-API release claim.
 - Web `origin/develop` is `1ac5cb1e4973919bacf054e961b43ff24d47e832`; Flow `4403172` Run 92 is running for that exact commit. It is not release evidence until its exact checkout, tests, artifact, deploy order, and online check are recorded.
 - A16 at `a9a43056` adds only `GET /agent/internal/command-operations/v1/operations/{operationId}`: an ACL-scoped, redacted status projection over the pre-existing privileged command audit rows. It does **not** migrate ordinary long-running endpoints to async submission/atomic acceptance/outbox, so it cannot make `ASYNC_ACK` compliance pass globally.
 - M4/M5 (`E01–E08`, `F01–F06`, `G01–G08`) remain draft/unclaimed source work. Their product-stage grouping is M4 = `E01–E08,F01,F02,F06`; M5 = `F03–F05,G01–G08` (the historical F03–F05 label discrepancy remains disclosed, not rewritten).
 
 ## Executable packages (maximum six)
 
-### P1 — API candidate release reconciliation: performance batch plus WX
+### P1 — API Run 22 completion plus WX-specific delayed evidence
 
-**Class:** implemented source / missing exact release and final targeted verification; no WX source rewrite.
+**Class:** A16/new performance increment has release evidence pending; WX source is already deployed and retains only final specific MySQL/business evidence.
 
 **Minimal scope**
 
-1. Attribute and correct only the bounded API installer release-lock acquisition path that stopped Run 21 before lifecycle.
-2. Use a materially changed release-control candidate, then let the normal API Flow validate and deploy the exact API commit containing `8fe0e096` and `a9a43056`.
-3. For WX, retain `8fe0e096` as the integrated source baseline; run only the frozen final selectors/MySQL proof required by its accepted source contract on the candidate, rather than recreating its implementation chain.
+1. Observe the already-started API Run 22 using installer `0935738e` and the 58-selector configuration; reconcile its exact checkout/tree, test/build result, artifact digest, deployment order, and online check. Do not start a duplicate run.
+2. Keep WX `8fe0e096` as deployed Run 18 ancestry. Run only its frozen, specific final MySQL/business-delay proof if still required by the WX acceptance contract; do not recreate source, migrations, or a release solely for WX.
+3. Keep full A16 separate: its current status projection is not a completed async-operation migration.
 
 **Real dependencies**
 
-- The current lock holder must finish or a safe, independently attributable lock remediation must exist; do not kill another owner’s process.
-- A new Flow run must be tied to an API commit at or after `a9a43056`; Run 18 and Run 21 cannot be relabeled as proof for it.
-- WX final fixture selectors must use the actual accepted source/candidate and a controlled isolated MySQL fixture. No production DDL/DML is implied.
+- Run 22's terminal Flow record is authoritative for the newer API candidate; it must bind the exact source commit before any A16 release statement.
+- WX final selectors must use the retained/deployed source lineage and a controlled isolated MySQL fixture. No production DDL/DML or new paid/business action is implied.
+- The specific WX business-delay evidence is distinct from a generic Flow health/build result.
 
 **Independent parallel path**
 
-The release-control repair/Flow path is independent of P2, P4, P5, and all business-acceptance preparations. WX source inspection and selector preparation are read-only and can proceed while the lock is being attributed.
+Run 22 observation is independent of P2, P4, P5, and business-acceptance preparations. WX selector preparation is read-only and can proceed without a new source writer or release queue.
 
 **Minimum Flow verification**
 
-API pipeline `5260799`, exact checkout/tree, configured relevant selectors (currently 58-class configuration for the newer candidate), `validateLayering`, `:starter:bootJar`, artifact digest, same-run deploy order, and healthy online check. Record separately the WX targeted/MySQL result; a successful build alone is not WX business release evidence.
+For Run 22: API pipeline `5260799`, exact checkout/tree, 58 configured relevant selectors, `validateLayering`, `:starter:bootJar`, artifact digest, same-run deploy order, and healthy online check. Record the WX final targeted/MySQL/business-delay result separately; neither a generic build nor Run 18's health check replaces that evidence.
 
 ---
 
@@ -75,7 +75,7 @@ Freeze an endpoint-by-endpoint A16 migration matrix before code: identify only l
 **Real dependencies**
 
 - The frozen A16 contract and registry classification from PERF-01; missing runtime capture/registry evidence means no global compliance claim.
-- Critical ownership/review is required for any transaction, ACL, idempotency, outbox, or replay change. Do not infer those semantics from the current status-only code.
+- The responsible owner must perform risk self-checks for any transaction, ACL, idempotency, outbox, or replay change and bind cloud relevant-test evidence. Do not infer those semantics from the current status-only code; this plan creates no independent Reviewer requirement.
 - P1 deployment is not a prerequisite for source work, but production `ASYNC_ACK` acceptance requires a released exact candidate plus per-route evidence.
 
 **Independent parallel path**
@@ -167,7 +167,7 @@ No new Flow run is a substitute for this package’s business evidence. If sourc
 
 ## Explicit exclusions from new development
 
-- Do not recreate WX source work: `8fe0e096` is an ancestor of current API develop. Its residual is exact verification/release evidence, not a second implementation.
-- Do not treat Run 18, Run 21, or Web Run 91 as evidence for newer commits.
+- Do not recreate or re-release WX source: `8fe0e096` is an ancestor of deployed Run 18 commit `a848956`; its residual is specific final MySQL/business-delay evidence, not source or deployment work.
+- Do not treat Run 18 or Run 21 as evidence for newer A16 commits; use Run 22's terminal exact record. Do not treat Web Run 91 as evidence for newer Web commits.
 - Do not mark the economy, skills, rent, or voice work complete from mocks, deployments, health probes, static client mappings, or unverifiable ACKs.
 - Do not use the old ledger wording to claim M4/M5, full PERF-A16, Rabbit activation, Archive browser closure, or global 3-second SLO completion.
