@@ -37,3 +37,7 @@ Repair `188948293d97c69a97df55a37d09ecd10c245ad1` is frozen clean. Writer report
 ## Repair review remaining issue
 
 Same reviewer closed R01/R03/R04 and the version-request fence on1889482. R02 remains only through the exact-resource requestedItem cache; see `review-1889482.md`. Original sole writer resumed bounded revalidation/clear repair. No OD05 acceptance or OD06 start yet.
+
+## Exact-resource repair candidate
+
+`07d20ea72a8f18e00c3a184f801f16e34022b5ed` is frozen clean and under same-reviewer recheck. Root verified three source/test hashes against candidate and manifest; output19 are included in related150, all pass, build/scoped lint exit0. Evidence `repair-07d20ea/observation.json` preserves runtime/manifest boundaries. No OD05 acceptance yet.
