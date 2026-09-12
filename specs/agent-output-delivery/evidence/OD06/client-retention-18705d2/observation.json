@@ -1,0 +1,139 @@
+{
+  "candidate": "18705d228b87f09e815b7a3f3aa8e758d16d6e69",
+  "parent": "29aa70da8bb9f0476379dd6bd9e41731c5219457",
+  "observed_at": "2026-09-12T10:11:07.831341+00:00",
+  "worktree_clean": true,
+  "source_association": [
+    {
+      "path": "conf/codex-ws-agent/README.md",
+      "sha256": "e98c3c77536b30c5608777507b063b89ecae37951ed696d08946b0ee8d18302d",
+      "manifest_worktree_candidate_match": true
+    },
+    {
+      "path": "conf/codex-ws-agent/agent-client.mjs",
+      "sha256": "0d643a222c883adc483602c190f24b4582597233961637718ec24b2ec0357962",
+      "manifest_worktree_candidate_match": true
+    },
+    {
+      "path": "conf/codex-ws-agent/env.example",
+      "sha256": "a4449b664bdc232727e5e854fb031faaa40c4f7d68211dca3a3da73cbcf96b21",
+      "manifest_worktree_candidate_match": true
+    },
+    {
+      "path": "conf/codex-ws-agent/output-queue.mjs",
+      "sha256": "10994c2058efb3603d5c9114d191e3cf91b19178d3ba6560e04ba18166a1ee26",
+      "manifest_worktree_candidate_match": true
+    },
+    {
+      "path": "conf/codex-ws-agent/test/agent-client.test.mjs",
+      "sha256": "aa0547965d372456a3cb021096681cf72457398fba05f9a1959e2c0c1bdde18e",
+      "manifest_worktree_candidate_match": true
+    },
+    {
+      "path": "conf/codex-ws-agent/test/fixtures/output-restart-worker.mjs",
+      "sha256": "4c13a74de52578155bab974d2f32d2021b0d925ca647cea03d7944fbf7cdd083",
+      "manifest_worktree_candidate_match": true
+    },
+    {
+      "path": "conf/codex-ws-agent/test/output-queue.test.mjs",
+      "sha256": "fddb963b5988b8adb7b63b964e9533632691c541e9817f39b41f90c08c31ebde",
+      "manifest_worktree_candidate_match": true
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "od06-client-retention-changed-files.txt",
+      "sha256": "976e4e07edf9ed343fabf9dc0159ab63802d0bba217f438966312b971dfa9868"
+    },
+    {
+      "path": "od06-client-retention-source-sha256.txt",
+      "sha256": "9c471b57beadddacb88eba9ad1899e2ef3aebede692525325b20a7f47bcb6de1"
+    },
+    {
+      "path": "od06-client-retention-evidence-sha256.txt",
+      "sha256": "66d496c2373b22a06495d61d0accf99d859f68193e36d6674987372fcc27013d"
+    },
+    {
+      "path": "od06-client-retention-targeted.log",
+      "sha256": "52c98fef03841b7ab8bd107f793201a361a30e3b61bbbb9b794bda2761cf9819"
+    },
+    {
+      "path": "od06-client-retention-targeted.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "od06-client-retention-agent-client.log",
+      "sha256": "69dec1a7a0cdf9c57a7d5274ffdc5139b61e266f9412670a89fb701a1452f59f"
+    },
+    {
+      "path": "od06-client-retention-agent-client.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "od06-client-retention-full.log",
+      "sha256": "d56925bcaf0e87b8238c1082c055f0ef8b288d83b05d55f00317235b3ba63998"
+    },
+    {
+      "path": "od06-client-retention-full.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "od06-client-retention-syntax.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "od06-client-retention-syntax.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "od06-client-retention-diff.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "od06-client-retention-diff.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    }
+  ],
+  "verification": {
+    "output_queue": {
+      "passed": 20,
+      "exit": 0,
+      "command": "node --test conf/codex-ws-agent/test/output-queue.test.mjs",
+      "cwd": "/home/chc/wsps/cyf-worktrees/output-client"
+    },
+    "agent_client_recovery_slice": {
+      "passed": 8,
+      "exit": 0,
+      "command": "node --test --test-name-pattern='processing output command|separate process restart publishes|restart monotonically reconciles output delivery|real delivery-pending flow|agent client validation rejects malformed retention' conf/codex-ws-agent/test/agent-client.test.mjs",
+      "cwd": "/home/chc/wsps/cyf-worktrees/output-client"
+    },
+    "full_client": {
+      "command": "npm test",
+      "passed": 302,
+      "failed": 0,
+      "skipped": 0,
+      "exit": 0
+    },
+    "changed_mjs_syntax": {
+      "exit": 0
+    },
+    "diff_check": {
+      "exit": 0
+    }
+  },
+  "review_status": "pending_independent_review",
+  "limits": [
+    "Scoped20 and8 overlap full302; not additive.",
+    "Post-test/post-commit source manifest, not pre/post-test evidence.",
+    "Controlled cross-process client tests are not live CYF API/browser acceptance.",
+    "No push/deployment/service restart."
+  ],
+  "runtime": {
+    "node": "v22.22.0"
+  },
+  "source_manifest_timing": {
+    "writer_reported_generated_at": "2026-09-12T18:09:25+08:00",
+    "association": "After all five checks and candidate commit; not a pre/post-test manifest pair.",
+    "root_independently_verified": "All7 changed candidate blobs match archived source manifest and clean working tree."
+  }
+}
