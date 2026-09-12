@@ -10,7 +10,7 @@
 | OD03 | R1 | **任务/对话成果发布、列表和鉴权下载**；agent artifact M002；chat_output；精确ACL与代理读 | critical_worker → adversarial_reviewer | 1～1.5 | OWNER_SHARE显式；private隔离；离线取件hash一致；O03,O06,O07,O08,O09,O19,O29 |
 | OD04 | R1 | **客户端manifest、安全快照、持久恢复**；isp-install/conf/codex-ws-agent/output-*.mjs及执行finish | critical_worker → adversarial_reviewer | 1.5～2 | 两个执行模式；manifest指定代码包取件；重启继续已有快照，不重跑模型；O01,O02,O04,O10,O22,O30 |
 | OD05 | R1 | **共用成果UI与两个入口**；web/components/outputs与chat/bounty/workspace、useOutputs | balanced_worker → adversarial_reviewer | 1～1.5 | 用户切换/source切换不串数据；下载、分页、过期提示；O01,O05,O06,O08,O21 |
-| OD06 | R1 | **R1集成、发布候选和演示**；只读验证；root evidence/integration更新 | main_orchestrator → release_guard | 1～1.5 | API/Web/client版本及R1矩阵通过，等待发布授权；R1_GATE |
+| OD06 | R1 | **R1集成、发布候选和演示**；串行保留清理/API合并与构建修复、独立验证、root证据 | main_orchestrator → release_guard | 1～1.5 | API/Web/client版本及R1矩阵通过，等待发布授权；R1_GATE |
 | OD07 | R2 | **HTTP租约和policy1全部入口禁入**；agent lease/assign/legacy/aggregation与client心跳 | critical_worker → adversarial_reviewer | 1～1.5 | claim/start/heartbeat/release可用；单工作项/旧路径硬限制；O13,O16,O22,O24,O31 |
 | OD08 | R2 | **唯一正式提交事务**；agent task_delivery M003/TaskDeliverySubmissionService | critical_worker → adversarial_reviewer | 1.5～2 | 固定版本、delivery pin、submitted CAS和事件同事务；O14,O15,O16,O17,O24,O25 |
 | OD09 | R2 | **人工验收、要求修改和显式返工派发**；agent review/rework/aggregation与client新run接入 | critical_worker → adversarial_reviewer | 1～2 | submitted->ready返工；新run/lease；重复/旧批次拒绝；O17,O18,O20,O32,O33 |
@@ -38,6 +38,7 @@ R1合计7～10人日，R2追加5～7.5人日，工程总计12～17.5人日（对
 | OD08 | 2 | submitDelivery、listDeliveries |
 | OD09 | 2 | reviewDelivery、dispatchRework |
 
+- OD06 已知前置修复按 [串行集成交接](evidence/OD06/serial-integration-handoff.md) 分别由唯一 critical_worker 实施并独立评审，再执行集成验证。
 - main_orchestrator仅写root计划/证据/集成控制文件；OD00/OD06/OD11如需执行验证由test_runner承担单一验证子任务，发布门槛由release_guard判定。
 - P0代码、迁移、权限、租约与并发由critical_worker写；balanced_worker仅在冻结契约后负责普通Vue/接口接线。
 - Client独立仓为 `/home/chc/wsps/isp-install`；不把其源码复制进root，不由root的API/Web gitlink代替client版本记录。

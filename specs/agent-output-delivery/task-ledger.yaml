@@ -302,7 +302,7 @@ tasks:
   status: not_started
   release: R1
   title: R1集成、发布候选和演示
-  ownership: 只读验证；root evidence/integration更新
+  ownership: 串行client保留清理/API合并与构建修复；独立验证；root evidence/integration更新
   writer_role: main_orchestrator
   reviewer_role: release_guard
   depends_on:
@@ -313,6 +313,11 @@ tasks:
   exit_gate: API/Web/client版本及R1矩阵通过，等待发布授权
   acceptance:
   - R1_GATE
+  preparation: evidence/OD06/serial-integration-handoff.md
+  implementation_prerequisites:
+  - client_retention_R03
+  - api_concurrent_baseline_reconciliation
+  - canonical_build_dependency_resolution
 - id: OD07
   status: not_started
   release: R2
