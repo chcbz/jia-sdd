@@ -1,6 +1,6 @@
 # OD07 queued implementation handoff
 
-Status: preparation only; OD07 has not started. The sole writer is still executing OD06 live R1 integration. Use the accepted OD06 descendant when this task is claimed; do not overwrite concurrent API integration changes. Canonical packaging and physical-device release gaps must remain explicit if development later proceeds before those external gates close.
+Status: OD06 independently accepted for development; OD07 API slice is active under claim.md. Use the accepted OD06 descendant when this task is claimed; do not overwrite concurrent API integration changes. Canonical packaging and physical-device release gaps must remain explicit if development later proceeds before those external gates close.
 
 Implement the already reviewed contracts in detailed-design.md section9, openapi.yaml lease routes, schema-contract.yaml and execution-plan.md section6. Reuse AgentWorkItemLeaseServiceImpl and its existing root transaction/CAS/event machinery. Its configured maximum lease duration is900000ms; the planned120000ms lease and40000ms heartbeat fit that bound. The old interface does not expose the specified ticket-bound recovery GET; add it without leaking another run's leaseToken. Bind the dispatched run to the work item, and validate executionRunId at claim/start/heartbeat/release/submit, including restart and old-run attempts after CHANGES_REQUESTED.
 
