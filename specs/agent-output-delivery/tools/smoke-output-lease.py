@@ -51,6 +51,7 @@ def identifier(value):
             and value == value.strip()
             and value not in (".", "..")
             and not any(c in value for c in ("/", "\\", "%"))
+            and not any(c.isspace() for c in value)
             and not any(ord(c) < 32 or ord(c) == 127 for c in value),
             "Exact nonempty identifier required")
     return value
@@ -164,6 +165,9 @@ def run_probe(request, task_id, work_item_id, run_id):
             require(isinstance(result.get("leaseUntil"), str)
                     and re.fullmatch(r"[1-9][0-9]{0,18}", result["leaseUntil"]) is not None,
                     "Active lease expiry missing or noncanonical")
+            if action == "heartbeat":
+                require(int(result["leaseUntil"]) > int(current["leaseUntil"]),
+                        "Heartbeat did not extend the lease expiry")
         else:
             require(not result.get("leaseToken"), "Released response retained an active lease token")
         current = result

@@ -40,7 +40,8 @@ class FakeTransport:
         }[action], "version": str(int(self.state["version"]) + 1)}
         if action != "release":
             value["leaseToken"] = "SYNTHETIC-LEASE-TOKEN-NOT-FOR-REPORTS"
-            value["leaseUntil"] = "1789239999000"
+            value["leaseUntil"] = (str(int(self.state["leaseUntil"]) + 1000)
+                                   if action == "heartbeat" else "1789239999000")
         if self.fault == "missing-active-token":
             value.pop("leaseToken", None)
         elif self.fault == "wrong-result-item":
@@ -57,6 +58,8 @@ class FakeTransport:
             value.pop("leaseUntil", None)
         elif self.fault == "duplicate-version-step":
             value["version"] = str(int(self.state["version"]) + 2)
+        elif self.fault == "unchanged-heartbeat-expiry" and action == "heartbeat":
+            value["leaseUntil"] = self.state["leaseUntil"]
         self.state = value
         self.receipts[key] = (dict(body), dict(value))
         return dict(value)
@@ -82,7 +85,7 @@ class LeaseProbeControls(unittest.TestCase):
         for fault in ("wrong-initial-item", "changed-receipt", "missing-active-token",
                       "wrong-result-item", "numeric-version", "backward-version",
                       "retained-release-token", "unchanged-version", "missing-active-expiry",
-                      "duplicate-version-step"):
+                      "duplicate-version-step", "unchanged-heartbeat-expiry"):
             with self.subTest(fault=fault), self.assertRaises(probe.ProbeFailure):
                 self.run_fixture(FakeTransport(fault))
 
@@ -118,7 +121,7 @@ class LeaseProbeControls(unittest.TestCase):
         with self.assertRaises(probe.ProbeFailure):
             probe.run_probe(transport.request, "task-example", "work-example", "invalid-run")
         self.assertEqual(transport.calls, [])
-        for value in (".", "..", "a/b", "a\\b", "%2e%2e", "a" * 101):
+        for value in (".", "..", "a/b", "a\\b", "%2e%2e", "a" * 101, "a b", "a\u2003b"):
             with self.subTest(identifier=value), self.assertRaises(probe.ProbeFailure):
                 probe.run_probe(transport.request, value, "work-example", "2" * 32)
             self.assertEqual(transport.calls, [])
