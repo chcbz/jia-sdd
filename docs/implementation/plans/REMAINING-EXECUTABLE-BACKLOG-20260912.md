@@ -1,5 +1,19 @@
 # Remaining executable backlog — 2026-09-12
 
+## 21:40 CST delta
+
+- A16 root cause reproduced: H2 2.4.240 generated IN retains closed DDL session; equivalent OR also fails, simple CASE succeeds with independent connections on both 2.3.232/2.4.240. Fixture-only correction518a052e retains generated uniqueness guards and all transaction assertions, with added guard regression. No production schema/dependency change. Run28 remains FAIL, not retried.
+- E03 backend8501cded collected/Ownerclosed and integrated as5fa6fd14/tree21e7a024 with the H2 fix. Exact develop pushed; API5260799 Run29 build514194885 RUNNING, deploy514194886 INIT. Configuration65selectors7ddf8db6 updated once/readbackAPPLIED; monitor29registered. This is not deployment evidence.
+- E02 implementation continues independently. New E03Web Owner in separate worktree implements the frozen suggest/edit/manual-confirm flow and explicit unavailable/CAS/idempotency semantics, not an automatic assignment/provider side channel. No independent Reviewer and no source queue.
+- E03 API remains opt-in/default-off; frontend, controlled acceptance and activation are not complete merely because the backend candidate exists.
+
+
+## 21:18 CST delta
+
+- E02 greedy team recommendation is now independently assigned; E01 prerequisite is releasedRun25. E03 work-item planning has11new source/test files in its own worktree, notyetaccepted orreleased. CurrentexactOwners remain solely inTASKS.yaml.
+- A16 Run27 diagnostic exposed H2 first pending-operation insert failure(SQLState90098), after all source/permission checks. No deployment. Minimal standalone exactDDL/JDBC probes pass on H22.3.232 andBoot4.0.1BOM2.4.240, so neither a driverdowngrade nor schemaweakening is justified. Run28 adds full immutable exception-chain logging; it is a diagnostic run, not a fix claim. Source67ac20d5, observe existingRun28 only.
+- Current business acceptance boundary reconciled against actualAPI25/Web93 pair in `handoffs/REMAINING-BUSINESS-ACCEPTANCE-20260912.json`: wallet/bounty, sixrealClientACKs, hostingrent, voiceProvider and Archive authenticated flows remain unproven and require their stated identity/authorization inputs. Source ancestry and released foundation code do not close these lanes.
+
 ## 20:45 CST delta
 
 - A16 Run26 stopped at cloud tests: service214cases/1failed/5skipped, first async accept in the new real-transaction test. No deployment; original Owner resumed for exact root cause and minimal correction. Run25 remains healthy live.

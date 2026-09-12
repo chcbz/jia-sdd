@@ -1,0 +1,60 @@
+{
+  "verifiedAt": "2026-09-12T21:30:45.386424+08:00",
+  "kind": "isolated_jdbc_diagnostic_not_release",
+  "productionAccess": false,
+  "localGradleOrApplicationBuild": false,
+  "javaMaxHeapMiB": 64,
+  "cause": "H2 2.4.240 generated IN expression references a closed schema-creation session; fresh insertion fails 90098. Equivalent OR is optimized back to IN and also fails. Simple CASE passes with separate closed DDL connection.",
+  "matrix": [
+    {
+      "version": "2.3.232",
+      "variant": "original",
+      "result": "PASS",
+      "log": "/var/tmp/cyf-h2-redrive-diagnostic-20260912/closed-ddl-2.3.232-original.log",
+      "sha256": "8de66f422f5d67180c877a3e1246806571adf6b1d1506b9284c021943c180846"
+    },
+    {
+      "version": "2.3.232",
+      "variant": "equivalent-or",
+      "result": "PASS",
+      "log": "/var/tmp/cyf-h2-redrive-diagnostic-20260912/closed-ddl-2.3.232-fixed.log",
+      "sha256": "8de66f422f5d67180c877a3e1246806571adf6b1d1506b9284c021943c180846"
+    },
+    {
+      "version": "2.3.232",
+      "variant": "simple-case",
+      "result": "PASS",
+      "log": "/var/tmp/cyf-h2-redrive-diagnostic-20260912/closed-ddl-2.3.232-simple-case.log",
+      "sha256": "8de66f422f5d67180c877a3e1246806571adf6b1d1506b9284c021943c180846"
+    },
+    {
+      "version": "2.4.240",
+      "variant": "original",
+      "result": "FAIL",
+      "log": "/var/tmp/cyf-h2-redrive-diagnostic-20260912/closed-ddl-2.4.240-original.log",
+      "sha256": "a90283749d1df0dc307d59d735a5c9c37ac3bd74a75e8d71748a058e518715f4"
+    },
+    {
+      "version": "2.4.240",
+      "variant": "equivalent-or",
+      "result": "FAIL",
+      "log": "/var/tmp/cyf-h2-redrive-diagnostic-20260912/closed-ddl-2.4.240-fixed.log",
+      "sha256": "a90283749d1df0dc307d59d735a5c9c37ac3bd74a75e8d71748a058e518715f4"
+    },
+    {
+      "version": "2.4.240",
+      "variant": "simple-case",
+      "result": "PASS",
+      "log": "/var/tmp/cyf-h2-redrive-diagnostic-20260912/closed-ddl-2.4.240-simple-case.log",
+      "sha256": "4ed3ac144afbbff6aaa314e14eb37f040bc15d85c752d50cb1738eca53303f4a"
+    }
+  ],
+  "preserved": [
+    "production SQL and migrations unchanged",
+    "driver versions unchanged",
+    "generated guards and uniqueness index retained",
+    "transaction rollback/idempotency assertions retained"
+  ],
+  "correctionCommit": "518a052eda2fc01a79e2a6219f25ed94d80c02a7",
+  "cloudVerification": "pending corrected candidate"
+}
