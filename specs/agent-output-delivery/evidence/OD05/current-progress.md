@@ -41,3 +41,7 @@ Same reviewer closed R01/R03/R04 and the version-request fence on1889482. R02 re
 ## Exact-resource repair candidate
 
 `07d20ea72a8f18e00c3a184f801f16e34022b5ed` is frozen clean and under same-reviewer recheck. Root verified three source/test hashes against candidate and manifest; output19 are included in related150, all pass, build/scoped lint exit0. Evidence `repair-07d20ea/observation.json` preserves runtime/manifest boundaries. No OD05 acceptance yet.
+
+## Source-denial review follow-up
+
+Same reviewer confirms exact-resource revalidation, but primary list and related source caches survive permanent source403. See `review-07d20ea.md`. Original writer resumed complete source invalidation/active-request protection, with denial-matrix regression required. No OD05 acceptance yet.
