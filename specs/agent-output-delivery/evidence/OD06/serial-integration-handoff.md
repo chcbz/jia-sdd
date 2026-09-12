@@ -2,7 +2,7 @@
 
 ## Current execution shortcut
 
-The running API is accepted52cc2aae; actual startup succeeded and anonymous HTTP401 was observed. The active task is trusted conversation dispatch and accepted-client publication/offline retrieval. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
+The accepted API baseline is52cc2aae. Live integration exposed a masked WebSocket failure: ERROR redispatch was converted to401. The pending DefaultSecurityConfig repair permits only DispatcherType.ERROR, retaining authentication for ordinary private and /error requests; its scoped tests passed2/2. The r8 local startup then exposed the original500 for both /ws/chat and /ws/agent/channel. Original-error diagnosis is in progress; neither trusted dispatch nor publication/offline retrieval has passed. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
 
 ```bash
 # cwd=/home/chc/wsps/cyf-worktrees/output-api; helper owns flock/JDK/substitutions
@@ -12,6 +12,8 @@ python3 /tmp/cyf-od02-evidence/run-gradle-with-od-env.py <affected-test-task> --
 Use --offline only when that task's dependencies are already cached. Do not run canonical first as a trial. The fixed original dependency gate is already blocked by recorded old-host TLS/DNS and canonical-host403 observations; no new credential/provenance evidence has arrived. Root alone coordinates that external gate. Do not re-read settings.xml, transfer credentials across hosts, probe private endpoints or rerun unaffected verifier tests on each local fix.
 
 Local startup is part of implementation verification and may run before the final repair commit/review, without production traffic or user Agent changes. Freeze a coherent startup repair after the relevant tests and actual launch attempts, then obtain independent review before trusted-run acceptance. This avoids treating every safe local boot attempt as a separate approval step. Current isolated schema/bucket persist; do not recreate them blindly.
+
+Start from a task-owned immutable jar copy, or stop the task API before replacing its running bootJar path. Repacking a live jar can break lazy class loading; r7 shutdown showed missing classes from unrelated packaged libraries after repacking, whereas r8 stopped cleanly. This is an execution precaution, not evidence of missing production dependencies. Diagnostic error details belong only in the isolated loopback configuration and must be removed after diagnosis; do not archive credentials, cookies or authentication headers.
 
 OD06 starts after OD05 independent approval. OD05 development approval was recorded on2026-09-12; step1 client retention is accepted at714b4aa and step2 API reconciliation/build/preview is now active. Later steps remain queued and no R1 integration acceptance is claimed. OD06 now includes known bounded implementation repairs before read-only integration verification. Keep one active product writer throughout; root owns this sequence, evidence and pins.
 
