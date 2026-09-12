@@ -17,6 +17,8 @@ PACKAGE = ROOT / 'incoming/package.tgz'
 APPROVAL = ROOT / 'approval.json'
 BACKUPS = ROOT / 'backups'
 INSTALLER = '/usr/local/sbin/cyf-api-flow-install'
+INSTALLER_SIZE = 47995
+INSTALLER_SHA256 = 'ecd726baf84c029153633f790757b69fc9d17b438381976efe962ef6fa553f13'
 LOCK = '/tmp/cyf-api-flow-auto-approval.lock'
 EXPECTED_ORG = '5fb7d76ee6f9d07f148529c7'
 EXPECTED_PIPELINE = '5260799'
@@ -104,7 +106,13 @@ def main():
     if not GIT_SHA.fullmatch(source_commit):
         fail('Flow source commit is invalid')
     safe_regular(Path(__file__).resolve(), mode=0o755)
-    safe_regular(Path(INSTALLER), mode=0o755)
+    installer_path = Path(INSTALLER)
+    installer_stat = safe_regular(installer_path, mode=0o755)
+    if installer_stat.st_size != INSTALLER_SIZE:
+        fail('installer size changed')
+    with installer_path.open('rb') as installer_handle:
+        if digest_fileobj(installer_handle) != INSTALLER_SHA256:
+            fail('installer digest changed')
     ps = safe_regular(PACKAGE)
     if ps.st_size <= 0 or ps.st_size > 2 * 1024 * 1024 * 1024:
         fail('incoming package size is invalid')
