@@ -27,3 +27,7 @@ The candidate also changes OAuth resource handling for streaming ASYNC dispatch;
 ## Independent review result
 
 `683e8007` received **REQUEST_CHANGES**, with three bounded repairs: snapshot pagination, UserJwt read error envelopes and deterministic request-hash collision. See [review-683e8007.md](review-683e8007.md). Original sole writer has resumed these repairs; OD03 remains unaccepted and OD04 has not started.
+
+## Repair candidate frozen
+
+`4c292cc35e4d82a23620a85296b721569ff59bd5` repairs R01–R03. Root verified **27/27** targeted checks, no failures/errors/skips; eight changed source files match pre/post-run and candidate hashes. Layering also exited 0. See [repair-4c292cc3/observation.json](repair-4c292cc3/observation.json). The same independent reviewer is checking the repair; OD04 remains pending.
