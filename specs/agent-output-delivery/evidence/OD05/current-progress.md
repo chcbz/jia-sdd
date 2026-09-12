@@ -9,3 +9,7 @@ Intermediate targeted regressions:51 passing, production build in progress. Logs
 ## Pre-freeze correctness and coverage repair
 
 Root identified missing real component/async lifecycle evidence and concrete preview/download/polling seams in the uncommitted implementation; see `pre-freeze-findings.md`. Sole writer asked to repair before freeze. Earlier52 targeted passes and successful build are intermediate, not final repair evidence. Optional broad npm regression was interrupted during unrelated map recomputation; full suite is not marked passed.
+
+## Writer availability fallback
+
+Balanced writer `/root/od05_output_ui` terminated with upstream503 auth_unavailable for gpt-5.6-terra. Product changes remain uncommitted in the dedicated Web worktree. Root reassigned the bounded OD05 implementation/repair to existing critical writer `/root/od01_source_auth`; only that agent may now write product code. This is an availability fallback, not independent review. Preserve prior changes and failed/incomplete logs; repair coverage includes real component state, historical versions, readable status/size and precise token-free resource navigation.
