@@ -1,5 +1,15 @@
 # Remaining executable backlog — 2026-09-12
 
+## 23:48 CST delta (current verified release pair)
+
+- API develop270ae185 / Run33 SUCCESS: E02 recommendation and stored coordinator projection released; JAR12c29e32, receipt52f23bad, PID2843894/10018 healthUP. Initial disk admission failure69511830 happened before lifecycle; one same-artifact retry69511949 succeeded after clean completed-worktree reclamation. Cold startup533s. Run32's2fixturefailures were corrected, not relabeled green.
+- Web develop61007609 / Run95 SUCCESS: 2135passed/2pending/0failed; artifact6f0f6913, order69512210; all410installedfiles and9online hashes match. E03 code and E07 manualpreview/localcoverage released. E03 frontend/backend flags remain OFF, and E07 has no persisted finalteamconfirmation endpoint; neither is full business acceptance.
+- Streaming Web deploy helper first real production use is now verified,107s wall time. Initial2homepage polls returned old content, third matched; exact cache mechanism not proven. Run93/94 historical failures retained.
+- Parallel source lanes: E04 sameOwner completing actual submitted->completed dependency unlock; F02 immutable scoped artifact file/hash storage newly assigned; Web runtime dependency installer efficiency newly assigned. No independent Reviewer or global source queue. Owners remain solely inTASKS.yaml.
+- OuterFlow bootstrap missing-only update286cfcc passed5tests/readback, but Run95 exposed a second fullRPM install in scripts/ci/prepare-runtime.mjs (110downloads/132operations). This is assigned, not falsely declared a measured speedup. The next genuine candidate should validate it; no synthetic re-release of95.
+- FullA16/M4/M5, E03 activation, Archive authenticated browser flows, monetary/provider/clientACK and ES realfixture acceptance remain open per original scope. Do not repeat already-shippedsource just because those acceptance inputs are missing. Existing exact-run monitor registration preserved; emaildelivery still unproved.
+
+
 ## 23:00 CST delta (supersedes earlier current-state projections)
 
 - API Run31/f6554168 is now cloud SUCCESS and independently reconciled with installed record, JAR c6fa5726, receipt0f6ba20f, PID2783320/10018 and healthUP. First disk-admission failure69510439 remains recorded; same-artifact retry69510726 succeeded. Login task owned lifecycle; main did not interrupt or duplicate it. A16/E03 default-off technical slices are deployed, not fully activated/business accepted.
