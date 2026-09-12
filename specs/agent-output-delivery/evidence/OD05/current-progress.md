@@ -33,3 +33,7 @@ REQUEST_CHANGES on3af0c43: four deterministic defects require repair before acce
 ## Frozen review repair
 
 Repair `188948293d97c69a97df55a37d09ecd10c245ad1` is frozen clean. Writer reports R01-R04 and version-request fence fixed; root verified five changed-file hashes against both manifests and candidate blobs. Output18 are included in related149, all pass; build and scoped lint exit0. Same independent reviewer is rechecking; see `repair-1889482/observation.json`. No acceptance yet.
+
+## Repair review remaining issue
+
+Same reviewer closed R01/R03/R04 and the version-request fence on1889482. R02 remains only through the exact-resource requestedItem cache; see `review-1889482.md`. Original sole writer resumed bounded revalidation/clear repair. No OD05 acceptance or OD06 start yet.
