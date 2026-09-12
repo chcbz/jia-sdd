@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-09-12T11:28:33.948834+00:00",
+  "verifiedAt": "2026-09-12T12:08:25.316949+00:00",
   "policy": "ready develop push -> cloud tests/build -> same-run artifact -> automatic deploy",
   "per_run_human_ticket": false,
   "per_run_reviewer": false,
@@ -73,6 +73,42 @@
       "selector_class_scope": 59,
       "physical_bootjar_mail_runtime_guard": "PASS",
       "evidence": "/home/isp/wsps/cyf/docs/implementation/handoffs/FLOW-API-RUN23-DEPLOYED-20260912.json"
+    },
+    {
+      "pipeline_id": "5260799",
+      "run": 24,
+      "status": "FAIL",
+      "commit": "1f5e79c605823384c71581b314c3389e6b2dc64a",
+      "tree": "e9214a25b9f003ecae498d2139000fc4bb9272b0",
+      "phase": "cloud_test_equal_score_assignment_order",
+      "build_job": 514147085,
+      "test_failure_summary": "service194tests2failed ordered-team assertions; no deployment",
+      "lifecycle_invoked": false,
+      "evidence": "/var/tmp/cyf-api-e01-release-20260912/run24-build-log.json"
+    },
+    {
+      "pipeline_id": "4403172",
+      "run": 93,
+      "status": "RUNNING",
+      "commit": "b58d37272dbeca5c93921694015c721369253df0",
+      "tree": "7b5ddcb5b92f9ea6783b0a1fc48ede362f3fea75",
+      "phase": "observe_exact_cloud_result",
+      "trigger_mode": 3,
+      "manual_start_by_main": false,
+      "evidence": "/var/tmp/cyf-web-e01-release-20260912/run93-status.json"
+    },
+    {
+      "pipeline_id": "5260799",
+      "run": 25,
+      "status": "RUNNING",
+      "expected_commit": "ef1a965945fc67834569c504bda605cb00f2f783",
+      "expected_tree": "d36fe144ca93c87436bb792e45d3811fc838983d",
+      "phase": "observe_exact_cloud_source_tests_artifact_deploy",
+      "build_job": 514152612,
+      "deploy_job": 514152613,
+      "selector_class_scope": 63,
+      "A16_included": false,
+      "evidence": "/var/tmp/cyf-api-e01-r2-release-20260912/run25-status.json"
     }
   ],
   "pipelines": [
@@ -80,8 +116,8 @@
       "component": "backend",
       "pipeline_id": "5260799",
       "name": "cyf-api-kit-ci",
-      "cloud_flow_sha256": "9b75b03aad672cc5c22fde09b977c6bcdde0d4be60af651adddb57640cf4df25",
-      "candidate_sha256": "3af2a8227378f550d16f8168552fb552d4f465ac601b57e324241b6afba29afd",
+      "cloud_flow_sha256": "6f7d8290f620f546288a7f6a72cdc59f6e38ec1882cc50ad44c1a9448c83f8f4",
+      "candidate_sha256": "e2e445b03df5a6c84d6580b8a43411a840b5e6953090f119f98f2c657b705fc1",
       "candidate_path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/templates/backend-develop-release.yaml",
       "current_branch": "develop",
       "current_events": [
@@ -90,11 +126,24 @@
       "current_branch_filter": "^develop$",
       "webhook_present_in_flow_config": true,
       "deployment_with_new_configuration_verified": true,
-      "state": "DEVELOP_RUN23_DEPLOYED_ONLINE_VERIFIED",
-      "next_action": "Released688a3e65 exact Run23; no rebuild/redeploy. Parallel bounded A16/E01/F03 source work self-check then integrate develop for next Flow run; actual next push must reconcile Run source before any manual start.",
-      "test_selector_classes": 59,
+      "state": "E01_FIX_RUN25_RUNNING",
+      "next_action": "Observe Run25 expectedef1a9659 including E01 tie-order repair and F03 test; Run24 failure retained/no retry. A16 not included/no dependency on its unfinished executor. Last verified live remains Run23 until new full proof.",
+      "test_selector_classes": 63,
       "automatic_push_trigger_verified": false,
       "current_run": {
+        "pipeline_id": "5260799",
+        "run": 25,
+        "status": "RUNNING",
+        "expected_commit": "ef1a965945fc67834569c504bda605cb00f2f783",
+        "expected_tree": "d36fe144ca93c87436bb792e45d3811fc838983d",
+        "phase": "observe_exact_cloud_source_tests_artifact_deploy",
+        "build_job": 514152612,
+        "deploy_job": 514152613,
+        "selector_class_scope": 63,
+        "A16_included": false,
+        "evidence": "/var/tmp/cyf-api-e01-r2-release-20260912/run25-status.json"
+      },
+      "verified_deployment": {
         "pipeline_id": "5260799",
         "run": 23,
         "status": "SUCCESS",
@@ -129,11 +178,11 @@
       "current_branch_filter": "^develop$",
       "webhook_present_in_flow_config": true,
       "deployment_with_new_configuration_verified": true,
-      "state": "DEVELOP_RUN92_DEPLOYED_ONLINE_VERIFIED",
+      "state": "E01_WEB_RUN93_AUTOMATIC_PUSH_OBSERVED",
       "service_connection_name": "chcbz的码云服务连接",
       "service_connection_id": "vyz9pea3uni64twx",
-      "next_action": "Run92 exact1ac5cb1e installed410files/online9hashchecks match. Current Gitee develop push and webhook configuration verified by readback; trigger execution still unverified. Do not repeat Run92 to prove webhook.",
-      "automatic_push_trigger_verified": false,
+      "next_action": "Run93 automatically follows develop pushb58d372; no manualStart. Observe exact tests/artifact/deploy+online before closing new Web increment; existing Run92 remains prior verified deployment.",
+      "automatic_push_trigger_verified": true,
       "historical_service_connection_error_code": "1209300",
       "service_connection_permission_resolved_at": "2026-09-12T10:44:34.284597+00:00",
       "verified_deployment": {
@@ -144,6 +193,17 @@
         "host_status": "Success",
         "host_client_status": "healthy",
         "before_source_trigger_update": true
+      },
+      "current_run": {
+        "pipeline_id": "4403172",
+        "run": 93,
+        "status": "RUNNING",
+        "commit": "b58d37272dbeca5c93921694015c721369253df0",
+        "tree": "7b5ddcb5b92f9ea6783b0a1fc48ede362f3fea75",
+        "phase": "observe_exact_cloud_result",
+        "trigger_mode": 3,
+        "manual_start_by_main": false,
+        "evidence": "/var/tmp/cyf-web-e01-release-20260912/run93-status.json"
       }
     }
   ],
@@ -168,7 +228,11 @@
     "Run23 original deploy failed before installer from inherited coordinator FD. Fixed parent-held v2 mutex and close_fds=True; 17 offline control tests PASS; retried only deployment once, reused successful build514133208.",
     "Actual PID2607082/10018 health UP; canonical JARa5cc9db1 matches Run23; no inherited coordinator mutex. Anonymous public /agent/map responds401 under named probe UA; actuator only loopback verified.",
     "Cron observed Run23 SUCCESS exactHEAD; mail helper rejected/unaccepted all3 bounded success-notice attempts. Inbox delivery unknown; do not reset or promise email.",
-    "Parallel A16/E01/F03 independent worktrees; owners self-check, no independent Reviewer; paid/authenticated external acceptance still pending."
+    "Parallel A16/E01/F03 independent worktrees; owners self-check, no independent Reviewer; paid/authenticated external acceptance still pending.",
+    "Run24 failed194service-tests/2ordered-team assertions before deployment. Equal-score lexicographic tiebreak removed in new candidate; previous successfulRun23 stilllive.",
+    "Web develop pushb58d372 createdRun93 triggerMode3, no manualStart: Web automatic push execution now evidenced. Backend push1f5e had no observed run; manualRun24 triggerMode4; rootcause of missing hook delivery remains unknown.",
+    "Selector-only backend config expanded59to63 at19:53, sources/build/deploy unchanged. MySQL selector is conditional on D09_MYSQL_URL and not realMySQL proof without controlledfixture.",
+    "F03 contributes only actual-prod-default health-isolation regression; no production ES configenable. Full F03 search readiness remains unverified."
   ],
   "permission_resume": {
     "verifiedAt": "2026-09-12T10:44:34.284597+00:00",
@@ -178,5 +242,12 @@
     "test_build_deploy_stages_changed": false,
     "new_run_started": false,
     "backup_directory": "/tmp/cyf-connection-resume-20260912"
+  },
+  "owned_cleanup": {
+    "receipt": "/var/tmp/cyf-batch4-owned-cleanup-20260912/receipt.json",
+    "reclaimed_bytes": 699559936,
+    "after_free_bytes": 5954011136,
+    "removed": "four completed clean own worktrees and exact verified Web92 duplicate download",
+    "preserved": "Git branches/objects/live files/rollback JARs/current artifacts/evidence; no foreign cleanup or lower disk guard"
   }
 }
