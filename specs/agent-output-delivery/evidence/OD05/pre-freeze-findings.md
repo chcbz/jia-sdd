@@ -12,3 +12,7 @@ Root contract/coverage check on the uncommitted OD05 working tree. This is not i
 Required behavioral evidence before acceptance: mount the real list; deferred list/download/preview responses across source/identity switches and unmount; actual application/octet-stream image response; decoded image bound; download failure and long download surviving refresh; pagination/history persistence; malformed/mismatched detail; polling completion/backoff.
 
 Existing broad npm test was stopped during unrelated E13 pixel/nav recomputation and is explicitly incomplete. The separate component run used a too-short default timeout; preserve its failure evidence and rerun affected cases using the project configuration. No passing full-regression claim is allowed. These repairs require updated scoped tests and build associated with the final candidate.
+
+## Resource navigation follow-up
+
+During repair inspection, resourceRoute appended outputSourceType/outputSourceId/outputId/outputVersion to the current URL, but there was no page consuming them. A token-free string alone is not a usable resource route. Require an actual same-account page/navigation consumer that requests the exact source/output/version without Agent selection, plus a navigation behavior test. Construct the URL from a controlled origin/path and allowlisted routing fields; do not preserve arbitrary original query parameters with only a token-name blacklist. The independent candidate review must verify this repair too.

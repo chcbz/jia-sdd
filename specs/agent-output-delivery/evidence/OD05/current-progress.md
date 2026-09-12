@@ -13,3 +13,7 @@ Root identified missing real component/async lifecycle evidence and concrete pre
 ## Writer availability fallback
 
 Balanced writer `/root/od05_output_ui` terminated with upstream503 auth_unavailable for gpt-5.6-terra. Product changes remain uncommitted in the dedicated Web worktree. Root reassigned the bounded OD05 implementation/repair to existing critical writer `/root/od01_source_auth`; only that agent may now write product code. This is an availability fallback, not independent review. Preserve prior changes and failed/incomplete logs; repair coverage includes real component state, historical versions, readable status/size and precise token-free resource navigation.
+
+## Active repair checkpoint
+
+Critical fallback writer confirmed successful Web takeover with no blocking condition. Core useOutputs repair is written: distinct list/version/preview/download cancellation, source/identity generation cleanup, history preservation, syncing/retryable polling and visibility handling, bounded10-minute download and token-free resource routing. Components and actual async behavior tests remain in progress; no frozen candidate or final test result yet.
