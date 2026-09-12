@@ -2,7 +2,7 @@
 
 ## Current execution shortcut
 
-The accepted API baseline is52cc2aae. Live integration exposed a masked WebSocket failure: ERROR redispatch was converted to401. The pending DefaultSecurityConfig repair permits only DispatcherType.ERROR, retaining authentication for ordinary private and /error requests; its scoped tests passed2/2. The r8 local startup then exposed the original500 for both /ws/chat and /ws/agent/channel. Original-error diagnosis is in progress; neither trusted dispatch nor publication/offline retrieval has passed. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
+The accepted API baseline isf6d7e278. The ERROR-dispatch repair passed independent review; scoped2/2 and normal-config handshake checks passed (missing/invalid key401, missing Agent400, unowned403, owned101). The prior true500 came from missing exact-case CORE_LOG in the isolated fixture and is repaired. Trusted conversation dispatch, accepted-client publication and offline retrieval are now active and have not yet passed. Use the existing development wrapper for every local Gradle repair/build, with task-specific --tests and :starter:bootJar in the same call when possible:
 
 ```bash
 # cwd=/home/chc/wsps/cyf-worktrees/output-api; helper owns flock/JDK/substitutions
