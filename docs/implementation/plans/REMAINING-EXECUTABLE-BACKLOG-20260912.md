@@ -1,5 +1,11 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 10:18 CST delta
+
+- API36/5ece9141 SUCCESS:78configuredselectors/build, JAR1c073e3b/receipt3371a3b7, order69520177,PID3257882/10018healthUPandcanonicalrecordmatch. No retry; Run35testfailurerootcausescorrected. E04completiondependencyunlock and F02internalstorage source shipped, notdefaultoffactivation orpublicuploadbusinessacceptance.
+- Web97/b33 failed beforedeployment:2136PASS2pending1C07Ca11ybeforeAllimporterror. ExistingSFCtestloader missednewWorkItemBoard import; main441c39f nowloadsactualboard+composable,addsDOMregression,71relatedtestsPASS/configured10000mstimeout,ESLintPASS. Firstlocalno-config2000mstimeoutsandpreexistingglobalcommentlintfailure retained; no assertion/timeoutpolicyweakening. Changedcandidatepushed; observeautoFlowonly.
+- F02authenticatedHTTPadapter separateOwner activelyimplementing NEWcontroller/DTO/tests; no overlapwithmainWebrepair. FullE08operations/business/provider/clientACK/ES/nativeexternal andfullA16/M4/M5remainopen. ExactOwners onlyTASKS.yaml; noindependentReviewer.
+
 ## 2026-09-13 09:44 CST delta
 
 - Web96 SUCCESS10c4/tree5b1298:2138PASS2pending, artifact3b68e16a, order69519905,410installed/9onlineMATCH. Deployment45s; observed transactiondownload158M->81M, not controlledbenchmark/zeroRPM claim. No separateReviewer.
