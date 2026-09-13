@@ -1,0 +1,43 @@
+name: cyf-output-scanner-package-plan
+sources: {}
+stages:
+  host_preflight:
+    name: Read-only output deployment prerequisites
+    jobs:
+      inspect_host:
+        name: Read-only metadata; no install or restart
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_PREFLIGHT_PY'\n#!/usr/bin/env python3\n\"\"\"Resolve\
+            \ a scanner install transaction without installing; suppress raw repository output.\"\"\"\nimport json\n\
+            import os\nimport re\nimport subprocess\nimport time\n\n\ndef main():\n    command=['/usr/bin/dnf','--assumeno','--setopt=install_weak_deps=False',\n\
+            \             '--setopt=timeout=15','--setopt=retries=0','install','clamav','clamd','clamav-update']\n\
+            \    environment=dict(os.environ, LC_ALL='C', LANG='C')\n    started=int(time.time())\n    result={'observedAtEpoch':started,'packageInstallRequested':False,\n\
+            \            'metadataCacheMayChange':True,'command':command,'packages':[],'messages':[]}\n    try:\n\
+            \        completed=subprocess.run(command,env=environment,stdin=subprocess.DEVNULL,\n              \
+            \                   stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=120,check=False)\n     \
+            \   result['exitCode']=completed.returncode\n        raw=completed.stdout\n        if len(raw)>2*1024*1024:\n\
+            \            result['status']='output_limit_exceeded'\n        else:\n            for line in raw.decode('utf-8',errors='replace').splitlines():\n\
+            \                parts=line.strip().split()\n                if (len(parts)>=4 and re.fullmatch(r'[A-Za-z0-9_.+-]{1,100}',parts[0])\n\
+            \                        and parts[1] in ('x86_64','noarch')\n                        and re.fullmatch(r'[A-Za-z0-9:_.+~^-]{1,100}',parts[2])\n\
+            \                        and re.fullmatch(r'[A-Za-z0-9_.:-]{1,100}',parts[3])):\n                  \
+            \  result['packages'].append({'name':parts[0],'arch':parts[1],'version':parts[2],'repository':parts[3]})\n\
+            \                for package in ('clamav','clamd','clamav-update'):\n                    if line.strip()=='No\
+            \ match for argument: '+package:\n                        result['messages'].append('No match for argument:\
+            \ '+package)\n                if re.fullmatch(r'(Total download size|Installed size): [0-9.]+ [kMGT]?',line.strip()):\n\
+            \                    result['messages'].append(line.strip())\n                if line.strip() in ('Operation\
+            \ aborted.','Nothing to do.','Complete!'):\n                    result['messages'].append(line.strip())\n\
+            \            result['status']='plan_observed' if result['packages'] else 'no_package_plan'\n    except\
+            \ subprocess.TimeoutExpired:\n        result['status']='query_timed_out'\n    except OSError:\n    \
+            \    result['status']='dnf_unavailable'\n    result['elapsedSeconds']=int(time.time())-started\n   \
+            \ result['limits']=['DNF --assumeno cannot confirm an installation and no service command is invoked.',\n\
+            \                      'Repository metadata/cache may be downloaded or refreshed by DNF; raw output\
+            \ is never exported.',\n                      'Package signatures and dependency compatibility are not\
+            \ proven by this plan alone.']\n    print(json.dumps(result,sort_keys=True))\n\n\nif __name__=='__main__':main()\n\
+            CYF_OUTPUT_PREFLIGHT_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
