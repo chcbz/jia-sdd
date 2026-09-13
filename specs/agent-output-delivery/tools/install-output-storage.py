@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 import pwd
-import resource
 import secrets
 import signal
 import shutil
@@ -30,7 +29,6 @@ BINARY = '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f'
 DISK_RESERVE = 3584 * 1024**2
 MEMORY_RESERVE = 1024 * 1024**2
 KNOWN_INSTALL_PEAK = 110989496 + 64 * 1024**2
-INSTALLER_MEMORY_MAX = 96 * 1024**2
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}
 
 
@@ -211,8 +209,9 @@ def main():
     try:
         if os.geteuid() != 0 or os.uname().machine != 'x86_64':
             raise RuntimeError('host_identity_gate')
-        resource.setrlimit(resource.RLIMIT_AS, (INSTALLER_MEMORY_MAX, INSTALLER_MEMORY_MAX))
-        result['installerAddressSpaceLimitBytes'] = INSTALLER_MEMORY_MAX
+        status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines() if ':' in line)
+        result['installerInitialMemory'] = {key+'Bytes': int(status[key].split()[0])*1024
+            for key in ['VmSize', 'VmRSS', 'VmData']}
         result['scannerPlanCleanup'] = scanner_plan_cleanup_state()
         for p in [BASE, CONFIG, STATE, UNIT]:
             if os.path.lexists(p):
@@ -238,7 +237,7 @@ def main():
         result.update(diskReserveBytes=DISK_RESERVE, memoryReserveBytes=MEMORY_RESERVE,
                       knownInstallPeakBytes=KNOWN_INSTALL_PEAK)
         if (result['diskAvailableBefore'] < DISK_RESERVE+KNOWN_INSTALL_PEAK
-                or result['memAvailableBefore'] < MEMORY_RESERVE+384*1024**2+INSTALLER_MEMORY_MAX):
+                or result['memAvailableBefore'] < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):
             raise RuntimeError('resource_gate')
         for port in [19000, 19001]:
             with socket.socket() as s:
