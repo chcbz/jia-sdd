@@ -202,7 +202,7 @@ def scanner_plan_cleanup_state():
 
 SCANNER_BINARY = '4af6f9bfab10e9b18f051e7ba8e299766a6eeae9bead3c482678b55afdae2b8a'
 SCANNER_UNIT_SHA = '8f6d10bebfa2df5832a824001826f42887fdb77c918955656aa3e2b5f271e3b7'
-SCANNER_CONFIG_SHA = 'bbd6c053c9029e10a6f43d101907433fe2c62650c7cb3f8f64ac9fcd80f3cea8'
+SCANNER_CONFIG_SHA = 'a005a0936da56ce957850e65af4dbd8a75e0296894fd9bf18c20e1f3d58fee9a'
 
 
 def scanner_prerequisite():
