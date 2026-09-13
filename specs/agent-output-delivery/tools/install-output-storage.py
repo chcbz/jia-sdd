@@ -104,6 +104,35 @@ def expired(signum, frame):
     raise RuntimeError('installer_deadline')
 
 
+def scanner_plan_cleanup_state():
+    prefix = b'/var/tmp/cyf-scanner-plan-'
+    residual = sorted(str(x) for x in Path('/var/tmp').glob('cyf-scanner-plan-*'))
+    if residual:
+        raise RuntimeError('scanner_plan_directory_remaining')
+    checked = 0
+    deadline = time.monotonic()+15
+    for proc in Path('/proc').iterdir():
+        if not proc.name.isdecimal():
+            continue
+        checked += 1
+        if checked > 8192 or time.monotonic() > deadline:
+            raise RuntimeError('scanner_plan_cleanup_scan_limit')
+        for name, limit in [('cmdline', 65536), ('mountinfo', 512*1024)]:
+            try:
+                fd = os.open(str(proc/name), os.O_RDONLY | os.O_NOFOLLOW)
+                with os.fdopen(fd, 'rb') as f:
+                    data = f.read(limit+1)
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            if len(data)>limit:
+                raise RuntimeError('scanner_plan_cleanup_record_limit')
+            if prefix in data:
+                raise RuntimeError('scanner_plan_process_or_mount_remaining')
+    return {'observedAtEpoch': int(time.time()), 'checkedProcesses': checked,
+            'residualTaskDirectories': 0, 'taskProcessReferences': 0, 'taskMountReferences': 0,
+            'readOnly': True, 'priorPrivateCacheAccessible': False}
+
+
 def main():
     result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN', 'apiRestartRequested': False}
     phase = 'preflight'
@@ -113,6 +142,7 @@ def main():
     try:
         if os.geteuid() != 0 or os.uname().machine != 'x86_64':
             raise RuntimeError('host_identity_gate')
+        result['scannerPlanCleanup'] = scanner_plan_cleanup_state()
         for p in [BASE, CONFIG, STATE, UNIT]:
             if os.path.lexists(p):
                 raise RuntimeError('existing_task_path')

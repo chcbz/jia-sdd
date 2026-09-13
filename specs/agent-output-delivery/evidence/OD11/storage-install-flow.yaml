@@ -53,25 +53,37 @@ stages:
             \    raise RuntimeError('process_changed')\n    memory = int(values['MemoryCurrent'])\n    if memory\
             \ > 384*1024**2:\n        raise RuntimeError('unit_memory_budget')\n    return {'pid': pid, 'startTicks':\
             \ before, 'uid': user.pw_uid, 'gid': user.pw_gid,\n            'exeSha256': installed['sha256'], 'unitMemoryBytes':\
-            \ memory}\n\n\ndef expired(signum, frame):\n    raise RuntimeError('installer_deadline')\n\n\ndef main():\n\
-            \    result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN', 'apiRestartRequested': False}\n\
-            \    phase = 'preflight'\n    activation_attempted = False\n    signal.signal(signal.SIGALRM, expired)\n\
-            \    signal.alarm(420)\n    try:\n        if os.geteuid() != 0 or os.uname().machine != 'x86_64':\n\
-            \            raise RuntimeError('host_identity_gate')\n        for p in [BASE, CONFIG, STATE, UNIT]:\n\
-            \            if os.path.lexists(p):\n                raise RuntimeError('existing_task_path')\n    \
-            \    try:\n            pwd.getpwnam(USER)\n        except KeyError:\n            pass\n        else:\n\
-            \            raise RuntimeError('existing_task_user')\n        try:\n            grp.getgrnam(USER)\n\
-            \        except KeyError:\n            pass\n        else:\n            raise RuntimeError('existing_task_group')\n\
-            \        for ancestor in [Path('/opt'), Path('/opt/cyf'), Path('/etc'), Path('/var'), Path('/var/lib'),\
-            \ UNIT.parent]:\n            info = ancestor.lstat()\n            if not stat.S_ISDIR(info.st_mode)\
-            \ or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o022:\n                raise RuntimeError('untrusted_parent')\n\
-            \        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n        result['memAvailableBefore']\
-            \ = available_memory()\n        result.update(diskReserveBytes=DISK_RESERVE, memoryReserveBytes=MEMORY_RESERVE,\n\
-            \                      knownInstallPeakBytes=KNOWN_INSTALL_PEAK)\n        if (result['diskAvailableBefore']\
-            \ < DISK_RESERVE+KNOWN_INSTALL_PEAK\n                or result['memAvailableBefore'] < max(1536*1024**2,\
-            \ MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n        for port in\
-            \ [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1', port))\n\
-            \        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
+            \ memory}\n\n\ndef expired(signum, frame):\n    raise RuntimeError('installer_deadline')\n\n\ndef scanner_plan_cleanup_state():\n\
+            \    prefix = b'/var/tmp/cyf-scanner-plan-'\n    residual = sorted(str(x) for x in Path('/var/tmp').glob('cyf-scanner-plan-*'))\n\
+            \    if residual:\n        raise RuntimeError('scanner_plan_directory_remaining')\n    checked = 0\n\
+            \    deadline = time.monotonic()+15\n    for proc in Path('/proc').iterdir():\n        if not proc.name.isdecimal():\n\
+            \            continue\n        checked += 1\n        if checked > 8192 or time.monotonic() > deadline:\n\
+            \            raise RuntimeError('scanner_plan_cleanup_scan_limit')\n        for name, limit in [('cmdline',\
+            \ 65536), ('mountinfo', 512*1024)]:\n            try:\n                fd = os.open(str(proc/name),\
+            \ os.O_RDONLY | os.O_NOFOLLOW)\n                with os.fdopen(fd, 'rb') as f:\n                   \
+            \ data = f.read(limit+1)\n            except (FileNotFoundError, ProcessLookupError):\n            \
+            \    continue\n            if len(data)>limit:\n                raise RuntimeError('scanner_plan_cleanup_record_limit')\n\
+            \            if prefix in data:\n                raise RuntimeError('scanner_plan_process_or_mount_remaining')\n\
+            \    return {'observedAtEpoch': int(time.time()), 'checkedProcesses': checked,\n            'residualTaskDirectories':\
+            \ 0, 'taskProcessReferences': 0, 'taskMountReferences': 0,\n            'readOnly': True, 'priorPrivateCacheAccessible':\
+            \ False}\n\n\ndef main():\n    result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN', 'apiRestartRequested':\
+            \ False}\n    phase = 'preflight'\n    activation_attempted = False\n    signal.signal(signal.SIGALRM,\
+            \ expired)\n    signal.alarm(420)\n    try:\n        if os.geteuid() != 0 or os.uname().machine != 'x86_64':\n\
+            \            raise RuntimeError('host_identity_gate')\n        result['scannerPlanCleanup'] = scanner_plan_cleanup_state()\n\
+            \        for p in [BASE, CONFIG, STATE, UNIT]:\n            if os.path.lexists(p):\n               \
+            \ raise RuntimeError('existing_task_path')\n        try:\n            pwd.getpwnam(USER)\n        except\
+            \ KeyError:\n            pass\n        else:\n            raise RuntimeError('existing_task_user')\n\
+            \        try:\n            grp.getgrnam(USER)\n        except KeyError:\n            pass\n        else:\n\
+            \            raise RuntimeError('existing_task_group')\n        for ancestor in [Path('/opt'), Path('/opt/cyf'),\
+            \ Path('/etc'), Path('/var'), Path('/var/lib'), UNIT.parent]:\n            info = ancestor.lstat()\n\
+            \            if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o022:\n\
+            \                raise RuntimeError('untrusted_parent')\n        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n\
+            \        result['memAvailableBefore'] = available_memory()\n        result.update(diskReserveBytes=DISK_RESERVE,\
+            \ memoryReserveBytes=MEMORY_RESERVE,\n                      knownInstallPeakBytes=KNOWN_INSTALL_PEAK)\n\
+            \        if (result['diskAvailableBefore'] < DISK_RESERVE+KNOWN_INSTALL_PEAK\n                or result['memAvailableBefore']\
+            \ < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n\
+            \        for port in [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1',\
+            \ port))\n        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
             \ dir='/opt/cyf') as temp:\n            layer_path = Path(temp) / 'layer.tar.gz'\n            url =\
             \ 'https://quay.io/v2/minio/minio/blobs/sha256:' + LAYER\n            # Public immutable layer; no registry/Flow\
             \ credentials or proxy inherited.\n            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
