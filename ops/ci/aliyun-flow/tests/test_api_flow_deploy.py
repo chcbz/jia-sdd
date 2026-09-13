@@ -46,12 +46,14 @@ class ApiFlowDeployF06Test(unittest.TestCase):
             'SCHEMA_RESULTS': deploy.SCHEMA_RESULTS,
             'RELEASE_LOCK': deploy.RELEASE_LOCK,
             'SCHEMA_RUNNER': deploy.SCHEMA_RUNNER,
+            'SCHEMA_PASSWORD_FILE': deploy.SCHEMA_PASSWORD_FILE,
             '_SCHEMA_CONTEXT': deploy._SCHEMA_CONTEXT,
         }
         deploy.ROOT = self.state
         deploy.SCHEMA_RESULTS = self.state / 'schema-results'
         deploy.RELEASE_LOCK = self.release_lock
         deploy.SCHEMA_RUNNER = self.runner
+        deploy.SCHEMA_PASSWORD_FILE = self.state / 'f06-schema-password'
         deploy._SCHEMA_CONTEXT = self.context
         self.old_password = os.environ.get(deploy.SCHEMA_PASSWORD_ENV)
         self.old_attacker = os.environ.get('CYF_F06_SCHEMA_OFFLINE_TEST')
@@ -227,6 +229,40 @@ raise SystemExit(%d)
         result = self.result()
         self.assertEqual(result['status'], 'failed')
         self.assertEqual(result['error'], 'same_run_installed_record_mismatch')
+
+    def test_root_only_file_secret_is_used_without_persisting_it(self):
+        os.environ.pop(deploy.SCHEMA_PASSWORD_ENV)
+        deploy.SCHEMA_PASSWORD_FILE.write_text('offline-file-secret')
+        deploy.SCHEMA_PASSWORD_FILE.chmod(0o600)
+        self.assertEqual(deploy.apply_schema_after_install(self.context), 0)
+        self.assertNotIn('offline-file-secret', json.dumps(self.result()))
+        self.assertNotIn(deploy.SCHEMA_PASSWORD_ENV, os.environ)
+
+    def test_file_secret_rejects_symlink_world_readable_and_hard_link(self):
+        os.environ.pop(deploy.SCHEMA_PASSWORD_ENV)
+        source = self.base / 'secret'
+        source.write_text('never-persist')
+        source.chmod(0o600)
+        deploy.SCHEMA_PASSWORD_FILE.symlink_to(source)
+        self.assertIsNone(deploy.schema_prerequisites()[1])
+        deploy.SCHEMA_PASSWORD_FILE.unlink()
+        os.link(str(source), str(deploy.SCHEMA_PASSWORD_FILE))
+        self.assertIsNone(deploy.schema_prerequisites()[1])
+        deploy.SCHEMA_PASSWORD_FILE.unlink()
+        deploy.SCHEMA_PASSWORD_FILE.write_text('never-persist')
+        deploy.SCHEMA_PASSWORD_FILE.chmod(0o644)
+        self.assertIsNone(deploy.schema_prerequisites()[1])
+
+    def test_file_secret_requires_root_only_parent_and_single_line(self):
+        os.environ.pop(deploy.SCHEMA_PASSWORD_ENV)
+        deploy.SCHEMA_PASSWORD_FILE.write_text('never-persist')
+        deploy.SCHEMA_PASSWORD_FILE.chmod(0o600)
+        self.state.chmod(0o755)
+        self.assertIsNone(deploy.schema_prerequisites()[1])
+        self.state.chmod(0o700)
+        deploy.SCHEMA_PASSWORD_FILE.write_text('bad\nsecret')
+        self.assertIn('db_principal_or_protected_password_not_configured',
+                      deploy.schema_prerequisites()[0])
 
     def test_missing_runner_and_db_principal_are_both_actionable(self):
         self.runner.unlink()
