@@ -1,4 +1,11 @@
-"""Offline-only E05 post-install hook tests; never touch F06 globals or MySQL."""
+"""Offline-only E05 post-install hook tests; never touch F06 globals or MySQL.
+
+Admission is fixed-SQL permission for an already-created, source-verified Run.
+The controller verifies source/tree and the required ancestor before authorizing;
+the original deploy chain verifies successful same-run cloud test/build receipt,
+JAR and healthy installation before this hook. Final Flow SUCCESS is an outcome,
+not a permission field, prerequisite or synthetic receipt. No CI-only rebuild.
+"""
 import contextlib
 import fcntl
 import grp
@@ -292,6 +299,39 @@ raise SystemExit(%d)
             self.assertEqual(deploy.maybe_apply_e05_schema_after_install(self.context), 0)
         self.assertFalse(self.calls.exists())
 
+    def test_fixed_sql_permission_admits_without_final_flow_success_claim(self):
+        self.write_activation(
+            authorization='controller_authorized_fixed_additive_sql_exact_run_once')
+        admission = self.admitted()
+        self.assertEqual(set(admission['value']), {
+            'schema_version', 'feature', 'status', 'authorization', 'pipeline_id',
+            'run_id', 'source_commit_sha', 'source_tree_sha',
+            'verified_api_ancestor_sha', 'sql_sha256', 'runner_sha256',
+        })
+        self.assertFalse(self.calls.exists())  # Permission itself performs no DDL.
+        self.assertFalse(deploy.E05_SCHEMA_RESULTS.exists())
+        self.assertEqual(deploy.maybe_apply_e05_schema_after_install(self.context), 0)
+        self.assertEqual(self.result()['activation_claim'], 'schema_only_not_feature_activation')
+        self.assertEqual(self.calls.read_text(), '1')
+
+    def test_final_flow_success_claim_is_not_an_authorization_or_required_field(self):
+        for changes in (
+                {'authorization': 'controller_verified_cloud_success_exact_source_once'},
+                {'flow_status': 'SUCCESS'}):
+            with self.subTest(changes=changes):
+                self.write_activation(**changes)
+                with self.assertRaises(deploy.SchemaIntegrationError) as caught:
+                    deploy.maybe_apply_e05_schema_after_install(self.context)
+                self.assertEqual(caught.exception.code, 'e05_activation_contract_invalid')
+                self.assertFalse(self.calls.exists())
+                self.assertFalse(deploy.E05_SCHEMA_RESULTS.exists())
+
+    def test_admission_does_not_replace_same_run_healthy_installed_record(self):
+        self.write_record(status='failed', phase='rolling_back', recovery='restored_healthy')
+        self.assertEqual(deploy.maybe_apply_e05_schema_after_install(self.context), 1)
+        self.assertEqual(self.result()['error'], 'same_run_installed_record_missing')
+        self.assertFalse(self.calls.exists())  # A healthy restored OLD API is insufficient.
+
     def test_activation_is_root_only_exact_and_requires_corrected_api_proof_field(self):
         self.write_activation(verified_api_ancestor_sha='0' * 40)
         with self.assertRaises(deploy.SchemaIntegrationError) as caught:
@@ -402,6 +442,8 @@ raise SystemExit(%d)
                 os.environ.pop(deploy.SCHEMA_PASSWORD_ENV, None)
             else:
                 os.environ[deploy.SCHEMA_PASSWORD_ENV] = old_f06
+        self.assertFalse(self.calls.exists())
+        self.assertFalse(deploy.E05_SCHEMA_RESULTS.exists())
         keys = json.loads(observed.read_text())
         self.assertNotIn(deploy.SCHEMA_PASSWORD_ENV, keys)
         self.assertNotIn(deploy.E05_SCHEMA_PASSWORD_ENV, keys)
@@ -411,9 +453,24 @@ raise SystemExit(%d)
         f06_call = source.index('apply_schema_after_install(_SCHEMA_CONTEXT)')
         f06_stop = source.index('if f06_return_code != 0:')
         e05_call = source.index('maybe_apply_e05_schema_after_install(_SCHEMA_CONTEXT)')
+        installer_stop = source.index('if return_code != 0 or _SCHEMA_CONTEXT is None:')
+        self.assertLess(installer_stop, f06_call)
         self.assertLess(f06_call, f06_stop)
         self.assertLess(f06_stop, e05_call)
         self.assertNotIn('shell=True', source)
+
+    def test_same_run_build_receipt_and_jar_checks_still_precede_install(self):
+        source = inspect.getsource(deploy.main)
+        install = source.index('raise SystemExit(invoke_installer(INSTALLER))')
+        for check in (
+                "receipt.get('status') != 'success'",
+                "receipt.get('gradle_exit_code') != 0",
+                "receipt.get('bridge_exit_code') != 0",
+                "flow.get('run_id') != run_id",
+                "source.get('commit_sha') != source_commit",
+                "GIT_SHA.fullmatch(str(source.get('tree_sha', '')))",
+                "digest_fileobj(jar_handle) != jar_record['sha256']"):
+            self.assertLess(source.index(check), install)
 
 
 if __name__ == '__main__':

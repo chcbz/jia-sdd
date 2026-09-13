@@ -507,7 +507,13 @@ E05_SCHEMA_PASSWORD_ENV = 'CYF_E05_MYSQL_PASSWORD'
 E05_SCHEMA_SQL_SHA256 = 'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1'
 E05_SCHEMA_RUNNER_SHA256 = '9315809c640fb6090bd5ec23c57a2773af1fe44251a17ce5858be3f0ab8c3e94'
 E05_REQUIRED_API_COMMIT_SHA = '52d24bb7c029ceb53286c6ebfef61e0b6b9f70dd'
-E05_ACTIVATION_AUTHORIZATION = 'controller_verified_cloud_success_exact_source_once'
+# Permission for fixed additive SQL, not a claim that this Flow Run has succeeded.
+# The controller binds an already-created Run to its verified source/tree/ancestor
+# before this hook is reached. main() checks that Run's successful test/build
+# receipt and JAR; invoke_installer() requires healthy installation and F06 success.
+# This hook is part of deployment, so final Flow SUCCESS is an outcome, never an
+# admission prerequisite. No CI-only duplicate build or per-release human ticket.
+E05_ACTIVATION_AUTHORIZATION = 'controller_authorized_fixed_additive_sql_exact_run_once'
 E05_ACTIVATION_KEYS = {
     'schema_version', 'feature', 'status', 'authorization', 'pipeline_id', 'run_id',
     'source_commit_sha', 'source_tree_sha', 'verified_api_ancestor_sha',
@@ -619,7 +625,7 @@ def load_e05_activation(context):
             or not re.fullmatch(r'[0-9a-f]{40}', str(value.get('source_tree_sha', '')))):
         raise SchemaIntegrationError(
             'e05_activation_contract_invalid',
-            'replace the activation admission with the exact reviewed E05 contract and use a new Flow run')
+            'use the fixed-SQL authorization contract for the source-verified Run; never retry an attempted Run')
     expected = {
         'pipeline_id': context['pipeline_id'],
         'run_id': context['run_id'],
@@ -1029,7 +1035,7 @@ def maybe_apply_e05_schema_after_install(context):
             'pipeline_id': context['pipeline_id'],
             'run_id': context['run_id'],
             'reason': 'root_only_exact_run_activation_missing',
-            'action': 'no E05 runner was invoked; authorize a corrected exact new Flow run to enable once',
+            'action': 'no E05 runner was invoked; authorize fixed SQL for a source-verified Run before its hook, not final Flow SUCCESS',
         }, sort_keys=True, separators=(',', ':')), flush=True)
         return 0
     if admission['status'] != 'admitted':
@@ -1039,7 +1045,7 @@ def maybe_apply_e05_schema_after_install(context):
             'run_id': context['run_id'],
             'reason': 'activation_is_for_a_different_exact_release',
             'activation_sha256': admission['sha256'],
-            'action': 'no E05 runner was invoked; replace admission only for a corrected exact new Flow run',
+            'action': 'no E05 runner was invoked; bind admission to the intended created Run/source/tree before its hook; never retry an attempted Run',
         }, sort_keys=True, separators=(',', ':')), flush=True)
         return 0
     return apply_e05_schema_after_install(context, admission)
