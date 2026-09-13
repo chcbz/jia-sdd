@@ -1,0 +1,33 @@
+{
+  "recordedAt": "2026-09-13T16:32:42+08:00",
+  "failedRun": 48,
+  "rootCause": "Unconditional E05 constructor required command Writer absent when outbox disabled",
+  "candidate": {
+    "commit": "4be112cdde8397590760292eb04eb823ad88299d",
+    "tree": "534c185dce7d07f90333b242120da5284d324ff5",
+    "remote": "origin/develop",
+    "pushed": true
+  },
+  "changes": [
+    "ObjectProvider resolves intentionally absent transport without enabling outbox",
+    "All four operations fail closed with TRANSPORT_DISABLED before domain storage access",
+    "Controller retains authentication/actor binding and maps disabled transport to HTTP503",
+    "Real configuration/service/controller context regression for absent,false,true DB-shadow configuration"
+  ],
+  "localChecks": [
+    "bounded source assertions PASS",
+    "git diff --check PASS"
+  ],
+  "cloudTests": "NOT_YET_RUN_FOR_THIS_SHA",
+  "requiredSelectors": [
+    "cn.jia.agent.config.AgentWorkItemReassignmentStartupTest",
+    "cn.jia.agent.config.AgentCommandTransportWriterConfigurationTest",
+    "cn.jia.agent.service.impl.AgentWorkItemReassignmentServiceTest",
+    "cn.jia.agent.service.impl.AgentWorkItemReassignmentRealTransactionTest",
+    "cn.jia.agent.api.AgentWorkItemReassignmentControllerTest",
+    "cn.jia.agent.service.impl.AgentCommandCanonicalCodecTest"
+  ],
+  "releaseOwner": "01a095c0-6238-7d31-940c-f085c253a1d2",
+  "runtimeOperationByThisTask": false,
+  "next": "Original API lifecycle Owner reconcile auto-trigger before starting single exact-source Flow; preserve original Run48 failure and recovery evidence. Include startup and codec selectors alongside existing suites."
+}
