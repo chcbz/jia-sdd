@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import resource
 import secrets
 import signal
 import shutil
@@ -28,7 +29,8 @@ LAYER = 'f9c0805c25ee5c0d375a9c16810eafb57cf658d7b6814c179d52496272bec8a4'
 BINARY = '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f'
 DISK_RESERVE = 3584 * 1024**2
 MEMORY_RESERVE = 1024 * 1024**2
-KNOWN_INSTALL_PEAK = 39450432 + 110989496 + 64 * 1024**2
+KNOWN_INSTALL_PEAK = 110989496 + 64 * 1024**2
+INSTALLER_MEMORY_MAX = 96 * 1024**2
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}
 
 
@@ -102,6 +104,68 @@ def runtime_identity(user, installed):
             'exeSha256': installed['sha256'], 'unitMemoryBytes': memory}
 
 
+class PinnedLayerStream:
+    def __init__(self, source, result):
+        self.source = source
+        self.result = result
+        self.digest = hashlib.sha256()
+        self.size = 0
+        self.deadline = time.monotonic()+120
+
+    def read(self, size):
+        if not 0 <= size <= 1024*1024:
+            raise RuntimeError('layer_read_bound')
+        if time.monotonic() > self.deadline:
+            raise RuntimeError('download_timeout')
+        data = self.source.read(size)
+        self.size += len(data)
+        self.result['downloadedLayerBytes'] = self.size
+        if self.size > 39450432:
+            raise RuntimeError('layer_size_exceeded')
+        self.digest.update(data)
+        return data
+
+    def verify_complete(self):
+        while self.read(1024*1024):
+            pass
+        if self.size != 39450432 or self.digest.hexdigest() != LAYER:
+            raise RuntimeError('layer_integrity')
+
+
+def extract_verified_layer(response, candidate, result):
+    stream = PinnedLayerStream(response, result)
+    matches = 0
+    with tarfile.open(fileobj=stream, mode='r|gz') as archive:
+        for index, member in enumerate(archive, 1):
+            if index > 2048:
+                raise RuntimeError('layer_member_count')
+            if member.name.lstrip('./') != 'usr/bin/minio':
+                continue
+            matches += 1
+            if matches != 1 or not member.isfile() or member.size != 110989496:
+                raise RuntimeError('binary_member_integrity')
+            digest = hashlib.sha256()
+            written = 0
+            with archive.extractfile(member) as src, candidate.open('xb') as dst:
+                while True:
+                    data = src.read(1024*1024)
+                    if not data:
+                        break
+                    written += len(data)
+                    if written > 110989496:
+                        raise RuntimeError('binary_size_exceeded')
+                    digest.update(data)
+                    dst.write(data)
+                dst.flush()
+                os.fsync(dst.fileno())
+            if written != 110989496 or digest.hexdigest() != BINARY:
+                raise RuntimeError('binary_integrity')
+    stream.verify_complete()
+    if matches != 1:
+        raise RuntimeError('binary_not_unique')
+    result['streamedLayerSha256'] = stream.digest.hexdigest()
+
+
 def expired(signum, frame):
     raise RuntimeError('installer_deadline')
 
@@ -147,6 +211,8 @@ def main():
     try:
         if os.geteuid() != 0 or os.uname().machine != 'x86_64':
             raise RuntimeError('host_identity_gate')
+        resource.setrlimit(resource.RLIMIT_AS, (INSTALLER_MEMORY_MAX, INSTALLER_MEMORY_MAX))
+        result['installerAddressSpaceLimitBytes'] = INSTALLER_MEMORY_MAX
         result['scannerPlanCleanup'] = scanner_plan_cleanup_state()
         for p in [BASE, CONFIG, STATE, UNIT]:
             if os.path.lexists(p):
@@ -172,14 +238,13 @@ def main():
         result.update(diskReserveBytes=DISK_RESERVE, memoryReserveBytes=MEMORY_RESERVE,
                       knownInstallPeakBytes=KNOWN_INSTALL_PEAK)
         if (result['diskAvailableBefore'] < DISK_RESERVE+KNOWN_INSTALL_PEAK
-                or result['memAvailableBefore'] < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):
+                or result['memAvailableBefore'] < MEMORY_RESERVE+384*1024**2+INSTALLER_MEMORY_MAX):
             raise RuntimeError('resource_gate')
         for port in [19000, 19001]:
             with socket.socket() as s:
                 s.bind(('127.0.0.1', port))
         phase = 'download_pinned_layer'
         with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-', dir='/opt/cyf') as temp:
-            layer_path = Path(temp) / 'layer.tar.gz'
             mirror = 'https://m.daocloud.io'
             url = mirror + '/v2/quay.io/minio/minio/blobs/sha256:' + LAYER
             # Anonymous public mirror token; no user/Flow credential or inherited proxy.
@@ -197,45 +262,9 @@ def main():
             request = urllib.request.Request(url, headers={'Authorization': 'Bearer '+token})
             result['downloadMirror'] = 'm.daocloud.io'
             result['downloadedLayerBytes'] = 0
-            digest = hashlib.sha256()
-            size = 0
-            with opener.open(request, timeout=30) as response, layer_path.open('xb') as f:
-                deadline = time.monotonic()+120
-                while True:
-                    if time.monotonic() > deadline:
-                        raise RuntimeError('download_timeout')
-                    data = response.read(1024*1024)
-                    if not data:
-                        break
-                    size += len(data)
-                    result['downloadedLayerBytes'] = size
-                    if size > 39450432:
-                        raise RuntimeError('layer_size_exceeded')
-                    digest.update(data)
-                    f.write(data)
-            if size != 39450432 or digest.hexdigest() != LAYER:
-                raise RuntimeError('layer_integrity')
             candidate = Path(temp) / 'minio'
-            matches = 0
-            with tarfile.open(layer_path, 'r|gz') as archive:
-                for member in archive:
-                    if member.name.lstrip('./') != 'usr/bin/minio':
-                        continue
-                    matches += 1
-                    if matches != 1 or not member.isfile() or member.size != 110989496:
-                        raise RuntimeError('binary_member_integrity')
-                    digest = hashlib.sha256()
-                    with archive.extractfile(member) as src, candidate.open('xb') as dst:
-                        while True:
-                            data = src.read(1024*1024)
-                            if not data:
-                                break
-                            digest.update(data)
-                            dst.write(data)
-                    if digest.hexdigest() != BINARY:
-                        raise RuntimeError('binary_integrity')
-            if matches != 1:
-                raise RuntimeError('binary_not_unique')
+            with opener.open(request, timeout=30) as response:
+                extract_verified_layer(response, candidate, result)
             phase = 'install_new_paths'
             BASE.mkdir(mode=0o755)
             CONFIG.mkdir(mode=0o700)
@@ -319,7 +348,7 @@ WantedBy=multi-user.target
                       service='cyf-output-storage.service', endpoint='http://127.0.0.1:19000',
                       bucketCreated=False, applicationConfigured=False)
         exclusive(BASE/'install-result.json', (json.dumps(result,sort_keys=True)+'\n').encode())
-    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError, tarfile.TarError) as exc:
+    except (OSError, ValueError, KeyError, RuntimeError, MemoryError, subprocess.SubprocessError, tarfile.TarError) as exc:
         signal.alarm(0)
         result.update(status='UNKNOWN', failedPhase=phase, errorType=type(exc).__name__)
         if isinstance(exc, urllib.error.HTTPError):

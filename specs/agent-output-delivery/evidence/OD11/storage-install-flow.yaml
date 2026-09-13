@@ -12,111 +12,119 @@ stages:
           executeUser: root
           run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_STORAGE_INSTALL_PY'\n#!/usr/bin/env python3\n\"\"\
             \"Install a pinned MinIO in new task-specific paths; never touches an existing API runtime.\"\"\"\n\
-            import hashlib\nimport grp\nimport json\nimport os\nfrom pathlib import Path\nimport pwd\nimport secrets\n\
-            import signal\nimport shutil\nimport socket\nimport stat\nimport subprocess\nimport tarfile\nimport\
-            \ tempfile\nimport time\nimport urllib.request\nimport urllib.parse\nimport urllib.error\n\nBASE = Path('/opt/cyf/output-storage')\n\
-            CONFIG = Path('/etc/cyf-output-storage')\nSTATE = Path('/var/lib/cyf-output-storage')\nUNIT = Path('/etc/systemd/system/cyf-output-storage.service')\n\
-            USER = 'cyf-output-store'\nLAYER = 'f9c0805c25ee5c0d375a9c16810eafb57cf658d7b6814c179d52496272bec8a4'\n\
+            import hashlib\nimport grp\nimport json\nimport os\nfrom pathlib import Path\nimport pwd\nimport resource\n\
+            import secrets\nimport signal\nimport shutil\nimport socket\nimport stat\nimport subprocess\nimport\
+            \ tarfile\nimport tempfile\nimport time\nimport urllib.request\nimport urllib.parse\nimport urllib.error\n\
+            \nBASE = Path('/opt/cyf/output-storage')\nCONFIG = Path('/etc/cyf-output-storage')\nSTATE = Path('/var/lib/cyf-output-storage')\n\
+            UNIT = Path('/etc/systemd/system/cyf-output-storage.service')\nUSER = 'cyf-output-store'\nLAYER = 'f9c0805c25ee5c0d375a9c16810eafb57cf658d7b6814c179d52496272bec8a4'\n\
             BINARY = '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f'\nDISK_RESERVE = 3584 * 1024**2\n\
-            MEMORY_RESERVE = 1024 * 1024**2\nKNOWN_INSTALL_PEAK = 39450432 + 110989496 + 64 * 1024**2\nENV = {'PATH':\
-            \ '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\n\n\ndef run(args, timeout=30):\n\
-            \    p = subprocess.run(args, env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,\n      \
-            \                 stderr=subprocess.DEVNULL, timeout=timeout, check=False)\n    if p.returncode != 0:\n\
-            \        raise RuntimeError('command_failed')\n\n\ndef exclusive(path, data, mode=0o600):\n    fd =\
-            \ os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)\n    with os.fdopen(fd,\
-            \ 'wb') as f:\n        f.write(data)\n        f.flush()\n        os.fsync(f.fileno())\n\n\ndef installed_identity():\n\
-            \    fd = os.open(str(BASE/'minio'), os.O_RDONLY | os.O_NOFOLLOW)\n    with os.fdopen(fd, 'rb') as f:\n\
-            \        info = os.fstat(f.fileno())\n        if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0\
-            \ or info.st_gid != 0\n                or stat.S_IMODE(info.st_mode) != 0o755 or info.st_size != 110989496):\n\
-            \            raise RuntimeError('installed_binary_identity')\n        digest = hashlib.sha256()\n  \
-            \      for data in iter(lambda: f.read(1024*1024), b''):\n            digest.update(data)\n        os.fsync(f.fileno())\n\
-            \        after = os.fstat(f.fileno())\n        if (after.st_ino, after.st_size, after.st_mtime_ns) !=\
-            \ (info.st_ino, info.st_size, info.st_mtime_ns):\n            raise RuntimeError('installed_binary_changed')\n\
-            \        if digest.hexdigest() != BINARY:\n            raise RuntimeError('installed_binary_digest')\n\
-            \    return {'sha256': digest.hexdigest(), 'bytes': info.st_size, 'device': info.st_dev,\n         \
-            \   'inode': info.st_ino, 'uid': info.st_uid, 'gid': info.st_gid, 'mode': '0755'}\n\n\ndef available_memory():\n\
-            \    mem = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())\n   \
-            \ return int(mem['MemAvailable'].split()[0])*1024\n\n\ndef runtime_identity(user, installed):\n    completed\
-            \ = subprocess.run(['/usr/bin/systemctl', 'show', 'cyf-output-storage.service',\n        '--property=MainPID,MemoryCurrent,User,Group',\
-            \ '--no-pager'], env=ENV,\n        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,\
-            \ timeout=10, check=False)\n    if completed.returncode != 0 or len(completed.stdout) > 4096:\n    \
-            \    raise RuntimeError('unit_identity_unavailable')\n    values = dict(line.split('=', 1) for line\
-            \ in completed.stdout.decode().splitlines())\n    pid = int(values['MainPID'])\n    if pid < 2 or values['User']\
-            \ != USER or values['Group'] != USER:\n        raise RuntimeError('unit_identity_mismatch')\n    proc\
-            \ = Path('/proc')/str(pid)\n    before = (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\n \
-            \   status = dict(line.split(':', 1) for line in (proc/'status').read_text().splitlines() if ':' in\
-            \ line)\n    if ([int(x) for x in status['Uid'].split()] != [user.pw_uid]*4\n            or [int(x)\
-            \ for x in status['Gid'].split()] != [user.pw_gid]*4\n            or os.readlink(proc/'exe') != str(BASE/'minio')):\n\
-            \        raise RuntimeError('process_identity_mismatch')\n    exe = os.stat(proc/'exe')\n    if (exe.st_dev,\
-            \ exe.st_ino) != (installed['device'], installed['inode']):\n        raise RuntimeError('process_executable_mismatch')\n\
-            \    after = (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\n    if before != after:\n    \
-            \    raise RuntimeError('process_changed')\n    memory = int(values['MemoryCurrent'])\n    if memory\
-            \ > 384*1024**2:\n        raise RuntimeError('unit_memory_budget')\n    return {'pid': pid, 'startTicks':\
-            \ before, 'uid': user.pw_uid, 'gid': user.pw_gid,\n            'exeSha256': installed['sha256'], 'unitMemoryBytes':\
-            \ memory}\n\n\ndef expired(signum, frame):\n    raise RuntimeError('installer_deadline')\n\n\ndef scanner_plan_cleanup_state():\n\
-            \    deadline = time.monotonic()+15\n    prefix = b'/var/tmp/cyf-scanner-plan-'\n    with os.scandir('/var/tmp')\
-            \ as entries:\n        for entry in entries:\n            if time.monotonic() > deadline:\n        \
-            \        raise RuntimeError('scanner_plan_cleanup_scan_limit')\n            if entry.name.startswith('cyf-scanner-plan-'):\n\
-            \                raise RuntimeError('scanner_plan_directory_remaining')\n    checked = 0\n    for proc\
-            \ in Path('/proc').iterdir():\n        if not proc.name.isdecimal():\n            continue\n       \
-            \ checked += 1\n        if checked > 8192 or time.monotonic() > deadline:\n            raise RuntimeError('scanner_plan_cleanup_scan_limit')\n\
-            \        for name, limit in [('cmdline', 65536), ('mountinfo', 512*1024)]:\n            try:\n     \
-            \           fd = os.open(str(proc/name), os.O_RDONLY | os.O_NOFOLLOW)\n                with os.fdopen(fd,\
-            \ 'rb') as f:\n                    data = f.read(limit+1)\n            except (FileNotFoundError, ProcessLookupError):\n\
-            \                continue\n            if len(data)>limit:\n                raise RuntimeError('scanner_plan_cleanup_record_limit')\n\
+            MEMORY_RESERVE = 1024 * 1024**2\nKNOWN_INSTALL_PEAK = 110989496 + 64 * 1024**2\nINSTALLER_MEMORY_MAX\
+            \ = 96 * 1024**2\nENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG':\
+            \ 'C'}\n\n\ndef run(args, timeout=30):\n    p = subprocess.run(args, env=ENV, stdin=subprocess.DEVNULL,\
+            \ stdout=subprocess.DEVNULL,\n                       stderr=subprocess.DEVNULL, timeout=timeout, check=False)\n\
+            \    if p.returncode != 0:\n        raise RuntimeError('command_failed')\n\n\ndef exclusive(path, data,\
+            \ mode=0o600):\n    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)\n\
+            \    with os.fdopen(fd, 'wb') as f:\n        f.write(data)\n        f.flush()\n        os.fsync(f.fileno())\n\
+            \n\ndef installed_identity():\n    fd = os.open(str(BASE/'minio'), os.O_RDONLY | os.O_NOFOLLOW)\n  \
+            \  with os.fdopen(fd, 'rb') as f:\n        info = os.fstat(f.fileno())\n        if (not stat.S_ISREG(info.st_mode)\
+            \ or info.st_uid != 0 or info.st_gid != 0\n                or stat.S_IMODE(info.st_mode) != 0o755 or\
+            \ info.st_size != 110989496):\n            raise RuntimeError('installed_binary_identity')\n       \
+            \ digest = hashlib.sha256()\n        for data in iter(lambda: f.read(1024*1024), b''):\n           \
+            \ digest.update(data)\n        os.fsync(f.fileno())\n        after = os.fstat(f.fileno())\n        if\
+            \ (after.st_ino, after.st_size, after.st_mtime_ns) != (info.st_ino, info.st_size, info.st_mtime_ns):\n\
+            \            raise RuntimeError('installed_binary_changed')\n        if digest.hexdigest() != BINARY:\n\
+            \            raise RuntimeError('installed_binary_digest')\n    return {'sha256': digest.hexdigest(),\
+            \ 'bytes': info.st_size, 'device': info.st_dev,\n            'inode': info.st_ino, 'uid': info.st_uid,\
+            \ 'gid': info.st_gid, 'mode': '0755'}\n\n\ndef available_memory():\n    mem = dict(line.split(':', 1)\
+            \ for line in Path('/proc/meminfo').read_text().splitlines())\n    return int(mem['MemAvailable'].split()[0])*1024\n\
+            \n\ndef runtime_identity(user, installed):\n    completed = subprocess.run(['/usr/bin/systemctl', 'show',\
+            \ 'cyf-output-storage.service',\n        '--property=MainPID,MemoryCurrent,User,Group', '--no-pager'],\
+            \ env=ENV,\n        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10,\
+            \ check=False)\n    if completed.returncode != 0 or len(completed.stdout) > 4096:\n        raise RuntimeError('unit_identity_unavailable')\n\
+            \    values = dict(line.split('=', 1) for line in completed.stdout.decode().splitlines())\n    pid =\
+            \ int(values['MainPID'])\n    if pid < 2 or values['User'] != USER or values['Group'] != USER:\n   \
+            \     raise RuntimeError('unit_identity_mismatch')\n    proc = Path('/proc')/str(pid)\n    before =\
+            \ (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\n    status = dict(line.split(':', 1) for\
+            \ line in (proc/'status').read_text().splitlines() if ':' in line)\n    if ([int(x) for x in status['Uid'].split()]\
+            \ != [user.pw_uid]*4\n            or [int(x) for x in status['Gid'].split()] != [user.pw_gid]*4\n  \
+            \          or os.readlink(proc/'exe') != str(BASE/'minio')):\n        raise RuntimeError('process_identity_mismatch')\n\
+            \    exe = os.stat(proc/'exe')\n    if (exe.st_dev, exe.st_ino) != (installed['device'], installed['inode']):\n\
+            \        raise RuntimeError('process_executable_mismatch')\n    after = (proc/'stat').read_text().rsplit(')',\
+            \ 1)[1].split()[19]\n    if before != after:\n        raise RuntimeError('process_changed')\n    memory\
+            \ = int(values['MemoryCurrent'])\n    if memory > 384*1024**2:\n        raise RuntimeError('unit_memory_budget')\n\
+            \    return {'pid': pid, 'startTicks': before, 'uid': user.pw_uid, 'gid': user.pw_gid,\n           \
+            \ 'exeSha256': installed['sha256'], 'unitMemoryBytes': memory}\n\n\nclass PinnedLayerStream:\n    def\
+            \ __init__(self, source, result):\n        self.source = source\n        self.result = result\n    \
+            \    self.digest = hashlib.sha256()\n        self.size = 0\n        self.deadline = time.monotonic()+120\n\
+            \n    def read(self, size):\n        if not 0 <= size <= 1024*1024:\n            raise RuntimeError('layer_read_bound')\n\
+            \        if time.monotonic() > self.deadline:\n            raise RuntimeError('download_timeout')\n\
+            \        data = self.source.read(size)\n        self.size += len(data)\n        self.result['downloadedLayerBytes']\
+            \ = self.size\n        if self.size > 39450432:\n            raise RuntimeError('layer_size_exceeded')\n\
+            \        self.digest.update(data)\n        return data\n\n    def verify_complete(self):\n        while\
+            \ self.read(1024*1024):\n            pass\n        if self.size != 39450432 or self.digest.hexdigest()\
+            \ != LAYER:\n            raise RuntimeError('layer_integrity')\n\n\ndef extract_verified_layer(response,\
+            \ candidate, result):\n    stream = PinnedLayerStream(response, result)\n    matches = 0\n    with tarfile.open(fileobj=stream,\
+            \ mode='r|gz') as archive:\n        for index, member in enumerate(archive, 1):\n            if index\
+            \ > 2048:\n                raise RuntimeError('layer_member_count')\n            if member.name.lstrip('./')\
+            \ != 'usr/bin/minio':\n                continue\n            matches += 1\n            if matches !=\
+            \ 1 or not member.isfile() or member.size != 110989496:\n                raise RuntimeError('binary_member_integrity')\n\
+            \            digest = hashlib.sha256()\n            written = 0\n            with archive.extractfile(member)\
+            \ as src, candidate.open('xb') as dst:\n                while True:\n                    data = src.read(1024*1024)\n\
+            \                    if not data:\n                        break\n                    written += len(data)\n\
+            \                    if written > 110989496:\n                        raise RuntimeError('binary_size_exceeded')\n\
+            \                    digest.update(data)\n                    dst.write(data)\n                dst.flush()\n\
+            \                os.fsync(dst.fileno())\n            if written != 110989496 or digest.hexdigest() !=\
+            \ BINARY:\n                raise RuntimeError('binary_integrity')\n    stream.verify_complete()\n  \
+            \  if matches != 1:\n        raise RuntimeError('binary_not_unique')\n    result['streamedLayerSha256']\
+            \ = stream.digest.hexdigest()\n\n\ndef expired(signum, frame):\n    raise RuntimeError('installer_deadline')\n\
+            \n\ndef scanner_plan_cleanup_state():\n    deadline = time.monotonic()+15\n    prefix = b'/var/tmp/cyf-scanner-plan-'\n\
+            \    with os.scandir('/var/tmp') as entries:\n        for entry in entries:\n            if time.monotonic()\
+            \ > deadline:\n                raise RuntimeError('scanner_plan_cleanup_scan_limit')\n            if\
+            \ entry.name.startswith('cyf-scanner-plan-'):\n                raise RuntimeError('scanner_plan_directory_remaining')\n\
+            \    checked = 0\n    for proc in Path('/proc').iterdir():\n        if not proc.name.isdecimal():\n\
+            \            continue\n        checked += 1\n        if checked > 8192 or time.monotonic() > deadline:\n\
+            \            raise RuntimeError('scanner_plan_cleanup_scan_limit')\n        for name, limit in [('cmdline',\
+            \ 65536), ('mountinfo', 512*1024)]:\n            try:\n                fd = os.open(str(proc/name),\
+            \ os.O_RDONLY | os.O_NOFOLLOW)\n                with os.fdopen(fd, 'rb') as f:\n                   \
+            \ data = f.read(limit+1)\n            except (FileNotFoundError, ProcessLookupError):\n            \
+            \    continue\n            if len(data)>limit:\n                raise RuntimeError('scanner_plan_cleanup_record_limit')\n\
             \            if prefix in data:\n                raise RuntimeError('scanner_plan_process_or_mount_remaining')\n\
             \    return {'observedAtEpoch': int(time.time()), 'checkedProcesses': checked,\n            'residualTaskDirectories':\
             \ 0, 'taskProcessReferences': 0, 'taskMountReferences': 0,\n            'readOnly': True, 'priorPrivateCacheAccessible':\
             \ False}\n\n\ndef main():\n    result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN', 'apiRestartRequested':\
             \ False}\n    phase = 'preflight'\n    activation_attempted = False\n    signal.signal(signal.SIGALRM,\
             \ expired)\n    signal.alarm(420)\n    try:\n        if os.geteuid() != 0 or os.uname().machine != 'x86_64':\n\
-            \            raise RuntimeError('host_identity_gate')\n        result['scannerPlanCleanup'] = scanner_plan_cleanup_state()\n\
-            \        for p in [BASE, CONFIG, STATE, UNIT]:\n            if os.path.lexists(p):\n               \
-            \ raise RuntimeError('existing_task_path')\n        try:\n            pwd.getpwnam(USER)\n        except\
-            \ KeyError:\n            pass\n        else:\n            raise RuntimeError('existing_task_user')\n\
-            \        try:\n            grp.getgrnam(USER)\n        except KeyError:\n            pass\n        else:\n\
-            \            raise RuntimeError('existing_task_group')\n        for ancestor in [Path('/opt'), Path('/opt/cyf'),\
+            \            raise RuntimeError('host_identity_gate')\n        resource.setrlimit(resource.RLIMIT_AS,\
+            \ (INSTALLER_MEMORY_MAX, INSTALLER_MEMORY_MAX))\n        result['installerAddressSpaceLimitBytes'] =\
+            \ INSTALLER_MEMORY_MAX\n        result['scannerPlanCleanup'] = scanner_plan_cleanup_state()\n      \
+            \  for p in [BASE, CONFIG, STATE, UNIT]:\n            if os.path.lexists(p):\n                raise\
+            \ RuntimeError('existing_task_path')\n        try:\n            pwd.getpwnam(USER)\n        except KeyError:\n\
+            \            pass\n        else:\n            raise RuntimeError('existing_task_user')\n        try:\n\
+            \            grp.getgrnam(USER)\n        except KeyError:\n            pass\n        else:\n       \
+            \     raise RuntimeError('existing_task_group')\n        for ancestor in [Path('/opt'), Path('/opt/cyf'),\
             \ Path('/etc'), Path('/var'), Path('/var/lib'), UNIT.parent]:\n            info = ancestor.lstat()\n\
             \            if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o022:\n\
             \                raise RuntimeError('untrusted_parent')\n        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n\
             \        result['memAvailableBefore'] = available_memory()\n        result.update(diskReserveBytes=DISK_RESERVE,\
             \ memoryReserveBytes=MEMORY_RESERVE,\n                      knownInstallPeakBytes=KNOWN_INSTALL_PEAK)\n\
             \        if (result['diskAvailableBefore'] < DISK_RESERVE+KNOWN_INSTALL_PEAK\n                or result['memAvailableBefore']\
-            \ < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n\
+            \ < MEMORY_RESERVE+384*1024**2+INSTALLER_MEMORY_MAX):\n            raise RuntimeError('resource_gate')\n\
             \        for port in [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1',\
             \ port))\n        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
-            \ dir='/opt/cyf') as temp:\n            layer_path = Path(temp) / 'layer.tar.gz'\n            mirror\
-            \ = 'https://m.daocloud.io'\n            url = mirror + '/v2/quay.io/minio/minio/blobs/sha256:' + LAYER\n\
-            \            # Anonymous public mirror token; no user/Flow credential or inherited proxy.\n        \
-            \    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n            opener.addheaders\
-            \ = [('User-Agent', 'docker/27.0'), ('Cache-Control', 'no-cache')]\n            query = urllib.parse.urlencode({'service':\
-            \ 'm.daocloud.io',\n                'scope': 'repository:quay.io/minio/minio:pull', 'client_id': 'cyf-output-probe'})\n\
-            \            with opener.open(mirror+'/auth/token?'+query, timeout=20) as response:\n              \
-            \  data = response.read(65537)\n                if len(data) > 65536:\n                    raise RuntimeError('public_token_response_limit')\n\
-            \                token = json.loads(data)['token']\n                if not isinstance(token, str) or\
-            \ not token or len(token)>16384:\n                    raise RuntimeError('public_token_invalid')\n \
-            \           request = urllib.request.Request(url, headers={'Authorization': 'Bearer '+token})\n    \
-            \        result['downloadMirror'] = 'm.daocloud.io'\n            result['downloadedLayerBytes'] = 0\n\
-            \            digest = hashlib.sha256()\n            size = 0\n            with opener.open(request,\
-            \ timeout=30) as response, layer_path.open('xb') as f:\n                deadline = time.monotonic()+120\n\
-            \                while True:\n                    if time.monotonic() > deadline:\n                \
-            \        raise RuntimeError('download_timeout')\n                    data = response.read(1024*1024)\n\
-            \                    if not data:\n                        break\n                    size += len(data)\n\
-            \                    result['downloadedLayerBytes'] = size\n                    if size > 39450432:\n\
-            \                        raise RuntimeError('layer_size_exceeded')\n                    digest.update(data)\n\
-            \                    f.write(data)\n            if size != 39450432 or digest.hexdigest() != LAYER:\n\
-            \                raise RuntimeError('layer_integrity')\n            candidate = Path(temp) / 'minio'\n\
-            \            matches = 0\n            with tarfile.open(layer_path, 'r|gz') as archive:\n          \
-            \      for member in archive:\n                    if member.name.lstrip('./') != 'usr/bin/minio':\n\
-            \                        continue\n                    matches += 1\n                    if matches\
-            \ != 1 or not member.isfile() or member.size != 110989496:\n                        raise RuntimeError('binary_member_integrity')\n\
-            \                    digest = hashlib.sha256()\n                    with archive.extractfile(member)\
-            \ as src, candidate.open('xb') as dst:\n                        while True:\n                      \
-            \      data = src.read(1024*1024)\n                            if not data:\n                      \
-            \          break\n                            digest.update(data)\n                            dst.write(data)\n\
-            \                    if digest.hexdigest() != BINARY:\n                        raise RuntimeError('binary_integrity')\n\
-            \            if matches != 1:\n                raise RuntimeError('binary_not_unique')\n           \
-            \ phase = 'install_new_paths'\n            BASE.mkdir(mode=0o755)\n            CONFIG.mkdir(mode=0o700)\n\
+            \ dir='/opt/cyf') as temp:\n            mirror = 'https://m.daocloud.io'\n            url = mirror +\
+            \ '/v2/quay.io/minio/minio/blobs/sha256:' + LAYER\n            # Anonymous public mirror token; no user/Flow\
+            \ credential or inherited proxy.\n            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
+            \            opener.addheaders = [('User-Agent', 'docker/27.0'), ('Cache-Control', 'no-cache')]\n  \
+            \          query = urllib.parse.urlencode({'service': 'm.daocloud.io',\n                'scope': 'repository:quay.io/minio/minio:pull',\
+            \ 'client_id': 'cyf-output-probe'})\n            with opener.open(mirror+'/auth/token?'+query, timeout=20)\
+            \ as response:\n                data = response.read(65537)\n                if len(data) > 65536:\n\
+            \                    raise RuntimeError('public_token_response_limit')\n                token = json.loads(data)['token']\n\
+            \                if not isinstance(token, str) or not token or len(token)>16384:\n                 \
+            \   raise RuntimeError('public_token_invalid')\n            request = urllib.request.Request(url, headers={'Authorization':\
+            \ 'Bearer '+token})\n            result['downloadMirror'] = 'm.daocloud.io'\n            result['downloadedLayerBytes']\
+            \ = 0\n            candidate = Path(temp) / 'minio'\n            with opener.open(request, timeout=30)\
+            \ as response:\n                extract_verified_layer(response, candidate, result)\n            phase\
+            \ = 'install_new_paths'\n            BASE.mkdir(mode=0o755)\n            CONFIG.mkdir(mode=0o700)\n\
             \            STATE.mkdir(mode=0o750)\n            receipt = BASE / 'install-intent.json'\n         \
             \   exclusive(receipt, (json.dumps(dict(result, layerSha256=LAYER, binarySha256=BINARY))+'\\n').encode())\n\
             \            run(['/usr/sbin/useradd', '--system', '--user-group', '--no-create-home', '--home-dir',\
@@ -155,11 +163,11 @@ stages:
             \ binarySha256=installed['sha256'],\n                      service='cyf-output-storage.service', endpoint='http://127.0.0.1:19000',\n\
             \                      bucketCreated=False, applicationConfigured=False)\n        exclusive(BASE/'install-result.json',\
             \ (json.dumps(result,sort_keys=True)+'\\n').encode())\n    except (OSError, ValueError, KeyError, RuntimeError,\
-            \ subprocess.SubprocessError, tarfile.TarError) as exc:\n        signal.alarm(0)\n        result.update(status='UNKNOWN',\
-            \ failedPhase=phase, errorType=type(exc).__name__)\n        if isinstance(exc, urllib.error.HTTPError):\n\
-            \            result['httpStatus'] = exc.code\n        if type(exc) is RuntimeError and str(exc).replace('_',\
-            \ '').isalpha():\n            result['errorCode'] = str(exc)\n        if activation_attempted:\n   \
-            \         try:\n                run(['/usr/bin/systemctl', 'disable', '--now', 'cyf-output-storage.service'],\
+            \ MemoryError, subprocess.SubprocessError, tarfile.TarError) as exc:\n        signal.alarm(0)\n    \
+            \    result.update(status='UNKNOWN', failedPhase=phase, errorType=type(exc).__name__)\n        if isinstance(exc,\
+            \ urllib.error.HTTPError):\n            result['httpStatus'] = exc.code\n        if type(exc) is RuntimeError\
+            \ and str(exc).replace('_', '').isalpha():\n            result['errorCode'] = str(exc)\n        if activation_attempted:\n\
+            \            try:\n                run(['/usr/bin/systemctl', 'disable', '--now', 'cyf-output-storage.service'],\
             \ timeout=45)\n                check = subprocess.run(['/usr/bin/systemctl', 'show', 'cyf-output-storage.service',\n\
             \                    '--property=ActiveState,UnitFileState', '--no-pager'], env=ENV, stdin=subprocess.DEVNULL,\n\
             \                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10, check=False)\n \
