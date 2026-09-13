@@ -1,7 +1,8 @@
-// Live output resource-route smoke. No mocked API responses and no model dispatch.
+// Live output resource-route or Hall bounty navigation smoke. No mocked API responses or model dispatch.
 // Input JSON: webRoot, tokenFile, outputDirectory, resourceRoute, title,
 // expectedSha256, expectedText or expectedImageSize {width,height} (optional).
 // Resource route must use local Vite15173.
+// Optional entryMode: 'hall-bounty', bountyStatus: open/assigned/running/completed/failed/archived.
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { withChromiumCloseCompatibility } from './output-browser-session.mjs'
@@ -23,6 +24,15 @@ assert.deepEqual([...route.searchParams.keys()].sort(),
   ['outputId', 'outputSourceId', 'outputSourceType', 'outputVersion'].sort())
 const sourceType = route.searchParams.get('outputSourceType')
 assert(['TASK', 'CONVERSATION'].includes(sourceType))
+const entryMode = config.entryMode ?? 'resource-route'
+assert(['resource-route', 'hall-bounty'].includes(entryMode))
+const bountyStatusLabels = {
+  open: '待点将', assigned: '已点将', running: '在办', completed: '交令', failed: '失手', archived: '入档'
+}
+if (entryMode === 'hall-bounty') {
+  assert.equal(sourceType, 'TASK')
+  assert(Object.hasOwn(bountyStatusLabels, config.bountyStatus))
+}
 const part = name => encodeURIComponent(route.searchParams.get(name))
 const collection = sourceType === 'TASK'
   ? `/agent/tasks/${part('outputSourceId')}/artifacts`
@@ -69,6 +79,7 @@ const network = []
 const blockedResources = []
 let failureMessage = ''
 let terminalErrors = []
+let failureDom = null
 const cleanupMessages = []
 const cleanupFailures = []
 const poll = async (check, limit = 25_000) => {
@@ -144,6 +155,12 @@ try {
       if (resourceType === 'Document' || hasAuthorization) throw new Error('Unapproved credential or navigation origin')
       return
     }
+    if (url.origin === origin && request.method !== 'GET' &&
+      (/^\/api\/chat\/stream\/?$/.test(url.pathname) ||
+        /^\/api\/agent\/tasks\/[^/]+\/(?:assign|auto-assign|deliveries|rework)(?:\/|$)/.test(url.pathname))) {
+      await cdp.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' })
+      throw new Error('Read-only navigation attempted task execution or review')
+    }
     await cdp.send('Fetch.continueRequest', { requestId })
   })
   cdp.on('Network.responseReceived', ({ response: value }) => {
@@ -158,8 +175,62 @@ try {
       localStorage.setItem('api_token', ${JSON.stringify(JSON.stringify({ data: token, expTime: tokenExpires }))});
     }`
   })
-  const card = `Array.from(document.querySelectorAll('.output-card.is-targeted')).find(e =>
+  const cardSelector = entryMode === 'hall-bounty' ? '.bounty-modal .output-card' : '.output-card.is-targeted'
+  const card = `Array.from(document.querySelectorAll(${JSON.stringify(cardSelector)})).find(e =>
     e.querySelector('strong')?.textContent === ${JSON.stringify(config.title)})`
+  const openBounty = async () => {
+    const navigationStep = step
+    const quickAction = `document.querySelector('[data-tour="portrait-action-tasks"]')`
+    step = `${navigationStep}:find-board-entry`
+    await poll(() => evaluate(`Boolean(${quickAction})`))
+    // Dismiss through the actual user control; do not overwrite onboarding or Vue state.
+    if (await evaluate(`Boolean(document.querySelector('.onboarding-overlay'))`)) {
+      step = `${navigationStep}:dismiss-onboarding`
+      await click(`document.querySelector('.onboarding-dialog [aria-label="稍后查看新手引导"]')`)
+      await poll(() => evaluate(`!document.querySelector('.onboarding-overlay')`))
+    }
+    step = `${navigationStep}:open-board`
+    const landscape = await evaluate(`document.querySelector('.juyi-page')?.classList.contains('experience-landscape-map')`)
+    if (landscape) {
+      // Read the same canonical hotspot geometry as onboarding, then use real pointer input.
+      // Do not call focusHotspot/openPanel or assign component state.
+      const point = await poll(() => evaluate(`(async () => {
+        const { juyitingGame } = await import('/src/game/index.js');
+        const { viewportBoundsToClientRect } = await import('/src/components/juyiting/hallOnboardingGeometry.js');
+        const page = document.querySelector('.juyi-page');
+        const canvas = page?.querySelector('.hall-board .melon-layer canvas');
+        const r = viewportBoundsToClientRect({ bounds: juyitingGame.getHotspotScreenBounds('bounty-board'),
+          canvasRect: canvas?.getBoundingClientRect(), viewport: juyitingGame.getRenderSnapshot()?.viewport,
+          virtualLandscape: page?.classList.contains('is-virtual-landscape') });
+        if (!r) return null;
+        const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return null;
+        return document.elementFromPoint(x, y) === canvas ? { x, y } : null;
+      })()`))
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point })
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...point })
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point })
+    } else await click(quickAction)
+    await poll(() => evaluate(`Boolean(document.querySelector('.bounty-panel .task-search input'))`))
+    const label = JSON.stringify(bountyStatusLabels[config.bountyStatus])
+    step = `${navigationStep}:filter-and-search`
+    await click(`Array.from(document.querySelectorAll('.task-status-tabs button')).find(e =>
+      Array.from(e.childNodes).filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join('').trim() === ${label})`)
+    await click(`document.querySelector('.bounty-panel .task-search input')`)
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2 })
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2 })
+    await cdp.send('Input.insertText', { text: route.searchParams.get('outputSourceId') })
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 })
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 })
+    const taskCard = `Array.from(document.querySelectorAll('.task-card')).find(e =>
+      Array.from(e.querySelectorAll('.task-meta span')).some(s => s.textContent.trim() === ${JSON.stringify(route.searchParams.get('outputSourceId'))}))`
+    step = `${navigationStep}:find-task`
+    await poll(() => evaluate(`Boolean(${taskCard})`))
+    step = `${navigationStep}:open-task`
+    await click(taskCard)
+    await poll(() => evaluate(`Boolean(${card})`))
+    assert(await evaluate(`document.querySelector('.bounty-modal .modal-task-info')?.textContent.includes(${JSON.stringify(route.searchParams.get('outputSourceId'))})`))
+  }
   for (const view of [{ name: 'desktop', width: 1440, height: 900, mobile: false },
     { name: 'mobile-simulation', width: 390, height: 844, mobile: true }]) {
     step = `${view.name}:load`
@@ -170,7 +241,21 @@ try {
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: view.width, height: view.height, mobile: view.mobile, deviceScaleFactor: 1
     })
-    await cdp.send('Page.navigate', { url: route.href })
+    if (entryMode === 'hall-bounty') {
+      await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: view.mobile, maxTouchPoints: 1 })
+    }
+    await cdp.send('Page.navigate', { url: entryMode === 'hall-bounty'
+      ? `${origin}/juyiting?nativeOrientation=portrait` : route.href })
+    if (entryMode === 'hall-bounty') {
+      step = `${view.name}:hall-bounty-navigation`
+      await openBounty()
+      step = `${view.name}:close-and-reopen`
+      await click(`document.querySelector('.bounty-modal .modal-close')`)
+      await poll(() => evaluate(`!document.querySelector('.bounty-modal')`))
+      await click(`document.querySelector('.floating-panel .panel-close')`)
+      await poll(() => evaluate(`!document.querySelector('.panel-overlay')`))
+      await openBounty()
+    }
     await poll(() => evaluate(`Boolean(${card})`))
     assert.equal(await evaluate('location.origin'), origin)
     await evaluate(`(${card}).scrollIntoView({ block: 'center' })`)
@@ -201,7 +286,8 @@ try {
     assert(bounds.width > 0 && bounds.left >= -1 && bounds.right <= bounds.viewport + 1)
     const shot = await cdp.send('Page.captureScreenshot', { format: 'png' })
     await writeFile(join(outputDirectory, `${view.name}.png`), Buffer.from(shot.data, 'base64'), { mode: 0o600 })
-    observations.push({ viewport: view, bytes: bytes.length, sha256: hash, filename,
+    observations.push({ viewport: view, entryMode, closedAndReopened: entryMode === 'hall-bounty',
+      bytes: bytes.length, sha256: hash, filename,
       previewTextMatched: typeof config.expectedText === 'string',
       previewImageMatched: Boolean(config.expectedImageSize), expectedImageSize: config.expectedImageSize ?? null,
       cardBounds: bounds })
@@ -211,6 +297,19 @@ try {
 } catch (error) {
   failureMessage = String(error?.message || 'Browser probe failed').replaceAll(token, '[REDACTED_TOKEN]')
   terminalErrors = cdp?.takeTerminalErrors().map(e => String(e.message).replaceAll(token, '[REDACTED_TOKEN]')) || []
+  if (cdp && !abort.signal.aborted) {
+    try {
+      failureDom = await evaluate(`({ path: location.pathname,
+        hallClass: document.querySelector('.juyi-page')?.className ?? null,
+        onboarding: Boolean(document.querySelector('.onboarding-overlay')),
+        tourAnchors: Array.from(document.querySelectorAll('[data-tour]')).map(e => e.getAttribute('data-tour')),
+        bountyPanels: document.querySelectorAll('.bounty-panel').length,
+        taskCards: document.querySelectorAll('.task-card').length,
+        outputCards: document.querySelectorAll('.output-card').length })`)
+      const shot = await cdp.send('Page.captureScreenshot', { format: 'png' })
+      await writeFile(join(outputDirectory, 'failure.png'), Buffer.from(shot.data, 'base64'), { mode: 0o600 })
+    } catch { /* Keep the original failure and bounded cleanup even if diagnostics are unavailable. */ }
+  }
   succeeded = false
 } finally {
   if (cdp) { try { await cdp.close() } catch (error) {
@@ -223,8 +322,8 @@ try {
   clearTimeout(timeout)
   process.off('SIGINT', onSignal)
   process.off('SIGTERM', onSignal)
-  const report = { succeeded: succeeded && cleanupFailures.length === 0, step, observations,
-    network, blockedResources, failureMessage, terminalErrors, cleanupFailures, cleanupMessages,
+  const report = { succeeded: succeeded && cleanupFailures.length === 0, entryMode, step, observations,
+    network, blockedResources, failureMessage, failureDom, terminalErrors, cleanupFailures, cleanupMessages,
     closeObservation: cdp?.closeObservation ?? null,
     eventCounts: Object.fromEntries([...new Set(cdp?.events.map(e => e.method) || [])].map(method =>
       [method, cdp.events.filter(e => e.method === method).length])),
