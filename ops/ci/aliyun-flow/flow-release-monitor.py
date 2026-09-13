@@ -298,7 +298,7 @@ def _observe_target(target, state_target, mail_enabled=True):
                 if record.get('accepted'):
                     return task_failed
                 if record.get('attempts', 0) >= 3:
-                    return task_failed
+                    return True
             mail_failed = _notice(target, state_target, event, subject, body,
                                   mail_enabled=mail_enabled)
             return task_failed or mail_failed

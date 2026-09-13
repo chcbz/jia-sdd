@@ -142,6 +142,24 @@ class FlowReleaseMonitorTest(unittest.TestCase):
         mail.assert_not_called()
         self.assertEqual(record, next(iter(self.state()['targets'].values()))['notices']['terminal_fail'])
 
+    def test_success_with_capped_unaccepted_mail_still_requires_controller(self):
+        record = {'attempts': 3, 'accepted': False,
+                  'receipt': {'accepted_by_mail_helper': False, 'inbox_delivery': 'unknown'}}
+        state = {'version': 1, 'targets': {self.monitor._target_key(self.target): {
+            'last_observation': {'kind': 'status', 'status': 'SUCCESS', 'commits': ['a' * 40]},
+            'notices': {'success_expected_commit': record}}}}
+        self.path.write_text(json.dumps(state))
+        for enabled in (True, False):
+            config = self.config()
+            config['mail_enabled'] = enabled
+            with mock.patch.object(self.monitor, '_flow_status', return_value=('SUCCESS', ['a' * 40])), \
+                 mock.patch.object(self.monitor, '_send_email') as mail:
+                self.assertEqual(2, self.monitor.check(config))
+                self.assertEqual(2, self.monitor.check(config))
+            mail.assert_not_called()
+            saved = next(iter(self.state()['targets'].values()))
+            self.assertEqual(record, saved['notices']['success_expected_commit'])
+
     def test_success_is_deduplicated_and_receipt_is_not_inbox_claim(self):
         with mock.patch.object(self.monitor, '_flow_status', return_value=('SUCCESS', ['a' * 40])), \
              mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
