@@ -4,6 +4,7 @@
 Retains the existing transactional installer and same-run artifact validation.
 """
 import fcntl
+import grp
 import hashlib
 import json
 import os
@@ -22,6 +23,11 @@ PACKAGE = ROOT / 'incoming/package.tgz'
 APPROVAL = ROOT / 'approval.json'
 BACKUPS = ROOT / 'backups'
 INSTALLER = '/usr/local/sbin/cyf-api-flow-install'
+SCHEMA_RUNNER = Path('/usr/local/sbin/cyf-api-additive-schema')
+SCHEMA_RESULTS = ROOT / 'schema-results'
+RELEASE_LOCK = Path('/tmp/cyf-release-api.lock')
+SCHEMA_SQL_SHA256 = '77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc'
+SCHEMA_PASSWORD_ENV = 'CYF_F06_MYSQL_PASSWORD'
 # v1 was inherited into the restored JVM; keep its inode untouched.
 # The v2 parent owns this mutex for the entire installer lifetime.
 LOCK = '/tmp/cyf-api-flow-auto-approval-v2.lock'
@@ -35,6 +41,19 @@ EXPECTED_MEMBERS = {
 SHA256 = re.compile(r'^[0-9a-f]{64}$')
 GIT_SHA = re.compile(r'^[0-9a-f]{40,64}$')
 RUN_ID = re.compile(r'^[1-9][0-9]*$')
+INSTALL_RECORD_KEYS = {
+    'schema_version', 'status', 'phase', 'recovery', 'ticket_sha256',
+    'source_commit_sha', 'source_tree_sha', 'run_id', 'receipt_sha256',
+    'candidate_sha256', 'previous_sha256', 'backup', 'candidate_stop_rc', 'timestamp',
+}
+SCHEMA_REPORT_KEYS = {
+    'schema_version', 'operation', 'status', 'transaction_model', 'lock_order',
+    'tables', 'binding', 'candidate', 'error', 'failed_table',
+}
+SCHEMA_TABLES = {
+    'agent_task_artifact_outcome', 'agent_task_artifact_outcome_decision',
+}
+_SCHEMA_CONTEXT = None
 
 
 def fail(message):
@@ -110,10 +129,366 @@ def discard_verified_download_copy(downloaded, package, original_stat):
     return {'bytes': current.st_size, 'sha256': source_hash}
 
 
+class SchemaIntegrationError(Exception):
+    def __init__(self, code, action):
+        Exception.__init__(self, code)
+        self.code = code
+        self.action = action
+
+
+def utc_timestamp():
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+
+def ensure_private_directory(path):
+    path.mkdir(mode=0o700, parents=False, exist_ok=True)
+    info = path.lstat()
+    if (not stat.S_ISDIR(info.st_mode) or info.st_uid != 0
+            or stat.S_IMODE(info.st_mode) != 0o700):
+        raise SchemaIntegrationError(
+            'schema_result_directory_unsafe',
+            'repair the root-owned 0700 schema result directory before a new Flow run')
+
+
+def schema_paths(run_id):
+    stem = 'run-' + run_id
+    return {
+        'state': SCHEMA_RESULTS / (stem + '.json'),
+        'stdout': SCHEMA_RESULTS / (stem + '.stdout'),
+        'stderr': SCHEMA_RESULTS / (stem + '.stderr'),
+    }
+
+
+def schema_state(context, status, started_at, **updates):
+    value = {
+        'schema_version': 1,
+        'feature': 'M4-F06-additive-schema',
+        'status': status,
+        'activation_claim': 'schema_only_not_feature_activation',
+        'pipeline_id': context['pipeline_id'],
+        'run_id': context['run_id'],
+        'source_commit_sha': context['source_commit_sha'],
+        'source_tree_sha': context['source_tree_sha'],
+        'receipt_sha256': context['receipt_sha256'],
+        'jar_sha256': context['jar_sha256'],
+        'sql_sha256': SCHEMA_SQL_SHA256,
+        'runner_path': str(SCHEMA_RUNNER),
+        'started_at': started_at,
+        'finished_at': None,
+        'runner_exit_code': None,
+        'error': None,
+        'action': None,
+        'prerequisites': [],
+        'runner_report': None,
+        'stdout_path': None,
+        'stdout_sha256': None,
+        'stderr_path': None,
+        'stderr_sha256': None,
+        'lock_order': [
+            'flow_coordinator_lock', 'api_release_lock',
+            'f06_runner_file_lock', 'f06_mysql_named_lock',
+        ],
+        'transaction_model': 'installed_record_then_mysql_ddl_autocommit_no_rollback_or_drop',
+    }
+    value.update(updates)
+    return value
+
+
+def validate_schema_state(value, context):
+    expected = set(schema_state(context, 'running', 'x'))
+    if not isinstance(value, dict) or set(value) != expected or value.get('schema_version') != 1:
+        raise SchemaIntegrationError(
+            'schema_result_state_invalid',
+            'inspect the root-only schema result files; do not delete or rerun this release')
+    for key in ('pipeline_id', 'run_id', 'source_commit_sha', 'source_tree_sha',
+                'receipt_sha256', 'jar_sha256'):
+        if value.get(key) != context[key]:
+            raise SchemaIntegrationError(
+                'schema_result_binding_mismatch',
+                'preserve the mismatched evidence and use a new Flow run')
+    if value.get('sql_sha256') != SCHEMA_SQL_SHA256:
+        raise SchemaIntegrationError(
+            'schema_result_sql_digest_mismatch',
+            'preserve the result and reconcile the reviewed F06 SQL before a new Flow run')
+    return value
+
+
+def load_installed_record(path, context):
+    info = safe_regular(path, mode=0o600)
+    try:
+        value = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, UnicodeDecodeError, ValueError):
+        raise SchemaIntegrationError(
+            'installed_record_json_invalid',
+            'repair the durable installer record without executing DDL, then use a new Flow run')
+    if (not isinstance(value, dict) or set(value) != INSTALL_RECORD_KEYS
+            or value.get('schema_version') != 2 or value.get('status') != 'installed'
+            or value.get('phase') != 'installed' or value.get('recovery') != 'not_required'
+            or value.get('candidate_stop_rc') != 0):
+        raise SchemaIntegrationError(
+            'same_run_installed_record_missing',
+            'recover the exact installer transaction to installed before any schema apply')
+    expected = {
+        'run_id': context['run_id'],
+        'source_commit_sha': context['source_commit_sha'],
+        'source_tree_sha': context['source_tree_sha'],
+        'receipt_sha256': context['receipt_sha256'],
+        'candidate_sha256': context['jar_sha256'],
+    }
+    if any(value.get(key) != expected_value for key, expected_value in expected.items()):
+        raise SchemaIntegrationError(
+            'same_run_installed_record_mismatch',
+            'do not apply schema for a different installed release; use its exact Flow run')
+    # Recheck after reading so replacement races fail before the attempt is recorded.
+    current = safe_regular(path, mode=0o600)
+    signature = lambda item: (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns)
+    if signature(info) != signature(current):
+        raise SchemaIntegrationError(
+            'installed_record_changed',
+            'wait for the exact installed record to stabilize, then use a new Flow run')
+    return value
+
+
+def acquire_release_lock(path):
+    try:
+        isp_gid = grp.getgrnam('isp').gr_gid
+    except KeyError:
+        raise SchemaIntegrationError(
+            'release_lock_group_missing',
+            'restore the existing isp release-lock group before a new Flow run')
+    info = safe_regular(path, mode=0o660)
+    if info.st_gid != isp_gid:
+        raise SchemaIntegrationError(
+            'release_lock_metadata_unsafe',
+            'restore /tmp/cyf-release-api.lock to root:isp 0660 before a new Flow run')
+    fd = os.open(str(path), os.O_RDWR | getattr(os, 'O_NOFOLLOW', 0))
+    try:
+        opened = os.fstat(fd)
+        if opened.st_dev != info.st_dev or opened.st_ino != info.st_ino:
+            raise SchemaIntegrationError(
+                'release_lock_changed',
+                'restore the canonical API release lock before a new Flow run')
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def write_schema_state(path, value, create=False):
+    data = (json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode()
+    if not create:
+        atomic_write(path, data)
+        return
+    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        os.write(fd, data)
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    fsync_dir(path.parent)
+
+
+def existing_schema_result(paths, context):
+    if not paths['state'].exists() and not paths['state'].is_symlink():
+        return None
+    safe_regular(paths['state'], mode=0o600)
+    try:
+        value = json.loads(paths['state'].read_text(encoding='utf-8'))
+    except (OSError, UnicodeDecodeError, ValueError):
+        raise SchemaIntegrationError(
+            'schema_result_state_invalid',
+            'inspect the root-only schema result files; do not delete or rerun this release')
+    value = validate_schema_state(value, context)
+    print(json.dumps({'f06_schema': 'existing_same_run_result', 'result': value},
+                     sort_keys=True, separators=(',', ':')), flush=True)
+    if value['status'] == 'pass':
+        return 0
+    return value['runner_exit_code'] if isinstance(value['runner_exit_code'], int) and 0 < value['runner_exit_code'] < 256 else 1
+
+
+def validate_runner_report(data, return_code):
+    try:
+        text = data.decode('utf-8')
+        value = json.loads(text)
+    except (UnicodeDecodeError, ValueError):
+        raise SchemaIntegrationError(
+            'schema_runner_report_invalid',
+            'inspect the preserved root-only stdout/stderr and verify durable table metadata before a new Flow run')
+    if (not isinstance(value, dict) or not set(value).issubset(SCHEMA_REPORT_KEYS)
+            or value.get('schema_version') != 1 or value.get('operation') != 'apply'
+            or value.get('transaction_model') != 'mysql_ddl_autocommit_per_create_no_rollback_or_drop'
+            or value.get('lock_order') != ['f06_runner_file_lock', 'f06_mysql_named_lock']
+            or set(value.get('tables', {})) != SCHEMA_TABLES):
+        raise SchemaIntegrationError(
+            'schema_runner_report_contract_mismatch',
+            'inspect the preserved root-only runner output; do not infer schema activation')
+    for table in value['tables'].values():
+        if (not isinstance(table, dict) or set(table) - {'status', 'mismatches'}
+                or not isinstance(table.get('status'), str)
+                or ('mismatches' in table and not isinstance(table['mismatches'], list))):
+            raise SchemaIntegrationError(
+                'schema_runner_report_contract_mismatch',
+                'inspect the preserved root-only runner output; do not infer schema activation')
+    if return_code == 0:
+        success_states = {'created_equivalent', 'existing_equivalent'}
+        if (value.get('status') != 'pass' or 'error' in value
+                or any(table['status'] not in success_states
+                       for table in value['tables'].values())):
+            raise SchemaIntegrationError(
+                'schema_runner_false_success',
+                'verify both F06 tables from durable metadata before a new Flow run')
+    elif value.get('status') != 'failed' or not isinstance(value.get('error'), str):
+        raise SchemaIntegrationError(
+            'schema_runner_failure_report_invalid',
+            'inspect the preserved root-only stdout/stderr and verify partial DDL before a new Flow run')
+    return value
+
+
+def schema_prerequisites():
+    missing = []
+    if not SCHEMA_RUNNER.exists() and not SCHEMA_RUNNER.is_symlink():
+        missing.append('schema_runner_not_installed')
+    else:
+        try:
+            safe_regular(SCHEMA_RUNNER, mode=0o755)
+        except SystemExit:
+            missing.append('schema_runner_metadata_unsafe')
+    password = os.environ.get(SCHEMA_PASSWORD_ENV)
+    if not isinstance(password, str) or not password or '\n' in password or '\r' in password:
+        missing.append('db_principal_or_protected_password_not_configured')
+    return missing, password
+
+
+def run_schema_once(context, paths):
+    started_at = utc_timestamp()
+    prerequisites, password = schema_prerequisites()
+    if prerequisites:
+        result = schema_state(
+            context, 'blocked_precondition', started_at,
+            finished_at=utc_timestamp(), error='schema_activation_prerequisites_missing',
+            prerequisites=prerequisites,
+            action=('install the reviewed runner as root:root 0755; provision fixed MySQL user '
+                    'cyf_f06_schema_runner for jia with only required metadata/lock/CREATE grants; '
+                    'inject protected CYF_F06_MYSQL_PASSWORD; then use a new Flow run'))
+        write_schema_state(paths['state'], result, create=True)
+        print(json.dumps({'f06_schema': 'blocked_precondition', 'result': result},
+                         sort_keys=True, separators=(',', ':')), flush=True)
+        return 1
+
+    running = schema_state(
+        context, 'running', started_at,
+        action=('if this process is interrupted, inspect durable F06 table metadata and the '
+                'preserved output files; never rerun this same Flow release automatically'),
+        stdout_path=str(paths['stdout']), stderr_path=str(paths['stderr']))
+    write_schema_state(paths['state'], running, create=True)
+    stdout_fd = os.open(str(paths['stdout']), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    stderr_fd = os.open(str(paths['stderr']), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        child_env = {
+            'PATH': '/usr/sbin:/usr/bin:/sbin:/bin',
+            'LC_ALL': 'C',
+            SCHEMA_PASSWORD_ENV: password,
+        }
+        try:
+            completed = subprocess.run(
+                [str(SCHEMA_RUNNER), '--apply'], env=child_env,
+                stdout=stdout_fd, stderr=stderr_fd, close_fds=True)
+            return_code = completed.returncode
+        except OSError:
+            return_code = 1
+            integration_error = SchemaIntegrationError(
+                'schema_runner_start_failed',
+                'repair the installed runner and inspect durable schema state before a new Flow run')
+        else:
+            integration_error = None
+        os.fsync(stdout_fd)
+        os.fsync(stderr_fd)
+    finally:
+        os.close(stdout_fd)
+        os.close(stderr_fd)
+        fsync_dir(SCHEMA_RESULTS)
+
+    stdout_bytes = paths['stdout'].read_bytes()
+    stderr_bytes = paths['stderr'].read_bytes()
+    report = None
+    if integration_error is None:
+        try:
+            report = validate_runner_report(stdout_bytes, return_code)
+        except SchemaIntegrationError as exc:
+            integration_error = exc
+    if integration_error is not None:
+        status = 'failed'
+        error = integration_error.code
+        action = integration_error.action
+    elif return_code == 0:
+        status = 'pass'
+        error = None
+        action = 'schema is verified only; feature activation and authenticated acceptance remain separate'
+    else:
+        status = 'failed'
+        error = report['error']
+        action = ('inspect the preserved runner report/stdout/stderr and durable table metadata; '
+                  'do not drop tables or rerun this same Flow release automatically')
+    result = schema_state(
+        context, status, started_at, finished_at=utc_timestamp(),
+        runner_exit_code=return_code, error=error, action=action,
+        runner_report=report, stdout_path=str(paths['stdout']),
+        stdout_sha256=hashlib.sha256(stdout_bytes).hexdigest(),
+        stderr_path=str(paths['stderr']),
+        stderr_sha256=hashlib.sha256(stderr_bytes).hexdigest())
+    write_schema_state(paths['state'], result)
+    print(json.dumps({'f06_schema': status, 'result': result},
+                     sort_keys=True, separators=(',', ':')), flush=True)
+    return return_code if status == 'pass' or 0 < return_code < 256 else 1
+
+
+def apply_schema_after_install(context):
+    release_fd = acquire_release_lock(RELEASE_LOCK)
+    try:
+        ensure_private_directory(SCHEMA_RESULTS)
+        paths = schema_paths(context['run_id'])
+        existing = existing_schema_result(paths, context)
+        if existing is not None:
+            return existing
+        try:
+            load_installed_record(ROOT / 'record.json', context)
+        except SchemaIntegrationError as exc:
+            now = utc_timestamp()
+            result = schema_state(
+                context, 'failed', now, finished_at=utc_timestamp(),
+                runner_exit_code=1, error=exc.code, action=exc.action)
+            write_schema_state(paths['state'], result, create=True)
+            print(json.dumps({'f06_schema': 'failed', 'result': result},
+                             sort_keys=True, separators=(',', ':')), flush=True)
+            return 1
+        return run_schema_once(context, paths)
+    finally:
+        os.close(release_fd)
+
+
 def invoke_installer(installer):
-    # The coordinator stays alive holding its mutex; only the installer acquires
-    # and passes the separate release/lifecycle locks under their existing contract.
-    return subprocess.run([installer], close_fds=True).returncode
+    # The coordinator stays alive holding its mutex. The installer owns the existing
+    # release lock through installed-record fsync; after it exits we reacquire that
+    # exact lock and keep it through the one-shot F06 schema runner.  The schema
+    # password belongs only to that runner and must never enter installer/lifecycle
+    # descendants (including the restored JVM).
+    installer_env = dict(os.environ)
+    installer_env.pop(SCHEMA_PASSWORD_ENV, None)
+    return_code = subprocess.run([installer], env=installer_env, close_fds=True).returncode
+    if return_code != 0 or _SCHEMA_CONTEXT is None:
+        return return_code
+    try:
+        return apply_schema_after_install(_SCHEMA_CONTEXT)
+    except SchemaIntegrationError as exc:
+        print(json.dumps({
+            'f06_schema': 'integration_blocked',
+            'pipeline_id': _SCHEMA_CONTEXT['pipeline_id'],
+            'run_id': _SCHEMA_CONTEXT['run_id'],
+            'error': exc.code,
+            'action': exc.action,
+        }, sort_keys=True, separators=(',', ':')), flush=True)
+        return 1
 
 
 def main():
@@ -261,6 +636,15 @@ def main():
                       'source_commit': source_commit, 'jar_sha256': approval['jar_sha256'],
                       'receipt_sha256': approval['receipt_sha256'],
                       'redundant_download_reclaimed': reclaimed}, sort_keys=True), flush=True)
+    global _SCHEMA_CONTEXT
+    _SCHEMA_CONTEXT = {
+        'pipeline_id': pipeline_id,
+        'run_id': run_id,
+        'source_commit_sha': source_commit,
+        'source_tree_sha': source['tree_sha'],
+        'receipt_sha256': approval['receipt_sha256'],
+        'jar_sha256': approval['jar_sha256'],
+    }
     raise SystemExit(invoke_installer(INSTALLER))
 
 
