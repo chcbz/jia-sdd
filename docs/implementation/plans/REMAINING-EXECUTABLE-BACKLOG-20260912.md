@@ -1,5 +1,13 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 11:41 CST delta
+
+- **Web99 已安装且线上核验通过，但 Flow FAIL 保留**：develop edace747，2151 PASS / 2 pending，构建和扫描成功；410安装文件/9线上响应匹配同次制品 b57049c1。部署单69521776最后首页校验三次读到旧98，后来独立读取已匹配99。host record仍为installed；没有伪改为online_verified，也不重装掩盖失败。
+- 已另派独立 root worktree 修复首页等待校验：当前3次/2秒窗口与Nginx已配置30秒文件缓存不匹配；保留哈希、TLS和取消能力，不把安装成功当线上成功。该修复不阻塞当前已核验页面。
+- API loopback health UP，公网未登录 `/agent/map` 返回401（不是502），仅证明连通和认证边界，不证明登录业务。
+- E05初候选00adb被主控发现将未确认的SENT终结为FAILED、阻断真实迟到ACK；原Owner已恢复继续做无状态变更的耗尽处理及真实ACK回归，未推送。不同Agent重派仍需新的不可变命令/API契约，不冒充完整E05。F06并行开发。
+- 附件存储、工作区、语音启用，以及合法账号/付费上限/六技能真实结果验收仍需分别落实，不因安装完成而归档。
+
 ## 2026-09-13 11:16 CST delta
 
 - F02 Web corrected candidate `6d103e81` plus main lint-only `edace747` is now remote develop. Getter/ref rendering and pre-request async identity/cancel races were corrected before push. Owner/main related tests each14 PASS, ESLint PASS. Auto Run99 is RUNNING; source checkout metadata remains pending, so neither exact cloud verification nor deployment is claimed yet. Web98/API37 remain last verified.
