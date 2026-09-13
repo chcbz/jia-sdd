@@ -225,9 +225,13 @@ def main():
             info = parent.lstat()
             require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and info.st_gid == 0
                     and not stat.S_IMODE(info.st_mode) & 0o022, 'untrusted_parent')
-        for path in [BASE/'credential-activation-intent.json', BASE/'configure-result.json',
+        for path in [BASE/'scan-contract-activation-intent.json', BASE/'configure-result.json',
                      CONFIG/'clamd.conf.observe-new']:
             require(not os.path.lexists(path), 'existing_activation')
+        credentials = json.loads(trusted_file(BASE/'credential-activation-intent.json', 0o600, 65536))
+        require(credentials.get('startedAtEpoch') == 1789305425
+                and credentials.get('status') == 'UNKNOWN'
+                and credentials.get('databaseDownloadRequested') is False, 'prior_credential_activation_mismatch')
         observed = json.loads(trusted_file(BASE/'observe-activation-intent.json', 0o600, 65536))
         require(observed.get('startedAtEpoch') == 1789301970
                 and observed.get('status') == 'UNKNOWN'
@@ -306,7 +310,7 @@ def main():
                 'configured_version')
         require(memory() >= SERVICE_MEMORY + MEMORY_RESERVE and disk() >= DISK_RESERVE,
                 'activation_resource_gate')
-        exclusive(BASE/'credential-activation-intent.json', (json.dumps(result, sort_keys=True)+'\n').encode())
+        exclusive(BASE/'scan-contract-activation-intent.json', (json.dumps(result, sort_keys=True)+'\n').encode())
         result['configurationSha256'] = expected[CONFIG/'clamd.conf']
         phase = 'activate_scanner'
         activation_attempted = True
@@ -356,18 +360,40 @@ def main():
                 and (exe.st_dev, exe.st_ino) == (identity['device'], identity['inode']),
                 'running_binary_identity')
         phase = 'real_scan_validation'
+        # OD02's streaming application guard is authoritative for expanded ZIP member bounds.
+        # Record raw daemon behavior separately; never claim this is a safe accepted upload.
+        result['requiredApplicationArchiveGuard'] = {
+            'memberMaxBytes': 50*1024**2, 'treeMaxBytes': 90*1024**2,
+            'requiredBeforeReady': True, 'productionApplicationVerified': False}
         result['scans'] = []
         for name, content, expected in [
                 ('clean', b'CYF output scanner production probe\n', 'stream: OK'),
                 ('eicar', EICAR, ' FOUND'),
-                ('member_61_mib', archive([61]), 'Heuristics.Limits.Exceeded'),
                 ('aggregate_110_mib', archive([55, 55]), 'Heuristics.Limits.Exceeded')]:
             began = time.monotonic()
             response = protocol(b'zINSTREAM\0', content)
-            require(response == expected if name == 'clean' else expected in response, 'scan_result_mismatch')
+            matched = response == expected if name == 'clean' else expected in response
             result['scans'].append({'case': name, 'inputBytes': len(content),
-                'sha256': hashlib.sha256(content).hexdigest(), 'expectedMatched': True,
-                'elapsedSeconds': round(time.monotonic()-began, 3)})
+                'sha256': hashlib.sha256(content).hexdigest(), 'expectedMatched': matched,
+                'response': response, 'elapsedSeconds': round(time.monotonic()-began, 3)})
+            require(matched, 'scan_result_mismatch')
+        began = time.monotonic()
+        response = protocol(b'zINSTREAM\0'+struct.pack('!I', 60*1024**2+1))
+        matched = response == 'INSTREAM size limit exceeded. ERROR'
+        result['scans'].append({'case': 'instream_announced_60_mib_plus_one',
+            'announcedBytes': 60*1024**2+1, 'payloadBytesSent': 0,
+            'expectedMatched': matched, 'response': response,
+            'elapsedSeconds': round(time.monotonic()-began, 3)})
+        require(matched, 'scan_stream_limit_mismatch')
+        content = archive([61])
+        began = time.monotonic()
+        response = protocol(b'zINSTREAM\0', content)
+        result['rawMemberLimitObservation'] = {'case': 'member_61_mib',
+            'inputBytes': len(content), 'sha256': hashlib.sha256(content).hexdigest(),
+            'response': response, 'elapsedSeconds': round(time.monotonic()-began, 3),
+            'outsideApplicationEnvelope': True, 'countsAsProtection': False}
+        require(response == 'stream: OK' or 'Heuristics.Limits.Exceeded' in response,
+                'raw_member_observation_unknown')
         require((proc/'stat').read_text().rsplit(')', 1)[1].split()[19] == start, 'process_changed')
         state = unit_values(DAEMON)
         result.update(runtimeIdentity={'pid': pid, 'startTicks': start, 'uid': user.pw_uid,
@@ -379,7 +405,7 @@ def main():
                 and int(state['MemoryCurrent']) <= SERVICE_MEMORY and memory() >= MEMORY_RESERVE
                 and disk() >= DISK_RESERVE, 'runtime_resource_gate')
         require(unit_values(UPDATER)['ActiveState'] == 'inactive', 'updater_active')
-        result['status'] = 'SCANNER_INSTALLED_AND_SCAN_VERIFIED'
+        result['status'] = 'SCANNER_ENGINE_VERIFIED'
         exclusive(BASE/'configure-result.json', (json.dumps(result, sort_keys=True)+'\n').encode())
     except (OSError, ValueError, KeyError, RuntimeError, MemoryError, subprocess.SubprocessError) as exc:
         signal.alarm(0)
@@ -397,7 +423,7 @@ def main():
     finally:
         signal.alarm(0)
     print(json.dumps(result, sort_keys=True))
-    return 0 if result['status'] == 'SCANNER_INSTALLED_AND_SCAN_VERIFIED' else 1
+    return 0 if result['status'] == 'SCANNER_ENGINE_VERIFIED' else 1
 
 
 if __name__ == '__main__':

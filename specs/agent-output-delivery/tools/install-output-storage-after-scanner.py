@@ -214,13 +214,19 @@ def scanner_prerequisite():
                 or stat.S_IMODE(info.st_mode) != 0o600 or info.st_size > 65536):
             raise RuntimeError('scanner_receipt_identity')
         receipt = json.loads(f.read(65537))
-    if (receipt.get('status') != 'SCANNER_INSTALLED_AND_SCAN_VERIFIED'
+    if (receipt.get('status') != 'SCANNER_ENGINE_VERIFIED'
             or receipt.get('serviceMemoryLimitBytes') != 1200*1024**2
             or receipt.get('runtimeIdentity', {}).get('exeSha256') != SCANNER_BINARY
             or {x.get('case') for x in receipt.get('scans', [])} !=
-                {'clean', 'eicar', 'member_61_mib', 'aggregate_110_mib'}
+                {'clean', 'eicar', 'aggregate_110_mib', 'instream_announced_60_mib_plus_one'}
             or not all(x.get('expectedMatched') is True for x in receipt.get('scans', []))):
         raise RuntimeError('scanner_receipt_unaccepted')
+    guard = receipt.get('requiredApplicationArchiveGuard', {})
+    if (guard.get('memberMaxBytes') != 50*1024**2 or guard.get('treeMaxBytes') != 90*1024**2
+            or guard.get('requiredBeforeReady') is not True
+            or guard.get('productionApplicationVerified') is not False
+            or receipt.get('rawMemberLimitObservation', {}).get('countsAsProtection') is not False):
+        raise RuntimeError('scanner_application_guard_contract')
     for path, expected, expected_mode in [
             (Path('/etc/systemd/system/cyf-output-scanner.service'), SCANNER_UNIT_SHA, 0o644),
             (Path('/etc/cyf-output-scanner/clamd.conf'), SCANNER_CONFIG_SHA, 0o644),

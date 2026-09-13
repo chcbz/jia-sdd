@@ -1,0 +1,7 @@
+# Scanner starts; old limit expectation fails
+
+5264972/run1, job514734791, order69532846: Failed with successful scanner stop/disable compensation. Exact efa84230 source and e2a578ec Flow, full readback and singleton host verified. Existing database signatures passed. Scanner reached PONG in126.076seconds with strict dedicated UID/GID986, exact executable and stable PID3757020/startTicks3087799088, zero restarts. Clean and EICAR scans passed. Single61MiB ZIP member scan did not match the expected limit-alert string; actual response was not preserved by this candidate. Aggregate scan was not reached. No successful final receipt, storage installation or output feature publication.
+
+The earlier OD02/clamav-limit-review.md already documents exactly this raw-engine boundary limitation on1.4.3 and the accepted application defense (member50MiB/tree90MiB streaming counters before READY). Production1.4.6 must be observed rather than presumed fixed. The current installer wrongly requires raw-engine enforcement that the selected architecture does not rely on. Repair the probe/receipt contract to verify clean/EICAR/aggregate limit/INSTREAM framing rejection, separately record the raw member observation, and require final real application rejection below daemon bounds. Do not mark the raw61MiB member as a passing scanner protection or remove the application guard.
+
+Preactivation memory1671077888bytes, disk2701553664bytes. Local API remains stopped. Scanner remains stopped/disabled after compensation.
