@@ -29,23 +29,25 @@ stages:
             \        info = item.lstat()\n        count += 1\n        if info.st_dev != device:\n    \
             \        continue\n        total += info.st_blocks * 512\n        if stat.S_ISDIR(info.st_mode):\n\
             \            with os.scandir(item) as entries:\n                for entry in entries:\n  \
-            \                  if len(stack) + count >= 50000:\n                        return {'allocatedBytes':\
-            \ total, 'entries': count, 'complete': False}\n                    stack.append(Path(entry.path))\n\
-            \    return {'allocatedBytes': total, 'entries': count, 'complete': True}\n\n\ndef deployment_disk():\n\
-            \    report = []\n    deadline = time.monotonic() + 30\n    for path in ['/var/lib/cyf-api-flow/downloads',\
-            \ '/var/lib/cyf-api-flow/releases',\n                 '/var/lib/cyf-web-flow/downloads', '/var/lib/cyf-web-flow/releases',\n\
-            \                 '/home/isp/hosts/cyf/api', '/opt/cyf/output-scanner',\n                \
-            \ '/var/lib/cyf-output-scanner']:\n        row = {'path': path}\n        try:\n          \
-            \  info = os.lstat(path)\n            if not stat.S_ISDIR(info.st_mode):\n               \
-            \ row['directory'] = False\n                report.append(row)\n                continue\n\
-            \            disk = os.statvfs(path)\n            row.update(device=info.st_dev, totalBytes=disk.f_blocks*disk.f_frsize,\n\
-            \                       availableBytes=disk.f_bavail*disk.f_frsize)\n            row['children']\
-            \ = []\n            with os.scandir(path) as entries:\n                for entry in entries:\n\
-            \                    if len(row['children']) >= 80 or time.monotonic() > deadline:\n     \
-            \                   row['truncated'] = True\n                        break\n             \
-            \       if not re.fullmatch('[A-Za-z0-9_.-]{1,100}', entry.name) or re.search(\n         \
-            \                   'password|secret|token|credential|config|properties|yaml|yml', entry.name,\
-            \ re.I):\n                        continue\n                    i = entry.stat(follow_symlinks=False)\n\
+            \                  if time.monotonic() > deadline or len(stack) + count >= 50000:\n      \
+            \                  return {'allocatedBytes': total, 'entries': count, 'complete': False}\n\
+            \                    stack.append(Path(entry.path))\n    return {'allocatedBytes': total,\
+            \ 'entries': count, 'complete': True}\n\n\ndef deployment_disk():\n    report = []\n    deadline\
+            \ = time.monotonic() + 30\n    for path in ['/var/lib/cyf-api-flow/downloads', '/var/lib/cyf-api-flow/releases',\n\
+            \                 '/var/lib/cyf-web-flow/downloads', '/var/lib/cyf-web-flow/releases',\n \
+            \                '/home/isp/hosts/cyf/api', '/opt/cyf/output-scanner',\n                 '/var/lib/cyf-output-scanner']:\n\
+            \        row = {'path': path}\n        if time.monotonic() > deadline:\n            report.append({'path':\
+            \ path, 'status': 'scan_budget_exhausted', 'truncated': True})\n            break\n      \
+            \  try:\n            info = os.lstat(path)\n            if not stat.S_ISDIR(info.st_mode):\n\
+            \                row['directory'] = False\n                report.append(row)\n          \
+            \      continue\n            disk = os.statvfs(path)\n            row.update(device=info.st_dev,\
+            \ totalBytes=disk.f_blocks*disk.f_frsize,\n                       availableBytes=disk.f_bavail*disk.f_frsize)\n\
+            \            row['children'] = []\n            with os.scandir(path) as entries:\n       \
+            \         for entry in entries:\n                    if len(row['children']) >= 80 or time.monotonic()\
+            \ > deadline:\n                        row['truncated'] = True\n                        break\n\
+            \                    if not re.fullmatch('[A-Za-z0-9_.-]{1,100}', entry.name) or re.search(\n\
+            \                            'password|secret|token|credential|config|properties|yaml|yml',\
+            \ entry.name, re.I):\n                        continue\n                    i = entry.stat(follow_symlinks=False)\n\
             \                    item = {'name': entry.name, 'uid': i.st_uid, 'mode': oct(stat.S_IMODE(i.st_mode)),\n\
             \                            'mtimeEpoch': int(i.st_mtime), 'symlink': stat.S_ISLNK(i.st_mode)}\n\
             \                    if stat.S_ISDIR(i.st_mode):\n                        item.update(allocated_tree(entry.path,\

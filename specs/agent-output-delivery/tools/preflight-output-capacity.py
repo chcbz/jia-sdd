@@ -50,7 +50,7 @@ def allocated_tree(path, deadline):
         if stat.S_ISDIR(info.st_mode):
             with os.scandir(item) as entries:
                 for entry in entries:
-                    if len(stack) + count >= 50000:
+                    if time.monotonic() > deadline or len(stack) + count >= 50000:
                         return {'allocatedBytes': total, 'entries': count, 'complete': False}
                     stack.append(Path(entry.path))
     return {'allocatedBytes': total, 'entries': count, 'complete': True}
@@ -64,6 +64,9 @@ def deployment_disk():
                  '/home/isp/hosts/cyf/api', '/opt/cyf/output-scanner',
                  '/var/lib/cyf-output-scanner']:
         row = {'path': path}
+        if time.monotonic() > deadline:
+            report.append({'path': path, 'status': 'scan_budget_exhausted', 'truncated': True})
+            break
         try:
             info = os.lstat(path)
             if not stat.S_ISDIR(info.st_mode):
