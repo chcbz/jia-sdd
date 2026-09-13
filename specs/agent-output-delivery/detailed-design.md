@@ -63,6 +63,8 @@ R1 不开放通用远程 Agent 工作空间读 API。普通未转发到外接 Ag
 
 Agent HTTP Authorization 使用该 ticket；用户 JWT 不能调用 Agent 写接口。token 不进入 prompt/manifest/子进程环境，在桥接进程内存保存，断线重启重新通过绑定 WS 取得；source/producer/binding 的动态有效性每次 mutation 再查。原 runtime 记录用于溯源，上传恢复可由相同未吊销 binding 的新已认证 runtime 执行；这不授予旧 work lease，新策略提交仍必须匹配服务端当前 lease/CAS。重新派发、换 Agent、撤权或恢复截止后拒绝新的发布/提交，已发布用户副本继续保留。
 
+2026-09-13 集成兼容修订：本需求尚未发布的任务成果 POST 改为 `/agent/tasks/{taskId}/output-publications`，保留已上线用户 JWT 的 `/agent/tasks/{taskId}/artifacts` 上传接口。用户列表、版本及下载 GET 仍使用 `/artifacts`。两类 POST 的认证链按独立路径匹配，不凭请求体、Idempotency-Key 是否存在或认证失败回退来切换身份协议。operationId、请求/响应结构及幂等语义不变；API 与 Agent 客户端必须使用同一修订。依据见 `evidence/OD11/publication-route-amendment.md`。
+
 对象 ticket 不授予 arbitrary URI、文件路径或管理员权限。限频默认每 binding 60 次 auth/min；超限 429。token 元数据在 `output_access_ticket` 独立表持久化，过期批量清理。
 
 鉴权引导例外：尚无主体时，只允许用服务端计算的 bearer SHA-256 精确查询 `BINARY(32) ticket_hash`，由持久行建立 scope；请求传入的 tenant/client/run/binding 不得决定主体。此后资源和业务查询必须使用行派生的精确 scope 并动态校验授权，仍遵守同一未撤销 binding 的新 runtime 恢复规则。普通资源 ID 不享有无 scope 查询例外。签发限频在同一精确 binding 行锁下完成窗口计数与 ticket 插入，可添加非唯一索引 `(tenant_id,client_id,binding_id,created_at)`。

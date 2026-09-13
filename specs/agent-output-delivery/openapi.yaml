@@ -240,14 +240,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadResponse'
-  /agent/tasks/{taskId}/artifacts:
+  /agent/tasks/{taskId}/output-publications:
     post:
       operationId: publishTaskOutput
       x-release: R1
       security:
       - RunTicket: []
       description: Exact run/source/producer and version checks. Task publishToOwner
-        is an explicit release; never marks task accepted.
+        is an explicit release; never marks task accepted. This dedicated run-ticket
+        route is separate from the existing user-JWT artifact upload API.
       parameters:
       - name: taskId
         in: path
@@ -284,6 +285,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TaskPublish'
+  /agent/tasks/{taskId}/artifacts:
     get:
       operationId: listTaskOutputs
       x-release: R1

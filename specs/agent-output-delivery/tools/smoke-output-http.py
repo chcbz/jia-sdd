@@ -145,6 +145,7 @@ def main():
     sid, oid = quote(args.source_id, safe=""), quote(output_id, safe="")
     task = args.source_type == "TASK"
     prefix = f"/agent/tasks/{sid}/artifacts" if task else f"/chat/conversations/{sid}/outputs"
+    publication_path = f"/agent/tasks/{sid}/output-publications" if task else prefix
     kind = "Task" if task else "Chat"
     try:
         if not args.read_only:
@@ -181,10 +182,10 @@ def main():
             else:
                 body.update(outputId=output_id, version="1")
             publish_key = "probe-publish-" + uuid.uuid4().hex
-            published, original = request("publish" + kind + "Output", "POST", prefix, ticket, body, publish_key)
+            published, original = request("publish" + kind + "Output", "POST", publication_path, ticket, body, publish_key)
             require(published["outputId"] == output_id and published["version"] == "1",
                     "Publication returned a different output version")
-            _, replay = request("publish" + kind + "Output", "POST", prefix, ticket, body, publish_key)
+            _, replay = request("publish" + kind + "Output", "POST", publication_path, ticket, body, publish_key)
             require(original == replay, "Publication did not replay its original response bytes")
         detail_path = prefix + f"/{oid}/versions/1"
         versions_path = prefix + f"/{oid}/versions"

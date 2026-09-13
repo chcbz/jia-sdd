@@ -95,7 +95,7 @@ flowchart LR
 | `PUT /agent/output-uploads/{uploadId}/content` | 文件字节、受限上传凭证 | 流式接收；一期失败重传整文件，相同已验证字节可返回成功 |
 | `POST /agent/output-uploads/{uploadId}/complete` | 幂等键 | `uploadId,status,objectId?`；校验中 202，READY 后才返回可登记对象 |
 | `GET /agent/output-uploads/{uploadId}` | 原上传身份 | 上传状态和失败原因；不暴露存储密钥 |
-| `POST /agent/tasks/{taskId}/artifacts` | 现有 publish 版本字段 + 正文或 `objectId`、可信运行关联 | 正式成果确切版本；Agent 成员/生产者授权；HTTP首发；未来WS适配共用同语义服务 |
+| `POST /agent/tasks/{taskId}/output-publications` | publish 版本字段 + 正文或 `objectId`、可信 run ticket | 发布确切成果版本，可显式分享给用户；不代表正式提交或验收。与已上线用户 JWT 的 `/artifacts` 上传接口分开鉴权。 |
 | `GET /agent/tasks/{taskId}/artifacts` | `cursor,limit` | 用户可见成果摘要、版本、size、MIME、state、下一页游标 |
 | `GET /agent/tasks/{taskId}/artifacts/{artifactId}/versions/{version}` | 用户 JWT | 详情、正文或受控预览能力；不输出内部 URI |
 | `GET /agent/tasks/{taskId}/artifacts/{artifactId}/versions/{version}/download` | 用户 JWT | 再鉴权后流式下载或 302 短期受限 URL |

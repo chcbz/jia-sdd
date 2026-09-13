@@ -106,6 +106,15 @@ class Controls(unittest.TestCase):
                 self.assertEqual(0, result)
                 if readonly:
                     self.assertTrue(all(r.method == "GET" for r in transport.calls))
+                elif kind == "TASK":
+                    publications = [r for r in transport.calls if r.method == "POST" and
+                                    probe.urlsplit(r.full_url).path == "/agent/tasks/source-test/output-publications"]
+                    self.assertEqual(2, len(publications))
+                    self.assertTrue(all(r.get_header("Authorization") == "Bearer synthetic-run-secret"
+                                        for r in publications))
+                    self.assertFalse(any(r.method == "POST" and
+                                         probe.urlsplit(r.full_url).path == "/agent/tasks/source-test/artifacts"
+                                         for r in transport.calls))
 
     def test_status_bytes_metadata_and_cache_faults_fail(self):
         for fault in ("replay_status", "bytes", "metadata", "cache", "list_source", "empty_list"):
