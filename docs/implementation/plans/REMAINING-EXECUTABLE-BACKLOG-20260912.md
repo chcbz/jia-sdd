@@ -1,5 +1,12 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 09:27 CST delta
+
+- E04 authoritative completion unlock17ebb and F02 scoped immutable storagee343 collected and merged, preserving independently pushed login/form/CORS80383. New APIdevelop72f03/tree5c8ff4da is in Run35 (78selectors); prior foreignRun34 built80383 successfully but deployment failed, not current production. API33 remains lastverified until35hostproof.
+- Web runtime dependency missing-only9cd7 integrated10c4/tree5b1298b; main18targetedtestsPASS. AutoRun96 nowrunning; no extra manualStart. Alloriginalruntimechecks/packages/GPG/cache retained, actualspeedgain still unproven. Web95 remains lastverified until96hostproof.
+- All three Owner candidates are collected with clean worktrees, no independentReviewer. F02 remains defaultOFF/internalservice API only, without publicupload/downloadadapter or automaticorphanGC. E03activation and realbusiness/client/provideracceptance are not closed by these runs. Exactrunmonitors35/96registered; old emailcounters preserved.
+
+
 ## 23:48 CST delta (current verified release pair)
 
 - API develop270ae185 / Run33 SUCCESS: E02 recommendation and stored coordinator projection released; JAR12c29e32, receipt52f23bad, PID2843894/10018 healthUP. Initial disk admission failure69511830 happened before lifecycle; one same-artifact retry69511949 succeeded after clean completed-worktree reclamation. Cold startup533s. Run32's2fixturefailures were corrected, not relabeled green.
