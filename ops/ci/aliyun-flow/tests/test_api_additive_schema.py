@@ -1,4 +1,5 @@
 """Offline-only adversarial tests for the exact F06 additive schema runner."""
+import copy
 import fcntl
 import hashlib
 import importlib.machinery
@@ -75,6 +76,123 @@ def expected_rows(table, collation):
     return rows
 
 
+def synthetic_show_rows(table, collation):
+    """Offline ONLY: model SHOW for the uncreated table; not live evidence."""
+    spec = f06.EXPECTED_TABLES[table]
+    lines = []
+    for name, sql_type, nullable, default, extra in spec['columns']:
+        assert default is None
+        lines.append('  `%s` %s %s%s' % (
+            name, sql_type, 'NOT NULL' if nullable == 'NO' else 'DEFAULT NULL',
+            ' AUTO_INCREMENT' if extra == 'auto_increment' else ''))
+    for name, non_unique, columns, kind in spec['indexes']:
+        prefix = ('PRIMARY KEY' if name == 'PRIMARY' else
+                  ('KEY' if non_unique else 'UNIQUE KEY') + ' `%s`' % name)
+        lines.append('  %s (%s)' % (prefix, ','.join('`%s`' % col for col in columns)))
+    for name, clause in sorted(spec['checks'].items()):
+        lines.append('  CONSTRAINT `%s` CHECK (%s)' % (name, ' '.join(clause.split())))
+    return ([[table, 'CREATE TABLE `%s` (' % table]] +
+            [[line + (',' if at < len(lines) - 1 else '')] for at, line in enumerate(lines)] +
+            [[') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=' + collation]])
+
+
+# Literal read-only Run49 observation, MySQL 8.0.21; no observed columns.
+# /var/tmp/cyf-f06-run49-metadata-diagnostic/metadata.json SHA256:
+# f8846b038a27a2ecbb40b2fb74f8314ded59f74d18963f26cf24cc405d2f9f81
+RUN49_METADATA = {'checks': {'agent_task_artifact_outcome': {'chk_artifact_outcome_digest': '(char_length(`decision_digest`) = 64)',
+                                            'chk_artifact_outcome_state': '(`outcome_state` in '
+                                                                          "(_utf8mb4\\'accepted\\',_utf8mb4\\'superseded\\'))",
+                                            'chk_artifact_outcome_supersession': "(((`outcome_state` = _utf8mb4\\'accepted\\') and "
+                                                                                 '(`superseded_by_artifact_id` is null) and '
+                                                                                 '(`superseded_by_artifact_version` is null)) or '
+                                                                                 "((`outcome_state` = _utf8mb4\\'superseded\\') and "
+                                                                                 '(`superseded_by_artifact_id` is not null) and '
+                                                                                 '(`superseded_by_artifact_version` >= 1) and '
+                                                                                 '((`artifact_id` <> `superseded_by_artifact_id`) or '
+                                                                                 '(`artifact_version` <> '
+                                                                                 '`superseded_by_artifact_version`))))',
+                                            'chk_artifact_outcome_versions': '((`artifact_version` >= 1) and (`version` >= 1) and '
+                                                                             '(`decided_at` > 0))'},
+            'agent_task_artifact_outcome_decision': {}},
+ 'columns': {'agent_task_artifact_outcome': [], 'agent_task_artifact_outcome_decision': []},
+ 'constraints': {'agent_task_artifact_outcome': {'PRIMARY': ['PRIMARY KEY', 'YES'],
+                                                 'chk_artifact_outcome_digest': ['CHECK', 'YES'],
+                                                 'chk_artifact_outcome_state': ['CHECK', 'YES'],
+                                                 'chk_artifact_outcome_supersession': ['CHECK', 'YES'],
+                                                 'chk_artifact_outcome_versions': ['CHECK', 'YES'],
+                                                 'uk_artifact_outcome_version': ['UNIQUE', 'YES']},
+                 'agent_task_artifact_outcome_decision': {}},
+ 'indexes': {'agent_task_artifact_outcome': {'PRIMARY': [[0, 1, 'id', None, 'BTREE', 'A', 'YES']],
+                                             'idx_artifact_outcome_decision': [[1, 1, 'tenant_id', None, 'BTREE', 'A', 'YES'],
+                                                                               [1, 2, 'client_id', None, 'BTREE', 'A', 'YES'],
+                                                                               [1, 3, 'task_id', None, 'BTREE', 'A', 'YES'],
+                                                                               [1, 4, 'decision_id', None, 'BTREE', 'A', 'YES'],
+                                                                               [1, 5, 'id', None, 'BTREE', 'A', 'YES']],
+                                             'idx_artifact_outcome_superseded_by': [[1, 1, 'tenant_id', None, 'BTREE', 'A', 'YES'],
+                                                                                    [1, 2, 'client_id', None, 'BTREE', 'A', 'YES'],
+                                                                                    [1, 3, 'task_id', None, 'BTREE', 'A', 'YES'],
+                                                                                    [1, 4, 'superseded_by_artifact_id', None, 'BTREE', 'A',
+                                                                                     'YES'],
+                                                                                    [1, 5, 'superseded_by_artifact_version', None, 'BTREE',
+                                                                                     'A', 'YES']],
+                                             'idx_artifact_outcome_task_state': [[1, 1, 'tenant_id', None, 'BTREE', 'A', 'YES'],
+                                                                                 [1, 2, 'client_id', None, 'BTREE', 'A', 'YES'],
+                                                                                 [1, 3, 'task_id', None, 'BTREE', 'A', 'YES'],
+                                                                                 [1, 4, 'outcome_state', None, 'BTREE', 'A', 'YES'],
+                                                                                 [1, 5, 'decided_at', None, 'BTREE', 'A', 'YES'],
+                                                                                 [1, 6, 'id', None, 'BTREE', 'A', 'YES']],
+                                             'uk_artifact_outcome_version': [[0, 1, 'tenant_id', None, 'BTREE', 'A', 'YES'],
+                                                                             [0, 2, 'client_id', None, 'BTREE', 'A', 'YES'],
+                                                                             [0, 3, 'artifact_id', None, 'BTREE', 'A', 'YES'],
+                                                                             [0, 4, 'artifact_version', None, 'BTREE', 'A', 'YES']]},
+             'agent_task_artifact_outcome_decision': {}},
+ 'schema_charset': 'utf8',
+ 'schema_collation': 'utf8_general_ci',
+ 'tables': {'agent_task_artifact_outcome': ['innodb', 'utf8mb4_0900_ai_ci']}}
+RUN49_GRANTS = ['GRANT USAGE ON *.* TO `cyf_f06_schema_runner`@`localhost`',
+ 'GRANT CREATE ON `jia`.`agent_task_artifact_outcome_decision` TO `cyf_f06_schema_runner`@`localhost`',
+ 'GRANT CREATE ON `jia`.`agent_task_artifact_outcome` TO `cyf_f06_schema_runner`@`localhost`']
+
+
+# Actual CREATE-only SHOW readback; SHA256 of shared show-create.json:
+# 08aab10b81368ab50f8f03002ea89b758110cbba6e725588420a7c56d11bf6c3
+RUN49_SHOW_ROWS = [['agent_task_artifact_outcome', 'CREATE TABLE `agent_task_artifact_outcome` ('],
+ ["  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Primary key',"],
+ ["  `task_id` varchar(100) NOT NULL COMMENT 'Task ID copied for exact scope fencing',"],
+ ["  `artifact_id` varchar(100) NOT NULL COMMENT 'Stable logical artifact ID',"],
+ ["  `artifact_version` int NOT NULL COMMENT 'Exact immutable artifact version',"],
+ ["  `outcome_state` varchar(20) NOT NULL COMMENT 'accepted/superseded',"],
+ ["  `superseded_by_artifact_id` varchar(100) DEFAULT NULL COMMENT 'Accepted replacement artifact ID',"],
+ ["  `superseded_by_artifact_version` int DEFAULT NULL COMMENT 'Accepted replacement artifact version',"],
+ ["  `decision_id` varchar(100) NOT NULL COMMENT 'Caller supplied scoped idempotency identity',"],
+ ["  `decision_digest` char(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',"],
+ ["  `decided_by_agent_id` varchar(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',"],
+ ["  `decided_at` bigint NOT NULL COMMENT 'Decision time',"],
+ ["  `version` bigint NOT NULL COMMENT 'Outcome optimistic lock version; implicit draft is zero',"],
+ ["  `tenant_id` varchar(50) NOT NULL COMMENT 'Owner jiacn scope',"],
+ ["  `client_id` varchar(50) NOT NULL COMMENT 'OAuth/API client scope',"],
+ ["  `create_time` bigint DEFAULT NULL COMMENT 'Create time',"],
+ ["  `update_time` bigint DEFAULT NULL COMMENT 'Last modified time',"], ['  PRIMARY KEY (`id`),'],
+ ['  UNIQUE KEY `uk_artifact_outcome_version` (`tenant_id`,`client_id`,`artifact_id`,`artifact_version`),'],
+ ['  KEY `idx_artifact_outcome_task_state` '
+  '(`tenant_id`,`client_id`,`task_id`,`outcome_state`,`decided_at`,`id`),'],
+ ['  KEY `idx_artifact_outcome_decision` (`tenant_id`,`client_id`,`task_id`,`decision_id`,`id`),'],
+ ['  KEY `idx_artifact_outcome_superseded_by` '
+  '(`tenant_id`,`client_id`,`task_id`,`superseded_by_artifact_id`,`superseded_by_artifact_version`),'],
+ ['  CONSTRAINT `chk_artifact_outcome_digest` CHECK ((char_length(`decision_digest`) = 64)),'],
+ ['  CONSTRAINT `chk_artifact_outcome_state` CHECK ((`outcome_state` in '
+  "(_utf8mb4'accepted',_utf8mb4'superseded'))),"],
+ ["  CONSTRAINT `chk_artifact_outcome_supersession` CHECK ((((`outcome_state` = _utf8mb4'accepted') and "
+  '(`superseded_by_artifact_id` is null) and (`superseded_by_artifact_version` is null)) or '
+  "((`outcome_state` = _utf8mb4'superseded') and (`superseded_by_artifact_id` is not null) and "
+  '(`superseded_by_artifact_version` >= 1) and ((`artifact_id` <> `superseded_by_artifact_id`) or '
+  '(`artifact_version` <> `superseded_by_artifact_version`))))),'],
+ ['  CONSTRAINT `chk_artifact_outcome_versions` CHECK (((`artifact_version` >= 1) and (`version` >= 1) and '
+  '(`decided_at` > 0)))'],
+ [") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Scoped current "
+  "accepted/superseded state for immutable task artifact versions'"]]
+
+
 FAKE_MYSQL = r'''#!/usr/bin/python3
 import json
 import os
@@ -104,6 +222,8 @@ for raw in sys.stdin:
         print(marker.group(1), flush=True)
         continue
     state = load()
+    state.setdefault('commands', []).append(statement)
+    save(state)
     if 'GET_LOCK(' in statement:
         print(str(state.get('db_lock_result', 1)), flush=True)
         continue
@@ -115,6 +235,16 @@ for raw in sys.stdin:
         tag = tag_match.group(1)
         if state.get('metadata_error_tag') == tag:
             print('fixture metadata failure', file=sys.stderr, flush=True)
+            continue
+        if tag in ('SHOWFIRST', 'SHOWSECOND'):
+            table = sorted(state['tables'])[0 if tag == 'SHOWFIRST' else 1]
+            emit(state['show_rows'].get(table, []))
+            continue
+        if tag == 'GRANTS':
+            emit([[value] for value in state['grants']])
+            continue
+        if tag == 'DEFAULTS':
+            emit(state['default_rows'])
             continue
         if tag == 'SCHEMA':
             emit(state['schema_rows'])
@@ -172,7 +302,10 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         self.collation = 'utf8mb4_0900_ai_ci'
         expected = {table: expected_rows(table, self.collation) for table in f06.TABLE_ORDER}
         self.state = {
-            'schema_rows': [[hx('utf8mb4'), hx(self.collation)]],
+            'schema_rows': [[hx('utf8'), hx('utf8_general_ci')]],
+            'default_rows': [[hx(self.collation)]],
+            'grants': list(RUN49_GRANTS),
+            'show_rows': {},
             'expected': expected,
             'tables': {table: 'absent' for table in f06.TABLE_ORDER},
             'creates': [],
@@ -392,6 +525,278 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
                 self.assertEqual(payload['error'], 'existing_schema_drift')
                 self.assertIn(mismatch, payload['tables'][f06.TABLE_ORDER[0]]['mismatches'])
                 self.assertEqual(self.read_state()['creates'], [])
+
+    def use_run49_metadata(self, complete_synthetic_columns=False):
+        # All visible metadata below is the real snapshot. Only the opt-in
+        # positive case adds synthetic contract columns, NOT production evidence.
+        metadata = copy.deepcopy(RUN49_METADATA)
+        self.state['schema_rows'] = [[hx(metadata['schema_charset']), hx(metadata['schema_collation'])]]
+        first = f06.TABLE_ORDER[0]
+        self.state['tables'][first] = 'equivalent'
+        self.state['show_rows'][first] = copy.deepcopy(RUN49_SHOW_ROWS)
+        for table in f06.TABLE_ORDER:
+            if table not in metadata['tables']:
+                continue
+            rows = self.state['expected'][table]
+            rows['TABLES'] = []
+            if table in metadata['tables']:
+                engine, collation = metadata['tables'][table]
+                rows['TABLES'] = [[hx(table), hx(engine), hx(collation)]]
+            if not complete_synthetic_columns:
+                rows['COLUMNS'] = []
+            rows['CHECKS'] = [[hx(table), hx(name), hx(clause)]
+                              for name, clause in sorted(metadata['checks'][table].items())]
+            rows['CONSTRAINTS'] = [[hx(table), hx(name), hx(kind), hx(enforced)]
+                                   for name, (kind, enforced) in
+                                   sorted(metadata['constraints'][table].items())]
+            rows['STATISTICS'] = []
+            for name, entries in sorted(metadata['indexes'][table].items()):
+                for non_unique, seq, col, sub, kind, direction, visible in entries:
+                    rows['STATISTICS'].append([
+                        hx(table), hx(name), str(non_unique), str(seq), hx(col),
+                        '-' if sub is None else '+' + str(sub), hx(kind), hx(direction), hx(visible)])
+        self.write_state()
+
+    def test_run49_create_only_uses_actual_show_without_new_grants_or_first_recreate(self):
+        self.use_run49_metadata()
+        second = f06.TABLE_ORDER[1]
+        self.state['expected'][second]['COLUMNS'] = []
+        self.state['show_rows'][second] = synthetic_show_rows(second, self.collation)
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertEqual(result.returncode, 0, payload)
+        self.assertEqual(payload['tables'][f06.TABLE_ORDER[0]]['status'], 'existing_equivalent')
+        self.assertEqual(payload['tables'][f06.TABLE_ORDER[1]]['status'], 'created_equivalent')
+        self.assertEqual(self.read_state()['creates'], [f06.TABLE_ORDER[1]])
+        self.assertEqual(self.read_state()['grants'], RUN49_GRANTS)
+
+    def test_real_show_is_complete_and_unknown_syntax_or_any_contract_drift_is_rejected(self):
+        first = f06.TABLE_ORDER[0]
+        columns = f06.parse_show_create(RUN49_SHOW_ROWS, first, self.collation)
+        self.assertEqual(len(columns), 16)
+        self.assertEqual(tuple(col[1:6] for col in columns), f06.EXPECTED_TABLES[first]['columns'])
+        changes = [
+            ('`id` bigint', '`id` int'),
+            ('bigint NOT NULL AUTO_INCREMENT', 'bigint DEFAULT NULL AUTO_INCREMENT'),
+            ('NOT NULL AUTO_INCREMENT', 'NOT NULL'),
+            ('varchar(100) NOT NULL', "varchar(100) NOT NULL DEFAULT 'evil'"),
+            ('varchar(100) NOT NULL', 'varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL'),
+            ('varchar(100) NOT NULL', 'varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL'),
+            ('UNIQUE KEY `uk_', 'KEY `uk_'),
+            ('`client_id`,`artifact_id`', '`task_id`,`artifact_id`'),
+            ('ENGINE=InnoDB', 'ENGINE=MyISAM'),
+            ('CHARSET=utf8mb4', 'CHARSET=utf8'),
+            ('COLLATE=utf8mb4_0900_ai_ci', 'COLLATE=utf8mb4_bin'),
+            ('_utf8mb4', '_latin1'),
+            ("'accepted'", "'accept`ed'"),
+            (' >= 1', ' > 1'),
+            (' and ', ' or '),
+            ("COMMENT 'Primary key'", "COMMENT 'Primary key' INVISIBLE"),
+            ('(`id`)', '(`id`(1))'),
+            ("= 64)),", "= 64)) NOT ENFORCED,"),
+            ('NOT NULL AUTO_INCREMENT', 'NOT NULL AUTO_INCREMENT ON UPDATE 1'),
+        ]
+        for before, after in changes:
+            with self.subTest(change=(before, after)):
+                rows = [[field.replace(before, after) for field in row] for row in RUN49_SHOW_ROWS]
+                self.assertNotEqual(rows, RUN49_SHOW_ROWS)
+                with self.assertRaises(f06.SchemaError):
+                    f06.parse_show_create(rows, first, self.collation)
+        malformed = [[], RUN49_SHOW_ROWS[:-1], RUN49_SHOW_ROWS[:1] + RUN49_SHOW_ROWS[2:]]
+        reordered = copy.deepcopy(RUN49_SHOW_ROWS)
+        reordered[1], reordered[2] = reordered[2], reordered[1]
+        malformed.extend([reordered, RUN49_SHOW_ROWS + [['trailing SQL']],
+                          [[first + '_foreign', RUN49_SHOW_ROWS[0][1]]] + RUN49_SHOW_ROWS[1:]])
+        for rows in malformed:
+            with self.subTest(rows=rows[:1]):
+                with self.assertRaises(f06.SchemaError):
+                    f06.parse_show_create(rows, first, self.collation)
+
+    def test_valid_show_does_not_mask_information_schema_indexes_checks_or_table_drift(self):
+        for drift in ('index_drift', 'constraint_drift', 'check_drift', 'collation_drift'):
+            with self.subTest(drift=drift):
+                self.use_run49_metadata()
+                self.state['tables'][f06.TABLE_ORDER[0]] = drift
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'existing_schema_drift')
+                self.assertEqual(self.read_state()['creates'], [])
+
+    def test_zero_columns_without_complete_show_remains_blocked_before_ddl(self):
+        self.use_run49_metadata()
+        self.state['show_rows'] = {}
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'show_create_metadata_invalid')
+        self.assertEqual(self.read_state()['creates'], [])
+        self.state['metadata_error_tag'] = 'SHOWFIRST'
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'metadata_visibility_show_create_failed')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_run49_visible_metadata_with_synthetic_complete_columns_is_equivalent(self):
+        self.use_run49_metadata(complete_synthetic_columns=True)
+        result, payload = self.execute()  # plan: second table remains absent
+        self.assertEqual(result.returncode, 0, payload)
+        self.assertEqual(payload['tables'][f06.TABLE_ORDER[0]]['status'], 'existing_equivalent')
+        self.assertEqual(payload['tables'][f06.TABLE_ORDER[1]]['status'], 'planned_create')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_both_absent_tables_need_exact_create_before_first_ddl_not_new_privileges(self):
+        for missing in f06.TABLE_ORDER:
+            with self.subTest(missing=missing):
+                self.state['grants'] = [grant for grant in RUN49_GRANTS if '`%s`' % missing not in grant]
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'exact_table_create_privilege_required')
+                self.assertEqual(payload['failed_table'], missing)
+                self.assertEqual(self.read_state()['creates'], [])
+
+    def test_privilege_scope_column_grant_and_query_failure_are_fail_closed(self):
+        valid = list(self.state['grants'])
+        changes = [
+            ('`jia`.`%s`' % f06.TABLE_ORDER[1], '`jia`.*'),
+            ('`jia`.', '`other`.'),
+            ('CREATE', 'CREATE, SELECT'),
+            ('CREATE', 'CREATE, REFERENCES (`id`)'),
+            ('@`localhost`', '@`%`'),
+            ('@`localhost`', '@`localhost` WITH GRANT OPTION'),
+        ]
+        for before, after in changes:
+            with self.subTest(change=(before, after)):
+                self.state['grants'] = [valid[0], valid[1].replace(before, after), valid[2]]
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'metadata_privilege_scope_invalid')
+                self.assertEqual(self.read_state()['creates'], [])
+        self.state['grants'] = valid
+        self.state['metadata_error_tag'] = 'GRANTS'
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'metadata_privilege_query_failed')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_existing_create_grants_suffice_but_references_does_not_imply_create(self):
+        self.state['grants'] = list(RUN49_GRANTS)
+        self.write_state()
+        result, payload = self.execute()
+        self.assertEqual(result.returncode, 0, payload)
+        self.state['grants'] = [grant.replace('GRANT CREATE ', 'GRANT REFERENCES ')
+                                for grant in self.state['grants']]
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'exact_table_create_privilege_required')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_column_collation_and_unique_scope_remain_exact(self):
+        first = f06.TABLE_ORDER[0]
+        self.state['tables'][first] = 'equivalent'
+        changes = [
+            ('COLUMNS', 1, 7, optional('utf8'), 'column_charset'),
+            ('COLUMNS', 1, 8, optional('utf8mb4_bin'), 'column_collation'),
+            ('STATISTICS', -1, 2, '1', 'index_attributes'),
+            ('STATISTICS', -1, 4, hx('task_id'), 'indexes'),
+        ]
+        for tag, row, field, value, mismatch in changes:
+            with self.subTest(change=(tag, field, value)):
+                self.state['expected'][first] = expected_rows(first, self.collation)
+                self.state['expected'][first][tag][row][field] = value
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(mismatch, payload['tables'][first]['mismatches'])
+                self.assertEqual(self.read_state()['creates'], [])
+
+    def test_partial_columns_and_post_create_invisible_columns_never_pass(self):
+        first = f06.TABLE_ORDER[0]
+        full = copy.deepcopy(self.state['expected'][first]['COLUMNS'])
+        for columns in (full[:1], full[:-1]):
+            with self.subTest(columns=len(columns)):
+                self.state['tables'][first] = 'equivalent'
+                self.state['expected'][first]['COLUMNS'] = columns
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('columns', payload['tables'][first]['mismatches'])
+                self.assertEqual(self.read_state()['creates'], [])
+        self.state['tables'][first] = 'absent'
+        self.state['expected'][first]['COLUMNS'] = []
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'created_table_not_equivalent')
+        self.assertIn('post_create_introspection', payload['tables'][first]['mismatches'])
+        self.assertEqual(self.read_state()['creates'], [first])
+        self.assertEqual(self.read_state()['tables'][first], 'equivalent')  # durable, not dropped
+        self.assertEqual(self.read_state()['tables'][f06.TABLE_ORDER[1]], 'absent')
+
+    def test_explicit_charset_uses_exact_session_default_not_any_utf8mb4_collation(self):
+        first = f06.TABLE_ORDER[0]
+        self.state['tables'][first] = 'equivalent'
+        # Table+columns consistently drifted together still must not pass.
+        for actual in ('utf8mb4_general_ci', 'utf8mb4_bin'):
+            with self.subTest(actual=actual):
+                self.state['expected'][first] = expected_rows(first, actual)
+                self.write_state()
+                result, payload = self.execute()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('table_collation', payload['tables'][first]['mismatches'])
+        # general_ci is equivalent only when the same CREATE would use it.
+        self.state['default_rows'] = [[hx('utf8mb4_general_ci')]]
+        self.state['expected'][first] = expected_rows(first, 'utf8mb4_general_ci')
+        self.write_state()
+        result, payload = self.execute()
+        self.assertEqual(result.returncode, 0, payload)
+        for rows in ([], [['']], [[hx('utf8mb4_bin')]], [[hx(self.collation)], [hx(self.collation)]]):
+            with self.subTest(default_rows=rows):
+                self.state['default_rows'] = rows
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'create_collation_metadata_invalid')
+                self.assertEqual(self.read_state()['creates'], [])
+
+    def test_actual_escaped_checks_preserve_literals_operators_and_boolean_structure(self):
+        first = f06.TABLE_ORDER[0]
+        checks = RUN49_METADATA['checks'][first]
+        for name, clause in checks.items():
+            self.assertEqual(f06.normalized_check(clause),
+                             f06.normalized_check(f06.EXPECTED_TABLES[first]['checks'][name]))
+        clause = checks['chk_artifact_outcome_supersession']
+        changes = [
+            ('accepted', 'Accepted'), ('accepted', 'accept`ed'),
+            ('accepted', "accept''ed"), ('accepted', r'accep\ted'),
+            ('_utf8mb4', '_latin1'), ('_utf8mb4', '_binary'),
+            (">= 1", "> 1"), (' is null', ' is not null'),
+            (' and ', ' or '), (' or ', ' and '), (' <> ', ' = '),
+            (r"\'accepted\'", r"\'accepted'"),
+            (r"\'accepted\'", r"'accepted\'"),
+        ]
+        self.use_run49_metadata(complete_synthetic_columns=True)
+        original = copy.deepcopy(self.state['expected'][first]['CHECKS'])
+        for before, after in changes:
+            with self.subTest(change=(before, after)):
+                self.assertIn(before, clause)
+                self.state['expected'][first]['CHECKS'] = [
+                    [row[0], row[1], hx(clause.replace(before, after, 1))]
+                    if row[1] == hx('chk_artifact_outcome_supersession') else row for row in original]
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('check_clause:chk_artifact_outcome_supersession',
+                              payload['tables'][first]['mismatches'])
+                self.assertEqual(self.read_state()['creates'], [])
+        # Previously global backtick removal silently changed literal contents.
+        self.assertNotEqual(f06.normalized_check("outcome_state = 'accept`ed'"),
+                            f06.normalized_check("outcome_state = 'accepted'"))
 
     def test_runner_file_lock_waits_without_backend_or_schema_mutation(self):
         lock_path = self.root / 'f06-runner.lock'
