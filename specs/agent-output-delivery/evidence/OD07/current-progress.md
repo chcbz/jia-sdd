@@ -1,6 +1,15 @@
 # OD07 current checkpoint
 
-2026-09-13: active, not accepted. Sole product writer `/root/od01_source_auth` owns API worktree. OD06 development ACCEPT remains in ../OD06/accepted-r1-development-review.md; R1 release gaps stay open. Web212bfe4 and client714b4aa are unchanged.
+2026-09-13 latest: active API review repair, not accepted. Sole product writer `/root/od01_source_auth` owns API worktree. OD06 development ACCEPT remains in ../OD06/accepted-r1-development-review.md; R1 release gaps stay open. Web212bfe4 and client714b4aa are unchanged.
+
+- API candidate4c871209c1ea9aa49ec8b669b0d4936a0972b09b (after0e1fc189 implementation) was frozen and independently reviewed. Verdict REJECT:2 P1 findings (legacy dispatch fallback and no usable replacement run after release/expiry),1 P2 (lease past run recovery deadline); see review-4c871209.md, copied from the reviewer's final report without edits. Preferred adversarial provider failed; independent sol_reviewer fallback performed the review.
+- Reviewer inspected pre-repair affected440/440, actual policy1 MySQL4/4, actual funded-policy MySQL3/3 and M003A/configuration7/7 reports. These replace earlier failure checkpoints only within their verified scope; they did not cover the reported P1 scenarios. Root's complete candidate archive/command-source association remains due.
+- Writer is repairing strict dispatch admission, fresh trusted replacement commands/runs and run-deadline bounds. Writer reports targeted167/167; Root independently retained the subsequent actual MySQL4/4 XML in intermediate-review-repair-mysql/. Complete affected29-suite regression and frozen repair re-review remain due; client work is still locked.
+- User explicitly extended authorization through release (“继续，直到完成发布”); see ../OD11/release-authorization.md. This permits necessary reviewed push/integration/deployment later, not immediate publication of the rejected candidate. Root is performing read-only pipeline preparation; no feature deployment has occurred.
+
+## Historical implementation checkpoints
+
+The following records describe earlier working-tree/test states. The latest review/repair state above takes precedence; preserve failures and scoped repairs rather than rewriting history.
 
 - API3343342b committed M003A strict schema/entity/mapper preparation. Later uncommitted work corrects feature-off migration and adds run-bound lease core. Do not reset or cherry-pick over the writer's working tree.
 - Writer reported the first targeted `:agent:jia-agent-service:compileJava` passed for lease-core work. This is compile evidence reported by the operator, not business tests or a final-candidate association; actual command/log will accompany the frozen handoff. No broad suite is counted as passing.
