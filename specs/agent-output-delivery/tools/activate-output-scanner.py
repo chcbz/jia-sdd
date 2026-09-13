@@ -198,7 +198,7 @@ def startup_progress(activation_began):
     print(json.dumps(row, sort_keys=True), flush=True)
     if row['pid'] > 1:
         strict = row['uids'] == [986]*4 and row['gids'] == [986]*4
-        initial_transition = (row['credentialTransitionElapsedSeconds'] <= 15
+        initial_transition = (time.monotonic()-activation_began <= 15
             and row['uids'] in ([0]*4, [986]*4) and row['gids'] in ([0]*4, [986]*4))
         require(strict or initial_transition, 'progress_process_identity')
     return row
@@ -310,8 +310,8 @@ def main():
         result['configurationSha256'] = expected[CONFIG/'clamd.conf']
         phase = 'activate_scanner'
         activation_attempted = True
-        command(['/usr/bin/systemctl', 'enable', '--now', DAEMON], timeout=30)
         activation_began = time.monotonic()
+        command(['/usr/bin/systemctl', 'enable', '--now', DAEMON], timeout=30)
         deadline = activation_began+600
         next_progress = 0
         initial_state = unit_values(DAEMON)
