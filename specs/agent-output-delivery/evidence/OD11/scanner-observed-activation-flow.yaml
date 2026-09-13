@@ -67,7 +67,7 @@ stages:
             \                       stderr=subprocess.DEVNULL, timeout=timeout, check=False)\n\
             \    require(p.returncode==0 and len(p.stdout)<=65536, 'command_failed')\n\
             \    return p.stdout.decode('utf-8', errors='strict')\n\n\ndef unit_values(name):\n\
-            \    data = command(['/usr/bin/systemctl','show',name,'--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,User,Group,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic','--no-pager'])\n\
+            \    data = command(['/usr/bin/systemctl','show',name,'--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,User,Group,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic,NRestarts','--no-pager'])\n\
             \    return dict(line.split('=',1) for line in data.splitlines())\n\n\n\
             def unit_text(description, executable, oneshot=False):\n    return f'''[Unit]\n\
             Description={description}\nAfter=network-online.target\nWants=network-online.target\n\
@@ -106,7 +106,8 @@ stages:
             \ and b'\\0' not in response:\n            part = connection.recv(64-len(response))\n\
             \            if not part:\n                break\n            response.extend(part)\n\
             \        return bytes(response) == b'PONG\\0'\n\n\ndef startup_progress():\n\
-            \    values = unit_values(DAEMON)\n    row = {'kind': 'SCANNER_STARTUP_PROGRESS',\
+            \    values = unit_values(DAEMON)\n    require(int(values['NRestarts'])\
+            \ == 0, 'startup_process_restarted')\n    row = {'kind': 'SCANNER_STARTUP_PROGRESS',\
             \ 'observedAtEpoch': int(time.time()),\n           'unitState': values['ActiveState'],\
             \ 'pid': int(values['MainPID']),\n           'memoryCurrent': values.get('MemoryCurrent'),\
             \ 'memAvailableBytes': memory()}\n    if row['pid'] > 1:\n        proc\
@@ -166,6 +167,7 @@ stages:
             \ unit in [DAEMON, UPDATER]:\n            state = unit_values(unit)\n\
             \            require(state['ActiveState'] == 'inactive' and state['UnitFileState']\
             \ == 'disabled'\n                    and state['MainPID'] == '0', 'existing_service_active')\n\
+            \            require(int(state['NRestarts']) == 0, 'prior_service_restarts')\n\
             \        with socket.socket() as s:\n            s.bind(('127.0.0.1',\
             \ 13310))\n        result.update(memAvailableBefore=memory(), diskAvailableBefore=disk())\n\
             \        require(memory() >= SERVICE_MEMORY + MEMORY_RESERVE and disk()\
@@ -210,24 +212,33 @@ stages:
             \        activation_attempted = True\n        command(['/usr/bin/systemctl',\
             \ 'enable', '--now', DAEMON], timeout=30)\n        activation_began =\
             \ time.monotonic()\n        deadline = activation_began+600\n        next_progress\
-            \ = 0\n        startup_identity = None\n        while True:\n        \
-            \    try:\n                if readiness_ping():\n                    break\n\
-            \            except OSError:\n                pass\n            require(time.monotonic()\
-            \ < deadline, 'scanner_readiness_deadline')\n            require(unit_values(DAEMON)['ActiveState']\
-            \ != 'failed', 'scanner_failed')\n            if time.monotonic() >= next_progress:\n\
-            \                row = startup_progress()\n                require(row['memAvailableBytes']\
+            \ = 0\n        initial_state = unit_values(DAEMON)\n        initial_pid\
+            \ = int(initial_state['MainPID'])\n        require(initial_pid > 1 and\
+            \ int(initial_state['NRestarts']) == 0, 'initial_process_identity')\n\
+            \        initial_start = (Path('/proc')/str(initial_pid)/'stat').read_text().rsplit(')',\
+            \ 1)[1].split()[19]\n        startup_identity = (initial_pid, initial_start)\n\
+            \        while True:\n            pending_state = unit_values(DAEMON)\n\
+            \            require(int(pending_state['NRestarts']) == 0\n          \
+            \          and int(pending_state['MainPID']) == startup_identity[0], 'startup_process_restarted')\n\
+            \            try:\n                if readiness_ping():\n            \
+            \        break\n            except OSError:\n                pass\n  \
+            \          require(time.monotonic() < deadline, 'scanner_readiness_deadline')\n\
+            \            require(unit_values(DAEMON)['ActiveState'] != 'failed', 'scanner_failed')\n\
+            \            if time.monotonic() >= next_progress:\n                row\
+            \ = startup_progress()\n                require(row['memAvailableBytes']\
             \ >= MEMORY_RESERVE, 'startup_memory_reserve')\n                if row['pid']\
             \ > 1:\n                    current_identity = (row['pid'], row['startTicks'])\n\
-            \                    require(startup_identity in [None, current_identity],\
-            \ 'startup_process_restarted')\n                    startup_identity =\
-            \ current_identity\n                next_progress = time.monotonic()+15\n\
-            \            time.sleep(2)\n        result['startupElapsedSeconds'] =\
-            \ round(time.monotonic()-activation_began, 3)\n        state = unit_values(DAEMON)\n\
-            \        pid = int(state['MainPID'])\n        require(pid > 1 and state['User']\
-            \ == USER and state['Group'] == USER\n                and int(state['MemoryMax'])\
-            \ == SERVICE_MEMORY, 'unit_identity')\n        proc = Path('/proc')/str(pid)\n\
-            \        start = (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\n\
-            \        status = dict(x.split(':', 1) for x in (proc/'status').read_text().splitlines()\
+            \                    require(startup_identity == current_identity, 'startup_process_restarted')\n\
+            \                next_progress = time.monotonic()+15\n            time.sleep(2)\n\
+            \        result['startupElapsedSeconds'] = round(time.monotonic()-activation_began,\
+            \ 3)\n        state = unit_values(DAEMON)\n        pid = int(state['MainPID'])\n\
+            \        require(int(state['NRestarts']) == 0, 'startup_process_restarted')\n\
+            \        require(pid > 1 and state['User'] == USER and state['Group']\
+            \ == USER\n                and int(state['MemoryMax']) == SERVICE_MEMORY,\
+            \ 'unit_identity')\n        proc = Path('/proc')/str(pid)\n        start\
+            \ = (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\n        require((pid,\
+            \ start) == startup_identity, 'startup_process_restarted')\n        status\
+            \ = dict(x.split(':', 1) for x in (proc/'status').read_text().splitlines()\
             \ if ':' in x)\n        require([int(x) for x in status['Uid'].split()]\
             \ == [user.pw_uid]*4\n                and [int(x) for x in status['Gid'].split()]\
             \ == [user.pw_gid]*4, 'process_identity')\n        exe = os.stat(proc/'exe')\n\
@@ -252,11 +263,12 @@ stages:
             \            'memoryCurrentBytes': int(state['MemoryCurrent'])},\n   \
             \         memAvailableAfter=memory(), diskAvailableAfter=disk(), version=protocol(b'zVERSION\\\
             0'))\n        require(int(state['MainPID']) == pid and state['ActiveState']\
-            \ == 'active'\n                and int(state['MemoryCurrent']) <= SERVICE_MEMORY\
-            \ and memory() >= MEMORY_RESERVE\n                and disk() >= DISK_RESERVE,\
-            \ 'runtime_resource_gate')\n        require(unit_values(UPDATER)['ActiveState']\
-            \ == 'inactive', 'updater_active')\n        result['status'] = 'SCANNER_INSTALLED_AND_SCAN_VERIFIED'\n\
-            \        exclusive(BASE/'configure-result.json', (json.dumps(result, sort_keys=True)+'\\\
+            \ == 'active'\n                and int(state['NRestarts']) == 0\n    \
+            \            and int(state['MemoryCurrent']) <= SERVICE_MEMORY and memory()\
+            \ >= MEMORY_RESERVE\n                and disk() >= DISK_RESERVE, 'runtime_resource_gate')\n\
+            \        require(unit_values(UPDATER)['ActiveState'] == 'inactive', 'updater_active')\n\
+            \        result['status'] = 'SCANNER_INSTALLED_AND_SCAN_VERIFIED'\n  \
+            \      exclusive(BASE/'configure-result.json', (json.dumps(result, sort_keys=True)+'\\\
             n').encode())\n    except (OSError, ValueError, KeyError, RuntimeError,\
             \ MemoryError, subprocess.SubprocessError) as exc:\n        signal.alarm(0)\n\
             \        result.update(status='UNKNOWN', failedPhase=phase, errorType=type(exc).__name__)\n\

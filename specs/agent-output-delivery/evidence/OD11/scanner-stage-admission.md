@@ -1,5 +1,6 @@
 # Isolated signed scanner staging admission
 
+Historical proposal, superseded by scanner-observed-activation-admission.md. Any pending-review or not-created statements below describe the original proposal time; they are not current execution authority. Replacement review requires full live state revalidation and uses separately archived actual failure/diagnosis results.
 Candidate name: `cyf-output-scanner-stage-20260913-a386c7e1`. Source `../../tools/stage-output-scanner.py` SHA256 `a386c7e1d05ddede4e4ea3b1f0b8a5c690ef8bf592aef39f4a3bead7157df050`; flow `scanner-stage-flow.yaml` SHA256 `d00017be99f4fdc8043c6bbfe6b112259aaf1de7ea81e3e04eedb216a28361b7`. Pending independent review; no such pipeline created or run yet.
 
 Scope: create only previously absent `/opt/cyf/output-scanner` (root-only), download four exact official Alibaba EPEL8 ClamAV1.4.6-1.el8 RPMs plus pinned Fedora EPEL8 public key. Package digests derive from recorded official metadata; selected member sizes/types/digests derive from locally verified payloads. Key SHA/fingerprint are pinned. Run rpm initdb/import/checksig only with a new private dbpath; never install RPMs, execute package scriptlets, alter global keys/dependencies, create service users/units, start scanners or restart API. No virus signatures or output bytes are transferred by this step.

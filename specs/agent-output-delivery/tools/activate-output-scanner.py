@@ -82,7 +82,7 @@ def command(args, timeout=15, private_libs=False):
 
 
 def unit_values(name):
-    data = command(['/usr/bin/systemctl','show',name,'--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,User,Group,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic','--no-pager'])
+    data = command(['/usr/bin/systemctl','show',name,'--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,User,Group,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic,NRestarts','--no-pager'])
     return dict(line.split('=',1) for line in data.splitlines())
 
 
@@ -181,6 +181,7 @@ def readiness_ping():
 
 def startup_progress():
     values = unit_values(DAEMON)
+    require(int(values['NRestarts']) == 0, 'startup_process_restarted')
     row = {'kind': 'SCANNER_STARTUP_PROGRESS', 'observedAtEpoch': int(time.time()),
            'unitState': values['ActiveState'], 'pid': int(values['MainPID']),
            'memoryCurrent': values.get('MemoryCurrent'), 'memAvailableBytes': memory()}
@@ -256,6 +257,7 @@ def main():
             state = unit_values(unit)
             require(state['ActiveState'] == 'inactive' and state['UnitFileState'] == 'disabled'
                     and state['MainPID'] == '0', 'existing_service_active')
+            require(int(state['NRestarts']) == 0, 'prior_service_restarts')
         with socket.socket() as s:
             s.bind(('127.0.0.1', 13310))
         result.update(memAvailableBefore=memory(), diskAvailableBefore=disk())
@@ -309,8 +311,15 @@ def main():
         activation_began = time.monotonic()
         deadline = activation_began+600
         next_progress = 0
-        startup_identity = None
+        initial_state = unit_values(DAEMON)
+        initial_pid = int(initial_state['MainPID'])
+        require(initial_pid > 1 and int(initial_state['NRestarts']) == 0, 'initial_process_identity')
+        initial_start = (Path('/proc')/str(initial_pid)/'stat').read_text().rsplit(')', 1)[1].split()[19]
+        startup_identity = (initial_pid, initial_start)
         while True:
+            pending_state = unit_values(DAEMON)
+            require(int(pending_state['NRestarts']) == 0
+                    and int(pending_state['MainPID']) == startup_identity[0], 'startup_process_restarted')
             try:
                 if readiness_ping():
                     break
@@ -323,17 +332,18 @@ def main():
                 require(row['memAvailableBytes'] >= MEMORY_RESERVE, 'startup_memory_reserve')
                 if row['pid'] > 1:
                     current_identity = (row['pid'], row['startTicks'])
-                    require(startup_identity in [None, current_identity], 'startup_process_restarted')
-                    startup_identity = current_identity
+                    require(startup_identity == current_identity, 'startup_process_restarted')
                 next_progress = time.monotonic()+15
             time.sleep(2)
         result['startupElapsedSeconds'] = round(time.monotonic()-activation_began, 3)
         state = unit_values(DAEMON)
         pid = int(state['MainPID'])
+        require(int(state['NRestarts']) == 0, 'startup_process_restarted')
         require(pid > 1 and state['User'] == USER and state['Group'] == USER
                 and int(state['MemoryMax']) == SERVICE_MEMORY, 'unit_identity')
         proc = Path('/proc')/str(pid)
         start = (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]
+        require((pid, start) == startup_identity, 'startup_process_restarted')
         status = dict(x.split(':', 1) for x in (proc/'status').read_text().splitlines() if ':' in x)
         require([int(x) for x in status['Uid'].split()] == [user.pw_uid]*4
                 and [int(x) for x in status['Gid'].split()] == [user.pw_gid]*4, 'process_identity')
@@ -362,6 +372,7 @@ def main():
             'memoryCurrentBytes': int(state['MemoryCurrent'])},
             memAvailableAfter=memory(), diskAvailableAfter=disk(), version=protocol(b'zVERSION\0'))
         require(int(state['MainPID']) == pid and state['ActiveState'] == 'active'
+                and int(state['NRestarts']) == 0
                 and int(state['MemoryCurrent']) <= SERVICE_MEMORY and memory() >= MEMORY_RESERVE
                 and disk() >= DISK_RESERVE, 'runtime_resource_gate')
         require(unit_values(UPDATER)['ActiveState'] == 'inactive', 'updater_active')
