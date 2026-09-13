@@ -1,0 +1,11 @@
+# Accepted API merge: isolated startup and retained outputs
+
+API9ca3eb9f (development-substitution jarc72b0bf2) replaced only the task-owned R1 process after exact PID478651/startTicks56397314 and jar checks. The new immutable jar runs at127.0.0.1:10018 as PID1445315/startTicks60495843. Existing R1 database/bucket,25 resource URI patterns and exact Web CORS were preserved. The cursor signing key was retained privately across restart; no credential values are in this record. Startup took193.155 seconds on the ARM development host.
+
+Mode is MQ_SHADOW: outbox/topology/publish/consume flags true, dispatch false and policy1 admission false. The local Rabbit boundary is agent.rabbit-broker at15673/vhost cyf_od11. No Agent binding, task creation/dispatch or model execution occurred. Real synthetic-user login and OAuth authorization/token exchange passed. TASK3 artifact list and all three exact-version downloads returned200 and matched the original retained byte hashes after the earlier synthetic Agent unbind. A first read incorrectly used literal task3 instead of fixture ID3 and returned404; the corrected checks are recorded separately, not relabeled.
+
+Direct MySQL observation confirmed all seven M003A columns and their types/defaults in the preserved R1 database. M003B formal-delivery/review tables are still an OD08 obligation. This is not a partial-schema/rollback stress test.
+
+Global actuator health is not a feature-readiness result: the isolated environment deliberately lacks Elasticsearch19200 and LDAP1389, and the aggregate health call failed because of those components. The first health summary helper also mishandled a missing components object. Actual application startup, OAuth and output byte retrieval succeeded; no global green health is claimed.
+
+The broker remains empty in MQ_SHADOW, consistent with the explicit topology design. Static tracing uncovered no production caller of AgentRabbitTopologyProvisioner.provision/passiveVerify; only tests call it, while dispatch-ready relay requires canonicalTopologyReady. The product writer queued an explicit activation lifecycle repair after the current client freeze/review. External queue creation or reflective readiness marking will not be used as a substitute.

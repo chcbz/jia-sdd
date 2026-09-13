@@ -1,0 +1,64 @@
+name: cyf-output-runtime-preflight
+sources: {}
+stages:
+  host_preflight:
+    name: Read-only output deployment prerequisites
+    jobs:
+      inspect_host:
+        name: Read-only metadata; no install or restart
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_PREFLIGHT_PY'\n#!/usr/bin/env python3\n\"\"\"Bounded\
+            \ read-only /opt CYF runtime identification; never exports configuration values.\"\"\"\nimport hashlib\n\
+            import json\nimport os\nfrom pathlib import Path\nimport re\nimport stat\nimport time\n\nROOT = '/opt/cyf/service/api'\n\
+            FILES = [ROOT, ROOT+'/config', '/run/cyf-api', '/usr/local/sbin/cyf-api-kit',\n         ROOT+'/cyf-api-kit.jar',\
+            \ '/run/cyf-api/cyf-api-kit.pid',\n         '/run/cyf-api/cyf-api-kit.runtime']\nCONFIGS = [ROOT+'/'+name\
+            \ for name in ('application.properties', 'application-prod.properties',\n                          \
+            \            'config/application.properties', 'config/application-prod.properties')]\nHISTORICAL_HELPER_SHA\
+            \ = 'b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525'\n\n\ndef read_small(path, limit):\n\
+            \    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)\n    with os.fdopen(fd, 'rb') as f:\n        data\
+            \ = f.read(limit+1)\n    if len(data) > limit:\n        raise ValueError('oversize')\n    return data\n\
+            \n\ndef metadata(path, max_hash_bytes=0):\n    row = {'path': path}\n    try:\n        info = os.lstat(path)\n\
+            \        row.update(exists=True, uid=info.st_uid, gid=info.st_gid,\n                   mode=oct(stat.S_IMODE(info.st_mode)),\
+            \ size=info.st_size,\n                   symlink=stat.S_ISLNK(info.st_mode), regular=stat.S_ISREG(info.st_mode))\n\
+            \        if max_hash_bytes and stat.S_ISREG(info.st_mode) and info.st_size <= max_hash_bytes:\n    \
+            \        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)\n            h = hashlib.sha256()\n       \
+            \     count = 0\n            with os.fdopen(fd,'rb') as f:\n                before = os.fstat(f.fileno())\n\
+            \                while count <= max_hash_bytes:\n                    chunk = f.read(min(1024*1024, max_hash_bytes+1-count))\n\
+            \                    if not chunk:\n                        break\n                    count += len(chunk)\n\
+            \                    h.update(chunk)\n                after = os.fstat(f.fileno())\n            identity\
+            \ = lambda x: (x.st_dev,x.st_ino,x.st_mtime_ns,x.st_size)\n            if count <= max_hash_bytes and\
+            \ identity(info) == identity(before) == identity(after):\n                row['sha256'] = h.hexdigest()\n\
+            \            else:\n                row['hashStatus'] = 'changed_or_oversize'\n    except FileNotFoundError:\n\
+            \        row['exists'] = False\n    except OSError:\n        row['status'] = 'unreadable'\n    return\
+            \ row\n\n\ndef main():\n    rows = [metadata(p, 300*1024*1024 if p.endswith('.jar') else 1024*1024 if\
+            \ p.endswith('/cyf-api-kit') else 0) for p in FILES]\n    helper = next(x for x in rows if x['path'].endswith('/cyf-api-kit'))\n\
+            \    helper['matchesHistoricalSourceBe41be7'] = helper.get('sha256') == HISTORICAL_HELPER_SHA\n    configs=[]\n\
+            \    for path in CONFIGS:\n        row=metadata(path)\n        if row.get('regular') and not row.get('symlink'):\n\
+            \            try:\n                source=read_small(path,65536).decode('utf-8')\n                keys=[]\n\
+            \                for line in source.splitlines():\n                    key=line.strip().split('=',1)[0].strip()\n\
+            \                    if re.fullmatch(r'(?:agent\\.(?:output-delivery|rabbit-broker|rabbit-dispatch|rabbit-topology|rabbit-publish|rabbit-consume|command-outbox)|spring\\\
+            .config)[A-Za-z0-9_.\\[\\]-]*', key):\n                        keys.append(key)\n                row['relevantKeys']=sorted(set(keys))[:100]\n\
+            \                row['keysTruncated']=len(set(keys))>100\n            except (OSError,ValueError,UnicodeError):\n\
+            \                row['keyInspectionStatus']='unreadable_or_oversize'\n        configs.append(row)\n\
+            \    processes=[]\n    for p in Path('/proc').iterdir():\n        if not p.name.isdecimal():continue\n\
+            \        try:\n            if read_small(p/'comm',17).rstrip(b'\\n')!=b'java':continue\n           \
+            \ args=[v.decode('utf-8') for v in read_small(p/'cmdline',65536).split(b'\\0') if v]\n            if\
+            \ ROOT+'/cyf-api-kit.jar' not in args:continue\n            ticks=read_small(p/'stat',16384).decode().split(')\
+            \ ',1)[1].split()[19]\n            processes.append({'pid':int(p.name),'startTicks':ticks,'exactJarArgument':ROOT+'/cyf-api-kit.jar',\n\
+            \                              'cwdIsServiceRoot':os.readlink(p/'cwd')==ROOT,\n                    \
+            \          'prodProfileArgument':'--spring.profiles.active=prod' in args})\n        except (OSError,ValueError,UnicodeError,IndexError):continue\n\
+            \    print(json.dumps({'observedAtEpoch':int(time.time()),'readOnly':True,'files':rows,'configs':configs,'processes':processes,\n\
+            \                      'limits':['Only fixed paths, metadata, jar/helper digests and allowlisted property\
+            \ names are exported.',\n                                'Existing bounded configuration contents and\
+            \ Java arguments may be inspected in memory; no values/raw arguments are exported.',\n             \
+            \                   'No network, SQL, process environment, subprocess, service command, install or file\
+            \ mutation.',\n                                'Historical helper correspondence does not itself prove\
+            \ the current Flow delegation or a working backup/rollback.']},sort_keys=True))\n\n\nif __name__=='__main__':main()\n\
+            CYF_OUTPUT_PREFLIGHT_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
