@@ -10,51 +10,58 @@ stages:
         with:
           downloadArtifact: false
           executeUser: root
-          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_PREFLIGHT_PY'\n#!/usr/bin/env python3\n\"\"\"Read-only, bounded\
-            \ CYF host metadata probe; never run services or export credentials.\"\"\"\nimport hashlib\nimport json\nimport\
-            \ os\nfrom pathlib import Path\nimport re\nimport socket\nimport stat\nimport time\n\n\nROOTS = (\n    \"/var/lib/cyf-api-flow\"\
-            , \"/var/lib/cyf-web-flow\",\n    \"/home/isp/hosts/cyf/api\", \"/home/isp/hosts/cyf/web/kit\",\n    \"/home/isp/apps\"\
-            , \"/etc/cyf\",\n)\nHELPERS = (\n    \"/usr/local/sbin/cyf-api-flow-deploy\",\n    \"/usr/local/sbin/cyf-web-flow-deploy\"\
-            ,\n)\nBINARIES = (\n    \"/home/isp/apps/mysql/bin/mysql\", \"/home/isp/apps/mysql/mysql.sock\",\n    \"/home/isp/apps/nginx/sbin/nginx\"\
-            , \"/home/isp/apps/minio/minio\",\n    \"/home/isp/apps/clamav/sbin/clamd\", \"/usr/sbin/clamd\",\n)\n\n\ndef\
-            \ metadata(name, hash_small_regular=False):\n    result = {\"path\": name}\n    try:\n        info = os.lstat(name)\n\
-            \        result.update(exists=True, mode=oct(stat.S_IMODE(info.st_mode)),\n                      uid=info.st_uid,\
-            \ gid=info.st_gid, size=info.st_size,\n                      symlink=stat.S_ISLNK(info.st_mode),\n           \
-            \           regular=stat.S_ISREG(info.st_mode))\n        if hash_small_regular and stat.S_ISREG(info.st_mode)\
-            \ and info.st_size <= 1024 * 1024:\n            fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW)\n            with\
-            \ os.fdopen(fd, \"rb\") as stream:\n                data = stream.read(1024 * 1024 + 1)\n                observed\
-            \ = os.fstat(stream.fileno())\n            if len(data) <= 1024 * 1024 and (info.st_dev, info.st_ino, info.st_mtime_ns)\
-            \ == (\n                    observed.st_dev, observed.st_ino, observed.st_mtime_ns):\n                result[\"\
-            sha256\"] = hashlib.sha256(data).hexdigest()\n            else:\n                result[\"hashStatus\"] = \"changed_or_oversize\"\
-            \n    except FileNotFoundError:\n        result[\"exists\"] = False\n    except OSError:\n        result[\"status\"\
-            ] = \"unreadable\"\n    return result\n\n\ndef disk(name):\n    item = metadata(name)\n    if item.get(\"exists\"\
-            ):\n        try:\n            info = os.statvfs(name)\n            item.update(availableBytes=info.f_bavail *\
-            \ info.f_frsize,\n                        totalBytes=info.f_blocks * info.f_frsize)\n        except OSError:\n\
-            \            item[\"diskStatus\"] = \"unreadable\"\n    return item\n\n\ndef local_port(port):\n    try:\n   \
-            \     with socket.create_connection((\"127.0.0.1\", port), timeout=0.5):\n            return {\"port\": port,\
-            \ \"tcpConnect\": True}\n    except OSError:\n        return {\"port\": port, \"tcpConnect\": False}\n\n\ndef\
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_PREFLIGHT_PY'\n#!/usr/bin/env python3\n\"\"\"Read-only,\
+            \ bounded CYF host metadata probe; never run services or export credentials.\"\"\"\nimport hashlib\n\
+            import json\nimport os\nfrom pathlib import Path\nimport re\nimport socket\nimport stat\nimport time\n\
+            \n\nROOTS = (\n    \"/var/lib/cyf-api-flow\", \"/var/lib/cyf-web-flow\",\n    \"/home/isp/hosts/cyf/api\"\
+            , \"/home/isp/hosts/cyf/web/kit\",\n    \"/home/isp/apps\", \"/etc/cyf\",\n)\nHELPERS = (\n    \"/usr/local/sbin/cyf-api-flow-deploy\"\
+            ,\n    \"/usr/local/sbin/cyf-web-flow-deploy\",\n)\nBINARIES = (\n    \"/home/isp/apps/mysql/bin/mysql\"\
+            , \"/home/isp/apps/mysql/mysql.sock\",\n    \"/home/isp/apps/nginx/sbin/nginx\", \"/home/isp/apps/minio/minio\"\
+            ,\n    \"/home/isp/apps/clamav/sbin/clamd\", \"/usr/sbin/clamd\",\n)\n\n\ndef metadata(name, hash_small_regular=False):\n\
+            \    result = {\"path\": name}\n    try:\n        info = os.lstat(name)\n        result.update(exists=True,\
+            \ mode=oct(stat.S_IMODE(info.st_mode)),\n                      uid=info.st_uid, gid=info.st_gid, size=info.st_size,\n\
+            \                      symlink=stat.S_ISLNK(info.st_mode),\n                      regular=stat.S_ISREG(info.st_mode))\n\
+            \        if hash_small_regular and stat.S_ISREG(info.st_mode) and info.st_size <= 1024 * 1024:\n   \
+            \         fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW)\n            with os.fdopen(fd, \"rb\") as\
+            \ stream:\n                data = stream.read(1024 * 1024 + 1)\n                observed = os.fstat(stream.fileno())\n\
+            \            if len(data) <= 1024 * 1024 and (info.st_dev, info.st_ino, info.st_mtime_ns) == (\n   \
+            \                 observed.st_dev, observed.st_ino, observed.st_mtime_ns):\n                result[\"\
+            sha256\"] = hashlib.sha256(data).hexdigest()\n            else:\n                result[\"hashStatus\"\
+            ] = \"changed_or_oversize\"\n    except FileNotFoundError:\n        result[\"exists\"] = False\n   \
+            \ except OSError:\n        result[\"status\"] = \"unreadable\"\n    return result\n\n\ndef disk(name):\n\
+            \    item = metadata(name)\n    if item.get(\"exists\"):\n        try:\n            info = os.statvfs(name)\n\
+            \            item.update(availableBytes=info.f_bavail * info.f_frsize,\n                        totalBytes=info.f_blocks\
+            \ * info.f_frsize)\n        except OSError:\n            item[\"diskStatus\"] = \"unreadable\"\n   \
+            \ return item\n\n\ndef local_port(port):\n    try:\n        with socket.create_connection((\"127.0.0.1\"\
+            , port), timeout=0.5):\n            return {\"port\": port, \"tcpConnect\": True}\n    except OSError:\n\
+            \        return {\"port\": port, \"tcpConnect\": False}\n\n\ndef allowed_jar(arg):\n    roots = (\"\
+            /home/isp/hosts/cyf/api/\", \"/var/lib/cyf-api-flow/\")\n    if not re.fullmatch(r\"/[A-Za-z0-9_./-]+\\\
+            .jar\", arg):\n        return False\n    if any(part in (\".\", \"..\") for part in arg.split(\"/\"\
+            )):\n        return False\n    return os.path.normpath(arg) == arg and arg.startswith(roots)\n\n\ndef\
             \ api_processes():\n    results = []\n    for entry in Path(\"/proc\").iterdir():\n        if not entry.name.isdecimal():\n\
-            \            continue\n        try:\n            with (entry / \"cmdline\").open(\"rb\") as stream:\n        \
-            \        parts = stream.read(65537)\n            if len(parts) > 65536:\n                continue\n          \
-            \  args = [x.decode(\"utf-8\", errors=\"replace\") for x in parts.split(b\"\\0\") if x]\n            if not args\
-            \ or Path(args[0]).name != \"java\":\n                continue\n            # Do not export the command line or\
-            \ arbitrary JVM/property values.\n            jars = [arg for i, arg in enumerate(args) if i > 0 and args[i -\
-            \ 1] == \"-jar\"\n                    and re.fullmatch(r\"/[A-Za-z0-9_./-]+\\.jar\", arg)\n                  \
-            \  and arg.startswith((\"/home/isp/hosts/cyf/api/\", \"/var/lib/cyf-api-flow/\"))]\n            if not jars:\n\
-            \                continue\n            ticks = (entry / \"stat\").read_text().split(\") \", 1)[1].split()[19]\n\
-            \            results.append({\"pid\": int(entry.name), \"startTicks\": ticks,\n                            \"\
-            jars\": [metadata(jar) for jar in jars]})\n        except (OSError, IndexError, ValueError):\n            continue\n\
-            \    return results\n\n\ndef main():\n    started = time.time()\n    result = {\n        \"observedAtEpoch\":\
-            \ int(started), \"uid\": os.getuid(), \"readOnly\": True,\n        \"directories\": [disk(path) for path in ROOTS],\n\
-            \        \"helpers\": [metadata(path, True) for path in HELPERS],\n        \"binaries\": [metadata(path) for path\
-            \ in BINARIES],\n        \"loopbackPorts\": [local_port(port) for port in (10018, 3306, 6379, 5672, 9000, 3310)],\n\
-            \        \"apiProcesses\": api_processes(),\n        \"limits\": [\"No configuration file contents or process\
-            \ environments were read.\",\n                   \"Bounded command lines were inspected in memory; only allowlisted\
-            \ CYF jar paths are exported.\",\n                   \"TCP availability does not identify a service or establish\
-            \ readiness.\",\n                   \"No SQL, application mutations, installation, restart or build was performed.\"\
-            ,\n                   \"No schema, backup, storage policy, scanner signature or functional gate is closed.\"],\n\
-            \    }\n    result[\"elapsedSeconds\"] = round(time.time() - started, 3)\n    print(json.dumps(result, sort_keys=True))\n\
-            \n\nif __name__ == \"__main__\":\n    main()\nCYF_OUTPUT_PREFLIGHT_PY\n"
+            \            continue\n        try:\n            with (entry / \"comm\").open(\"rb\") as stream:\n \
+            \               if stream.read(17).rstrip(b\"\\n\") != b\"java\":\n                    continue\n  \
+            \          with (entry / \"cmdline\").open(\"rb\") as stream:\n                parts = stream.read(65537)\n\
+            \            if len(parts) > 65536:\n                continue\n            args = [x.decode(\"utf-8\"\
+            , errors=\"replace\") for x in parts.split(b\"\\0\") if x]\n            if not args or Path(args[0]).name\
+            \ != \"java\":\n                continue\n            # Do not export the command line or arbitrary\
+            \ JVM/property values.\n            jars = [arg for i, arg in enumerate(args) if i > 0 and args[i -\
+            \ 1] == \"-jar\"\n                    and allowed_jar(arg)]\n            if not jars:\n            \
+            \    continue\n            ticks = (entry / \"stat\").read_text().split(\") \", 1)[1].split()[19]\n\
+            \            results.append({\"pid\": int(entry.name), \"startTicks\": ticks,\n                    \
+            \        \"jars\": [metadata(jar) for jar in jars]})\n        except (OSError, IndexError, ValueError):\n\
+            \            continue\n    return results\n\n\ndef main():\n    started = time.time()\n    result =\
+            \ {\n        \"observedAtEpoch\": int(started), \"uid\": os.getuid(), \"readOnly\": True,\n        \"\
+            directories\": [disk(path) for path in ROOTS],\n        \"helpers\": [metadata(path, True) for path\
+            \ in HELPERS],\n        \"binaries\": [metadata(path) for path in BINARIES],\n        \"loopbackPorts\"\
+            : [local_port(port) for port in (10018, 3306, 6379, 5672, 9000, 3310)],\n        \"apiProcesses\": api_processes(),\n\
+            \        \"limits\": [\"No configuration file contents or process environments were read.\",\n     \
+            \              \"Bounded command lines were inspected in memory; only allowlisted CYF jar paths are\
+            \ exported.\",\n                   \"TCP availability does not identify a service or establish readiness.\"\
+            ,\n                   \"No SQL, application mutations, installation, restart or build was performed.\"\
+            ,\n                   \"No schema, backup, storage policy, scanner signature or functional gate is closed.\"\
+            ],\n    }\n    result[\"elapsedSeconds\"] = round(time.time() - started, 3)\n    print(json.dumps(result,\
+            \ sort_keys=True))\n\n\nif __name__ == \"__main__\":\n    main()\nCYF_OUTPUT_PREFLIGHT_PY\n"
           useEncodeBase64: false
           machineGroup: yjctjhskhk1ti9t4
           batchNumber: 1

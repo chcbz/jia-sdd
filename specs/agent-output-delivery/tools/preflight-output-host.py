@@ -71,12 +71,24 @@ def local_port(port):
         return {"port": port, "tcpConnect": False}
 
 
+def allowed_jar(arg):
+    roots = ("/home/isp/hosts/cyf/api/", "/var/lib/cyf-api-flow/")
+    if not re.fullmatch(r"/[A-Za-z0-9_./-]+\.jar", arg):
+        return False
+    if any(part in (".", "..") for part in arg.split("/")):
+        return False
+    return os.path.normpath(arg) == arg and arg.startswith(roots)
+
+
 def api_processes():
     results = []
     for entry in Path("/proc").iterdir():
         if not entry.name.isdecimal():
             continue
         try:
+            with (entry / "comm").open("rb") as stream:
+                if stream.read(17).rstrip(b"\n") != b"java":
+                    continue
             with (entry / "cmdline").open("rb") as stream:
                 parts = stream.read(65537)
             if len(parts) > 65536:
@@ -86,8 +98,7 @@ def api_processes():
                 continue
             # Do not export the command line or arbitrary JVM/property values.
             jars = [arg for i, arg in enumerate(args) if i > 0 and args[i - 1] == "-jar"
-                    and re.fullmatch(r"/[A-Za-z0-9_./-]+\.jar", arg)
-                    and arg.startswith(("/home/isp/hosts/cyf/api/", "/var/lib/cyf-api-flow/"))]
+                    and allowed_jar(arg)]
             if not jars:
                 continue
             ticks = (entry / "stat").read_text().split(") ", 1)[1].split()[19]
