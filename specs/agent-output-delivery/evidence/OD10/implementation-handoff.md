@@ -2,6 +2,8 @@
 
 Preparation only; OD10 remains not_started until OD09 acceptance. Sole future Web writer uses the accepted Web212bfe4 descendant in output-web; no original checkout, API or client edits. Read docs/juyiting-runbook.md, detailed-design section10 and the frozen OD08/OD09 public responses before implementing. Root's current source inspection establishes locations, not UI acceptance.
 
+Before implementation, integrate the selected current Web develop descendant (preflight observed `edace747`) without dropping the existing ArtifactTransfer/plan/board/team or shared HTTP changes. Root's real desktop Hall bounty navigation against212bfe4 exposed a cropped nested detail dialog with three outputs and an unreachable inner close control; see `../OD11/hall-bounty-navigation-r3/README.md` and its screenshot. Fix actual-container height/scrolling and verify both desktop map hotspot and mobile portrait entry by pointer actions, including close/reopen and exact downloaded bytes. `tools/smoke-output-browser.mjs` now has a prepared hall-bounty mode; its failed probe does not count as acceptance.
+
 ## Existing wiring to reuse
 
 - `src/components/juyiting/BountyPanel.vue` owns the create form, detail modal, explicit assignment actions and the shared OutputList. Add delivery requirements to the form and batch/review/rework presentation to details. Preserve retrieval without a connected Agent, source switching and the old policy0 display.
