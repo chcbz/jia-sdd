@@ -159,6 +159,7 @@ def main():
               'rpmTransactionRequested':False,'scheduledUpdaterEnabled':False}
     phase = 'preflight'
     units_created = False
+    diagnostic_fd = None
     def expired(signum,frame):
         raise RuntimeError('installer_deadline')
     signal.signal(signal.SIGALRM,expired)
@@ -176,6 +177,15 @@ def main():
         try:grp.getgrnam(USER)
         except KeyError:pass
         else:raise RuntimeError('existing_group')
+        for private in [BASE/'rpmdb',BASE/'packages']:
+            info=private.lstat()
+            require(stat.S_ISDIR(info.st_mode) and info.st_uid==0 and info.st_gid==0 and stat.S_IMODE(info.st_mode)==0o700,'private_stage_directory')
+        for private in [BASE/'stage-intent.json',BASE/'RPM-GPG-KEY-EPEL-8']:
+            info=private.lstat()
+            require(stat.S_ISREG(info.st_mode) and info.st_uid==0 and info.st_gid==0 and stat.S_IMODE(info.st_mode)==0o600,'private_stage_metadata')
+        diagnostic_fd=os.open(str(BASE/'command-output'),os.O_RDONLY|os.O_NOFOLLOW)
+        info=os.fstat(diagnostic_fd)
+        require(stat.S_ISREG(info.st_mode) and info.st_uid==0 and info.st_gid==0 and info.st_size<=65536 and not stat.S_IMODE(info.st_mode)&0o022,'stage_diagnostic_identity')
         identities={}
         for row in MANIFEST:
             path=BASE/row['path']
@@ -189,6 +199,11 @@ def main():
         require(disk()>=DISK_RESERVE+DATABASE_PEAK and memory()>=SERVICE_MEMORY+MEMORY_RESERVE,'resource_gate')
         phase='configure_new_service'
         exclusive(BASE/'configure-intent.json',(json.dumps(result)+'\n').encode())
+        os.fchmod(diagnostic_fd,0o600)
+        os.fsync(diagnostic_fd)
+        require(stat.S_IMODE(os.fstat(diagnostic_fd).st_mode)==0o600,'stage_diagnostic_privacy')
+        os.close(diagnostic_fd)
+        diagnostic_fd=None
         command(['/usr/sbin/useradd','--system','--user-group','--no-create-home','--home-dir',str(STATE),'--shell','/sbin/nologin',USER])
         user=pwd.getpwnam(USER)
         require(user.pw_uid!=0 and grp.getgrnam(USER).gr_gid==user.pw_gid and user.pw_dir==str(STATE) and user.pw_shell=='/sbin/nologin','created_identity')
@@ -297,7 +312,9 @@ CommandReadTimeout 10
                 states=[unit_values(x) for x in [DAEMON,UPDATER]]
                 result['failureServicesStoppedAndDisabled']=all(x['ActiveState'] in ['inactive','failed'] and x['UnitFileState']=='disabled' for x in states)
             except (OSError,ValueError,RuntimeError,subprocess.SubprocessError):result['failureServicesStoppedAndDisabled']=False
-    finally:signal.alarm(0)
+    finally:
+        signal.alarm(0)
+        if diagnostic_fd is not None:os.close(diagnostic_fd)
     result['diskAvailableAfter']=disk()
     print(json.dumps(result,sort_keys=True))
     return 0 if result['status']=='SCANNER_INSTALLED_AND_SCAN_VERIFIED' else 1

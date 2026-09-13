@@ -73,22 +73,31 @@ stages:
             \ as member:\n                for _ in range(size):\n                    member.write(block)\n    return\
             \ output.getvalue()\n\n\ndef main():\n    result = {'startedAtEpoch':int(time.time()),'status':'UNKNOWN','apiRestartRequested':False,\n\
             \              'rpmTransactionRequested':False,'scheduledUpdaterEnabled':False}\n    phase = 'preflight'\n\
-            \    units_created = False\n    def expired(signum,frame):\n        raise RuntimeError('installer_deadline')\n\
-            \    signal.signal(signal.SIGALRM,expired)\n    signal.alarm(1200)\n    try:\n        require(os.geteuid()==0\
-            \ and os.uname().machine=='x86_64','host_identity')\n        for parent in [Path('/opt'),Path('/opt/cyf'),BASE,BASE/'usr',BASE/'usr/bin',BASE/'usr/sbin',BASE/'usr/lib64',Path('/etc'),Path('/var'),Path('/var/lib'),UNITDIR]:\n\
+            \    units_created = False\n    diagnostic_fd = None\n    def expired(signum,frame):\n        raise\
+            \ RuntimeError('installer_deadline')\n    signal.signal(signal.SIGALRM,expired)\n    signal.alarm(1200)\n\
+            \    try:\n        require(os.geteuid()==0 and os.uname().machine=='x86_64','host_identity')\n     \
+            \   for parent in [Path('/opt'),Path('/opt/cyf'),BASE,BASE/'usr',BASE/'usr/bin',BASE/'usr/sbin',BASE/'usr/lib64',Path('/etc'),Path('/var'),Path('/var/lib'),UNITDIR]:\n\
             \            info=parent.lstat()\n            require(stat.S_ISDIR(info.st_mode) and info.st_uid==0\
             \ and not stat.S_IMODE(info.st_mode)&0o022,'untrusted_parent')\n        for path in [CONFIG,STATE,UNITDIR/DAEMON,UNITDIR/UPDATER,BASE/'configure-intent.json']:\n\
             \            require(not os.path.lexists(path),'existing_configuration')\n        try:pwd.getpwnam(USER)\n\
             \        except KeyError:pass\n        else:raise RuntimeError('existing_user')\n        try:grp.getgrnam(USER)\n\
-            \        except KeyError:pass\n        else:raise RuntimeError('existing_group')\n        identities={}\n\
-            \        for row in MANIFEST:\n            path=BASE/row['path']\n            if row['type']=='regular':identities[row['path']]=read_hash(path,row)\n\
+            \        except KeyError:pass\n        else:raise RuntimeError('existing_group')\n        for private\
+            \ in [BASE/'rpmdb',BASE/'packages']:\n            info=private.lstat()\n            require(stat.S_ISDIR(info.st_mode)\
+            \ and info.st_uid==0 and info.st_gid==0 and stat.S_IMODE(info.st_mode)==0o700,'private_stage_directory')\n\
+            \        for private in [BASE/'stage-intent.json',BASE/'RPM-GPG-KEY-EPEL-8']:\n            info=private.lstat()\n\
+            \            require(stat.S_ISREG(info.st_mode) and info.st_uid==0 and info.st_gid==0 and stat.S_IMODE(info.st_mode)==0o600,'private_stage_metadata')\n\
+            \        diagnostic_fd=os.open(str(BASE/'command-output'),os.O_RDONLY|os.O_NOFOLLOW)\n        info=os.fstat(diagnostic_fd)\n\
+            \        require(stat.S_ISREG(info.st_mode) and info.st_uid==0 and info.st_gid==0 and info.st_size<=65536\
+            \ and not stat.S_IMODE(info.st_mode)&0o022,'stage_diagnostic_identity')\n        identities={}\n   \
+            \     for row in MANIFEST:\n            path=BASE/row['path']\n            if row['type']=='regular':identities[row['path']]=read_hash(path,row)\n\
             \            else:\n                info=path.lstat()\n                require(stat.S_ISLNK(info.st_mode)\
             \ and info.st_uid==0 and os.readlink(path)==row['target'],'staged_link_identity')\n        with socket.socket()\
             \ as s:s.bind(('127.0.0.1',13310))\n        result.update(diskAvailableBefore=disk(),memAvailableBefore=memory(),diskReserveBytes=DISK_RESERVE,\n\
             \                      knownDatabasePeakBytes=DATABASE_PEAK,serviceMemoryLimitBytes=SERVICE_MEMORY,memoryReserveBytes=MEMORY_RESERVE)\n\
             \        require(disk()>=DISK_RESERVE+DATABASE_PEAK and memory()>=SERVICE_MEMORY+MEMORY_RESERVE,'resource_gate')\n\
             \        phase='configure_new_service'\n        exclusive(BASE/'configure-intent.json',(json.dumps(result)+'\\\
-            n').encode())\n        command(['/usr/sbin/useradd','--system','--user-group','--no-create-home','--home-dir',str(STATE),'--shell','/sbin/nologin',USER])\n\
+            n').encode())\n        os.fchmod(diagnostic_fd,0o600)\n        os.fsync(diagnostic_fd)\n        require(stat.S_IMODE(os.fstat(diagnostic_fd).st_mode)==0o600,'stage_diagnostic_privacy')\n\
+            \        os.close(diagnostic_fd)\n        diagnostic_fd=None\n        command(['/usr/sbin/useradd','--system','--user-group','--no-create-home','--home-dir',str(STATE),'--shell','/sbin/nologin',USER])\n\
             \        user=pwd.getpwnam(USER)\n        require(user.pw_uid!=0 and grp.getgrnam(USER).gr_gid==user.pw_gid\
             \ and user.pw_dir==str(STATE) and user.pw_shell=='/sbin/nologin','created_identity')\n        CONFIG.mkdir(mode=0o755)\n\
             \        STATE.mkdir(mode=0o750)\n        (STATE/'db').mkdir(mode=0o750)\n        for path in [STATE,STATE/'db']:os.chown(path,user.pw_uid,user.pw_gid)\n\
@@ -146,8 +155,9 @@ stages:
             \        if units_created:\n            try:\n                command(['/usr/bin/systemctl','disable','--now',DAEMON,UPDATER],timeout=45)\n\
             \                states=[unit_values(x) for x in [DAEMON,UPDATER]]\n                result['failureServicesStoppedAndDisabled']=all(x['ActiveState']\
             \ in ['inactive','failed'] and x['UnitFileState']=='disabled' for x in states)\n            except (OSError,ValueError,RuntimeError,subprocess.SubprocessError):result['failureServicesStoppedAndDisabled']=False\n\
-            \    finally:signal.alarm(0)\n    result['diskAvailableAfter']=disk()\n    print(json.dumps(result,sort_keys=True))\n\
-            \    return 0 if result['status']=='SCANNER_INSTALLED_AND_SCAN_VERIFIED' else 1\n\n\nif __name__=='__main__':\n\
+            \    finally:\n        signal.alarm(0)\n        if diagnostic_fd is not None:os.close(diagnostic_fd)\n\
+            \    result['diskAvailableAfter']=disk()\n    print(json.dumps(result,sort_keys=True))\n    return 0\
+            \ if result['status']=='SCANNER_INSTALLED_AND_SCAN_VERIFIED' else 1\n\n\nif __name__=='__main__':\n\
             \    raise SystemExit(main())\nCYF_OUTPUT_SCANNER_INSTALL_PY\n"
           useEncodeBase64: false
           machineGroup: yjctjhskhk1ti9t4
