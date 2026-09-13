@@ -166,6 +166,36 @@ def trusted_file(path, mode, maximum):
         return content
 
 
+def readiness_ping():
+    with socket.create_connection(('127.0.0.1', 13310), timeout=2) as connection:
+        connection.settimeout(2)
+        connection.sendall(b'zPING\0')
+        response = bytearray()
+        while len(response) < 64 and b'\0' not in response:
+            part = connection.recv(64-len(response))
+            if not part:
+                break
+            response.extend(part)
+        return bytes(response) == b'PONG\0'
+
+
+def startup_progress():
+    values = unit_values(DAEMON)
+    row = {'kind': 'SCANNER_STARTUP_PROGRESS', 'observedAtEpoch': int(time.time()),
+           'unitState': values['ActiveState'], 'pid': int(values['MainPID']),
+           'memoryCurrent': values.get('MemoryCurrent'), 'memAvailableBytes': memory()}
+    if row['pid'] > 1:
+        proc = Path('/proc')/str(row['pid'])
+        status = dict(x.split(':', 1) for x in (proc/'status').read_text().splitlines() if ':' in x)
+        require([int(x) for x in status['Uid'].split()] == [986]*4, 'progress_process_identity')
+        info = (proc/'stat').read_text().rsplit(')', 1)[1].split()
+        row.update(startTicks=info[19], userTicks=int(info[11]), systemTicks=int(info[12]))
+        for key in ['VmRSS', 'VmSwap']:
+            row[key+'Bytes'] = int(status[key].split()[0])*1024
+    print(json.dumps(row, sort_keys=True), flush=True)
+    return row
+
+
 def main():
     result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN',
               'apiRestartRequested': False, 'rpmTransactionRequested': False,
@@ -187,8 +217,13 @@ def main():
             info = parent.lstat()
             require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and info.st_gid == 0
                     and not stat.S_IMODE(info.st_mode) & 0o022, 'untrusted_parent')
-        for path in [BASE/'activate-intent.json', BASE/'configure-result.json']:
+        for path in [BASE/'observe-activation-intent.json', BASE/'configure-result.json',
+                     CONFIG/'clamd.conf.pre-observation', CONFIG/'clamd.conf.observe-new']:
             require(not os.path.lexists(path), 'existing_activation')
+        previous = json.loads(trusted_file(BASE/'activate-intent.json', 0o600, 65536))
+        require(previous.get('startedAtEpoch') == 1789290118
+                and previous.get('status') == 'UNKNOWN'
+                and previous.get('databaseDownloadRequested') is False, 'prior_activation_mismatch')
         prior = json.loads(trusted_file(BASE/'configure-intent.json', 0o600, 65536))
         require(prior.get('startedAtEpoch') == 1789288473 and prior.get('status') == 'UNKNOWN'
                 and prior.get('apiRestartRequested') is False, 'prior_intent_mismatch')
@@ -253,20 +288,46 @@ def main():
                 'configured_version')
         require(memory() >= SERVICE_MEMORY + MEMORY_RESERVE and disk() >= DISK_RESERVE,
                 'activation_resource_gate')
-        exclusive(BASE/'activate-intent.json', (json.dumps(result, sort_keys=True)+'\n').encode())
+        exclusive(BASE/'observe-activation-intent.json', (json.dumps(result, sort_keys=True)+'\n').encode())
+        phase = 'enable_engine_logging'
+        original_config = trusted_file(CONFIG/'clamd.conf', 0o644, 16384)
+        require(hashlib.sha256(original_config).hexdigest() == expected[CONFIG/'clamd.conf'],
+                'configuration_changed')
+        new_config = original_config + b'LogSyslog yes\nLogTime yes\nLogVerbose yes\n'
+        exclusive(CONFIG/'clamd.conf.pre-observation', original_config)
+        exclusive(CONFIG/'clamd.conf.observe-new', new_config, 0o644)
+        os.replace(CONFIG/'clamd.conf.observe-new', CONFIG/'clamd.conf')
+        directory_fd = os.open(str(CONFIG), os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        result['configurationSha256'] = hashlib.sha256(new_config).hexdigest()
         phase = 'activate_scanner'
         activation_attempted = True
         command(['/usr/bin/systemctl', 'enable', '--now', DAEMON], timeout=30)
-        deadline = time.monotonic()+120
+        activation_began = time.monotonic()
+        deadline = activation_began+600
+        next_progress = 0
+        startup_identity = None
         while True:
             try:
-                if protocol(b'zPING\0') == 'PONG':
+                if readiness_ping():
                     break
             except OSError:
                 pass
             require(time.monotonic() < deadline, 'scanner_readiness_deadline')
             require(unit_values(DAEMON)['ActiveState'] != 'failed', 'scanner_failed')
+            if time.monotonic() >= next_progress:
+                row = startup_progress()
+                require(row['memAvailableBytes'] >= MEMORY_RESERVE, 'startup_memory_reserve')
+                if row['pid'] > 1:
+                    current_identity = (row['pid'], row['startTicks'])
+                    require(startup_identity in [None, current_identity], 'startup_process_restarted')
+                    startup_identity = current_identity
+                next_progress = time.monotonic()+15
             time.sleep(2)
+        result['startupElapsedSeconds'] = round(time.monotonic()-activation_began, 3)
         state = unit_values(DAEMON)
         pid = int(state['MainPID'])
         require(pid > 1 and state['User'] == USER and state['Group'] == USER
@@ -327,4 +388,3 @@ def main():
 
 if __name__ == '__main__':
     raise SystemExit(main())
-
