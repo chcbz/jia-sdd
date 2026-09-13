@@ -12,30 +12,64 @@ stages:
           executeUser: root
           run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_STORAGE_INSTALL_PY'\n#!/usr/bin/env python3\n\"\"\
             \"Install a pinned MinIO in new task-specific paths; never touches an existing API runtime.\"\"\"\n\
-            import hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport pwd\nimport secrets\nimport\
-            \ shutil\nimport socket\nimport stat\nimport subprocess\nimport tarfile\nimport tempfile\nimport time\n\
-            import urllib.request\n\nBASE = Path('/opt/cyf/output-storage')\nCONFIG = Path('/etc/cyf-output-storage')\n\
+            import hashlib\nimport grp\nimport json\nimport os\nfrom pathlib import Path\nimport pwd\nimport secrets\n\
+            import signal\nimport shutil\nimport socket\nimport stat\nimport subprocess\nimport tarfile\nimport\
+            \ tempfile\nimport time\nimport urllib.request\n\nBASE = Path('/opt/cyf/output-storage')\nCONFIG = Path('/etc/cyf-output-storage')\n\
             STATE = Path('/var/lib/cyf-output-storage')\nUNIT = Path('/etc/systemd/system/cyf-output-storage.service')\n\
             USER = 'cyf-output-store'\nLAYER = 'f9c0805c25ee5c0d375a9c16810eafb57cf658d7b6814c179d52496272bec8a4'\n\
-            BINARY = '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f'\nENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin',\
-            \ 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\n\n\ndef run(args, timeout=30):\n    p = subprocess.run(args,\
-            \ env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,\n                       stderr=subprocess.DEVNULL,\
-            \ timeout=timeout, check=False)\n    if p.returncode != 0:\n        raise RuntimeError('command_failed')\n\
-            \n\ndef exclusive(path, data, mode=0o600):\n    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL\
-            \ | os.O_NOFOLLOW, mode)\n    with os.fdopen(fd, 'wb') as f:\n        f.write(data)\n        f.flush()\n\
-            \        os.fsync(f.fileno())\n\n\ndef main():\n    result = {'startedAtEpoch': int(time.time()), 'status':\
-            \ 'UNKNOWN', 'apiRestartRequested': False}\n    phase = 'preflight'\n    try:\n        if os.geteuid()\
-            \ != 0 or os.uname().machine != 'x86_64':\n            raise RuntimeError('host_identity_gate')\n  \
-            \      for p in [BASE, CONFIG, STATE, UNIT]:\n            if os.path.lexists(p):\n                raise\
-            \ RuntimeError('existing_task_path')\n        try:\n            pwd.getpwnam(USER)\n        except KeyError:\n\
-            \            pass\n        else:\n            raise RuntimeError('existing_task_user')\n        for\
-            \ ancestor in [Path('/opt'), Path('/opt/cyf'), Path('/etc'), Path('/var'), Path('/var/lib'), UNIT.parent]:\n\
-            \            info = ancestor.lstat()\n            if not stat.S_ISDIR(info.st_mode) or info.st_uid !=\
-            \ 0 or stat.S_IMODE(info.st_mode) & 0o022:\n                raise RuntimeError('untrusted_parent')\n\
-            \        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n        mem = dict(line.split(':',\
-            \ 1) for line in Path('/proc/meminfo').read_text().splitlines())\n        result['memAvailableBefore']\
-            \ = int(mem['MemAvailable'].split()[0]) * 1024\n        if result['diskAvailableBefore'] < 4 * 1024**3\
-            \ or result['memAvailableBefore'] < 1536 * 1024**2:\n            raise RuntimeError('resource_gate')\n\
+            BINARY = '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f'\nDISK_RESERVE = 3584 * 1024**2\n\
+            MEMORY_RESERVE = 1024 * 1024**2\nKNOWN_INSTALL_PEAK = 39450432 + 2 * 110989496 + 64 * 1024**2\nENV =\
+            \ {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\n\n\ndef run(args,\
+            \ timeout=30):\n    p = subprocess.run(args, env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,\n\
+            \                       stderr=subprocess.DEVNULL, timeout=timeout, check=False)\n    if p.returncode\
+            \ != 0:\n        raise RuntimeError('command_failed')\n\n\ndef exclusive(path, data, mode=0o600):\n\
+            \    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)\n    with os.fdopen(fd,\
+            \ 'wb') as f:\n        f.write(data)\n        f.flush()\n        os.fsync(f.fileno())\n\n\ndef installed_identity():\n\
+            \    fd = os.open(str(BASE/'minio'), os.O_RDONLY | os.O_NOFOLLOW)\n    with os.fdopen(fd, 'rb') as f:\n\
+            \        info = os.fstat(f.fileno())\n        if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0\
+            \ or info.st_gid != 0\n                or stat.S_IMODE(info.st_mode) != 0o755 or info.st_size != 110989496):\n\
+            \            raise RuntimeError('installed_binary_identity')\n        digest = hashlib.sha256()\n  \
+            \      for data in iter(lambda: f.read(1024*1024), b''):\n            digest.update(data)\n        os.fsync(f.fileno())\n\
+            \        after = os.fstat(f.fileno())\n        if (after.st_ino, after.st_size, after.st_mtime_ns) !=\
+            \ (info.st_ino, info.st_size, info.st_mtime_ns):\n            raise RuntimeError('installed_binary_changed')\n\
+            \        if digest.hexdigest() != BINARY:\n            raise RuntimeError('installed_binary_digest')\n\
+            \    return {'sha256': digest.hexdigest(), 'bytes': info.st_size, 'device': info.st_dev,\n         \
+            \   'inode': info.st_ino, 'uid': info.st_uid, 'gid': info.st_gid, 'mode': '0755'}\n\n\ndef available_memory():\n\
+            \    mem = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())\n   \
+            \ return int(mem['MemAvailable'].split()[0])*1024\n\n\ndef runtime_identity(user, installed):\n    completed\
+            \ = subprocess.run(['/usr/bin/systemctl', 'show', 'cyf-output-storage.service',\n        '--property=MainPID,MemoryCurrent,User,Group',\
+            \ '--no-pager'], env=ENV,\n        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,\
+            \ timeout=10, check=False)\n    if completed.returncode != 0 or len(completed.stdout) > 4096:\n    \
+            \    raise RuntimeError('unit_identity_unavailable')\n    values = dict(line.split('=', 1) for line\
+            \ in completed.stdout.decode().splitlines())\n    pid = int(values['MainPID'])\n    if pid < 2 or values['User']\
+            \ != USER or values['Group'] != USER:\n        raise RuntimeError('unit_identity_mismatch')\n    proc\
+            \ = Path('/proc')/str(pid)\n    before = (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\n \
+            \   status = dict(line.split(':', 1) for line in (proc/'status').read_text().splitlines() if ':' in\
+            \ line)\n    if ([int(x) for x in status['Uid'].split()] != [user.pw_uid]*4\n            or [int(x)\
+            \ for x in status['Gid'].split()] != [user.pw_gid]*4\n            or os.readlink(proc/'exe') != str(BASE/'minio')):\n\
+            \        raise RuntimeError('process_identity_mismatch')\n    exe = os.stat(proc/'exe')\n    if (exe.st_dev,\
+            \ exe.st_ino) != (installed['device'], installed['inode']):\n        raise RuntimeError('process_executable_mismatch')\n\
+            \    after = (proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\n    if before != after:\n    \
+            \    raise RuntimeError('process_changed')\n    memory = int(values['MemoryCurrent'])\n    if memory\
+            \ > 384*1024**2:\n        raise RuntimeError('unit_memory_budget')\n    return {'pid': pid, 'startTicks':\
+            \ before, 'uid': user.pw_uid, 'gid': user.pw_gid,\n            'exeSha256': installed['sha256'], 'unitMemoryBytes':\
+            \ memory}\n\n\ndef expired(signum, frame):\n    raise RuntimeError('installer_deadline')\n\n\ndef main():\n\
+            \    result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN', 'apiRestartRequested': False}\n\
+            \    phase = 'preflight'\n    activation_attempted = False\n    signal.signal(signal.SIGALRM, expired)\n\
+            \    signal.alarm(420)\n    try:\n        if os.geteuid() != 0 or os.uname().machine != 'x86_64':\n\
+            \            raise RuntimeError('host_identity_gate')\n        for p in [BASE, CONFIG, STATE, UNIT]:\n\
+            \            if os.path.lexists(p):\n                raise RuntimeError('existing_task_path')\n    \
+            \    try:\n            pwd.getpwnam(USER)\n        except KeyError:\n            pass\n        else:\n\
+            \            raise RuntimeError('existing_task_user')\n        try:\n            grp.getgrnam(USER)\n\
+            \        except KeyError:\n            pass\n        else:\n            raise RuntimeError('existing_task_group')\n\
+            \        for ancestor in [Path('/opt'), Path('/opt/cyf'), Path('/etc'), Path('/var'), Path('/var/lib'),\
+            \ UNIT.parent]:\n            info = ancestor.lstat()\n            if not stat.S_ISDIR(info.st_mode)\
+            \ or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o022:\n                raise RuntimeError('untrusted_parent')\n\
+            \        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n        result['memAvailableBefore']\
+            \ = available_memory()\n        result.update(diskReserveBytes=DISK_RESERVE, memoryReserveBytes=MEMORY_RESERVE,\n\
+            \                      knownInstallPeakBytes=KNOWN_INSTALL_PEAK)\n        if (result['diskAvailableBefore']\
+            \ < max(4*1024**3, DISK_RESERVE+KNOWN_INSTALL_PEAK)\n                or result['memAvailableBefore']\
+            \ < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n\
             \        for port in [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1',\
             \ port))\n        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
             \ dir='/opt/cyf') as temp:\n            layer_path = Path(temp) / 'layer.tar.gz'\n            url =\
@@ -64,35 +98,53 @@ stages:
             \            receipt = BASE / 'install-intent.json'\n            exclusive(receipt, (json.dumps(dict(result,\
             \ layerSha256=LAYER, binarySha256=BINARY))+'\\n').encode())\n            run(['/usr/sbin/useradd', '--system',\
             \ '--user-group', '--no-create-home', '--home-dir', str(STATE), '--shell', '/sbin/nologin', USER])\n\
-            \            user = pwd.getpwnam(USER)\n            os.chown(STATE, user.pw_uid, user.pw_gid)\n    \
-            \        shutil.copyfile(candidate, BASE/'minio')\n            os.chmod(BASE/'minio', 0o755)\n     \
-            \       credential = {'accessKey': 'cyf-output-'+secrets.token_hex(8), 'secretKey': secrets.token_hex(32)}\n\
-            \            exclusive(CONFIG/'credentials.json', (json.dumps(credential)+'\\n').encode())\n       \
-            \     exclusive(CONFIG/'minio.env', ('MINIO_ROOT_USER='+credential['accessKey']+'\\nMINIO_ROOT_PASSWORD='+credential['secretKey']+'\\\
-            nMINIO_BROWSER=off\\nMINIO_API_REQUESTS_MAX=8\\nGOMEMLIMIT=256MiB\\n').encode())\n            unit =\
-            \ '''[Unit]\nDescription=CYF Agent output object storage\nAfter=network-online.target\nWants=network-online.target\n\
-            StartLimitIntervalSec=300\nStartLimitBurst=3\n\n[Service]\nUser=cyf-output-store\nGroup=cyf-output-store\n\
-            EnvironmentFile=/etc/cyf-output-storage/minio.env\nExecStart=/opt/cyf/output-storage/minio server /var/lib/cyf-output-storage\
-            \ --address 127.0.0.1:19000 --console-address 127.0.0.1:19001\nRestart=on-failure\nRestartSec=10\nUMask=0077\n\
-            LimitNOFILE=4096\nMemoryMax=384M\nTasksMax=128\nNoNewPrivileges=true\nPrivateTmp=true\nProtectSystem=strict\n\
-            ProtectHome=true\nReadWritePaths=/var/lib/cyf-output-storage\nRestrictAddressFamilies=AF_INET AF_INET6\
-            \ AF_UNIX\n\n[Install]\nWantedBy=multi-user.target\n'''\n            exclusive(UNIT, unit.encode(),\
-            \ 0o644)\n        phase = 'activate_new_service'\n        run(['/usr/bin/systemctl', 'daemon-reload'])\n\
-            \        run(['/usr/bin/systemctl', 'enable', '--now', 'cyf-output-storage.service'], timeout=60)\n\
-            \        phase = 'readiness'\n        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
+            \            user = pwd.getpwnam(USER)\n            group = grp.getgrnam(USER)\n            if (user.pw_uid\
+            \ == 0 or user.pw_gid != group.gr_gid or user.pw_dir != str(STATE)\n                    or user.pw_shell\
+            \ != '/sbin/nologin'):\n                raise RuntimeError('created_identity_mismatch')\n          \
+            \  result['serviceIdentity'] = {'uid': user.pw_uid, 'gid': user.pw_gid, 'home': user.pw_dir, 'shell':\
+            \ user.pw_shell}\n            os.chown(STATE, user.pw_uid, user.pw_gid)\n            shutil.copyfile(candidate,\
+            \ BASE/'minio')\n            os.chmod(BASE/'minio', 0o755)\n            installed = installed_identity()\n\
+            \            result['installedBinary'] = installed\n            credential = {'accessKey': 'cyf-output-'+secrets.token_hex(8),\
+            \ 'secretKey': secrets.token_hex(32)}\n            exclusive(CONFIG/'credentials.json', (json.dumps(credential)+'\\\
+            n').encode())\n            exclusive(CONFIG/'minio.env', ('MINIO_ROOT_USER='+credential['accessKey']+'\\\
+            nMINIO_ROOT_PASSWORD='+credential['secretKey']+'\\nMINIO_BROWSER=off\\nMINIO_API_REQUESTS_MAX=8\\nGOMEMLIMIT=256MiB\\\
+            n').encode())\n            unit = '''[Unit]\nDescription=CYF Agent output object storage\nAfter=network-online.target\n\
+            Wants=network-online.target\nStartLimitIntervalSec=300\nStartLimitBurst=3\n\n[Service]\nUser=cyf-output-store\n\
+            Group=cyf-output-store\nEnvironmentFile=/etc/cyf-output-storage/minio.env\nExecStart=/opt/cyf/output-storage/minio\
+            \ server /var/lib/cyf-output-storage --address 127.0.0.1:19000 --console-address 127.0.0.1:19001\nRestart=on-failure\n\
+            RestartSec=10\nUMask=0077\nLimitNOFILE=4096\nMemoryAccounting=true\nMemoryMax=384M\nTasksMax=128\nNoNewPrivileges=true\n\
+            PrivateTmp=true\nProtectSystem=strict\nProtectHome=true\nReadWritePaths=/var/lib/cyf-output-storage\n\
+            RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX\n\n[Install]\nWantedBy=multi-user.target\n'''\n   \
+            \         exclusive(UNIT, unit.encode(), 0o644)\n        phase = 'activate_new_service'\n        if\
+            \ shutil.disk_usage('/opt').free < DISK_RESERVE or available_memory() < MEMORY_RESERVE+384*1024**2:\n\
+            \            raise RuntimeError('activation_resource_gate')\n        activation_attempted = True\n \
+            \       run(['/usr/bin/systemctl', 'daemon-reload'])\n        run(['/usr/bin/systemctl', 'enable', '--now',\
+            \ 'cyf-output-storage.service'], timeout=60)\n        phase = 'readiness'\n        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
             \        ready = False\n        for _ in range(20):\n            try:\n                with opener.open('http://127.0.0.1:19000/minio/health/ready',\
             \ timeout=3) as response:\n                    ready = response.status == 200\n            except OSError:\n\
             \                pass\n            if ready:\n                break\n            time.sleep(1)\n   \
-            \     if not ready:\n            raise RuntimeError('readiness_failed')\n        result.update(status='STORAGE_SERVICE_INSTALLED',\
-            \ binarySha256=BINARY,\n                      service='cyf-output-storage.service', endpoint='http://127.0.0.1:19000',\n\
+            \     if not ready:\n            raise RuntimeError('readiness_failed')\n        result['runtimeIdentity']\
+            \ = runtime_identity(user, installed)\n        result['memAvailableAfter'] = available_memory()\n  \
+            \      if shutil.disk_usage('/opt').free < DISK_RESERVE or result['memAvailableAfter'] < MEMORY_RESERVE:\n\
+            \            raise RuntimeError('runtime_resource_gate')\n        result.update(status='STORAGE_SERVICE_INSTALLED',\
+            \ binarySha256=installed['sha256'],\n                      service='cyf-output-storage.service', endpoint='http://127.0.0.1:19000',\n\
             \                      bucketCreated=False, applicationConfigured=False)\n        exclusive(BASE/'install-result.json',\
-            \ (json.dumps(result,sort_keys=True)+'\\n').encode())\n    except (OSError, RuntimeError, subprocess.SubprocessError,\
-            \ tarfile.TarError):\n        result.update(status='UNKNOWN', failedPhase=phase)\n    result['diskAvailableAfter']\
-            \ = shutil.disk_usage('/opt').free\n    print(json.dumps(result, sort_keys=True))\n    return 0 if result['status']\
-            \ == 'STORAGE_SERVICE_INSTALLED' else 1\n\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n\
-            CYF_OUTPUT_STORAGE_INSTALL_PY\n"
+            \ (json.dumps(result,sort_keys=True)+'\\n').encode())\n    except (OSError, ValueError, KeyError, RuntimeError,\
+            \ subprocess.SubprocessError, tarfile.TarError):\n        signal.alarm(0)\n        result.update(status='UNKNOWN',\
+            \ failedPhase=phase)\n        if activation_attempted:\n            try:\n                run(['/usr/bin/systemctl',\
+            \ 'disable', '--now', 'cyf-output-storage.service'], timeout=45)\n                check = subprocess.run(['/usr/bin/systemctl',\
+            \ 'show', 'cyf-output-storage.service',\n                    '--property=ActiveState,UnitFileState',\
+            \ '--no-pager'], env=ENV, stdin=subprocess.DEVNULL,\n                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,\
+            \ timeout=10, check=False)\n                states = dict(line.split('=', 1) for line in check.stdout.decode().splitlines())\n\
+            \                result['failureServiceDisabledAndStopped'] = (check.returncode == 0\n             \
+            \       and states.get('ActiveState') in ('inactive', 'failed')\n                    and states.get('UnitFileState')\
+            \ == 'disabled')\n            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):\n\
+            \                result['failureServiceDisabledAndStopped'] = False\n    finally:\n        signal.alarm(0)\n\
+            \    result['diskAvailableAfter'] = shutil.disk_usage('/opt').free\n    print(json.dumps(result, sort_keys=True))\n\
+            \    return 0 if result['status'] == 'STORAGE_SERVICE_INSTALLED' else 1\n\n\nif __name__ == '__main__':\n\
+            \    raise SystemExit(main())\nCYF_OUTPUT_STORAGE_INSTALL_PY\n"
           useEncodeBase64: false
           machineGroup: yjctjhskhk1ti9t4
           batchNumber: 1
           batchWaitTime: 0
-          deployTimeoutPerHost: 300
+          deployTimeoutPerHost: 600
