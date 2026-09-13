@@ -13,30 +13,35 @@ stages:
           run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_PREFLIGHT_PY'\n#!/usr/bin/env python3\n\"\"\"Bounded,\
             \ plugin-free, cache-only scanner dependency planning; no RPM transaction.\"\"\"\nimport configparser\n\
             import glob\nimport json\nimport os\nfrom pathlib import Path\nimport re\nimport selectors\nimport signal\n\
-            import stat\nimport subprocess\nimport tempfile\nimport time\n\nREQUESTED = ('clamav', 'clamd', 'clamav-update')\n\
-            # Only these distro/EPEL cache IDs may participate. No network metadata refresh.\nREPO_IDS = ('alinux3-os',\
-            \ 'alinux3-updates', 'alinux3-plus', 'alinux3-powertools', 'epel')\nENVIRONMENT = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin',\
-            \ 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\nLIMIT = 2 * 1024 * 1024\n\n\ndef repo_ids():\n    ids\
-            \ = set()\n    files = sorted(glob.glob('/etc/yum.repos.d/*.repo'))\n    if len(files) > 40:\n     \
-            \   raise ValueError('repository_file_limit')\n    for name in files:\n        fd = os.open(name, os.O_RDONLY\
-            \ | os.O_NOFOLLOW)\n        with os.fdopen(fd, 'rb') as f:\n            if not stat.S_ISREG(os.fstat(f.fileno()).st_mode):\n\
-            \                raise ValueError('repository_not_regular')\n            data = f.read(65537)\n    \
-            \    if len(data) > 65536:\n            raise ValueError('repository_size_limit')\n        parser =\
-            \ configparser.ConfigParser(interpolation=None, strict=True)\n        parser.read_string(data.decode('utf-8'))\n\
-            \        ids.update(x for x in parser.sections() if re.fullmatch(r'[A-Za-z0-9_.-]{1,100}', x))\n   \
-            \ return sorted(ids)\n\n\ndef bounded_run(command):\n    output = bytearray()\n    process = subprocess.Popen(command,\
-            \ env=ENVIRONMENT, stdin=subprocess.DEVNULL,\n                               stdout=subprocess.PIPE,\
-            \ stderr=subprocess.STDOUT, start_new_session=True)\n    status = 'exited'\n    selector = selectors.DefaultSelector()\n\
-            \    selector.register(process.stdout, selectors.EVENT_READ)\n    deadline = time.monotonic() + 120\n\
-            \    try:\n        while selector.get_map():\n            if time.monotonic() >= deadline:\n       \
-            \         status = 'query_timed_out'\n                break\n            for key, _ in selector.select(min(0.25,\
-            \ max(0, deadline-time.monotonic()))):\n                data = os.read(key.fileobj.fileno(), 65536)\n\
-            \                if not data:\n                    selector.unregister(key.fileobj)\n              \
-            \      continue\n                if len(output) + len(data) > LIMIT:\n                    status = 'output_limit_exceeded'\n\
-            \                    break\n                output.extend(data)\n            if status != 'exited':\n\
-            \                break\n        # A process can close stdout and still continue running.\n        if\
-            \ status == 'exited':\n            try:\n                process.wait(timeout=max(0.01, deadline-time.monotonic()))\n\
-            \            except subprocess.TimeoutExpired:\n                status = 'query_timed_out'\n    finally:\n\
+            import stat\nimport subprocess\nimport sys\nimport tempfile\nimport time\n\nREQUESTED = ('clamav', 'clamd',\
+            \ 'clamav-update')\n# Only these distro/EPEL cache IDs may participate. No network metadata refresh.\n\
+            REPO_IDS = ('alinux3-os', 'alinux3-updates', 'alinux3-plus', 'alinux3-powertools', 'epel')\nENVIRONMENT\
+            \ = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\nLIMIT =\
+            \ 2 * 1024 * 1024\n\n\ndef repo_ids():\n    ids = set()\n    directory = os.lstat('/etc/yum.repos.d')\n\
+            \    if not stat.S_ISDIR(directory.st_mode) or directory.st_uid != 0 or directory.st_mode & 0o022:\n\
+            \        raise ValueError('repository_directory_identity')\n    files = sorted(glob.glob('/etc/yum.repos.d/*.repo'))\n\
+            \    if len(files) > 40:\n        raise ValueError('repository_file_limit')\n    for name in files:\n\
+            \        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW)\n        with os.fdopen(fd, 'rb') as f:\n \
+            \           info = os.fstat(f.fileno())\n            if not stat.S_ISREG(info.st_mode) or info.st_uid\
+            \ != 0 or info.st_mode & 0o022:\n                raise ValueError('repository_not_regular')\n      \
+            \      data = f.read(65537)\n        if len(data) > 65536:\n            raise ValueError('repository_size_limit')\n\
+            \        parser = configparser.ConfigParser(interpolation=None, strict=True)\n        parser.read_string(data.decode('utf-8'))\n\
+            \        for item in parser.sections():\n            if item in ids and item in REPO_IDS:\n        \
+            \        raise ValueError('duplicate_allowlisted_repository')\n            if re.fullmatch(r'[A-Za-z0-9_.-]{1,100}',\
+            \ item):\n                ids.add(item)\n    return sorted(ids)\n\n\ndef bounded_run(command):\n   \
+            \ output = bytearray()\n    process = subprocess.Popen(command, env=ENVIRONMENT, stdin=subprocess.DEVNULL,\n\
+            \                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True)\n\
+            \    status = 'exited'\n    selector = selectors.DefaultSelector()\n    selector.register(process.stdout,\
+            \ selectors.EVENT_READ)\n    deadline = time.monotonic() + 120\n    try:\n        while selector.get_map():\n\
+            \            if time.monotonic() >= deadline:\n                status = 'query_timed_out'\n        \
+            \        break\n            for key, _ in selector.select(min(0.25, max(0, deadline-time.monotonic()))):\n\
+            \                data = os.read(key.fileobj.fileno(), 65536)\n                if not data:\n       \
+            \             selector.unregister(key.fileobj)\n                    continue\n                if len(output)\
+            \ + len(data) > LIMIT:\n                    status = 'output_limit_exceeded'\n                    break\n\
+            \                output.extend(data)\n            if status != 'exited':\n                break\n  \
+            \      # A process can close stdout and still continue running.\n        if status == 'exited':\n  \
+            \          try:\n                process.wait(timeout=max(0.01, deadline-time.monotonic()))\n      \
+            \      except subprocess.TimeoutExpired:\n                status = 'query_timed_out'\n    finally:\n\
             \        # Kill any child left in this dedicated group, even when its parent exited.\n        try:\n\
             \            os.killpg(process.pid, signal.SIGKILL)\n        except ProcessLookupError:\n          \
             \  pass\n        process.wait(timeout=10)\n        selector.close()\n        process.stdout.close()\n\
@@ -45,41 +50,68 @@ stages:
             \ False,\n              'packages': [], 'messages': [], 'pluginsEnabled': False}\n    started = time.monotonic()\n\
             \    try:\n        space = os.statvfs('/var/cache/dnf')\n        result['diskAvailableBefore'] = space.f_bavail\
             \ * space.f_frsize\n        if result['diskAvailableBefore'] < 4 * 1024**3:\n            result['reason']\
-            \ = 'disk_space_gate'\n            return result\n        inventory = repo_ids()\n        result['repositoryIds']\
-            \ = inventory\n        selected = [x for x in REPO_IDS if x in inventory]\n        result['enabledCacheRepositoryIds']\
+            \ = 'disk_space_gate'\n            return result\n        temp_space = os.statvfs('/var/tmp')\n    \
+            \    result['temporaryDiskAvailableBefore'] = temp_space.f_bavail * temp_space.f_frsize\n        memory\
+            \ = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())\n        result['memAvailableBefore']\
+            \ = int(memory['MemAvailable'].split()[0]) * 1024\n        if result['temporaryDiskAvailableBefore']\
+            \ < 4 * 1024**3 or result['memAvailableBefore'] < 1536 * 1024**2:\n            result['reason'] = 'temporary_disk_or_memory_gate'\n\
+            \            return result\n        inventory = repo_ids()\n        result['repositoryIds'] = inventory\n\
+            \        selected = [x for x in REPO_IDS if x in inventory]\n        result['enabledCacheRepositoryIds']\
             \ = selected\n        if not selected:\n            result['reason'] = 'no_allowlisted_repository_cache'\n\
-            \            return result\n        with tempfile.TemporaryDirectory(prefix='cyf-output-dnf-plan-')\
-            \ as temp:\n            command = ['/usr/bin/dnf', '--noplugins', '--cacheonly', '--assumeno',\n   \
-            \                    '--disablerepo=*'] + ['--enablerepo='+x for x in selected] + [\n              \
-            \         '--setopt=install_weak_deps=False', '--setopt=logdir='+temp,\n                       '--setopt=persistdir='+temp,\
-            \ '--setopt=log_size=1048576',\n                       '--setopt=log_rotate=0', '--setopt=timeout=15',\
-            \ '--setopt=retries=0',\n                       'install', *REQUESTED]\n            state, code, raw\
-            \ = bounded_run(command)\n            result['processStatus'] = state\n            result['exitCode']\
-            \ = code\n            if state != 'exited':\n                return result\n            aborted = False\n\
-            \            failed = False\n            for line in raw.decode('utf-8', errors='replace').splitlines():\n\
-            \                line = line.strip()\n                parts = line.split()\n                if (len(parts)\
-            \ >= 4 and re.fullmatch(r'[A-Za-z0-9_.+-]{1,100}', parts[0])\n                        and parts[1] in\
-            \ ('x86_64', 'noarch')\n                        and re.fullmatch(r'[A-Za-z0-9:_.+~^-]{1,100}', parts[2])\n\
-            \                        and parts[3] in selected):\n                    result['packages'].append(dict(zip(('name',\
-            \ 'arch', 'version', 'repository'), parts[:4])))\n                if line == 'Operation aborted.':\n\
-            \                    aborted = True\n                if re.search(r'(?i)(error:|failed|no match for\
-            \ argument|cannot |could not |unable to)', line):\n                    failed = True\n             \
-            \   if re.fullmatch(r'(Total download size|Installed size): [0-9.]+ [kMGT]?', line):\n             \
-            \       result['messages'].append(line)\n            complete = set(REQUESTED).issubset({x['name'] for\
-            \ x in result['packages']})\n            result.update(automaticRefusalObserved=aborted, errorMarkerObserved=failed,\n\
-            \                          requestedPackagesComplete=complete)\n            if code == 1 and aborted\
-            \ and not failed and complete:\n                result['status'] = 'complete_cached_plan'\n        \
-            \    else:\n                result['reason'] = 'incomplete_or_unrecognized_cached_transaction'\n   \
-            \ except (OSError, ValueError, configparser.Error, subprocess.SubprocessError):\n        result['reason']\
-            \ = 'bounded_cache_query_unavailable'\n    finally:\n        try:\n            space = os.statvfs('/var/cache/dnf')\n\
-            \            result['diskAvailableAfter'] = space.f_bavail * space.f_frsize\n        except OSError:\n\
-            \            pass\n        result['elapsedSeconds'] = round(time.monotonic()-started, 3)\n        result['limits']\
-            \ = [\n            'No plugins; fixed minimal environment; cache-only mode forbids metadata network\
-            \ refresh.',\n            'Only allowlisted local cache repositories; no installation confirmation or\
-            \ service command.',\n            'Private temporary DNF logs/state are deleted; raw output never exported.',\n\
-            \            'Complete cached plan is not package signature verification, installation, or readiness.']\n\
-            \    return result\n\n\nif __name__ == '__main__':\n    print(json.dumps(main(), sort_keys=True))\n\
-            CYF_OUTPUT_PREFLIGHT_PY\n"
+            \            return result\n        with tempfile.TemporaryDirectory(prefix='cyf-output-dnf-plan-',\
+            \ dir='/var/tmp') as temp:\n            config = Path(temp) / 'dnf.conf'\n            config.write_text('[main]\\\
+            nplugins=0\\nreposdir=/etc/yum.repos.d\\n'\n                              'cachedir=/var/cache/dnf\\\
+            nsystem_cachedir=/var/cache/dnf\\n'\n                              'skip_if_unavailable=False\\ngpgcheck=1\\\
+            nsslverify=1\\n'\n                              'install_weak_deps=False\\nlogdir='+temp+'\\npersistdir='+temp+'\\\
+            n')\n            command = ['/usr/bin/dnf', '--config='+str(config), '--noplugins', '--cacheonly', '--assumeno',\n\
+            \                       '--disablerepo=*'] + ['--enablerepo='+x for x in selected] + [\n           \
+            \            '--setopt=install_weak_deps=False', '--setopt=*.skip_if_unavailable=False',\n         \
+            \              '--setopt=logdir='+temp,\n                       '--setopt=persistdir='+temp, '--setopt=log_size=1048576',\n\
+            \                       '--setopt=log_rotate=0', '--setopt=timeout=15', '--setopt=retries=0',\n    \
+            \                   'install', *REQUESTED]\n            state, code, raw = bounded_run(command)\n  \
+            \          result['processStatus'] = state\n            result['exitCode'] = code\n            if state\
+            \ != 'exited':\n                return result\n            aborted = 0\n            failed = False\n\
+            \            in_table = False\n            table_finished = False\n            malformed_table = False\n\
+            \            pending = ''\n            seen = set()\n            for line in raw.decode('utf-8', errors='replace').splitlines():\n\
+            \                line = line.strip()\n                if line == 'Operation aborted.':\n           \
+            \         aborted += 1\n                if re.search(r'(?i)(error:|failed|no match for argument|cannot\
+            \ |could not |unable to|problem:|ignoring repositories|skip.*repositor)', line):\n                 \
+            \   failed = True\n                if line in ('Installing:', 'Installing dependencies:'):\n       \
+            \             if pending:\n                        malformed_table = True\n                    in_table\
+            \ = True\n                    continue\n                if line == 'Transaction Summary':\n        \
+            \            if pending or not in_table:\n                        malformed_table = True\n         \
+            \           in_table = False\n                    table_finished = True\n                    continue\n\
+            \                if in_table:\n                    if not line or re.fullmatch(r'=+', line):\n     \
+            \                   continue\n                    pending = (pending + ' ' + line).strip()\n       \
+            \             parts = pending.split()\n                    if len(parts) < 6 and len(pending) < 500:\n\
+            \                        continue\n                    if (len(parts) == 6 and re.fullmatch(r'[A-Za-z0-9_.+-]{1,100}',\
+            \ parts[0])\n                            and parts[1] in ('x86_64', 'noarch')\n                    \
+            \        and re.fullmatch(r'[A-Za-z0-9:_.+~^-]{1,100}', parts[2])\n                            and parts[3]\
+            \ in selected and re.fullmatch(r'[0-9.]+', parts[4])\n                            and parts[5] in ('k',\
+            \ 'M', 'G', 'T')):\n                        key = tuple(parts[:4])\n                        if key in\
+            \ seen or len(seen) >= 256:\n                            malformed_table = True\n                  \
+            \      else:\n                            seen.add(key)\n                            result['packages'].append(dict(zip(('name',\
+            \ 'arch', 'version', 'repository'), parts[:4])))\n                    else:\n                      \
+            \  malformed_table = True\n                    pending = ''\n                if re.fullmatch(r'(Total\
+            \ download size|Installed size): [0-9.]+ [kMGT]?', line):\n                    result['messages'].append(line)\n\
+            \            complete = set(REQUESTED).issubset({x['name'] for x in result['packages']})\n         \
+            \   result.update(automaticRefusalCount=aborted, errorMarkerObserved=failed,\n                     \
+            \     requestedPackagesComplete=complete, transactionTableComplete=table_finished,\n               \
+            \           unparsedTransactionRows=malformed_table or bool(pending) or in_table)\n            if (code\
+            \ == 1 and aborted == 1 and not failed and complete and table_finished\n                    and not\
+            \ result['unparsedTransactionRows']):\n                result['status'] = 'complete_cached_plan'\n \
+            \           else:\n                result['reason'] = 'incomplete_or_unrecognized_cached_transaction'\n\
+            \    except (OSError, ValueError, KeyError, configparser.Error, subprocess.SubprocessError):\n     \
+            \   result['reason'] = 'bounded_cache_query_unavailable'\n    finally:\n        try:\n            space\
+            \ = os.statvfs('/var/cache/dnf')\n            result['diskAvailableAfter'] = space.f_bavail * space.f_frsize\n\
+            \        except OSError:\n            pass\n        result['elapsedSeconds'] = round(time.monotonic()-started,\
+            \ 3)\n        result['limits'] = [\n            'No plugins; fixed minimal environment; cache-only mode\
+            \ forbids metadata network refresh.',\n            'Only allowlisted local cache repositories; no installation\
+            \ confirmation or service command.',\n            'Private temporary DNF logs/state are deleted; raw\
+            \ output never exported.',\n            'Complete cached plan is not package signature verification,\
+            \ installation, or readiness.']\n    return result\n\n\nif __name__ == '__main__':\n    observation\
+            \ = main()\n    print(json.dumps(observation, sort_keys=True))\n    sys.exit(0 if observation['status']\
+            \ == 'complete_cached_plan' else 1)\nCYF_OUTPUT_PREFLIGHT_PY\n"
           useEncodeBase64: false
           machineGroup: yjctjhskhk1ti9t4
           batchNumber: 1
