@@ -19,3 +19,11 @@ The isolated API package at10018 already has exact Vite15173 CORS and all25 star
 Keep the outage cases distinct: paused writes and unavailable scanner should not prevent previously READY objects being downloaded from healthy storage. If object storage itself is unavailable, fetching its bytes can fail explicitly/retryably; verify metadata/authorization persist and the same hash is downloadable after restoration. Do not promise bytes from an unavailable store or turn failed verification into READY to satisfy the probe.
 
 R2 evidence must separate owner-share from formal delivery: create through authenticated entry, valid run-bound lease, freeze exact versions, atomic submit, accept/change-request, explicit new-run rework, conflicts and receipt recovery. Include funded-route negative checks without enabling deferred settlement integration. Trace actual HTTP bodies/versions to database delivery pins and ordered events; only record safe identifiers and hashes.
+
+## Frozen OD07 runtime and release selector checkpoint (2026-09-13)
+
+`0771f107` full starter now starts successfully on isolated port10018; real login/OAuth and all3 retained TASK3 downloads pass after Agent unbind/workspace removal. Evidence: ../OD07/full-starter-0771f107/. This development package still uses the recorded OpenCV/JAI substitutions.
+
+The integrated API already contains `ops/ci/aliyun-flow/cold-init.gradle`, which resolves the original pinned OpenCV4.5.5 from its provenance repository and verifies size722802/SHA323d4011… before consumption. Do not replace this with the development substitution for release. The prior private artifact403 is still the last direct probe; no repeated credential probe was performed here.
+
+`ops/orchestration/flow_remote.py` currently fixes tasks to common-core/test (SensitiveDataSanitizerTest), common-service/test (CorsConfigTest), validateLayering and starter/bootJar. It cannot currently claim the OD agent/chat/MySQL/Rabbit suite. The final CI plan must explicitly add a reviewed OD selector or attach separately attributable required verification; a successful existing ticket alone is inadequate. Preserve existing ticket hash/source/nonce and credential-isolation controls when extending it.
