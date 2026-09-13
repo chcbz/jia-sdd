@@ -1,0 +1,1 @@
+Run 5 failed read-only with AttributeError. Host AST formatting used ast.unparse, unavailable before Python 3.9. No cache mutation occurred. Follow-up uses ast.dump and explicit legacy Str/Bytes redaction, with safe Python version tuple. Original host log retained in /tmp/od11-web-lock-541be6b7/result.json. This run proves no shared lock.

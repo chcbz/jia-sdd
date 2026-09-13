@@ -13,38 +13,42 @@ stages:
           run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_WEB_LOCK_PY'\n#!/usr/bin/env python3\n\"\"\"\
             Read-only pinned helper lock inspection; export only sanitized Python syntax.\"\"\"\nimport\
             \ ast\nimport copy\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport\
-            \ stat\nimport time\n\nHELPER = Path('/usr/local/sbin/cyf-web-flow-deploy')\nEXPECTED = '53070ba8cf924852744e38c232d0b5d5b3fd432e0d05c90b8f9a877af21b9bb6'\n\
-            SAFE_STRINGS = {'/var/lib/cyf-web-flow', '/var/lib/cyf-web-flow/deploy.lock',\n          \
-            \      'deploy.lock', 'a', 'a+', 'w', 'r', 'r+', 'rb', '__main__'}\n\nclass Redact(ast.NodeTransformer):\n\
-            \    def visit_Constant(self, node):\n        if isinstance(node.value, str) and node.value\
-            \ not in SAFE_STRINGS:\n            return ast.copy_location(ast.Constant('<redacted>'), node)\n\
-            \        return node\n\n\ndef main():\n    fd = os.open(HELPER, os.O_RDONLY | os.O_NOFOLLOW)\n\
-            \    with os.fdopen(fd, 'rb') as stream:\n        before = os.fstat(stream.fileno())\n   \
-            \     data = stream.read(1024*1024+1)\n        after = os.fstat(stream.fileno())\n    assert\
-            \ stat.S_ISREG(before.st_mode) and before.st_uid == 0\n    assert (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns)\
-            \ == (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns)\n    assert len(data) <=\
-            \ 1024*1024 and hashlib.sha256(data).hexdigest() == EXPECTED\n    tree = ast.parse(data.decode())\n\
-            \    statements = [n for n in ast.walk(tree) if isinstance(n, ast.stmt)]\n    selected = []\n\
-            \    for node in statements:\n        # Compound nodes contribute only their header, never\
-            \ whole function bodies.\n        shallow = copy.deepcopy(node)\n        for field in ('body','orelse','finalbody','handlers'):\n\
-            \            if hasattr(shallow,field):\n                setattr(shallow,field,[ast.Pass()]\
-            \ if field == 'body' else [])\n        rendered = ast.unparse(shallow)\n        if any(word\
-            \ in rendered.lower() for word in ('lock','flock')):\n            selected.append(node)\n\
-            \    names = {n.id for node in selected for n in ast.walk(node)\n             if isinstance(n,ast.Name)}\n\
-            \    dependencies = [n for n in statements if isinstance(n,(ast.Assign,ast.AnnAssign))\n \
-            \                   and any(isinstance(x,ast.Name) and isinstance(x.ctx,ast.Store) and x.id\
+            \ stat\nimport sys\nimport time\n\nHELPER = Path('/usr/local/sbin/cyf-web-flow-deploy')\n\
+            EXPECTED = '53070ba8cf924852744e38c232d0b5d5b3fd432e0d05c90b8f9a877af21b9bb6'\nSAFE_STRINGS\
+            \ = {'/var/lib/cyf-web-flow', '/var/lib/cyf-web-flow/deploy.lock',\n                'deploy.lock',\
+            \ 'a', 'a+', 'w', 'r', 'r+', 'rb', '__main__'}\n\nclass Redact(ast.NodeTransformer):\n   \
+            \ def visit_Str(self, node):\n        if node.s not in SAFE_STRINGS:\n            return ast.copy_location(ast.Str(s=\"\
+            <redacted>\"), node)\n        return node\n\n    def visit_Bytes(self, node):\n        return\
+            \ ast.copy_location(ast.Bytes(s=b\"<redacted>\"), node)\n\n    def visit_Constant(self, node):\n\
+            \        if isinstance(node.value, str) and node.value not in SAFE_STRINGS:\n            return\
+            \ ast.copy_location(ast.Constant('<redacted>'), node)\n        return node\n\n\ndef main():\n\
+            \    fd = os.open(HELPER, os.O_RDONLY | os.O_NOFOLLOW)\n    with os.fdopen(fd, 'rb') as stream:\n\
+            \        before = os.fstat(stream.fileno())\n        data = stream.read(1024*1024+1)\n   \
+            \     after = os.fstat(stream.fileno())\n    assert stat.S_ISREG(before.st_mode) and before.st_uid\
+            \ == 0\n    assert (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns) == (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns)\n\
+            \    assert len(data) <= 1024*1024 and hashlib.sha256(data).hexdigest() == EXPECTED\n    tree\
+            \ = ast.parse(data.decode())\n    statements = [n for n in ast.walk(tree) if isinstance(n,\
+            \ ast.stmt)]\n    selected = []\n    for node in statements:\n        # Compound nodes contribute\
+            \ only their header, never whole function bodies.\n        shallow = copy.deepcopy(node)\n\
+            \        for field in ('body','orelse','finalbody','handlers'):\n            if hasattr(shallow,field):\n\
+            \                setattr(shallow,field,[ast.Pass()] if field == 'body' else [])\n        rendered\
+            \ = ast.dump(shallow)\n        if any(word in rendered.lower() for word in ('lock','flock')):\n\
+            \            selected.append(node)\n    names = {n.id for node in selected for n in ast.walk(node)\n\
+            \             if isinstance(n,ast.Name)}\n    dependencies = [n for n in statements if isinstance(n,(ast.Assign,ast.AnnAssign))\n\
+            \                    and any(isinstance(x,ast.Name) and isinstance(x.ctx,ast.Store) and x.id\
             \ in names for x in ast.walk(n))]\n    exported=[]\n    for node in sorted({n.lineno:n for\
             \ n in selected+dependencies}.values(),key=lambda n:n.lineno):\n        clone=copy.deepcopy(node)\n\
             \        for field in ('body','orelse','finalbody','handlers'):\n            if hasattr(clone,field):\n\
-            \                setattr(clone,field,[ast.Pass()] if field == 'body' else [])\n        exported.append({'line':node.lineno,'endLine':node.end_lineno,\n\
-            \                         'syntax':ast.unparse(Redact().visit(clone))})\n    info = Path('/var/lib/cyf-web-flow/deploy.lock').lstat()\n\
-            \    print(json.dumps({'observedAtEpoch':int(time.time()),'readOnly':True,\n             \
-            \         'helperSha256':EXPECTED,'lockSyntax':exported,\n                      'lock':{'device':info.st_dev,'inode':info.st_ino,'uid':info.st_uid,\n\
-            \                              'gid':info.st_gid,'mode':oct(stat.S_IMODE(info.st_mode)),\n\
-            \                              'nlink':info.st_nlink,'regular':stat.S_ISREG(info.st_mode)}}\
-            \ ,sort_keys=True))\n\nif __name__ == '__main__':\n    try:\n        main()\n    except Exception\
-            \ as exc:\n        print(json.dumps({'status':'INSPECTION_FAILED','errorType':type(exc).__name__}))\n\
-            \        raise SystemExit(1)\nCYF_WEB_LOCK_PY\n"
+            \                setattr(clone,field,[ast.Pass()] if field == 'body' else [])\n        exported.append({'line':node.lineno,'endLine':getattr(node,'end_lineno',None),\n\
+            \                         'syntax':ast.dump(Redact().visit(clone))})\n    info = Path('/var/lib/cyf-web-flow/deploy.lock').lstat()\n\
+            \    print(json.dumps({'observedAtEpoch':int(time.time()),'readOnly':True,'pythonVersion':list(sys.version_info[:3]),\n\
+            \                      'helperSha256':EXPECTED,'lockSyntax':exported,\n                  \
+            \    'lock':{'device':info.st_dev,'inode':info.st_ino,'uid':info.st_uid,\n               \
+            \               'gid':info.st_gid,'mode':oct(stat.S_IMODE(info.st_mode)),\n              \
+            \                'nlink':info.st_nlink,'regular':stat.S_ISREG(info.st_mode)}} ,sort_keys=True))\n\
+            \nif __name__ == '__main__':\n    try:\n        main()\n    except Exception as exc:\n   \
+            \     print(json.dumps({'status':'INSPECTION_FAILED','errorType':type(exc).__name__}))\n \
+            \       raise SystemExit(1)\nCYF_WEB_LOCK_PY\n"
           useEncodeBase64: false
           machineGroup: yjctjhskhk1ti9t4
           batchNumber: 1

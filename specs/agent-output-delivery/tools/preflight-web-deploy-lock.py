@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import sys
 import time
 
 HELPER = Path('/usr/local/sbin/cyf-web-flow-deploy')
@@ -15,6 +16,14 @@ SAFE_STRINGS = {'/var/lib/cyf-web-flow', '/var/lib/cyf-web-flow/deploy.lock',
                 'deploy.lock', 'a', 'a+', 'w', 'r', 'r+', 'rb', '__main__'}
 
 class Redact(ast.NodeTransformer):
+    def visit_Str(self, node):
+        if node.s not in SAFE_STRINGS:
+            return ast.copy_location(ast.Str(s="<redacted>"), node)
+        return node
+
+    def visit_Bytes(self, node):
+        return ast.copy_location(ast.Bytes(s=b"<redacted>"), node)
+
     def visit_Constant(self, node):
         if isinstance(node.value, str) and node.value not in SAFE_STRINGS:
             return ast.copy_location(ast.Constant('<redacted>'), node)
@@ -39,7 +48,7 @@ def main():
         for field in ('body','orelse','finalbody','handlers'):
             if hasattr(shallow,field):
                 setattr(shallow,field,[ast.Pass()] if field == 'body' else [])
-        rendered = ast.unparse(shallow)
+        rendered = ast.dump(shallow)
         if any(word in rendered.lower() for word in ('lock','flock')):
             selected.append(node)
     names = {n.id for node in selected for n in ast.walk(node)
@@ -52,10 +61,10 @@ def main():
         for field in ('body','orelse','finalbody','handlers'):
             if hasattr(clone,field):
                 setattr(clone,field,[ast.Pass()] if field == 'body' else [])
-        exported.append({'line':node.lineno,'endLine':node.end_lineno,
-                         'syntax':ast.unparse(Redact().visit(clone))})
+        exported.append({'line':node.lineno,'endLine':getattr(node,'end_lineno',None),
+                         'syntax':ast.dump(Redact().visit(clone))})
     info = Path('/var/lib/cyf-web-flow/deploy.lock').lstat()
-    print(json.dumps({'observedAtEpoch':int(time.time()),'readOnly':True,
+    print(json.dumps({'observedAtEpoch':int(time.time()),'readOnly':True,'pythonVersion':list(sys.version_info[:3]),
                       'helperSha256':EXPECTED,'lockSyntax':exported,
                       'lock':{'device':info.st_dev,'inode':info.st_ino,'uid':info.st_uid,
                               'gid':info.st_gid,'mode':oct(stat.S_IMODE(info.st_mode)),
