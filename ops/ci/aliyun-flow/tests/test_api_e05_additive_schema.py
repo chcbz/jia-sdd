@@ -1,4 +1,5 @@
 """Offline-only adversarial tests for the exact E05 additive schema runner."""
+import copy
 import fcntl
 import hashlib
 import importlib.machinery
@@ -6,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tarfile
 import tempfile
@@ -68,23 +70,75 @@ def expected_rows(table, collation):
         rows['CONSTRAINTS'].append([hx(table), hx(name), hx(kind), hx(enforced)])
     for name, clause in sorted(spec['checks'].items()):
         # MySQL 8 returns quoted identifiers and may parenthesize arithmetic operands.
-        mysql_clause = clause
-        for identifier in (
-                'request_sha256', 'lease_fence_sha256', 'expected_work_item_version',
-                'result_work_item_version', 'task_version', 'previous_agent_id',
-                'target_agent_id', 'previous_lease_until', 'lease_until',
-                'attempt_count', 'max_attempts', 'create_time', 'update_time'):
-            mysql_clause = mysql_clause.replace(identifier, '`' + identifier + '`')
+        # Quote complete identifiers in one pass. Sequential substring replace
+        # corrupts previous_lease_until when lease_until is processed later;
+        # the old global backtick deletion accidentally concealed that fixture bug.
+        identifiers = (
+            'request_sha256', 'lease_fence_sha256', 'expected_work_item_version',
+            'result_work_item_version', 'task_version', 'previous_agent_id',
+            'target_agent_id', 'previous_lease_until', 'lease_until',
+            'attempt_count', 'max_attempts', 'create_time', 'update_time')
+        mysql_clause = re.sub(r'\b(?:' + '|'.join(identifiers) + r')\b',
+                              lambda match: '`' + match.group(0) + '`', clause)
         mysql_clause = mysql_clause.replace('`expected_work_item_version` + 1',
                                              '(`expected_work_item_version` + 1)')
         rows['CHECKS'].append([hx(table), hx(name), hx('(' + mysql_clause + ')')])
     return rows
 
 
+# Synthetic E05 SHOW fixture, transcribed from the fixed CREATE contract in
+# MySQL 8.0.21 SHOW spelling (including arithmetic parentheses). E05 has NOT
+# been created/read in production. Unlike F06 Run49, this is NOT live evidence.
+E05_SHOW_TEXT = """CREATE TABLE `agent_work_item_reassignment` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `reassignment_id` varchar(100) NOT NULL COMMENT 'Deterministic scope/task/work-item/idempotency receipt identity',
+  `request_sha256` char(64) NOT NULL COMMENT 'Canonical exact request digest',
+  `task_id` varchar(100) NOT NULL,
+  `work_item_id` varchar(100) NOT NULL,
+  `operator_subject` varchar(100) NOT NULL COMMENT 'Exact authenticated JWT sub',
+  `coordinator_agent_id` varchar(100) NOT NULL COMMENT 'Exact active task coordinator',
+  `previous_agent_id` varchar(100) NOT NULL,
+  `target_agent_id` varchar(100) NOT NULL,
+  `source_command_id` varchar(100) NOT NULL,
+  `command_id` varchar(100) NOT NULL COMMENT 'New immutable WORK_ITEM_EXECUTE command',
+  `message_id` varchar(100) NOT NULL,
+  `outbox_event_id` varchar(100) NOT NULL,
+  `expected_work_item_version` bigint NOT NULL,
+  `result_work_item_version` bigint NOT NULL,
+  `task_version` bigint NOT NULL,
+  `lease_fence_sha256` char(64) NOT NULL COMMENT 'SHA-256 of fresh lease token; token is never stored here',
+  `previous_lease_until` bigint NOT NULL,
+  `lease_until` bigint NOT NULL,
+  `attempt_count` int NOT NULL,
+  `max_attempts` int NOT NULL,
+  `tenant_id` varchar(50) NOT NULL,
+  `client_id` varchar(50) NOT NULL,
+  `create_time` bigint NOT NULL,
+  `update_time` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_work_item_reassignment_id` (`tenant_id`,`client_id`,`reassignment_id`),
+  UNIQUE KEY `uk_work_item_reassignment_command` (`tenant_id`,`client_id`,`command_id`),
+  KEY `idx_work_item_reassignment_latest` (`tenant_id`,`client_id`,`task_id`,`work_item_id`,`id`),
+  CONSTRAINT `chk_work_item_reassignment_agents` CHECK ((`previous_agent_id` <> `target_agent_id`)),
+  CONSTRAINT `chk_work_item_reassignment_digest` CHECK (((char_length(`request_sha256`) = 64) and (char_length(`lease_fence_sha256`) = 64))),
+  CONSTRAINT `chk_work_item_reassignment_immutable_clock` CHECK (((`create_time` > 0) and (`update_time` = `create_time`))),
+  CONSTRAINT `chk_work_item_reassignment_lease` CHECK (((`previous_lease_until` > 0) and (`lease_until` > `previous_lease_until`) and (`attempt_count` > 0) and (`attempt_count` < `max_attempts`))),
+  CONSTRAINT `chk_work_item_reassignment_versions` CHECK (((`expected_work_item_version` >= 0) and (`result_work_item_version` = (`expected_work_item_version` + 1)) and (`task_version` >= 0)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Immutable E05 explicit-target expired-lease reassignment receipts'
+"""
+E05_SHOW_ROWS = [['agent_work_item_reassignment', E05_SHOW_TEXT.splitlines()[0]]] + [
+    [line] for line in E05_SHOW_TEXT.splitlines()[1:]]
+E05_CREATE_GRANTS = [
+    'GRANT USAGE ON *.* TO `cyf_e05_schema_runner`@`localhost`',
+    'GRANT CREATE ON `jia`.`agent_work_item_reassignment` TO `cyf_e05_schema_runner`@`localhost`',
+]
+
+
 FAKE_MYSQL = r'''#!/usr/bin/python3
 import json
 import os
 from pathlib import Path
+import re
 import re
 import sys
 
@@ -110,6 +164,8 @@ for raw in sys.stdin:
         print(marker.group(1), flush=True)
         continue
     state = load()
+    state.setdefault('commands', []).append(statement)
+    save(state)
     if 'GET_LOCK(' in statement:
         print(str(state.get('db_lock_result', 1)), flush=True)
         continue
@@ -121,6 +177,15 @@ for raw in sys.stdin:
         tag = tag_match.group(1)
         if state.get('metadata_error_tag') == tag:
             print('fixture metadata failure', file=sys.stderr, flush=True)
+            continue
+        if tag == 'GRANTS':
+            emit([[value] for value in state['grants']])
+            continue
+        if tag == 'DEFAULTS':
+            emit(state['default_rows'])
+            continue
+        if tag == 'SHOWFIRST':
+            emit(state['show_rows'])
             continue
         if tag == 'SCHEMA':
             emit(state['schema_rows'])
@@ -188,7 +253,10 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.collation = 'utf8mb4_0900_ai_ci'
         expected = {table: expected_rows(table, self.collation) for table in e05.TABLE_ORDER}
         self.state = {
-            'schema_rows': [[hx('utf8mb4'), hx(self.collation)]],
+            'schema_rows': [[hx('utf8'), hx('utf8_general_ci')]],
+            'default_rows': [[hx(self.collation)]],
+            'grants': list(E05_CREATE_GRANTS),
+            'show_rows': copy.deepcopy(E05_SHOW_ROWS),
             'expected': expected,
             'tables': {table: 'absent' for table in e05.TABLE_ORDER},
             'creates': [],
@@ -421,15 +489,164 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
                 self.assertIn(mismatch, payload['tables'][table]['mismatches'])
                 self.assertEqual(self.read_state()['creates'], [])
 
-    def test_schema_charset_mismatch_is_rejected_before_create(self):
+    def test_explicit_utf8mb4_is_independent_of_schema_charset_but_not_session_collation(self):
+        table = e05.TABLE_ORDER[0]
         self.state['schema_rows'] = [[hx('latin1'), hx('latin1_swedish_ci')]]
-        self.state['tables'][e05.TABLE_ORDER[0]] = 'equivalent'
+        self.state['tables'][table] = 'equivalent'
+        self.write_state()
+        result, payload = self.execute()
+        self.assertEqual(result.returncode, 0, payload)
+        for collation in ('utf8mb4_general_ci', 'utf8mb4_bin'):
+            with self.subTest(collation=collation):
+                self.state['expected'][table] = expected_rows(table, collation)
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('table_collation', payload['tables'][table]['mismatches'])
+                self.assertEqual(self.read_state()['creates'], [])
+        self.state['default_rows'] = [[hx('utf8mb4_general_ci')]]
+        self.state['expected'][table] = expected_rows(table, 'utf8mb4_general_ci')
+        self.write_state()
+        result, payload = self.execute()
+        self.assertEqual(result.returncode, 0, payload)
+
+    def test_create_only_zero_columns_use_complete_synthetic_show_after_single_create(self):
+        table = e05.TABLE_ORDER[0]
+        self.state['expected'][table]['COLUMNS'] = []
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertEqual(result.returncode, 0, payload)
+        self.assertEqual(payload['tables'][table]['status'], 'created_equivalent')
+        self.assertEqual(self.read_state()['creates'], [table])
+        self.assertEqual(self.read_state()['grants'], E05_CREATE_GRANTS)
+        self.assert_no_secret_disclosure(result, payload)
+
+    def test_existing_zero_columns_use_show_without_recreate_but_partial_columns_fail(self):
+        table = e05.TABLE_ORDER[0]
+        full = copy.deepcopy(self.state['expected'][table]['COLUMNS'])
+        self.state['tables'][table] = 'equivalent'
+        self.state['expected'][table]['COLUMNS'] = []
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertEqual(result.returncode, 0, payload)
+        self.assertEqual(payload['tables'][table]['status'], 'existing_equivalent')
+        self.assertEqual(self.read_state()['creates'], [])
+        for columns in (full[:1], full[:-1]):
+            with self.subTest(columns=len(columns)):
+                self.state['expected'][table]['COLUMNS'] = columns
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'existing_schema_drift')
+                self.assertIn('columns', payload['tables'][table]['mismatches'])
+                self.assertEqual(self.read_state()['creates'], [])
+
+    def test_missing_or_inaccessible_show_blocks_existing_table_before_ddl(self):
+        table = e05.TABLE_ORDER[0]
+        self.state['tables'][table] = 'equivalent'
+        self.state['expected'][table]['COLUMNS'] = []
+        for rows in ([], E05_SHOW_ROWS[:-1], E05_SHOW_ROWS[:1] + E05_SHOW_ROWS[2:]):
+            with self.subTest(rows=len(rows)):
+                self.state['show_rows'] = rows
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(payload['error'], ('show_create_metadata_invalid', 'show_create_schema_drift'))
+                self.assertEqual(self.read_state()['creates'], [])
+        self.state['metadata_error_tag'] = 'SHOWFIRST'
         self.write_state()
         result, payload = self.execute('--apply')
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(payload['error'], 'existing_schema_drift')
-        self.assertIn('schema_charset', payload['tables'][e05.TABLE_ORDER[0]]['mismatches'])
+        self.assertEqual(payload['error'], 'metadata_visibility_show_create_failed')
         self.assertEqual(self.read_state()['creates'], [])
+
+    def test_zero_columns_without_show_after_create_is_durable_failure_not_pass_or_drop(self):
+        table = e05.TABLE_ORDER[0]
+        self.state['expected'][table]['COLUMNS'] = []
+        self.state['show_rows'] = []
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'created_table_not_equivalent')
+        self.assertEqual(payload['tables'][table]['status'], 'create_result_unknown')
+        self.assertEqual(self.read_state()['creates'], [table])
+        self.assertEqual(self.read_state()['tables'][table], 'equivalent')
+
+    def test_show_is_independently_complete_closed_and_preserves_e05_arithmetic_contract(self):
+        table = e05.TABLE_ORDER[0]
+        columns = e05.parse_show_create(E05_SHOW_ROWS, table, self.collation)
+        self.assertEqual(len(columns), 25)
+        self.assertEqual(tuple(col[1:6] for col in columns), e05.EXPECTED_TABLES[table]['columns'])
+        changes = [
+            ('`id` bigint', '`id` int'), ('varchar(100) NOT NULL', 'varchar(100) DEFAULT NULL'),
+            ('NOT NULL AUTO_INCREMENT', 'NOT NULL'),
+            ('varchar(100) NOT NULL', "varchar(100) NOT NULL DEFAULT 'evil'"),
+            ('varchar(100) NOT NULL', 'varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL'),
+            ('char(64) NOT NULL', 'char(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL'),
+            ('UNIQUE KEY `uk_', 'KEY `uk_'), ('`tenant_id`,`client_id`', '`task_id`,`client_id`'),
+            ('ENGINE=InnoDB', 'ENGINE=MyISAM'), ('CHARSET=utf8mb4', 'CHARSET=utf8'),
+            ('COLLATE=utf8mb4_0900_ai_ci', 'COLLATE=utf8mb4_bin'),
+            (' + 1', ' + 2'), (' >= 0', ' > 0'), (' < ', ' > '), (' <> ', ' = '),
+            (' and ', ' or '), ('(`id`)', '(`id`(1))'),
+            ('NOT NULL AUTO_INCREMENT', 'NOT NULL AUTO_INCREMENT INVISIBLE'),
+            ('NOT NULL AUTO_INCREMENT', 'NOT NULL AUTO_INCREMENT ON UPDATE 1'),
+        ]
+        for before, after in changes:
+            with self.subTest(change=(before, after)):
+                rows = [[value.replace(before, after) for value in row] for row in E05_SHOW_ROWS]
+                self.assertNotEqual(rows, E05_SHOW_ROWS)
+                with self.assertRaises(e05.SchemaError):
+                    e05.parse_show_create(rows, table, self.collation)
+        reordered = copy.deepcopy(E05_SHOW_ROWS)
+        reordered[1], reordered[2] = reordered[2], reordered[1]
+        for rows in (reordered, E05_SHOW_ROWS + [['trailing SQL']]):
+            with self.assertRaises(e05.SchemaError):
+                e05.parse_show_create(rows, table, self.collation)
+        with self.assertRaises(e05.SchemaError):
+            e05.parse_show_create(E05_SHOW_ROWS, 'agent_task_artifact_outcome', self.collation)
+        self.assertEqual(set(e05.SHOW_SQL), set(e05.TABLE_ORDER))
+
+    def test_good_show_cannot_mask_information_schema_drift(self):
+        table = e05.TABLE_ORDER[0]
+        self.state['expected'][table]['COLUMNS'] = []
+        for drift in ('index_drift', 'index_attributes_drift', 'constraint_drift', 'check_drift', 'collation_drift'):
+            with self.subTest(drift=drift):
+                self.state['tables'][table] = drift
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'existing_schema_drift')
+                self.assertEqual(self.read_state()['creates'], [])
+
+    def test_no_new_grants_required_but_wrong_scope_missing_create_and_query_failure_stop(self):
+        for grants, error in [
+                (E05_CREATE_GRANTS[:1], 'exact_table_create_privilege_required'),
+                ([grant.replace('GRANT CREATE ', 'GRANT REFERENCES ') for grant in E05_CREATE_GRANTS],
+                 'exact_table_create_privilege_required'),
+                ([grant.replace('`jia`.`agent_work_item_reassignment`', '`jia`.*') for grant in E05_CREATE_GRANTS],
+                 'metadata_privilege_scope_invalid'),
+                ([grant.replace('cyf_e05_schema_runner', 'cyf_f06_schema_runner') for grant in E05_CREATE_GRANTS],
+                 'metadata_privilege_scope_invalid')]:
+            with self.subTest(grants=grants):
+                self.state['grants'] = grants
+                self.write_state()
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], error)
+                self.assertEqual(self.read_state()['creates'], [])
+        self.state['grants'] = list(E05_CREATE_GRANTS)
+        self.state['metadata_error_tag'] = 'GRANTS'
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'metadata_privilege_query_failed')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_malformed_identifier_quoting_is_not_silently_repaired(self):
+        with self.assertRaises(e05.SchemaError):
+            e05.normalized_check('`previous_`lease_until`` > 0')
+        self.assertNotEqual(e05.normalized_check("operator_subject = 'sub`value'"),
+                            e05.normalized_check("operator_subject = 'subvalue'"))
 
     def test_every_check_constraint_semantic_drift_is_rejected(self):
         table = e05.TABLE_ORDER[0]
@@ -479,7 +696,18 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.assertNotIn('/usr/local/sbin/cyf-api-kit', source)
         self.assertNotIn('/tmp/cyf-release-api.lock', source)
         self.assertNotIn('activation', source.lower())
-        self.assertNotIn('GRANT ', source.upper())
+        # Reading/parsing SHOW GRANTS is allowed, executing GRANT/REVOKE is not.
+        for sql in list(e05.QUERY_SQL.values()) + list(e05.SHOW_SQL.values()):
+            statement = re.sub(r'^/\*[^*]*\*/\s*', '', sql).upper()
+            self.assertRegex(statement, r'^(SELECT|SHOW) ')
+            self.assertNotIn(';', statement)
+        result, payload = self.execute('--apply')
+        self.assertEqual(result.returncode, 0, payload)
+        for sql in self.read_state()['commands']:
+            statement = re.sub(r'^/\*[^*]*\*/\s*', '', sql).upper()
+            self.assertRegex(statement, r'^(SELECT |SHOW |CREATE TABLE IF NOT EXISTS AGENT_WORK_ITEM_REASSIGNMENT )')
+            self.assertNotRegex(statement, r'^(GRANT|REVOKE|DROP|ALTER|INSERT|UPDATE|DELETE) ')
+
         statements = e05.split_exact_statements(e05.E05_SQL_BYTES)
         self.assertEqual(set(statements), {'agent_work_item_reassignment'})
         statement = statements['agent_work_item_reassignment']

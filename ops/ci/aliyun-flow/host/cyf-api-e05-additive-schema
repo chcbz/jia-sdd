@@ -189,12 +189,22 @@ EXPECTED_TABLES = {
 
 
 QUERY_SQL = {
+    # Explicit DEFAULT CHARSET=utf8mb4 without COLLATE uses this session default,
+    # not jia's default charset/collation (MySQL 8.0.21 sql/sql_table.cc).
+    'DEFAULTS': "/*CYF_E05:DEFAULTS*/ SELECT HEX(@@SESSION.default_collation_for_utf8mb4)",
+    'GRANTS': "/*CYF_E05:GRANTS*/ SHOW GRANTS FOR CURRENT_USER()",
     'SCHEMA': """/*CYF_E05:SCHEMA*/ SELECT HEX(DEFAULT_CHARACTER_SET_NAME),HEX(DEFAULT_COLLATION_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='jia'""",
     'TABLES': """/*CYF_E05:TABLES*/ SELECT HEX(TABLE_NAME),HEX(ENGINE),HEX(TABLE_COLLATION) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='jia' AND TABLE_NAME='agent_work_item_reassignment' ORDER BY TABLE_NAME""",
     'COLUMNS': """/*CYF_E05:COLUMNS*/ SELECT HEX(TABLE_NAME),ORDINAL_POSITION,HEX(COLUMN_NAME),HEX(COLUMN_TYPE),HEX(IS_NULLABLE),CASE WHEN COLUMN_DEFAULT IS NULL THEN '-' ELSE CONCAT('+',HEX(COLUMN_DEFAULT)) END,HEX(EXTRA),CASE WHEN CHARACTER_SET_NAME IS NULL THEN '-' ELSE CONCAT('+',HEX(CHARACTER_SET_NAME)) END,CASE WHEN COLLATION_NAME IS NULL THEN '-' ELSE CONCAT('+',HEX(COLLATION_NAME)) END FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='jia' AND TABLE_NAME='agent_work_item_reassignment' ORDER BY TABLE_NAME,ORDINAL_POSITION""",
     'STATISTICS': """/*CYF_E05:STATISTICS*/ SELECT HEX(TABLE_NAME),HEX(INDEX_NAME),NON_UNIQUE,SEQ_IN_INDEX,HEX(COLUMN_NAME),CASE WHEN SUB_PART IS NULL THEN '-' ELSE CONCAT('+',SUB_PART) END,HEX(INDEX_TYPE),HEX(COLLATION),HEX(IS_VISIBLE) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA='jia' AND TABLE_NAME='agent_work_item_reassignment' ORDER BY TABLE_NAME,INDEX_NAME,SEQ_IN_INDEX""",
     'CONSTRAINTS': """/*CYF_E05:CONSTRAINTS*/ SELECT HEX(TABLE_NAME),HEX(CONSTRAINT_NAME),HEX(CONSTRAINT_TYPE),HEX(ENFORCED) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA='jia' AND TABLE_NAME='agent_work_item_reassignment' ORDER BY TABLE_NAME,CONSTRAINT_NAME""",
     'CHECKS': """/*CYF_E05:CHECKS*/ SELECT HEX(tc.TABLE_NAME),HEX(tc.CONSTRAINT_NAME),HEX(cc.CHECK_CLAUSE) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc JOIN INFORMATION_SCHEMA.CHECK_CONSTRAINTS cc ON cc.CONSTRAINT_SCHEMA=tc.CONSTRAINT_SCHEMA AND cc.CONSTRAINT_NAME=tc.CONSTRAINT_NAME WHERE tc.TABLE_SCHEMA='jia' AND tc.TABLE_NAME='agent_work_item_reassignment' AND tc.CONSTRAINT_TYPE='CHECK' ORDER BY tc.TABLE_NAME,tc.CONSTRAINT_NAME""",
+}
+
+
+# No caller-supplied identifier or arbitrary SHOW/SQL path.
+SHOW_SQL = {
+    'agent_work_item_reassignment': "/*CYF_E05:SHOWFIRST*/ SHOW CREATE TABLE `jia`.`agent_work_item_reassignment`",
 }
 
 
@@ -515,13 +525,17 @@ def split_exact_statements(resource):
     return statements
 
 
+# Only the observed MySQL utf8mb4 introducer is decoration. Backticks are
+# identifier delimiters, never removed from string contents. The 8.0.21 DD
+# escaped-delimiter form is accepted only for simple ASCII word literals;
+# interior/backslash escapes and other charsets fail closed, not unescaped.
 TOKEN_RE = re.compile(
-    r"\s*(>=|<>|<|>|=|\+|\(|\)|,|'(?:''|\\.|[^'])*'|[A-Za-z_][A-Za-z0-9_]*|[0-9]+)")
+    r"\s*(_utf8mb4\\'[A-Za-z0-9_]+\\'|(?:_utf8mb4)?'(?:''|[^'\\])*'|"
+    r"`[A-Za-z_][A-Za-z0-9_]*`|>=|<>|<|>|=|\+|\(|\)|,|[A-Za-z_][A-Za-z0-9_]*|[0-9]+)",
+    re.IGNORECASE)
 
 
 def check_tokens(text):
-    text = text.replace('`', '')
-    text = re.sub(r"_[A-Za-z0-9]+(?=')", '', text)
     values = []
     position = 0
     while position < len(text):
@@ -530,7 +544,14 @@ def check_tokens(text):
             if text[position:].strip():
                 raise SchemaError('check_clause_unparseable')
             break
-        values.append(match.group(1))
+        token = match.group(1)
+        if token.lower().startswith(("_utf8mb4'", "_utf8mb4\\'")):
+            token = token[8:]
+            if token.startswith("\\'"):
+                token = "'" + token[2:-2] + "'"
+        elif token.startswith('`'):
+            token = token[1:-1]
+        values.append(token)
         position = match.end()
     return values
 
@@ -643,6 +664,14 @@ def parse_metadata(rows):
         'constraints': {name: {} for name in TABLE_ORDER},
         'checks': {name: {} for name in TABLE_ORDER},
     }
+    defaults = rows['DEFAULTS']
+    if len(defaults) != 1 or len(defaults[0]) != 1:
+        raise SchemaError('create_collation_metadata_invalid')
+    result['create_collation'] = decode_hex(defaults[0][0]).lower()
+    # MySQL 8.0.21 sys_vars.cc permits exactly these session defaults. Matching
+    # any utf8mb4_* collation, or matching the schema default, is not sufficient.
+    if result['create_collation'] not in ('utf8mb4_0900_ai_ci', 'utf8mb4_general_ci'):
+        raise SchemaError('create_collation_metadata_invalid')
     schema_rows = rows['SCHEMA']
     if len(schema_rows) != 1 or len(schema_rows[0]) != 2:
         raise SchemaError('schema_identity_invalid')
@@ -717,9 +746,7 @@ def compare_table(metadata, table):
     engine, collation = metadata['tables'][table]
     if engine != 'innodb':
         mismatches.append('engine')
-    if metadata['schema_charset'] != 'utf8mb4':
-        mismatches.append('schema_charset')
-    if collation != metadata['schema_collation']:
+    if collation != metadata['create_collation']:
         mismatches.append('table_collation')
     expected = EXPECTED_TABLES[table]
     actual_columns = []
@@ -849,14 +876,139 @@ class MysqlSession(object):
             raise SchemaError('mysql_backend_reported_error')
 
 
+def verify_metadata_privileges(session):
+    # F06 Run49 proves CREATE-only can SHOW CREATE despite invisible COLUMNS.
+    # Apply that metadata strategy to only the fixed E05 table; require CREATE before
+    # writing. No REFERENCES/SELECT or new grant is required/executed. Existing
+    # zero-column tables additionally need a successful, complete SHOW below;
+    # partial COLUMNS are never filled in. An absent table is verified after
+    # CREATE, not manufactured just to probe metadata visibility.
+    rows, errored = session.command(QUERY_SQL['GRANTS'])
+    if errored:
+        raise SchemaError('metadata_privilege_query_failed')
+    account = '`cyf_e05_schema_runner`@`localhost`'
+    grants = {table: set() for table in TABLE_ORDER}
+    for row in rows:
+        if len(row) != 1:
+            raise SchemaError('metadata_privilege_scope_invalid')
+        if row[0] == 'GRANT USAGE ON *.* TO ' + account:
+            continue
+        match = re.fullmatch(
+            r'GRANT (CREATE|REFERENCES|CREATE, REFERENCES|REFERENCES, CREATE) '
+            r'ON `jia`\.`([a-z_]+)` TO ' + re.escape(account), row[0])
+        if not match or match.group(2) not in grants:
+            # Roles, column-only grants, wildcard scopes and data privileges
+            # are not substitutes for this fixed CREATE-only principal.
+            raise SchemaError('metadata_privilege_scope_invalid')
+        grants[match.group(2)].update(match.group(1).split(', '))
+    for table in TABLE_ORDER:
+        if 'CREATE' not in grants[table]:
+            raise SchemaError('exact_table_create_privilege_required', table)
+
+
+# Deliberately a closed SHOW CREATE grammar, not a general SQL parser. Unknown
+# options, generated expressions, index prefixes, FK clauses, escapes, etc. stop.
+SHOW_NAME = r'`([a-z_][a-z0-9_]*)`'
+SHOW_COMMENT = r"'(?:''|[^'\\])*'"
+SHOW_COLUMN = re.compile(
+    r'  ' + SHOW_NAME + r' (bigint|int|varchar\([1-9][0-9]*\)|char\([1-9][0-9]*\))'
+    r'(?: CHARACTER SET ([a-z0-9_]+))?(?: COLLATE ([a-z0-9_]+))?'
+    r' (NOT NULL|DEFAULT NULL)( AUTO_INCREMENT)?(?: COMMENT ' + SHOW_COMMENT + r')?')
+SHOW_KEY = re.compile(
+    r'  (PRIMARY KEY|UNIQUE KEY ' + SHOW_NAME + r'|KEY ' + SHOW_NAME + r') '
+    r'\((`[a-z_][a-z0-9_]*`(?:,`[a-z_][a-z0-9_]*`)*)\)')
+SHOW_CHECK = re.compile(r'  CONSTRAINT ' + SHOW_NAME + r' CHECK \((.+)\)')
+SHOW_OPTIONS = re.compile(
+    r'\) ENGINE=([A-Za-z0-9_]+)(?: AUTO_INCREMENT=[1-9][0-9]*)?'
+    r' DEFAULT CHARSET=([a-z0-9_]+) COLLATE=([a-z0-9_]+)'
+    r'(?: COMMENT=' + SHOW_COMMENT + r')?')
+
+
+def parse_show_create(rows, table, create_collation):
+    if (table not in SHOW_SQL or len(rows) < 3 or len(rows[0]) != 2
+            or rows[0] != [table, 'CREATE TABLE `%s` (' % table]
+            or any(len(row) != 1 for row in rows[1:])):
+        raise SchemaError('show_create_metadata_invalid', table)
+    options = SHOW_OPTIONS.fullmatch(rows[-1][0])
+    if not options:
+        raise SchemaError('show_create_metadata_invalid', table)
+    engine, charset, collation = options.groups()
+    result = {
+        'create_collation': create_collation,
+        'tables': {table: (engine.lower(), collation)},
+        'columns': {table: []}, 'indexes': {table: {}},
+        'constraints': {table: {}}, 'checks': {table: {}},
+    }
+    if charset != 'utf8mb4':
+        raise SchemaError('show_create_schema_drift', table)
+    phase = 0
+    for at, row in enumerate(rows[1:-1]):
+        line = row[0]
+        if at < len(rows) - 3:
+            if not line.endswith(','):
+                raise SchemaError('show_create_metadata_invalid', table)
+            line = line[:-1]
+        column = SHOW_COLUMN.fullmatch(line)
+        key = SHOW_KEY.fullmatch(line)
+        check = SHOW_CHECK.fullmatch(line)
+        if column and phase == 0:
+            name, sql_type, column_charset, column_collation, nullable, extra = column.groups()
+            string_type = sql_type.startswith(('varchar(', 'char('))
+            if not string_type and (column_charset or column_collation):
+                raise SchemaError('show_create_metadata_invalid', table)
+            result['columns'][table].append((
+                len(result['columns'][table]) + 1, name, sql_type,
+                'NO' if nullable == 'NOT NULL' else 'YES', None,
+                'auto_increment' if extra else '',
+                (column_charset or charset) if string_type else None,
+                (column_collation or collation) if string_type else None,
+            ))
+        elif key and phase <= 1:
+            phase = 1
+            kind, unique_name, ordinary_name, columns = key.groups()
+            name = unique_name or ordinary_name or 'PRIMARY'
+            if name in result['indexes'][table]:
+                raise SchemaError('show_create_metadata_invalid', table)
+            non_unique = 1 if ordinary_name else 0
+            result['indexes'][table][name] = [
+                (non_unique, ordinal, col[1:-1], None, 'BTREE', 'A', 'YES')
+                for ordinal, col in enumerate(columns.split(','), 1)]
+            if not non_unique:
+                result['constraints'][table][name] = (
+                    'PRIMARY KEY' if kind == 'PRIMARY KEY' else 'UNIQUE', 'YES')
+        elif check:
+            phase = 2
+            name, clause = check.groups()
+            if name in result['constraints'][table]:
+                raise SchemaError('show_create_metadata_invalid', table)
+            result['constraints'][table][name] = ('CHECK', 'YES')
+            result['checks'][table][name] = clause
+        else:
+            raise SchemaError('show_create_metadata_invalid', table)
+    # SHOW is independently compared in full (not just used to supply columns).
+    # I_S indexes/constraints/checks then undergo their original exact comparison.
+    state, ignored = compare_table(result, table)
+    if state != 'equivalent':
+        raise SchemaError('show_create_schema_drift', table)
+    return result['columns'][table]
+
+
 def introspect(session):
     rows = {}
-    for name in ('SCHEMA', 'TABLES', 'COLUMNS', 'STATISTICS', 'CONSTRAINTS', 'CHECKS'):
+    for name in ('DEFAULTS', 'SCHEMA', 'TABLES', 'COLUMNS', 'STATISTICS', 'CONSTRAINTS', 'CHECKS'):
         result, errored = session.command(QUERY_SQL[name])
         if errored:
             raise SchemaError('metadata_query_failed')
         rows[name] = result
-    return parse_metadata(rows)
+    metadata = parse_metadata(rows)
+    for table in TABLE_ORDER:
+        if table in metadata['tables'] and not metadata['columns'][table]:
+            shown, errored = session.command(SHOW_SQL[table])
+            if errored:
+                raise SchemaError('metadata_visibility_show_create_failed', table)
+            metadata['columns'][table] = parse_show_create(
+                shown, table, metadata['create_collation'])
+    return metadata
 
 
 def acquire_runner_lock(path, uid):
@@ -970,6 +1122,7 @@ def run(operation, report):
         }
         session = MysqlSession(paths['mysql'], paths['socket'], password)
         session.acquire()
+        verify_metadata_privileges(session)
         metadata = introspect(session)
         states = {}
         drift = False
