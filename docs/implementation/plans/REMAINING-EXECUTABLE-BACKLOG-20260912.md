@@ -1,5 +1,13 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 12:26 CST delta
+
+- **API38 已发布核验**：develop `741cc3f2`，84 个配置 selector 范围测试和构建成功；部署单 `69522605` 成功、线上 JAR `37fb8ae0` 与同 Run 制品一致，PID `3348479`/10018 健康 UP。交付 E05 有界重试/退避及无伪造终态的 deferral；完整跨 Agent 重派仍未完成。
+- **F06 源码已合入并推送 develop `5bfdb2a8`**：22 条路径保持 Owner `8c927ec3` 字节一致；与 E05 路径无交集。88 个 selector 配置已保存并 readback，云端验证尚未取得结果。两张新增表未执行迁移，不能称已启用。
+- **继续并行而不是排 Reviewer**：E05 显式目标过期工作项重派、F06 认证成果确认/查询接口分别由独立 worktree Owner 实施；主控做集成、云效及线上核验。精确 Owner 只以 TASKS.yaml 为准。已完成 F06 原 Owner 不再可达，wait/close 返回 not_found，未把它当作运行进程失败。
+- **激活前置已查实一部分**：当前 API 的本机 3306 TCP 连接与 MySQL processlist `jia` 对应；已有 artifact/event/workitem/meta 表，F06 两表缺失。仅只读查询，未改 schema/开关/生产数据。真实身份、付费授权与原生客户端业务 ACK 仍不能用部署成功代替。
+
+
 ## 2026-09-13 11:59 CST delta
 
 - E05 corrected741cc3f2/7031b74c is now remote develop; initial00adb ambiguous-timeout FAILED mutation removed before publication.55lightweight policy/readback checks PASS; real service/transaction regressions authored, not locally run. Config84selectorsd3cc saved/readbackAPPLIED. One actual Start returned API38 INIT/sourcepending; observe38only, no duplicateStart. API37 remains lastverified.
