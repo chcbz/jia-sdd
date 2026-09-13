@@ -16,6 +16,8 @@ import tarfile
 import tempfile
 import time
 import urllib.request
+import urllib.parse
+import urllib.error
 
 BASE = Path('/opt/cyf/output-storage')
 CONFIG = Path('/etc/cyf-output-storage')
@@ -26,7 +28,7 @@ LAYER = 'f9c0805c25ee5c0d375a9c16810eafb57cf658d7b6814c179d52496272bec8a4'
 BINARY = '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f'
 DISK_RESERVE = 3584 * 1024**2
 MEMORY_RESERVE = 1024 * 1024**2
-KNOWN_INSTALL_PEAK = 39450432 + 2 * 110989496 + 64 * 1024**2
+KNOWN_INSTALL_PEAK = 39450432 + 110989496 + 64 * 1024**2
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}
 
 
@@ -178,12 +180,26 @@ def main():
         phase = 'download_pinned_layer'
         with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-', dir='/opt/cyf') as temp:
             layer_path = Path(temp) / 'layer.tar.gz'
-            url = 'https://quay.io/v2/minio/minio/blobs/sha256:' + LAYER
-            # Public immutable layer; no registry/Flow credentials or proxy inherited.
+            mirror = 'https://m.daocloud.io'
+            url = mirror + '/v2/quay.io/minio/minio/blobs/sha256:' + LAYER
+            # Anonymous public mirror token; no user/Flow credential or inherited proxy.
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            opener.addheaders = [('User-Agent', 'docker/27.0'), ('Cache-Control', 'no-cache')]
+            query = urllib.parse.urlencode({'service': 'm.daocloud.io',
+                'scope': 'repository:quay.io/minio/minio:pull', 'client_id': 'cyf-output-probe'})
+            with opener.open(mirror+'/auth/token?'+query, timeout=20) as response:
+                data = response.read(65537)
+                if len(data) > 65536:
+                    raise RuntimeError('public_token_response_limit')
+                token = json.loads(data)['token']
+                if not isinstance(token, str) or not token or len(token)>16384:
+                    raise RuntimeError('public_token_invalid')
+            request = urllib.request.Request(url, headers={'Authorization': 'Bearer '+token})
+            result['downloadMirror'] = 'm.daocloud.io'
+            result['downloadedLayerBytes'] = 0
             digest = hashlib.sha256()
             size = 0
-            with opener.open(url, timeout=30) as response, layer_path.open('xb') as f:
+            with opener.open(request, timeout=30) as response, layer_path.open('xb') as f:
                 deadline = time.monotonic()+120
                 while True:
                     if time.monotonic() > deadline:
@@ -192,6 +208,7 @@ def main():
                     if not data:
                         break
                     size += len(data)
+                    result['downloadedLayerBytes'] = size
                     if size > 39450432:
                         raise RuntimeError('layer_size_exceeded')
                     digest.update(data)
@@ -233,7 +250,11 @@ def main():
                 raise RuntimeError('created_identity_mismatch')
             result['serviceIdentity'] = {'uid': user.pw_uid, 'gid': user.pw_gid, 'home': user.pw_dir, 'shell': user.pw_shell}
             os.chown(STATE, user.pw_uid, user.pw_gid)
-            shutil.copyfile(candidate, BASE/'minio')
+            if candidate.stat().st_dev != BASE.stat().st_dev:
+                raise RuntimeError('binary_filesystem_mismatch')
+            # Exclusive hard link shares existing blocks, then remove the staging name.
+            os.link(candidate, BASE/'minio', follow_symlinks=False)
+            candidate.unlink()
             os.chmod(BASE/'minio', 0o755)
             installed = installed_identity()
             result['installedBinary'] = installed
@@ -298,9 +319,13 @@ WantedBy=multi-user.target
                       service='cyf-output-storage.service', endpoint='http://127.0.0.1:19000',
                       bucketCreated=False, applicationConfigured=False)
         exclusive(BASE/'install-result.json', (json.dumps(result,sort_keys=True)+'\n').encode())
-    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError, tarfile.TarError):
+    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError, tarfile.TarError) as exc:
         signal.alarm(0)
-        result.update(status='UNKNOWN', failedPhase=phase)
+        result.update(status='UNKNOWN', failedPhase=phase, errorType=type(exc).__name__)
+        if isinstance(exc, urllib.error.HTTPError):
+            result['httpStatus'] = exc.code
+        if type(exc) is RuntimeError and str(exc).replace('_', '').isalpha():
+            result['errorCode'] = str(exc)
         if activation_attempted:
             try:
                 run(['/usr/bin/systemctl', 'disable', '--now', 'cyf-output-storage.service'], timeout=45)

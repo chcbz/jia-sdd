@@ -14,16 +14,16 @@ stages:
             \"Install a pinned MinIO in new task-specific paths; never touches an existing API runtime.\"\"\"\n\
             import hashlib\nimport grp\nimport json\nimport os\nfrom pathlib import Path\nimport pwd\nimport secrets\n\
             import signal\nimport shutil\nimport socket\nimport stat\nimport subprocess\nimport tarfile\nimport\
-            \ tempfile\nimport time\nimport urllib.request\n\nBASE = Path('/opt/cyf/output-storage')\nCONFIG = Path('/etc/cyf-output-storage')\n\
-            STATE = Path('/var/lib/cyf-output-storage')\nUNIT = Path('/etc/systemd/system/cyf-output-storage.service')\n\
+            \ tempfile\nimport time\nimport urllib.request\nimport urllib.parse\nimport urllib.error\n\nBASE = Path('/opt/cyf/output-storage')\n\
+            CONFIG = Path('/etc/cyf-output-storage')\nSTATE = Path('/var/lib/cyf-output-storage')\nUNIT = Path('/etc/systemd/system/cyf-output-storage.service')\n\
             USER = 'cyf-output-store'\nLAYER = 'f9c0805c25ee5c0d375a9c16810eafb57cf658d7b6814c179d52496272bec8a4'\n\
             BINARY = '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f'\nDISK_RESERVE = 3584 * 1024**2\n\
-            MEMORY_RESERVE = 1024 * 1024**2\nKNOWN_INSTALL_PEAK = 39450432 + 2 * 110989496 + 64 * 1024**2\nENV =\
-            \ {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\n\n\ndef run(args,\
-            \ timeout=30):\n    p = subprocess.run(args, env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,\n\
-            \                       stderr=subprocess.DEVNULL, timeout=timeout, check=False)\n    if p.returncode\
-            \ != 0:\n        raise RuntimeError('command_failed')\n\n\ndef exclusive(path, data, mode=0o600):\n\
-            \    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)\n    with os.fdopen(fd,\
+            MEMORY_RESERVE = 1024 * 1024**2\nKNOWN_INSTALL_PEAK = 39450432 + 110989496 + 64 * 1024**2\nENV = {'PATH':\
+            \ '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\n\n\ndef run(args, timeout=30):\n\
+            \    p = subprocess.run(args, env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,\n      \
+            \                 stderr=subprocess.DEVNULL, timeout=timeout, check=False)\n    if p.returncode != 0:\n\
+            \        raise RuntimeError('command_failed')\n\n\ndef exclusive(path, data, mode=0o600):\n    fd =\
+            \ os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)\n    with os.fdopen(fd,\
             \ 'wb') as f:\n        f.write(data)\n        f.flush()\n        os.fsync(f.fileno())\n\n\ndef installed_identity():\n\
             \    fd = os.open(str(BASE/'minio'), os.O_RDONLY | os.O_NOFOLLOW)\n    with os.fdopen(fd, 'rb') as f:\n\
             \        info = os.fstat(f.fileno())\n        if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0\
@@ -85,54 +85,66 @@ stages:
             \ < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n\
             \        for port in [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1',\
             \ port))\n        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
-            \ dir='/opt/cyf') as temp:\n            layer_path = Path(temp) / 'layer.tar.gz'\n            url =\
-            \ 'https://quay.io/v2/minio/minio/blobs/sha256:' + LAYER\n            # Public immutable layer; no registry/Flow\
-            \ credentials or proxy inherited.\n            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
-            \            digest = hashlib.sha256()\n            size = 0\n            with opener.open(url, timeout=30)\
-            \ as response, layer_path.open('xb') as f:\n                deadline = time.monotonic()+120\n      \
-            \          while True:\n                    if time.monotonic() > deadline:\n                      \
-            \  raise RuntimeError('download_timeout')\n                    data = response.read(1024*1024)\n   \
-            \                 if not data:\n                        break\n                    size += len(data)\n\
-            \                    if size > 39450432:\n                        raise RuntimeError('layer_size_exceeded')\n\
-            \                    digest.update(data)\n                    f.write(data)\n            if size !=\
-            \ 39450432 or digest.hexdigest() != LAYER:\n                raise RuntimeError('layer_integrity')\n\
-            \            candidate = Path(temp) / 'minio'\n            matches = 0\n            with tarfile.open(layer_path,\
-            \ 'r|gz') as archive:\n                for member in archive:\n                    if member.name.lstrip('./')\
-            \ != 'usr/bin/minio':\n                        continue\n                    matches += 1\n        \
-            \            if matches != 1 or not member.isfile() or member.size != 110989496:\n                 \
-            \       raise RuntimeError('binary_member_integrity')\n                    digest = hashlib.sha256()\n\
-            \                    with archive.extractfile(member) as src, candidate.open('xb') as dst:\n       \
-            \                 while True:\n                            data = src.read(1024*1024)\n            \
-            \                if not data:\n                                break\n                            digest.update(data)\n\
-            \                            dst.write(data)\n                    if digest.hexdigest() != BINARY:\n\
-            \                        raise RuntimeError('binary_integrity')\n            if matches != 1:\n    \
-            \            raise RuntimeError('binary_not_unique')\n            phase = 'install_new_paths'\n    \
-            \        BASE.mkdir(mode=0o755)\n            CONFIG.mkdir(mode=0o700)\n            STATE.mkdir(mode=0o750)\n\
-            \            receipt = BASE / 'install-intent.json'\n            exclusive(receipt, (json.dumps(dict(result,\
-            \ layerSha256=LAYER, binarySha256=BINARY))+'\\n').encode())\n            run(['/usr/sbin/useradd', '--system',\
-            \ '--user-group', '--no-create-home', '--home-dir', str(STATE), '--shell', '/sbin/nologin', USER])\n\
-            \            user = pwd.getpwnam(USER)\n            group = grp.getgrnam(USER)\n            if (user.pw_uid\
-            \ == 0 or user.pw_gid != group.gr_gid or user.pw_dir != str(STATE)\n                    or user.pw_shell\
-            \ != '/sbin/nologin'):\n                raise RuntimeError('created_identity_mismatch')\n          \
-            \  result['serviceIdentity'] = {'uid': user.pw_uid, 'gid': user.pw_gid, 'home': user.pw_dir, 'shell':\
-            \ user.pw_shell}\n            os.chown(STATE, user.pw_uid, user.pw_gid)\n            shutil.copyfile(candidate,\
-            \ BASE/'minio')\n            os.chmod(BASE/'minio', 0o755)\n            installed = installed_identity()\n\
-            \            result['installedBinary'] = installed\n            credential = {'accessKey': 'cyf-output-'+secrets.token_hex(8),\
-            \ 'secretKey': secrets.token_hex(32)}\n            exclusive(CONFIG/'credentials.json', (json.dumps(credential)+'\\\
-            n').encode())\n            exclusive(CONFIG/'minio.env', ('MINIO_ROOT_USER='+credential['accessKey']+'\\\
-            nMINIO_ROOT_PASSWORD='+credential['secretKey']+'\\nMINIO_BROWSER=off\\nMINIO_API_REQUESTS_MAX=8\\nGOMEMLIMIT=256MiB\\\
-            n').encode())\n            unit = '''[Unit]\nDescription=CYF Agent output object storage\nAfter=network-online.target\n\
-            Wants=network-online.target\nStartLimitIntervalSec=300\nStartLimitBurst=3\n\n[Service]\nUser=cyf-output-store\n\
-            Group=cyf-output-store\nEnvironmentFile=/etc/cyf-output-storage/minio.env\nExecStart=/opt/cyf/output-storage/minio\
-            \ server /var/lib/cyf-output-storage --address 127.0.0.1:19000 --console-address 127.0.0.1:19001\nRestart=on-failure\n\
-            RestartSec=10\nUMask=0077\nLimitNOFILE=4096\nMemoryAccounting=true\nMemoryMax=384M\nTasksMax=128\nNoNewPrivileges=true\n\
-            PrivateTmp=true\nProtectSystem=strict\nProtectHome=true\nReadWritePaths=/var/lib/cyf-output-storage\n\
-            RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX\n\n[Install]\nWantedBy=multi-user.target\n'''\n   \
-            \         exclusive(UNIT, unit.encode(), 0o644)\n        phase = 'activate_new_service'\n        if\
-            \ shutil.disk_usage('/opt').free < DISK_RESERVE or available_memory() < MEMORY_RESERVE+384*1024**2:\n\
-            \            raise RuntimeError('activation_resource_gate')\n        activation_attempted = True\n \
-            \       run(['/usr/bin/systemctl', 'daemon-reload'])\n        run(['/usr/bin/systemctl', 'enable', '--now',\
-            \ 'cyf-output-storage.service'], timeout=60)\n        phase = 'readiness'\n        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
+            \ dir='/opt/cyf') as temp:\n            layer_path = Path(temp) / 'layer.tar.gz'\n            mirror\
+            \ = 'https://m.daocloud.io'\n            url = mirror + '/v2/quay.io/minio/minio/blobs/sha256:' + LAYER\n\
+            \            # Anonymous public mirror token; no user/Flow credential or inherited proxy.\n        \
+            \    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n            opener.addheaders\
+            \ = [('User-Agent', 'docker/27.0'), ('Cache-Control', 'no-cache')]\n            query = urllib.parse.urlencode({'service':\
+            \ 'm.daocloud.io',\n                'scope': 'repository:quay.io/minio/minio:pull', 'client_id': 'cyf-output-probe'})\n\
+            \            with opener.open(mirror+'/auth/token?'+query, timeout=20) as response:\n              \
+            \  data = response.read(65537)\n                if len(data) > 65536:\n                    raise RuntimeError('public_token_response_limit')\n\
+            \                token = json.loads(data)['token']\n                if not isinstance(token, str) or\
+            \ not token or len(token)>16384:\n                    raise RuntimeError('public_token_invalid')\n \
+            \           request = urllib.request.Request(url, headers={'Authorization': 'Bearer '+token})\n    \
+            \        result['downloadMirror'] = 'm.daocloud.io'\n            result['downloadedLayerBytes'] = 0\n\
+            \            digest = hashlib.sha256()\n            size = 0\n            with opener.open(request,\
+            \ timeout=30) as response, layer_path.open('xb') as f:\n                deadline = time.monotonic()+120\n\
+            \                while True:\n                    if time.monotonic() > deadline:\n                \
+            \        raise RuntimeError('download_timeout')\n                    data = response.read(1024*1024)\n\
+            \                    if not data:\n                        break\n                    size += len(data)\n\
+            \                    result['downloadedLayerBytes'] = size\n                    if size > 39450432:\n\
+            \                        raise RuntimeError('layer_size_exceeded')\n                    digest.update(data)\n\
+            \                    f.write(data)\n            if size != 39450432 or digest.hexdigest() != LAYER:\n\
+            \                raise RuntimeError('layer_integrity')\n            candidate = Path(temp) / 'minio'\n\
+            \            matches = 0\n            with tarfile.open(layer_path, 'r|gz') as archive:\n          \
+            \      for member in archive:\n                    if member.name.lstrip('./') != 'usr/bin/minio':\n\
+            \                        continue\n                    matches += 1\n                    if matches\
+            \ != 1 or not member.isfile() or member.size != 110989496:\n                        raise RuntimeError('binary_member_integrity')\n\
+            \                    digest = hashlib.sha256()\n                    with archive.extractfile(member)\
+            \ as src, candidate.open('xb') as dst:\n                        while True:\n                      \
+            \      data = src.read(1024*1024)\n                            if not data:\n                      \
+            \          break\n                            digest.update(data)\n                            dst.write(data)\n\
+            \                    if digest.hexdigest() != BINARY:\n                        raise RuntimeError('binary_integrity')\n\
+            \            if matches != 1:\n                raise RuntimeError('binary_not_unique')\n           \
+            \ phase = 'install_new_paths'\n            BASE.mkdir(mode=0o755)\n            CONFIG.mkdir(mode=0o700)\n\
+            \            STATE.mkdir(mode=0o750)\n            receipt = BASE / 'install-intent.json'\n         \
+            \   exclusive(receipt, (json.dumps(dict(result, layerSha256=LAYER, binarySha256=BINARY))+'\\n').encode())\n\
+            \            run(['/usr/sbin/useradd', '--system', '--user-group', '--no-create-home', '--home-dir',\
+            \ str(STATE), '--shell', '/sbin/nologin', USER])\n            user = pwd.getpwnam(USER)\n          \
+            \  group = grp.getgrnam(USER)\n            if (user.pw_uid == 0 or user.pw_gid != group.gr_gid or user.pw_dir\
+            \ != str(STATE)\n                    or user.pw_shell != '/sbin/nologin'):\n                raise RuntimeError('created_identity_mismatch')\n\
+            \            result['serviceIdentity'] = {'uid': user.pw_uid, 'gid': user.pw_gid, 'home': user.pw_dir,\
+            \ 'shell': user.pw_shell}\n            os.chown(STATE, user.pw_uid, user.pw_gid)\n            if candidate.stat().st_dev\
+            \ != BASE.stat().st_dev:\n                raise RuntimeError('binary_filesystem_mismatch')\n       \
+            \     # Exclusive hard link shares existing blocks, then remove the staging name.\n            os.link(candidate,\
+            \ BASE/'minio', follow_symlinks=False)\n            candidate.unlink()\n            os.chmod(BASE/'minio',\
+            \ 0o755)\n            installed = installed_identity()\n            result['installedBinary'] = installed\n\
+            \            credential = {'accessKey': 'cyf-output-'+secrets.token_hex(8), 'secretKey': secrets.token_hex(32)}\n\
+            \            exclusive(CONFIG/'credentials.json', (json.dumps(credential)+'\\n').encode())\n       \
+            \     exclusive(CONFIG/'minio.env', ('MINIO_ROOT_USER='+credential['accessKey']+'\\nMINIO_ROOT_PASSWORD='+credential['secretKey']+'\\\
+            nMINIO_BROWSER=off\\nMINIO_API_REQUESTS_MAX=8\\nGOMEMLIMIT=256MiB\\n').encode())\n            unit =\
+            \ '''[Unit]\nDescription=CYF Agent output object storage\nAfter=network-online.target\nWants=network-online.target\n\
+            StartLimitIntervalSec=300\nStartLimitBurst=3\n\n[Service]\nUser=cyf-output-store\nGroup=cyf-output-store\n\
+            EnvironmentFile=/etc/cyf-output-storage/minio.env\nExecStart=/opt/cyf/output-storage/minio server /var/lib/cyf-output-storage\
+            \ --address 127.0.0.1:19000 --console-address 127.0.0.1:19001\nRestart=on-failure\nRestartSec=10\nUMask=0077\n\
+            LimitNOFILE=4096\nMemoryAccounting=true\nMemoryMax=384M\nTasksMax=128\nNoNewPrivileges=true\nPrivateTmp=true\n\
+            ProtectSystem=strict\nProtectHome=true\nReadWritePaths=/var/lib/cyf-output-storage\nRestrictAddressFamilies=AF_INET\
+            \ AF_INET6 AF_UNIX\n\n[Install]\nWantedBy=multi-user.target\n'''\n            exclusive(UNIT, unit.encode(),\
+            \ 0o644)\n        phase = 'activate_new_service'\n        if shutil.disk_usage('/opt').free < DISK_RESERVE\
+            \ or available_memory() < MEMORY_RESERVE+384*1024**2:\n            raise RuntimeError('activation_resource_gate')\n\
+            \        activation_attempted = True\n        run(['/usr/bin/systemctl', 'daemon-reload'])\n       \
+            \ run(['/usr/bin/systemctl', 'enable', '--now', 'cyf-output-storage.service'], timeout=60)\n       \
+            \ phase = 'readiness'\n        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
             \        ready = False\n        for _ in range(20):\n            try:\n                with opener.open('http://127.0.0.1:19000/minio/health/ready',\
             \ timeout=3) as response:\n                    ready = response.status == 200\n            except OSError:\n\
             \                pass\n            if ready:\n                break\n            time.sleep(1)\n   \
@@ -143,14 +155,17 @@ stages:
             \ binarySha256=installed['sha256'],\n                      service='cyf-output-storage.service', endpoint='http://127.0.0.1:19000',\n\
             \                      bucketCreated=False, applicationConfigured=False)\n        exclusive(BASE/'install-result.json',\
             \ (json.dumps(result,sort_keys=True)+'\\n').encode())\n    except (OSError, ValueError, KeyError, RuntimeError,\
-            \ subprocess.SubprocessError, tarfile.TarError):\n        signal.alarm(0)\n        result.update(status='UNKNOWN',\
-            \ failedPhase=phase)\n        if activation_attempted:\n            try:\n                run(['/usr/bin/systemctl',\
-            \ 'disable', '--now', 'cyf-output-storage.service'], timeout=45)\n                check = subprocess.run(['/usr/bin/systemctl',\
-            \ 'show', 'cyf-output-storage.service',\n                    '--property=ActiveState,UnitFileState',\
-            \ '--no-pager'], env=ENV, stdin=subprocess.DEVNULL,\n                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,\
-            \ timeout=10, check=False)\n                states = dict(line.split('=', 1) for line in check.stdout.decode().splitlines())\n\
-            \                result['failureServiceDisabledAndStopped'] = (check.returncode == 0\n             \
-            \       and states.get('ActiveState') in ('inactive', 'failed')\n                    and states.get('UnitFileState')\
+            \ subprocess.SubprocessError, tarfile.TarError) as exc:\n        signal.alarm(0)\n        result.update(status='UNKNOWN',\
+            \ failedPhase=phase, errorType=type(exc).__name__)\n        if isinstance(exc, urllib.error.HTTPError):\n\
+            \            result['httpStatus'] = exc.code\n        if type(exc) is RuntimeError and str(exc).replace('_',\
+            \ '').isalpha():\n            result['errorCode'] = str(exc)\n        if activation_attempted:\n   \
+            \         try:\n                run(['/usr/bin/systemctl', 'disable', '--now', 'cyf-output-storage.service'],\
+            \ timeout=45)\n                check = subprocess.run(['/usr/bin/systemctl', 'show', 'cyf-output-storage.service',\n\
+            \                    '--property=ActiveState,UnitFileState', '--no-pager'], env=ENV, stdin=subprocess.DEVNULL,\n\
+            \                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10, check=False)\n \
+            \               states = dict(line.split('=', 1) for line in check.stdout.decode().splitlines())\n \
+            \               result['failureServiceDisabledAndStopped'] = (check.returncode == 0\n              \
+            \      and states.get('ActiveState') in ('inactive', 'failed')\n                    and states.get('UnitFileState')\
             \ == 'disabled')\n            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):\n\
             \                result['failureServiceDisabledAndStopped'] = False\n    finally:\n        signal.alarm(0)\n\
             \    result['diskAvailableAfter'] = shutil.disk_usage('/opt').free\n    print(json.dumps(result, sort_keys=True))\n\
