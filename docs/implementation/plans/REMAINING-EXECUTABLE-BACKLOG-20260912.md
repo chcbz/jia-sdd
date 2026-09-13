@@ -1,5 +1,12 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 11:16 CST delta
+
+- F02 Web corrected candidate `6d103e81` plus main lint-only `edace747` is now remote develop. Getter/ref rendering and pre-request async identity/cancel races were corrected before push. Owner/main related tests each14 PASS, ESLint PASS. Auto Run99 is RUNNING; source checkout metadata remains pending, so neither exact cloud verification nor deployment is claimed yet. Web98/API37 remain last verified.
+- Two independent API Writers continue F06 outcome state and E05 timeout/failure/reassignment policy; no Reviewer/global source queue. Completed Web Owner released.
+- Passive client evidence since10:30CST: active PID1183165, three correlated registration ACKs following API37, one earlier ack_timeout retained. Counts alone do not prove unique-profile coverage. Known client default inbox has3skill scopes and0installed/acknowledged-result files; six real skill acceptance is still absent, not replaced by transport ACK. No restart, credential read or paid action performed.
+- Current published deployment policy removes unsupported fixed5GiB reserve/time-age failure rules; do not reintroduce historical thresholds from older summaries. Actual byte requirements, mutual exclusion, source/artifact integrity and health evidence remain.
+
 ## 2026-09-13 10:56 CST delta
 
 - **API37 已发布并核验**：develop `e54f579e`，79 个配置测试类对应云端构建成功，部署单 69520789 成功；同次制品、线上 JAR/记录一致，PID 3284987 监听 10018，健康 UP。F02 HTTP 上传/下载代码已部署，但文件存储仍默认关闭，真实上传下载验收未完成。
