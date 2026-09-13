@@ -241,7 +241,7 @@ m.main()
             self.assertNotIn('FirstBatchPause',text)
             self.assertIn('batchNumber: 1',text)
         api=(OPS/'templates/backend-develop-release.yaml').read_text()
-        self.assertEqual(api.count('--tests '),59)
+        # Required regression selectors matter; an arbitrary total must not reject new tests.
         for selector in (
             'cn.jia.agent.api.AgentCommandOperationsControllerTest',
             'cn.jia.agent.dao.AgentCommandOperationsMapperContractTest',

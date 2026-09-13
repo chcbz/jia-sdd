@@ -1,4 +1,5 @@
 import os
+import fcntl
 from pathlib import Path
 import subprocess
 import tempfile
@@ -83,21 +84,24 @@ class ApiFlowInstallLockTest(unittest.TestCase):
         self.assertGreaterEqual(elapsed, 0.2)
         self.assertLess(elapsed, 5)
 
-    def test_sustained_holder_times_out_without_post_lock_action(self):
-        holder = self.hold_lock(64)
+    def test_contention_waits_without_mutation_then_proceeds(self):
         original = self.package.read_bytes()
-        result, elapsed = self.run_installer()
-        holder.wait(timeout=10)
-
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('another API release is active', result.stderr)
-        self.assertNotIn('approval is missing or unsafe', result.stderr)
-        self.assertGreaterEqual(elapsed, 59)
-        self.assertLess(elapsed, 64)
-        self.assertEqual(self.package.read_bytes(), original)
-        self.assertEqual(self.package.stat().st_mode & 0o777, 0o644)
-        self.assertFalse((self.root / 'state/record.json').exists())
-        self.assertEqual(list((self.root / 'state/backups').iterdir()), [])
+        with self.lock.open('r+') as held:
+            fcntl.flock(held, fcntl.LOCK_EX)
+            waiter = subprocess.Popen([str(INSTALLER)], env=self.env,
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                      universal_newlines=True)
+            try:
+                time.sleep(0.3)
+                self.assertIsNone(waiter.poll())
+                self.assertEqual(self.package.read_bytes(), original)
+                self.assertFalse((self.root / 'state/record.json').exists())
+            finally:
+                fcntl.flock(held, fcntl.LOCK_UN)
+            out, err = waiter.communicate(timeout=5)
+        self.assertIn('approval is missing or unsafe', err)
+        self.assertNotEqual(waiter.returncode, 0)
+        self.assertNotIn('another API release is active', err)
 
 
 if __name__ == '__main__':

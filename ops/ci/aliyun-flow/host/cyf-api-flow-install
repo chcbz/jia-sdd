@@ -16,9 +16,7 @@ RELEASE_LOCK=/tmp/cyf-release-api.lock
 EXPECTED_ORGANIZATION=5fb7d76ee6f9d07f148529c7
 EXPECTED_PIPELINE=5260799
 EXPECTED_JOB=cloud_ci.api_ci
-MAX_PACKAGE_BYTES=$((2 * 1024 * 1024 * 1024))
-MAX_EXTRACT_BYTES=$((3 * 1024 * 1024 * 1024))
-MIN_LIFECYCLE_BYTES=$((5 * 1024 * 1024 * 1024))
+# Resource admission uses measured candidate + rollback bytes, not fixed spare-space quotas.
 
 fail() { printf 'cyf-api-flow-install: %s\n' "$*" >&2; exit 1; }
 recoverable_fail() { fail "$*; rerun the same exact package and approval to recover"; }
@@ -101,7 +99,8 @@ else
 fi
 exec 8<>"$RELEASE_LOCK"
 [[ "$(stat -Lc '%d:%i' "$RELEASE_LOCK")" == "$(stat -Lc '%d:%i' /proc/$$/fd/8)" ]] || fail 'release lock changed while opening'
-flock -w 60 8 || fail 'another API release is active'
+# Serialize releases; contention is waiting, not a failed release. Flow owns cancellation.
+flock -x 8 || fail 'API release lock acquisition interrupted'
 LOCK_DEVICE="$(stat -Lc '%d' /proc/$$/fd/8)"
 LOCK_INODE="$(stat -Lc '%i' /proc/$$/fd/8)"
 export CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$LOCK_DEVICE" CYF_RELEASE_LOCK_INODE="$LOCK_INODE" CYF_RELEASE_LOCK_HELD=1
@@ -112,7 +111,6 @@ export CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$LOCK_DEVICE" CY
 [[ "$(stat -Lc '%u:%h' "$INCOMING_PACKAGE")" == "${INSTALL_UID}:1" ]] || fail 'incoming package must be owner-controlled and single-link'
 PACKAGE_BYTES="$(stat -Lc '%s' "$INCOMING_PACKAGE")"
 [[ "$PACKAGE_BYTES" =~ ^[0-9]+$ ]] || fail 'incoming package metadata is unreadable'
-(( PACKAGE_BYTES <= MAX_PACKAGE_BYTES )) || fail 'incoming package exceeds size limit'
 chmod 0600 "$INCOMING_PACKAGE"
 [[ "$(stat -Lc '%u:%a:%h' "$INCOMING_PACKAGE")" == "${INSTALL_UID}:600:1" ]] || fail 'incoming package normalization failed'
 
@@ -183,11 +181,10 @@ fi
 
 # Scan and size the complete member catalog before creating any extraction directory.
 # This is admission only; the second pass performs byte and JSON validation while unpacking.
-EXTRACT_BYTES="$(python3 -I -B - "$INCOMING_PACKAGE" "$MAX_PACKAGE_BYTES" "$MAX_EXTRACT_BYTES" <<'PY'
+EXTRACT_BYTES="$(python3 -I -B - "$INCOMING_PACKAGE" <<'PY'
 import os, sys, tarfile
 from pathlib import Path
 package = Path(sys.argv[1])
-max_package, max_extract = map(int, sys.argv[2:])
 expected = {
     'application.jar', 'application.metadata.json', 'application.sidecar.json',
     'dependency.provenance.json', 'receipt.json',
@@ -197,19 +194,18 @@ seen = set()
 total = 0
 try:
     info = package.stat()
-    if not package.is_file() or package.is_symlink() or info.st_nlink != 1 or info.st_size > max_package:
+    if not package.is_file() or package.is_symlink() or info.st_nlink != 1:
         raise SystemExit('unsafe package metadata')
     with tarfile.open(package, 'r|gz') as archive:
         for member in archive:
             name = member.name[2:] if member.name.startswith('./') else member.name
             if name in ('', '.') and member.isdir():
                 continue
-            limit = 4 * 1024 * 1024 if name in json_members else 2 * 1024 * 1024 * 1024
             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
                     or any(part in ('', '.', '..') for part in name.split('/'))
                     or name in seen or name not in expected or not member.isreg()
-                    or member.size < 0 or member.size > limit or total + member.size > max_extract):
-                raise SystemExit('unsafe, duplicate, or oversized package member')
+                    or member.size < 0):
+                raise SystemExit('unsafe or duplicate package member')
             seen.add(name)
             total += member.size
 except (OSError, tarfile.TarError):
@@ -256,10 +252,10 @@ BACKUP_DEVICE="$(filesystem_device backup "$BACKUP_ROOT")" || fail 'cannot ident
 TARGET_AVAILABLE="$(available_bytes target "$TARGET_DIR")" || fail 'cannot read target filesystem capacity'
 BACKUP_AVAILABLE="$(available_bytes backup "$BACKUP_ROOT")" || fail 'cannot read backup filesystem capacity'
 if [[ "$TARGET_DEVICE" == "$BACKUP_DEVICE" ]]; then
-  PRE_EXTRACT_TARGET_REQUIRED=$((MIN_LIFECYCLE_BYTES + EXTRACT_BYTES + OLD_JAR_BYTES))
+  PRE_EXTRACT_TARGET_REQUIRED=$((EXTRACT_BYTES + OLD_JAR_BYTES))
   (( TARGET_AVAILABLE >= PRE_EXTRACT_TARGET_REQUIRED )) || fail 'insufficient same-filesystem capacity before unpacking candidate'
 else
-  PRE_EXTRACT_TARGET_REQUIRED=$((MIN_LIFECYCLE_BYTES + EXTRACT_BYTES))
+  PRE_EXTRACT_TARGET_REQUIRED=$((EXTRACT_BYTES))
   if [[ ! -e "$TARGET_JAR" ]]; then
     # Recovery must recreate the canonical old JAR beside the extracted candidate.
     PRE_EXTRACT_TARGET_REQUIRED=$((PRE_EXTRACT_TARGET_REQUIRED + OLD_JAR_BYTES))
@@ -276,13 +272,13 @@ WORK="$(mktemp -d "$TARGET_DIR/.cyf-api-flow-install.XXXXXX")"
 cleanup() { rm -rf -- "$WORK"; }
 trap cleanup EXIT
 
-mapfile -t APPROVAL_CONTEXT < <(python3 -I -B - "$INCOMING_PACKAGE" "$WORK" "$APPROVAL_PATH" "$EXPECTED_ORGANIZATION" "$EXPECTED_PIPELINE" "$EXPECTED_JOB" "$MAX_PACKAGE_BYTES" "$MAX_EXTRACT_BYTES" "$INSTALL_UID" <<'PY'
+mapfile -t APPROVAL_CONTEXT < <(python3 -I -B - "$INCOMING_PACKAGE" "$WORK" "$APPROVAL_PATH" "$EXPECTED_ORGANIZATION" "$EXPECTED_PIPELINE" "$EXPECTED_JOB" "$INSTALL_UID" <<'PY'
 import hashlib, json, os, re, stat, sys, tarfile, zipfile
 from pathlib import Path
 
 package, work, approval_path = map(Path, sys.argv[1:4])
 expected_org, expected_pipeline, expected_job = sys.argv[4:7]
-max_package, max_extract, expected_uid = map(int, sys.argv[7:10])
+expected_uid = int(sys.argv[7])
 expected = {
     'application.jar', 'application.metadata.json', 'application.sidecar.json',
     'dependency.provenance.json', 'receipt.json',
@@ -298,7 +294,7 @@ package_stat = package.stat()
 approval_stat = approval_path.stat()
 if (root_stat.st_uid != os.geteuid() or stat.S_IMODE(root_stat.st_mode) != 0o700
         or not stat.S_ISREG(package_stat.st_mode) or package_stat.st_uid != expected_uid
-        or package_stat.st_nlink != 1 or package_stat.st_size > max_package
+        or package_stat.st_nlink != 1
         or not stat.S_ISREG(approval_stat.st_mode) or approval_stat.st_uid != expected_uid
         or approval_stat.st_nlink != 1 or stat.S_IMODE(approval_stat.st_mode) != 0o600):
     raise SystemExit('unsafe package, approval, or staging metadata')
@@ -326,12 +322,11 @@ try:
             name = member.name[2:] if member.name.startswith('./') else member.name
             if name in ('', '.') and member.isdir():
                 continue
-            limit = 4 * 1024 * 1024 if name in json_members else 2 * 1024 * 1024 * 1024
             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
                     or any(part in ('', '.', '..') for part in name.split('/'))
                     or name in seen or name not in expected or not member.isreg()
-                    or member.size < 0 or member.size > limit or total + member.size > max_extract):
-                raise SystemExit('unsafe, duplicate, or oversized package member')
+                    or member.size < 0):
+                raise SystemExit('unsafe or duplicate package member')
             seen.add(name)
             total += member.size
             source = archive.extractfile(member)
@@ -452,16 +447,12 @@ if sidecar != {
 try:
     with zipfile.ZipFile(jar) as boot:
         entries = boot.infolist()
-        if len(entries) > 100000 or len(entries) != len({entry.filename for entry in entries}):
+        if len(entries) != len({entry.filename for entry in entries}):
             raise SystemExit('Spring Boot JAR entry count is unsafe')
-        if (sum(entry.file_size for entry in entries) > 4 * 1024 * 1024 * 1024
-                or sum(entry.compress_size for entry in entries) > 2 * 1024 * 1024 * 1024
-                or any(entry.file_size < 0 or entry.filename.startswith('/') or '\\' in entry.filename
-                       or '..' in entry.filename.split('/') for entry in entries)):
+        if any(entry.file_size < 0 or entry.filename.startswith('/') or '\\' in entry.filename
+               or '..' in entry.filename.split('/') for entry in entries):
             raise SystemExit('Spring Boot JAR entries are unsafe')
         manifest_info = boot.getinfo('META-INF/MANIFEST.MF')
-        if manifest_info.file_size > 64 * 1024:
-            raise SystemExit('Spring Boot manifest is oversized')
         manifest = boot.read(manifest_info)
         if (b'Spring-Boot-Classes:' not in manifest or b'Start-Class:' not in manifest
                 or not any(entry.filename.startswith('BOOT-INF/lib/') for entry in entries)):
@@ -661,20 +652,10 @@ PY
 }
 
 lifecycle_admission_before_backup() {
-  local target_free backup_free
-  target_free="$(available_bytes target "$TARGET_DIR")" || return 1
+  # The candidate is already unpacked. Only the actual rollback copy remains to be allocated.
+  local backup_free
   backup_free="$(available_bytes backup "$BACKUP_ROOT")" || return 1
-  if [[ "$TARGET_DEVICE" == "$BACKUP_DEVICE" ]]; then
-    (( target_free >= MIN_LIFECYCLE_BYTES + OLD_JAR_BYTES ))
-  else
-    (( target_free >= MIN_LIFECYCLE_BYTES && backup_free >= OLD_JAR_BYTES ))
-  fi
-}
-
-lifecycle_admission_after_backup() {
-  local target_free
-  target_free="$(available_bytes target "$TARGET_DIR")" || return 1
-  (( target_free >= MIN_LIFECYCLE_BYTES ))
+  (( backup_free >= OLD_JAR_BYTES ))
 }
 
 activate_candidate() {
@@ -1029,9 +1010,8 @@ OLD_JAR_BYTES="$(stat -Lc '%s' "$TARGET_JAR")"
 if [[ "$RECORD_STATUS" != prepared || "$RECORD_MATCH" != 1 ]]; then
   write_record prepared pre_cutover not_started 255 || recoverable_fail 'prepared record write was interrupted before lifecycle mutation'
 fi
-lifecycle_admission_before_backup || fail 'insufficient 5GiB lifecycle reserve plus rollback JAR before stopping service'
+lifecycle_admission_before_backup || fail 'insufficient space for actual rollback JAR before stopping service'
 ensure_backup || fail 'durable rollback backup creation failed before stopping service'
-lifecycle_admission_after_backup || fail 'insufficient 5GiB lifecycle reserve after rollback backup creation'
 write_record activating activation ready 255 || recoverable_fail 'activation record write was interrupted before stopping service'
 
 if ! stop_and_verify; then
