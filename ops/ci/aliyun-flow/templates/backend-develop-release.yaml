@@ -44,6 +44,8 @@ stages:
                   --init-script ops/ci/aliyun-flow/cold-init.gradle \
                   --project-cache-dir "$PWD/_cyf_project_cache" \
                   :agent:jia-agent-mapper:test \
+                  --tests cn.jia.agent.dao.AgentWorkItemReassignmentMapperContractTest \
+                  --tests cn.jia.agent.mapper.AgentTaskContextPackMapperTest \
                   --tests cn.jia.agent.cache.AgentPersonaCatalogCacheTest \
                   --tests cn.jia.agent.dao.AgentPersonaDaoCacheInvalidationTest \
                   --tests cn.jia.agent.dao.AgentRuntimeBatchMapperContractTest \
@@ -55,6 +57,13 @@ stages:
                   --tests cn.jia.agent.dao.AgentTaskArtifactOutcomeMapperContractTest \
                   --tests cn.jia.agent.dao.AgentCommandRecoveryMapperContractTest \
                   :agent:jia-agent-service:test \
+                  --tests cn.jia.agent.service.impl.AgentWorkItemReassignmentServiceTest \
+                  --tests cn.jia.agent.service.impl.AgentWorkItemReassignmentRealTransactionTest \
+                  --tests cn.jia.agent.api.AgentWorkItemReassignmentControllerTest \
+                  --tests cn.jia.agent.service.impl.AgentWorkItemReassignmentEventValidatorTest \
+                  --tests cn.jia.agent.api.AgentTaskContextPackControllerTest \
+                  --tests cn.jia.agent.service.impl.AgentTaskContextPackServiceImplTest \
+                  --tests cn.jia.agent.service.impl.AgentTaskContextPackRepeatableReadTest \
                   --tests cn.jia.agent.api.AgentControllerTest \
                   --tests cn.jia.agent.api.AgentWorkItemPlanControllerTest \
                   --tests cn.jia.agent.api.AgentTaskArtifactControllerTest \
@@ -90,6 +99,8 @@ stages:
                   --tests cn.jia.base.filter.UriAccessLogFilterTest \
                   --tests cn.jia.base.service.impl.LogServiceImplTest \
                   :chat:jia-chat-service:test \
+                  --tests cn.jia.chat.service.impl.AgentTaskContextPackHttpActorTest \
+                  --tests cn.jia.chat.service.impl.AgentTaskContextPackConversationSourceImplTest \
                   --tests cn.jia.chat.ai.AiProviderConfigurationTest \
                   --tests cn.jia.chat.ai.BudgetedChatModelTest \
                   --tests cn.jia.chat.api.ChatControllerTest \
