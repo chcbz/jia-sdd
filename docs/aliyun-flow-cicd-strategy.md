@@ -1,6 +1,8 @@
 # CYF 阿里云 Flow 构建、测试与部署策略
 
-更新：2026-09-12。按用户最新要求，日常发布以可用、轻量为准。
+更新：2026-09-13。按用户最新要求，日常发布以可用、轻量为准。
+
+2026-09-13 门禁调整：删除无测算依据的固定磁盘/内存预留、包大小上限和本地等待超时判败；空间按实际安装与回退字节计算，互斥等待，健康按实际状态判断。保留云端测试、同 Run 制品、身份/完整性与恢复能力。后续只有实际问题及证据才能支持新增门禁，见 `docs/aliyun-flow-gate-policy.md`。
 
 ## 唯一默认路径
 
@@ -105,7 +107,7 @@
 - Web `4403172 / Run92`：develop `1ac5cb1e4973919bacf054e961b43ff24d47e832`，2117 passing / 2 pending / 0 failures；部署单 `69505789`，410 文件及 9 个线上响应哈希匹配。制品 SHA-256 `ab289e2791709f70202e161b57db2a35e24e55271148a67114019d5ec1285741`。手动发布已实成；自动 push 尚未启用。
 - API Run22：58 类范围的测试/构建成功，但启动缺 `javax.mail.MessagingException`，发布器已自动恢复旧 Run18 JAR，health UP；不是新功能上线成功。
 - 新候选 `688a3e65` 将 SMS mail 从 compileOnly 改为 implementation，新增隔离主运行 classpath 回归。Run23 已单次启动；59 类范围和 bootJar 实际 mail/activation/provider 类检查在制品导出前执行。未取得新运行健康证明前，不标后端发布完成。
-- 安装保留锁与回退；仅将瞬时锁冲突改为固定 60 秒等待。同 Run 下载副本在验证身份及完整摘要后回收，保留 incoming、云端制品和回退 JAR，不降低 5GiB 运行余量。
+- 安装保留锁与回退；仅将瞬时锁冲突改为固定 60 秒等待。同 Run 下载副本在验证身份及完整摘要后回收，保留 incoming、云端制品和回退 JAR，当时保留 5GiB 运行余量；该固定阈值已按 2026-09-13 用户指令取消。
 
 ## 2026-09-12 19:24 CST 发布闭环与并行推进
 
@@ -121,3 +123,11 @@
 - API Run25 SUCCESS：develop `ef1a9659`，JAR `ea9de1bd`，order69508149，PID2659818/healthUP。63类范围测试构建成功；E01评分及顺序修复已发布，F03仅增加默认健康隔离测试。完整证明见 `docs/implementation/handoffs/FLOW-API-RUN25-DEPLOYED-20260912.json`。
 - Web Run93 **Flow FAIL / installed+online verified**：develop `b58d3727`，2119pass/2pending；410安装文件及9线上哈希全部匹配。原20:23:23首页校验不匹配，之后同请求已匹配，原因尚未知；不改写失败、不重复部署。实际自动push触发已证实。详见 `docs/implementation/handoffs/FLOW-WEB-RUN93-ONLINE-WITH-FAILURE-20260912.json`。
 - Web安装器反复gzip随机seek的独立性能问题由Owner改为有界顺序staging，并补最终只读重验诊断；不降低制品、路径或身份校验。A16异步受理基础 `9672b4bc` 已push，保持default-off，不声称执行器已完成。
+
+
+## 2026-09-13 登录修复与门禁精简验收
+
+- 删除无测算依据的固定资源/大小阈值及本地超时判败，24 项相关控制面回归通过；三个线上 helper 的候选摘要与 readback 一致，未清理历史备份。
+- API Run36 SUCCESS，commit `5ece9141e66f27aa2d5443dada1ea816e44ca95c`，deploy order `69520177`；JAR SHA-256 `1c073e3bf7928bf9f057d81d33265fe8323384247a112ab5cd2111df811925b9`，PID3257882/health UP，包含 `80383a07` 登录表单与 CORS 修复。
+- 公网预检明确包含 x-request-id，未登录 map 返回可读401，无效 code 的 token 表单返回400 invalid_grant而非302登录页；真实账号及第三方/微信交互仍需用户重试确认。
+- 精确证据：`docs/implementation/handoffs/FLOW-AUTH-GATE-FOLLOWUP-VERIFIED-20260913.json`。
