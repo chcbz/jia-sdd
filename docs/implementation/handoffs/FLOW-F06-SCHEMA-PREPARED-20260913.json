@@ -1,0 +1,91 @@
+{
+  "at": "2026-09-13T06:38:51.713796+00:00",
+  "status": "installed_plan_pass_waiting_genuine_flow_apply",
+  "installation": {
+    "at": "2026-09-13T06:36:29.277813+00:00",
+    "state": "installed_readback_verified",
+    "beforeSha256": "f262aba1d9031baf6d97abe763581c8cf5a5f6ad9df7a8aba20bb010b1a34f35",
+    "afterSha256": "22d078b96c55b8a053cee8756323e18dc06bef6ea609ade81eaaf2d16726f5c9",
+    "backup": "/var/tmp/cyf-f06-schema-readiness-20260913/cyf-api-flow-deploy.before-f06",
+    "sourceCommit": "6f6bbbb3d85cf060af05311fc870ce9773f955d2",
+    "runnerSha256": "c7fd518d026f2503723442261429e0e23169cd4367782d4811edb9867b439fc1",
+    "tests": {
+      "deployFocused": 14,
+      "runnerFocused": 19,
+      "autoCompatibility": 17,
+      "gatePolicy": 8
+    },
+    "applicationDDL": false,
+    "APIlifecycle": false,
+    "next": "Next genuine Flow deployment applies only fixed two F06 tables after same-run installed record under release lock; not feature activation"
+  },
+  "principal": {
+    "at": "2026-09-13T06:27:09.290766+00:00",
+    "status": "provisioned_and_readback_verified",
+    "principal": "cyf_f06_schema_runner@localhost",
+    "database": "jia",
+    "secretFile": "/var/lib/cyf-api-flow/f06-schema-password",
+    "grants": [
+      "CREATE on jia.agent_task_artifact_outcome",
+      "CREATE on jia.agent_task_artifact_outcome_decision"
+    ],
+    "applicationDDL": false,
+    "DML": false,
+    "existingAccountsChanged": false,
+    "tableGrantCount": 2,
+    "principalLoginVerified": true
+  },
+  "readOnlyPlan": {
+    "binding": {
+      "jar_sha256": "20625639587936a543bdbe1fdadef65f4d478bebe0227475937ae2b85105716e",
+      "organization": "5fb7d76ee6f9d07f148529c7",
+      "pipeline": "5260799",
+      "receipt_sha256": "dec2ff1ae7a86966c15d2608f52780570175bda488da5c1c4ea9934d10047532",
+      "run": "40",
+      "source_commit": "564e50fa6bb4889d6f0b7221de57b4c22116a810",
+      "source_tree": "5085937a8f35f0086f1398bb8b89f207a442e854"
+    },
+    "candidate": {
+      "resource_inner": "db/agent-task-artifact-outcome-f06.sql",
+      "resource_outer": "BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar",
+      "sql_sha256": "77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc",
+      "statement_policy": "exact_create_table_if_not_exists_only",
+      "tables": [
+        "agent_task_artifact_outcome",
+        "agent_task_artifact_outcome_decision"
+      ]
+    },
+    "lock_order": [
+      "f06_runner_file_lock",
+      "f06_mysql_named_lock"
+    ],
+    "operation": "plan",
+    "schema_version": 1,
+    "status": "pass",
+    "tables": {
+      "agent_task_artifact_outcome": {
+        "status": "planned_create"
+      },
+      "agent_task_artifact_outcome_decision": {
+        "status": "planned_create"
+      }
+    },
+    "transaction_model": "mysql_ddl_autocommit_per_create_no_rollback_or_drop"
+  },
+  "sourceCommit": "25c12a5bcdd3638b50d966085b9e00f09c1b8aca",
+  "sourceTree": "980f633d48c4385df7442a9e4af42243761af34f",
+  "firstPlanFailure": {
+    "at": "2026-09-13T06:33:50.319081+00:00",
+    "rootCause": "Real Flow upload contains one empty directory root . before exact five files; original fake archives omitted it",
+    "correction": "Allow exactly one empty root-directory metadata entry, retaining exact5payload names and rejecting duplicate/link/extra/nonempty directories",
+    "oldRunnerSha256": "cb79be33f8e63879fd1fb23b5a9eaf107b59ca0ca7356fb28aaf9ac467d7ee99",
+    "newRunnerSha256": "c7fd518d026f2503723442261429e0e23169cd4367782d4811edb9867b439fc1",
+    "offlineTests": 19,
+    "applicationDDL": false
+  },
+  "appDDLExecuted": false,
+  "productionAPIlifecycleExecuted": false,
+  "featureActivated": false,
+  "rootOnlyEvidence": "/var/tmp/cyf-f06-schema-readiness-20260913",
+  "nextAction": "Next genuine API Flow release under same-run artifact/installed record applies fixed two F06 tables; inspect root-only schema-results and actual metadata. Do not rerun old40/42 or claim schema/feature complete from plan."
+}
