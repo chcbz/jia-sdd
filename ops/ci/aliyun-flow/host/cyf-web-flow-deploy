@@ -27,8 +27,7 @@ MAX_ARCHIVE_ENTRIES = 20000
 MAX_ARCHIVE_SIZE = 1024 ** 3
 MAX_MANIFEST_SIZE = 4 * 1024 ** 2
 CHUNK_SIZE = 1024 * 1024
-ONLINE_VERIFY_ATTEMPTS = 3
-ONLINE_VERIFY_DELAY_SECONDS = 2
+ONLINE_VERIFY_POLL_DELAY_SECONDS = 2
 ONLINE_VERIFY_TIMEOUT_SECONDS = 30
 
 
@@ -318,8 +317,29 @@ def verify_installed(expected):
             fail('installed file mismatch')
 
 
+def prior_index_digest(record_path):
+    """Return a valid previous index digest only when the existing record has one.
+
+    This is diagnostic classification only: current same-run/source/hash validation
+    remains the condition for online verification.
+    """
+    try:
+        record = json.loads(record_path.read_text())
+        files = record.get('files')
+        if not isinstance(files, list):
+            return None
+        for item in files:
+            if (isinstance(item, dict) and item.get('path') == 'index.html'
+                    and isinstance(item.get('sha256'), str)
+                    and re.fullmatch('[0-9a-f]{64}', item['sha256'])):
+                return item['sha256']
+    except (OSError, ValueError, AttributeError):
+        return None
+    return None
+
+
 def online_verification_log(attempt, pipeline, run, commit, status, size, expected, actual, match,
-                            error_type=None):
+                            error_type=None, response_kind=None):
     identity = pipeline + '/' + run + '/' + commit
     event = dict(attempt=attempt, pipeline_id=pipeline, run_id=run, commit=commit,
                  request_identity=identity, user_agent=('cyf-web-flow-deploy/stream-v1 pipeline/' + pipeline
@@ -329,12 +349,23 @@ def online_verification_log(attempt, pipeline, run, commit, status, size, expect
                  actual_sha256=actual, match=match)
     if error_type is not None:
         event['error_type'] = error_type
+    if response_kind is not None:
+        event['response_kind'] = response_kind
     print('CYF_WEB_FLOW_ONLINE_VERIFY ' + json.dumps(event, sort_keys=True), file=sys.stderr, flush=True)
 
 
-def verify_online_index(pipeline, run, commit, expected):
+def verify_online_index(pipeline, run, commit, expected, previous_index_sha256=None):
+    """Wait for the exact installed index through the public HTTPS endpoint.
+
+    Nginx can retain the old index while its configured file-cache entry is still
+    valid.  A bounded request prevents an oversized response from being accepted,
+    but there is intentionally no elapsed-time or attempt-count failure gate: the
+    outer Flow controls cancellation while this deploy remains pending online proof.
+    """
     item = expected['index.html']
-    for attempt in range(1, ONLINE_VERIFY_ATTEMPTS + 1):
+    attempt = 0
+    while True:
+        attempt += 1
         status = None
         size = 0
         actual = None
@@ -356,6 +387,11 @@ def verify_online_index(pipeline, run, commit, expected):
                 status = getattr(response, 'status', None)
                 if status is None and hasattr(response, 'getcode'):
                     status = response.getcode()
+                # urllib raises HTTPError for non-2xx responses.  Keep the
+                # explicit status check when supplied, while accepting the
+                # successful-response contract of small compatible streams.
+                if status is None:
+                    status = 200
                 while True:
                     block = response.read(min(CHUNK_SIZE, item['size'] - size + 1))
                     if not block:
@@ -370,13 +406,21 @@ def verify_online_index(pipeline, run, commit, expected):
             error_type = type(ex).__name__
             status = getattr(ex, 'code', status)
         actual = digest.hexdigest()
+        response_kind = None
+        if not match:
+            if error_type is not None:
+                response_kind = 'request_error'
+            elif previous_index_sha256 is not None and actual == previous_index_sha256:
+                response_kind = 'known_prior_index'
+            else:
+                response_kind = 'unexpected_response'
         online_verification_log(attempt, pipeline, run, commit, status, size,
-                                item['sha256'], actual, match, error_type)
+                                item['sha256'], actual, match, error_type, response_kind)
         if match:
             return
-        if attempt < ONLINE_VERIFY_ATTEMPTS:
-            time.sleep(ONLINE_VERIFY_DELAY_SECONDS)
-    fail('online index does not match the deployed artifact')
+        # Do not catch KeyboardInterrupt/SystemExit: the owning Flow cancels this
+        # pending verifier rather than an arbitrary local wait-age gate declaring it failed.
+        time.sleep(ONLINE_VERIFY_POLL_DELAY_SECONDS)
 
 
 def verified_package_handle(package, before):
@@ -436,6 +480,7 @@ def deploy(pipeline, run, commit):
         record_path = ROOT / 'record.json'
         if installed_run(record_path) > int(run):
             fail('refusing deployment older than the installed run')
+        previous_index_sha256 = prior_index_digest(record_path)
         staging = Path(tempfile.mkdtemp(prefix='.cyf-web-stage-', dir=str(ROOT)))
         os.chmod(str(staging), 0o700)
         safe_dir(staging)
@@ -449,7 +494,7 @@ def deploy(pipeline, run, commit):
         record['status'] = 'installed'
         record['phase'] = 'installed'
         atomic(record_path, (json.dumps(record, sort_keys=True) + '\n').encode(), 0o600)
-        verify_online_index(pipeline, run, commit, expected)
+        verify_online_index(pipeline, run, commit, expected, previous_index_sha256)
         record['status'] = 'online_verified'
         record['phase'] = 'online_verified'
         atomic(record_path, (json.dumps(record, sort_keys=True) + '\n').encode(), 0o600)
