@@ -1,0 +1,65 @@
+name: cyf-output-capacity-preflight
+sources: {}
+stages:
+  host_preflight:
+    name: Read-only output deployment prerequisites
+    jobs:
+      inspect_host:
+        name: Read-only metadata; no install or restart
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_PREFLIGHT_PY'\n#!/usr/bin/env python3\n\"\"\"Fixed\
+            \ read-only capacity and deployment-layout probe; no subprocess or raw configs.\"\"\"\nimport hashlib\n\
+            import json\nimport os\nfrom pathlib import Path\nimport platform\nimport re\nimport time\n\nHELPERS\
+            \ = {\n    '/usr/local/sbin/cyf-api-flow-deploy': 'f262aba1d9031baf6d97abe763581c8cf5a5f6ad9df7a8aba20bb010b1a34f35',\n\
+            \    '/usr/local/sbin/cyf-web-flow-deploy': '53070ba8cf924852744e38c232d0b5d5b3fd432e0d05c90b8f9a877af21b9bb6',\n\
+            }\nPREFIXES = ('/home/isp/hosts/cyf/', '/var/lib/cyf-api-flow/', '/var/lib/cyf-web-flow/', '/home/isp/apps/',\
+            \ '/etc/systemd/system/')\n\n\ndef bounded(path, limit):\n    with open(path, 'rb') as f:\n        data\
+            \ = f.read(limit + 1)\n    if len(data) > limit:\n        raise ValueError('oversize')\n    return data\n\
+            \n\ndef safe_path(value):\n    return (bool(re.fullmatch(r'/[A-Za-z0-9_./-]+', value))\n           \
+            \ and os.path.normpath(value) == value\n            and not any(part in ('.', '..') for part in value.split('/'))\n\
+            \            and value.startswith(PREFIXES)\n            and not re.search(r'password|secret|token|credential|\\\
+            .pass', value, re.I))\n\n\ndef main():\n    report = {'observedAtEpoch': int(time.time()), 'architecture':\
+            \ platform.machine(), 'readOnly': True}\n    try:\n        fields = {}\n        for line in bounded('/etc/os-release',\
+            \ 16384).decode().splitlines():\n            key, sep, value = line.partition('=')\n            value\
+            \ = value.strip('\"')\n            if sep and key in ('ID', 'VERSION_ID', 'ID_LIKE') and re.fullmatch(r'[A-Za-z0-9_.\
+            \ -]{1,100}', value):\n                fields[key] = value\n        report['os'] = fields\n    except\
+            \ (OSError, ValueError, UnicodeError):\n        report['os'] = {'status': 'unreadable'}\n    try:\n\
+            \        fields = {}\n        for line in bounded('/proc/meminfo', 16384).decode().splitlines():\n \
+            \           match = re.fullmatch(r'(MemTotal|MemAvailable|SwapTotal|SwapFree):\\s+(\\d+) kB', line)\n\
+            \            if match:\n                fields[match[1] + 'Bytes'] = int(match[2]) * 1024\n        report['memory']\
+            \ = fields\n    except (OSError, ValueError, UnicodeError):\n        report['memory'] = {'status': 'unreadable'}\n\
+            \    report['helpers'] = []\n    for name, expected in HELPERS.items():\n        row = {'path': name}\n\
+            \        try:\n            data = bounded(name, 1024 * 1024)\n            digest = hashlib.sha256(data).hexdigest()\n\
+            \            row.update(sha256=digest, expectedHashMatches=digest == expected)\n            if digest\
+            \ != expected:\n                row['status'] = 'changed_since_prior_probe'\n            else:\n   \
+            \             source = data.decode('utf-8')\n                paths = sorted(set(p for p in re.findall(r'/[A-Za-z0-9_./-]+',\
+            \ source) if safe_path(p)))\n                row['literalPaths'] = paths[:60]\n                row['pathsTruncated']\
+            \ = len(paths) > 60\n                row['uses'] = {word: bool(re.search(r'\\b' + re.escape(word) +\
+            \ r'\\b', source)) for word in\n                               ('systemctl', 'nohup', 'java', 'spring.config',\
+            \ 'rollback', 'backup')}\n        except (OSError, ValueError, UnicodeError):\n            row['status']\
+            \ = 'unreadable'\n        report['helpers'].append(row)\n    report['javaJars'] = []\n    for pid in\
+            \ Path('/proc').iterdir():\n        if not pid.name.isdecimal():\n            continue\n        try:\n\
+            \            if bounded(pid / 'comm', 17).rstrip(b'\\n') != b'java':\n                continue\n   \
+            \         args = [part.decode('utf-8') for part in bounded(pid / 'cmdline', 65536).split(b'\\0') if\
+            \ part]\n            if not args or Path(args[0]).name != 'java':\n                continue\n      \
+            \      for index, arg in enumerate(args):\n                if index == 0 or args[index-1] != '-jar'\
+            \ or not re.fullmatch(r'[A-Za-z0-9_./-]+\\.jar', arg):\n                    continue\n             \
+            \   if any(part in ('.', '..') for part in arg.split('/')):\n                    continue\n        \
+            \        candidate = arg if arg.startswith('/') else str(Path(os.readlink(pid / 'cwd')) / arg)\n   \
+            \             if not safe_path(candidate):\n                    continue\n                info = os.lstat(candidate)\n\
+            \                ticks = bounded(pid / 'stat', 16384).decode().split(') ', 1)[1].split()[19]\n     \
+            \           report['javaJars'].append({'pid': int(pid.name), 'startTicks': ticks,\n                \
+            \                           'jarPath': candidate, 'sizeBytes': info.st_size})\n        except (OSError,\
+            \ ValueError, UnicodeError, IndexError):\n            continue\n    report['limits'] = ['Only OS ID/version\
+            \ and selected numeric meminfo fields are exported.',\n                        'Helper contents and\
+            \ bounded Java arguments are inspected in memory; raw text is not exported.',\n                    \
+            \    'No application config/environment, network connection, subprocess, installation or restart.',\n\
+            \                        'No service readiness, backup, storage/scanner or release gate is closed.']\n\
+            \    print(json.dumps(report, sort_keys=True))\n\n\nif __name__ == '__main__':\n    main()\nCYF_OUTPUT_PREFLIGHT_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
