@@ -1,0 +1,123 @@
+name: cyf-output-backed-cache-prune
+sources: {}
+stages:
+  host_preflight:
+    name: Reclaim five backed-up historical Web download caches
+    jobs:
+      inspect_host:
+        name: Lock, recheck references, remove five exact cached packages
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_BACKED_CACHE_PRUNE_PY'\n#!/usr/bin/env python3\n\
+            \"\"\"Remove five exact off-host-backed-up download caches, under the Web deploy lock.\"\"\
+            \"\nimport fcntl\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport\
+            \ signal\nimport stat\nimport time\n\nPLAN = [{'bytes': 104222372, 'complete': True, 'device':\
+            \ 64769, 'gid': 0, 'inode': 394846, 'mode': '0o644', 'mtimeNs': 1789214540000000000, 'nlink':\
+            \ 1, 'path': '/var/lib/cyf-web-flow/downloads/93/package.tgz', 'run': 93, 'sha256': '0ece2d5e0d2e333cfe5259ea654689fcc878b7f06ff91c49b81d5851dbcb1600',\
+            \ 'uid': 0}, {'bytes': 104244925, 'complete': True, 'device': 64769, 'gid': 0, 'inode': 454305,\
+            \ 'mode': '0o644', 'mtimeNs': 1789227576000000000, 'nlink': 1, 'path': '/var/lib/cyf-web-flow/downloads/95/package.tgz',\
+            \ 'run': 95, 'sha256': '6f0f6913f11b288f45d346fb575f4f6f867fb9d57d5564896c1a63f5766c27c0',\
+            \ 'uid': 0}, {'bytes': 104243370, 'complete': True, 'device': 64769, 'gid': 0, 'inode': 394667,\
+            \ 'mode': '0o644', 'mtimeNs': 1789263102000000000, 'nlink': 1, 'path': '/var/lib/cyf-web-flow/downloads/96/package.tgz',\
+            \ 'run': 96, 'sha256': '3b68e16aedd732c473147e4e0ff691117571bec7af3f9498b00e8d038b3aa253',\
+            \ 'uid': 0}, {'bytes': 104251760, 'complete': True, 'device': 64769, 'gid': 0, 'inode': 394783,\
+            \ 'mode': '0o644', 'mtimeNs': 1789266385000000000, 'nlink': 1, 'path': '/var/lib/cyf-web-flow/downloads/98/package.tgz',\
+            \ 'run': 98, 'sha256': '10781a487cae29e80a92641b7313f355f1ac4849201638291f562177aece8cd6',\
+            \ 'uid': 0}, {'bytes': 104273152, 'complete': True, 'device': 64769, 'gid': 0, 'inode': 395235,\
+            \ 'mode': '0o644', 'mtimeNs': 1789269693000000000, 'nlink': 1, 'path': '/var/lib/cyf-web-flow/downloads/99/package.tgz',\
+            \ 'run': 99, 'sha256': 'b57049c1c0d4772b187cdfa41d4ebca659a24357ee18d66a25f073106fe1d5a9',\
+            \ 'uid': 0}]\nBASE = Path('/var/lib/cyf-web-flow')\nSITE = Path('/home/isp/hosts/cyf/web/kit')\n\
+            INTENT = Path('/opt/cyf/output-cache-prune-intent.json')\nRECEIPT = Path('/opt/cyf/output-cache-prune-result.json')\n\
+            HELPER_SHA = '53070ba8cf924852744e38c232d0b5d5b3fd432e0d05c90b8f9a877af21b9bb6'\n\n\ndef require(ok,\
+            \ code):\n    if not ok:\n        raise RuntimeError(code)\n\n\ndef safe_dir(path):\n    info\
+            \ = path.lstat()\n    require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and info.st_gid\
+            \ == 0\n            and not stat.S_IMODE(info.st_mode) & 0o022, 'directory_identity')\n  \
+            \  return os.open(str(path), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)\n\n\ndef identity(info):\n\
+            \    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns,\n            info.st_uid,\
+            \ info.st_gid, stat.S_IMODE(info.st_mode), info.st_nlink)\n\n\ndef digest(fd, maximum):\n\
+            \    os.lseek(fd, 0, os.SEEK_SET)\n    h = hashlib.sha256()\n    size = 0\n    while True:\n\
+            \        chunk = os.read(fd, 1024*1024)\n        if not chunk:\n            break\n      \
+            \  size += len(chunk)\n        require(size <= maximum, 'hash_bound')\n        h.update(chunk)\n\
+            \    return h.hexdigest()\n\n\ndef protected_fingerprint(path, maximum):\n    fd = os.open(str(path),\
+            \ os.O_RDONLY | os.O_NOFOLLOW)\n    try:\n        before = os.fstat(fd)\n        require(stat.S_ISREG(before.st_mode)\
+            \ and before.st_uid == 0\n                and before.st_size <= maximum, 'protected_file_identity')\n\
+            \        h = digest(fd, maximum)\n        require(identity(before) == identity(path.lstat()),\
+            \ 'protected_file_changed')\n        return {'identity': identity(before), 'sha256': h}\n\
+            \    finally:\n        os.close(fd)\n\n\ndef no_open_references(targets):\n    checked = 0\n\
+            \    for process in Path('/proc').iterdir():\n        if not process.name.isdecimal() or int(process.name)\
+            \ == os.getpid():\n            continue\n        try:\n            with os.scandir(process/'fd')\
+            \ as entries:\n                for entry in entries:\n                    checked += 1\n \
+            \                   require(checked <= 100000, 'fd_scan_bound')\n                    try:\n\
+            \                        info = os.stat(entry.path)\n                    except FileNotFoundError:\n\
+            \                        continue\n                    require((info.st_dev, info.st_ino)\
+            \ not in targets, 'cache_open_elsewhere')\n        except FileNotFoundError:\n           \
+            \ continue\n    return checked\n\n\ndef no_site_references(targets):\n    stack = [SITE]\n\
+            \    count = 0\n    while stack:\n        path = stack.pop()\n        info = path.lstat()\n\
+            \        count += 1\n        require(count <= 20000, 'site_scan_bound')\n        if stat.S_ISLNK(info.st_mode):\n\
+            \            resolved = os.path.realpath(path)\n            require(not any(x['path'] == resolved\
+            \ or x['path'].startswith(resolved.rstrip('/')+'/')\n                            for x in\
+            \ PLAN), 'cache_site_reference')\n            try:\n                followed = path.stat()\n\
+            \            except FileNotFoundError:\n                continue\n            require((followed.st_dev,\
+            \ followed.st_ino) not in targets, 'cache_site_reference')\n        elif stat.S_ISDIR(info.st_mode):\n\
+            \            with os.scandir(path) as entries:\n                for entry in entries:\n  \
+            \                  require(len(stack)+count < 20000, 'site_scan_bound')\n                \
+            \    stack.append(Path(entry.path))\n        else:\n            require((info.st_dev, info.st_ino)\
+            \ not in targets, 'cache_site_reference')\n    return count\n\n\ndef exclusive(path, value):\n\
+            \    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)\n\
+            \    with os.fdopen(fd, 'w') as f:\n        json.dump(value, f, sort_keys=True)\n        f.write('\\\
+            n')\n        f.flush()\n        os.fsync(f.fileno())\n\n\ndef available():\n    s = os.statvfs(BASE)\n\
+            \    return s.f_bavail*s.f_frsize\n\n\ndef main():\n    result = {'startedAtEpoch': int(time.time()),\
+            \ 'status': 'UNKNOWN',\n              'removed': [], 'apiRestartRequested': False,\n     \
+            \         'scope': 'Five backed-up Web download cache files only; no runtime/backup deletion'}\n\
+            \    handles = []\n    lock = None\n    def expired(signum, frame):\n        raise RuntimeError('cleanup_deadline')\n\
+            \    signal.signal(signal.SIGALRM, expired)\n    signal.alarm(240)\n    try:\n        require(os.geteuid()\
+            \ == 0 and [x['run'] for x in PLAN] == [93,95,96,98,99], 'fixed_scope')\n        for parent\
+            \ in [Path('/var'), Path('/var/lib'), BASE, BASE/'downloads',\n                       Path('/opt'),\
+            \ Path('/opt/cyf')]:\n            fd = safe_dir(parent)\n            os.close(fd)\n      \
+            \  si = SITE.lstat()\n        require(stat.S_ISDIR(si.st_mode) and si.st_uid in (0,1000)\n\
+            \                and not stat.S_IMODE(si.st_mode)&0o002, 'site_directory_identity')\n    \
+            \    require(not os.path.lexists(INTENT) and not os.path.lexists(RECEIPT), 'prior_cleanup_intent')\n\
+            \        helper = protected_fingerprint(Path('/usr/local/sbin/cyf-web-flow-deploy'), 1024*1024)\n\
+            \        require(helper['sha256'] == HELPER_SHA, 'deploy_helper_changed')\n        lock =\
+            \ os.open(str(BASE/'deploy.lock'), os.O_RDONLY | os.O_NOFOLLOW)\n        li = os.fstat(lock)\n\
+            \        require(stat.S_ISREG(li.st_mode) and li.st_uid == 0 and li.st_gid == 0\n        \
+            \        and stat.S_IMODE(li.st_mode) == 0o600 and li.st_nlink == 1, 'deploy_lock_identity')\n\
+            \        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)\n        protected_paths = [(SITE/'index.html',\
+            \ 1024*1024), (BASE/'record.json', 1024*1024),\n                           (BASE/'downloads/100/package.tgz',\
+            \ 128*1024**2),\n                           (BASE/'downloads/102/package.tgz', 128*1024**2)]\n\
+            \        before_protected = {str(p): protected_fingerprint(p, limit) for p,limit in protected_paths}\n\
+            \        targets = set()\n        for row in PLAN:\n            parent = BASE/'downloads'/str(row['run'])\n\
+            \            require(row['path'] == str(parent/'package.tgz'), 'plan_path')\n            directory\
+            \ = safe_dir(parent)\n            handles.append(directory)\n            fd = os.open('package.tgz',\
+            \ os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory)\n            handles.append(fd)\n       \
+            \     info = os.fstat(fd)\n            expected = (row['device'],row['inode'],row['bytes'],row['mtimeNs'],0,0,0o644,1)\n\
+            \            require(stat.S_ISREG(info.st_mode) and identity(info) == expected, 'cache_identity_changed')\n\
+            \            require(digest(fd, 128*1024**2) == row['sha256'], 'cache_hash_changed')\n   \
+            \         targets.add((info.st_dev,info.st_ino))\n            row['_directoryFd'], row['_fileFd']\
+            \ = directory, fd\n        result['checkedOpenDescriptors'] = no_open_references(targets)\n\
+            \        result['checkedSiteEntries'] = no_site_references(targets)\n        result['availableBefore']\
+            \ = available()\n        result['protectedBefore'] = before_protected\n        exclusive(INTENT,\
+            \ result)\n        for row in PLAN:\n            expected = (row['device'],row['inode'],row['bytes'],row['mtimeNs'],0,0,0o644,1)\n\
+            \            require(identity(os.fstat(row['_fileFd'])) == expected\n                    and\
+            \ identity(os.stat('package.tgz', dir_fd=row['_directoryFd'],\n                          \
+            \               follow_symlinks=False)) == expected, 'cache_replaced')\n            os.unlink('package.tgz',\
+            \ dir_fd=row['_directoryFd'])\n            os.fsync(row['_directoryFd'])\n            result['removed'].append({'run':row['run'],\
+            \ 'bytes':row['bytes'], 'sha256':row['sha256']})\n        after_protected = {str(p): protected_fingerprint(p,\
+            \ limit) for p,limit in protected_paths}\n        require(after_protected == before_protected,\
+            \ 'protected_file_changed')\n        result['protectedUnchanged'] = True\n        for fd in\
+            \ handles:\n            os.close(fd)\n        handles.clear()\n        result['availableAfter']\
+            \ = available()\n        result['status'] = 'BACKED_UP_CACHE_FILES_REMOVED'\n        exclusive(RECEIPT,\
+            \ result)\n    except (OSError, ValueError, RuntimeError) as exc:\n        result['errorType']\
+            \ = type(exc).__name__\n        if isinstance(exc, OSError):\n            result['errno']\
+            \ = exc.errno\n        if type(exc) is RuntimeError:\n            result['errorCode'] = str(exc)\n\
+            \    finally:\n        signal.alarm(0)\n        for fd in handles:\n            os.close(fd)\n\
+            \        if lock is not None:\n            os.close(lock)\n    print(json.dumps(result, sort_keys=True))\n\
+            \    return 0 if result['status'] == 'BACKED_UP_CACHE_FILES_REMOVED' else 1\n\n\nif __name__\
+            \ == '__main__':\n    raise SystemExit(main())\nCYF_BACKED_CACHE_PRUNE_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
+          deployTimeoutPerHost: 600
