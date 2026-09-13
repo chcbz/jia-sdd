@@ -1,0 +1,158 @@
+name: cyf-output-scanner-stage
+sources: {}
+stages:
+  host_preflight:
+    name: Stage signed isolated ClamAV binaries
+    jobs:
+      inspect_host:
+        name: Private RPM trust DB and loader validation; no service start
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_SCANNER_STAGE_PY'\n#!/usr/bin/env python3\n\"\"\"\
+            Stage pinned signed ClamAV payloads; no RPM transaction or service activation.\"\"\"\nimport gzip\n\
+            import hashlib\nimport io\nimport json\nimport lzma\nimport os\nfrom pathlib import Path\nimport re\n\
+            import resource\nimport shutil\nimport signal\nimport stat\nimport struct\nimport subprocess\nimport\
+            \ time\nimport urllib.request\n\nPACKAGES = [{'name': 'clamav', 'arch': 'x86_64', 'version': {'epoch':\
+            \ '0', 'ver': '1.4.6', 'rel': '1.el8'}, 'rpm': 'Packages/c/clamav-1.4.6-1.el8.x86_64.rpm', 'sha256':\
+            \ '26c0d752dde2bce847c4c482a45faf3c154509d0db42cad8eafa38b673741485', 'bytes': '7303280'}, {'name':\
+            \ 'clamav-lib', 'arch': 'x86_64', 'version': {'epoch': '0', 'ver': '1.4.6', 'rel': '1.el8'}, 'rpm':\
+            \ 'Packages/c/clamav-lib-1.4.6-1.el8.x86_64.rpm', 'sha256': '750a489e2da29989cbf5690fea84ae7dd5ccf70ae464ed03b2a68d0e43ba2afe',\
+            \ 'bytes': '4257924'}, {'name': 'clamd', 'arch': 'x86_64', 'version': {'epoch': '0', 'ver': '1.4.6',\
+            \ 'rel': '1.el8'}, 'rpm': 'Packages/c/clamd-1.4.6-1.el8.x86_64.rpm', 'sha256': '98900509e74e6b989770bf6dc06485ad1286994fb36fb1299ef44eee00e0f061',\
+            \ 'bytes': '134244'}, {'name': 'clamav-freshclam', 'arch': 'x86_64', 'version': {'epoch': '0', 'ver':\
+            \ '1.4.6', 'rel': '1.el8'}, 'rpm': 'Packages/c/clamav-freshclam-1.4.6-1.el8.x86_64.rpm', 'sha256': 'ebdcd6cc94391fc05a2565237f4f34c6d029944db2558e9427b2a65aaf2230d6',\
+            \ 'bytes': '3566940', 'providesLegacyName': True}]\nMANIFEST = [{'package': 'clamav', 'rpmSha256': '26c0d752dde2bce847c4c482a45faf3c154509d0db42cad8eafa38b673741485',\
+            \ 'payloadCodec': 'xz', 'payloadBytesRead': 20552672, 'members': [{'path': 'usr/bin/clamscan', 'mode':\
+            \ '0o755', 'bytes': 193984, 'sha256': '4c662ebca789e371eb97fcd6ec2ff44b3445211bd6f5f87808c4a396bbed3989',\
+            \ 'type': 'regular'}, {'path': 'usr/bin/sigtool', 'mode': '0o755', 'bytes': 9587448, 'sha256': '1a6010478d9361b3bf27fc700ba87447b7fcbfa12358251f9c0160ddd201fe15',\
+            \ 'type': 'regular'}]}, {'package': 'clamav-lib', 'rpmSha256': '750a489e2da29989cbf5690fea84ae7dd5ccf70ae464ed03b2a68d0e43ba2afe',\
+            \ 'payloadCodec': 'xz', 'payloadBytesRead': 11507080, 'members': [{'path': 'usr/lib64/libclamav.so.12',\
+            \ 'mode': '0o777', 'bytes': 19, 'sha256': '3c9b7fb194d079740744d66a329096b72c522ada5dc2ea566b8e3c87471dcb17',\
+            \ 'type': 'symlink', 'target': 'libclamav.so.12.0.3'}, {'path': 'usr/lib64/libclamav.so.12.0.3', 'mode':\
+            \ '0o755', 'bytes': 11421696, 'sha256': 'f2eb53c3b86f2f01449ef57d5970efd47f36fd3c33c6e027e342493c6c6d748e',\
+            \ 'type': 'regular'}, {'path': 'usr/lib64/libclammspack.so.0', 'mode': '0o777', 'bytes': 22, 'sha256':\
+            \ '462d1f655fb5c241ac8b821dfa923d8cd0274df9f634fe86e0b4d8455092a6bd', 'type': 'symlink', 'target': 'libclammspack.so.0.8.0'},\
+            \ {'path': 'usr/lib64/libclammspack.so.0.8.0', 'mode': '0o755', 'bytes': 78840, 'sha256': 'cdebda20f8fbe3f64341a60fa12b3282d412becc95f8e9c197cae4f538bb277b',\
+            \ 'type': 'regular'}]}, {'package': 'clamd', 'rpmSha256': '98900509e74e6b989770bf6dc06485ad1286994fb36fb1299ef44eee00e0f061',\
+            \ 'payloadCodec': 'xz', 'payloadBytesRead': 268320, 'members': [{'path': 'usr/sbin/clamd', 'mode': '0o755',\
+            \ 'bytes': 223024, 'sha256': '4af6f9bfab10e9b18f051e7ba8e299766a6eeae9bead3c482678b55afdae2b8a', 'type':\
+            \ 'regular'}]}, {'package': 'clamav-freshclam', 'rpmSha256': 'ebdcd6cc94391fc05a2565237f4f34c6d029944db2558e9427b2a65aaf2230d6',\
+            \ 'payloadCodec': 'xz', 'payloadBytesRead': 9690824, 'members': [{'path': 'usr/bin/freshclam', 'mode':\
+            \ '0o755', 'bytes': 83568, 'sha256': '91029892d3ce03a17cf2c56bf273fe12d3c800cf6bc2e6bf75d58d9de758dbab',\
+            \ 'type': 'regular'}, {'path': 'usr/lib64/libfreshclam.so.3', 'mode': '0o777', 'bytes': 21, 'sha256':\
+            \ '3297218ef05a4dd3ec638b4fc3be8426f26a5b2d9de9032c1aa99d617e1eb4cf', 'type': 'symlink', 'target': 'libfreshclam.so.3.0.2'},\
+            \ {'path': 'usr/lib64/libfreshclam.so.3.0.2', 'mode': '0o755', 'bytes': 9591216, 'sha256': '9f90f21ddb393ac49773a862c88baadebc2d72dc54675b322ffef90ea33ed0b3',\
+            \ 'type': 'regular'}]}]\n\nBASE = Path('/opt/cyf/output-scanner')\nKEY_SHA = 'cd1db21a863185127f2e3b264c97fb1c6c44c316385707999041ea475c110d1c'\n\
+            KEY_FINGERPRINT = '94E279EB8D8F25B21810ADF121EA45AB2F86D6A1'\nENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin',\
+            \ 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C'}\nRESERVE = 3584 * 1024**2\nPEAK = 128 * 1024**2\n\n\n\
+            def require(condition, code):\n    if not condition:\n        raise RuntimeError(code)\n\n\ndef exclusive(path,\
+            \ data, mode=0o600):\n    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,\
+            \ mode)\n    with os.fdopen(fd, 'wb') as f:\n        f.write(data)\n        f.flush()\n        os.fsync(f.fileno())\n\
+            \n\ndef memory():\n    values = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())\n\
+            \    return {key+'Bytes': int(values[key].split()[0])*1024 for key in\n            ['MemTotal', 'MemAvailable',\
+            \ 'SwapTotal', 'SwapFree']}\n\n\ndef download(url, path, size, digest):\n    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\
+            \    deadline = time.monotonic()+90\n    value = hashlib.sha256()\n    count = 0\n    fd = os.open(str(path),\
+            \ os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)\n    with os.fdopen(fd, 'wb') as target,\
+            \ opener.open(url, timeout=20) as source:\n        while True:\n            require(time.monotonic()\
+            \ < deadline, 'download_deadline')\n            data = source.read(1024*1024)\n            if not data:\n\
+            \                break\n            count += len(data)\n            require(count <= size, 'download_size_limit')\n\
+            \            value.update(data)\n            target.write(data)\n        target.flush()\n        os.fsync(target.fileno())\n\
+            \    require(count == size and value.hexdigest() == digest, 'download_integrity')\n\n\ndef child_limits():\n\
+            \    resource.setrlimit(resource.RLIMIT_AS, (256*1024**2, 256*1024**2))\n    resource.setrlimit(resource.RLIMIT_CORE,\
+            \ (0, 0))\n    resource.setrlimit(resource.RLIMIT_FSIZE, (16*1024**2, 16*1024**2))\n\n\ndef command(args,\
+            \ private_libs=False):\n    env = dict(ENV)\n    if private_libs:\n        env['LD_LIBRARY_PATH'] =\
+            \ str(BASE/'usr/lib64')\n    # Output is local and bounded by a regular file + RLIMIT_FSIZE; never exported\
+            \ raw.\n    with (BASE/'command-output').open('w+b') as output:\n        p = subprocess.run(args, stdin=subprocess.DEVNULL,\
+            \ stdout=output, stderr=subprocess.STDOUT,\n                           env=env, timeout=25, check=False,\
+            \ preexec_fn=child_limits)\n        output.seek(0)\n        data = output.read(65537)\n    require(len(data)\
+            \ <= 65536, 'command_output_limit')\n    require(p.returncode == 0, 'command_exit_nonzero')\n    return\
+            \ data.decode('utf-8', errors='strict')\n\n\ndef fingerprint(data):\n    import base64\n    lines =\
+            \ data.decode('ascii').splitlines()\n    start = lines.index('-----BEGIN PGP PUBLIC KEY BLOCK-----')+1\n\
+            \    while lines[start].strip():\n        start += 1\n    start += 1\n    raw = base64.b64decode(''.join(line\
+            \ for line in lines[start:] if line and not line.startswith(('=', '-'))), validate=True)\n    require(raw[0]&0x80\
+            \ and not raw[0]&0x40 and (raw[0]>>2)&15 == 6, 'key_packet_type')\n    length_kind = raw[0]&3\n    require(length_kind\
+            \ in (0, 1, 2), 'key_packet_length')\n    n = 1 << length_kind\n    length = int.from_bytes(raw[1:1+n],\
+            \ 'big')\n    body = raw[1+n:1+n+length]\n    require(len(body) == length and body[0] == 4 and length\
+            \ < 65536, 'key_packet_version')\n    return hashlib.sha1(b'\\x99'+length.to_bytes(2, 'big')+body).hexdigest().upper()\n\
+            \n\ndef extract(rpm, expected):\n    data = rpm.read_bytes()\n    require(len(data)<16*1024**2 and data[:4]\
+            \ == b'\\xed\\xab\\xee\\xdb', 'rpm_format')\n    def header(offset):\n        require(offset+16<=len(data)\
+            \ and data[offset:offset+4] == b'\\x8e\\xad\\xe8\\x01', 'rpm_header')\n        n, size = struct.unpack('>II',\
+            \ data[offset+8:offset+16])\n        require(n<10000 and size<16*1024**2, 'rpm_header_limit')\n    \
+            \    start = offset+16+n*16\n        require(start+size<=len(data), 'rpm_header_bounds')\n        return\
+            \ start+size\n    sigend = header(96)\n    start = header((sigend+7)//8*8)\n    f = lzma.LZMAFile(io.BytesIO(data[start:]))\n\
+            \    total, count = 0, 0\n    wanted = {row['path']: row for row in expected}\n    seen = set()\n  \
+            \  def read(n):\n        nonlocal total\n        require(0<=n<=64*1024**2, 'payload_member_limit')\n\
+            \        total += n\n        require(total<=256*1024**2, 'payload_total_limit')\n        result = f.read(n)\n\
+            \        require(len(result)==n, 'payload_truncated')\n        return result\n    while True:\n    \
+            \    h = read(110)\n        require(h[:6] == b'070701', 'cpio_format')\n        values = [int(h[6+i*8:14+i*8],\
+            \ 16) for i in range(13)]\n        mode, size, namesize = values[1], values[6], values[11]\n       \
+            \ require(1<=namesize<=4096 and size<=64*1024**2, 'cpio_member_limit')\n        name = read(namesize)\n\
+            \        require(name.endswith(b'\\0'), 'cpio_name')\n        name = name[:-1].decode()\n        read((-(110+namesize))%4)\n\
+            \        if name == 'TRAILER!!!':\n            require(size == 0, 'cpio_trailer')\n            break\n\
+            \        count += 1\n        require(count<=20000, 'cpio_count')\n        payload = read(size)\n   \
+            \     read((-size)%4)\n        path = name[2:] if name.startswith('./') else name\n        if path not\
+            \ in wanted:\n            continue\n        require(path not in seen, 'duplicate_payload')\n       \
+            \ seen.add(path)\n        row = wanted[path]\n        require(size == row['bytes'] and hashlib.sha256(payload).hexdigest()\
+            \ == row['sha256'], 'payload_integrity')\n        destination = BASE/path\n        require(not os.path.lexists(destination),\
+            \ 'existing_payload')\n        if row['type'] == 'regular':\n            require(stat.S_ISREG(mode)\
+            \ and stat.S_IMODE(mode)==0o755 and\n                    payload[:5]==b'\\x7fELF\\x02' and payload[18:20]==b'\\\
+            x3e\\x00', 'elf_identity')\n            exclusive(destination, payload, 0o755)\n        else:\n    \
+            \        require(stat.S_ISLNK(mode) and payload.decode()==row['target'] and\n                    '/'\
+            \ not in row['target'] and row['target'] not in ('.', '..'), 'payload_link')\n            os.symlink(row['target'],\
+            \ destination)\n    f.close()\n    require(seen == set(wanted), 'missing_payload')\n    return {'membersVerified':\
+            \ len(seen), 'payloadBytesRead': total}\n\n\ndef expired(signum, frame):\n    raise RuntimeError('stage_deadline')\n\
+            \n\ndef main():\n    result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN', 'rpmTransactionRequested':\
+            \ False,\n              'serviceActivationRequested': False, 'signaturesDatabaseDownloaded': False,\n\
+            \              'apiRestartRequested': False}\n    phase = 'preflight'\n    signal.signal(signal.SIGALRM,\
+            \ expired)\n    signal.alarm(450)\n    try:\n        require(os.geteuid()==0 and os.uname().machine=='x86_64',\
+            \ 'host_identity')\n        require(not os.path.lexists(BASE), 'existing_stage')\n        for ancestor\
+            \ in [Path('/opt'), Path('/opt/cyf')]:\n            info = ancestor.lstat()\n            require(stat.S_ISDIR(info.st_mode)\
+            \ and info.st_uid==0 and not stat.S_IMODE(info.st_mode)&0o022, 'untrusted_parent')\n        for program\
+            \ in [Path('/usr/bin/rpm'), Path('/lib64/ld-linux-x86-64.so.2')]:\n            info = program.stat()\n\
+            \            require(stat.S_ISREG(info.st_mode) and info.st_uid==0 and not stat.S_IMODE(info.st_mode)&0o022,\
+            \ 'untrusted_host_tool')\n        result.update(memoryBefore=memory(), diskAvailableBefore=shutil.disk_usage('/opt').free,\n\
+            \                      diskReserveBytes=RESERVE, knownStagePeakBytes=PEAK)\n        require(result['diskAvailableBefore']>=RESERVE+PEAK\
+            \ and result['memoryBefore']['MemAvailableBytes']>=768*1024**2, 'resource_gate')\n        BASE.mkdir(mode=0o700)\n\
+            \        exclusive(BASE/'stage-intent.json', (json.dumps(result)+'\\n').encode())\n        for name\
+            \ in ['rpmdb', 'packages', 'usr', 'usr/bin', 'usr/sbin', 'usr/lib64']:\n            (BASE/name).mkdir(mode=0o700)\n\
+            \        phase = 'download_signing_key'\n        key = BASE/'RPM-GPG-KEY-EPEL-8'\n        download('https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8',\
+            \ key, 1627, KEY_SHA)\n        require(fingerprint(key.read_bytes())==KEY_FINGERPRINT, 'key_fingerprint')\n\
+            \        phase = 'private_key_import'\n        dbargs = ['/usr/bin/rpm', '--dbpath', str(BASE/'rpmdb')]\n\
+            \        command(dbargs+['--initdb'])\n        command(dbargs+['--import', str(key)])\n        result['keyFingerprint']\
+            \ = KEY_FINGERPRINT\n        result['packages'] = []\n        for package in PACKAGES:\n           \
+            \ phase = 'download_'+package['name']\n            path = BASE/'packages'/Path(package['rpm']).name\n\
+            \            download('https://mirrors.aliyun.com/epel/8/Everything/x86_64/'+package['rpm'], path,\n\
+            \                     int(package['bytes']), package['sha256'])\n            phase = 'verify_'+package['name']\n\
+            \            output = command(dbargs+['--checksig', '--verbose', str(path)])\n            require(re.search(r'Signature,\
+            \ key ID 2f86d6a1: OK', output, re.I) is not None and\n                    not re.search(r'NOT OK|NOKEY|NOTTRUSTED|BAD|UNSIGNED',\
+            \ output, re.I), 'rpm_signature_invalid')\n            selected = next(row for row in MANIFEST if row['package']==package['name'])\n\
+            \            require(selected['rpmSha256']==package['sha256'], 'manifest_rpm_identity')\n          \
+            \  phase = 'extract_'+package['name']\n            row = extract(path, selected['members'])\n      \
+            \      result['packages'].append(dict(name=package['name'], rpmSha256=package['sha256'], signatureVerified=True,\
+            \ **row))\n        phase = 'dynamic_dependencies'\n        result['executables'] = []\n        for rel\
+            \ in ['usr/bin/clamscan', 'usr/bin/sigtool', 'usr/bin/freshclam', 'usr/sbin/clamd']:\n            path\
+            \ = BASE/rel\n            dependencies = command(['/lib64/ld-linux-x86-64.so.2', '--list', str(path)],\
+            \ private_libs=True)\n            require('not found' not in dependencies, 'missing_library')\n    \
+            \        libraries = []\n            for match in re.finditer(r'=> (/[^\\s]+)', dependencies):\n   \
+            \             library = Path(match.group(1))\n                require(library.is_absolute() and '..'\
+            \ not in library.parts, 'loader_path')\n                info = library.stat()\n                require(stat.S_ISREG(info.st_mode)\
+            \ and info.st_uid==0 and not stat.S_IMODE(info.st_mode)&0o022, 'untrusted_library')\n              \
+            \  libraries.append(str(library))\n            require(libraries, 'no_loader_dependencies')\n      \
+            \      version = command([str(path), '--version'], private_libs=True).strip()\n            require(re.fullmatch(r'ClamAV\
+            \ 1\\.4\\.6', version) is not None, 'executable_version')\n            result['executables'].append({'path':\
+            \ rel, 'version': version, 'libraries': libraries})\n        result.update(status='SCANNER_BINARIES_STAGED',\
+            \ memoryAfter=memory(), diskAvailableAfter=shutil.disk_usage('/opt').free)\n        require(result['diskAvailableAfter']>=RESERVE,\
+            \ 'final_disk_reserve')\n        exclusive(BASE/'stage-result.json', (json.dumps(result,sort_keys=True)+'\\\
+            n').encode())\n    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError,\
+            \ lzma.LZMAError) as exc:\n        result.update(status='UNKNOWN', failedPhase=phase,\n            \
+            \          errorCode=str(exc) if type(exc) is RuntimeError and re.fullmatch(r'[a-z_]+',str(exc)) else\
+            \ type(exc).__name__)\n    finally:\n        signal.alarm(0)\n    result['diskAvailableAfter'] = shutil.disk_usage('/opt').free\n\
+            \    print(json.dumps(result, sort_keys=True))\n    return 0 if result['status']=='SCANNER_BINARIES_STAGED'\
+            \ else 1\n\n\nif __name__ == '__main__':\n    raise SystemExit(main())\nCYF_OUTPUT_SCANNER_STAGE_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
+          deployTimeoutPerHost: 600

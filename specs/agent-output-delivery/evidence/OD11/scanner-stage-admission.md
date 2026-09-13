@@ -1,0 +1,15 @@
+# Isolated signed scanner staging admission
+
+Candidate name: `cyf-output-scanner-stage-20260913-a386c7e1`. Source `../../tools/stage-output-scanner.py` SHA256 `a386c7e1d05ddede4e4ea3b1f0b8a5c690ef8bf592aef39f4a3bead7157df050`; flow `scanner-stage-flow.yaml` SHA256 `d00017be99f4fdc8043c6bbfe6b112259aaf1de7ea81e3e04eedb216a28361b7`. Pending independent review; no such pipeline created or run yet.
+
+Scope: create only previously absent `/opt/cyf/output-scanner` (root-only), download four exact official Alibaba EPEL8 ClamAV1.4.6-1.el8 RPMs plus pinned Fedora EPEL8 public key. Package digests derive from recorded official metadata; selected member sizes/types/digests derive from locally verified payloads. Key SHA/fingerprint are pinned. Run rpm initdb/import/checksig only with a new private dbpath; never install RPMs, execute package scriptlets, alter global keys/dependencies, create service users/units, start scanners or restart API. No virus signatures or output bytes are transferred by this step.
+
+Require root/x86_64, absent target, trusted ancestors and host rpm/loader, >=3.5GiB reserve+128MiB staging peak and >=768MiB available RAM. Four RPMs total15,262,388bytes; selected regular payloads31,189,776bytes, leaving ample private RPMdb/key/output allowance within128MiB. Child address space256MiB, core0, file limit16MiB; capture output bounded65536bytes; each child25s. Download exact size/hash, per-file90s plus request20s. Total alarm450s; Flow600s. On failure keep the root-only stage for diagnosis, report safe phase/error code, no cleanup or blind retries.
+
+Verify actual RPM signature key ID2f86d6a1 and reject non-OK signature outcomes before payload parse/execution. Stream bounded newc/xz, select only exact allowlisted members, reject duplicates/missing/wrong type/size/hash, no archive path extraction. Only three pinned same-directory links. Check all four executable loader resolutions and trusted library metadata, then exact ClamAV1.4.6 --version using only the private LD_LIBRARY_PATH. Public vendor binaries execute only after both checksum and RPM signature validation.
+
+Local Python AST, EPEL key fingerprint, all four original payload parses and selected ten members passed; this ARM host did not execute AMD64 binaries or verify RPM signatures (rpm absent). No production signature/dependency/install evidence is claimed.
+
+Use existing immutable guarded Flow controller: zero sources, one root VMDeploy, fixed org5fb7d76ee6f9d07f148529c7/group28833/machineGroupyjctjhskhk1ti9t4/sole ECSi-wz9j3ip2unzhwij0bs30/cn-shenzhen. Unique-name pagination, singleton target before create/start, intent-before-write, exact parsed YAML/settings readback+digest, zero prior runs, one empty-parameter start. Unknown writes reconcile read-only. No DNF, no product pipeline changes.
+
+Success proves only signed staged binaries and production loader/version compatibility. Full signature download, scanner resource admission/activation, clean+EICAR scans, updates and application integration require subsequent reviewed execution.
