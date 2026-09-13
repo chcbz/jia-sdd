@@ -1,0 +1,67 @@
+name: cyf-output-scanner-bootstrap-diagnosis
+sources: {}
+stages:
+  host_preflight:
+    name: Read failed scanner bootstrap state and bounded journal
+    jobs:
+      inspect_host:
+        name: Read-only fixed scanner units and database metadata
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_SCANNER_BOOTSTRAP_DIAG_PY'\n\
+            #!/usr/bin/env python3\n\"\"\"Read-only diagnosis of the fixed failed\
+            \ scanner bootstrap; no service mutations.\"\"\"\nimport hashlib\nimport\
+            \ json\nimport os\nfrom pathlib import Path\nimport re\nimport signal\n\
+            import stat\nimport subprocess\nimport time\n\nUNITS = ['cyf-output-scanner-bootstrap.service',\
+            \ 'cyf-output-scanner.service']\nENV = {'PATH': '/usr/bin:/usr/sbin:/bin:/sbin',\
+            \ 'LC_ALL': 'C'}\n\n\ndef command(args):\n    p = subprocess.run(args,\
+            \ env=ENV, stdin=subprocess.DEVNULL,\n                       stdout=subprocess.PIPE,\
+            \ stderr=subprocess.DEVNULL, timeout=20)\n    if p.returncode or len(p.stdout)\
+            \ > 262144:\n        raise RuntimeError('diagnostic_command_failed')\n\
+            \    return p.stdout.decode('utf-8', errors='strict')\n\n\ndef main():\n\
+            \    result = {'observedAtEpoch': int(time.time()), 'readOnly': True,\
+            \ 'status': 'UNKNOWN'}\n    def expired(signum, frame):\n        raise\
+            \ RuntimeError('deadline')\n    signal.signal(signal.SIGALRM, expired)\n\
+            \    signal.alarm(90)\n    try:\n        if os.geteuid() != 0:\n     \
+            \       raise RuntimeError('host_identity')\n        result['units'] =\
+            \ []\n        for unit in UNITS:\n            state = command(['/usr/bin/systemctl',\
+            \ 'show', unit, '--no-pager',\n                '--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic'])\n\
+            \            raw = command(['/usr/bin/journalctl', '--no-pager', '-u',\
+            \ unit,\n                           '--since', '2026-09-13 16:30:00',\
+            \ '-n', '100', '-o', 'json'])\n            messages = []\n           \
+            \ for line in raw.splitlines():\n                row = json.loads(line)\n\
+            \                message = row.get('MESSAGE', '')\n                if\
+            \ not isinstance(message, str):\n                    continue\n      \
+            \          message = re.sub(r'https?://\\S+', '<url>', message)\n    \
+            \            if re.search(r'password|secret|token|authorization|bearer',\
+            \ message, re.I):\n                    message = '<sensitive line excluded>'\n\
+            \                messages.append({'time': row.get('__REALTIME_TIMESTAMP'),\
+            \ 'message': message[:600]})\n            result['units'].append({'unit':\
+            \ unit,\n                'state': dict(x.split('=', 1) for x in state.splitlines()),\n\
+            \                'journalSha256': hashlib.sha256(raw.encode()).hexdigest(),\n\
+            \                'journalBytes': len(raw.encode()), 'lastMessages': messages})\n\
+            \        db = Path('/var/lib/cyf-output-scanner/db')\n        info = db.lstat()\n\
+            \        if not stat.S_ISDIR(info.st_mode) or info.st_uid == 0:\n    \
+            \        raise RuntimeError('database_directory_identity')\n        entries\
+            \ = list(db.iterdir())\n        if len(entries) > 32:\n            raise\
+            \ RuntimeError('entry_limit')\n        result['databaseEntries'] = []\n\
+            \        for entry in entries:\n            i = entry.lstat()\n      \
+            \      result['databaseEntries'].append({'name': entry.name, 'bytes':\
+            \ i.st_size,\n                'uid': i.st_uid, 'mode': oct(stat.S_IMODE(i.st_mode)),\n\
+            \                'regular': stat.S_ISREG(i.st_mode), 'mtimeEpoch': i.st_mtime})\n\
+            \        m = dict(x.split(':', 1) for x in Path('/proc/meminfo').read_text().splitlines())\n\
+            \        result['memAvailableBytes'] = int(m['MemAvailable'].split()[0])\
+            \ * 1024\n        v = os.statvfs('/opt')\n        result['diskAvailableBytes']\
+            \ = v.f_bavail * v.f_frsize\n        result['status'] = 'READ_ONLY_DIAGNOSED'\n\
+            \    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError)\
+            \ as exc:\n        result['errorType'] = type(exc).__name__\n    finally:\n\
+            \        signal.alarm(0)\n    print(json.dumps(result, sort_keys=True))\n\
+            \    return 0 if result['status'] == 'READ_ONLY_DIAGNOSED' else 1\n\n\n\
+            if __name__ == '__main__':\n    raise SystemExit(main())\nCYF_SCANNER_BOOTSTRAP_DIAG_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
+          deployTimeoutPerHost: 600
