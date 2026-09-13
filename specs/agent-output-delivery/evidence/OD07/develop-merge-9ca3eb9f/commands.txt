@@ -1,0 +1,27 @@
+# All invocations used /tmp/cyf-od02-evidence/run-gradle-with-od-env.py, which owns /tmp/cyf-gradle.lock and single-worker low-memory settings.
+
+# Earlier merge-resolution Base/User security regressions; not included in the later Agent 277 count.
+python3 /tmp/cyf-od02-evidence/run-gradle-with-od-env.py :base:jia-base-service:test --tests 'cn.jia.base.filter.UriAccessLogFilterTest' --tests 'cn.jia.base.service.impl.LogServiceImplTest' :user:jia-user-service:test --tests 'cn.jia.user.config.DefaultSecurityConfigTest'
+
+# Focused repair checks before the final 10-suite invocation; later superseded by the final scoped XML where overlapping.
+python3 /tmp/cyf-od02-evidence/run-gradle-with-od-env.py :agent:jia-agent-service:test --tests 'cn.jia.agent.service.impl.AgentServiceImplTest'
+python3 /tmp/cyf-od02-evidence/run-gradle-with-od-env.py :agent:jia-agent-service:test --tests 'cn.jia.agent.service.impl.AgentTaskCollaborationServiceImplTest'
+
+# Final Agent compatibility scope: 10 suites, 277 tests.
+python3 /tmp/cyf-od02-evidence/run-gradle-with-od-env.py :agent:jia-agent-service:test \
+  --tests 'cn.jia.agent.api.OutputDeliveryControllerTest' \
+  --tests 'cn.jia.agent.api.AgentTaskArtifactControllerTest' \
+  --tests 'cn.jia.agent.api.OutputPublicationMappingCoexistenceTest' \
+  --tests 'cn.jia.agent.config.OutputUploadSecurityConfigurationTest' \
+  --tests 'cn.jia.agent.config.OutputUploadSecurityCoexistenceTest' \
+  --tests 'cn.jia.agent.service.impl.AgentWorkItemPlanServiceImplTest' \
+  --tests 'cn.jia.agent.service.impl.AgentWorkItemDependencyServiceImplTest' \
+  --tests 'cn.jia.agent.service.impl.AgentServiceImplTest' \
+  --tests 'cn.jia.agent.service.impl.AgentTaskArtifactStorageF02Test' \
+  --tests 'cn.jia.agent.service.impl.AgentTaskCollaborationServiceImplTest'
+
+# Mapper contracts plus integrated package build: 2 suites, 7 tests, then bootJar.
+python3 /tmp/cyf-od02-evidence/run-gradle-with-od-env.py :agent:jia-agent-mapper:test \
+  --tests 'cn.jia.agent.dao.AgentRuntimeMapperContractTest' \
+  --tests 'cn.jia.agent.dao.AgentRuntimeBatchMapperContractTest' \
+  :starter:bootJar

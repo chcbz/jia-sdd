@@ -1,0 +1,7 @@
+# Production capacity/layout observation
+
+The second independently reviewed read-only probe (source9a67c935, Root ba97e743) ran exactly once through Flow5264709/run1, job514585308, order69523281. The official machine log and deployment order bind Success to the sole expected ECS i-wz9j3ip2unzhwij0bs30 in cn-shenzhen. All sources remain empty; complete flow matches the reviewed YAML and outer settings equal those accepted for the first probe. Start locked the full configuration digestbdba2839c00cf37fc091b33a339a5fbbb16d486a22a002e199a0699c2033d76e after rechecking the singleton host and zero existing runs.
+
+Observed Alibaba Cloud Linux3, x86_64, memory total3,904,995,328 bytes and available1,820,512,256 bytes; swap total2,147,479,552 and free1,272,512,512. Both helper hashes still match the first observation; path extraction did not truncate. The API helper has backup/rollback keywords, but that does not prove either works. The restricted parser found no API literal deployment path and no matching Java jar, so helper integration/runtime identity remains unresolved. Do not infer that the API is absent.
+
+This evidence supports resource planning only. No package installation, application configuration, SQL, signal, network connection or service change was performed by this probe. Production storage/scanner capacity and signatures, runtime configuration, schema/backup/restore and feature verification remain open.

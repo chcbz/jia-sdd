@@ -1,0 +1,9 @@
+# Isolated RabbitMQ prerequisite
+
+RabbitMQ4.0.5 and Erlang27.3.4.1 are extracted from16 Debian13 packages into `/home/chc/.local/share/cyf-output-tools/services/rabbitmq/root`. Each downloaded package SHA256 was checked against the configured APT index; no maintainer script or system package installation ran. This adapts the isp-install dedicated-prefix approach to the existing Debian ARM development host; it does not claim the older isp-install RabbitMQ3.12.12 was installed.
+
+The task-only node cyf_od11@localhost exposes AMQP127.0.0.1:15673, management127.0.0.1:15674, distribution127.0.0.1:14370, and its own EPMD127.0.0.1:14369. Credentials/config/cookie are private files under that directory; user HOME and the existing Agent were not changed. OTP27 required a task-specific XDG cookie directory; an explicit tracked EPMD process handles relocation, and the duplicate -home option was removed. The three startup failures remain in private state logs; final readiness succeeded.
+
+Authenticated management reported RabbitMQ/Erlang versions, one running node, and no memory/disk alarm. A real AMQP0-9-1 connection received the Connection.Start frame. Broker memory observed110,284,800 bytes under a256MiB cap; this is broker prerequisite evidence, not application outbox/claim/rework acceptance. Actual broker PID1360902/startTicks60429000 and EPMD identity are recorded.
+
+For the future isolated API candidate use dedicated `agent.rabbit-broker.*` host127.0.0.1/port15673/virtual-host cyf_od11; obtain user/password only in memory from `state/credentials.json`. Changing `spring.rabbitmq.*` alone does not configure the Agent M3 boundary. Enable the outbox/topology/publish/consume/dispatch dependency chain only with the exact disposable fixture tenant/client allowlist. Root has not restarted API10018, changed its config, bound an Agent or dispatched a task for this preparation.
