@@ -1,0 +1,7 @@
+# Production /opt runtime observation
+
+Reviewed sourcea0275cf1 executed once as Flow5264725/run1, job514601946, order69524016, bound to the sole expected Shenzhen ECS. The fixed /opt/cyf/service/api directory exists and a Java process includes the exact jar path, uses that cwd and has an explicit prod profile. Disk JAR SHA25620625639587936a543bdbe1fdadef65f4d478bebe0227475937ae2b85105716e (221,061,111 bytes) was observed. This is not proof of the process-loaded digest: pid/executable/UID identity and the runtime record still need the final release check.
+
+The four checked external Spring properties files and the config directory do not exist. The standard working-directory Spring config location is therefore a concrete candidate for additive output configuration without changing existing lifecycle helpers; validate loading and permissions with the actual release package before enabling it. Current /usr/local/sbin/cyf-api-kit SHA256d4525dd5e8e34faf5d28a9f635315b54f7cc1b6bf82f9fcf7637670718c4b275 does not match historical be41be7. Do not assume the old helper's capacity limits or full implementation from that historical source.
+
+This was a read-only observation: no properties values, key files, process environments or runtime-record contents were exported; no application mutation or service restart. The first two narrow probes had intentionally omitted /opt, which explains their empty jar matches. The candidate process and on-disk artifact here belong to concurrent deployed work, not the output feature.
