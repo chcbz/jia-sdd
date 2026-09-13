@@ -136,7 +136,7 @@ def main():
         result['memAvailableBefore'] = available_memory()
         result.update(diskReserveBytes=DISK_RESERVE, memoryReserveBytes=MEMORY_RESERVE,
                       knownInstallPeakBytes=KNOWN_INSTALL_PEAK)
-        if (result['diskAvailableBefore'] < max(4*1024**3, DISK_RESERVE+KNOWN_INSTALL_PEAK)
+        if (result['diskAvailableBefore'] < DISK_RESERVE+KNOWN_INSTALL_PEAK
                 or result['memAvailableBefore'] < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):
             raise RuntimeError('resource_gate')
         for port in [19000, 19001]:

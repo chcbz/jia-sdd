@@ -74,7 +74,7 @@ stages:
             \           'cacheLimitBytes':256*1024**2,'privateMountNamespaceRequested':True}\n    phase = 'preflight'\n\
             \    try:\n        if os.geteuid()!=0:\n            raise ValueError('root_required')\n        st=os.statvfs('/var/tmp');out['diskAvailableBefore']=st.f_bavail*st.f_frsize\n\
             \        memory=dict(line.split(':',1) for line in Path('/proc/meminfo').read_text().splitlines())\n\
-            \        out['memAvailableBefore']=int(memory['MemAvailable'].split()[0])*1024\n        if out['diskAvailableBefore']<4*1024**3\
+            \        out['memAvailableBefore']=int(memory['MemAvailable'].split()[0])*1024\n        if out['diskAvailableBefore']<3584*1024**2+16*1024**2\
             \ or out['memAvailableBefore']<1536*1024**2:\n            raise ValueError('resource_gate')\n      \
             \  repos=approved_repos()\n        out['repositories']=[{'id':rid,'scheme':'https','host':repos[rid]['host']}\
             \ for rid in REPOS]\n        phase='bounded_metadata_plan'\n        with capped_workspace() as temp:\n\

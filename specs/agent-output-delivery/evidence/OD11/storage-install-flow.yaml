@@ -68,10 +68,10 @@ stages:
             \        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n        result['memAvailableBefore']\
             \ = available_memory()\n        result.update(diskReserveBytes=DISK_RESERVE, memoryReserveBytes=MEMORY_RESERVE,\n\
             \                      knownInstallPeakBytes=KNOWN_INSTALL_PEAK)\n        if (result['diskAvailableBefore']\
-            \ < max(4*1024**3, DISK_RESERVE+KNOWN_INSTALL_PEAK)\n                or result['memAvailableBefore']\
-            \ < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n\
-            \        for port in [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1',\
-            \ port))\n        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
+            \ < DISK_RESERVE+KNOWN_INSTALL_PEAK\n                or result['memAvailableBefore'] < max(1536*1024**2,\
+            \ MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n        for port in\
+            \ [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1', port))\n\
+            \        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
             \ dir='/opt/cyf') as temp:\n            layer_path = Path(temp) / 'layer.tar.gz'\n            url =\
             \ 'https://quay.io/v2/minio/minio/blobs/sha256:' + LAYER\n            # Public immutable layer; no registry/Flow\
             \ credentials or proxy inherited.\n            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\

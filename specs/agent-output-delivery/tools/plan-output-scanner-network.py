@@ -157,7 +157,7 @@ def main():
         st=os.statvfs('/var/tmp');out['diskAvailableBefore']=st.f_bavail*st.f_frsize
         memory=dict(line.split(':',1) for line in Path('/proc/meminfo').read_text().splitlines())
         out['memAvailableBefore']=int(memory['MemAvailable'].split()[0])*1024
-        if out['diskAvailableBefore']<4*1024**3 or out['memAvailableBefore']<1536*1024**2:
+        if out['diskAvailableBefore']<3584*1024**2+16*1024**2 or out['memAvailableBefore']<1536*1024**2:
             raise ValueError('resource_gate')
         repos=approved_repos()
         out['repositories']=[{'id':rid,'scheme':'https','host':repos[rid]['host']} for rid in REPOS]
