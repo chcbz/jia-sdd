@@ -54,15 +54,16 @@ stages:
             \ > 384*1024**2:\n        raise RuntimeError('unit_memory_budget')\n    return {'pid': pid, 'startTicks':\
             \ before, 'uid': user.pw_uid, 'gid': user.pw_gid,\n            'exeSha256': installed['sha256'], 'unitMemoryBytes':\
             \ memory}\n\n\ndef expired(signum, frame):\n    raise RuntimeError('installer_deadline')\n\n\ndef scanner_plan_cleanup_state():\n\
-            \    prefix = b'/var/tmp/cyf-scanner-plan-'\n    residual = sorted(str(x) for x in Path('/var/tmp').glob('cyf-scanner-plan-*'))\n\
-            \    if residual:\n        raise RuntimeError('scanner_plan_directory_remaining')\n    checked = 0\n\
-            \    deadline = time.monotonic()+15\n    for proc in Path('/proc').iterdir():\n        if not proc.name.isdecimal():\n\
-            \            continue\n        checked += 1\n        if checked > 8192 or time.monotonic() > deadline:\n\
-            \            raise RuntimeError('scanner_plan_cleanup_scan_limit')\n        for name, limit in [('cmdline',\
-            \ 65536), ('mountinfo', 512*1024)]:\n            try:\n                fd = os.open(str(proc/name),\
-            \ os.O_RDONLY | os.O_NOFOLLOW)\n                with os.fdopen(fd, 'rb') as f:\n                   \
-            \ data = f.read(limit+1)\n            except (FileNotFoundError, ProcessLookupError):\n            \
-            \    continue\n            if len(data)>limit:\n                raise RuntimeError('scanner_plan_cleanup_record_limit')\n\
+            \    deadline = time.monotonic()+15\n    prefix = b'/var/tmp/cyf-scanner-plan-'\n    with os.scandir('/var/tmp')\
+            \ as entries:\n        for entry in entries:\n            if time.monotonic() > deadline:\n        \
+            \        raise RuntimeError('scanner_plan_cleanup_scan_limit')\n            if entry.name.startswith('cyf-scanner-plan-'):\n\
+            \                raise RuntimeError('scanner_plan_directory_remaining')\n    checked = 0\n    for proc\
+            \ in Path('/proc').iterdir():\n        if not proc.name.isdecimal():\n            continue\n       \
+            \ checked += 1\n        if checked > 8192 or time.monotonic() > deadline:\n            raise RuntimeError('scanner_plan_cleanup_scan_limit')\n\
+            \        for name, limit in [('cmdline', 65536), ('mountinfo', 512*1024)]:\n            try:\n     \
+            \           fd = os.open(str(proc/name), os.O_RDONLY | os.O_NOFOLLOW)\n                with os.fdopen(fd,\
+            \ 'rb') as f:\n                    data = f.read(limit+1)\n            except (FileNotFoundError, ProcessLookupError):\n\
+            \                continue\n            if len(data)>limit:\n                raise RuntimeError('scanner_plan_cleanup_record_limit')\n\
             \            if prefix in data:\n                raise RuntimeError('scanner_plan_process_or_mount_remaining')\n\
             \    return {'observedAtEpoch': int(time.time()), 'checkedProcesses': checked,\n            'residualTaskDirectories':\
             \ 0, 'taskProcessReferences': 0, 'taskMountReferences': 0,\n            'readOnly': True, 'priorPrivateCacheAccessible':\

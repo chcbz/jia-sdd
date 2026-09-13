@@ -105,12 +105,15 @@ def expired(signum, frame):
 
 
 def scanner_plan_cleanup_state():
-    prefix = b'/var/tmp/cyf-scanner-plan-'
-    residual = sorted(str(x) for x in Path('/var/tmp').glob('cyf-scanner-plan-*'))
-    if residual:
-        raise RuntimeError('scanner_plan_directory_remaining')
-    checked = 0
     deadline = time.monotonic()+15
+    prefix = b'/var/tmp/cyf-scanner-plan-'
+    with os.scandir('/var/tmp') as entries:
+        for entry in entries:
+            if time.monotonic() > deadline:
+                raise RuntimeError('scanner_plan_cleanup_scan_limit')
+            if entry.name.startswith('cyf-scanner-plan-'):
+                raise RuntimeError('scanner_plan_directory_remaining')
+    checked = 0
     for proc in Path('/proc').iterdir():
         if not proc.name.isdecimal():
             continue
