@@ -1,0 +1,7 @@
+# Real 120-file API paging
+
+Frozen API0771f107 at isolated10018, accepted client7c6a273d copied through git archive. A new isolated Agent identity was provisioned for the existing fixture owner; no output source/run was fabricated. Real login/OAuth and two authenticated chat/stream dispatches created conversation4 and distinct runs, with60 Markdown files per executor run. This synthetic executor does not call a model; actual trusted dispatch, output queue, storage/scan/publication and user read APIs are exercised.
+
+Client queue records became PUBLISHED. Actual API cursor reads return six pages of20 files; all120 IDs are unique, complete and have exact expected sizes/hashes/version1. Six boundary items (indexes0,19,20,99,100,119) passed detail and byte/hash download checks. The tool records overallPass; its original script exit status alone is not an assertion because it catches failures to preserve observations. Raw response bodies were not retained; response digests and observed fields are available.
+
+After verification, only synthetic PID2193246/startTicks61921886 was stopped using pidfd and exact executable argument verification. User Agent untouched. Source snapshots and published server artifacts remain for OD10/OD11 browser paging/navigation and final-candidate regression. Browser pointer paging, identity/source cursor reset, hosted mode and lifecycle races remain separate gates. Private fixture credentials and SSE logs are excluded.
