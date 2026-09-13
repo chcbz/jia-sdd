@@ -1,0 +1,11 @@
+# Continued implementation and release authorization
+
+User instruction on2026-09-13: “继续，直到完成发布”. This explicitly extends the existing OD00–OD11 implementation authorization to the necessary reviewed source integration/push, pipeline execution and production deployment for this feature. No repeated routine implementation or release permission question is required once the exact CYF repositories, candidates, pipeline/environment and deployment effects have been identified.
+
+Earlier no-push/no-deploy/no-pin statements describe the previous local-only authorization boundary. This instruction supersedes that boundary for the completed feature's release; it does not authorize an immediate push of an incomplete OD07 candidate or release of unrelated work. Product candidates still pass independent review, required tests and integration/release gates. Root coordinates the single release operator and records full source SHAs, actual pipeline runs, artifacts/deployment targets and post-deployment business verification. Root gitlinks are updated only when candidates are remotely reproducible.
+
+Current protection remains: do not edit the original checkout, revert other work or stop the user's unrelated local Agent. Identify hosted/client rollout targets in the concrete deployment plan before changing running processes. Every Gradle invocation holds /tmp/cyf-gradle.lock. Keep credentials out of source, reports and command arguments; paths to existing credential files may be referenced. No writes to pipeline configuration or retries with unknown previous effects merely to force a green result.
+
+Release coordination applies aliyun-pipeline skill instructions at /home/chc/.codex/skills/aliyun-pipeline/SKILL.md. Read current pipeline configuration/trigger rules before pushing; prevent a duplicate manual run when a push already triggered the candidate. If a start response is uncertain, inspect subsequent runs and exact sources/environment before any retry. A historical successful run or homepage200 is insufficient release proof.
+
+This file is authorization and sequencing evidence, not a deployment record. OD07 remains under repair/review; OD08–OD11 implementation/integration and applicable R1 release gates remain open. Deferred P3 and funding-settlement linkage remain outside this feature's scope.
