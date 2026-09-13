@@ -328,8 +328,16 @@ def load_package(path, uid, mode):
             try:
                 with tarfile.open(fileobj=raw, mode='r:*') as archive:
                     members = {}
+                    root_directory_seen = False
                     for member in archive.getmembers():
                         raw_name = member.name
+                        # Flow ArtifactUpload includes one empty archive-root directory.
+                        # It is metadata, not a sixth payload member or an extraction path.
+                        if raw_name in ('.', './'):
+                            if root_directory_seen or not member.isdir() or member.size != 0:
+                                raise SchemaError('package_member_invalid')
+                            root_directory_seen = True
+                            continue
                         normalized = raw_name[2:] if raw_name.startswith('./') else raw_name
                         if (not normalized or normalized.startswith('/') or '..' in Path(normalized).parts
                                 or '/' in normalized or normalized in members or not member.isfile()):

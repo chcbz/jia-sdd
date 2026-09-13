@@ -226,7 +226,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         return boot.getvalue()
 
     def rebuild_release(self, resource=None, nested_name=None, resource_name=None,
-                        record_overrides=None, receipt_overrides=None):
+                        record_overrides=None, receipt_overrides=None, root_entries=()):
         jar = self.build_jar(resource, nested_name, resource_name)
         canonical = self.root / 'service/cyf-api-kit.jar'
         canonical.write_bytes(jar)
@@ -269,6 +269,11 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         }
         package = self.root / 'state/incoming/package.tgz'
         with tarfile.open(str(package), 'w:gz') as archive:
+            for name, kind, size in root_entries:
+                info = tarfile.TarInfo(name)
+                info.type = kind
+                info.size = size
+                archive.addfile(info, io.BytesIO(b'x' * size) if size else None)
             for name, value in members.items():
                 info = tarfile.TarInfo(name)
                 info.size = len(value)
@@ -325,6 +330,28 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         self.assertTrue(all(value['status'] == 'planned_create'
                             for value in payload['tables'].values()))
         self.assert_no_secret_disclosure(result, payload)
+
+    def test_flow_empty_root_directory_is_allowed_without_weakening_payload_allowlist(self):
+        self.rebuild_release(root_entries=(('.', tarfile.DIRTYPE, 0),))
+        result, payload = self.execute()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(payload['status'], 'pass')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_archive_root_is_not_a_link_duplicate_or_extra_directory(self):
+        cases = [
+            (('.', tarfile.SYMTYPE, 0),),
+            (('.', tarfile.DIRTYPE, 0), ('./', tarfile.DIRTYPE, 0)),
+            (('unexpected', tarfile.DIRTYPE, 0),),
+            (('.', tarfile.DIRTYPE, 1),),
+        ]
+        for entries in cases:
+            with self.subTest(entries=entries):
+                self.rebuild_release(root_entries=entries)
+                result, payload = self.execute()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'package_member_invalid')
+                self.assertEqual(self.read_state()['creates'], [])
 
     def test_apply_creates_only_the_two_exact_tables_and_verifies_equivalence(self):
         result, payload = self.execute('--apply')
