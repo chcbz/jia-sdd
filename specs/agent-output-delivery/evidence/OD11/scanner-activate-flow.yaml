@@ -1,0 +1,237 @@
+name: cyf-output-scanner-activate-existing
+sources: {}
+stages:
+  host_preflight:
+    name: Verify existing signed databases and activate isolated scanner
+    jobs:
+      inspect_host:
+        name: Exact compensated configuration, no database download
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_SCANNER_ACTIVATE_PY'\n#!/usr/bin/env\
+            \ python3\n\"\"\"Activate the exact compensated scanner using independently\
+            \ verified existing full databases.\"\"\"\nimport grp\nimport hashlib\n\
+            import io\nimport json\nimport os\nfrom pathlib import Path\nimport pwd\n\
+            import re\nimport signal\nimport socket\nimport stat\nimport struct\n\
+            import subprocess\nimport time\nimport zipfile\n\nMANIFEST = [{'path':\
+            \ 'usr/bin/clamscan', 'mode': '0o755', 'bytes': 193984, 'sha256': '4c662ebca789e371eb97fcd6ec2ff44b3445211bd6f5f87808c4a396bbed3989',\
+            \ 'type': 'regular'}, {'path': 'usr/bin/sigtool', 'mode': '0o755', 'bytes':\
+            \ 9587448, 'sha256': '1a6010478d9361b3bf27fc700ba87447b7fcbfa12358251f9c0160ddd201fe15',\
+            \ 'type': 'regular'}, {'path': 'usr/lib64/libclamav.so.12', 'mode': '0o777',\
+            \ 'bytes': 19, 'sha256': '3c9b7fb194d079740744d66a329096b72c522ada5dc2ea566b8e3c87471dcb17',\
+            \ 'type': 'symlink', 'target': 'libclamav.so.12.0.3'}, {'path': 'usr/lib64/libclamav.so.12.0.3',\
+            \ 'mode': '0o755', 'bytes': 11421696, 'sha256': 'f2eb53c3b86f2f01449ef57d5970efd47f36fd3c33c6e027e342493c6c6d748e',\
+            \ 'type': 'regular'}, {'path': 'usr/lib64/libclammspack.so.0', 'mode':\
+            \ '0o777', 'bytes': 22, 'sha256': '462d1f655fb5c241ac8b821dfa923d8cd0274df9f634fe86e0b4d8455092a6bd',\
+            \ 'type': 'symlink', 'target': 'libclammspack.so.0.8.0'}, {'path': 'usr/lib64/libclammspack.so.0.8.0',\
+            \ 'mode': '0o755', 'bytes': 78840, 'sha256': 'cdebda20f8fbe3f64341a60fa12b3282d412becc95f8e9c197cae4f538bb277b',\
+            \ 'type': 'regular'}, {'path': 'usr/sbin/clamd', 'mode': '0o755', 'bytes':\
+            \ 223024, 'sha256': '4af6f9bfab10e9b18f051e7ba8e299766a6eeae9bead3c482678b55afdae2b8a',\
+            \ 'type': 'regular'}, {'path': 'usr/bin/freshclam', 'mode': '0o755', 'bytes':\
+            \ 83568, 'sha256': '91029892d3ce03a17cf2c56bf273fe12d3c800cf6bc2e6bf75d58d9de758dbab',\
+            \ 'type': 'regular'}, {'path': 'usr/lib64/libfreshclam.so.3', 'mode':\
+            \ '0o777', 'bytes': 21, 'sha256': '3297218ef05a4dd3ec638b4fc3be8426f26a5b2d9de9032c1aa99d617e1eb4cf',\
+            \ 'type': 'symlink', 'target': 'libfreshclam.so.3.0.2'}, {'path': 'usr/lib64/libfreshclam.so.3.0.2',\
+            \ 'mode': '0o755', 'bytes': 9591216, 'sha256': '9f90f21ddb393ac49773a862c88baadebc2d72dc54675b322ffef90ea33ed0b3',\
+            \ 'type': 'regular'}]\n\nBASE = Path('/opt/cyf/output-scanner')\nCONFIG\
+            \ = Path('/etc/cyf-output-scanner')\nSTATE = Path('/var/lib/cyf-output-scanner')\n\
+            USER = 'cyf-output-scan'\nDAEMON = 'cyf-output-scanner.service'\nUPDATER\
+            \ = 'cyf-output-scanner-bootstrap.service'\nUNITDIR = Path('/etc/systemd/system')\n\
+            ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL':\
+            \ 'C', 'LANG': 'C'}\nDISK_RESERVE = 2560 * 1024**2\nDATABASE_PEAK = 768\
+            \ * 1024**2\nSERVICE_MEMORY = 1200 * 1024**2\nMEMORY_RESERVE = 256 * 1024**2\n\
+            EICAR = b'X5O!P%@AP[4\\\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'\n\
+            \n\ndef require(value, code):\n    if not value:\n        raise RuntimeError(code)\n\
+            \n\ndef exclusive(path, data, mode=0o600):\n    fd = os.open(str(path),\
+            \ os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)\n    with\
+            \ os.fdopen(fd, 'wb') as f:\n        f.write(data)\n        f.flush()\n\
+            \        os.fsync(f.fileno())\n\n\ndef memory():\n    rows = dict(line.split(':',\
+            \ 1) for line in Path('/proc/meminfo').read_text().splitlines())\n   \
+            \ return int(rows['MemAvailable'].split()[0])*1024\n\n\ndef disk():\n\
+            \    v = os.statvfs('/opt')\n    return v.f_bavail*v.f_frsize\n\n\ndef\
+            \ read_hash(path, row):\n    fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW)\n\
+            \    with os.fdopen(fd, 'rb') as f:\n        before = os.fstat(f.fileno())\n\
+            \        require(stat.S_ISREG(before.st_mode) and before.st_uid==0 and\
+            \ before.st_gid==0 and\n                stat.S_IMODE(before.st_mode)==0o755\
+            \ and before.st_size==row['bytes'], 'staged_file_identity')\n        digest\
+            \ = hashlib.sha256()\n        for chunk in iter(lambda:f.read(1024*1024),\
+            \ b''):\n            digest.update(chunk)\n        after = os.fstat(f.fileno())\n\
+            \        require((before.st_ino,before.st_size,before.st_mtime_ns)==(after.st_ino,after.st_size,after.st_mtime_ns),\
+            \ 'staged_file_changed')\n        require(digest.hexdigest()==row['sha256'],\
+            \ 'staged_file_hash')\n        return {'device':before.st_dev,'inode':before.st_ino,'sha256':digest.hexdigest()}\n\
+            \n\ndef command(args, timeout=15, private_libs=False):\n    env = dict(ENV)\n\
+            \    if private_libs:\n        env['LD_LIBRARY_PATH'] = str(BASE/'usr/lib64')\n\
+            \    p = subprocess.run(args, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,\n\
+            \                       stderr=subprocess.DEVNULL, timeout=timeout, check=False)\n\
+            \    require(p.returncode==0 and len(p.stdout)<=65536, 'command_failed')\n\
+            \    return p.stdout.decode('utf-8', errors='strict')\n\n\ndef unit_values(name):\n\
+            \    data = command(['/usr/bin/systemctl','show',name,'--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,User,Group,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic','--no-pager'])\n\
+            \    return dict(line.split('=',1) for line in data.splitlines())\n\n\n\
+            def unit_text(description, executable, oneshot=False):\n    return f'''[Unit]\n\
+            Description={description}\nAfter=network-online.target\nWants=network-online.target\n\
+            StartLimitIntervalSec=300\nStartLimitBurst=2\n\n[Service]\nType={'oneshot'\
+            \ if oneshot else 'simple'}\nUser={USER}\nGroup={USER}\nEnvironment=LD_LIBRARY_PATH={BASE}/usr/lib64\n\
+            ExecStart={executable}\nTimeoutStartSec={'600' if oneshot else '120'}\n\
+            TimeoutStopSec=20\nMemoryAccounting=true\nMemoryMax=1200M\nMemorySwapMax=128M\n\
+            TasksMax=64\nLimitFSIZE=256M\nLimitCORE=0\nUMask=0077\nNoNewPrivileges=true\n\
+            PrivateTmp=true\nProtectHome=true\nProtectSystem=strict\nReadWritePaths={STATE}\n\
+            RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX\n{'' if oneshot else\
+            \ 'Restart=on-failure' + chr(10) + 'RestartSec=15'}\n\n[Install]\nWantedBy=multi-user.target\n\
+            '''\n\n\ndef protocol(command_bytes, content=None):\n    with socket.create_connection(('127.0.0.1',13310),\
+            \ timeout=5) as s:\n        s.settimeout(180)\n        s.sendall(command_bytes)\n\
+            \        if content is not None:\n            for start in range(0,len(content),65536):\n\
+            \                part = content[start:start+65536]\n                s.sendall(struct.pack('!I',len(part))+part)\n\
+            \            s.sendall(struct.pack('!I',0))\n        response = bytearray()\n\
+            \        while len(response)<1024:\n            data = s.recv(1024-len(response))\n\
+            \            if not data:\n                break\n            response.extend(data)\n\
+            \            if b'\\0' in data:\n                break\n        require(len(response)<1024,\
+            \ 'scanner_response_limit')\n        return response.split(b'\\0',1)[0].decode('ascii',\
+            \ errors='strict')\n\n\ndef archive(sizes):\n    output = io.BytesIO()\n\
+            \    with zipfile.ZipFile(output,'w',compression=zipfile.ZIP_DEFLATED)\
+            \ as z:\n        block = bytes(1024*1024)\n        for i,size in enumerate(sizes):\n\
+            \            with z.open('padding'+str(i)+'.bin','w') as member:\n   \
+            \             for _ in range(size):\n                    member.write(block)\n\
+            \    return output.getvalue()\n\n\ndef trusted_file(path, mode, maximum):\n\
+            \    fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW)\n    with os.fdopen(fd,\
+            \ 'rb') as f:\n        info = os.fstat(f.fileno())\n        require(stat.S_ISREG(info.st_mode)\
+            \ and info.st_uid == 0 and info.st_gid == 0\n                and stat.S_IMODE(info.st_mode)\
+            \ == mode and info.st_size <= maximum,\n                'configuration_identity')\n\
+            \        content = f.read(maximum + 1)\n        require(len(content) <=\
+            \ maximum, 'configuration_limit')\n        return content\n\n\ndef main():\n\
+            \    result = {'startedAtEpoch': int(time.time()), 'status': 'UNKNOWN',\n\
+            \              'apiRestartRequested': False, 'rpmTransactionRequested':\
+            \ False,\n              'scheduledUpdaterEnabled': False, 'databaseDownloadRequested':\
+            \ False,\n              'priorBootstrapStartedAtEpoch': 1789288473,\n\
+            \              'serviceMemoryLimitBytes': SERVICE_MEMORY, 'memoryReserveBytes':\
+            \ MEMORY_RESERVE,\n              'diskReserveBytes': DISK_RESERVE}\n \
+            \   phase = 'existing_configuration_verification'\n    activation_attempted\
+            \ = False\n    def expired(signum, frame):\n        raise RuntimeError('activation_deadline')\n\
+            \    signal.signal(signal.SIGALRM, expired)\n    signal.alarm(1200)\n\
+            \    try:\n        require(os.geteuid() == 0 and os.uname().machine ==\
+            \ 'x86_64', 'host_identity')\n        for parent in [Path('/opt'), Path('/opt/cyf'),\
+            \ BASE, BASE/'usr', BASE/'usr/bin',\n                       BASE/'usr/sbin',\
+            \ BASE/'usr/lib64', Path('/etc'), CONFIG,\n                       Path('/var'),\
+            \ Path('/var/lib'), UNITDIR]:\n            info = parent.lstat()\n   \
+            \         require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and\
+            \ info.st_gid == 0\n                    and not stat.S_IMODE(info.st_mode)\
+            \ & 0o022, 'untrusted_parent')\n        for path in [BASE/'activate-intent.json',\
+            \ BASE/'configure-result.json']:\n            require(not os.path.lexists(path),\
+            \ 'existing_activation')\n        prior = json.loads(trusted_file(BASE/'configure-intent.json',\
+            \ 0o600, 65536))\n        require(prior.get('startedAtEpoch') == 1789288473\
+            \ and prior.get('status') == 'UNKNOWN'\n                and prior.get('apiRestartRequested')\
+            \ is False, 'prior_intent_mismatch')\n        user = pwd.getpwnam(USER)\n\
+            \        require(user.pw_uid == 986 and user.pw_gid == grp.getgrnam(USER).gr_gid\n\
+            \                and user.pw_dir == str(STATE) and user.pw_shell == '/sbin/nologin',\
+            \ 'existing_user')\n        for parent in [STATE, STATE/'db']:\n     \
+            \       info = parent.lstat()\n            require(stat.S_ISDIR(info.st_mode)\
+            \ and info.st_uid == user.pw_uid\n                    and info.st_gid\
+            \ == user.pw_gid and stat.S_IMODE(info.st_mode) == 0o750,\n          \
+            \          'database_directory_identity')\n        identities = {}\n \
+            \       for row in MANIFEST:\n            path = BASE/row['path']\n  \
+            \          if row['type'] == 'regular':\n                identities[row['path']]\
+            \ = read_hash(path, row)\n            else:\n                info = path.lstat()\n\
+            \                require(stat.S_ISLNK(info.st_mode) and info.st_uid ==\
+            \ 0\n                        and os.readlink(path) == row['target'], 'staged_link_identity')\n\
+            \        expected = {\n            UNITDIR/DAEMON: '8f6d10bebfa2df5832a824001826f42887fdb77c918955656aa3e2b5f271e3b7',\n\
+            \            UNITDIR/UPDATER: '3b86c587e083c21fd040b065862ecb430dbaa8f8311992b93140089d28c4433c',\n\
+            \            CONFIG/'clamd.conf': 'bbd6c053c9029e10a6f43d101907433fe2c62650c7cb3f8f64ac9fcd80f3cea8',\n\
+            \        }\n        for path, digest in expected.items():\n          \
+            \  require(hashlib.sha256(trusted_file(path, 0o644, 16384)).hexdigest()\
+            \ == digest,\n                    'configuration_digest')\n        for\
+            \ unit in [DAEMON, UPDATER]:\n            state = unit_values(unit)\n\
+            \            require(state['ActiveState'] == 'inactive' and state['UnitFileState']\
+            \ == 'disabled'\n                    and state['MainPID'] == '0', 'existing_service_active')\n\
+            \        with socket.socket() as s:\n            s.bind(('127.0.0.1',\
+            \ 13310))\n        result.update(memAvailableBefore=memory(), diskAvailableBefore=disk())\n\
+            \        require(memory() >= SERVICE_MEMORY + MEMORY_RESERVE and disk()\
+            \ >= DISK_RESERVE,\n                'resource_gate')\n        phase =\
+            \ 'existing_database_signatures'\n        require({x.name for x in (STATE/'db').iterdir()}\
+            \ ==\n                {'main.cvd', 'daily.cvd', 'bytecode.cvd', 'freshclam.dat'},\
+            \ 'database_set')\n        result['databases'] = []\n        for name,\
+            \ size in [('main.cvd', 89072577), ('daily.cvd', 23432361), ('bytecode.cvd',\
+            \ 281702)]:\n            path = STATE/'db'/name\n            fd = os.open(str(path),\
+            \ os.O_RDONLY | os.O_NOFOLLOW)\n            with os.fdopen(fd, 'rb') as\
+            \ f:\n                before = os.fstat(f.fileno())\n                require(stat.S_ISREG(before.st_mode)\
+            \ and before.st_uid == user.pw_uid\n                        and before.st_gid\
+            \ == user.pw_gid and stat.S_IMODE(before.st_mode) == 0o600\n         \
+            \               and before.st_size == size, 'database_identity')\n   \
+            \             digest = hashlib.sha256()\n                for data in iter(lambda:\
+            \ f.read(1024*1024), b''):\n                    digest.update(data)\n\
+            \                output = command([str(BASE/'usr/bin/sigtool'), '--info',\
+            \ str(path)], private_libs=True)\n                require('Verification\
+            \ OK.' in output, 'database_signature_invalid')\n                after\
+            \ = path.lstat()\n                require((before.st_dev, before.st_ino,\
+            \ before.st_size, before.st_mtime_ns) ==\n                        (after.st_dev,\
+            \ after.st_ino, after.st_size, after.st_mtime_ns), 'database_changed')\n\
+            \            result['databases'].append({'name': name, 'bytes': size,\n\
+            \                'sha256': digest.hexdigest(), 'signatureVerified': True})\n\
+            \        require(command([str(BASE/'usr/sbin/clamd'), '--config-file='+str(CONFIG/'clamd.conf'),\n\
+            \                         '--version'], private_libs=True).strip().split('/',\
+            \ 1)[0] == 'ClamAV 1.4.6',\n                'configured_version')\n  \
+            \      require(memory() >= SERVICE_MEMORY + MEMORY_RESERVE and disk()\
+            \ >= DISK_RESERVE,\n                'activation_resource_gate')\n    \
+            \    exclusive(BASE/'activate-intent.json', (json.dumps(result, sort_keys=True)+'\\\
+            n').encode())\n        phase = 'activate_scanner'\n        activation_attempted\
+            \ = True\n        command(['/usr/bin/systemctl', 'enable', '--now', DAEMON],\
+            \ timeout=30)\n        deadline = time.monotonic()+120\n        while\
+            \ True:\n            try:\n                if protocol(b'zPING\\0') ==\
+            \ 'PONG':\n                    break\n            except OSError:\n  \
+            \              pass\n            require(time.monotonic() < deadline,\
+            \ 'scanner_readiness_deadline')\n            require(unit_values(DAEMON)['ActiveState']\
+            \ != 'failed', 'scanner_failed')\n            time.sleep(2)\n        state\
+            \ = unit_values(DAEMON)\n        pid = int(state['MainPID'])\n       \
+            \ require(pid > 1 and state['User'] == USER and state['Group'] == USER\n\
+            \                and int(state['MemoryMax']) == SERVICE_MEMORY, 'unit_identity')\n\
+            \        proc = Path('/proc')/str(pid)\n        start = (proc/'stat').read_text().rsplit(')',\
+            \ 1)[1].split()[19]\n        status = dict(x.split(':', 1) for x in (proc/'status').read_text().splitlines()\
+            \ if ':' in x)\n        require([int(x) for x in status['Uid'].split()]\
+            \ == [user.pw_uid]*4\n                and [int(x) for x in status['Gid'].split()]\
+            \ == [user.pw_gid]*4, 'process_identity')\n        exe = os.stat(proc/'exe')\n\
+            \        identity = identities['usr/sbin/clamd']\n        require(os.readlink(proc/'exe')\
+            \ == str(BASE/'usr/sbin/clamd')\n                and (exe.st_dev, exe.st_ino)\
+            \ == (identity['device'], identity['inode']),\n                'running_binary_identity')\n\
+            \        phase = 'real_scan_validation'\n        result['scans'] = []\n\
+            \        for name, content, expected in [\n                ('clean', b'CYF\
+            \ output scanner production probe\\n', 'stream: OK'),\n              \
+            \  ('eicar', EICAR, ' FOUND'),\n                ('member_61_mib', archive([61]),\
+            \ 'Heuristics.Limits.Exceeded'),\n                ('aggregate_110_mib',\
+            \ archive([55, 55]), 'Heuristics.Limits.Exceeded')]:\n            began\
+            \ = time.monotonic()\n            response = protocol(b'zINSTREAM\\0',\
+            \ content)\n            require(response == expected if name == 'clean'\
+            \ else expected in response, 'scan_result_mismatch')\n            result['scans'].append({'case':\
+            \ name, 'inputBytes': len(content),\n                'sha256': hashlib.sha256(content).hexdigest(),\
+            \ 'expectedMatched': True,\n                'elapsedSeconds': round(time.monotonic()-began,\
+            \ 3)})\n        require((proc/'stat').read_text().rsplit(')', 1)[1].split()[19]\
+            \ == start, 'process_changed')\n        state = unit_values(DAEMON)\n\
+            \        result.update(runtimeIdentity={'pid': pid, 'startTicks': start,\
+            \ 'uid': user.pw_uid,\n            'gid': user.pw_gid, 'exeSha256': identity['sha256'],\n\
+            \            'memoryCurrentBytes': int(state['MemoryCurrent'])},\n   \
+            \         memAvailableAfter=memory(), diskAvailableAfter=disk(), version=protocol(b'zVERSION\\\
+            0'))\n        require(int(state['MainPID']) == pid and state['ActiveState']\
+            \ == 'active'\n                and int(state['MemoryCurrent']) <= SERVICE_MEMORY\
+            \ and memory() >= MEMORY_RESERVE\n                and disk() >= DISK_RESERVE,\
+            \ 'runtime_resource_gate')\n        require(unit_values(UPDATER)['ActiveState']\
+            \ == 'inactive', 'updater_active')\n        result['status'] = 'SCANNER_INSTALLED_AND_SCAN_VERIFIED'\n\
+            \        exclusive(BASE/'configure-result.json', (json.dumps(result, sort_keys=True)+'\\\
+            n').encode())\n    except (OSError, ValueError, KeyError, RuntimeError,\
+            \ MemoryError, subprocess.SubprocessError) as exc:\n        signal.alarm(0)\n\
+            \        result.update(status='UNKNOWN', failedPhase=phase, errorType=type(exc).__name__)\n\
+            \        if type(exc) is RuntimeError and re.fullmatch('[a-z_]+', str(exc)):\n\
+            \            result['errorCode'] = str(exc)\n        if activation_attempted:\n\
+            \            try:\n                command(['/usr/bin/systemctl', 'disable',\
+            \ '--now', DAEMON], timeout=45)\n                state = unit_values(DAEMON)\n\
+            \                result['failureScannerStoppedAndDisabled'] = (\n    \
+            \                state['ActiveState'] in ['inactive', 'failed'] and state['UnitFileState']\
+            \ == 'disabled')\n            except (OSError, ValueError, RuntimeError,\
+            \ subprocess.SubprocessError):\n                result['failureScannerStoppedAndDisabled']\
+            \ = False\n    finally:\n        signal.alarm(0)\n    print(json.dumps(result,\
+            \ sort_keys=True))\n    return 0 if result['status'] == 'SCANNER_INSTALLED_AND_SCAN_VERIFIED'\
+            \ else 1\n\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n\
+            \nCYF_SCANNER_ACTIVATE_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
+          deployTimeoutPerHost: 1500
