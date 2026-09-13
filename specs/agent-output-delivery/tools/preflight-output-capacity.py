@@ -10,10 +10,10 @@ import stat
 import time
 
 HELPERS = {
-    '/usr/local/sbin/cyf-api-flow-deploy': 'f262aba1d9031baf6d97abe763581c8cf5a5f6ad9df7a8aba20bb010b1a34f35',
+    '/usr/local/sbin/cyf-api-flow-deploy': '22d078b96c55b8a053cee8756323e18dc06bef6ea609ade81eaaf2d16726f5c9',
     '/usr/local/sbin/cyf-web-flow-deploy': '53070ba8cf924852744e38c232d0b5d5b3fd432e0d05c90b8f9a877af21b9bb6',
 }
-PREFIXES = ('/home/isp/hosts/cyf/', '/var/lib/cyf-api-flow/', '/var/lib/cyf-web-flow/', '/home/isp/apps/', '/etc/systemd/system/')
+PREFIXES = ('/home/isp/hosts/cyf/', '/var/lib/cyf-api-flow/', '/var/lib/cyf-web-flow/', '/home/isp/apps/', '/etc/systemd/system/', '/opt/cyf/', '/opt/cyf-api/', '/opt/cyf-web/', '/usr/local/libexec/')
 
 
 def bounded(path, limit):
@@ -62,7 +62,8 @@ def deployment_disk():
     for path in ['/var/lib/cyf-api-flow/downloads', '/var/lib/cyf-api-flow/releases',
                  '/var/lib/cyf-web-flow/downloads', '/var/lib/cyf-web-flow/releases',
                  '/home/isp/hosts/cyf/api', '/opt/cyf/output-scanner',
-                 '/var/lib/cyf-output-scanner']:
+                 '/var/lib/cyf-output-scanner', '/opt/cyf', '/var/lib/cyf-api-flow',
+                 '/var/lib/cyf-web-flow', '/home/isp/hosts/cyf/web/kit']:
         row = {'path': path}
         if time.monotonic() > deadline:
             report.append({'path': path, 'status': 'scan_budget_exhausted', 'truncated': True})
@@ -97,6 +98,45 @@ def deployment_disk():
             row['status'] = 'missing_or_unreadable'
         report.append(row)
     return report
+
+
+
+def cache_fingerprints():
+    rows = []
+    deadline = time.monotonic() + 120
+    for run in [93, 95, 96, 98, 99]:
+        path = Path('/var/lib/cyf-web-flow/downloads')/str(run)/'package.tgz'
+        row = {'run': run, 'path': str(path), 'complete': False}
+        try:
+            for parent in [path.parent.parent, path.parent]:
+                info = parent.lstat()
+                if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or stat.S_IMODE(info.st_mode)&0o022:
+                    raise ValueError('cache_parent_identity')
+            fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW)
+            with os.fdopen(fd, 'rb') as f:
+                before = os.fstat(f.fileno())
+                if not stat.S_ISREG(before.st_mode) or before.st_uid != 0 or before.st_size > 128*1024**2:
+                    raise ValueError('cache_file_identity')
+                h = hashlib.sha256()
+                while True:
+                    if time.monotonic() > deadline:
+                        raise ValueError('cache_hash_budget')
+                    chunk = f.read(1024*1024)
+                    if not chunk:
+                        break
+                    h.update(chunk)
+                after = path.lstat()
+                if (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns) != (
+                        after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns):
+                    raise ValueError('cache_file_changed')
+            row.update(complete=True,sha256=h.hexdigest(),bytes=before.st_size,
+                       device=before.st_dev,inode=before.st_ino,nlink=before.st_nlink,
+                       mode=oct(stat.S_IMODE(before.st_mode)),uid=before.st_uid,gid=before.st_gid,
+                       mtimeNs=before.st_mtime_ns)
+        except (OSError,ValueError):
+            row['status'] = 'not_fingerprinted'
+        rows.append(row)
+    return rows
 
 
 def main():
@@ -164,6 +204,7 @@ def main():
         except (OSError, ValueError, UnicodeError, IndexError):
             continue
     report['deploymentDisk'] = deployment_disk()
+    report['cacheFingerprints'] = cache_fingerprints()
     report['limits'] = ['Only OS ID/version and selected numeric meminfo fields are exported.',
                         'Helper contents and bounded Java arguments are inspected in memory; raw text is not exported.',
                         'No application config/environment, network connection, subprocess, installation or restart.',
