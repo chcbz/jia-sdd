@@ -1,5 +1,11 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 09:44 CST delta
+
+- Web96 SUCCESS10c4/tree5b1298:2138PASS2pending, artifact3b68e16a, order69519905,410installed/9onlineMATCH. Deployment45s; observed transactiondownload158M->81M, not controlledbenchmark/zeroRPM claim. No separateReviewer.
+- API35 failed403service tests/5failed/5skipped beforedeployment. E04 exacttwo-event matcher correction32db ready; F02four failures assigned independentOwner; no unchangedretry. API33 remainslastverified.
+- E08 actualworkitemboard/eligibleexistingactions now assigned in independentWebworktree; no waitingforAPI. CurrentOwners onlyTASKS.yaml. FullE08 and authenticated/paid/provider/clientACK/ES/external acceptance not closed.
+
 ## 2026-09-13 09:27 CST delta
 
 - E04 authoritative completion unlock17ebb and F02 scoped immutable storagee343 collected and merged, preserving independently pushed login/form/CORS80383. New APIdevelop72f03/tree5c8ff4da is in Run35 (78selectors); prior foreignRun34 built80383 successfully but deployment failed, not current production. API33 remains lastverified until35hostproof.
