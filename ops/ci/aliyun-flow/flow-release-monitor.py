@@ -59,11 +59,14 @@ def _target_key(target):
 def _validate_config(value):
     if not isinstance(value, dict):
         raise ConfigurationError('config_object_required')
-    allowed = set(('targets', 'state', 'org'))
+    allowed = set(('targets', 'state', 'org', 'mail_enabled'))
     if set(value) - allowed:
         raise ConfigurationError('unknown_config_field')
     if value.get('org', FLOW_ORG) != FLOW_ORG:
         raise ConfigurationError('fixed_org_required')
+    mail_enabled = value.get('mail_enabled', True)
+    if not isinstance(mail_enabled, bool):
+        raise ConfigurationError('mail_enabled_invalid')
     state = value.get('state')
     if not isinstance(state, str) or not state or '\x00' in state:
         raise ConfigurationError('state_path_required')
@@ -94,7 +97,7 @@ def _validate_config(value):
             raise ConfigurationError('duplicate_target')
         seen.add(key)
         normalized.append(target)
-    return state, normalized
+    return state, normalized, mail_enabled
 
 
 def _read_state(path):
@@ -210,8 +213,10 @@ def _send_email(subject, body):
         return False
 
 
-def _notice(target, state_target, event, subject, body):
+def _notice(target, state_target, event, subject, body, mail_enabled=True):
     """Attempt a mail at most three times; a success is only helper acceptance."""
+    if not mail_enabled:
+        return False
     notices = state_target.setdefault('notices', {})
     record = notices.setdefault(event, {'attempts': 0, 'accepted': False})
     if record.get('accepted'):
@@ -251,7 +256,7 @@ def _terminal_notice(target, status, commits):
     return ('terminal_' + status.lower(), title, base + '需主控核验。')
 
 
-def _observe_target(target, state_target):
+def _observe_target(target, state_target, mail_enabled=True):
     """Return whether this observation requires a main-controller exit status."""
     try:
         status, commits = _flow_status(target)
@@ -269,7 +274,8 @@ def _observe_target(target, state_target):
                 target, state_target, 'observation_error_' + error_class,
                 'Flow %s %s 观察异常' % (target['pipeline'], target['run']),
                 '任务 %s；流水线 %s；运行 %s；观察阶段 %s 连续%d次异常。需主控核验。' %
-                (target['task_id'], target['pipeline'], target['run'], error_class, streak))
+                (target['task_id'], target['pipeline'], target['run'], error_class, streak),
+                mail_enabled=mail_enabled)
             if mail_failed:
                 return True
         return error_class in ('flow_identity_mismatch', 'flow_sources_invalid',
@@ -291,9 +297,10 @@ def _observe_target(target, state_target):
                 record = state_target.get('notices', {}).get(event, {})
                 if record.get('accepted'):
                     return task_failed
-                if record.get('attempts', 0) <= 0:
+                if record.get('attempts', 0) >= 3:
                     return task_failed
-            mail_failed = _notice(target, state_target, event, subject, body)
+            mail_failed = _notice(target, state_target, event, subject, body,
+                                  mail_enabled=mail_enabled)
             return task_failed or mail_failed
     if previous == observation:
         return False
@@ -301,7 +308,7 @@ def _observe_target(target, state_target):
 
 
 def check(config):
-    state_path, targets = _validate_config(config)
+    state_path, targets, mail_enabled = _validate_config(config)
     lock_path = state_path + '.lock'
     parent = os.path.dirname(os.path.abspath(lock_path)) or '.'
     if not os.path.isdir(parent):
@@ -318,10 +325,17 @@ def check(config):
                 return EXIT_OK
             return EXIT_MAIN_CONTROLLER_REQUIRED
         state = _read_state(state_path)
+        # Keep one explicit pause marker while observations continue.  The
+        # marker is configuration state only; notices and receipts stay
+        # untouched until an operator re-enables mail.
+        if mail_enabled:
+            state.pop('mail_paused', None)
+        else:
+            state['mail_paused'] = {'reason': 'mail_disabled'}
         requires_controller = False
         for target in targets:
             target_state = state['targets'].setdefault(_target_key(target), {})
-            if _observe_target(target, target_state):
+            if _observe_target(target, target_state, mail_enabled=mail_enabled):
                 requires_controller = True
         _atomic_write(state_path, state)
         return EXIT_MAIN_CONTROLLER_REQUIRED if requires_controller else EXIT_OK
