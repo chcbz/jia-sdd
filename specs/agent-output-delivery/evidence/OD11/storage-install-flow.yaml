@@ -94,23 +94,23 @@ stages:
             \ False}\n    phase = 'preflight'\n    activation_attempted = False\n    signal.signal(signal.SIGALRM,\
             \ expired)\n    signal.alarm(420)\n    try:\n        if os.geteuid() != 0 or os.uname().machine != 'x86_64':\n\
             \            raise RuntimeError('host_identity_gate')\n        status = dict(line.split(':', 1) for\
-            \ line in Path('/proc/self/status').read_text().splitlines() if ':' in line)\n        result['installerInitialMemory']\
-            \ = {key+'Bytes': int(status[key].split()[0])*1024\n            for key in ['VmSize', 'VmRSS', 'VmData']}\n\
-            \        result['scannerPlanCleanup'] = scanner_plan_cleanup_state()\n        for p in [BASE, CONFIG,\
-            \ STATE, UNIT]:\n            if os.path.lexists(p):\n                raise RuntimeError('existing_task_path')\n\
-            \        try:\n            pwd.getpwnam(USER)\n        except KeyError:\n            pass\n        else:\n\
-            \            raise RuntimeError('existing_task_user')\n        try:\n            grp.getgrnam(USER)\n\
-            \        except KeyError:\n            pass\n        else:\n            raise RuntimeError('existing_task_group')\n\
-            \        for ancestor in [Path('/opt'), Path('/opt/cyf'), Path('/etc'), Path('/var'), Path('/var/lib'),\
-            \ UNIT.parent]:\n            info = ancestor.lstat()\n            if not stat.S_ISDIR(info.st_mode)\
-            \ or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o022:\n                raise RuntimeError('untrusted_parent')\n\
-            \        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n        result['memAvailableBefore']\
-            \ = available_memory()\n        result.update(diskReserveBytes=DISK_RESERVE, memoryReserveBytes=MEMORY_RESERVE,\n\
-            \                      knownInstallPeakBytes=KNOWN_INSTALL_PEAK)\n        if (result['diskAvailableBefore']\
-            \ < DISK_RESERVE+KNOWN_INSTALL_PEAK\n                or result['memAvailableBefore'] < max(1536*1024**2,\
-            \ MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n        for port in\
-            \ [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1', port))\n\
-            \        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
+            \ line in (Path('/proc')/str(os.getpid())/'status').read_text().splitlines() if ':' in line)\n     \
+            \   result['installerInitialMemory'] = {key+'Bytes': int(status[key].split()[0])*1024\n            for\
+            \ key in ['VmSize', 'VmRSS', 'VmData']}\n        result['scannerPlanCleanup'] = scanner_plan_cleanup_state()\n\
+            \        for p in [BASE, CONFIG, STATE, UNIT]:\n            if os.path.lexists(p):\n               \
+            \ raise RuntimeError('existing_task_path')\n        try:\n            pwd.getpwnam(USER)\n        except\
+            \ KeyError:\n            pass\n        else:\n            raise RuntimeError('existing_task_user')\n\
+            \        try:\n            grp.getgrnam(USER)\n        except KeyError:\n            pass\n        else:\n\
+            \            raise RuntimeError('existing_task_group')\n        for ancestor in [Path('/opt'), Path('/opt/cyf'),\
+            \ Path('/etc'), Path('/var'), Path('/var/lib'), UNIT.parent]:\n            info = ancestor.lstat()\n\
+            \            if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o022:\n\
+            \                raise RuntimeError('untrusted_parent')\n        result['diskAvailableBefore'] = shutil.disk_usage('/opt').free\n\
+            \        result['memAvailableBefore'] = available_memory()\n        result.update(diskReserveBytes=DISK_RESERVE,\
+            \ memoryReserveBytes=MEMORY_RESERVE,\n                      knownInstallPeakBytes=KNOWN_INSTALL_PEAK)\n\
+            \        if (result['diskAvailableBefore'] < DISK_RESERVE+KNOWN_INSTALL_PEAK\n                or result['memAvailableBefore']\
+            \ < max(1536*1024**2, MEMORY_RESERVE+384*1024**2)):\n            raise RuntimeError('resource_gate')\n\
+            \        for port in [19000, 19001]:\n            with socket.socket() as s:\n                s.bind(('127.0.0.1',\
+            \ port))\n        phase = 'download_pinned_layer'\n        with tempfile.TemporaryDirectory(prefix='cyf-output-storage-install-',\
             \ dir='/opt/cyf') as temp:\n            mirror = 'https://m.daocloud.io'\n            url = mirror +\
             \ '/v2/quay.io/minio/minio/blobs/sha256:' + LAYER\n            # Anonymous public mirror token; no user/Flow\
             \ credential or inherited proxy.\n            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))\n\

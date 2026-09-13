@@ -209,7 +209,7 @@ def main():
     try:
         if os.geteuid() != 0 or os.uname().machine != 'x86_64':
             raise RuntimeError('host_identity_gate')
-        status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines() if ':' in line)
+        status = dict(line.split(':', 1) for line in (Path('/proc')/str(os.getpid())/'status').read_text().splitlines() if ':' in line)
         result['installerInitialMemory'] = {key+'Bytes': int(status[key].split()[0])*1024
             for key in ['VmSize', 'VmRSS', 'VmData']}
         result['scannerPlanCleanup'] = scanner_plan_cleanup_state()
