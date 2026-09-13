@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Fixed read-only capacity and deployment-layout probe; no subprocess or raw configs."""
+"""Fixed read-only capacity and deployment-layout probe; no subprocess or raw configs; bounded metadata sizes."""
 import hashlib
 import json
 import os
 from pathlib import Path
 import platform
 import re
+import stat
 import time
 
 HELPERS = {
@@ -29,6 +30,70 @@ def safe_path(value):
             and not any(part in ('.', '..') for part in value.split('/'))
             and value.startswith(PREFIXES)
             and not re.search(r'password|secret|token|credential|\.pass', value, re.I))
+
+
+
+def allocated_tree(path, deadline):
+    total = 0
+    count = 0
+    stack = [Path(path)]
+    device = os.lstat(path).st_dev
+    while stack:
+        if time.monotonic() > deadline or count >= 50000:
+            return {'allocatedBytes': total, 'entries': count, 'complete': False}
+        item = stack.pop()
+        info = item.lstat()
+        count += 1
+        if info.st_dev != device:
+            continue
+        total += info.st_blocks * 512
+        if stat.S_ISDIR(info.st_mode):
+            with os.scandir(item) as entries:
+                for entry in entries:
+                    if len(stack) + count >= 50000:
+                        return {'allocatedBytes': total, 'entries': count, 'complete': False}
+                    stack.append(Path(entry.path))
+    return {'allocatedBytes': total, 'entries': count, 'complete': True}
+
+
+def deployment_disk():
+    report = []
+    deadline = time.monotonic() + 30
+    for path in ['/var/lib/cyf-api-flow/downloads', '/var/lib/cyf-api-flow/releases',
+                 '/var/lib/cyf-web-flow/downloads', '/var/lib/cyf-web-flow/releases',
+                 '/home/isp/hosts/cyf/api', '/opt/cyf/output-scanner',
+                 '/var/lib/cyf-output-scanner']:
+        row = {'path': path}
+        try:
+            info = os.lstat(path)
+            if not stat.S_ISDIR(info.st_mode):
+                row['directory'] = False
+                report.append(row)
+                continue
+            disk = os.statvfs(path)
+            row.update(device=info.st_dev, totalBytes=disk.f_blocks*disk.f_frsize,
+                       availableBytes=disk.f_bavail*disk.f_frsize)
+            row['children'] = []
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    if len(row['children']) >= 80 or time.monotonic() > deadline:
+                        row['truncated'] = True
+                        break
+                    if not re.fullmatch('[A-Za-z0-9_.-]{1,100}', entry.name) or re.search(
+                            'password|secret|token|credential|config|properties|yaml|yml', entry.name, re.I):
+                        continue
+                    i = entry.stat(follow_symlinks=False)
+                    item = {'name': entry.name, 'uid': i.st_uid, 'mode': oct(stat.S_IMODE(i.st_mode)),
+                            'mtimeEpoch': int(i.st_mtime), 'symlink': stat.S_ISLNK(i.st_mode)}
+                    if stat.S_ISDIR(i.st_mode):
+                        item.update(allocated_tree(entry.path, deadline))
+                    elif stat.S_ISREG(i.st_mode):
+                        item.update(allocatedBytes=i.st_blocks*512, bytes=i.st_size)
+                    row['children'].append(item)
+        except (OSError, ValueError):
+            row['status'] = 'missing_or_unreadable'
+        report.append(row)
+    return report
 
 
 def main():
@@ -95,6 +160,7 @@ def main():
                                            'jarPath': candidate, 'sizeBytes': info.st_size})
         except (OSError, ValueError, UnicodeError, IndexError):
             continue
+    report['deploymentDisk'] = deployment_disk()
     report['limits'] = ['Only OS ID/version and selected numeric meminfo fields are exported.',
                         'Helper contents and bounded Java arguments are inspected in memory; raw text is not exported.',
                         'No application config/environment, network connection, subprocess, installation or restart.',

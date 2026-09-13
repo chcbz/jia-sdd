@@ -1,0 +1,103 @@
+name: cyf-output-capacity-diagnosis
+sources: {}
+stages:
+  host_preflight:
+    name: Read deployment disk allocation and live capacity
+    jobs:
+      inspect_host:
+        name: Read bounded metadata without deleting deployment files
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_CAPACITY_DIAG_PY'\n#!/usr/bin/env python3\n\"\
+            \"\"Fixed read-only capacity and deployment-layout probe; no subprocess or raw configs; bounded\
+            \ metadata sizes.\"\"\"\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\n\
+            import platform\nimport re\nimport stat\nimport time\n\nHELPERS = {\n    '/usr/local/sbin/cyf-api-flow-deploy':\
+            \ 'f262aba1d9031baf6d97abe763581c8cf5a5f6ad9df7a8aba20bb010b1a34f35',\n    '/usr/local/sbin/cyf-web-flow-deploy':\
+            \ '53070ba8cf924852744e38c232d0b5d5b3fd432e0d05c90b8f9a877af21b9bb6',\n}\nPREFIXES = ('/home/isp/hosts/cyf/',\
+            \ '/var/lib/cyf-api-flow/', '/var/lib/cyf-web-flow/', '/home/isp/apps/', '/etc/systemd/system/')\n\
+            \n\ndef bounded(path, limit):\n    with open(path, 'rb') as f:\n        data = f.read(limit\
+            \ + 1)\n    if len(data) > limit:\n        raise ValueError('oversize')\n    return data\n\
+            \n\ndef safe_path(value):\n    return (bool(re.fullmatch(r'/[A-Za-z0-9_./-]+', value))\n \
+            \           and os.path.normpath(value) == value\n            and not any(part in ('.', '..')\
+            \ for part in value.split('/'))\n            and value.startswith(PREFIXES)\n            and\
+            \ not re.search(r'password|secret|token|credential|\\.pass', value, re.I))\n\n\n\ndef allocated_tree(path,\
+            \ deadline):\n    total = 0\n    count = 0\n    stack = [Path(path)]\n    device = os.lstat(path).st_dev\n\
+            \    while stack:\n        if time.monotonic() > deadline or count >= 50000:\n           \
+            \ return {'allocatedBytes': total, 'entries': count, 'complete': False}\n        item = stack.pop()\n\
+            \        info = item.lstat()\n        count += 1\n        if info.st_dev != device:\n    \
+            \        continue\n        total += info.st_blocks * 512\n        if stat.S_ISDIR(info.st_mode):\n\
+            \            with os.scandir(item) as entries:\n                for entry in entries:\n  \
+            \                  if len(stack) + count >= 50000:\n                        return {'allocatedBytes':\
+            \ total, 'entries': count, 'complete': False}\n                    stack.append(Path(entry.path))\n\
+            \    return {'allocatedBytes': total, 'entries': count, 'complete': True}\n\n\ndef deployment_disk():\n\
+            \    report = []\n    deadline = time.monotonic() + 30\n    for path in ['/var/lib/cyf-api-flow/downloads',\
+            \ '/var/lib/cyf-api-flow/releases',\n                 '/var/lib/cyf-web-flow/downloads', '/var/lib/cyf-web-flow/releases',\n\
+            \                 '/home/isp/hosts/cyf/api', '/opt/cyf/output-scanner',\n                \
+            \ '/var/lib/cyf-output-scanner']:\n        row = {'path': path}\n        try:\n          \
+            \  info = os.lstat(path)\n            if not stat.S_ISDIR(info.st_mode):\n               \
+            \ row['directory'] = False\n                report.append(row)\n                continue\n\
+            \            disk = os.statvfs(path)\n            row.update(device=info.st_dev, totalBytes=disk.f_blocks*disk.f_frsize,\n\
+            \                       availableBytes=disk.f_bavail*disk.f_frsize)\n            row['children']\
+            \ = []\n            with os.scandir(path) as entries:\n                for entry in entries:\n\
+            \                    if len(row['children']) >= 80 or time.monotonic() > deadline:\n     \
+            \                   row['truncated'] = True\n                        break\n             \
+            \       if not re.fullmatch('[A-Za-z0-9_.-]{1,100}', entry.name) or re.search(\n         \
+            \                   'password|secret|token|credential|config|properties|yaml|yml', entry.name,\
+            \ re.I):\n                        continue\n                    i = entry.stat(follow_symlinks=False)\n\
+            \                    item = {'name': entry.name, 'uid': i.st_uid, 'mode': oct(stat.S_IMODE(i.st_mode)),\n\
+            \                            'mtimeEpoch': int(i.st_mtime), 'symlink': stat.S_ISLNK(i.st_mode)}\n\
+            \                    if stat.S_ISDIR(i.st_mode):\n                        item.update(allocated_tree(entry.path,\
+            \ deadline))\n                    elif stat.S_ISREG(i.st_mode):\n                        item.update(allocatedBytes=i.st_blocks*512,\
+            \ bytes=i.st_size)\n                    row['children'].append(item)\n        except (OSError,\
+            \ ValueError):\n            row['status'] = 'missing_or_unreadable'\n        report.append(row)\n\
+            \    return report\n\n\ndef main():\n    report = {'observedAtEpoch': int(time.time()), 'architecture':\
+            \ platform.machine(), 'readOnly': True}\n    try:\n        fields = {}\n        for line in\
+            \ bounded('/etc/os-release', 16384).decode().splitlines():\n            key, sep, value =\
+            \ line.partition('=')\n            value = value.strip('\"')\n            if sep and key in\
+            \ ('ID', 'VERSION_ID', 'ID_LIKE') and re.fullmatch(r'[A-Za-z0-9_. -]{1,100}', value):\n  \
+            \              fields[key] = value\n        report['os'] = fields\n    except (OSError, ValueError,\
+            \ UnicodeError):\n        report['os'] = {'status': 'unreadable'}\n    try:\n        fields\
+            \ = {}\n        for line in bounded('/proc/meminfo', 16384).decode().splitlines():\n     \
+            \       match = re.fullmatch(r'(MemTotal|MemAvailable|SwapTotal|SwapFree):\\s+(\\d+) kB',\
+            \ line)\n            if match:\n                fields[match[1] + 'Bytes'] = int(match[2])\
+            \ * 1024\n        report['memory'] = fields\n    except (OSError, ValueError, UnicodeError):\n\
+            \        report['memory'] = {'status': 'unreadable'}\n    report['helpers'] = []\n    for\
+            \ name, expected in HELPERS.items():\n        row = {'path': name}\n        try:\n       \
+            \     data = bounded(name, 1024 * 1024)\n            digest = hashlib.sha256(data).hexdigest()\n\
+            \            row.update(sha256=digest, expectedHashMatches=digest == expected)\n         \
+            \   if digest != expected:\n                row['status'] = 'changed_since_prior_probe'\n\
+            \            else:\n                source = data.decode('utf-8')\n                paths =\
+            \ sorted(set(p for p in re.findall(r'/[A-Za-z0-9_./-]+', source) if safe_path(p)))\n     \
+            \           row['literalPaths'] = paths[:60]\n                row['pathsTruncated'] = len(paths)\
+            \ > 60\n                row['uses'] = {word: bool(re.search(r'\\b' + re.escape(word) + r'\\\
+            b', source)) for word in\n                               ('systemctl', 'nohup', 'java', 'spring.config',\
+            \ 'rollback', 'backup')}\n        except (OSError, ValueError, UnicodeError):\n          \
+            \  row['status'] = 'unreadable'\n        report['helpers'].append(row)\n    report['javaJars']\
+            \ = []\n    for pid in Path('/proc').iterdir():\n        if not pid.name.isdecimal():\n  \
+            \          continue\n        try:\n            if bounded(pid / 'comm', 17).rstrip(b'\\n')\
+            \ != b'java':\n                continue\n            args = [part.decode('utf-8') for part\
+            \ in bounded(pid / 'cmdline', 65536).split(b'\\0') if part]\n            if not args or Path(args[0]).name\
+            \ != 'java':\n                continue\n            for index, arg in enumerate(args):\n \
+            \               if index == 0 or args[index-1] != '-jar' or not re.fullmatch(r'[A-Za-z0-9_./-]+\\\
+            .jar', arg):\n                    continue\n                if any(part in ('.', '..') for\
+            \ part in arg.split('/')):\n                    continue\n                candidate = arg\
+            \ if arg.startswith('/') else str(Path(os.readlink(pid / 'cwd')) / arg)\n                if\
+            \ not safe_path(candidate):\n                    continue\n                info = os.lstat(candidate)\n\
+            \                ticks = bounded(pid / 'stat', 16384).decode().split(') ', 1)[1].split()[19]\n\
+            \                report['javaJars'].append({'pid': int(pid.name), 'startTicks': ticks,\n \
+            \                                          'jarPath': candidate, 'sizeBytes': info.st_size})\n\
+            \        except (OSError, ValueError, UnicodeError, IndexError):\n            continue\n \
+            \   report['deploymentDisk'] = deployment_disk()\n    report['limits'] = ['Only OS ID/version\
+            \ and selected numeric meminfo fields are exported.',\n                        'Helper contents\
+            \ and bounded Java arguments are inspected in memory; raw text is not exported.',\n      \
+            \                  'No application config/environment, network connection, subprocess, installation\
+            \ or restart.',\n                        'No service readiness, backup, storage/scanner or\
+            \ release gate is closed.']\n    print(json.dumps(report, sort_keys=True))\n\n\nif __name__\
+            \ == '__main__':\n    main()\nCYF_CAPACITY_DIAG_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
+          deployTimeoutPerHost: 600
