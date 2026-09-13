@@ -1,0 +1,36 @@
+# Concurrent integration preflight — 2026-09-13
+
+Read-only forecast at approximately 03:21 UTC. Root fetched the exact public remote commits below using `git fetch --no-tags --no-write-fetch-head origin SHA`; no branch, index or working file changed. `git merge-tree --write-tree --name-only --no-messages` created only unreferenced analysis trees. These are not reviewed integration candidates.
+
+| Repository | Output committed HEAD | Remote develop observed/fetched | Merge base | Textual conflicts |
+| --- | --- | --- | --- | --- |
+| API | `4c871209c1ea9aa49ec8b669b0d4936a0972b09b` (rejected; repairs uncommitted) | `e54f579e62d7009ab0177aa1074e095eac4ea16e` | `a9d3e7417447a9f5f59a12523e582a8e8f1818f6` | 7 |
+| Web | `212bfe4f9441cc82262d98e7b0723d6c0800e3d9` | `edace747484dc01e39664485ec81b6ae2c1fd7b7` | `b31565f8741fdc6f986763dd86442a2c2a4345b0` | 3 |
+
+API forecast tree `786ac052ef3d26f8bf6c08b4af77b9ae0df51e5d`; conflicting paths relative to API:
+
+```text
+agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentRuntimeMapper.java
+agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java
+agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskCollaborationServiceImpl.java
+base/jia-base-service/src/main/java/cn/jia/base/filter/UriAccessLogFilter.java
+base/jia-base-service/src/test/java/cn/jia/base/filter/UriAccessLogFilterTest.java
+common/jia-common-core/src/main/java/cn/jia/core/common/EsRequestWrapper.java
+user/jia-user-service/src/main/java/cn/jia/user/config/DefaultSecurityConfig.java
+```
+
+Web forecast tree `f8a56a91f0cb60f897d0deb4c729fd46489ffd15`; conflicting paths relative to Web:
+
+```text
+src/components/juyiting/BountyPanel.vue
+src/composables/useHttp.js
+tests/juyiting-component-behavior.test.js
+```
+
+## Semantic blockers that textual conflict resolution will not detect
+
+1. API remote adds `agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskArtifactController.java`. Its `POST /agent/tasks/{taskId}/artifacts` has the same JSON consumes/produces mapping as `OutputDeliveryController.publish`. With output enabled, registering both unchanged is ambiguous. The remote adapter authenticates a user JWT and explicit actor header and accepts managed content bytes; OD authenticates a run ticket, requires an idempotency key and publishes already verified artifacts. Select and review a compatible routing contract; neither credential scheme may become an alternative way to bypass the other's authority. Preserve the existing published Web `useHallArtifactTransfer.js` client behavior or migrate it coherently. Merely changing a class name or merging without text conflicts does not fix mapping ambiguity.
+2. Remote adds `AgentWorkItemPlanServiceImpl`, `AgentWorkItemDependencyServiceImpl` and related controllers/DAOs, plus team recommendations and changes to collaboration state. Plan confirmation can write work-item rows. Include these new entrypoints in policy1 admission/mutation guards and exact single required work-item invariants before claiming OD07's guards cover the integrated application. This is compatibility with existing parallel features; it does not enable deferred P3 or funded R2.
+3. Remote Web adds `ArtifactTransferPanel.vue`, task plan/board/team controls and changes shared `useHttp.js`. Retain their identity/transport semantics while preserving OD binary download, source reset, offline retrieval and the new review/rework flow. Full authenticated application startup and actual Hall navigation remain necessary after merging.
+
+The sole product writer has received these findings. Freeze/review current OD07 repairs first; integrate the selected API baseline before downstream client/submission implementation to avoid finishing against a contract that cannot be released. Web integration precedes OD10 UI implementation. Recheck remote ancestry again immediately before actual push.
