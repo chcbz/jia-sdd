@@ -1,0 +1,7 @@
+# Read-only scanner failure diagnosis
+
+Pending independent review. Sole new identity cyf-output-scanner-diagnosis-20260913-0c35f95f. Source ../../tools/diagnose-output-scanner.py SHA256 0c35f95f228d93f4cbfa8c233b9eb996cd3071b781fe1307cfd823d133585292; flow scanner-diagnosis-flow.yaml SHA256 645cfc1c48eebd203dda54ab47dee218fa6dfdb6b54741cb8c3e81eae3e4f2f1.
+
+After terminal scanner-stage5264787/run1, read only its root-owned bounded command-output and exact pinned freshclam/clamd binaries; invoke trusted host loader --list on those two files with the private library path and256MiB address/core0 limits. Never execute the scanner daemon/updater entrypoint or modify files, package DB, service, signatures, API, or settings. Export only known library/missing symbol/version names, boolean error classes and hashes, not raw text. Read fixed API helper<=128KiB in memory; export only source hash and literal numeric DISK/MEM/SPACE constants, never helper content or secrets. Export selected numeric host memory/swap/disk for next resource admission. Alarm90s; child20s each. Unexpected missing/oversized/untrusted data fails closed.
+
+Preserve established guarded zero-source/single root VMDeploy controller, exact returned YAML/settings/hash, exclusive intents, zero prior runs, one empty start, fixed org5fb7d76ee6f9d07f148529c7/group28833/machineGroupyjctjhskhk1ti9t4/ECSi-wz9j3ip2unzhwij0bs30/cn-shenzhen. Schedule after any active storage mutation finishes. Unknown writes reconcile read-only. No DNF/retry/reinstallation. Success is diagnostic evidence only.

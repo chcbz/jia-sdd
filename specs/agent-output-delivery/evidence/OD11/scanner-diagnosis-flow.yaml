@@ -1,0 +1,63 @@
+name: cyf-output-scanner-diagnosis
+sources: {}
+stages:
+  host_preflight:
+    name: Read-only scanner loader and capacity diagnosis
+    jobs:
+      inspect_host:
+        name: Read fixed stage diagnostic; no service activation
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          run: "set -eu\n/usr/bin/python3 -I -S - <<'CYF_OUTPUT_SCANNER_DIAG_PY'\n#!/usr/bin/env python3\n\"\"\"\
+            Read-only fixed scanner-stage failure and resource diagnosis; never activate services.\"\"\"\nimport\
+            \ hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport re\nimport resource\nimport signal\n\
+            import stat\nimport subprocess\nimport time\n\nBASE = Path('/opt/cyf/output-scanner')\nENV = {'PATH':\
+            \ '/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root', 'LC_ALL': 'C', 'LANG': 'C',\n       'LD_LIBRARY_PATH':\
+            \ str(BASE/'usr/lib64')}\n\n\ndef read(path, limit):\n    fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW)\n\
+            \    with os.fdopen(fd, 'rb') as stream:\n        info = os.fstat(stream.fileno())\n        if not stat.S_ISREG(info.st_mode)\
+            \ or info.st_uid != 0 or stat.S_IMODE(info.st_mode)&0o022:\n            raise RuntimeError('untrusted_file')\n\
+            \        data = stream.read(limit+1)\n    if len(data)>limit:\n        raise RuntimeError('file_limit')\n\
+            \    return data\n\n\ndef limit_child():\n    resource.setrlimit(resource.RLIMIT_AS, (256*1024**2, 256*1024**2))\n\
+            \    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))\n\n\ndef diagnostics(data):\n    text = data.decode('utf-8',\
+            \ errors='replace')\n    return {'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data),\n \
+            \           'libraryNames': sorted(set(re.findall(r'\\blib[A-Za-z0-9_+.-]+\\.so(?:\\.[0-9]+)*', text))),\n\
+            \            'missingLibraries': sorted(set(re.findall(r'(lib[A-Za-z0-9_+.-]+\\.so(?:\\.[0-9]+)*)\\\
+            s*(?:=>\\s*not found|:\\s*cannot open shared object file)', text))),\n            'undefinedSymbols':\
+            \ sorted(set(re.findall(r'undefined symbol:\\s*([A-Za-z0-9_]+)', text))),\n            'versionMissing':\
+            \ sorted(set(re.findall(r'version [`\\x27]([A-Za-z0-9_.]+)[\\x27]\\s+not found', text))),\n        \
+            \    'allocationFailure': bool(re.search(r'Cannot allocate memory|memory allocation failed', text, re.I)),\n\
+            \            'configurationFailure': bool(re.search(r'config.*(?:error|fail)|(?:error|fail).*config',\
+            \ text, re.I))}\n\n\ndef main():\n    result = {'observedAtEpoch': int(time.time()), 'readOnly': True,\
+            \ 'status': 'UNKNOWN'}\n    def expired(signum, frame):\n        raise RuntimeError('diagnostic_deadline')\n\
+            \    signal.signal(signal.SIGALRM, expired)\n    signal.alarm(90)\n    try:\n        if os.geteuid()!=0\
+            \ or os.uname().machine!='x86_64':\n            raise RuntimeError('host_identity')\n        result['lastStageCommand']\
+            \ = diagnostics(read(BASE/'command-output', 65536))\n        loader = Path('/lib64/ld-linux-x86-64.so.2')\n\
+            \        info = loader.stat()\n        if info.st_uid!=0 or not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode)&0o022:\n\
+            \            raise RuntimeError('untrusted_loader')\n        result['loaders'] = []\n        for relative\
+            \ in ['usr/bin/freshclam', 'usr/sbin/clamd']:\n            data = read(BASE/relative, 16*1024**2)\n\
+            \            expected = {'usr/bin/freshclam': '91029892d3ce03a17cf2c56bf273fe12d3c800cf6bc2e6bf75d58d9de758dbab',\n\
+            \                        'usr/sbin/clamd': '4af6f9bfab10e9b18f051e7ba8e299766a6eeae9bead3c482678b55afdae2b8a'}\n\
+            \            if hashlib.sha256(data).hexdigest()!=expected[relative]:\n                raise RuntimeError('staged_binary_hash')\n\
+            \            p = subprocess.run([str(loader), '--list', str(BASE/relative)], env=ENV,\n            \
+            \    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,\n                timeout=20,\
+            \ check=False, preexec_fn=limit_child)\n            if len(p.stdout)>65536:\n                raise RuntimeError('loader_output_limit')\n\
+            \            result['loaders'].append(dict(path=relative, exitCode=p.returncode, **diagnostics(p.stdout)))\n\
+            \        mem = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())\n\
+            \        result['memory'] = {k+'Bytes': int(mem[k].split()[0])*1024 for k in ['MemTotal','MemAvailable','SwapTotal','SwapFree']}\n\
+            \        v = os.statvfs('/opt')\n        result['diskAvailableBytes'] = v.f_bavail*v.f_frsize\n    \
+            \    helper = read(Path('/usr/local/sbin/cyf-api-kit'), 128*1024)\n        result['apiHelperSha256']\
+            \ = hashlib.sha256(helper).hexdigest()\n        result['literalResourceConstants'] = [{'name': m[0],\
+            \ 'value': int(m[2])} for m in re.findall(\n            rb'(?m)^([A-Z_]*(?:DISK|MEM|SPACE)[A-Z_]*)=([\\\
+            x22\\x27]?)([0-9]+)\\2(?:\\s*#.*)?$',helper)]\n        for row in result['literalResourceConstants']:\n\
+            \            row['name'] = row['name'].decode('ascii')\n        result['status'] = 'READ_ONLY_DIAGNOSED'\n\
+            \    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:\n        result['errorType']\
+            \ = type(exc).__name__\n    finally:\n        signal.alarm(0)\n    print(json.dumps(result, sort_keys=True))\n\
+            \    return 0 if result['status']=='READ_ONLY_DIAGNOSED' else 1\n\n\nif __name__ == '__main__':\n  \
+            \  raise SystemExit(main())\nCYF_OUTPUT_SCANNER_DIAG_PY\n"
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
+          deployTimeoutPerHost: 600
