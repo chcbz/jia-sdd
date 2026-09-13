@@ -1,5 +1,14 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 10:56 CST delta
+
+- **API37 已发布并核验**：develop `e54f579e`，79 个配置测试类对应云端构建成功，部署单 69520789 成功；同次制品、线上 JAR/记录一致，PID 3284987 监听 10018，健康 UP。F02 HTTP 上传/下载代码已部署，但文件存储仍默认关闭，真实上传下载验收未完成。
+- **Web98 已发布并核验**：develop `441c39fe`，2143 PASS / 2 pending / 0 failures；部署单 69520737，410 个安装文件和 9 个线上响应摘要一致。E08 只读看板代码已部署，任务工作区默认关闭；不冒充已启用或完整协作功能交付。Run97 失败与修复历史保留。
+- **并行开发**：F02 Web 上传/下载交互继续实施；新增 F06 accepted/superseded 成果状态独立 API Writer。Owner 自检、主控合入 develop 后云效验证发布，不设独立 Reviewer 或全局 Writer 队列。精确 Owner 只登记在 TASKS.yaml。
+- **耗时核验**：两次 API 冷启动约 458/494 秒，GC 暂停约 29/26 秒，不能把全部启动时间归因 GC。只读诊断未改生产；失效的 Mini helper 已释放，不做重复调用。
+- 原有身份、明确付费授权、真实 Client/Provider ACK、ES/native 依赖仍有效；这些不阻塞无依赖代码并行开发，也不算已验收。
+
+
 ## 2026-09-13 10:25 CST delta
 
 - F02authenticatedHTTPadapter e54f/4f6fa7ef nowdevelop;13newcontrollertests sourceadded. Config79selectors28ea79APPLIED. OneactualStartreturnedAPI37INIT withsourcepending; neverstartagainformissingmetadata. Actualrequest/upload/downloadcaps24/16/64MiB; storage remainsdefaultOFF,activation/GC/businessnotdone.
