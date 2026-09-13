@@ -1,5 +1,10 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 10:25 CST delta
+
+- F02authenticatedHTTPadapter e54f/4f6fa7ef nowdevelop;13newcontrollertests sourceadded. Config79selectors28ea79APPLIED. OneactualStartreturnedAPI37INIT withsourcepending; neverstartagainformissingmetadata. Actualrequest/upload/downloadcaps24/16/64MiB; storage remainsdefaultOFF,activation/GC/businessnotdone.
+- Web441c39f autoRun98sourceverified after71relatedtestsPASS; earlier97FAILretained. API36/Web96remainlastverifiedpair. AllcollectedcodingOwnersclosed; mainobserves37/98inparallelwithoutReviewer. Fullgoal/externalacceptanceboundariesretained.
+
 ## 2026-09-13 10:18 CST delta
 
 - API36/5ece9141 SUCCESS:78configuredselectors/build, JAR1c073e3b/receipt3371a3b7, order69520177,PID3257882/10018healthUPandcanonicalrecordmatch. No retry; Run35testfailurerootcausescorrected. E04completiondependencyunlock and F02internalstorage source shipped, notdefaultoffactivation orpublicuploadbusinessacceptance.
