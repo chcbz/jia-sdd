@@ -4,6 +4,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import pwd
+import grp
 import re
 import signal
 import stat
@@ -34,7 +36,7 @@ def main():
         result['units'] = []
         for unit in UNITS:
             state = command(['/usr/bin/systemctl', 'show', unit, '--no-pager',
-                '--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic'])
+                '--property=ActiveState,SubState,Result,ExecMainStatus,MainPID,MemoryCurrent,MemoryMax,UnitFileState,ExecMainStartTimestampMonotonic,ExecMainExitTimestampMonotonic,User,Group,NRestarts'])
             raw = command(['/usr/bin/journalctl', '--no-pager', '-u', unit,
                            '--since', '2026-09-13 16:30:00', '-n', '100', '-o', 'json'])
             messages = []
@@ -46,11 +48,21 @@ def main():
                 message = re.sub(r'https?://\S+', '<url>', message)
                 if re.search(r'password|secret|token|authorization|bearer', message, re.I):
                     message = '<sensitive line excluded>'
-                messages.append({'time': row.get('__REALTIME_TIMESTAMP'), 'message': message[:600]})
+                metadata = {}
+                for key in ['_UID', '_GID', '_PID']:
+                    value = row.get(key)
+                    if isinstance(value, str) and re.fullmatch('[0-9]{1,12}', value):
+                        metadata[key] = value
+                messages.append({'time': row.get('__REALTIME_TIMESTAMP'), 'message': message[:600],
+                                 'process': metadata})
             result['units'].append({'unit': unit,
                 'state': dict(x.split('=', 1) for x in state.splitlines()),
                 'journalSha256': hashlib.sha256(raw.encode()).hexdigest(),
                 'journalBytes': len(raw.encode()), 'lastMessages': messages})
+        user = pwd.getpwnam('cyf-output-scan')
+        group = grp.getgrnam('cyf-output-scan')
+        result['scannerAccount'] = {'uid': user.pw_uid, 'gid': user.pw_gid,
+                                   'namedGroupGid': group.gr_gid}
         db = Path('/var/lib/cyf-output-scanner/db')
         info = db.lstat()
         if not stat.S_ISDIR(info.st_mode) or info.st_uid == 0:
