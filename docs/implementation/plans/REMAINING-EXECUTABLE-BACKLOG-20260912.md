@@ -1,5 +1,11 @@
 # Remaining executable backlog — 2026-09-12
 
+## 2026-09-13 11:59 CST delta
+
+- E05 corrected741cc3f2/7031b74c is now remote develop; initial00adb ambiguous-timeout FAILED mutation removed before publication.55lightweight policy/readback checks PASS; real service/transaction regressions authored, not locally run. Config84selectorsd3cc saved/readbackAPPLIED. One actual Start returned API38 INIT/sourcepending; observe38only, no duplicateStart. API37 remains lastverified.
+- Full E05 explicit different-agent reassignment remains a concrete new-command/lease/API/client packet, not an external user blocker and not completed by bounded retries. Its shared task-event registry paths are currently F06-owned, so coordinate that specific integration rather than reintroducing a global source queue.
+- Web99 actual410file/9online proof retained with FlowFAIL. Cache-verifier sourcef2f93 integrated712b65 and installed53070ba8 after20offline checks/readback; sourceOwnerclosed. No synthetic redeploy99/nginxreload. Newhelperproductionuse awaits next genuineWebcandidate.
+
 ## 2026-09-13 11:41 CST delta
 
 - **Web99 已安装且线上核验通过，但 Flow FAIL 保留**：develop edace747，2151 PASS / 2 pending，构建和扫描成功；410安装文件/9线上响应匹配同次制品 b57049c1。部署单69521776最后首页校验三次读到旧98，后来独立读取已匹配99。host record仍为installed；没有伪改为online_verified，也不重装掩盖失败。
