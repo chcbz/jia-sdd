@@ -496,22 +496,589 @@ def apply_schema_after_install(context):
         os.close(release_fd)
 
 
+E05_SCHEMA_RUNNER = Path('/usr/local/sbin/cyf-api-e05-additive-schema')
+E05_SCHEMA_RESULTS = ROOT / 'e05-schema-results'
+E05_SCHEMA_STATE_ROOT = ROOT
+E05_SCHEMA_RECORD = ROOT / 'record.json'
+E05_SCHEMA_ACTIVATION_FILE = ROOT / 'e05-schema-activation.json'
+E05_SCHEMA_PASSWORD_FILE = ROOT / 'e05-schema-password'
+E05_RELEASE_LOCK = RELEASE_LOCK
+E05_SCHEMA_PASSWORD_ENV = 'CYF_E05_MYSQL_PASSWORD'
+E05_SCHEMA_SQL_SHA256 = 'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1'
+E05_SCHEMA_RUNNER_SHA256 = '9315809c640fb6090bd5ec23c57a2773af1fe44251a17ce5858be3f0ab8c3e94'
+E05_REQUIRED_API_COMMIT_SHA = '52d24bb7c029ceb53286c6ebfef61e0b6b9f70dd'
+E05_ACTIVATION_AUTHORIZATION = 'controller_verified_cloud_success_exact_source_once'
+E05_ACTIVATION_KEYS = {
+    'schema_version', 'feature', 'status', 'authorization', 'pipeline_id', 'run_id',
+    'source_commit_sha', 'source_tree_sha', 'verified_api_ancestor_sha',
+    'sql_sha256', 'runner_sha256',
+}
+E05_SCHEMA_REPORT_KEYS = {
+    'schema_version', 'operation', 'status', 'transaction_model', 'lock_order',
+    'tables', 'binding', 'candidate', 'error', 'failed_table',
+}
+E05_SCHEMA_TABLE = 'agent_work_item_reassignment'
+
+
+def e05_file_signature(value):
+    return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns)
+
+
+def e05_private_state_root():
+    try:
+        info = E05_SCHEMA_STATE_ROOT.lstat()
+    except OSError:
+        raise SchemaIntegrationError(
+            'e05_state_root_missing',
+            'restore the root-owned 0700 Flow state directory before enabling E05')
+    if (not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_gid != 0
+            or stat.S_IMODE(info.st_mode) != 0o700):
+        raise SchemaIntegrationError(
+            'e05_state_root_unsafe',
+            'restore the root:root 0700 Flow state directory before enabling E05')
+
+
+def ensure_e05_results_directory():
+    e05_private_state_root()
+    E05_SCHEMA_RESULTS.mkdir(mode=0o700, parents=False, exist_ok=True)
+    info = E05_SCHEMA_RESULTS.lstat()
+    if (not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_gid != 0
+            or stat.S_IMODE(info.st_mode) != 0o700):
+        raise SchemaIntegrationError(
+            'e05_schema_result_directory_unsafe',
+            'repair the root:root 0700 E05 result directory before a new Flow run')
+
+
+def e05_read_stable_regular(path, mode, label):
+    try:
+        before = path.lstat()
+    except OSError:
+        raise SchemaIntegrationError(
+            label + '_missing',
+            'repair the exact root-only E05 host file, then use a new Flow run')
+    if (not stat.S_ISREG(before.st_mode) or before.st_uid != 0 or before.st_gid != 0
+            or before.st_nlink != 1 or stat.S_IMODE(before.st_mode) != mode):
+        raise SchemaIntegrationError(
+            label + '_metadata_unsafe',
+            'repair the exact root:root E05 host file metadata, then use a new Flow run')
+    try:
+        fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except OSError:
+        raise SchemaIntegrationError(
+            label + '_open_failed',
+            'repair the exact root-only E05 host file, then use a new Flow run')
+    try:
+        opened = os.fstat(fd)
+        if e05_file_signature(opened) != e05_file_signature(before):
+            raise SchemaIntegrationError(
+                label + '_changed',
+                'preserve the changed E05 host file and use a new Flow run')
+        with os.fdopen(fd, 'rb', closefd=False) as stream:
+            value = stream.read()
+        after = os.fstat(fd)
+    finally:
+        os.close(fd)
+    try:
+        current = path.lstat()
+    except OSError:
+        raise SchemaIntegrationError(
+            label + '_changed',
+            'preserve the changed E05 host file and use a new Flow run')
+    if (e05_file_signature(before) != e05_file_signature(after)
+            or e05_file_signature(after) != e05_file_signature(current)):
+        raise SchemaIntegrationError(
+            label + '_changed',
+            'preserve the changed E05 host file and use a new Flow run')
+    return value, e05_file_signature(current)
+
+
+def load_e05_activation(context):
+    if (not E05_SCHEMA_ACTIVATION_FILE.exists()
+            and not E05_SCHEMA_ACTIVATION_FILE.is_symlink()):
+        return None
+    e05_private_state_root()
+    raw, signature = e05_read_stable_regular(
+        E05_SCHEMA_ACTIVATION_FILE, 0o600, 'e05_activation')
+    try:
+        value = json.loads(raw.decode('utf-8'))
+    except (UnicodeDecodeError, ValueError):
+        raise SchemaIntegrationError(
+            'e05_activation_json_invalid',
+            'replace the invalid root-only activation admission and use a new Flow run')
+    if (not isinstance(value, dict) or set(value) != E05_ACTIVATION_KEYS
+            or value.get('schema_version') != 1
+            or value.get('feature') != 'M4-E05-additive-schema'
+            or value.get('status') != 'enabled_once'
+            or value.get('authorization') != E05_ACTIVATION_AUTHORIZATION
+            or value.get('pipeline_id') != EXPECTED_PIPELINE
+            or value.get('verified_api_ancestor_sha') != E05_REQUIRED_API_COMMIT_SHA
+            or value.get('sql_sha256') != E05_SCHEMA_SQL_SHA256
+            or value.get('runner_sha256') != E05_SCHEMA_RUNNER_SHA256
+            or not RUN_ID.fullmatch(str(value.get('run_id', '')))
+            or not re.fullmatch(r'[0-9a-f]{40}', str(value.get('source_commit_sha', '')))
+            or not re.fullmatch(r'[0-9a-f]{40}', str(value.get('source_tree_sha', '')))):
+        raise SchemaIntegrationError(
+            'e05_activation_contract_invalid',
+            'replace the activation admission with the exact reviewed E05 contract and use a new Flow run')
+    expected = {
+        'pipeline_id': context['pipeline_id'],
+        'run_id': context['run_id'],
+        'source_commit_sha': context['source_commit_sha'],
+        'source_tree_sha': context['source_tree_sha'],
+    }
+    digest = hashlib.sha256(raw).hexdigest()
+    if any(value.get(key) != expected_value for key, expected_value in expected.items()):
+        return {
+            'status': 'not_for_release',
+            'sha256': digest,
+            'signature': signature,
+            'value': value,
+        }
+    return {
+        'status': 'admitted',
+        'sha256': digest,
+        'signature': signature,
+        'value': value,
+    }
+
+
+def assert_e05_activation_unchanged(admission):
+    raw, signature = e05_read_stable_regular(
+        E05_SCHEMA_ACTIVATION_FILE, 0o600, 'e05_activation')
+    if (signature != admission['signature']
+            or hashlib.sha256(raw).hexdigest() != admission['sha256']):
+        raise SchemaIntegrationError(
+            'e05_activation_changed',
+            'preserve the changed activation admission and use a new Flow run')
+
+
+def acquire_e05_release_lock(path):
+    try:
+        isp_gid = grp.getgrnam('isp').gr_gid
+    except KeyError:
+        raise SchemaIntegrationError(
+            'e05_release_lock_group_missing',
+            'restore the existing isp release-lock group; this admitted run must not be retried')
+    try:
+        info = path.lstat()
+    except OSError:
+        raise SchemaIntegrationError(
+            'e05_release_lock_missing',
+            'restore /tmp/cyf-release-api.lock; this admitted run must not be retried')
+    if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_gid != isp_gid
+            or info.st_nlink != 1 or stat.S_IMODE(info.st_mode) != 0o660):
+        raise SchemaIntegrationError(
+            'e05_release_lock_metadata_unsafe',
+            'restore the canonical root:isp 0660 release lock; this admitted run must not be retried')
+    try:
+        fd = os.open(str(path), os.O_RDWR | os.O_NOFOLLOW)
+    except OSError:
+        raise SchemaIntegrationError(
+            'e05_release_lock_open_failed',
+            'restore the canonical API release lock; this admitted run must not be retried')
+    try:
+        opened = os.fstat(fd)
+        if e05_file_signature(opened) != e05_file_signature(info):
+            raise SchemaIntegrationError(
+                'e05_release_lock_changed',
+                'preserve the changed release lock; this admitted run must not be retried')
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def e05_schema_paths(run_id):
+    stem = 'run-' + run_id
+    return {
+        'state': E05_SCHEMA_RESULTS / (stem + '.json'),
+        'stdout': E05_SCHEMA_RESULTS / (stem + '.stdout'),
+        'stderr': E05_SCHEMA_RESULTS / (stem + '.stderr'),
+    }
+
+
+def e05_schema_state(context, status, started_at, **updates):
+    value = {
+        'schema_version': 1,
+        'feature': 'M4-E05-additive-schema',
+        'status': status,
+        'activation_claim': 'schema_only_not_feature_activation',
+        'admission_status': 'admitted',
+        'activation_path': str(E05_SCHEMA_ACTIVATION_FILE),
+        'activation_sha256': None,
+        'pipeline_id': context['pipeline_id'],
+        'run_id': context['run_id'],
+        'source_commit_sha': context['source_commit_sha'],
+        'source_tree_sha': context['source_tree_sha'],
+        'receipt_sha256': context['receipt_sha256'],
+        'jar_sha256': context['jar_sha256'],
+        'sql_sha256': E05_SCHEMA_SQL_SHA256,
+        'runner_path': str(E05_SCHEMA_RUNNER),
+        'runner_sha256': E05_SCHEMA_RUNNER_SHA256,
+        'verified_api_ancestor_sha': E05_REQUIRED_API_COMMIT_SHA,
+        'started_at': started_at,
+        'finished_at': None,
+        'runner_exit_code': None,
+        'error': None,
+        'action': None,
+        'prerequisites': [],
+        'runner_report': None,
+        'stdout_path': None,
+        'stdout_sha256': None,
+        'stderr_path': None,
+        'stderr_sha256': None,
+        'lock_order': [
+            'flow_coordinator_lock', 'api_release_lock',
+            'e05_runner_file_lock', 'e05_mysql_named_lock',
+        ],
+        'transaction_model': 'installed_record_then_mysql_ddl_autocommit_no_rollback_or_drop',
+    }
+    value.update(updates)
+    return value
+
+
+def validate_e05_schema_state(value, context):
+    expected = set(e05_schema_state(context, 'running', 'x'))
+    if not isinstance(value, dict) or set(value) != expected or value.get('schema_version') != 1:
+        raise SchemaIntegrationError(
+            'e05_schema_result_state_invalid',
+            'inspect the root-only E05 result files; do not delete or rerun this release')
+    for key in ('pipeline_id', 'run_id', 'source_commit_sha', 'source_tree_sha',
+                'receipt_sha256', 'jar_sha256'):
+        if value.get(key) != context[key]:
+            raise SchemaIntegrationError(
+                'e05_schema_result_binding_mismatch',
+                'preserve the mismatched E05 evidence and use a new Flow run')
+    if (value.get('sql_sha256') != E05_SCHEMA_SQL_SHA256
+            or value.get('runner_sha256') != E05_SCHEMA_RUNNER_SHA256
+            or value.get('verified_api_ancestor_sha') != E05_REQUIRED_API_COMMIT_SHA):
+        raise SchemaIntegrationError(
+            'e05_schema_result_catalog_mismatch',
+            'preserve the result and reconcile the fixed E05 catalogs before a new Flow run')
+    return value
+
+
+def existing_e05_schema_result(paths, context):
+    if not paths['state'].exists() and not paths['state'].is_symlink():
+        return None
+    try:
+        raw, _ = e05_read_stable_regular(paths['state'], 0o600, 'e05_schema_result')
+        value = json.loads(raw.decode('utf-8'))
+    except SchemaIntegrationError:
+        raise
+    except (UnicodeDecodeError, ValueError):
+        raise SchemaIntegrationError(
+            'e05_schema_result_state_invalid',
+            'inspect the root-only E05 result files; do not delete or rerun this release')
+    value = validate_e05_schema_state(value, context)
+    print(json.dumps({'e05_schema': 'existing_same_run_result', 'result': value},
+                     sort_keys=True, separators=(',', ':')), flush=True)
+    if value['status'] == 'pass':
+        return 0
+    return (value['runner_exit_code']
+            if isinstance(value['runner_exit_code'], int)
+            and 0 < value['runner_exit_code'] < 256 else 1)
+
+
+def validate_e05_runner_report(data, return_code, context):
+    try:
+        value = json.loads(data.decode('utf-8'))
+    except (UnicodeDecodeError, ValueError):
+        raise SchemaIntegrationError(
+            'e05_schema_runner_report_invalid',
+            'inspect preserved E05 stdout/stderr and durable table metadata before a new Flow run')
+    if (not isinstance(value, dict) or not set(value).issubset(E05_SCHEMA_REPORT_KEYS)
+            or value.get('schema_version') != 1 or value.get('operation') != 'apply'
+            or value.get('transaction_model') != 'mysql_ddl_autocommit_per_create_no_rollback_or_drop'
+            or value.get('lock_order') != ['e05_runner_file_lock', 'e05_mysql_named_lock']
+            or set(value.get('tables', {})) != {E05_SCHEMA_TABLE}):
+        raise SchemaIntegrationError(
+            'e05_schema_runner_report_contract_mismatch',
+            'inspect preserved E05 output; do not infer schema activation')
+    table = value['tables'][E05_SCHEMA_TABLE]
+    if (not isinstance(table, dict) or set(table) - {'status', 'mismatches'}
+            or not isinstance(table.get('status'), str)
+            or ('mismatches' in table and not isinstance(table['mismatches'], list))):
+        raise SchemaIntegrationError(
+            'e05_schema_runner_report_contract_mismatch',
+            'inspect preserved E05 output; do not infer schema activation')
+    if 'failed_table' in value and value['failed_table'] != E05_SCHEMA_TABLE:
+        raise SchemaIntegrationError(
+            'e05_schema_runner_report_contract_mismatch',
+            'inspect preserved E05 output; do not infer schema activation')
+    binding = value.get('binding')
+    if binding is not None:
+        expected_binding = {
+            'organization': EXPECTED_ORG,
+            'pipeline': context['pipeline_id'],
+            'run': context['run_id'],
+            'source_commit': context['source_commit_sha'],
+            'source_tree': context['source_tree_sha'],
+            'jar_sha256': context['jar_sha256'],
+            'receipt_sha256': context['receipt_sha256'],
+        }
+        if binding != expected_binding:
+            raise SchemaIntegrationError(
+                'e05_schema_runner_binding_mismatch',
+                'preserve the mismatched E05 report and use a new Flow run')
+    candidate = value.get('candidate')
+    if candidate is not None and candidate != {
+            'resource_outer': 'BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar',
+            'resource_inner': 'db/agent-work-item-reassignment-e05.sql',
+            'sql_sha256': E05_SCHEMA_SQL_SHA256,
+            'tables': [E05_SCHEMA_TABLE],
+            'statement_policy': 'exact_create_table_if_not_exists_only'}:
+        raise SchemaIntegrationError(
+            'e05_schema_runner_candidate_mismatch',
+            'preserve the mismatched E05 candidate and use a new Flow run')
+    if return_code == 0:
+        if (value.get('status') != 'pass' or 'error' in value or 'failed_table' in value
+                or binding is None or candidate is None
+                or table['status'] not in {'created_equivalent', 'existing_equivalent'}):
+            raise SchemaIntegrationError(
+                'e05_schema_runner_false_success',
+                'verify the E05 table from durable metadata before a new Flow run')
+    elif value.get('status') != 'failed' or not isinstance(value.get('error'), str):
+        raise SchemaIntegrationError(
+            'e05_schema_runner_failure_report_invalid',
+            'inspect preserved E05 stdout/stderr and durable table metadata before a new Flow run')
+    return value
+
+
+def protected_e05_schema_password():
+    e05_private_state_root()
+    raw, _ = e05_read_stable_regular(
+        E05_SCHEMA_PASSWORD_FILE, 0o600, 'e05_schema_password')
+    try:
+        value = raw.decode('utf-8')
+    except UnicodeDecodeError:
+        return None
+    if not value or '\n' in value or '\r' in value:
+        return None
+    return value
+
+
+def e05_schema_prerequisites():
+    missing = []
+    password = None
+    try:
+        parent = E05_SCHEMA_RUNNER.parent.lstat()
+        if (not stat.S_ISDIR(parent.st_mode) or parent.st_uid != 0 or parent.st_gid != 0
+                or parent.st_mode & 0o022):
+            raise SchemaIntegrationError('e05_schema_runner_parent_unsafe', '')
+        runner_bytes, _ = e05_read_stable_regular(
+            E05_SCHEMA_RUNNER, 0o755, 'e05_schema_runner')
+        if hashlib.sha256(runner_bytes).hexdigest() != E05_SCHEMA_RUNNER_SHA256:
+            missing.append('e05_schema_runner_digest_mismatch')
+    except SchemaIntegrationError as exc:
+        missing.append(exc.code)
+    try:
+        password = protected_e05_schema_password()
+    except SchemaIntegrationError as exc:
+        missing.append(exc.code)
+    if password is None:
+        missing.append('e05_db_principal_or_protected_password_not_configured')
+    return missing, password
+
+
+def write_e05_schema_state(path, value, create=False):
+    write_schema_state(path, value, create=create)
+
+
+def run_e05_schema_once(context, paths, admission, started_at):
+    prerequisites, password = e05_schema_prerequisites()
+    if prerequisites:
+        result = e05_schema_state(
+            context, 'blocked_precondition', started_at,
+            activation_sha256=admission['sha256'], finished_at=utc_timestamp(),
+            error='e05_schema_activation_prerequisites_missing', prerequisites=prerequisites,
+            action=('install the byte-exact E05 runner as root:root 0755; provision fixed MySQL '
+                    'user cyf_e05_schema_runner with USAGE plus CREATE only on jia.agent_work_item_reassignment; '
+                    'provision root:root 0600 e05-schema-password under the root-only Flow state directory; '
+                    'then authorize an exact new Flow run'))
+        write_e05_schema_state(paths['state'], result)
+        print(json.dumps({'e05_schema': 'blocked_precondition', 'result': result},
+                         sort_keys=True, separators=(',', ':')), flush=True)
+        return 1
+
+    running = e05_schema_state(
+        context, 'running', started_at, activation_sha256=admission['sha256'],
+        action=('release lock and installed record verified; if interrupted, inspect durable E05 '
+                'metadata and never rerun this same Flow release automatically'),
+        stdout_path=str(paths['stdout']), stderr_path=str(paths['stderr']))
+    write_e05_schema_state(paths['state'], running)
+    try:
+        assert_e05_activation_unchanged(admission)
+    except SchemaIntegrationError as exc:
+        result = e05_schema_state(
+            context, 'failed', started_at, activation_sha256=admission['sha256'],
+            finished_at=utc_timestamp(), runner_exit_code=1, error=exc.code,
+            action=exc.action, stdout_path=None, stderr_path=None)
+        write_e05_schema_state(paths['state'], result)
+        print(json.dumps({'e05_schema': 'failed', 'result': result},
+                         sort_keys=True, separators=(',', ':')), flush=True)
+        return 1
+
+    stdout_fd = os.open(str(paths['stdout']), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    stderr_fd = os.open(str(paths['stderr']), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        child_env = {
+            'PATH': '/usr/sbin:/usr/bin:/sbin:/bin',
+            'LC_ALL': 'C',
+            E05_SCHEMA_PASSWORD_ENV: password,
+        }
+        try:
+            completed = subprocess.run(
+                [str(E05_SCHEMA_RUNNER), '--apply'], env=child_env,
+                stdout=stdout_fd, stderr=stderr_fd, close_fds=True)
+            return_code = completed.returncode
+        except OSError:
+            return_code = 1
+            integration_error = SchemaIntegrationError(
+                'e05_schema_runner_start_failed',
+                'repair the installed E05 runner and inspect durable schema state before a new Flow run')
+        else:
+            integration_error = None
+        os.fsync(stdout_fd)
+        os.fsync(stderr_fd)
+    finally:
+        os.close(stdout_fd)
+        os.close(stderr_fd)
+        fsync_dir(E05_SCHEMA_RESULTS)
+
+    stdout_bytes = paths['stdout'].read_bytes()
+    stderr_bytes = paths['stderr'].read_bytes()
+    report = None
+    if integration_error is None:
+        try:
+            report = validate_e05_runner_report(stdout_bytes, return_code, context)
+        except SchemaIntegrationError as exc:
+            integration_error = exc
+    if integration_error is not None:
+        status = 'failed'
+        error = integration_error.code
+        action = integration_error.action
+    elif return_code == 0:
+        status = 'pass'
+        error = None
+        action = 'E05 schema is verified only; feature activation and authenticated acceptance remain separate'
+    else:
+        status = 'failed'
+        error = report['error']
+        action = ('inspect preserved E05 report/stdout/stderr and durable table metadata; '
+                  'do not drop or rerun this same Flow release automatically')
+    result = e05_schema_state(
+        context, status, started_at, activation_sha256=admission['sha256'],
+        finished_at=utc_timestamp(), runner_exit_code=return_code,
+        error=error, action=action, runner_report=report,
+        stdout_path=str(paths['stdout']), stdout_sha256=hashlib.sha256(stdout_bytes).hexdigest(),
+        stderr_path=str(paths['stderr']), stderr_sha256=hashlib.sha256(stderr_bytes).hexdigest())
+    write_e05_schema_state(paths['state'], result)
+    print(json.dumps({'e05_schema': status, 'result': result},
+                     sort_keys=True, separators=(',', ':')), flush=True)
+    return return_code if status == 'pass' or 0 < return_code < 256 else 1
+
+
+def apply_e05_schema_after_install(context, admission):
+    ensure_e05_results_directory()
+    paths = e05_schema_paths(context['run_id'])
+    existing = existing_e05_schema_result(paths, context)
+    if existing is not None:
+        return existing
+    started_at = utc_timestamp()
+    waiting = e05_schema_state(
+        context, 'running', started_at, activation_sha256=admission['sha256'],
+        action=('exact run admitted and waiting for the API release lock; interruption requires '
+                'manual durable-state inspection and never automatic same-run retry'),
+        stdout_path=str(paths['stdout']), stderr_path=str(paths['stderr']))
+    write_e05_schema_state(paths['state'], waiting, create=True)
+    try:
+        release_fd = acquire_e05_release_lock(E05_RELEASE_LOCK)
+    except SchemaIntegrationError as exc:
+        result = e05_schema_state(
+            context, 'failed', started_at, activation_sha256=admission['sha256'],
+            finished_at=utc_timestamp(), runner_exit_code=1,
+            error=exc.code, action=exc.action)
+        write_e05_schema_state(paths['state'], result)
+        print(json.dumps({'e05_schema': 'failed', 'result': result},
+                         sort_keys=True, separators=(',', ':')), flush=True)
+        return 1
+    try:
+        try:
+            load_installed_record(E05_SCHEMA_RECORD, context)
+        except SchemaIntegrationError as exc:
+            result = e05_schema_state(
+                context, 'failed', started_at, activation_sha256=admission['sha256'],
+                finished_at=utc_timestamp(), runner_exit_code=1,
+                error=exc.code, action=exc.action)
+            write_e05_schema_state(paths['state'], result)
+            print(json.dumps({'e05_schema': 'failed', 'result': result},
+                             sort_keys=True, separators=(',', ':')), flush=True)
+            return 1
+        return run_e05_schema_once(context, paths, admission, started_at)
+    finally:
+        os.close(release_fd)
+
+
+def maybe_apply_e05_schema_after_install(context):
+    admission = load_e05_activation(context)
+    if admission is None:
+        print(json.dumps({
+            'e05_schema': 'not_admitted',
+            'pipeline_id': context['pipeline_id'],
+            'run_id': context['run_id'],
+            'reason': 'root_only_exact_run_activation_missing',
+            'action': 'no E05 runner was invoked; authorize a corrected exact new Flow run to enable once',
+        }, sort_keys=True, separators=(',', ':')), flush=True)
+        return 0
+    if admission['status'] != 'admitted':
+        print(json.dumps({
+            'e05_schema': 'not_admitted',
+            'pipeline_id': context['pipeline_id'],
+            'run_id': context['run_id'],
+            'reason': 'activation_is_for_a_different_exact_release',
+            'activation_sha256': admission['sha256'],
+            'action': 'no E05 runner was invoked; replace admission only for a corrected exact new Flow run',
+        }, sort_keys=True, separators=(',', ':')), flush=True)
+        return 0
+    return apply_e05_schema_after_install(context, admission)
+
+def installer_environment():
+    installer_env = dict(os.environ)
+    installer_env.pop(SCHEMA_PASSWORD_ENV, None)
+    installer_env.pop(E05_SCHEMA_PASSWORD_ENV, None)
+    return installer_env
+
+
 def invoke_installer(installer):
     # The coordinator stays alive holding its mutex. The installer owns the existing
     # release lock through installed-record fsync; after it exits we reacquire that
-    # exact lock and keep it through the one-shot F06 schema runner.  The schema
-    # password belongs only to that runner and must never enter installer/lifecycle
-    # descendants (including the restored JVM).
-    installer_env = dict(os.environ)
-    installer_env.pop(SCHEMA_PASSWORD_ENV, None)
-    return_code = subprocess.run([installer], env=installer_env, close_fds=True).returncode
+    # exact lock for F06 and then E05. Each fixed runner owns its own file/MySQL locks.
+    # Neither schema password may enter installer/lifecycle descendants (including the
+    # installed or restored JVM); each is passed only in its schema runner child env.
+    return_code = subprocess.run(
+        [installer], env=installer_environment(), close_fds=True).returncode
     if return_code != 0 or _SCHEMA_CONTEXT is None:
         return return_code
     try:
-        return apply_schema_after_install(_SCHEMA_CONTEXT)
+        f06_return_code = apply_schema_after_install(_SCHEMA_CONTEXT)
     except SchemaIntegrationError as exc:
         print(json.dumps({
             'f06_schema': 'integration_blocked',
+            'pipeline_id': _SCHEMA_CONTEXT['pipeline_id'],
+            'run_id': _SCHEMA_CONTEXT['run_id'],
+            'error': exc.code,
+            'action': exc.action,
+        }, sort_keys=True, separators=(',', ':')), flush=True)
+        return 1
+    if f06_return_code != 0:
+        return f06_return_code
+    try:
+        return maybe_apply_e05_schema_after_install(_SCHEMA_CONTEXT)
+    except SchemaIntegrationError as exc:
+        print(json.dumps({
+            'e05_schema': 'integration_blocked',
             'pipeline_id': _SCHEMA_CONTEXT['pipeline_id'],
             'run_id': _SCHEMA_CONTEXT['run_id'],
             'error': exc.code,
