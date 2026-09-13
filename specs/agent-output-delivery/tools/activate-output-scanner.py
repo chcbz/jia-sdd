@@ -179,7 +179,7 @@ def readiness_ping():
         return bytes(response) == b'PONG\0'
 
 
-def startup_progress():
+def startup_progress(activation_began):
     values = unit_values(DAEMON)
     require(int(values['NRestarts']) == 0, 'startup_process_restarted')
     row = {'kind': 'SCANNER_STARTUP_PROGRESS', 'observedAtEpoch': int(time.time()),
@@ -188,12 +188,19 @@ def startup_progress():
     if row['pid'] > 1:
         proc = Path('/proc')/str(row['pid'])
         status = dict(x.split(':', 1) for x in (proc/'status').read_text().splitlines() if ':' in x)
-        require([int(x) for x in status['Uid'].split()] == [986]*4, 'progress_process_identity')
+        row['uids'] = [int(x) for x in status['Uid'].split()]
+        row['gids'] = [int(x) for x in status['Gid'].split()]
+        row['credentialTransitionElapsedSeconds'] = round(time.monotonic()-activation_began, 3)
         info = (proc/'stat').read_text().rsplit(')', 1)[1].split()
         row.update(startTicks=info[19], userTicks=int(info[11]), systemTicks=int(info[12]))
         for key in ['VmRSS', 'VmSwap']:
             row[key+'Bytes'] = int(status[key].split()[0])*1024
     print(json.dumps(row, sort_keys=True), flush=True)
+    if row['pid'] > 1:
+        strict = row['uids'] == [986]*4 and row['gids'] == [986]*4
+        initial_transition = (row['credentialTransitionElapsedSeconds'] <= 15
+            and row['uids'] in ([0]*4, [986]*4) and row['gids'] in ([0]*4, [986]*4))
+        require(strict or initial_transition, 'progress_process_identity')
     return row
 
 
@@ -218,9 +225,16 @@ def main():
             info = parent.lstat()
             require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and info.st_gid == 0
                     and not stat.S_IMODE(info.st_mode) & 0o022, 'untrusted_parent')
-        for path in [BASE/'observe-activation-intent.json', BASE/'configure-result.json',
-                     CONFIG/'clamd.conf.pre-observation', CONFIG/'clamd.conf.observe-new']:
+        for path in [BASE/'credential-activation-intent.json', BASE/'configure-result.json',
+                     CONFIG/'clamd.conf.observe-new']:
             require(not os.path.lexists(path), 'existing_activation')
+        observed = json.loads(trusted_file(BASE/'observe-activation-intent.json', 0o600, 65536))
+        require(observed.get('startedAtEpoch') == 1789301970
+                and observed.get('status') == 'UNKNOWN'
+                and observed.get('databaseDownloadRequested') is False, 'prior_observed_activation_mismatch')
+        require(hashlib.sha256(trusted_file(CONFIG/'clamd.conf.pre-observation', 0o600, 16384)).hexdigest()
+                == 'bbd6c053c9029e10a6f43d101907433fe2c62650c7cb3f8f64ac9fcd80f3cea8',
+                'prior_configuration_backup')
         previous = json.loads(trusted_file(BASE/'activate-intent.json', 0o600, 65536))
         require(previous.get('startedAtEpoch') == 1789290118
                 and previous.get('status') == 'UNKNOWN'
@@ -248,7 +262,7 @@ def main():
         expected = {
             UNITDIR/DAEMON: '8f6d10bebfa2df5832a824001826f42887fdb77c918955656aa3e2b5f271e3b7',
             UNITDIR/UPDATER: '3b86c587e083c21fd040b065862ecb430dbaa8f8311992b93140089d28c4433c',
-            CONFIG/'clamd.conf': 'bbd6c053c9029e10a6f43d101907433fe2c62650c7cb3f8f64ac9fcd80f3cea8',
+            CONFIG/'clamd.conf': 'a005a0936da56ce957850e65af4dbd8a75e0296894fd9bf18c20e1f3d58fee9a',
         }
         for path, digest in expected.items():
             require(hashlib.sha256(trusted_file(path, 0o644, 16384)).hexdigest() == digest,
@@ -258,6 +272,8 @@ def main():
             require(state['ActiveState'] == 'inactive' and state['UnitFileState'] == 'disabled'
                     and state['MainPID'] == '0', 'existing_service_active')
             require(int(state['NRestarts']) == 0, 'prior_service_restarts')
+            require(state['User'] == USER and state['Group'] == USER
+                    and int(state['MemoryMax']) == SERVICE_MEMORY, 'configured_unit_identity')
         with socket.socket() as s:
             s.bind(('127.0.0.1', 13310))
         result.update(memAvailableBefore=memory(), diskAvailableBefore=disk())
@@ -290,21 +306,8 @@ def main():
                 'configured_version')
         require(memory() >= SERVICE_MEMORY + MEMORY_RESERVE and disk() >= DISK_RESERVE,
                 'activation_resource_gate')
-        exclusive(BASE/'observe-activation-intent.json', (json.dumps(result, sort_keys=True)+'\n').encode())
-        phase = 'enable_engine_logging'
-        original_config = trusted_file(CONFIG/'clamd.conf', 0o644, 16384)
-        require(hashlib.sha256(original_config).hexdigest() == expected[CONFIG/'clamd.conf'],
-                'configuration_changed')
-        new_config = original_config + b'LogSyslog yes\nLogTime yes\nLogVerbose yes\n'
-        exclusive(CONFIG/'clamd.conf.pre-observation', original_config)
-        exclusive(CONFIG/'clamd.conf.observe-new', new_config, 0o644)
-        os.replace(CONFIG/'clamd.conf.observe-new', CONFIG/'clamd.conf')
-        directory_fd = os.open(str(CONFIG), os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
-        result['configurationSha256'] = hashlib.sha256(new_config).hexdigest()
+        exclusive(BASE/'credential-activation-intent.json', (json.dumps(result, sort_keys=True)+'\n').encode())
+        result['configurationSha256'] = expected[CONFIG/'clamd.conf']
         phase = 'activate_scanner'
         activation_attempted = True
         command(['/usr/bin/systemctl', 'enable', '--now', DAEMON], timeout=30)
@@ -328,7 +331,7 @@ def main():
             require(time.monotonic() < deadline, 'scanner_readiness_deadline')
             require(unit_values(DAEMON)['ActiveState'] != 'failed', 'scanner_failed')
             if time.monotonic() >= next_progress:
-                row = startup_progress()
+                row = startup_progress(activation_began)
                 require(row['memAvailableBytes'] >= MEMORY_RESERVE, 'startup_memory_reserve')
                 if row['pid'] > 1:
                     current_identity = (row['pid'], row['startTicks'])
