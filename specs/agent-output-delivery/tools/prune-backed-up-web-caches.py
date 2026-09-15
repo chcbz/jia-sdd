@@ -14,6 +14,8 @@ BASE = Path('/var/lib/cyf-web-flow')
 SITE = Path('/home/isp/hosts/cyf/web/kit')
 INTENT = Path('/opt/cyf/output-cache-prune-intent.json')
 RECEIPT = Path('/opt/cyf/output-cache-prune-result.json')
+FAILURE = Path('/opt/cyf/output-cache-prune-failure.json')
+JOURNAL = Path('/opt/cyf/output-cache-prune-journal.jsonl')
 HELPER_SHA = '53070ba8cf924852744e38c232d0b5d5b3fd432e0d05c90b8f9a877af21b9bb6'
 
 
@@ -32,6 +34,10 @@ def safe_dir(path):
 def identity(info):
     return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns,
             info.st_uid, info.st_gid, stat.S_IMODE(info.st_mode), info.st_nlink)
+
+
+def parent_identity(info):
+    return (info.st_dev,info.st_ino,info.st_uid,info.st_gid,stat.S_IMODE(info.st_mode))
 
 
 def digest(fd, maximum):
@@ -115,6 +121,50 @@ def exclusive(path, value):
         f.write('\n')
         f.flush()
         os.fsync(f.fileno())
+    parent = safe_dir(path.parent)
+    try:
+        os.fsync(parent)
+    finally:
+        os.close(parent)
+
+
+def journal(fd, value):
+    data = (json.dumps(value, sort_keys=True)+'\n').encode()
+    while data:
+        n = os.write(fd, data)
+        require(n > 0, 'journal_short_write')
+        data = data[n:]
+    os.fsync(fd)
+
+
+def reconcile(rows):
+    states = []
+    for row in rows:
+        state = {'run': row['run'], 'path': row['path'], 'state': 'UNKNOWN'}
+        try:
+            directory = row['_directoryFd']
+            require(parent_identity(os.fstat(directory)) == row['_parentIdentity'], 'parent_changed')
+            try:
+                info = os.stat('package.tgz', dir_fd=directory, follow_symlinks=False)
+            except FileNotFoundError:
+                state['state'] = 'MISSING'
+            else:
+                expected = (row['device'],row['inode'],row['bytes'],row['mtimeNs'],0,0,0o644,1)
+                if stat.S_ISREG(info.st_mode) and identity(info) == expected:
+                    fd = os.open('package.tgz', os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory)
+                    try:
+                        state['state'] = 'ORIGINAL' if identity(os.fstat(fd)) == expected and digest(fd,128*1024**2) == row['sha256'] else 'CHANGED'
+                    finally:
+                        os.close(fd)
+                else:
+                    state['state'] = 'CHANGED'
+            os.fsync(directory)
+            state['parentFsynced'] = True
+        except (OSError,RuntimeError,KeyError) as exc:
+            state['reconciliationError'] = type(exc).__name__
+            state['parentFsynced'] = False
+        states.append(state)
+    return states
 
 
 def available():
@@ -128,9 +178,12 @@ def main():
               'scope': 'Five backed-up Web download cache files only; no runtime/backup deletion'}
     handles = []
     lock = None
+    journal_fd = None
+    intent_created = False
     def expired(signum, frame):
         raise RuntimeError('cleanup_deadline')
-    signal.signal(signal.SIGALRM, expired)
+    for sig in (signal.SIGALRM, signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, expired)
     signal.alarm(240)
     try:
         require(os.geteuid() == 0 and [x['run'] for x in PLAN] == [93,95,96,98,99], 'fixed_scope')
@@ -141,7 +194,7 @@ def main():
         si = SITE.lstat()
         require(stat.S_ISDIR(si.st_mode) and si.st_uid in (0,1000)
                 and not stat.S_IMODE(si.st_mode)&0o002, 'site_directory_identity')
-        require(not os.path.lexists(INTENT) and not os.path.lexists(RECEIPT), 'prior_cleanup_intent')
+        require(not any(os.path.lexists(p) for p in (INTENT,RECEIPT,FAILURE,JOURNAL)), 'prior_cleanup_intent')
         helper = protected_fingerprint(Path('/usr/local/sbin/cyf-web-flow-deploy'), 1024*1024)
         require(helper['sha256'] == HELPER_SHA, 'deploy_helper_changed')
         lock = os.open(str(BASE/'deploy.lock'), os.O_RDONLY | os.O_NOFOLLOW)
@@ -167,28 +220,35 @@ def main():
             require(digest(fd, 128*1024**2) == row['sha256'], 'cache_hash_changed')
             targets.add((info.st_dev,info.st_ino))
             row['_directoryFd'], row['_fileFd'] = directory, fd
+            row['_parentIdentity'] = parent_identity(os.fstat(directory))
         result['checkedOpenDescriptors'] = no_open_references(targets)
         result['checkedSiteEntries'] = no_site_references(targets)
         result['availableBefore'] = available()
         result['protectedBefore'] = before_protected
+        result['targets'] = [{**{k:v for k,v in row.items() if not k.startswith('_')},
+                              'parentIdentity':row['_parentIdentity']} for row in PLAN]
         exclusive(INTENT, result)
+        intent_created = True
+        journal_fd = os.open(JOURNAL, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        journal(journal_fd, {'phase':'PREPARED','targets':result['targets']})
+        parent = safe_dir(JOURNAL.parent)
+        try:
+            os.fsync(parent)
+        finally:
+            os.close(parent)
         for row in PLAN:
             expected = (row['device'],row['inode'],row['bytes'],row['mtimeNs'],0,0,0o644,1)
             require(identity(os.fstat(row['_fileFd'])) == expected
                     and identity(os.stat('package.tgz', dir_fd=row['_directoryFd'],
                                          follow_symlinks=False)) == expected, 'cache_replaced')
+            journal(journal_fd, {'run':row['run'],'phase':'BEFORE_UNLINK'})
             os.unlink('package.tgz', dir_fd=row['_directoryFd'])
             os.fsync(row['_directoryFd'])
-            result['removed'].append({'run':row['run'], 'bytes':row['bytes'], 'sha256':row['sha256']})
+            journal(journal_fd, {'run':row['run'],'phase':'AFTER_UNLINK_PARENT_FSYNC'})
         after_protected = {str(p): protected_fingerprint(p, limit) for p,limit in protected_paths}
         require(after_protected == before_protected, 'protected_file_changed')
         result['protectedUnchanged'] = True
-        for fd in handles:
-            os.close(fd)
-        handles.clear()
-        result['availableAfter'] = available()
-        result['status'] = 'BACKED_UP_CACHE_FILES_REMOVED'
-        exclusive(RECEIPT, result)
+        result['operationChecksPassed'] = True
     except (OSError, ValueError, RuntimeError) as exc:
         result['errorType'] = type(exc).__name__
         if isinstance(exc, OSError):
@@ -197,8 +257,28 @@ def main():
             result['errorCode'] = str(exc)
     finally:
         signal.alarm(0)
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM,signal.SIGTERM,signal.SIGINT})
+        if intent_created:
+            result['reconciledTargets'] = reconcile(PLAN)
+            result['removed'] = [{k:row[k] for k in ('run','bytes','sha256')} for row,state in zip(PLAN,result['reconciledTargets']) if state['state'] == 'MISSING']
+            result['allMissingDurable'] = all(x['state'] == 'MISSING' and x.get('parentFsynced') for x in result['reconciledTargets'])
         for fd in handles:
             os.close(fd)
+        result['availableAfter'] = available()
+        if intent_created:
+            try:
+                if result.get('operationChecksPassed') and result['allMissingDurable'] and not result.get('errorType'):
+                    result['status'] = 'BACKED_UP_CACHE_FILES_REMOVED'
+                if journal_fd is not None:
+                    journal(journal_fd, {'phase':'FINAL_RECONCILIATION','status':result['status'],'targets':result['reconciledTargets']})
+                exclusive(RECEIPT if result['status'] == 'BACKED_UP_CACHE_FILES_REMOVED' else FAILURE, result)
+                result['durableResultWritten'] = True
+            except (OSError,RuntimeError) as exc:
+                result['status'] = 'UNKNOWN'
+                result['durableResultWritten'] = False
+                result['finalizationError'] = type(exc).__name__
+        if journal_fd is not None:
+            os.close(journal_fd)
         if lock is not None:
             os.close(lock)
     print(json.dumps(result, sort_keys=True))
