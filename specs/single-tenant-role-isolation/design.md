@@ -61,36 +61,37 @@ owner_jiacn is nonblank
 - Archive controller 构造 `(0, clientId, claim.jiacn)`；存储层保留三元精确谓词。
 - Chat conversation 与 message 均写入 tenant `0`；`jiacn + client_id` 继续参与精确筛选、消息一致性和删除围栏。
 - 用户资料的 existing owner 谓词必须保留；不能为 `tenant_id='0'` 增加跨用户宽松查询。
-- 兼容版本可读取同一 owner/client 的旧 `tenant_id=owner_jiacn` 行与新 `0` 行，但绝不接受其他 owner 的旧行；最终严格版本移除兼容分支。
+- 不提供旧 `tenant_id=owner_jiacn` 行的应用兼容读取。维护窗口内先完成受控迁移或删除，再部署严格版本；严格版本只读取和写入 `tenant_id='0'`，且保留 owner 谓词。
 
 ## 5. 数据迁移顺序
 
-### Phase A — 兼容代码与加法 DDL
+### Phase A — 维护窗口与加法 DDL
 
-1. 发布兼容代码：新写入使用 `0`；旧行只可在相同 owner/client 的额外谓词下读取。不得把 JWT `jiacn` 继续当作 tenant，也不得因 tenant 归一取消 owner 谓词。
-2. 所有任务根/子表加 `owner_jiacn`，新写入从认证 owner 或已锁定 root 复制。仅可从 `task_plan.jiacn`、已锁定任务根或历史 tenant 回填；来源不一致、缺失或孤儿记录即停止。
-3. 建立携带 owner 的查询索引，但不删除旧索引。迁移前不能启用会因旧数据重复而失败的强制全局角色唯一性。
-4. identity/alias 的数据库约束先允许“旧 owner-tenant 或新 `0`”；只有 Phase B 成功读回后才在 Phase C 收紧为仅 `0`。
+1. 进入维护窗口并阻断会产生业务写入的入口；不得依赖应用层旧格式兼容。
+2. 以生产盘点生成完整 tenant 表清单、行数、主键哈希、外键/父子关系和 owner 来源。每一行只能被分类为“可迁移”或“不可迁移后删除”。
+3. 所有任务根/子表加 `owner_jiacn`，新严格代码的写入从认证 owner 或已锁定 root 复制。可迁移历史行仅可从 `task_plan.jiacn`、已锁定任务根或现有明确 owner 字段回填；来源不一致、缺失或孤儿记录列入删除集。
+4. 建立携带 owner 的查询索引，并准备 `(tenant_id, client_id, active_persona_code)` 唯一键；旧重复 persona 在 tenant 改为 `0` 前先按本设计处理。
+5. identity/alias 约束与严格版本同步收紧为 `tenant_id='0'`；不存在“旧 owner-tenant 或新 0”的兼容期。
 
-### Phase B — 受控生产迁移
+### Phase B — 受控生产迁移/删除
 
 每次执行使用受控变量 `CLIENT_ID`、`KEEP_OWNER`、`PERSONA_CODE`，不得把个人标识写入代码库或日志。
 
-1. 只读快照：`information_schema` 的完整 tenant 表清单、每表范围行数与主键哈希、重复 persona 组、两个任务根及当前执行 Agent 引用哈希。
+1. 只读快照：`information_schema` 的完整 tenant 表清单、每表范围行数与主键哈希、重复 persona 组、两个任务根及当前执行 Agent 引用哈希；同时生成不可迁移记录的精确主键删除清单。
 2. 锁定指定保留 binding 与另一条 active duplicate；断言一个冲突组、一个保留 binding、一个退役 binding、恰好两个待迁移实时任务，且 identity/runtime/hosting 投影完整。
 3. 仅把这两个任务的实时执行引用迁至保留 canonical Agent，追加迁移事件；不修改原 event，不修改 `owner_jiacn`。
 4. 退役非保留 binding、identity、runtime 与 hosted profile；不物理删除。
-5. 按依赖关系更新全部业务 tenant 为 `0`。每条更新使用快照主键范围、旧值和预期影响行数；不允许“全表无条件更新”。
-6. 提交后读回：所有业务表无非 `0` tenant；不存在活跃重复 persona；两任务都指向保留 Agent；资料/Archive/Chat/Task 的 owner 精确读取成功，交叉 owner 不泄露存在性。
+5. 对每个可迁移行，按父子依赖顺序写入 owner 并将 tenant 更新为 `0`；每条更新使用快照主键范围、旧值和预期影响行数。
+6. 对无法确定 owner、owner 来源冲突或父子关系无法验证的记录，按已生成的精确主键清单从叶子到根删除；不得使用无条件全表删除，且删除数必须等于快照删除集。
+7. 提交后读回：所有业务表无非 `0` tenant；不存在活跃重复 persona；两任务都指向保留 Agent；资料/Archive/Chat/Task 的 owner 精确读取成功，交叉 owner 不泄露存在性；迁移/删除行数与快照完全一致。
 
-DDL 自动提交，DML 事务不跨 DDL。生产 Phase B 脚本在盘点完成后临时生成，连同私有快照、逆向 SQL 和 post-hash 一起保存在受控运行环境，不进 Git。
+DDL 自动提交，DML 事务不跨 DDL。生产 DML 与删除 SQL 在盘点完成后临时生成，连同私有快照、逆向 SQL（仅适用于迁移记录）和 post-hash 一起保存在受控运行环境，不进 Git。
 
 ### Phase C — 严格版本
 
-仅在 Phase B 读回和线上 smoke 成功后，删除旧 owner-tenant 兼容查询与旧索引，启用严格 `tenant_id='0'` 约束。
-
+Phase B 读回成功后部署严格版本：所有业务读写固定 `tenant_id='0'`；读取、更新和删除继续带 owner 谓词。任何残余非 `0` tenant 或未分类记录均阻止版本切换。
 ## 6. 回滚
 
-- Phase A：回滚应用版本；新增 owner/索引可保留，不影响旧数据。
-- Phase B：未提交即回滚事务；已提交仅按私有快照、主键与 post-hash 执行一次受控逆向恢复，不根据猜测恢复重复 binding。
+- Phase A：退出维护窗口前回滚 DDL 以外的未提交变更；新增 owner/索引可保留。
+- Phase B：未提交即回滚事务；已提交的可迁移记录仅按私有快照、主键与 post-hash 执行一次受控逆向恢复，不根据猜测恢复重复 binding。经本次授权删除的不可迁移记录不承诺自动恢复。
 - Phase C：只在 Phase B 结果和线上 smoke 都成功后执行；否则不进入。
