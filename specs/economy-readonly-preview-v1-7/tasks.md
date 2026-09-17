@@ -35,3 +35,9 @@
 ## 2026-09-17 冻结结果
 
 本轮目标完成，证据见`docs/implementation/V1_7_RELEASE_READY_20260917.md`。部署/认证线上验收仍待后续安排，不能标记全部功能上线或归档整个需求。
+
+## 2026-09-17 18:15 发布后增量
+
+API18:08、Web18:11已实际部署健康；认证回归发现预览数据503，新增`V1-7-PREVIEW-MYSQL-FIX-20260917`有界修复任务，未标整需求完成/归档。部署runtime Owner与API修复Owner并行，前者独占生命周期、后者独立源码；不另起Reviewer、不生产DML。结果见`docs/implementation/V1_7_LOCAL_RELEASE_RESULT_20260917.md`。
+
+18:22修复归因完成：源码无需改动，生产缺失12表；修复任务进入`waiting_user`，等明确DDL授权而非等待代码/Reviewer。未执行任何生产迁移/数据写入。另2表托管schema缺口单列，不能算全分支已验证。
