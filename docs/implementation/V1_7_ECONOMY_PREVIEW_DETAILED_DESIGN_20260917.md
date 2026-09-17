@@ -26,3 +26,7 @@ API/Web分开并行，Owner自检，不设Reviewer；仅Gradle重型验证和集
 ## 首个实现切片（2026-09-17）
 
 已提交Web只读策略模块与定向测试：`058fe4271b49e9ba4419a8fc6fd58f5dca069287` / tree `823c85842798b992864d1a534f01275ddfcf8cd6`，Owner执行7/7 PASS。支持严格能力校验、禁用交易动作、身份/Agent/请求代次隔离及无Agent卡片上下文。仅此切片完成；尚未push/合develop、未接页面、未发布。证据为`docs/implementation/handoffs/V1-7-WEB-POLICY-20260917.json`；Owner已释放，API/UI/集成任务仍待继续实施。
+
+## 16:02 进度修订
+
+已完成用户授权深度清理，删除29个完成worktree及12个旧Flow二进制副本，约5.68GiB分配块；磁盘满盘问题已解除，API健康200/UP。API/UI两个Owner已实际并行开工，前文“仅剩数MiB、其余待分配”是14时计划快照，不再作为当前阻塞。当前仍未完成1.7集成或发布。详见`DISK_DEEP_CLEANUP_20260917.md`与唯一台账。
