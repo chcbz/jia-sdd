@@ -17,3 +17,10 @@
 11. 部署证据：exact API/Web commit/tree、测试selector/fixture摘要、制品hash、build_origin=local_user_authorized、冻结release/1.7.0、健康及认证新页/读API验证；不包含真实扣款/生产DML或付费探针。
 
 用户最终只需：登录查看钱包→试算预算→浏览技能权限→选择自己的Agent看证据状态→查看租金说明，再换另一个账号确认隔离。技术测试与发布由Owner先完成，不要求用户代做后端测试。
+
+
+## 2026-09-17 源码/构建验收补充（不是线上验收）
+
+API `9aaf2a31`：完整新增preview26、scope/catalog/schema12、制品安全64均通过；bootJar成功。Web `7c49029`：全量2195通过/2既有pending/0失败，policy7通过，生产构建成功。九类契约静态对齐，MockMvc/Spring事务、实际H2 SQL、Vue组件和异步隔离均有执行证据。前后端已合远端develop并冻结release/1.7.0。
+
+矩阵1–10已有相应源码/隔离fixture证据，不等于各项线上认证读取均已完成；真实移动设备、生产MySQL和双身份上线读取仍待部署后验证。矩阵11仅制品/exact分支部分完成，健康与生产新页部分未执行。默认agent全量测试仍有历史编译债，因此仅声明约定changed-scope API验证，不声明全API通过。详见`docs/implementation/V1_7_RELEASE_READY_20260917.md`及本机交付包。

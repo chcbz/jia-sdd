@@ -110,3 +110,19 @@ features/actions.estimate由开关和已实现读取能力计算；不可将未�
 本请求启动开发，不等于此刻操作生产。发布阶段依现有授权、实际健康、进程归属和互斥由指定Owner执行；先API新增读接口再Web新入口，保存可恢复安装。新只读开关需在发布包配置中明确启用并做认证验收，不能以默认false的隐藏页声称交付可用；旧交易开关保持发布前值，不因预览被启用。旧release/1.6.0不移动。故障优先关闭新入口，不关闭旧聊天/阅读服务；恢复版本时记录真实产物，不以无关性能阈值阻止服务。
 
 风险：①把老quote当无副作用读取；②scope查询/安装“成功”误判；③不存在的表被伪空处理；④金额精度；⑤新开关误启收费；⑥磁盘实际不足。前五项用最小相关测试；磁盘按实际构建/制品/恢复副本测算，不增加任意10G门槛。2026-09-17盘点时仅18MiB可用且在下降，因此目前只执行文档和轻量切片，未启动构建；需查明增长来源并由其Owner处理后安排构建，不能在没有空间证据时承诺发布时间。
+
+
+## 2026-09-17 集成修订：既有写入源的身份域
+
+首次候选将所有表的tenant统一设为0，主控按既有写入源核对后发现钱包域不适用；已在API候选`8e2e494e`拆分，不能以“单租户”推导所有经济数据都共用tenant。此修订澄清第3/5节的scope含义，不更改响应合同、不迁移历史数据。
+
+| 数据域 | 实际tenant来源 | 额外隔离 | 对照实现 |
+| --- | --- | --- | --- |
+| 钱包/流水 | 受信JWT `jiacn`，不是0 | exact client_id + sub payer | `economy/jia-economy-service/.../api/EconomyWalletController.java#subject` |
+| 技能目录/权益/安装 | 部署tenant `0` | 目录为client内已发布商品；Agent证据另核实owner及sub | `agent/jia-agent-service/.../skill/`沿用`HostingRentHttp.actor` |
+| 托管参考方案/租约 | 部署tenant `0` | exact client；个人租约另验证当前Agent拥有关系 | `agent/jia-agent-service/.../hosting/HostingRentHttp.java#Actor` |
+| Agent registry/hosted profile | 部署tenant `0` | exact client_id + owner_jiacn + canonical_agent_id/binding | `AgentServiceImpl`及`HostingRentOwnerResolver` |
+
+`jiacn`绝不从缺省tenant推导；Agent查询前还须通过持久身份解析证明`sub`与owner匹配。拒绝“找不到自己的记录就退到tenant0/其他client”的回退；合法既有canonical0记录不等于无主legacy记录可自动认领。同client目录共享是既有市场语义，不是共享钱包/Agent私有权益。新测试需分别验证各域，不能用单一tenant mock掩盖空读。
+
+本轮用户目标是自检合组件develop并冻结新的release分支。上线、启用新开关、认证业务读取与用户验收分别记录；不能把尚未部署写成已交付，也不要求先操作生产才能生成release候选。

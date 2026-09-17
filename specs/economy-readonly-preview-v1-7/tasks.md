@@ -18,9 +18,10 @@
 - [x] 两个语音任务deferred、保留404证据，不阻塞新版本。
 - [x] 盘点已有API/Web，不重复开发交易内核。
 - [x] 首个policy切片已提交、定向测试通过：`058fe4271b49e9ba4419a8fc6fd58f5dca069287` / tree `823c85842798b992864d1a534f01275ddfcf8cd6`，Owner执行Node定向7/7 PASS。尚未push/合develop/接UI/发布。
-- [ ] 新API/页面完整实现并相关测试通过。
-- [ ] 集成exact SHA、全部相关回归通过，前后端均合develop。
-- [ ] 冻结release/1.7.0及本地制品上线健康通过。
+- [x] 新API/页面实现并指定相关测试通过；非全API套件，历史测试编译债单列。
+- [x] 集成exact SHA、约定改动范围回归通过，前后端均合远端develop。
+- [x] 本地相关测试/构建通过，冻结新的release/1.7.0（本轮目标）。
+- [ ] 后续执行已授权部署时，记录线上健康与认证业务读取（不与生成release分支混淆）。
 - [ ] 通知用户可验收，按acceptance场景确认。
 
 ## 墙钟时间估计（不是传统人天、不是承诺）
@@ -30,3 +31,7 @@
 ## 2026-09-17 16:02 执行增量
 
 深度清理完成，原“仅数MiB可用”的构建前问题已解除（清理结果见`docs/implementation/DISK_DEEP_CLEANUP_20260917.md`）。API Owner Shannon与Web Owner Curie已分别claim并开始实现，采用独立worktree；前文“尚未分配”仅为初始快照。实际测试/候选/合入/发布仍需逐项证据，不把开工当完成。
+
+## 2026-09-17 冻结结果
+
+本轮目标完成，证据见`docs/implementation/V1_7_RELEASE_READY_20260917.md`。部署/认证线上验收仍待后续安排，不能标记全部功能上线或归档整个需求。
