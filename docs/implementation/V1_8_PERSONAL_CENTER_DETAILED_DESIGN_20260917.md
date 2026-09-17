@@ -30,3 +30,7 @@
 - 基线/候选/发布状态：`/home/isp/wsps/cyf/specs/personal-center-navigation-v1-8/integration.yaml`
 
 N0契约盘点→N1入口与N2个人中心并行→N3集成→N4发布/回归。无独立Reviewer、无全局Writer队列。估算8–12小时墙钟净执行窗口（包含常见返修余量），资源排队/用户验收另计；当前尚未开工，无固定上线承诺。
+
+## 2026-09-17 20:34 开发启动（覆盖上文未启动状态）
+
+用户已同意本版方案，要求先建当前版本BUG修复分支再开发。API/Web维护分支`codex/bugfix/1.7.0`均从既有精确发布SHA建立并推送远端。两个1.8 Web实现包已在独立worktree认领，唯一台账登记`V1-8-HALL-NAV-20260917`及`V1-8-PROFILE-NAV-20260917`；集成任务等待自检candidate。未操作生产，release/1.8.0未创建；精确分支证据见 `/home/isp/wsps/cyf/docs/implementation/V1_8_KICKOFF_20260917.json`。
