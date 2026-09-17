@@ -38,3 +38,10 @@ release/1.8.0已在API/Web创建并推送；源码/构建/隔离集成验证通�
 返修历史不抹除：首轮reader测试harness缺router依赖；浏览器发现刷新身份未rehydrate而使预览入口缺失，已补产品修复/回归；横屏入口label被隐藏也已修复。仿真orientation缺配置、v-show断言检查DOM而非可见性、CDP取消请求误归类为JS异常属于runner问题，已分别归因并在修改输入后重验。最终构建在全新目录，避免旧hash文件混包。
 
 持久证据：`/home/isp/wsps/cyf/deliverables/releases/v1.8.0-local-ready-20260917/`，含原失败记录、最终Web/API结果、精确制品、远端readback、清单与SHA256SUMS。未复用历史明文账号、未访问生产API、未执行Provider/生产DML/服务操作。
+
+
+## 随1.9.2实际交付（覆盖上述未部署历史）
+
+按用户要求1.8未单独发布，已统一包含在1.9.2。新exact API/Web及构建/发布证据见integration.yaml#latest_bundled_delivery；真实OAuth API46/本轮完整Chromium113通过，包括个人中心入口/导航/刷新/横竖屏与经济预览。未使用响应mock，未激活付费/交易/语音；第二真实账号/client与真机仍未新增验收证据。
+
+原1.8冻结branch/pins与隔离测试历史保持不变；用户最终验收等待回执，详见 `/home/isp/wsps/cyf/docs/implementation/V1_9_2_RELEASE_RESULT_20260918.md`。

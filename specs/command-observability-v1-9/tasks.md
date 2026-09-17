@@ -9,3 +9,8 @@ Owner/gate/exact仅在TASKS.yaml#runtime_ledger_json登记。不是新的全局W
 ## 收尾结果
 
 三包实现/范围内验证完成：API candidate ca74c558，Web最终41ca32b（包括主控集成修复），develop/release已冻结。主控已封存持久制品/测试/失败归因/远端回执，下一步仅通知用户安排发布；真实部署/启用/用户验收不在本轮完成声明中。
+
+
+## 发布与回归闭环补充
+
+V1-9-RELEASE-20260918完成1.9.1；V1-9-2-OAUTH-ROUTE-FIX-20260918 / V1-9-2-RELEASE-20260918 / V1-9-2-ONLINE-REGRESSION-20260918完成1.9.2修复、实际发布与API46/浏览器113回归。当前仅V1-9-2-USER-ACCEPTANCE-20260918等待用户本人验收。exact/Owner/gate仍只以唯一运行台账为准，两个执行Agent已关闭。

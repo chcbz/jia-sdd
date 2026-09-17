@@ -1,15 +1,15 @@
 feature_id: command-observability-v1-9
 version: 1.9.0
-status: integration-ready
-user_authorization: implement_1_9_bundle_1_8_do_not_release_1_8_separately_notify_when_ready
+status: released
+user_authorization: release_combined_1_8_1_9_bugfix_then_regress_and_notify_user_acceptance
 scope: privileged_readonly_command_operations_dashboard
 new_http_apis: 1
 schema_changes: 0
 production_flags_or_authority_grants: not_authorized
 runtime_ledger: docs/implementation/TASKS.yaml#runtime_ledger_json
 pinned_revisions:
-  api_commit: ca74c55899fe91dbecb138a8a5bafe6481176b13
-  api_tree: 7335b3c5bd63a733e651dea1f160d5560e4967fa
+  api_commit: e15f7020bf77153912aafce15fc11c67b2f06e11
+  api_tree: 551c452f1a81bbc6f6b198452891d2189b967fd8
   web_commit: 41ca32b72fda97e8066783dc702b1218305ca395
   web_tree: 0edb17f4f5420670630ab2b0f713a644a8af4bbd
 base:
@@ -17,25 +17,45 @@ base:
   web_commit: 7099b176e06e2322c6a79f258a4ad74d6221c358
 verification:
   source: passed_changed_scope
+  original_counts_note: web308_policy7_isolated99_on_unchanged_web_and_api10_verifier64_are_preserved_prior_evidence_not_fresh_1_9_2_tests
   web_related_tests: 308
   web_policy_tests: 7
   api_capability_and_d09_tests: 10
   public_artifact_verifier_tests: 64
   isolated_browser_checks: 99
   full_api_suite: not_claimed_legacy_compileTestJava_debt
-  live_api_db_rabbit_or_real_devices: not_claimed
+  live_api_scoped_checks: 46
+  live_browser_checks: 113
+  fresh_oauth_identity_security_classpath_tests: 15
+  live_db_admin_rabbit_or_real_devices: not_claimed
+  observed_live_capability_reason: FORBIDDEN
+  ops_read_activation: not_performed
 release:
-  branch: release/1.9.0
-  status: candidate_ready_not_deployed
+  version: 1.9.2
+  branch: release/1.9.2
+  status: deployed_healthy_scoped_regression_passed
   remote_refs_verified: true
-  includes: [1.8.0, 1.9.0]
+  includes: [1.8.0, 1.9.0, existing_live_hotfixes, oauth_resource_route_collision_fix]
   standalone_1_8_release: cancelled_by_user
   preserve_release_1_8_branch: true
-  deployment_executed: false
+  deployment_executed: true
+  patch_web_operation: reused_unchanged_1_9_1_install
   build_origin: local_user_authorized
   flow_run: null
-acceptance: pending_deployment_and_user
-readiness_evidence: docs/implementation/V1_9_RELEASE_READY_20260917.md
-local_bundle: deliverables/releases/v1.9.0-local-ready-20260917/readiness.json
+acceptance: pending_user_only
+readiness_evidence: docs/implementation/V1_9_2_RELEASE_RESULT_20260918.md
+local_bundle: deliverables/releases/v1.9.2-local-20260918/release-outcome.json
 root_gitlinks: freeze_branch_pins_exact_pair_primary_dirty_checkouts_preserved
-root_freeze_branch: codex/v1-9-sdd-freeze-20260917
+root_freeze_branch: codex/v1-9-2-sdd-release-20260918
+
+historical_candidates:
+  release_1_9_0:
+    api_commit: ca74c55899fe91dbecb138a8a5bafe6481176b13
+    api_tree: 7335b3c5bd63a733e651dea1f160d5560e4967fa
+    state: preserved_frozen_not_deployed_superseded_by_live_hotfix_preservation
+  release_1_9_1:
+    api_commit: 14f3ec867397c29eac24128e7ce0da8f832b1542
+    state: deployed_then_superseded_by_regression_fix_original_failures_preserved
+regression_evidence: deliverables/releases/v1.9.2-regression-20260918/final-summary.json
+source_verification_evidence: deliverables/releases/v1.9.2-verification-20260918/
+delivery_manifest: docs/implementation/handoffs/V1_9_2_DELIVERY_20260918.json
