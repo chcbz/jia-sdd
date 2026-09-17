@@ -1,0 +1,96 @@
+{
+  "schema": "cyf-voice-activation-readiness-v1",
+  "as_of": "2026-09-17T14:29:05.244577",
+  "status": "NOT_READY_FOR_USER_ACCEPTANCE",
+  "task_id": "V1-6-VOICE-ACTIVATION-20260917",
+  "models": {
+    "method": "GET",
+    "target": "https://codex.chcbz.net/v1/models",
+    "redirect_policy": "NEVER",
+    "proxy_policy": "DIRECT_ONLY",
+    "http_status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "request_id_present": false,
+    "body_size": 669,
+    "body_sha256": "ecb4d7010f0d2c748c3bffaf82d0e9becc8ccdd92e64ff9d7cedede8f050d434",
+    "safe_error_code": "",
+    "model_count": 8,
+    "whisper_1_listed": false,
+    "gpt_4o_mini_tts_listed": false,
+    "model_ids": [
+      "codex-auto-review",
+      "deepseek-v4-pro",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-image-2"
+    ]
+  },
+  "provider_probe": {
+    "schema": "cyf-provider-audio-probe-v1",
+    "authorization_file_sha256": "910a938e2180fc63613530c2c9b883bf2f53741c77dc8ffbf40ed6d15a483aaf",
+    "host": "https://codex.chcbz.net/v1",
+    "redirect_policy": "NEVER",
+    "proxy_policy": "DIRECT_ONLY",
+    "automatic_retries": 0,
+    "tts_requests": 1,
+    "stt_requests": 0,
+    "overall": "TTS_FAILED_STT_NOT_INVOKED",
+    "tts": {
+      "operation": "POST /audio/speech",
+      "target": "https://codex.chcbz.net/v1/audio/speech",
+      "invoked": true,
+      "success": false,
+      "http_status": 404,
+      "content_type": "text/plain",
+      "body_size": 18,
+      "body_sha256": "99eb12f2ab3c4866a353e098ffa3cb7a967e617c49b98480394ec5d8ea92b094",
+      "safe_error_code": "",
+      "safe_error_type": "",
+      "transport_error": "",
+      "server": "nginx/1.12.2",
+      "via": "",
+      "request_id_present": false,
+      "peer_cert_sha256": "5540a1870312cba4c89e666fa4b788e1c132e3cf3db5aeb9de906669f9037ef9",
+      "transcript": ""
+    },
+    "stt": {
+      "operation": "POST /audio/transcriptions",
+      "target": "https://codex.chcbz.net/v1/audio/transcriptions",
+      "invoked": false,
+      "success": false,
+      "http_status": -1,
+      "content_type": "",
+      "body_size": 0,
+      "body_sha256": "",
+      "safe_error_code": "",
+      "safe_error_type": "",
+      "transport_error": "",
+      "server": "",
+      "via": "",
+      "request_id_present": false,
+      "peer_cert_sha256": "",
+      "transcript": ""
+    }
+  },
+  "production_changed": false,
+  "credentials_exposed": false,
+  "required_external_prerequisite": "A voice-capable connection and credential, or repaired existing gateway audio routes; never reuse gateway key on another host.",
+  "frontend": "Deployed voice flag false; source complete, activation build waits for actual API proof.",
+  "evidence": [
+    {
+      "path": "/var/tmp/cyf-v1-6-voice-activation-20260917-api/gateway-models-summary.json",
+      "sha256": "3fdd104d812cd5eb1e1d4ba1f4d75b8ac4fe4485592022e5910ca9acbf3faf7f"
+    },
+    {
+      "path": "/var/tmp/cyf-v1-6-voice-activation-20260917-api/provider-audio-probe-summary.json",
+      "sha256": "0c104703b79c090b389500ab6541de8103c00b73b3954b942d23f73dd0b0c999"
+    },
+    {
+      "path": "/var/tmp/cyf-v1-6-voice-activation-20260917-api/provider-probe-controller-authorization.json",
+      "sha256": "910a938e2180fc63613530c2c9b883bf2f53741c77dc8ffbf40ed6d15a483aaf"
+    }
+  ]
+}
