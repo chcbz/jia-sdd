@@ -27,4 +27,12 @@
 3. B01–B08必须取得明确授权后由真实Agent/Provider执行：Provider账户或测试Agent、非敏感测试文件、可外发数据范围、调用次数/用量或金额上限。当前没有该授权，因此没有调用Provider，也没有虚构图片或文件修改成功。
 4. 当前生产API的标准loopback health检查在2026-09-19返回401（详见`handoffs/V1_13_1_RUNTIME_ONLINE_BASELINE_20260919.json`）；当前Web生产配置仍以`VITE_JUYITING_TASK_WORKSPACE_ENABLED=false`保持未验收功能隐藏。须先恢复可验证健康、完成A/B并以显式true构建，再冻结`release/1.13.1`、发布并执行C01–C03。
 
+
+## 2026-09-19 15:06 只读推进
+
+- Runtime `c5b1ea4…` 的 323 项测试通过且已安装字节匹配；API/Web源码候选未改变。
+- API生产健康问题已收窄：运行中存在10个 `SecurityFilterChain`、`ActuatorSecurityConfiguration` 实例和 `@Order(HIGHEST_PRECEDENCE)` 字节码，但 `/actuator` 与 `/actuator/health` 仍由 `DefaultSecurityConfig` 返回401。未对生产JVM、配置或进程做写入/重启；必须先以可重复的集成回归定位链选择异常。
+- Flow实时复查仍只见API Run 88、Web Run 142等预调度失败。远端流水线保留 `develop` push触发且当前均无deploy stage；未对相同输入重试，也没有覆盖远端配置。
+- 因此实现候选完整性不等于可发布：仍缺精确构建/制品、健康修复、A类端到端验收及经明确授权的B类真实Provider验收。
+
 唯一运行台账：`docs/implementation/TASKS.yaml#runtime_ledger_json`。

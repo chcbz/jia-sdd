@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "verifiedAt": "2026-09-19T14:49:00+08:00",
+  "verifiedAt": "2026-09-19T15:06:38+08:00",
   "feature": "juyiting-workspace-loop-v1-13-1",
   "observations": {
     "runtime": {
@@ -27,6 +27,23 @@
         "httpStatus": 401,
         "serviceStatus": "HEALTH=NOT_READY",
         "responseClassification": "authenticated API error; not health success"
+      },
+      "securityDiagnostic": {
+        "observedAt": "2026-09-19T15:06:38+08:00",
+        "requestPaths": {
+          "/actuator": 401,
+          "/actuator/health": 401,
+          "/actuator/health/": 401,
+          "/actuatorx/health": 401
+        },
+        "responseOwner": "cn.jia.user.config.DefaultSecurityConfig",
+        "runtimeEvidence": {
+          "securityFilterChainInstances": 10,
+          "actuatorConfigurationInstancePresent": true,
+          "actuatorSecurityFilterChainBytecodePresent": true,
+          "actuatorBeanOrder": -2147483648
+        },
+        "interpretation": "The deployed ActuatorSecurityConfiguration is instantiated and its highest-priority bean annotation is present, but actuator requests still reach DefaultSecurityConfig. This attributes the release preflight failure to live security-chain selection/order behavior; it does not prove a source fix or authorize a runtime mutation."
       }
     },
     "web": {
@@ -38,5 +55,5 @@
       "onlineAssetSha256": "618bc051fdae0595f29698ca4ba29734916f077f8970d01e5e09a6743fdc2a4e"
     }
   },
-  "conclusion": "The runtime candidate is actively installed, but the API and Web 1.13.1 candidates are not deployed. The current production API's canonical loopback health endpoint returned 401, so this observation cannot be used as a successful release health check. It is a release preflight issue to resolve before any 1.13.1 deployment claim; it does not prove an API candidate source failure."
+  "conclusion": "The runtime candidate is actively installed, but the API and Web 1.13.1 candidates are not deployed. The current production API canonical loopback health endpoint returned 401. Read-only live diagnostics confirm that the deployed actuator security configuration is instantiated and has a highest-priority bean order, yet actuator requests reach DefaultSecurityConfig; this is an unresolved security-chain selection/order release preflight defect. It does not prove an API candidate source failure and no runtime mutation was performed."
 }
