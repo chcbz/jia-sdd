@@ -1,27 +1,27 @@
 {
   "schemaVersion": 1,
-  "verifiedAt": "2026-09-19T14:35:00+08:00",
+  "verifiedAt": "2026-09-19T14:33:55+08:00",
   "feature": "juyiting-workspace-loop-v1-13-1",
   "component": "web",
-  "commit": "68f9eab7e3bdec7f3d711b735d2767085feb2d3f",
-  "tree": "6c96e8dc8d1413718d06f47accdeeb1021802e72",
+  "commit": "36d6ede9911bfc131fce6ba3b351745caba29c8f",
+  "tree": "f348d2412456ef3b7b562d99484fa82123a031de",
   "branch": "develop",
   "checks": [
     {
-      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec tests/personal-workspace-task-links.test.js tests/personal-workspace-task-material-links.test.js tests/juyiting-task-workspace-integration.test.js tests/juyiting-task-workspace-panel.test.js tests/juyiting-task-workspace-state.test.js tests/juyiting-task-workspace-wiring.test.js tests/output-delivery-rb05.test.js tests/formal-delivery-od10.test.js",
+      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter dot tests/personal-workspace-task-links.test.js tests/personal-workspace-task-material-links.test.js tests/juyiting-task-workspace-integration.test.js tests/juyiting-task-workspace-panel.test.js tests/juyiting-task-workspace-state.test.js tests/juyiting-task-workspace-wiring.test.js tests/output-delivery-rb05.test.js tests/formal-delivery-od10.test.js tests/personal-workspace-conversation-links.test.js tests/juyiting-conversation-material-links.test.js tests/personal-workspace-execution.test.js tests/juyiting-hall-conversation.test.js tests/juyiting-component-behavior.test.js",
       "result": "PASS",
-      "summary": "80 passing"
+      "summary": "206 passing"
     },
     {
       "command": "node tests/output-preview-pdf.test.mjs && node tests/output-preview-document.test.mjs",
       "result": "PASS"
     },
     {
-      "command": "node --check src/composables/useOutputs.js && node --check src/composables/usePersonalWorkspaceExecution.js && git diff --check",
+      "command": "node --check src/composables/usePersonalWorkspaceConversationLinks.js && git diff --check",
       "result": "PASS"
     }
   ],
-  "scope": "Test fixtures/mocks now cover the authenticated conversation deliverables directory, strict task-artifact fields, controlled OUTPUT viewing, identity-reset disabled attach state, and the Hall account-router/outcome-panel imports.",
+  "scope": "Confirmed execution now persists every selected exact input version to the authenticated conversation before the unique runtime request; fixed conversation material can be read and explicitly detached without claiming revocation of an already-started execution snapshot. The SFC test loader now stubs authenticated delivery adapters, including the workspace task-material component, so the broader Hall component regression remains executable.",
   "releaseState": "NOT_PUBLISHABLE",
   "remainingEvidence": [
     "The exact Web commit still needs a successful authoritative Flow test/build/artifact/deployment run and online verification.",
