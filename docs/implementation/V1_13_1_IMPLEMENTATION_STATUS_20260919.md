@@ -2,6 +2,17 @@
 
 状态：**实现候选，非发布、非MVP验收通过通知。**
 
+## 2026-09-19 20:35 接管核对（取代旧摘要，不改写历史）
+
+- 用户要求由线程 `01a0b99a-ff54-7a10-94b9-159894504d90` 接管执行。原线程在任务服务中为 `notLoaded`；交接时未见 Gradle JVM。当前执行台账仍是 `/root/.codex/worktrees/927b/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json`，不在主 checkout 创建第二台账。
+- 之前只读取已提交分支得到的 15:13 状态不完整：该工作区的未提交实施记录已到 18:48，API候选提交已到19:08。旧“缺少repoUsername、无正式本地包”阻塞已被后续实际本地构建解决，不能继续据此报告停滞。
+- 实时远端 readback：API develop=`3e492a20cea25eb2d2ee053c20f4cba7b3700198`；Web develop=`12f50eb74648577547c5a8e4c98c0339eb54e2ef`；两仓均未返回 `release/1.13.1`。
+- API待验证候选=`273db5cf0bff45f91f20f8e2294937fd292b461f` / tree `785bea25b2520c19240b3190f7858b1d462038b9`。它相对已构建3e492a20含生产迁移SQL校验空白归一化修复，**旧JAR不能当作此候选的精确构建证据**。
+- 本轮并行路径：无Provider验收执行、生产POI依赖一致性修复、真实FilterChainProxy健康回归、Web浏览器操作回归；Owner自检，无独立Reviewer。新结果只落本轮独有目录，不改旧证据和生产进程。
+- `gpt_test_runner` 模型路由在执行前返回 `502 unknown provider for model gpt-5.4-mini`，没有产生测试结果；改用继承主线程模型的验证专用worker，不盲重试坏路由。
+- 本轮不因构建/单测通过宣称A/B/C全通过；Office文本抽取仍不是PPT逐页/Excel分表预览，真实Provider与资料外发仍未获明确范围授权。
+- 20:43实际健康只读复查：文档所指主机上`127.0.0.1:10018`拒绝连接，`ss`无监听；这不是下午401的延续，也不是新候选失败证明。已向台账中的旧发布任务`V1-10-PERSONAL-WORKSPACE-20260918`记录归属告警；本线程没有重启/操作生产。
+
 ## 已实现的闭环能力候选
 
 - 工作空间固定版本可关联本人悬赏；悬赏可回到空间选材并进入对应厅内议事。
@@ -36,3 +47,84 @@
 - 因此实现候选完整性不等于可发布：仍缺精确构建/制品、健康修复、A类端到端验收及经明确授权的B类真实Provider验收。
 
 唯一运行台账：`docs/implementation/TASKS.yaml#runtime_ledger_json`。
+
+## 2026-09-19 15:41 Flow 平台归因更新
+
+- API 当前候选已推进为 `1917ad2c…` / tree `1f576869…`（health fallback 修复）；Web 仍为 `36d6ede…` / tree `f348d241…`。
+- 为排除失效的 Gitee 服务连接，仅将两条 Flow 的源码类型改为公开 `git`，移除了服务连接证书；readback 均为 APPLIED，未增加部署阶段、未修改测试/构建/制品步骤。
+- Web 在这一**实质配置修复**后唯一启动 Run 143，仍在 1–3 秒内、源码 checkout 前终止：构建与扫描两个 job 的完整日志均为空（`more=false`），source commit 仍为空。故该修复不能证明源码失败，也不能继续盲重试或再启动同平台条件下的 API Run。
+- 当前的实际阻塞是 Flow runner/job 创建或平台侧 source binding 诊断；细节见 `handoffs/V1_13_1_FLOW_PLATFORM_BLOCKER_20260919.json`。**1.13.1 仍不可发布**；此外 B01–B08 仍须用户明确的 Provider、测试文件、数据外发与费用上限授权。
+- 只读核验既有运维流水线 `5264702` 的最新 Run 9 也为 FAIL 且 job 日志为空；它不是功能源码验证，但支持“当前 Flow job 可观测性/执行环境异常”需由平台侧处理的结论。
+
+## 2026-09-19 本地构建授权执行结果
+
+用户已授权在云效不可用期间改用本地构建。本次仅使用任务自有 tmpfs 依赖和临时构建目录，未调用真实 Provider、未写入生产数据、未部署。
+
+- API 候选为 `25295cb1910beee29e0b95a181427f31b7dbf3b0` / tree `73b185d933b06d880525355639543bf6b6c8110a`；经 orchestrator 串行执行 `:agent:jia-agent-mapper:test` 的7个 owner-scope mapper/DAO 定向类，结果 `BUILD SUCCESSFUL`（45秒）。
+- Web 候选为 `52b22d5e34ea56f1b82ae76b126834b9019c6607` / tree `ea873ae68544ebb7991d9ef8770d08d6268c5480`；1.13.1 工作空间/议事/交付物13个定向 Mocha suite 通过，`206 passing (12s)`。构建期间临时 `web/node_modules` 链接已在每次命令结束后清理，Web 工作树保持干净。
+- Web 正式 Vite 构建**尚未成功**：256 MiB 与384 MiB V8旧生代均在模块转换阶段触发可诊断的heap OOM；解除本任务闲置 Gradle daemon 后，512 MiB/8 MiB半空间方案完成1,240个模块转换并进入 `rendering chunks`，仍被内核全局 OOM 杀死（约573,240 KiB匿名RSS）。其99 MiB临时半成品不含 `dist/index.html`，已作为无效任务临时输出删除，不能视为制品。
+- 当前宿主根盘仅约91 MiB可用，无法保存约99 MiB的Web制品；tmpfs制品会占用同一紧张内存。需在有足够额外内存与至少实际制品大小持久空间的本地构建机上，对上述精确Web SHA重新执行生产构建，才能生成可校验制品并继续 release/1.13.1。详见 `.evidence/v1-13-1-w09/local-web-vite-final-stage-host-oom-attribution-20260919.md`。
+
+因此，1.13.1 仍处于“实现候选、局部本地验证通过、正式前端制品受宿主容量阻塞”的状态；没有创建 `release/1.13.1`，没有发布，也没有发送验收通过通知。
+
+## 2026-09-19 本地构建最终推进（18:02）
+
+云效暂不可用期间，按用户授权继续使用本地构建；未调用真实 Provider、未写生产数据、未创建 `release/1.13.1`、未部署。
+
+- Web 精确候选已更新为 `12f50eb74648577547c5a8e4c98c0339eb54e2ef` / tree `04ca7ed9016125f4fed40cac8c26b406514e4324`：13 个工作空间/议事/交付物定向 Mocha suite `206 passing (11s)`；Vite 生产构建通过（1,240 modules，29.54s）。不可变 Web 包为 `deliverables/releases/v1.13.1-local-candidate-20260919/web/cyf-web-12f50eb74648577547c5a8e4c98c0339eb54e2ef-04ca7ed9016125f4fed40cac8c26b406514e4324.tar.gz`，SHA-256 `2da3d21eb48bdec08551bf01a82da54c4d9a81af411b1176d462d8a0a137c496`；本地构建溯源明确 `build_origin=local_user_authorized`。
+- API 精确候选为 `25295cb1910beee29e0b95a181427f31b7dbf3b0` / tree `73b185d933b06d880525355639543bf6b6c8110a`：7 个 owner-scope mapper/DAO 定向类已通过。` :starter:bootJar` 的两次受控单 worker 本地尝试分别以 `-Xmx384m` 和 `-Xmx256m` 执行，均被内核 `global_oom` 杀死 Gradle daemon；第二次已推进更多模块但仍未形成 JAR。证据见 `.evidence/v1-13-1-w09/local-gradle-bootjar-r10-oom-attribution-20260919.md` 与 `.evidence/v1-13-1-w09/local-gradle-bootjar-r11-oom-attribution-20260919.md`。
+- 运行台账 `V1-13-1-W09-FORMAT-PREVIEW-20260919` 已按两次同根因失败进入 `blocked_root_cause`。禁止在同一宿主上盲目第三次重试；需提供实际可用内存更充足的本地构建资源/主机后，对相同 API SHA 重跑 `:starter:bootJar`，生成并校验 API 不可变制品，才能继续合入 develop、冻结 release 分支与发布验收。
+
+因此当前是：**Web 本地候选制品完成；API 正式制品受本机构建内存阻塞；1.13.1 不可发布。**
+
+## 2026-09-19 18:26 本地候选制品与 develop 集成
+
+- API 已完成本地分段编译、正式 `:starter:bootJar` 与 bootJar 内置 public-artifact verifier。精确制品为 `25295cb1910beee29e0b95a181427f31b7dbf3b0` / tree `73b185d933b06d880525355639543bf6b6c8110a`，JAR SHA-256 为 `73253f02b69321205dad40a2dd6a23ef0db3cce17d157008c0a4ab6f3c9da69a`；已完成 ZIP CRC、安全路径、禁止开发配置/私钥类文件与启动类存在性复核。
+- API `develop` 已从 `1917ad2c…` fast-forward 至精确候选 `25295cb…` 并完成远端 readback；Web `develop` 已从 `36d6ede…` fast-forward 至精确候选 `12f50eb…` 并完成远端 readback。两者均未 force push。
+- 双制品与本地授权溯源已密封在 `deliverables/releases/v1.13.1-local-candidate-20260919/`；综合 readback 为 `develop-integration-readback.json`。这是**可验证的本地构建候选**，不是 release 分支、生产部署或线上验收通过通知。
+- 尚未创建 `release/1.13.1`，也没有部署：仍须完成 A01–A20 端到端验收；B01–B08 仍需用户明确真实 Provider/测试文件/数据外发范围/调用或费用上限授权；功能开关与 C01–C03 上线回归也必须在上述条件完成后推进。
+
+## 2026-09-19 本地 A 类隔离回归（18:41）
+
+- API candidate 已推进到 `3e492a20cea25eb2d2ee053c20f4cba7b3700198` / tree `321e453042f1f79b1b075e12f98ca0041620e77c`。为避免默认 `test` 在 selector 生效前编译全部历史、已过期的 test source，`jia-agent-service` 增加独立且可审计的 `v1131Regression` source set；默认 suite 未被修改或掩盖，历史 owner-scope test 债务仍保留为单独问题。
+- 通过 orchestrator 的本地 Gradle 命令 `:agent:jia-agent-service:v1131Regression` 成功：8 个闭环相关测试类、67 tests、0 failed / 0 skipped（安全运行时15、个人工作空间执行17、正式交付决定3、会话成果读取8及其余闭环 ACL/关联/成果测试）。命令证据缓存 key：`257b51481dec3e7bf9d48b60318135abec8bbab568fe9fc2b7a55f0f18f2c073`；构建来源仍为 `local_user_authorized`。
+- 此回归覆盖固定版本资料、owner/runtime scope、任务执行、成果发布/正式交付、会话读取、改稿和部分拒绝路径；它不是 A01–A20 全部端到端 PASS，更不替代 B01–B08 的真实 Provider 验收。当前仍不调用 Provider、不创建 release 分支、不部署。
+
+## 2026-09-19 本地构建候选最终同步（18:48）
+
+云效流水线仍不可用，继续依据本地构建临时授权执行；本次没有调用真实 Provider、没有写入生产数据、没有创建 `release/1.13.1`，也没有部署。
+
+- API 当前精确候选已同步为 `3e492a20cea25eb2d2ee053c20f4cba7b3700198` / tree `321e453042f1f79b1b075e12f98ca0041620e77c`，且远端 `develop` readback 为同一 commit。`v1131Regression` 隔离回归通过：8 个测试类、67 tests、0 failed / 0 skipped；生产包 `:starter:bootJar` 与内置 public-artifact verifier 已通过。
+- 对应不可变 API 候选包为 `deliverables/releases/v1.13.1-local-candidate-20260919/api/cyf-api-3e492a20cea25eb2d2ee053c20f4cba7b3700198-321e453042f1f79b1b075e12f98ca0041620e77c.jar`，SHA-256：`73253f02b69321205dad40a2dd6a23ef0db3cce17d157008c0a4ab6f3c9da69a`。候选清单、API 溯源、develop readback 和 release input 均已更新为该精确 API commit/tree；本地构建来源明确记录为 `local_user_authorized`。
+- Web 仍为已通过的 `12f50eb74648577547c5a8e4c98c0339eb54e2ef` / tree `04ca7ed9016125f4fed40cac8c26b406514e4324`，13 个定向 Mocha suite 为 `206 passing`，Vite 生产包 SHA-256 为 `2da3d21eb48bdec08551bf01a82da54c4d9a81af411b1176d462d8a0a137c496`。
+- W10 的历史 fixture-contract-drift blocker 已在 67/67 成功后清除。它只证明这组无 Provider 隔离回归，不替代 A01–A20 的完整端到端验收；B01–B08 仍需明确 Provider、测试文件、允许外发范围以及调用/费用上限授权。完成 A/B 后才可冻结 `release/1.13.1`，再执行部署及 C01–C03 线上回归。
+
+## 2026-09-19 接管整改（进行中，保留失败）
+
+- 原精确`273db5cf`扩大suite实测164项、27失败，已密封命令/XML/report；事件回放22项来自fixture漏owner或旧tenant预期，成果存储3项来自回读fixture漏owner及把tenant字符`0`错误当作hash URI泄漏。修复保留原scope断言，并新增缺owner/owner大小写污染拒绝用例。
+- Office两项失败是真实POI/XmlBeans二进制不兼容，不是单纯fixture。生产声明同时用了POI3.14解析器和POI5.4 schema；正在统一生产依赖，并移除只在测试classpath排除旧schema的掩盖方式。新增校验直接使用`main.runtimeClasspath`，分别创建DOCX/XLSX/PPTX；该检查依据本次实际NoSuchMethodError，不添加无依据数值门槛。
+- 集成`33882279`在Gradle配置阶段遇到version-provider accessor错误，0测试执行；Owner补丁已修正。随后`38a741c1`配置通过，发现POI5.4移除旧PowerPoint extractor导致生产编译失败，仍是0测试执行；继续按真实API修复，不回到不兼容的混合依赖。
+- 健康候选新增真实HttpSecurity/FilterChainProxy/MockMvc测试，匿名访问仅限health及其子路径；其他管理/业务路由仍受鉴权。尚未执行通过，不能声称生产恢复。
+- 本轮不触发任何真实Provider，不改生产数据，不启动/重启生产服务。
+
+## 2026-09-19 21:14 接管进展
+
+- Web浏览器回归`1883eeb3`已合入远端develop并readback；真实Chromium+mock HTTP有13项动态检查通过、0未定义路由，证据见`V1_13_1_TAKEOVER_WEB_BROWSER_20260919.json`。不把减小layout viewport称为真实键盘验证，不把内部identity clear称为用户退出按钮验收。
+- API集成`51deee5b`已完成POI5 extractor迁移及多页正文/notes/master排除回归。扩大suite实测170项、169通过、1失败、0跳过；Office两项原始运行时失败已通过，剩余replay测试存在旧tenant字面量verify，Owner继续修复。
+- `DefaultSecurityConfigTest`在`38a741c1`已实跑4/4通过（非UP-TO-DATE），涵盖真实fallback FilterChainProxy；专用actuator链及生产classpath专项尚待结果。
+- 所有构建/测试标记`build_origin=local_user_authorized`，没有伪造Flow Run、没有调用Provider或部署。
+
+## 2026-09-19 21:20 健康与生产依赖专项结果
+
+- `51deee5b` 的 starter health 真正执行2/2、production main-runtime POI真正执行2/2，均通过；user health4/4复用`38a741c1`实际执行结果，XML逐字节哈希一致，明确不是再次执行。
+- 最后回放fixture修复已自检并集成为`e97a2769692aed955a47f5cd9906db24d8feacb1` / tree `69f7793dd4667c492a9e94b3614b9c1bd883ac26`；断言继续精确校验tenant/client/owner/task，不删除错误scope攻击用例。最终回归进行中。
+- 健康结果仅证明隔离环境真实FilterChainProxy的专用链与fallback；不代表线上进程恢复，生产health详情暴露配置尚未核验。20:42本机10018无监听的只读观察已发送归属告警，未操作其他任务进程。
+- 即使专项全通过，仍须完成三入口真实API持久化链路与A01–A20、PPT逐页/Excel分表等产品缺口、获授权B01–B08及C01–C03。Provider授权不是剩余工作的唯一阻塞。
+
+## 2026-09-19 21:28 接管整改阶段交付（尚未发布）
+
+- API `e97a2769692aed955a47f5cd9906db24d8feacb1` / tree `69f7793dd4667c492a9e94b3614b9c1bd883ac26`：扩大suite **170/170** 实跑通过，0失败/0跳过；健康4+2、production POI2按Gradle输入未变复用并比对XML摘要；public-artifact-verifier **64/64**实跑通过，`:starter:bootJar`成功。
+- 新API候选251796504 bytes，SHA-256 `cc93e30293efeea9bda9e2925f2635928abc1298ad040ee05f66652824631f4d`，主控重新计算吻合。只引用本轮新产物，不把旧`3e492a20`制品改标签冒充。路径与命令/归档摘要见`handoffs/V1_13_1_TAKEOVER_FINAL_20260919.json`。
+- API develop已非force快进至`e97a2769`并远端readback；Web develop为`1883eeb3`。本次没有重建新Web生产包，旧Web包仍只绑定`12f50eb`。
+- 全部命令已结束，无遗留任务Gradle JVM。没有Flow成功声明、Provider调用、生产数据更改、release分支或部署；此前27项失败和中间构建失败证据仍保留。
+- 下一实施项：补齐A19三入口完整操作与真实API持久化回归、PPT逐页/Excel分表产品缺口，逐项完成A01–A20；B类须明确测试Agent/Provider、非敏感文件、外发范围与费用/调用上限。生产归属/实际健康及C类仍独立未完成，不能把本轮专项绿灯当整版ready。

@@ -1,0 +1,288 @@
+{
+  "kind": "mock-service-browser-regression-not-real-service-e2e",
+  "viewports": [
+    "1440x900",
+    "390x844",
+    "844x390",
+    "390x300-layout-viewport-only"
+  ],
+  "checks": [
+    {
+      "name": "workspace execution preserves explicit v1",
+      "passed": true
+    },
+    {
+      "name": "workspace execution transmits explicit Agent",
+      "passed": true
+    },
+    {
+      "name": "workspace execution preserves instruction",
+      "passed": true
+    },
+    {
+      "name": "revoke preserves grant revision",
+      "passed": true
+    },
+    {
+      "name": "desktop workspace: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "narrow workspace: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "Hall requests map data",
+      "passed": true
+    },
+    {
+      "name": "Hall requests roster data",
+      "passed": true
+    },
+    {
+      "name": "task material preserves fixed v1 INPUT link",
+      "passed": true
+    },
+    {
+      "name": "task material does not create another execution",
+      "passed": true
+    },
+    {
+      "name": "landscape Hall task material picker: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "keyboard-height Hall: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "no unexpected mock routes",
+      "passed": true
+    }
+  ],
+  "assertionCount": 13,
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/agent/roster",
+      "payload": {
+        "pageNum": 1,
+        "pageSize": 100
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/agent/personal-workspace/files",
+      "payload": null
+    },
+    {
+      "method": "GET",
+      "path": "/agent/personal-workspace/executions/capabilities",
+      "payload": null
+    },
+    {
+      "method": "GET",
+      "path": "/agent/personal-workspace/files/file-report",
+      "payload": null
+    },
+    {
+      "method": "POST",
+      "path": "/agent/personal-workspace/executions",
+      "payload": {
+        "conversationId": null,
+        "targetAgentId": "agent-alpha",
+        "taskId": null,
+        "instruction": "根据 v1 制作 PPT",
+        "outputContentMimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "inputs": [
+          {
+            "fileId": "file-report",
+            "version": "1"
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/agent/personal-workspace/executions/execution-a19",
+      "payload": null
+    },
+    {
+      "method": "POST",
+      "path": "/agent/personal-workspace/executions/execution-a19/revoke-inputs",
+      "payload": {
+        "expectedGrantRevision": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/agent/roster",
+      "payload": {
+        "pageNum": 1,
+        "pageSize": 100
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/agent/map",
+      "payload": null
+    },
+    {
+      "method": "GET",
+      "path": "/agent/personas/catalog",
+      "payload": null
+    },
+    {
+      "method": "POST",
+      "path": "/agent/tasks/search",
+      "payload": {
+        "pageNum": 1,
+        "pageSize": 30,
+        "status": "open"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/agent/tasks/status-counts",
+      "payload": {}
+    },
+    {
+      "method": "GET",
+      "path": "/agent/scenes/juyiting-main/snapshot",
+      "payload": null
+    },
+    {
+      "method": "POST",
+      "path": "/agent/tasks/task-a19/recommend",
+      "payload": {}
+    },
+    {
+      "method": "GET",
+      "path": "/agent/personal-workspace/files",
+      "payload": null
+    },
+    {
+      "method": "GET",
+      "path": "/agent/tasks/task-a19/file-links",
+      "payload": null
+    },
+    {
+      "method": "GET",
+      "path": "/agent/personal-workspace/files/file-report",
+      "payload": null
+    },
+    {
+      "method": "POST",
+      "path": "/agent/tasks/task-a19/file-links",
+      "payload": {
+        "fileId": "file-report",
+        "version": 1,
+        "role": "INPUT"
+      }
+    }
+  ],
+  "unexpectedRequests": [],
+  "preflightRequests": [
+    {
+      "path": "/agent/roster",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/files",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/executions/capabilities",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/files/file-report",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/executions",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/executions/execution-a19",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/executions/execution-a19/revoke-inputs",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/roster",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/map",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personas/catalog",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/tasks/search",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/tasks/status-counts",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/scenes/juyiting-main/snapshot",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/tasks/task-a19/recommend",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/files",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/tasks/task-a19/file-links",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/personal-workspace/files/file-report",
+      "origin": "https://127.0.0.1:18480"
+    },
+    {
+      "path": "/agent/tasks/task-a19/file-links",
+      "origin": "https://127.0.0.1:18480"
+    }
+  ],
+  "cleanup": [
+    {
+      "resource": "cdp",
+      "status": "closed"
+    },
+    {
+      "resource": "chromium",
+      "status": "stopped-and-profile-removed"
+    },
+    {
+      "resource": "vite",
+      "status": "stopped"
+    },
+    {
+      "resource": "mock-api",
+      "status": "closed"
+    }
+  ],
+  "coverageLimits": [
+    "390x300 changes the layout viewport only; it is not visualViewport-only keyboard evidence.",
+    "identity cleanup invokes the Pinia API store directly; it is not a user-visible logout-button flow.",
+    "mock service only; no Provider and no real-service E2E."
+  ],
+  "web_commit": "1883eeb3c3d54ac485b7862c0540331195e43808",
+  "web_tree": "ca2a4ce6feb31bc7087a4585d23a1bad8d72bd9b",
+  "source_report_sha256": "29cb017f4522b37e2359133f82f8464187da0bd97192b24b726a41c43af6c695",
+  "remote_develop_readback": "1883eeb3c3d54ac485b7862c0540331195e43808",
+  "production_build": "not_performed_for_test_only_commit",
+  "deployed": false
+}

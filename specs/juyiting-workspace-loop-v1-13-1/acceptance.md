@@ -1,6 +1,6 @@
 # 1.13.1 验收清单
 
-日期：2026-09-19。**以下全部 NOT_RUN，设计文档存在不等于验收通过。** 逐项记录 exact API/Web/runtime SHA/tree、环境、步骤、预期/实测、证据位置；失败保留根因和下一步。模拟Provider仅用于A类，不替代B类真实业务。
+日期：2026-09-19。**A类已有局部自动化执行证据，但完整A/B/C验收尚未通过；设计文档或单测存在不等于端到端验收通过。** 逐项记录 exact API/Web/runtime SHA/tree、环境、步骤、预期/实测、证据位置；失败保留根因和下一步。模拟Provider仅用于A类，不替代B类真实业务。
 
 ## A. 不触发 Provider 的合同/集成验收
 
@@ -82,3 +82,22 @@
 ## 当前结果
 
 A：0/20正式PASS；B：0/8正式PASS；C：0/3正式PASS。W00–W09源码候选及局部静态/运行时自检已存在，但不替代本清单的端到端证据；不复用1.13.0的PNG上传回归去冒充上述新闭环证据。
+
+## 2026-09-19 接管实测增量
+
+- API `273db5cf` / tree `785bea25` 的本地无Provider隔离suite：20类、164项、137通过、27失败、0跳过。失败分布：事件回放22、成果存储3、Office格式校验1、Office预览1。归因与修复正在推进，不能标A类完成。
+- 上述suite涵盖部分A02/A03/A05–A18/A20合同；它不是浏览器→真实HTTP→持久化→runtime的完整链路，因此暂不把任何完整A项从0直接改成PASS。
+- 新浏览器验证必须记录真实Chromium运行及mock/真实服务边界；静态源码断言不冒充A19实际操作。
+- 初次实测摘要及XML摘要：`docs/implementation/handoffs/V1_13_1_TAKEOVER_ACCEPTANCE_INITIAL_20260919.json`。
+
+### 浏览器局部结果（21:04）
+
+Web `1883eeb3` / tree `ca2a4ce6` 已以非force快进推送develop并readback。真实Chromium驱动实际Vue路由，mock HTTP边界：13个动态计数检查通过，0未定义mock路由，测试进程/profile全部清理。覆盖固定v1、显式Agent、输入撤销、桌面/窄屏/横屏的空间与悬赏资料入口。
+
+边界：内部`clearIdentity()`不等于用户退出按钮流程；390×300仅layout viewport，不是visualViewport-only键盘验证；私人/任务议事第三旅程、真实进度/下载及真实API持久化仍未完整验证。因此A19仍是PARTIAL，不是PASS。证据见`docs/implementation/handoffs/V1_13_1_TAKEOVER_WEB_BROWSER_20260919.json`。
+
+### 最终源码回归与候选构建（21:28）
+
+API `e97a2769` / tree `69f7793d`：扩大隔离suite170/170实跑、public artifact verifier64/64实跑、bootJar成功；user health4/starter health2/production POI2在最终树由Gradle输入未变复用，原始执行SHA和XML哈希在`V1_13_1_TAKEOVER_FINAL_20260919.json`完整记录。API/Web均已非force合入develop并readback。新API JAR摘要`cc93e30293efeea9bda9e2925f2635928abc1298ad040ee05f66652824631f4d`。
+
+这是局部源码与候选构建证据，**A仍0/20整项正式PASS、B0/8、C0/3**：不把单测组合当真实服务端到端，不把mock Chromium当真实Provider，也不把候选包当已上线。PPT逐页/Excel分表、三入口完整操作/持久化、授权B类和生产健康仍需完成。
