@@ -157,3 +157,17 @@
 - API `73ead7d6`最终健康：starter2和production POI2实跑通过，user4输入未变复用；制品verifier64复用字节相同旧XML，bootJar及其内置制品检查成功。新JAR251818971 bytes，SHA-256 `92e0c4dcbda27c2a7d62b0ac372fab72906923f1c949569aff918295bb047960`。已非force推送develop并readback；Web `2ad8b509`亦已readback。
 - 旧e97候选原样原子移到本线程`immutable-candidates/`保存，未换标签；仅清理无运行Gradle时本线程可再生JavaCompile缓存，并关闭已完成Owners后移除两个clean且owned files与主集成逐字节相同的已合入worktree，所有commits/证据保留。实际制品+逐个nested JAR临时空间据实计算，无固定磁盘保留门槛。
 - 当前canonical后端仍`STOPPED`、10018无监听；本任务未操作生产进程。仍须完整A跨层/initializer验证、明确真实Provider测试Agent/材料/外发/调用或费用上限，以及定时发布和线上C核验。未创建release/1.13.1、未部署，不发送“可验收”成功通知。
+
+## 2026-09-19 23:42 用户明确要求先发布再验收
+
+用户最新指令：“那就发布上去，我去验证”。本次按明确手动发布指令，将当前已测候选先上线供用户验收；此前未完成的完整A/B不再作为本次发布的前置阻塞，**不改写为PASS**。仍保留exact来源/制品、锁、权限/进程归属、可恢复安装和线上健康；不包含由Agent代调用付费Provider或额外生产DML。
+
+已从验证后的develop exact SHA新建并远端readback `release/1.13.1`：API `73ead7d6`/`25219ef5`、Web `2ad8b509`/`70b26020`，未覆盖原冻结分支。runtime Owner负责锁内安装和线上核验，主控只协调并冻结输入。此记录时尚未部署；用户业务验收待上线后进行。
+
+## 2026-09-20 00:00 发布前共享元数据丢失已恢复
+
+23:52发布前真实校验失败：两个候选的共享Git元数据目录及原canonical orchestration worktree已消失；原因和执行者未知，不据磁盘变化归责。源码、已冻结远端release分支和制品都仍完整。主控从远端exact release浅克隆到本线程独立gitdir，read-tree恢复index并核对HEAD/tree/ref/status、远端SHA；未改源码、未重建制品，失败证据保留。
+
+原台账路径已不存在，唯一运行台账恢复为当前workspace `docs/implementation/TASKS.yaml`，仅追加已知W11及同runtime Owner，全部原有其他task逐字节结构比对未改；未编造丢失历史、未创建第二个live ledger。恢复记录见`handoffs/V1_13_1_RELEASE_METADATA_RECOVERY_20260920.json`。
+
+双端制品联合verify已PASS，input SHA `99d5f0af23a375e79d01451b7c05b1bf965ee4a843bdff61e23f019571713437`，joint record SHA `936e8df068ef592ce8c44e75740228de7b88b90568224f66a24424e5dab8b156`。已给runtime Owner固定输入与明确开始信号，要求API先健康、Web后发布；此时尚不能声明实际上线。

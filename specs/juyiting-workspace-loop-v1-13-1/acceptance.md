@@ -109,3 +109,9 @@ API `e97a2769` / tree `69f7793d`：扩大隔离suite170/170实跑、public artif
 - 当前SQL在隔离MySQL8.0.21实测45 PASS/5 BOUNDARY/0 FAIL；空库/实际1.13.0升级fixture覆盖不等于Java initializer启动链验证。
 - API/Web均已非force合入develop并远端readback。新API JAR SHA-256 `92e0c4dcbda27c2a7d62b0ac372fab72906923f1c949569aff918295bb047960`；双端完整命令/摘要见`docs/implementation/handoffs/V1_13_1_MULTIPART_FINAL_20260919.json`及其关联证据。
 - **没有release/1.13.1或生产部署；完整A/B/C仍未通过。** 不把上述局部集成组合当浏览器→真实API→持久化→runtime全链路，也不把mock当真实Provider。A19真实键盘/退出重登、真实三入口全流程和A20 Java initializer等仍需补证；B授权缺失；C未执行。旧生产canonical status仍STOPPED，未由本任务重启。
+
+## 2026-09-19 23:42 用户明确要求先发布再验收
+
+用户最新指令：“那就发布上去，我去验证”。本次按明确手动发布指令，将当前已测候选先上线供用户验收；此前未完成的完整A/B不再作为本次发布的前置阻塞，**不改写为PASS**。仍保留exact来源/制品、锁、权限/进程归属、可恢复安装和线上健康；不包含由Agent代调用付费Provider或额外生产DML。
+
+已从验证后的develop exact SHA新建并远端readback `release/1.13.1`：API `73ead7d6`/`25219ef5`、Web `2ad8b509`/`70b26020`，未覆盖原冻结分支。runtime Owner负责锁内安装和线上核验，主控只协调并冻结输入。此记录时尚未部署；用户业务验收待上线后进行。
