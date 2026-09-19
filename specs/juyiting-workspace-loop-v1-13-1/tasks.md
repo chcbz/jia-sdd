@@ -1,6 +1,6 @@
 # 1.13.1 实施任务与工作量初估
 
-日期：2026-09-19。全部任务 **planned / 未执行**。这是实施拆分，不是第二运行台账；实际 Owner、exact SHA/tree、gate、blocker、next_action 只进 `docs/implementation/TASKS.yaml#runtime_ledger_json`。本轮不派发实现、不新增 Reviewer。
+日期：2026-09-19。W00–W09 已合并为实现候选；W10 验收和 W11 发布仍未执行。表格保留原始实施拆分与估算，不是第二运行台账；实际 Owner、exact SHA/tree、gate、blocker、next_action 只进 `docs/implementation/TASKS.yaml#runtime_ledger_json`。不新增 Reviewer。
 
 ## 任务拆分
 
