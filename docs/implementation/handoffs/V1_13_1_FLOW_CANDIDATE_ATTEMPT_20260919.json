@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-09-19T14:37:12+08:00",
+  "verifiedAt": "2026-09-19T14:39:30+08:00",
   "feature": "juyiting-workspace-loop-v1-13-1",
   "candidates": {
     "api": {
@@ -28,7 +28,21 @@
       "status": "FAIL",
       "job": 518873645,
       "sourceCommit": "unknown",
-      "jobLog": "empty_more_false"
+      "jobLog": "empty_more_false",
+      "dispatchObservation": {
+        "runCreatedAt": "2026-09-19T14:10:46+08:00",
+        "stageStartedAt": "2026-09-19T14:10:47+08:00",
+        "jobTimings": [
+          {
+            "job": 518873645,
+            "startedAt": "2026-09-19T14:10:47+08:00",
+            "endedAt": "2026-09-19T14:10:48+08:00",
+            "status": "FAIL"
+          }
+        ],
+        "jobErrorFields": "none returned by GetPipelineRun",
+        "interpretation": "The run terminated before checkout or JavaBuild produced a log; this is not evidence of an API Gradle/test failure."
+      }
     },
     {
       "pipeline": "4403172",
@@ -73,7 +87,27 @@
       ],
       "sourceCommit": "unknown",
       "jobLogs": "empty_more_false",
-      "note": "The start time follows the develop push of 36d6ede by fifteen seconds, but Flow source metadata does not prove checkout of that SHA."
+      "note": "The start time follows the develop push of 36d6ede by fifteen seconds, but Flow source metadata does not prove checkout of that SHA.",
+      "dispatchObservation": {
+        "runCreatedAt": "2026-09-19T14:32:54+08:00",
+        "stageStartedAt": "2026-09-19T14:32:55+08:00",
+        "jobTimings": [
+          {
+            "job": 518884461,
+            "startedAt": "2026-09-19T14:32:55+08:00",
+            "endedAt": "2026-09-19T14:32:58+08:00",
+            "status": "FAIL"
+          },
+          {
+            "job": 518884462,
+            "startedAt": "2026-09-19T14:32:55+08:00",
+            "endedAt": "2026-09-19T14:32:56+08:00",
+            "status": "FAIL"
+          }
+        ],
+        "jobErrorFields": "none returned by GetPipelineRun",
+        "interpretation": "The run terminated within seconds before either checkout, CustomEnvironmentBuild, or code scan exposed a log; this is not evidence of a source test/build failure."
+      }
     }
   ],
   "pipeline_readback": {
@@ -96,5 +130,5 @@
       "readOnlyConfirmedAt": "2026-09-19T14:37:12+08:00"
     }
   },
-  "conclusion": "API Run 88 and Web Runs 140/141/142 reached terminal FAIL before an observable checkout, test, build, artifact, or deployment. Runs 141 and 142 were automatically created immediately after their respective Web develop pushes, but Flow source metadata returned no commit and every queried job log was empty with more=false; push timing does not prove the checked-out SHA. Read-only Flow access confirmed both current config hashes. No unchanged retry was started. None of the candidates is cloud-tested, built, deployed, or publishable."
+  "conclusion": "API Run 88 and Web Runs 140/141/142 reached terminal FAIL before an observable checkout, test, build, artifact, or deployment. Raw Run 88/142 metadata shows their jobs failed within one to three seconds and exposes no job-level error field; every queried job log is empty with more=false. Runs 141 and 142 were automatically created immediately after their respective Web develop pushes, but Flow source metadata returned no commit; push timing does not prove the checked-out SHA. Read-only Flow access confirmed both current config hashes. This is a Flow pre-dispatch/diagnostics blocker, not source-test evidence. No unchanged retry was started. None of the candidates is cloud-tested, built, deployed, or publishable."
 }
