@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-09-19T14:11:12+08:00",
+  "verifiedAt": "2026-09-19T14:37:12+08:00",
   "feature": "juyiting-workspace-loop-v1-13-1",
   "candidates": {
     "api": {
@@ -7,8 +7,8 @@
       "tree": "92cb053a6f7c8df2f3ea2050fed099b7cea51655"
     },
     "web": {
-      "commit": "b97d223b654bbb1c18be43a656c3f75e1a88986a",
-      "tree": "3735603f4cc991ecc916560f30a7ecb4218c5616"
+      "commit": "36d6ede9911bfc131fce6ba3b351745caba29c8f",
+      "tree": "f348d2412456ef3b7b562d99484fa82123a031de"
     },
     "runtime": {
       "commit": "c5b1ea43f8a54599d38b08d377d1f6f53f76b18b",
@@ -17,7 +17,7 @@
   },
   "source_promotions": {
     "api_develop": "bf5adc386429f73a427722f25fc392312bd9d998",
-    "web_develop": "b97d223b654bbb1c18be43a656c3f75e1a88986a"
+    "web_develop": "36d6ede9911bfc131fce6ba3b351745caba29c8f"
   },
   "flow_attempts": [
     {
@@ -42,6 +42,38 @@
       ],
       "sourceCommit": "unknown",
       "jobLogs": "empty_more_false"
+    },
+    {
+      "pipeline": "4403172",
+      "run": 141,
+      "observedAt": "2026-09-19T14:36:19+08:00",
+      "startedAt": "2026-09-19T14:19:00+08:00",
+      "branch": "develop",
+      "pushCandidate": "68f9eab7e3bdec7f3d711b735d2767085feb2d3f",
+      "status": "FAIL",
+      "jobs": [
+        518877530,
+        518877531
+      ],
+      "sourceCommit": "unknown",
+      "jobLogs": "empty_more_false",
+      "note": "The start time follows the develop push of 68f9eab by two seconds, but Flow source metadata does not prove checkout of that SHA."
+    },
+    {
+      "pipeline": "4403172",
+      "run": 142,
+      "observedAt": "2026-09-19T14:36:19+08:00",
+      "startedAt": "2026-09-19T14:32:54+08:00",
+      "branch": "develop",
+      "pushCandidate": "36d6ede9911bfc131fce6ba3b351745caba29c8f",
+      "status": "FAIL",
+      "jobs": [
+        518884461,
+        518884462
+      ],
+      "sourceCommit": "unknown",
+      "jobLogs": "empty_more_false",
+      "note": "The start time follows the develop push of 36d6ede by fifteen seconds, but Flow source metadata does not prove checkout of that SHA."
     }
   ],
   "pipeline_readback": {
@@ -50,15 +82,19 @@
       "events": [
         "push"
       ],
-      "deployStages": 0
+      "deployStages": 0,
+      "canonicalConfigSha256": "f5e349f744c45b39f9c9d984537f0748d3580aba354e594fe89e988e3a518c8d",
+      "readOnlyConfirmedAt": "2026-09-19T14:37:12+08:00"
     },
     "web": {
       "branchesFilter": "^(develop|codex/v1-6-voice-availability-20260917)$",
       "events": [
         "push"
       ],
-      "deployStages": 0
+      "deployStages": 0,
+      "canonicalConfigSha256": "425f28e502b4c96126ea957273fa3fccb6fc9ec2369ea2565ed3584efd89bec3",
+      "readOnlyConfirmedAt": "2026-09-19T14:37:12+08:00"
     }
   },
-  "conclusion": "Both exact-source verification attempts reached terminal FAIL before an observable checkout, test, build, artifact, or deployment. Flow source metadata returned no commit and all job logs were empty with more=false; do not treat either candidate as cloud-tested, built, deployed, or publishable. No unchanged retry was started."
+  "conclusion": "API Run 88 and Web Runs 140/141/142 reached terminal FAIL before an observable checkout, test, build, artifact, or deployment. Runs 141 and 142 were automatically created immediately after their respective Web develop pushes, but Flow source metadata returned no commit and every queried job log was empty with more=false; push timing does not prove the checked-out SHA. Read-only Flow access confirmed both current config hashes. No unchanged retry was started. None of the candidates is cloud-tested, built, deployed, or publishable."
 }
