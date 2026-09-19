@@ -25,6 +25,6 @@
 1. 精确API/Web候选完成权威测试、构建、同源制品和健康核验。
 2. A01–A20完成端到端验收。
 3. B01–B08必须取得明确授权后由真实Agent/Provider执行：Provider账户或测试Agent、非敏感测试文件、可外发数据范围、调用次数/用量或金额上限。当前没有该授权，因此没有调用Provider，也没有虚构图片或文件修改成功。
-4. 当前生产API的标准loopback health检查在2026-09-19返回401（详见`handoffs/V1_13_1_RUNTIME_ONLINE_BASELINE_20260919.json`）；须先恢复可验证健康，再冻结`release/1.13.1`、发布并执行C01–C03。
+4. 当前生产API的标准loopback health检查在2026-09-19返回401（详见`handoffs/V1_13_1_RUNTIME_ONLINE_BASELINE_20260919.json`）；当前Web生产配置仍以`VITE_JUYITING_TASK_WORKSPACE_ENABLED=false`保持未验收功能隐藏。须先恢复可验证健康、完成A/B并以显式true构建，再冻结`release/1.13.1`、发布并执行C01–C03。
 
 唯一运行台账：`docs/implementation/TASKS.yaml#runtime_ledger_json`。

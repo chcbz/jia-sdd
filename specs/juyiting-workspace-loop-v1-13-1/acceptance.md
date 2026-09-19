@@ -48,7 +48,7 @@
 
 | ID | 验收要求 |
 | --- | --- |
-| C01 | exact API/Web及必要runtime commit/tree、测试selectors和结果、artifact SHA-256、build_origin、迁移方案/授权、release/1.13.1远端readback完整；不覆盖既有冻结分支 |
+| C01 | exact API/Web及必要runtime commit/tree、测试selectors和结果、artifact SHA-256、build_origin、迁移方案/授权、release/1.13.1远端readback完整；任务工作空间的正式release build必须显式使用`VITE_JUYITING_TASK_WORKSPACE_ENABLED=true`，并核验线上资源确为该构建；不覆盖既有冻结分支。仅有源码而保持false不算闭环发布。 |
 | C02 | 实际发布后健康/版本/资源与进程归属通过；授权测试账号实际从空间与悬赏进入议事，关联/执行记录/成果预览下载/版本验收状态可读；必要真实Provider线上抽检获得单独范围授权并记录，不因只通过HTTP200宣布闭环 |
 | C03 | 用户通知列明实际功能、入口/操作、A/B/C逐项结果、授权及未通过项；用户可以独立完成B08，不需要开发者搬文件或改状态 |
 
