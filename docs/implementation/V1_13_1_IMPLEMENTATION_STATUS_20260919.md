@@ -18,7 +18,7 @@
 | Web | `b97d223b654bbb1c18be43a656c3f75e1a88986a` / `3735603f4cc991ecc916560f30a7ecb4218c5616` | `node --check`、PDF与文档预览静态合同测试 | 完整Mocha/Vite及实际部署 |
 | Agent runtime | `c5b1ea43f8a54599d38b08d377d1f6f53f76b18b` / `36e27d3fab582dc8617780e364cedfdbbd4af527` | `node --test`: 323 pass / 0 fail | 与精确API/Web的真实联调和受控部署 |
 
-本机API Gradle会在根构建评估阶段因缺少受批准的`repoUsername`配置停止；Web工作树没有完整测试依赖。两者均已记录，未对相同输入盲目重试。
+本机API Gradle会在根构建评估阶段因缺少受批准的`repoUsername`配置停止；Web工作树没有完整测试依赖。两者均已记录，未对相同输入盲目重试。2026-09-19 已将两个精确候选推进至各自`develop`并启动无部署 Flow 验证：API `5260799` Run 88、Web `4403172` Run 140 均在checkout/test/build前终止为`FAIL`，来源commit未知且作业日志为空（`more=false`）。因此没有获得云端测试、制品或部署证据；详见 `handoffs/V1_13_1_FLOW_CANDIDATE_ATTEMPT_20260919.json`。
 
 ## 不能跳过的发布条件
 
