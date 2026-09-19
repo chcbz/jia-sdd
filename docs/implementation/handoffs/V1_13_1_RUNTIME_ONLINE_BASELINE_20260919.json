@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-09-19T14:49:00+08:00",
+  "feature": "juyiting-workspace-loop-v1-13-1",
+  "observations": {
+    "runtime": {
+      "activeReleaseDirectory": "/home/isp/apps/codex-ws-agent/releases/20260918233500-c5b1ea4",
+      "activeSourceCommit": "c5b1ea43f8a54599d38b08d377d1f6f53f76b18b",
+      "activeProcess": "node /home/isp/apps/codex-ws-agent/agent-client.mjs",
+      "byteMatchedFiles": [
+        "agent-client.mjs",
+        "workspace-file-bridge.mjs",
+        "workspace-manager.mjs"
+      ],
+      "interpretation": "The deployed runtime bytes match the 1.13.1 runtime candidate for these runtime entry files."
+    },
+    "api": {
+      "deployedSourceCommit": "0562bdeac74d0d103e001e603f3ebc7ea0e3f798",
+      "deployedSourceTree": "e183de7fd710c660022fe5e95755bb71c13c06f7",
+      "deployedJarSha256": "3fb3d5a38cd2890676ce9af7b8cdb43280a5a0ab4a53420ca62033458655e6dd",
+      "candidateCommit": "bf5adc386429f73a427722f25fc392312bd9d998",
+      "candidateDeployed": false,
+      "processAttestation": "MATCH",
+      "portOwnership": "LISTENING_BY_PID",
+      "loopbackHealth": {
+        "url": "http://127.0.0.1:10018/actuator/health",
+        "httpStatus": 401,
+        "serviceStatus": "HEALTH=NOT_READY",
+        "responseClassification": "authenticated API error; not health success"
+      }
+    },
+    "web": {
+      "candidateCommit": "36d6ede9911bfc131fce6ba3b351745caba29c8f",
+      "candidateDeployed": false,
+      "onlineIndexHttpStatus": 200,
+      "onlineIndexSha256": "7057a402b1a85f6dc44b493cc2c000a19e573a4da207eb360d1413f707d3f941",
+      "onlineIndexAsset": "/static/index-DWcGhNDH.js",
+      "onlineAssetSha256": "618bc051fdae0595f29698ca4ba29734916f077f8970d01e5e09a6743fdc2a4e"
+    }
+  },
+  "conclusion": "The runtime candidate is actively installed, but the API and Web 1.13.1 candidates are not deployed. The current production API's canonical loopback health endpoint returned 401, so this observation cannot be used as a successful release health check. It is a release preflight issue to resolve before any 1.13.1 deployment claim; it does not prove an API candidate source failure."
+}
