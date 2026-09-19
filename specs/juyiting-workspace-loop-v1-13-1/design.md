@@ -174,3 +174,13 @@ API 复用 PersonalWorkspace*Controller/Service、chat scope/task thread 服务�
 W00 必须产出：task/thread/lease exact 调用图、任务与私人运行单一派发方案、对象存储适配合同、消息/outbox复用清单、runtime commit/tree及实际能力、迁移字段/索引/锁序、Provider 测试授权清单。锁顺序以现有任务 root 先锁约束为起点统一 task→execution→按ID排序文件→output；逆序存量调用必须修复并并发验证，不能仅在文档声明。
 
 这些是当前可见的真实风险，不是假定已实现；W00 冻结后方进入对应高风险写路径实施。
+
+## 2026-09-19 多part预览兼容补充（W12/W13）
+
+本节是增量实现合同，不改写上文冻结业务语义；测试和发布结论独立记录。
+
+- 个人空间和任务成果的既有`GET .../preview`缺省保持旧single-`content` catalog；任务Office/PDF仍返回`EXTRACTED_TEXT`，不迫使1.13.0客户端理解新parts。
+- 新客户端仅在metadata请求显式加入`?view=parts`。非法/重复view或混入身份参数返回400；query永不替代JWT owner/client、任务或文件ACL。`.../preview/parts/{partId}`仍按精确版本和owner先鉴权。
+- PPT：`slide-N` PNG，任务representation=`PAGED_IMAGE`；Excel：`sheet-N`纯文本，`SHEET_TEXT`，显示单元格坐标和原公式、绝不执行公式；PDF：`page-N`逐页提取文本，`PAGED_TEXT`，不是PDF页面图像/版式保真；DOCX仍`content`提取文本。
+- 新catalog末尾保留`content`兼容提取文本；新UI可从分页导航排除这项，旧URL仍可读。支持格式不是实际Provider能力或收费授权。
+- PPT派生预览的输出格式采用1600×1200边界框，保持比例；这是预览分辨率设计，不按源尺寸拒绝文件或中断后续页面。metadata不生成PNG，只按请求页渲染；巨大源pageSize不得直接分配原尺寸画布。嵌入图解码和外部资源读取另做Owner安全核对。

@@ -128,3 +128,32 @@
 - API develop已非force快进至`e97a2769`并远端readback；Web develop为`1883eeb3`。本次没有重建新Web生产包，旧Web包仍只绑定`12f50eb`。
 - 全部命令已结束，无遗留任务Gradle JVM。没有Flow成功声明、Provider调用、生产数据更改、release分支或部署；此前27项失败和中间构建失败证据仍保留。
 - 下一实施项：补齐A19三入口完整操作与真实API持久化回归、PPT逐页/Excel分表产品缺口，逐项完成A01–A20；B类须明确测试Agent/Provider、非敏感文件、外发范围与费用/调用上限。生产归属/实际健康及C类仍独立未完成，不能把本轮专项绿灯当整版ready。
+
+## 2026-09-19 22:27 持续实施（尚未发布）
+
+- 用户继续要求发布可验收后通知。新增独立W12后端多part预览、W13三入口预览UI、W14真实H2/MyBatis事务持久化测试Owner；不创建Reviewer，仍用原唯一台账。
+- API `77ca400d`新增6个HTTP controller/filter测试类，修正旧snapshot fixture四参数到tenant=0/client/owner/task/actor五参数。首次`e0a19f2d`13项编译错误/0测试保留；变更后实跑26类**209/209**通过。不是全A验收。
+- W14已集成`ce9219de`，首次编译发现新test使用Jackson2旧包名而项目为Jackson3，5个编译错误/0测试；Owner修正中，不添加旧依赖或伪用旧209XML。
+- canonical `/usr/local/sbin/cyf-api-kit status`实读`STOPPED`（exit3）、10018无监听。`/run/cyf-api/cyf-api-kit.runtime`的PID3562928与journal记录2026-09-19 16:46:59 +08:00 global_oom kill精确匹配（dmesg -T换算有偏移，以journal墙钟为准），说明原服务被OOM杀死；不推断是哪个任务导致。只读记录及归属告警已保存，未重启/改生产。
+- 空间不足一次发生在新增worktree期间，未成功写台账；删除本线程已合入且干净的fixtures/health/poi旧worktree，commits及证据保留。仅将本线程可再生Gradle generated-gradle-jars/javaCompile缓存迁到tmpfs并链接复用，未删除其他任务目录或发布制品。
+- B类仍缺测试Agent/Provider、非敏感材料/外发范围及调用/费用上限；已向用户明确询问，继续推进非Provider实现与回归，不将发布要求理解为付费/数据外发授权。
+
+## 2026-09-19 23:05 真实持久化与迁移验证增量（未发布）
+
+- API `4f41058f` 新增真实MockMvc→Spring事务Service→MyBatis→H2→私有文件系统回归，定向2/2通过；覆盖固定版本/hash、幂等冲突、重建服务可回读及跨owner/client在存储读取前拒绝。此前Jackson编译失败及H2 schema连接生命周期失败均保留，不能当真实socket端到端。
+- API `cbbf9761`对应生产SQL在隔离MySQL8.0.21上实测45 PASS/5 BOUNDARY/0 FAIL，包括空库、实际1.13.0基线升级及部分迁移边界；Java initializer未执行，不将raw duplicate ALTER当应用成败。私有DB已清理，生产未连接；见`handoffs/V1_13_1_MYSQL_SCHEMA_20260919.json`。
+- 多part候选的扩大suite未完成：UTF8测试解码断言失败，随后daemon1728于22:49:55被global OOM终止（journal精确时间）。后端Owner修复嵌入图片解码内存风险和UTF8断言；重型验证改为串行、缓存编译使用较小heap，保留失败证据。
+- 前端mock浏览器局部20检查通过尚不能接收：父级核对真实契约发现private预览无representation、PPT含content文本fallback，与UI严格验证不匹配。已交原Owner修正并用真实后端形状补fixture；不以mock绿灯推送或发布。
+- 没有release分支、部署或Provider调用；当前A/B/C仍未完整通过。下一步完成上述修复后按新exact SHA串行回归和生产构建。
+
+## 2026-09-19 23:23 多part集成回归通过（尚未发布）
+
+- Web `2ad8b509` / tree `70b26020`修复private无representation及PPT兼容content文本混合契约、全部rich fallback去重导航、partial原样文本提示；删除新增PNG无依据1MiB拒绝。159项相关Mocha、2项静态合同、真实Chromium/mock20项通过。显式任务工作空间flag=true的生产构建完成，365文件共105190991 bytes逐一SHA复核；非force合入develop并readback。见`handoffs/V1_13_1_MULTIPART_WEB_20260919.json`。
+- API `73ead7d6` / tree `25219ef5`扩大回归实跑218/218通过，0失败/跳过。包括旧metadata默认兼容、新view=parts、PPT有限画布及嵌入位图ImageIO采样、外链loopback tripwire、真实H2持久化。矢量图片仍用POI fallback，不声明所有格式内存有界。
+- API此前`aaea0e7f`test重复变量编译1错误/0测试已保留；Owner新commit仅改响应变量名、不削弱UTF8断言。新候选健康/POI及最终制品还在验证。当前依旧无release分支或部署、无Provider调用。
+
+## 2026-09-19 23:29 双端候选制品完成并合入develop（未发布）
+
+- API `73ead7d6`最终健康：starter2和production POI2实跑通过，user4输入未变复用；制品verifier64复用字节相同旧XML，bootJar及其内置制品检查成功。新JAR251818971 bytes，SHA-256 `92e0c4dcbda27c2a7d62b0ac372fab72906923f1c949569aff918295bb047960`。已非force推送develop并readback；Web `2ad8b509`亦已readback。
+- 旧e97候选原样原子移到本线程`immutable-candidates/`保存，未换标签；仅清理无运行Gradle时本线程可再生JavaCompile缓存，并关闭已完成Owners后移除两个clean且owned files与主集成逐字节相同的已合入worktree，所有commits/证据保留。实际制品+逐个nested JAR临时空间据实计算，无固定磁盘保留门槛。
+- 当前canonical后端仍`STOPPED`、10018无监听；本任务未操作生产进程。仍须完整A跨层/initializer验证、明确真实Provider测试Agent/材料/外发/调用或费用上限，以及定时发布和线上C核验。未创建release/1.13.1、未部署，不发送“可验收”成功通知。

@@ -101,3 +101,11 @@ Web `1883eeb3` / tree `ca2a4ce6` 已以非force快进推送develop并readback。
 API `e97a2769` / tree `69f7793d`：扩大隔离suite170/170实跑、public artifact verifier64/64实跑、bootJar成功；user health4/starter health2/production POI2在最终树由Gradle输入未变复用，原始执行SHA和XML哈希在`V1_13_1_TAKEOVER_FINAL_20260919.json`完整记录。API/Web均已非force合入develop并readback。新API JAR摘要`cc93e30293efeea9bda9e2925f2635928abc1298ad040ee05f66652824631f4d`。
 
 这是局部源码与候选构建证据，**A仍0/20整项正式PASS、B0/8、C0/3**：不把单测组合当真实服务端到端，不把mock Chromium当真实Provider，也不把候选包当已上线。PPT逐页/Excel分表、三入口完整操作/持久化、授权B类和生产健康仍需完成。
+
+### 多part候选实际验证（2026-09-19 23:29）
+
+- API `73ead7d6` / tree `25219ef5`：28类218/218扩大回归实跑，含真实H2/MyBatis/事务/filesystem、默认旧预览合同与view=parts、PPT多页及大压缩位图采样/loopback无外链请求。starter health2及production-runtime POI2在此树实跑；user health4按输入未变复用并逐字节核验XML。bootJar成功，内置制品检查通过；verifier单测64明确为UP-TO-DATE复用旧实跑，不写本轮再次执行。
+- Web `2ad8b509` / tree `70b26020`：159项相关Mocha、2项静态合同、20项Chromium/mock检查通过；mock已改为真实private无representation及末尾content兼容分片形状。生产build显式flag=true，365项制品文件哈希已复核。
+- 当前SQL在隔离MySQL8.0.21实测45 PASS/5 BOUNDARY/0 FAIL；空库/实际1.13.0升级fixture覆盖不等于Java initializer启动链验证。
+- API/Web均已非force合入develop并远端readback。新API JAR SHA-256 `92e0c4dcbda27c2a7d62b0ac372fab72906923f1c949569aff918295bb047960`；双端完整命令/摘要见`docs/implementation/handoffs/V1_13_1_MULTIPART_FINAL_20260919.json`及其关联证据。
+- **没有release/1.13.1或生产部署；完整A/B/C仍未通过。** 不把上述局部集成组合当浏览器→真实API→持久化→runtime全链路，也不把mock当真实Provider。A19真实键盘/退出重登、真实三入口全流程和A20 Java initializer等仍需补证；B授权缺失；C未执行。旧生产canonical status仍STOPPED，未由本任务重启。
