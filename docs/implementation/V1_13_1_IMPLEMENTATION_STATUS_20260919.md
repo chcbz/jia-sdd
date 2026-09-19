@@ -15,10 +15,10 @@
 | 组件 | Commit / tree | 已做自检 | 未完成 |
 | --- | --- | --- | --- |
 | API | `bf5adc386429f73a427722f25fc392312bd9d998` / `92cb053a6f7c8df2f3ea2050fed099b7cea51655` | Git whitespace、W09静态合同与手工`javac` | 精确Gradle/集成测试；实际部署 |
-| Web | `b97d223b654bbb1c18be43a656c3f75e1a88986a` / `3735603f4cc991ecc916560f30a7ecb4218c5616` | `node --check`、PDF与文档预览静态合同测试 | 完整Mocha/Vite及实际部署 |
+| Web | `68f9eab7e3bdec7f3d711b735d2767085feb2d3f` / `6c96e8dc8d1413718d06f47accdeeb1021802e72` | 80项聚焦Mocha、PDF/文档预览合同、`node --check`、`git diff --check` | 权威Flow测试/构建/同Run制品/实际部署 |
 | Agent runtime | `c5b1ea43f8a54599d38b08d377d1f6f53f76b18b` / `36e27d3fab582dc8617780e364cedfdbbd4af527` | `node --test`: 323 pass / 0 fail | 与精确API/Web的真实联调和受控部署 |
 
-本机API Gradle会在根构建评估阶段因缺少受批准的`repoUsername`配置停止；Web工作树没有完整测试依赖。两者均已记录，未对相同输入盲目重试。2026-09-19 已将两个精确候选推进至各自`develop`并启动无部署 Flow 验证：API `5260799` Run 88、Web `4403172` Run 140 均在checkout/test/build前终止为`FAIL`，来源commit未知且作业日志为空（`more=false`）。因此没有获得云端测试、制品或部署证据；详见 `handoffs/V1_13_1_FLOW_CANDIDATE_ATTEMPT_20260919.json`。
+本机API Gradle会在根构建评估阶段因缺少受批准的`repoUsername`配置停止。Web已在可复用测试依赖下完成80项聚焦Mocha、PDF/Office预览合同、静态语法和空白检查；精确命令与结果见 `handoffs/V1_13_1_WEB_CONTRACT_RECHECK_20260919.json`，但这不是生产构建或部署证据。2026-09-19 原始候选曾进入无部署 Flow 验证：API `5260799` Run 88、Web `4403172` Run 140 均在checkout/test/build前终止为`FAIL`，来源commit未知且作业日志为空（`more=false`）。Web随后已有新提交`68f9eab…`，可作为新的精确候选，但当前执行环境没有可用的Flow控制面凭据，无法只读确认push自动Run或安全地手动启动；未对旧失败输入盲目重试。因此仍没有云端测试、制品或部署证据；原失败详情见 `handoffs/V1_13_1_FLOW_CANDIDATE_ATTEMPT_20260919.json`。
 
 ## 不能跳过的发布条件
 

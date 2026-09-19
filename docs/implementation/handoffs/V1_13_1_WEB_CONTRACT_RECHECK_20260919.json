@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-09-19T14:35:00+08:00",
+  "feature": "juyiting-workspace-loop-v1-13-1",
+  "component": "web",
+  "commit": "68f9eab7e3bdec7f3d711b735d2767085feb2d3f",
+  "tree": "6c96e8dc8d1413718d06f47accdeeb1021802e72",
+  "branch": "develop",
+  "checks": [
+    {
+      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec tests/personal-workspace-task-links.test.js tests/personal-workspace-task-material-links.test.js tests/juyiting-task-workspace-integration.test.js tests/juyiting-task-workspace-panel.test.js tests/juyiting-task-workspace-state.test.js tests/juyiting-task-workspace-wiring.test.js tests/output-delivery-rb05.test.js tests/formal-delivery-od10.test.js",
+      "result": "PASS",
+      "summary": "80 passing"
+    },
+    {
+      "command": "node tests/output-preview-pdf.test.mjs && node tests/output-preview-document.test.mjs",
+      "result": "PASS"
+    },
+    {
+      "command": "node --check src/composables/useOutputs.js && node --check src/composables/usePersonalWorkspaceExecution.js && git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "scope": "Test fixtures/mocks now cover the authenticated conversation deliverables directory, strict task-artifact fields, controlled OUTPUT viewing, identity-reset disabled attach state, and the Hall account-router/outcome-panel imports.",
+  "releaseState": "NOT_PUBLISHABLE",
+  "remainingEvidence": [
+    "The exact Web commit still needs a successful authoritative Flow test/build/artifact/deployment run and online verification.",
+    "The API candidate still lacks authoritative Gradle/integration evidence; its prior Flow Run 88 failed before checkout with empty logs.",
+    "B01-B08 real-provider acceptance remains unstarted because no provider/test-Agent, approved test files/data-egress scope, or usage/amount cap was authorized."
+  ]
+}
