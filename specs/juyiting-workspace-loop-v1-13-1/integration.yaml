@@ -1,7 +1,7 @@
 feature_id: juyiting-workspace-loop-v1-13-1
-status: release_authorized_user_acceptance_pending
+status: deployed_user_acceptance_pending
 planned_release: 1.13.1
-updated_at: '2026-09-19'
+updated_at: '2026-09-20'
 implementation_started: true
 release_plan: docs/implementation/V1_13_1_CLOSED_LOOP_PLAN_20260919.md
 scope_spec: spec.md
@@ -35,24 +35,24 @@ effort:
   total: [192, 322]
   calendar_commitment: none
 activation:
-  task_workspace_production_flag: false
-  current_interpretation: exact_flag_true_candidate_authorized_for_manual_release_user_acceptance_pending
+  task_workspace_production_flag: true
+  current_interpretation: exact_flag_true_candidate_deployed_public_assets_verified_user_acceptance_pending
   release_requirement: VITE_JUYITING_TASK_WORKSPACE_ENABLED=true
   candidate_build_flag: true
-  candidate_build_interpretation: built_but_not_deployed_or_online_verified
+  candidate_build_interpretation: deployed_public_resources_hash_verified
 verification:
   non_provider_A: partial_218_api_159_web_20_mock_browser_isolated_MySQL45_not_full_A_pass
   real_provider_B: not_run_authorization_missing
-  release_C: not_run
+  release_C: deployment_health_and_public_resource_readback_pass_not_blanket_full_C
   paid_provider_authorization: not_granted_by_plan
   production_data_authorization: not_granted_by_plan
-  application_build_or_deploy: local_authorized_api_bootJar_and_flag_true_web_build_succeeded_not_deployed
+  application_build_or_deploy: local_authorized_exact_api_and_flag_true_web_deployed_healthy
   build_origin: local_user_authorized
-  candidate_status: api_73ead7d6_acceptance_218_pass_health_6_pass_poi_runtime_2_pass_bootJar_pass; web_2ad8b509_targeted_159_pass_browser_mock_20_pass_build_pass; both_remote_develop_and_release_readback_verified; user_authorized_manual_release_pending_online_readback
+  candidate_status: api_73ead7d6_acceptance_218_pass_health_6_pass_poi_runtime_2_pass_bootJar_pass; web_2ad8b509_targeted_159_pass_browser_mock_20_pass_build_pass; both_remote_develop_and_release_readback_verified; user_authorized_manual_release_online_readback_pass
   evidence: docs/implementation/handoffs/V1_13_1_MULTIPART_FINAL_20260919.json
-  remaining: runtime_install_health_and_resource_readback; remaining_A_B_business_acceptance_by_user_not_pre_release_blocker
+  remaining: remaining_A_B_business_acceptance_by_user_not_pre_release_blocker
 acceptance:
-  status: implementation_candidate_not_accepted
+  status: deployed_pending_user_business_acceptance
   evidence: acceptance.md
   complete_requires: all_A_B_C_pass
 
@@ -63,4 +63,6 @@ user_release_directive_20260919:
   frozen_remote_ref: release/1.13.1
   authorization: docs/implementation/handoffs/V1_13_1_USER_RELEASE_AUTHORIZATION_20260919.json
   paid_provider_calls: not_authorized
-  actual_deployment: pending
+  actual_deployment: deployed_healthy_20260920
+
+release_evidence: docs/implementation/handoffs/V1_13_1_RELEASED_20260920.json

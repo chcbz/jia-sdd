@@ -115,3 +115,11 @@ API `e97a2769` / tree `69f7793d`：扩大隔离suite170/170实跑、public artif
 用户最新指令：“那就发布上去，我去验证”。本次按明确手动发布指令，将当前已测候选先上线供用户验收；此前未完成的完整A/B不再作为本次发布的前置阻塞，**不改写为PASS**。仍保留exact来源/制品、锁、权限/进程归属、可恢复安装和线上健康；不包含由Agent代调用付费Provider或额外生产DML。
 
 已从验证后的develop exact SHA新建并远端readback `release/1.13.1`：API `73ead7d6`/`25219ef5`、Web `2ad8b509`/`70b26020`，未覆盖原冻结分支。runtime Owner负责锁内安装和线上核验，主控只协调并冻结输入。此记录时尚未部署；用户业务验收待上线后进行。
+
+## 2026-09-20 00:23 已发布，待用户业务验收
+
+- 用户授权的本地发布已完成：API `73ead7d6` → 健康UP → Web `2ad8b509`，两端均为冻结的 `release/1.13.1`。`build_origin=local_user_authorized`，无Flow Run。
+- API安装JAR SHA `92e0c4dcbda27c2a7d62b0ac372fab72906923f1c949569aff918295bb047960` 与测试制品一致，PID86504/start_ticks3140706307；Web完整365文件tree SHA `e16b15e14716a3fd8ab6d80860d018968d935a8a613ebeaf89ecdeab3c8cc711`。任务工作空间flag=true。
+- 独立公网复核5项HTML/JS摘要全部一致，`/workspace`、`/juyiting`均200且返回新index；未登录受保护API返回401。最初curl403来自原有nginx User-Agent规则，未改配置/鉴权。内部健康200/UP。
+- 首次安装因Owner后检误将只读status识别为变更进程而回退；保留失败归因，修正guard后第二次成功。旧制品/目录可恢复，发布锁均释放；未操作foreign进程，未代调用Provider或执行额外生产DML。
+- **发布/健康/资源核验通过不等于完整A/B/C业务验收通过**。下一步由用户在工作空间或聚义厅按验收清单验证。完整记录见 `docs/implementation/handoffs/V1_13_1_RELEASED_20260920.json`。
