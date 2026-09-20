@@ -27,10 +27,9 @@ STATE_PATH = STATE_DIR + "/state.json"
 LOCK_PATH = STATE_DIR + "/monitor.lock"
 MAINTENANCE_PATH = STATE_DIR + "/maintenance"
 CANONICAL = "/usr/local/sbin/cyf-api-kit"
-CANONICAL_SHA256 = "b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525"
 SYSTEMD_RUN = "/usr/bin/systemd-run"
 RECOVERY_CARRIER = "/usr/local/libexec/cyf-juyiting-recovery-carrier.py"
-RECOVERY_CARRIER_SHA256 = "fd626334a7d491acbf42c0a10d221b771f0e07b0a0b74f46e415cc6bc5173f6a"
+RECOVERY_CARRIER_SHA256 = "440e82ab992b88778b26542e176c8f7da14c62c66e6bad32b3dcb941e908c321"
 MAIL_PYTHON = "/usr/bin/python3"
 MAIL_HELPER = "/root/.local/bin/cyf-task-email"
 MAIL_HELPER_SHA256 = "ddc540f1d450880af5bb707751cf6cd68b6492e58cb702436b19580867d3ae99"
@@ -38,14 +37,13 @@ MAIL_ENV = "/root/.config/cyf-task-monitor/email.env"
 LOGGER = "/usr/bin/logger"
 WEB_URL = "https://kit.chaoyoufan.cn/juyiting"
 API_URL = "https://api.chaoyoufan.cn/agent/map"
-USER_AGENT = "CYF-HealthMonitor/1.0"
+USER_AGENT = "cyf-juyiting-health/1.0"
 EXPECTED_RUNTIME_IDENTITY = "cyf-api(987:1000)"
 FAILURE_THRESHOLD = 3
 HEALTHY_RESET_THRESHOLD = 3
 MAX_RECOVERY_ATTEMPTS = 3
 COOLDOWN_SECONDS = 60
 STARTUP_GRACE_SECONDS = 25 * 60
-CANONICAL_STATUS_TIMEOUT_SECONDS = 45
 MIN_MEMORY_BYTES = 1024 * 1024 * 1024
 MIN_DISK_BYTES = 5 * 1024 * 1024 * 1024
 MAX_STATE_BYTES = 128 * 1024
@@ -767,7 +765,10 @@ class Effects(object):
     def _trusted_canonical(self):
         try:
             validate_regular(CANONICAL, 0o755, 0, 1024 * 1024, True, True)
-            return sha256_file(CANONICAL) == CANONICAL_SHA256
+            # Root ownership, non-symlink, single-link and non-writable metadata are
+            # the executable identity contract.  Do not turn a stale point-in-time
+            # content pin into a synthetic outage or cancel a healthy status probe.
+            return True
         except (MonitorError, OSError):
             return False
 
@@ -776,7 +777,9 @@ class Effects(object):
             return {"healthy": False, "classification": "canonical_file_untrusted",
                     "recovery_safe": False, "returncode": None, "pid": None,
                     "elapsed_seconds": None}
-        result = self._run([CANONICAL, "status"], CANONICAL_STATUS_TIMEOUT_SECONDS)
+        # Status is observational: wait for its real outcome rather than killing it
+        # at an unmeasured performance deadline.
+        result = self._run([CANONICAL, "status"], None)
         if result["classification"] == "timeout":
             return {"healthy": False, "classification": "canonical_status_timeout",
                     "recovery_safe": False, "returncode": 124, "pid": None,

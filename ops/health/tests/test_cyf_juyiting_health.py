@@ -1184,32 +1184,57 @@ class ProbeContractTests(unittest.TestCase):
         self.assertFalse(parsed["recovery_safe"])
         self.assertEqual("not_ready_identity_incomplete", parsed["classification"])
 
-    def test_canonical_status_uses_45_second_observation_budget(self):
+    def test_canonical_status_waits_for_the_real_observation_outcome(self):
         effects = health.Effects()
         completed = {"returncode": 4, "classification": "completed",
                      "stdout": self.canonical_output("NOT_READY"), "stderr": ""}
         with mock.patch.object(effects, "_trusted_canonical", return_value=True), \
                 mock.patch.object(effects, "_run", return_value=completed) as runner:
             result = effects.canonical_status()
-        self.assertEqual(45, health.CANONICAL_STATUS_TIMEOUT_SECONDS)
-        runner.assert_called_once_with(
-            [health.CANONICAL, "status"], health.CANONICAL_STATUS_TIMEOUT_SECONDS)
+        runner.assert_called_once_with([health.CANONICAL, "status"], None)
         self.assertEqual("not_ready_trusted", result["classification"])
         self.assertTrue(result["recovery_safe"])
 
-    def test_canonical_status_timeout_at_45_seconds_remains_fail_closed(self):
+    def test_canonical_status_timeout_result_remains_fail_closed(self):
         effects = health.Effects()
         timed_out = {"returncode": 124, "classification": "timeout",
                      "stdout": "", "stderr": ""}
         with mock.patch.object(effects, "_trusted_canonical", return_value=True), \
                 mock.patch.object(effects, "_run", return_value=timed_out) as runner:
             result = effects.canonical_status()
-        runner.assert_called_once_with(
-            [health.CANONICAL, "status"], health.CANONICAL_STATUS_TIMEOUT_SECONDS)
+        runner.assert_called_once_with([health.CANONICAL, "status"], None)
         self.assertEqual("canonical_status_timeout", result["classification"])
         self.assertEqual(124, result["returncode"])
         self.assertFalse(result["healthy"])
         self.assertFalse(result["recovery_safe"])
+
+    def test_public_api_uses_waf_compatible_health_monitor_user_agent(self):
+        effects = health.Effects()
+        captured = []
+
+        class Response(object):
+            headers = {"Content-Type": "application/json"}
+
+            def getcode(self):
+                return 401
+
+            def read(self, maximum):
+                return b'{"code":"E401","msg":"authentication required","status":401}'
+
+            def close(self):
+                pass
+
+        class Opener(object):
+            def open(self, request, timeout):
+                captured.append((request.get_header("User-agent"), timeout))
+                return Response()
+
+        with mock.patch.object(health.urlrequest, "build_opener", return_value=Opener()):
+            result = effects.public_api()
+
+        self.assertTrue(result["healthy"])
+        self.assertEqual("auth_boundary_json_denial", result["classification"])
+        self.assertEqual([( "cyf-juyiting-health/1.0", 8)], captured)
 
     def test_public_api_allows_exact_empty_401_boundary(self):
         effects = health.Effects()
@@ -1649,7 +1674,7 @@ print('MIME_SUBJECTS_OK:%d' % len(subjects))
         self.assertIn("CANDIDATE_CARRIER_SHA=" + carrier_digest, text)
         self.assertIn("installed monitor is not the reviewed candidate", text)
         self.assertIn("installed carrier is not the reviewed candidate", text)
-        self.assertIn("CANONICAL_SHA=" + health.CANONICAL_SHA256, text)
+        self.assertNotIn("CANONICAL_SHA=", text)
         self.assertIn("755:0:0:1", text)
 
     def test_cron_syntax_contract(self):

@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 CANONICAL = "/usr/local/sbin/cyf-api-kit"
-CANONICAL_SHA256 = "b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525"
+CANONICAL_SHA256 = "63a7ba180603d021666af77e9535b93bdbdcedf0ce799d0b5e09e7718e8d0bcd"
 MEMORY_CGROUP_ROOT = "/sys/fs/cgroup/memory"
 PROC_SELF_CGROUP = "/proc/self/cgroup"
 MAX_CANONICAL_BYTES = 1024 * 1024

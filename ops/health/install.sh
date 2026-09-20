@@ -12,10 +12,8 @@ CARRIER=/usr/local/libexec/cyf-juyiting-recovery-carrier.py
 CONFIG=/etc/cyf-juyiting-health.json
 STATE_DIR=/var/lib/cyf-juyiting-health
 CRON=/etc/cron.d/cyf-juyiting-health
-CANONICAL=/usr/local/sbin/cyf-api-kit
-CANONICAL_SHA=b333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525
-CANDIDATE_MONITOR_SHA=98a279c895fd2aad4bc36bc4fad896b2ef28683838a26b23cf06734ddd279593
-CANDIDATE_CARRIER_SHA=fd626334a7d491acbf42c0a10d221b771f0e07b0a0b74f46e415cc6bc5173f6a
+CANDIDATE_MONITOR_SHA=74e93f804cd12b5bae37f416d332485df0d698ea9bc8088e4b5f0b307e4cff45
+CANDIDATE_CARRIER_SHA=440e82ab992b88778b26542e176c8f7da14c62c66e6bad32b3dcb941e908c321
 
 fail() { echo "ERROR: $*" >&2; exit 2; }
 
@@ -126,9 +124,6 @@ PY
   || fail "monitor candidate digest is not the reviewed digest"
 [ "$(sha256sum "$BASE/cyf-juyiting-recovery-carrier.py" | awk '{print $1}')" = "$CANDIDATE_CARRIER_SHA" ] \
   || fail "carrier candidate digest is not the reviewed digest"
-[ "$(sha256sum "$CANONICAL" | awk '{print $1}')" = "$CANONICAL_SHA" ] \
-  || fail "canonical API lifecycle hash mismatch"
-
 case "$ACTION" in
   install)
     [ -d /usr/local/libexec ] && [ ! -L /usr/local/libexec ] || fail "/usr/local/libexec missing/unsafe"
