@@ -21,4 +21,4 @@ Do not create a feature directory for local-only refactors unless it changes a p
 
 ## 2026-09-22 delivery
 
-- `juyiting-unified-experience/`：1.13.10 + API fix1技术发布、线上只读HTTP6/6与浏览器6/6通过；API787ae631/Webb8bd0de精确gitlinks。完整用户/业务/真机验收仍待执行，见该目录验收清单与分层证据。
+- `juyiting-unified-experience/`：已发布1.13.10-uxfix4，用户确认本轮UI；Web10fc720/API787ae631，302单元组件+39fixture浏览器+6线上HTTP+37线上UI通过。上下文及清理见`session-closeout-20260922.md`；付费闭环／真机／Runtime激活／P01仍单列待验。
