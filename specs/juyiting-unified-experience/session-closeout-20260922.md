@@ -47,7 +47,7 @@
 
 先推送本收尾文档，再移除已完成的本任务9个worktree；保留远端源码及冻结分支。删除前核验干净状态、远端可恢复和无活动进程占用。工作树内`.tmp-w04/w05-evidence`及API测试报告先独立归档并校验。只清理本任务浏览器临时profile、Vite缓存等可再生目录。
 
-**保留**主root/api/web未提交修改、其他任务工作树及进程、共享node_modules、线上与回退站点、全部发布包／哈希／日志／报告／截图。清理实录：`deliverables/cleanup/juyiting-closeout-20260922/`，清理后摘要见 `cleanup-closeout-20260922.md`。
+**保留**主root/api/web未提交修改、其他任务工作树及进程、共享node_modules、线上与回退站点、全部发布包／哈希／日志／报告／截图。清理实录：`deliverables/cleanup/juyiting-closeout-20260922/`，清理摘要见 `cleanup-closeout-20260922.md`，最终9树完成记录位于上述目录的`final-result.json`（本提交推送后移除最后文档树）。
 
 ## 下次接手
 
