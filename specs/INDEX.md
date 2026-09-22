@@ -18,3 +18,7 @@ Create a feature with:
 ```
 
 Do not create a feature directory for local-only refactors unless it changes a published contract, shared behavior, release baseline, or both repositories.
+
+## 2026-09-22 delivery
+
+- `juyiting-unified-experience/`：1.13.10 + API fix1技术发布、线上只读HTTP6/6与浏览器6/6通过；API787ae631/Webb8bd0de精确gitlinks。完整用户/业务/真机验收仍待执行，见该目录验收清单与分层证据。
