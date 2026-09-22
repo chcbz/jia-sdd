@@ -47,6 +47,9 @@ For the current GPT multimodal visual baseline verdict and required contact shee
 
 ## UI Invariants
 
+- 横屏 `landscape-map` 且 `homeMode=map` 使用沉浸地图：隐藏业务 shell 的 header/toolbar/footer，启用既有 Stage 轻量悬浮 HUD；概览保留业务导航。竖屏仅地图上的“横屏看全景”提供方向入口，不显示工具栏／弹窗方向按钮或地图缩放复位按钮。Stage、打开的面板和草稿在旋转中保持同实例。
+- 地图画布采用 cover 裁切，回归检查 Stage 填满容器且 canvas 覆盖四边，不能要求 canvas 与屏幕宽高完全相等；悬浮栏图标须能在已安装 Varlet 图标集中解析。
+
 - Map filtering and roster filtering are separate. Changing roster status should not remove map agents.
 - `visibleAgents` should derive from `mapAgents`, not from roster state.
 - Bounty assignment should receive the target agent from the clicked row or explicit action payload.
