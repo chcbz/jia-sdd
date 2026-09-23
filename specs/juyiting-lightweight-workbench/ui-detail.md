@@ -28,6 +28,8 @@
 |`.workbench-mobile-nav`|隐藏|隐藏|≤760 显示；高度 `62px + env(safe-area-inset-bottom)`，`padding:5px 12px max(5px,env(safe-area-inset-bottom))`，边1，z-index30；每项均分，至少50高、竖向gap4、11px、图标21|≤760 同左|
 |全部入口|≤760 前隐藏|同左|绝对定位右15、顶64、z-index32；`border-box` 宽 `min(330px,100% - 30px)`，padding12、gap6、2列；最大高 `100% - 64px - 62px - safe-area-bottom`，内部滚动|≤560高改顶58及对应最大高|
 
+极窄复排补充（不改变上表常规断点）：宽 ≤240 CSS px 时页头仅保留品牌/“全部入口”（消息/个人中心仍在展开菜单），底栏前三项只显示图标并加同名 `aria-label`，最后一项继续显示“典籍阁”，图标按钮 font-size10/padding3；标题文字不换行而省略，议事工具栏可横向滚动且按钮可聚焦，议事输入 max-height56、上下 padding2。宽 ≤180 时标题视觉隐藏但 `aria-labelledby` 仍保留中文标题、工具栏 padding `2px 6px`、消息区 padding `4px 8px`、辅助文案单行省略。高 ≤260 且宽 ≤760 的极短屏中，**仅议事**窗口本身增加纵向滚动、消息区 min-height80/max-height40vh，草稿和发送按钮可以滚动进入视口；不覆盖常规模式。源码在 `JuyiHall.vue`，仅检查了四个半尺寸 CSS 视口 + DPR2，详见 `evidence/compact-reflow-review.md`。
+
 页头在顶层工作台页签和消息/好汉/资料页可操作；打开草稿/详情等次级对话时不可操作。顶层工作区对话 `aria-modal=false`，次级/地图场景对话为 `true`；只有模态层执行焦点循环。打开和返回沿用原有 panelFrames 与草稿离开保存屏障，不把红色错误提示转为成功。
 
 ## 3. 厅内议事和其他真实业务面板
@@ -45,7 +47,18 @@
 |320×740|320×64|隐藏|288|288×185|62|330.52|无（scrollWidth=320）|
 |844×390|652×58|192|600|600×165|隐藏|129.06|无（scrollWidth=844）|
 
-手机底栏实际高度经 `box-sizing:border-box` 与面板底预留 62px 一致，**不是** 62px 高再额外加上下 padding。消息区是空话头/关闭引用与历史选取器时的高度，不是有键盘或长消息时的恒定值。已另用实际 Vue 渲染 28 条**合成** Markdown 消息在四视口＋720×450 核对消息自身滚动且输入不被遮挡，数值见 `evidence/long-chat-fixture.json`；这只验证视图布局，不表示真实话头数据已从服务端读取，也不等于 200% 浏览器缩放测试。更多位置、各页签 computed 字体/间距/颜色见 [计算属性附表](ui-computed-attributes.md)，可见区域的原始 CSS/aria/href 样本见 `evidence/computed-live-fixture.json`；正文表按最终 CSS 约束取整，几何小数仅报告实测样本。
+**极窄/极短实测补表（候选 `8f47a12`，半尺寸 CSS 视口 + DPR2，非实际浏览器缩放）：**
+
+|CSS 视口|底栏单项 W×H|前三项文字 / 典籍阁文字|议事消息区高度|议事窗可视高 / 滚动内容高|
+|---|---:|---|---:|---:|
+|160×370|34×51px|隐藏 / 可见；四项中文 `aria-label` 均保留|62.06px|250 / 250px|
+|195×422|42.75×51px|隐藏 / 可见；四项中文 `aria-label` 均保留|97.06px|302 / 302px|
+|422×195|99.5×51px|均可见|100px|75 / 301px，需滚到输入区|
+|720×450|174×51px|均可见|129.06px|330 / 330px|
+
+这些是按当前空数据和字体环境测得的包围盒；小屏的 `font-size:10px` / `padding:3px` 与 11px 常规底栏字号、非链接按钮语义见 §2、§4；窗口高度受输入法、内容和安全区影响，不能写死。原始 `width/height/labelDisplay` 和截图见 [`compact-reflow-fixture.json`](evidence/compact-reflow-fixture.json) 与 [`compact-reflow-review.md`](evidence/compact-reflow-review.md)。
+
+手机底栏实际高度经 `box-sizing:border-box` 与面板底预留 62px 一致，**不是** 62px 高再额外加上下 padding。消息区是空话头/关闭引用与历史选取器时的高度，不是有键盘或长消息时的恒定值。已另用实际 Vue 渲染 28 条**合成** Markdown 消息在四视口＋720×450 核对消息自身滚动且输入不被遮挡，数值见 `evidence/long-chat-fixture.json`；这只验证视图布局，不表示真实话头数据已从服务端读取，也不等于 200% 浏览器缩放测试。另补 `evidence/compact-reflow-fixture.json` 只证明等效半尺寸 CSS 视口的布局和操作入口，**不**等于实际浏览器缩放。更多位置、各页签 computed 字体/间距/颜色见 [计算属性附表](ui-computed-attributes.md)，可见区域的原始 CSS/aria/href 样本见 `evidence/computed-live-fixture.json`；正文表按最终 CSS 约束取整，几何小数仅报告实测样本。
 
 ### 3.2 原业务内页属性（源 CSS 声明；不作为全部状态的实测值）
 

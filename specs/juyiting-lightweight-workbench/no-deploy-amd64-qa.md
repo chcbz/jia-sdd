@@ -1,6 +1,6 @@
 # 候选提交无部署 amd64 全量验证移交单（待授权执行）
 
-2026-09-23。本文件是**操作前检查单**，不是运行报告或通过证明。目标提交仅限 `cyf-web-kit` 的 `a9354407c3216efe75a16959afe522bb127e1a19`（远端 `codex/juyiting-lightweight-workbench` 已核对）；不得把当前 `develop`、旧 Flow Run 147 或本机 Chromium 142 的结果归给该提交。API 源码未改，根仓库 `web` gitlink 尚未 pin；详见 `acceptance.md`。
+2026-09-23 编写，2026-09-24 更新。本文件是**操作前检查单**，不是运行报告或通过证明。目标提交仅限 `cyf-web-kit` 的 `8f47a1289bf501616ba234638192a5303d3155d7`（远端 `codex/juyiting-lightweight-workbench` 已核对）；不得把当前 `develop`、旧 Flow Run 147 或本机 Chromium 142 的结果归给该提交。API 源码未改，根仓库 `web` gitlink 尚未 pin；详见 `acceptance.md`。
 
 ## 环境与权限
 
@@ -14,7 +14,7 @@
 # 在隔离的 Alinux3 amd64 worker 上；不要在生产服务器部署目录执行。
 git clone --single-branch --branch codex/juyiting-lightweight-workbench https://gitee.com/chcbz/cyf-web-kit.git cyf-web-candidate
 cd cyf-web-candidate
-test "$(git rev-parse HEAD)" = a9354407c3216efe75a16959afe522bb127e1a19
+test "$(git rev-parse HEAD)" = 8f47a1289bf501616ba234638192a5303d3155d7
 npm ci
 CI=1 npm test            # 原完整 Mocha、固定浏览器、E14 新报告/性能门禁
 npm run build             # 生产打包；不得把构建成功称为服务端/线上验收
