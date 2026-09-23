@@ -23,6 +23,7 @@
 
 - 当前 63 项是有界的**聚义厅 Demo 对比清单**；正式页每组仍挂载旧组件的路径见 `feature-integration-audit.md`，并不代表真实账户所有服务端行为已验证。后续以实际授权账户对正式/私人事项、文件版本/权限、议事 SSE、典籍章节、地图素材等逐流程取证。
 - 页面外壳的 CSS 算法和断点见 `ui-detail.md`，实现态采样表见 `ui-computed-attributes.md`；实际顶层按钮/输入/链接逐项清单见 `ui-control-attributes.md`，四视口完整原始数据见 `evidence/computed-live-fixture.json` 与 `evidence/computed-controls-live-fixture.json`；旧 Demo 的 180 种控件登记只限 Demo。
+- **隔离复测（2026-09-23 23:29–23:31 CST）**：只跑此前全量中的 E1 基线重定向、TMX 编辑 CLI、TMX 快照/预览三条，E1 27.48 秒通过；TMX 编辑内设 60 秒及快照/预览内设 20 秒均仍超时（测试退出码 2，原始日志 `/tmp/cyf-wb-target-tmx-e1-20260923.log`，未写入仓库）。这证明 E1 曾经的 60 秒超时受本地全量执行条件影响；TMX 两条在隔离环境仍未过，**不能简单归因“只是 Chromium 缺失”或放松断言/超时充作通过**。项目锁定的 amd64 门禁仍需重跑这三条，并区分平台性能与真实回归。
 - 144 passing 是本轮七份相关组件测试单次运行结果；与早前全量运行的 2331/47 不是同一次测试批次，不可相加为全量通过。复现命令（从 `web/` 运行）：
 
 ```bash
