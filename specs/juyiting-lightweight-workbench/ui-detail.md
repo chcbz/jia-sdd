@@ -64,6 +64,22 @@
 
 所有上述工作台按钮当前为 `type="button"` 内部动作，**不是**带 `href` 的锚点；文档“/profile”表示调用 Vue Router 后实际应到达的路由，不等于账户按钮的 DOM href。典籍阁内的两个 `<button role="tab">` 带 `aria-selected`、`aria-controls` 与 `tabindex`，键盘左右切换；后续新增链接需另列实际 URL/target/rel 与权限。当前页面不会为这些按钮生成可分享的面板深链。本次未引入新路径或外链，顶层页签不会修改 pathname/hash；浏览器 Back 不等价于面板 Back。外部链接（如招贤令安装指引）按原组件权威 URI/权限展示，本次不伪造通用 URL；本地空 API 的正式页面还采到原全局抽屉（关闭时 x=-240，不在视口）的真实 `a[href]`：`/profile`（个人中心）、`/messages`（消息中心）、`/help`（帮助与反馈）；这是旧全局导航，不是工作台新增的按钮链接，不能说整个站点没有 href。全站原 `/`, `/demo`, `/oauth2/callback`, `/profile`, `/workspace` 等路由仍由原 Router 管理。
 
+### 4.1 精确尺寸/排版/链接索引（避免把导航按钮误认作 URL）
+
+以下为**正式候选**（1440×900、390×844、320×740、844×390），不借用 Demo 假状态。先查本文件 §2 的 CSS 规则/断点，再查 [实测字体·尺寸·距离·颜色](ui-computed-attributes.md) 和 [按钮·输入·链接逐项明细](ui-control-attributes.md)；四视口每一个已布局控件的 `rect`/字体族字号字重行高字距/`padding`/`margin`/`gap`/前景背景/边框圆角/ARIA/type/`href`/resolvedHref 在 [`computed-controls-live-fixture.json`](evidence/computed-controls-live-fixture.json)。实测值是状态快照，不等于对所有条件状态下固定的尺寸承诺。
+
+|控件/场景|桌面 1440×900|手机 390×844|语义、目标及采样界限|
+|---|---|---|---|
+|侧栏“典籍阁”|185×44；14px/500/20.3px；padding 9px 12px；相邻侧栏项 gap3px|不显示|按钮无 href，切到原 `LibraryPanel` 的阅读/案卷页签；侧栏底区与顶区分开|
+|底栏右下“典籍阁”|不显示|91.5×51；11px/400/18.15px；padding5px，图标21px；底栏62高，底/顶内边距5px/5px（安全区为0时）|按钮无 href；仍在 `/juyiting`，不是 `/archive` 或下载链接|
+|页头“全部入口”|不显示|46×40；15px/400/24.75px；padding8px 12px；位于 x328/y12.02（此单视口）|`aria-label=全部入口`/`aria-expanded`；只在展开时显示菜单，关闭态计算样本没有菜单子项|
+|议事工作区关闭按钮|36×36；15px/500/24.75px；padding 0 12px|36×34；15px/500/24.75px；padding 0 9px|`aria-label=关闭面板`，无 href；属于顶层返回逻辑，次级表单返回需单独检查|
+|账户按钮与旧抽屉链接|账户 56×42.75；15px/400/24.75px|同桌面|账户本身无 href、Vue Router 到 `/profile`；关闭的全局抽屉有三条 `a[href]` `/profile`、`/messages`、`/help`（x=-240，非视口内），它们不属于本工作台新增链接|
+
+展开菜单的**源码规则**：相对 `.juyi-page` 绝对定位 `top:62px; right:15px; z-index:32`；宽 `min(330px, 100vw - 30px)`；内边距12、两等宽列、gap6、圆角10、背景 `#FFFEFA`、边框1px `#E3E5DC`、阴影 `0 18px 38px #242e2b29`；文字换行、左对齐。它的字体沿用工作台继承栈/页头按钮规则（15px、padding 8px 12px、min-height40）；**展开态未被空 API 计算样本采集，不将此处 CSS 声明冒充实测 W×H**。≤560px 高短横屏页头缩到58px，菜单的 `top:62px` 仍按源码固定，需实机检查是否挡住内容。
+
+链接目录的界限：上述页签、典籍阅读/案卷检索切换、使用帮助、厅中实景都是 Vue 按钮，没有可分享深链、`target`/`rel`；典籍正文动态内容、招贤令外部安装指引、事项/文件详情和权限依赖的下载 URL 不在空数据采样内，**不能从这张表推断无链接或固定目的地**。需要在授权环境显示相应状态后补充标签→实际 URL/目标/权限，避免填造链接。源文件 `web/src/router/index.js` 注册 `/juyiting`、`/profile`、`/messages` 和 `/help`，本次没有新增路由。
+
 ## 5. 响应式和验收边界
 
 - 工作台切换、厅中实景和已挂载 Stage 的同实例测试依赖真实 Vue 组件；图像证据采用**本地只读空响应 fixture**，仅测试展示/入口/溢出与焦点。账号资料权限不足/错误文案是模拟 API 的结果，不得认为线上服务出现此故障；阅读原文、真实资料下载、SSE、报价/支付、指派等必须分别用已有业务测试与有授权服务验证。
