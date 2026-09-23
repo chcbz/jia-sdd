@@ -17,7 +17,7 @@
 - **只读 Flow 状态（2026-09-23 23:19–23:21 CST）**：前端流水线 `4403172` 最近运行 `147`（2026-09-20 11:36 CST 开始）为 FAIL，来源 `develop`，运行源提交元数据为 null，构建/扫描作业均 FAIL，日志 API 返回空内容；这既不能诊断失败原因，也与未触发的 `fe43ebc5` **无关**。当前流水线源码触发过滤器 `^(develop|codex/v1-6-voice-availability-20260917)$`，不含本次特性分支；推送后 23:26 CST 再查询最新仍为 Run 147，没有候选的 amd64 全量 CI/部署。要验收须在授权的无部署 amd64 受控作业针对完整候选 SHA 执行门禁；不能用旧 Run 147 成败替代。
 - 历史原型 63 条覆盖结论属于 Demo；新正式组件接入和仍需实际验证的差异分别见 `feature-integration-audit.md`、`ui-detail.md`。`docs/ui-workbench/ui-detail.md` 是原型属性详设，**实现态以本目录及 live fixture 样本为准**。验收完成前不得将 `integration.yaml` 标为 accepted；`./sddw pin` 会提前改成 integration-ready，真实服务/受控浏览器门禁通过前不要执行。Web 提交已推至非发布特性分支，但 root 的 `web` gitlink 仍保持原值。
 
-真实服务与受控浏览器的逐项操作、证据和先决条件见 [`real-service-qa.md`](real-service-qa.md)。
+真实服务与受控浏览器的逐项操作、证据和先决条件见 [`real-service-qa.md`](real-service-qa.md)；无部署候选全量 CI 执行检查单见 [`no-deploy-amd64-qa.md`](no-deploy-amd64-qa.md)。
 
 ## 本地复核边界与待办（2026-09-23）
 
