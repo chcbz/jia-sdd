@@ -26,7 +26,7 @@
 |顶层`.panel-overlay.is-workbench-panel`|absolute，从左216、上76，内padding `16px 24px`；面板最大宽1320，高100%，无深色遮罩|左192|≤760 inset 从上64至底 `62px + safe-area-inset-bottom`，padding0，面板全宽无圆角|上58；聊天重复简介隐藏|
 |顶层`.floating-panel`|`width:min(1320px,100%)`，height100%、border1、radius12；标题最小56、padding `10px 20px`、字号20|同左|≤760标题最小44、padding `6px 16px`|最小40、padding上下4|
 |`.workbench-mobile-nav`|隐藏|隐藏|≤760 显示；高度 `62px + env(safe-area-inset-bottom)`，`padding:5px 12px max(5px,env(safe-area-inset-bottom))`，边1，z-index30；每项均分，至少50高、竖向gap4、11px、图标21|≤760 同左|
-|全部入口|≤760 前隐藏|同左|绝对定位右15、顶62、z-index32；宽 `min(330px,100vw - 30px)`，padding12、gap6、2列|短屏弹出仍需可滚动/焦点回归|
+|全部入口|≤760 前隐藏|同左|绝对定位右15、顶64、z-index32；`border-box` 宽 `min(330px,100vw - 30px)`，padding12、gap6、2列；最大高 `100% - 64px - 62px - safe-area-bottom`，内部滚动|≤560高改顶58及对应最大高|
 
 页头在顶层工作台页签和消息/好汉/资料页可操作；打开草稿/详情等次级对话时不可操作。顶层工作区对话 `aria-modal=false`，次级/地图场景对话为 `true`；只有模态层执行焦点循环。打开和返回沿用原有 panelFrames 与草稿离开保存屏障，不把红色错误提示转为成功。
 
@@ -105,12 +105,12 @@
 |议事工作区关闭按钮|36×36；15px/500/24.75px；padding 0 12px|36×34；15px/500/24.75px；padding 0 9px|`aria-label=关闭面板`，无 href；属于顶层返回逻辑，次级表单返回需单独检查|
 |账户按钮与旧抽屉链接|账户 56×42.75；15px/400/24.75px|同桌面|账户本身无 href、Vue Router 到 `/profile`；关闭的全局抽屉有三条 `a[href]` `/profile`、`/messages`、`/help`（x=-240，非视口内），它们不属于本工作台新增链接|
 
-展开菜单的**源码规则**：相对 `.juyi-page` 绝对定位 `top:62px; right:15px; z-index:32`；宽 `min(330px, 100vw - 30px)`；内边距12、两等宽列、gap6、圆角10、背景 `#FFFEFA`、边框1px `#E3E5DC`、阴影 `0 18px 38px #242e2b29`；文字换行、左对齐。它的字体沿用工作台继承栈/页头按钮规则（15px、padding 8px 12px、min-height40）；**展开态未被空 API 计算样本采集，不将此处 CSS 声明冒充实测 W×H**。≤560px 高短横屏页头缩到58px，菜单的 `top:62px` 仍按源码固定，需实机检查是否挡住内容。
+展开菜单的**源码规则**：相对 `.juyi-page` 绝对定位 `top:64px; right:15px; z-index:32`（≤560高为 top58）；`box-sizing:border-box` 宽 `min(330px, 100vw - 30px)`；`max-height:calc(100% - 64px - 62px - env(safe-area-inset-bottom))`（短屏替换64为58）、`overflow-y:auto`、内部滚动不传到底页；内边距12、两等宽列、gap6、圆角10、背景 `#FFFEFA`、边框1px `#E3E5DC`、阴影 `0 18px 38px #242e2b29`；文字换行、左对齐。它的字体沿用工作台继承栈/页头按钮规则（15px、padding 8px 12px、min-height40）；**原 28 场景控件 CSSOM 仍为关闭态；新展开态另在六视口实测了外框 W×H、scroll 与末项焦点（`evidence/menu-short-screen-fixture.json`），未重采 10 个菜单按钮的完整计算字体/边距，因此本段文字属性仍是源码约束而非全状态实测**。320×320 短屏下菜单可在页头58px与底栏顶缘258px之间滚动；展开态实测与截图见 `evidence/menu-short-screen-fixture.json`，不代表实际软键盘/安全区已通过。
 
 链接目录的界限：上述页签、典籍阅读/案卷检索切换、使用帮助、厅中实景都是 Vue 按钮，没有可分享深链、`target`/`rel`；典籍正文动态内容、招贤令外部安装指引、事项/文件详情和权限依赖的下载 URL 不在空数据采样内，**不能从这张表推断无链接或固定目的地**。需要在授权环境显示相应状态后补充标签→实际 URL/目标/权限，避免填造链接。源文件 `web/src/router/index.js` 注册 `/juyiting`、`/profile`、`/messages` 和 `/help`，本次没有新增路由。
 
 ## 5. 响应式和验收边界
 
-- 工作台切换、厅中实景和已挂载 Stage 的同实例测试依赖真实 Vue 组件；既有 28 场景图像/CSSOM 证据采用**本地只读空响应 fixture**，仅测试展示/入口/溢出与焦点。2026-09-24 又以临时进程内只读代理和授权真实账号检查概览、章节与会话列表、实景 snapshot，详见 `evidence/real-readonly-browser-20260924.md`；此证据**不改变**上述 28 场景 computed 属性的来源，也不等于本候选已部署。账号资料权限不足/错误文案是模拟 API 的结果，不得认为线上服务出现此故障；阅读原文的进度写入、真实资料下载、SSE、报价/支付、指派等仍必须分别用已有业务测试与有授权服务验证。
+- 工作台切换、厅中实景和已挂载 Stage 的同实例测试依赖真实 Vue 组件；既有 28 场景图像/CSSOM 证据采用**本地只读空响应 fixture**，仅测试展示/入口/溢出与焦点。前序 Web `fe43ebc5` 曾以临时进程内只读代理和授权真实账号检查概览、章节与会话列表、实景 snapshot，详见 `evidence/real-readonly-browser-20260924.md`；此证据**不改变**上述 28 场景 computed 属性的来源，也不等于本候选已部署。账号资料权限不足/错误文案是模拟 API 的结果，不得认为线上服务出现此故障；阅读原文的进度写入、真实资料下载、SSE、报价/支付、指派等仍必须分别用已有业务测试与有授权服务验证。
 - 真实软键盘、安全区（headless 的 `env()`=0）、实际宋体安装、辅助文字 11px 的可读性、所有子组件 200% 缩放和屏幕阅读器不是此布局采样的通过项目。
 - 功能完整性审计矩阵与当前状态见 `../../docs/ui-workbench/feature-coverage.md`（**静态 Demo 的缺口，不代表本次正式接入新增了这 63 个功能**）和本规格目录 `acceptance.md`；保留依赖现有功能的入口，不宣称这次重新实现了其业务逻辑。
