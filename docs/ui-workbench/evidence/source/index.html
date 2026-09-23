@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="description" content="聚义厅轻量工作台完整 UI Demo：办事概览、事项、议事、好汉、资料、案卷与地图。本地示例，无线上操作。">
+<title>聚义厅 · 轻量工作台 Demo</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<div id="app" data-mode="overview">
+  <section id="map-stage" aria-label="聚义厅地图演示，拖动浏览，使用加减号缩放，数字0复位" tabindex="0">
+    <div id="map-world">
+      <img class="map-image" src="assets/hall-scene.webp" alt="现有聚义厅实景截图，保留梁山大厅美术" draggable="false">
+      <button class="landmark" style="left:84%;top:13%" data-open="bounty"><i class="var-icon--set var-icon-format-list-checkbox" aria-hidden="true"></i>悬赏榜<span>查看榜文</span></button>
+      <button class="landmark" style="left:48%;top:24%" data-open="chat"><i class="var-icon--set var-icon-chat-processing-outline" aria-hidden="true"></i>厅内议事<span>坐下聊一聊</span></button>
+      <button class="landmark" style="left:13%;top:13%" data-open="agents"><i class="var-icon--set var-icon-account-circle" aria-hidden="true"></i>点将册<span>认识好汉</span></button>
+      <button class="landmark" style="left:13%;top:58%" data-open="files"><i class="var-icon--set var-icon-file-document-outline" aria-hidden="true"></i>百宝箱<span>资料与成果</span></button>
+      <button class="landmark" style="left:89%;top:77%" data-open="archive"><i class="var-icon--set var-icon-notebook" aria-hidden="true"></i>典籍阁<span>查阅案卷</span></button>
+      <button class="agent-hit" style="left:74%;top:67%" data-agent="husanniang" aria-label="查看扈三娘"><span>查看扈三娘</span></button>
+      <button class="agent-hit" style="left:18%;top:39%" data-agent="likui" aria-label="查看李逵"><span>查看李逵</span></button>
+      <button class="agent-hit" style="left:29%;top:39%" data-agent="linchong" aria-label="查看林冲"><span>查看林冲</span></button>
+      <button class="agent-hit" style="left:89.5%;top:40.5%" data-agent="songjiang" aria-label="查看宋江"><span>查看宋江</span></button>
+      <button class="agent-hit" style="left:86%;top:41%" data-agent="wuyong" aria-label="查看吴用"><span>查看吴用</span></button>
+    </div>
+  </section>
+  <div class="map-hud" aria-label="地图工具栏">
+    <button class="hud-brand" data-open="quick" aria-label="聚义厅快捷入口">聚义厅</button>
+    <button class="hud-account" data-open="account" aria-label="个人中心" title="个人中心"><img src="assets/songjiang.webp" alt=""></button>
+    <button class="hud-button" data-mode="overview" aria-label="办事概览" title="办事概览"><i class="var-icon--set var-icon-format-list-checkbox" aria-hidden="true"></i></button>
+    <button class="hud-button" data-open="messages" aria-label="查看消息" title="查看消息"><i class="var-icon--set var-icon-bell-outline" aria-hidden="true"></i><span class="unread-dot"></span></button>
+    <button class="hud-button" data-open="files" aria-label="打开百宝箱" title="打开百宝箱"><i class="var-icon--set var-icon-wrench" aria-hidden="true"></i></button>
+    <button class="hud-button" data-action="sound" aria-label="声响设置" title="声响设置"><i class="var-icon--set var-icon-bell" aria-hidden="true"></i></button>
+    <button class="hud-button" data-open="help" aria-label="怎么开始" title="怎么开始"><i class="var-icon--set var-icon-help-circle-outline" aria-hidden="true"></i></button>
+  </div>
+  <div class="map-demo-marker"><span class="demo-dot"></span> UI DEMO <span class="marker-detail">· 静态场景 / 本地交互</span></div>
+  <div class="map-caption"><span>梁山泊 · 聚义厅</span><small>拖动地图，点击场所或好汉</small></div>
+  <button class="return-hall" data-action="reset-map" aria-label="回主厅" title="回主厅">⌂</button>
+  <button class="portrait-hint" data-action="orientation">横屏看全景 <i class="var-icon--set var-icon-chevron-right" aria-hidden="true"></i></button>
+  <section id="business-shell">
+    <aside class="sidebar" aria-label="工作台导航">
+      <button class="work-brand" data-view="overview"><span class="brand-seal">聚</span><span>聚义厅<small>一起，把事情办成。</small></span></button>
+      <div class="nav-caption">我的工作空间</div>
+      <nav class="side-nav" aria-label="主导航"><button data-view="overview"><i class="var-icon--set var-icon-home-outline" aria-hidden="true"></i><span>办事概览</span></button><button data-view="bounty"><i class="var-icon--set var-icon-format-list-checkbox" aria-hidden="true"></i><span>我的事项</span></button><button data-view="chat"><i class="var-icon--set var-icon-chat-processing-outline" aria-hidden="true"></i><span>厅内议事</span></button><button data-view="agents"><i class="var-icon--set var-icon-account-circle-outline" aria-hidden="true"></i><span>点将册</span></button><button data-view="files"><i class="var-icon--set var-icon-file-document-outline" aria-hidden="true"></i><span>百宝箱</span></button><button data-view="archive"><i class="var-icon--set var-icon-notebook" aria-hidden="true"></i><span>典籍阁</span></button></nav>
+      <div class="sidebar-bottom"><button class="sidebar-map" data-mode="map"><i class="var-icon--set var-icon-map-marker-outline" aria-hidden="true"></i><span>厅中实景<small>去梁山走一走</small></span><i class="var-icon--set var-icon-chevron-right" aria-hidden="true"></i></button>
+      <nav class="side-nav utility-nav" aria-label="辅助导航"><button data-view="settings"><i class="var-icon--set var-icon-cog-outline" aria-hidden="true"></i><span>偏好设置</span></button><button data-view="help"><i class="var-icon--set var-icon-help-circle-outline" aria-hidden="true"></i><span>使用帮助</span></button></nav>
+      <button class="sidebar-account" data-view="account"><img class="portrait" src="assets/songjiang.webp" alt=""><span>体验账号<small>本地演示空间</small></span><i class="var-icon--set var-icon-chevron-right" aria-hidden="true"></i></button></div>
+    </aside>
+    <div class="work-area">
+      <header class="work-header"><div class="breadcrumb"><span>我的工作空间</span><i class="var-icon--set var-icon-chevron-right" aria-hidden="true"></i><strong id="current-page">办事概览</strong></div><div class="work-header-actions"><span class="demo-badge"><span></span>本地 DEMO</span><button class="icon-button" data-view="messages" aria-label="消息通知"><i class="var-icon--set var-icon-bell-outline" aria-hidden="true"></i><span class="unread-dot"></span></button><button data-action="new-demand" class="primary header-create"><i class="var-icon--set var-icon-plus" aria-hidden="true"></i>提出需求</button><button class="icon-button mobile-more" data-action="navigation" aria-label="全部入口"><i class="var-icon--set var-icon-menu" aria-hidden="true"></i></button></div></header>
+      <main id="work-main" tabindex="-1"><div id="overview"></div><section id="page-view" hidden><header class="page-heading"><div class="eyebrow">聚义厅 / 我的工作空间</div><h1 id="page-title"></h1><p id="page-description"></p></header><div class="page-surface"><div id="page-body"></div><footer id="page-footer" hidden></footer></div></section></main>
+      <div class="work-footnote"><span>梁山好汉 · 共成其事</span><span>UI DEMO · 示例数据，刷新重置</span></div>
+    </div>
+    <nav class="mobile-nav" aria-label="移动端导航"><button data-view="overview"><i class="var-icon--set var-icon-home-outline" aria-hidden="true"></i><span>办事概览</span></button><button data-view="bounty"><i class="var-icon--set var-icon-format-list-checkbox" aria-hidden="true"></i><span>我的事项</span></button><button data-view="chat"><i class="var-icon--set var-icon-chat-processing-outline" aria-hidden="true"></i><span>厅内议事</span></button><button data-view="archive"><i class="var-icon--set var-icon-notebook" aria-hidden="true"></i><span>典籍阁</span></button></nav>
+  </section>
+</div>
+<dialog id="panel" aria-labelledby="panel-title">
+  <header class="panel-header"><div class="panel-heading"><button class="icon-button back-button" data-action="back" aria-label="返回上一级" hidden><i class="var-icon--set var-icon-chevron-left" aria-hidden="true"></i></button><div><div class="panel-kicker">聚义厅 · 演示空间</div><h1 id="panel-title"></h1></div></div><button class="icon-button" data-action="close" aria-label="关闭面板"><i class="var-icon--set var-icon-window-close" aria-hidden="true"></i></button></header>
+  <div id="panel-body" class="panel-body"></div>
+  <footer id="panel-footer" class="panel-footer" hidden></footer>
+</dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<noscript>请启用 JavaScript 以体验本地交互 Demo；所有操作都不会连接线上接口。</noscript>
+</body>
+</html>

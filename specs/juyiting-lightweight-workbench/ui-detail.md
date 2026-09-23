@@ -1,0 +1,71 @@
+# 正式聚义厅 · 轻量工作台 UI 详设（实现态）
+
+日期：2026-09-23。适用范围：`/juyiting` 内此次新增的工作台框架、概览和顶层业务面板；**不是**其他全站路由或静态 Demo 的全量样式规范。原型的逐控件 180 种目标、38 场景 CSSOM 与页面尺寸，分别见 `../../docs/ui-workbench/{ui-detail.md,component-attributes.md,control-targets.md,evidence/computed-ui.json}`。原型是假数据；下表是正式 Vue 实现的规则，不把原型属性误写成已实现属性。**正式接入的逐组件字号/字重/行高、实测 W×H、边距/gap/圆角与文字/背景色的桌面+手机对照请查 [计算属性附表](ui-computed-attributes.md)**；四视口 28 场景原始样本查 `evidence/computed-live-fixture.json`；**实际可见按钮、输入框/链接逐项登记**见 [正式控件属性索引](ui-control-attributes.md)及 `evidence/computed-controls-live-fixture.json`（含 320/844 断点和现有全局抽屉的 offscreen 链接）。
+
+## 1. CSS 来源、层叠和计量
+
+- 工作台框架样式：`web/src/components/world/JuyiHall.vue` 的 scoped `<style>`，限定 `.home-overview`；普通业务面板保留各自现有样式，非地图模式不修改 Stage 绘制。概览：`web/src/components/juyiting/HallOverview.vue` 的 scoped 样式；消息/会话、任务/文件/阅读的细部字体和按钮仍由各自组件定义，**未全站统一重写**。
+- 框架 CSS 变量（仅工作台祖先）：`--work-paper:#FFFEFA`、`--work-ground:#F5F4F0`、`--work-line:#E3E5DC`、`--work-ink:#242E2B`、`--work-muted:#68716B`、`--work-brand:#923F30`；主按钮 hover `#793326`，选中背景 `#F6EEE8`，普通 hover `#F0F1EA`；焦点轮廓 `3px solid #923F3080`、offset `3px`。
+- UI 正文字体栈 `-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif`，基准 `15px/1.65`；品牌、欢迎大标题、地图预览文字用 `"Noto Serif CJK SC", "Songti SC", STSong, serif`。均为回退列表而非强制下载；不同操作系统的实际字形、换行待实机核对。Varlet 图标本地资源。
+- 几何单位均为 CSS px；`minmax`、`env()` 按视口动态计算。`evidence/computed-live-fixture.json` 为 Chromium 中四视口 × 七表面的计算样式/包围盒/控件 aria/href 样本，**使用本地假认证 token 与空 API 响应，仅证明真实 Vue 的布局/导航，不是线上服务功能验收**。同目录 PNG 是视觉证据；样本无个人信息或口令。
+
+## 2. 页面结构和属性
+
+|部件/选择器|常规桌面|≤1200|≤1000 / ≤760 / ≤600|短横屏 ≤560 高|
+|---|---|---|---|---|
+|`.juyi-page.home-overview`|grid `216px minmax(0,1fr)` × `76px minmax(0,1fr)`；height 100%，overflow hidden|列宽192|≤760 单列、行高 `64px minmax(0,1fr)`|行高 `58px minmax(0,1fr)`|
+|`.hall-workbench-sidebar`|第一列两行、padding `28px 15px 16px`、`overflow-y:auto`、底部入口 `margin-top:auto`|水平padding10|≤760 隐藏|窄横屏可在侧栏内部滚动|
+|品牌/栏目|品牌23px/500衬线，方印38×38，字21；说明11px/1.5；栏目11px + letter-spacing `.06em`、margin `30px 10px 10px`|同左|侧栏隐藏|同左|
+|侧栏按钮|高度至少44、padding `9px 12px`、gap12、圆角7、14px/500；图标19；地图入口至少66、边框1、底距14|同左|手机底栏取代|同左|
+|`.hall-app-header`|第二列首行、padding `12px 36px`，底边线1；品牌17；右侧工具按钮 min-height40 / padding `8px 12px` / radius7|padding左右26|≤760 首行 padding `10px 16px`；隐藏好汉和大号提出需求，保留消息/账户/全部入口|上下padding5，行高58|
+|`.hall-overview`|最大宽1320、居中、`padding:30px 36px 36px`，背景 ground|padding26|≤600 `22px 16px`|滚动属于原 `HallPortraitHome` 内容区|
+|概览标题与动作|眉题11px + 字距 `.08em`；h2 28px/500/1.5 衬线，字距 `.8px`；说明14；动作 gap10 / margin-top16；按钮最小42、radius7、14px/500|同左|≤600 h2 25px、字距0，动作12px|同左|
+|`.overview-columns`|主栏 minmax(0,1fr) + 300，gap24；主卡 padding `22px 24px 0`、radius11、1px线|副栏264 / gap18|≤1000 单列，副卡两列；≤600 副卡单列，主卡 `18px 16px 0`|同左|
+|事项页签/列表|页签 gap10，13px、padding `12px 8px`、横向滚动；列表上下padding17，标题15px/500/1.55，元信息12px，标签11px|同左|≤600 列表允许换行，元信息不裁掉动作|同左|
+|概览副卡/资料|地图卡高176 / padding `20px 18px`，radius11；副卡和资料卡padding20，radius11；卡片间距18；副卡内操作至少36|地图卡默认同左|≤1000地图卡165；≤600地图卡185、资料/副卡padding18（资料左右16）|同左|
+|顶层`.panel-overlay.is-workbench-panel`|absolute，从左216、上76，内padding `16px 24px`；面板最大宽1320，高100%，无深色遮罩|左192|≤760 inset 从上64至底 `62px + safe-area-inset-bottom`，padding0，面板全宽无圆角|上58；聊天重复简介隐藏|
+|顶层`.floating-panel`|`width:min(1320px,100%)`，height100%、border1、radius12；标题最小56、padding `10px 20px`、字号20|同左|≤760标题最小44、padding `6px 16px`|最小40、padding上下4|
+|`.workbench-mobile-nav`|隐藏|隐藏|≤760 显示；高度 `62px + env(safe-area-inset-bottom)`，`padding:5px 12px max(5px,env(safe-area-inset-bottom))`，边1，z-index30；每项均分，至少50高、竖向gap4、11px、图标21|≤760 同左|
+|全部入口|≤760 前隐藏|同左|绝对定位右15、顶62、z-index32；宽 `min(330px,100vw - 30px)`，padding12、gap6、2列|短屏弹出仍需可滚动/焦点回归|
+
+页头在顶层工作台页签和消息/好汉/资料页可操作；打开草稿/详情等次级对话时不可操作。顶层工作区对话 `aria-modal=false`，次级/地图场景对话为 `true`；只有模态层执行焦点循环。打开和返回沿用原有 panelFrames 与草稿离开保存屏障，不把红色错误提示转为成功。
+
+## 3. 厅内议事和其他真实业务面板
+
+- 议事仍由 `PublicDiscussionPanel` / `BountyDiscussionPanel` / `PrivateDiscussionPanel` → `ChatPanel` → `HallChatComposer` 提供会话分页/删除、@选择、固定版本引用、流式与失败恢复。工作台只在顶层议事面板内覆盖 `.hall-messages` 为 `flex:1 1 auto; min-height:0; padding:16px 20px`（≤760 `10px 16px`），独立 `overflow-y:auto` 继承既有组件；输入区 padding `10px 20px 12px`（≤760 `8px 16px 10px`；短横屏 `6px 16px 6px`）。消息区并非固定高度，空会话实测记录见证据；有历史浮层、引用选择器或系统键盘时剩余空间会变。
+- 短横屏≤560高隐藏重复 `.discussion-brief`，保留工具条 `.context-summary` 的话头标题和状态；不隐藏历史、引用、发消息控件。164px/390视口之类的极端键盘高度尚未验收。
+- 悬赏榜、点将册、百宝箱、典籍阁、消息使用**同一批现有业务组件**，没有将 Demo 字体栈/按钮规格强行覆盖所有旧业务组件；详细字段/按键/间距仍由源文件及计算样式证据约束。非顶层内页（资料预览、草稿、固定版本成果、典籍阅读）的内层布局需继续遵循原组件规则，不以本表“卡片圆角12”覆盖内层。
+
+### 3.1 本地 Chromium 实测（空数据，只读布局）
+
+|视口|页头宽×高|侧栏宽|概览主卡宽|地图卡宽×高|移动底栏高|议事消息区高|页面水平溢出|
+|---|---:|---:|---:|---:|---:|---:|---|
+|1440×900|1224×76|216|828|300×176|隐藏|492.52|无（scrollWidth=1440）|
+|390×844|390×64|隐藏|358|358×185|62|434.52|无（scrollWidth=390）|
+|320×740|320×64|隐藏|288|288×185|62|330.52|无（scrollWidth=320）|
+|844×390|652×58|192|600|600×165|隐藏|129.06|无（scrollWidth=844）|
+
+手机底栏实际高度经 `box-sizing:border-box` 与面板底预留 62px 一致，**不是** 62px 高再额外加上下 padding。消息区是空话头/关闭引用与历史选取器时的高度，不是有键盘或长消息时的恒定值。已另用实际 Vue 渲染 28 条**合成** Markdown 消息在四视口＋720×450 核对消息自身滚动且输入不被遮挡，数值见 `evidence/long-chat-fixture.json`；这只验证视图布局，不表示真实话头数据已从服务端读取，也不等于 200% 浏览器缩放测试。更多位置、各页签 computed 字体/间距/颜色见 [计算属性附表](ui-computed-attributes.md)，可见区域的原始 CSS/aria/href 样本见 `evidence/computed-live-fixture.json`；正文表按最终 CSS 约束取整，几何小数仅报告实测样本。
+
+## 4. 链接、控件目的和页面返回
+
+|可见位置|标签|动作/目标|URL属性|
+|---|---|---|---|
+|桌面侧栏和手机底栏首项|办事概览|关闭当前顶层业务面板、显示权威 `HallOverview`|无 href，仍在 `/juyiting`|
+|桌面侧栏和手机底栏第二项|我的事项|根切换 `openPanel('tasks')` → 真实 BountyPanel；原张榜/查榜/指派/推荐仍从组件内进入|无 href|
+|桌面侧栏和手机底栏第三项|厅内议事|根切换 `openPanel('chat',mode:'public')` → 真实会话；具体私议/事项议事从上下文动作进入|无 href|
+|桌面侧栏和手机底栏最后一项|典籍阁|根切换 `openPanel('library')` → 典籍阅读和案卷检索 tabs|无 href|
+|侧栏其余项/全部入口|点将册、百宝箱、消息通知|进入真实 agents、treasure、messages，不改变账户权限或服务端状态|无 href|
+|首页需求/聊天/资料/好汉/地图卡|提出需求、先聊一聊、打开百宝箱、打开点将册、厅中实景|原 `openPrivateDraft`、会话/资料/点将/`homeMode=map`；地图加载仍靠 HallStage|无 href|
+|工作台“使用帮助”|使用帮助|原 `HallOnboarding` 重新打开|无 href|
+|工作台“个人中心”|个人中心|调用现有 `router.push({name:'UserProfile'})`，由原离厅确认与路由守卫保护|`/profile`，按钮本身无 href|
+|地图 HUD“办事概览”|办事概览|`setHomeMode('overview')` 返回同一 `/juyiting`，Stage 不销毁|无 href|
+|典籍阁两个页签|典籍阅读/案卷检索|同一个 `LibraryPanel` 内状态切换；原 Reader 章节/书签/笔记/选段和检索继续复用|无 href|
+
+所有上述工作台按钮当前为 `type="button"` 内部动作，**不是**带 `href` 的锚点；文档“/profile”表示调用 Vue Router 后实际应到达的路由，不等于账户按钮的 DOM href。典籍阁内的两个 `<button role="tab">` 带 `aria-selected`、`aria-controls` 与 `tabindex`，键盘左右切换；后续新增链接需另列实际 URL/target/rel 与权限。当前页面不会为这些按钮生成可分享的面板深链。本次未引入新路径或外链，顶层页签不会修改 pathname/hash；浏览器 Back 不等价于面板 Back。外部链接（如招贤令安装指引）按原组件权威 URI/权限展示，本次不伪造通用 URL；本地空 API 的正式页面还采到原全局抽屉（关闭时 x=-240，不在视口）的真实 `a[href]`：`/profile`（个人中心）、`/messages`（消息中心）、`/help`（帮助与反馈）；这是旧全局导航，不是工作台新增的按钮链接，不能说整个站点没有 href。全站原 `/`, `/demo`, `/oauth2/callback`, `/profile`, `/workspace` 等路由仍由原 Router 管理。
+
+## 5. 响应式和验收边界
+
+- 工作台切换、厅中实景和已挂载 Stage 的同实例测试依赖真实 Vue 组件；图像证据采用**本地只读空响应 fixture**，仅测试展示/入口/溢出与焦点。账号资料权限不足/错误文案是模拟 API 的结果，不得认为线上服务出现此故障；阅读原文、真实资料下载、SSE、报价/支付、指派等必须分别用已有业务测试与有授权服务验证。
+- 真实软键盘、安全区（headless 的 `env()`=0）、实际宋体安装、辅助文字 11px 的可读性、所有子组件 200% 缩放和屏幕阅读器不是此布局采样的通过项目。
+- 功能完整性审计矩阵与当前状态见 `../../docs/ui-workbench/feature-coverage.md`（**静态 Demo 的缺口，不代表本次正式接入新增了这 63 个功能**）和本规格目录 `acceptance.md`；保留依赖现有功能的入口，不宣称这次重新实现了其业务逻辑。

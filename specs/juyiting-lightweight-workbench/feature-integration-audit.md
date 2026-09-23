@@ -1,0 +1,25 @@
+# 功能覆盖复核 · 正式页面接入状态
+
+2026-09-23。复核对象：正式 `web/src/components/world/JuyiHall.vue` 的现有挂载链与本分支的导航改动，**不是**静态原型的模拟结果。详细 63 条需求/原型差异见 `../../docs/ui-workbench/feature-coverage.md`。这里的“保留”只说明**原组件/动作仍挂载并可达**，不表示当前线上账号有该权限或每条真实服务流程已通过 E2E。`/juyiting` 以外的路由只做不删检查，未做全站功能审计。
+
+|原 63 条分组|本次正式页接入路径|判定/待核对|
+|---|---|---|
+|F01–F05 首页、权威概览/消息|默认 `useHallHomeMode=overview` → `HallPortraitHome` 的 `HallOverview`；错误/分页仍经 `useHallOverview`；消息是同组件 `messages-only`，没有已读=验收/归档的伪操作；地图入口用原 Stage|入口保留；本地空响应浏览器显示读取/未确认态；真实身份与部分读取的 E2E 未过|
+|F06–F10 悬赏榜/正式创建/旧稿|侧栏/底栏“我的事项” → 原 `BountyPanel`；`HallDraftEditor` 的 `formalDraft` 单独挂载；原 `taskKeyword`、requiredAbilities/榜号、30+200正式草稿未指派合同不转成私人交办|正式组件保持，最终提交与冲突必须有权威后端验证|
+|F11–F19 私人需求/固定版本/授权/归档/成果/验收|`openPrivateDraft` → 原 `HallDraftEditor`；`PersonalWorkspace` 文件选择/版本；`HallPrivateMark` 处理归档/查看；正式 `FormalDeliveryList` 处理验收。草稿离开仍调用 `guardPanelLeave`，根切换不绕开|入口/状态独立；本轮没有触发任何真实写操作/上传/验收|
+|F20–F28 指派、自动点将、团队推荐、条件经济/协作|`BountyPanel` → 原单/多指派和自动点将/推荐；`TeamRecommendationPanel`、`WorkItemPlanPanel`、`TaskWorkspacePanel`、`ArtifactOutcomePanel` 保留原条件判断、角色/版本守卫；本分支未开启关闭的开关|能力可达性受构建/主体/服务权限决定，不伪称所有条件功能已可用|
+|F29–F33 点将册、招贤令、托管|`openPanel('agents')` → 原 `AgentPanel` → `PersonaCatalogPanel` → 现有 `HostingRentPanel`；Stage agents 仍经 `/agent/map`，roster 仍经 `/agent/roster`，不可合流|组件/数据流保留；实例绑定/解绑/托管订单需要授权环境核对|
+|F34–F41 厅内议事/会话/引用/流式/语音|`chat` 顶层 → 原公议与私议/事项议事组件；复用新建/删除历史/分页/@好汉/文件精确版本引用/回复状态；聊天区增高且独立滚动；语音开关不改|四视口中空会话可用；流式长内容、实际软键盘和语音授权待回归|
+|F42–F46 百宝箱文件治理|`treasure` 顶层 → 原 `PersonalWorkspace`，详情、版本、预览、上传/回收/重命名原流程未替换成Demo内存名；两层返回仍由组件内部实现|本地空数据入口可达；真实上传/下载/版本冲突未操作|
+|F47–F53 典籍与案卷|桌面/手机“典籍阁”直达 `LibraryPanel`，内有 `ArchiveReader` 章节/书签/笔记/选段提问与案卷检索、引用需求；显示标题/aria统一“典籍阁”|真实 Vue 双页签已核验；空API无法确认章节内容/私有笔记状态|
+|F54–F57 地图实时、旋转、引导|概览/侧栏实景入口 → 原 `HallStage`（懒加载，但挂载后保留同一实例），原 stage HUD“办事概览”返回；引导仍在 `JuyiHallEntry`|本地浏览器证实新服务中 PNG 解码且 Stage 实例来回不重建；模拟/声音/真实 backend 快照未端到端检验|
+|F58–F62 身份/安全/设置/全站|“个人中心”仍走原 `/profile` 路由和离厅守卫，`UserProfile` 原退出设备入口/条件经济入口不移动到假账号页；登录回调由 `/oauth2/callback`，UI 偏好原路由保留|全站路由不改；远端授权端点本次 HTTP 403/代理 502，不能出具登录后的真实账号验收|
+|F63 弹层/导航/焦点|侧栏/底栏根页签可切换；草稿/详情保持模态；工作区顶层非模态不锁导航焦点；逃逸/关闭沿原屏障；移动 `全部入口` 仍可达|组件测试与本地浏览器检查；真机读屏/浏览器Back不是本次结论|
+
+## 链路检查/风险
+
+1. **静态 Demo ≠ 生产接入**：旧矩阵里 Demo“缺失”24条并非正式组件 24 条缺失；本实现复用原组件保持业务合同。不能把保留现有组件描述成重新写完了所有功能。
+2. 只读取 mock 空数据时已观察 UI `HallOverview` 权威身份未就绪、典籍目录加载错误的正常失败态；这由测试桩无合法身份/内容导致，不是线上服务行为证据；未使用静态假回复或假文件。
+3. 地图首次进入时 Stage 允许延迟挂载；**首次进入不是保留同实例的前提**。再次回到工作台后保持相同实例，相关组件测试及浏览器空桩均已核对。横竖屏切换仍应另测现场游戏状态。
+4. 未纳入此次重排的全站 `/chat`、`/task`、`/list`、`/workspace`、`/gift`、`/pay`、`/order/list`、`/wallet`、`/skill-market`、`/command-observability` 等仍归原路由，不说“已经完全覆盖全站”。
+5. 真实 OAuth/API 可用性与账号权限、固定版本文件读写、正式/私人发布、典籍章节/书签/笔记/案卷检索、离厅保存失败、语音/协作等条件路径仍为**阻断完整验收的待验证项**；进度与证据见 `acceptance.md`。

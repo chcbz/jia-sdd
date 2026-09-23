@@ -1,0 +1,642 @@
+{
+  "date": "2026-09-23",
+  "counts": {
+    "UI覆盖": 5,
+    "部分": 25,
+    "缺失": 24,
+    "偏差": 3,
+    "条件缺失": 6
+  },
+  "rows": [
+    {
+      "id": "F01",
+      "feature": "默认工作台、地图可达",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 30,
+      "anchor": "HallPortraitHome",
+      "status": "UI覆盖",
+      "demo": "index.html：侧栏 / 概览地图卡 / quick",
+      "requirement": "只确认导航可达；地图运行时另列"
+    },
+    {
+      "id": "F02",
+      "feature": "最近/待处理/案卷概览",
+      "source": "web/src/components/juyiting/HallOverview.vue",
+      "line": 11,
+      "anchor": "overview-tabs",
+      "status": "部分",
+      "demo": "renderOverview / data-overview-filter",
+      "requirement": "仅本地样例；缺来源分区错误、原事项身份核对"
+    },
+    {
+      "id": "F03",
+      "feature": "概览分区重试与分页",
+      "source": "web/src/components/juyiting/HallOverview.vue",
+      "line": 19,
+      "anchor": "loadPartition",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "保留部分成功数据；错误不显示为空；按来源继续读取"
+    },
+    {
+      "id": "F04",
+      "feature": "原正式任务/私人事项/旧执行/草稿入口",
+      "source": "web/src/components/juyiting/HallOverview.vue",
+      "line": 22,
+      "anchor": "typeLabels",
+      "status": "部分",
+      "demo": "data-task → openTask",
+      "requirement": "仅简化 formal/private 与 draft；缺 LEGACY_EXECUTION 原入口"
+    },
+    {
+      "id": "F05",
+      "feature": "消息中心的待处理语义",
+      "source": "web/src/components/juyiting/HallOverview.vue",
+      "line": 9,
+      "anchor": "打开不代表已读",
+      "status": "偏差",
+      "demo": "renderMessages / read-messages",
+      "requirement": "Demo 全部已读仅隐藏提示；不能代替正式成果已查看/验收标记"
+    },
+    {
+      "id": "F06",
+      "feature": "事项状态、本领筛选",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 18,
+      "anchor": "taskAbilityFilter",
+      "status": "部分",
+      "demo": "renderBounty / data-bounty-filter",
+      "requirement": "支持本地筛选；缺真实计数、读取中、错误恢复"
+    },
+    {
+      "id": "F07",
+      "feature": "按榜号查榜",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 13,
+      "anchor": "查榜号",
+      "status": "缺失",
+      "demo": "#task-query 仅匹配标题",
+      "requirement": "需保留榜号查询，不能只用名称搜索替代"
+    },
+    {
+      "id": "F08",
+      "feature": "原张榜表单与本领要求",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 48,
+      "anchor": "task-create-form",
+      "status": "缺失",
+      "demo": "new-formal → 统一表单",
+      "requirement": "另保留直接张榜路径、requiredAbilities；不能并入简述型正式草稿"
+    },
+    {
+      "id": "F09",
+      "feature": "简述型正式任务创建",
+      "source": "web/src/components/juyiting/HallDraftEditor.vue",
+      "line": 14,
+      "anchor": "只创建无悬赏",
+      "status": "偏差",
+      "demo": "formal-demand / formal-confirm / submitDemand",
+      "requirement": "必须标题30、简述200；无附件/格式/选人；创建未指派、不执行；当前Demo描述20000并要求选人、生成assigned"
+    },
+    {
+      "id": "F10",
+      "feature": "正式旧稿不支持字段处置",
+      "source": "web/src/components/juyiting/HallDraftEditor.vue",
+      "line": 16,
+      "anchor": "hasUnsupportedFormalFields",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "原字段保留、阻止提交；明确移除而非静默丢失"
+    },
+    {
+      "id": "F11",
+      "feature": "私人交办输入/目标选择",
+      "source": "web/src/components/juyiting/HallDraftEditor.vue",
+      "line": 16,
+      "anchor": "targetAgentId",
+      "status": "部分",
+      "demo": "demand / confirm / #assign-agent",
+      "requirement": "UI有明确目标；需真实 roster、固定版本与服务端支持的 MIME"
+    },
+    {
+      "id": "F12",
+      "feature": "账号草稿恢复、放弃、修订冲突",
+      "source": "web/src/components/juyiting/HallDraftEditor.vue",
+      "line": 7,
+      "anchor": "恢复草稿",
+      "status": "部分",
+      "demo": "save-draft / sourceId",
+      "requirement": "仅内存；无恢复列表、分页、版本冲突、不覆盖本地输入"
+    },
+    {
+      "id": "F13",
+      "feature": "资料选择与预览返回",
+      "source": "web/src/components/juyiting/HallDraftEditor.vue",
+      "line": 36,
+      "anchor": "temporaryInputs",
+      "status": "部分",
+      "demo": "materials / preview",
+      "requirement": "有选择返回；缺 fileId+version 固定引用及旧版保留"
+    },
+    {
+      "id": "F14",
+      "feature": "交办授权、外部服务与费用告知",
+      "source": "web/src/components/juyiting/HallDraftEditor.vue",
+      "line": 60,
+      "anchor": "authorizationAcknowledgement",
+      "status": "缺失",
+      "demo": "confirm 仅演示说明",
+      "requirement": "提交前显式授权；缺提供方、费用与数据范围告知"
+    },
+    {
+      "id": "F15",
+      "feature": "提交不明核对、离开保存屏障",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 269,
+      "anchor": "leaveState",
+      "status": "缺失",
+      "demo": "关闭表单/内存草稿",
+      "requirement": "需核对原提交、保存失败重试/留页/放弃；禁止盲目重建"
+    },
+    {
+      "id": "F16",
+      "feature": "私人事项执行历史与修改再执行",
+      "source": "web/src/components/juyiting/HallDraftEditor.vue",
+      "line": 69,
+      "anchor": "startRevision",
+      "status": "缺失",
+      "demo": "task 静态时间线",
+      "requirement": "需固定执行/成果版本、提出修改与新修订"
+    },
+    {
+      "id": "F17",
+      "feature": "个人归档、撤销归档、成果已查看",
+      "source": "web/src/components/juyiting/HallPrivateMark.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "部分",
+      "demo": "archive-task 单向收入案卷",
+      "requirement": "缺撤销归档、精确结果集 viewed 标记、版本冲突恢复"
+    },
+    {
+      "id": "F18",
+      "feature": "正式成果批次与固定版本下载",
+      "source": "web/src/components/deliveries/FormalDeliveryList.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "部分",
+      "demo": "view-result → f3 TXT",
+      "requirement": "缺批次、哈希、执行与固定版本；示例TXT不代表真实PDF成果"
+    },
+    {
+      "id": "F19",
+      "feature": "正式验收与退回修改",
+      "source": "web/src/components/deliveries/FormalDeliveryList.vue",
+      "line": 62,
+      "anchor": "changes_requested",
+      "status": "缺失",
+      "demo": "收入案卷按钮",
+      "requirement": "归档不等于验收；拒收需原因，返工关联固定版本"
+    },
+    {
+      "id": "F20",
+      "feature": "单好汉显式指派",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 220,
+      "anchor": "assign-task",
+      "status": "部分",
+      "demo": "assign-task / #assign-agent",
+      "requirement": "有显式选择；缺真实可指派权限与请求状态"
+    },
+    {
+      "id": "F21",
+      "feature": "多好汉指派",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 236,
+      "anchor": "selectedAssignees",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "保留多选、明确传目标集合"
+    },
+    {
+      "id": "F22",
+      "feature": "宋江自动点将",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 246,
+      "anchor": "auto-assign-task",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "独立动作与结果/失败说明"
+    },
+    {
+      "id": "F23",
+      "feature": "候选推荐和匹配解释",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 288,
+      "anchor": "recommended-agent",
+      "status": "缺失",
+      "demo": "静态人物能力列表",
+      "requirement": "不能把人物设定当服务端实时推荐"
+    },
+    {
+      "id": "F24",
+      "feature": "团队推荐预演",
+      "source": "web/src/components/juyiting/TeamRecommendationPanel.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "保留人数/席位预算/风险/复核人、覆盖缺口与本地替换；现有组件也只是预演，不声称可最终确认团队"
+    },
+    {
+      "id": "F25",
+      "feature": "工作项规划",
+      "source": "web/src/components/juyiting/WorkItemPlanPanel.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "条件缺失",
+      "demo": "无",
+      "requirement": "受 WORK_ITEM_PLAN 开关及权限约束；需规划编辑/校验/保存交互"
+    },
+    {
+      "id": "F26",
+      "feature": "资金悬赏/报价/撤销/结算",
+      "source": "web/src/components/juyiting/BountyPanel.vue",
+      "line": 148,
+      "anchor": "fundedQuotePreview",
+      "status": "条件缺失",
+      "demo": "无",
+      "requirement": "经济构建开关+能力守卫；不可用通用确认交办替代报价确认/原请求恢复"
+    },
+    {
+      "id": "F27",
+      "feature": "任务协作工作台",
+      "source": "web/src/components/juyiting/TaskWorkspacePanel.vue",
+      "line": 2,
+      "anchor": "task-workspace-panel",
+      "status": "条件缺失",
+      "demo": "无",
+      "requirement": "开关默认false；摘要/成员/工作项/待处理诉求/成果/会话及连接重试"
+    },
+    {
+      "id": "F28",
+      "feature": "协作文件传输与成果治理",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 354,
+      "anchor": "ArtifactTransfer",
+      "status": "条件缺失",
+      "demo": "无",
+      "requirement": "协作开关+主体权限；固定版本上传下载、取消、成果状态治理"
+    },
+    {
+      "id": "F29",
+      "feature": "点将册列表/状态/能力/详情",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 246,
+      "anchor": "renderedPanel === 'agents'",
+      "status": "部分",
+      "demo": "renderAgents / data-select-agent",
+      "requirement": "4位示例；缺真实载入、授权与失败态"
+    },
+    {
+      "id": "F30",
+      "feature": "地图与点将册数据独立",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 45,
+      "anchor": "mapAgents",
+      "status": "UI覆盖",
+      "demo": "mapAgentIds / rosterIds",
+      "requirement": "模拟数据分离，不证明真实API联调；必须保留 /agent/map 与 /agent/roster"
+    },
+    {
+      "id": "F31",
+      "feature": "108好汉招募与接入",
+      "source": "web/src/components/juyiting/PersonaCatalogPanel.vue",
+      "line": 2,
+      "anchor": "persona",
+      "status": "部分",
+      "demo": "recruit 两张说明卡",
+      "requirement": "缺108名册、绑定/重整接应、解绑、系统与我的身份区分"
+    },
+    {
+      "id": "F32",
+      "feature": "接入参数、命令复制与安装链接",
+      "source": "web/src/components/juyiting/PersonaCatalogPanel.vue",
+      "line": 14,
+      "anchor": "copySetupResult",
+      "status": "缺失",
+      "demo": "recruit-preview 提示",
+      "requirement": "缺profileId/workdir/env/config、复制结果、外部安装指引"
+    },
+    {
+      "id": "F33",
+      "feature": "服务端托管",
+      "source": "web/src/components/juyiting/HostingRentPanel.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "条件缺失",
+      "demo": "无",
+      "requirement": "由托管/经济能力决定；需保留可用性、订单/租用状态等现有流程，不在审计中执行"
+    },
+    {
+      "id": "F34",
+      "feature": "公议/私议/事项议事",
+      "source": "web/src/components/juyiting/ChatPanel.vue",
+      "line": 2,
+      "anchor": "discussionVariant",
+      "status": "部分",
+      "demo": "chat / chat-dialog / chat-task-context",
+      "requirement": "能切本地上下文；缺真实会话scope与授权"
+    },
+    {
+      "id": "F35",
+      "feature": "真正新建会话",
+      "source": "web/src/components/juyiting/ChatPanel.vue",
+      "line": 60,
+      "anchor": "new-conversation",
+      "status": "偏差",
+      "demo": "new-chat",
+      "requirement": "当前只是返回既有厅前公议；不能标为新建话头覆盖"
+    },
+    {
+      "id": "F36",
+      "feature": "历史选取/删除/分页",
+      "source": "web/src/components/juyiting/HallConversationHistory.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "部分",
+      "demo": "chat-history / data-chat-key",
+      "requirement": "只有已有上下文切换；缺新会话列表、删除确认、分页与失败恢复"
+    },
+    {
+      "id": "F37",
+      "feature": "@好汉与清除目标/草稿",
+      "source": "web/src/components/juyiting/HallChatComposer.vue",
+      "line": 104,
+      "anchor": "mention-agent",
+      "status": "缺失",
+      "demo": "纯textarea",
+      "requirement": "需候选菜单、目标chips、锁定目标与清空草稿"
+    },
+    {
+      "id": "F38",
+      "feature": "议事固定版本资料增删",
+      "source": "web/src/components/juyiting/ChatPanel.vue",
+      "line": 259,
+      "anchor": "materialLinks",
+      "status": "部分",
+      "demo": "chat-materials 将文件名写入草稿",
+      "requirement": "不是绑定版本；缺建立会话前禁用、添加/删除引用和打开百宝箱"
+    },
+    {
+      "id": "F39",
+      "feature": "流式回复/加载失败/恢复重试",
+      "source": "web/src/components/juyiting/ChatPanel.vue",
+      "line": 220,
+      "anchor": "eventStreamRecovering",
+      "status": "缺失",
+      "demo": "同步假回复",
+      "requirement": "需Markdown/安全渲染、等待/流中/恢复/重试、发送互斥状态"
+    },
+    {
+      "id": "F40",
+      "feature": "语音交互",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 797,
+      "anchor": "voiceFeatureEnabled",
+      "status": "条件缺失",
+      "demo": "无",
+      "requirement": "VOICE默认false；按能力保留转写确认和交互锁"
+    },
+    {
+      "id": "F41",
+      "feature": "聊天空间与独立滚动",
+      "source": "web/src/components/juyiting/ChatPanel.vue",
+      "line": 146,
+      "anchor": "hall-messages",
+      "status": "UI覆盖",
+      "demo": "V3.1 chat-layout；#chat-stream",
+      "requirement": "布局优化覆盖；不代表消息业务覆盖，实机键盘仍待验"
+    },
+    {
+      "id": "F42",
+      "feature": "文件分类/搜索/预览/下载",
+      "source": "web/src/components/workspace/PersonalWorkspace.vue",
+      "line": 2,
+      "anchor": "embedded",
+      "status": "部分",
+      "demo": "files / preview / download-file",
+      "requirement": "本地名目与TXT；缺正式格式、图片/分页、多段预览"
+    },
+    {
+      "id": "F43",
+      "feature": "上传确认与显示名",
+      "source": "web/src/components/workspace/PersonalWorkspace.vue",
+      "line": 10,
+      "anchor": "upload",
+      "status": "部分",
+      "demo": "local-file-input",
+      "requirement": "仅记录文件名/大小，不读内容；缺正式上传确认、失败与进度"
+    },
+    {
+      "id": "F44",
+      "feature": "文件版本、追加、重命名",
+      "source": "web/src/components/workspace/PersonalWorkspace.vue",
+      "line": 31,
+      "anchor": "version",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "保留旧引用固定版本、版本选择、追加与改名"
+    },
+    {
+      "id": "F45",
+      "feature": "回收站/引用次数确认/恢复",
+      "source": "web/src/components/workspace/PersonalWorkspace.vue",
+      "line": 17,
+      "anchor": "trash",
+      "status": "部分",
+      "demo": "delete-file / restore-file",
+      "requirement": "缺引用次数与确认；没有永久删除需求，不擅自加入"
+    },
+    {
+      "id": "F46",
+      "feature": "文件载入/错误/空/分页",
+      "source": "web/src/components/workspace/PersonalWorkspace.vue",
+      "line": 19,
+      "anchor": "loadMore",
+      "status": "部分",
+      "demo": "file-search 空结果",
+      "requirement": "缺服务端分页、错误和权限处理"
+    },
+    {
+      "id": "F47",
+      "feature": "典籍阅读/案卷检索双入口",
+      "source": "web/src/components/juyiting/LibraryPanel.vue",
+      "line": 5,
+      "anchor": "library-tabs",
+      "status": "缺失",
+      "demo": "archive 说明文档+样例归档",
+      "requirement": "名称已改典籍阁，但未保留正式双入口"
+    },
+    {
+      "id": "F48",
+      "feature": "水浒传目录/章节/阅读进度",
+      "source": "web/src/components/juyiting/archive/ArchiveReader.vue",
+      "line": 55,
+      "anchor": "enterReading",
+      "status": "缺失",
+      "demo": "reader 两篇帮助文档",
+      "requirement": "帮助文档不能冒充原典阅读；需目录/上下回/继续阅读"
+    },
+    {
+      "id": "F49",
+      "feature": "书签添加/打开/删除",
+      "source": "web/src/components/juyiting/archive/ArchiveReader.vue",
+      "line": 356,
+      "anchor": "createBookmark",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "保留阅读位置与账号归属"
+    },
+    {
+      "id": "F50",
+      "feature": "私人笔记增改删",
+      "source": "web/src/components/juyiting/archive/ArchiveReader.vue",
+      "line": 199,
+      "anchor": "saveNote",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "保留选段与私密笔记关联"
+    },
+    {
+      "id": "F51",
+      "feature": "选段提问/重试/引用起草",
+      "source": "web/src/components/juyiting/archive/ArchiveReader.vue",
+      "line": 327,
+      "anchor": "citeParagraph",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "原文上下文、提问恢复及引用到需求草稿"
+    },
+    {
+      "id": "F52",
+      "feature": "案卷关键词/来源过滤/引用",
+      "source": "web/src/components/juyiting/LibraryPanel.vue",
+      "line": 111,
+      "anchor": "cite-library",
+      "status": "缺失",
+      "demo": "无",
+      "requirement": "project / meeting / memory，结果来源/时间/引用传令"
+    },
+    {
+      "id": "F53",
+      "feature": "沉浸阅读及横竖屏安全区",
+      "source": "web/src/components/juyiting/archive/ArchiveReader.vue",
+      "line": 4,
+      "anchor": "virtualLandscape",
+      "status": "缺失",
+      "demo": "普通dialog reader",
+      "requirement": "需目录/笔记/阅读态与胶囊避让，不只是全文滚动"
+    },
+    {
+      "id": "F54",
+      "feature": "地图拖动缩放/场所/好汉入口",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 94,
+      "anchor": "HallStage",
+      "status": "UI覆盖",
+      "demo": "map 静态图、5场所与5人物热点",
+      "requirement": "只覆盖视觉和本地相机；不是游戏场景"
+    },
+    {
+      "id": "F55",
+      "feature": "实时场景、移动、气泡、模拟、声音",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 122,
+      "anchor": "simulationEnabled",
+      "status": "部分",
+      "demo": "静态map / sound 提示",
+      "requirement": "缺melonJS、快照/事件、模拟运行；声音按钮不播音"
+    },
+    {
+      "id": "F56",
+      "feature": "横竖屏/只读实景预览",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 99,
+      "anchor": "read-only-preview",
+      "status": "部分",
+      "demo": "orientation 提示",
+      "requirement": "没有真实虚拟旋转/只读live预览；只提示横屏"
+    },
+    {
+      "id": "F57",
+      "feature": "新手引导/访客模板交接",
+      "source": "web/src/components/world/JuyiHallEntry.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "部分",
+      "demo": "guide 4页文字",
+      "requirement": "缺热点定位、账号持久化完成/稍后/重置、访客模板交接"
+    },
+    {
+      "id": "F58",
+      "feature": "个人资料权威读取与错误",
+      "source": "web/src/components/UserProfile.vue",
+      "line": 1,
+      "anchor": "<template>",
+      "status": "部分",
+      "demo": "account 静态昵称头像",
+      "requirement": "不读取会话身份；缺loading/error/retry"
+    },
+    {
+      "id": "F59",
+      "feature": "退出当前设备/全部设备确认",
+      "source": "web/src/components/UserProfile.vue",
+      "line": 101,
+      "anchor": "退出所有设备",
+      "status": "缺失",
+      "demo": "logout → login 演示",
+      "requirement": "不执行真实退出；缺全部设备确认及失败"
+    },
+    {
+      "id": "F60",
+      "feature": "运行看板与经济发现入口",
+      "source": "web/src/components/UserProfile.vue",
+      "line": 57,
+      "anchor": "command-observability-title",
+      "status": "部分",
+      "demo": "account 无链接",
+      "requirement": "运行看板入口缺失；经济/钱包/技能市场为条件入口"
+    },
+    {
+      "id": "F61",
+      "feature": "登录/回调与会话恢复",
+      "source": "web/src/router/index.js",
+      "line": 35,
+      "anchor": "/oauth2/callback",
+      "status": "部分",
+      "demo": "login / login-method",
+      "requirement": "仅样式与提示；无真实认证、回调、找回密码或手机验证"
+    },
+    {
+      "id": "F62",
+      "feature": "偏好设置",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 26,
+      "anchor": "toggleHallSound",
+      "status": "部分",
+      "demo": "settings 字体/大小/色温/标签",
+      "requirement": "Demo独立会话内偏好，非生产设置全集；不要把新增原型设置当现有后台能力"
+    },
+    {
+      "id": "F63",
+      "feature": "弹层返回、焦点与移动导航",
+      "source": "web/src/components/world/JuyiHall.vue",
+      "line": 6,
+      "anchor": "activePanel",
+      "status": "UI覆盖",
+      "demo": "openPanel / back / closePanel / mobile-nav",
+      "requirement": "右下角典籍阁直达；其他入口在全部入口；浏览器默认dialog焦点机制，不代表完整无障碍认证"
+    }
+  ]
+}
