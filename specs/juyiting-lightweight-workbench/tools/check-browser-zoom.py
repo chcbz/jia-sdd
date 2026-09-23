@@ -17,6 +17,15 @@ from playwright.sync_api import sync_playwright
 
 WEB_SHA = '8f47a1289bf501616ba234638192a5303d3155d7'
 SIZES = [(320, 740), (390, 844), (844, 390), (1440, 900)]
+# These are navigation surfaces, not assertions that the backend actions succeed.
+PRIMARY_SURFACES = [
+    ('tasks', '我的事项', '悬赏榜', '.bounty-panel'),
+    ('agents', '点将册', '点将册', '.agent-panel'),
+    ('treasure', '百宝箱', '百宝箱', '.personal-workspace'),
+    ('library', '典籍阁', '典籍阁', '.library-panel'),
+    ('messages', '消息通知', '消息', '.hall-overview.is-messages'),
+    ('chat', '厅内议事', '厅内议事', '.chat-panel'),
+]
 
 
 def main():
@@ -58,6 +67,7 @@ def main():
                     "if ('serviceWorker' in navigator) navigator.serviceWorker.register = () => Promise.reject(new Error('Local probe blocks app service workers')); }")
 
                 intercepted = {'GET': 0, 'POST': 0, 'other': 0}
+                web_sockets = {'localVite': 0, 'blocked': 0}
 
                 def route_request(route):
                     target = route.request.url
@@ -65,6 +75,8 @@ def main():
                     path = parsed.path
                     if f'{parsed.scheme}://{parsed.netloc}' != origin:
                         route.abort()
+                    elif route.request.resource_type == 'eventsource':
+                        route.abort()  # No SSE simulation: this probe only measures empty-state UI.
                     elif (route.request.resource_type in ('xhr', 'fetch') or
                             path.startswith(('/api/', '/chat/', '/agent/', '/user/', '/task/', '/oauth2/'))):
                         method = route.request.method
@@ -76,6 +88,20 @@ def main():
                         route.abort()
 
                 context.route('**/*', route_request)
+                # HTTP routing does not isolate WebSocket handshakes. Let only this dev
+                # server's HMR root connect; prevent an app socket reaching any service.
+                def route_web_socket(ws):
+                    target = urlparse(ws.url)
+                    if (target.scheme == ('wss' if url.scheme == 'https' else 'ws') and
+                            target.hostname == url.hostname and target.port == url.port and
+                            target.path == '/'):
+                        web_sockets['localVite'] += 1
+                        ws.connect_to_server()
+                    else:
+                        web_sockets['blocked'] += 1
+                        ws.close()
+
+                context.route_web_socket('**/*', route_web_socket)
                 page = context.new_page()
                 page.goto(origin + '/juyiting', wait_until='domcontentloaded', timeout=30000)
                 assert page.evaluate('''() => !!document.querySelector('script[src*="/@vite/client"]') &&
@@ -172,9 +198,60 @@ def main():
                 if viewport['innerHeight'] > 260:
                     composer_bottom = page.locator('.hall-chat-composer').bounding_box()
                     assert composer_bottom and composer_bottom['y'] + composer_bottom['height'] <= chat['nav']['top'] + .5, long_chat
+                surfaces = []
+                for panel, label, title, content_selector in PRIMARY_SURFACES:
+                    trigger.click()
+                    menu.wait_for(state='visible')
+                    menu.get_by_role('button', name=label, exact=True).click()
+                    dialog = page.get_by_role('dialog', name=title, exact=True)
+                    dialog.wait_for(state='visible')
+                    dialog.locator(content_selector).wait_for(state='visible')
+                    page.wait_for_function('''() => {
+                        const panel=document.querySelector('.panel-overlay.is-workbench-panel > .floating-panel');
+                        const overlay=panel?.parentElement;
+                        return panel && Math.abs(overlay.getBoundingClientRect().top-panel.getBoundingClientRect().top)<.5;
+                    }''')
+                    surface = page.evaluate('''([panel, label, selector]) => {
+                        const dialog=document.querySelector('.panel-overlay.is-workbench-panel .floating-panel');
+                        const content=dialog.querySelector(selector);
+                        const rect=dialog.getBoundingClientRect();
+                        const body=content.getBoundingClientRect();
+                        const nav=document.querySelector('.workbench-mobile-nav').getBoundingClientRect();
+                        return {panel, label, title:dialog.querySelector('.panel-title > span')?.textContent,
+                            ariaModal:dialog.getAttribute('aria-modal'),
+                            ariaLabelledby:dialog.getAttribute('aria-labelledby'),
+                            contentVisible:getComputedStyle(content).display!=='none' && body.width>0 && body.height>0,
+                            dialog:{left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom},
+                            navTop:nav.top, pageScrollWidth:document.documentElement.scrollWidth,
+                            menuExpanded:document.querySelector('.workbench-mobile-more').getAttribute('aria-expanded')};
+                    }''', [panel, label, content_selector])
+                    assert surface['title'] == title and surface['ariaModal'] == 'false' and surface['ariaLabelledby'], surface
+                    assert surface['contentVisible'] and surface['menuExpanded'] == 'false', surface
+                    assert surface['dialog']['left'] >= -.5 and surface['dialog']['right'] <= viewport['innerWidth']+.5, surface
+                    assert surface['dialog']['bottom'] <= surface['navTop']+.5, surface
+                    assert surface['pageScrollWidth'] <= viewport['innerWidth'], surface
+                    if panel == 'library':
+                        dialog.get_by_role('tab', name='案卷检索').click()
+                        assert dialog.get_by_role('tab', name='案卷检索').get_attribute('aria-selected') == 'true'
+                        assert dialog.get_by_role('tab', name='典籍阅读').get_attribute('aria-selected') == 'false'
+                        surface['archiveSearchTabReachable'] = True
+                    surfaces.append(surface)
+                trigger.click()
+                menu.wait_for(state='visible')
+                menu.get_by_role('button', name='办事概览', exact=True).click()
+                page.locator('.panel-overlay.is-workbench-panel').wait_for(state='hidden')
+                overview = page.evaluate('''() => ({pageScrollWidth:document.documentElement.scrollWidth,
+                    visible:!document.querySelector('.panel-overlay.is-workbench-panel') &&
+                        !!document.querySelector('.hall-overview') &&
+                        getComputedStyle(document.querySelector('.hall-overview')).display!=='none',
+                    navCurrent:[...document.querySelectorAll('.workbench-mobile-nav button[aria-current="page"]')]
+                        .map(button=>button.getAttribute('aria-label'))})''')
+                assert overview['visible'] and overview['pageScrollWidth'] <= viewport['innerWidth'], overview
+                assert overview['navCurrent'] == ['办事概览'], overview
                 results.append({'baseViewportPixels': f'{width}x{height}', 'tabZoom': tab_zoom,
                                 'viewport': viewport, 'navigation': nav_menu, 'chat': chat, 'syntheticLongChat': long_chat,
-                                'interceptedApiRequestsByMethod': intercepted})
+                                'primarySurfaces': surfaces, 'returnToOverview': overview,
+                                'interceptedApiRequestsByMethod': intercepted, 'webSockets': web_sockets})
                 print(f'PASS tab zoom 200% {width}x{height} -> {viewport["innerWidth"]}x{viewport["innerHeight"]}')
             finally:
                 context.close()
