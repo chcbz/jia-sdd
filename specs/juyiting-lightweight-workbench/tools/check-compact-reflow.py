@@ -41,12 +41,14 @@ def main():
         version = browser.version
         try:
             for width, height in SIZES:
-                context = browser.new_context(viewport={'width': width, 'height': height}, device_scale_factor=2, ignore_https_errors=True)
+                context = browser.new_context(viewport={'width': width, 'height': height}, device_scale_factor=2, ignore_https_errors=True, service_workers='block')
                 context.add_init_script("if (location.origin === " + json.dumps(origin) + " && window.top === window) localStorage.setItem('api_token', JSON.stringify({data:'reflow-layout-fixture', expTime:Date.now()+120000}))")
 
                 def route_request(route):
                     url = urlparse(route.request.url)
-                    if route.request.url.startswith(origin + '/api/') or route.request.url == origin + '/api':
+                    if f'{url.scheme}://{url.netloc}' != origin:
+                        route.abort()
+                    elif (route.request.resource_type in ('xhr', 'fetch') or url.path.startswith(('/api/', '/chat/', '/agent/', '/user/', '/task/', '/oauth2/'))):
                         route.fulfill(status=200, content_type='application/json', body='{"code":200,"data":[],"items":[]}')
                     elif f'{url.scheme}://{url.netloc}' == origin:
                         route.continue_()
@@ -88,7 +90,10 @@ def main():
                         assert all(x['labelDisplay'] != 'none' for x in initial['tabs'][:3]), initial
                     assert initial['tabs'][-1]['labelDisplay'] != 'none', initial
                     menu.get_by_role('button', name='厅内议事').click()
-                    assert page.get_by_role('dialog', name='厅内议事').count() == 1
+                    dialog = page.get_by_role('dialog', name='厅内议事')
+                    assert dialog.count() == 1
+                    title_id = dialog.get_attribute('aria-labelledby')
+                    assert title_id and page.evaluate('id => document.getElementById(id)?.textContent?.includes("厅内议事")', title_id)
                     page.wait_for_function('''() => { const overlay = document.querySelector('.panel-overlay.is-workbench-panel');
                       const panel = overlay?.querySelector('.floating-panel'); return panel && Math.abs(panel.getBoundingClientRect().top - overlay.getBoundingClientRect().top) <= .5; }''', timeout=8000)
                     measurements = page.evaluate('''() => {
