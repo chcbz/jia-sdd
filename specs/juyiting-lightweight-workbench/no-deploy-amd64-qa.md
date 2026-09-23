@@ -27,6 +27,8 @@ npm run build             # 生产打包；不得把构建成功称为服务端/
 1. `uname -m`、系统/Node/npm 信息，worker 标识和时间；实际 checkout 的**完整** Web SHA 与候选分支名。
 2. `CI=1 npm test` **完整退出码**、固定浏览器版本与真实可执行文件 SHA、E14 此次生成报告里的五项 gate、10s/60s 采样及 p95≤2ms、p99≤4ms、完整 Mocha 通过/失败/待决统计、`mochawesome-report/mochawesome.{json,html}`。控制台 `CYF_E14_REPORT_BASE64=` 只来自**本次**运行，不能拼上其他作业日志；压缩/截断的日志不得宣称完整。
 3. 单独标明 E9A/E9B、E1 基线重定向、两条 TMX（编辑 CLI、快照/预览）的结果：本机 aarch64 曾发生缺固定浏览器及 60/20 秒超时，需确认此受控环境结果；失败须保留原样并定位，不跳过用例。
+
+   本机同 SHA 的 TMX 编辑 CLI 定时补测为 30.124s + 29.487s（两个子进程均 exit 0），再加测试开销超过其 60s 限额，说明本机超时**可由性能解释**，却不证明锁定 worker 会通过；快照/预览的 20s 用例内有 10 次 CLI 调用；本机前 3 次独立重放各约 2.16s、返回预期状态，说明同样存在时间门槛风险，但未验证固定 worker 的结果。详细来源见 `evidence/local-full-recheck.md`，不得据此提高超时/跳过测试。
 4. `npm run build` 退出码、生成资源清单/摘要；安全扫描同 SHA 的作业与报告（若为验收门禁），不得用历史成功报告顶替。
 5. 只有上述与 `real-service-qa.md` 的授权账号业务流程**均通过**，再评估 `./sddw pin`、`./sddw verify`、根仓库 gitlink 与用户最终确认；在此之前 `integration.yaml` 维持 `implementing`，不写 `accepted` 或“已上线”。
 

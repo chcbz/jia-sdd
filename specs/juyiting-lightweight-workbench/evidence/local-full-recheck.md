@@ -12,4 +12,8 @@
 
 复核入口是 [`local-full-recheck-summary.json`](local-full-recheck-summary.json)：包含报告的统计、41 个失败测试的 Mocha `fullTitle` 原字段及以 `/` 分隔的套件路径（两者不可混用）、E8A 两类失败阶段、6 个本轮已通过的历史失败标题及运行环境、报告 SHA256。原始本机忽略产物 `web/mochawesome-report/mochawesome.json` 的 SHA256 见 JSON；进程日志位于本机 `/tmp/cyf-wb-full-recheck.log`（不随提交长期保存）。此前 `2331/47` 来自另一批运行，测试登记数不同，不能简单把 pass 差值当作本分支修复数。
 
+**TMX 超时定因补测（仍非通过）**：在此 aarch64/Node22 本机、`web` 同一 SHA 下，以 `TemporaryDirectory` 复制提交的 `hall.tmx`，从独立 Python 进程顺序重放同一 CLI `node scripts/juyiting/apply-map-ops.mjs <临时TMX> tests/fixtures/juyiting/hall-movement-ops.json` 两次，分别 **30.124s / 29.487s**，均 exit 0，首轮 `updated`、第二轮 `unchanged`；空操作数组 `[]` 对同一 TMX 只需 **0.819s**（exit 0）。失败的 CLI 用例（`tmx-edit-ops.test.ts:284`）设 `this.timeout(60_000)`；重放使用 Python stdout/stderr 管道而不是测试 `spawnSyncCaptured` 的临时文件捕获，两轮仅 CLI 耗时约 59.611s，另有复制/断言/框架开销，足以在此宿主机引发超时；这是对本机故障的**性能解释**，不证明固定 worker 上能通过，亦不准放宽超时。`git diff c19ac81..8f47a12 --` 检查 TMX 编辑实现、CLI、两条测试及 spawn helper **没有本分支差异**；运行逻辑保持基线，不为通过本机旧测试修改地图编辑业务语义。另一条快照/预览超时仅有下段限定条件定时复测，仍须固定 worker 复验，不能将其原因据此判定相同。
+
+**快照/预览超时补测**：以与测试 `withScriptFixture` 相同的临时 `hall.tmx` + 4 个 1px 图片字节和隔离环境变量，依次运行原 `node --import tsx scripts/juyiting/render-map-preview.mjs` 缺失态、`--update`、成功检查；分别 **2.156s / 2.171s / 2.168s**，对应退出码 1/0/0，文案符合预期。超时测试在单个 20s 用例内调用该子进程 **10 次**（还要改写资源/校验失败/清理），约 2s 的本机单次耗时已足以解释 20s 门槛风险，但未完整重跑该 10 调用测试的单次耗时分布，也不证明固定 worker 上通过；现有业务、断言与 20s 限额均未更改。
+
 **下一步门槛**：仅在获得 `no-deploy-amd64-qa.md` 列明的独立 Alinux3/amd64/root worker 授权后，针对**相同 Web SHA** 执行固定浏览器、E14、全量测试、构建与扫描；候选部署上的 OAuth、文件版本、SSE、写入和实体键盘仍按 `real-service-qa.md` 另验。本次不改动任何现有 E8/E9/TMX 源码、超时或历史基线。
