@@ -5,7 +5,7 @@
 ## 前置条件
 
 - [ ] 集成环境在候选 web commit 上部署 `/juyiting`，浏览器能从 `/oauth2/authorize` 回到 `/oauth2/callback`，同源或 CORS 允许访问后端；只用已授权测试账号。当前本机 `https://localhost:10018` 无监听，生产 `https://api.chaoyoufan.cn/login/index.html` 从本机直接请求 403；无法走通该步骤，**不得判定 A1–A5 真实服务通过**。
-- [ ] 受控环境装齐项目锁定的 Node/Chromium/WebP 工具链并核验 SHA256，不以 `/usr/bin/chromium` 142 冒充项目固定的 Chromium 133 `chromium-headless-smoke`；全量运行 `cd web && npm run test` 并保存完整退出码/失败明细与报告。
+- [ ] 受控 **amd64** 环境装齐项目锁定的 Node/Chromium/WebP 工具链并核验 SHA256（本机 aarch64 无法执行官方锁定的 x86-64 Chrome 133，下载包 SHA256 已核对正确，启动报 `Exec format error`），不以 `/usr/bin/chromium` 142 冒充项目固定的 Chromium 133 `chromium-headless-smoke`；全量运行 `cd web && npm run test` 并保存完整退出码/失败明细与报告。
 - [ ] 建立独立测试空间和可清理数据（测试好汉、正式任务、私人需求、文件、会话），隔离其他用户、付费操作和真实生产数据；在有明确许可之前**只做只读检查**。
 
 ## 操作与成功判定（授权环境执行）
