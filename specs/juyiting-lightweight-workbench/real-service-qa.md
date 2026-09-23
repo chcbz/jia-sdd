@@ -1,10 +1,10 @@
-# 真实服务 / 受控浏览器验收清单（**尚未执行**）
+# 真实服务 / 受控浏览器验收清单（局部只读已执行，完整流程**未完成**）
 
 2026-09-23。适用于候选 web commit `fe43ebc5bece2fd2e6e78e765cd523d9fb6001a5`。**不要**拿现有 `/tmp` 假身份、空 API fixture、原型 63 条静态对照、headless 截图或已构建的 dist 冒充真实服务验收。测试账号口令仅在授权登录页输入，不写入脚本、日志、URL、截图或本库。
 
 ## 前置条件
 
-- [ ] 集成环境在候选 web commit 上部署 `/juyiting`，浏览器能从 `/oauth2/authorize` 回到 `/oauth2/callback`，同源或 CORS 允许访问后端；只用已授权测试账号。当前本机 `https://localhost:10018` 无监听，生产 `https://api.chaoyoufan.cn/login/index.html` 从本机直接请求 403；无法走通该步骤，**不得判定 A1–A5 真实服务通过**。
+- [ ] 集成环境在候选 web commit 上部署 `/juyiting`，浏览器能从 `/oauth2/authorize` 回到 `/oauth2/callback`，同源或 CORS 允许访问后端；只用已授权测试账号。本机 `https://localhost:10018` 无监听，未经 OAuth 直接 GET 生产登录页返回 403；但从 kit 发起完整 OAuth 的授权测试账号已能认证，候选本地通过**只读进程内转发**访问真实 API（见 `evidence/real-readonly-browser-20260924.md`）。**仍缺候选部署及其实际回调/CORS**，不得把读接口局部成功判为 A1–A5 全部通过。
 - [ ] 受控 **amd64** 环境装齐项目锁定的 Node/Chromium/WebP 工具链并核验 SHA256（本机 aarch64 无法执行官方锁定的 x86-64 Chrome 133，下载包 SHA256 已核对正确，启动报 `Exec format error`），不以 `/usr/bin/chromium` 142 冒充项目固定的 Chromium 133 `chromium-headless-smoke`；全量运行 `cd web && npm run test` 并保存完整退出码/失败明细与报告。
 - [ ] 建立独立测试空间和可清理数据（测试好汉、正式任务、私人需求、文件、会话），隔离其他用户、付费操作和真实生产数据；在有明确许可之前**只做只读检查**。
 

@@ -1,6 +1,6 @@
 # 正式聚义厅 · 轻量工作台 UI 详设（实现态）
 
-日期：2026-09-23。适用范围：`/juyiting` 内此次新增的工作台框架、概览和顶层业务面板；**不是**其他全站路由或静态 Demo 的全量样式规范。原型的逐控件 180 种目标、38 场景 CSSOM 与页面尺寸，分别见 `../../docs/ui-workbench/{ui-detail.md,component-attributes.md,control-targets.md,evidence/computed-ui.json}`。原型是假数据；下表是正式 Vue 实现的规则，不把原型属性误写成已实现属性。**正式接入的逐组件字号/字重/行高、实测 W×H、边距/gap/圆角与文字/背景色的桌面+手机对照请查 [计算属性附表](ui-computed-attributes.md)**；四视口 28 场景原始样本查 `evidence/computed-live-fixture.json`；**实际可见按钮、输入框/链接逐项登记**见 [正式控件属性索引](ui-control-attributes.md)及 `evidence/computed-controls-live-fixture.json`（含 320/844 断点和现有全局抽屉的 offscreen 链接）。
+基线日期：2026-09-23；复核：2026-09-24。适用范围：`/juyiting` 内此次新增的工作台框架、概览和顶层业务面板；**不是**其他全站路由或静态 Demo 的全量样式规范。原型的逐控件 180 种目标、38 场景 CSSOM 与页面尺寸，分别见 `../../docs/ui-workbench/{ui-detail.md,component-attributes.md,control-targets.md,evidence/computed-ui.json}`。原型是假数据；下表是正式 Vue 实现的规则，不把原型属性误写成已实现属性。**正式接入的逐组件字号/字重/行高、实测 W×H、边距/gap/圆角与文字/背景色的桌面+手机对照请查 [计算属性附表](ui-computed-attributes.md)**；四视口 28 场景原始样本查 `evidence/computed-live-fixture.json`；**实际可见按钮、输入框/链接逐项登记**见 [正式控件属性索引](ui-control-attributes.md)及 `evidence/computed-controls-live-fixture.json`（含 320/844 断点和现有全局抽屉的 offscreen 链接）。
 
 ## 1. CSS 来源、层叠和计量
 
@@ -47,6 +47,23 @@
 
 手机底栏实际高度经 `box-sizing:border-box` 与面板底预留 62px 一致，**不是** 62px 高再额外加上下 padding。消息区是空话头/关闭引用与历史选取器时的高度，不是有键盘或长消息时的恒定值。已另用实际 Vue 渲染 28 条**合成** Markdown 消息在四视口＋720×450 核对消息自身滚动且输入不被遮挡，数值见 `evidence/long-chat-fixture.json`；这只验证视图布局，不表示真实话头数据已从服务端读取，也不等于 200% 浏览器缩放测试。更多位置、各页签 computed 字体/间距/颜色见 [计算属性附表](ui-computed-attributes.md)，可见区域的原始 CSS/aria/href 样本见 `evidence/computed-live-fixture.json`；正文表按最终 CSS 约束取整，几何小数仅报告实测样本。
 
+### 3.2 原业务内页属性（源 CSS 声明；不作为全部状态的实测值）
+
+以下只记录本次导航**实际复用**的内页关键控件；均为 `web/src/` 的组件源码规则，与 §3.1 空数据 CSSOM 的数值证据等级不同。字号未单独声明时继承该组件/父级，不能把工作台 `15px` 强行当成所有表单控件的 computed 字号；例如原生输入在 Chromium 中可能为 `13.3333px`。W×H 随数据、容器、字体和内容变化。
+
+|入口 / 源组件选择器|字体、颜色|距离、大小和排布|响应式/状态|
+|---|---|---|---|
+|厅内议事 `ChatPanel.vue` `.panel-toolbar` / `.icon-button`|工具条 12px `#765f40`；上下文标题 14px/700 `#3f2815`；状态 12px；图标按钮 `#4a3423` / `#efe0c6`|工具条 padding `8px 10px 6px`、gap8；按钮 34×34、圆角8、相邻gap6|引用区打开时额外占高 `max-height:min(42vh,270px)`；消息区取剩余高度|
+|同组件 `.hall-message` / `.message-content`|消息文字 `#4a3423`、行高1.55；发送者13px、状态12px；用户背景 `#e8f2ed`，Agent/系统 `#fffdf6`|气泡 max-width 88%、padding `10px 12px`、底距10、圆角8；Markdown 段落下距8，列表左内距20，代码块 padding `8px 10px`|长消息独立纵向滚动，代码块/表格内部横向滚动；消息正文链接下划线且 `#7f4a22`|
+|`HallChatComposer.vue` `.composer-textarea` / `.composer-send`|输入颜色 `#3f2815`、背景 `#fffdf6`，继承字体、行高1.45；发送 `#fff8e8` / `#7f4a22`|输入最小42、最大132高，padding `11px 12px`、圆角8；操作按钮宽42/最小高42、圆角8；操作 gap6；@标签高26、max-width128、gap4、padding `0 8px`|≤760由工作台覆盖外层 padding `8px 16px 10px`；短屏≤560高 `6px 16px 6px`，不缩小消息字体|
+|我的事项 `BountyPanel.vue` `.task-create-form` / `.task-card`|内页主字继承；榜文正文/时间12px `#765f40`；卡片背景 `#f7ecd7`，选中 `#ead3a9`|创建表单四列 `minmax(150px,1fr) minmax(180px,1.4fr) minmax(140px,.8fr) auto`、gap8、padding `0 16px 12px`；卡片 padding12、底距10、圆角8；状态标签 gap8/底内距12；单任务操作 34×34|创建/详情/经济动作受原权限和断点控制；真实数据行未被空数据样本测量|
+|点将册 `AgentPanel.vue` `.agent-panel-body` / `.status-filter`|工具条13px `#765f40`；状态选中 `#fff` / `#23483e`，未选 `#4a3423` / `#efe0c6`；次级字12px|列表+详情列 `minmax(0,1fr) minmax(260px,320px)`、gap12、padding `0 12px 12px`；状态按钮 min-height36、左右padding12、gap8、圆角8；列表行 padding10、底距8；头像38/58|≤900px 单列，详情排在列表之前；≤620px 工具条上下排列|
+|典籍阁 `LibraryPanel.vue` `.library-tabs` / `.library-search`|页签继承当前字体；激活背景 `#23483e`、字 `#fff8e8`；表单字 `#3f2815`、背景 `#fffdf6`|容器 padding14、gap12；页签 gap8、padding `7px 10px`、圆角7；搜索列 `minmax(180px,1fr) 132px auto`，gap8；输入/下拉高38、左右padding10、圆角8；搜索按钮高至少38、左右padding12|**容器**宽≤520px 时检索表单单列，不按浏览器窗口宽度判断；双页签仍是内部按钮|
+|原文阅读 `archive/ArchiveReader.vue` `.archive-reader-fullscreen` / `.reader-paragraph`|正文 `serif`、`clamp(16px,1.35vw,20px)`、行高2；章题 `serif`、`clamp(22px,2.5vw,30px)`|阅读全屏 fixed、`100dvh`、z-index10000；gap12、padding `clamp(12px,2vw,24px)`；正文 max-width50em、段距 `0 auto 1.05em`；内容区三列（目录打开）/两列（关闭），gap12、内边距 `clamp(12px,2vw,22px)`|≤900px 内容变单列，目录抽屉宽 `min(82vw,330px)`、笔记抽屉 `min(88vw,390px)`；设备横屏/虚拟旋转及安全区另有覆盖，不能只照常规表|
+|百宝箱 `PersonalWorkspace.vue` `.is-hall-treasure` / `.treasure-content`|根字体16px；标题22px/500/1.45（≤600为19px），说明14px/1.6；主按钮 `#fff9ee` / `#8d402c`|根 padding `28px 30px`（≤600为 `20px 16px`）；按钮 min-height44、padding `8px 14px`、圆角4；页签 gap8、下距18；搜索区 gap12、margin `18px 0 12px`；输入 min-height44|文件版本/预览/管理在内页切换，不使用新路由；短屏≤500有独立紧凑规则|
+
+颜色和 font-family 的层叠边界：品牌/欢迎/地图卡明确衬线、正文为工作台回退栈；阅读正文写的是通用 `serif`，百宝箱内部有 `font-family:serif` 的二级标题；这些**不是同一套强制字体文件**。业务内页/条件数据态的每个像素没有真实身份的逐状态截图就不声称“全量实测”；应按相关组件 `<style scoped>` 与挂载后 CSSOM 两级复验。
+
 ## 4. 链接、控件目的和页面返回
 
 |可见位置|标签|动作/目标|URL属性|
@@ -61,6 +78,18 @@
 |工作台“个人中心”|个人中心|调用现有 `router.push({name:'UserProfile'})`，由原离厅确认与路由守卫保护|`/profile`，按钮本身无 href|
 |地图 HUD“办事概览”|办事概览|`setHomeMode('overview')` 返回同一 `/juyiting`，Stage 不销毁|无 href|
 |典籍阁两个页签|典籍阅读/案卷检索|同一个 `LibraryPanel` 内状态切换；原 Reader 章节/书签/笔记/选段和检索继续复用|无 href|
+
+**内页真实链接/下载的例外**（本次工作台没有新增这些链接）：
+
+|来源/元素|href/解析目标|target、rel、下载属性|出现条件和验证界限|
+|---|---|---|---|
+|`PersonaCatalogPanel.vue` 本地接入指引 `<a>`|源码常量 `https://gitee.com/chcbz/isp-install/blob/master/skills/codex-ws-agent-install/SKILL.md`|`target="_blank"`，`rel="noopener noreferrer"`，无 download|只在招贤令特定接入状态可见；此处是**源码合同**，非空数据 DOM 实测|
+|`ChatPanel.vue` 服务端消息 Markdown `<a>`|由消息内容生成；`marked` 输出经 DOMPurify 净化后渲染，无法给固定 URL|未在组件显式指定 `target`/`rel`/download，最终属性依净化后的消息内容，**不能假定外链均新窗**|字体/距离遵循 `.message-content :deep(a)` 的 `#7f4a22`、下划线、offset2px；仅有真实消息时出现，需另做 URL 安全核验|
+|`PersonalWorkspace.vue` 版本“下载”按钮|可见按钮 `href=null`；鉴权取得所选版本 Blob，`savePersonalWorkspaceBlob` 临时创建并撤销 `blob:` URL|临时 `<a download="安全文件名">`；不是持久可分享链接|需相应文件与版本权限；空数据样本不能证明下载成功或写死 href|
+|旧全局抽屉中的 3 个 `<a>`|`/profile`、`/messages`、`/help`|源码/快照未新增 `target`/`rel`/download|在空响应浏览器 DOM 中但位于 x=-240、关闭时不在视口；不是工作台新增导航|
+|典籍阁案卷引用、原文选段提问|`href=null`，触发内部业务动作|不适用|有搜索结果/选段且有权限时才出现；尚未做实际搜索/写入|
+
+上述动态/权限态均未包含在空数据逐控件 CSSOM 中，需授权环境分别核对 URL 安全、下载权限及版本号。
 
 所有上述工作台按钮当前为 `type="button"` 内部动作，**不是**带 `href` 的锚点；文档“/profile”表示调用 Vue Router 后实际应到达的路由，不等于账户按钮的 DOM href。典籍阁内的两个 `<button role="tab">` 带 `aria-selected`、`aria-controls` 与 `tabindex`，键盘左右切换；后续新增链接需另列实际 URL/target/rel 与权限。当前页面不会为这些按钮生成可分享的面板深链。本次未引入新路径或外链，顶层页签不会修改 pathname/hash；浏览器 Back 不等价于面板 Back。外部链接（如招贤令安装指引）按原组件权威 URI/权限展示，本次不伪造通用 URL；本地空 API 的正式页面还采到原全局抽屉（关闭时 x=-240，不在视口）的真实 `a[href]`：`/profile`（个人中心）、`/messages`（消息中心）、`/help`（帮助与反馈）；这是旧全局导航，不是工作台新增的按钮链接，不能说整个站点没有 href。全站原 `/`, `/demo`, `/oauth2/callback`, `/profile`, `/workspace` 等路由仍由原 Router 管理。
 
@@ -82,6 +111,6 @@
 
 ## 5. 响应式和验收边界
 
-- 工作台切换、厅中实景和已挂载 Stage 的同实例测试依赖真实 Vue 组件；图像证据采用**本地只读空响应 fixture**，仅测试展示/入口/溢出与焦点。账号资料权限不足/错误文案是模拟 API 的结果，不得认为线上服务出现此故障；阅读原文、真实资料下载、SSE、报价/支付、指派等必须分别用已有业务测试与有授权服务验证。
+- 工作台切换、厅中实景和已挂载 Stage 的同实例测试依赖真实 Vue 组件；既有 28 场景图像/CSSOM 证据采用**本地只读空响应 fixture**，仅测试展示/入口/溢出与焦点。2026-09-24 又以临时进程内只读代理和授权真实账号检查概览、章节与会话列表、实景 snapshot，详见 `evidence/real-readonly-browser-20260924.md`；此证据**不改变**上述 28 场景 computed 属性的来源，也不等于本候选已部署。账号资料权限不足/错误文案是模拟 API 的结果，不得认为线上服务出现此故障；阅读原文的进度写入、真实资料下载、SSE、报价/支付、指派等仍必须分别用已有业务测试与有授权服务验证。
 - 真实软键盘、安全区（headless 的 `env()`=0）、实际宋体安装、辅助文字 11px 的可读性、所有子组件 200% 缩放和屏幕阅读器不是此布局采样的通过项目。
 - 功能完整性审计矩阵与当前状态见 `../../docs/ui-workbench/feature-coverage.md`（**静态 Demo 的缺口，不代表本次正式接入新增了这 63 个功能**）和本规格目录 `acceptance.md`；保留依赖现有功能的入口，不宣称这次重新实现了其业务逻辑。
