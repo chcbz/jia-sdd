@@ -58,6 +58,8 @@
 
 这些是按当前空数据和字体环境测得的包围盒；小屏的 `font-size:10px` / `padding:3px` 与 11px 常规底栏字号、非链接按钮语义见 §2、§4；窗口高度受输入法、内容和安全区影响，不能写死。原始 `width/height/labelDisplay` 和截图见 [`compact-reflow-fixture.json`](evidence/compact-reflow-fixture.json) 与 [`compact-reflow-review.md`](evidence/compact-reflow-review.md)。
 
+**消息内容态补测**：在与上述空会话结果**不同**的隔离 fixture 中，真实 Vue 会话路径渲染 28 条合成 Markdown，按 100% 两手机视口和实际页签 200% 四视口量测消息气泡、列表、代码块、链接、独立滚动及输入区边界；390×844/100% 消息区 434.52px、首气泡 358×205.94px、正文与链接 15px/23.25px、链接 `#7f4a22` 下划线且 offset2px，源码生成的本地片段 `href="#local-fixture"` 无 target/rel；160 CSS px 宽/200% 时气泡宽144px、代码块宽120px且代码块内部可横滚，正文保持15px。六种条件 28 条真实 Vue DOM 气泡均不越界，且滚动限于消息区/极短屏工作窗。逐项高度、字体、包围盒和边界见 [`rendered-chat-review.md`](evidence/rendered-chat-review.md)、[`rendered-chat-native-fixture.json`](evidence/rendered-chat-native-fixture.json)、[`rendered-chat-actual-zoom-fixture.json`](evidence/rendered-chat-actual-zoom-fixture.json)。这只是**合成 API 回复**；不是从服务端取到真实长会话，也未测试 SSE/键盘。
+
 **实际浏览器缩放补样**：另用隔离的 Chromium 页签 API `setZoom(2)`/`getZoom()` 验证原始 320×740、390×844、844×390、1440×900 四个视口实际缩为对应半尺寸 CSS 视口，消息区约 62.05/97.05/100/129.05px，28 段合成内容仍由消息区独立滚动；极短视口工作窗可滚到发送按钮。与上表“半尺寸 CSS 视口 + DPR2”**证据性质不同**；来源/几何/安全界限见 [`actual-zoom-review.md`](evidence/actual-zoom-review.md) 与 [`actual-zoom-fixture.json`](evidence/actual-zoom-fixture.json)。这不是实体设备或项目固定 Chrome 133 的测试。 同一真实缩放页签还从“全部入口”逐一核对七个顶层页面的空数据 DOM 容器与标题、典籍“案卷检索”内页、返回概览，并测得各面板与底栏无重叠、页面无横向溢出；详细逐项矩形在 `evidence/actual-zoom-fixture.json` 的 `primarySurfaces` 和 `returnToOverview`，判定界限见 `evidence/actual-zoom-review.md`。内容态/授权态内页控件字号与链接仍需在条件出现时按 §3.2/§4 和真实 CSSOM 核验。
 
 手机底栏实际高度经 `box-sizing:border-box` 与面板底预留 62px 一致，**不是** 62px 高再额外加上下 padding。消息区是空话头/关闭引用与历史选取器时的高度，不是有键盘或长消息时的恒定值。已另用实际 Vue 渲染 28 条**合成** Markdown 消息在四视口＋720×450 核对消息自身滚动且输入不被遮挡，数值见 `evidence/long-chat-fixture.json`；这只验证视图布局，不表示真实话头数据已从服务端读取，也不等于 200% 浏览器缩放测试。另补 `evidence/compact-reflow-fixture.json` 只证明等效半尺寸 CSS 视口的布局和操作入口，**不**等于实际浏览器缩放。更多位置、各页签 computed 字体/间距/颜色见 [计算属性附表](ui-computed-attributes.md)，可见区域的原始 CSS/aria/href 样本见 `evidence/computed-live-fixture.json`；正文表按最终 CSS 约束取整，几何小数仅报告实测样本。
@@ -99,6 +101,7 @@
 |来源/元素|href/解析目标|target、rel、下载属性|出现条件和验证界限|
 |---|---|---|---|
 |`PersonaCatalogPanel.vue` 本地接入指引 `<a>`|源码常量 `https://gitee.com/chcbz/isp-install/blob/master/skills/codex-ws-agent-install/SKILL.md`|`target="_blank"`，`rel="noopener noreferrer"`，无 download|只在招贤令特定接入状态可见；此处是**源码合同**，非空数据 DOM 实测|
+|`ChatPanel.vue` 本地合成 Markdown 锚点|`#local-fixture`，仅合成消息的相对片段|无 target/rel/download|28 条经真实 Vue 渲染后的 **100% 和 200%** CSSOM/URL 属性见 `evidence/rendered-chat-review.md`；不能据此推断服务器消息链接地址或安全性|
 |`ChatPanel.vue` 服务端消息 Markdown `<a>`|由消息内容生成；`marked` 输出经 DOMPurify 净化后渲染，无法给固定 URL|未在组件显式指定 `target`/`rel`/download，最终属性依净化后的消息内容，**不能假定外链均新窗**|字体/距离遵循 `.message-content :deep(a)` 的 `#7f4a22`、下划线、offset2px；仅有真实消息时出现，需另做 URL 安全核验|
 |`PersonalWorkspace.vue` 版本“下载”按钮|可见按钮 `href=null`；鉴权取得所选版本 Blob，`savePersonalWorkspaceBlob` 临时创建并撤销 `blob:` URL|临时 `<a download="安全文件名">`；不是持久可分享链接|需相应文件与版本权限；空数据样本不能证明下载成功或写死 href|
 |旧全局抽屉中的 3 个 `<a>`|`/profile`、`/messages`、`/help`|源码/快照未新增 `target`/`rel`/download|在空响应浏览器 DOM 中但位于 x=-240、关闭时不在视口；不是工作台新增导航|

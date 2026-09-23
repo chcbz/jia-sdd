@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check actual Chromium tab zoom=200% on local Vue, without live API or credentials.
+"""Check actual Chromium tab zoom (100%/200%) on local Vue without live API or credentials.
 
-A temporary MV3 extension calls chrome.tabs.setZoom(2) and getZoom(); no CSS zoom,
+A temporary MV3 extension calls chrome.tabs.setZoom(factor) and getZoom(); no CSS zoom,
 page-scale emulation, or viewport-halving shortcut is used. Requires a fresh Vite
 server for this worktree and the system Chromium/Playwright (not CI Chrome 133).
 """
@@ -33,7 +33,9 @@ def main():
     parser.add_argument('--url', default='https://127.0.0.1:61360')
     parser.add_argument('--chromium', default=shutil.which('chromium'))
     parser.add_argument('--out', type=Path, help='Save safe, local-only geometry JSON')
-    parser.add_argument('--screenshots', type=Path, help='Save two local-only screenshots')
+    parser.add_argument('--screenshots', type=Path, help='Save local-only screenshots')
+    parser.add_argument('--rendered-history', action='store_true', help='Feed 28 synthetic messages through the real Vue chat API path')
+    parser.add_argument('--zoom-factor', type=int, choices=(1, 2), default=2, help='Actual Chromium tab zoom; native size only probes mobile widths')
     args = parser.parse_args()
     url = urlparse(args.url)
     if url.scheme not in ('https', 'http') or url.hostname not in ('localhost', '127.0.0.1', '::1') or url.username or url.password:
@@ -54,7 +56,7 @@ def main():
             'permissions': ['tabs'], 'background': {'service_worker': 'worker.js'},
         }))
         (extension / 'worker.js').write_text('chrome.runtime.onInstalled.addListener(() => {});')
-        for width, height in SIZES:
+        for width, height in (SIZES if args.zoom_factor == 2 else SIZES[:2]):
             context = playwright.chromium.launch_persistent_context(
                 str(Path(temp) / f'profile-{width}'), executable_path=args.chromium,
                 headless=True, viewport={'width': width, 'height': height},
@@ -68,6 +70,7 @@ def main():
 
                 intercepted = {'GET': 0, 'POST': 0, 'other': 0}
                 web_sockets = {'localVite': 0, 'blocked': 0}
+                fixture_requests = {'list': 0, 'content': 0, 'events': 0}
 
                 def route_request(route):
                     target = route.request.url
@@ -76,12 +79,38 @@ def main():
                     if f'{parsed.scheme}://{parsed.netloc}' != origin:
                         route.abort()
                     elif route.request.resource_type == 'eventsource':
-                        route.abort()  # No SSE simulation: this probe only measures empty-state UI.
+                        route.abort()  # No SSE simulation: the offline fixture measures only UI.
                     elif (route.request.resource_type in ('xhr', 'fetch') or
                             path.startswith(('/api/', '/chat/', '/agent/', '/user/', '/task/', '/oauth2/'))):
                         method = route.request.method
                         intercepted[method if method in intercepted else 'other'] += 1
-                        route.fulfill(status=200, content_type='application/json', body='{"code":200,"data":[],"items":[]}')
+                        if args.rendered_history and method == 'POST' and path == '/api/chat/conversation/list':
+                            fixture_requests['list'] += 1
+                            conversation = {'id': '19001', 'title': '本地虚构公议', 'conversationType': 'juyiting',
+                                            'conversationScopeType': 'public', 'conversationScopeKey': 'public',
+                                            'updateTime': 1700000000000}
+                            route.fulfill(status=200, content_type='application/json', body=json.dumps({'data': [conversation]}))
+                        elif args.rendered_history and method == 'GET' and path == '/api/chat/conversation/content':
+                            assert parsed.query == 'id=19001', 'Unexpected fixture conversation ID'
+                            fixture_requests['content'] += 1
+                            mock_messages = [
+                                {'id': str(i + 1), 'senderType': 'agent' if i % 2 else 'user',
+                                 'messageType': 'USER' if i % 2 == 0 else 'AGENT',
+                                 'senderName': '虚构好汉' if i % 2 else '你',
+                                 'createTime': 1700000000000 + i * 1000,
+                                 'content': (f'**本地样例 {i + 1}**：仅用于测试真正 Vue 消息渲染和布局，非真实账号会话。\n\n'
+                                             '- 一段较长的 Markdown 文本用于测试换行和气泡宽度。\n'
+                                             '- 另一段列表内容。' +
+                                             ('\n\n[示例锚点](#local-fixture)' if i == 0 else '') +
+                                             ('\n\n```text\n' + '0123456789abcdef ' * 12 + '\n```' if i == 1 else ''))}
+                                for i in range(28)
+                            ]
+                            route.fulfill(status=200, content_type='application/json', body=json.dumps({'data': mock_messages}))
+                        elif args.rendered_history and method == 'GET' and path == '/api/chat/conversation/events':
+                            fixture_requests['events'] += 1
+                            route.fulfill(status=403, content_type='text/plain', body='Local fixture does not simulate SSE')
+                        else:
+                            route.fulfill(status=200, content_type='application/json', body='{"code":200,"data":[],"items":[]}')
                     elif target.startswith(origin + '/'):
                         route.continue_()
                     else:
@@ -109,20 +138,20 @@ def main():
                 page.locator('.onboarding-dialog .skip-button').click(timeout=25000)
                 page.locator('.onboarding-overlay').wait_for(state='hidden')
                 worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker', timeout=10000)
-                tab_zoom = worker.evaluate('''async origin => {
+                tab_zoom = worker.evaluate('''async ([origin, factor]) => {
                   const tabs = await chrome.tabs.query({});
                   const tab = tabs.find(t => t.url?.startsWith(origin + '/juyiting'));
                   if (!tab) throw new Error('Local workbench tab not found');
-                  await chrome.tabs.setZoom(tab.id, 2);
+                  await chrome.tabs.setZoom(tab.id, factor);
                   return chrome.tabs.getZoom(tab.id);
-                }''', origin)
-                page.wait_for_function('''([w,h]) => devicePixelRatio === 2 &&
-                    Math.abs(innerWidth * 2 - w) <= 1 &&
-                    Math.abs(innerHeight * 2 - h) <= 1''', arg=[width, height], timeout=12000)
+                }''', [origin, args.zoom_factor])
+                page.wait_for_function('''([w,h,factor]) => devicePixelRatio === factor &&
+                    Math.abs(innerWidth * factor - w) <= 1 &&
+                    Math.abs(innerHeight * factor - h) <= 1''', arg=[width, height, args.zoom_factor], timeout=12000)
                 viewport = page.evaluate('''() => ({ devicePixelRatio, innerWidth, innerHeight, outerWidth, outerHeight,
                     visualViewportScale: visualViewport.scale, pageScrollWidth:document.documentElement.scrollWidth,
                     userAgent:navigator.userAgent })''')
-                assert tab_zoom == 2 and viewport['visualViewportScale'] == 1, viewport
+                assert tab_zoom == args.zoom_factor and viewport['visualViewportScale'] == 1, viewport
                 assert viewport['pageScrollWidth'] <= viewport['innerWidth'], viewport
                 trigger = page.locator('.workbench-mobile-more')
                 trigger.click()
@@ -180,21 +209,70 @@ def main():
                         assert action.evaluate('(e) => document.activeElement === e')
                         chat['toolbarScrollAfter'] = page.locator('.chat-panel .panel-toolbar').evaluate('(e) => e.scrollLeft')
                         assert chat['toolbarScrollAfter'] > 0, chat
-                if args.screenshots and width in (320, 844):
+                if args.rendered_history:
+                    page.wait_for_function('''() => document.querySelectorAll('.hall-messages .hall-message').length === 28''', timeout=12000)
+                if args.screenshots and width in ((320, 390, 844) if args.rendered_history else (320, 844)):
                     args.screenshots.mkdir(parents=True, exist_ok=True)
-                    page.screenshot(path=str(args.screenshots / f'actual-zoom-{width}x{height}.png'))
-                long_chat = page.evaluate('''() => {
+                    filename = (f'rendered-chat-zoom{args.zoom_factor}' if args.rendered_history else 'actual-zoom')
+                    page.screenshot(path=str(args.screenshots / f'{filename}-{width}x{height}.png'))
+                long_chat = page.evaluate('''rendered => {
                     const messages=document.querySelector('.hall-messages');
-                    for (let i=0;i<28;i++) { const item=document.createElement('p');
-                      item.textContent='本地合成消息 '+(i+1)+'：仅用于浏览器缩放时测试长对话滚动，不来自任何用户或服务。';
-                      messages.appendChild(item); }
-                    const maxScroll=messages.scrollHeight-messages.clientHeight;
+                    if (!rendered) {
+                      for (let i=0;i<28;i++) { const item=document.createElement('p');
+                        item.textContent='本地合成消息 '+(i+1)+'：仅用于浏览器缩放时测试长对话滚动，不来自任何用户或服务。';
+                        messages.appendChild(item); }
+                    }
                     messages.scrollTop=messages.scrollHeight;
                     return {clientHeight:messages.clientHeight,scrollHeight:messages.scrollHeight,scrollTop:messages.scrollTop,
+                      renderedMessages:messages.querySelectorAll('.hall-message').length,
+                      markdownStrong:messages.querySelectorAll('.message-content strong').length,
+                      markdownLists:messages.querySelectorAll('.message-content ul').length,
+                      markdownCodeBlocks:messages.querySelectorAll('.message-content pre').length,
+                      maxPreScrollExcess:Math.max(0,...[...messages.querySelectorAll('.message-content pre')].map(pre=>pre.scrollWidth-pre.clientWidth)),
+                      sampleLink:messages.querySelector('.message-content a')?.getAttribute('href') || null,
+                      renderedStyle:rendered ? (() => {
+                        const bubble=messages.querySelector('.hall-message');
+                        const content=bubble.querySelector('.message-content');
+                        const link=messages.querySelector('.message-content a');
+                        const pre=messages.querySelector('.message-content pre');
+                        const fields=e=>{const c=getComputedStyle(e),r=e.getBoundingClientRect();return {
+                          width:r.width,height:r.height,fontFamily:c.fontFamily,fontSize:c.fontSize,fontWeight:c.fontWeight,
+                          lineHeight:c.lineHeight,color:c.color,backgroundColor:c.backgroundColor,padding:c.padding,
+                          textDecorationLine:c.textDecorationLine,textUnderlineOffset:c.textUnderlineOffset,
+                          borderRadius:c.borderRadius,overflowX:c.overflowX};};
+                        return {bubble:fields(bubble),content:fields(content),link:{...fields(link),
+                          href:link.getAttribute('href'),target:link.getAttribute('target'),rel:link.getAttribute('rel')},
+                          pre:fields(pre)};
+                      })() : null,
+                      renderedBounds:rendered ? (() => {
+                        const box=messages.getBoundingClientRect();
+                        const padding=getComputedStyle(messages);
+                        const left=box.left+parseFloat(padding.paddingLeft), right=box.right-parseFloat(padding.paddingRight);
+                        const bubbles=[...messages.querySelectorAll('.hall-message')].map(e=>e.getBoundingClientRect());
+                        return {areaLeft:box.left,areaRight:box.right,contentLeft:left,contentRight:right,
+                          scrollWidth:messages.scrollWidth,clientWidth:messages.clientWidth,scrollLeft:messages.scrollLeft,
+                          minBubbleLeft:Math.min(...bubbles.map(r=>r.left)),maxBubbleRight:Math.max(...bubbles.map(r=>r.right)),
+                          clippedLeft:bubbles.filter(r=>r.left<left-.5).length,
+                          clippedRight:bubbles.filter(r=>r.right>right+.5).length};
+                      })() : null,
                       pageScrollWidth:document.documentElement.scrollWidth};
-                }''')
+                }''', args.rendered_history)
+                if args.rendered_history:
+                    assert long_chat['renderedMessages'] == 28 and long_chat['markdownStrong'] >= 28, long_chat
+                    assert long_chat['markdownLists'] >= 28 and long_chat['markdownCodeBlocks'] >= 1, long_chat
+                    assert long_chat['sampleLink'] == '#local-fixture' and long_chat['maxPreScrollExcess'] > 0, long_chat
+                    style = long_chat['renderedStyle']
+                    assert style['content']['fontSize'] == '15px' and style['content']['lineHeight'] == '23.25px', style
+                    assert style['link']['color'] == 'rgb(127, 74, 34)' and style['link']['textDecorationLine'] == 'underline', style
+                    assert style['link']['textUnderlineOffset'] == '2px' and style['link']['target'] is None and style['link']['rel'] is None, style
+                    assert style['pre']['overflowX'] == 'auto', style
+                    assert fixture_requests['list'] >= 1 and fixture_requests['content'] >= 1 and fixture_requests['events'] >= 1, fixture_requests
                 assert long_chat['scrollHeight'] > long_chat['clientHeight'] and long_chat['scrollTop'] > 0, long_chat
                 assert long_chat['pageScrollWidth'] <= viewport['innerWidth'], long_chat
+                if args.rendered_history:
+                    bounds = long_chat['renderedBounds']
+                    assert bounds['clippedLeft'] == 0 and bounds['clippedRight'] == 0, bounds
+                    assert bounds['scrollWidth'] == bounds['clientWidth'] and bounds['scrollLeft'] == 0, bounds
                 if viewport['innerHeight'] > 260:
                     composer_bottom = page.locator('.hall-chat-composer').bounding_box()
                     assert composer_bottom and composer_bottom['y'] + composer_bottom['height'] <= chat['nav']['top'] + .5, long_chat
@@ -251,14 +329,17 @@ def main():
                 results.append({'baseViewportPixels': f'{width}x{height}', 'tabZoom': tab_zoom,
                                 'viewport': viewport, 'navigation': nav_menu, 'chat': chat, 'syntheticLongChat': long_chat,
                                 'primarySurfaces': surfaces, 'returnToOverview': overview,
-                                'interceptedApiRequestsByMethod': intercepted, 'webSockets': web_sockets})
-                print(f'PASS tab zoom 200% {width}x{height} -> {viewport["innerWidth"]}x{viewport["innerHeight"]}')
+                                'interceptedApiRequestsByMethod': intercepted, 'webSockets': web_sockets,
+                                **({'renderedHistoryFixtureRequests': fixture_requests} if args.rendered_history else {})})
+                print(f'PASS tab zoom {args.zoom_factor * 100}% {width}x{height} -> {viewport["innerWidth"]}x{viewport["innerHeight"]}')
             finally:
                 context.close()
     if args.out:
         args.out.write_text(json.dumps({'webSha': actual_sha, 'browser': 'system Chromium (not project Chrome 133); see results[*].viewport.userAgent for runtime version',
-                                        'method': 'chrome.tabs.setZoom(2) and getZoom() using isolated temporary extension',
-                                        'limitations': 'local fake token, empty intercepted API, no real keyboard/safe area or service',
+                                        'method': f'chrome.tabs.setZoom({args.zoom_factor}) and getZoom() using isolated temporary extension',
+                                        'limitations': ('local fake token, synthetic Vue-rendered history, no real keyboard/safe area or service'
+                                                        if args.rendered_history else 'local fake token, empty intercepted API, no real keyboard/safe area or service'),
+                                        **({'renderedHistory': True} if args.rendered_history else {}),
                                         'results': results}, ensure_ascii=False, indent=2) + '\n')
 
 
