@@ -14,6 +14,8 @@
 
 **内容态浏览器补核（2026-09-24）**：真实 Vue `ChatPanel` 从隔离的合成会话 API 响应渲染 28 条 Markdown；320×740/390×844 原始视口及四视口实际页签 200% 缩放下的消息独立滚动、气泡边界、代码横滚、链接 CSS/示例 href 通过，详情见 [`evidence/rendered-chat-review.md`](evidence/rendered-chat-review.md)。它比先前 DOM 插入段落更接近聊天渲染，但仍**不等于**真实服务读取/SSE/输入法/权限态，A3/A6 尚未整体完成。
 
+**当前 SHA 本地构建再核对**：`npm run build` exit 0，JS/CSS 懒加载资源摘要与未部署界限见 [`evidence/local-build-recheck.md`](evidence/local-build-recheck.md)；只读查询前端 Flow 最近仍 Run 147 / FAIL，不属于本候选。构建、历史 Run 均不能替代同 SHA 固定 amd64/Chrome133 门禁。
+
 **新增本机全量复跑（同一 Web 候选，非受控门禁）**：`npm run test` 退出码 1，2341 passing / 41 failing / 2 pending；41 条均属于 E9A/E9B/E8A 固定浏览器解码工具缺失或 TMX 两项 Mocha 超时，六条此前本机失败的相关/地图用例已在本轮通过。分类、报告哈希与逐条失败标题见 [`evidence/local-full-recheck.md`](evidence/local-full-recheck.md) / [`local-full-recheck-summary.json`](evidence/local-full-recheck-summary.json)。本机 aarch64/Node22 非固定 worker、未运行 E14，A6/整体验收仍为**未完成**；不要以本次结果替代授权 amd64 全量门禁。
 
 ## 来源与限制
