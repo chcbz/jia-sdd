@@ -65,6 +65,7 @@ npm run test
 ## Documentation Entry Points
 
 - `docs/juyiting-runbook.md`: compact guide for ongoing Juyi Hall changes.
+- `specs/juyiting-lightweight-workbench/`: candidate formal Vue workbench UI detail, control dimensions/targets, audit and incomplete real-service acceptance. The earlier V3.1 static Demo is audited separately in `docs/ui-workbench/`.
 - `docs/juyiting-occlusion-system-design.md`: extensible full-map occlusion, world sorting, TMX schema, migration, validation, and Agent execution plan.
 - `docs/juyiting-occlusion-system-execution-plan.md`: serial implementation backlog, DeepSeek/GPT allocation, handoff gates, verification, and release sequence for occlusion v2.
 - `docs/juyiting-feature-guide.md`: deeper Juyi Hall behavior and data-flow documentation.

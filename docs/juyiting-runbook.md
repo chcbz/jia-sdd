@@ -4,6 +4,7 @@ This is the short working guide for future 聚义厅/Juyi Hall iterations. Use `
 For map masking, prop depth, occluder assets, and future map expansion, use `docs/juyiting-occlusion-system-design.md`.
 For the serial implementation order and DeepSeek/GPT Agent allocation, use `docs/juyiting-occlusion-system-execution-plan.md`.
 For the current GPT multimodal visual baseline verdict and required contact sheets, use `docs/juyiting-occlusion-visual-review-v0.md`.
+For the lightweight workbench candidate on `/juyiting` (navigation, typography, archive shortcut, chat room), use `specs/juyiting-lightweight-workbench/` for UI detail, feature coverage, local evidence, and open real-service acceptance gates; `docs/ui-workbench/` describes the earlier static Demo, not production verification.
 
 ## Primary Files
 

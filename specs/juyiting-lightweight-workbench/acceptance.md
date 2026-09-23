@@ -16,6 +16,8 @@
 - 此机对 `https://api.chaoyoufan.cn` 的直接请求为 HTTP 403；此前 Vite OAuth 代理出现 502，无法由这次本地会话对已有测试账号完成真实登录、权限和后端读写验收。需要有权限的集成环境重新核验；不能把示意空API错误文案认作正式业务故障。
 - 历史原型 63 条覆盖结论属于 Demo；新正式组件接入和仍需实际验证的差异分别见 `feature-integration-audit.md`、`ui-detail.md`。`docs/ui-workbench/ui-detail.md` 是原型属性详设，**实现态以本目录及 live fixture 样本为准**。验收完成前不得更新 integration.yaml 为 complete。
 
+真实服务与受控浏览器的逐项操作、证据和先决条件见 [`real-service-qa.md`](real-service-qa.md)。
+
 ## 本地复核边界与待办（2026-09-23）
 
 - 当前 63 项是有界的**聚义厅 Demo 对比清单**；正式页每组仍挂载旧组件的路径见 `feature-integration-audit.md`，并不代表真实账户所有服务端行为已验证。后续以实际授权账户对正式/私人事项、文件版本/权限、议事 SSE、典籍章节、地图素材等逐流程取证。
