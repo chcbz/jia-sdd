@@ -18,6 +18,6 @@
 |A4|按授权创建简述正式任务（标题≤30，说明≤200），确认未指派不执行；私人需求固定版本附件与显式授权；区分消息已读/成果已查看/个人归档/正式验收|准确的请求方法、对象 id 和版本号、服务端状态；验收/拒收必须是正式交付意图；不得以静态 Demo 的 assigned 状态或“收入案卷”伪造|
 |A5|查榜/筛选/指派/推荐、点将册招贤令、百宝箱真实文件版本和删除恢复；条件工作项/经济/语音/协作仅在有权且开关可见时测试|受控权限、错误与冲突态及返回规则；地图人物只来自 `/agent/map`，名册只来自 `/agent/roster`，不得调用 `/agent/active`|
 |A6|四视口和真机安全区/软键盘/200% 缩放，运行候选 build 与全量测试、检查无横向溢出|截图/计算样式、全量测试报告与环境 provenance；144 个定向测试及 28 个 mock 页面不是全量替代|
-|A7|独立评审反馈落实，核对 web/root/API 配对、发布和线上访问|web commit 已推送、root gitlink pin 到已推送 SHA、`./sddw verify juyiting-lightweight-workbench` 通过；部署后独立线上核对并取得用户确认；未完成之前 `integration.yaml` 保持 implementing|
+|A7|独立评审反馈落实，核对 web/root/API 配对、发布和线上访问|web commit 已推至特性分支并以远端 SHA 核对；受控 amd64 候选全量测试通过后，root gitlink pin 到该已推送 SHA、`./sddw verify juyiting-lightweight-workbench` 通过；部署后独立线上核对并取得用户确认；未完成之前 `integration.yaml` 保持 implementing|
 
 当前有界静态覆盖矩阵见 `feature-integration-audit.md`；更多实现态 CSS/URL 属性见 `ui-detail.md` 与 `ui-control-attributes.md`。权限不足/外部网络不可用时记录具体响应和时间，保持“未完成”，不要降低验收判定阈值。
