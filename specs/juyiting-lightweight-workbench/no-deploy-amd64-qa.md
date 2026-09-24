@@ -1,6 +1,6 @@
 # 候选提交无部署 amd64 全量验证移交单（待授权执行）
 
-2026-09-23 编写，2026-09-24 更新。本文件是**操作前检查单**，不是运行报告或通过证明。目标提交仅限 `cyf-web-kit` 的 `8f47a1289bf501616ba234638192a5303d3155d7`（远端 `codex/juyiting-lightweight-workbench` 已核对）；不得把当前 `develop`、旧 Flow Run 147 或本机 Chromium 142 的结果归给该提交。API 源码未改，根仓库 `web` gitlink 尚未 pin；详见 `acceptance.md`。
+2026-09-23 编写，2026-09-24 更新。本文件是**操作前检查单**，不是运行报告或通过证明。目标提交仅限 `cyf-web-kit` 的 `8f47a1289bf501616ba234638192a5303d3155d7`（远端 `codex/juyiting-lightweight-workbench` 已核对）；不得把当前 `develop`、旧 Flow Run 147 或本机 Chromium 142 的结果归给该提交。API 源码未改，root 特性分支已为服务器合并预先 pin 该 Web gitlink；验收状态仍未完成，详见 `acceptance.md`。
 
 ## 环境与权限
 
@@ -30,6 +30,6 @@ npm run build             # 生产打包；不得把构建成功称为服务端/
 
    本机同 SHA 的 TMX 编辑 CLI 定时补测为 30.124s + 29.487s（两个子进程均 exit 0），再加测试开销超过其 60s 限额，说明本机超时**可由性能解释**，却不证明锁定 worker 会通过；快照/预览的 20s 用例内有 10 次 CLI 调用；本机前 3 次独立重放各约 2.16s、返回预期状态，说明同样存在时间门槛风险，但未验证固定 worker 的结果。详细来源见 `evidence/local-full-recheck.md`，不得据此提高超时/跳过测试。
 4. `npm run build` 退出码、生成资源清单/摘要；安全扫描同 SHA 的作业与报告（若为验收门禁），不得用历史成功报告顶替。
-5. 只有上述与 `real-service-qa.md` 的授权账号业务流程**均通过**，再评估 `./sddw pin`、`./sddw verify`、根仓库 gitlink 与用户最终确认；在此之前 `integration.yaml` 维持 `implementing`，不写 `accepted` 或“已上线”。
+5. root 特性分支已为服务器合并预先 pin Web gitlink（不代表验收）；上述门禁与 `real-service-qa.md` 的授权账号业务流程**均通过**后，再评估将 `integration.yaml` 更新为 `accepted`、用户最终确认及发布记录。在此之前维持 `implementing`，不写“已上线”。
 
 若没有合规 worker/授权，把实际拒绝原因记在 `acceptance.md`，不要在 aarch64 本机用系统浏览器冒充固定 Chrome，也不要向现有 `develop` 发布流水线推送候选。
