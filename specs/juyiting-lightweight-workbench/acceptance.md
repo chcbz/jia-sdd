@@ -47,3 +47,9 @@ node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./test
 ## 2026-09-24 服务器合并前交接（开发候选）
 
 本分支按用户要求交付**完整实现的可合并候选**，Web 为 `8f47a1289bf501616ba234638192a5303d3155d7`、API 无代码变动。root 分支把 `web` gitlink pin 到该 SHA，`api` 仍为 `787ae631264d0ae323fcce48957cb71c1cae52c8`；这是交接服务器合并和发布验证的可复现组合，**不是**宣称服务端联调、固定 amd64/Chrome 133 门禁或业务验收已经通过。服务器合并 root 分支后必须执行子模块同步/更新，并核对 Web SHA，再依 `no-deploy-amd64-qa.md` 与 `real-service-qa.md` 完成验证；正式验收前保持 `integration.yaml status: implementing`。本机同 SHA 的相关组件测试 146 passing，构建结果以本轮复跑日志为准。
+
+## 2026-09-24 已发布版图标复核/修订候选
+
+授权测试账号从 `https://kit.chaoyoufan.cn/` 完整 OAuth 登录后查看 `/juyiting`（只读浏览，无写操作）；线上底栏四项图标的 Varlet 字形与 Demo 一致，页头消息/账户原为文字，概览两个主动作/资料卡与手机展开入口缺图标。修订范围、名/大小/颜色见 `ui-detail.md` 的“线上图标差异修订”，没有改动现有业务 API、地图或入口链接。本地候选的新图标必须由服务器合并发布后再核对，线上旧截图不能当成已修复证据。
+
+修订 Web 提交：`7dd607d69373794897e28b3267943b66a614c73f`；本地 `npm run build` 通过（仍提示已有大 chunk），`juyiting-component-behavior` + `juyiting-hall-overview-component` **96 passing**，本地 Vue/空 API 的手机菜单六视口展开、末项聚焦与底栏不遮挡均通过；候选图像见 `evidence/icon-fix-candidate-mobile-390.png` 和 `evidence/icon-fix-candidate-menu-320x320.png`。线上已发布旧版**尚未**包含修订提交；服务器需再合并 root/gitlink 更新并发布核对。旧 146/2341 数字仅属于修订前 Web SHA，不得套用到新 SHA 的全量结果。

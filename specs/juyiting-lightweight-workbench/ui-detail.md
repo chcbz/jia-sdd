@@ -9,6 +9,19 @@
 - UI 正文字体栈 `-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif`，基准 `15px/1.65`；品牌、欢迎大标题、地图预览文字用 `"Noto Serif CJK SC", "Songti SC", STSong, serif`。均为回退列表而非强制下载；不同操作系统的实际字形、换行待实机核对。Varlet 图标本地资源。
 - 几何单位均为 CSS px；`minmax`、`env()` 按视口动态计算。`evidence/computed-live-fixture.json` 为 Chromium 中四视口 × 七表面的计算样式/包围盒/控件 aria/href 样本，**使用本地假认证 token 与空 API 响应，仅证明真实 Vue 的布局/导航，不是线上服务功能验收**。同目录 PNG 是视觉证据；样本无个人信息或口令。
 
+### 2026-09-24 线上图标差异修订（待新版本发布）
+
+线上 `/juyiting`（授权测试账号，仅浏览不写入）与 `deliverables/ui-workbench-demo/index.html` 对照：桌面七项侧栏和移动底栏四项的 Varlet 图标名/字形本来一致；不一致的是页头消息/账户为文字按钮、概览操作和资料卡缺图标，以及移动“全部入口”展开项只有文字。本次仅补这些图标，不改导航目标/权限/地图美术，原 28 场景 CSSOM 属修订前快照。
+
+|位置|原型与修订后图标名|规则与无障碍|
+|---|---|---|
+|桌面侧栏七项/手机底栏四项|`home-outline`、`format-list-checkbox`、`chat-processing-outline`、`account-circle-outline`、`file-document-outline`、`notebook`、`bell-outline`；手机显示首/次/三/典籍四项|原有 19/21px 不变；图标装饰，按钮中文名不变|
+|工作台页头|消息 `bell-outline`、提出需求 `plus`、个人中心 `account-circle-outline`、全部入口 `menu`|手机消息/账户/菜单 40×40 CSS px；按钮保留 `aria-label`，地图页头原文本不变|
+|概览主动作/资料卡|提出需求 `plus`、先聊一聊 `chat-processing-outline`、资料 `file-document-outline`|动作图标 16px，文字仍可见；资料图标 22px，底托 44×44、圆角 9、底色 `#EAF2ED`/图标色 `#21604D`|
+|手机展开“全部入口”|七项同侧栏，实景 `map-marker-outline`、个人中心 `account-circle-outline`、使用帮助 `help-circle-outline`|图标 19px、文字保持；菜单仍两列、可滚动、原动作及回焦不变|
+
+源：`web/src/components/world/JuyiHall.vue` / `web/src/components/juyiting/HallOverview.vue`；图标本地 Varlet font 与 Demo 的 `assets/icons.css` 使用相同码位。线上旧版截图与本地候选图标对比仅为视觉修订记录，服务器重新发布前不可称线上已修复。
+
 ## 2. 页面结构和属性
 
 |部件/选择器|常规桌面|≤1200|≤1000 / ≤760 / ≤600|短横屏 ≤560 高|
