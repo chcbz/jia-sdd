@@ -53,3 +53,9 @@ node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./test
 授权测试账号从 `https://kit.chaoyoufan.cn/` 完整 OAuth 登录后查看 `/juyiting`（只读浏览，无写操作）；线上底栏四项图标的 Varlet 字形与 Demo 一致，页头消息/账户原为文字，概览两个主动作/资料卡与手机展开入口缺图标。修订范围、名/大小/颜色见 `ui-detail.md` 的“线上图标差异修订”，没有改动现有业务 API、地图或入口链接。本地候选的新图标必须由服务器合并发布后再核对，线上旧截图不能当成已修复证据。
 
 修订 Web 提交：`7dd607d69373794897e28b3267943b66a614c73f`；本地 `npm run build` 通过（仍提示已有大 chunk），`juyiting-component-behavior` + `juyiting-hall-overview-component` **96 passing**，本地 Vue/空 API 的手机菜单六视口展开、末项聚焦与底栏不遮挡均通过；候选图像见 `evidence/icon-fix-candidate-mobile-390.png` 和 `evidence/icon-fix-candidate-menu-320x320.png`。线上已发布旧版**尚未**包含修订提交；服务器需再合并 root/gitlink 更新并发布核对。旧 146/2341 数字仅属于修订前 Web SHA，不得套用到新 SHA 的全量结果。
+
+## 2026-09-24 视觉统一复核补充（待线上验证）
+
+同一特性分支新增首页布局/侧栏账户与面包屑、工作台面板关闭图标、百宝箱窄屏搜索排版及 28 场景浏览器断言；对照结论/截图/线上 OAuth 502 限制见 [`visual-parity-review-20260924.md`](visual-parity-review-20260924.md)。此补充为**本地候选**，不能替代本表 A1–A6 的真实服务业务验收；以新 Web SHA 和 root gitlink/服务器合并记录为准，先前 `7dd607d` 的验证数字不得归给新提交。
+
+本轮候选 `e53b3c315a4541c3c8e8ef28eb9cf5608f776251` 本地 `npm run build` 通过（保留大 chunk 警告），聚义厅组件相关测试 **96 passing**（超时设置 30s；首次与构建并行且默认 2s 时在公共 setup 超时，隔离重跑通过），真实 Vue 空 API 28 个表面/四视口检查通过，移动展开菜单 6 个视口末项可聚焦、无底栏碰撞。线上 OAuth 登录入口 502；**这些不构成已发布 UI 或真实业务完整验收**。复现命令及截图索引见本轮视觉复核文档。
