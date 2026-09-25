@@ -55,7 +55,7 @@ For the current GPT multimodal visual baseline verdict and required contact shee
 - Bounty assignment should receive the target agent from the clicked row or explicit action payload.
 - Chat context should preserve selected agent, mentioned agents, selected task, and `scene: 'juyiting'` metadata.
 - Keep map controls and fixed-format UI elements dimensionally stable to avoid layout jumps.
-- 移动底栏只在聚义厅四个一级工作台根页面显示；软键盘 `open/closing`、详情/嵌套弹层和新手引导均隐藏底栏，竖屏嵌套详情只保留一个返回动作，根级弹层只保留关闭。
+- 移动底栏只在聚义厅四个一级工作台根页面显示；软键盘 `open/closing`、详情/嵌套弹层和新手引导均隐藏底栏，竖屏嵌套详情和根级弹层都只保留一个 `← 返回` 动作（根级返回执行关闭）；桌面/横屏根级弹层保留关闭。
 - 工作台弹层统一使用 `theme-workbench` 浅色语义主题；地图模式及其面板继续保留既有深色沉浸主题，不得套用工作台主题。
 - Reader capsule avoidance is in `web/src/components/juyiting/archive/ArchiveReader.vue`: normal/native layouts reserve the right edge; virtual 90-degree landscape reserves the logical left and rotates safe-area mapping. Verify the lazy Juyi Hall CSS, not just index CSS; [Flow 85 release evidence](releases/2026-09-09-reader-flow85.md).
 - Onboarding follows the actual `portrait-command` / `landscape-map` experience (including virtual landscape), with separate steps. Keep portrait `data-tour` anchors aligned with their buttons; map steps must use runtime hotspot bounds and canonical map IDs, not fixed screen coordinates. Preserve replay, versioned dismissal, and modal focus restoration.

@@ -37,8 +37,8 @@
 
 从概览直接打开招贤令、提出需求等根级弹层时：
 
-- 移动竖屏：隐藏底部导航，只显示关闭动作。
-- 桌面居中弹层：显示关闭动作。
+- 移动竖屏：隐藏底部导航，只显示统一的 `← 返回` 前导动作；根级无父层，因此该动作调用 `closePanel()`。
+- 桌面/横屏根级弹层：继续显示关闭动作。
 - 若弹层拥有明确父层，则显示返回动作并隐藏关闭动作；返回后仍可由父层关闭。
 
 ### 1.4 软键盘
@@ -67,6 +67,7 @@ hasChildDetail    = formalTaskRef
                     or renderedPanel === 'workspace'
                     or portraitTaskDetailOpen
 hasFrameParent    = Boolean(panelReturnPanel)
+showRootReturn    = isPortraitMobile and not isPrimarySurface and not hasChildDetail
 ```
 
 ### 2.2 返回动作归属
@@ -107,7 +108,7 @@ showWorkbenchDock = isOverviewHome
 | 一级工作台根页面 | 底栏；无返回/关闭 | 侧栏；无返回/关闭 |
 | 一级工作台 self-owned 子层 | 子组件返回；无关闭 | 子组件返回；无关闭 |
 | 一级工作台 Hall-owned 子层 | Hall 返回；无关闭 | Hall 返回；无关闭 |
-| 非一级根弹层 | 关闭 | 关闭 |
+| 非一级根弹层 | Hall `← 返回`（执行关闭） | 关闭 |
 | 非一级 self-owned 子层 | 子组件返回；无关闭 | 子组件返回 + Hall 关闭 |
 | 非一级 Hall-owned 子层 | Hall 返回；无关闭 | Hall 返回 + 关闭 |
 | 沉浸地图无面板 | 无底栏 | 无底栏 |
@@ -170,6 +171,7 @@ open/closing -> closed:
 `JuyiHall.vue` 消费展示解析器输出：
 
 - `showWorkbenchDock`
+- `showRootReturn`
 - `showHallReturn`
 - `showHallClose`
 - `showPrimaryChildHeader`
@@ -179,8 +181,8 @@ open/closing -> closed:
 优先级：
 
 1. 子组件 self-owned 返回优先处理其内部状态。
-2. Hall-owned 返回调用 `returnPanel()`，其中 `formalTaskRef`、宝库和 workspace 使用既有分支。
-3. 非一级弹层离开调用 `closePanel()`，继续受草稿保存保护。
+2. Hall-owned 子层返回调用 `returnPanel()`，其中 `formalTaskRef`、宝库和 workspace 使用既有分支。
+3. 移动竖屏根级弹层的 `← 返回` 调用 `closePanel()`，继续受草稿保存保护；桌面/横屏仍由关闭按钮调用同一动作。
 4. Escape 保持现有 `returnPanel()`/`closePanel()` 顺序，不新增直接栈操作。
 
 移动竖屏返回与关闭互斥；桌面/沉浸横屏仅在非一级嵌套弹层中允许“返回 + 关闭”，两者语义分别是回父层和退出整个弹层。一级工作台无论桌面或移动均不显示关闭整个页面的动作。

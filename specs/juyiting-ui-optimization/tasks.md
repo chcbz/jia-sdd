@@ -14,6 +14,7 @@
 - [x] 将移动内容底部留白改为 CSS 变量驱动。
 - [x] 确保软键盘、详情和非一级弹层隐藏底栏。
 - [x] 确保移动返回与关闭互斥。
+- [x] 将移动竖屏非一级根级弹层统一为单一 `← 返回`，根级返回复用 `closePanel()`。
 
 ### W2 视觉规范（P1）
 
@@ -39,7 +40,7 @@
 
 - [x] 独立只读审查实现和测试覆盖。
 - [x] 修复审查发现。
-- [x] 提交并推送 Web `feature/ui-optimization`（最新 `52145bfbd3afe752ffd388754a14a7768ac663d3`）。
+- [x] 提交并推送 Web `feature/ui-optimization`（最新 `d79af65ed0c493b31a82f8d26206b949ea662bf4`）。
 - [x] 使用 `./sddw pin juyiting-ui-optimization` 固定 API/Web revisions。
 - [x] 使用 `./sddw verify juyiting-ui-optimization` 通过集成门禁。
 - [x] 更新 `acceptance.md` 和 `integration.yaml`。
