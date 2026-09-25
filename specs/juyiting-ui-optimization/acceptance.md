@@ -32,7 +32,7 @@
 
 - 验证日期：2026-09-24。
 - API revision：`3426f40aab364ab98519c20a66145bf076733e2c`（无代码变更，当前 `origin/develop`）。
-- Web revision：`2f528d5280ca41b0dfde81d8e83178f0bce97e0c`（已推送 `origin/feature/ui-optimization`）。
+- Web revision：`52145bfbd3afe752ffd388754a14a7768ac663d3`（已推送 `origin/feature/ui-optimization`）。
 - 目标测试：导航展示、体验模式、组件行为、草稿编辑器、案卷阅读器、竖屏首页测试组合，结果 `252 passing (43s)`。
 - 构建：`cd web && npm run build`，Vite 生产构建通过（1257 modules transformed，49.08s）；仅保留既有动态/静态混用及大 chunk 非阻断告警。
 - 浏览器矩阵报告：
@@ -47,3 +47,17 @@
 - 独立多模态视觉审查：APPROVE，无范围内 P0/P1。
 - SDD 门禁：`./sddw pin juyiting-ui-optimization` 与 `./sddw verify juyiting-ui-optimization` 通过。
 - Result：accepted。
+
+
+## 2026-09-25 圈选细节复核
+
+- 范围：仅复核用户圈选的聚义厅移动端细节，不扩展到其他页面。
+- 一句话需求：字数计数固定在输入框右下角，预留底部空间并增加实色衬底；输入框不再出现与计数重叠的拖拽手柄。
+- 事项与百宝箱 Tab：活动项统一为透明背景、品牌红文字和 2px 下划线；百宝箱窄屏允许横向滚动。
+- 草稿主操作：`下一步：确认交办` 在 390px 竖屏独占整行且不换行。
+- 文件预览：版本标签、选择器和下载按钮使用明确网格布局，390px 下无横向溢出。
+- 详情导航：Hall 与事项详情统一显示 `← 返回`；文件预览和事项详情保留对应页面标题，返回按钮高度 44px。
+- 目标测试：5 个受影响测试文件，结果 `131 passing (57s)`。
+- 构建：`cd web && npm run build` 通过（1257 modules transformed，47.74s）；仅有既有动态/静态导入与大 chunk 非阻断告警。
+- 浏览器证据：`/tmp/cyf-juyi-highlighted-20260925/report.json`、`01-overview.png` 至 `06-draft-action-bottom.png`。报告确认计数位于输入框内、Tab computed style 正确、版本区无溢出、返回按钮 44px、CTA 不换行、页面无横向溢出。
+- 独立只读审查：ACCEPT，无 P0/P1；审查提出的计数衬底和主题变量 P2 已收敛，真实渲染风险由浏览器 smoke 覆盖。

@@ -39,7 +39,7 @@
 
 - [x] 独立只读审查实现和测试覆盖。
 - [x] 修复审查发现。
-- [x] 提交并推送 Web `feature/ui-optimization`（`2f528d5280ca41b0dfde81d8e83178f0bce97e0c`）。
+- [x] 提交并推送 Web `feature/ui-optimization`（最新 `52145bfbd3afe752ffd388754a14a7768ac663d3`）。
 - [x] 使用 `./sddw pin juyiting-ui-optimization` 固定 API/Web revisions。
 - [x] 使用 `./sddw verify juyiting-ui-optimization` 通过集成门禁。
 - [x] 更新 `acceptance.md` 和 `integration.yaml`。
