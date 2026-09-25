@@ -1,7 +1,7 @@
 # 聚义厅 Codex 快速议事与上下文一致性验收
 
 日期：2026-09-25
-状态：Pending。以下是可观察验收合同，不代表当前已经通过。
+状态：Integration-ready。代码、组件测试与跨仓协议已完成本地验证；真实模型 A/B、MySQL 8、部署和线上验收仍待外部环境执行。
 
 ## 1. 证据真实性
 
@@ -133,23 +133,29 @@
 - [ ] 用户数据导出以业务 DB 为准；日志、指标和删除审计不包含正文或 secrets。
 - [ ] CHAT 状态回答绑定 sourceVector/fact ref；INSPECT 结论绑定 manifest ref/hash/tree SHA；来源缺失或冲突时明确说明而不猜测。
 
-## 13. 验证证据待填写
+## 13. 验证证据（2026-09-25）
 
-- API revision/tree：
-- Web revision/tree：
-- Agent Runtime revision/tree：
-- Root integration revision：
-- CLI/app-server version：
-- App-server schema digest/capability/tool catalog：
-- Selected Fast CHAT engine and policy：
-- API tests：
-- Web tests：
-- Agent runtime tests：
-- Controlled A/B report：
-- Usage/cost/rate-limit report：
-- Mixed-version/failure-injection report：
-- Retention/deletion readback：
-- Artifact SHA-256：
-- Deployment/run evidence：
-- Online verification：
-- Known residual risks：
+### 已确认
+
+- API revision/tree：`caee54fc27a08146f9cc57219cf86c763e41c531` / `49bff80f9b513245d43ea16818d70fee1cedff8b`。
+- Web revision/tree：`96838f17fc24fbf21781be39476aa9723dee3a2c` / `4a18c3e5c2ad65370cc79dcbe3591cb47bc15555`。
+- Agent Runtime revision/tree：`68dbe8992a56c8e1041056a9123b1156d1d2b35e` / `79be3699c99f9fdf8365729dea2e53fec595a914`。
+- Root integration revision：本文件、`integration.yaml` 与 API/Web gitlink 固定在同一个 root commit；Git commit 不能自引用其自身 SHA，最终交付报告记录 exact root HEAD。
+- CLI/app-server version：实施主机 `codex-cli 0.153.4`。
+- App-server schema：现场 path+content aggregate SHA-256 `01804576862b892c00970c9ce3f70b1c9a95001e0fe906057c258f9ad4fb1a70`；Runtime 锁定 bundle SHA-256 `b06f77062369d481a59cc70720c12b89cb9dd49c385863923262102d3ad6c978`。
+- Selected Fast CHAT engine and policy：本地 stdio Codex app-server adapter；安全声明固定为 `read-only-constrained`，不得宣称 strict no-tools。
+- API tests：`:chat:jia-chat-service:chatDeliberation` 通过；`:chat:jia-chat-service:bf08FormalFlow` 58 通过；`compileJava` 与 OAuth targeted tests 通过；`git diff --check` 通过。所有 Gradle 命令均串行持有 `/tmp/cyf-gradle.lock`。
+- Web tests：实现方 targeted 85 通过、component 147 通过、production build 通过；独立 reviewer targeted 183 通过并最终 `APPROVE`；`git diff --check` 通过。
+- Agent Runtime tests：`npm test` 377 通过；独立 reviewer 最终 `APPROVE`；`git diff --check` 通过。
+- Hosted wire artifact：API 生产路径生成 fixture 与 Runtime 副本 byte-for-byte 一致，SHA-256 `5ffd3ce6fd11dd1141f850409d6024abd0666443df9330b2bbf7df61a83edf86`，provenance 为 `API_GENERATED_VERIFIED`。
+- 实现覆盖：权威 CHAT/INSPECT 路由与 EXECUTE fail-closed、tenant/owner/client/generation scope、durable parent request/child turn/outbox/event journal、Context Envelope/hash、app-server delta/final、restart recovery、SSE cursor/replay/resync、取消、Web 身份竞态与群聊终态状态机。
+
+### 明确未执行，不作为已通过证据
+
+- Controlled A/B report：未运行；没有真实付费模型调用，不能声称 TTFT、质量或成本目标已达到。
+- Usage/cost/rate-limit report：未读取真实部署账户。
+- MySQL 8 integration：本机无可用真实 MySQL 8 集成环境；只完成 migration/contract/targeted tests。
+- Deployment/run evidence：未部署，未 push；用户未授权发布。发布前置、机器令牌分阶段切换及数据库备份/恢复要求见 `release-readiness-20260925.md`。
+- Online verification：未执行。
+- Retention/deletion production readback：未执行。
+- Known residual risks：Linux `/proc/<pid>/exe` 依赖；malformed legacy lock migration 无生产操作入口；private temp lock 在进程崩溃后可能残留 inode；真实部署 Profile 的模型、认证、额度、负向 prompt、资源容量与保留策略仍须试点核验。当前宿主磁盘、`/tmp` 与 swap 不满足发布门禁；MySQL 8 恢复演练和 legacy machine token 清退尚未执行，因此 release 明确 blocked。

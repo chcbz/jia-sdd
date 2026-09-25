@@ -1,7 +1,7 @@
 # 聚义厅 Codex 快速议事与上下文一致性实施任务
 
 日期：2026-09-25
-状态：Ready backlog；可分配 Owner 并进入开发与测试，当前尚未进入 `TASKS.yaml` 运行台账。
+状态：Integration-ready；核心开发、组件验证与独立审查已完成，部署试点、真实模型 A/B 与生产环境读回仍待授权。
 原则：不创建独立 Reviewer；每个实现 Owner 对其身份、ACL、事务、幂等、并发和恢复边界自检。
 
 ## 0. 依赖关系
@@ -322,3 +322,20 @@ T10/T11/T12/T13 可在契约冻结后按非重叠路径并行。T20 必须等待
 - [ ] Web 发送新字段前读取 API capability；每个目标 Agent 独立协商 payload 版本。
 - [ ] 每阶段保留关闭 flag 和旧路径回退。
 - [ ] 发布记录测试、制品 SHA-256、部署顺序、健康和线上低风险只读核验。
+
+## 8. 2026-09-25 实施结果
+
+### 已完成并固定
+
+- API：T10/T11/T15 与 T41 的 durable 路由、快照、父 request/子 turn、outbox、事件 journal、replay/cancel、tenant scope、migration 和兼容路径；commit `caee54fc27a08146f9cc57219cf86c763e41c531`。
+- Agent Runtime：T12/T20/T21/T40/T41 的 Context Envelope、read-only-constrained app-server adapter、chat/inspect/command lanes、真实 delta/final、durable inbox/dedupe/restart、server request 默认拒绝和 executable/schema identity；commit `68dbe8992a56c8e1041056a9123b1156d1d2b35e`。
+- Web：T03/T13/T15/T22/T41 的 capability 协商、稳定 request ID、身份/生命周期 fence、authenticated SSE parser、cursor replay/resync、父子 turn reducer、群聊 busy/cancel、服务端确认状态和权威 readback；commit `96838f17fc24fbf21781be39476aa9723dee3a2c`。
+- API 与 Runtime hosted wire fixture 已由生产转换路径生成并校验一致，SHA-256 `5ffd3ce6fd11dd1141f850409d6024abd0666443df9330b2bbf7df61a83edf86`。
+- API、Runtime 与 Web 均完成独立只读审查；最终结论均为 `APPROVE`，无 P0/P1。
+
+### 本次不伪报完成的外部项
+
+- T04/T23/T42/T52 中要求的真实模型调用、受控 A/B、部署 Profile 资源测量、额度/成本和线上验证未执行。
+- 真实 MySQL 8 migration integration 未执行；本地只完成 schema/migration contract 与 targeted tests。
+- T30/T31/T32 的生产只读 manifest 挂载与部署环境隔离仍需在实际授权文件源和运行环境中验收。
+- 未 push、未部署；发布状态为 `blocked_pending_operational_gates`，具体门禁见 `release-readiness-20260925.md`。
