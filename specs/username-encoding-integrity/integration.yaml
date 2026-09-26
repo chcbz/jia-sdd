@@ -40,8 +40,10 @@ verification:
   web_node_syntax_and_diff_check: passed_exact_final_tree
   web_full_suite: 2405_pass_2_pending_53_fail_pre_harness_fix_7_task_failures_then_fixed_46_unrelated_remain
   web_production_build: exact_final_tree_exit_137_host_oom_after_1259_modules
-  flow_api: no_exact_sha_run_observed_at_2026-09-26T13:03:01+08:00
-  flow_web: no_exact_sha_run_observed_at_2026-09-26T13:03:00+08:00
+  flow_api_release: no_exact_sha_run_observed_at_2026-09-26T13:03:01+08:00
+  flow_web_release: no_exact_sha_run_observed_at_2026-09-26T13:03:00+08:00
+  flow_api_ci_run_17: failed_pre_execution_empty_log_source_commit_unavailable
+  flow_web_ci_run_9: failed_pre_execution_empty_log_source_commit_unavailable
   data_audit: pending_explicit_authorization
   data_repair: pending_explicit_authorization
   production: pending
@@ -57,5 +59,6 @@ notes:
   - Correct confirmed human name is 陈惠超; no code path guesses it from irreversible fragments.
   - OAuth/User focused PASS evidence predates the final Advisor-only API commit; final API tree still requires formal build evidence.
   - No production MySQL, LDAP or chat-history write was performed.
-  - API and Web automatic Flow runs were not observed after the develop pushes as of 2026-09-26 13:03 Asia/Shanghai; no Flow success is claimed.
+  - API and Web automatic release Flow runs were not observed after the develop pushes as of 2026-09-26 13:03 Asia/Shanghai.
+  - One bounded CI-only start was made for each exact develop branch after confirming no active/new run: API 5263690 Run 17 and Web 5263692 Run 9. Both failed before checkout/build evidence, returned no source commit and complete empty job logs; they cannot verify either candidate and were not retried.
   - Web final-tree targeted tests pass, but the exact-final production build was killed by host OOM after transforming 1259 modules; no final-tree artifact is claimed.

@@ -51,12 +51,19 @@ API 候选同时固定到 `codex/username-encoding-integrity-api-20260926`，Web
 
 ## 5. Flow 状态
 
-北京时间 2026-09-26 13:03 查询：
+北京时间 2026-09-26 13:03 查询 release 流水线：
 
 - API `5260799` 最新仍为 Run 96 FAIL，source commit 未返回；未出现绑定 API `188bf0c0...` 的新 Run。
 - Web `4403172` 最新仍为 Run 147 FAIL，source commit 未返回；未出现绑定 Web `c2af3ce...` 的新 Run。
 
-未手工重复触发，未伪报 Flow 成功。正式测试、制品、部署和线上健康仍待 exact-SHA 云端证据，或按仍生效的 2026-09-17 本地发布授权补齐本地生产构建、冻结 release、制品摘要和实际健康。
+在确认 develop 远端仍精确指向上述 SHA、CI-only 无活动/新增运行后，于 13:08 各做一次有界云端验证启动：
+
+- API `5263690 / cyf-api-ci / Run 17`，Job `524330808`：返回 Run ID 后很快 FAIL；source 仅有 repo/branch，commit 为空；完整日志 API 返回空内容且 `more=false`。
+- Web `5263692 / cyf-web-ci / Run 9`，Job `524330809`：同样在无 source commit、无日志的预执行阶段 FAIL。
+
+启动调用因初始 Run 详情缺 source commit 而保持 UNKNOWN，随后只读状态确认上述 Run 已创建并失败。未重复发送 start，也未重试失败 Job。两次运行都没有进入可证明 exact SHA 的 checkout/test/build 阶段，不能作为候选验证证据。
+
+未伪报 Flow 成功。正式测试、制品、部署和线上健康仍待修复后的 exact-SHA 云端证据，或按仍生效的 2026-09-17 本地发布授权在资源可用的 materially changed 环境补齐本地生产构建、冻结 release、制品摘要和实际健康。
 
 ## 6. 明确未执行
 

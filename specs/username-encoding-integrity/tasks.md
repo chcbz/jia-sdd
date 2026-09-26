@@ -115,7 +115,7 @@
 - [ ] API：OAuth、User、Chat、Agent WebSocket 相关测试；正式 Gradle 构建由云效执行，或在云效不可用期间按本地发布授权经 orchestrator 串行执行。
 - [x] Web：共享 helper、Chat/Juyiting reducer 与 UI 定向回归已通过（83 + 5）；正式 Vite 构建仍须由云效执行，或在云效不可用期间完成 exact-final-tree 本地生产构建。
 - [ ] 验证普通聊天、聚义厅 relay、Advisor、Agent final/delta、刷新历史、身份切换。
-- [ ] 记录 Flow Run、exact source commit/tree、测试摘要、artifact SHA-256、部署顺序和实际健康。
+- [ ] 记录 Flow Run、exact source commit/tree、测试摘要、artifact SHA-256、部署顺序和实际健康。当前 CI-only API Run 17/Web Run 9 预执行失败且无 source commit/log，不能勾选。
 - [ ] 发布失败即停止，不用本地成功替代云端证据。
 - 依赖：UNE-A01~A04、UNE-W01~W02。
 
