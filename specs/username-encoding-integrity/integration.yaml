@@ -1,0 +1,58 @@
+feature_id: username-encoding-integrity
+status: implementation_pushed_verification_pending
+baseline_date: 2026-09-26
+owners:
+  api: username-encoding-owner-20260926/critical_worker
+  web: username-encoding-owner-20260926/balanced_worker
+  data: pending_explicit_production_authorization
+  verification: gpt_test_runner
+contract:
+  api_or_event_changes: >-
+    POST /chat/stream keeps senderName and senderType as deprecated compatibility
+    inputs but ignores them; HTTP, advisor, relay, persistence, metadata and Agent
+    WebSocket sender identity are server-authoritative.
+  compatibility: >-
+    Existing clients remain accepted. New Web clients stop sending sender identity.
+    Historical names receive display-only fallback until authorized data repair.
+  data_migration: >-
+    No DDL is assumed. Any MySQL, LDAP or chat-history write requires a separate
+    read-only audit, a SHA-256-bound manifest, compare-and-set, readback and explicit
+    production-write authorization.
+  security: >-
+    Human identity resolves from EsContext jiacn/clientId plus UserService; Agent
+    identity resolves from the authenticated session agentId plus runtime/persona.
+pinned_revisions:
+  api_commit: 188bf0c0e85afed82c1258b63f298491d669d575
+  api_tree: 71b6fbac75bec0166d392cbb7d502af3976a8320
+  api_remote_develop_readback: 188bf0c0e85afed82c1258b63f298491d669d575
+  web_commit: 84810522d33adb377dec77162fc15051e19526fe
+  web_tree: 833da6a7473fd4aebd1e137a92e50fdc6fc0b789
+  web_remote_develop_readback: 84810522d33adb377dec77162fc15051e19526fe
+  root_base_commit: 02d66c044a379c5b602ee854b92a56bdb1a12496
+verification:
+  source_audit: completed_20260926
+  screenshot_reproduction: completed_20260926
+  api_oauth_focused: passed_pre_final_tree
+  api_user_boundary: passed_pre_final_tree
+  api_chat_final_tree: pending_formal_build_global_oom_recorded
+  web_native_assertions: passed
+  web_node_syntax: passed
+  web_full_test_and_build: pending_dependencies_or_flow
+  flow_api: no_exact_sha_run_observed_at_2026-09-26T12:22:51+08:00
+  flow_web: no_exact_sha_run_observed_at_2026-09-26T12:22:50+08:00
+  data_audit: pending_explicit_authorization
+  data_repair: pending_explicit_authorization
+  production: pending
+acceptance:
+  status: source_complete_release_pending
+  evidence:
+    source_audit: source-audit-20260926.md
+    detailed_design: design.md
+    implementation: implementation-evidence-20260926.md
+    local_gradle_root_cause: local-gradle-root-cause-20260926.md
+    data_repair_plan: data-repair-plan.md
+notes:
+  - Correct confirmed human name is 陈惠超; no code path guesses it from irreversible fragments.
+  - OAuth/User focused PASS evidence predates the final Advisor-only API commit; final API tree still requires formal build evidence.
+  - No production MySQL, LDAP or chat-history write was performed.
+  - API and Web automatic Flow runs were not observed after the develop pushes; no Flow success is claimed.
