@@ -25,9 +25,9 @@ pinned_revisions:
   api_commit: 188bf0c0e85afed82c1258b63f298491d669d575
   api_tree: 71b6fbac75bec0166d392cbb7d502af3976a8320
   api_remote_develop_readback: 188bf0c0e85afed82c1258b63f298491d669d575
-  web_commit: 84810522d33adb377dec77162fc15051e19526fe
-  web_tree: 833da6a7473fd4aebd1e137a92e50fdc6fc0b789
-  web_remote_develop_readback: 84810522d33adb377dec77162fc15051e19526fe
+  web_commit: c2af3ce30e7ced1e3d4d93234a1538e13bd73585
+  web_tree: e6a80a167782cb3ea7b2763897a13b81530e0ab1
+  web_remote_develop_readback: c2af3ce30e7ced1e3d4d93234a1538e13bd73585
   root_base_commit: 02d66c044a379c5b602ee854b92a56bdb1a12496
 verification:
   source_audit: completed_20260926
@@ -35,11 +35,13 @@ verification:
   api_oauth_focused: passed_pre_final_tree
   api_user_boundary: passed_pre_final_tree
   api_chat_final_tree: pending_formal_build_global_oom_recorded
-  web_native_assertions: passed
-  web_node_syntax: passed
-  web_full_test_and_build: pending_dependencies_or_flow
-  flow_api: no_exact_sha_run_observed_at_2026-09-26T12:22:51+08:00
-  flow_web: no_exact_sha_run_observed_at_2026-09-26T12:22:50+08:00
+  web_targeted_core: passed_83_exact_final_tree
+  web_mount_integration: passed_5_exact_final_tree
+  web_node_syntax_and_diff_check: passed_exact_final_tree
+  web_full_suite: 2405_pass_2_pending_53_fail_pre_harness_fix_7_task_failures_then_fixed_46_unrelated_remain
+  web_production_build: exact_final_tree_exit_137_host_oom_after_1259_modules
+  flow_api: no_exact_sha_run_observed_at_2026-09-26T13:03:01+08:00
+  flow_web: no_exact_sha_run_observed_at_2026-09-26T13:03:00+08:00
   data_audit: pending_explicit_authorization
   data_repair: pending_explicit_authorization
   production: pending
@@ -55,4 +57,5 @@ notes:
   - Correct confirmed human name is 陈惠超; no code path guesses it from irreversible fragments.
   - OAuth/User focused PASS evidence predates the final Advisor-only API commit; final API tree still requires formal build evidence.
   - No production MySQL, LDAP or chat-history write was performed.
-  - API and Web automatic Flow runs were not observed after the develop pushes; no Flow success is claimed.
+  - API and Web automatic Flow runs were not observed after the develop pushes as of 2026-09-26 13:03 Asia/Shanghai; no Flow success is claimed.
+  - Web final-tree targeted tests pass, but the exact-final production build was killed by host OOM after transforming 1259 modules; no final-tree artifact is claimed.

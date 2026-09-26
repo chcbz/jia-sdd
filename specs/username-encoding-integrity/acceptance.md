@@ -83,9 +83,9 @@
 - [ ] API Flow pipeline：`5260799 / cyf-api-release`。
 - [ ] Web Flow pipeline：`4403172 / cyf-web-release`。
 - [x] exact API commit/tree：`188bf0c0e85afed82c1258b63f298491d669d575` / `71b6fbac75bec0166d392cbb7d502af3976a8320`。
-- [x] exact Web commit/tree：`84810522d33adb377dec77162fc15051e19526fe` / `833da6a7473fd4aebd1e137a92e50fdc6fc0b789`。
-- [ ] Flow Run IDs：截至北京时间 2026-09-26 12:22，两个组件均未观察到绑定 exact SHA 的自动 Run。
-- [ ] 测试摘要：OAuth/User 定向 PASS、Web 原生断言与语法 PASS；最终 API Chat tree 和 Web 正式套件仍待执行。
+- [x] exact Web commit/tree：`c2af3ce30e7ced1e3d4d93234a1538e13bd73585` / `e6a80a167782cb3ea7b2763897a13b81530e0ab1`。
+- [ ] Flow Run IDs：截至北京时间 2026-09-26 13:03，两个组件均未观察到绑定 exact SHA 的自动 Run；最新 API Run 96、Web Run 147 均为无法从 API 解析 commit 的历史 FAIL。
+- [ ] 测试摘要：OAuth/User 定向 PASS；Web exact-final-tree 核心定向 83 PASS、挂载集成 5 PASS。完整套件在修复 harness 前为 2405 PASS / 2 pending / 53 FAIL，其中本任务引入的 7 项已修复，剩余 46 项为既存无关 fixture/provenance/旧源码断言失败。最终 API Chat tree 与 Web exact-final production build 仍缺正式成功证据。
 - [ ] artifact SHA-256：待填写。
 - [ ] 部署顺序：API → Web → 线上验证 → 数据只读审计 → 获授权的数据修复。
 - [ ] 实际健康与功能 readback：待填写。
@@ -98,7 +98,7 @@
 | 固定 API/Web 源码审计 | 已完成 |
 | 根因设计与任务拆分 | 已完成 |
 | API 实现/测试 | 实现已推送；OAuth/User 定向 PASS；最终 Chat tree 因宿主全局 OOM 尚待正式构建 |
-| Web 实现/测试 | 实现已推送；原生断言/语法 PASS；Mocha/Vite 待正式环境 |
+| Web 实现/测试 | 实现已推送；exact-final-tree 定向 83 PASS、挂载集成 5 PASS、语法/diff check PASS；最终 Vite build 在 1259 modules 后被宿主 OOM 以 137 终止 |
 | 生产只读数据审计 | 未授权、未执行 |
 | 生产修复 | 未授权、未执行 |
-| 发布与线上验收 | develop 已更新；未观察到 exact-SHA Flow Run，尚未发布验收 |
+| 发布与线上验收 | API/Web develop 已更新；截至 13:03 未观察到 exact-SHA Flow Run，尚未发布验收 |
