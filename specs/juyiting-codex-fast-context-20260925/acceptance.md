@@ -155,7 +155,7 @@
 - Controlled A/B report：未运行；没有真实付费模型调用，不能声称 TTFT、质量或成本目标已达到。
 - Usage/cost/rate-limit report：未读取真实部署账户。
 - MySQL 8 integration：本机无可用真实 MySQL 8 集成环境；只完成 migration/contract/targeted tests。
-- Deployment/run evidence：未部署，未 push；用户未授权发布。发布前置、机器令牌分阶段切换及数据库备份/恢复要求见 `release-readiness-20260925.md`。
+- Remote delivery：2026-09-27 API、Web、Agent Runtime 的同名 feature 分支已推送并核对远端 SHA；Root 同名 feature 分支在本次记录提交后推送。仅推送候选代码，未合入 `master/develop`，未部署。发布前置、机器令牌分阶段切换及数据库备份/恢复要求见 `release-readiness-20260925.md`。
 - Online verification：未执行。
 - Retention/deletion production readback：未执行。
 - Known residual risks：Linux `/proc/<pid>/exe` 依赖；malformed legacy lock migration 无生产操作入口；private temp lock 在进程崩溃后可能残留 inode；真实部署 Profile 的模型、认证、额度、负向 prompt、资源容量与保留策略仍须试点核验。当前宿主磁盘、`/tmp` 与 swap 不满足发布门禁；MySQL 8 恢复演练和 legacy machine token 清退尚未执行，因此 release 明确 blocked。

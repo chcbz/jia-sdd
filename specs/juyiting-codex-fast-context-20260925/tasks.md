@@ -338,4 +338,4 @@ T10/T11/T12/T13 可在契约冻结后按非重叠路径并行。T20 必须等待
 - T04/T23/T42/T52 中要求的真实模型调用、受控 A/B、部署 Profile 资源测量、额度/成本和线上验证未执行。
 - 真实 MySQL 8 migration integration 未执行；本地只完成 schema/migration contract 与 targeted tests。
 - T30/T31/T32 的生产只读 manifest 挂载与部署环境隔离仍需在实际授权文件源和运行环境中验收。
-- 未 push、未部署；发布状态为 `blocked_pending_operational_gates`，具体门禁见 `release-readiness-20260925.md`。
+- 2026-09-27 已将 API、Web、Agent Runtime 的同名 feature 分支推送到远端，并在本次记录后推送 Root 同名 feature 分支；未合入默认分支，未部署。发布状态仍为 `blocked_pending_operational_gates`，具体门禁见 `release-readiness-20260925.md`。

@@ -51,4 +51,4 @@ migration 后必须读取：
 - 机器 token 清退清单、最大 TTL、canary claims 和分阶段部署时间；
 - MySQL 8 备份 SHA-256、隔离恢复演练与 migration 前后查询结果；
 - 真实 Profile 的 app-server auth/model/tool negative prompts、额度/成本和资源采样；
-- 用户明确的 push/deploy 授权及线上低风险验证。
+- 用户对合入发布分支或部署的明确授权及线上低风险验证；仅推送 feature 分支不构成发布授权。
