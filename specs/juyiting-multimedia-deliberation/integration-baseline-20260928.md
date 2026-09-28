@@ -98,3 +98,9 @@ API `5c31ad487847dc30e3583004e14a9d0f989976f8` / tree `63891c1ce734802a0a688aad5
 Client `7b13329793095b71ff751d4833cc910ae979dfcf` / tree `5bac2cbe281ade4c5e7862d4a1be38b52495d244` 的独立探针 `conf/codex-ws-agent/contracts/probes/api-long-history-wire.mjs` 将上述API实际生成字节送进 `normalizeInboundMessage → buildContextEnvelope → runFastChat`，1项通过；全套相关Node **185通过**。检查未物化的参考资料不能伪称已读取、截断标记/摘要保留，并用**假引擎适配器**验证冷线程输入；不代表真实 Provider 冷启动/工具隔离/生成输出已验证。手工复核：`CYF_LONG_HISTORY_WIRE_OUTPUT=/tmp/...` 经 orchestrator 跑 API 选择器后，`CYF_LONG_HISTORY_WIRE_INPUT=/tmp/... node --test contracts/probes/api-long-history-wire.mjs`；导出探针不参与默认npm test。
 
 Web `80e7b8cd0c5df01551ab456b42c20959d69995e7` / tree `eff22679e7562a3592ca8b19702f014d26df9a06` 新增可选参考图片入口，仅选择精确 PNG/JPEG 文件版本并关联为 REFERENCE；保留原有通用资料与 INPUT/REFERENCE 选择，不为图片功能缩窄原流程；相关组件测试 **13通过**。仍缺自动点将启动、多媒体 asset/保存/验收服务端以及浏览器联调，不可按用户验收。四仓开发分支均推送后核验了远端HEAD，详见 `integration-evidence-20260928/u0-cross-repository-wire-and-reference.json`。
+
+## 增量：会话资产保存界面与隔离库准备
+
+Web `e9f00f5be51389e1660e0cc53a9463edc8a3a33d` / tree `560c3176a347e872d8b0687d2adeb77d1152e81f` 已推送并通过Owner定向24项及ESLint。会话 ready 内容仅按固定 assetId/revision 提交归档，保存成功须取得服务端匹配回执及 fileId/version；网络未知保留原幂等键，不把404或模型URL当成果。**API归档接口尚未实现**，测试mock并非端到端成果保存。
+
+当前业务分支另以本线程独占socket-only MySQL 8.0.21校验了*已有*Chat空库schema两次应用；详见 `integration-evidence-20260928/u1-isolated-mysql-baseline-20260929.json`。该证据不包含U1/U2新DDL、存量升级或服务端Java启动，不能据此标迁移通过。Web gitlink与开发pin随本提交更新；API仍保持先前已提交的准确pin，不预先收录共同工作树中未提交的Agent/Chat代码。
