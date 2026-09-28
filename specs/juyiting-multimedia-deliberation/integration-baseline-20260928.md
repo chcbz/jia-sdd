@@ -74,3 +74,11 @@ Web新增会话媒体part reducer/私有读取展示切片 `de72f12649de1038efa1
 Client feature远端已从 `33e38de` 快进至 `326b85767cb97e211bfa32cba673631a674f5d83` / tree `5cfe533f79144c0f001ab0b0d4a4dc1c1b15644a`（推送readback一致）；本节不覆盖上表的首次整合时点。`agent.register`/`agent.presence` 共用 `runtimeCapabilities.capabilityContractVersion=1`：默认fast关闭时CHAT不可用，只读约束不冒充经验证严格无工具；INSPECT和新EXECUTE均未广告，旧PRIVATE/TASK/native START仅是legacy兼容能力。冻结fixture见Client `conf/codex-ws-agent/test/fixtures/u0-runtime-capabilities-v1.json`。
 
 主线程在新tree执行 `node --check agent-client.mjs`、`node --test test/agent-client.test.mjs test/config-runtime.test.mjs`：**150 passing，0 failed**（两套合跑输出 `# tests 150`，`# pass 150`）；Client Owner原文档分开执行116与34同为150，最终口头146与实跑不一致，以实际合跑为准。U0-A服务端尚在开发，真实逐目标协商/旧新客户端负向、Provider无工具证明及MySQL/JWT未闭合；本pin只是研发进展，不是出厂条件。
+
+## 增量：U0-A / Client受限上下文协议自检（2026-09-28）
+
+API feature远端 `5daf1087595ba033833bd69e852c722f64a9f862` / tree `caf6dbbb1018ab55f9b187c9a8a72bf3be4f125a`，Client `c2103561be4f839fbeb4e6339a2f93eb4acbfd91` / tree `bf69fd83b01e18f60a91f08cb4a686cc9fdf6dca` 均已push/readback；SDD gitlink固定新API树。新增逐目标modern/legacy能力判定、禁用目标等待/不支持目标终态、INSPECT无实读负向及按owner/client/target重建受限历史/资料目录。历史正文在builtin prompt中作为用户级**数据**而不是system指令；Client同样把历史正文标为非可信数据。`sourceVector.summaryRevision` 遵循已有十进制Long合同，内容改变另由authorizedHistoryDigest绑定。
+
+原 v1 golden在真实测试中拒绝了新的上下文字节及Client十进制字段冲突；按错误归因修复后，由API生成并冻结**同字节** fixture：API `chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/api-hosted-wire-v1.json` = Client `conf/codex-ws-agent/contracts/api-hosted-wire-v1.json`，SHA-256 `10534e0347fbac81ff5298ad182ee5f8549005c8a6aa73ee874e64ede98a6eb6`。API通过orchestrator串行本地定向 `:chat:jia-chat-service:chatDeliberation` **68 passing, 0 fail**（14份JUnit XML、build successful）；Client `node --check chat-runtime.mjs` + 3套Node测试 **185 passing, 0 fail**。失败历史/修复归因保留在隔离证据 `evidence/u0-api/02–13*` 与 `evidence/u0-client-cross-contract-{tests,final-tests}.log`，不是伪装一次全绿。
+
+**剩余未闭合风险**：Client现有fact单值JSON限制8192字节，当前短消息fixture仅验证短历史；长历史/大资料目录可能超限导致真实接应拒绝，须做明确的可重建、有截断标记与摘要校验的快照边界回归，再考虑F3收口。还未测MySQL/JWT迁移、目标真实端到端、严格无工具Provider证明或付费授权；INSPECT/新EXECUTE仍禁用，U0不等于可发布或画鸟可验收。
