@@ -17,3 +17,4 @@ checksums.json列本目录其余文件SHA-256，不包含自身。根仓最终�
 API选择器可能重叠，不将总和称为独立用例数；chatDeliberation在最终tree调用UP-TO-DATE，保留同source set既有56项通过证据，见该selector摘要。未来34项产品验收保持NOT_RUN。
 
 - u0-long-history-20260929.json：后续API 370a2e1d长会话有界快照的精确树/XML统计与失败归因；不证明端到端续办。
+- u0-cross-repository-wire-and-reference.json：API生成真实长历史wire、Client解析和假冷适配器探针、Web参考图与保留通用资料入口的精确树回执；非Provider或产品验收。

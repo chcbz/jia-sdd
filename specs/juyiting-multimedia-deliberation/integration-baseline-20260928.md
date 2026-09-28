@@ -90,3 +90,11 @@ API feature `370a2e1ddfbcf500eb2469101221e1887a1b4fe3` / tree `1073e073080711bde
 本地 Gradle 经 orchestrator 锁串行执行 `:chat:jia-chat-service:chatDeliberation`，正确配置无真实发布凭据的离线占位属性后成功；**最终调用 UP-TO-DATE，复核先前在同一源码树生成的 14 份 JUnit XML：69 tests / 0 failures / 0 errors / 0 skipped**（不称本次重跑69项）。首次调用遗漏占位属性、在 build.gradle:109 求值失败，尚未开始测试；记录失败与纠正过程，不伪装首次成功。便携汇总见 `integration-evidence-20260928/u0-long-history-20260929.json`。
 
 以上仅说明 bounded wire 单测，不证明真实 Client 长会话/引用截断后的端到端续办、Provider 隔离、MySQL/JWT 兼容或生图业务完成；34项产品用例仍全部 NOT_RUN。历史各表的早期 SHA/68 项结果仅代表当时研发切片，不是当前 pin。
+
+## 增量：长历史真wire接应契约与参考图入口
+
+API `5c31ad487847dc30e3583004e14a9d0f989976f8` / tree `63891c1ce734802a0a688aad5e226aa4e31f224d` 由真实 `ChatDeliberationService.authorizedContext → eventPayload → ChatDeliberationOutboxRelay.hostedWire` 在定向 Java 测试导出 200 条中文历史与 180 个资料目录项的有界 CHAT wire（184128 bytes； SHA-256 `be9f8b3bfd74844542d2ce2279a7d7ead6b30d85bfecd929bfd3ed9d629215d5`）。原短消息固定 golden 未修改。本次 Gradle `:chat:jia-chat-service:chatDeliberation` 执行测试（非 UP-TO-DATE），14份XML：**70通过、0失败、0跳过**。
+
+Client `7b13329793095b71ff751d4833cc910ae979dfcf` / tree `5bac2cbe281ade4c5e7862d4a1be38b52495d244` 的独立探针 `conf/codex-ws-agent/contracts/probes/api-long-history-wire.mjs` 将上述API实际生成字节送进 `normalizeInboundMessage → buildContextEnvelope → runFastChat`，1项通过；全套相关Node **185通过**。检查未物化的参考资料不能伪称已读取、截断标记/摘要保留，并用**假引擎适配器**验证冷线程输入；不代表真实 Provider 冷启动/工具隔离/生成输出已验证。手工复核：`CYF_LONG_HISTORY_WIRE_OUTPUT=/tmp/...` 经 orchestrator 跑 API 选择器后，`CYF_LONG_HISTORY_WIRE_INPUT=/tmp/... node --test contracts/probes/api-long-history-wire.mjs`；导出探针不参与默认npm test。
+
+Web `80e7b8cd0c5df01551ab456b42c20959d69995e7` / tree `eff22679e7562a3592ca8b19702f014d26df9a06` 新增可选参考图片入口，仅选择精确 PNG/JPEG 文件版本并关联为 REFERENCE；保留原有通用资料与 INPUT/REFERENCE 选择，不为图片功能缩窄原流程；相关组件测试 **13通过**。仍缺自动点将启动、多媒体 asset/保存/验收服务端以及浏览器联调，不可按用户验收。四仓开发分支均推送后核验了远端HEAD，详见 `integration-evidence-20260928/u0-cross-repository-wire-and-reference.json`。
