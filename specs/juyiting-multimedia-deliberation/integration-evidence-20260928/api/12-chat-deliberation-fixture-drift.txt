@@ -1,0 +1,9 @@
+MMD-INTEGRATE-API-20260928 chatDeliberation fixture drift
+Date: 2026-09-28
+Commit: 78ca7f08b1d2f02ee4079c0002d8edd7671323a8
+Tree: f97844bf7373b36020c04660cffadd41b8acf83d
+Selector: :chat:jia-chat-service:chatDeliberation
+Result: 56 tests completed, 1 failed; the other 55 passed.
+Failure: ApiHostedWireV1ContractTest byte fixture expected 7236 bytes, generated merged F1-safe wire was 7308 bytes.
+Attribution: The manually updated checked-in canonical fixture omitted part of the exact generated authoritative identity metadata. Production/test compilation and all non-fixture durable tests passed; this is deterministic checked-in fixture drift, not an environment failure.
+Remediation: Invoke the already-compiled private deterministic fixture generator on the exact tree classpath (no Gradle/provider/network), compare and replace only the checked-in fixture/provenance digest, commit, and make one bounded selector retry.

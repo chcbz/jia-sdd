@@ -1,5 +1,7 @@
 # 开发计划与拆分
 
+> **2026-09-28 最新计划**：[融合实施计划v2](fusion-implementation-plan-v2.md) 优先于本文的未开始/外部F0等待描述。本轮已启动feature代码整合，后续多媒体业务包仍待实施；唯一运行台账不变。
+
 日期：2026-09-27。状态：planned / not started；本次仅计划，不派发 Writer、不创建独立 Reviewer、不修改运行台账。以下 Owner 为建议职责，不代表已领取；实际执行仍只登记 `/home/isp/wsps/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json`。
 
 ## 1. 推进策略
