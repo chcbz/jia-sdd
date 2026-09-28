@@ -11,8 +11,9 @@
 3. [融合详细设计 v2](fusion-detailed-design-v2.md)：统一入口、授权、路由、上下文、状态机、兼容。
 4. [原 UI / 媒体 / 归档与验收详设](design.md)：未被v2覆盖的合同继续有效。
 5. [融合实施计划 v2](fusion-implementation-plan-v2.md)：U0–U4工作包及Owner/依赖/验证。
-6. [验收](acceptance.md)：AC01–AC22，另加详设v2的FD01–FD12；共34项产品用例。
-7. [集成状态](integration.yaml) 与 [便携证据](integration-evidence-20260928/README.md)。
+6. [分版本交付与验收计划](versioned-delivery-plan-20260928.md)：候选 1.13.45–1.13.47 的出厂条件与通知标准。
+7. [验收](acceptance.md)：AC01–AC22，另加详设v2的FD01–FD12；共34项产品用例。
+8. [集成状态](integration.yaml) 与 [便携证据](integration-evidence-20260928/README.md)。
 
 ## 开发注意
 

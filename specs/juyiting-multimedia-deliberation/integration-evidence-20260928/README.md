@@ -10,6 +10,7 @@
 - webclient-push-readback.json / wire-client-push-readback.json：新feature远端SHA回读，非develop发布。
 - api/：Owner最终回执、冲突解决、F1边界、历史失败归因与定向验证摘要；`.log`明确为事后摘要，不冒充原始终端日志。xml-suite-case-summary.json来自Gradle XML保留suite/case状态，省去可能含环境信息的stdout；详细原始XML仍在API独立工作树build/test-results。
 - api-push-readback.json：最终API推送、fixture与Client一致性的主Agent复核。
+- web-media-slice-receipt.json / web-media-slice-tests.log.gz：后续 Web de72f12 研发切片及155项本地测试，非浏览器/线上验收。
 
 checksums.json列本目录其余文件SHA-256，不包含自身。根仓最终提交和四仓最终远端核验回执存放在线程evidence/final-delivery-receipt.json，避免自引用提交哈希。
 

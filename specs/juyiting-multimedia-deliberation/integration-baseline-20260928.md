@@ -64,3 +64,7 @@ Client pin API不可变提交 `bc4bd8b15cc06ed29bc591ad01258d1533711f2a` 的生�
 ## 下一步
 
 从 [融合实施计划v2](fusion-implementation-plan-v2.md) 的U0基础收口开始，冻结U1授权/统一交互合同，再做图片纵切和完整多媒体；只在真实验收与授权条件成立后制定合入/发布动作。本次未修改develop/release、未部署。
+
+## 2026-09-28 后续源码增量（不改写最初整合回执）
+
+Web新增会话媒体part reducer/私有读取展示切片 `de72f12649de1038efa197f804e2d67f2d59f777` / tree `f67f67d69140ad6b40f873d4427ae4dd6eb0c808`，四组定向测试 **155 passing**，SFC语法检查通过，完整日志摘要与推送回读见便携证据。此增量**不代表**尚未实现的服务端会话资产API或“画鸟”真实交付已验收。原始表格的Web 3e37d05与86测试是此前源码整合时点，当前SDD gitlink已更新到de72f12。完整后续交付计划见 [分版本交付](versioned-delivery-plan-20260928.md)。
