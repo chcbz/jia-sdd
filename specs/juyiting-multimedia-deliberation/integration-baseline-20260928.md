@@ -82,3 +82,11 @@ API feature远端 `5daf1087595ba033833bd69e852c722f64a9f862` / tree `caf6dbbb101
 原 v1 golden在真实测试中拒绝了新的上下文字节及Client十进制字段冲突；按错误归因修复后，由API生成并冻结**同字节** fixture：API `chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/api-hosted-wire-v1.json` = Client `conf/codex-ws-agent/contracts/api-hosted-wire-v1.json`，SHA-256 `10534e0347fbac81ff5298ad182ee5f8549005c8a6aa73ee874e64ede98a6eb6`。API通过orchestrator串行本地定向 `:chat:jia-chat-service:chatDeliberation` **68 passing, 0 fail**（14份JUnit XML、build successful）；Client `node --check chat-runtime.mjs` + 3套Node测试 **185 passing, 0 fail**。失败历史/修复归因保留在隔离证据 `evidence/u0-api/02–13*` 与 `evidence/u0-client-cross-contract-{tests,final-tests}.log`，不是伪装一次全绿。
 
 **剩余未闭合风险**：Client现有fact单值JSON限制8192字节，当前短消息fixture仅验证短历史；长历史/大资料目录可能超限导致真实接应拒绝，须做明确的可重建、有截断标记与摘要校验的快照边界回归，再考虑F3收口。还未测MySQL/JWT迁移、目标真实端到端、严格无工具Provider证明或付费授权；INSPECT/新EXECUTE仍禁用，U0不等于可发布或画鸟可验收。
+
+## 增量：有界长上下文的精确树复核（2026-09-29）
+
+API feature `370a2e1ddfbcf500eb2469101221e1887a1b4fe3` / tree `1073e073080711bde21f9a42673ef43f80bcc98b` 已推送并回读同SHA；SDD gitlink 与 `integration.yaml` 同步更新。该增量为 Client 单个 facts 值 8192 UTF-8 字节的已知协议限制增加有界摘要、丢失条目标记、源ID/摘要保留，并补长上下文单测；短消息 golden fixture SHA-256 仍为 `10534e0347fbac81ff5298ad182ee5f8549005c8a6aa73ee874e64ede98a6eb6`。
+
+本地 Gradle 经 orchestrator 锁串行执行 `:chat:jia-chat-service:chatDeliberation`，正确配置无真实发布凭据的离线占位属性后成功；**最终调用 UP-TO-DATE，复核先前在同一源码树生成的 14 份 JUnit XML：69 tests / 0 failures / 0 errors / 0 skipped**（不称本次重跑69项）。首次调用遗漏占位属性、在 build.gradle:109 求值失败，尚未开始测试；记录失败与纠正过程，不伪装首次成功。便携汇总见 `integration-evidence-20260928/u0-long-history-20260929.json`。
+
+以上仅说明 bounded wire 单测，不证明真实 Client 长会话/引用截断后的端到端续办、Provider 隔离、MySQL/JWT 兼容或生图业务完成；34项产品用例仍全部 NOT_RUN。历史各表的早期 SHA/68 项结果仅代表当时研发切片，不是当前 pin。
