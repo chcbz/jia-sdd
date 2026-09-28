@@ -68,3 +68,9 @@ Client pin API不可变提交 `bc4bd8b15cc06ed29bc591ad01258d1533711f2a` 的生�
 ## 2026-09-28 后续源码增量（不改写最初整合回执）
 
 Web新增会话媒体part reducer/私有读取展示切片 `de72f12649de1038efa197f804e2d67f2d59f777` / tree `f67f67d69140ad6b40f873d4427ae4dd6eb0c808`，四组定向测试 **155 passing**，SFC语法检查通过，完整日志摘要与推送回读见便携证据。此增量**不代表**尚未实现的服务端会话资产API或“画鸟”真实交付已验收。原始表格的Web 3e37d05与86测试是此前源码整合时点，当前SDD gitlink已更新到de72f12。完整后续交付计划见 [分版本交付](versioned-delivery-plan-20260928.md)。
+
+## 增量：U0-R真实能力声明（2026-09-28）
+
+Client feature远端已从 `33e38de` 快进至 `326b85767cb97e211bfa32cba673631a674f5d83` / tree `5cfe533f79144c0f001ab0b0d4a4dc1c1b15644a`（推送readback一致）；本节不覆盖上表的首次整合时点。`agent.register`/`agent.presence` 共用 `runtimeCapabilities.capabilityContractVersion=1`：默认fast关闭时CHAT不可用，只读约束不冒充经验证严格无工具；INSPECT和新EXECUTE均未广告，旧PRIVATE/TASK/native START仅是legacy兼容能力。冻结fixture见Client `conf/codex-ws-agent/test/fixtures/u0-runtime-capabilities-v1.json`。
+
+主线程在新tree执行 `node --check agent-client.mjs`、`node --test test/agent-client.test.mjs test/config-runtime.test.mjs`：**150 passing，0 failed**（两套合跑输出 `# tests 150`，`# pass 150`）；Client Owner原文档分开执行116与34同为150，最终口头146与实跑不一致，以实际合跑为准。U0-A服务端尚在开发，真实逐目标协商/旧新客户端负向、Provider无工具证明及MySQL/JWT未闭合；本pin只是研发进展，不是出厂条件。
