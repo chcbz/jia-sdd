@@ -25,3 +25,5 @@ API 特性分支随后整合 `bb395a8549cc9c20a6cbc07543180caa688d1c1a` / tree `
 ## 旧入口 bounty 同任务绑定增量（2026-09-29）
 
 API 特性分支已快进推送 `e64623cdb3b58eaba120e9685c9a54300fcae0c5` / tree `6663a389b4d91fee5a75e602a31354370ca952e0`，远端 readback 同 SHA。旧 `/chat/stream` 对 `juyiting/bounty` 的创建与 v2 `ensure` 共享 `(tenant,client,owner,task)` binding 行锁；拒绝非法 task/scope/目标组合、多个历史候选及删除稳定 bounty 会话，不让旧 CHAT 路径获取新执行 grant。owner 在 exact tree 自检：`chatDeliberation` **82/82**，旧通用会话 guard **11/11**，0 failures/skips；原始日志 `evidence/u1-chat/legacy-unique-full-e64623cd.log`、`legacy-guard-e64623cd.log`。这仅证明源码切片的定向行为；旧新入口并发、历史数据/迁移的真实 MySQL8 验证仍待完成，不能宣称数据库层全局唯一或端到端已可用。权威不可变需求快照与后台消费尚在研发中；不得将 `ADMITTED` 或普通文本回复视为生成图片成功。
+
+同一旧入口 API exact SHA/tree 的独立 MySQL 8.0.21 SQL 级并发补验：本线程独占私有 socket 上创建隔离库 `mmd_chat_legacy_binding_20260929`，安装仓库原版 Chat U1 DDL，两条事务竞争同 `(tenant,owner,client,task)` binding 行：第二条 reserve 等锁后读得同一 conversation（约 793ms 阻塞；两条连接仅产生 1 个 live bounty）；两个 owner 的同 task 各自独立；唯一历史候选收养、两个历史候选拒绝并回滚。见 `evidence/u1-chat/mysql-legacy-binding-e64623cd.json`（含 DDL SHA-256）。**这是 SQL/约束/行锁证据，不是 Spring `create/ensure` 并发集成、真实旧库迁移或全局唯一性结论。**
