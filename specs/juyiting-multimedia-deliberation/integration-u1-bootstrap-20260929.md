@@ -27,3 +27,15 @@ API 特性分支随后整合 `bb395a8549cc9c20a6cbc07543180caa688d1c1a` / tree `
 API 特性分支已快进推送 `e64623cdb3b58eaba120e9685c9a54300fcae0c5` / tree `6663a389b4d91fee5a75e602a31354370ca952e0`，远端 readback 同 SHA。旧 `/chat/stream` 对 `juyiting/bounty` 的创建与 v2 `ensure` 共享 `(tenant,client,owner,task)` binding 行锁；拒绝非法 task/scope/目标组合、多个历史候选及删除稳定 bounty 会话，不让旧 CHAT 路径获取新执行 grant。owner 在 exact tree 自检：`chatDeliberation` **82/82**，旧通用会话 guard **11/11**，0 failures/skips；原始日志 `evidence/u1-chat/legacy-unique-full-e64623cd.log`、`legacy-guard-e64623cd.log`。这仅证明源码切片的定向行为；旧新入口并发、历史数据/迁移的真实 MySQL8 验证仍待完成，不能宣称数据库层全局唯一或端到端已可用。权威不可变需求快照与后台消费尚在研发中；不得将 `ADMITTED` 或普通文本回复视为生成图片成功。
 
 同一旧入口 API exact SHA/tree 的独立 MySQL 8.0.21 SQL 级并发补验：本线程独占私有 socket 上创建隔离库 `mmd_chat_legacy_binding_20260929`，安装仓库原版 Chat U1 DDL，两条事务竞争同 `(tenant,owner,client,task)` binding 行：第二条 reserve 等锁后读得同一 conversation（约 793ms 阻塞；两条连接仅产生 1 个 live bounty）；两个 owner 的同 task 各自独立；唯一历史候选收养、两个历史候选拒绝并回滚。见 `evidence/u1-chat/mysql-legacy-binding-e64623cd.json`（含 DDL SHA-256）。**这是 SQL/约束/行锁证据，不是 Spring `create/ensure` 并发集成、真实旧库迁移或全局唯一性结论。**
+
+## 权威需求快照及自动议事入站源码（2026-09-29）
+
+Agent Owner 在独立 `Agent/**` 工作树提交 `1dd01d2d`（append-only `agent_task_requirement_snapshot`，任务根事务创建/认证 owner 重确认；`read(scope,taskId,revision)` 原文与 SHA-256 精确回读；grant 的当前 revision 校验），首轮 45 项有 10 项失败：9 项旧 H2 夹具缺 `owner_jiacn`/旧 tenant，1 项 Mockito restub 提前执行旧 answer；原日志 `evidence/u1-requirement-snapshot-agent/gradle-mmdU1BootstrapOutbox-1dd01d2d-attempt1.log`。Owner 改变**仅测试夹具**后提交 `f7d24bc5` / tree `c2c170cd`，经 orchestrator 复测 Agent 7 classes / **45/45** 通过、0 failures/errors/skips，日志 `evidence/u1-requirement-snapshot-agent/gradle-mmdU1BootstrapOutbox-f7d24bc5-attempt2.log`。历史任务不自动伪造 revision；旧已出资任务的重确认入口及 Java service 真 MySQL 事务尚未验证。
+
+Chat 主特性树新增 `ChatBountyBootstrapAdmissionService` 和**默认关闭**的后台 `ChatBountyBootstrapRelay`：可信 claim 精确取需求原文、复核 grant/会话，按业务动作原子入一条 USER 消息、同一 `chat_request`、step、无执行 ID 的 intent 及 durable 状态事件；重领复用原记录。首次入站**不会偷跑** fast CHAT 推理、执行命令或 Provider。独立 Chat `b7ade3d9` / tree `9f0d4e54` 经 orchestrator `chatDeliberation` 19 classes / **89/89**，日志 `evidence/u1-chat/gradle-bootstrap-initial-b7ade3d9.log`。
+
+Agent 修复与 Chat 入站组合在 API 特性分支 `8470e549525fb9f0c52a73380800f827dec4cfc8` / tree `3ab92940ed35747563c0fd1a704b04af74873f65`，已推送并从远端 readback。**同一整合 exact tree** 经串行 orchestrator 跑 Chat **89/89** + Agent **45/45**，共 134，0 failures/errors/skips，日志 `evidence/u1-bootstrap-outbox/integrated-8470e549.log`、evidence key `a540ba8f21b07e5908a8fd5e9ebcac8af427f858dc5831b740edb7ba6238e1c5`。
+
+私有隔离 MySQL 8.0.21 新库安装原版快照 DDL 两次并验证历史任务不回填、Unicode 全量回读、跨 owner 隔离、唯一键/十余负向 CHECK；精确 JSON（含 DDL SHA-256）在 `evidence/u1-requirement-snapshot-agent/mysql-requirement-snapshot-sql-8470e549.json`。**此项只是 SQL/约束/原文 hash 夹具，不是 Java Spring 真实 transaction 或存量生产库迁移。**
+
+**当前残余**：worker 开关默认 off，尚未有 `/chat/conversations/{id}/interactions` 公共入口及澄清/受控 execution 后台消费者；`ADMITTED` 只表示初始请求/step 已持久入站，不能声称 Agent 已答复或图片已生成。 bytes-backed 会话媒体/预览下载、空间保存、最终交付/验收和真实浏览器仍未完成；绝非可发布或可通知用户验收。
