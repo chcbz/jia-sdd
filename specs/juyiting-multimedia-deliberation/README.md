@@ -14,7 +14,7 @@
 6. [分版本交付与验收计划](versioned-delivery-plan-20260928.md)：候选 1.13.45–1.13.47 的出厂条件与通知标准。
 7. [验收](acceptance.md)：AC01–AC22，另加详设v2的FD01–FD12；共34项产品用例。
 8. [集成状态](integration.yaml) 与 [便携证据](integration-evidence-20260928/README.md)。
-9. [2026-09-29 轻量议事与 Agent 基础整合](integration-u2-chat-agent-convergence-20260929.md)、[受权媒体读取候选](integration-u2-media-read-20260929.md)、[U2会话执行lease集成](integration-u2-lease-20260929.md)：均默认关闭，不等同上线。
+9. [2026-09-29 轻量议事与 Agent 基础整合](integration-u2-chat-agent-convergence-20260929.md)、[受权媒体读取候选](integration-u2-media-read-20260929.md)、[U2会话执行lease集成](integration-u2-lease-20260929.md)、[U2受权输出清单](integration-u2-output-catalog-20260929.md)：均默认关闭，不等同上线。
 
 ## 开发注意
 
