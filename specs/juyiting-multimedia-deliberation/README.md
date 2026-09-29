@@ -16,6 +16,8 @@
 8. [集成状态](integration.yaml) 与 [便携证据](integration-evidence-20260928/README.md)。
 9. [2026-09-29 轻量议事与 Agent 基础整合](integration-u2-chat-agent-convergence-20260929.md)、[受权媒体读取候选](integration-u2-media-read-20260929.md)、[U2会话执行lease集成](integration-u2-lease-20260929.md)、[U2受权输出清单](integration-u2-output-catalog-20260929.md)：均默认关闭，不等同上线。
 
+- [2026-09-30 客户端参考图+生图单次接应组合证据](integration-u2-client-references-20260930.md)：开发分支已整合，仍默认关闭、未付费/未部署。
+
 ## 开发注意
 
 - 先处理U0残留与U1合同，不直接启用所有能力开关。
