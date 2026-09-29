@@ -19,9 +19,9 @@ Create a feature with:
 
 Do not create a feature directory for local-only refactors unless it changes a published contract, shared behavior, release baseline, or both repositories.
 
-## 2026-09-27 多媒体悬赏议事流程优化
+## 2026-09-29 多媒体悬赏议事长期融合（研发中）
 
-- [juyiting-multimedia-deliberation](juyiting-multimedia-deliberation/spec.md)：draft / design-only。点将自动议事，支持可选参考资料、多媒体回复与持续修改、主动保存、选定成果验收；复用现有存储及修正后的 fast-deliberation，不建设第三套文件系统。包含详设、开发计划与 22 项待执行验收；未派发、未修改组件 gitlink、未构建/部署。
+- [juyiting-multimedia-deliberation](juyiting-multimedia-deliberation/spec.md)：implementing / default-off 基础代码。目标是点将自动议事，支持可选参考资料、多媒体回复与持续修改、主动保存、选定成果验收；复用现有存储及修正后的 fast-deliberation，不建设第三套文件系统。包含长期详设、开发计划与 34 项产品验收；当前特性分支已有 fast 基线与部分 API/Chat/Agent 开发 gitlink，未合入 develop、未发布、未完成浏览器验收。
 
 ## 2026-09-28 长期融合研发分支
 
