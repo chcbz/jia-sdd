@@ -7,3 +7,7 @@
 - 独立 Chat exact tree `414612780f057d40961e406e080f6b782da151b3` / `3528ccb1adfe19a3c3a46643b1b55bed57905077`：bounty binding 4/4，schema contract 3/3；首轮 JVM OOM 被内核杀死，改为单 worker + 512m heap 后通过；原始日志 `evidence/u1-chat/gradle-bounty-binding-1worker.log`、`gradle-bounty-schema-1worker.log`。
 - **同一整合 API tree** 串行 orchestrator 跑 `:chat:jia-chat-service:chatDeliberation :agent:jia-agent-service:mmdU1BootstrapOutbox`：Chat 16 classes / 76 tests、Agent 4 classes / 19 tests，共 95，0 failures/errors/skips；原始日志 `/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/evidence/u1-bootstrap-outbox/integrated-a6d2bf67.log`，evidence key `70655d241c695582293633868509e2064bdee2cecd69195fce6231c5646feb65`。本地定向验证只用于特性源码自检，不等于生产构建/发布。
 - **缺口未消除**：`claimNext(scope)` 缺服务端待办 scope 发现/启动调度；Chat binding 不等于首条需求入库或 Agent 已接单；`/chat/stream` 旧 bounty 新建路径仍可能产生竞争；新表 MySQL8 空/旧库迁移与真实唯一性未测；`interactions`、真实授权执行、bytes-backed 媒体与验收仍待实现。按 [桥接缺口](u1-bootstrap-bridge-notes-20260929.md) 分包推进，任何单项通过不得称“可验收”。
+
+## 本地隔离 MySQL 8 补验（同一 API exact tree）
+
+在本任务已有、仅本线程持有的 Unix socket 私有 MySQL 8.0.21 内新建 `mmd_bootstrap_u1_20260929`，分别对 Chat 和 Agent outbox 新表的仓库原版 DDL 执行两次。11 个 CRUD/约束观察覆盖 binding 同 scope task 唯一、同 scope conversation 唯一、跨 owner 分离、非负 assignment、outbox 同 scope action 唯一、非法提前 ADMITTED 拒绝、CLAIMED→ADMITTED 有效转换。结果及 DDL SHA-256：`/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/evidence/u1-bootstrap-outbox/mysql-integrated-a6d2bf67.json`。**未测旧库迁移、与旧 `/chat/stream` 并发、真实 service SQL 的事务隔离、生产 MySQL，故不得声称全局会话唯一或发布就绪。**
