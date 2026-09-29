@@ -21,3 +21,7 @@ API 特性分支随后整合 `bb395a8549cc9c20a6cbc07543180caa688d1c1a` / tree `
 - 本线程隔离 MySQL 8.0.21 在私有新库对已装 v1 表执行一次原版显式 v2 索引迁移，按列顺序核对两个新索引，并开启两条独立事务证实 `SKIP LOCKED` 在锁住 owner-b 行时能读取 owner-c 行；证据 `/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/evidence/u1-bootstrap-outbox/mysql-discovery-index-before.txt`、`mysql-discovery-index-after.txt`、`mysql-discovery-concurrency.json`。这里只证明 SQL 和事务锁行为，不证明 Java Spring 真实并发、旧业务历史升级或生产数据库变更。
 
 **当前关键阻断项**：服务端权威不可变 `requirementRevision` 正文快照及精确 owner-scoped 读取未实现；不能把客户端自报 revision 或 `TaskPlan` 的已截断描述传给 Agent。Chat 受理/消费者、旧会话同任务唯一性、真实执行及媒体交付仍缺；此增量绝非可发布或可验收证明。
+
+## 旧入口 bounty 同任务绑定增量（2026-09-29）
+
+API 特性分支已快进推送 `e64623cdb3b58eaba120e9685c9a54300fcae0c5` / tree `6663a389b4d91fee5a75e602a31354370ca952e0`，远端 readback 同 SHA。旧 `/chat/stream` 对 `juyiting/bounty` 的创建与 v2 `ensure` 共享 `(tenant,client,owner,task)` binding 行锁；拒绝非法 task/scope/目标组合、多个历史候选及删除稳定 bounty 会话，不让旧 CHAT 路径获取新执行 grant。owner 在 exact tree 自检：`chatDeliberation` **82/82**，旧通用会话 guard **11/11**，0 failures/skips；原始日志 `evidence/u1-chat/legacy-unique-full-e64623cd.log`、`legacy-guard-e64623cd.log`。这仅证明源码切片的定向行为；旧新入口并发、历史数据/迁移的真实 MySQL8 验证仍待完成，不能宣称数据库层全局唯一或端到端已可用。权威不可变需求快照与后台消费尚在研发中；不得将 `ADMITTED` 或普通文本回复视为生成图片成功。
