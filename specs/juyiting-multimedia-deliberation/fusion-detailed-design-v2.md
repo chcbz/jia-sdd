@@ -161,7 +161,7 @@ builtin 宋江与远端 runtime 均使用同一权威上下文合同；builtin �
 - `POST /chat/requests/{requestId}/cancel`：旧语义不静默扩大。新 v2 请求须显式 `scope=interaction` 和 expectedStateVersion，服务端编排取消其已授权运行；不取消同会话其他请求/他人工作。旧客户端没有 scope 时保持取消聊天推理原语义。
 - `POST /chat/turns/{turnId}/cancel`：仍仅取消对应推理；与真实执行取消分清，UI 显示“停止回复”和“取消办理”的实际目标。
 - 新执行由服务端应用服务调用既有 execution 入口/持久 command 机制，绑定 grant、step 和 intent；**不允许 `/chat/stream` 通过 execute 字段绕过**。
-- runtime input/output/start/commit/failure 继续既有 native 路径，不用浏览器代持 producer 凭据。
+- CONVERSATION 使用独立 native fence 的 inbox/lease/inputs/stage/commit/failure 路径，不复用 PRIVATE/TASK 无 fence 输入接口，不用浏览器代持 producer 凭据。当前服务端 `POST /internal/agent/tasks/{taskId}/runs/{runId}/conversation/inputs` 仅在当前 Agent Runtime 租约、任务根、grant 和执行归属一致且输入行**真实为空**时返回 `{executionId,leaseVersion,noReferencedMaterials:true,inputs:[]}`；输入行不为空则拒绝，绝不把有参考资料说成“无资料”。后续参考图版本与来源 ACL 接入时扩展为精确 input manifest 和受 fence 的字节读取，不能把目前的无参考桥接当作完整参考素材实现。
 
 ### 6.4 能力协商
 
