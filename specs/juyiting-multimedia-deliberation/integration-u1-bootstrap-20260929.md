@@ -11,3 +11,13 @@
 ## 本地隔离 MySQL 8 补验（同一 API exact tree）
 
 在本任务已有、仅本线程持有的 Unix socket 私有 MySQL 8.0.21 内新建 `mmd_bootstrap_u1_20260929`，分别对 Chat 和 Agent outbox 新表的仓库原版 DDL 执行两次。11 个 CRUD/约束观察覆盖 binding 同 scope task 唯一、同 scope conversation 唯一、跨 owner 分离、非负 assignment、outbox 同 scope action 唯一、非法提前 ADMITTED 拒绝、CLAIMED→ADMITTED 有效转换。结果及 DDL SHA-256：`/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/evidence/u1-bootstrap-outbox/mysql-integrated-a6d2bf67.json`。**未测旧库迁移、与旧 `/chat/stream` 并发、真实 service SQL 的事务隔离、生产 MySQL，故不得声称全局会话唯一或发布就绪。**
+
+## 可信后台发现增量（仍未开启消费者）
+
+API 特性分支随后整合 `bb395a8549cc9c20a6cbc07543180caa688d1c1a` / tree `ef010dd9450061d70a6b0497d219e417992c91fe`，远端同 SHA。Agent 内部 `claimNextAvailable(consumerId,now)` 从数据库行派生 owner/client，MySQL8 `FOR UPDATE SKIP LOCKED`、版本与租约 fence；**没有 HTTP 端点，也尚无后台 worker 或 Chat 自动投递。** 新装 v1 DDL 增加发现索引，既有 v1 表需显式执行 `agent-task-bounty-bootstrap-outbox-discovery-v2.sql` 一次；缺索引时初始化 fail closed。
+
+- 独立 Agent exact tree `1b26cec82550c1937652d81819958efa82f9d6ae` / `fe3fa06c9ff0fb26870a44470bce89644cf31788` 定向 26/26、0 failed/skipped，日志 `/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/evidence/u1-bootstrap-discovery/targeted-01.log`。
+- 整合后同一 API exact tree 串行 orchestrator `chatDeliberation` 76/76 + `mmdU1BootstrapOutbox` 26/26，共 102，0 failed/skipped；日志 `/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/evidence/u1-bootstrap-outbox/integrated-bb395a85.log`、evidence key `9ba296414adae5d99f67565322d176a715cfa7bcd9fc8e240d66ef2522197656`。单测中模拟的锁竞争不冒充数据库行为。
+- 本线程隔离 MySQL 8.0.21 在私有新库对已装 v1 表执行一次原版显式 v2 索引迁移，按列顺序核对两个新索引，并开启两条独立事务证实 `SKIP LOCKED` 在锁住 owner-b 行时能读取 owner-c 行；证据 `/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/evidence/u1-bootstrap-outbox/mysql-discovery-index-before.txt`、`mysql-discovery-index-after.txt`、`mysql-discovery-concurrency.json`。这里只证明 SQL 和事务锁行为，不证明 Java Spring 真实并发、旧业务历史升级或生产数据库变更。
+
+**当前关键阻断项**：服务端权威不可变 `requirementRevision` 正文快照及精确 owner-scoped 读取未实现；不能把客户端自报 revision 或 `TaskPlan` 的已截断描述传给 Agent。Chat 受理/消费者、旧会话同任务唯一性、真实执行及媒体交付仍缺；此增量绝非可发布或可验收证明。
