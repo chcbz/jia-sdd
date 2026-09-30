@@ -117,3 +117,5 @@
 [源码融合与证据](integration-provider-core-source-progress.md)：Client `69765549`（193项定向通过）与 Web `1ceb48d`（69项定向通过）已精确FF、推送并readback；[Web core 合同 v1.1](web-provider-consent-core-contract-v1.md)规定 EXPIRED 只读投影、显式同意和 task/target 迟到响应隔离。API `acab3411` 是尚在验证的候选，不提升API研发 pin。上文“受控adapter尚未实现”的旧记录保留其历史时点含义。
 
 core **不等于合法点将/START费用桥或页面闭环**：未选择真实账户/模型，未启用付费，未做34项产品用例、双接应浏览器或版本发布；不通知可验收。
+
+[受控图像Grant/execution/START桥接详设 v1](controlled-image-grant-start-bridge-design-v1.md)补充下一完整桥接的入口wire、aggregate/回滚、一次消费与版本化16输入协议、Web显式同意及三仓写集；拟议wire须先冻结共同fixture，不当作已实现或可收费的接口。

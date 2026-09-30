@@ -107,3 +107,7 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 原子参考图创建已源码晋升API083f（20通过，含实际MySQL2及事务2）；此处不建立第二份任务台账。[整合证据](integration-u1-atomic-reference-intake-source-20261001.md)保留原缺陷、失败及exact合并树证明。原始宿主时间戳不代表当前日期或发布日期。
 
 [多轮follow-up源码准备](multiround-followup-design-notes-v1.md)是下一合同冻结入口：先落持久澄清/parent lineage与精确conversation-asset resolver，再统一成果卡/composer发送恢复。当前EDIT确定被拒绝，且无真实EDIT-capable bridge；不要只改Web或新造会话规避。
+
+## 受控费用 Grant / START 的下一完整桥接包
+
+[桥接详设 v1](controlled-image-grant-start-bridge-design-v1.md)将core之后的缺口收敛为BRIDGE-A/C/W/I：原点将与consent绑定、唯一execution预留、同事务consume+START、受控16项v2命令/回执与显式页面同意，不能只写非空costRef。这是待Owner核对并冻结共同wire fixture的详设，不是源码完成；真实费用账户仍未选择/授权，不推导付费许可。运行状态只记录在主工作区唯一ledger。
