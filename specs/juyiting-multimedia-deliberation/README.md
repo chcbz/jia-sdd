@@ -16,6 +16,10 @@
 
 [本次源码与缺口](integration-u1-task-linked-reference-source-20260930.md)：API `74b4b44e` Owner66定向、Web `7821209` Owner108定向通过并精确FF/push；参考图策略默认关闭，费用仍未授权。原子创建候选的实际MySQL2失败已定位并交回原Owner，未提升该候选；新develop语音修复仍需收敛。源码交付不是发布或完整34项产品验收。
 
+## 本次精确验证补充
+
+[受控图像桥实际验证进展](integration-controlled-bridge-verification-progress.md)：四仓远端fast ancestry重新核验；API实际38项中5失败/3跳过，Web精确组合重现会话采用/迟到恢复/issuer阶段缺口。候选均未提升，原Owner继续修复；分支和详设已交付不等于产品可验收。
+
 ## 阅读顺序
 
 1. [需求方案](spec.md)：用户流程及不做什么。
