@@ -131,3 +131,7 @@ core **不等于合法点将/START费用桥或页面闭环**：未选择真实�
 SDD融合提交 `6c347c444d91d783885cbfc77b31e7f2c99dbd36` 已推送/readback；父提交为本合同 `69a2a420` 与 develop `01f7599e`。只解决 INDEX 冲突：保留本功能 implementing/34项范围，并保留 develop D2典籍任职入口；D2整目录与develop字节一致，组件gitlink未变。此只证明SDD文档收敛，不证明API/Web最新develop语音已融合。
 
 BRIDGE-A/C 已由两个Owner在独立API/Client worktree按冻结合同施工，不创建Reviewer。API原core `acab3411` 保持未验证候选：正常源图已编过agent主类，但无测试/XML；common-test的Testable AP在384MiB仍堆不足。下一修正基于实际11个standalone测试的imports，由原Owner提交仅定向sourceSet依赖修复，保留全部测试/真实production源码图和标准full-test配置，不再盲增堆、不disable AP、不复制baseline类或假overlay。新候选实际通过后才能提升API pin；真实MySQL、跨仓桥接、34产品用例和发布仍未完成。
+
+## 受控 v2 Client 源码整合补充
+
+[Client精确源码及真实修复证据](integration-u2-controlled-image-v2-client-source.md)：研发pin提升到5548052/tree59af3，Owner157定向通过、Main12项纯parser断言及hash核对后精确FF/push/readback。原初稿154通过未覆盖的grammar/epoch/UNKNOWN和类型强制转换缺陷均由原Owner修复；没有真实Provider或产品验收。API核心实际编译缺失Hamcrest仍修复，API/Web合法费用桥和多轮完整范围继续施工，不通知可验收。
