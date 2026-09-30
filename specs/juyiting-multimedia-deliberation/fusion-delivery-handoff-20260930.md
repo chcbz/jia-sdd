@@ -137,3 +137,23 @@ assignment + grant + 唯一 bootstrap/outbox
 [Provider权限与pre-call长期详设补充](provider-authority-and-precall-enforcement-design-v1.md)依据实码纠正“一次START等于一次扣费”的误读：现有通用executor内部没有工具调用前计数门禁。平台账户operator delegation和任务owner同意是两个权限事实。拟采用受控图像adapter或可信pre-call gateway的条件路线，尚未选择/切换账户、冻结费用wire或实现门禁；费用仍UNAVAILABLE，不写假costRef或以提示词替代。
 
 后续先冻结合法账户/调用前合同，并补同会话澄清、上一稿/EDIT及恢复；完整34产品用例仍NOT_RUN。完成版本同源制品、双接应及浏览器交付/验收后才能通知用户可验收。
+
+
+## 本次分支与详设交付复核
+本次以 fetch + 独立远端 readback + `merge-base --is-ancestor` 重新确认：用户要求的新特性分支已存在于四仓并已合入当前 fast 代码。保持现有分支和开发成果，不重复建分支、伪造新 merge 或重置已提交代码。
+| 仓库 | 本次文档提交前远端 feature HEAD | fast 已包含 | develop 尚独有提交 |
+| --- | --- | --- | --- |
+| sdd | `0032e526fb4561b4267b2531801826786705d929` | 是 | 1 |
+| api | `083f9846ee26835e6db79892e4f7186accff467a` | 是 | 4 |
+| web | `7821209c874995621d139da9047983f3b586d0b0` | 是 | 4 |
+| client | `1812e5b5d090013338265d16ca34b0b9c257da49` | 是 | 0 |
+
+完整 fast/develop/tree 和核验原始时间见[只读证据](integration-evidence-20260928/branch-design-reverification.json)。其中时间为采集主机时钟，不作为发布日期。SDD 行为本次文档提交前观测点；API/Web gitlink 与上述源码 HEAD 一致。本次只做文档静态校验，不把历史测试重写成刚执行，不改34项产品验收状态。
+
+长期详设交付包括：
+- [长期融合方案](long-term-fusion-plan-20260928.md)：一个会话产品，fast 为轻量策略，读取/执行按需授权；只有 legacy 适配是过渡措施。
+- [融合详设 v2](fusion-detailed-design-v2.md)：admission、分层上下文、授权、路由、状态/事件、执行关联、兼容和迁移；[媒体详设](design.md)补充预览/下载、现有存储根、三种内容用途、双接应输入输出目录。
+- [开发计划](fusion-implementation-plan-v2.md)及[验收矩阵](acceptance.md)：跨仓工作包与依赖，AC22 + FD12 共34项产品用例，Owner 自检，不新增 Reviewer。
+- [Provider 调用前控制](provider-authority-and-precall-enforcement-design-v1.md)与[多轮续办设计准备](multiround-followup-design-notes-v1.md)：明确真实费用授权和澄清/EDIT缺口；core合同已冻结不等于真实费用链已实施。
+
+下一可执行步骤：按融合计划领取尚未完成的授权/续办工作包，在独立 worktree 实现并做最小相关自检。后续集成必须收敛上表 develop 独有改动，不能将 fast ancestry 当作最新 develop 完整包含证明。本次不修改任何在途 Owner 源码、运行台账或测试夹具。
