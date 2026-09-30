@@ -90,3 +90,6 @@
 ## 2026-10-01 参考图入口Web整合
 
 [Web精确组合源码证据](integration-u1-reference-intake-web-20261001.md)：远端`84b14a5`，213定向通过，scoped ESLint通过；真实需求表单、真实选择器和真实创建composable已组合验证，选择器异步替换竞态已修复。上文旧候选/施工限制保留对应日期含义。API仍独立验证，不把此Web研发pin当成跨仓联调、资料执行或可验收；native仍EMPTY_ONLY、费用未授权，完整34产品用例NOT_RUN。
+
+
+[任务已关联参考图点将合同 v1](task-linked-reference-point-and-start-contract-v1.md)冻结下一包：完整任务目录与精确版本回读、TASK_LINKED_REFERENCE真实能力政策、原意图优先、执行事务重验；不放开费用或提前通知可验收。
