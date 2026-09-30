@@ -107,3 +107,5 @@
 [费用来源与pre-call长期详设补充 v1](provider-authority-and-precall-enforcement-design-v1.md)明确：现有单次executor START不保证单次imagegen调用/扣费；平台template账户需要operator delegation与taskOwner同意，不能只写非空costRef。受控图像adapter及费用wire尚未冻结/实现，不切换Provider或开放费用入口。
 
 [同会话澄清/续办/上一稿修改详设准备](multiround-followup-design-notes-v1.md)列出源码确定的拒绝路径、可复用assetRef与恢复链，以及下一份合同的最小写集；这不是已接通EDIT或已冻结wire。
+
+[受控图像账户与单次请求core合同 v1](controlled-image-provider-core-contract-v1.md)冻结下一源码包：真实operator policy + owner exact consent、当前binding声明、持久一次HTTP调用adapter。core阶段不接旧grant/START费用权限，不选真实账户或执行付费；全产品目标保持不变。
