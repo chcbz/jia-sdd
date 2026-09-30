@@ -60,3 +60,10 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 ## 2026-09-30 入口闭环增量
 
 新增[ENTRY-A/ENTRY-W/ENTRY-I施工包](point-and-start-entry-design-v1.md#5-最小开发包与验证)：从权威当前requirement snapshot读接口接通真实v2点将和自动议事。可以与独立finalization/schema-readiness路径并行，但组件pin须基于已测试候选。此处仅任务定义，不是第二套运行ledger，不改变现有Owner写集或产品验收状态。
+
+
+### 入口恢复合同施工补充
+
+[原点将操作只读投影 v1](assignment-operation-read-contract-v1.md)为ENTRY-A/ENTRY-W固定追加合同：服务端按原键提供owner-safe的grant/bootstrap/current-assignment事实，Web按确切首轮request采用同一议事历史与事件。API写集与finalization/schema-readiness隔离；读取投影、会话采用以及真实页面v2点将是不同切片，不因其中一项完成即关闭入口包。验证须覆盖无写入/无Provider、404未知、撤权/重派、版本精度、身份切换、错误回执与首轮不重复。
+
+首轮动作与grant操作集合的拆分仍需独立实现，不在只读投影或Web中绕过服务端准入。当前进行中的API候选未验证前不更新跨仓gitlink；实际Java测试阻塞归因与下一步诊断保留在Owner证据中，不把文档静态检查冒充运行测试。

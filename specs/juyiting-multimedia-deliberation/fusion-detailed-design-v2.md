@@ -276,3 +276,14 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 ## 16. 2026-09-30 真实点将入口施工补充
 
 [点将即办理入口详设 v1](point-and-start-entry-design-v1.md)补充权威当前需求读取、v2点将body/原幂等键、grant与task分离、自动进入已有bootstrap会话及unknown恢复。当前Web点将仍是legacy，当前需求revision读接口待实现；成果展示/最终验收UI测试不关闭此入口缺口。原CHAT/INSPECT/EXECUTE授权边界、统一会话/存储和finalization冻结合同不变；34项产品用例维持未验收。
+
+
+## 17. 2026-09-30 原点将只读恢复合同补充
+
+详见[原点将操作只读投影合同 v1](assignment-operation-read-contract-v1.md)。这是第16节入口施工的恢复补充，不改写已冻结的finalization合同，不宣称新接口已实现或已部署。
+
+浏览器需在点将写入前固定原键和正文；状态恢复只读查询原业务action，分别核对 root/task、grant、bootstrap 的版本事实。`ADMITTED` 表示首轮Chat请求受理；只有当前assignment仍匹配时才自动采用其确切会话/首轮request，采用前还须验证服务端RequestView的任务/assignment/目标及会话关联。不以 `taskVersion == assignmentRevision` 猜当前归属，不自动重发首轮生成。
+
+原操作404、网络响应未知、历史读取失败都不表示执行从未受理；用户明确恢复时才允许按原键/原正文重试对应写入。已确认的受理事实不得因媒体或历史读取失败被抹除。权限切换、重新点将、晚到响应须隔离，已撤销/替换的原操作仅可显示真实历史事实。
+
+首轮初始动作与grant允许动作集合是不同维度。当前bootstrap只接受单个非INSPECT动作的实现限制须由代码包改为显式首轮动作，不能缩窄长期授权集合或让Web猜选首轮；补齐前不以同时允许GENERATE_IMAGE/EDIT_IMAGE的grant宣称入口闭环。

@@ -48,3 +48,12 @@
 ## 点将入口的真实闭环补充（2026-09-30）
 
 [四仓远端分支与fast ancestry重新核验](integration-evidence-20260928/branch-reverification-20260930.json)已通过，且均与远端feature readback一致；这不是当前develop融合、构建或发布证明。[点将即办理入口详设 v1](point-and-start-entry-design-v1.md)记录实码缺口：页面普通点将仍走legacy，权威当前requirementRevision没有浏览器读接口。下一包按ENTRY-A/ENTRY-W/ENTRY-I接通原键v2点将、canonical投影及自动进入同一悬赏议事；不得猜revision=1、将grant当task、重发首轮或据UI单测宣称业务闭环。
+
+## 原点将操作的只读恢复合同（2026-09-30）
+
+[原点将操作只读投影合同 v1](assignment-operation-read-contract-v1.md)固定浏览器以**原幂等键**核对 grant / bootstrap / 当前 assignment 的响应、权限和恢复语义。该接口仍是施工合同，不能将文档链接或 `ADMITTED` 回执当作已生成媒体、已交付或已验收。
+
+- `GET` 不 claim outbox、不创建消息或执行、不调用 Provider；404 不证明原 POST 没有被受理。
+- 自动进入议事必须读取确切 conversation / initial request，验证 task、assignment、显式目标 Agent，再加载历史/事件；不从列表猜测、不补发首轮。
+- grant 的允许操作集合与首轮 `initialOperation` 必须区分；“允许生成并修改”不等于首轮同时执行两次。当前接口实现缺口仍需独立代码包处理。
+- [本次远端复核](integration-evidence-20260928/branch-followup-verification-20260930.json)只证明四仓分支与 fast ancestry；API 本地 schema-readiness 候选尚未验证/推送，不替换已记录的远端研发 pin。
