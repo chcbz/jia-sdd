@@ -125,3 +125,9 @@ core **不等于合法点将/START费用桥或页面闭环**：未选择真实�
 [桥接冻结合同 v1](controlled-image-bridge-contract-v1.md)将上一详设的拟议wire固定为独立受控capability/点将/原键读回、同session能力协商、v2 command及仅首次成功START回执，并闭合root-first三段事务、authority查证及16输入边界。[29项共同预期fixture](fixtures/controlled-image-bridge-v1.json)全部NOT_RUN；静态字段/摘要检查及现有Web core issue/BOUND receipt兼容检查通过，**不是桥接实现或34项产品验收通过**。
 
 后端验证环境曾有argparse错误、stale baseline ABI、正常图javac堆不足；保留失败，改为exact-source正常图输出，不以环境错误归因业务或用静态兼容替代真实事务。API core仍须实际验证后整合，Client/API/Web下一包按冻结wire实施；未启用账户/Provider，未发布或通知可验收。
+
+### develop文档收敛与实施启动（精确SHA补充）
+
+SDD融合提交 `6c347c444d91d783885cbfc77b31e7f2c99dbd36` 已推送/readback；父提交为本合同 `69a2a420` 与 develop `01f7599e`。只解决 INDEX 冲突：保留本功能 implementing/34项范围，并保留 develop D2典籍任职入口；D2整目录与develop字节一致，组件gitlink未变。此只证明SDD文档收敛，不证明API/Web最新develop语音已融合。
+
+BRIDGE-A/C 已由两个Owner在独立API/Client worktree按冻结合同施工，不创建Reviewer。API原core `acab3411` 保持未验证候选：正常源图已编过agent主类，但无测试/XML；common-test的Testable AP在384MiB仍堆不足。下一修正基于实际11个standalone测试的imports，由原Owner提交仅定向sourceSet依赖修复，保留全部测试/真实production源码图和标准full-test配置，不再盲增堆、不disable AP、不复制baseline类或假overlay。新候选实际通过后才能提升API pin；真实MySQL、跨仓桥接、34产品用例和发布仍未完成。
