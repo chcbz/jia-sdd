@@ -81,3 +81,7 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 - ENTRY-W恢复组件已源码合入Web `7ac3bbc`：182定向通过，其中45新增；[证据](integration-u1-web-point-and-start-20260930.md)。原key/body、grant!=TaskDTO、纯读/显式恢复、独立fence与身份隔离已补；不代表实际页面已启用。
 - 下一依赖顺序：API readiness修正验证 → finalization/current requirement/projection/initialOperation及selector-only Controller路由整合/回归 → 权威能力协商与页面接线/实际引用关联 → 真实澄清、上一稿/修改和费用授权 → 双接应/Provider/浏览器全范围 → exact版本制品发布及线上验收。
 - 不对未完整业务分支提前合develop/启用/发布；未实测状态不改PASS。实际阶段推进继续使用唯一runtime ledger，不设Reviewer队列。
+
+## 2026-09-30 组合源码验证增量
+
+[ENTRY/finalization/readiness组合候选](integration-u1u3-entry-finalization-20260930.md)已推送API `f93febe9` 并提升研发pin；正常模块357次执行、bounded99项、独立MySQL26项和归属锁验证通过。后续不重复把未变的组合树全部重测当作进展；按exact tree/selector/fixture复用证据，对实际新改动补相关验证。旧弱CHECK识别/授权迁移、真实Java/MySQL生命周期、目标能力协商/页面接线、真实引用/澄清/EDIT/合法费用授权与最终全范围发布验收仍单独施工。无develop/release/生产激活或可验收声明；运行状态仍只在runtime ledger。

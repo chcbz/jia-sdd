@@ -303,3 +303,7 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 持久意图不是授权；服务端能力协商尚未定义/接通，新组件默认不支持。后续页面接线必须提供权威支持事实、当前身份/目标隔离回调、实际任务资料关联和精确首轮采用，不能用UI开关或测试注入证明执行许可。前端完成事实仍分别是本轮成果、个人归档、正式提交、owner验收和真实task.completed。
 
 本次API只静态候选，不更新pin。初始动作字段须参与Controller v2识别，selector-only不完整请求也不能落入legacy；此缺口独立补测。schema readiness fixture纠正只解决测试条件，不替代正常模块/真实库启动。长期直接执行/澄清/多轮修改与费用授权仍按第17–18节和各冻结合同推进。
+
+## 20. 2026-09-30 ENTRY/finalization组合源码证据
+
+[组合源码与验证记录](integration-u1u3-entry-finalization-20260930.md)：API研发pin提升到 `f93febe9`/tree`8289c1a3`。正常模块357次测试执行、bounded99项、独立MySQL26项与锁归属实测通过；保留已归因失败，不意味着整套构建/Provider/UI或产品验收完成。真实NULL约束问题已修正；旧实验schema不能据CREATE IF NOT EXISTS视为已迁移。下一步权威目标能力协商、实际页面与task引用、多轮澄清/EDIT/费用授权；仍维持一条会话与平台权威资产，不添加第三套文件系统或强制三轮模型调用。
