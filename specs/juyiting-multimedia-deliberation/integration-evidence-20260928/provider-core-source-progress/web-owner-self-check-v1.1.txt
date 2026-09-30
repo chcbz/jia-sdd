@@ -1,0 +1,20 @@
+Task: MMD-U1-WEB-PROVIDER-CONSENT-CORE-20260930
+Frozen supplement: web-provider-consent-core-contract-v1.md section 5 (core v1.1)
+Owner: gpt-5.6-terra / balanced_worker
+Parent source: aec76860bbbbfa7a877797f3c7bc2dfa2e2e97c6 / e7bb664a86576bd4b81d389cda8ae85d693c65ab
+Commit: 1ceb48d45648e0c6ebaaa7283ce72a724acf9b70
+Tree: 2a1b4d47237f9cc779a7ce7e9f5a8a5add9cc2d6
+
+Final checks (exit 0):
+1. npx eslint src/composables/juyiting/hallPointAndStartProviderConsent.js src/composables/juyiting/useHallPointAndStartCostConsent.js src/composables/juyiting/hallPointAndStartIntent.js src/composables/juyiting/useHallPointAndStart.js tests/juyiting-provider-consent-core.test.js
+2. node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec tests/juyiting-provider-consent-core.test.js tests/juyiting-point-and-start.test.js
+   Result: 69 passing (23 provider-consent; 46 existing point/start).
+3. git diff --check
+4. git push origin codex/juyiting-mmd-web-provider-consent-core
+   Remote head: 1ceb48d45648e0c6ebaaa7283ce72a724acf9b70
+
+Delta tests prove: API readonly same-version active->EXPIRED projection; immutable facts and EXPIRED terminal rules; expired original-version explicit revoke; explicit acknowledgement missing gives zero storage/POST; same-identity task+target selectContext fences late response without deleting durable intent.
+
+Failure attribution: first remediation Mocha attempt had one implementation defect: EXPIRED->EXPIRED at a higher version was mistakenly rejected despite v1.1 allowing monotonic EXPIRED projection. Fixed in the focused helper; changed-selector final run passed 69/69. Original aec7686 65-pass evidence remains retained and is not replaced.
+
+Source-only. No page/API/Client/Provider/paid/newStart/assign/session/legacy fallback changes or claims.
