@@ -77,3 +77,8 @@
 [旧弱CHECK识别与真实Java/MySQL证据](integration-u3-schema-check-truth-20260930.md)已验证API `b1e7b068`：正常84项报告（42本次、42复用）及真实6项JDBC/Spring全部通过；不是整套启动、迁移或产品验收。
 
 [原生悬赏能力/点将协商冻结合同](native-bounty-capability-contract-v1.md)新增独立native声明，保留fast-v1 EXECUTE=false；API、Web页面与Client分别施工。task引用/澄清/EDIT/合法费用桥、双接应与真实浏览器仍必须完成。候选版本号按版本计划末尾的远端占用补充重新核实。
+
+
+## 需求前可选参考图施工（2026-09-30）
+
+[需求创建与可选参考图原子受理合同 v1](requirement-reference-intake-contract-v1.md)已冻结：普通榜文由一个持久原操作创建真实task和精确REFERENCE关联，刷新只读查询，明确继续才原键/原正文重放；旧普通/funded接口不扩大权限。Web候选已接真实Bounty草稿、原请求恢复及页面路由，组件选择器与API事务实现分别独立施工；候选尚未成为跨仓生产基线。选择参考图不会放开当前native EMPTY_ONLY或费用授权；后续必须接真实task-file回读与执行输入、合法费用桥、澄清/EDIT及最终浏览器发布验收。
