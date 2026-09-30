@@ -97,3 +97,7 @@
 
 
 [任务已关联参考图点将合同 v1](task-linked-reference-point-and-start-contract-v1.md)冻结下一包：完整任务目录与精确版本回读、TASK_LINKED_REFERENCE真实能力政策、原意图优先、执行事务重验；不放开费用或提前通知可验收。
+
+## 原子参考图创建缺陷已修复（采集时间2026-10-01）
+
+[原子创建真实MySQL与源码整合证据](integration-u1-atomic-reference-intake-source-20261001.md)：API研发pin提升到`083f9846`，20项通过（含实际MySQL2、Spring事务2），零失败/错误/跳过；原catalog失败已修复，历史失败保留。上文“API候选尚未整合”属于旧时点；当前仍默认关闭/无合法费用桥、无真实34产品用例、无发布。
