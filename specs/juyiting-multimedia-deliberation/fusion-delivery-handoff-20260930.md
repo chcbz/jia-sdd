@@ -117,3 +117,12 @@ assignment + grant + 唯一 bootstrap/outbox
 - **本次未执行**：develop合入、生产构建、部署、生产数据库迁移、付费调用或画鸟浏览器验收。34项产品状态不改 PASS。
 
 状态详见[集成清单](integration.yaml)。运行推进仍只使用 `docs/implementation/TASKS.yaml#runtime_ledger_json`；本文不新增 Owner/运行门禁台账。
+
+
+## 8. 需求参考图施工期间的远端复核（2026-09-30）
+
+[本次精确远端快照](integration-evidence-20260928/branch-reference-intake-verification-20260930.json)重新 fetch 四仓 feature / fast / develop 并核验 ancestry：SDD `97c06613`、API `5668c747`、Web `ab317fa`、Client `1812e5b` 均包含当前远端 fast HEAD。develop 独有提交仍分别为1/3/4/0，不能将 fast 合入等同 develop 收敛。此处是本次文档提交前的观测点，不是将原交接表的历史SHA改写。
+
+需求前可选图片按[原子受理合同 v1](requirement-reference-intake-contract-v1.md)继续实施；API事务与Web选择器/创建入口各自在隔离worktree。Main真实父表单、真实图片选择器及真实创建composable的两项组合测试已经通过，HTTP仍为隔离夹具，并非已部署API/浏览器/Provider证据。选择器异步替换的具体竞态由原Owner修复，修复后须精确组合树验证，当前远端Web pin未提前提升。
+
+完整34项产品用例仍NOT_RUN。原操作长期保留是安全恢复措施，不是完整错误退出体验；产品发布前还须为确定拒绝、失效参考图等原意图提供有服务端无副作用证明的明确处置，不得以清localStorage、换键或GET404冒充可以新建的证明。本补充不扩展冻结receipt接口，也不授权生产迁移或付费调用。

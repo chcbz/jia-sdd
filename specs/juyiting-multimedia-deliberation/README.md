@@ -82,3 +82,6 @@
 ## 需求前可选参考图施工（2026-09-30）
 
 [需求创建与可选参考图原子受理合同 v1](requirement-reference-intake-contract-v1.md)已冻结：普通榜文由一个持久原操作创建真实task和精确REFERENCE关联，刷新只读查询，明确继续才原键/原正文重放；旧普通/funded接口不扩大权限。Web候选已接真实Bounty草稿、原请求恢复及页面路由，组件选择器与API事务实现分别独立施工；候选尚未成为跨仓生产基线。选择参考图不会放开当前native EMPTY_ONLY或费用授权；后续必须接真实task-file回读与执行输入、合法费用桥、澄清/EDIT及最终浏览器发布验收。
+
+
+本次参考图施工期间再次核实[四仓当前远端分支](integration-evidence-20260928/branch-reference-intake-verification-20260930.json)，均已包含当前fast；[交接第8节](fusion-delivery-handoff-20260930.md#8-需求参考图施工期间的远端复核2026-09-30)保留候选与产品验收区别，以及确定拒绝原意图的安全处置待办。Web候选仍需修复选择器异步替换竞态并验证组合树，不将两项夹具组合测试视为真实画鸟通过。
