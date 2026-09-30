@@ -33,6 +33,8 @@
 
 [正式验收界面与原操作恢复](integration-u3-finalization-web-20260930.md)已完成Web源码切片，57项定向通过；[finalization冻结合同](finalization-contract-v1.md)是跨仓实现合同，API尚未整合/验证。UI完成不代表正式提交、领域验收或需求完成已真实联通。
 
+[验收完成后的任务投影刷新](integration-u3-finalization-completion-refresh-20260930.md)已补齐Web联动，61项定向通过；只读刷新，不本地伪造任务完成。后端正式验收与schema启动依赖仍在开发，不通知可验收。
+
 ## 开发注意
 
 - 先处理U0残留与U1合同，不直接启用所有能力开关。
