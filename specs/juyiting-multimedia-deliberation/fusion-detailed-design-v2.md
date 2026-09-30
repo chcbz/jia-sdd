@@ -264,3 +264,11 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 [output→assetRef→工作空间归档对接](integration-u3-output-asset-archive-20260930.md)已整合至研发分支，覆盖第13节“保存对接合同”的源码缺口。目录 GET 的可选 assetRef 必须指向已持久且完整来源核对的资产；未投影时等待，不触发生成/投影/归档写操作。Web 保存统一委托已有归档 composable，保留原幂等意图、只读查询、明确原键重放和身份隔离。
 
 这是源码和定向测试事实，不是线上保存或完整验收事实。正式晋升/验收/任务完成仍待实现；schema初始化顺序、真实双接应、完整多媒体/澄清/引用修改、exact版本发布和浏览器证据仍须收口。34项产品验收不得用本轮160/28项单元测试代替。
+
+## 15. 2026-09-30 正式验收与分阶段恢复合同补充
+
+正式验收HTTP合同冻结为 [finalization v1](finalization-contract-v1.md)：POST按原Idempotency-Key持久受理精确成果集合，两个GET分别按operationId/原键只读核对。阶段为PROMOTING→READY_TO_SUBMIT→SUBMITTED→ACCEPTING→TASK_COMPLETED；最终完成须同时具备真实正式交付accepted、领域task completed及实际deliveryId，不以UI标签或模型回复作证。版本使用十进制字符串回执，原请求保留可安全表示的整数。
+
+持久晋升适配器须核验会话输出完整来源、授权/assignment、字节/MIME/hash/length；hash只是预期pin而非所有权凭据。通过Agent应用服务取得真实producer/work-item/run/lease，再复用正式submit和owner decision；不建立Agent→Chat实现模块循环依赖，不为获lease调用Provider，不删除原权限条件。固定成果/晋升/提交/验收事实分阶段恢复，GET、回放和查询绝不触发新执行。
+
+[Web实作证据](integration-u3-finalization-web-20260930.md)已覆盖原操作恢复、完整回执校验、纯读查询和身份隔离；API正式闭环仍在开发，尚未获得exact候选测试/隔离MySQL/浏览器证据。本节冻结目标合同并记录切片进展，不将34项产品验收从NOT_RUN改为通过。
