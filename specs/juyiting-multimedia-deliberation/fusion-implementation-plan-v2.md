@@ -67,3 +67,10 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 [原点将操作只读投影 v1](assignment-operation-read-contract-v1.md)为ENTRY-A/ENTRY-W固定追加合同：服务端按原键提供owner-safe的grant/bootstrap/current-assignment事实，Web按确切首轮request采用同一议事历史与事件。API写集与finalization/schema-readiness隔离；读取投影、会话采用以及真实页面v2点将是不同切片，不因其中一项完成即关闭入口包。验证须覆盖无写入/无Provider、404未知、撤权/重派、版本精度、身份切换、错误回执与首轮不重复。
 
 首轮动作与grant操作集合的拆分仍需独立实现，不在只读投影或Web中绕过服务端准入。当前进行中的API候选未验证前不更新跨仓gitlink；实际Java测试阻塞归因与下一步诊断保留在Owner证据中，不把文档静态检查冒充运行测试。
+
+
+### ENTRY首轮采用源码进展（2026-09-30）
+
+[Web采用切片](integration-u1-web-bootstrap-adoption-20260930.md)已推送并通过130定向，页面真实点将/完整ENTRY-W尚未完成。下一步接权威当前revision、原key/body持久readback、原操作投影与canonical任务，调用该采用函数；不能补发首轮或据媒体事件本地完成任务。
+
+[初始动作合同 v1](initial-operation-contract-v1.md)为grant/DTO和只读projection分配不重叠写集，旧hash兼容和单outbox为共同fixture。仍需完整服务编译/测试、真实DB及跨仓页面验收；source acceptance与产品验收分开。

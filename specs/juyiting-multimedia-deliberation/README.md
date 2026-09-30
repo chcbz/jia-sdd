@@ -57,3 +57,9 @@
 - 自动进入议事必须读取确切 conversation / initial request，验证 task、assignment、显式目标 Agent，再加载历史/事件；不从列表猜测、不补发首轮。
 - grant 的允许操作集合与首轮 `initialOperation` 必须区分；“允许生成并修改”不等于首轮同时执行两次。当前接口实现缺口仍需独立代码包处理。
 - [本次远端复核](integration-evidence-20260928/branch-followup-verification-20260930.json)只证明四仓分支与 fast ancestry；API 本地 schema-readiness 候选尚未验证/推送，不替换已记录的远端研发 pin。
+
+## 真实首轮会话采用切片（2026-09-30）
+
+[首轮采用与native成果终态源码证据](integration-u1-web-bootstrap-adoption-20260930.md)：Web `0e9be06`，130定向通过（新增35）。已受理首轮可精确挂入同一议事，原生媒体本轮终态只读核对后解除忙碌，领域任务完成不被混淆。**页面点将连接、后端候选验证及真实画鸟流程仍未闭环。**
+
+[首轮动作与完整授权集合合同 v1](initial-operation-contract-v1.md)固定可选selector、旧请求hash兼容、单bootstrap与原键只读恢复；两个独立Owner正在按不重叠写集实现，不把允许操作集合当同时执行的动作清单。
