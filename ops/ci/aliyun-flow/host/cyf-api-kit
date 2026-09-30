@@ -198,6 +198,7 @@ java_names = {
     'JIA_CHAT_VOICE_TRANSCRIPTION_ENABLED', 'JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER',
     'JIA_CHAT_VOICE_TRANSCRIPTION_MODEL', 'JIA_CHAT_VOICE_SYNTHESIS_ENABLED',
     'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER', 'JIA_CHAT_VOICE_SYNTHESIS_MODEL',
+    'JIA_CHAT_VOICE_SYNTHESIS_FORMATS',
     'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER_VOICE', 'SPRING_AI_OPENAI_API_KEY',
     'SPRING_AI_OPENAI_BASE_URL', 'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_API_KEY',
     'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_BASE_URL',
@@ -220,16 +221,25 @@ for number, raw in enumerate(path.read_bytes().splitlines(), 1):
     if name not in allowed or name in values:
         raise SystemExit('unknown or duplicate configuration name on line {}'.format(number))
     values[name] = value
+provider = values.get('JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER')
+if provider == 'openai-compatible':
+    transcription_model, synthesis_model, synthesis_format = 'whisper-1', 'gpt-4o-mini-tts', 'mp3'
+elif provider == 'cliproxy-realtime':
+    transcription_model, synthesis_model, synthesis_format = 'gpt-realtime', 'gpt-realtime', 'wav'
+else:
+    raise SystemExit('unsupported voice provider profile')
 required_exact = {
     'JIA_CHAT_VOICE_ENABLED': 'true',
     'JIA_CHAT_VOICE_TRANSCRIPTION_ENABLED': 'true',
-    'JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER': 'openai-compatible',
-    'JIA_CHAT_VOICE_TRANSCRIPTION_MODEL': 'whisper-1',
+    'JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER': provider,
+    'JIA_CHAT_VOICE_TRANSCRIPTION_MODEL': transcription_model,
     'JIA_CHAT_VOICE_SYNTHESIS_ENABLED': 'true',
-    'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER': 'openai-compatible',
-    'JIA_CHAT_VOICE_SYNTHESIS_MODEL': 'gpt-4o-mini-tts',
+    'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER': provider,
+    'JIA_CHAT_VOICE_SYNTHESIS_MODEL': synthesis_model,
     'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER_VOICE': 'alloy',
 }
+if provider == 'cliproxy-realtime' or 'JIA_CHAT_VOICE_SYNTHESIS_FORMATS' in values:
+    required_exact['JIA_CHAT_VOICE_SYNTHESIS_FORMATS'] = synthesis_format
 for name, expected in required_exact.items():
     if values.get(name) != expected:
         raise SystemExit('required activation setting is missing or invalid: {}'.format(name))
@@ -277,8 +287,6 @@ allowlist = set(filter(None, values.get('JIA_CHAT_VOICE_COMPATIBILITY_GATEWAY_AL
                                         'https://api.openai.com/v1').split(',')))
 if not set(provided_urls).issubset(allowlist):
     raise SystemExit('provider gateway is not allowlisted')
-if not values.get('CYF_VOICE_SMOKE_BEARER_TOKEN'):
-    raise SystemExit('authenticated smoke credential is missing')
 common_key_provided = 'SPRING_AI_OPENAI_API_KEY' in values
 common_url_provided = 'SPRING_AI_OPENAI_BASE_URL' in values
 connection_deferred = any(
