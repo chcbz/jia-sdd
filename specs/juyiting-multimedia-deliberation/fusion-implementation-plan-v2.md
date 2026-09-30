@@ -85,3 +85,11 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 ## 2026-09-30 组合源码验证增量
 
 [ENTRY/finalization/readiness组合候选](integration-u1u3-entry-finalization-20260930.md)已推送API `f93febe9` 并提升研发pin；正常模块357次执行、bounded99项、独立MySQL26项和归属锁验证通过。后续不重复把未变的组合树全部重测当作进展；按exact tree/selector/fixture复用证据，对实际新改动补相关验证。旧弱CHECK识别/授权迁移、真实Java/MySQL生命周期、目标能力协商/页面接线、真实引用/澄清/EDIT/合法费用授权与最终全范围发布验收仍单独施工。无develop/release/生产激活或可验收声明；运行状态仍只在runtime ledger。
+
+## 2026-09-30 schema修复完成与native能力施工
+
+[本次证据](integration-u3-schema-check-truth-20260930.md)关闭精确候选的旧弱CHECK识别及隔离Java/MySQL初始化验证缺口；整套启动、实际旧库授权迁移不合并关闭。
+
+[冻结native合同](native-bounty-capability-contract-v1.md)下一包按仓库隔离并行：API Owner实现声明解析/当前session身份源/只读协商；Web Owner接真实页面点将与原意图恢复；Client Owner由真正启用的执行器/配置生成注册声明。三个写集不涉及schema initializer，遵循Owner自检无Reviewer；精确验证后再提升pin，不把施工任务当第二ledger。
+
+此包是必要前置，不代替合法费用授权、task-file引用入榜与回读、同会话澄清/EDIT和派生产物；当前费用ref为空时禁止付费准入。最后仍必须完整两种接应/Provider/浏览器/版本发布再通知可验收。

@@ -307,3 +307,13 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 ## 20. 2026-09-30 ENTRY/finalization组合源码证据
 
 [组合源码与验证记录](integration-u1u3-entry-finalization-20260930.md)：API研发pin提升到 `f93febe9`/tree`8289c1a3`。正常模块357次测试执行、bounded99项、独立MySQL26项与锁归属实测通过；保留已归因失败，不意味着整套构建/Provider/UI或产品验收完成。真实NULL约束问题已修正；旧实验schema不能据CREATE IF NOT EXISTS视为已迁移。下一步权威目标能力协商、实际页面与task引用、多轮澄清/EDIT/费用授权；仍维持一条会话与平台权威资产，不添加第三套文件系统或强制三轮模型调用。
+
+## 21. 2026-09-30 旧弱约束与实际生命周期补充
+
+[精确源码与证据](integration-u3-schema-check-truth-20260930.md)：`b1e7b068`安全识别旧弱CHECK，不自动迁移；真实MySQL揭示的TEXT/MEDIUMTEXT元数据预期错误已修正。84项正常报告（42本次/42复用），6项真正JDBC/Spring初始化图通过。pre-fence源派生fixture不是生产原始DDL，不将此声明为完整应用启动/旧库迁移。原失败与绑定问题保留。
+
+## 22. 2026-09-30 原生执行能力与费用来源补充
+
+[原生能力施工合同v1](native-bounty-capability-contract-v1.md)冻结agent.register sibling `nativeBountyExecution`、成功当前session/持久身份校验，以及owner只读点将协商。fast-v1 EXECUTE=false保持不可变；原生HTTP执行与fast路由分别证明、服务端准入共享平台会话/资产事实。
+
+能力就绪不等于费用授权。现有reward escrow/hosting/skill/wallet用途不能挪为costAuthorizationRef，当前费用签发桥缺失须真实补齐。原v2点将意图存在时永不legacy降级，404/UNKNOWN仅恢复未知，不能自动重发/生成。本文不因增加声明而缩窄画鸟、参考图、修改与验收目标。

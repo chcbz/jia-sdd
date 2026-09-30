@@ -65,3 +65,9 @@
 [首轮采用与native成果终态源码证据](integration-u1-web-bootstrap-adoption-20260930.md)：Web `0e9be06`，130定向通过（新增35）。已受理首轮可精确挂入同一议事，原生媒体本轮终态只读核对后解除忙碌，领域任务完成不被混淆。**页面点将连接、后端候选验证及真实画鸟流程仍未闭环。**
 
 [首轮动作与完整授权集合合同 v1](initial-operation-contract-v1.md)固定可选selector、旧请求hash兼容、单bootstrap与原键只读恢复；两个独立Owner正在按不重叠写集实现，不把允许操作集合当同时执行的动作清单。
+
+## 当前schema验证与原生能力施工补充（2026-09-30）
+
+[旧弱CHECK识别与真实Java/MySQL证据](integration-u3-schema-check-truth-20260930.md)已验证API `b1e7b068`：正常84项报告（42本次、42复用）及真实6项JDBC/Spring全部通过；不是整套启动、迁移或产品验收。
+
+[原生悬赏能力/点将协商冻结合同](native-bounty-capability-contract-v1.md)新增独立native声明，保留fast-v1 EXECUTE=false；API、Web页面与Client分别施工。task引用/澄清/EDIT/合法费用桥、双接应与真实浏览器仍必须完成。候选版本号按版本计划末尾的远端占用补充重新核实。
