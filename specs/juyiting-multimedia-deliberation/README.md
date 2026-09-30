@@ -101,3 +101,9 @@
 ## 原子参考图创建缺陷已修复（采集时间2026-10-01）
 
 [原子创建真实MySQL与源码整合证据](integration-u1-atomic-reference-intake-source-20261001.md)：API研发pin提升到`083f9846`，20项通过（含实际MySQL2、Spring事务2），零失败/错误/跳过；原catalog失败已修复，历史失败保留。上文“API候选尚未整合”属于旧时点；当前仍默认关闭/无合法费用桥、无真实34产品用例、无发布。
+
+## Provider权限与真实调用前控制
+
+[费用来源与pre-call长期详设补充 v1](provider-authority-and-precall-enforcement-design-v1.md)明确：现有单次executor START不保证单次imagegen调用/扣费；平台template账户需要operator delegation与taskOwner同意，不能只写非空costRef。受控图像adapter及费用wire尚未冻结/实现，不切换Provider或开放费用入口。
+
+[同会话澄清/续办/上一稿修改详设准备](multiround-followup-design-notes-v1.md)列出源码确定的拒绝路径、可复用assetRef与恢复链，以及下一份合同的最小写集；这不是已接通EDIT或已冻结wire。

@@ -98,3 +98,12 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 ## 2026-09-30 native源码整合及当前实施授权补充
 
 [四仓 native 源码基线](integration-u1-native-capability-source-20260930.md)现已通过精确源码验证并更新pin，页面原键恢复与能力协商已接线；真实引用/费用/澄清/EDIT/产品全流程仍按依赖继续，不重复改写旧切片结果。当前用户持续目标是实施后按版本发布、可验收时通知；早期“仅设计/无发布授权”限于当时动作，不阻止达到上线条件后的普通已授权发布。付费调用、生产数据和迁移授权不据此扩展；本次无发布或产品通过。下一包优先需求前可选精确参考图、任务创建/引用关联与合法费用授权桥。
+
+
+## Provider权限与调用前控制的真实依赖
+
+[调用前详设补充v1](provider-authority-and-precall-enforcement-design-v1.md)把实际native源码缺口单独列清：普通executor START只防整次重启，不保证内部只生图一次/只扣费一次。下一费用工作包须先冻结真实operator delegation + owner exact consent + 可执行pre-call adapter合同，再分配Client/API/Web非重叠写集。无真实适配器不开放费用lane，不擅自切换Provider；mock计数回归与实际付费验收分别报告。
+
+原子参考图创建已源码晋升API083f（20通过，含实际MySQL2及事务2）；此处不建立第二份任务台账。[整合证据](integration-u1-atomic-reference-intake-source-20261001.md)保留原缺陷、失败及exact合并树证明。原始宿主时间戳不代表当前日期或发布日期。
+
+[多轮follow-up源码准备](multiround-followup-design-notes-v1.md)是下一合同冻结入口：先落持久澄清/parent lineage与精确conversation-asset resolver，再统一成果卡/composer发送恢复。当前EDIT确定被拒绝，且无真实EDIT-capable bridge；不要只改Web或新造会话规避。

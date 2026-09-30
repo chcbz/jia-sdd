@@ -126,3 +126,14 @@ assignment + grant + 唯一 bootstrap/outbox
 需求前可选图片按[原子受理合同 v1](requirement-reference-intake-contract-v1.md)继续实施；API事务与Web选择器/创建入口各自在隔离worktree。Main真实父表单、真实图片选择器及真实创建composable的两项组合测试已经通过，HTTP仍为隔离夹具，并非已部署API/浏览器/Provider证据。选择器异步替换的具体竞态由原Owner修复，修复后须精确组合树验证，当前远端Web pin未提前提升。
 
 完整34项产品用例仍NOT_RUN。原操作长期保留是安全恢复措施，不是完整错误退出体验；产品发布前还须为确定拒绝、失效参考图等原意图提供有服务端无副作用证明的明确处置，不得以清localStorage、换键或GET404冒充可以新建的证明。本补充不扩展冻结receipt接口，也不授权生产迁移或付费调用。
+
+
+## 9. 原子创建源码晋升与费用门禁详设补充
+
+[四仓远端readback](integration-evidence-20260928/four-repo-remote-readback-after-intake.json)再次确认当前fast HEAD均已包含。该快照SDD `09536f3c`是本补充提交前的精确核验点；宿主时间戳按原值保存，不作为当前日期或发布日期。
+
+最新研发pins：API `083f9846` / tree `fbc21df0`，Web `7821209c` / tree `d829db4c`，Client `1812e5b5` / tree `43029628`。API原子参考图创建20项通过，含实际MySQL2和Spring事务2，零跳过；[证据及历史失败](integration-u1-atomic-reference-intake-source-20261001.md)已便携提交，不重复未变源码验证。当前develop独有仍SDD1/API4/Web4/Client0；voice/Redis4真实修复要在发布前收敛，未执行develop融合或发布。
+
+[Provider权限与pre-call长期详设补充](provider-authority-and-precall-enforcement-design-v1.md)依据实码纠正“一次START等于一次扣费”的误读：现有通用executor内部没有工具调用前计数门禁。平台账户operator delegation和任务owner同意是两个权限事实。拟采用受控图像adapter或可信pre-call gateway的条件路线，尚未选择/切换账户、冻结费用wire或实现门禁；费用仍UNAVAILABLE，不写假costRef或以提示词替代。
+
+后续先冻结合法账户/调用前合同，并补同会话澄清、上一稿/EDIT及恢复；完整34产品用例仍NOT_RUN。完成版本同源制品、双接应及浏览器交付/验收后才能通知用户可验收。

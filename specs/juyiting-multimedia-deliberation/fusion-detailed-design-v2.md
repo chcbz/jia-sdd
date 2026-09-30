@@ -317,3 +317,7 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 [原生能力施工合同v1](native-bounty-capability-contract-v1.md)冻结agent.register sibling `nativeBountyExecution`、成功当前session/持久身份校验，以及owner只读点将协商。fast-v1 EXECUTE=false保持不可变；原生HTTP执行与fast路由分别证明、服务端准入共享平台会话/资产事实。
 
 能力就绪不等于费用授权。现有reward escrow/hosting/skill/wallet用途不能挪为costAuthorizationRef，当前费用签发桥缺失须真实补齐。原v2点将意图存在时永不legacy降级，404/UNKNOWN仅恢复未知，不能自动重发/生成。本文不因增加声明而缩窄画鸟、参考图、修改与验收目标。
+
+## 23. Provider权限与调用前计数的源证据补充
+
+见[长期费用/调用前详设补充 v1](provider-authority-and-precall-enforcement-design-v1.md)。当前START只防整次executor重启，通用Codex进程内部仍缺pre-call门禁；不能把单结果或提示词当单次费用保证。账户operator许可与taskOwner操作同意分别建模；独立受控executor/gateway须有真实适配和明确账户授权，未冻结或启用。此补充不改现有冻结native-v1，不缩窄完整多媒体/双接应/34产品验收目标。
