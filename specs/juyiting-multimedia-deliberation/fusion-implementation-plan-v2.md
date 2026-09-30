@@ -56,3 +56,7 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 按实际整合树进行冲突标记/whitespace/语法、Web与Client相关定向测试；API检查最近build.gradle后通过orchestrator进行必要验证，实际执行范围和失败归因以 `integration-baseline-20260928.md` 为准。
 
 本轮不会为了文档中的未来功能跑付费模型、浏览器生成、真实库迁移或生产构建。没有实测的事项保持NOT_RUN；性能慢只记观测，不新增任意数值硬门槛。无Reviewer，未修改其他任务进程/服务。
+
+## 2026-09-30 入口闭环增量
+
+新增[ENTRY-A/ENTRY-W/ENTRY-I施工包](point-and-start-entry-design-v1.md#5-最小开发包与验证)：从权威当前requirement snapshot读接口接通真实v2点将和自动议事。可以与独立finalization/schema-readiness路径并行，但组件pin须基于已测试候选。此处仅任务定义，不是第二套运行ledger，不改变现有Owner写集或产品验收状态。

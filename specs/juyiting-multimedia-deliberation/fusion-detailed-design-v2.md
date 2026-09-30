@@ -272,3 +272,7 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 持久晋升适配器须核验会话输出完整来源、授权/assignment、字节/MIME/hash/length；hash只是预期pin而非所有权凭据。通过Agent应用服务取得真实producer/work-item/run/lease，再复用正式submit和owner decision；不建立Agent→Chat实现模块循环依赖，不为获lease调用Provider，不删除原权限条件。固定成果/晋升/提交/验收事实分阶段恢复，GET、回放和查询绝不触发新执行。
 
 [Web实作证据](integration-u3-finalization-web-20260930.md)已覆盖原操作恢复、完整回执校验、纯读查询和身份隔离；API正式闭环仍在开发，尚未获得exact候选测试/隔离MySQL/浏览器证据。本节冻结目标合同并记录切片进展，不将34项产品验收从NOT_RUN改为通过。
+
+## 16. 2026-09-30 真实点将入口施工补充
+
+[点将即办理入口详设 v1](point-and-start-entry-design-v1.md)补充权威当前需求读取、v2点将body/原幂等键、grant与task分离、自动进入已有bootstrap会话及unknown恢复。当前Web点将仍是legacy，当前需求revision读接口待实现；成果展示/最终验收UI测试不关闭此入口缺口。原CHAT/INSPECT/EXECUTE授权边界、统一会话/存储和finalization冻结合同不变；34项产品用例维持未验收。
