@@ -6,6 +6,10 @@
 
 **本分支合入 fast-deliberation 作为开发基础，不表示完整多媒体业务已完成或可以直接部署。** 精确源码、实际测试、未关闭风险见 [整合回执](integration-baseline-20260928.md) 与 [U1增量证据](integration-u1-20260929.md)。
 
+## 最新源码整合补充（2026-09-30）
+
+[原生能力协商四仓源码整合](integration-u1-native-capability-source-20260930.md)已同步 API `5668c747` / Web `ab317fa` / Client `1812e5b` 的研发 pin 与远端证明：API 83、Web 144、Client Owner 172 项定向通过。旧交接/切片中的“协商施工中、页面未接线”保留其历史含义，最新状态以此补充和 `integration.yaml` 为准。引用入口仍 EMPTY_ONLY，合法费用授权及完整澄清/EDIT、双接应/Provider/浏览器/版本发布未完成，**不表示可验收**。
+
 ## 阅读顺序
 
 1. [需求方案](spec.md)：用户流程及不做什么。

@@ -93,3 +93,8 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 [冻结native合同](native-bounty-capability-contract-v1.md)下一包按仓库隔离并行：API Owner实现声明解析/当前session身份源/只读协商；Web Owner接真实页面点将与原意图恢复；Client Owner由真正启用的执行器/配置生成注册声明。三个写集不涉及schema initializer，遵循Owner自检无Reviewer；精确验证后再提升pin，不把施工任务当第二ledger。
 
 此包是必要前置，不代替合法费用授权、task-file引用入榜与回读、同会话澄清/EDIT和派生产物；当前费用ref为空时禁止付费准入。最后仍必须完整两种接应/Provider/浏览器/版本发布再通知可验收。
+
+
+## 2026-09-30 native源码整合及当前实施授权补充
+
+[四仓 native 源码基线](integration-u1-native-capability-source-20260930.md)现已通过精确源码验证并更新pin，页面原键恢复与能力协商已接线；真实引用/费用/澄清/EDIT/产品全流程仍按依赖继续，不重复改写旧切片结果。当前用户持续目标是实施后按版本发布、可验收时通知；早期“仅设计/无发布授权”限于当时动作，不阻止达到上线条件后的普通已授权发布。付费调用、生产数据和迁移授权不据此扩展；本次无发布或产品通过。下一包优先需求前可选精确参考图、任务创建/引用关联与合法费用授权桥。
