@@ -74,3 +74,10 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 [Web采用切片](integration-u1-web-bootstrap-adoption-20260930.md)已推送并通过130定向，页面真实点将/完整ENTRY-W尚未完成。下一步接权威当前revision、原key/body持久readback、原操作投影与canonical任务，调用该采用函数；不能补发首轮或据媒体事件本地完成任务。
 
 [初始动作合同 v1](initial-operation-contract-v1.md)为grant/DTO和只读projection分配不重叠写集，旧hash兼容和单outbox为共同fixture。仍需完整服务编译/测试、真实DB及跨仓页面验收；source acceptance与产品验收分开。
+
+
+## 2026-09-30 原点将恢复组件增量
+
+- ENTRY-W恢复组件已源码合入Web `7ac3bbc`：182定向通过，其中45新增；[证据](integration-u1-web-point-and-start-20260930.md)。原key/body、grant!=TaskDTO、纯读/显式恢复、独立fence与身份隔离已补；不代表实际页面已启用。
+- 下一依赖顺序：API readiness修正验证 → finalization/current requirement/projection/initialOperation及selector-only Controller路由整合/回归 → 权威能力协商与页面接线/实际引用关联 → 真实澄清、上一稿/修改和费用授权 → 双接应/Provider/浏览器全范围 → exact版本制品发布及线上验收。
+- 不对未完整业务分支提前合develop/启用/发布；未实测状态不改PASS。实际阶段推进继续使用唯一runtime ledger，不设Reviewer队列。

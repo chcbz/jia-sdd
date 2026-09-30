@@ -294,3 +294,12 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 [首轮采用源码证据](integration-u1-web-bootstrap-adoption-20260930.md)已整合Web，验证actual RequestView/fence再挂接确切会话。`OUTPUT_COMMITTED` 是本次原生创作请求终态，不是需求完成；SSE成果只触发权威只读readback，不代替真实字节/交付/验收事实。此切片尚未接页面v2点将，API新GET/finalization候选未正式验证。
 
 [首轮动作与完整授权集合冻结合同](initial-operation-contract-v1.md)为第17节初始动作缺口固定新字段与hash兼容：grant可允许生成和修改，显式首轮只选择一项，已有outbox保存唯一初始动作；原投影不再由完整集合反向推导。兼容仅限旧请求原本可确定的单动作，不把缺字段/歧义转成默认收费执行。未实现的上一稿/费用授权/修改resolver不得以这一合同声明已可用。
+
+
+## 19. 2026-09-30 原点将恢复组件与页面接线边界
+
+[原点将恢复源码切片](integration-u1-web-point-and-start-20260930.md)固定原body/key，真实需求修订与canonical task先读，原grant/assignment/outbox独立fence后读；采用会话只交接确切已有bootstrap，禁止补发需求。首次明确动作、纯读核对、显式继续原操作是三个不同入口，不做刷新自动POST。
+
+持久意图不是授权；服务端能力协商尚未定义/接通，新组件默认不支持。后续页面接线必须提供权威支持事实、当前身份/目标隔离回调、实际任务资料关联和精确首轮采用，不能用UI开关或测试注入证明执行许可。前端完成事实仍分别是本轮成果、个人归档、正式提交、owner验收和真实task.completed。
+
+本次API只静态候选，不更新pin。初始动作字段须参与Controller v2识别，selector-only不完整请求也不能落入legacy；此缺口独立补测。schema readiness fixture纠正只解决测试条件，不替代正常模块/真实库启动。长期直接执行/澄清/多轮修改与费用授权仍按第17–18节和各冻结合同推进。
