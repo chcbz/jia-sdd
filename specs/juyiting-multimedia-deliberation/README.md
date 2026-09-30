@@ -2,6 +2,8 @@
 
 当前研发分支：SDD / API / Web / Agent Client 四仓 `codex/juyiting-multimedia-deliberation`。
 
+**2026-09-30 本次交付入口**：[长期融合详设交接](fusion-delivery-handoff-20260930.md)汇总精确远端分支核验、完整详设合同导航与开发顺序。fast已合入不等于最新develop已合入，更不等于产品已验收；下文旧切片限制保留对应日期的历史含义。
+
 **本分支合入 fast-deliberation 作为开发基础，不表示完整多媒体业务已完成或可以直接部署。** 精确源码、实际测试、未关闭风险见 [整合回执](integration-baseline-20260928.md) 与 [U1增量证据](integration-u1-20260929.md)。
 
 ## 阅读顺序
