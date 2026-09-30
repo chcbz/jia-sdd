@@ -26,3 +26,7 @@ Do not create a feature directory for local-only refactors unless it changes a p
 ## 2026-09-28 长期融合研发分支
 
 - [juyiting-multimedia-deliberation 长期融合方案](juyiting-multimedia-deliberation/long-term-fusion-plan-20260928.md)：统一议事与受控执行；fast作为轻量策略，不建设第二套聊天系统。四仓 `codex/juyiting-multimedia-deliberation` 是代码整合/设计基线，不是已实现完整媒体闭环。详设v2、实施计划和34项待执行验收位于同目录。
+
+## 典籍阁 Agent 任职与内容维护方案
+
+- `archive-agent-maintenance`：ready / D2，可交接其他 Agent 从 M0 实施。宋江协调或直达任职 Agent，经技能与受控 API 完成多书/不可变版本、草稿校验及授权发布；保留旧阅读、身份隔离和共享执行/存储合同，不扩旧 ItemRef。入口：[实施交接](/home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md)、[详设](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)、[开发计划](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)。84 项业务验收均未执行；仅文档提交，无派发、组件 gitlink/运行台账修改、构建部署或生产激活。
