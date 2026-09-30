@@ -10,6 +10,10 @@
 
 [原生能力协商四仓源码整合](integration-u1-native-capability-source-20260930.md)已同步 API `5668c747` / Web `ab317fa` / Client `1812e5b` 的研发 pin 与远端证明：API 83、Web 144、Client Owner 172 项定向通过。旧交接/切片中的“协商施工中、页面未接线”保留其历史含义，最新状态以此补充和 `integration.yaml` 为准。引用入口仍 EMPTY_ONLY，合法费用授权及完整澄清/EDIT、双接应/Provider/浏览器/版本发布未完成，**不表示可验收**。
 
+## 任务参考图源码融合补充
+
+[本次源码与缺口](integration-u1-task-linked-reference-source-20260930.md)：API `74b4b44e` Owner66定向、Web `7821209` Owner108定向通过并精确FF/push；参考图策略默认关闭，费用仍未授权。原子创建候选的实际MySQL2失败已定位并交回原Owner，未提升该候选；新develop语音修复仍需收敛。源码交付不是发布或完整34项产品验收。
+
 ## 阅读顺序
 
 1. [需求方案](spec.md)：用户流程及不做什么。
