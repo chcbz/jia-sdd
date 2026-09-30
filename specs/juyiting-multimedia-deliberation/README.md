@@ -85,3 +85,8 @@
 
 
 本次参考图施工期间再次核实[四仓当前远端分支](integration-evidence-20260928/branch-reference-intake-verification-20260930.json)，均已包含当前fast；[交接第8节](fusion-delivery-handoff-20260930.md#8-需求参考图施工期间的远端复核2026-09-30)保留候选与产品验收区别，以及确定拒绝原意图的安全处置待办。Web候选仍需修复选择器异步替换竞态并验证组合树，不将两项夹具组合测试视为真实画鸟通过。
+
+
+## 2026-10-01 参考图入口Web整合
+
+[Web精确组合源码证据](integration-u1-reference-intake-web-20261001.md)：远端`84b14a5`，213定向通过，scoped ESLint通过；真实需求表单、真实选择器和真实创建composable已组合验证，选择器异步替换竞态已修复。上文旧候选/施工限制保留对应日期含义。API仍独立验证，不把此Web研发pin当成跨仓联调、资料执行或可验收；native仍EMPTY_ONLY、费用未授权，完整34产品用例NOT_RUN。
