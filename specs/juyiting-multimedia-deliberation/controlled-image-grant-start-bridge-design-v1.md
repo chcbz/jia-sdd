@@ -2,6 +2,8 @@
 
 状态：**下一完整桥接包的详细设计，尚未冻结实施 wire、尚无源码/联调通过**。本文件不修改已冻结 core/native-v1 合同，不启用真实账户。实施前 Owner 必须基于验证后的 API core 精确树核对下面的事务与协议，然后冻结跨仓共同 fixture；不得只给 costAuthorizationRef 填字符串就开放收费。
 
+后续合同补充：[桥接合同 v1](controlled-image-bridge-contract-v1.md)已冻结跨仓wire及共同预期fixture；本文原“拟议/尚未冻结”保留初稿历史含义。wire以补充合同为准，源码、真实测试、费用启用和产品验收仍须分别证明。
+
 ## 1. 与长期融合方案的关系
 
 一个悬赏议事承载 CHAT / INSPECT / EXECUTE；受控 HTTP 是 EXECUTE 的 adapter，不新增聊天系统。明确“画一只鸟”且已受权可直达执行，不强制先调用 fast 模型。资料仍复用 owner 工作空间及精确 task-linked version，输出仍经现有 lease → stage/commit → 持久会话 asset → 可选归档 / 正式交付。

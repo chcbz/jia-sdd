@@ -119,3 +119,9 @@
 core **不等于合法点将/START费用桥或页面闭环**：未选择真实账户/模型，未启用付费，未做34项产品用例、双接应浏览器或版本发布；不通知可验收。
 
 [受控图像Grant/execution/START桥接详设 v1](controlled-image-grant-start-bridge-design-v1.md)补充下一完整桥接的入口wire、aggregate/回滚、一次消费与版本化16输入协议、Web显式同意及三仓写集；拟议wire须先冻结共同fixture，不当作已实现或可收费的接口。
+
+## 合法费用桥：共同 wire 与五组 fixture
+
+[桥接冻结合同 v1](controlled-image-bridge-contract-v1.md)将上一详设的拟议wire固定为独立受控capability/点将/原键读回、同session能力协商、v2 command及仅首次成功START回执，并闭合root-first三段事务、authority查证及16输入边界。[29项共同预期fixture](fixtures/controlled-image-bridge-v1.json)全部NOT_RUN；静态字段/摘要检查及现有Web core issue/BOUND receipt兼容检查通过，**不是桥接实现或34项产品验收通过**。
+
+后端验证环境曾有argparse错误、stale baseline ABI、正常图javac堆不足；保留失败，改为exact-source正常图输出，不以环境错误归因业务或用静态兼容替代真实事务。API core仍须实际验证后整合，Client/API/Web下一包按冻结wire实施；未启用账户/Provider，未发布或通知可验收。
