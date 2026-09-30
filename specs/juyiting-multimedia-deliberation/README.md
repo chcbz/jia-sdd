@@ -18,6 +18,7 @@
 
 - [受权媒体 HEAD / 音频 Range 验证](integration-u3-media-range.md)：API 单段字节范围、无正文 HEAD、416/If-Range；仍需浏览器和正式发布。
 - [回复流内多媒体片段回归](integration-u2-web-reply-stream-parts.md)：`part.ready` 不再被请求状态处理吞掉；仅验证 Web 接收端，不是后端生成 `part.ready` 的证明。
+- [待确认保存操作的恢复](integration-u3-archive-pending-reconcile-20260930.md)：服务端仍 pending 时用户显式复用原键 POST；后端归档接口仍未联通。
 - [工作空间归档服务端原语](integration-u3-workspace-archive-primitive-20260930.md)：可信会话字节及来源校验后可创建 owner-scoped 文件版本；Chat 资产绑定/归档接口尚未接通。
 - [会话成果归档的刷新恢复](integration-u3-archive-resume-20260930.md)：Web 同身份会话内保留原保存幂等键与操作ID；服务端归档仍未实现，不能将本切片视为归档验收。
 - [议事会话内成果展示证据](integration-u2-web-inline-transcript.md)：受权成果组件进入同一聊天滚动区；仍未持久化 `part.ready`，未做浏览器验证。
