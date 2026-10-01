@@ -1,3 +1,5 @@
+**2026-10-01 多稿目录源码已收口**：[Web目录接受](integration-u2-web-request-catalog-source-20261001.md)记录1993/105定向及原四wire失败修复；API索引真实验证仍待完成，不表示产品/发布通过。
+
 **多轮执行下一包（2026-10-01）**：[owner HTTP/每意图授权合同 v1](controlled-image-followup-owner-contract-v1.md)已冻结，含 source-backed preview→issue 漂移校验及独立EDIT授权；仍需实际实现/验证，澄清/资料讨论和完整产品范围不缩减。
 
 # 聚义厅多媒体悬赏议事：融合开发入口
