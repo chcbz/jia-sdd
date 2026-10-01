@@ -35,6 +35,8 @@ v7剩余13项分组：
 
 v8 仅先运行完整 typed11（包括真实隔离MySQL和Spring事务）；沿用原worktree增量缓存、正常依赖/AP图及有据256m daemon，不重跑无关构建。授权执行不等于已通过；a213上的Chat V3/V2/Agent证据仍明确属于父候选，不能自动算成67937全套通过。待本轮结果再确定最小兼容回归范围。API feature pin仍保持87c0，尚未发布或可验收。
 
+v8实际终态：runner 读取 argv 缺失的 `environment` 字段，抛出 `KeyError`，尚未启动Gradle，日志为空、0测试。自有桥已关闭；不是67937源码失败，也不是测试通过。[原始失败证据](integration-evidence-20260928/api-67937-v8-harness-failure-20261001/manifest.json)保留不覆盖。已授权验证Owner在独立v9目录修正环境映射、核验runner所需字段和模拟启动路径后执行一次typed11；不得沿用未修正输入盲重试。
+
 ## 3. 验证效率与证据真实性
 
 - v6记录了128m Gradle daemon的真实堆耗尽；v7仅将该daemon试验性分配改为256m并加逐阶段GC日志，编译器/Test heap、正常Gradle依赖/AP图不变。不是新增资源门禁，也不宣称256m为测得最小值或宿主OOM问题已消失。
