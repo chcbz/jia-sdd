@@ -1,5 +1,5 @@
 feature_id: archive-agent-maintenance
-status: integration-ready
+status: implementing
 owners:
   api: critical_worker
   web: balanced_worker
@@ -25,7 +25,7 @@ source_observation:
   release_evidence: false
 verification:
   documentation:
-    status: current_source_pin_evidence_gate_pass
+    status: prior_delivery_consistency_pass_completion_audit_open
     evidence: evidence/delivery/current-delivery-check.json
     historical_checker_evidence: evidence/documentation/delivery-history-audit/
     note: >-
@@ -83,7 +83,7 @@ release:
   build_origin: null
   artifact_sha256: null
 implementation_handoff:
-  status: source_delivery_integration_ready
+  status: completion_audit_source_gaps_open
   entry: handoff.md
   progress: implementation-baseline.md
   current_delivery: delivery.md
@@ -109,3 +109,9 @@ requested_delivery_remote_check:
   plain_archive_agent_maintenance_ref_exists: false
   root_push_state: verify_after_delivery_commit
   note: Final root push is verified after commit; the commit cannot embed its own SHA.
+
+completion_audit:
+  status: source_gaps_open
+  evidence: completion-audit.md
+  preserves_original_scope: true
+  prior_delivery_consistency_gate_is_not_feature_completion: true
