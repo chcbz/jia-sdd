@@ -91,3 +91,8 @@ Main 实际加载 immutable `4ce7a02e` 的 JS primitive/Vue composable，以 moc
 ## 5. 多稿发现施工合同已冻结
 
 [bounty conversation request index v1](bounty-conversation-request-index-contract-v1.md)定义owner只读GET、scope隔离、已有RequestView复用、fixed-through keyset、晚提交低ordinal从0重扫和Web独立catalog；历史读不依赖ACTIVE grant，不把旧target/assignment稿借权为当前验收。22项预期fixture均NOT_RUN，离线检查只证明示例shape与坏输入拒绝，不证明API/Web业务。API新六叶子路径与既有74路径互不重叠，Web沿用明确多稿接口，不改activeRequest取消焦点。下一步责任Owner实现和实际验证该包，不停留在文档。
+
+
+## 6. 自然答复Client执行包
+
+[typed result v1](typed-deliberation-client-result-contract-v1.md)已冻结：原生outputSchema产出ANSWER/CLARIFY/proposal，以同一chat.message final sidecar原子绑定，不把普通正文解析成执行命令；只流式显示顶层text。sourceRefId仅可选本轮授权目录，不含模型造出的grant/版本/费用/parent。Client实现默认关闭且真实能力声明；API随后须将正文+union纳入finalDigest并持久化pending question/CAS/resume，Web再闭合自然交互。24预期runtime用例均NOT_RUN，离线shape自检不是Provider/用户验收；真实INSPECT未被广告或偷启。
