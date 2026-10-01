@@ -8,6 +8,8 @@
 - 长期统一一个会话、一套 request/turn/event 和权威内容引用；fast 是 CHAT 策略，多媒体按需查阅或执行，不默认全量加载工具/资料、不要求固定三次模型调用。模型提议不能授予执行权限。
 - 实施顺序和逐版出厂条件见[开发计划](fusion-implementation-plan-v2.md)与[分版本计划](versioned-delivery-plan-20260928.md)。自然澄清的 API 原子续办、真实 INSPECT、双接应和完整浏览器闭环仍需完成；旧示例版本号 1.13.45–1.13.47 不得直接用于本特性发布。
 
+**2026-10-01 原子续办完整实施启动**：[业务冻结合同](typed-deliberation-atomic-followup-contract-v1.md)固定自然DISCUSSION、原子final、问题CAS/新CHAT续办和独立执行确认；16共同预期保持NOT_RUN。API26路径（Handler已明确交接）与Web12路径由各自Owner实际施工；每意图授权包d995已交付，094精确组合正在正常图验证，尚未提升。
+
 **2026-10-01 typed final严格校验源码已收口**：[正常图实际38项接受](integration-u2-api-typed-final-validator-source-20261001.md)记录87c0编译及JUnit通过，未关闭原子落库/pending CAS/自然多轮或产品验收。
 
 以下为各历史时点的增量记录，保留原始失败和限制；最新状态以以上入口及集成 pin 为准。
