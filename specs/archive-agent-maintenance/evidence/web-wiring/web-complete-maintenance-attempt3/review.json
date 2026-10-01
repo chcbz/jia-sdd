@@ -1,0 +1,98 @@
+{
+  "reviewed_at": "2026-10-01T13:20:49.234928+00:00",
+  "reviewer": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "reviewed_tree": "5435f01df857a16cf2443b816b7af92fbd5aca1f",
+  "frozen_api_tree": "30f0c7c641c3b7c14ef6afe180541ab95dfa1cc1",
+  "verdict": "REJECT_LOCAL_WEB_SCOPE",
+  "p0": 0,
+  "p1": 5,
+  "p2": 2,
+  "findings": [
+    {
+      "priority": "P1",
+      "description": "ALL_WORKS wire scope rejected by frozen API; UI must use COLLECTION or EXPLICIT_WORKS",
+      "file": "web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue",
+      "lines": [
+        9,
+        33,
+        50,
+        62
+      ]
+    },
+    {
+      "priority": "P1",
+      "description": "Version diff reads nonexistent content fields in actual EditionVersionDTO; passing fixture fabricates content",
+      "file": "web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue",
+      "lines": [
+        46,
+        47
+      ]
+    },
+    {
+      "priority": "P1",
+      "description": "Reader openEdition only selectWork does not set readingOpen/body/focus; return goes to shelf",
+      "file": "web/src/components/juyiting/archive/ArchiveReader.vue",
+      "lines": [
+        775
+      ]
+    },
+    {
+      "priority": "P1",
+      "description": "run and direct block/history/edition loaders do not failclosed on401/403; old sensitive state retained",
+      "file": "web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue",
+      "lines": [
+        56,
+        75,
+        80,
+        81,
+        82
+      ]
+    },
+    {
+      "priority": "P1",
+      "description": "same-work out-of-order edition responses select wrong edition and withdrawal target",
+      "file": "web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue",
+      "lines": [
+        81,
+        83
+      ]
+    },
+    {
+      "priority": "P2",
+      "description": "Reading button must require PUBLISHED and PASSED not only verification PASSED",
+      "file": "web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue",
+      "lines": [
+        20
+      ]
+    },
+    {
+      "priority": "P2",
+      "description": "Appointment summary missing server bindingVersion workScope/workIds requiredSkill",
+      "file": "web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue",
+      "lines": [
+        10
+      ]
+    }
+  ],
+  "tests_passed": 255,
+  "build_exit_code": 0,
+  "confirmed_closures": [
+    "structured blockPUT and metadataPATCH",
+    "fresh validation404",
+    "current appointment waiting snapshot",
+    "Source202 retainedkey COMMITTED consumption",
+    "withdraw null body IfMatch",
+    "FAILED readback no repeatpublish",
+    "three tabs roving focus"
+  ],
+  "verification_missing": [
+    "real API-shaped revision diff",
+    "LibraryPanel to historical reader opening",
+    "direct401/403 fences",
+    "same-work delayed editions",
+    "COLLECTION and EXPLICIT_WORKS exact bodies",
+    "mounted410 preserving private data"
+  ],
+  "whole_feature_accepted": false,
+  "production_deployed": false
+}
