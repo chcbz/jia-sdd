@@ -124,3 +124,8 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 5. **发布与通知**：全部34产品/29桥用例、山寨安顿/自家接应实际验证和浏览器闭环完成后，自检合组件develop，从未占用的实际exact版本发布并核验制品/线上健康与产品。真实费用账户、付费和生产数据授权不从实施授权推导；本特性未发布前不通知“可验收”。
 
 当前typed fixture的24 runtime expectations与request-index的22 expectations保持NOT_RUN，执行后另记exact evidence，不篡改冻结fixture为PASS。1.13.45–1.13.47只是旧候选示例且已有其他发布占用，后续必须重新读取真实版本，不覆盖release分支。
+
+
+## typed final 校验叶子包（2026-10-01）
+
+[服务端严格校验/摘要合同v1](typed-deliberation-api-final-validator-contract-v1.md)和中文黄金fixture已冻结，30 runtime预期尚未运行。新三个叶子路径与现75路径每意图授权Owner互不重叠，可并行实现；只处理exactfacts/union/binding和canonical完整摘要，不碰Handler/Interactions/StepStore。随后完整原子落库/pending question CAS/resume包接线，不能拿纯validator通过代替澄清/自然多轮完成。新版发布按各里程碑适用范围实测，不要求基础版冒充34项完整产品通过；任何“画鸟可验收”通知仍须实际目标版本在线和对应浏览器闭环。
