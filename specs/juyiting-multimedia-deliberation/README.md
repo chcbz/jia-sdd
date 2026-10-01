@@ -1,3 +1,5 @@
+**2026-10-01 请求目录API已收口**：[API目录接受](integration-u2-api-request-index-source-20261001.md)记录9798正常编译及62实际测试（MySQL2）；与Web1993的实时联调/浏览器/产品发布仍待验证。
+
 **2026-10-01 原生自然答复源码已收口**：[Client结果接受](integration-u2-client-typed-result-source-20261001.md)记录2f69/199实际Node及原边界修复；API原子持久化/澄清续办和Web自然输入仍待闭合，INSPECT未启用。
 
 **2026-10-01 多稿目录源码已收口**：[Web目录接受](integration-u2-web-request-catalog-source-20261001.md)记录1993/105定向及原四wire失败修复；API索引真实验证仍待完成，不表示产品/发布通过。
