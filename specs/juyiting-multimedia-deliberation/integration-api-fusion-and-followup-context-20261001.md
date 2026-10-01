@@ -36,3 +36,12 @@ API Owner 已在独占工作树实施 v1 72 精确路径包（源码施工，不
 ## 验收与授权边界
 
 29 桥共同 fixture、34 产品用例仍 NOT_RUN。普通有 refs 的讨论、AVAILABLE/INSPECT、持久澄清及 WAITING_USER 可回复、全媒体/多 lineage、双接应、实际 Provider/浏览器、保存/正式交付/验收/需求完成与 exact 版本发布仍必须闭合。未选择真实账户/模型、未付费调用、未发布/启用，不通知产品可验收。运行状态只在 `docs/implementation/TASKS.yaml#runtime_ledger_json`，本补充不是第二台账。
+
+
+## 后续实际更新：v5 通过及 context v1.1 冻结
+
+此前 v4 失败与缺口记录保留。本次 v5 真实 exit0/BUILD SUCCESSFUL，69 tasks（6 executed/63 UP-TO-DATE）：Voice16XML/120项本轮实际编译执行，全部零失败/错误/跳过；Redis contract 10项含真实 Redis4.0.6 owned-child 用例执行通过。Agent57/Chat25（含MySQL3）UP-TO-DATE，明确复用上节 v4 输入未变的实际 XML，不宣称 v5 重跑82项。
+
+Main逐一核对33XML/源码hash/任务执行与复用标记，确认终态PID缺席，重新读回自有MySQL Unix/TCP同一身份且prefix空。API feature已精确 FF/push/remote readback到 `8121e8d89ad0be13ddb79012b61955bac5ae8caa`，SDD研发pin/gitlink同步；[便携v5/source提升证据](integration-evidence-20260928/api-develop-fusion-v5-source-accepted/manifest.json)保存41原件及逐selector复用边界。源证据只绑定develop parent88da；最新49a三commit/五path语音delta仍待单独收敛，不把旧组合视为最新develop全融合。
+
+Main基于Web真实缺口冻结独立 [owner context v1.1追加合同](controlled-image-followup-owner-context-v1.1.md)：GET current context自己的schemaVersion1，精确九字段（全部ID/版本string，五个版本decimal）与typed错误/业务零写/一致读取/前端fence。已冻结v1原件/72允许路径不改。API Owner继续源码自检/实施，实际GET与Web测试仍NOT_RUN；Main合同决策不冒充Owner源码通过。完整34项产品/29共同fixture仍NOT_RUN，无Provider/付费/上线或可验收声明。

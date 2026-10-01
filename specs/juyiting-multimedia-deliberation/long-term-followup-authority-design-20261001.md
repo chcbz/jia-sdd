@@ -121,3 +121,8 @@ WAITING_USER 允许精确澄清回复和明确讨论，不将全部 composer 禁
 截至本补充：四仓 feature 已包含 fast。API 桥 f89d4de3、Web 8b8c951、Client 71b26ce6 是已推送研发源码；Client v3 43 离线定向通过但强制 disabled、生产 poller 不调度。API develop 融合 8121e8d8 是待组合验证候选，不提前提升 pin。
 
 schema-3 owner HTTP/per-intent/完整澄清续办仍待实现；真实 Provider 账户未选、未付费调用、34产品用例和29共同桥 fixture 仍 NOT_RUN、尚未按本特性发布。**分支/文档交付已完成，完整画鸟产品没有完成，不能通知“可以验收”。**
+
+
+## 9. Owner HTTP 与 pre-preview current context 冻结补充
+
+[owner HTTP v1](controlled-image-followup-owner-contract-v1.md)已冻结 EXECUTE 的 per-intent/source/runtime闭包，不把它误写成全部讨论/澄清已实现。[current context v1.1](controlled-image-followup-owner-context-v1.1.md)追加只读权威 tuple，解决刷新后新意图不能拼 generation/grant/assignment/requirement/target 的真实缺口；context自己的schemaVersion1不替代schema3 intent，读回无权限/字节/Provider/业务写。Web可以依冻结接口独立施工，实际API组合与页面联调后才可声称闭合。
