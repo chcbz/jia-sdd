@@ -1,6 +1,6 @@
 # 最新交付入口（2026-10-01）
 
-**完整实施最新推进**：[真实catalog与原生引擎兼容](integration-catalog-and-native-runtime-progress-20261001.md)：三路径API修复7abc已提交并静态核对，第二轮kernel OOM发生于编译、fresh JUnit为0；新输入改为正常增量依赖+目标Test单独重跑，完整V3/V2/typed回归继续。Client own-key child607d已接受并推送，Owner162 Node及Main原11项probe通过，原继承键失败保留；真实离线native测量只证明版本/schema兼容。INSPECT/双接应/完整浏览器/本特性版本发布仍未完成。
+**完整实施最新推进**：[真实catalog与原生引擎兼容](integration-catalog-and-native-runtime-progress-20261001.md)：API7abc第三轮Agent V3实际39项全部通过，但Chat V3 source-set漏fixture导致3编译错误、JUnit未开始；V2/typed未运行，单路径两行child3063已提交并静态核对，v4原Owner容量不足未执行，实际Terra READY并绑定v5完整验证GO、结果未返回，API未晋升。前轮真实OOM/原失败均保留。Client own-key child607d已接受并推送，Owner162 Node及Main原11项probe通过；真实离线native测量只证明版本/schema兼容。INSPECT/双接应/完整浏览器/本特性版本发布仍未完成。
 
 **统一详设总入口**：[长期融合详设与施工入口](fusion-final-design-entry-20261001.md)汇总单会话/按需能力、双接应输入输出、三用途存储、恢复和开发分工；讨论以冻结 typed v1 为准，执行保持独立 v3，不另实现早期 schema-3 讨论候选。四仓当前 fast 合入有[21:39直接远端证据](integration-evidence-20260928/fusion-feature-fast-remote-readback-20261001-2139.json)，无需重复建分支/merge。
 

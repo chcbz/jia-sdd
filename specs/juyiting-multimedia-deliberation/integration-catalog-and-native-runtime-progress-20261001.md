@@ -81,3 +81,28 @@ Main对真实模块的纯负向probe另发现：registry为plain object，`__pro
 默认/两份登记合同、旧CODEX_APP_SERVER_SCHEMA与wire/fixture未变；own-key修复不改资源测量逻辑，复用ff594真实离线native测量，不重复重资源运行。Main核对exact source/path/log hash及clean tree后，以FF-only、普通非force push晋升Client feature，远端直接回读为607d；SDD Client研发pin同步。证据见同一[便携manifest](integration-evidence-20260928/catalog-and-native-runtime-progress-20261001/portable-manifest.json)的`client-607d/`、`main/client-607d-probes/`及push readback。
 
 这是原生版本兼容的**源码接受**，不是启动或生产安装；INSPECT仍NOT_ENABLED，strictNoToolsVerified仍false。API7abc新第三轮完整验证未返回，不晋升API；完整浏览器/双接应/多媒体正式交付/用户验收及本特性发布仍待实际完成。
+
+
+## 2026-10-01 第三轮API结果：Agent39通过，Chat测试source-set编译失败
+
+`7abc`第三轮实际argv正确移除全局`--rerun-tasks`、各目标Test单独`--rerun`。Agent V3 **39项、9份fresh XML、0fail/error/skip**，Main独立解析原始XML确认；新增legacy-catalog测试已实际运行。其后Chat V3 `compileMmdControlledImageFollowupV3Java`报3处同一未解析fixture引用，JUnit没有开始；**整个V3阶段FAIL、V2和typed11均NOT_RUN，API不晋升**。不是本轮OOM，也不能将39项部分通过当完整后端通过。
+
+实际依赖闭包为V3 `AgentWebSocketControlledImageV3ExecutionTest`→已有`NativeProviderCredentialBindingDeclarationTest`→已有`AgentRuntimeCapabilitiesTest.candidate()`；V3 source-set漏了这两个fixture，V1/V2已经包含。已冻结单路径source-only child：只准`chat/jia-chat-service/build.gradle`补入上述两个已有源，保留全部现有selectors/依赖/AP/resources，不改断言、不借旧class；fixture自身测试自然增加实际数量。Main尚未收到child；新源码exact SHA/tree及后续验证需重新绑定，不能直接重跑旧输入。
+
+第三轮owned schema清理PASS、桥关闭`connect_ex=111`、mysqld PID/start_ticks未变且未操作；关闭前捕获元数据后已没有第二轮EBADF。原始argv/raw、fresh XML、source/class provenance、精准归因和cleanup收进[便携manifest](integration-evidence-20260928/catalog-and-native-runtime-progress-20261001/portable-manifest.json)的`api-7abc-v3-compile-closure-failure/`，Main实际XML核对和最小child矩阵保存于`main/`。
+
+当前接受的组件研发pin仍为API87c0、Webebb、Client607d；源码失败没有覆盖已接受基线。完整功能、INSPECT/双接应/真实浏览器和版本发布继续保持未完成，不发送“可以验收”通知。
+
+
+## 2026-10-01 21:58 依赖闭包child已提交，下一轮验证输入已绑定
+
+`30632a9754ace8e03cdc1f7561ba12237c0f377e` / tree `04d2fddd83a4e86adc21d6aaf2e866de5fa913dc`，parent7abc，clean；仅上述build.gradle增加两行include。Main独立移除新增两行后逐字节等于parent，原production/fixture/assertion与其他构建配置不变。这只是静态接受为验证输入，尚未晋升API feature/pin。
+
+新v4矩阵和唯一ledger绑定3063精确源码，保留正常依赖/AP、目标Test单独`--rerun`、全部V3/V2/typed11；新加入两份fixture必须真实运行并计入fresh XML。已向同一实际Owner投递GO。首次message工具返回owner未找到，没有据此宣称执行开始；恢复同一ID后再投递已受理，保留控制面恢复回执。**当前未收到v4结果**。原第三轮39部分通过/Chat编译失败及历史OOM/前置失败保持原样。
+
+
+## 2026-10-01 22:07 验证路由故障与真实Owner重新绑定
+
+v4原Owner实际报`Selected model is at capacity`，没有v4测试/runner结果，不能宣称已执行或通过。Main保留原始控制面错误并关闭自己的errored Agent，不重试同一路由、不改全局模型配置。新Terra验证-only Owner已实际READY，核对3063 clean/source及完整normal graph，无真实阻塞；经唯一ledger`authorize-remediation`和精确owner/SHA/tree绑定后获v5 GO，使用新的独立证据目录。原Sol/Mini失败保留，不调用DeepSeek，不新建独立Reviewer。
+
+v5保留所有源/依赖/AP、V3新增两份真实fixture、V2和typed11，以及owned桥生命周期/身份/prefix/provenance/fresh XML；模型路由变化不能缩减测试范围。当前仍待真实结果，API feature/pin未提升；本特性未发布、不可通知可验收。两份故障归因/实际Owner矩阵已入上述便携manifest。
