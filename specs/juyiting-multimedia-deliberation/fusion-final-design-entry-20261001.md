@@ -66,6 +66,10 @@ Web：单输入框、会话内容块、精确引用、选择成果、恢复
 
 上述 v1/v3 属于不同协议域，不是要求全平台升到 schema3。旧 `/chat/stream` 禁止 execute hint 获取执行权限的边界继续保留。
 
+### 3.3 真实资料查阅：INSPECT sibling v1
+
+[受权查阅领域合同v1](typed-inspection-authority-contract-v1.md)固定独立inspection admission/原key只读恢复、purpose-scoped machine GET、manifest无自引用摘要、每次读取的当前授权重核，以及新的typed终态v2。复用已有snapshot/request/inbox/typed pending，不新增文件根或第二状态机；旧CHAT v1的NONE/AVAILABLE与route=CHAT不改。领域合同不等于引擎就绪：实际工具/文件系统隔离profile、四种carrier、授权实现和真实双接应仍待完成。设计fixture的12项运行用例均NOT_RUN。
+
 ## 4. 一份内容、三种用途；Agent 工作目录不统一挂载
 
 ```text
