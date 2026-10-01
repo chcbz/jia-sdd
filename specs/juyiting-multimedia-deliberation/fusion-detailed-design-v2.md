@@ -321,3 +321,14 @@ U0/U1→U2→U3→U4 的切片见长期方案；各项明确 commit/tree、selec
 ## 23. Provider权限与调用前计数的源证据补充
 
 见[长期费用/调用前详设补充 v1](provider-authority-and-precall-enforcement-design-v1.md)。当前START只防整次executor重启，通用Codex进程内部仍缺pre-call门禁；不能把单结果或提示词当单次费用保证。账户operator许可与taskOwner操作同意分别建模；独立受控executor/gateway须有真实适配和明确账户授权，未冻结或启用。此补充不改现有冻结native-v1，不缩窄完整多媒体/双接应/34产品验收目标。
+
+
+## 自然交互与多稿发现的长期合同补充（2026-10-01）
+
+本节追加而不改写已冻结协议。[typed result v1](typed-deliberation-client-result-contract-v1.md)明确模型结果通道：只有服务端校验过的snapshot启用native outputSchema，模型返回ANSWER、必要CLARIFY或EXECUTION_PROPOSAL。流式界面仅展示顶层text，原子final同时绑定正文与严格union；plain CHAT黄金wire不变，禁止对普通聊天正文做关键词/JSON解析来授予执行权。
+
+API后续必须同事务保存finalDigest、message/event/outbox和typed事实：相同正文但不同proposal/问题不是幂等重复；来源、目标、dispatch和context hash由服务端重验。CLARIFY保存版本化pending question并进入WAITING_USER，不占长期生成lease；精确回复以问题版本CAS消费并形成唯一续办事实。回复/提议均不能直接生成command或consent，续办重新校验目标、任务、资料与本轮授权。未知回执按原键只读恢复，不再调用模型/生成第二次副作用。API pending/续办wire与DDL仍需责任Owner冻结并实测，本合同不冒充其实现。
+
+[conversation request index v1](bounty-conversation-request-index-contract-v1.md)提供独立权威目录：activeRequest只负责正在处理/取消焦点，成果与历史由多request目录发现。固定through分页只是keyset扫描，不是假称跨页MVCC；晚提交低ordinal由下一轮从0重扫发现，单轮缺失不删除旧稿。历史旧assignment可预览/下载，不借用当前目标/许可供选择、编辑或验收。
+
+这两份追加合同消除的是长期状态/来源边界，不是临时把fast与multimedia互相切换的兼容开关。真实INSPECT、自然输入闭环、API持久续办、双接应和全产品验收仍需完成。

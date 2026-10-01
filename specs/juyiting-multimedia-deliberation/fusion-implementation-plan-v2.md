@@ -111,3 +111,16 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 ## 受控费用 Grant / START 的下一完整桥接包
 
 [桥接详设 v1](controlled-image-grant-start-bridge-design-v1.md)将core之后的缺口收敛为BRIDGE-A/C/W/I：原点将与consent绑定、唯一execution预留、同事务consume+START、受控16项v2命令/回执与显式页面同意，不能只写非空costRef。这是待Owner核对并冻结共同wire fixture的详设，不是源码完成；真实费用账户仍未选择/授权，不推导付费许可。运行状态只记录在主工作区唯一ledger。
+
+
+## 自然讨论与多稿发现的当前实施顺序（2026-10-01）
+
+此处是工作包依赖，不是第二执行ledger；实际Owner/gate只在主工作空间runtime_ledger_json。
+
+1. **互不重叠的源码包**：API 74路径owner/source/per-intent包；API六leaf只读请求目录；Web独立多request catalog；Client原生typed union/stream/atomic final。各包完整自检后交干净child，未完候选不能晋升；不设置Reviewer。
+2. **精确组合验证**：按tree/selector/fixture复用已核验42d的Agent57、Chat25、Voice129，不为未改树全套盲重跑。新API包补正常源图/隔离MySQL、default-off旧schema与v1/v3重启、并发/ACL；Web补实际Vue/Page多稿同名output、read-hint、刷新/晚低ID重扫和迟到fence。Gradle经orchestrator串行、等待不抢占。
+3. **API自然交互闭包**：依据[已冻结Client结果合同](typed-deliberation-client-result-contract-v1.md)冻结服务端可信snapshot/typed final原子持久化及pending question/CAS/原键恢复/resume合同；完整实现并验证，不能将Client-only结果当业务完成。Web再接唯一Hall composer与问题/提议显示，EXECUTE仍走独立owner明确同意/issue/admit，不复制第二套会话。
+4. **真实查阅与全媒体**：固定本轮资料manifest及能力后实现INSPECT，不支持就诚实不可用；验证文本/图片/音频/文件展示、预览/下载/保存，以及正式交付、验收、实际需求完成。历史读和当前写权限分开。
+5. **发布与通知**：全部34产品/29桥用例、山寨安顿/自家接应实际验证和浏览器闭环完成后，自检合组件develop，从未占用的实际exact版本发布并核验制品/线上健康与产品。真实费用账户、付费和生产数据授权不从实施授权推导；本特性未发布前不通知“可验收”。
+
+当前typed fixture的24 runtime expectations与request-index的22 expectations保持NOT_RUN，执行后另记exact evidence，不篡改冻结fixture为PASS。1.13.45–1.13.47只是旧候选示例且已有其他发布占用，后续必须重新读取真实版本，不覆盖release分支。

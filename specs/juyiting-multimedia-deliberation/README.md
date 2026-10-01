@@ -2,6 +2,14 @@
 
 # 聚义厅多媒体悬赏议事：融合开发入口
 
+## 2026-10-01 最新融合设计增量
+
+API `42d6e7e` 已完成正常源图的33XML/211项实际组合核验并推送；此前OOM/runner失败保留历史记录，不表示宿主风险消除。Web已接受基线仍为 `4f21fa42`，多请求目录新候选尚未完成自检，未提升。
+
+长期交互继续是一条会话、按需路由、权威资产多用途，而不是每轮全量加载。[原子 typed result 合同 v1](typed-deliberation-client-result-contract-v1.md)已冻结：原生结构化结果只有ANSWER/CLARIFY/EXECUTION_PROPOSAL，正文与结果在同一final落库；普通正文绝不解析成执行许可。Client源码施工、API问题CAS/续办和Web自然输入尚未完成，INSPECT未就绪。多稿发现按[请求目录合同 v1](bounty-conversation-request-index-contract-v1.md)实现，不再把activeRequest等同全会话成果。
+
+下一阶段按[融合实施计划](fusion-implementation-plan-v2.md#自然讨论与多稿发现的当前实施顺序2026-10-01)推进。文档离线fixture校验不是运行时或产品验收；完整34项、29桥、双接应、浏览器及本特性发布均仍待完成。
+
 ## 2026-10-01 当前交付与实施边界（本轮只读复核）
 
 四仓 `codex/juyiting-multimedia-deliberation` 已建立、推送并包含当前 fast 代码；[精确远端回执](integration-evidence-20260928/fusion-branch-design-current-readback-20261001.json)记录 API `8121e8d8`、Web `8b8c951d`、Client `71b26ce6`。其后 Web 多轮 EXECUTE 切片已接受并推送 `4f21fa42`，见[实际修复证据](integration-evidence-20260928/web-followup-4f21-source-accepted/portable-manifest.json)。长期方案、详设 v2、媒体/存储详设和开发计划已交付，继续使用下文“阅读顺序”，不另建第二套架构合同。
