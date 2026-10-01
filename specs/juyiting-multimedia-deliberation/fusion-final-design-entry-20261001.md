@@ -127,3 +127,19 @@ Web：单输入框、会话内容块、精确引用、选择成果、恢复
 研发 pin：API `87c0acc`、Web `ebb664f`、Client `2f69072`；完整 SHA/tree 以 `integration.yaml` 为准，未通过的 API 组合候选不替换 pin。[最近实际验证记录](integration-typed-receipt-source-adoption-20261001.md)保存 Web 196 通过及基线 lint 问题、API 候选 34 通过/3 真实 MySQL 失败及其余未运行，不冒称完整通过。
 
 本次详设交付不修改运行源码、不合 develop、不发布或触发付费生成。真实 INSPECT、双接应、完整多媒体和浏览器验收仍需闭合，**不能通知“可以验收”**。长期方案见[融合方案](long-term-fusion-plan-20260928.md)，领域详设见[整体 v2](fusion-detailed-design-v2.md)；本文仅收敛导航及后续冻结合同的优先顺序。
+
+
+## 7.1 本次交付复核（2026-10-01 22:35，Asia/Shanghai）
+
+上述第7节保留首次交付时点。本次以[直接远端读回](integration-evidence-20260928/fusion-design-delivery-current-readback-20261001.json)再次核对：SDD、API、Web、Agent Client 四仓均已建立并推送 `codex/juyiting-multimedia-deliberation`，各仓当前 `codex/juyiting-codex-fast-deliberation-context` HEAD 都是该 feature 的祖先，不重复创建分支或制造空 merge。
+
+| 仓库 | 本次核验的远端 feature SHA | fast 合入结果 |
+| --- | --- | --- |
+| SDD（本文补充之前） | `68729a74819ca425e81ebd938e538d11a60dff02` | 已包含 |
+| API | `87c0acc16bef37c35f96f0edbbc078b5ff860a46` | 已包含 |
+| Web | `ebb664fc8a443845577f356d0823bd6368634dfa` | 已包含 |
+| Agent Client | `607d25145efe3d13f996e5fbb5e33a01d7bf2195` | 已包含 |
+
+本次仅补文档和分支核验；组件研发 pin 不变，以 `integration.yaml` 为准。阅读顺序：本文 → 长期融合方案 → 整体详设 v2 / 媒体与存储详设 → 对应后续冻结合同 → 实施计划与验收。整体详设中的候选 HTTP/状态模型若被后续版本化冻结合同替代，按本文第3节选择唯一实施合同，不另建并行协议或状态机。
+
+**本次交付范围完成的是分支、fast 代码融合和长期详设，不是产品开发完成。** 真实 INSPECT、双接应、多媒体全流程和浏览器验收仍未关闭；未执行应用构建、develop 合入、发布、生产迁移或付费生成。下一步按第6节工作包落实，并保留真实测试/发布/用户验收三个独立判定。
