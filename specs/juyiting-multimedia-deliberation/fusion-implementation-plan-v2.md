@@ -141,3 +141,8 @@ U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。
 ## typed final 校验叶子包（2026-10-01）
 
 [服务端严格校验/摘要合同v1](typed-deliberation-api-final-validator-contract-v1.md)和中文黄金fixture已冻结，30 runtime预期尚未运行。新三个叶子路径与现75路径每意图授权Owner互不重叠，可并行实现；只处理exactfacts/union/binding和canonical完整摘要，不碰Handler/Interactions/StepStore。随后完整原子落库/pending question CAS/resume包接线，不能拿纯validator通过代替澄清/自然多轮完成。新版发布按各里程碑适用范围实测，不要求基础版冒充34项完整产品通过；任何“画鸟可验收”通知仍须实际目标版本在线和对应浏览器闭环。
+
+
+## 2026-10-01 回执修复施工补充
+
+按[最新领域实施优先级](integration-typed-receipt-source-adoption-20261001.md)执行：Web ebb 源码已接受；API642e仅候选、V3真实MySQL CHECK失败须新源码修复，完整正常图验证继续作为前置。自然讨论与澄清仍仅 typed schema1 入口，独立执行v3不变；不追加早期schema-3讨论或第二套问题状态机。真实INSPECT、双接应、全部媒体及浏览器正式交付验收仍在完整范围内。Owner/gate只用主工作区唯一台账；此节不记录独立运行状态。
