@@ -27,6 +27,14 @@ v7剩余13项分组：
 
 下一源码包限定7条路径：修复上述两处Java实现及测试装配，保持SQL/DDL、CHECK/FK、事务、身份权限、黄金fixture和强断言。任何超出冻结合同的迁移/授权/事务语义变更不属于该包。修复后先真实跑typed11，按变更影响补兼容回归，不重复跑未变的已验证包。
 
+### 2.1 67937 修复已提交，开始精确候选验证
+
+候选 `67937da02b811b463ba837c8a0f0bc636406df5a` / tree `7a6de5e54f5cf4dd6d12b21f95769aa17f1f666f`，parent 为上述 a213。Main 已核对 clean、精确7路径、SQL与黄金fixture不变以及生产改动范围；[源码核对及原合同](integration-evidence-20260928/api-67937-source-check-20261001/manifest.json)保留摘要。
+
+修复已覆盖前述5组根因，并补充破坏性DDL拒绝、nullable facts摘要、WebSocket回执和服务端请求ID绑定断言。澄清CAS mock 的成功桩使用宽入参，但调用后精确验证 receipt requestId 与捕获的服务端DTO一致，fresh case另固定确定性ID；没有更改生产CAS语义。
+
+v8 仅先运行完整 typed11（包括真实隔离MySQL和Spring事务）；沿用原worktree增量缓存、正常依赖/AP图及有据256m daemon，不重跑无关构建。授权执行不等于已通过；a213上的Chat V3/V2/Agent证据仍明确属于父候选，不能自动算成67937全套通过。待本轮结果再确定最小兼容回归范围。API feature pin仍保持87c0，尚未发布或可验收。
+
 ## 3. 验证效率与证据真实性
 
 - v6记录了128m Gradle daemon的真实堆耗尽；v7仅将该daemon试验性分配改为256m并加逐阶段GC日志，编译器/Test heap、正常Gradle依赖/AP图不变。不是新增资源门禁，也不宣称256m为测得最小值或宿主OOM问题已消失。
