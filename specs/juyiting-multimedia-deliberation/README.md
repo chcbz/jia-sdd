@@ -2,7 +2,7 @@
 
 当前研发分支：SDD / API / Web / Agent Client 四仓 `codex/juyiting-multimedia-deliberation`。
 
-**本轮进展（2026-10-01）**：[API桥源码验证与推送](integration-controlled-bridge-verification-progress.md#api桥源码已验证并推送2026-10-01)：API`f89d4de3`已精确FF/push，Chat25本轮实际通过，Agent57/真实MySQL3复用输入未变的实际通过证据；Web`8b8c951`已融合develop并通过120定向。原失败证据保留。[runtime v3精确来源/EDIT合同](controlled-image-v3-source-wire-contract-v1.md)源码包施工中、声明强制disabled；完整多轮、费用、双接应与34项产品/浏览器验收未完成。
+**本轮进展（2026-10-01）**：[Client v3精确来源/EDIT源码](integration-u2-client-v3-source-edit-20261001.md)已43离线定向通过并精确FF/push到`71b26ce6`，声明强制disabled、不调度生产；[API桥](integration-controlled-bridge-verification-progress.md#api桥源码已验证并推送2026-10-01)`f89d4de3`已推送，Chat25本轮实际通过、Agent57/真实MySQL3复用实际证据；Web`8b8c951`已融合develop、120定向通过。API当前develop语音融合施工中，完整多轮/费用/双接应与34项产品验收未完成。
 
 **2026-10-01 最新执行进展**：[完整桥与develop融合的实际验证](integration-controlled-bridge-verification-progress.md#最新实际验证补充2026-10-01)已保存API桥57项9失败及Web语音组合3失败/lint19项原始便携证据，交回原Owner限定修复；未提升失败候选。分支与长期详设交付不变，完整产品仍未发布/验收。
 
@@ -35,6 +35,7 @@
 1. [需求方案](spec.md)：用户流程及不做什么。
 2. [长期融合方案](long-term-fusion-plan-20260928.md)：统一议事，不保留两个独立聊天系统。
 3. [融合详细设计 v2](fusion-detailed-design-v2.md)：统一入口、授权、路由、上下文、状态机、兼容。
+   - [2026-10-01 多轮与每意图授权详设补充](long-term-followup-authority-design-20261001.md)：资料可用/查阅分层、首轮GEN不能借权EDIT、统一follow-up与实施依赖；具体HTTP/DDL待Owner冻结。
 4. [原 UI / 媒体 / 归档与验收详设](design.md)：未被v2覆盖的合同继续有效。
 5. [融合实施计划 v2](fusion-implementation-plan-v2.md)：U0–U4工作包及Owner/依赖/验证。
 6. [分版本交付与验收计划](versioned-delivery-plan-20260928.md)：候选 1.13.45–1.13.47 的出厂条件与通知标准。
