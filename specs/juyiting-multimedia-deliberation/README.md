@@ -1,3 +1,5 @@
+**多轮执行下一包（2026-10-01）**：[owner HTTP/每意图授权合同 v1](controlled-image-followup-owner-contract-v1.md)已冻结，含 source-backed preview→issue 漂移校验及独立EDIT授权；仍需实际实现/验证，澄清/资料讨论和完整产品范围不缩减。
+
 # 聚义厅多媒体悬赏议事：融合开发入口
 
 当前研发分支：SDD / API / Web / Agent Client 四仓 `codex/juyiting-multimedia-deliberation`。
