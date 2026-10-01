@@ -1,6 +1,6 @@
 # 实施工作包与推进计划（D2）
 
-日期：2026-09-28。状态：**D2 历史 WBS；当前源码交付候选已形成，pins 与验证范围见 delivery.md / integration.yaml**。本文件保留工作包和依赖设计，不作为实时执行台账。当前局部源码、测试证据与剩余缺口见 [implementation-baseline.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md)，机器状态见 [integration.yaml](/home/isp/wsps/cyf/specs/archive-agent-maintenance/integration.yaml)，原始证据见 [evidence/2026-09-30](/home/isp/wsps/cyf/specs/archive-agent-maintenance/evidence/2026-09-30)。84 项业务验收仍全部未执行。
+日期：2026-09-28。状态：**D2 历史 WBS；当前 implementing / NOT_COMPLETE，源码补缺见 completion-audit.md，上一轮局部 pins 与验证范围见 delivery.md / integration.yaml**。本文件保留工作包和依赖设计，不作为实时执行台账。当前局部源码、测试证据与剩余缺口见 [implementation-baseline.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md)，机器状态见 [integration.yaml](/home/isp/wsps/cyf/specs/archive-agent-maintenance/integration.yaml)，原始证据见 [evidence/2026-09-30](/home/isp/wsps/cyf/specs/archive-agent-maintenance/evidence/2026-09-30)。84 项业务验收仍全部未执行。
 
 ## 1. 工作包
 
@@ -57,7 +57,7 @@
 
 ## 5. 下一步可执行动作
 
-源码实现、组件测试与有界 HTTP/JDBC/POSIX/Client fixture 的当前事实见 delivery.md / integration.yaml，历史 WBS 不改写成业务 PASS。下一步是部署前环境/真实 Runtime 全链验证及授权业务验收；具体生产管理者、吴用身份、底本与公共发布用途/自动发布权限必须在业务激活前精确核对。不得因源码推送擅自部署或上架真实典籍。
+源码实现、组件测试与有界 HTTP/JDBC/POSIX/Client fixture 的当前事实见 delivery.md / integration.yaml，历史 WBS 不改写成业务 PASS。当前先补独立审计确认的源码缺口：API 下架/版本/校验恢复 → 等待输入与任职/resolve-input及精确管理接口 → Web 完整管理体验 → 隔离 Runtime/真实 HTTP 开发验证 → 完整逐要求复核。当前有效串行 Writer 与独立只读复审安排以 AGENTS/MODEL_ROUTING.yaml 为准，不沿用本文件历史“不创建 Reviewer”安排。具体生产管理者、吴用身份、底本与公共发布用途/自动发布权限必须在业务激活前精确核对。不得因源码推送擅自部署或上架真实典籍。
 
 
 ## 6. 可执行的交接与依赖 DAG

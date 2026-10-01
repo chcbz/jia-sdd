@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" tests="17" skipped="0" failures="2" errors="0" timestamp="2026-10-01T03:56:51.213Z" hostname="DESKTOP-AANKMQ7" time="43.046">
+  <properties/>
+  <testcase name="nativeLifecyclePersistsStartFailureReplayAndLateTerminalReceipt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.617"/>
+  <testcase name="productionRevocationReplacementAndReassignAdvanceEpochOnceAndFenceOldScope()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.543"/>
+  <testcase name="autoValidatedNativePublishIsAtomicAndLostResponseReplaysOnePublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.623"/>
+  <testcase name="completePreviousMaintenanceSchemaUpgradesAdditivelyAndMalformedBreakpointFailsClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.952"/>
+  <testcase name="withdrawalCasReplacementReplayAndPrivateFactsRemainImmutable()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="1.926">
+    <failure message="org.springframework.dao.DataIntegrityViolationException: StatementCallback; SQL [INSERT INTO archive_work(work_id,title,active_edition_id) VALUES ('work-withdraw','title','edition-a')]; Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_work`, CONSTRAINT `fk_archive_work_active_edition` FOREIGN KEY (`work_id`, `active_edition_id`) REFERENCES `archive_edition` (`work_id`, `edition_id`) ON DELETE RESTRI" type="org.springframework.dao.DataIntegrityViolationException">org.springframework.dao.DataIntegrityViolationException: StatementCallback; SQL [INSERT INTO archive_work(work_id,title,active_edition_id) VALUES ('work-withdraw','title','edition-a')]; Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_work`, CONSTRAINT `fk_archive_work_active_edition` FOREIGN KEY (`work_id`, `active_edition_id`) REFERENCES `archive_edition` (`work_id`, `edition_id`) ON DELETE RESTRI
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:106)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:581)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedPublishedContent(ArchiveMaintenanceConcurrencyMySqlTest.java:824)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedPublishedVersions(ArchiveMaintenanceConcurrencyMySqlTest.java:820)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.withdrawalCasReplacementReplayAndPrivateFactsRemainImmutable(ArchiveMaintenanceConcurrencyMySqlTest.java:682)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_work`, CONSTRAINT `fk_archive_work_active_edition` FOREIGN KEY (`work_id`, `active_edition_id`) REFERENCES `archive_edition` (`work_id`, `edition_id`) ON DELETE RESTRI
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeUpdateInternal(StatementImpl.java:1499)
+	at com.mysql.cj.jdbc.StatementImpl.executeLargeUpdate(StatementImpl.java:2321)
+	at com.mysql.cj.jdbc.StatementImpl.executeUpdate(StatementImpl.java:1369)
+	at org.springframework.jdbc.core.JdbcTemplate$1UpdateStatementCallback.doInStatement(JdbcTemplate.java:569)
+	at org.springframework.jdbc.core.JdbcTemplate$1UpdateStatementCallback.doInStatement(JdbcTemplate.java:566)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 4 more
+</failure>
+  </testcase>
+  <testcase name="repeatableReadRealPublishWinsBeforeWithdrawalAndStaleWorkCasLeavesEditionPublished()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.089">
+    <failure message="org.springframework.dao.DataIntegrityViolationException: StatementCallback; SQL [INSERT INTO archive_work(work_id,title,active_edition_id) VALUES ('work-withdraw','title','edition-a')]; Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_work`, CONSTRAINT `fk_archive_work_active_edition` FOREIGN KEY (`work_id`, `active_edition_id`) REFERENCES `archive_edition` (`work_id`, `edition_id`) ON DELETE RESTRI" type="org.springframework.dao.DataIntegrityViolationException">org.springframework.dao.DataIntegrityViolationException: StatementCallback; SQL [INSERT INTO archive_work(work_id,title,active_edition_id) VALUES ('work-withdraw','title','edition-a')]; Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_work`, CONSTRAINT `fk_archive_work_active_edition` FOREIGN KEY (`work_id`, `active_edition_id`) REFERENCES `archive_edition` (`work_id`, `edition_id`) ON DELETE RESTRI
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:106)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:581)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedPublishedContent(ArchiveMaintenanceConcurrencyMySqlTest.java:824)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.repeatableReadRealPublishWinsBeforeWithdrawalAndStaleWorkCasLeavesEditionPublished(ArchiveMaintenanceConcurrencyMySqlTest.java:754)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_work`, CONSTRAINT `fk_archive_work_active_edition` FOREIGN KEY (`work_id`, `active_edition_id`) REFERENCES `archive_edition` (`work_id`, `edition_id`) ON DELETE RESTRI
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeUpdateInternal(StatementImpl.java:1499)
+	at com.mysql.cj.jdbc.StatementImpl.executeLargeUpdate(StatementImpl.java:2321)
+	at com.mysql.cj.jdbc.StatementImpl.executeUpdate(StatementImpl.java:1369)
+	at org.springframework.jdbc.core.JdbcTemplate$1UpdateStatementCallback.doInStatement(JdbcTemplate.java:569)
+	at org.springframework.jdbc.core.JdbcTemplate$1UpdateStatementCallback.doInStatement(JdbcTemplate.java:566)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 3 more
+</failure>
+  </testcase>
+  <testcase name="reviseContextReturnsExactWorkSnapshotAndConcurrentRevisionChangeBlocksAutoPublish()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.421"/>
+  <testcase name="draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.566"/>
+  <testcase name="explicitResumeCreatesOneHigherEpochPreservesHistoryAndFencesOldRun()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.277"/>
+  <testcase name="revokeWaitingBehindEnsureSeesAndFencesNewlyCommittedGrantUnderRepeatableRead()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.09"/>
+  <testcase name="lateFailureCasFailureRollsBackRunGrantJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.167"/>
+  <testcase name="lateStartCasFailureRollsBackRunJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.082"/>
+  <testcase name="explicitReassignUsesOnlySuppliedCurrentAppointmentAndNewEpoch()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.116"/>
+  <testcase name="expiredProductionFenceResumesAtNextEpochAndExactReplayKeepsOneReplacement()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.215"/>
+  <testcase name="platformAgentRootThenManagerAndEnsureExecutionCompleteWithoutReverseLockDeadlock()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.046"/>
+  <testcase name="persistedConfirmationBindsCanonicalTurnAndAllRetriesReuseOneDurableJob()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.156"/>
+  <testcase name="validationRecoveryReadsOnlyCurrentRevisionAndExactActorScope()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.131"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\Think\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.17.8\f09415827a71be7ed621c7bd02550678f28bc81c\byte-buddy-agent-1.17.8.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

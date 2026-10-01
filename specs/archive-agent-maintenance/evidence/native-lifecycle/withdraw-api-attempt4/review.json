@@ -1,0 +1,42 @@
+{
+  "reviewed_on": "2026-10-01",
+  "reviewer_agent": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "review_kind": "independent_read_only_first_api_repair_package",
+  "tree": "8b8c4665c5eb43b1c0a34b54c9093ab8dff0f424",
+  "verdict": "REJECT_LOCAL_API_SCOPE",
+  "p0": 0,
+  "p1": [
+    {
+      "code": "edition_history_mixed_snapshot",
+      "file": "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java",
+      "start": 221,
+      "end": 231,
+      "reason": "Separate autocommit reads can combine old publication states with newly committed work revision/active pointer",
+      "required_fix": "Short atomic read with current manager then collection/work/publication root ordering, plus real MySQL interleaving test"
+    }
+  ],
+  "p2": [
+    {
+      "code": "withdrawal_outbox_not_dispatched",
+      "reason": "PENDING persisted but no scan/dispatcher/CAS delivered; not required for immediate DB authoritative withdrawal visibility",
+      "boundary": "Do not claim business notification/projection convergence"
+    }
+  ],
+  "focused_tests": {
+    "tests": 184,
+    "failed": 0,
+    "skipped": 0
+  },
+  "archive_regression": {
+    "tests": 270,
+    "failed": 11,
+    "skipped": 0,
+    "introduced": [],
+    "removed": []
+  },
+  "source_tests_run_by_main": true,
+  "application_tests_run_by_reviewer": false,
+  "external_http_runtime_e2e": false,
+  "whole_feature_accepted": false,
+  "repair_returned_to_same_writer": true
+}

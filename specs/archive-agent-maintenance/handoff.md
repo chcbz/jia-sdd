@@ -2,7 +2,7 @@
 
 - **特性名称**：典籍阁 Agent 任职与内容维护
 - **Feature ID**：`archive-agent-maintenance`
-- **设计版本**：D2，2026-09-28；源码交付候选已形成；精确 pins 与远程回执见 integration.yaml / delivery.md，业务验收未完成。
+- **设计版本**：D2，2026-09-28；当前 implementing / NOT_COMPLETE，独立审计确认源码缺口。上一轮局部 pins 与远程回执见 integration.yaml / delivery.md；当前接续先读 completion-audit.md。
 - **文档交付分支**：根仓 `codex/archive-agent-maintenance`。
 - **根仓工作分支**：`codex/archive-agent-maintenance`；组件提交核验后由根仓 pin；不是部署发布。
 - **组件实施状态**：API/Web/Client 的提交/tree、测试和远程回执统一记录在 delivery.md 与 integration.yaml。历史 prospective tree 证据保留；release 仍 not_started。
@@ -45,7 +45,7 @@
 
 ## 4. 完成与授权
 
-每包 Owner 自检，不创建 Reviewer；所有 Gradle 经 orchestrator 串行。测试/构建/发布按执行时有效政策（包括尚有效的本地授权例外），记录 exact SHA/tree、selector、fixture digest、制品摘要与真实健康，不伪造 Flow Run。
+D2 原交接的“每包 Owner 自检，不创建 Reviewer”为历史安排。当前依照 AGENTS 与 MODEL_ROUTING.yaml：唯一 Writer 串行实施，SOURCE FREEZE 后由 Main 全程持共享 Gradle 锁验证，再独立只读复审；Reviewer 不修代码。测试/构建/发布按执行时有效政策（包括尚有效的本地授权例外），记录 exact SHA/tree、selector、fixture digest、制品摘要与真实健康，不伪造 Flow Run。
 
 当前局部实施未启动生产操作。接手后允许的动作仍由用户授权及项目政策决定；真实首任管理员、任职吴用、来源与公共发布用途、额外付费操作必须精确核对。未获生产激活授权时可继续源码与隔离 fixture 工作，不能新增真实典籍后再补授权。
 

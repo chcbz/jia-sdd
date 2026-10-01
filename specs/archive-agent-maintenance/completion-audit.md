@@ -25,3 +25,18 @@ Reviewer于2026-10-01明确返回 **NOT_COMPLETE**：未发现P0，确认4项P1�
 独立阶段未裁定draft block/PATCH与whole-draft PUT等价、operations/{oid}替代、全部84项/M0-M8/U1-U9或真实Runtime/浏览器全链。不得把该局部审计说成全面需求PASS。
 
 下一源码包已授权唯一critical_writer：API withdraw/版本可见性/独立ACL与事务、版本history与当前validation GET；随后Main持锁隔离实库验证，再独立只读复审。WAITING_INPUT/ASSIGNEE/resolve-input、Web完整管理路径和其他精确接口仍需后续补齐。原完整goal保持active。
+## API 补缺包一：候选与实库验证
+
+2026-10-01：唯一 critical_writer 已补新增管理端下架、版本列表/详情、当前 revision 校验 GET 与 Reader 410。候选 source tree 为 `8b8c4665c5eb43b1c0a34b54c9093ab8dff0f424`，组件 HEAD 仍为原 `62223001`；**本候选尚未提交/推送，独立只读复审进行中，不宣布全特性完成**。
+
+Main 全程持共享 Gradle 锁执行四套真实隔离 MySQL：platform74/native6/maintenance104 全 PASS（定向184/184）；archive270/259PASS/11既有FAIL/0skip，Gradle exit1。与 fbc4a8f9 基线直接逐失败比较 introduced=[] / removed=[]，前后同 tree、XML 全部 fresh。原件 `evidence/native-lifecycle/withdraw-api-attempt4/`。
+
+前轮 attempt1 编译错误、attempt2 新 CHECK 单项 IN 的 MySQL 实际等号表达差异、attempt3 测试 FK 初始化顺序/精确断言错误均已保存，未删除失败轮或放宽约束。旧 schema 升级 fixture 的前15表 DDL 逐字节等于62223001的 Git blob，绑定见 `previous-schema-binding.json`；真实升级和畸形断点 fail-closed selector 已运行。
+
+当前范围边界：withdraw audit/outbox 持久 PENDING，未新增 dispatcher；HTTP 此轮为 Controller 合同测试 + 实际 Service/JDBC，不是 live HTTP/Runtime E2E；Web 尚未接入新增合同。后续仍须补等待输入/任职与 resolve-input、剩余精确管理接口、Web 版本/预览/差异/下架/显式范围及 validation 刷新恢复、隔离共享 Runtime 和真实浏览器验证。84业务验收仍全部 not_run，不擅自生产激活。
+
+独立首轮复审结果为 REJECT_LOCAL_API_SCOPE（P0=0/P1=1/P2=1）：editionHistory 非同事务的三段读取可产生旧版本列表与新 workRevision/active 的混合快照，已交回唯一 Writer 补原子读取和实库并发测试。P2 为持久 PENDING 尚无投影 dispatcher，不破坏直接 DB 可见性，但不得声称通知最终收敛。原回执摘要见 attempt4/review.json；其他下架/权限/校验/升级局部项已认可，尚不宣布第一包通过。
+
+首包修复后的 attempt5：tree `16fbbff2e0df67d042142e51ec3c107e802ee0bf`，focused185/185PASS；archive271/260PASS/11既有FAIL/0skip，Gradle exit1，failure delta空、fresh XML、前后同tree。独立复审 **ACCEPT_LOCAL_API_SCOPE，P0/P1=0**，history 混合快照已通过锁定读取和有效 latch 实库测试闭合；outbox P2 边界保持不变。原件 `evidence/native-lifecycle/withdraw-api-attempt5/`。
+
+Main 已保存本地 API commit `05875268c0c8cc991951f2dcb3fef9d29204e702`，其 tree 精确等于 tested/reviewed tree，提交后工作树 clean。**未 push 首包增量、未更新根仓 gitlink/pinned SHA 为未推送提交，不宣称特性完成。** 当前唯一 Writer 已继续第二包 durable WAITING_INPUT/WAITING_ASSIGNEE、resolve-input 与必要 schema/最小聊天接线；剩余精确 draft/operation 接口、Web 和完整开发集成仍在其后串行补齐。
