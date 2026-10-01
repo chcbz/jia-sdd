@@ -1,3 +1,5 @@
+**2026-10-01 真实验证最新补充**：[API多轮/澄清验证](integration-api-strict-wire-runtime-verification-20261001.md)记录a213的Chat V3 33通过、V2 82通过，typed64项中13失败；另明确复用同树Agent39通过。128m daemon堆耗尽、collector/provenance纠正及全部原始失败保留。限定修复继续，失败候选不提升；真实INSPECT/完整多媒体/双接应/浏览器/发布仍未完成。
+
 # 最新交付入口（2026-10-01）
 
 **完整实施最新推进**：[真实catalog与原生引擎兼容](integration-catalog-and-native-runtime-progress-20261001.md)：API7abc第三轮Agent V3实际39项全部通过，但Chat V3 source-set漏fixture导致3编译错误、JUnit未开始；V2/typed未运行，单路径两行child3063已提交并静态核对，v4原Owner容量不足未执行，实际Terra READY并绑定v5完整验证GO、结果未返回，API未晋升。前轮真实OOM/原失败均保留。Client own-key child607d已接受并推送，Owner162 Node及Main原11项probe通过；真实离线native测量只证明版本/schema兼容。INSPECT/双接应/完整浏览器/本特性版本发布仍未完成。
