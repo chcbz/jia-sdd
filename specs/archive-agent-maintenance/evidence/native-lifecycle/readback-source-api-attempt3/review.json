@@ -1,0 +1,27 @@
+{
+  "reviewed_at": "2026-10-01T19:11:07.5794126+08:00",
+  "reviewer": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "reviewed_tree": "ea9dffa9dfe91b77290d97aafd67e01ef207e88a",
+  "verdict": "REJECT_LOCAL_API_SCOPE",
+  "p0": 0,
+  "p1": 1,
+  "p2": 0,
+  "resolved": [
+    "legacy_publication_upgrade_and_bootstrap_durable_readback",
+    "preface_chapter_separate_paragraph_counts"
+  ],
+  "findings": [
+    {
+      "priority": "P1",
+      "file": "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java",
+      "lines": "235-261",
+      "description": "Edition/history returns pre-Reader-IO authorization and publication snapshot combined with post-IO verification; revoke/withdraw during IO can leak or mix facts",
+      "required_fix": "Final short authorized locked snapshot after transaction-external Reader IO; real dual-connection revoke and withdrawal latch coverage"
+    }
+  ],
+  "existing_outbox_pending_dispatcher_gap_preserved": true,
+  "scope": "publication_readback_source202_narrow_review_only",
+  "whole_feature_accepted": false,
+  "source_writes": false,
+  "gradle_executed_by_reviewer": false
+}
