@@ -1,6 +1,6 @@
 # 最新交付入口（2026-10-01）
 
-**本轮真实验证增量**：[自然议事实际验证与修复](integration-typed-natural-actual-verification-20261001.md)记录Web原31项通过但真实7项边界失败，未晋升；API测试DAO最小兼容child已提交、交原Verifier正常图核验。原子typed续办继续施工，产品未发布/验收。
+**本轮真实验证增量**：[自然议事实际验证与修复](integration-typed-natural-actual-verification-20261001.md#4-第二轮真实边界复核2026-10-01-1740北京时间)：Web原七项修复已实测通过，但新同版本OPEN轮询、typed回执负向及189通过/2失败的语音harness遗漏仍待修复；API正常图34通过/3隔离MySQL setup失败，Chat25及82V2未跑。候选未晋升；原子typed续办继续施工，产品未发布/验收。
 
 **本次要求已落实：四仓分支已建立并推送、当前 fast 已包含、长期方案与详细设计已交付。完整功能仍在实施，不表示已发布或可验收。**
 
