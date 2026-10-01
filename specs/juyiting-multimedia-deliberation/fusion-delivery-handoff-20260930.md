@@ -157,3 +157,25 @@ assignment + grant + 唯一 bootstrap/outbox
 - [Provider 调用前控制](provider-authority-and-precall-enforcement-design-v1.md)与[多轮续办设计准备](multiround-followup-design-notes-v1.md)：明确真实费用授权和澄清/EDIT缺口；core合同已冻结不等于真实费用链已实施。
 
 下一可执行步骤：按融合计划领取尚未完成的授权/续办工作包，在独立 worktree 实现并做最小相关自检。后续集成必须收敛上表 develop 独有改动，不能将 fast ancestry 当作最新 develop 完整包含证明。本次不修改任何在途 Owner 源码、运行台账或测试夹具。
+
+
+## 最新分支与详设交付核验（2026-10-01）
+
+本次重新查询四仓远端 feature/fast，并核验当前 fast HEAD 是 feature HEAD 的祖先。新分支和既有合入成果均保留，不制造重复 merge。[精确远端回执及文档静态验证](integration-evidence-20260928/fusion-current-branch-design-readback.json)记录如下提交；SDD 为本回执提交前的观测点。
+
+| 仓库 | 已推送 feature commit | 当前 fast 全部包含 |
+| --- | --- | --- |
+| SDD | `b3287b11d13034174cbefe9897282ad8876c742b` | 是 |
+| API | `99ff1a43a9a02d2c83ad6c6ebf9a131212ce3130` | 是 |
+| Web | `8244f5aca0f4060540cc3e2983bd20382fd14edf` | 是 |
+| Agent Client | `554805226ddfcbe7ab15f499f9d0fa31d035b2f6` | 是 |
+
+**本次请求已交付**：同名 feature 分支、fast 代码合入、长期融合方案、详细设计与开发计划。权威入口仍是本文件第5节及 README 阅读顺序，不另建第二份长期合同。详设覆盖统一 admission、按需上下文/能力、服务端授权、双接应精确输入输出、媒体持久展示/下载、主动归档、正式交付与验收恢复。
+
+本次静态核验9份入口文档的124条相对文件链接、integration.yaml 解析/源码 commit+tree、API/Web gitlinks，均一致；105份便携证据的文件与原始字节摘要一致。重新解析既有 v16 的11份 XML 得到56项、零失败/错误/跳过；这是已执行测试的证据复核，不是本次重新运行测试。原始 Web stdout 的末尾空行保持不动；此前提交的 diff-check 对这些原始证据有3处警告，不冒称全提交 whitespace 检查无警告。本次新增文档 diff 另行静态检查。
+
+**长期决策不变**：同一会话，fast 是轻量 CHAT 策略；资料和工具按当前意图、精确引用及权限加载；明确且已授权的需求可直接执行，只有信息不足才澄清。模型提示词不能授予工具/费用/文件访问权；同一会话不共用带执行权限的模型线程。
+
+**不等于产品完成**：Bridge-A 的 grant/execution/START 完整桥、多轮澄清/续办/上一稿 EDIT、双接应与完整浏览器验收仍须完成；34产品用例及29共同桥 fixture 仍 NOT_RUN。当前没有 develop 合入、版本发布、真实账户选择或付费调用。本次不重复验证未变源码、不改在途 Owner 的代码与运行台账。
+
+下一可执行步骤：实施 Agent 从[融合开发计划](fusion-implementation-plan-v2.md)及[受控费用桥详设](controlled-image-grant-start-bridge-design-v1.md)领取尚未完成的跨仓闭环工作包，按已有共同 fixture 实现、Owner 自检，并提交 exact commit/tree 与实际测试证据。
