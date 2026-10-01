@@ -47,6 +47,14 @@ v8实际终态：runner 读取 argv 缺失的 `environment` 字段，抛出 `Key
 
 下一包冻结为3路径机械修复：Main固定SQL一字节删除，保留全部CHECK谓词/FK/索引；补精确context调用verify，保留no-more-interactions；补语法回归。旧“SQL字节不变”合同保留历史，新合同仅对这一字节显式修订，不授权生产迁移、数据写入或放宽catalog检查。新child提交后再跑typed11，不重复未修正67937。
 
+### 2.3 v10与全量CHECK诊断：62通过，剩余3项目录比对失败
+
+`da047e483c0f1a7bfcd482b179049dcbb49be36e` / tree `cf44abe26ecf1ad01954127c145944c83ae8edac` 已完成一字节SQL修复和精确mock校验。v10实际11份fresh XML、65项、**62通过/3失败/0错误/跳过**；Main独立核对。SQL语法和mock问题已消除，3个MySQL用例现在进入目录检查，在 `chk_chat_typed_proposal_parent` 拒绝；仍未通过完整数据库用例，不能提升候选。
+
+为避免逐个猜修重跑，追加独立临时库诊断，一次捕获全部18个真实CHECK和4份SHOW CREATE；使用exact SQL `98af3d88…`，仅Unix socket，前后核对自有前缀为空，未操作mysqld。静态转写比较定位7条expected常量的括号呈现不匹配；转写诊断不是Java测试通过证据。
+
+Main固定下一包：仅替换7条expected表达式常量为已批准SQL的实际目录呈现，保留全部非括号token及原AND/OR分组语义；不改SQL、归一化算法、检查集合、ENFORCED要求、事务或锁。新增完整18行真实fixture正向和7个AND改OR拒绝测试。原开发Owner在3路径内实施，随后运行Java/真实MySQL验证。[v10、全部目录、静态比较及精确修复合同](integration-evidence-20260928/api-da047-v10-catalog-20261001/portable-manifest.json)保留全过程。
+
 ## 3. 验证效率与证据真实性
 
 - v6记录了128m Gradle daemon的真实堆耗尽；v7仅将该daemon试验性分配改为256m并加逐阶段GC日志，编译器/Test heap、正常Gradle依赖/AP图不变。不是新增资源门禁，也不宣称256m为测得最小值或宿主OOM问题已消失。
