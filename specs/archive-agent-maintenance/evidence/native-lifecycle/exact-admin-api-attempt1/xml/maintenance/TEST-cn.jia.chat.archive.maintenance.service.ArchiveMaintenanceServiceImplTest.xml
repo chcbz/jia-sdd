@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" tests="53" skipped="0" failures="1" errors="0" timestamp="2026-10-01T07:17:25.953Z" hostname="DESKTOP-AANKMQ7" time="0.548">
+  <properties/>
+  <testcase name="cancellationFencesRunAndMakesOldNativeContextUnusable()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.007"/>
+  <testcase name="operationLookupChecksJobOwnerEvenWithCollectionGrant()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.002"/>
+  <testcase name="revokedOrForeignAppointmentNeverQueriesOrLeaksInstalledProof()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.057"/>
+  <testcase name="editionHistoryExposesImmutablePublishAndWithdrawalFactsOnlyToActiveAuthorizedManager()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="managerConfirmationPersistsImmutableServerIntentBeforeCommonRequestAndReplays()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.016"/>
+  <testcase name="nativeFailureReleasesProducerAndExactTerminalReplayUsesReadOnlyReceipt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.008"/>
+  <testcase name="nativeStartClaimsExactMessageAndExactReplayIsStable()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="manualPublishValidatedValidationStillCompletesAndReleasesProducer()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.012"/>
+  <testcase name="offlineTargetStillAllowsCancellationToFencePersistedExecution()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="appointmentSkillReadinessIsReadOnlyAdditiveAndNeverUnlocksExecution()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="validationCannotPassWhenDraftClaimsTextNotPresentInStoredSource()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.059">
+    <failure message="org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent: &#10;Argument(s) are different! Wanted:&#10;archiveMaintenanceStore.appendJobEvent(&#10;    &quot;aj_job&quot;,&#10;    2L,&#10;    &quot;VALIDATION_FINISHED&quot;,&#10;    &lt;any string&gt;&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest.validationCannotPassWhenDraftClaimsTextNotPresentInStoredSource(ArchiveMaintenanceServiceImplTest.java:252)&#10;Actual invocations have different arguments at position [2]:&#10;archiveMaintenanceStore.findJob(&#10;    &quot;aj_job&quot;,&#10;    false&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireJob(ArchiveMaintenanceServiceImpl.java:2339)&#10;archiveMaintenanceStore.findSource(&#10;    &quot;src_1&quot;&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireSourceSnapshot(ArchiveMaintenanceServiceImpl.java:2469)&#10;archiveMaintenanceStore.findManagerGrant(&#10;    ArchiveActorScope[tenantId=0, clientId=client-a, ownerJiacn=owner-a],&#10;    &quot;platform-classics&quot;,&#10;    true&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireManager(ArchiveMaintenanceServiceImpl.java:2314)&#10;archiveMaintenanceStore.findJob(&#10;    &quot;aj_job&quot;,&#10;    true&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireJob(ArchiveMaintenanceServiceImpl.java:2339)&#10;archiveMaintenanceStore.findDraftByJob(&#10;    &quot;aj_job&quot;,&#10;    true&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireDraft(ArchiveMaintenanceServiceImpl.java:2361)&#10;archiveMaintenanceStore.beginOperation(&#10;    ArchiveActorScope[tenantId=0, clientId=client-a, ownerJiacn=owner-a],&#10;    &quot;validate-source&quot;,&#10;    &quot;POST&quot;,&#10;    &quot;/archive/admin/v1/jobs/aj_job/validate&quot;,&#10;    &quot;b275cc3e1fd59369adf26b216d0196140480d9a5c0ec5b25151a8c1bef346cf7&quot;,&#10;    &quot;VALIDATION&quot;,&#10;    &quot;val_ba48deac360441378db850f8ebf68f5d&quot;&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.operation(ArchiveMaintenanceServiceImpl.java:2986)&#10;archiveMaintenanceStore.insertValidation(&#10;    ArchiveValidationRecord[validationId=val_claim, draftId=ad_draft, draftRevision=1, outcome=FAILED, validationDigest=278f4babfe2b7b5934c91bec28fc50f03ba039fcbd1cbaeef48309e4e7129398, findingsJson=[&quot;title one has an invalid byte range&quot;,&quot;title one does not match the exact source bytes&quot;,&quot;paragraph one/1 has an invalid byte range&quot;,&quot;paragraph one/1 does not match the exact source bytes&quot;,&quot;title two has an invalid byte range&quot;,&quot;title two does not match the exact source bytes&quot;,&quot;paragraph two/1 has an invalid byte range&quot;,&quot;paragraph two/1 does not match the exact source bytes&quot;,&quot;source bytes are not fully accounted for&quot;]]&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2089)&#10;archiveMaintenanceStore.updateDraft(&#10;    &quot;ad_draft&quot;,&#10;    1L,&#10;    1L,&#10;    &quot;CHANGES_REQUIRED&quot;,&#10;    &quot;{&quot;blocks&quot;:[{&quot;blockType&quot;:&quot;CHAPTER&quot;,&quot;blockKey&quot;:&quot;one&quot;,&quot;ordinal&quot;:1,&quot;title&quot;:&quot;第一回&quot;,&quot;titleSourceRanges&quot;:[{&quot;startByte&quot;:0,&quot;endByte&quot;:9}],&quot;paragraphs&quot;:[{&quot;ordinal&quot;:1,&quot;text&quot;:&quot;甲&quot;,&quot;sourceRanges&quot;:[{&quot;startByte&quot;:9,&quot;endByte&quot;:12}]}]},{&quot;blockType&quot;:&quot;CHAPTER&quot;,&quot;blockKey&quot;:&quot;two&quot;,&quot;ordinal&quot;:2,&quot;title&quot;:&quot;第二回&quot;,&quot;titleSourceRanges&quot;:[{&quot;startByte&quot;:12,&quot;endByte&quot;:21}],&quot;paragraphs&quot;:[{&quot;ordinal&quot;:1,&quot;text&quot;:&quot;乙&quot;,&quot;sourceRanges&quot;:[{&quot;startByte&quot;:21,&quot;endByte&quot;:24}]}]}],&quot;excludedSourceRanges&quot;:[]}&quot;,&#10;    &quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&quot;,&#10;    null,&#10;    null&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2093)&#10;archiveMaintenanceStore.updateJobState(&#10;    &quot;aj_job&quot;,&#10;    1L,&#10;    &quot;NEEDS_CHANGES&quot;,&#10;    null,&#10;    null&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2098)&#10;archiveMaintenanceStore.appendJobEvent(&#10;    &quot;aj_job&quot;,&#10;    2L,&#10;    &quot;HUMAN_VALIDATION_FINISHED&quot;,&#10;    &quot;{&quot;draftRevision&quot;:&quot;1&quot;,&quot;outcome&quot;:&quot;FAILED&quot;,&quot;validationId&quot;:&quot;val_claim&quot;,&quot;actorType&quot;:&quot;HUMAN&quot;,&quot;actorId&quot;:&quot;owner-a&quot;,&quot;authorizationRevision&quot;:&quot;3&quot;}&quot;&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2114)&#10;archiveMaintenanceStore.commitOperation(&#10;    ArchiveActorScope[tenantId=0, clientId=client-a, ownerJiacn=owner-a],&#10;    &quot;validate-source&quot;,&#10;    &quot;val_claim&quot;&#10;);&#10;-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2122)&#10;" type="org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent">Argument(s) are different! Wanted:
+archiveMaintenanceStore.appendJobEvent(
+    &quot;aj_job&quot;,
+    2L,
+    &quot;VALIDATION_FINISHED&quot;,
+    &lt;any string&gt;
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest.validationCannotPassWhenDraftClaimsTextNotPresentInStoredSource(ArchiveMaintenanceServiceImplTest.java:252)
+Actual invocations have different arguments at position [2]:
+archiveMaintenanceStore.findJob(
+    &quot;aj_job&quot;,
+    false
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireJob(ArchiveMaintenanceServiceImpl.java:2339)
+archiveMaintenanceStore.findSource(
+    &quot;src_1&quot;
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireSourceSnapshot(ArchiveMaintenanceServiceImpl.java:2469)
+archiveMaintenanceStore.findManagerGrant(
+    ArchiveActorScope[tenantId=0, clientId=client-a, ownerJiacn=owner-a],
+    &quot;platform-classics&quot;,
+    true
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireManager(ArchiveMaintenanceServiceImpl.java:2314)
+archiveMaintenanceStore.findJob(
+    &quot;aj_job&quot;,
+    true
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireJob(ArchiveMaintenanceServiceImpl.java:2339)
+archiveMaintenanceStore.findDraftByJob(
+    &quot;aj_job&quot;,
+    true
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.requireDraft(ArchiveMaintenanceServiceImpl.java:2361)
+archiveMaintenanceStore.beginOperation(
+    ArchiveActorScope[tenantId=0, clientId=client-a, ownerJiacn=owner-a],
+    &quot;validate-source&quot;,
+    &quot;POST&quot;,
+    &quot;/archive/admin/v1/jobs/aj_job/validate&quot;,
+    &quot;b275cc3e1fd59369adf26b216d0196140480d9a5c0ec5b25151a8c1bef346cf7&quot;,
+    &quot;VALIDATION&quot;,
+    &quot;val_ba48deac360441378db850f8ebf68f5d&quot;
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.operation(ArchiveMaintenanceServiceImpl.java:2986)
+archiveMaintenanceStore.insertValidation(
+    ArchiveValidationRecord[validationId=val_claim, draftId=ad_draft, draftRevision=1, outcome=FAILED, validationDigest=278f4babfe2b7b5934c91bec28fc50f03ba039fcbd1cbaeef48309e4e7129398, findingsJson=[&quot;title one has an invalid byte range&quot;,&quot;title one does not match the exact source bytes&quot;,&quot;paragraph one/1 has an invalid byte range&quot;,&quot;paragraph one/1 does not match the exact source bytes&quot;,&quot;title two has an invalid byte range&quot;,&quot;title two does not match the exact source bytes&quot;,&quot;paragraph two/1 has an invalid byte range&quot;,&quot;paragraph two/1 does not match the exact source bytes&quot;,&quot;source bytes are not fully accounted for&quot;]]
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2089)
+archiveMaintenanceStore.updateDraft(
+    &quot;ad_draft&quot;,
+    1L,
+    1L,
+    &quot;CHANGES_REQUIRED&quot;,
+    &quot;{&quot;blocks&quot;:[{&quot;blockType&quot;:&quot;CHAPTER&quot;,&quot;blockKey&quot;:&quot;one&quot;,&quot;ordinal&quot;:1,&quot;title&quot;:&quot;第一回&quot;,&quot;titleSourceRanges&quot;:[{&quot;startByte&quot;:0,&quot;endByte&quot;:9}],&quot;paragraphs&quot;:[{&quot;ordinal&quot;:1,&quot;text&quot;:&quot;甲&quot;,&quot;sourceRanges&quot;:[{&quot;startByte&quot;:9,&quot;endByte&quot;:12}]}]},{&quot;blockType&quot;:&quot;CHAPTER&quot;,&quot;blockKey&quot;:&quot;two&quot;,&quot;ordinal&quot;:2,&quot;title&quot;:&quot;第二回&quot;,&quot;titleSourceRanges&quot;:[{&quot;startByte&quot;:12,&quot;endByte&quot;:21}],&quot;paragraphs&quot;:[{&quot;ordinal&quot;:1,&quot;text&quot;:&quot;乙&quot;,&quot;sourceRanges&quot;:[{&quot;startByte&quot;:21,&quot;endByte&quot;:24}]}]}],&quot;excludedSourceRanges&quot;:[]}&quot;,
+    &quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&quot;,
+    null,
+    null
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2093)
+archiveMaintenanceStore.updateJobState(
+    &quot;aj_job&quot;,
+    1L,
+    &quot;NEEDS_CHANGES&quot;,
+    null,
+    null
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2098)
+archiveMaintenanceStore.appendJobEvent(
+    &quot;aj_job&quot;,
+    2L,
+    &quot;HUMAN_VALIDATION_FINISHED&quot;,
+    &quot;{&quot;draftRevision&quot;:&quot;1&quot;,&quot;outcome&quot;:&quot;FAILED&quot;,&quot;validationId&quot;:&quot;val_claim&quot;,&quot;actorType&quot;:&quot;HUMAN&quot;,&quot;actorId&quot;:&quot;owner-a&quot;,&quot;authorizationRevision&quot;:&quot;3&quot;}&quot;
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2114)
+archiveMaintenanceStore.commitOperation(
+    ArchiveActorScope[tenantId=0, clientId=client-a, ownerJiacn=owner-a],
+    &quot;validate-source&quot;,
+    &quot;val_claim&quot;
+);
+-&gt; at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$validateAuthorized$0(ArchiveMaintenanceServiceImpl.java:2122)
+
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest.validationCannotPassWhenDraftClaimsTextNotPresentInStoredSource(ArchiveMaintenanceServiceImplTest.java:252)
+</failure>
+  </testcase>
+  <testcase name="expiredExecutionReplayFencesDurablyWithoutOnlineTargetOrReadmission()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.006"/>
+  <testcase name="waitingIntentBindsFirstDirectTargetAndRejectsRetargetOrDifferentCurrentAppointment()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.015"/>
+  <testcase name="changedManagerAuthorizationRevisionFencesAdmissionAndNativeBeforeProofInspection()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="validationReadReturnsOnlyExactCurrentRevisionForOwningActor()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.003"/>
+  <testcase name="exactExecutionGrantIsPersistedOnceAndCommittedReplayDoesNotAllocateAgain()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.011"/>
+  <testcase name="recoveryContextHidesForeignJobsAndRequiresJobManage()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="autoPublishValidatedValidationRetainsProducerOnlyForNativePublish()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.019"/>
+  <testcase name="nativeWriteRequiresExactPersistedGrantCommandAttemptEpochAndCurrentProof()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.007"/>
+  <testcase name="slotAndAppointmentHistoryDoNotExposeForeignOwners()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.006"/>
+  <testcase name="restrictedRequestRejectsSourceAndPublicationWideningBeforeStoreAccess()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.006"/>
+  <testcase name="managerRevocationPreflightsExactActorLocksAgentFirstAndFencesCurrentRuns()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.007"/>
+  <testcase name="withdrawalUsesIndependentPermissionWorkCasExplicitPointerAndExactReplay()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.008"/>
+  <testcase name="waitingInputsAreFrozenScopedAndNativeExecutionRemainsFailClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.006"/>
+  <testcase name="terminalReceiptRequiresPersistedStartedMessageToMatchCurrentDelivery()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="waitingJobCanBeCancelledWithoutInventingOrFencingARun()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="ordinaryReaderCannotManageAndIsNeverAutoPromoted()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="sameConfirmedIntentAcrossAllEntriesAndSameTurnRetryReturnsOneDurableJob()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.011"/>
+  <testcase name="resolveInputRejectsRevokedManagerChangedAppointmentAndForeignSource()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.007"/>
+  <testcase name="draftCasRejectsStaleRevisionAndSuccessfulWriteInvalidatesValidation()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.021"/>
+  <testcase name="operationLookupExposesOnlyAuthorizedAdminIntentAndPreservesPending()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="sourceSnapshotUsesServerComputedBytesAndOwnerBoundStorageNotCallerDigestAlone()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.012"/>
+  <testcase name="eventFeedIsAuthorizedPerCollectionAndCursorNeverLeaksForeignJob()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="revokedAppointmentRejectsNativeContextAndThereIsNoRuntimePublishServiceMethod()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="nativeStartRejectsNonCurrentMessageWithoutClaiming()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="jobManageWithoutJobCreateOrAppointReadsJobsEventsAndExactRecoverySnapshots()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="pendingIdempotencyRecordCannotBeReplayed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="publishedJobCannotBeCancelledOrRewritten()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="exactBlockAndPatchPersistImmutableNullableSnapshotsAndHumanTakeoverNeedsNoAppointment()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.039"/>
+  <testcase name="restrictedRequestRejectsOperationWorkAndNewWorkChangesBeforeStoreAccess()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.003"/>
+  <testcase name="draftOnlySuccessfulRuntimeValidationCompletesRunAndReleasesGrant()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.013"/>
+  <testcase name="withdrawalHidesForeignScopeAndDoesNotFollowPublishOrAgentAuthority()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.004"/>
+  <testcase name="corruptedStoredSourceBlocksValidatedPublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.009"/>
+  <testcase name="currentDeliveryMessageFencesRunningProducerFailureAndResultBeforeMutation()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.006"/>
+  <testcase name="managementGrantDoesNotRevealOrModifyOtherOwnersJobsInSameCollection()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="sourceReservationSurvivesRetryAndCommittedReplayDoesNotStoreAgain()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.006"/>
+  <testcase name="missingSourceAndAssigneeCreateDurableWaitingJobThenResolveExactCandidateWithoutDispatch()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.01"/>
+  <testcase name="chatConfirmationBindsOneCanonicalServerTurnAndRejectsForeignOrDriftedReuse()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.011"/>
+  <testcase name="directRequestRequiresExactCurrentAppointedAgentBeforeIncompleteInputCanWait()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.006"/>
+  <testcase name="executionIsDefaultOffEvenWhenAResolverWouldReportVerified()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.002"/>
+  <testcase name="resolveInputOperationLookupRequiresExactJobTargetOwnerAndCurrentManageGrant()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.005"/>
+  <testcase name="publishesValidatedTwoChapterEditionWithoutPrefaceInOneTransactionShape()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.021"/>
+  <testcase name="publicationReplayReturnsOriginalOnlyForSameCommittedKeyAndRevision()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImplTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

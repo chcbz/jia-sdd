@@ -55,3 +55,15 @@ Main 全程持共享锁执行四套真实隔离 MySQL：platform74/native6/maint
 修复后 attempt5：tree d15130e3，platform74/native6/maintenance117，定向 **197/197PASS**；archive283/272PASS/11既有FAIL/0skip，Gradle exit1。相对首包直接 failure delta空，前后同tree、XML fresh。CHECK负向测试已确认约束名称（不是FK假绿），两项真实latch撤权排序已运行。独立只读窄复审进行中，未提交/推送第二包，整项goal仍active。
 
 第二包最终窄复审 **ACCEPT_LOCAL_API_SCOPE，P0/P1/P2=0**。Main已保存本地API commit **a1c39dcf04f91102879c1a73bb9e0a44ffb2a851**，tree精确等于tested/reviewed d15130e3，提交后clean；尚未push、Root gitlink与pinned SHA保留远程62223001。原件 attempt5/review-final.json。当前唯一Writer继续第三包六条精确draft/operation接口、管理作品枚举（active=null仍可管理历史）及D2管理者以新human授权接管撤任Agent合法草稿；Web和开发Runtime全链仍在其后。整项不宣布complete。
+
+## API 补缺包三：精确管理合同候选
+
+唯一 Writer 已冻结第三包 tree `b90e85b59bb51fc9ea1f1471ac6a6b6f4b8f715d`（base a1c39dcf）：六条精确 draft/operation 路由、当前管理作品枚举、同事务不可变 operation receipt，以及以当前 human manager 授权接管撤任 Agent 合法草稿。Main attempt1 实库编译通过，platform74/native6PASS；maintenance121/1FAIL，archive287/12FAIL（11既有+1新增），前后同tree/fresh XML。新增失败来自旧 job-aggregate `VALIDATION_FINISHED` 被重命名为 human 前缀，而非 source 校验被放宽。已回交 Writer 保留旧事件类型并仅追加 human 审计事实；不改旧负例来假绿。原件 `evidence/native-lifecycle/exact-admin-api-attempt1/`。
+
+### 逐 D2 收口中额外确认的源码缺口
+
+2026-10-01 源码只读观察：`ArchiveMaintenanceServiceImpl.publicationDto` 仍将 `readbackState` 固定为 PENDING；maintenance schema 尚无持久 readback 结果、检查项及核验时间。历史跨组件 fixture 曾真实 GET Reader 成功，但不能替代 D2§10.2 要求的 publication/operation 独立持久读回事实。后续须补“提交后服务读回成功/失败均可查询，失败不撤销已提交发布/不重复激活”链，不以生产未授权掩盖该源码缺口。
+
+另需按完整管理合同复核固定来源上传状态：D2§7.2 列为202 source operation，当前 Controller 为201同步READY source DTO且无operationId。保留当前源码/设计事实，后续明确实现一致性，不能只检查方法和路径便当整个合同PASS。尚不宣布所有管理接口/整体API或完整特性开发完成。
+第三包兼容性窄修后的 attempt2：tree **f50f84630c6eeddd659f69102eff070a2f5195aa**，platform74/native6/maintenance121，定向 **201/201PASS**；archive287/276PASS/11既有FAIL/0skip，Gradle exit1。Main 已独立 snapshot XML、前后 source freeze 和直接失败集合比较：XML fresh、source unchanged、introduced=[] / removed=[]。原件 `evidence/native-lifecycle/exact-admin-api-attempt2/`。当前独立只读复审正在进行；本包尚未提交/推送，不宣称完整合同或整项特性完成。发布读回与来源202合同仍作为下一串行源码包。
+第三包 attempt2 独立只读审查 **REJECT_LOCAL_API_SCOPE，P0=0/P1=1/P2=2**。P1：validate 幂等摘要依赖当前可变草稿内容，首次校验成功→合法编辑→原 key/原 revision 重试会错误冲突而非回放原 receipt。P2：exact validate 事件前缀与标准类型分歧；managed works 将 CANCELLED 维护单当作 pendingJobId。原件摘要 `exact-admin-api-attempt2/review.json`。已交唯一 Writer 窄修及新增真实实库负例，尚未激活 readback/source202 或 Web 包。201PASS不抵消此次发现，不提交/推送被拒候选。

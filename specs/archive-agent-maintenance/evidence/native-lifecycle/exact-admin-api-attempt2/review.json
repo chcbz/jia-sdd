@@ -1,0 +1,33 @@
+{
+  "reviewed_at": "2026-10-01T15:52:17.4181652+08:00",
+  "reviewer": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "reviewed_tree": "f50f84630c6eeddd659f69102eff070a2f5195aa",
+  "verdict": "REJECT_LOCAL_API_SCOPE",
+  "p0": 0,
+  "p1": 1,
+  "p2": 2,
+  "findings": [
+    {
+      "priority": "P1",
+      "file": "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java",
+      "line": 1243,
+      "description": "validate requestSha uses mutable current draft content; original key/revision after edit conflicts instead of replaying immutable result"
+    },
+    {
+      "priority": "P2",
+      "file": "api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java",
+      "line": 1288,
+      "description": "exact validate event type diverges from stable VALIDATION_FINISHED contract"
+    },
+    {
+      "priority": "P2",
+      "file": "api/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java",
+      "line": 325,
+      "description": "CANCELLED jobs incorrectly appear as pendingJobId"
+    }
+  ],
+  "scope": "exact_admin_draft_operations_human_takeover_managed_works_schema_only",
+  "whole_feature_accepted": false,
+  "source_writes": false,
+  "gradle_executed_by_reviewer": false
+}
