@@ -26,3 +26,13 @@ API AgentWebSocketHandler 在 persistFinal 事务提交后发送既有 agent_mes
 `processor-native-final-restart-v1` 运行通过：真实 AgentMessageProcessor 接受 INSPECT → runTypedInspection 接受响应丢失 → processor 调 recoverTypedInspection 查原生终态 → final 持久化 → 重建 processor/inbox 实例 → 重放相同 final。引擎启动 1 次、原生 readback 1 次、发送 2 次且内容及 ID 一致。唯一预期拒绝记录为 TURN_ACCEPTANCE_UNKNOWN。
 
 核对 Git 对象时发现 chat-runtime 已含 Owner 正在实施的 ACK 改动，与 `3f76d29` 不同；已中止将其绑定该提交。四源码测试前后观测摘要一致，仅按记录的工作源码摘要保存，不宣称整体候选通过。引擎与 WS 仍是替身，结果仍未获服务端确认。冻结源码后才能据 exact tree 补完 ACK 及端到端验收。
+
+## 冻结回执消费增量：8907400 已进入特性分支
+
+[固定源码及原始测试清单](integration-evidence-20260928/client-final-ack-8907400/manifest.json)。Client 特性分支已 fast-forward 并远端 readback `8907400eccb3601c6c096e3cfdd9b6216910ef84` / tree `96cc59a2963600de0c6a04e18a56eaa382354017`；仅源码集成，默认关闭，未合 develop、安装或发布。
+
+原有 agent_message_saved 现在按唯一已持久 INSPECT final 及目标 profile 绑定确认，持久终态后清重试；拒绝错误绑定/歧义/无准备结果/终态冲突。37项chat-runtime回归、4项ACK定向、3项processor恢复和1项typed恢复通过；存在重叠，未执行项按原日志 skip 保留，不能合计成唯一用例数。初次失败日志仍保留。
+
+主 Owner 从 git archive 冻结源码执行真实 processor/runtime/inbox 交叉验证：接受响应未知→原生readback→落盘→发送失败→重建实例→相同final重放→早于发送返回的重复服务端回执→confirmed归档。启动/readback各1次，recovery记录与重试timer均为0，四源码摘要已核对Git对象。该回执、引擎与传输为替身，**不是实际API事务或模型理解验收**。
+
+后续仍需真实API/Agent/媒体理解、双接应、完整浏览器及按版本发布；此前原生握手成功不提升为整个8907400候选的原生运行通过。
