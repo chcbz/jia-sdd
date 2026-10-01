@@ -1,0 +1,41 @@
+{
+  "scope": "actual immutable Web4ce7 primitive and Vue composable probe using mock HTTP only; no Provider/production/browser/product PASS",
+  "results": [
+    {
+      "case": "4000 Unicode codepoints remain legal",
+      "expected": true,
+      "actual": false,
+      "codepoints": 4000,
+      "UTF16CodeUnits": 8000
+    },
+    {
+      "case": "ISO control LF is rejected before preview",
+      "expected": false,
+      "actual": true
+    },
+    {
+      "case": "ISO control C1 NEL is rejected before preview",
+      "expected": false,
+      "actual": true
+    },
+    {
+      "case": "absence of secure entropy must emit zero preview POSTs, never reuse a constant key",
+      "expectedPreviewPosts": 0,
+      "actualPreviewPosts": 2,
+      "posts": [
+        {
+          "path": "/conversations/conversation_fixture/interactions/preview",
+          "key": "mmd-followup-final-",
+          "content": "画一只鸟"
+        },
+        {
+          "path": "/conversations/conversation_fixture/interactions/preview",
+          "key": "mmd-followup-final-",
+          "content": "画两只鸟"
+        }
+      ],
+      "first": true,
+      "second": false
+    }
+  ]
+}

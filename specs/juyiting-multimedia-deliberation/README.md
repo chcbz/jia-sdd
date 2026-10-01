@@ -2,6 +2,13 @@
 
 # 聚义厅多媒体悬赏议事：融合开发入口
 
+## 2026-10-01 当前交付与实施边界（本轮只读复核）
+
+四仓 `codex/juyiting-multimedia-deliberation` 已建立、推送并包含当前 fast 代码；[精确远端回执](integration-evidence-20260928/fusion-branch-design-current-readback-20261001.json)记录 API `8121e8d8`、Web `8b8c951d`、Client `71b26ce6`。其后 Web 多轮 EXECUTE 切片已接受并推送 `4f21fa42`，见[实际修复证据](integration-evidence-20260928/web-followup-4f21-source-accepted/portable-manifest.json)。长期方案、详设 v2、媒体/存储详设和开发计划已交付，继续使用下文“阅读顺序”，不另建第二套架构合同。
+
+最新实现风险：[本轮整合与待办](integration-current-design-and-contract-findings-20261001.md)明确 Web 多轮候选的四项实际合同遗漏、API 最新语音组合的真实 OOM/NOT_RUN、schema v1/v3 重启兼容写集，以及自然澄清/INSPECT/多请求媒体的未关闭范围。失败候选未提升；**分支与文档完成，不等于完整产品已发布或可验收**。下文旧 SHA/限制均保留各自历史时点；源码当前 pin 以 `integration.yaml` 为准。
+
+
 当前研发分支：SDD / API / Web / Agent Client 四仓 `codex/juyiting-multimedia-deliberation`。
 
 **本轮进展（2026-10-01）**：[Client v3精确来源/EDIT源码](integration-u2-client-v3-source-edit-20261001.md)已43离线定向通过并精确FF/push到`71b26ce6`，声明强制disabled、不调度生产；[API桥](integration-controlled-bridge-verification-progress.md#api桥源码已验证并推送2026-10-01)`f89d4de3`已推送，Chat25本轮实际通过、Agent57/真实MySQL3复用实际证据；Web`8b8c951`已融合develop、120定向通过。API当前develop语音融合施工中，完整多轮/费用/双接应与34项产品验收未完成。
