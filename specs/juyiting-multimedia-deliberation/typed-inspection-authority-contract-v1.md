@@ -123,6 +123,22 @@ finalDigest同时覆盖contract版本、完整binding、原始规范化union和r
 
 Web显示阶段区分：资料目录AVAILABLE → 查阅受理 → 正在查阅 → Agent答复/澄清/提议。前端不凭选中资料宣称已读；byte receipt只证明输入边界，不替代“理解正确”的真实模型验收。新版结果需显式支持版本2，不把未知版本按v1降级展示为已完成。
 
+### 6.1 输入摘要算法（v1 精确补充，2026-10-02）
+
+本节为 IA/IC 共享算法；fixture见 `fixtures/typed-inspection-input-digests-v1.json`。沿既有canonical JSON：对象键按字典序，UTF-8，无额外空白；数组顺序不重排。来源必须已经按 `sourceRefId` 严格升序，重复/乱序拒绝，不默默改变manifest或native输入顺序。字段名统一 `sourceRefId`，不得使用 `sourceRef` 别名。
+
+所有contribution preimage精确公共键：`schemaVersion:1,sourceRefId,sha256,byteLength,mimeType,carrier,carrierContractDigest`；各carrier只追加以下字段：
+
+- DIRECT_TEXT：`sourceByteDigest,textDigest`。sourceByteDigest为`sha256:`加原bytes的hex摘要。严格UTF-8解码，保留BOM、Unicode和换行，不做归一化；非法序列拒绝。实际native text精确为 `UNTRUSTED INSPECTION MATERIAL (` + sourceRefId + `):\n` + 解码文本。textDigest为该完整native text的UTF-8摘要。
+- PARSED_TEXT：`sourceByteDigest,parserConfigDigest,extractedTextDigest,textDigest`。parserConfigDigest绑定已登记的parser binary/config合同；提取文本须为合法Unicode scalar序列，拒绝孤立surrogate，不在编码时替换。extractedTextDigest为原提取文本UTF-8摘要；实际native text使用与DIRECT_TEXT完全相同的包装，textDigest覆盖包装后文本。不得将文件正文当系统指令。
+- LOCAL_IMAGE/LOCAL_AUDIO：不追加字段。路径、adapter函数、engine IDs均不进入preimage；实际bytes/载体及carrier合同已由公共字段和manifest绑定。仅允许对应native类型及经验证的当前私有path，拒绝adapter替换为text、URL或其他来源。此检查不替代上游decode/profile验证。
+
+`contributionDigest = sha256: + SHA256(canonical(preimage))`。
+
+receipt的每项精确键为`sourceRefId,sha256,byteLength,carrier,contributionDigest`。`inputDigest = sha256: + SHA256(canonical({schemaVersion:1,authorizationId,manifestDigest,sources:receiptSources}))`；API重算该摘要并对照manifest验证来源顺序/字段。contributionDigest记录可信Client的实际转换，不能伪称API仅凭摘要已独立理解内容。
+
+准备输入函数必须在原生turn/start前可运行，不要求engineThreadId/engineTurnId。它返回nativeInputs、inputDigest及不含engine IDs的receipt草稿；原生受理后独立finalizer附加真实engineThreadId/engineTurnId，形成第6节完整receipt。禁止用占位IDs提前制作final receipt，禁止为计算摘要触发第二次turn/start。输入数组中每个source恰有一项；关联说明包含在文本项内，不重复注入文件正文。
+
 ## 7. 最小施工包与验证
 
 | 包 | 责任与范围 | 验证 |
