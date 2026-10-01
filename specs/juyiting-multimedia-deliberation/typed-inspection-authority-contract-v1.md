@@ -109,6 +109,14 @@ carrier：
 
 **尚需单独固定的引擎实施项**：实际可用profile的完整工具目录/OS隔离配置、文件parser与支持MIME清单、真实出站参数快照。此处不虚构这些证据；它们是Client source enable/广告的前提，而非延迟API接口设计的借口。
 
+### 5.1 UI 意图与能力就绪不能混同
+
+本合同中的 `typedInspection` 声明属于已认证目标runtime的服务端协商事实，不约定将它直接附加到全局 `/chat/capabilities`。后者未绑定task/assignment/target，不能用全局布尔值证明当前目标查阅就绪，也不能凭空解析未约定字段。
+
+Web可让用户明确选择本轮“查阅所选资料”，这是用户意图而非能力广告。未取得目标就绪事实时说明“将所选资料交给当前Agent查阅，实际可用性在发送时校验”或“能力待确认”；提交由inspection admission实时校验唯一目标、profile、来源及当前授权。受理成功仍不等于已读。422/503等真实失败需展示，不可静默转换为CHAT猜资料、EXECUTE或另造新意图。
+
+本轮不新增第二个Web能力事实源或凭build flag伪造ready。未来若需发送前目标就绪预览，必须单独约定task/assignment绑定的只读投影；该预览不能替代受理时重新校验。用户意图选择、服务端能力声明、授权受理和实际输入回执保持分离。
+
 ## 6. 结构化终态与用户交互
 
 INSPECT final使用新的`outcomeContractVersion:2`，`interactionOutcome.schemaVersion:2`；其ANSWER/CLARIFY/EXECUTION_PROPOSAL联合的业务字段与限制沿原typed结构，但版本2只能与typedInspection marker和route=INSPECT匹配。旧CHAT v1拒绝v2，INSPECT拒绝v1；正文不解析为命令。
