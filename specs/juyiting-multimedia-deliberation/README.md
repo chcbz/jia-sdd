@@ -1,5 +1,7 @@
 # 最新交付入口（2026-10-01）
 
+**完整实施最新推进**：[真实catalog与原生引擎兼容](integration-catalog-and-native-runtime-progress-20261001.md)：25条来源精确SQL已执行并捕获四表完整raw catalog，汇总FAILED及安全cleanup保留；Main离线独立核对4表/27CHECK/136列/89索引，精确两路径修复354f已提交并静态核对，新正常图验证Owner已绑定/获GO、结果待返回。实测CLI0.159.2资源超过旧guard，版本化源包v1.1补齐本地profile精确typed readiness，尚未启动；真实INSPECT/双接应/浏览器/版本发布仍未完成。
+
 **统一详设总入口**：[长期融合详设与施工入口](fusion-final-design-entry-20261001.md)汇总单会话/按需能力、双接应输入输出、三用途存储、恢复和开发分工；讨论以冻结 typed v1 为准，执行保持独立 v3，不另实现早期 schema-3 讨论候选。四仓当前 fast 合入有[直接远端证据](integration-evidence-20260928/fusion-final-design-branch-readback-20261001.json)，无需重复建分支/merge。
 
 **最新进度**：[回执领域修复与实施优先级](integration-typed-receipt-source-adoption-20261001.md)：Web `ebb664f` 已推送，Main 196 项及合法状态/绑定 probe 通过（基线 lint 两错误与旧合成正向失败保留）；API `642e732` V3实测34通过/3真实MySQL CHECK失败，后续NOT_RUN、未晋升。浏览器启动前置已实测，不等于业务验收。

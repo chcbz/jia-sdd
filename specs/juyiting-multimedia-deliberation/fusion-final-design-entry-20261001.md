@@ -85,6 +85,12 @@ Web：单输入框、会话内容块、精确引用、选择成果、恢复
 4. 输出沿既有受权内容上传与 manifest commit 协议提交。校验 run/producer/assignment、摘要、长度、类型和来源后，才能登记持久 asset/part 并发布 ready 事件。
 5. Agent 离线、临时目录清理或会话切换不能让已保存/正式交付内容丢失。正式存储必要复制时核对摘要；不做跨 owner 物理去重。
 
+### 4.1 双接应的引擎合同与本地版本选择
+
+平台统一的是领域协议和受权内容，不要求所有Agent同一工作目录或同一全局CLI。Client按本地operator profile显式选择已登记的exact引擎合同，测量真实binary/version/schema bundle、私有资源快照和启动identity；版本未登记或与选择不符时如实不可用，不自动更换模型、Provider或全局CLI。
+
+能力声明、typed readiness、实际CHAT调用必须使用同一所选合同；不能在adapter支持新版本后仍硬匹配旧合同，也不能只看measured=true。默认旧合同及现有wire保持兼容。资源文件数量/字节记录为观测，不沿用无依据的大小门槛；路径、归属、符号链接、摘要和资源漂移的真实安全检查仍保留。原生协议兼容不等于INSPECT或严格无工具能力证明，[当前源码依据与验证边界](integration-catalog-and-native-runtime-progress-20261001.md)另行记录。
+
 ## 5. 实时媒体、断线及业务恢复
 
 - 复用单会话持久事件日志和请求目录；不能把 activeRequest 当全会话唯一成果。同身份刷新可恢复多请求、新旧稿及 pending question。
