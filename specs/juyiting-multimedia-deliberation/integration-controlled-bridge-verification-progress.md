@@ -76,3 +76,25 @@ API桥v4`dbcd4da1`实际8XML、Agent57中54通过/3失败/0error/0skip：v3的6�
 按正式修复矩阵，原API Owner仅在本线程精确新诊断schema中运行原fixture CREATE与v1_17 ALTER，取得`chk_pwex_controlled_consent`真实catalog、ENFORCED=YES及前后prefix/exactschema均0。新候选`29b60fee`/tree`9b0bb114`仅修initializer和独立literal正/负断言，DDL资源/17fixture/AP/heaps不变；未提升API feature。Main固定v5 matrix/input/argv并交原Verifier一次运行，实际结果待核准，不把catalog自检当57项测试通过。
 
 下一完整多轮包的[runtime来源/EDIT wire合同v1](controlled-image-v3-source-wire-contract-v1.md)已冻结：独立v3 sibling、精确asset来源、每轮新command/consent、保留旧v2，三组合法及13组负向共同样例仍NOT_RUN。此只锁定runtime增量，owner pendingClarification/每意图费用及统一Hall composer仍须落地，不把新native样例当完整多轮已接通。真实账户未选、Provider未调用、完整34项产品仍NOT_RUN；未发布或通知可验收。
+
+
+### Agent桥实际通过、Chat诊断逐步推进（2026-10-01）
+
+API桥v5候选`29b60fee`已实际执行Agent57项（含真实隔离MySQL3），全部零失败/错误/跳过；MySQL用例已进入业务体，不再只是catalog诊断。Chat production编译完成，但fixture在`ChatBountyExecutionCoordinatorTest.java:199`因多余闭合分隔符编译失败，Chat XML0、NOT_RUN。Main重新核对Unix/TCP同一测试库身份及本线程prefix空；完整stdout、8XML、冻结输入与最小语法修复矩阵保留在[实际v5便携证据](integration-evidence-20260928/controlled-bridge-v5-chat-syntax/manifest.json)。
+
+新child`b3593501`仅删除该多余`)`，断言和17fixture保留。v6首次进入Chat业务测试：Chat实际25项/3失败/0error/0skip，其中coordinator7及Spring事务1通过；三项WebSocket测试在Mockito反射`AgentRuntimeAuthenticationService`时因`cn.jia.oauth.service.ApiKeyService`不在bounded runtime classpath而失败，尚未到业务断言。Agent为UP-TO-DATE，复用输入未变的v5实际57项/真实MySQL3 XML，不冒称v6重新执行了57项。原stdout与17XML、Main后prefix空读回及限定修复矩阵见[实际v6便携证据](integration-evidence-20260928/controlled-bridge-v6-chat-runtime/manifest.json)。
+
+Main已按归因矩阵授权原API Owner仅修Chat bounded fixture runtime依赖；不改变生产依赖、17测试源、权限/CHECK/一次消费断言、AP、堆参数或selector。只有新immutable child及新freeze后才允许下一次验证；未提升失败候选，不将局部测试改写成完整Bridge、29共同样例或34产品验收通过。
+
+[最新四仓独立远端读回](integration-evidence-20260928/fusion-current-remote-heads-20261001.json)再次确认feature均包含当前fast；Web`8b8c951`亦包含最新develop，API feature相对当前develop仍缺10个提交，后续集成须按真实差异收敛。Client新v3精确来源/EDIT源码包已派发，注册必须disabled、operations=[]，业务澄清/每意图费用合同及统一Hall follow-up仍须完成；不将runtime合同误当owner HTTP合同或真实能力就绪。
+
+完整范围仍为可选参考图、点将进入同一悬赏议事、生成或澄清、多轮修改、多媒体实时展示/预览下载、主动保存、正式交付/验收/任务完成；未选择真实账户、未付费调用、未发布或通知可验收。
+
+
+### API桥源码已验证并推送（2026-10-01）
+
+最小Chat runtime修复child`f89d4de3`/tree`b54dee07`只新增bounded source set的OAuth API运行依赖；production/17fixture/AP/heap/selectors不变。v7真实exit0、`BUILD SUCCESSFUL`：Chat25项本轮实际执行全部通过；Agent57项（含真实MySQL3）为输入未变的v5实际XML复用，明确不是v7重跑。Main已核对17XML、实际stdout摘要、终态回执及Unix/TCP自有测试库prefix0。
+
+已新建Main独占`api-fusion-main-20261001`checkout，精确FF/push/readback到feature`f89d4de3`；SDD API研发pin/gitlink随此次提交同步。原v5语法、v6runtime失败不删除/不改PASS；[本轮便携证据及推送回执](integration-evidence-20260928/controlled-bridge-v7-source-accepted/manifest.json)保存新冻结输入、原stdout、17XML与源tree/远端证明。
+
+这是API bridge源码切片通过，不是API/Web/Client29共同样例或完整34项产品验收，更不是Provider/浏览器/版本发布。完整多轮澄清、精确上一稿EDIT、每新意图authority、统一Hall follow-up与API最新develop差异收敛仍是后续工作；v3 Client源码包继续默认关闭实施，真实账户未选择、未付费调用、未部署。

@@ -179,3 +179,22 @@ assignment + grant + 唯一 bootstrap/outbox
 **不等于产品完成**：Bridge-A 的 grant/execution/START 完整桥、多轮澄清/续办/上一稿 EDIT、双接应与完整浏览器验收仍须完成；34产品用例及29共同桥 fixture 仍 NOT_RUN。当前没有 develop 合入、版本发布、真实账户选择或付费调用。本次不重复验证未变源码、不改在途 Owner 的代码与运行台账。
 
 下一可执行步骤：实施 Agent 从[融合开发计划](fusion-implementation-plan-v2.md)及[受控费用桥详设](controlled-image-grant-start-bridge-design-v1.md)领取尚未完成的跨仓闭环工作包，按已有共同 fixture 实现、Owner 自检，并提交 exact commit/tree 与实际测试证据。
+
+
+## 本轮独立远端读回与长期详设状态（2026-10-01）
+
+已通过独立`ls-remote`读回并以精确SHA核验fast ancestry；不因现有分支已经建立而重复merge或改写fast。四仓分支均为`codex/juyiting-multimedia-deliberation`。
+
+| 仓库 | 本轮远端feature观测点 | 当前fast为祖先 | 当前develop独有提交 |
+| --- | --- | --- | --- |
+| SDD | `1eab54cb` | 是 | 0 |
+| API | `99ff1a43` | 是 | 10 |
+| Web | `8b8c951d` | 是 | 0 |
+| Agent Client | `55480522` | 是 | 0 |
+
+SDD为本文提交前观测点。完整commit/tree/远端develop/采集时间见[只读回执](integration-evidence-20260928/fusion-current-remote-heads-20261001.json)。**分支、fast合入及长期详设已完成；API新桥仍独立验证，未提前替换研发pin；完整产品未验收或发布。**[最新实际进展](integration-controlled-bridge-verification-progress.md#agent桥实际通过chat诊断逐步推进2026-10-01)明确Agent实际57项/真实MySQL3通过和Chat新增诊断，不冒称整桥通过。
+
+长期设计继续使用本文件第5节的权威文档：同一会话产品、fast轻量CHAT策略、按需受权INSPECT/EXECUTE；明确且已授权的需求可直接执行，只有信息不足才澄清。资料和成果复用不可变内容身份，按会话/个人空间/正式交付分别授权；双接应各自run隔离，以受权manifest/API领取与提交，不共享任意工作目录。[新增runtime v3精确来源/EDIT合同](controlled-image-v3-source-wire-contract-v1.md)补齐上一稿来源及每次调用的wire；仅是runtime增量，不把尚未冻结/实现的owner澄清与费用HTTP接口视为完成。后续按冻结包继续实现，不另造两套议事/三套文件系统。
+
+
+本轮API bridge后续已推进到精确feature`f89d4de3`/tree`b54dee07`，详见[源码推送readback](integration-evidence-20260928/controlled-bridge-v7-source-accepted/source-push-readback.json)和[最新实际状态](integration-controlled-bridge-verification-progress.md#api桥源码已验证并推送2026-10-01)。上表`99ff1a43`是此前独立远端采集点，保留历史；本次SDD pin/gitlink采用已推送新API源。长期详设本身不因测试诊断改写；没有完整产品验收或版本发布。

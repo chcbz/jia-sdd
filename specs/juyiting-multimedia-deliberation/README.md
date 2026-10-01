@@ -2,7 +2,7 @@
 
 当前研发分支：SDD / API / Web / Agent Client 四仓 `codex/juyiting-multimedia-deliberation`。
 
-**本轮进展（2026-10-01）**：[实际验证更新](integration-controlled-bridge-verification-progress.md#本轮源码推进与新实际诊断2026-10-01)：Web最新8b8c951已融合develop语音、120定向及lint通过并推送；API新桥仍独立验证，不提前提升研发pin。新增[runtime v3精确来源/EDIT合同](controlled-image-v3-source-wire-contract-v1.md)供后续源码实施，尚未启用，不替代完整澄清/费用/浏览器验收。
+**本轮进展（2026-10-01）**：[API桥源码验证与推送](integration-controlled-bridge-verification-progress.md#api桥源码已验证并推送2026-10-01)：API`f89d4de3`已精确FF/push，Chat25本轮实际通过，Agent57/真实MySQL3复用输入未变的实际通过证据；Web`8b8c951`已融合develop并通过120定向。原失败证据保留。[runtime v3精确来源/EDIT合同](controlled-image-v3-source-wire-contract-v1.md)源码包施工中、声明强制disabled；完整多轮、费用、双接应与34项产品/浏览器验收未完成。
 
 **2026-10-01 最新执行进展**：[完整桥与develop融合的实际验证](integration-controlled-bridge-verification-progress.md#最新实际验证补充2026-10-01)已保存API桥57项9失败及Web语音组合3失败/lint19项原始便携证据，交回原Owner限定修复；未提升失败候选。分支与长期详设交付不变，完整产品仍未发布/验收。
 
