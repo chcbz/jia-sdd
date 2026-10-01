@@ -37,6 +37,16 @@ v8 仅先运行完整 typed11（包括真实隔离MySQL和Spring事务）；沿�
 
 v8实际终态：runner 读取 argv 缺失的 `environment` 字段，抛出 `KeyError`，尚未启动Gradle，日志为空、0测试。自有桥已关闭；不是67937源码失败，也不是测试通过。[原始失败证据](integration-evidence-20260928/api-67937-v8-harness-failure-20261001/manifest.json)保留不覆盖。已授权验证Owner在独立v9目录修正环境映射、核验runner所需字段和模拟启动路径后执行一次typed11；不得沿用未修正输入盲重试。
 
+### 2.2 v9：61通过，剩余4失败已定位
+
+修正验证脚本环境字段后，v9 在 exact67937 上完成正常编译和全部 typed11：**11份fresh XML，65项测试，61通过、4失败、0错误/跳过**。Main已独立逐XML计数；[原始日志、XML和修复合同](integration-evidence-20260928/api-67937-v9-20261001/portable-manifest.json)可复核。正常Gradle共63任务，3执行/60 up-to-date，耗时约73秒；自有桥关闭、私有数据库清理通过，mysqld未操作。不是可验收或发布通过。
+
+- 3项MySQL失败：第一次真正执行到 pending-question DDL，发现 `chk_chat_typed_pending_version` 末尾额外一个 `)`；语法失败，不能宣称建表或约束校验通过。
+- 1项Admission测试失败：合法 `contexts.resolve` 调用尚未被显式verify，直接 `verifyNoMoreInteractions` 报错；不是生产身份不匹配。
+- nullable facts、有效WebSocket turn/回执、Spring依赖与事务组、服务端ID/CAS原失败已在本轮通过；其余SQL约束仍待真实验证。
+
+下一包冻结为3路径机械修复：Main固定SQL一字节删除，保留全部CHECK谓词/FK/索引；补精确context调用verify，保留no-more-interactions；补语法回归。旧“SQL字节不变”合同保留历史，新合同仅对这一字节显式修订，不授权生产迁移、数据写入或放宽catalog检查。新child提交后再跑typed11，不重复未修正67937。
+
 ## 3. 验证效率与证据真实性
 
 - v6记录了128m Gradle daemon的真实堆耗尽；v7仅将该daemon试验性分配改为256m并加逐阶段GC日志，编译器/Test heap、正常Gradle依赖/AP图不变。不是新增资源门禁，也不宣称256m为测得最小值或宿主OOM问题已消失。
