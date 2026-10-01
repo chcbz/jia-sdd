@@ -42,3 +42,9 @@ API AgentWebSocketHandler 在 persistFinal 事务提交后发送既有 agent_mes
 原兼容候选979597b虽通过定向测试，但Main使用API实际非durable回执形状（无turnId/duplicate）仍复现提前严格校验误拒绝；原失败已保留。[修复及冻结验证证据](integration-evidence-20260928/client-final-ack-compat-d082e1c/manifest.json)绑定d082e1c。现在先识别唯一匹配的INSPECT turn，再校验其严格回执；旧聊天事件不改变INSPECT状态，歧义和已匹配INSPECT错误仍拒绝。
 
 4项相关定向通过、113项未选中；Main在git archive固定源码中验证真实processor忽略旧API形状且无reject，同时原生接收响应丢失、readback、结果落盘、重启、相同final重放及早到重复ACK链仍通过（fake engine/transport/ACK）。Client特性分支已FF推送；未进行develop合入、安装、收费调用或发布。实际API服务恢复及测试账号模型额度授权仍待用户确认，不因自动续办消息视为授权。
+
+## 当前冻结源码非收费原生验证
+
+[精确源码非收费探查](integration-evidence-20260928/client-native-d082e1c-nonpaid/manifest.json)绑定d082e1c/tree afc199d。Main核对原始证据摘要、四个运行源码Git对象及禁止thread/turn调用的包装器；原生初始化、账号状态、模型目录、配置和MCP目录读取exit0。运行前后源码摘要一致。此证据独立于此前native-v6工作源码观测，未把历史证据改绑新tree。
+
+模型目录元数据声明text/image不等于已看懂图片；当前`contractReady=false`、`declaration=null`，没有收费调用/turn/start，也没有音频理解能力广告。实际图片理解、生成和修改仍须授权后实测，不能用模型列表或模拟鸟图替代。当前没有在途原生进程，不重复探查以充当进度。服务恢复与现有额度使用授权已向用户询问，自动续办不是授权；本特性仍未发布。
