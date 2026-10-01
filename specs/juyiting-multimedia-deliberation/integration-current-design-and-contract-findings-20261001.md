@@ -81,3 +81,8 @@ Main 实际加载 immutable `4ce7a02e` 的 JS primitive/Vue composable，以 moc
 - 34 产品用例、29 共同桥 fixture、浏览器画鸟全流程、两个接应模式及本特性版本发布均未完成。正式构建/发布必须绑定实际版本、exact SHA/tree、测试和制品摘要；既有其他功能的 release 不能当本特性已发布。
 
 下一可执行步骤：原 API Owner 完成授权源码包与自检，Web 已接受切片继续做跨仓组合，Verifier 完成候选分阶段实际组合验证；Main 再冻结讨论/澄清/INSPECT 下一合同并做跨仓闭包。Owner 自检，无独立 Reviewer；Gradle 经 orchestrator 串行，等待资源不抢占，性能慢仅观测。
+
+
+## 4. 同日后续：语音融合验证已收口
+
+上文 §3.2 是原 v1 失败观测点，保留不改。随后同 `42d6e7e` 获得 Main 实际核验的 33XML/211项：Agent57原v1复用，Chat25和Voice129为v3独立实际执行，零失败/错误/跳过；owned Redis4 contract10/10通过，PID终态与MySQL后读回一致。API feature 已精确 FF/push/readback42d，当前 pin/gitlink同步。详见[新源码接受回执](integration-api-voice-delta-source-accepted-20261001.md)；该通过不包含自然多轮、产品用例或发布，不覆盖历史OOM/runner失败。
