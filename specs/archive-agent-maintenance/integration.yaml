@@ -176,27 +176,32 @@ completion_audit:
     root_pin_updated: false
     whole_feature_complete: false
     boundary: durable readback, source202 and final authorization only; outbox and live Runtime remain open
-  active_repair_package:
-    id: web_complete_maintenance
-    owner: critical_worker
-    base_api_commit: 18d664193c40ca82246694f2b5fa5249d07c57d8
-    base_web_commit: bdff47863a99318a991e2dffb6073b8db872b5fc
-    status: rejected_full_scope_repair_in_progress
-    candidate_web_tree: 13d4b42eac1acc1ae279151fc2c3973bec2f3387
-    evidence: evidence/web-wiring/web-complete-maintenance-attempt5/
-    independent_verdict: REJECT_LOCAL_WEB_SCOPE
+  repair_package_web:
+    status: locally_committed_reviewed_not_pushed
+    web_commit: a3066e0c63dc45c40e4b51c90c490908b8c685c1
+    tree: 000572b3ab6f1901d344fb1e246219f41636eb95
+    frozen_api_commit: 18d664193c40ca82246694f2b5fa5249d07c57d8
+    evidence: evidence/web-wiring/web-complete-maintenance-attempt6/
+    independent_verdict: ACCEPT_LOCAL_WEB_SCOPE
     p0: 0
-    p1: 1
+    p1: 0
     p2: 0
-    prior_review_evidence: evidence/web-wiring/web-complete-maintenance-attempt4/review.json
-    tests_pass: 267
+    tests_pass: 268
     tests_pending: 0
     build_exit_code: 0
     source_unchanged: true
-    contract: D2 section 12 and frozen exact admin routes, source202 and current verification
+    root_pin_updated: false
+    whole_feature_complete: false
+    boundary: mounted real createApi fetch fixtures; not live API Runtime or browser E2E
+  active_repair_package:
+    id: business_outbox_projection
+    owner: critical_worker
+    base_api_commit: 18d664193c40ca82246694f2b5fa5249d07c57d8
+    frozen_web_commit: a3066e0c63dc45c40e4b51c90c490908b8c685c1
+    status: implementing_unverified
+    contract: D2 business outbox actual scoped chat projection retry CAS and bounded scan
     whole_feature_complete: false
   remaining_source_and_integration:
-    - complete Web maintenance tabs, exact contracts, versions and withdrawal, waiting input and validation recovery
     - durable business outbox actual projection and retry, not scan-only DELIVERED
     - actual isolated shared identity registration installation execution transport and browser development verification
     - full D2 requirement closure, not production authorization
