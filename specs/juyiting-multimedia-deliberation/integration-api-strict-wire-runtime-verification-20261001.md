@@ -55,6 +55,14 @@ v8实际终态：runner 读取 argv 缺失的 `environment` 字段，抛出 `Key
 
 Main固定下一包：仅替换7条expected表达式常量为已批准SQL的实际目录呈现，保留全部非括号token及原AND/OR分组语义；不改SQL、归一化算法、检查集合、ENFORCED要求、事务或锁。新增完整18行真实fixture正向和7个AND改OR拒绝测试。原开发Owner在3路径内实施，随后运行Java/真实MySQL验证。[v10、全部目录、静态比较及精确修复合同](integration-evidence-20260928/api-da047-v10-catalog-20261001/portable-manifest.json)保留全过程。
 
+### 2.4 2026-10-02：v11 typed11完整通过
+
+候选 `a6e3e06cb4fa29ed6c01d80e8d8f0ae9372a1de9` / tree `996aa030dd369fcac09a4bf859da90d6767d26e3`：v11 **11份fresh XML、66通过、0失败/错误/跳过**，Main独立逐XML复核。真实MySQL建表/重启目录检查、无效行约束、弱CHECK拒绝，以及Spring事务、typed讨论/澄清测试均包含在所选组内。7条expected常量精确修订，未放宽检查器；真实18行fixture及7个AND改OR拒绝断言通过。附加测试的泛型推断风险在运行前已用显式类型修正，未为此浪费一次构建。
+
+[源码、SQL/fixture绑定、完整XML与日志](integration-evidence-20260928/api-a6e3-v11-20261002/portable-manifest.json)。自有前缀清理及桥关闭已核实，没有操作mysqld。目录名保留准备时的20261001；终态证据与本补充按实际跨日时间记录。
+
+下一步v12只跑同一exact tree的Agent V3、Chat V3和V2兼容组；v11的66项明确同树复用，不重复typed。兼容结果未出前不提升API feature，也不把父候选测试冒充当前通过。产品34项、双接应/媒体、浏览器及发布仍独立待完成。
+
 ## 3. 验证效率与证据真实性
 
 - v6记录了128m Gradle daemon的真实堆耗尽；v7仅将该daemon试验性分配改为256m并加逐阶段GC日志，编译器/Test heap、正常Gradle依赖/AP图不变。不是新增资源门禁，也不宣称256m为测得最小值或宿主OOM问题已消失。
