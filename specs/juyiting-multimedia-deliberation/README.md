@@ -1,5 +1,7 @@
 # 最新交付入口（2026-10-01）
 
+**本轮真实验证增量**：[自然议事实际验证与修复](integration-typed-natural-actual-verification-20261001.md)记录Web原31项通过但真实7项边界失败，未晋升；API测试DAO最小兼容child已提交、交原Verifier正常图核验。原子typed续办继续施工，产品未发布/验收。
+
 **本次要求已落实：四仓分支已建立并推送、当前 fast 已包含、长期方案与详细设计已交付。完整功能仍在实施，不表示已发布或可验收。**
 
 - 统一开发分支：SDD / API / Web / Agent Client 的 `codex/juyiting-multimedia-deliberation`；[本次直接远端核验](integration-evidence-20260928/branch-and-design-delivery-readback-20261001.json)证明四仓当前 fast HEAD 都是 feature HEAD 的祖先，无需重复合并。
