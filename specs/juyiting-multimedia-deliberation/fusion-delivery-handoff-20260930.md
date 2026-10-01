@@ -14,12 +14,12 @@
 
 | 仓库 | 本次文档提交前 feature HEAD | 当前远端 fast HEAD | 包含 fast / 已推送 |
 | --- | --- | --- | --- |
-| SDD | `2f4951c95c72e01d69ee3dab8a24ccb590cdda16` | `9f47e63e456a7965d954e6d1e645a083920d784e` | 是 / 是 |
-| API | `97989512351b6a409ac629e4546ce9fe698670e0` | `caee54fc27a08146f9cc57219cf86c763e41c531` | 是 / 是 |
+| SDD | `0334c58a04adf5583d021527b0b430a653c9db2c` | `9f47e63e456a7965d954e6d1e645a083920d784e` | 是 / 是 |
+| API | `87c0acc16bef37c35f96f0edbbc078b5ff860a46` | `caee54fc27a08146f9cc57219cf86c763e41c531` | 是 / 是 |
 | Web | `1993b888391c2c7ce707dc60da743810f25f17df` | `96838f17fc24fbf21781be39476aa9723dee3a2c` | 是 / 是 |
 | Agent Client | `2f6907274ea5395980df0643c6b3898fa522a54f` | `68dbe8992a56c8e1041056a9123b1156d1d2b35e` | 是 / 是 |
 
-完整时间/tree/命令语义见[本次远端回执](integration-evidence-20260928/branch-and-design-delivery-readback-20261001.json)。SDD 此后只追加本文档提交，组件 pin 不变；本文不推导已经包含“现在所有 develop 提交”，也不安排 develop 合入或发布。
+完整时间/tree/命令语义见[本次远端回执](integration-evidence-20260928/typed-receipt-adoption-20261001/branch-readback.json)。SDD 此后只追加本文档提交，组件 pin 不变。本次18:19北京时间远端快照中，四仓各自develop HEAD也都是feature祖先；此事实只绑定该快照，不推导之后新增提交已包含。本轮不另行合develop或发布。
 
 ### 长期设计与详设优先级
 
@@ -27,17 +27,30 @@
 2. [整体详设 v2](fusion-detailed-design-v2.md)：受理、任务授权、路由、快照、状态机、幂等、协议兼容和故障恢复。
 3. [多轮与每意图授权补充](long-term-followup-authority-design-20261001.md)：细化 v2 的当前实施决策。旧 GENERATE-only grant **不能借权 EDIT**；本轮明确操作/来源授权与费用同意分别核验，不改写原 grant。讨论、精确澄清回复、执行三类意图均留在同会话。
 4. [媒体/存储/归档/验收详设](design.md)：text/image/audio/file 内容块、受权真实字节、预览/下载、可选保存、选定最终成果及正式验收/完成。UI 展示不等于 Agent 已理解附件；未保存成果仍须持久可读。
-5. 具体实现按已冻结的领域 wire/HTTP/fixture 合同施工；**新架构决策不静默改变旧协议或已绑定 hash**。确需改变合同时另冻结版本。候选设计、源码接受、产品验收、实际发布四种状态分开。
+5. 具体实现按已冻结的领域 wire/HTTP/fixture 合同施工（包括[原子typed合同v1](typed-deliberation-atomic-followup-contract-v1.md)与[回执领域补充v1.1](typed-deliberation-receipt-adoption-contract-v1.1.md)）；**新架构决策不静默改变旧协议或已绑定 hash**。确需改变合同时另冻结版本。候选设计、源码接受、产品验收、实际发布四种状态分开。
 
 “一份内容，三种用途”保留平台已有私有存储根，使用会话 asset、个人文件版本、正式交付 manifest 的精确引用和各自 ACL；不是让所有 Agent 共用一个物理目录。山寨安顿/自家接应均从受 fence 的 manifest 物化本轮 inputs，在各自 run 的 outputs 提交，由平台验证后发布媒体。提示词说明路径，但授权/上传/提交由协议执行。
+
+### 当前具体合同与状态收口
+
+| 领域 | 当前实施合同 | 与fast关系 |
+| --- | --- | --- |
+| 自然讨论/精确澄清回复 | typed schemaVersion=1；`POST /chat/conversations/{conversationId}/interactions/discussion`；原子typed合同v1 | 仍是原durable CHAT request/turn，正文与可信结果同事务；不新建聊天引擎 |
+| 新生成/编辑 | 每意图授权、执行schema-3及Client来源合同 | 独立受控EXECUTE；不能从讨论结果、旧GEN grant或已预览推导EDIT/付费授权 |
+| 资料查阅 | NONE/AVAILABLE/INSPECT分层，INSPECT实际实现尚未完成 | AVAILABLE只给目录，不假报已经读图；能力未证明不得广告READY |
+| 状态与回放 | 不变Admission `ADMITTED/0`；原GET返回当前RequestView | 请求可已RUNNING或COMPLETED；immutable IDs/scope/revision严格匹配，状态/版本不跨领域相等比较 |
+
+详设v2及早期schema-3讨论入口是架构候选；具体自然讨论以原子typed合同v1为准，**不再另建schema-3讨论、第二套会话或问题状态机**。独立执行v3继续有效。旧冻结文件/fixture hash不变，新语义通过回执补充v1.1显式细化。
+
+本轮真实只读核验：Web891精确树13文件**193通过/0失败**，旧语音harness问题未复现；固定合法状态probe仍**1通过/2失败**。API8fc精确组合无冲突，但typed receipt仍从RUNNING聚合状态复制；API测试NOT_RUN。两候选均未晋升，见[证据](integration-evidence-20260928/typed-receipt-adoption-20261001/manifest.json)。这项真实协议问题是下一修复对象，不以套件通过、分支包含fast或文档交付掩盖。
 
 ### 接下来如何指导开发 Agent
 
 以[融合开发计划](fusion-implementation-plan-v2.md)拆独立路径任务，每包固定合同版本、base commit、允许写集、验收 selector 和未完成项；不要求 Agent 重新设计第二套会话或全盘重写聚义厅。
 
-当前顺序：API 现有每意图授权包与独立 typed 校验叶子包收口 → 精确组合/真实数据库核验 → typed final 原子持久化、pending question/CAS/续办与唯一 composer → 真实受控查阅和全部媒体闭环 → 双接应/浏览器/正式交付验收 → 达到对应里程碑条件后分版本发布。Owner 自检，不创建独立 Reviewer；所有 Gradle 经 orchestrator。
+当前顺序：API/Web先修回执与实时状态领域分离，保持原负向与版本防回退 → 验证V3 CHECK-catalog最小child、完整62V3后82V2及typed原子闭包/真实数据库 → 同一composer的自然多轮与既有执行链联调 → 真实受控查阅和全部媒体闭环 → 双接应/浏览器/正式交付验收 → 达到对应里程碑条件后分版本发布。Owner 自检，不创建独立 Reviewer；所有 Gradle 经 orchestrator。
 
-本次只做文档/远端 L0 核验，不重跑应用构建、Provider 或浏览器；已有定向测试不计作 34 项产品用例。发布前重新核对线上版本与 release refs，旧计划示例号不得覆盖已有版本；有/无参考图画鸟、继续修改、预览下载、保存及真实需求完成均须对应目标版本实测，才能通知“可以验收”。执行 Owner/gate 仍只在主工作区 runtime ledger，本节不是第二台账。
+本次执行文档/远端核验与上述轻量定向源码测试，不跑应用构建、Provider 或浏览器；定向测试不计作 34 项产品用例。发布前重新核对线上版本与 release refs，旧计划示例号不得覆盖已有版本；有/无参考图画鸟、继续修改、预览下载、保存及真实需求完成均须对应目标版本实测，才能通知“可以验收”。执行 Owner/gate 仍只在主工作区 runtime ledger，本节不是第二台账。
 
 ## 1. 分支交付及远端核验
 

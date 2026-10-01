@@ -2,6 +2,18 @@
 
 日期：2026-09-28。本轮已授权的是 feature 整合与设计；后续业务包仍是计划。运行状态只在主工作区 `/home/isp/wsps/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json` 登记，本文件不是第二套运行 ledger。
 
+## 2026-10-01 回执领域修复：当前最小施工顺序
+
+本节是工作包依赖，不是运行台账；不存在/失效Agent句柄不能当作正在施工或验证。复领任务须先核验实际Owner与路径归属，不创建独立Reviewer。
+
+1. API以干净typed组合`8fc61c4`为候选基线，仅修typed Admission持久回执为`ADMITTED/0`及对应新受理/原键replay测试；原RequestView/TurnView状态不改。保留原final事务、pending CAS、真实session能力及全部历史协议边界。
+2. Web以干净`891a1ec`为候选基线，仅修新typed适配的合法RequestView状态采用，保留原身份/目标/会话/唯一turn绑定和低版本防回退。原七边界、同版本OPEN、UNKNOWN原键恢复、content失败不重复POST继续回归。
+3. Main只读核验本轮193项套件通过但两项合法状态失败，故两候选不晋升。[回执v1.1合同](typed-deliberation-receipt-adoption-contract-v1.1.md)/TRA01–06跨端共同用例仍NOT_RUN；不得为了过probe修改旧fixture或全局legacy reducer。
+4. API最小CHECK-catalog child`3351bf3`已经在8fc组合中，但V6未启动；须由有实际归属的Verifier经orchestrator正常图完整62V3（包括隔离MySQL3），通过后82V2，并完成typed60/16共同事务/真实数据库核验。沿用精确selector，失败归因不盲重跑。
+5. 通过后才更新组件feature/pin，继续真实INSPECT、双接应、多媒体/保存/正式交付验收及版本发布。193项源码套件不代表34项产品验收；旧计划版本号发布前重新分配。
+
+具体HTTP以已冻结原子typed v1的`interactions/discussion`为准，独立EXECUTE v3继续沿用；早期设计中schema-3讨论候选不另行实现。[证据与精确SHA](integration-evidence-20260928/typed-receipt-adoption-20261001/manifest.json)。
+
 ## 1. 分支与实施策略
 
 四仓统一分支 `codex/juyiting-multimedia-deliberation`，以各自精确远端 develop 为第一亲合入 fast 的精确提交。保留 develop 修复和 fast 基础，不强制覆盖任何一边，不更新 develop/release，不触发部署。

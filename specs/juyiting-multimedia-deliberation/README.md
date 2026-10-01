@@ -1,12 +1,12 @@
 # 最新交付入口（2026-10-01）
 
-**本轮真实验证增量**：[自然议事实际验证与修复](integration-typed-natural-actual-verification-20261001.md#4-第二轮真实边界复核2026-10-01-1740北京时间)：Web原七项修复已实测通过，但新同版本OPEN轮询、typed回执负向及189通过/2失败的语音harness遗漏仍待修复；API正常图34通过/3隔离MySQL setup失败，Chat25及82V2未跑。候选未晋升；原子typed续办继续施工，产品未发布/验收。
+**本轮详设收口与真实核验**：[受理回执/请求投影领域分离 v1.1](typed-deliberation-receipt-adoption-contract-v1.1.md)补齐当前API/Web状态混用问题；[本轮证据](integration-evidence-20260928/typed-receipt-adoption-20261001/manifest.json)记录891精确候选13文件193通过/0失败，但合法RUNNING/COMPLETED采用仍2失败，候选未晋升。API8fc为干净无冲突组合，测试NOT_RUN；V6未启动。完整产品未发布/验收。
 
 **本次要求已落实：四仓分支已建立并推送、当前 fast 已包含、长期方案与详细设计已交付。完整功能仍在实施，不表示已发布或可验收。**
 
-- 统一开发分支：SDD / API / Web / Agent Client 的 `codex/juyiting-multimedia-deliberation`；[本次直接远端核验](integration-evidence-20260928/branch-and-design-delivery-readback-20261001.json)证明四仓当前 fast HEAD 都是 feature HEAD 的祖先，无需重复合并。
+- 统一开发分支：SDD / API / Web / Agent Client 的 `codex/juyiting-multimedia-deliberation`；[本次直接远端核验](integration-evidence-20260928/typed-receipt-adoption-20261001/branch-readback.json)证明四仓当前 fast HEAD 都是 feature HEAD 的祖先，无需重复合并。
 - 最新已推送组件基线：API `87c0acc`、Web `1993b88`、Client `2f69072`；完整 commit/tree 以 `integration.yaml` 为准，历史段落不代表最新 pin。
-- **先读**：[本次详设交付与施工入口](fusion-delivery-handoff-20260930.md#本次请求的最终交付2026-10-01)，然后读[长期融合方案](long-term-fusion-plan-20260928.md)、[整体详设 v2](fusion-detailed-design-v2.md)、[多轮及每意图授权详设](long-term-followup-authority-design-20261001.md)、[媒体/存储/验收详设](design.md)。
+- **先读**：[本次详设交付与施工入口](fusion-delivery-handoff-20260930.md#本次请求的最终交付2026-10-01)，然后读[长期融合方案](long-term-fusion-plan-20260928.md)、[整体详设 v2](fusion-detailed-design-v2.md)、[多轮及每意图授权详设](long-term-followup-authority-design-20261001.md)、[媒体/存储/验收详设](design.md)。具体讨论按[原子typed合同v1](typed-deliberation-atomic-followup-contract-v1.md)与[回执补充v1.1](typed-deliberation-receipt-adoption-contract-v1.1.md)，执行按独立v3合同；版本号不是全局升级。
 - 长期统一一个会话、一套 request/turn/event 和权威内容引用；fast 是 CHAT 策略，多媒体按需查阅或执行，不默认全量加载工具/资料、不要求固定三次模型调用。模型提议不能授予执行权限。
 - 实施顺序和逐版出厂条件见[开发计划](fusion-implementation-plan-v2.md)与[分版本计划](versioned-delivery-plan-20260928.md)。自然澄清的 API 原子续办、真实 INSPECT、双接应和完整浏览器闭环仍需完成；旧示例版本号 1.13.45–1.13.47 不得直接用于本特性发布。
 
