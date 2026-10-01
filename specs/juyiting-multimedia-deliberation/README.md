@@ -2,6 +2,8 @@
 
 当前研发分支：SDD / API / Web / Agent Client 四仓 `codex/juyiting-multimedia-deliberation`。
 
+**本轮进展（2026-10-01）**：[实际验证更新](integration-controlled-bridge-verification-progress.md#本轮源码推进与新实际诊断2026-10-01)：Web最新8b8c951已融合develop语音、120定向及lint通过并推送；API新桥仍独立验证，不提前提升研发pin。新增[runtime v3精确来源/EDIT合同](controlled-image-v3-source-wire-contract-v1.md)供后续源码实施，尚未启用，不替代完整澄清/费用/浏览器验收。
+
 **2026-10-01 最新执行进展**：[完整桥与develop融合的实际验证](integration-controlled-bridge-verification-progress.md#最新实际验证补充2026-10-01)已保存API桥57项9失败及Web语音组合3失败/lint19项原始便携证据，交回原Owner限定修复；未提升失败候选。分支与长期详设交付不变，完整产品仍未发布/验收。
 
 **最新请求交付核验（2026-10-01）**：[交付说明](fusion-delivery-handoff-20260930.md#最新分支与详设交付核验2026-10-01)及[远端/文档回执](integration-evidence-20260928/fusion-current-branch-design-readback.json)确认四仓分支已推送且包含当前fast，长期方案/详设/计划已齐备。源码pin为API `99ff1a43`、Web `8244f5a`、Client `5548052`；分支与文档交付已完成，完整多媒体产品仍在实施，未发布、未验收。

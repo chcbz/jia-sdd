@@ -65,3 +65,14 @@ Main已核对终态PID缺席及实际XML，按独立修复矩阵交回原API Own
 [便携manifest](integration-evidence-20260928/controlled-bridge-and-develop-fusion-20261001/manifest.json)保存3轮API原stdout、matrix/input/argv/preflight、v3全部8XML及Web全部stdout、两Owner修复矩阵，共33个原件；gzip解压后与原件SHA逐一一致。Web第一次ledger失败回执手工抄错self-check全hash，修复矩阵已明确纠正为`947cfaf8913c6470f38ef44afa60465ec4470e35f91418d8ba8d6bc8adfca34d`，原文件及历史均保留；不是新增源码失败。
 
 本节只是源候选验证与修复进展。29共同预期fixture与34产品用例仍NOT_RUN；完整澄清/上一稿EDIT、全部多媒体、正式验收/完成、双接应真实浏览器与按版本发布仍须实现验证。未选择真实账户、未调用Provider/付费、未发布或通知可验收。唯一运行台账仍是`docs/implementation/TASKS.yaml#runtime_ledger_json`。
+
+
+### 本轮源码推进与新实际诊断（2026-10-01）
+
+Web候选`8b8c951d`/tree`386d1e00`已由Owner实际bridge83+PCM6+voice31共120项及scoped lint通过；Main核对实际stdout摘要/hash、原7路径及受保护多媒体闭包字节一致后，精确FF/push/readback到feature。原335失败和修夹具过程的真实stdout均保留在[便携Web证据](integration-evidence-20260928/web-develop-fusion-8b8c951/manifest.json)。旧feature checkout实际缺失但Git ref/source保留，Main新建`web-fusion-main-20261001`独占checkout继续，不操作主develop或推断是谁删除。
+
+API桥v4`dbcd4da1`实际8XML、Agent57中54通过/3失败/0error/0skip：v3的6个非MySQL诊断已通过，bridge6CHECK已越过；3个MySQL用例仍在setUp新遇到execution表CHECK catalog drift，Chat未开始。这不是Provider/OOM失败。完整stdout/XML、实际后prefix空readback及Main两个freeze-checker的控制面错误（未启动测试时发生）均保存[本轮便携证据](integration-evidence-20260928/controlled-bridge-v4-execution-check/manifest.json)。
+
+按正式修复矩阵，原API Owner仅在本线程精确新诊断schema中运行原fixture CREATE与v1_17 ALTER，取得`chk_pwex_controlled_consent`真实catalog、ENFORCED=YES及前后prefix/exactschema均0。新候选`29b60fee`/tree`9b0bb114`仅修initializer和独立literal正/负断言，DDL资源/17fixture/AP/heaps不变；未提升API feature。Main固定v5 matrix/input/argv并交原Verifier一次运行，实际结果待核准，不把catalog自检当57项测试通过。
+
+下一完整多轮包的[runtime来源/EDIT wire合同v1](controlled-image-v3-source-wire-contract-v1.md)已冻结：独立v3 sibling、精确asset来源、每轮新command/consent、保留旧v2，三组合法及13组负向共同样例仍NOT_RUN。此只锁定runtime增量，owner pendingClarification/每意图费用及统一Hall composer仍须落地，不把新native样例当完整多轮已接通。真实账户未选、Provider未调用、完整34项产品仍NOT_RUN；未发布或通知可验收。
