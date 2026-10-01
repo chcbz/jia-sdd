@@ -36,3 +36,9 @@ API AgentWebSocketHandler 在 persistFinal 事务提交后发送既有 agent_mes
 主 Owner 从 git archive 冻结源码执行真实 processor/runtime/inbox 交叉验证：接受响应未知→原生readback→落盘→发送失败→重建实例→相同final重放→早于发送返回的重复服务端回执→confirmed归档。启动/readback各1次，recovery记录与重试timer均为0，四源码摘要已核对Git对象。该回执、引擎与传输为替身，**不是实际API事务或模型理解验收**。
 
 后续仍需真实API/Agent/媒体理解、双接应、完整浏览器及按版本发布；此前原生握手成功不提升为整个8907400候选的原生运行通过。
+
+## 旧聊天回执兼容已补齐：d082e1c
+
+原兼容候选979597b虽通过定向测试，但Main使用API实际非durable回执形状（无turnId/duplicate）仍复现提前严格校验误拒绝；原失败已保留。[修复及冻结验证证据](integration-evidence-20260928/client-final-ack-compat-d082e1c/manifest.json)绑定d082e1c。现在先识别唯一匹配的INSPECT turn，再校验其严格回执；旧聊天事件不改变INSPECT状态，歧义和已匹配INSPECT错误仍拒绝。
+
+4项相关定向通过、113项未选中；Main在git archive固定源码中验证真实processor忽略旧API形状且无reject，同时原生接收响应丢失、readback、结果落盘、重启、相同final重放及早到重复ACK链仍通过（fake engine/transport/ACK）。Client特性分支已FF推送；未进行develop合入、安装、收费调用或发布。实际API服务恢复及测试账号模型额度授权仍待用户确认，不因自动续办消息视为授权。
