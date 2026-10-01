@@ -40,3 +40,18 @@ Main 全程持共享 Gradle 锁执行四套真实隔离 MySQL：platform74/nativ
 首包修复后的 attempt5：tree `16fbbff2e0df67d042142e51ec3c107e802ee0bf`，focused185/185PASS；archive271/260PASS/11既有FAIL/0skip，Gradle exit1，failure delta空、fresh XML、前后同tree。独立复审 **ACCEPT_LOCAL_API_SCOPE，P0/P1=0**，history 混合快照已通过锁定读取和有效 latch 实库测试闭合；outbox P2 边界保持不变。原件 `evidence/native-lifecycle/withdraw-api-attempt5/`。
 
 Main 已保存本地 API commit `05875268c0c8cc991951f2dcb3fef9d29204e702`，其 tree 精确等于 tested/reviewed tree，提交后工作树 clean。**未 push 首包增量、未更新根仓 gitlink/pinned SHA 为未推送提交，不宣称特性完成。** 当前唯一 Writer 已继续第二包 durable WAITING_INPUT/WAITING_ASSIGNEE、resolve-input 与必要 schema/最小聊天接线；剩余精确 draft/operation 接口、Web 和完整开发集成仍在其后串行补齐。
+
+## API 补缺包二：真实等待维护单
+
+2026-10-01：durable WAITING_INPUT/WAITING_ASSIGNEE、resolve-input、精确 direct target 和最小 Chat 接线候选已冻结为 tree `0e8e8b7ca39119759812a0b4004058f6892da7b5`，父提交为 `05875268`。无完整候选时不创建 run/draft/grant/lease/command；来源及作品冻结后不原地替换。第二包源码尚未提交/推送，独立只读审查进行中。
+
+Main 全程持共享锁执行四套真实隔离 MySQL：platform74/native6/maintenance113，定向 **193/193PASS**；archive279/268PASS/11既有FAIL/0skip，Gradle exit1。相对首包 attempt5 的逐失败比较 introduced=[] / removed=[]，XML 全 fresh、前后 tree 相同。原件 `evidence/native-lifecycle/waiting-api-attempt3/`。attempt1 编译失败与 attempt2 的5项新测试失败均保留，修复未放宽 source/target/授权/CHECK/FK；attempt3 相对 attempt2 仅修测试合法 fixture 与正确负向断言。
+
+本结果仅为局部源码实库组件验证，不是 live HTTP/共享 Runtime 全链或业务验收。六条精确 draft/operation 管理路由、管理作品枚举、Web 完整维护体验与开发集成继续按 D2 补齐，不以本包 PASS 宣称 whole-feature complete。
+第二包 attempt3 独立只读裁定 **REJECT_LOCAL_API_SCOPE**（P0=0/P1=2/P2=2）：resolve-input 的已提交 receipt 未在 by-key allowlist；manager-first 等待单跨 direct 入口重放未冻结 exact target。另发现 waiting/cancelled nullable CHECK 不够精确，及 resolve 对撤权/换任缺真实双连接 latch 证据。已回交唯一 Writer 窄修；原件摘要 attempt3/review.json。本轮193PASS只证明现有选择器，不能抵消上述审查缺陷。
+
+第二包 review 窄修候选 c035e8b 的 attempt4 编译通过，但新增 CHECK selector 的 appointment 缺 slot FK fixture、by-key foreign waiting 负例 helper 将 nullable appointmentRevision 拆箱，导致定向117/2FAIL与archive283/13FAIL（11既有+2新增）。原始XML/日志及前后同tree/failure delta已保留 attempt4/。唯一Writer仅修两个测试文件：合法slot→appointment、明确CHECK名称断言、29参nullable构造保留target/null；新tree d15130e3 的 attempt5 实库验证正在执行，未预先宣称PASS。
+
+修复后 attempt5：tree d15130e3，platform74/native6/maintenance117，定向 **197/197PASS**；archive283/272PASS/11既有FAIL/0skip，Gradle exit1。相对首包直接 failure delta空，前后同tree、XML fresh。CHECK负向测试已确认约束名称（不是FK假绿），两项真实latch撤权排序已运行。独立只读窄复审进行中，未提交/推送第二包，整项goal仍active。
+
+第二包最终窄复审 **ACCEPT_LOCAL_API_SCOPE，P0/P1/P2=0**。Main已保存本地API commit **a1c39dcf04f91102879c1a73bb9e0a44ffb2a851**，tree精确等于tested/reviewed d15130e3，提交后clean；尚未push、Root gitlink与pinned SHA保留远程62223001。原件 attempt5/review-final.json。当前唯一Writer继续第三包六条精确draft/operation接口、管理作品枚举（active=null仍可管理历史）及D2管理者以新human授权接管撤任Agent合法草稿；Web和开发Runtime全链仍在其后。整项不宣布complete。

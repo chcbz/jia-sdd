@@ -1,0 +1,53 @@
+{
+  "reviewer": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "kind": "main_recorded_independent_read_only_review_summary",
+  "verdict": "REJECT_LOCAL_API_SCOPE",
+  "base_tree": "16fbbff2e0df67d042142e51ec3c107e802ee0bf",
+  "reviewed_tree": "0e8e8b7ca39119759812a0b4004058f6892da7b5",
+  "source_unchanged": true,
+  "reviewer_wrote_source": false,
+  "reviewer_ran_gradle": false,
+  "p0": 0,
+  "p1": 2,
+  "p2": 2,
+  "findings": [
+    {
+      "severity": "P1",
+      "title": "resolve-input committed receipt missing from operationByKey allowlist",
+      "file": "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java",
+      "lines": "957-1032,1125-1180",
+      "impact": "Lost POST response cannot be resolved using committed JOB_INPUT by-key receipt",
+      "status": "assigned_to_unique_writer"
+    },
+    {
+      "severity": "P1",
+      "title": "Cross-entry intent replay fails to freeze exact direct target",
+      "file": "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java",
+      "lines": "499-504,517-523,985-990",
+      "impact": "Manager-first target-null waiting job replays under direct agent A, then resolves current agent B",
+      "status": "assigned_to_unique_writer"
+    },
+    {
+      "severity": "P2",
+      "title": "CHECK accepts semantically mixed waiting/cancelled nullable shapes",
+      "file": "chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql",
+      "lines": "170-176",
+      "impact": "WAITING_INPUT can have full inputs; CANCELLED accepts mixed partial execution candidate",
+      "status": "assigned_to_unique_writer"
+    },
+    {
+      "severity": "P2",
+      "title": "Real resolve vs revoke dual-connection tests absent",
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceConcurrencyMySqlTest.java",
+      "lines": "659-748",
+      "impact": "Ordering needs genuine latch evidence, not mocked or sequential checks",
+      "status": "assigned_to_unique_writer"
+    }
+  ],
+  "focused_tests": 193,
+  "focused_failures": 0,
+  "archive_tests": 279,
+  "archive_existing_failures": 11,
+  "runtime_e2e": false,
+  "whole_feature_accepted": false
+}

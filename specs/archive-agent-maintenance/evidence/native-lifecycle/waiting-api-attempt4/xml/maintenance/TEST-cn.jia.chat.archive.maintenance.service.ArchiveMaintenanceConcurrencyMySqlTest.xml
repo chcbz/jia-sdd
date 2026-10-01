@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" tests="22" skipped="0" failures="1" errors="0" timestamp="2026-10-01T06:18:09.039Z" hostname="DESKTOP-AANKMQ7" time="56.725">
+  <properties/>
+  <testcase name="nativeLifecyclePersistsStartFailureReplayAndLateTerminalReceipt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.988"/>
+  <testcase name="resolveCommittedBeforeAppointmentRevocationCreatesWholeCandidateThenFencesIt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.27"/>
+  <testcase name="productionRevocationReplacementAndReassignAdvanceEpochOnceAndFenceOldScope()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.541"/>
+  <testcase name="strictWaitingAndCancelledShapesRejectImpossibleRowsOnFreshAndUpgradedSchema()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="1.865">
+    <failure message="org.springframework.dao.DataIntegrityViolationException: PreparedStatementCallback; SQL [INSERT INTO archive_appointment(appointment_id,collection_id,role_code,tenant_id,client_id,owner_jiacn,agent_id,binding_version,work_scope_mode,work_ids,permission_profile,required_skill_key,required_skill_version,required_skill_sha256,status,revision) VALUES ('shape-appointment',?,'ARCHIVE_EDITOR','0','client-a','owner-a','shape-agent','1','COLLECTION','','DRAFT_ONLY','archive-maintainer','1.0.0',?,'REVOKED',1)]; Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_appointment`, CONSTRAINT `fk_archive_appointment_slot` FOREIGN KEY (`collection_id`, `role_code`) REFERENCES `archive_appointment_slot` (`collection_id`, `role_code`))" type="org.springframework.dao.DataIntegrityViolationException">org.springframework.dao.DataIntegrityViolationException: PreparedStatementCallback; SQL [INSERT INTO archive_appointment(appointment_id,collection_id,role_code,tenant_id,client_id,owner_jiacn,agent_id,binding_version,work_scope_mode,work_ids,permission_profile,required_skill_key,required_skill_version,required_skill_sha256,status,revision) VALUES ('shape-appointment',?,'ARCHIVE_EDITOR','0','client-a','owner-a','shape-agent','1','COLLECTION','','DRAFT_ONLY','archive-maintainer','1.0.0',?,'REVOKED',1)]; Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_appointment`, CONSTRAINT `fk_archive_appointment_slot` FOREIGN KEY (`collection_id`, `role_code`) REFERENCES `archive_appointment_slot` (`collection_id`, `role_code`))
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:106)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.assertStrictWaitingShapesRejectImpossibleRows(ArchiveMaintenanceConcurrencyMySqlTest.java:1187)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.strictWaitingAndCancelledShapesRejectImpossibleRowsOnFreshAndUpgradedSchema(ArchiveMaintenanceConcurrencyMySqlTest.java:935)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Cannot add or update a child row: a foreign key constraint fails (`cyf_h02_aam`.`archive_appointment`, CONSTRAINT `fk_archive_appointment_slot` FOREIGN KEY (`collection_id`, `role_code`) REFERENCES `archive_appointment_slot` (`collection_id`, `role_code`))
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <testcase name="autoValidatedNativePublishIsAtomicAndLostResponseReplaysOnePublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.615"/>
+  <testcase name="editionHistoryReauthorizesAndReturnsOnlyAtomicPostWithdrawalSnapshot()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.197"/>
+  <testcase name="completePreviousMaintenanceSchemaUpgradesAdditivelyAndMalformedBreakpointFailsClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="8.592"/>
+  <testcase name="withdrawalCasReplacementReplayAndPrivateFactsRemainImmutable()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.738"/>
+  <testcase name="repeatableReadRealPublishWinsBeforeWithdrawalAndStaleWorkCasLeavesEditionPublished()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.326"/>
+  <testcase name="reviseContextReturnsExactWorkSnapshotAndConcurrentRevisionChangeBlocksAutoPublish()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.278"/>
+  <testcase name="draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.331"/>
+  <testcase name="explicitResumeCreatesOneHigherEpochPreservesHistoryAndFencesOldRun()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.025"/>
+  <testcase name="revokeWaitingBehindEnsureSeesAndFencesNewlyCommittedGrantUnderRepeatableRead()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.059"/>
+  <testcase name="managerRevocationCommittedBeforeResolvePreventsCandidateCreation()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.05"/>
+  <testcase name="lateFailureCasFailureRollsBackRunGrantJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.021"/>
+  <testcase name="lateStartCasFailureRollsBackRunJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.099"/>
+  <testcase name="explicitReassignUsesOnlySuppliedCurrentAppointmentAndNewEpoch()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.081"/>
+  <testcase name="waitingJobPersistsWithoutExecutionAndResolvesThroughExactCurrentAppointment()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.12"/>
+  <testcase name="expiredProductionFenceResumesAtNextEpochAndExactReplayKeepsOneReplacement()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.177"/>
+  <testcase name="platformAgentRootThenManagerAndEnsureExecutionCompleteWithoutReverseLockDeadlock()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.044"/>
+  <testcase name="persistedConfirmationBindsCanonicalTurnAndAllRetriesReuseOneDurableJob()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.06"/>
+  <testcase name="validationRecoveryReadsOnlyCurrentRevisionAndExactActorScope()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.244"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
