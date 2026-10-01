@@ -1,5 +1,7 @@
 # 最新交付入口（2026-10-01）
 
+**统一详设总入口**：[长期融合详设与施工入口](fusion-final-design-entry-20261001.md)汇总单会话/按需能力、双接应输入输出、三用途存储、恢复和开发分工；讨论以冻结 typed v1 为准，执行保持独立 v3，不另实现早期 schema-3 讨论候选。四仓当前 fast 合入有[直接远端证据](integration-evidence-20260928/fusion-final-design-branch-readback-20261001.json)，无需重复建分支/merge。
+
 **最新进度**：[回执领域修复与实施优先级](integration-typed-receipt-source-adoption-20261001.md)：Web `ebb664f` 已推送，Main 196 项及合法状态/绑定 probe 通过（基线 lint 两错误与旧合成正向失败保留）；API `642e732` V3实测34通过/3真实MySQL CHECK失败，后续NOT_RUN、未晋升。浏览器启动前置已实测，不等于业务验收。
 
 **前轮详设收口与真实核验**：[受理回执/请求投影领域分离 v1.1](typed-deliberation-receipt-adoption-contract-v1.1.md)补齐当前API/Web状态混用问题；[本轮证据](integration-evidence-20260928/typed-receipt-adoption-20261001/manifest.json)记录891精确候选13文件193通过/0失败，但合法RUNNING/COMPLETED采用仍2失败，候选未晋升。API8fc为干净无冲突组合，测试NOT_RUN；V6未启动。完整产品未发布/验收。
