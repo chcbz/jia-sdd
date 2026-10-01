@@ -1,0 +1,93 @@
+
+
+  controlled image point-and-start bridge v1
+    ✔ accepts fixture capability only as explicit consent and identifies unavailable separately
+    ✔ performs real fake issue → durable wrapper → bridge → BOUND observation exactly once
+    ✔ uses the existing read-only assignment projection and bootstrap adoption after BOUND, never /assign
+    ✔ continues read-only original projection from PREPARING to ADMITTED and adopts without bridge or assign replay
+    ✔ restores durable context for refresh and observes consumed/revoked without reissue
+    ✔ invalidates a late authoritative read before any issue or bridge POST
+    ✔ does not POST bridge when a deferred GET404 arrives after invalidation
+    ✔ recovers an ACK-lost issued consent through issuer readback before its exact bridge replay
+    ✔ routes an ACK-lost providerConsent-only shared intent to controlled check/resume, not ordinary recovery
+    ✔ GET404 only explicitly replays persisted wrapper; 503/409 do not
+    ✔ treats malformed, 503 as controlled unknown and only explicit 404 undeclared
+
+  frozen provider-consent intent and receipt contract
+    ✔ only accepts the frozen one-image issue shape and at most 16 exact references
+    ✔ rejects wrong target receipts
+    ✔ rejects wrong assignment key receipts
+    ✔ rejects wrong hash receipts
+    ✔ rejects wrong epoch receipts
+    ✔ rejects extra authority receipts
+    ✔ rejects unknown state receipts
+    ✔ accepts each frozen core receipt state without treating it as paid/newStart
+    ✔ allows only the API readonly same-version active-to-expired projection
+    ✔ uses BigInt-safe monotonic receipt versions and immutable facts
+    ✔ rejects issue body acknowledgement and assignment-key/body substitutions
+    ✔ keeps provider extension immutable in the one shared original-intent store
+    ✔ requires explicit acknowledgement with zero storage or POST side effects when absent
+    ✔ persists/readbacks assignment and issue keys/bodies before the one issuer POST
+    ✔ fails closed on corrupt or unreadable shared storage without an issuer POST
+    ✔ never overwrites an ordinary original intent with a consent extension
+    ✔ check only GETs, while explicit resume GET404 replays the same issue body/key
+    ✔ does not replay on network/503/conflict reads and keeps original issue facts
+    ✔ reads before revoke, persists one revoke key/version, and reuses it after an unknown revoke
+    ✔ permits an expired receipt to revoke with its original persisted version
+    ✔ fences same-identity task and target navigation without deleting the original intent
+    ✔ fences a late receipt after actor scope changes
+    ✔ does not allow the ordinary point flow to reach /assign when a cost extension exists
+
+  persisted exact point-and-start source contract
+    ✔ persists/readbacks original body before one POST, then reads exact action/task and adopts without resend
+    ✔ preserves exact fixed-version optional reference with metadata/hash projected by server
+    ✔ server negotiation defaults off, even for a valid task
+    ✔ never writes with no trustworthy requirement
+    ✔ never writes with numeric revision
+    ✔ never writes with unsafe numeric write revision
+    ✔ never writes with mismatched task root version
+    ✔ never writes with missing immutable hash
+    ✔ never writes with bad source
+    ✔ funded tasks stay outside this workflow
+    ✔ corrupt storage cannot be replaced to bypass an unresolved request
+    ✔ failed storage readback prevents POST
+    ✔ unknown POST preserves original key/body; remount only reads and never POSTs
+    ✔ new selection never overwrites an existing original intent
+    ✔ checking 404 does not resend the original request
+    ✔ checking 401 does not resend the original request
+    ✔ checking 403 does not resend the original request
+    ✔ checking 500 does not resend the original request
+    ✔ checking 503 does not resend the original request
+    ✔ explicit recovery after exact action404 replays original body/key only
+    ✔ explicit recovery replays persisted reference versions even when an external catalog could have changed
+    ✔ confirmed POST + projection404 cannot erase facts or trigger replay
+    ✔ PENDING preparation uses no new first-turn/send/POST
+    ✔ reassigned/revoked historical original can be read but never automatically attached
+    ✔ scope switch while POST is in flight isolates late receipt and forbids followup reads/adoption
+    ✔ draft edits during requirement read do not mutate the fixed operation selection
+    ✔ changed explicit target during preflight cannot silently point to another Agent
+    ✔ canonical read failure retains confirmed grant and uses original key for a pure read retry
+    ✔ newer canonical root requires fresh original-assignment verification before attaching
+    ✔ same-target but changed assignment epoch fails fresh read and never attaches an old request
+    ✔ explicit recovery 401 never retries a write
+    ✔ explicit recovery 403 never retries a write
+    ✔ explicit recovery 500 never retries a write
+    ✔ explicit recovery 503 never retries a write
+    ✔ bad grant ACK retains original intent and never copies it into task or blindly replays
+    ✔ single composable blocks double click and disposal fences pending reads
+
+  independent action/grant/root fences
+    ✔ rejects foreign task
+    ✔ rejects wrong target
+    ✔ rejects another first action
+    ✔ rejects altered grant set
+    ✔ rejects numeric stateVersion
+    ✔ rejects missing admitted request
+    ✔ rejects extra injected input
+    ✔ root/grant can advance without moving outbox fence or inventing conflict
+    ✔ same outbox version conflicting state and admitted regression are rejected
+    ✔ noncanonical/unsafe version never becomes an inaccurate write number
+
+
+  80 passing (159ms)
+

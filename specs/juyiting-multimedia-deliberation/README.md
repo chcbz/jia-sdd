@@ -20,6 +20,10 @@
 
 [受控图像桥实际验证进展](integration-controlled-bridge-verification-progress.md)：四仓远端fast ancestry重新核验；API实际38项中5失败/3跳过，Web精确组合重现会话采用/迟到恢复/issuer阶段缺口。候选均未提升，原Owner继续修复；分支和详设已交付不等于产品可验收。
 
+## Provider core 与页面恢复：最新实际验证
+
+[普通验证/MySQL/页面恢复补充](integration-provider-core-normal-mysql-web-recovery-progress.md)：API `99ff1a43`已以实际56项通过（Agent39含真实MySQL3、Chat17，0fail/skip）精确FF/push/readback；Web `8244f5a`以83项实际回归/scoped lint及Main真实Page闭包证据整合，覆盖issuer-only恢复、自动PREPARING→ATTACHED及目标/授权/修订迟到fence。SDD研发pins/gitlinks同步，历史失败保留。API Grant/execution/START桥、多轮及34项产品验收/Provider/发布仍未完成，不通知可验收。
+
 ## 阅读顺序
 
 1. [需求方案](spec.md)：用户流程及不做什么。
