@@ -86,3 +86,8 @@ Main 实际加载 immutable `4ce7a02e` 的 JS primitive/Vue composable，以 moc
 ## 4. 同日后续：语音融合验证已收口
 
 上文 §3.2 是原 v1 失败观测点，保留不改。随后同 `42d6e7e` 获得 Main 实际核验的 33XML/211项：Agent57原v1复用，Chat25和Voice129为v3独立实际执行，零失败/错误/跳过；owned Redis4 contract10/10通过，PID终态与MySQL后读回一致。API feature 已精确 FF/push/readback42d，当前 pin/gitlink同步。详见[新源码接受回执](integration-api-voice-delta-source-accepted-20261001.md)；该通过不包含自然多轮、产品用例或发布，不覆盖历史OOM/runner失败。
+
+
+## 5. 多稿发现施工合同已冻结
+
+[bounty conversation request index v1](bounty-conversation-request-index-contract-v1.md)定义owner只读GET、scope隔离、已有RequestView复用、fixed-through keyset、晚提交低ordinal从0重扫和Web独立catalog；历史读不依赖ACTIVE grant，不把旧target/assignment稿借权为当前验收。22项预期fixture均NOT_RUN，离线检查只证明示例shape与坏输入拒绝，不证明API/Web业务。API新六叶子路径与既有74路径互不重叠，Web沿用明确多稿接口，不改activeRequest取消焦点。下一步责任Owner实现和实际验证该包，不停留在文档。
