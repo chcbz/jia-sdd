@@ -20,3 +20,9 @@ Client `3f76d29bd53f136b314f073975fc4772116ab132` 补充 processor recoveryContr
 API AgentWebSocketHandler 在 persistFinal 事务提交后发送既有 agent_message_saved；重复 final 也发送该回执。检查 Client 3f76d29 时尚未消费这个回执，成功发送也停留 recovery_required，因此必须补齐可信 socket、精确 profile/turn 绑定的持久终态与重试清理，并覆盖早到回执、丢回执后重复确认、重启及错误绑定。
 
 不能因 WS 写入成功就标记服务端持久化成功；也不能无限重放作为最终产品方案。媒体实际理解、双接应、完整浏览器交付、版本构建发布仍未验收。
+
+## 实际跨层接线增量（工作源码证据，不是冻结提交验收）
+
+`processor-native-final-restart-v1` 运行通过：真实 AgentMessageProcessor 接受 INSPECT → runTypedInspection 接受响应丢失 → processor 调 recoverTypedInspection 查原生终态 → final 持久化 → 重建 processor/inbox 实例 → 重放相同 final。引擎启动 1 次、原生 readback 1 次、发送 2 次且内容及 ID 一致。唯一预期拒绝记录为 TURN_ACCEPTANCE_UNKNOWN。
+
+核对 Git 对象时发现 chat-runtime 已含 Owner 正在实施的 ACK 改动，与 `3f76d29` 不同；已中止将其绑定该提交。四源码测试前后观测摘要一致，仅按记录的工作源码摘要保存，不宣称整体候选通过。引擎与 WS 仍是替身，结果仍未获服务端确认。冻结源码后才能据 exact tree 补完 ACK 及端到端验收。
