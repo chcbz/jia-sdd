@@ -1,3 +1,17 @@
+# 最新交付入口（2026-10-01）
+
+**本次要求已落实：四仓分支已建立并推送、当前 fast 已包含、长期方案与详细设计已交付。完整功能仍在实施，不表示已发布或可验收。**
+
+- 统一开发分支：SDD / API / Web / Agent Client 的 `codex/juyiting-multimedia-deliberation`；[本次直接远端核验](integration-evidence-20260928/branch-and-design-delivery-readback-20261001.json)证明四仓当前 fast HEAD 都是 feature HEAD 的祖先，无需重复合并。
+- 最新已推送组件基线：API `9798951`、Web `1993b88`、Client `2f69072`；完整 commit/tree 以 `integration.yaml` 为准，历史段落不代表最新 pin。
+- **先读**：[本次详设交付与施工入口](fusion-delivery-handoff-20260930.md#本次请求的最终交付2026-10-01)，然后读[长期融合方案](long-term-fusion-plan-20260928.md)、[整体详设 v2](fusion-detailed-design-v2.md)、[多轮及每意图授权详设](long-term-followup-authority-design-20261001.md)、[媒体/存储/验收详设](design.md)。
+- 长期统一一个会话、一套 request/turn/event 和权威内容引用；fast 是 CHAT 策略，多媒体按需查阅或执行，不默认全量加载工具/资料、不要求固定三次模型调用。模型提议不能授予执行权限。
+- 实施顺序和逐版出厂条件见[开发计划](fusion-implementation-plan-v2.md)与[分版本计划](versioned-delivery-plan-20260928.md)。自然澄清的 API 原子续办、真实 INSPECT、双接应和完整浏览器闭环仍需完成；旧示例版本号 1.13.45–1.13.47 不得直接用于本特性发布。
+
+以下为各历史时点的增量记录，保留原始失败和限制；最新状态以以上入口及集成 pin 为准。
+
+---
+
 **2026-10-01 请求目录API已收口**：[API目录接受](integration-u2-api-request-index-source-20261001.md)记录9798正常编译及62实际测试（MySQL2）；与Web1993的实时联调/浏览器/产品发布仍待验证。
 
 **2026-10-01 原生自然答复源码已收口**：[Client结果接受](integration-u2-client-typed-result-source-20261001.md)记录2f69/199实际Node及原边界修复；API原子持久化/澄清续办和Web自然输入仍待闭合，INSPECT未启用。

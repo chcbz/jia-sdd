@@ -4,6 +4,41 @@
 
 本文件是本次分支/文档交付的只读状态补充，不改变冻结的 API、wire 或验收合同，不是运行台账。完整详设以[融合详设 v2](fusion-detailed-design-v2.md)为主，[UI/媒体/存储详设](design.md)补充，冲突时 v2 优先。**分支建立与 fast 代码融合已完成；完整产品尚未验收。**
 
+## 本次请求的最终交付（2026-10-01）
+
+本节更新交付入口和当前源码快照；下文各历史核验点原样保留，不是最新状态。**本次交付是分支、fast 合入与长期详设；没有把整个多媒体功能宣称为开发完成、发布或可验收。**
+
+### 当前远端分支核验
+
+直接 `git ls-remote --heads origin` 读取四仓 feature/fast HEAD，再以 `git merge-base --is-ancestor <remote-fast> <remote-feature>` 核对。四仓返回均为 0，且本地 feature 与远端一致；没有重复 merge、重建分支、改写 fast 或操作脏主 checkout。
+
+| 仓库 | 本次文档提交前 feature HEAD | 当前远端 fast HEAD | 包含 fast / 已推送 |
+| --- | --- | --- | --- |
+| SDD | `2f4951c95c72e01d69ee3dab8a24ccb590cdda16` | `9f47e63e456a7965d954e6d1e645a083920d784e` | 是 / 是 |
+| API | `97989512351b6a409ac629e4546ce9fe698670e0` | `caee54fc27a08146f9cc57219cf86c763e41c531` | 是 / 是 |
+| Web | `1993b888391c2c7ce707dc60da743810f25f17df` | `96838f17fc24fbf21781be39476aa9723dee3a2c` | 是 / 是 |
+| Agent Client | `2f6907274ea5395980df0643c6b3898fa522a54f` | `68dbe8992a56c8e1041056a9123b1156d1d2b35e` | 是 / 是 |
+
+完整时间/tree/命令语义见[本次远端回执](integration-evidence-20260928/branch-and-design-delivery-readback-20261001.json)。SDD 此后只追加本文档提交，组件 pin 不变；本文不推导已经包含“现在所有 develop 提交”，也不安排 develop 合入或发布。
+
+### 长期设计与详设优先级
+
+1. [长期方案](long-term-fusion-plan-20260928.md)：一个业务会话；fast 为轻量 CHAT 策略，多媒体为同入口的受权能力。CHAT/INSPECT/EXECUTE 是权限和上下文边界，不是三套系统或固定三次模型调用。
+2. [整体详设 v2](fusion-detailed-design-v2.md)：受理、任务授权、路由、快照、状态机、幂等、协议兼容和故障恢复。
+3. [多轮与每意图授权补充](long-term-followup-authority-design-20261001.md)：细化 v2 的当前实施决策。旧 GENERATE-only grant **不能借权 EDIT**；本轮明确操作/来源授权与费用同意分别核验，不改写原 grant。讨论、精确澄清回复、执行三类意图均留在同会话。
+4. [媒体/存储/归档/验收详设](design.md)：text/image/audio/file 内容块、受权真实字节、预览/下载、可选保存、选定最终成果及正式验收/完成。UI 展示不等于 Agent 已理解附件；未保存成果仍须持久可读。
+5. 具体实现按已冻结的领域 wire/HTTP/fixture 合同施工；**新架构决策不静默改变旧协议或已绑定 hash**。确需改变合同时另冻结版本。候选设计、源码接受、产品验收、实际发布四种状态分开。
+
+“一份内容，三种用途”保留平台已有私有存储根，使用会话 asset、个人文件版本、正式交付 manifest 的精确引用和各自 ACL；不是让所有 Agent 共用一个物理目录。山寨安顿/自家接应均从受 fence 的 manifest 物化本轮 inputs，在各自 run 的 outputs 提交，由平台验证后发布媒体。提示词说明路径，但授权/上传/提交由协议执行。
+
+### 接下来如何指导开发 Agent
+
+以[融合开发计划](fusion-implementation-plan-v2.md)拆独立路径任务，每包固定合同版本、base commit、允许写集、验收 selector 和未完成项；不要求 Agent 重新设计第二套会话或全盘重写聚义厅。
+
+当前顺序：API 现有每意图授权包与独立 typed 校验叶子包收口 → 精确组合/真实数据库核验 → typed final 原子持久化、pending question/CAS/续办与唯一 composer → 真实受控查阅和全部媒体闭环 → 双接应/浏览器/正式交付验收 → 达到对应里程碑条件后分版本发布。Owner 自检，不创建独立 Reviewer；所有 Gradle 经 orchestrator。
+
+本次只做文档/远端 L0 核验，不重跑应用构建、Provider 或浏览器；已有定向测试不计作 34 项产品用例。发布前重新核对线上版本与 release refs，旧计划示例号不得覆盖已有版本；有/无参考图画鸟、继续修改、预览下载、保存及真实需求完成均须对应目标版本实测，才能通知“可以验收”。执行 Owner/gate 仍只在主工作区 runtime ledger，本节不是第二台账。
+
 ## 1. 分支交付及远端核验
 
 四仓均使用 `codex/juyiting-multimedia-deliberation`。本次重新 fetch 远端精确分支，以 `merge-base --is-ancestor` 核验当前 fast HEAD；四仓均已包含，无需重复 merge、重置或改写原 fast 分支。
