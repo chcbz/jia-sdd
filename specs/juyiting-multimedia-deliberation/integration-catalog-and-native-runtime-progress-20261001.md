@@ -47,3 +47,37 @@ Owner静态自检和Main独立路径/摘要/literal核对通过，**仅接受为
 新API精确child相关正常图测试通过后才提升feature/pin；Client原生引擎兼容与真实INSPECT、多轮来源和完整媒体、双接应、真实登录/正式交付/验收/完成仍按原范围推进。当前loopback10018实际连接拒绝，已向canonical Runtime协调入口发alert-only，Main未重启foreign服务；旧健康记录不作为当前UP证据。
 
 尚无本特性develop合入、冻结release、生产制品/部署或产品验收。不能发送“可以验收”的通知。所有上述原始回执与离线派生见[便携manifest](integration-evidence-20260928/catalog-and-native-runtime-progress-20261001/portable-manifest.json)。
+
+## 2026-10-01 后续源码与真实环境收口（本节优先于上文同日历史状态）
+
+完整正常图对 `354f736` 实际执行到Agent V3：**38项、37通过、1真实MySQL重启失败，0error/skip，9份fresh XML**。此前V3直接catalog问题已经收口；剩余失败是旧provider-consent initializer 的两处V3期待仍用原DDL表达式，而非实际MySQL catalog rendering。Chat V3、V2和typed阶段未运行；原失败与owned schema清理PASS均保留。
+
+新Source Owner提交 `7abcd58ad74d4deb23e9b4c0a572168004b05ebb` / tree `7dae5070aa1c5bb45e90419f415c83b07708048a`，仅三路径：新增catalog-only accessor、替换旧initializer两处期待、补实际catalog正向与弱化/TRUE/OR/缺失/额外/未执行CHECK负向测试。Main独立核对生产diff只含该accessor和两处调用替换；DDL、共享normalizer及第四允许路径不变。仅静态接受为新验证输入，尚未晋升feature/pin。
+
+同一Owner自检首次 `7abc` 在read-only MySQL TCP前置检查失败，**未运行任何Gradle/数据库写入**。Main进一步按精确自有Unix socket只读核验，MySQL8.0.21、UUID/datadir、PID/start_ticks仍匹配且服务存活；故障是旧TCP代理已消失，不是数据库死亡。已授权该Owner在新验证runner生命周期内创建自己的TCP→此唯一Unix socket适配，不重启/操作mysqld或其他进程。新的输入、前置身份/私有prefix检查及完整正常图V3→V2→typed 11类回归继续；旧NOT_RUN/失败不改写。旧source回执错误未来时间已由单独actual-clock correction补正，原字节与摘要保留，不把错误时间用作事件发生证据。
+
+Client新版兼容已从“没有Owner”推进为**真实Owner READY并绑定唯一ledger/获GO**，开始冻结v1.1七路径施工及相关Node/离线native测量；最终源码与实际测试结果仍待返回。没有启动真实app-server模型、Provider或生产安装，不据此宣称INSPECT或严格无工具可用。
+
+当前版本占用见[分版本最新补充](versioned-delivery-plan-20260928.md#2026-10-01-当前版本重新核验优先于历史候选号)：1.13.45/46/47均不可再当本特性新候选号；三个出厂范围不缩减，达到条件后选当时空闲版本。本特性仍未合develop、发布或完整验收。
+
+
+## 2026-10-01 21:36 实测补充：OOM归因与Client边界修复
+
+`7abc`第二轮已通过自己的TCP→Unix桥身份及prefix前置核验，但**kernel global OOM明确杀死自有Gradle daemon PID 2844792**，发生于production依赖编译、JUnit尚未开始；fresh XML为0，V2/typed均NOT_RUN，不能分类成JUnit失败。此前argv额外包含全局`--rerun-tasks`，导致全部production/AP/compiler依赖强制重编译。原始raw/argv/kernel/PID及清理证据已保存，owned schema cleanup通过，桥关闭且原mysqld未操作。cleanup回执另有先close后读取socket的EBADF，原异常不掩盖。
+
+已通过唯一ledger的`authorize-remediation`冻结第三轮输入：源码、normal init、堆、依赖/AP与全部selectors不变，仅去掉全局`--rerun-tasks`，每个目标Test task使用自己的`--rerun`产生fresh XML；内置选项由本地Gradle9.3.1 primary bytecode确认。Owner在新runner中保持桥到三个阶段终态，关闭前捕获socket元数据。此为受证据支持的新输入，不是同输入盲重试；当前尚无第三轮结果。
+
+Client `ff594c6b7e38293501326cf980c34ffa9921a614` / tree `6ecfd9d2e2e4500a50164c7fad5e3a671c7b61c2`已完成七路径源码及Owner **161/161 Node PASS**，清环境的真实native version/schema离线测量也通过：CLI0.159.2、bundle `7243ba24…`、binary `1748767b…`，40资源/78101808bytes，private copy。保留默认0.153.4及旧wire，资源量只观测；该测量没有启动会话、模型或Provider。
+
+Main对真实模块的纯负向probe另发现：registry为plain object，`__proto__`、`constructor`、`toString`等未登记继承键被当作合同；当synthetic measured readback缺少三个合同字段时，undefined比较可错误得到READY。普通未知字符串正常拒绝。**这是实测合同校验失败，不是已证明远程利用或真实engine启动**；161项原PASS保留，`ff594`尚未晋升feature/pin。已交回同一Owner限定own-key最小child及resolver/声明/runtime零启动负向回归，不再重复重资源native测量，不改INSPECT/wire/默认合同。
+
+证据均收进[便携manifest](integration-evidence-20260928/catalog-and-native-runtime-progress-20261001/portable-manifest.json)：`api-7abc-v2-oom/`、`client-ff594/`及`main/client-ff594-own-key-negative/`；两个Main限定修复/验证矩阵也同目录保存。当前范围仍为完整产品，不以源码/离线测量代替真实INSPECT、双接应、多媒体、正式交付、验收或发布。
+
+
+## 2026-10-01 21:44 Client最小child已接受并推送
+
+同一Source Owner完成`607d25145efe3d13f996e5fbb5e33a01d7bf2195` / tree `c1fb2ccac220d588d341999ea4adbd6f3757fb3c`，parent为原`ff594`，四路径child只有central resolver own-key判断和三份测试增量。Owner **162/162 Node PASS、0fail/error/skip/cancel**；Main在新不可变模块副本上不改原断言，重跑原继承键7项和typed事实/绑定4项，全部PASS。原ff594负向失败和161PASS仍保存，不改写为通过。
+
+默认/两份登记合同、旧CODEX_APP_SERVER_SCHEMA与wire/fixture未变；own-key修复不改资源测量逻辑，复用ff594真实离线native测量，不重复重资源运行。Main核对exact source/path/log hash及clean tree后，以FF-only、普通非force push晋升Client feature，远端直接回读为607d；SDD Client研发pin同步。证据见同一[便携manifest](integration-evidence-20260928/catalog-and-native-runtime-progress-20261001/portable-manifest.json)的`client-607d/`、`main/client-607d-probes/`及push readback。
+
+这是原生版本兼容的**源码接受**，不是启动或生产安装；INSPECT仍NOT_ENABLED，strictNoToolsVerified仍false。API7abc新第三轮完整验证未返回，不晋升API；完整浏览器/双接应/多媒体正式交付/用户验收及本特性发布仍待实际完成。

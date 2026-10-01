@@ -1,0 +1,192 @@
+Compiled from "TaskOptionsGenerator.java"
+public class org.gradle.api.internal.tasks.TaskOptionsGenerator {
+  private static final org.slf4j.Logger LOGGER;
+
+  static final java.util.List<org.gradle.api.internal.tasks.options.BuiltInOptionElement> BUILT_IN_OPTIONS;
+
+  public org.gradle.api.internal.tasks.TaskOptionsGenerator();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  private static java.util.List<org.gradle.api.internal.tasks.options.OptionDescriptor> generateBuiltInOptions(java.lang.Object, java.util.Collection<java.lang.String>);
+    Code:
+       0: new           #7                  // class java/util/ArrayList
+       3: dup
+       4: invokespecial #9                  // Method java/util/ArrayList."<init>":()V
+       7: astore_2
+       8: getstatic     #10                 // Field BUILT_IN_OPTIONS:Ljava/util/List;
+      11: invokeinterface #16,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      16: astore_3
+      17: aload_3
+      18: invokeinterface #22,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      23: ifeq          104
+      26: aload_3
+      27: invokeinterface #28,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      32: checkcast     #32                 // class org/gradle/api/internal/tasks/options/BuiltInOptionElement
+      35: astore        4
+      37: new           #34                 // class org/gradle/api/internal/tasks/options/InstanceOptionDescriptor
+      40: dup
+      41: aload_0
+      42: aload         4
+      44: aconst_null
+      45: aload_1
+      46: aload         4
+      48: invokevirtual #36                 // Method org/gradle/api/internal/tasks/options/BuiltInOptionElement.getOptionName:()Ljava/lang/String;
+      51: invokeinterface #40,  2           // InterfaceMethod java/util/Collection.contains:(Ljava/lang/Object;)Z
+      56: invokespecial #46                 // Method org/gradle/api/internal/tasks/options/InstanceOptionDescriptor."<init>":(Ljava/lang/Object;Lorg/gradle/api/internal/tasks/options/OptionElement;Lorg/gradle/internal/reflect/JavaMethod;Z)V
+      59: astore        5
+      61: aload         5
+      63: invokeinterface #49,  1           // InterfaceMethod org/gradle/api/internal/tasks/options/OptionDescriptor.isClashing:()Z
+      68: ifeq          92
+      71: getstatic     #54                 // Field LOGGER:Lorg/slf4j/Logger;
+      74: ldc           #58                 // String Built-in option \'{}\' in task {} was disabled for clashing with another option of same name
+      76: aload         5
+      78: invokeinterface #60,  1           // InterfaceMethod org/gradle/api/internal/tasks/options/OptionDescriptor.getName:()Ljava/lang/String;
+      83: aload_0
+      84: invokeinterface #63,  4           // InterfaceMethod org/slf4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+      89: goto          101
+      92: aload_2
+      93: aload         5
+      95: invokeinterface #69,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     100: pop
+     101: goto          17
+     104: aload_2
+     105: areturn
+
+  private static java.util.Map<java.lang.String, org.gradle.api.internal.tasks.options.OptionDescriptor> generateOppositeOptions(java.lang.Object, java.util.Map<java.lang.String, org.gradle.api.internal.tasks.options.OptionDescriptor>, org.gradle.api.internal.tasks.TaskOptionsGenerator$TaskOptions);
+    Code:
+       0: new           #72                 // class java/util/HashMap
+       3: dup
+       4: invokespecial #74                 // Method java/util/HashMap."<init>":()V
+       7: astore_3
+       8: new           #75                 // class java/util/LinkedList
+      11: dup
+      12: invokespecial #77                 // Method java/util/LinkedList."<init>":()V
+      15: astore        4
+      17: aload_1
+      18: invokeinterface #78,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+      23: invokeinterface #84,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      28: astore        5
+      30: aload         5
+      32: invokeinterface #22,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      37: ifeq          164
+      40: aload         5
+      42: invokeinterface #28,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      47: checkcast     #50                 // class org/gradle/api/internal/tasks/options/OptionDescriptor
+      50: astore        6
+      52: aload         6
+      54: instanceof    #34                 // class org/gradle/api/internal/tasks/options/InstanceOptionDescriptor
+      57: ifeq          161
+      60: aload         6
+      62: checkcast     #34                 // class org/gradle/api/internal/tasks/options/InstanceOptionDescriptor
+      65: invokevirtual #85                 // Method org/gradle/api/internal/tasks/options/InstanceOptionDescriptor.getOptionElement:()Lorg/gradle/api/internal/tasks/options/OptionElement;
+      68: astore        7
+      70: aload         7
+      72: instanceof    #89                 // class org/gradle/api/internal/tasks/options/BooleanOptionElement
+      75: ifeq          161
+      78: aload         7
+      80: checkcast     #89                 // class org/gradle/api/internal/tasks/options/BooleanOptionElement
+      83: invokestatic  #91                 // Method org/gradle/api/internal/tasks/options/BooleanOptionElement.oppositeOf:(Lorg/gradle/api/internal/tasks/options/BooleanOptionElement;)Lorg/gradle/api/internal/tasks/options/BooleanOptionElement;
+      86: astore        8
+      88: aload         8
+      90: invokevirtual #95                 // Method org/gradle/api/internal/tasks/options/BooleanOptionElement.getOptionName:()Ljava/lang/String;
+      93: astore        9
+      95: aload_1
+      96: aload         9
+      98: invokeinterface #96,  2           // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+     103: ifeq          122
+     106: getstatic     #54                 // Field LOGGER:Lorg/slf4j/Logger;
+     109: ldc           #99                 // String Opposite option \'{}\' in task {} was disabled for clashing with another option of same name
+     111: aload         9
+     113: aload_0
+     114: invokeinterface #63,  4           // InterfaceMethod org/slf4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+     119: goto          161
+     122: new           #34                 // class org/gradle/api/internal/tasks/options/InstanceOptionDescriptor
+     125: dup
+     126: aload_0
+     127: aload         8
+     129: aconst_null
+     130: invokespecial #101                // Method org/gradle/api/internal/tasks/options/InstanceOptionDescriptor."<init>":(Ljava/lang/Object;Lorg/gradle/api/internal/tasks/options/OptionElement;Lorg/gradle/internal/reflect/JavaMethod;)V
+     133: astore        10
+     135: aload_3
+     136: aload         9
+     138: aload         10
+     140: invokeinterface #104,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     145: pop
+     146: aload         4
+     148: aload         6
+     150: aload         10
+     152: invokestatic  #108                // Method org/gradle/internal/Pair.of:(Ljava/lang/Object;Ljava/lang/Object;)Lorg/gradle/internal/Pair;
+     155: invokeinterface #69,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     160: pop
+     161: goto          30
+     164: aload_2
+     165: aload         4
+     167: invokestatic  #114                // Method java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;
+     170: invokestatic  #120                // Method org/gradle/api/internal/tasks/TaskOptionsGenerator$TaskOptions.access$002:(Lorg/gradle/api/internal/tasks/TaskOptionsGenerator$TaskOptions;Ljava/util/List;)Ljava/util/List;
+     173: pop
+     174: aload_3
+     175: areturn
+
+  public static org.gradle.api.internal.tasks.TaskOptionsGenerator$TaskOptions generate(java.lang.Object, org.gradle.api.internal.tasks.options.OptionReader);
+    Code:
+       0: new           #121                // class org/gradle/api/internal/tasks/TaskOptionsGenerator$TaskOptions
+       3: dup
+       4: aconst_null
+       5: invokespecial #126                // Method org/gradle/api/internal/tasks/TaskOptionsGenerator$TaskOptions."<init>":(Lorg/gradle/api/internal/tasks/TaskOptionsGenerator$1;)V
+       8: astore_2
+       9: aload_1
+      10: aload_0
+      11: invokevirtual #129                // Method org/gradle/api/internal/tasks/options/OptionReader.getOptions:(Ljava/lang/Object;)Ljava/util/Map;
+      14: astore_3
+      15: aload_3
+      16: aload_0
+      17: aload_3
+      18: aload_2
+      19: invokestatic  #135                // Method generateOppositeOptions:(Ljava/lang/Object;Ljava/util/Map;Lorg/gradle/api/internal/tasks/TaskOptionsGenerator$TaskOptions;)Ljava/util/Map;
+      22: invokeinterface #139,  2          // InterfaceMethod java/util/Map.putAll:(Ljava/util/Map;)V
+      27: aload_3
+      28: invokeinterface #78,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+      33: invokestatic  #143                // Method org/gradle/api/internal/tasks/options/BooleanOptionElement.groupOppositeOptions:()Ljava/util/Comparator;
+      36: invokestatic  #147                // Method org/gradle/util/internal/CollectionUtils.sort:(Ljava/lang/Iterable;Ljava/util/Comparator;)Ljava/util/List;
+      39: astore        4
+      41: aload         4
+      43: aload_0
+      44: aload_3
+      45: invokeinterface #153,  1          // InterfaceMethod java/util/Map.keySet:()Ljava/util/Set;
+      50: invokestatic  #157                // Method generateBuiltInOptions:(Ljava/lang/Object;Ljava/util/Collection;)Ljava/util/List;
+      53: invokeinterface #161,  2          // InterfaceMethod java/util/List.addAll:(Ljava/util/Collection;)Z
+      58: pop
+      59: aload_2
+      60: aload         4
+      62: invokestatic  #114                // Method java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;
+      65: invokestatic  #165                // Method org/gradle/api/internal/tasks/TaskOptionsGenerator$TaskOptions.access$202:(Lorg/gradle/api/internal/tasks/TaskOptionsGenerator$TaskOptions;Ljava/util/List;)Ljava/util/List;
+      68: pop
+      69: aload_2
+      70: areturn
+
+  private static void lambda$static$0(org.gradle.api.Task);
+    Code:
+       0: aload_0
+       1: invokeinterface #168,  1          // InterfaceMethod org/gradle/api/Task.getOutputs:()Lorg/gradle/api/tasks/TaskOutputs;
+       6: invokestatic  #174                // Method org/gradle/api/specs/Specs.satisfyNone:()Lorg/gradle/api/specs/Spec;
+       9: invokeinterface #180,  2          // InterfaceMethod org/gradle/api/tasks/TaskOutputs.upToDateWhen:(Lorg/gradle/api/specs/Spec;)V
+      14: return
+
+  static {};
+    Code:
+       0: ldc           #11                 // class org/gradle/api/internal/tasks/TaskOptionsGenerator
+       2: invokestatic  #186                // Method org/slf4j/LoggerFactory.getLogger:(Ljava/lang/Class;)Lorg/slf4j/Logger;
+       5: putstatic     #54                 // Field LOGGER:Lorg/slf4j/Logger;
+       8: new           #32                 // class org/gradle/api/internal/tasks/options/BuiltInOptionElement
+      11: dup
+      12: ldc           #192                // String Causes the task to be re-run even if up-to-date.
+      14: ldc           #194                // String rerun
+      16: invokedynamic #196,  0            // InvokeDynamic #0:accept:()Ljava/util/function/Consumer;
+      21: invokespecial #200                // Method org/gradle/api/internal/tasks/options/BuiltInOptionElement."<init>":(Ljava/lang/String;Ljava/lang/String;Ljava/util/function/Consumer;)V
+      24: invokestatic  #203                // Method java/util/Collections.singletonList:(Ljava/lang/Object;)Ljava/util/List;
+      27: putstatic     #10                 // Field BUILT_IN_OPTIONS:Ljava/util/List;
+      30: return
+}
