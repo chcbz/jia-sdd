@@ -1,0 +1,310 @@
+EXPLAIN verifiedCandidateQuery
+{
+  "query_block": {
+    "select_id": 1,
+    "cost_info": {
+      "query_cost": "0.37"
+    },
+    "ordering_operation": {
+      "using_filesort": false,
+      "nested_loop": [
+        {
+          "table": {
+            "table_name": "i",
+            "access_type": "ref",
+            "possible_keys": [
+              "PRIMARY",
+              "uk_platform_install_request",
+              "uk_platform_install_command",
+              "ix_platform_install_reconcile",
+              "ix_platform_install_resolve",
+              "ix_platform_install_resolve_history"
+            ],
+            "key": "ix_platform_install_reconcile",
+            "used_key_parts": [
+              "state"
+            ],
+            "key_length": "130",
+            "ref": [
+              "const"
+            ],
+            "rows_examined_per_scan": 1,
+            "rows_produced_per_join": 0,
+            "filtered": "5.00",
+            "backward_index_scan": true,
+            "cost_info": {
+              "read_cost": "0.25",
+              "eval_cost": "0.01",
+              "prefix_cost": "0.35",
+              "data_read_per_join": "266"
+            },
+            "used_columns": [
+              "installation_id",
+              "tenant_id",
+              "client_id",
+              "owner_jiacn",
+              "actor_id",
+              "request_key",
+              "request_sha256",
+              "agent_id",
+              "binding_id",
+              "runtime_instance_id",
+              "registration_hash",
+              "skill_key",
+              "skill_version",
+              "package_sha256",
+              "challenge_id",
+              "command_id",
+              "origin",
+              "state",
+              "result_sha256",
+              "error_code",
+              "revision",
+              "created_at"
+            ],
+            "attached_condition": "((`aam_frozen`.`i`.`registration_hash` = 0x0101010101010101010101010101010101010101010101010101010101010101) and (`aam_frozen`.`i`.`runtime_instance_id` = 'runtime-fixture') and (`aam_frozen`.`i`.`binding_id` = 1) and (`aam_frozen`.`i`.`package_sha256` = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') and (`aam_frozen`.`i`.`skill_version` = '1.0.0') and (`aam_frozen`.`i`.`skill_key` = 'archive-maintainer') and (`aam_frozen`.`i`.`agent_id` = 'agent-fixture') and (`aam_frozen`.`i`.`origin` = 'PLATFORM_PROVISIONED') and (`aam_frozen`.`i`.`owner_jiacn` = 'owner-fixture') and (`aam_frozen`.`i`.`client_id` = 'client-fixture') and (`aam_frozen`.`i`.`tenant_id` = '0') and regexp_like(`aam_frozen`.`i`.`result_sha256`,'^[0-9a-f]{64}$') and (`aam_frozen`.`i`.`error_code` is null))"
+          }
+        },
+        {
+          "table": {
+            "table_name": "d",
+            "access_type": "eq_ref",
+            "possible_keys": [
+              "uk_delivery_command",
+              "idx_delivery_agent",
+              "idx_delivery_active_message"
+            ],
+            "key": "uk_delivery_command",
+            "used_key_parts": [
+              "tenant_id",
+              "client_id",
+              "owner_jiacn",
+              "command_id"
+            ],
+            "key_length": "1008",
+            "ref": [
+              "const",
+              "const",
+              "const",
+              "aam_frozen.i.command_id"
+            ],
+            "rows_examined_per_scan": 1,
+            "rows_produced_per_join": 0,
+            "filtered": "5.00",
+            "cost_info": {
+              "read_cost": "0.01",
+              "eval_cost": "0.00",
+              "prefix_cost": "0.37",
+              "data_read_per_join": "41"
+            },
+            "used_columns": [
+              "id",
+              "command_id",
+              "owner_jiacn",
+              "task_id",
+              "target_agent_id",
+              "command_type",
+              "status",
+              "expires_at",
+              "tenant_id",
+              "client_id"
+            ],
+            "attached_condition": "((`aam_frozen`.`d`.`task_id` = `aam_frozen`.`i`.`installation_id`) and (`aam_frozen`.`d`.`command_type` = 'PLATFORM_SKILL_INSTALL') and (`aam_frozen`.`d`.`target_agent_id` = 'agent-fixture'))"
+          }
+        }
+      ]
+    }
+  }
+}
+EXPLAIN pendingCandidateQuery
+{
+  "query_block": {
+    "select_id": 1,
+    "cost_info": {
+      "query_cost": "0.37"
+    },
+    "ordering_operation": {
+      "using_filesort": false,
+      "nested_loop": [
+        {
+          "table": {
+            "table_name": "i",
+            "access_type": "ref",
+            "possible_keys": [
+              "PRIMARY",
+              "uk_platform_install_request",
+              "uk_platform_install_command",
+              "ix_platform_install_reconcile",
+              "ix_platform_install_resolve",
+              "ix_platform_install_resolve_history"
+            ],
+            "key": "ix_platform_install_reconcile",
+            "used_key_parts": [
+              "state"
+            ],
+            "key_length": "130",
+            "ref": [
+              "const"
+            ],
+            "rows_examined_per_scan": 1,
+            "rows_produced_per_join": 0,
+            "filtered": "5.00",
+            "backward_index_scan": true,
+            "cost_info": {
+              "read_cost": "0.25",
+              "eval_cost": "0.01",
+              "prefix_cost": "0.35",
+              "data_read_per_join": "266"
+            },
+            "used_columns": [
+              "installation_id",
+              "tenant_id",
+              "client_id",
+              "owner_jiacn",
+              "actor_id",
+              "request_key",
+              "request_sha256",
+              "agent_id",
+              "binding_id",
+              "runtime_instance_id",
+              "registration_hash",
+              "skill_key",
+              "skill_version",
+              "package_sha256",
+              "challenge_id",
+              "command_id",
+              "origin",
+              "state",
+              "result_sha256",
+              "error_code",
+              "revision",
+              "created_at"
+            ],
+            "attached_condition": "((`aam_frozen`.`i`.`registration_hash` = 0x0101010101010101010101010101010101010101010101010101010101010101) and (`aam_frozen`.`i`.`runtime_instance_id` = 'runtime-fixture') and (`aam_frozen`.`i`.`binding_id` = 1) and (`aam_frozen`.`i`.`package_sha256` = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') and (`aam_frozen`.`i`.`skill_version` = '1.0.0') and (`aam_frozen`.`i`.`skill_key` = 'archive-maintainer') and (`aam_frozen`.`i`.`agent_id` = 'agent-fixture') and (`aam_frozen`.`i`.`origin` = 'PLATFORM_PROVISIONED') and (`aam_frozen`.`i`.`owner_jiacn` = 'owner-fixture') and (`aam_frozen`.`i`.`client_id` = 'client-fixture') and (`aam_frozen`.`i`.`tenant_id` = '0') and (`aam_frozen`.`i`.`result_sha256` is null) and (`aam_frozen`.`i`.`error_code` is null))"
+          }
+        },
+        {
+          "table": {
+            "table_name": "d",
+            "access_type": "eq_ref",
+            "possible_keys": [
+              "uk_delivery_command",
+              "idx_delivery_retry",
+              "idx_delivery_lease",
+              "idx_delivery_agent",
+              "idx_delivery_active_message"
+            ],
+            "key": "uk_delivery_command",
+            "used_key_parts": [
+              "tenant_id",
+              "client_id",
+              "owner_jiacn",
+              "command_id"
+            ],
+            "key_length": "1008",
+            "ref": [
+              "const",
+              "const",
+              "const",
+              "aam_frozen.i.command_id"
+            ],
+            "rows_examined_per_scan": 1,
+            "rows_produced_per_join": 0,
+            "filtered": "5.00",
+            "cost_info": {
+              "read_cost": "0.01",
+              "eval_cost": "0.00",
+              "prefix_cost": "0.37",
+              "data_read_per_join": "41"
+            },
+            "used_columns": [
+              "id",
+              "command_id",
+              "owner_jiacn",
+              "task_id",
+              "target_agent_id",
+              "command_type",
+              "status",
+              "expires_at",
+              "tenant_id",
+              "client_id"
+            ],
+            "attached_condition": "((`aam_frozen`.`d`.`task_id` = `aam_frozen`.`i`.`installation_id`) and (`aam_frozen`.`d`.`command_type` = 'PLATFORM_SKILL_INSTALL') and (`aam_frozen`.`d`.`target_agent_id` = 'agent-fixture') and (`aam_frozen`.`d`.`status` in ('PENDING','CONSUMED','SENT','RECEIVED','STARTED','SUCCEEDED')) and (`aam_frozen`.`d`.`expires_at` > 1))"
+          }
+        }
+      ]
+    }
+  }
+}
+EXPLAIN historicalCandidateQuery
+{
+  "query_block": {
+    "select_id": 1,
+    "cost_info": {
+      "query_cost": "71.87"
+    },
+    "ordering_operation": {
+      "using_filesort": false,
+      "table": {
+        "table_name": "agent_platform_skill_installation",
+        "access_type": "range",
+        "possible_keys": [
+          "uk_platform_install_request",
+          "uk_platform_install_command",
+          "ix_platform_install_resolve",
+          "ix_platform_install_resolve_history"
+        ],
+        "key": "ix_platform_install_resolve_history",
+        "used_key_parts": [
+          "tenant_id",
+          "client_id",
+          "owner_jiacn",
+          "origin",
+          "agent_id",
+          "skill_key",
+          "skill_version",
+          "package_sha256",
+          "binding_id",
+          "runtime_instance_id",
+          "registration_hash"
+        ],
+        "key_length": "2156",
+        "rows_examined_per_scan": 479,
+        "rows_produced_per_join": 479,
+        "filtered": "100.00",
+        "index_condition": "((`aam_frozen`.`agent_platform_skill_installation`.`registration_hash` = 0x0101010101010101010101010101010101010101010101010101010101010101) and (`aam_frozen`.`agent_platform_skill_installation`.`runtime_instance_id` = 'runtime-fixture') and (`aam_frozen`.`agent_platform_skill_installation`.`binding_id` = 1) and (`aam_frozen`.`agent_platform_skill_installation`.`package_sha256` = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') and (`aam_frozen`.`agent_platform_skill_installation`.`skill_version` = '1.0.0') and (`aam_frozen`.`agent_platform_skill_installation`.`skill_key` = 'archive-maintainer') and (`aam_frozen`.`agent_platform_skill_installation`.`agent_id` = 'agent-fixture') and (`aam_frozen`.`agent_platform_skill_installation`.`origin` = 'PLATFORM_PROVISIONED') and (`aam_frozen`.`agent_platform_skill_installation`.`owner_jiacn` = 'owner-fixture') and (`aam_frozen`.`agent_platform_skill_installation`.`client_id` = 'client-fixture') and (`aam_frozen`.`agent_platform_skill_installation`.`tenant_id` = '0'))",
+        "backward_index_scan": true,
+        "cost_info": {
+          "read_cost": "23.98",
+          "eval_cost": "47.90",
+          "prefix_cost": "71.88",
+          "data_read_per_join": "2M"
+        },
+        "used_columns": [
+          "installation_id",
+          "tenant_id",
+          "client_id",
+          "owner_jiacn",
+          "actor_id",
+          "request_key",
+          "request_sha256",
+          "agent_id",
+          "binding_id",
+          "runtime_instance_id",
+          "registration_hash",
+          "skill_key",
+          "skill_version",
+          "package_sha256",
+          "challenge_id",
+          "command_id",
+          "origin",
+          "state",
+          "result_sha256",
+          "error_code",
+          "revision",
+          "created_at"
+        ]
+      }
+    }
+  }
+}

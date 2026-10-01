@@ -1,6 +1,6 @@
 # 实施工作包与推进计划（D2）
 
-日期：2026-09-28。状态：**可交接实施，未派发**。本文件是 WBS/依赖设计，不是执行台账；如获准实施，状态仅在 `/home/isp/wsps/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json` 通过 orchestrator 维护。本轮不创建 Reviewer，不创建子聊天、不安装技能、不改生产。
+日期：2026-09-28。状态：**D2 历史 WBS；当前源码交付候选已形成，pins 与验证范围见 delivery.md / integration.yaml**。本文件保留工作包和依赖设计，不作为实时执行台账。当前局部源码、测试证据与剩余缺口见 [implementation-baseline.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md)，机器状态见 [integration.yaml](/home/isp/wsps/cyf/specs/archive-agent-maintenance/integration.yaml)，原始证据见 [evidence/2026-09-30](/home/isp/wsps/cyf/specs/archive-agent-maintenance/evidence/2026-09-30)。84 项业务验收仍全部未执行。
 
 ## 1. 工作包
 
@@ -49,7 +49,7 @@
 
 ## 4. 验证与证据要求
 
-- 本轮文档仅 L0 结构、JSON/YAML、链接、覆盖/依赖一致性检查；不跑应用测试或 build。
+- D2 设计交付轮只做 L0 文档检查；此后已产生局部组件测试/build 证据，当前结果以 implementation-baseline.md 与 evidence/2026-09-30 为准，仍不等于业务验收。
 - 实施时测试选择以 nearest build.gradle 为准，所有 Gradle 经 `/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py`，不得并行 Gradle。
 - 正式测试/构建优先既有 Flow；本地授权例外有效期间遵守 `build_origin=local_user_authorized`、组件 develop 自检合入、exact SHA 冻结 release 分支、制品摘要与健康要求；不创建新 Flow 链路或伪 Run；应用部署仍遵守当前有效的 Asia/Shanghai 版本发布排期，普通内容上架不是应用重建部署。
 - 测试证据按 tree SHA + selector + fixture digest 复用；原始结果/未通过项保持真实，不把“未执行”改成 PASS。
@@ -57,7 +57,7 @@
 
 ## 5. 下一步可执行动作
 
-获准开始实施后首先执行 M0：从当前可复现 API/Web/Client 基线冻结合同，确认身份/事务/迁移和平台安装证明；随后按路径归属开不重叠 Writer 范围（例如后端通用化与 Web 合同界面），不先创建全站岗位系统。具体生产管理者、吴用身份、底本与自动发布权限可在业务激活前补齐，不阻碍纯源码实现准备。
+源码实现、组件测试与有界 HTTP/JDBC/POSIX/Client fixture 的当前事实见 delivery.md / integration.yaml，历史 WBS 不改写成业务 PASS。下一步是部署前环境/真实 Runtime 全链验证及授权业务验收；具体生产管理者、吴用身份、底本与公共发布用途/自动发布权限必须在业务激活前精确核对。不得因源码推送擅自部署或上架真实典籍。
 
 
 ## 6. 可执行的交接与依赖 DAG

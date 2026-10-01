@@ -1,0 +1,88 @@
+{
+  "review_type": "independent_read_only_bounded_m7",
+  "reviewed_at": "2026-09-30",
+  "base_tree": "52f235d2c73e0099cdba5769e018a5098a683b93",
+  "source_tree": "a2a6031ce94eb33333685ce2ec85915f15f143e1",
+  "verdict": "REJECT",
+  "whole_feature_accepted": false,
+  "source_modified": false,
+  "tests_run_by_reviewer": false,
+  "severity_summary": {
+    "P0": 0,
+    "P1": 1,
+    "P2": 1
+  },
+  "findings": [
+    {
+      "id": "M7-P1-TRUSTED-CONFIRMATION-PROVENANCE",
+      "severity": "P1",
+      "status": "unresolved",
+      "title": "Chat body is promoted into a server-authorized confirmed policy without a server-side confirmation or canonical turn lookup",
+      "locations": [
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-service\\src\\main\\java\\cn\\jia\\chat\\archive\\maintenance\\entry\\ArchiveMaintenanceChatCoordinator.java",
+          "lines": "53-86,121-132"
+        },
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-core\\src\\main\\java\\cn\\jia\\chat\\archive\\maintenance\\dto\\ArchiveMaintenanceChatIntent.java",
+          "lines": "3-13"
+        },
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-service\\src\\main\\java\\cn\\jia\\chat\\archive\\maintenance\\http\\ArchiveAdminController.java",
+          "lines": "142-155"
+        }
+      ],
+      "trigger": "An authenticated manager with a valid current appointment posts archiveMaintenanceIntent in a canonical Songjiang or private conversation and chooses confirmationId, collection, operation, source and AUTO ceiling. The coordinator constructs requestIntentId, conversationRef and ArchiveConfirmedPolicyRef directly from those body fields, then labels the projection server-authorized. No persisted confirmation or canonical conversation-turn binding is read.",
+      "impact": "A malicious or buggy client can convert arbitrary chat input into an executable structured request and can choose the idempotency identity and policy ceiling. Downstream manager/appointment/source ACLs still apply, so this is not a reader-to-manager bypass, but the explicit-confirmation and audit boundary required by design sections 8 and 18.1 is absent.",
+      "repair": "Make the body carry only an opaque confirmation reference. Resolve an immutable confirmed intent from a trusted server-side port keyed by exact actor scope plus canonical conversation and canonical turn/message. Derive requestIntentId and publication ceiling only from that record and fail closed to the management entry when absent/mismatched. If manager POST is itself the confirmation point, perform manager ACL first and atomically persist the immutable intent/key before invoking the common request facade; do not synthesize confirmed policy directly from untrusted body fields.",
+      "tests": [
+        "forged body confirmation/source/AUTO cannot call service.request",
+        "confirmation from another actor/conversation/turn is rejected",
+        "same canonical turn retry resolves the same intent",
+        "different turn cannot reuse the client-selected confirmation id"
+      ]
+    },
+    {
+      "id": "M7-P2-UNVERIFIED-SUCCESS-NARRATION",
+      "severity": "P2",
+      "status": "unresolved",
+      "title": "Songjiang final text is persisted and returned without proving that an authoritative tool result permits the claimed terminal state",
+      "locations": [
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-service\\src\\main\\java\\cn\\jia\\chat\\archive\\maintenance\\entry\\ArchiveMaintenanceChatCoordinator.java",
+          "lines": "108-152"
+        }
+      ],
+      "trigger": "The restricted model emits a success statement such as already published without invoking requestArchiveMaintenance/getArchiveMaintenanceJob, or after a non-terminal result. The coordinator concatenates, persists and returns the text; the prompt instruction is the only guard.",
+      "impact": "No unauthorized write is created, but the response can falsely represent publication or completion, contrary to the authoritative-receipt rule.",
+      "repair": "Track restricted callback outcomes in the per-request session and render terminal claims from server-owned structured status, or reject/downgrade success wording unless an exact authoritative terminal receipt was observed and read back. Add a model-without-tool and non-terminal-tool-result negative test."
+    }
+  ],
+  "verification_status": {
+    "observed_main_results": {
+      "platform": "69/69 pass",
+      "native_security": "6/6 pass",
+      "maintenance": "87 total, 3 fail",
+      "archive_regression": "252 total, 14 fail (11 baseline plus same 3 introduced), 0 skip",
+      "introduced_failures": [
+        "ArchiveMaintenanceChatCoordinatorTest#managerSongjiangAndDirectRetriesMapOneConfirmedIntentToSameFacadeKey",
+        "ArchiveMaintenanceServiceImplTest#directRequestRequiresExactCurrentAppointedAgent",
+        "ArchiveMaintenanceServiceImplTest#sameConfirmedIntentAcrossAllEntriesAndSameTurnRetryReturnsOneDurableJob"
+      ]
+    },
+    "failure_diagnosis": "The coordinator fixture uses a JwtAuthenticationToken that does not satisfy the authenticated production shape; client_id is the correct claim. The two service fixtures stub findCurrentAppointment(lock=true semantics incorrectly); production uses lockSlot plus locked appointment lookup at ArchiveMaintenanceServiceImpl 1544-1555. These are fixture failures, not evidence that the production ACL should be weakened. They still keep the frozen M7 slice red."
+  },
+  "verified_nonfindings": [
+    "Actor identity is server-resolved; ArchiveAdminController uses jiacn and client_id, and direct target comes from the persisted private conversation.",
+    "Service request exact-compares collection, operation, work/newWork and source and permits MANUAL or AUTO only within the supplied ceiling.",
+    "Restricted final Prompt contains exactly the three archive callbacks and clears delegate global callbacks and tool context.",
+    "Direct private path bypasses Songjiang and is checked against the current appointed agent.",
+    "Ordinary reader and unsupported legacy schema do not gain maintenance authority or a generic execution fallback."
+  ],
+  "limits": [
+    "Bounded to the 17-file M7 delta and directly necessary design/test evidence.",
+    "No reviewer Gradle, DB, HTTP, runtime, browser or cross-component E2E execution.",
+    "AUTO/resume/native lifecycle and previously approved slices were not re-audited.",
+    "This is not whole-feature acceptance."
+  ]
+}

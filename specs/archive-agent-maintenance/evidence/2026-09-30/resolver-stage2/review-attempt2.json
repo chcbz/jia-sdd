@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-30",
+  "reviewer": "Raman",
+  "agent_id": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "source_tree": "f88f5125ae99d345a544ef8d1fa929055be1e14a",
+  "scope": "InstalledSkillResolver local source slice only",
+  "verdict": "REJECT",
+  "findings": [
+    {
+      "severity": "P1",
+      "code": "NON_EXACT_HISTORICAL_PROOF",
+      "summary": "Historical installation query and fallback omit binding/runtime/registration, so old binding proof can be exposed as current REVOKED proof."
+    },
+    {
+      "severity": "P2",
+      "code": "NULL_REFERENCE_ACCEPTED",
+      "summary": "String.valueOf(null) permits null canonicalAgent and installationRef through regex validation."
+    },
+    {
+      "severity": "P2",
+      "code": "HISTORICAL_SORT_INDEX",
+      "summary": "Current index does not support historical ordering because unconstrained binding/runtime/registration/state precede created_at."
+    }
+  ],
+  "focused_tests": 100,
+  "archive_regression": {
+    "tests": 198,
+    "failures": 12,
+    "skipped": 3,
+    "introduced_failure_set": [],
+    "removed_failure_set": []
+  },
+  "real_mysql_run": false,
+  "http_e2e_run": false,
+  "whole_feature_accepted": false
+}

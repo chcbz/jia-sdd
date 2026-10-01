@@ -1,0 +1,74 @@
+{
+  "reviewed_at": "2026-09-30T20:07:27.979Z",
+  "reviewer": "GPT-5.6 Sol independent read-only review",
+  "scope": "Only the five-file native work snapshot prerequisite delta from approved AUTO tree d4e041270b7eed7751c05107ee3f7ac993c6aaf5 to frozen prospective tree 52f235d2c73e0099cdba5769e018a5098a683b93",
+  "source_tree": "52f235d2c73e0099cdba5769e018a5098a683b93",
+  "base_tree": "d4e041270b7eed7751c05107ee3f7ac993c6aaf5",
+  "verdict": "ACCEPT_LOCAL_PREREQUISITE_SLICE",
+  "whole_feature_accepted": false,
+  "native_execution_default_enabled": false,
+  "findings": {
+    "P0": [],
+    "P1": [],
+    "P2": []
+  },
+  "verified": [
+    {
+      "topic": "Exact job-bound work snapshot",
+      "status": "RESOLVED",
+      "evidence": [
+        "ArchiveMaintenanceServiceImpl.java:1112-1157 derives workId and operation only from the locked persisted job; the context request has no source/body work selector",
+        "ADD_WORK returns revision 0 and null active edition only when both collection_work and work are absent; partial or nonmatching state fails with ACTIVE_EDITION_CHANGED",
+        "Existing work returns the exact collection_work revision and archive_work active edition identifier"
+      ]
+    },
+    {
+      "topic": "Root-first authorization and stale execution fencing",
+      "status": "RESOLVED",
+      "evidence": [
+        "ArchiveMaintenanceServiceImpl.java:1116-1127 performs preliminary scope hiding, then locks the controlled identity root before manager, appointment and job authorization",
+        "The shared authorizeRuntimeLocked path enforces exact tenant/client/owner/agent, current run, runtime instance, grant, execution, command, attempt, epoch, appointment/binding and controlled-target proof",
+        "Revoked context and mismatched attempt/runtime tests remain fail closed; old run identifiers are rejected before a context snapshot is returned"
+      ]
+    },
+    {
+      "topic": "AUTO publish CAS continuity",
+      "status": "RESOLVED",
+      "evidence": [
+        "The response snapshot is advisory input only; the approved final publisher CAS remains unchanged and still checks expectedWorkRevision plus expectedActiveEditionId against the exact job work",
+        "ArchiveMaintenanceConcurrencyMySqlTest covers ADD_WORK 0/null context and REVISE_WORK revision 4 followed by a concurrent revision increment that rejects publication with ACTIVE_EDITION_CHANGED and preserves RUNNING/ACTIVE/AWAITING_PUBLISH"
+      ]
+    },
+    {
+      "topic": "Credential and resource isolation",
+      "status": "RESOLVED",
+      "evidence": [
+        "ArchiveRuntimeContextDTO adds only workId, operation, expectedWorkRevision and expectedActiveEditionId; it exposes no token, grant secret, execution proof, command header or user JWT",
+        "Context data is returned only after exact runtime and current appointment authorization; source, draft and work facts are taken from the authorized persisted job"
+      ]
+    },
+    {
+      "topic": "Bounded delta",
+      "status": "VERIFIED",
+      "evidence": [
+        "The five changed files contain one DTO extension, one service snapshot implementation and three test updates",
+        "No schema, platform package, validator or route file changed"
+      ]
+    }
+  ],
+  "test_evidence": {
+    "focused": "148/148",
+    "archive": "238 tests, 11 exact baseline failures, 0 skipped",
+    "direct_auto_introduced": [],
+    "direct_auto_removed": [],
+    "before_after_tree_equal": true,
+    "fresh_xml_after_freeze": true,
+    "evidence_directory": "specs/archive-agent-maintenance/evidence/native-lifecycle/native-work-snapshot-attempt1"
+  },
+  "limitations": [
+    "The reviewer did not run Gradle, WSL, database operations or HTTP/runtime end-to-end tests",
+    "Client deterministic runner, M7 and Web remain outside this slice",
+    "Previously approved schema, validator, package bytes, publication implementation and unrelated lifecycle code were not re-audited",
+    "This acceptance is only for the native work snapshot prerequisite and is not whole-feature acceptance"
+  ]
+}

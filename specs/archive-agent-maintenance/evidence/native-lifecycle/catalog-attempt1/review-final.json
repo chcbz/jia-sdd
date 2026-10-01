@@ -1,0 +1,71 @@
+{
+  "review_type": "independent_read_only_bounded_platform_catalog_review",
+  "reviewed_at": "2026-10-01",
+  "base_tree": "b05d1eaa5a5a17d018f567eb0fa1f118b0df796e",
+  "source_tree": "67ae414f1964af95794510d0e2038841bfc43ba6",
+  "verdict": "REJECT",
+  "catalog_endpoint_verdict": "ACCEPT_LOCAL_CODE",
+  "delivery_reproducibility_verdict": "REJECT",
+  "whole_feature_accepted": false,
+  "p0_count": 0,
+  "p1_count": 1,
+  "p2_count": 0,
+  "findings": [
+    {
+      "id": "CATALOG-PACKAGE-P1-01",
+      "severity": "P1",
+      "title": "Frozen Git tree does not reproduce the approved platform package bytes",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/.gitattributes:1-2",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/main/java/cn/jia/agent/platform/PlatformSkillCatalog.java:31-66",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/main/resources/platform-skills/archive-maintainer/manifest.json",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/main/resources/platform-skills/archive-maintainer/fixtures/ordinary-crlf-bom-emoji.txt",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/main/resources/platform-skills/archive-maintainer/fixtures/malicious-instructions.txt"
+      ],
+      "trigger": "With core.autocrlf=true, export prospective tree 67ae414f1964af95794510d0e2038841bfc43ba6 through Git and put the exported platform resources first on the real compiled PlatformSkillCatalog classpath. Three of the 19 resource blobs differ from the tested worktree bytes: manifest 1009 disk vs 1007 Git bytes, ordinary CRLF fixture 75 vs 68, and malicious fixture 63 vs 61. PlatformSkillCatalog constructs a different ZIP and fails the frozen digest check at lines 65-66.",
+      "observed_failure": "java.lang.IllegalStateException: Approved platform skill bytes changed; release a new version and installation",
+      "impact": "A clean Git clone/archive with agent.platform-skills.enabled=true cannot instantiate the catalog/service or serve the catalog/package. The 170 focused passing tests are valid for the current worktree bytes but do not prove that frozen tree 67ae414f contains the tested approved package. The release artifact therefore is not reproducible from source control.",
+      "minimal_repair": [
+        "Add a byte-exact -text rule covering agent/jia-agent-service/src/main/resources/platform-skills/archive-maintainer/** in .gitattributes; retain the existing archive content rule.",
+        "Do not edit or normalize any of the 19 approved resource files. Re-index/freeze them so each Git blob is byte-identical to the existing approved worktree file.",
+        "Verify all 19 paths have Git-object bytes equal to disk bytes.",
+        "From an exact Git archive/clean checkout, compile/use the real PlatformSkillCatalog and ExportApprovedPackage helper with exported resources first on the classpath; require ZIP size 40563 and SHA-256 8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081.",
+        "No package version bump is required if and only if the resulting bytes remain the already approved 1.0.0 package; any actual resource-byte change requires the existing new-version rule."
+      ],
+      "evidence": [
+        "C:/tmp/aam-client-evidence-20261001/package-git-byte-audit.json",
+        "C:/tmp/aam-client-evidence-20261001/package-git-export-attempt1/export.log",
+        "C:/tmp/aam-client-evidence-20261001/package-git-export-attempt1/run.args"
+      ]
+    }
+  ],
+  "accepted_catalog_contract": {
+    "locations": [
+      "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/main/java/cn/jia/agent/platform/PlatformSkillCatalogView.java:3-8",
+      "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/main/java/cn/jia/agent/platform/PlatformSkillController.java:18-32,72-89",
+      "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/main/java/cn/jia/agent/platform/PlatformSkillInstallationService.java:69-75,318-322",
+      "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillControllerContractTest.java:23-63",
+      "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java:84-96"
+    ],
+    "verified": [
+      "GET /agent/platform-skills/catalog is behind the existing agent.platform-skills.enabled=true conditional and remains default-off.",
+      "The controller requires an authenticated JwtAuthenticationToken with exact sub, client_id and jiacn claims, rejects query strings, and returns Cache-Control private, no-store.",
+      "The response is a raw immutable list whose record has exactly key, version, packageSha256 and protocol.",
+      "The service validates the actor scope before returning metadata and performs no installation-store, database, transport, session, policy or runtime operation.",
+      "No package bytes, installation authority, URL, challenge, runtime identity, registration hash, command metadata or secret-bearing field is returned.",
+      "The catalog delta does not alter the approved package resources or ZIP construction."
+    ],
+    "residual": "The accepted endpoint code remains operationally blocked in an exact Git checkout until CATALOG-PACKAGE-P1-01 is repaired."
+  },
+  "test_evidence": {
+    "focused": "platform 74/74, native security 6/6, maintenance 90/90; total 170/170 passed against the frozen worktree bytes",
+    "archive_regression": "255 tests, 11 existing failures, 0 skipped, introduced=[]; overall Gradle exit remains 1",
+    "source": "before/after tree equal and fresh XML recorded for 67ae414f1964af95794510d0e2038841bfc43ba6",
+    "interpretation": "These results remain valid and are not erased by the Git-byte finding, but they do not prove clean-clone package reproducibility."
+  },
+  "unreviewed_limits": [
+    "No new Gradle, database, package export, Git archive, or source modification was performed by this reviewer.",
+    "Review was limited to the six-file catalog prerequisite and the directly blocking 19-resource Git-byte delivery audit; prior execution, M7, Client, Web and whole-feature acceptance were not re-audited.",
+    "No HTTP deployment E2E was claimed."
+  ]
+}

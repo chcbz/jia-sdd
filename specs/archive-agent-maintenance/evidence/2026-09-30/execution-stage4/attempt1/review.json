@@ -1,0 +1,70 @@
+{
+  "date": "2026-09-30",
+  "reviewer": "Raman",
+  "verdict": "REJECT",
+  "scope": "API execution grant dispatch and MySQL startup slice only",
+  "source_tree": "aa2e416622d5c758fa121e745b593bf2a7f2303e",
+  "p0": 0,
+  "p1": 4,
+  "p2": 2,
+  "findings": [
+    {
+      "summary": "Four DDL checks render differently in real MySQL and strict initializer rejects startup.",
+      "code": "MAINTENANCE_CHECK_METADATA_MISMATCH",
+      "priority": "P1"
+    },
+    {
+      "summary": "Progress single-tenant CHECK name differs between resource and catalog; H03/H05A startup fails.",
+      "code": "READER_DATA_CHECK_NAME_MISMATCH",
+      "priority": "P1"
+    },
+    {
+      "summary": "Platform admission takes Agent root then Archive manager; execution/native currently take Archive locks then Agent root.",
+      "code": "CROSS_DOMAIN_LOCK_ORDER_CYCLE",
+      "priority": "P1"
+    },
+    {
+      "summary": "Manager revoke then same-scope regrant can revive old active execution grants because issuance manager revision is absent.",
+      "code": "MANAGER_REVISION_NOT_BOUND",
+      "priority": "P1"
+    },
+    {
+      "summary": "Nonlocking lookup establishes RR snapshot before slot wait and active grant scan can miss concurrent commit.",
+      "code": "REVOKE_RR_STALE_SNAPSHOT",
+      "priority": "P2"
+    },
+    {
+      "summary": "H02 only creates content schema though importer now requires maintenance tables; production bootstrap ordering is correct.",
+      "code": "H02_FIXTURE_BOOTSTRAP_DEPENDENCY",
+      "priority": "P2"
+    }
+  ],
+  "focused": {
+    "failures": 0,
+    "tests": 113
+  },
+  "default_archive": {
+    "failure_set_same_as_baseline": true,
+    "skipped": 3,
+    "failures": 12,
+    "tests": 206
+  },
+  "real_mysql_archive": {
+    "three_newly_exposed_tests_previously_skipped": true,
+    "skipped": 0,
+    "failures": 15,
+    "tests": 206
+  },
+  "mysql_initializer_probe": {
+    "passed": 13,
+    "failed": 1,
+    "skipped": 0,
+    "tests": 14
+  },
+  "reviewer_ran_gradle": false,
+  "reviewer_reproduced_mysql_races": false,
+  "http_e2e_run": false,
+  "whole_feature_accepted": false,
+  "native_execution_enabled": false,
+  "production_operations": false
+}

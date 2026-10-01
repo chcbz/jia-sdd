@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-30",
+  "reviewer": "Raman",
+  "verdict": "REJECT",
+  "scope": "API execution slice only",
+  "source_tree": "57fad153289a06d512c53a10cb39d410dee44e44",
+  "p0": 0,
+  "p1": 3,
+  "p2": 3,
+  "findings": [
+    {
+      "summary": "Cancel/revoke/dispatch compensation require online valid runtime before durable fence.",
+      "code": "FENCE_REQUIRES_LIVE_TARGET",
+      "priority": "P1"
+    },
+    {
+      "summary": "Manager revoke locks collection current appointment target before exact actor authorization.",
+      "code": "MANAGER_REVOKE_FOREIGN_TARGET_LOCK",
+      "priority": "P1"
+    },
+    {
+      "summary": "INSERT IGNORE retains removed or changed configuration grants.",
+      "code": "CONFIGURATION_AUTHORIZATION_NOT_RECONCILED",
+      "priority": "P1"
+    },
+    {
+      "summary": "Expired but not yet persisted-fenced execution may replay ACTIVE.",
+      "code": "EXPIRED_EXECUTE_REPLAY_STATUS",
+      "priority": "P2"
+    },
+    {
+      "summary": "Generic operation receipt lookup omits manager revoke.",
+      "code": "REVOKE_OPERATION_RECEIPT_NOT_ALLOWLISTED",
+      "priority": "P2"
+    },
+    {
+      "summary": "Fresh schema verified; any pre-release old table upgrade remains unverified.",
+      "code": "MAINTENANCE_OLD_SCHEMA_UPGRADE_UNVERIFIED",
+      "priority": "P2"
+    }
+  ],
+  "focused": {
+    "failures": 0,
+    "tests": 115
+  },
+  "real_mysql_archive": {
+    "skipped": 0,
+    "failures": 11,
+    "tests": 208,
+    "introduced_failures": []
+  },
+  "reviewer_ran_gradle": false,
+  "reviewer_reproduced_mysql_races": false,
+  "http_e2e_run": false,
+  "whole_feature_accepted": false,
+  "production_operations": false
+}

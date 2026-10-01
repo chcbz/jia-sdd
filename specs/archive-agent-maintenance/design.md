@@ -1,6 +1,6 @@
 # 典籍阁 Agent 任职与内容维护：总体方案与详细设计
 
-**版本：D2；日期：2026-09-28；状态：ready / 可交接实施，从 M0 基线映射开始。下文是目标合同，不是已实现能力；未派发、未测试、未部署。**
+**版本：D2；设计日期：2026-09-28；交付候选更新：2026-10-01。下文为目标合同与历史源码观察；当前源码/提交/实测范围见 delivery.md、integration.yaml 和 implementation-baseline.md。组件接线及有界 HTTP/JDBC/POSIX/Client fixture 已实现，不代表真实 Runtime 全链、84 项业务验收或生产部署。**
 
 > D2 已吸收兼容性复核：不扩旧 ItemRef、不建第二套调度/文件系统、保留直达吴用、区分 Runtime 协议、隔离私人来源与公开发布。实施入口见[Agent 交接](/home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md)，共享边界见 §18；D1 风险记录保留在[影响评估](/home/isp/wsps/cyf/specs/archive-agent-maintenance/impact-assessment.md)。
 
@@ -170,14 +170,14 @@ archive-maintainer/
 
 ### 4.2 不与收费市场绑定的安装路径
 
-现有安装器的下载、摘要检查、目录安全、原子激活和持久回执机制可复用；但现有服务的市场订单、托管结算和退款状态不能照搬。
+现有安装器的下载、摘要检查、目录安全、原子激活和持久回执机制可复用；但现有服务的市场订单、托管结算和退款状态不能照搬。当前局部实现已经落地默认关闭的平台安装 manager 与服务端平台安装合同，只读 InstalledSkillResolver 已接任职状态投影，但仍未接 `agent-client` 路由、执行 grant/dispatch，因此不能据此宣称 Agent 已就绪。
 
 推荐新增平台配置安装源 `PLATFORM_PROVISIONED`，只允许受控平台技能目录；独立 `agent_platform_skill_installation` 记录。命令类型新增 `PLATFORM_SKILL_INSTALL` v1，保留现有 `SKILL_INSTALL` 合同原样，不把新字段塞进冻结 payload。
 
 - 管理者同时是该 Agent owner 才能发起安装；显式目标 agentId/bindingVersion/skillVersion，不从 UI 选中态隐式取值。
 - 无购买、银两扣减或退款；记录“平台配置”。安装确需额外收费资源时停留说明，不能从本方案推导付费授权。
-- 安装回执必须来自当前受信 runtime/已注册传输身份，绑定 commandId、installationId、Agent、binding/runtime、包摘要、attempt/epoch 和服务端挑战；重放、跨源订单混用、摘要不符均拒绝。
-- 平台发布的包必须有可验证发布者与完整性证明；安装证明记录认证来源与服务端确认。不能把“客户端说已安装”或目录存在当成证明，也不夸大安装证明为远程执行代码的绝对证明。
+- 安装回执必须来自当前受信 runtime/已注册传输身份，绑定 commandId、installationId、Agent、binding/runtime、包摘要、attempt/epoch 和服务端挑战；重放、跨源订单混用、摘要不符均拒绝。客户端 business fingerprint 排除 transport `messageId/attempt`，但保留全部不可变 scope/payload；相同 installation 异内容或在途异 fingerprint 失败关闭，已持久 success 只精确重放原 result/body。
+- 平台发布的包必须有可验证发布者与完整性证明；安装证明记录认证来源与服务端确认。不能把“客户端说已安装”或目录存在当成证明，也不夸大安装证明为远程执行代码的绝对证明。当前客户端物理目录按 `skills/platform-provisioned/<scopeDigest>/<skill>/<version>/<installationId>` 隔离；旧 scope/runtime/installation 的 marker、inode 和内容不得被新安装覆盖或复用。
 - 统一 InstalledSkillResolver 按 MARKET / PLATFORM_PROVISIONED 分派；`PlatformInstalledSkillResolver` 是新增来源适配器，不是另一套 registry/installer。deliverable skill 标签不等于安装事实、商业权益或岗位权限；维护成功不自动产生正式成果验收证据。适配器在服务端输出 `VERIFIED / PENDING / REVOKED / UNAVAILABLE`；与商业安装授权保持可插拔适配，不改资金表。
 - 原始 SKILL_INSTALL 的签名/认证和安装安全要求不能降低。新 origin 的 proof canonicalization 和 challenge/密钥验证方案在 M0 合同阶段按现有注册安全实现冻结，不能用未认证普通 HTTP 回调替代。
 
@@ -374,7 +374,9 @@ archive-maintainer/
 }
 ```
 
-PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{ordinal,text,sourceRanges}], declaredDigest}`。段落 ID 由服务端按封存 edition/ordinal 生成；服务端计算字节/摘要，客户端 declaredDigest 只用于相互校验。
+首版固定来源通过管理者 `sourceName/sourceVersion/rightsBasis/declaredSha256/contentBase64` 严格 JSON 上传 UTF-8 原始文件（最多 16 MiB），服务端验证原始字节摘要并写入按 owner/sourceId 隔离的既有私有对象存储；`sourceId` 由服务端给出。该对象存储默认关闭，生产启用配置、对象孤儿清理和真实授权仍须单独验收。
+
+首版草稿 `PUT` 的实际来源合同：`{blocks:[{blockType,blockKey,ordinal,title,titleSourceRanges:[{startByte,endByte}],paragraphs:[{ordinal,text,sourceRanges:[{startByte,endByte}]}]}],excludedSourceRanges:[{startByte,endByte,reason}]}`。偏移是原始 UTF-8 字节的零起点半开区间，标题及每段须与来源字节完全一致且按来源顺序；所有保留区间与显式排除区间无重叠地覆盖整个来源。服务端在校验和发布前重新读取私有对象并复算区间。排除原因只是人工审阅线索，不能证明被排除的目录/正文合规，也不自动判定整书完整性。段落 ID 由服务端按封存 edition/ordinal 生成，摘要由服务端计算；尚未支持概念合同中的 `declaredDigest` 和多种编码归一化。
 
 发布回执至少含：`publicationId, jobId, workId, editionId, manifestSha256, sourceSha256, chapterCount, paragraphCount, previousActiveEditionId, actorType, actorId, authorizationRevision, publishedAt, readbackState`。文本、完整原始文件、凭据不进入回执。阅读链接按前端实际路由构造，不能硬编码未实现 URL。
 
@@ -491,7 +493,15 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 
 若实测跨数据源，本候选的单事务激活方案必须修订，不以跨服务异步事件宣称原子撤权；这是必要架构验证，不是可跳过的假设。
 
-### 10.4 典型故障矩阵
+### 10.4 平台安装 deadline、回执竞态与恢复
+
+当前局部实现将安装命令的 `issuedAt/expiresAt` 作为 durable immutable deadline：下载、响应 body 与 result POST 都使用有界等待/AbortSignal；自定义 helper 即使不响应 signal，也不能无限占用 manager。每次下载后、PREPARED 前和原子激活前重新检查期限，过期后禁止开始新的激活。已经本地持久化的成功结果不改写成失败，只允许在有限 receipt grace 内精确重放原 attempt/epoch/body；过期后的未知状态不能伪造成成功。
+
+服务端把 delivery `SUCCEEDED` 与 native result 分为两个事实。若 result 已 committed，精确 receipt replay 优先；否则 `REQUESTED + resultSha=null + delivery=SUCCEEDED` 在 `expiresAt` 到期前不得失败，到期后由 status 与 reconciler 共用锁内判定，持久化固定 `PLATFORM_SKILL_RECEIPT_TIMEOUT`。reconciler 使用 bounded keyset cursor；坏记录失败仍推进扫描并在后续轮次绕回，避免固定头 100 条饿死健康候选。普通 `(state, created_at, installation_id)` 索引只服务有界扫描，不放宽既有 unique/type/prefix/extra schema 合同。
+
+客户端 journal 创建采用 temp + fsync + atomic no-replace，PREPARED 恢复绑定真实 regular `SKILL.md` digest、父目录/staging inode proof 与 no-symlink/no-replace 激活。Linux helper 优先 `libc.renameat2`，musl 无导出时只对已知 x86_64 syscall 316、aarch64 syscall 276 精确回退，未知架构保持 `UNSUPPORTED`。这些实现有组件测试证据，但尚未接真实命令入口。
+
+### 10.5 典型故障矩阵
 
 | 故障点 | 持久事实 | 恢复动作 |
 | --- | --- | --- |
@@ -621,7 +631,7 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 - 固定来源/章节完整性检查来自“新增可阅读原著而非模型生成故事”的业务目标；hash/授权/事务检查沿用既有安全与版本不变性要求。
 - schema 兼容、reader/私人数据/选文解耦来自 source-audit 中实际固定书目和 CHECK 的证据；不是为了通用化做全站重构。
 - 新 `expectedWorkRevision` 是为消除默认版 A→B→A 后仅比较 ID 无法发现的并发修改；权限/锁/幂等都用精确事务版本，不添加性能 deadline。
-- 不设置无来源的全文长度、包大小、磁盘/内存预留或总执行秒数门槛。已有真实传输安全边界保持，新增数值必须有实测问题与推导。
+- 不设置无来源的全文长度、包大小、磁盘/内存预留或总执行秒数门槛。平台安装 `issuedAt/expiresAt` 与 receipt grace 是防止过期命令激活和无界网络等待的协议安全期限，不是内容任务性能预算；已有真实传输安全边界保持，新增数值必须有实测问题与推导。
 - 第一版只有一个岗位和一个技能；商业市场、全站任职、跨 owner 雇佣、建议队列、OCR 等不混入验收范围。平台安装和维护执行是安全边界所需的小型协议增量，而非另建 Agent 平台。
 
 
@@ -631,6 +641,9 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 
 - 管理 UI、宋江协调、直接 @任职 Agent/密议都调用同一 `ArchiveMaintenanceService.request`。直达路径不调用宋江，不把私人会话加入宋江上下文。
 - 用户级请求必须由服务端构造 `ArchiveRequestContext={actorScope,requestIntentId,entryPoint,conversationRef?,targetAgentId?,confirmedPolicyRef}`；模型只能提供 §8 的业务参数。直达 targetAgentId 必须与当前任职匹配，不匹配只提示，不自动改派。
+- M7实现合同：`POST /archive/admin/v1/collections/{collectionId}/requests`接受业务DTO与稳定`Idempotency-Key`；校验当前manager `job.create`权限后在既有Archive事务/store中原子持久化不可变确认事实，再调用统一request。JsonResult.data为`{job,execution,readiness,nextAction,confirmationRef}`；相同key/body重放同确认与job，异内容409。
+- Chat仅传`archiveMaintenanceIntent={schemaVersion:1,confirmationRef}`，不接收客户端policy/actor/source/work/mode上限。服务端从exact actor确认事实派生immutable context；首次使用同事务保存真实user message并绑定canonical message ID、persisted conversation/generation、content SHA、entry与direct target，后续漂移fail closed到管理入口。manager与首次选择的chat入口共享durable intent；已绑定ref不能迁至另一宋江/private target，应新建明确确认而不是自动改派。
+- 宋江最终输出只渲染三个受限callback的权威状态，模型自由文本不直接返回或持久化。无有效callback为`UNCONFIRMED`，非终态为`AUTHORITATIVE_NON_TERMINAL`；job查询限本session实际request绑定的exact job。`archive_maintenance_receipt`中的jobRef须通过当前授权GET重新读取，消息存在不构成发布或访问权。
 - 显式确认意图由受信业务层建立；聊天入口取 canonical request/turn 关联，UI 入口持久保存原 key。`(actorScope,requestIntentId)` 唯一，同意图跨重试/入口只返回原 job；异内容同 key 为 409。不同轮次的真实新意图不按文本相似度自动合并。
 - 先校验当前权限再查幂等。创建 job、保存意图映射、业务 outbox 同事务；outbox 的 dispatchKey=`jobId/runId` 稳定。发送响应丢失后查原 command，不新建平行执行。
 - 直接聊天中的普通答复不自动授予执行权。远端模型不能伪造用户上下文调用管理 API；结构化维护意图必须通过已验证的服务端受理入口。旧客户端不支持结构化意图时展示管理入口，不隐式换另一种执行路径。
@@ -653,12 +666,16 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 
 ### 18.3 平台安装与协议协商
 
-- 注册能力是精确版本集合：支持 PLATFORM_SKILL_INSTALL/v1、ARCHIVE_MAINTENANCE_EXECUTE/v1 及其 native adapter。服务端在受理和实际投递前均读取目标能力；出现变化不向不兼容客户端发送新命令。
-- 新安装命令的业务字段为 schemaVersion、installationId、bindingVersion、skillKey/version/packageSha256、challengeId、packageRef；目标/runtime/command/attempt/epoch 由已认证 envelope 绑定。packageRef 仅是 §7.3 固定路径，bridge 不接受任意 origin。
-- 平台包来自服务端批准目录及已验证发布者来源；客户端重算包摘要、进行既有目录/符号链接/原子激活检查。结果字段为 installationId、commandId、attempt、executionEpoch、challengeId、packageSha256、outcome、errorCode（可空）。认证 scope 不从 body 获取。
-- 一次性 challenge 绑定完整安装请求及当前 runtime；同已验证结果重放幂等，换 digest/目标/epoch 拒绝。客户端回执须走现有受信 native 认证，不引入自制 HMAC 密钥或裸回调。安装证明不宣称能证明被攻陷宿主实际执行了正确代码。
-- 服务端校验当前绑定、包发布/撤销状态、挑战和传输事实后保存安装结果。商店订单状态/退款协议保持原样，失败不伪造商业权益。
+截至 2026-09-30，API Spring production constructor 已以真实 `AnnotationConfigApplicationContext` + mock dependencies 验证装配；平台安装 receipt timeout、keyset reconciler 和扫描索引合同已有定向测试。Client 平台 manager 的 246 项 Linux 源码测试通过，Raman 复审 ACCEPT（无 P0/P1），但 `client_entry_wired=false`，以下协议仍是后续集成合同而非已启用能力。
 
+- 注册能力是精确版本集合：支持 PLATFORM_SKILL_INSTALL/v1、ARCHIVE_MAINTENANCE_EXECUTE/v1 及其 native adapter。服务端在受理和实际投递前均读取目标能力；出现变化不向不兼容客户端发送新命令。
+- 新安装命令的业务字段为 schemaVersion、installationId、bindingVersion、skillKey/version/packageSha256、challengeId、packageRef、issuedAt、expiresAt；目标/runtime/command/attempt/epoch 由已认证 envelope 绑定。packageRef 仅是 §7.3 固定路径，bridge 不接受任意 origin。deadline 不可由 transport 重投延长。
+- 平台包来自服务端批准目录及已验证发布者来源；客户端重算包摘要、进行既有目录/符号链接/原子激活检查。结果字段为 installationId、commandId、attempt、executionEpoch、challengeId、packageSha256、outcome、errorCode（可空）。认证 scope 不从 body 获取。
+- 一次性 challenge 绑定完整安装请求及当前 runtime；同已验证结果重放幂等，换 digest/目标/epoch 拒绝。客户端回执须走现有受信 native 认证，不引入自制 HMAC 密钥或裸回调。安装证明不宣称能证明被攻陷宿主实际执行了正确代码。相同 scope 的新 installationId 使用新的不可变物理目录；旧安装结果丢失或服务端 fence 后的新 challenge 不得覆盖旧 marker，也不得把旧 success 改造成新 receipt。
+- 服务端校验当前绑定、包发布/撤销状态、挑战和传输事实后保存安装结果。商店订单状态/退款协议保持原样，失败不伪造商业权益。客户端 installationId 完整副本当前没有配额和受控回收策略；这是启用前必须补齐的 P2，禁止用递归扫描目录推导安装资格或自动删除旧 scope。
+
+- 当前批准平台技能元数据由`GET /agent/platform-skills/catalog`提供，verified authenticated JWT与valid actor、拒绝query、private/no-store，raw数组仅`{key,version,packageSha256,protocol}`，默认platform-skills disabled不装配。不返回包字节、下载地址、其他owner/binding/runtime或秘密；元数据读取不产生安装/收费/transport写入。新任职/安装读取current catalog，resume/reassign分别使用已持久任职的exact requiredSkill，不由客户端常量授权。
+- `archive-maintainer@1.0.0`批准资源必须byte-exact保存在Git；API `.gitattributes`对`agent/jia-agent-service/src/main/resources/platform-skills/archive-maintainer/**`设置`-text`，保证CRLF/BOM fixtures与manifest原字节不被checkout/index规范化。发布包必须从冻结Git资源重建为40563bytes及批准SHA，而非仅在当前worktree导出验证。
 ### 18.4 前端与公开投影
 
 首期管理入口属于典籍阁，不注入统一办事列表。原会话维护卡只存受权 jobRef 和显示元数据，打开时按当前用户 GET job；不能靠卡片存在授权。普通读者可见“当前是否有人负责/能否提交管理请求”等脱敏能力，不得到他人 agentId、owner、binding、runtime 或 endpoint。仅管理者在自己的授权管理范围看到目标身份。
@@ -672,3 +689,11 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 M0 需要从实施时最新组件 SHA 核对 fast-deliberation 的权威身份、逐目标 capability、冷线程上下文与真实 INSPECT 能力，不直接复用 9 月 27 日未就绪候选。缺口只影响相应聊天集成，不阻止独立内容域与 UI 合同开发。
 
 共享热点包括 ChatController、JuyitingAgentRelayService、AgentWebSocketHandler、native filter、useHallConversation、hallConversationMessages、agent-client。由当前 Owner 约定字段/方法与精确 tree 后交接，不整文件覆盖；不创建 Reviewer，不修改别的任务台账/证据。
+
+### Implementation correction: least-privilege job recovery
+
+`GET /archive/admin/v1/jobs/{jobId}/recovery-context` is an authenticated, actor-owned `job.manage` read. It returns `{jobId,jobRevision,previousAppointment:{appointmentId,revision,requiredSkill,status},candidates:[{appointmentId,revision,requiredSkill,status,agentId}]}`. The previous revision is the **job's frozen appointment revision**, not a later revoked-row revision; the skill is the immutable old appointment skill. Candidates are only the same actor/collection's current ACTIVE appointment. No owner/client/runtime/credential/storageRef is projected. The snapshot grants no write authority; existing resume/reassign CAS and current authorization are still rechecked.
+
+Actor-owned job list/detail/events reads accept `job.create` **or** `job.manage`, so a manager can recover/cancel an existing job without acquiring permission to appoint or create new jobs. This does not broaden appointment/slot/source/draft/publish authorization. Unauthorized collection reads remain 403; foreign job/appointment references remain 404. The recovery-context response uses the job revision ETag and `Cache-Control: private, no-store`.
+
+Platform catalog failure is an independent readiness issue: it disables new installation/appointment, never hides existing revoke/cancel/job recovery. New skill selection uses a unique current server catalog entry, not a client version/digest constant. Unknown writes retain exact key/method/path/body/revision until authoritative reconciliation or an explicit user acknowledgement; identity cleanup fences late responses without deleting a new identity's retained request.

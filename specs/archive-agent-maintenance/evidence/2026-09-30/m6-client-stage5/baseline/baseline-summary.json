@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-30",
+  "kind": "isolated_linux_client_source_baseline_not_e2e",
+  "tree": "a3ea0078fd11feb1fa25d4ca4109bc4231b57b45",
+  "environment": "task-scoped Alpine 3.22.6 chroot in docker-desktop WSL",
+  "node": "22.23.2",
+  "python": "3.12.14",
+  "selectors": [
+    "platform-skill-manager.test.mjs",
+    "platform-skill-native.test.mjs",
+    "skill-install-manager.test.mjs",
+    "agent-client.test.mjs"
+  ],
+  "attempt1": {
+    "tests": 246,
+    "failed": 1,
+    "skipped": 0,
+    "passed": 245,
+    "cause": "Test environment lacked bash: spawn bash ENOENT"
+  },
+  "attempt2": {
+    "passed": 246,
+    "repair": "Installed signed bash APK in isolated chroot only; no source change",
+    "failed": 0,
+    "tests": 246,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "client_entry_wired": false,
+  "whole_feature_accepted": false,
+  "full_suite": {
+    "source_tree": "a3ea0078fd11feb1fa25d4ca4109bc4231b57b45",
+    "exit_code": 1,
+    "failed": 9,
+    "tests": 407,
+    "test_environment_repairs": "added signed Git/coreutils and bound /dev random/urandom only under task chroot; added same-tree shell source snapshot; baseline source bytes unchanged",
+    "passed": 398,
+    "skipped": 0,
+    "command": "npm test",
+    "remaining": "one unrelated config-runtime baseline assertion, eight installer CRLF failures including nested tests"
+  }
+}

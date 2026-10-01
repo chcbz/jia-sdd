@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-30",
+  "reviewer": "Raman",
+  "verdict": "REJECT",
+  "scope": "targeted execution lifecycle and fencing slice only",
+  "source_tree": "ae12d17a381976a26e7150f573a80b242005ebed",
+  "p0": 0,
+  "p1": 1,
+  "p2": 0,
+  "findings": [
+    {
+      "code": "HISTORICAL_BINDING_FENCE_BLOCKED_BY_CURRENT_RUNTIME",
+      "priority": "P1",
+      "summary": "Adapter persistent root lock still checks current runtime binding/scope, blocking old-run fencing after rebind."
+    }
+  ],
+  "resolved": [
+    "CONFIGURATION_AUTHORIZATION_LIFECYCLE",
+    "EXACT_OWNER_REVOKE_PREFLIGHT",
+    "EXPIRY_REPLAY_LOGIC",
+    "REVOKE_OPERATION_RECEIPT",
+    "RR_LOCK_ORDER_AND_QUEUED_REVOKE"
+  ],
+  "focused": {
+    "tests": 125,
+    "failures": 0
+  },
+  "real_mysql_archive": {
+    "tests": 217,
+    "skipped": 0,
+    "introduced_failures": [],
+    "failures": 11
+  },
+  "real_rr_tests": {
+    "tests": 2,
+    "uses_sql_locking_agent_port_double": true,
+    "failures": 0
+  },
+  "http_e2e_run": false,
+  "whole_feature_accepted": false,
+  "production_operations": false
+}

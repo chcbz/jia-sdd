@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" tests="6" skipped="0" failures="1" errors="0" timestamp="2026-09-30T17:58:02.777Z" hostname="DESKTOP-AANKMQ7" time="16.572">
+  <properties/>
+  <testcase name="nativeLifecyclePersistsStartFailureReplayAndLateTerminalReceipt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.871"/>
+  <testcase name="draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.544">
+    <failure message="org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [SELECT state='ACTIVE' FROM archive_appointment WHERE appointment_id=?]" type="org.springframework.jdbc.BadSqlGrammarException">org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [SELECT state='ACTIVE' FROM archive_appointment WHERE appointment_id=?]
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:112)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:731)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:756)
+	at org.springframework.jdbc.core.JdbcTemplate.queryForObject(JdbcTemplate.java:892)
+	at org.springframework.jdbc.core.JdbcTemplate.queryForObject(JdbcTemplate.java:911)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication(ArchiveMaintenanceConcurrencyMySqlTest.java:316)
+Caused by: java.sql.SQLSyntaxErrorException: Unknown column 'state' in 'field list'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:112)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:1056)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$query$0(JdbcTemplate.java:737)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <testcase name="revokeWaitingBehindEnsureSeesAndFencesNewlyCommittedGrantUnderRepeatableRead()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.029"/>
+  <testcase name="lateFailureCasFailureRollsBackRunGrantJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.11"/>
+  <testcase name="lateStartCasFailureRollsBackRunJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.018"/>
+  <testcase name="platformAgentRootThenManagerAndEnsureExecutionCompleteWithoutReverseLockDeadlock()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="1.998"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\Think\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.17.8\f09415827a71be7ed621c7bd02550678f28bc81c\byte-buddy-agent-1.17.8.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

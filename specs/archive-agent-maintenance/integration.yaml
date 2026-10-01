@@ -1,39 +1,81 @@
 feature_id: archive-agent-maintenance
-status: ready
+status: integration-ready
 owners:
-  api: unassigned
-  web: unassigned
-  client: unassigned
-  integration: unassigned
+  api: critical_worker
+  web: balanced_worker
+  client: critical_worker
+  integration: main_owner
 contract:
   revision: D2
   api_or_event_changes: archive_admin_native_v1_and_typed_execution_via_shared_adapters
   compatibility: >-
-    Preserve legacy Shuihu identifiers, bytes, hashes, personal-owner isolation,
-    catalog response shape and existing command payloads. Add a multi-work reader,
-    explicit publication visibility and immutable historic-edition access.
-    New commands and platform skill provisioning do not alter paid market orders.
-    Preserve ItemRef/OVERVIEW-v1; separate management panel and authorized conversation card.
-    Reuse execution/transport/install/storage; preserve direct-Agent routing; do not mix Runtime protocols.
+    Preserve legacy Shuihu identifiers, bytes, hashes, private-owner isolation and command payloads.
+    Multi-work immutable editions and explicit publication use shared identity/install/execution/storage adapters.
+    Preserve ItemRef/OVERVIEW-v1 and direct-Agent routing; never mix Runtime protocols or paid-market orders.
 pinned_revisions:
-  api_commit: null
-  web_commit: null
-  client_commit: null
-  root_base_commit: null
+  api_commit: 62223001dfeff648989efb0a79a6e28addb404a3
+  web_commit: bdff47863a99318a991e2dffb6073b8db872b5fc
+  client_commit: bc035b3757b97aac90c59c06386a7ebfa3d71162
+  root_base_commit: 01f7599ed28e84c1a44d2cc6c3dec13f7ddbeb67
 source_observation:
-  evidence: /home/isp/wsps/cyf/specs/archive-agent-maintenance/source-audit.json
-  remote_refs_fetched: false
+  evidence: source-audit.json
+  historical_source_observation_not_current_deployment: true
+  remote_refs_fetched: true
   production_verified: false
   release_evidence: false
 verification:
-  documentation: passed_static_self_check
-  api: not_run
-  web: not_run
-  client: not_run
-  integration: not_run
+  documentation:
+    status: current_source_pin_evidence_gate_pass
+    evidence: evidence/delivery/current-delivery-check.json
+    historical_checker_evidence: evidence/documentation/delivery-history-audit/
+    note: >-
+      Historical validate-design.cjs exits 1 on client_historical_source_sha256:agent-client.mjs.
+      Old 246-test source hashes intentionally remain historical, not rewritten to match later source.
+      Current commit/tree/remote/pin checks use a separate delivery record and sddw verify.
+  api:
+    status: focused_pass_regression_baseline_failures
+    evidence: evidence/native-lifecycle/final-api-regression/direct-native-comparison.json
+    commit: 62223001dfeff648989efb0a79a6e28addb404a3
+    tree: fbc4a8f9b89c0bb410fcd7df5e3f8590fb17cbb5
+    summary: >-
+      Shared-lock forced real isolated-MySQL four suites: platform74/native6/maintenance93, 173/173PASS;
+      archive258/247PASS/11existingFAIL/0skip. Gradle exit1. Before/after same tree and fresh XML.
+      Direct comparison to recovery-context tree66061b5: introduced=[] removed=[] for all suites.
+      Independent prior production-slice reviews and final fixture scope ACCEPT, not whole-feature acceptance.
+  web:
+    status: component_tests_and_build_pass
+    evidence: evidence/web-wiring/web-final-attempt3/source-proof.json
+    commit: bdff47863a99318a991e2dffb6073b8db872b5fc
+    tree: b3d0ac34e4a08a75d1d6420d702d19264126becd
+    summary: >-
+      Six real selectors245/245PASS/0skip; npm run build exit0; frozen before/after tree same.
+      Independent ACCEPT_LOCAL_WEB_SCOPE, P0/P1/P2=0. Mounted SFC/gateway/HTTP fixture is not real-browser Runtime E2E.
+  client:
+    status: regression_baseline_failure
+    evidence: evidence/client-runner/archive-runner-attempt3/source-proof.json
+    commit: bc035b3757b97aac90c59c06386a7ebfa3d71162
+    tree: 191d8fc8d6285d3f0614a656f729657688a29204
+    summary: >-
+      Exact Git archive Linux full npm test443/442PASS/1existingFAIL/0skip, introduced=[] removed=[].
+      Existing config-runtime post-rename session-map assertion preserved. Before/after tree same.
+      Independent runner repair ACCEPT_LOCAL_SLICE. Approved ZIP bytes unchanged and activation/NativeRunner exercised by bounded integration.
+  integration:
+    status: bounded_fixture_pass
+    evidence: evidence/crosscomponent/crosscomponent-fixture-attempt5/source-binding.json
+    review: evidence/crosscomponent/crosscomponent-fixture-attempt5/review-final.json
+    summary: >-
+      Node1/1PASS/0skip and server final-result passed: MANUAL draft/validate/terminal then explicit admin publish/readback;
+      AUTO publish plus replay, one publication/event and Reader readback. Real Tomcat/DispatcherServlet/Controller/filter,
+      JDBC transactions, Linux POSIX storage, production codec, approved ZIP/19-entry verification/atomic install/NativeRunner.
+      Prerequisite identity/bootstrap/account/registration/admission/command and installation transports doubled.
+      Latest Git-exported Node selector reused unchanged Java blobs compiled from tree4e9598 and frozen Client191d8;
+      binding explicitly records reuse, not a recompiled latest-tree JVM. Independent local fixture ACCEPT, P0/P1/P2=0.
+    real_runtime_e2e: false
+    business_acceptance: false
 acceptance:
   status: not_run
-  evidence: /home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md
+  cases: 84
+  evidence: acceptance-cases.json
 release:
   status: not_started
   production_operations_authorized_by_this_document: false
@@ -41,18 +83,29 @@ release:
   build_origin: null
   artifact_sha256: null
 implementation_handoff:
-  status: ready_for_M0_not_dispatched
-  entry: /home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md
+  status: source_delivery_integration_ready
+  entry: handoff.md
+  progress: implementation-baseline.md
+  current_delivery: delivery.md
   design_baseline: D2
   runtime_ledger_modified: false
   production_activation_authorized: false
-  shared_adapter_mapping: required_in_M0
+  shared_adapter_mapping: implemented_with_bounded_fixture_not_live_runtime_accepted
   neighboring_feature: juyiting-multimedia-deliberation
 document_delivery:
-  target_branch: develop
+  target_branch: codex/archive-agent-maintenance
   feature_branch: codex/archive-agent-maintenance
   feature_branch_repository: root_sdd
-  component_feature_branches: not_created
-  root_remote_base: ccd6cbabe0c9f737ae61237c0d01c4df821e8a5c
-  root_remote_checked_on: '2026-09-28'
-  component_refs_refreshed_for_delivery: false
+  component_feature_branches: pushed_and_exact_remote_sha_verified
+  component_remote_evidence: evidence/delivery/component-remote-verification.json
+  root_remote_base: 01f7599ed28e84c1a44d2cc6c3dec13f7ddbeb67
+  root_remote_checked_on: '2026-10-01'
+  component_refs_refreshed_for_delivery: true
+requested_delivery_remote_check:
+  checked_on: '2026-10-01'
+  repository: root_sdd
+  remote_ref: refs/heads/codex/archive-agent-maintenance
+  head_before_delivery: 01f7599ed28e84c1a44d2cc6c3dec13f7ddbeb67
+  plain_archive_agent_maintenance_ref_exists: false
+  root_push_state: verify_after_delivery_commit
+  note: Final root push is verified after commit; the commit cannot embed its own SHA.

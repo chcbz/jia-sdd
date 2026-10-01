@@ -2,16 +2,16 @@
 
 - **特性名称**：典籍阁 Agent 任职与内容维护
 - **Feature ID**：`archive-agent-maintenance`
-- **设计版本**：D2，2026-09-28，ready / 从 M0 开始实施准备，未派发。
-- **文档交付分支**：根仓 `develop`。
-- **已准备的根仓特性分支**：`codex/archive-agent-maintenance`，与本次 D2 文档提交对齐。
-- **组件实施分支**：API/Web/Client 在 M0 冻结各自 develop 基线后由实施 Owner 创建对应特性分支；本次不预建组件分支、不改组件 gitlink。
+- **设计版本**：D2，2026-09-28；源码交付候选已形成；精确 pins 与远程回执见 integration.yaml / delivery.md，业务验收未完成。
+- **文档交付分支**：根仓 `codex/archive-agent-maintenance`。
+- **根仓工作分支**：`codex/archive-agent-maintenance`；组件提交核验后由根仓 pin；不是部署发布。
+- **组件实施状态**：API/Web/Client 的提交/tree、测试和远程回执统一记录在 delivery.md 与 integration.yaml。历史 prospective tree 证据保留；release 仍 not_started。
 
 ## 1. 给接手 Agent 的任务
 
 按 D2 实现：聚义厅中由宋江协调或直接交办已任职吴用，通过典籍维护技能和受控 API 新增/修订典籍；先草稿、确定性校验，再按显式授权发布不可变版本并读回。以《三国演义》为真实业务验收目标，但不预设底本、章数、生产身份或付费权限。
 
-**先完成 M0 并记录实际源码映射，再进入工作包。不要从这份文档推断任何功能已经上线，不要把旧 D1 当作接口合同。**
+**源码交付与实际验证的当前事实见 [implementation-baseline.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md) 和 [integration.yaml](/home/isp/wsps/cyf/specs/archive-agent-maintenance/integration.yaml)。不要从局部测试推断功能已接线、已上线或 84 项业务验收已通过，也不要把旧 D1 当作接口合同。**
 
 建议阅读顺序：
 
@@ -33,7 +33,9 @@
 - 私人资料读取不授予公开发布权；发布成功依据 publication + 实际读回，不依据模型回复、ACK 或 inbox completed。
 - 已提交相邻特性为 `juyiting-multimedia-deliberation`；它的设计状态不代表底座代码已合入。共享接口接线先核对实际组件，不整文件覆盖其他任务。
 
-## 3. 第一次实施会话应完成什么
+## 3. D2 历史启动清单与当前接续点
+
+以下 1–5 项保留为 D2 启动历史，不是当前尚未派发声明；当前接续以 delivery.md 和 implementation-baseline.md 最后章节为准。
 
 1. 阅读当前工作区 AGENTS、项目地图、聚义厅 runbook、唯一运行台账；检查聊天附件，选择路径归属明确的工作树。不操作其他任务进程、服务或 evidence。
 2. 核对 root/API/Web/Client 最新可复现 develop SHA/tree，不用 dirty checkout pin；记录实际 schema、模块依赖和事务管理器。
@@ -45,6 +47,6 @@
 
 每包 Owner 自检，不创建 Reviewer；所有 Gradle 经 orchestrator 串行。测试/构建/发布按执行时有效政策（包括尚有效的本地授权例外），记录 exact SHA/tree、selector、fixture digest、制品摘要与真实健康，不伪造 Flow Run。
 
-此文档交付本身未启动实施或生产操作。接手后允许的动作仍由用户授权及项目政策决定；真实首任管理员、任职吴用、来源与公共发布用途、额外付费操作必须精确核对。未获生产激活授权时可继续源码与隔离 fixture 工作，不能新增真实典籍后再补授权。
+当前局部实施未启动生产操作。接手后允许的动作仍由用户授权及项目政策决定；真实首任管理员、任职吴用、来源与公共发布用途、额外付费操作必须精确核对。未获生产激活授权时可继续源码与隔离 fixture 工作，不能新增真实典籍后再补授权。
 
 完成回报需区分：源码完成、验证完成、应用发布、Agent 就绪、真实典籍上架；只报告实际达到的层级及一个可执行下一步。

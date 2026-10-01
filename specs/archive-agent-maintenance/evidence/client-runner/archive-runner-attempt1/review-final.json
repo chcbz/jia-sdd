@@ -1,0 +1,79 @@
+{
+  "review_kind": "independent_read_only_bounded_source_review",
+  "reviewed_tree": "432ddf9658fb8bcc2cdbafdf01b15e18a7607543",
+  "base_tree": "273f8e64c5321839671d52a846168d6385aecb55",
+  "verdict": "REJECT",
+  "whole_feature_accepted": false,
+  "source_modified": false,
+  "tests_run_by_reviewer": false,
+  "summary": "One confirmed P1 prevents every authoritative successful archive-maintainer installation from resolving. Two passing negative tests are short-circuited by that same proof failure and do not yet exercise their intended fences.",
+  "findings": [
+    {
+      "id": "M6-RUNNER-01",
+      "severity": "P1",
+      "title": "Approved installation resolver dereferences a nonexistent nested receipt and rejects every valid success",
+      "files": [
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\isp-install\\conf\\codex-ws-agent\\platform-skill-manager.mjs",
+          "lines": "798-812,1129-1134,1181-1197"
+        },
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\isp-install\\conf\\codex-ws-agent\\archive-maintenance-runner.mjs",
+          "lines": "140-142"
+        }
+      ],
+      "trigger": [
+        "_loadReceipt validates record.receipt and returns the flat frozen receipt body.",
+        "getInstallation assigns that flat body directly to installation.receipt.",
+        "resolveApprovedArchiveInstallation checks installation.receipt.receipt?.state, which is undefined for every valid receipt.",
+        "The resolver throws PLATFORM_SKILL_INSTALL_CONFLICT; the runner converts it to ARCHIVE_RECOVERY_REQUIRED before source, draft, validation, publish, or terminal reconciliation."
+      ],
+      "evidence": "Exact-tree Linux candidate1 reports 10 introduced archive-runner failures; positive MANUAL/AUTO and all loss-recovery cases show ARCHIVE_RECOVERY_REQUIRED: PLATFORM_SKILL_INSTALL_CONFLICT.",
+      "repair": "Check the validated flat receipt state at installation.receipt.state. Preserve all existing result, command/package identity, current runtime scope, activation marker, exact 19-entry proof, inode/path identity, and reverify checks; do not accept an unvalidated raw receipt or result alone."
+    },
+    {
+      "id": "M6-RUNNER-02",
+      "severity": "P2",
+      "title": "Unknown-result and human-edit negative tests pass before reaching the behavior they claim to cover",
+      "files": [
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\isp-install\\conf\\codex-ws-agent\\test\\archive-maintenance-runner.test.mjs",
+          "lines": "137-168"
+        },
+        {
+          "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\isp-install\\conf\\codex-ws-agent\\archive-maintenance-runner.mjs",
+          "lines": "135-176"
+        }
+      ],
+      "trigger": [
+        "Both tests install a valid package but execution stops at resolveApprovedArchiveInstallation because of M6-RUNNER-01.",
+        "The asserted RECOVERY_REQUIRED and zero draft PUT therefore occur without proving the unknown-result reconciliation path or the non-empty human revision fence."
+      ],
+      "repair": "After fixing M6-RUNNER-01, assert phase reachability: human-edit must observe context, source, and draft GET while draft PUT remains zero; unknown-result must observe start and later authoritative result lookup/denial before remaining RECOVERY_REQUIRED. Re-run positive, loss-response, publish-denial, terminal-routing, human-edit, and rotation/generation cases on the exact fixed tree."
+    }
+  ],
+  "verified_nonfindings": [
+    "No Codex, shell, arbitrary-URL, or secret-prompt fallback was found in the reviewed runner path.",
+    "Runner terminal cache is checked only after the live registration fence; disconnect/rotation clears the runtime objects and aborts the session.",
+    "Draft producer write is limited to exact revision 0 plus exact empty content, and uncertain write recovery rereads authoritative state instead of issuing a second producer write.",
+    "Only server-authoritative COMPLETED or FAILED results are converted to terminal outcomes; other states remain recovery_required.",
+    "Default-off and Linux atomic-runtime advertisement behavior remains fail closed in the reviewed delta."
+  ],
+  "test_evidence": {
+    "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\specs\\archive-agent-maintenance\\evidence\\client-runner\\archive-runner-attempt1",
+    "tests": 443,
+    "passed": 432,
+    "failed": 11,
+    "skipped": 0,
+    "introduced_failures": 10,
+    "baseline_failures": 1,
+    "source_before_after_unchanged": true
+  },
+  "limitations": [
+    "This is a local review of the frozen 12-file Client runner delta only.",
+    "No reviewer-run tests, WSL, Gradle, database, or source edits were performed.",
+    "No real API HTTP/runtime end-to-end execution was verified.",
+    "AUTO/resume API internals, M7, Web, scheduler, and unrelated accepted lifecycle slices were not re-audited.",
+    "The current mutable worktree was not used as the review identity; source conclusions are bound to Git tree 432ddf9658fb8bcc2cdbafdf01b15e18a7607543 and the recorded source-proof blobs."
+  ]
+}

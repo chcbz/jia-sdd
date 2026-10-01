@@ -1,0 +1,71 @@
+{
+  "kind": "independent_read_only_bounded_review",
+  "reviewed_tree": "a3a9e24cb9b884a7b86a16fbf8dc62822ab815e2",
+  "approved_base_tree": "74630fbbf6e0c6b8eddbcca25c6834a8426f2b2a",
+  "scope": "14-file AUTO/resume delta only",
+  "verdict": "REJECT_LOCAL_SLICE",
+  "whole_feature_accepted": false,
+  "source_modified": false,
+  "tests_run_by_reviewer": false,
+  "findings": [
+    {
+      "severity": "P1",
+      "id": "AUTO_PUBLISH_EXTERNAL_IO_IN_TRANSACTION",
+      "file": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-service\\src\\main\\java\\cn\\jia\\chat\\archive\\maintenance\\service\\ArchiveMaintenanceServiceImpl.java",
+      "lines": [
+        "789-801",
+        "804-857",
+        "1095-1119",
+        "1550-1570"
+      ],
+      "summary": "Manual and runtime publication call source artifact storage and parse/validate source bytes while the database transaction and authorization/job/draft locks are held.",
+      "trigger": "A slow or unavailable AgentTaskArtifactStorage.read during first publication keeps the operation, manager, appointment, job and draft transaction open and blocks competing revoke/recovery/publication work.",
+      "contract": "design.md 10.1 lines 473-475 and publication flow lines 479-483 require external source I/O and parsing outside the short final database transaction.",
+      "repair": "Use a two-phase publication candidate: read and validate the immutable source and draft candidate outside DB locks, then reacquire all authorization/job/draft/work locks and revalidate exact source/draft/validation hashes and CAS before database-only activation. Preserve a committed-operation replay path that does not depend on source storage availability."
+    },
+    {
+      "severity": "P1",
+      "id": "RECOVERY_REJECTS_ALREADY_FENCED_CURRENT_RUN",
+      "file": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-service\\src\\main\\java\\cn\\jia\\chat\\archive\\maintenance\\service\\ArchiveMaintenanceServiceImpl.java",
+      "lines": [
+        "623-638"
+      ],
+      "supporting_file": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-mapper\\src\\main\\java\\cn\\jia\\chat\\archive\\maintenance\\store\\JdbcArchiveMaintenanceStore.java",
+      "supporting_lines": [
+        "321-329"
+      ],
+      "summary": "resume/reassign always call fenceRun, but fenceRun returns 0 when the old current run is already FENCED, so the intended recovery path rejects exactly the expiry/revocation state it must replace.",
+      "trigger": "Expire an ACTIVE grant through ensureExecution fencing, then call exact resume; or revoke the old appointment through the production revoke path, create/select a new appointment, then call reassign. Both reach oldRun.state=FENCED and fail with ARCHIVE_EXECUTION_CHANGED before creating the new epoch.",
+      "repair": "After locking the old run and grant, treat an already-FENCED run as an admissible immutable history state only when its grant is absent or coherently FENCED. Fence non-FENCED runs exactly once, then insert the next epoch and CAS replaceCurrentRun. Reject inconsistent FENCED+ACTIVE/READ_ONLY combinations."
+    },
+    {
+      "severity": "P2",
+      "id": "REAL_MYSQL_RECOVERY_FIXTURES_DO_NOT_COVER_PRODUCTION_FENCE_OR_GRANT",
+      "file": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\cyf-web-kit\\api\\chat\\jia-chat-service\\src\\test\\java\\cn\\jia\\chat\\archive\\maintenance\\service\\ArchiveMaintenanceConcurrencyMySqlTest.java",
+      "lines": [
+        "370-425"
+      ],
+      "summary": "The resume fixture starts from a WAITING run without a grant, and the reassign fixture changes appointment status/slot by direct SQL instead of production revokeAppointment, so neither exercises an already-FENCED run or old grant fencing.",
+      "repair": "Add real MySQL recovery tests starting from production expiry fencing and production appointment revocation. Assert old run and grant remain FENCED, old runtime scope is denied, new run has exactly next epoch, history is preserved, and exact idempotency replay creates no second run."
+    }
+  ],
+  "verified_positive_points": [
+    "AUTO native publish requires persisted AUTO plus PUBLISH_VALIDATED, active RUNNING grant, current manager revision, appointment/binding and runtime proof.",
+    "Exact validation id/draft revision and work revision/active edition CAS are checked before activation.",
+    "Publication operation replay returns the single committed publication and terminal runtime receipt path remains read-only.",
+    "MANUAL runtime validation completes the producer and releases the grant; only AUTO plus PUBLISH_VALIDATED retains it for native publish.",
+    "Recovery locks distinct old/new identity roots in deterministic agent/binding order and uses job revision plus run-id CAS.",
+    "Default execution remains disabled and approved package bytes are untouched."
+  ],
+  "evidence_observed": {
+    "focused": "145/145 pass",
+    "regression": "235 tests, 11 known baseline failures, 0 skipped, introduced empty",
+    "gradle_exit_code": 1,
+    "test_evidence_not_reexecuted_by_reviewer": true,
+    "limits": [
+      "Port and artifact storage remain test doubles in the real-MySQL tests",
+      "No actual HTTP/runtime/client end-to-end",
+      "Fresh schema evidence is not deployed-schema upgrade evidence"
+    ]
+  }
+}

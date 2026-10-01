@@ -1,17 +1,17 @@
 # 典籍阁 Agent 维护：兼容性与并行开发影响评估
 
-日期：2026-09-28。对象：原 D1 草案。状态：历史兼容性评估；下列调整已纳入 D2 目标合同与验收，运行验证仍未执行。
+日期：2026-09-28。对象：原 D1 草案。状态：历史兼容性评估；“运行验证仍未执行”仅描述 2026-09-28 的 D1 评估时点，不是当前实施进度。当前进度与证据以 [实施基线](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md) 和 [集成状态](/home/isp/wsps/cyf/specs/archive-agent-maintenance/integration.yaml) 为准。
 
 ## 1. 结论与证据边界
 
 总体方向可保留：宋江协调/直接交办任职 Agent → 受控 API → 草稿、校验、不可变版本、发布。Agent 不直连数据库。
 
-**D1 不是可直接开工的冻结合同**：存在一处已确认的办事列表合同不兼容，以及执行、身份、技能安装等共享边界未收敛。当前只有文档，因此本方案尚未造成运行时冲突；这不代表实施后无影响。
+**D1 不是可直接开工的冻结合同**：存在一处已确认的办事列表合同不兼容，以及执行、身份、技能安装等共享边界未收敛。2026-09-28 的 D1 评估时点只有文档，因此当时尚未造成运行时冲突；这不是对 2026-09-30 当前局部源码与组件测试进度的描述，也不代表后续实施无影响。当前事实见 implementation-baseline.md。
 
-- 当前源码、已有精确源审计及共享规格为依据；本轮未 fetch、未核验线上版本、未执行合并模拟或应用测试。
+- D1 评估当日以当时源码、已有精确源审计及共享规格为依据；2026-09-28 当轮未 fetch、未核验线上版本、未执行合并模拟或应用测试。后续局部测试证据另见 implementation-baseline.md §10–§14。
 - 运行台账采用 `/home/isp/wsps/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json`，其更新时间为 2026-09-26T19:28:52+08:00。状态是记录，不证明相应 Owner 此刻仍在写代码。
 - fast-deliberation 结论引用 2026-09-27 共享评估，不能视为本轮对最新远端的复测。未读取该任务的临时 evidence 目录。
-- 本文保留 D1 问题的发现记录；本次交接已同步修订 design/spec/tasks/acceptance/integration 为 D2。底座到实际源码的映射仍由 M0 执行，不能称风险已通过运行验证。
+- 本文保留 D1 问题的发现记录；其“尚未运行验证”结论只属于 2026-09-28 历史时点。D2 与后续局部实现现状由 implementation-baseline.md 和 integration.yaml 记录；局部组件测试仍不能称整体验收通过。
 - 后续文档提交核对了根仓远端 develop ccd6cbabe0c9f737ae61237c0d01c4df821e8a5c；已提交相邻特性名称为 juyiting-multimedia-deliberation。该核对不刷新此前组件源码/生产观察。
 
 ## 2. 冲突与影响矩阵
@@ -46,19 +46,19 @@
 - **最小闭环先行**：有权管理者通过内容 API 新增并读回一部书 → 任职吴用以草稿模式执行 → 接宋江/直达入口 → 显式预授权自动发布 → 最后扩统一办事投影。
 - **上线前针对性验证**：旧水浒 reader/书签/手札/选文与续读；跨 owner/client、换绑及撤任；旧/新客户端混用；重复交办与断线恢复；私人材料到公开内容边界；内容 schema 升级/重启/恢复。文档检查不替代这些测试。
 
-本次用户授权输出并提交文档，由其他 Agent 实施。本文不启动实施、生产 DML、任职、付费模型调用或部署，也不调整其他任务台账。
+2026-09-28 的 D1 文档轮仅授权输出文档，当时未启动实施、生产 DML、任职、付费模型调用或部署。当前局部实现进度不由本段更新，以 implementation-baseline.md 为准；本文仍不构成生产授权。
 
 ## 5. 依据
 
 - [D2 设计与源码差距](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)
 - [精确源码审计](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-audit.json)
-- [统一办事台冻结合同](/home/isp/wsps/cyf/specs/juyiting-unified-experience/agent-execution-plan.md)
+- 统一办事台冻结合同——2026-09-28 共享工作区历史引用，当前交付仓不存在、不作为验收证据：`/home/isp/wsps/cyf/specs/juyiting-unified-experience/agent-execution-plan.md`
 - [当前 HallReadServiceImpl 类型校验](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/HallReadServiceImpl.java)
-- [多媒体议事重设计](/home/isp/wsps/cyf/specs/juyiting-creative-delivery-mvp/workspace-redesign-20260927.md)
-- [快速议事候选合入评估（2026-09-27）](/home/isp/wsps/cyf/specs/juyiting-creative-delivery-mvp/fast-deliberation-merge-assessment-20260927.md)
-- [通讯协作合同](/home/isp/wsps/cyf/specs/juyiting-task-collaboration/connectivity-detailed-design-20260922.md)
+- 多媒体议事重设计——2026-09-28 共享工作区历史引用，当前交付仓不存在、不作为验收证据：`/home/isp/wsps/cyf/specs/juyiting-creative-delivery-mvp/workspace-redesign-20260927.md`
+- 快速议事候选合入评估（2026-09-27）——2026-09-28 共享工作区历史引用，当前交付仓不存在、不作为验收证据：`/home/isp/wsps/cyf/specs/juyiting-creative-delivery-mvp/fast-deliberation-merge-assessment-20260927.md`
+- 通讯协作合同——2026-09-28 共享工作区历史引用，当前交付仓不存在、不作为验收证据：`/home/isp/wsps/cyf/specs/juyiting-task-collaboration/connectivity-detailed-design-20260922.md`
 - [角色隔离规格](/home/isp/wsps/cyf/specs/single-tenant-role-isolation/spec.md)
-- [能力治理设计](/home/isp/wsps/cyf/specs/juyiting-agent-model-governance/design.md)
+- 能力治理设计——2026-09-28 共享工作区历史引用，当前交付仓不存在、不作为验收证据：`/home/isp/wsps/cyf/specs/juyiting-agent-model-governance/design.md`
 - [独立 Runtime v1 范围](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/README.md)
 - [运行台账](/home/isp/wsps/cyf/docs/implementation/TASKS.yaml)
 

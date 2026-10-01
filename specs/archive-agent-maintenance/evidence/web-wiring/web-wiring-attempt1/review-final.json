@@ -1,0 +1,135 @@
+{
+  "review_type": "independent_read_only_bounded_web_wiring_review",
+  "reviewed_at": "2026-10-01",
+  "web_source_tree": "61637ef6027f23d3a970efb8b7908fd35716e9de",
+  "approved_base_tree": "e7d4cc80afcccb0acb4c33a209763c7d52052f43",
+  "api_contract_tree": "b05d1eaa5a5a17d018f567eb0fa1f118b0df796e",
+  "verdict": "REJECT",
+  "whole_feature_accepted": false,
+  "p0_count": 0,
+  "p1_count": 5,
+  "p2_count": 3,
+  "findings": [
+    {
+      "id": "WEB-M7-P1-01",
+      "severity": "P1",
+      "title": "Authorized refresh calls an API method that the gateway does not export",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue:130-142",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/composables/juyiting/useArchiveMaintenance.js:67-82"
+      ],
+      "trigger": "Authenticate as an actor whose capabilities include appoint, mount the maintenance panel, and let refresh reach line 136. The call to gateway.slot() throws TypeError because the returned gateway object has no slot member.",
+      "impact": "The authorized manager cannot load the slot, appointments, or jobs and cannot use appointment/recovery controls.",
+      "minimal_repair": "Export an exact read-only slot() method for GET /collections/platform-classics/slot and add a mounted/composable runtime test that reaches the appoint-capable refresh path."
+    },
+    {
+      "id": "WEB-M7-P1-02",
+      "severity": "P1",
+      "title": "Songjiang entry persists the noncanonical agent id and is rejected by the API coordinator",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/composables/juyiting/useHallChatContext.js:89-99",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/composables/juyiting/useHallChatContext.js:140-145",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/BuiltinHallAgentSupport.java:14-26",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/entry/ArchiveMaintenanceChatCoordinator.java:69-75"
+      ],
+      "trigger": "Choose '交宋江统筹'. The Web sends targetAgentIds/targetAgentId as songjiang. Conversation authorization preserves that explicit value, while the M7 coordinator requires the persisted sole target to equal builtin-songjiang.",
+      "impact": "The main M7 Songjiang conversation route is denied before the opaque confirmation can be consumed.",
+      "minimal_repair": "Use the canonical builtin-songjiang runtime id (prefer a server-returned canonical coordinator id if exposed), and add an integration-level Web request-shape test against the exact API contract. Do not alias it only in a source-string test."
+    },
+    {
+      "id": "WEB-M7-P1-03",
+      "severity": "P1",
+      "title": "The rewritten panel removes previously approved management and safety controls",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue:9-73",
+        "approved base e7d4cc80afcccb0acb4c33a209763c7d52052f43 same file:22-34,55-71,200-286",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/http/ArchiveAdminController.java:64-79,109-137,231-285"
+      ],
+      "trigger": "Open the maintenance panel with source.prepare, draft.write, publish, or job.manage permissions. The current template and script no longer expose appointment revoke, source snapshot upload, draft read/write, validation, explicit MANUAL publish, job cancel, or publication read-back.",
+      "impact": "Users cannot create the immutable source snapshot required by the new request flow, cannot complete MANUAL jobs, and lose revoke/cancel emergency controls that remain supported by the API. This is a regression from the approved Web base, not an unimplemented future slice.",
+      "minimal_repair": "Merge the M7 confirmation/install/resume/reassign entry into the approved control surface instead of replacing it. Restore each control with its existing capability check, exact revision/idempotency fence, and identity cleanup."
+    },
+    {
+      "id": "WEB-M7-P1-04",
+      "severity": "P1",
+      "title": "Successful appoint and confirmation operations leave the panel permanently busy",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue:125-142",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue:167-182"
+      ],
+      "trigger": "Complete a successful appoint, or a successful confirmation containing a jobId. Both operation bodies await refresh(); refresh invalidates the same identity fence and changes generation. run() then treats its own success as stale and skips both the success message and busy=false in finally.",
+      "impact": "After the first successful appointment or maintenance confirmation, all controls guarded by busy remain disabled until remount/identity cleanup.",
+      "minimal_repair": "Separate identity lifetime epoch from refresh request sequencing. A normal refresh must not invalidate the owning mutation token; always release the mutation busy state for the same identity, while still fencing writes after identity cleanup/unmount. Add mounted success-path tests for appoint and confirm."
+    },
+    {
+      "id": "WEB-M7-P1-05",
+      "severity": "P1",
+      "title": "Late mutation responses can repopulate state after identity cleanup or authorization change",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue:117-142",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue:171-181",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/tests/archive-maintenance.test.js:88-103"
+      ],
+      "trigger": "Start install/status/confirmation under actor A, invoke identity cleanup, then resolve the old promise. The operation writes installationStatus or confirmation before run() checks the captured generation. confirmation then may invoke refresh under actor B; refresh also retains old authorized state when capabilities become empty or change.",
+      "impact": "Actor A's installation/confirmation/job references can reappear in actor B's panel, and a differently authorized actor can see or act on stale UI state. The existing test only checks a standalone fence and source strings; it does not execute these assignments.",
+      "minimal_repair": "Capture results in locals, verify the identity epoch immediately after every await and before every ref assignment or follow-up request, and clear all authorization-derived state whenever capabilities lose/change scope. Add deferred-promise actor-switch and permission-downgrade mounted tests."
+    },
+    {
+      "id": "WEB-M7-P2-01",
+      "severity": "P2",
+      "title": "Receipt reauthorization has no identity or unmount fence",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenanceReceiptCard.vue:12-35",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/tests/archive-maintenance.test.js:81-86"
+      ],
+      "trigger": "Start reauthorize(), switch identity or unmount, then resolve the old GET successfully. current is assigned with the old actor's state because there is no lifecycle epoch/abort cleanup.",
+      "impact": "A stale state/waitReason/publicationId can be displayed after authority changed. The test is only a source-text assertion and does not exercise a delayed request.",
+      "minimal_repair": "Register identity cleanup, abort or epoch-fence the request, clear current/error/loading on cleanup, and verify the epoch plus current receipt jobId before assignment. Add a deferred-response mounted test."
+    },
+    {
+      "id": "WEB-M7-P2-02",
+      "severity": "P2",
+      "title": "An ambiguous mutation silently receives a new idempotency key when its body or revision changes",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/composables/juyiting/useArchiveMaintenance.js:33-63",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/tests/archive-maintenance.test.js:43-66",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/http/ArchiveAdminController.java:259-264"
+      ],
+      "trigger": "Receive a timeout/404/5xx, then edit the form or refresh its revision and submit the same logical intent. fingerprint mismatch replaces the retained record with a new key even though the first outcome is unresolved.",
+      "impact": "A second appointment/request/recovery may be created instead of reconciling/replaying the first operation. The test covers only exact same-body retry.",
+      "minimal_repair": "While an ambiguous intent is retained, reject a changed fingerprint with a recovery-required UI state. Reconcile admin operations through /operations/by-key or explicitly abandon after authoritative review; only a decisive result may release the retained intent."
+    },
+    {
+      "id": "WEB-M7-P2-03",
+      "severity": "P2",
+      "title": "The Web constant is treated as the current approved platform catalog",
+      "locations": [
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/composables/juyiting/useArchiveMaintenance.js:3-8",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue:112-113,167-191",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveCapabilitiesDTO.java:5-7",
+        "C:/Users/Think/.codex/worktrees/archive-agent-maintenance/cyf-web-kit/api/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveAppointmentDTO.java:5-9"
+      ],
+      "trigger": "Publish/revoke a future catalog version while this Web remains deployed. Appointment, installation, resume and reassign continue to submit the embedded 1.0.0 digest instead of an authoritative current value.",
+      "impact": "The server should reject drift, so this is not an authorization bypass, but the control plane becomes unusable or can request an obsolete still-addressable release. Capabilities currently provide no catalog ref; existing appointments do expose their exact requiredSkill.",
+      "minimal_repair": "Do not label a client constant as the current approved catalog. Obtain the create-appointment/install skill ref from an authenticated server response/endpoint; for resume/reassign use the exact selected appointment.requiredSkill and revision. Keep the server as final authority."
+    }
+  ],
+  "verified_non_findings": [
+    "ArchiveJobDTO does expose assignedAgentId; the private-entry field name is compatible with API b05d1e.",
+    "ArchiveResumeRequest and ArchiveReassignRequest field names emitted by the panel match the strict API DTO shapes.",
+    "The chat payload is narrowed to schemaVersion=1 plus opaque confirmationRef before POST /stream; no client policy fields are forwarded."
+  ],
+  "test_evidence": {
+    "build": "PASS, exit 0, but generated src/components.d.ts changed the tree from 51c4e3c6d4d26768fe080b6911adf8d425adebf7 to reviewed 61637ef6027f23d3a970efb8b7908fd35716e9de",
+    "selected_suite": "FAIL beforeAll, 0 tests executed, SyntaxError Cannot use import statement outside a module at ChatPanel load",
+    "baseline_component_suite": "The approved e7d4 tree independently has the same class of pre-existing loader failure at LibraryPanel with 0 tests; therefore the current red suite is not claimed as a purely introduced regression.",
+    "isolated_subset": "142/142 passed only after excluding juyiting-component-behavior.test.js; it does not validate the actual new panel/receipt runtime path.",
+    "required_follow_up": "Extend/fix the SFC loader rather than deleting the suite, then execute actual mounted Vue tests for the new panel, receipt card, canonical Songjiang route, late responses, authorization downgrade, and restored management controls."
+  },
+  "unreviewed_limits": [
+    "No browser/API cross-component E2E was run or claimed.",
+    "No Gradle, npm, build, WSL, database, or source-edit operation was performed by this reviewer.",
+    "The review is limited to the stated 10-file Web delta plus exact API DTO/coordinator context; unrelated reader, API lifecycle, Client runner, AUTO, schema, validator, and release acceptance were not re-audited.",
+    "Generated declaration content was not treated as feature acceptance."
+  ]
+}

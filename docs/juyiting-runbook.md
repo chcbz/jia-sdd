@@ -92,3 +92,15 @@ cd web && npm run dev -- --host 0.0.0.0
 - Keep this runbook short and operational.
 - Put detailed flow diagrams or long explanations in `docs/juyiting-feature-guide.md`.
 - When fixing a repeated issue, add one sentence here under the relevant section so future sessions do not rediscover it.
+
+## Archive Agent maintenance (development branch)
+
+- Feature contract and delivery evidence: `specs/archive-agent-maintenance/`; implementation is isolated on the `codex/archive-agent-maintenance*` branches. Deployment, privileged activation and real-book publication are separate operations, not implied by a Git push.
+- Admin HTTP lane: `/archive/admin/v1`; native execution lane: `/internal/archive/v1/jobs/{jobId}/runs/{runId}`. Admin scope comes from JWT, native scope from the authenticated WebSocket registration. Do not pass owner/client/runtime authority from Web forms or chat text.
+- API execution stays default-off (`archive.maintenance.execution-enabled=false`); platform installation/catalog is independently gated by `agent.platform-skills.enabled`. Client installation/execution flags are `AGENT_PLATFORM_SKILL_INSTALL_ENABLED` and `AGENT_ARCHIVE_MAINTENANCE_ENABLED`, both default-off. Catalog unavailability must not disable existing manager revoke/cancel controls.
+- Maintenance UI: `web/src/components/juyiting/archive/ArchiveMaintenancePanel.vue`; authorization-rechecked conversation card: `ArchiveMaintenanceReceiptCard.vue`; gateway: `web/src/composables/juyiting/useArchiveMaintenance.js`.
+- Chat entry carries only `archiveMaintenanceIntent: { schemaVersion: 1, confirmationRef }`. Songjiang uses canonical `builtin-songjiang`; private entry uses the exact persisted appointed Agent and must not fall back to Songjiang.
+- Byte-addressed package resources and existing archive content use API `.gitattributes` `-text`; never normalize approved package bytes to make an installation check pass. Package v1.0.0 is 40,563 bytes, SHA-256 `8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081`.
+- Run the existing real selectors (not similarly named nonexistent files): `archive-reader.test.js`, `archive-maintenance.test.js`, `juyiting-component-behavior.test.js`, `juyiting-hall-chat-context.test.js`, `juyiting-hall-conversation.test.js`, `juyiting-conversation-material-links.test.js`. The new panel/card tests compile and mount their actual SFCs; their explicit authStore seam still uses the production gateway, createApi and useHttp.
+- Backend focused tasks: `:agent:jia-agent-service:archivePlatformContracts`, `:agent:jia-agent-service:archiveMaintenanceSecurity`, `:chat:jia-chat-service:archiveMaintenanceMvp`, `:chat:jia-chat-service:archiveRegression`. Hold the shared Gradle lock for the entire command; actual isolated-MySQL opt-in tests use `ArchiveMySqlTestGuard`, never a production DB.
+- Do not relabel preserved baseline failures, skipped/absent selectors, source-string assertions, mock transport, or a package/install receipt as full regression success or actual publication. See the latest source-bound evidence and remaining boundaries in the feature acceptance file.

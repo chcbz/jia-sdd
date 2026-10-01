@@ -1,0 +1,35 @@
+{
+  "verdict": "REJECT",
+  "scope": "M6 Client install entry local slice only",
+  "source_kind": "prospective_worktree_tree_not_commit",
+  "tree": "93bcb0a29afa5b33607e48469be2fecb2c984470",
+  "reviewer_agent": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "source_read_only": true,
+  "findings": [
+    {
+      "priority": "P1",
+      "id": "unknown-to-succeeded",
+      "files": [
+        "conf/codex-ws-agent/platform-skill-manager.mjs:981-984,987-988,1030-1037",
+        "conf/codex-ws-agent/agent-client.mjs:2779-2816"
+      ],
+      "description": "Manager execution returns unknown without definitive installation receipt; Processor handles only recovery_required and defaults every non-failed status to completed, persisting terminal SUCCEEDED inbox/ledger/ACK."
+    },
+    {
+      "priority": "P2",
+      "id": "failed-reconciliation-online",
+      "files": [
+        "conf/codex-ws-agent/agent-client.mjs:4618-4624"
+      ],
+      "description": "Registration activation ignores authoritative reconciliation failure and may set ready/send ONLINE even when processor is fail-closed."
+    }
+  ],
+  "test_observations": [
+    "425 tests/415 pass/10 fail/0 skip exit1; not green",
+    "Old SKILL.md fixture literal must match actual fixed approved ZIP",
+    "Legacy PREPARED follow-through must be rerun after first status assertion repair"
+  ],
+  "whole_feature_accepted": false,
+  "http_websocket_e2e_verified": false,
+  "production_operations": false
+}

@@ -1,6 +1,6 @@
 # 验收与证据矩阵（D2）
 
-**以下全部为待执行验收条件，不是测试通过报告。** 本轮仅交付设计与静态文档检查；未调用应用、未运行 Gradle/Vite、未做生产内容维护。
+**以下 84 项全部仍是待执行业务验收条件，不是测试通过报告。** 当前源码提交和测试证据见 delivery.md / integration.yaml；组件测试与有界真实 HTTP/JDBC/POSIX/Client fixture 已运行，但不冒充完整 Runtime、部署或真实业务验收。历史 prospective tree 证据原样保留。
 
 机器可读矩阵：[acceptance-cases.json](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance-cases.json)。功能要求见 [spec.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/spec.md)，合同见 [design.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)。
 
@@ -151,11 +151,15 @@
 
 若只有草稿模式，通过点为 AWAITING_PUBLISH，不能标 AUTO/实际上架通过；没有《三国演义》授权来源时先验证 fixture，不伪称真实书已新增。
 
-## 5. 本轮结果
+## 5. 2026-09-30 历史局部实现证据（不是当前进度）
 
-- 业务用例：全部 `not_run`。
-- 应用构建/测试、生产迁移、任职、安装、导入、发布：均未执行。
-- 文档静态检查结果：见 [documentation-check.json](/home/isp/wsps/cyf/specs/archive-agent-maintenance/documentation-check.json)；该文件只证明结构与自检项，不是安全认证或集成验收。
+- 业务用例：机器矩阵 84 项全部 `not_run`，`evidence=null`；下面的组件测试不得回填为 PASS。
+- API 前次冻结 prospective tree `7d61d50e9a262eeb43bc8cc9ab77763bd9cec27b`（非 commit）：平台 48、native security 6、maintenance 31，合计 85 项定向测试通过；archive regression 共 195 项、12 fail、3 skip，失败方法集合与 commit `e15e1a9d947e86e5f81a3288948087466a8a879c` baseline 完全相同，delta 为空。Spring `AnnotationConfigApplicationContext` 装配测试包含平台服务与 `ArchiveMaintenanceServiceImpl`。
+- API 当前 resolver tree `67dc1c225a1cc020f5c68b44b992a6f329dc1a01`（非 commit）：平台 63/native 6/maintenance 34，共 103 定向通过；archive 198 项、12 fail、3 skip，既有失败方法集合不变。原历史 proof 泄漏 P1 与两项 P2 已修，Raman 局部 ACCEPT；任职仍不可执行，不等于 Agent 已就绪。最终证据在 `resolver-stage2/attempt3/`，原 REJECT 与失败日志保留。
+- Client prospective tree `a3ea0078fd11feb1fa25d4ca4109bc4231b57b45`（非 commit）：隔离 Linux chroot 中 246/246 Node tests 通过、0 skip；安全安装 manager 默认关闭，`client_entry_wired=false`，未发生 live installation。
+- Web prospective tree `e7d4cc80afcccb0acb4c33a209763c7d52052f43`（非 commit）：archive tests 82 通过，`npm run build` 通过；未部署。
+- 原始证据在 [evidence/2026-09-30](/home/isp/wsps/cyf/specs/archive-agent-maintenance/evidence/2026-09-30)。尚未执行真实 MySQL/DB、HTTP、跨组件、授权任职、真实技能安装/执行、内容发布、Flow 或生产验收。
+- 2026-09-30 主线程已运行前轮文档静态检查；本轮 resolver 证据增量的静态检查状态以 `integration.yaml` 的 `verification.documentation.status` 为准。生成的 [documentation-check.json](/home/isp/wsps/cyf/specs/archive-agent-maintenance/documentation-check.json) 只证明结构、冻结源码和证据声明自洽，不是安全认证或集成验收。
 
 重跑本轮静态检查：
 
@@ -163,4 +167,22 @@
 node /home/isp/wsps/cyf/specs/archive-agent-maintenance/validate-design.cjs
 ```
 
-该命令只读取冻结 Git 对象、解析文档/YAML/JSON并更新本目录的静态检查记录；依赖现有 Web node_modules 中的 js-yaml，不安装依赖，不启动应用或访问生产。
+该命令只读取冻结 Git 对象、解析文档/YAML/JSON与已存在的组件测试证据，并更新本目录的静态检查记录；依赖现有 Web node_modules 中的 js-yaml，不安装依赖，不启动应用、不运行应用测试或访问生产。
+
+### 2026-09-30 execution 最新局部证据（不回填业务 PASS）
+
+API 冻结 prospective tree `57fad153289a06d512c53a10cb39d410dee44e44` 的四 task 实际持锁复测：平台66/native6/maintenance43，共115定向全绿；archive208/11fail/0skip，三个H02/H03/H05A真实MySQL测试通过。新增失败集合为空，原reader-data catalog失败已修，其余11个既有失败保留；整体Gradle仍失败。见 `evidence/2026-09-30/execution-stage4/attempt4-real-mysql/` 的源码证明、XML、日志与 baseline-comparison。初始化/JDBC probe另为92497fc6树的14/14实库检查，见 `mysql-stage3/attempt3/`。两者均非业务E2E；执行切片独立复审仍在进行，Client/M7未接，不提交为完成版。
+最新局部复测为 ae12d17 树（非 commit）的 attempt7-real-mysql：125 定向通过、archive217/11baselinefail/0skip、introduced=[]；两项真实 RR 并发及三项旧域 MySQL 测试通过。attempt5 编译失败、attempt6 mock 夹具失败均保留。独立复审仍待回执；这些不是 Runtime/HTTP/WebSocket/业务验收，84 项保持 not_run。
+
+最终 execution 局部切片 b6fb79 树的 attempt10-real-mysql：126 定向全绿、archive217/11baselinefail/0skip、introduced=[]，5 实库测试通过，Raman 局部 ACCEPT。attempt8 未完成及 attempt9 隔离 DB 停止失败均保留。M5 开始实施，M6/M7/AUTO/HTTP/WebSocket/整体验收与提交推送未完成，84 项仍 not_run。
+
+### 2026-09-30 M5 局部验证补充（不是业务验收）
+
+- API tree `889f63ac33251e85c288e945c339c9e4f4a48582`：Node14/14；持锁实库定向129/129；全archive219/11既有失败/0skip，introduced=[]，整体Gradle exit1。证据 `evidence/2026-09-30/execution-stage4/m5-attempt2-real-mysql/`。
+- 确定性包 SHA `8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081`（40563 bytes）；独立M5复审无剩余P0/P1/P2。首轮compile/checker失败另留原件，不冒充全量绿色。
+- Client冻结基线四selector246/246；Client真实受控入口/AUTO/恢复/M7及跨组件验收未完成。84业务用例仍not_run，pins null，未提交/推送/发布。
+
+
+## 6. 2026-10-01 当前源码交付验证
+
+以 `delivery.md` 和 `integration.yaml` 的精确 commit/tree/pins 为准。Web245/245PASS+build0；API定向173PASS、archive258/11既有FAIL/0skip且delta空；Client443/442PASS/1既有FAIL/0skip且delta空；有界真实HTTP/JDBC/POSIX/Client fixture1/1PASS，MANUAL显式管理发布、AUTO/replay唯一publication/event、实际Reader读回。独立最终scope ACCEPT，不代表84业务用例或完整Runtime E2E。历史文档checker exit1仍披露，单独当前交付gate不替代它。

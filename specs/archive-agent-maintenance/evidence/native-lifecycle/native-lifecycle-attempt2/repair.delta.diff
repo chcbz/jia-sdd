@@ -1,0 +1,422 @@
+diff --git a/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java b/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java
+index cc370176..da0f2b3e 100644
+--- a/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java
++++ b/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java
+@@ -196,7 +196,8 @@ public final class ArchiveAgentExecutionAdapter implements ArchiveAgentExecution
+         AgentCommandDeliveryEntity delivery = deliveries.lockDelivery(expected.tenant(), expected.client(),
+                 expected.owner(), expected.commandId());
+         verifyDelivery(delivery, expected, RESULT_DELIVERY);
+-        require(clock.millis() < expected.expiresAt(), "ARCHIVE_EXECUTION_RESULT_EXPIRED");
++        // Terminal READ_ONLY receipts remain recoverable after the producer deadline. The caller
++        // admits only a durable COMPLETED/FAILED run and still revalidates every live scope proof.
+         return new Inspection(true, delivery.getStatus(), delivery.getActiveMessageId());
+     }
+ 
+diff --git a/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java b/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java
+index 637fb8c5..6d23893b 100644
+--- a/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java
++++ b/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java
+@@ -105,6 +105,15 @@ class ArchiveAgentExecutionAdapterTest {
+         assertEquals("ARCHIVE_EXECUTION_TARGET_FENCED", assertThrows(
+                 ArchiveAgentExecutionPort.Denied.class,
+                 () -> adapter.inspectResult(expected, rotated)).code());
++        var lateAdapter = new ArchiveAgentExecutionAdapter(identities, runtimes, authentication, skills,
++                writers, deliveries, sessions, manager,
++                Clock.fixed(Instant.ofEpochMilli(expected.expiresAt() + 1), ZoneOffset.UTC));
++        deliveryStatus.set("STARTED");
++        assertEquals("ARCHIVE_EXECUTION_EXPIRED", assertThrows(
++                ArchiveAgentExecutionPort.Denied.class,
++                () -> lateAdapter.inspectExecution(expected, lockedTarget)).code());
++        deliveryStatus.set("FAILED");
++        assertEquals("FAILED", lateAdapter.inspectResult(expected, lockedTarget).deliveryState());
+         AgentArchiveMaintenancePayload payload = (AgentArchiveMaintenancePayload) written.get().payload();
+         assertEquals("grant-a", payload.grantRef());
+         assertEquals("execution-a", payload.executionRef());
+diff --git a/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql b/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql
+index 92e9448b..e2f6c457 100644
+--- a/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql
++++ b/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql
+@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS archive_job_run (
+     CONSTRAINT chk_archive_run_state CHECK (state IN ('WAITING','AUTHORIZED','RUNNING','COMPLETED','FAILED','FENCED')),
+     CONSTRAINT chk_archive_run_failure_retryable CHECK ((failure_retryable IS NULL) OR (failure_retryable IN (0,1))),
+ 
+-    CONSTRAINT chk_archive_run_lifecycle CHECK (((state IN ('WAITING','AUTHORIZED')) AND started_message_id IS NULL AND failure_phase IS NULL AND failure_code IS NULL AND failure_retryable IS NULL) OR ((state IN ('RUNNING','COMPLETED')) AND started_message_id IS NOT NULL AND failure_phase IS NULL AND failure_code IS NULL AND failure_retryable IS NULL) OR (state='FAILED' AND started_message_id IS NOT NULL AND failure_phase IS NOT NULL AND failure_code IS NOT NULL AND failure_retryable IS NOT NULL) OR state='FENCED')
++    CONSTRAINT chk_archive_run_lifecycle CHECK (((state IN ('WAITING','AUTHORIZED')) AND (started_message_id IS NULL) AND (failure_phase IS NULL) AND (failure_code IS NULL) AND (failure_retryable IS NULL)) OR ((state IN ('RUNNING','COMPLETED')) AND (started_message_id IS NOT NULL) AND (failure_phase IS NULL) AND (failure_code IS NULL) AND (failure_retryable IS NULL)) OR ((state='FAILED') AND (started_message_id IS NOT NULL) AND (failure_phase IS NOT NULL) AND (failure_code IS NOT NULL) AND (failure_retryable IS NOT NULL)) OR (state='FENCED'))
+ 
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin;
+ 
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java
+index f4ce3338..d6605e19 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java
++++ b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java
+@@ -1124,6 +1124,11 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             ArchiveAgentExecutionPort.Inspection inspection = terminal
+                     ? executionPort.inspectResult(expected(job, grant), lockedTarget)
+                     : executionPort.inspectExecution(expected(job, grant), lockedTarget);
++            if (!"AUTHORIZED".equals(run.state())
++                    && !same(run.startedMessageId(), inspection.activeMessageId())) {
++                throw error(403, "EXECUTION_FENCED",
++                        "Archive command message is no longer current");
++            }
+             return new RuntimeAuthorization(run, grant, inspection);
+         } catch (ArchiveAgentExecutionPort.Denied denied) {
+             throw error(403, "EXECUTION_FENCED", "Archive execution proof is no longer valid");
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceConcurrencyMySqlTest.java b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceConcurrencyMySqlTest.java
+index 4993fbbe..52612105 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceConcurrencyMySqlTest.java
++++ b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceConcurrencyMySqlTest.java
+@@ -9,7 +9,7 @@ import cn.jia.agent.service.InstalledSkillResolver;
+ import cn.jia.chat.archive.config.ArchiveSchemaInitializer;
+ import cn.jia.chat.archive.maintenance.config.ArchiveMaintenanceProperties;
+ import cn.jia.chat.archive.maintenance.config.ArchiveMaintenanceSchemaInitializer;
+-import cn.jia.chat.archive.maintenance.dto.ArchiveManagerRevokeRequest;
++import cn.jia.chat.archive.maintenance.dto.*;
+ import cn.jia.chat.archive.maintenance.model.ArchiveActorScope;
+ import cn.jia.chat.archive.maintenance.model.ArchiveExecutionGrantRecord;
+ import cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore;
+@@ -30,6 +30,8 @@ import java.sql.Statement;
+ import java.time.Clock;
+ import java.time.Instant;
+ import java.time.ZoneOffset;
++import java.nio.charset.StandardCharsets;
++import java.util.List;
+ import java.util.concurrent.CountDownLatch;
+ import java.util.concurrent.ExecutorService;
+ import java.util.concurrent.Executors;
+@@ -38,6 +40,8 @@ import java.util.concurrent.TimeUnit;
+ import java.util.concurrent.atomic.AtomicInteger;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ import static org.junit.jupiter.api.Assumptions.assumeTrue;
+ import static org.mockito.ArgumentMatchers.*;
+@@ -58,6 +62,7 @@ class ArchiveMaintenanceConcurrencyMySqlTest {
+     private static final String RUN = "run-a";
+     private static final String APPOINTMENT = "appointment-a";
+     private static final String SHA = "a".repeat(64);
++    private static final byte[] SOURCE = "第一回甲第二回乙".getBytes(StandardCharsets.UTF_8);
+ 
+     private JdbcTemplate jdbc;
+     private DriverManagerDataSource dataSource;
+@@ -162,15 +167,164 @@ class ArchiveMaintenanceConcurrencyMySqlTest {
+                 String.class, COLLECTION));
+     }
+ 
++    @Test
++    void nativeLifecyclePersistsStartFailureReplayAndLateTerminalReceipt() {
++        seedExecutionCandidate();
++        JdbcArchiveMaintenanceStore store = new JdbcArchiveMaintenanceStore(jdbc);
++        RootLockingPort port = new RootLockingPort(jdbc);
++        ArchiveMaintenanceServiceImpl service = service(store, port);
++        service.ensureExecution(ACTOR, JOB, "ensure-lifecycle", 1);
++
++        ArchiveRuntimeResultDTO started = service.runtimeStart(runtime(), JOB, RUN,
++                new ArchiveRuntimeStartRequest("command-a", "message-a", "1", "1"));
++        ArchiveRuntimeResultDTO replay = service.runtimeStart(runtime(), JOB, RUN,
++                new ArchiveRuntimeStartRequest("command-a", "message-a", "1", "1"));
++        assertEquals("RUNNING", started.runState());
++        assertEquals(started.runRevision(), replay.runRevision());
++        assertEquals("message-a:RUNNING", jdbc.queryForObject(
++                "SELECT CONCAT(started_message_id, ':', state) FROM archive_job_run WHERE run_id=?",
++                String.class, RUN));
++        assertEquals(1, eventCount("EXECUTION_STARTED"));
++
++        port.expired = true;
++        assertEquals("EXECUTION_FENCED", assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeUpdateDraft(runtime(), JOB, RUN, "expired-write", 0,
++                        new ArchiveDraftUpdateRequest(List.of(), List.of()))).code());
++        port.expired = false;
++
++        ArchiveRuntimeFailureRequest failure = new ArchiveRuntimeFailureRequest(
++                "RUNNER", "RUNNER_CRASH", true);
++        ArchiveRuntimeResultDTO failed = service.runtimeFailure(runtime(), JOB, RUN, failure);
++        assertEquals("FAILED", failed.runState());
++        assertEquals("FAILED:READ_ONLY:FAILED", jdbc.queryForObject(
++                "SELECT CONCAT(r.state, ':', g.state, ':', j.state) FROM archive_job_run r "
++                        + "JOIN archive_execution_grant g ON g.run_id=r.run_id "
++                        + "JOIN archive_maintenance_job j ON j.run_id=r.run_id WHERE r.run_id=?",
++                String.class, RUN));
++        assertEquals(1, eventCount("JOB_FAILED"));
++
++        port.expired = true;
++        assertEquals("FAILED", service.runtimeFailure(runtime(), JOB, RUN, failure).runState());
++        assertEquals("FAILED", service.runtimeResult(runtime(), JOB, RUN).runState());
++        assertEquals(1, eventCount("JOB_FAILED"));
++
++        service.revokeManagerAuthorization(ACTOR, COLLECTION, "revoke-read-only", 3,
++                new ArchiveManagerRevokeRequest("configuration removed"));
++        assertEquals("FENCED:FENCED", jdbc.queryForObject(
++                "SELECT CONCAT(r.state, ':', g.state) FROM archive_job_run r "
++                        + "JOIN archive_execution_grant g ON g.run_id=r.run_id WHERE r.run_id=?",
++                String.class, RUN));
++    }
++
++    @Test
++    void lateStartCasFailureRollsBackRunJobAndEventTogether() {
++        seedExecutionCandidate();
++        RootLockingPort port = new RootLockingPort(jdbc);
++        JdbcArchiveMaintenanceStore normal = new JdbcArchiveMaintenanceStore(jdbc);
++        service(normal, port).ensureExecution(ACTOR, JOB, "ensure-cas", 1);
++        ArchiveMaintenanceServiceImpl failing = service(new LateFailingStore(jdbc), port);
++
++        assertEquals("ARCHIVE_EXECUTION_CHANGED", assertThrows(ArchiveMaintenanceException.class,
++                () -> failing.runtimeStart(runtime(), JOB, RUN,
++                        new ArchiveRuntimeStartRequest("command-a", "message-a", "1", "1"))).code());
++
++        assertEquals("AUTHORIZED:EXECUTION_REQUESTED", jdbc.queryForObject(
++                "SELECT CONCAT(r.state, ':', j.state) FROM archive_job_run r "
++                        + "JOIN archive_maintenance_job j ON j.run_id=r.run_id WHERE r.run_id=?",
++                String.class, RUN));
++        assertEquals(0, eventCount("EXECUTION_STARTED"));
++        assertEquals(0, jdbc.queryForObject(
++                "SELECT COUNT(*) FROM archive_job_run WHERE run_id=? AND started_message_id IS NOT NULL",
++                Integer.class, RUN));
++    }
++
++    @Test
++    void draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication() throws Exception {
++        seedExecutionCandidate();
++        JdbcArchiveMaintenanceStore store = new JdbcArchiveMaintenanceStore(jdbc);
++        RootLockingPort port = new RootLockingPort(jdbc);
++        ArchiveMaintenanceServiceImpl service = service(store, port);
++        service.ensureExecution(ACTOR, JOB, "ensure-validation", 1);
++        service.runtimeStart(runtime(), JOB, RUN,
++                new ArchiveRuntimeStartRequest("command-a", "message-a", "1", "1"));
++        String draftJson = new ObjectMapper().writeValueAsString(validDraft());
++        jdbc.update("UPDATE archive_draft SET revision=1,content_json=?,content_sha256=? WHERE draft_id='draft-a'",
++                draftJson, "c".repeat(64));
++
++        ArchiveValidationDTO validation = service.runtimeValidate(runtime(), JOB, RUN,
++                "validate-complete", 1);
++        assertEquals("PASSED", validation.outcome());
++        assertEquals("COMPLETED:READ_ONLY:AWAITING_PUBLISH", jdbc.queryForObject(
++                "SELECT CONCAT(r.state, ':', g.state, ':', j.state) FROM archive_job_run r "
++                        + "JOIN archive_execution_grant g ON g.run_id=r.run_id "
++                        + "JOIN archive_maintenance_job j ON j.run_id=r.run_id WHERE r.run_id=?",
++                String.class, RUN));
++        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM archive_publication", Integer.class));
++        long draftRevision = jdbc.queryForObject(
++                "SELECT revision FROM archive_draft WHERE draft_id='draft-a'", Long.class);
++        int eventCount = jdbc.queryForObject(
++                "SELECT COUNT(*) FROM archive_event WHERE job_id=?", Integer.class, JOB);
++
++        port.expired = true;
++        assertEquals("COMPLETED", service.runtimeResult(runtime(), JOB, RUN).runState());
++        assertEquals("EXECUTION_FENCED", assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeUpdateDraft(runtime(), JOB, RUN, "write-after-complete", 1,
++                        validDraft())).code());
++        assertEquals("EXECUTION_FENCED", assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeValidate(runtime(), JOB, RUN, "validate-after-complete", 1)).code());
++        assertEquals(draftRevision, jdbc.queryForObject(
++                "SELECT revision FROM archive_draft WHERE draft_id='draft-a'", Long.class));
++        assertEquals(eventCount, jdbc.queryForObject(
++                "SELECT COUNT(*) FROM archive_event WHERE job_id=?", Integer.class, JOB));
++
++        service.revokeAppointment(ACTOR, APPOINTMENT, "revoke-completed", 1,
++                new ArchiveAppointmentRevokeRequest("editor removed"));
++        assertEquals("FENCED:FENCED", jdbc.queryForObject(
++                "SELECT CONCAT(r.state, ':', g.state) FROM archive_job_run r "
++                        + "JOIN archive_execution_grant g ON g.run_id=r.run_id WHERE r.run_id=?",
++                String.class, RUN));
++        assertFalse(jdbc.queryForObject(
++                "SELECT state='ACTIVE' FROM archive_appointment WHERE appointment_id=?",
++                Boolean.class, APPOINTMENT));
++    }
++
++    private int eventCount(String type) {
++        return jdbc.queryForObject(
++                "SELECT COUNT(*) FROM archive_event WHERE job_id=? AND event_type=?",
++                Integer.class, JOB, type);
++    }
++
++    private ArchiveRuntimeScope runtime() {
++        ArchiveExecutionGrantRecord grant = new JdbcArchiveMaintenanceStore(jdbc)
++                .findExecutionGrant(RUN, false);
++        return new ArchiveRuntimeScope(grant.tenantId(), grant.clientId(), grant.ownerJiacn(),
++                grant.agentId(), grant.runtimeInstanceId(), grant.grantRef(), grant.executionRef(),
++                grant.commandId(), grant.activeAttempt(), grant.executionEpoch());
++    }
++
++    private ArchiveDraftUpdateRequest validDraft() {
++        return new ArchiveDraftUpdateRequest(List.of(
++                new ArchiveDraftBlockInput("CHAPTER", "one", 1, "第一回",
++                        List.of(new ArchiveSourceRangeInput(0, 9)),
++                        List.of(new ArchiveDraftParagraphInput(1, "甲",
++                                List.of(new ArchiveSourceRangeInput(9, 12))))),
++                new ArchiveDraftBlockInput("CHAPTER", "two", 2, "第二回",
++                        List.of(new ArchiveSourceRangeInput(12, 21)),
++                        List.of(new ArchiveDraftParagraphInput(1, "乙",
++                                List.of(new ArchiveSourceRangeInput(21, 24)))))), List.of());
++    }
++
+     private ArchiveMaintenanceServiceImpl service(JdbcArchiveMaintenanceStore store,
+             ArchiveAgentExecutionPort port) {
+         AgentIdentityService identities = mock(AgentIdentityService.class);
+         when(identities.requireActiveIdentityForBinding("0", "client-a", "owner-a", 7, AGENT))
+                 .thenReturn(new AgentIdentityRegistryEntity().setCanonicalAgentId(AGENT));
++        AgentTaskArtifactStorage sourceStorage = mock(AgentTaskArtifactStorage.class);
++        when(sourceStorage.read(any(), anyString(), anyString(), anyLong(), anyString()))
++                .thenReturn(new AgentTaskArtifactStorage.StoredContent(SOURCE, SHA, SOURCE.length, "text/plain"));
+         ArchiveMaintenanceServiceImpl service = new ArchiveMaintenanceServiceImpl(store,
+                 mock(ArchiveContentStore.class), transactions, identities, new ObjectMapper(),
+-                mock(AgentTaskArtifactStorage.class),
+-                Clock.fixed(Instant.parse("2026-09-30T00:00:00Z"), ZoneOffset.UTC));
++                sourceStorage, Clock.fixed(Instant.parse("2026-09-30T00:00:00Z"), ZoneOffset.UTC));
+         ArchiveMaintenanceProperties properties = new ArchiveMaintenanceProperties();
+         properties.setExecutionEnabled(true);
+         service.setArchiveMaintenanceProperties(properties);
+@@ -180,31 +334,36 @@ class ArchiveMaintenanceConcurrencyMySqlTest {
+ 
+     private void seedExecutionCandidate() {
+         jdbc.update("INSERT INTO aam_test_agent_root(agent_id) VALUES (?)", AGENT);
++        jdbc.update("INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)",
++                COLLECTION, "platform-classics");
+         jdbc.update("INSERT INTO archive_collection_manager(collection_id,tenant_id,client_id,owner_jiacn,permissions,state,revision) "
+                 + "VALUES (?,?,?,?,?,'ACTIVE',3)", COLLECTION, "0", "client-a", "owner-a",
+-                "appoint,job.manage,draft.write");
++                "appoint,job.manage,draft.write,validate");
+         jdbc.update("INSERT INTO archive_appointment_slot(collection_id,role_code,current_appointment_id,revision) "
+                 + "VALUES (?, 'ARCHIVE_EDITOR', ?, 1)", COLLECTION, APPOINTMENT);
+-        jdbc.update("INSERT INTO archive_appointment(appointment_id,collection_id,role_code,tenant_id,client_id,owner_jiacn," 
+-                + "agent_id,binding_version,work_scope_mode,work_ids,permission_profile,required_skill_key," 
++        jdbc.update("INSERT INTO archive_appointment(appointment_id,collection_id,role_code,tenant_id,client_id,owner_jiacn,"
++                + "agent_id,binding_version,work_scope_mode,work_ids,permission_profile,required_skill_key,"
+                 + "required_skill_version,required_skill_sha256,status,revision) "
+-                + "VALUES (?,?,'ARCHIVE_EDITOR','0','client-a','owner-a',?,'7','COLLECTION',''," 
++                + "VALUES (?,?,'ARCHIVE_EDITOR','0','client-a','owner-a',?,'7','COLLECTION','',"
+                 + "'DRAFT_ONLY','archive-maintainer','1.0.0',?,'ACTIVE',1)",
+                 APPOINTMENT, COLLECTION, AGENT, SHA);
+-        jdbc.update("INSERT INTO archive_source_snapshot(source_id,collection_id,tenant_id,client_id,owner_jiacn," 
++        jdbc.update("INSERT INTO archive_source_snapshot(source_id,collection_id,tenant_id,client_id,owner_jiacn,"
+                 + "storage_uri,raw_sha256,raw_byte_length,source_name,source_version,rights_basis,normalization_rule,state) "
+-                + "VALUES ('source-a',?,'0','client-a','owner-a','cyf-artifact://source',?,1,'source','v1'," 
+-                + "'authorized','UTF8_EXACT_V1','READY')", COLLECTION, SHA);
+-        jdbc.update("INSERT INTO archive_maintenance_job(job_id,run_id,collection_id,tenant_id,client_id,owner_jiacn," 
+-                + "appointment_id,appointment_revision,agent_id,binding_version,permission_profile," 
+-                + "manager_authorization_revision,publication_mode,operation_code,work_id,canonical_key,title," 
+-                + "source_id,source_sha256,source_summary,rights_basis,state,wait_reason,revision,draft_id," 
+-                + "request_intent_id,request_sha256) VALUES (?,?,?,'0','client-a','owner-a',?,1,?,'7'," 
+-                + "'DRAFT_ONLY',3,'MANUAL','ADD_WORK','work-a','key-a','title','source-a',?," 
+-                + "'summary','authorized','WAITING_SKILL','CLIENT_UPDATE_REQUIRED',1,'draft-a','intent-a',?)",
++                + "VALUES ('source-a',?,'0','client-a','owner-a','cyf-artifact://source',?,?,'source','v1',"
++                + "'authorized','UTF8_EXACT_V1','READY')", COLLECTION, SHA, SOURCE.length);
++        jdbc.update("INSERT INTO archive_maintenance_job(job_id,run_id,collection_id,tenant_id,client_id,owner_jiacn,"
++                + "appointment_id,appointment_revision,agent_id,binding_version,permission_profile,"
++                + "manager_authorization_revision,publication_mode,operation_code,work_id,canonical_key,title,"
++                + "source_id,source_sha256,source_summary,rights_basis,state,wait_reason,revision,draft_id,"
++                + "request_intent_id,request_sha256) VALUES (?,?,?,'0','client-a','owner-a',?,1,?,'7',"
++                + "'DRAFT_ONLY',3,'MANUAL','ADD_WORK','work-a','key-a','title','source-a',?,"
++                + "'source / v1','authorized','WAITING_SKILL','CLIENT_UPDATE_REQUIRED',1,'draft-a','intent-a',?)",
+                 JOB, RUN, COLLECTION, APPOINTMENT, AGENT, SHA, "b".repeat(64));
+         jdbc.update("INSERT INTO archive_job_run(run_id,job_id,execution_epoch,grant_revision,state,revision) "
+                 + "VALUES (?,?,1,1,'WAITING',1)", RUN, JOB);
++        jdbc.update("INSERT INTO archive_draft(draft_id,job_id,revision,state,content_json,content_sha256) "
++                + "VALUES ('draft-a',?,0,'EDITABLE','{\"blocks\":[],\"excludedSourceRanges\":[]}',?)",
++                JOB, "d".repeat(64));
+     }
+ 
+     private void lockAgentRoot() {
+@@ -249,6 +408,7 @@ class ArchiveMaintenanceConcurrencyMySqlTest {
+         private final AtomicInteger rootAttempts = new AtomicInteger();
+         final CountDownLatch firstRootAttempted = new CountDownLatch(1);
+         final CountDownLatch secondRootAttempted = new CountDownLatch(1);
++        volatile boolean expired;
+ 
+         RootLockingPort(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+ 
+@@ -280,13 +440,28 @@ class ArchiveMaintenanceConcurrencyMySqlTest {
+         }
+ 
+         @Override public Inspection inspectExecution(Expected expected, LockedTarget lockedTarget) {
+-            return new Inspection(true, "SENT");
++            if (expired) throw new Denied("ARCHIVE_EXECUTION_EXPIRED");
++            return new Inspection(true, "STARTED", "message-a");
++        }
++        @Override public Inspection inspectResult(Expected expected, LockedTarget lockedTarget) {
++            return new Inspection(true, "SUCCEEDED", "message-a");
+         }
+         @Override public AgentRawCommandDispatchResult dispatch(Expected expected, byte[] exactWire) {
+             return AgentRawCommandDispatchResult.rejected();
+         }
+     }
+ 
++    private static final class LateFailingStore extends JdbcArchiveMaintenanceStore {
++        LateFailingStore(JdbcTemplate jdbc) { super(jdbc); }
++
++        @Override
++        public int updateJobState(String id, long expected, String state, String wait,
++                String publicationId) {
++            if ("RUNNING".equals(state)) return 0;
++            return super.updateJobState(id, expected, state, wait, publicationId);
++        }
++    }
++
+     private static final class BlockingGrantStore extends JdbcArchiveMaintenanceStore {
+         private final CountDownLatch inserted;
+         private final CountDownLatch release;
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java
+index 08be88fe..f73cca36 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java
++++ b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java
+@@ -870,6 +870,59 @@ class ArchiveMaintenanceServiceImplTest {
+         verify(port).inspectResult(any(), any());
+     }
+ 
++    @Test
++    void currentDeliveryMessageFencesRunningProducerFailureAndResultBeforeMutation() {
++        ArchiveAgentExecutionPort port = enableRuntime();
++        ArchiveMaintenanceJobRecord runningJob = jobState("RUNNING", null, 3);
++        ArchiveJobRunRecord running = new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, "message-original", null, null, null, "RUNNING", 3);
++        allowManager("draft.write,validate");
++        activeAppointment(appointment("ACTIVE", 1));
++        allowCurrentBinding();
++        when(store.findJob(JOB, false)).thenReturn(runningJob);
++        when(store.findJob(JOB, true)).thenReturn(runningJob);
++        when(store.findRun(RUN, true)).thenReturn(running);
++        when(store.findExecutionGrant(RUN, true)).thenReturn(executionGrant("ACTIVE", 1));
++        when(port.inspectExecution(any(), any())).thenReturn(
++                new ArchiveAgentExecutionPort.Inspection(true, "STARTED", "message-replaced"));
++
++        assertEquals("EXECUTION_FENCED", assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeUpdateDraft(runtime(), JOB, RUN, "write-stale-message", 0,
++                        new ArchiveDraftUpdateRequest(List.of(), List.of()))).code());
++        assertEquals("EXECUTION_FENCED", assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeFailure(runtime(), JOB, RUN,
++                        new ArchiveRuntimeFailureRequest("RUNNER", "RUNNER_CRASH", true))).code());
++        assertEquals("EXECUTION_FENCED", assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeResult(runtime(), JOB, RUN)).code());
++        verify(store, never()).updateDraft(anyString(), anyLong(), anyLong(), anyString(),
++                anyString(), anyString(), any(), any());
++        verify(store, never()).failRun(anyString(), anyLong(), anyString(), anyString(), anyBoolean());
++        verify(store, never()).beginOperation(any(), anyString(), anyString(), anyString(),
++                anyString(), anyString(), anyString());
++    }
++
++    @Test
++    void terminalReceiptRequiresPersistedStartedMessageToMatchCurrentDelivery() {
++        ArchiveAgentExecutionPort port = enableRuntime();
++        ArchiveMaintenanceJobRecord failedJob = jobState("FAILED", "RUNNER_CRASH", 4);
++        ArchiveJobRunRecord failed = new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, "message-original", "RUNNER", "RUNNER_CRASH",
++                true, "FAILED", 4);
++        allowManager("draft.write");
++        activeAppointment(appointment("ACTIVE", 1));
++        allowCurrentBinding();
++        when(store.findJob(JOB, false)).thenReturn(failedJob);
++        when(store.findJob(JOB, true)).thenReturn(failedJob);
++        when(store.findRun(RUN, true)).thenReturn(failed);
++        when(store.findExecutionGrant(RUN, true)).thenReturn(executionGrant("READ_ONLY", 1));
++        when(port.inspectResult(any(), any())).thenReturn(
++                new ArchiveAgentExecutionPort.Inspection(true, "FAILED", "message-replaced"));
++
++        assertEquals("EXECUTION_FENCED", assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeResult(runtime(), JOB, RUN)).code());
++        verify(store, never()).findDraftByJob(anyString(), anyBoolean());
++    }
++
+     @Test
+     void draftOnlySuccessfulRuntimeValidationCompletesRunAndReleasesGrant() throws Exception {
+         ArchiveAgentExecutionPort port = enableRuntime();

@@ -1,6 +1,6 @@
 # 典籍阁 Agent 任职与内容维护
 
-状态：**ready / D2 可交接实施（先 M0），未派发、未实施、未任命、未导入、未发布**。
+状态：**D2 源码交付候选；组件测试与有界真实 HTTP/JDBC/POSIX/Client fixture 已形成。精确提交、远程核验和剩余验证边界以 delivery.md / integration.yaml 为准；未完成 84 项真实业务验收、部署或生产激活。**
 
 ## 1. 目标与结论
 
@@ -8,7 +8,9 @@
 
 采用组合方案：**宋江协调工具 + 典籍维护技能 + 明确任职授权 + 服务端内容管理 API**。Agent 不持有数据库凭据，不执行生产 SQL。任职绑定 canonical Agent 身份和当前 owner/binding，不绑定“吴用”显示名称。任职授权、技能安装、任务分配是三个不同的事实。
 
-阅读入口：[详细设计](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)；[工作包](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)；[验收矩阵](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md)；[源码核对](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-baseline.md)。
+阅读入口：[详细设计](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)；[工作包](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)；[验收矩阵](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md)；[源码核对](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-baseline.md)；[当前实施基线与缺口](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md)。
+
+2026-10-01 当前实现已覆盖多书/不可变版本、任职/权限、平台技能安全安装、维护作业/原生执行/发布、宋江工具/直达路由及 Web 面板/卡片。Web 六 selector 245/245 PASS，Client 全套 443/442 PASS/1 既有 FAIL；有界跨组件 fixture 1/1 PASS。API 最终回归见交付记录，既有失败不抹除。真实 Runtime 全链与 84 项业务验收未执行，功能默认关闭；历史切片不是最终交付 pin。
 
 ## 2. 首期范围
 
@@ -66,4 +68,4 @@
 
 ## 7. 完成边界
 
-设计完成 ≠ 实现完成 ≠ 发布完成 ≠ 内容上架完成。实施须按 acceptance.md 获取 API/Web/Client exact SHA、测试与制品证据、schema 迁移证据、任职/来源授权、发布记录、实际阅读结果。当前所有业务验收均未执行，集成 pins 留空。
+设计完成 ≠ 局部源码完成 ≠ 集成完成 ≠ 发布完成 ≠ 内容上架完成。实施须按 acceptance.md 获取 API/Web/Client exact commit/tree、测试与制品证据、schema 迁移证据、任职/来源授权、发布记录、实际阅读结果。当前局部组件测试不构成 84 项业务验收；所有业务验收仍未执行，集成 pins 留空。

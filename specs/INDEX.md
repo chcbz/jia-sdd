@@ -25,4 +25,4 @@ Do not create a feature directory for local-only refactors unless it changes a p
 
 ## 典籍阁 Agent 任职与内容维护方案
 
-- `archive-agent-maintenance`：ready / D2，可交接其他 Agent 从 M0 实施。宋江协调或直达任职 Agent，经技能与受控 API 完成多书/不可变版本、草稿校验及授权发布；保留旧阅读、身份隔离和共享执行/存储合同，不扩旧 ItemRef。入口：[实施交接](/home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md)、[详设](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)、[开发计划](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)。84 项业务验收均未执行；仅文档提交，无派发、组件 gitlink/运行台账修改、构建部署或生产激活。
+- `archive-agent-maintenance`：integration-ready / D2 源码集成候选；API/Web/Client 精确提交、远程回执与验证边界见 `specs/archive-agent-maintenance/delivery.md` / `integration.yaml`。Web245PASS、有界跨组件1PASS；API/Client既有失败保留。84 项业务验收仍 `not_run`，未部署或生产激活。

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" tests="5" skipped="0" failures="5" errors="0" timestamp="2026-09-30T17:46:33.086Z" hostname="DESKTOP-AANKMQ7" time="10.73">
+  <properties/>
+  <testcase name="nativeLifecyclePersistsStartFailureReplayAndLateTerminalReceipt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.302">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedExecutionCandidate(ArchiveMaintenanceConcurrencyMySqlTest.java:338)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.nativeLifecyclePersistsStartFailureReplayAndLateTerminalReceipt(ArchiveMaintenanceConcurrencyMySqlTest.java:173)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <testcase name="draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="1.815">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedExecutionCandidate(ArchiveMaintenanceConcurrencyMySqlTest.java:338)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication(ArchiveMaintenanceConcurrencyMySqlTest.java:244)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <testcase name="revokeWaitingBehindEnsureSeesAndFencesNewlyCommittedGrantUnderRepeatableRead()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="1.791">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedExecutionCandidate(ArchiveMaintenanceConcurrencyMySqlTest.java:338)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.revokeWaitingBehindEnsureSeesAndFencesNewlyCommittedGrantUnderRepeatableRead(ArchiveMaintenanceConcurrencyMySqlTest.java:138)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <testcase name="lateStartCasFailureRollsBackRunJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="1.995">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedExecutionCandidate(ArchiveMaintenanceConcurrencyMySqlTest.java:338)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.lateStartCasFailureRollsBackRunJobAndEventTogether(ArchiveMaintenanceConcurrencyMySqlTest.java:222)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <testcase name="platformAgentRootThenManagerAndEnsureExecutionCompleteWithoutReverseLockDeadlock()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="1.826">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_collection(collection_id,code,revision) VALUES (?,?,1)]; Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.seedExecutionCandidate(ArchiveMaintenanceConcurrencyMySqlTest.java:338)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.platformAgentRootThenManagerAndEnsureExecutionCompleteWithoutReverseLockDeadlock(ArchiveMaintenanceConcurrencyMySqlTest.java:103)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'platform-classics' for key 'archive_collection.PRIMARY'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

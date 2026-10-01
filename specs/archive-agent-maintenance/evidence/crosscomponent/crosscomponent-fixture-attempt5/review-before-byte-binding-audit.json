@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-10-01",
+  "reviewer": "independent-read-only",
+  "apiTree": "fbc4a8f9b89c0bb410fcd7df5e3f8590fb17cbb5",
+  "baseTree": "4e9598da5599bb3c3ed75adcc5316be1b7b50345",
+  "clientTree": "191d8fc8d6285d3f0614a656f729657688a29204",
+  "verdict": "ACCEPT_LOCAL_FIXTURE_SCOPE",
+  "remaining": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0
+  },
+  "closed": [
+    {
+      "severity": "P1",
+      "issue": "fixture authentication was not exposed as an authenticated MVC Principal",
+      "status": "resolved",
+      "evidence": "wrong bearer 401 and positive admin flow reached ready"
+    },
+    {
+      "severity": "P2",
+      "issue": "fixture install command expiry was not exactly issuedAt plus 3600000",
+      "status": "resolved",
+      "evidence": "approved package install completed with atomic activation"
+    },
+    {
+      "severity": "P2",
+      "issue": "fixture passed an object to resolveApprovedArchiveInstallation instead of the installationId string",
+      "status": "resolved",
+      "evidence": "one-file repair and exact Git-archive Node selector passed 1/1"
+    }
+  ],
+  "runtimeEvidence": {
+    "nodeSelectorSha256": "f5e3e929d5f8a94d7e9125ebc4efde2063ba3c4b35909f3fc0b556251abcbcb3",
+    "nodeTests": "1/1 pass, 0 skip",
+    "clientExitCode": 0,
+    "finalResult": "passed",
+    "manualStatus": "completed",
+    "autoStatus": "completed",
+    "autoReplayStatus": "completed",
+    "autoPublicationCount": 1,
+    "autoPublicationEventCount": 1,
+    "manualExplicitPublish": true,
+    "manualReaderChapter": "第一章",
+    "autoReaderChapter": "第一章",
+    "approvedPackageSha256": "8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081"
+  },
+  "reuseAssessment": {
+    "javaCompiledTree": "4e9598da5599bb3c3ed75adcc5316be1b7b50345",
+    "javaReusedFromAttempt4": true,
+    "acceptable": true,
+    "reason": "The only tree delta was the Node test resource; Java source blobs and the waiting JVM were unchanged and source-binding records the exact new Node blob."
+  },
+  "boundaries": {
+    "fullProductionRuntimeE2E": false,
+    "businessAcceptance": false,
+    "productionEnabled": false,
+    "actualComponents": [
+      "Tomcat HTTP",
+      "Admin Native Reader controllers",
+      "runtime authentication filter",
+      "maintenance service",
+      "JDBC stores and transactions",
+      "Linux POSIX artifact storage",
+      "production command codec",
+      "Client approved package proof and atomic activation",
+      "Archive NativeRunner"
+    ],
+    "prerequisiteDoubles": [
+      "identity/bootstrap/account collaborators",
+      "registration",
+      "execution admission and command transport",
+      "installation download and result transport"
+    ],
+    "pendingOutsideScope": [
+      "final API real-MySQL four-suite regression"
+    ]
+  },
+  "findings": []
+}

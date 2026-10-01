@@ -1,0 +1,64 @@
+{
+  "reviewed_at": "2026-09-30T19:51:24.972Z",
+  "reviewer": "GPT-5.6 Sol independent read-only review",
+  "scope": "Only the three-file repair delta from rejected AUTO tree a3a9e24cb9b884a7b86a16fbf8dc62822ab815e2 to frozen prospective tree d4e041270b7eed7751c05107ee3f7ac993c6aaf5",
+  "source_tree": "d4e041270b7eed7751c05107ee3f7ac993c6aaf5",
+  "rejected_tree": "a3a9e24cb9b884a7b86a16fbf8dc62822ab815e2",
+  "verdict": "ACCEPT_LOCAL_REPAIR_SLICE",
+  "whole_feature_accepted": false,
+  "execution_default_enabled": false,
+  "findings": {
+    "P0": [],
+    "P1": [],
+    "P2": []
+  },
+  "closures": [
+    {
+      "prior": "P1 external artifact I/O under publication transaction",
+      "status": "RESOLVED",
+      "evidence": [
+        "ArchiveMaintenanceServiceImpl.java:796-824 performs committed replay first, prepares PublicationCandidate outside transactions.required, then enters the final short transaction",
+        "ArchiveMaintenanceServiceImpl.java:923-960 reads/parses/validates source outside the final transaction and rechecks exact job/source/draft/validation records under lock",
+        "ArchiveMaintenanceConcurrencyMySqlTest.java:550-557 asserts sourceStorage.read runs without an active Spring transaction"
+      ]
+    },
+    {
+      "prior": "P1 committed publication replay depended on source storage",
+      "status": "RESOLVED",
+      "evidence": [
+        "ArchiveMaintenanceServiceImpl.java:977-995 resolves an exact COMMITTED operation directly to its persisted publication",
+        "ArchiveMaintenanceServiceImplTest publicationReplayReturnsOriginalOnlyForSameCommittedKeyAndRevision verifies no sourceStorage.read and no new beginOperation"
+      ]
+    },
+    {
+      "prior": "P1 recovery rejected coherent already-FENCED history",
+      "status": "RESOLVED",
+      "evidence": [
+        "ArchiveMaintenanceServiceImpl.java:623-654 accepts an already-FENCED run only when the locked grant is absent or FENCED at the same epoch, otherwise fails closed; it advances exactly one epoch and retains replaceCurrentRun CAS"
+      ]
+    },
+    {
+      "prior": "P2 no real-store production expiry/revoke recovery coverage",
+      "status": "RESOLVED",
+      "evidence": [
+        "ArchiveMaintenanceConcurrencyMySqlTest.java:397-433 covers production expiry fencing, resume, exact replay, one replacement, old-scope rejection and epoch advancement",
+        "ArchiveMaintenanceConcurrencyMySqlTest.java:436-478 covers production revoke, replacement appointment, reassign, exact replay, preserved fenced history and old-scope rejection"
+      ]
+    }
+  ],
+  "test_evidence": {
+    "focused": "147/147",
+    "archive": "237 tests, 11 exact baseline failures, 0 skipped",
+    "direct_native_introduced": [],
+    "direct_native_removed": [],
+    "before_after_tree_equal": true,
+    "fresh_xml_after_freeze": true,
+    "evidence_directory": "specs/archive-agent-maintenance/evidence/native-lifecycle/auto-resume-attempt5"
+  },
+  "limitations": [
+    "No HTTP, real native runtime, or Client end-to-end execution was verified by this review",
+    "The separately known future native-context work-CAS snapshot requirement is outside this repair review and is not accepted here",
+    "Previously approved schema, validator and package bytes were not re-audited",
+    "This is not whole-feature acceptance"
+  ]
+}

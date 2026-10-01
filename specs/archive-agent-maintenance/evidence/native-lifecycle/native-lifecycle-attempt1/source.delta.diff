@@ -1,0 +1,1069 @@
+diff --git a/agent/jia-agent-api/src/main/java/cn/jia/agent/service/ArchiveAgentExecutionPort.java b/agent/jia-agent-api/src/main/java/cn/jia/agent/service/ArchiveAgentExecutionPort.java
+index f4e282ff..a84a57ce 100644
+--- a/agent/jia-agent-api/src/main/java/cn/jia/agent/service/ArchiveAgentExecutionPort.java
++++ b/agent/jia-agent-api/src/main/java/cn/jia/agent/service/ArchiveAgentExecutionPort.java
+@@ -92,12 +92,16 @@ public interface ArchiveAgentExecutionPort {
+         public TargetRequest target() { return new TargetRequest(tenant, client, owner, canonicalAgent, binding); }
+     }
+ 
+-    record Inspection(boolean authorized, String deliveryState) {
++    record Inspection(boolean authorized, String deliveryState, String activeMessageId) {
+         public Inspection {
+-            if (!authorized || deliveryState == null || deliveryState.isBlank()) {
++            if (!authorized || deliveryState == null || deliveryState.isBlank()
++                    || (activeMessageId != null && !ID.matcher(activeMessageId).matches())) {
+                 throw new IllegalArgumentException("Invalid archive execution inspection");
+             }
+         }
++        public Inspection(boolean authorized, String deliveryState) {
++            this(authorized, deliveryState, null);
++        }
+     }
+ 
+     /** Must be the first domain lock acquired in the caller's write transaction. */
+@@ -106,6 +110,9 @@ public interface ArchiveAgentExecutionPort {
+     LockedTarget requireControlledTarget(TargetRequest request, LockedIdentityRoot root);
+     Grant ensureExecution(Request request, LockedTarget lockedTarget);
+     Inspection inspectExecution(Expected expected, LockedTarget lockedTarget);
++    default Inspection inspectResult(Expected expected, LockedTarget lockedTarget) {
++        return inspectExecution(expected, lockedTarget);
++    }
+     AgentRawCommandDispatchResult dispatch(Expected expected, byte[] exactWire);
+ 
+     final class Denied extends IllegalStateException {
+diff --git a/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java b/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java
+index 15c47bd2..cc370176 100644
+--- a/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java
++++ b/agent/jia-agent-service/src/main/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapter.java
+@@ -25,6 +25,8 @@ import java.util.Set;
+ @ConditionalOnProperty(prefix = "archive.maintenance", name = "execution-enabled", havingValue = "true")
+ public final class ArchiveAgentExecutionAdapter implements ArchiveAgentExecutionPort {
+     private static final Set<String> AUTHORIZED_DELIVERY = Set.of("SENT", "RECEIVED", "STARTED", "SUCCEEDED");
++    private static final Set<String> RESULT_DELIVERY = Set.of("SENT", "RECEIVED", "STARTED",
++            "SUCCEEDED", "FAILED", "REJECTED");
+     private static final Set<String> DISPATCHABLE_DELIVERY = Set.of("CONSUMED", "SENT", "RECEIVED", "STARTED");
+     private final AgentIdentityService identities;
+     private final AgentRuntimeDao runtimes;
+@@ -173,7 +175,29 @@ public final class ArchiveAgentExecutionAdapter implements ArchiveAgentExecution
+                 expected.owner(), expected.commandId());
+         verifyDelivery(delivery, expected, AUTHORIZED_DELIVERY);
+         require(clock.millis() < expected.expiresAt(), "ARCHIVE_EXECUTION_EXPIRED");
+-        return new Inspection(true, delivery.getStatus());
++        return new Inspection(true, delivery.getStatus(), delivery.getActiveMessageId());
++    }
++
++    @Override
++    public Inspection inspectResult(Expected expected, LockedTarget lockedTarget) {
++        Objects.requireNonNull(expected, "expected");
++        Objects.requireNonNull(lockedTarget, "lockedTarget");
++        require(TransactionSynchronizationManager.isActualTransactionActive()
++                && !TransactionSynchronizationManager.isCurrentTransactionReadOnly(),
++                "ARCHIVE_EXECUTION_TRANSACTION_REQUIRED");
++        exactLockedTarget(expected.target(), lockedTarget);
++        require(expected.runtimeInstanceId().equals(lockedTarget.runtimeInstanceId())
++                && MessageDigest.isEqual(expected.registrationHash(), lockedTarget.registrationHash()),
++                "ARCHIVE_EXECUTION_TARGET_FENCED");
++        exactProof(expected, verifiedSkill(expected.tenant(), expected.client(), expected.owner(),
++                expected.canonicalAgent(), expected.binding(), expected.skillOrigin(),
++                expected.skillProof().key(), expected.skillProof().version(),
++                expected.skillProof().packageDigest()));
++        AgentCommandDeliveryEntity delivery = deliveries.lockDelivery(expected.tenant(), expected.client(),
++                expected.owner(), expected.commandId());
++        verifyDelivery(delivery, expected, RESULT_DELIVERY);
++        require(clock.millis() < expected.expiresAt(), "ARCHIVE_EXECUTION_RESULT_EXPIRED");
++        return new Inspection(true, delivery.getStatus(), delivery.getActiveMessageId());
+     }
+ 
+     @Override
+diff --git a/agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationFilter.java b/agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationFilter.java
+index f2c7224a..d972e7e7 100644
+--- a/agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationFilter.java
++++ b/agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationFilter.java
+@@ -46,13 +46,13 @@ public final class AgentRuntimeAuthenticationFilter extends OncePerRequestFilter
+                 || "POST".equals(request.getMethod()) && path.matches("/internal/agent/tasks/" + id
+                 + "/runs/" + id + "/(?:failure|start)")
+                 || "GET".equals(request.getMethod()) && path.matches("/internal/archive/v1/jobs/" + id
+-                + "/runs/" + id + "/(?:context|draft|validation)")
++                + "/runs/" + id + "/(?:context|draft|validation|result)")
+                 || "GET".equals(request.getMethod()) && path.matches("/internal/archive/v1/jobs/" + id
+                 + "/runs/" + id + "/sources/" + id + "/content")
+                 || "PUT".equals(request.getMethod()) && path.matches("/internal/archive/v1/jobs/" + id
+                 + "/runs/" + id + "/draft(?:/blocks/" + id + ")?")
+                 || "POST".equals(request.getMethod()) && path.matches("/internal/archive/v1/jobs/" + id
+-                + "/runs/" + id + "/validate");
++                + "/runs/" + id + "/(?:start|failure|validate)");
+     }
+ 
+     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+diff --git a/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java b/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java
+index 0401808d..637fb8c5 100644
+--- a/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java
++++ b/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java
+@@ -61,13 +61,15 @@ class ArchiveAgentExecutionAdapterTest {
+                 InstalledSkillResolver.State.VERIFIED, proof));
+         when(writers.getIfAvailable()).thenReturn(writer);
+         AtomicReference<AgentCommandDraft> written = new AtomicReference<>();
++        AtomicReference<String> deliveryStatus = new AtomicReference<>("PENDING");
+         when(writer.write(any())).thenAnswer(call -> {
+             AgentCommandDraft draft = call.getArgument(0);
+             written.set(draft);
+             return new AgentCommandTransportWriteResult(1, draft.commandId(), "message-a", "event-a", false);
+         });
+         when(deliveries.lockDelivery(eq("0"), eq("client-a"), eq("owner-a"), anyString()))
+-                .thenAnswer(call -> delivery(written.get(), call.getArgument(3)));
++                .thenAnswer(call -> delivery(written.get(), call.getArgument(3))
++                        .setStatus(deliveryStatus.get()));
+         var adapter = new ArchiveAgentExecutionAdapter(identities, runtimes, authentication, skills,
+                 writers, deliveries, sessions, manager,
+                 Clock.fixed(Instant.ofEpochMilli(1_000_000L), ZoneOffset.UTC));
+@@ -81,6 +83,28 @@ class ArchiveAgentExecutionAdapterTest {
+         ArchiveAgentExecutionPort.Grant grant = adapter.ensureExecution(request, lockedTarget);
+         assertEquals("runtime-a", grant.runtimeInstanceId());
+         assertEquals("installation-a", grant.skillProof().installationRef());
++        ArchiveAgentExecutionPort.Expected expected = new ArchiveAgentExecutionPort.Expected(
++                request.tenant(), request.client(), request.owner(), request.canonicalAgent(),
++                request.binding(), request.jobId(), request.runId(), request.appointmentId(),
++                request.appointmentRevision(), request.managerAuthorizationRevision(),
++                request.grantRef(), request.executionRef(), request.executionEpoch(),
++                request.dispatchKey(), grant.commandId(), grant.activeAttempt(), grant.expiresAt(),
++                grant.runtimeInstanceId(), grant.registrationHash(), request.skillOrigin(),
++                grant.skillProof(), request.contextRef());
++        deliveryStatus.set("STARTED");
++        assertEquals("message-a", adapter.inspectExecution(expected, lockedTarget).activeMessageId());
++        deliveryStatus.set("FAILED");
++        assertEquals("FAILED", adapter.inspectResult(expected, lockedTarget).deliveryState());
++        assertEquals("ARCHIVE_EXECUTION_DELIVERY_FENCED", assertThrows(
++                ArchiveAgentExecutionPort.Denied.class,
++                () -> adapter.inspectExecution(expected, lockedTarget)).code());
++        byte[] rotatedRegistration = REGISTRATION.clone();
++        rotatedRegistration[0] = 1;
++        ArchiveAgentExecutionPort.LockedTarget rotated = new ArchiveAgentExecutionPort.LockedTarget(
++                "0", "client-a", "owner-a", "agent-a", 7, "runtime-a", rotatedRegistration);
++        assertEquals("ARCHIVE_EXECUTION_TARGET_FENCED", assertThrows(
++                ArchiveAgentExecutionPort.Denied.class,
++                () -> adapter.inspectResult(expected, rotated)).code());
+         AgentArchiveMaintenancePayload payload = (AgentArchiveMaintenancePayload) written.get().payload();
+         assertEquals("grant-a", payload.grantRef());
+         assertEquals("execution-a", payload.executionRef());
+diff --git a/agent/jia-agent-service/src/test/java/cn/jia/agent/security/ArchiveMaintenanceRuntimeAllowlistTest.java b/agent/jia-agent-service/src/test/java/cn/jia/agent/security/ArchiveMaintenanceRuntimeAllowlistTest.java
+index 57087bdc..a4671d43 100644
+--- a/agent/jia-agent-service/src/test/java/cn/jia/agent/security/ArchiveMaintenanceRuntimeAllowlistTest.java
++++ b/agent/jia-agent-service/src/test/java/cn/jia/agent/security/ArchiveMaintenanceRuntimeAllowlistTest.java
+@@ -19,8 +19,14 @@ class ArchiveMaintenanceRuntimeAllowlistTest {
+         assertFalse(allowed("GET", "/internal/archive/v1/jobs/job-1/runs/run-1/sources/%2f/content"));
+         assertTrue(allowed("PUT", "/internal/archive/v1/jobs/job-1/runs/run-1/draft"));
+         assertTrue(allowed("PUT", "/internal/archive/v1/jobs/job-1/runs/run-1/draft/blocks/chapter-1"));
++        assertTrue(allowed("POST", "/internal/archive/v1/jobs/job-1/runs/run-1/start"));
++        assertTrue(allowed("POST", "/internal/archive/v1/jobs/job-1/runs/run-1/failure"));
++        assertTrue(allowed("GET", "/internal/archive/v1/jobs/job-1/runs/run-1/result"));
+         assertTrue(allowed("POST", "/internal/archive/v1/jobs/job-1/runs/run-1/validate"));
+         assertTrue(allowed("GET", "/internal/archive/v1/jobs/job-1/runs/run-1/validation"));
++        assertFalse(allowed("GET", "/internal/archive/v1/jobs/job-1/runs/run-1/start"));
++        assertFalse(allowed("POST", "/internal/archive/v1/jobs/job-1/runs/run-1/result"));
++        assertFalse(allowed("POST", "/internal/archive/v1/jobs/job-1/runs/run-1/failure/extra"));
+         assertFalse(allowed("POST", "/internal/archive/v1/jobs/job-1/runs/run-1/publish"));
+         assertFalse(allowed("GET", "/internal/archive/v1/jobs/job-1/runs/run-1/context/extra"));
+         assertFalse(allowed("GET", "/internal/archive/v1/jobs/job-1/runs/run-1/%2e%2e/context"));
+diff --git a/chat/jia-chat-api/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceService.java b/chat/jia-chat-api/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceService.java
+index 2acb23dc..857aabc2 100644
+--- a/chat/jia-chat-api/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceService.java
++++ b/chat/jia-chat-api/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceService.java
+@@ -28,6 +28,9 @@ public interface ArchiveMaintenanceService {
+     ArchiveJobDTO cancel(ArchiveActorScope actor,String jobId,String operationKey,long expectedJobRevision,ArchiveCancelRequest request);
+     ArchivePublicationDTO publish(ArchiveActorScope actor,String jobId,String operationKey,long expectedDraftRevision,ArchivePublishRequest request);
+ 
++    ArchiveRuntimeResultDTO runtimeStart(ArchiveRuntimeScope runtime,String jobId,String runId,ArchiveRuntimeStartRequest request);
++    ArchiveRuntimeResultDTO runtimeFailure(ArchiveRuntimeScope runtime,String jobId,String runId,ArchiveRuntimeFailureRequest request);
++    ArchiveRuntimeResultDTO runtimeResult(ArchiveRuntimeScope runtime,String jobId,String runId);
+     ArchiveRuntimeContextDTO runtimeContext(ArchiveRuntimeScope runtime,String jobId,String runId);
+     ArchiveDraftDTO runtimeDraft(ArchiveRuntimeScope runtime,String jobId,String runId);
+     ArchiveDraftDTO runtimeUpdateDraft(ArchiveRuntimeScope runtime,String jobId,String runId,String operationKey,long expectedRevision,ArchiveDraftUpdateRequest request);
+diff --git a/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeFailureRequest.java b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeFailureRequest.java
+new file mode 100644
+index 00000000..cbc61e26
+--- /dev/null
++++ b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeFailureRequest.java
+@@ -0,0 +1,4 @@
++package cn.jia.chat.archive.maintenance.dto;
++
++/** Sanitized terminal producer failure. No source, credential, log or free-form diagnostic field. */
++public record ArchiveRuntimeFailureRequest(String phase, String code, Boolean retryable) { }
+diff --git a/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeResultDTO.java b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeResultDTO.java
+new file mode 100644
+index 00000000..20807b60
+--- /dev/null
++++ b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeResultDTO.java
+@@ -0,0 +1,9 @@
++package cn.jia.chat.archive.maintenance.dto;
++
++/** Authoritative request-scoped run receipt; transport ACKs are intentionally absent. */
++public record ArchiveRuntimeResultDTO(
++        String jobId, String runId, String commandId, String attempt, String executionEpoch,
++        String runState, String runRevision, String jobState, String jobRevision, String stage,
++        String validationId, String validationOutcome, String validationDigest, String draftRevision,
++        String publicationId, String workId, String editionId, String publicationState,
++        String failurePhase, String failureCode, Boolean failureRetryable) { }
+diff --git a/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeStartRequest.java b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeStartRequest.java
+new file mode 100644
+index 00000000..b8496ace
+--- /dev/null
++++ b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/dto/ArchiveRuntimeStartRequest.java
+@@ -0,0 +1,5 @@
++package cn.jia.chat.archive.maintenance.dto;
++
++/** Exact transport identity echoed by the controlled runner when claiming a run. */
++public record ArchiveRuntimeStartRequest(String commandId, String messageId,
++        String attempt, String executionEpoch) { }
+diff --git a/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/model/ArchiveJobRunRecord.java b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/model/ArchiveJobRunRecord.java
+index 3602ac57..1ce43536 100644
+--- a/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/model/ArchiveJobRunRecord.java
++++ b/chat/jia-chat-core/src/main/java/cn/jia/chat/archive/maintenance/model/ArchiveJobRunRecord.java
+@@ -1,4 +1,12 @@
+ package cn.jia.chat.archive.maintenance.model;
+ 
+ public record ArchiveJobRunRecord(String runId, String jobId, long executionEpoch,
+-        String runtimeInstanceId, long grantRevision, String state, long revision) { }
++        String runtimeInstanceId, long grantRevision, String startedMessageId,
++        String failurePhase, String failureCode, Boolean failureRetryable,
++        String state, long revision) {
++    public ArchiveJobRunRecord(String runId, String jobId, long executionEpoch,
++            String runtimeInstanceId, long grantRevision, String state, long revision) {
++        this(runId, jobId, executionEpoch, runtimeInstanceId, grantRevision,
++                null, null, null, null, state, revision);
++    }
++}
+diff --git a/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/ArchiveMaintenanceStore.java b/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/ArchiveMaintenanceStore.java
+index 78f1c72d..f3a8a19f 100644
+--- a/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/ArchiveMaintenanceStore.java
++++ b/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/ArchiveMaintenanceStore.java
+@@ -32,12 +32,16 @@ public interface ArchiveMaintenanceStore {
+     void insertRun(String runId, String jobId, long grantRevision);
+     ArchiveJobRunRecord findRun(String runId, boolean lock);
+     int activateRun(String runId, long expectedRevision, String runtimeInstanceId);
++    int startRun(String runId, long expectedRevision, String messageId);
++    int failRun(String runId, long expectedRevision, String phase, String code, boolean retryable);
++    int completeRun(String runId, long expectedRevision);
+     ArchiveExecutionGrantRecord findExecutionGrant(String runId, boolean lock);
+     List<ArchiveExecutionGrantRecord> listActiveExecutionGrants(String appointmentId, boolean lock);
+     List<String> lockRunIdsForAppointment(String appointmentId);
+     List<String> lockRunIdsForManager(ArchiveActorScope actor, String collectionId);
+     List<ManagerRunTarget> listUnfencedRunTargetsForManager(ArchiveActorScope actor, String collectionId, boolean lock);
+     void insertExecutionGrant(ArchiveExecutionGrantRecord grant);
++    int releaseExecutionGrant(String runId, long expectedRevision);
+     int fenceRun(String runId);
+     int updateJobState(String jobId, long expectedRevision, String state, String waitReason,
+                        String publicationId);
+diff --git a/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java b/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java
+index becc3534..a48717b7 100644
+--- a/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java
++++ b/chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java
+@@ -44,10 +44,15 @@ public class JdbcArchiveMaintenanceStore implements ArchiveMaintenanceStore {
+                     rs.getString("rights_basis"), rs.getString("state"), rs.getString("wait_reason"),
+                     rs.getLong("revision"), rs.getString("draft_id"), rs.getString("publication_id"),
+                     rs.getString("request_intent_id"), rs.getString("request_sha256"));
+-    private static final RowMapper<ArchiveJobRunRecord> RUN = (rs, n) ->
+-            new ArchiveJobRunRecord(rs.getString("run_id"), rs.getString("job_id"),
+-                    rs.getLong("execution_epoch"), rs.getString("runtime_instance_id"),
+-                    rs.getLong("grant_revision"), rs.getString("state"), rs.getLong("revision"));
++    private static final RowMapper<ArchiveJobRunRecord> RUN = (rs, n) -> {
++        long retryable = rs.getLong("failure_retryable");
++        Boolean nullableRetryable = rs.wasNull() ? null : retryable == 1;
++        return new ArchiveJobRunRecord(rs.getString("run_id"), rs.getString("job_id"),
++                rs.getLong("execution_epoch"), rs.getString("runtime_instance_id"),
++                rs.getLong("grant_revision"), rs.getString("started_message_id"),
++                rs.getString("failure_phase"), rs.getString("failure_code"), nullableRetryable,
++                rs.getString("state"), rs.getLong("revision"));
++    };
+     private static final RowMapper<ArchiveExecutionGrantRecord> EXECUTION = (rs, n) ->
+             new ArchiveExecutionGrantRecord(rs.getString("grant_ref"), rs.getString("run_id"),
+                     rs.getString("tenant_id"), rs.getString("client_id"), rs.getString("owner_jiacn"),
+@@ -247,6 +252,15 @@ public class JdbcArchiveMaintenanceStore implements ArchiveMaintenanceStore {
+     @Override public int activateRun(String runId,long expected,String runtimeId) {
+         return jdbc.update("UPDATE archive_job_run SET runtime_instance_id=?,state='AUTHORIZED',revision=revision+1 WHERE run_id=? AND revision=? AND state='WAITING' AND runtime_instance_id IS NULL",runtimeId,runId,expected);
+     }
++    @Override public int startRun(String runId,long expected,String messageId) {
++        return jdbc.update("UPDATE archive_job_run SET started_message_id=?,state='RUNNING',revision=revision+1 WHERE run_id=? AND revision=? AND state='AUTHORIZED' AND started_message_id IS NULL",messageId,runId,expected);
++    }
++    @Override public int failRun(String runId,long expected,String phase,String code,boolean retryable) {
++        return jdbc.update("UPDATE archive_job_run SET failure_phase=?,failure_code=?,failure_retryable=?,state='FAILED',revision=revision+1 WHERE run_id=? AND revision=? AND state='RUNNING' AND started_message_id IS NOT NULL AND failure_phase IS NULL AND failure_code IS NULL AND failure_retryable IS NULL",phase,code,retryable?1:0,runId,expected);
++    }
++    @Override public int completeRun(String runId,long expected) {
++        return jdbc.update("UPDATE archive_job_run SET state='COMPLETED',revision=revision+1 WHERE run_id=? AND revision=? AND state='RUNNING' AND started_message_id IS NOT NULL",runId,expected);
++    }
+     @Override public ArchiveExecutionGrantRecord findExecutionGrant(String runId,boolean lock) {
+         return first(jdbc.query("SELECT * FROM archive_execution_grant WHERE run_id=?"+(lock?" FOR UPDATE":""),EXECUTION,runId));
+     }
+@@ -298,14 +312,18 @@ public class JdbcArchiveMaintenanceStore implements ArchiveMaintenanceStore {
+                 g.dispatchKey(),g.requestSha256(),g.contextRef(),g.expiresAt());
+         if(rows!=1) throw new IllegalStateException("Archive execution grant insert failed");
+     }
++    @Override public int releaseExecutionGrant(String runId,long expected) {
++        return jdbc.update("UPDATE archive_execution_grant SET state='READ_ONLY',revision=revision+1 WHERE run_id=? AND revision=? AND state='ACTIVE'",runId,expected);
++    }
+     @Override public int fenceRun(String runId) {
+         ArchiveJobRunRecord run=findRun(runId,true);
+         if(run==null || "FENCED".equals(run.state())) return 0;
+         ArchiveExecutionGrantRecord grant=findExecutionGrant(runId,true);
+         if(grant!=null) {
+-            if(!"ACTIVE".equals(grant.state()) || grant.executionEpoch()!=run.executionEpoch()) return 0;
+-            if(jdbc.update("UPDATE archive_execution_grant SET state='FENCED',execution_epoch=execution_epoch+1,revision=revision+1 WHERE run_id=? AND revision=? AND execution_epoch=? AND state='ACTIVE'",
+-                    runId,grant.revision(),grant.executionEpoch())!=1) return 0;
++            if(!java.util.Set.of("ACTIVE","READ_ONLY").contains(grant.state())
++                    || grant.executionEpoch()!=run.executionEpoch()) return 0;
++            if(jdbc.update("UPDATE archive_execution_grant SET state='FENCED',execution_epoch=execution_epoch+1,revision=revision+1 WHERE run_id=? AND revision=? AND execution_epoch=? AND state=?",
++                    runId,grant.revision(),grant.executionEpoch(),grant.state())!=1) return 0;
+         }
+         return jdbc.update("UPDATE archive_job_run SET state='FENCED',execution_epoch=execution_epoch+1,revision=revision+1 WHERE run_id=? AND revision=? AND execution_epoch=? AND state=?",
+                 runId,run.revision(),run.executionEpoch(),run.state());
+diff --git a/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql b/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql
+index 5527faed..92e9448b 100644
+--- a/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql
++++ b/chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql
+@@ -147,12 +147,21 @@ CREATE TABLE IF NOT EXISTS archive_job_run (
+     execution_epoch BIGINT NOT NULL,
+     runtime_instance_id VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NULL,
+     grant_revision BIGINT NOT NULL,
++    started_message_id VARCHAR(100) CHARACTER SET ascii COLLATE ascii_bin NULL,
++    failure_phase VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL,
++    failure_code VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
++    failure_retryable BIGINT NULL,
+     state VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+     revision BIGINT NOT NULL,
+     PRIMARY KEY (run_id),
+     UNIQUE KEY uk_archive_job_current_run (job_id, run_id),
+     CONSTRAINT fk_archive_run_job FOREIGN KEY (job_id) REFERENCES archive_maintenance_job(job_id),
+-    CONSTRAINT chk_archive_run_revision CHECK ((revision >= 1) AND (grant_revision >= 1) AND (execution_epoch >= 1))
++    CONSTRAINT chk_archive_run_revision CHECK ((revision >= 1) AND (grant_revision >= 1) AND (execution_epoch >= 1)),
++    CONSTRAINT chk_archive_run_state CHECK (state IN ('WAITING','AUTHORIZED','RUNNING','COMPLETED','FAILED','FENCED')),
++    CONSTRAINT chk_archive_run_failure_retryable CHECK ((failure_retryable IS NULL) OR (failure_retryable IN (0,1))),
++
++    CONSTRAINT chk_archive_run_lifecycle CHECK (((state IN ('WAITING','AUTHORIZED')) AND started_message_id IS NULL AND failure_phase IS NULL AND failure_code IS NULL AND failure_retryable IS NULL) OR ((state IN ('RUNNING','COMPLETED')) AND started_message_id IS NOT NULL AND failure_phase IS NULL AND failure_code IS NULL AND failure_retryable IS NULL) OR (state='FAILED' AND started_message_id IS NOT NULL AND failure_phase IS NOT NULL AND failure_code IS NOT NULL AND failure_retryable IS NOT NULL) OR state='FENCED')
++
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin;
+ 
+ CREATE TABLE IF NOT EXISTS archive_execution_grant (
+@@ -194,7 +203,7 @@ CREATE TABLE IF NOT EXISTS archive_execution_grant (
+     KEY idx_archive_execution_appointment (appointment_id, state, run_id),
+     CONSTRAINT fk_archive_execution_run FOREIGN KEY (run_id) REFERENCES archive_job_run(run_id),
+     CONSTRAINT fk_archive_execution_appointment FOREIGN KEY (appointment_id) REFERENCES archive_appointment(appointment_id),
+-    CONSTRAINT chk_archive_execution_state CHECK (state IN ('ACTIVE','FENCED')),
++    CONSTRAINT chk_archive_execution_state CHECK (state IN ('ACTIVE','READ_ONLY','FENCED')),
+     CONSTRAINT chk_archive_execution_versions CHECK ((appointment_revision >= 1) AND (manager_authorization_revision >= 1) AND (binding_version >= 1) AND (active_attempt >= 1) AND (execution_epoch >= 1) AND (installation_revision >= 1) AND (revision >= 1)),
+     CONSTRAINT chk_archive_execution_origin CHECK (skill_origin IN ('PLATFORM_PROVISIONED','MARKET')),
+     CONSTRAINT chk_archive_execution_expiry CHECK (expires_at > 0)
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeController.java b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeController.java
+index f5853d4c..37a53ccd 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeController.java
++++ b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeController.java
+@@ -5,6 +5,9 @@ import cn.jia.chat.archive.maintenance.dto.ArchiveDraftBlockInput;
+ import cn.jia.chat.archive.maintenance.dto.ArchiveDraftDTO;
+ import cn.jia.chat.archive.maintenance.dto.ArchiveDraftUpdateRequest;
+ import cn.jia.chat.archive.maintenance.dto.ArchiveRuntimeContextDTO;
++import cn.jia.chat.archive.maintenance.dto.ArchiveRuntimeFailureRequest;
++import cn.jia.chat.archive.maintenance.dto.ArchiveRuntimeResultDTO;
++import cn.jia.chat.archive.maintenance.dto.ArchiveRuntimeStartRequest;
+ import cn.jia.chat.archive.maintenance.dto.ArchiveValidationDTO;
+ import cn.jia.chat.archive.maintenance.model.ArchiveRuntimeScope;
+ import cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException;
+@@ -51,6 +54,30 @@ public class ArchiveNativeController {
+         this.mapper = Objects.requireNonNull(mapper, "mapper");
+     }
+ 
++    @PostMapping("/start")
++    public JsonResult<ArchiveRuntimeResultDTO> start(@PathVariable String jobId,
++            @PathVariable String runId, @RequestBody byte[] body, Authentication authentication,
++            HttpServletRequest request) {
++        ArchiveRuntimeStartRequest claim = ArchiveStrictRequest.read(mapper, body,
++                ArchiveRuntimeStartRequest.class);
++        return JsonResult.success(service.runtimeStart(runtime(authentication, request), jobId, runId, claim));
++    }
++
++    @PostMapping("/failure")
++    public JsonResult<ArchiveRuntimeResultDTO> failure(@PathVariable String jobId,
++            @PathVariable String runId, @RequestBody byte[] body, Authentication authentication,
++            HttpServletRequest request) {
++        ArchiveRuntimeFailureRequest failure = ArchiveStrictRequest.read(mapper, body,
++                ArchiveRuntimeFailureRequest.class);
++        return JsonResult.success(service.runtimeFailure(runtime(authentication, request), jobId, runId, failure));
++    }
++
++    @GetMapping("/result")
++    public JsonResult<ArchiveRuntimeResultDTO> result(@PathVariable String jobId,
++            @PathVariable String runId, Authentication authentication, HttpServletRequest request) {
++        return JsonResult.success(service.runtimeResult(runtime(authentication, request), jobId, runId));
++    }
++
+     @GetMapping("/context")
+     public JsonResult<ArchiveRuntimeContextDTO> context(@PathVariable String jobId,
+             @PathVariable String runId, Authentication authentication, HttpServletRequest request) {
+@@ -202,4 +229,4 @@ public class ArchiveNativeController {
+         return new ArchiveMaintenanceException(400, "INVALID_REQUEST",
+                 "Native request contains unknown or invalid fields");
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java
+index 91909239..f4ce3338 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java
++++ b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java
+@@ -32,6 +32,9 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+     private static final String ROLE = "ARCHIVE_EDITOR";
+     private static final Pattern ID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._:-]{0,99}");
+     private static final Pattern SHA = Pattern.compile("[0-9a-f]{64}");
++    private static final Pattern FAILURE_CODE = Pattern.compile("[A-Z][A-Z0-9_]{0,63}");
++    private static final Set<String> FAILURE_PHASES = Set.of("START", "CONTEXT", "SOURCE_READ",
++            "DRAFT_READ", "DRAFT_WRITE", "VALIDATION", "RESULT_RECONCILIATION", "RUNNER");
+     private static final int MAX_SOURCE_BYTES = 16 * 1024 * 1024;
+     private final AgentTaskArtifactStorage sourceStorage;
+     private final ArchiveMaintenanceStore store;
+@@ -756,6 +759,116 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+         });
+     }
+ 
++    @Override
++    public ArchiveRuntimeResultDTO runtimeStart(ArchiveRuntimeScope runtime, String jobId, String runId,
++            ArchiveRuntimeStartRequest request) {
++        requireRuntime(runtime);
++        exactId(jobId);
++        exactId(runId);
++        validateStart(runtime, request);
++        ArchiveMaintenanceJobRecord observed = requireJob(jobId, false);
++        if (!observed.runId().equals(runId)) notFound();
++        requireRuntimeJobScope(runtime, observed);
++        return transactions.required(() -> {
++            ArchiveAgentExecutionPort.LockedTarget lockedTarget = lockControlledTarget(target(observed));
++            ArchiveManagerGrantRecord manager = requireManager(actor(runtime), observed.collectionId(), "draft.write", true);
++            requireManagerRevision(manager, observed);
++            ArchiveAppointmentRecord appointment = requireCurrentAppointmentForJob(observed, true);
++            ArchiveMaintenanceJobRecord job = requireJob(jobId, true);
++            requireManagerRevision(manager, job);
++            RuntimeAuthorization authorization = authorizeRuntimeLocked(runtime, job, appointment, lockedTarget, true);
++            if (!request.messageId().equals(authorization.inspection().activeMessageId())) {
++                throw error(403, "EXECUTION_FENCED", "Archive command message is not current");
++            }
++            ArchiveJobRunRecord run = authorization.run();
++            if (!"AUTHORIZED".equals(run.state())) {
++                if (same(run.startedMessageId(), request.messageId())) {
++                    return runtimeResultDto(job, run, authorization.grant());
++                }
++                conflict("ARCHIVE_EXECUTION_START_CONFLICT", "Archive execution start does not match the accepted claim");
++            }
++            if (!"EXECUTION_REQUESTED".equals(job.state())) {
++                conflict("ARCHIVE_EXECUTION_CHANGED", "Archive job is not awaiting a start claim");
++            }
++            if (store.startRun(run.runId(), run.revision(), request.messageId()) != 1
++                    || store.updateJobState(job.jobId(), job.revision(), "RUNNING", null, null) != 1) {
++                conflict("ARCHIVE_EXECUTION_CHANGED", "Archive execution changed during start");
++            }
++            ArchiveJobRunRecord started = runState(run, "RUNNING", run.revision() + 1,
++                    request.messageId(), null, null, null);
++            ArchiveMaintenanceJobRecord running = jobState(job, "RUNNING", null, job.revision() + 1);
++            store.appendJobEvent(job.jobId(), running.revision(), "EXECUTION_STARTED",
++                    json(Map.of("commandId", runtime.commandId(), "messageId", request.messageId(),
++                            "attempt", Long.toString(runtime.activeAttempt()),
++                            "executionEpoch", Long.toString(runtime.executionEpoch()))));
++            return runtimeResultDto(running, started, authorization.grant());
++        });
++    }
++
++    @Override
++    public ArchiveRuntimeResultDTO runtimeFailure(ArchiveRuntimeScope runtime, String jobId, String runId,
++            ArchiveRuntimeFailureRequest request) {
++        requireRuntime(runtime);
++        exactId(jobId);
++        exactId(runId);
++        validateFailure(request);
++        ArchiveMaintenanceJobRecord observed = requireJob(jobId, false);
++        if (!observed.runId().equals(runId)) notFound();
++        requireRuntimeJobScope(runtime, observed);
++        return transactions.required(() -> {
++            ArchiveAgentExecutionPort.LockedTarget lockedTarget = lockControlledTarget(target(observed));
++            ArchiveManagerGrantRecord manager = requireManager(actor(runtime), observed.collectionId(), "draft.write", true);
++            requireManagerRevision(manager, observed);
++            ArchiveAppointmentRecord appointment = requireCurrentAppointmentForJob(observed, true);
++            ArchiveMaintenanceJobRecord job = requireJob(jobId, true);
++            requireManagerRevision(manager, job);
++            RuntimeAuthorization authorization = authorizeRuntimeLocked(runtime, job, appointment, lockedTarget, true);
++            ArchiveJobRunRecord run = authorization.run();
++            if ("FAILED".equals(run.state())) {
++                if (same(run.failurePhase(), request.phase()) && same(run.failureCode(), request.code())
++                        && same(run.failureRetryable(), request.retryable())) {
++                    return runtimeResultDto(job, run, authorization.grant());
++                }
++                conflict("ARCHIVE_EXECUTION_FAILURE_CONFLICT", "Archive failure does not match the accepted outcome");
++            }
++            if (!"RUNNING".equals(run.state()) || !"ACTIVE".equals(authorization.grant().state())) {
++                conflict("ARCHIVE_EXECUTION_NOT_RUNNING", "Archive execution has not started or is already terminal");
++            }
++            if (store.failRun(run.runId(), run.revision(), request.phase(), request.code(), request.retryable()) != 1
++                    || store.releaseExecutionGrant(run.runId(), authorization.grant().revision()) != 1
++                    || store.updateJobState(job.jobId(), job.revision(), "FAILED", request.code(), null) != 1) {
++                conflict("ARCHIVE_EXECUTION_CHANGED", "Archive execution changed during failure recording");
++            }
++            ArchiveJobRunRecord failed = runState(run, "FAILED", run.revision() + 1,
++                    run.startedMessageId(), request.phase(), request.code(), request.retryable());
++            ArchiveMaintenanceJobRecord failedJob = jobState(job, "FAILED", request.code(), job.revision() + 1);
++            store.appendJobEvent(job.jobId(), failedJob.revision(), "JOB_FAILED",
++                    json(Map.of("phase", request.phase(), "code", request.code(),
++                            "retryable", request.retryable().toString())));
++            return runtimeResultDto(failedJob, failed, authorization.grant());
++        });
++    }
++
++    @Override
++    public ArchiveRuntimeResultDTO runtimeResult(ArchiveRuntimeScope runtime, String jobId, String runId) {
++        requireRuntime(runtime);
++        exactId(jobId);
++        exactId(runId);
++        ArchiveMaintenanceJobRecord observed = requireJob(jobId, false);
++        if (!observed.runId().equals(runId)) notFound();
++        requireRuntimeJobScope(runtime, observed);
++        return transactions.required(() -> {
++            ArchiveAgentExecutionPort.LockedTarget lockedTarget = lockControlledTarget(target(observed));
++            ArchiveManagerGrantRecord manager = requireManager(actor(runtime), observed.collectionId(), "draft.write", true);
++            requireManagerRevision(manager, observed);
++            ArchiveAppointmentRecord appointment = requireCurrentAppointmentForJob(observed, true);
++            ArchiveMaintenanceJobRecord job = requireJob(jobId, true);
++            requireManagerRevision(manager, job);
++            RuntimeAuthorization authorization = authorizeRuntimeLocked(runtime, job, appointment, lockedTarget, true);
++            return runtimeResultDto(job, authorization.run(), authorization.grant());
++        });
++    }
++
+     @Override
+     public ArchiveRuntimeContextDTO runtimeContext(ArchiveRuntimeScope runtime, String jobId, String runId) {
+         ArchiveMaintenanceJobRecord job = authorizeRuntime(runtime, jobId, runId);
+@@ -834,7 +947,9 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             ArchiveMaintenanceJobRecord job = requireJobForActor(actor, observed.jobId(), true);
+             if (runtime) {
+                 requireManagerRevision(manager, job);
+-                authorizeRuntimeLocked(runtimeScope, job, appointment, lockedTarget);
++                RuntimeAuthorization authorization = authorizeRuntimeLocked(
++                        runtimeScope, job, appointment, lockedTarget);
++                requireProducerRunning(authorization.run());
+                 requireRuntimeWritable(job);
+             }
+             ArchiveDraftRecord draft = requireDraft(job.jobId(), true);
+@@ -863,6 +978,15 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             ArchiveMaintenanceJobRecord observed, String key, long expectedRevision,
+             boolean runtime, ArchiveRuntimeScope runtimeScope) {
+         requireKey(key);
++        byte[] observedSource = null;
++        String observedSourceFailure = null;
++        try {
++            observedSource = requireSource(observed);
++        } catch (ArchiveMaintenanceException failure) {
++            observedSourceFailure = failure.getMessage();
++        }
++        byte[] sourceBytes = observedSource;
++        String sourceFailure = observedSourceFailure;
+         return transactions.required(() -> {
+             ArchiveAgentExecutionPort.LockedTarget lockedTarget = runtime
+                     ? lockControlledTarget(target(observed)) : null;
+@@ -870,9 +994,11 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             if (runtime) requireManagerRevision(manager, observed);
+             ArchiveAppointmentRecord appointment = requireCurrentAppointmentForJob(observed, true);
+             ArchiveMaintenanceJobRecord job = requireJobForActor(actor, observed.jobId(), true);
++            RuntimeAuthorization authorization = null;
+             if (runtime) {
+                 requireManagerRevision(manager, job);
+-                authorizeRuntimeLocked(runtimeScope, job, appointment, lockedTarget);
++                authorization = authorizeRuntimeLocked(runtimeScope, job, appointment, lockedTarget);
++                requireProducerRunning(authorization.run());
+                 requireRuntimeWritable(job);
+             }
+             ArchiveDraftRecord draft = requireDraft(job.jobId(), true);
+@@ -891,10 +1017,13 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             }
+             List<String> findings = new ArrayList<>();
+             try {
+-                byte[] sourceBytes = requireSource(job);
+                 ArchiveDraftUpdateRequest body = parseDraft(draft.contentJson());
+                 findings.addAll(validateContent(body));
+-                findings.addAll(ArchiveSourceMappingValidator.validate(sourceBytes, body));
++                if (sourceFailure == null) {
++                    findings.addAll(ArchiveSourceMappingValidator.validate(sourceBytes, body));
++                } else {
++                    findings.add(sourceFailure);
++                }
+             } catch (ArchiveMaintenanceException failure) {
+                 findings.add(failure.getMessage());
+             }
+@@ -915,9 +1044,22 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             if (store.updateJobState(job.jobId(), job.revision(), jobState, null, null) != 1) {
+                 conflict("ARCHIVE_JOB_CHANGED", "Archive job changed during validation");
+             }
++            if (runtime && findings.isEmpty() && "DRAFT_ONLY".equals(job.permissionProfile())) {
++                if (store.completeRun(authorization.run().runId(), authorization.run().revision()) != 1
++                        || store.releaseExecutionGrant(authorization.run().runId(),
++                                authorization.grant().revision()) != 1) {
++                    conflict("ARCHIVE_EXECUTION_CHANGED",
++                            "Archive execution changed during draft completion");
++                }
++            }
+             store.appendJobEvent(job.jobId(), job.revision() + 1, "VALIDATION_FINISHED",
+                     json(Map.of("validationId", validation.validationId(),
+                             "draftRevision", Long.toString(draft.revision()), "outcome", outcome)));
++            if (runtime && findings.isEmpty() && "DRAFT_ONLY".equals(job.permissionProfile())) {
++                store.appendJobEvent(job.jobId(), job.revision() + 1, "EXECUTION_COMPLETED",
++                        json(Map.of("runId", job.runId(), "validationId", validation.validationId(),
++                                "stage", "AWAITING_HUMAN_RELEASE")));
++            }
+             store.commitOperation(actor, key, validation.validationId());
+             return validationDto(validation);
+         });
+@@ -928,6 +1070,7 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+         requireRuntime(runtime);
+         ArchiveMaintenanceJobRecord observed = requireJob(jobId, false);
+         if (!observed.runId().equals(runId)) notFound();
++        requireRuntimeJobScope(runtime, observed);
+         return transactions.required(() -> {
+             ArchiveAgentExecutionPort.LockedTarget lockedTarget = lockControlledTarget(target(observed));
+             ArchiveManagerGrantRecord manager = requireManager(actor(runtime), observed.collectionId(), "draft.write", true);
+@@ -935,30 +1078,37 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             ArchiveAppointmentRecord appointment = requireCurrentAppointmentForJob(observed, true);
+             ArchiveMaintenanceJobRecord current = requireJob(jobId, true);
+             requireManagerRevision(manager, current);
+-            authorizeRuntimeLocked(runtime, current, appointment, lockedTarget);
++            authorizeRuntimeLocked(runtime, current, appointment, lockedTarget, false);
+             return current;
+         });
+     }
+ 
+-    private void authorizeRuntimeLocked(ArchiveRuntimeScope runtime, ArchiveMaintenanceJobRecord job,
+-            ArchiveAppointmentRecord appointment, ArchiveAgentExecutionPort.LockedTarget lockedTarget) {
++    private RuntimeAuthorization authorizeRuntimeLocked(ArchiveRuntimeScope runtime,
++            ArchiveMaintenanceJobRecord job, ArchiveAppointmentRecord appointment,
++            ArchiveAgentExecutionPort.LockedTarget lockedTarget) {
++        return authorizeRuntimeLocked(runtime, job, appointment, lockedTarget, false);
++    }
++
++    private RuntimeAuthorization authorizeRuntimeLocked(ArchiveRuntimeScope runtime,
++            ArchiveMaintenanceJobRecord job, ArchiveAppointmentRecord appointment,
++            ArchiveAgentExecutionPort.LockedTarget lockedTarget, boolean allowTerminalResult) {
+         if ("CANCELLED".equals(job.state())) {
+             throw error(403, "EXECUTION_FENCED", "Archive execution was cancelled");
+         }
+-        if (!same(runtime.tenantId(), job.tenantId())
+-                || !same(runtime.clientId(), job.clientId())
+-                || !same(runtime.ownerJiacn(), job.ownerJiacn())
+-                || !same(runtime.agentId(), job.agentId())) {
+-            notFound();
+-        }
++        requireRuntimeJobScope(runtime, job);
+         requireCurrentBinding(appointment);
+         if (!executionEnabled || executionPort == null) {
+             throw error(403, "EXECUTION_FENCED", "Archive execution is disabled");
+         }
+         ArchiveJobRunRecord run = store.findRun(job.runId(), true);
+         ArchiveExecutionGrantRecord grant = store.findExecutionGrant(job.runId(), true);
+-        if (run == null || grant == null || !"AUTHORIZED".equals(run.state())
+-                || !"ACTIVE".equals(grant.state()) || !job.jobId().equals(run.jobId())
++        boolean active = run != null && grant != null
++                && Set.of("AUTHORIZED", "RUNNING").contains(run.state())
++                && "ACTIVE".equals(grant.state());
++        boolean terminal = run != null && grant != null
++                && Set.of("COMPLETED", "FAILED").contains(run.state())
++                && "READ_ONLY".equals(grant.state());
++        if ((!active && !(allowTerminalResult && terminal)) || !job.jobId().equals(run.jobId())
+                 || run.executionEpoch() != grant.executionEpoch()
+                 || !same(run.runtimeInstanceId(), grant.runtimeInstanceId())
+                 || !same(runtime.runtimeInstanceId(), grant.runtimeInstanceId())
+@@ -971,7 +1121,10 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+             throw error(403, "EXECUTION_FENCED", "Archive execution proof is not current");
+         }
+         try {
+-            executionPort.inspectExecution(expected(job, grant), lockedTarget);
++            ArchiveAgentExecutionPort.Inspection inspection = terminal
++                    ? executionPort.inspectResult(expected(job, grant), lockedTarget)
++                    : executionPort.inspectExecution(expected(job, grant), lockedTarget);
++            return new RuntimeAuthorization(run, grant, inspection);
+         } catch (ArchiveAgentExecutionPort.Denied denied) {
+             throw error(403, "EXECUTION_FENCED", "Archive execution proof is no longer valid");
+         }
+@@ -1512,6 +1665,99 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+                     "Archive authentication context is incomplete");
+         }
+     }
++    private void validateStart(ArchiveRuntimeScope runtime, ArchiveRuntimeStartRequest request) {
++        if (request == null || !ID.matcher(String.valueOf(request.commandId())).matches()
++                || !ID.matcher(String.valueOf(request.messageId())).matches()
++                || !same(request.commandId(), runtime.commandId())
++                || parsePositive(request.attempt(), "attempt") != runtime.activeAttempt()
++                || parsePositive(request.executionEpoch(), "executionEpoch") != runtime.executionEpoch()) {
++            invalid("Native start proof does not match the authenticated execution");
++        }
++    }
++
++    private void validateFailure(ArchiveRuntimeFailureRequest request) {
++        if (request == null || !FAILURE_PHASES.contains(request.phase())
++                || !FAILURE_CODE.matcher(String.valueOf(request.code())).matches()
++                || request.retryable() == null) {
++            invalid("Native failure must use a safe phase, code and retryability");
++        }
++    }
++
++    private void requireRuntimeJobScope(ArchiveRuntimeScope runtime, ArchiveMaintenanceJobRecord job) {
++        if (!same(runtime.tenantId(), job.tenantId())
++                || !same(runtime.clientId(), job.clientId())
++                || !same(runtime.ownerJiacn(), job.ownerJiacn())
++                || !same(runtime.agentId(), job.agentId())) {
++            notFound();
++        }
++    }
++
++    private void requireProducerRunning(ArchiveJobRunRecord run) {
++        if (run == null || !"RUNNING".equals(run.state()) || run.startedMessageId() == null) {
++            conflict("ARCHIVE_EXECUTION_NOT_RUNNING",
++                    "Archive execution must claim start before producer writes");
++        }
++    }
++
++    private ArchiveRuntimeResultDTO runtimeResultDto(ArchiveMaintenanceJobRecord job,
++            ArchiveJobRunRecord run, ArchiveExecutionGrantRecord grant) {
++        ArchiveDraftRecord draft = requireDraft(job.jobId(), false);
++        ArchiveValidationRecord validation = draft.validationId() == null
++                ? null : store.findValidation(draft.validationId());
++        ArchivePublicationRecord publication = job.publicationId() == null
++                ? null : store.findPublicationByJob(job.jobId());
++        if (publication != null && !same(job.publicationId(), publication.publicationId())) {
++            throw error(409, "ARCHIVE_RESULT_CONFLICT",
++                    "Archive publication receipt does not match the job");
++        }
++        return new ArchiveRuntimeResultDTO(job.jobId(), run.runId(), grant.commandId(),
++                Integer.toString(grant.activeAttempt()), Long.toString(run.executionEpoch()),
++                run.state(), Long.toString(run.revision()), job.state(),
++                Long.toString(job.revision()), resultStage(job, run),
++                validation == null ? null : validation.validationId(),
++                validation == null ? null : validation.outcome(),
++                validation == null ? null : validation.validationDigest(),
++                Long.toString(draft.revision()),
++                publication == null ? null : publication.publicationId(),
++                publication == null ? null : publication.workId(),
++                publication == null ? null : publication.editionId(),
++                publication == null ? null : publication.state(),
++                run.failurePhase(), run.failureCode(), run.failureRetryable());
++    }
++
++    private String resultStage(ArchiveMaintenanceJobRecord job, ArchiveJobRunRecord run) {
++        return switch (run.state()) {
++            case "WAITING" -> "QUEUED";
++            case "AUTHORIZED" -> "READY_TO_START";
++            case "RUNNING" -> "RUNNING";
++            case "COMPLETED" -> "AWAITING_PUBLISH".equals(job.state())
++                    ? "AWAITING_HUMAN_RELEASE" : "COMPLETED";
++            case "FAILED" -> "FAILED";
++            case "FENCED" -> "FENCED";
++            default -> throw error(409, "ARCHIVE_RESULT_CONFLICT",
++                    "Archive run state is not recognized");
++        };
++    }
++
++    private ArchiveMaintenanceJobRecord jobState(ArchiveMaintenanceJobRecord job, String state,
++            String waitReason, long revision) {
++        return new ArchiveMaintenanceJobRecord(job.jobId(), job.runId(), job.collectionId(),
++                job.tenantId(), job.clientId(), job.ownerJiacn(), job.appointmentId(),
++                job.appointmentRevision(), job.agentId(), job.bindingVersion(),
++                job.permissionProfile(), job.managerAuthorizationRevision(), job.publicationMode(),
++                job.operation(), job.workId(), job.canonicalKey(), job.title(), job.sourceId(),
++                job.sourceSha256(), job.sourceSummary(), job.rightsBasis(), state, waitReason,
++                revision, job.draftId(), job.publicationId(), job.requestIntentId(),
++                job.requestSha256());
++    }
++
++    private ArchiveJobRunRecord runState(ArchiveJobRunRecord run, String state, long revision,
++            String messageId, String failurePhase, String failureCode, Boolean failureRetryable) {
++        return new ArchiveJobRunRecord(run.runId(), run.jobId(), run.executionEpoch(),
++                run.runtimeInstanceId(), run.grantRevision(), messageId, failurePhase, failureCode,
++                failureRetryable, state, revision);
++    }
++
+     private void requireRuntime(ArchiveRuntimeScope runtime) {
+         if (runtime == null || !"0".equals(runtime.tenantId())
+                 || !exact(runtime.clientId(), 50) || !exact(runtime.ownerJiacn(), 50)
+@@ -1563,6 +1809,8 @@ public class ArchiveMaintenanceServiceImpl implements ArchiveMaintenanceService
+     private ArchiveMaintenanceException error(int status, String code, String message) {
+         return new ArchiveMaintenanceException(status, code, message);
+     }
++    private record RuntimeAuthorization(ArchiveJobRunRecord run,
++            ArchiveExecutionGrantRecord grant, ArchiveAgentExecutionPort.Inspection inspection) { }
+     private record PublicationMaterial(ArchiveEditionRecord edition,
+             List<ArchiveBlockRecord> blocks, List<ArchiveParagraphRecord> paragraphs) { }
+     private record ExecutionAdmission(ArchiveExecutionDTO value, boolean expired) { }
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/config/ArchiveMaintenanceSchemaCatalogTest.java b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/config/ArchiveMaintenanceSchemaCatalogTest.java
+index 8548fb30..c609f925 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/config/ArchiveMaintenanceSchemaCatalogTest.java
++++ b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/config/ArchiveMaintenanceSchemaCatalogTest.java
+@@ -35,9 +35,17 @@ class ArchiveMaintenanceSchemaCatalogTest {
+         assertEquals(new ArchiveMaintenanceSchemaCatalog.Column("bigint", false, null),
+                 expected.tables().get("archive_maintenance_job").columns()
+                         .get("manager_authorization_revision"));
++        var run = expected.tables().get("archive_job_run");
++        assertEquals(new ArchiveMaintenanceSchemaCatalog.Column("varchar(100)", true, "ascii_bin"),
++                run.columns().get("started_message_id"));
++        assertEquals(new ArchiveMaintenanceSchemaCatalog.Column("bigint", true, null),
++                run.columns().get("failure_retryable"));
++        assertTrue(run.checks().get("chk_archive_run_state").contains("RUNNING"));
++        assertTrue(run.checks().get("chk_archive_run_lifecycle").contains("started_message_id"));
+         var execution = expected.tables().get("archive_execution_grant");
+         assertEquals(new ArchiveMaintenanceSchemaCatalog.Column("bigint", false, null),
+                 execution.columns().get("manager_authorization_revision"));
++        assertTrue(execution.checks().get("chk_archive_execution_state").contains("READ_ONLY"));
+         assertEquals(new ArchiveMaintenanceSchemaCatalog.Column("binary(32)", false, null),
+                 execution.columns().get("registration_hash"));
+         assertEquals("0:tenant_id,client_id,owner_jiacn,dispatch_key",
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeControllerContractTest.java b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeControllerContractTest.java
+index 6608533f..b0a6b02c 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeControllerContractTest.java
++++ b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/http/ArchiveNativeControllerContractTest.java
+@@ -3,6 +3,8 @@ package cn.jia.chat.archive.maintenance.http;
+ import cn.jia.agent.security.AgentRuntimeAuthentication;
+ import cn.jia.chat.archive.maintenance.dto.ArchiveDraftBlockInput;
+ import cn.jia.chat.archive.maintenance.dto.ArchiveDraftUpdateRequest;
++import cn.jia.chat.archive.maintenance.dto.ArchiveRuntimeFailureRequest;
++import cn.jia.chat.archive.maintenance.dto.ArchiveRuntimeStartRequest;
+ import cn.jia.chat.archive.maintenance.model.ArchiveRuntimeScope;
+ import cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException;
+ import cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceService;
+@@ -69,6 +71,44 @@ class ArchiveNativeControllerContractTest {
+                 () -> controller.context("job-a", "run-a", authentication, zeroAttempt)).code());
+     }
+ 
++    @Test
++    void lifecycleRoutesUseStrictBodiesAndAuthenticatedHeaderScopeOnly() {
++        ArchiveMaintenanceService service = mock(ArchiveMaintenanceService.class);
++        ArchiveNativeController controller = new ArchiveNativeController(service, new ObjectMapper());
++        AgentRuntimeAuthentication authentication = mock(AgentRuntimeAuthentication.class);
++        when(authentication.isAuthenticated()).thenReturn(true);
++        when(authentication.getPrincipal()).thenReturn(new AgentRuntimeAuthentication.Scope(
++                "0", "client-a", "owner-a", "agent-a", "runtime-a"));
++        MockHttpServletRequest request = exactRequest();
++
++        controller.start("job-a", "run-a", ("{\"commandId\":\"command-a\","
++                + "\"messageId\":\"message-a\",\"attempt\":\"2\","
++                + "\"executionEpoch\":\"3\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8),
++                authentication, request);
++        controller.failure("job-a", "run-a", ("{\"phase\":\"RUNNER\","
++                + "\"code\":\"RUNNER_CRASH\",\"retryable\":true}")
++                .getBytes(java.nio.charset.StandardCharsets.UTF_8), authentication, request);
++        controller.result("job-a", "run-a", authentication, request);
++
++        verify(service).runtimeStart(any(ArchiveRuntimeScope.class), eq("job-a"), eq("run-a"),
++                eq(new ArchiveRuntimeStartRequest("command-a", "message-a", "2", "3")));
++        verify(service).runtimeFailure(any(ArchiveRuntimeScope.class), eq("job-a"), eq("run-a"),
++                eq(new ArchiveRuntimeFailureRequest("RUNNER", "RUNNER_CRASH", true)));
++        verify(service).runtimeResult(any(ArchiveRuntimeScope.class), eq("job-a"), eq("run-a"));
++
++        byte[] duplicate = ("{\"commandId\":\"command-a\",\"commandId\":\"command-b\","
++                + "\"messageId\":\"message-a\",\"attempt\":\"2\","
++                + "\"executionEpoch\":\"3\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8);
++        assertEquals("INVALID_REQUEST", assertThrows(ArchiveMaintenanceException.class,
++                () -> controller.start("job-a", "run-a", duplicate, authentication, request)).code());
++        byte[] identityInjection = ("{\"phase\":\"RUNNER\",\"code\":\"RUNNER_CRASH\","
++                + "\"retryable\":true,\"tenantId\":\"0\"}")
++                .getBytes(java.nio.charset.StandardCharsets.UTF_8);
++        assertEquals("INVALID_REQUEST", assertThrows(ArchiveMaintenanceException.class,
++                () -> controller.failure("job-a", "run-a", identityInjection,
++                        authentication, request)).code());
++    }
++
+     private static MockHttpServletRequest exactRequest() {
+         MockHttpServletRequest request = new MockHttpServletRequest();
+         request.addHeader("X-Archive-Grant-Ref", "grant-a");
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java
+index 97d0af53..08be88fe 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java
++++ b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImplTest.java
+@@ -773,6 +773,146 @@ class ArchiveMaintenanceServiceImplTest {
+         verify(port, times(1)).inspectExecution(any(), any());
+     }
+ 
++    @Test
++    void nativeStartClaimsExactMessageAndExactReplayIsStable() {
++        ArchiveAgentExecutionPort port = enableRuntime();
++        ArchiveAppointmentRecord appointment = appointment("ACTIVE", 1);
++        ArchiveMaintenanceJobRecord requested = jobState("EXECUTION_REQUESTED", null, 2);
++        ArchiveMaintenanceJobRecord running = jobState("RUNNING", null, 3);
++        ArchiveJobRunRecord authorized = new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, null, null, null, null, "AUTHORIZED", 2);
++        ArchiveJobRunRecord started = new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, "message-a", null, null, null, "RUNNING", 3);
++        allowManager("draft.write");
++        activeAppointment(appointment);
++        allowCurrentBinding();
++        when(store.findJob(JOB, false)).thenReturn(requested, running);
++        when(store.findJob(JOB, true)).thenReturn(requested, running);
++        when(store.findRun(RUN, true)).thenReturn(authorized, started);
++        when(store.findExecutionGrant(RUN, true)).thenReturn(executionGrant("ACTIVE", 1));
++        when(store.findDraftByJob(JOB, false)).thenReturn(emptyDraft());
++        when(port.inspectExecution(any(), any())).thenReturn(
++                new ArchiveAgentExecutionPort.Inspection(true, "STARTED", "message-a"));
++        when(store.startRun(RUN, 2, "message-a")).thenReturn(1);
++        when(store.updateJobState(JOB, 2, "RUNNING", null, null)).thenReturn(1);
++        ArchiveRuntimeScope runtime = runtime();
++        ArchiveRuntimeStartRequest claim = new ArchiveRuntimeStartRequest(
++                "command-a", "message-a", "1", "1");
++
++        ArchiveRuntimeResultDTO first = service.runtimeStart(runtime, JOB, RUN, claim);
++        ArchiveRuntimeResultDTO replay = service.runtimeStart(runtime, JOB, RUN, claim);
++
++        assertEquals("RUNNING", first.runState());
++        assertEquals("RUNNING", replay.runState());
++        assertEquals("3", replay.runRevision());
++        verify(store, times(1)).startRun(RUN, 2, "message-a");
++        verify(store, times(1)).appendJobEvent(eq(JOB), eq(3L), eq("EXECUTION_STARTED"), anyString());
++    }
++
++    @Test
++    void nativeStartRejectsNonCurrentMessageWithoutClaiming() {
++        ArchiveAgentExecutionPort port = enableRuntime();
++        ArchiveMaintenanceJobRecord requested = jobState("EXECUTION_REQUESTED", null, 2);
++        allowManager("draft.write");
++        activeAppointment(appointment("ACTIVE", 1));
++        allowCurrentBinding();
++        when(store.findJob(JOB, false)).thenReturn(requested);
++        when(store.findJob(JOB, true)).thenReturn(requested);
++        when(store.findRun(RUN, true)).thenReturn(new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, "AUTHORIZED", 2));
++        when(store.findExecutionGrant(RUN, true)).thenReturn(executionGrant("ACTIVE", 1));
++        when(port.inspectExecution(any(), any())).thenReturn(
++                new ArchiveAgentExecutionPort.Inspection(true, "SENT", "message-current"));
++
++        ArchiveMaintenanceException denied = assertThrows(ArchiveMaintenanceException.class,
++                () -> service.runtimeStart(runtime(), JOB, RUN,
++                        new ArchiveRuntimeStartRequest("command-a", "message-stale", "1", "1")));
++
++        assertEquals("EXECUTION_FENCED", denied.code());
++        verify(store, never()).startRun(anyString(), anyLong(), anyString());
++    }
++
++    @Test
++    void nativeFailureReleasesProducerAndExactTerminalReplayUsesReadOnlyReceipt() {
++        ArchiveAgentExecutionPort port = enableRuntime();
++        ArchiveMaintenanceJobRecord runningJob = jobState("RUNNING", null, 3);
++        ArchiveMaintenanceJobRecord failedJob = jobState("FAILED", "RUNNER_CRASH", 4);
++        ArchiveJobRunRecord running = new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, "message-a", null, null, null, "RUNNING", 3);
++        ArchiveJobRunRecord failed = new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, "message-a", "RUNNER", "RUNNER_CRASH", true, "FAILED", 4);
++        allowManager("draft.write");
++        activeAppointment(appointment("ACTIVE", 1));
++        allowCurrentBinding();
++        when(store.findJob(JOB, false)).thenReturn(runningJob, failedJob);
++        when(store.findJob(JOB, true)).thenReturn(runningJob, failedJob);
++        when(store.findRun(RUN, true)).thenReturn(running, failed);
++        when(store.findExecutionGrant(RUN, true)).thenReturn(
++                executionGrant("ACTIVE", 1), executionGrant("READ_ONLY", 1));
++        when(store.findDraftByJob(JOB, false)).thenReturn(emptyDraft());
++        when(port.inspectExecution(any(), any())).thenReturn(
++                new ArchiveAgentExecutionPort.Inspection(true, "STARTED", "message-a"));
++        when(port.inspectResult(any(), any())).thenReturn(
++                new ArchiveAgentExecutionPort.Inspection(true, "FAILED", "message-a"));
++        when(store.failRun(RUN, 3, "RUNNER", "RUNNER_CRASH", true)).thenReturn(1);
++        when(store.releaseExecutionGrant(RUN, 1)).thenReturn(1);
++        when(store.updateJobState(JOB, 3, "FAILED", "RUNNER_CRASH", null)).thenReturn(1);
++        ArchiveRuntimeFailureRequest failure = new ArchiveRuntimeFailureRequest(
++                "RUNNER", "RUNNER_CRASH", true);
++
++        ArchiveRuntimeResultDTO first = service.runtimeFailure(runtime(), JOB, RUN, failure);
++        ArchiveRuntimeResultDTO replay = service.runtimeFailure(runtime(), JOB, RUN, failure);
++
++        assertEquals("FAILED", first.runState());
++        assertEquals("RUNNER_CRASH", replay.failureCode());
++        verify(store, times(1)).failRun(RUN, 3, "RUNNER", "RUNNER_CRASH", true);
++        verify(store, times(1)).releaseExecutionGrant(RUN, 1);
++        verify(port).inspectResult(any(), any());
++    }
++
++    @Test
++    void draftOnlySuccessfulRuntimeValidationCompletesRunAndReleasesGrant() throws Exception {
++        ArchiveAgentExecutionPort port = enableRuntime();
++        ArchiveMaintenanceJobRecord runningJob = jobState("RUNNING", null, 3);
++        ArchiveJobRunRecord running = new ArchiveJobRunRecord(
++                RUN, JOB, 1, "runtime-a", 1, "message-a", null, null, null, "RUNNING", 3);
++        ArchiveDraftUpdateRequest body = body("甲", "乙");
++        byte[] source = "第一回甲第二回乙".getBytes(java.nio.charset.StandardCharsets.UTF_8);
++        String bodyJson = new ObjectMapper().writeValueAsString(body);
++        ArchiveDraftRecord draft = new ArchiveDraftRecord(DRAFT, JOB, 1, "EDITABLE",
++                bodyJson, "b".repeat(64), null, null);
++        allowManager("draft.write,validate");
++        activeAppointment(appointment("ACTIVE", 1));
++        allowCurrentBinding();
++        when(store.findJob(JOB, false)).thenReturn(runningJob);
++        when(store.findJob(JOB, true)).thenReturn(runningJob);
++        when(store.findRun(RUN, true)).thenReturn(running);
++        when(store.findExecutionGrant(RUN, true)).thenReturn(executionGrant("ACTIVE", 1));
++        when(store.findDraftByJob(JOB, true)).thenReturn(draft);
++        when(store.findSource("src_1")).thenReturn(new ArchiveSourceSnapshotRecord(
++                "src_1", COLLECTION, "0", "client-a", "owner-a", "cyf-artifact://source",
++                SHA, source.length, "固定来源", "摘要", "已授权公开用途", "UTF8_EXACT_V1", "READY"));
++        when(sourceStorage.read(any(), anyString(), anyString(), anyLong(), anyString()))
++                .thenReturn(new AgentTaskArtifactStorage.StoredContent(source, SHA, source.length, "text/plain"));
++        when(port.inspectExecution(any(), any())).thenReturn(
++                new ArchiveAgentExecutionPort.Inspection(true, "STARTED", "message-a"));
++        operation("POST", "/internal/archive/v1/jobs/" + JOB + "/runs/" + RUN + "/validate",
++                "VALIDATION", "val_native");
++        when(store.updateDraft(eq(DRAFT), eq(1L), eq(1L), eq("VALIDATED"),
++                eq(bodyJson), eq("b".repeat(64)), eq(1L), eq("val_native"))).thenReturn(1);
++        when(store.updateJobState(JOB, 3, "AWAITING_PUBLISH", null, null)).thenReturn(1);
++        when(store.completeRun(RUN, 3)).thenReturn(1);
++        when(store.releaseExecutionGrant(RUN, 1)).thenReturn(1);
++
++        ArchiveValidationDTO validation = service.runtimeValidate(runtime(), JOB, RUN,
++                "validate-native", 1);
++
++        assertEquals("PASSED", validation.outcome());
++        verify(store).completeRun(RUN, 3);
++        verify(store).releaseExecutionGrant(RUN, 1);
++        verify(store).appendJobEvent(eq(JOB), eq(4L), eq("EXECUTION_COMPLETED"), anyString());
++    }
++
+     private ArchiveDraftUpdateRequest body(String first, String second) {
+         int title1 = "第一回".getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+         int text1 = first.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+@@ -837,6 +977,44 @@ class ArchiveMaintenanceServiceImplTest {
+         verifyNoInteractions(resolver);
+     }
+ 
++    private ArchiveAgentExecutionPort enableRuntime() {
++        ArchiveAgentExecutionPort port = mock(ArchiveAgentExecutionPort.class);
++        ArchiveMaintenanceProperties properties = new ArchiveMaintenanceProperties();
++        properties.setExecutionEnabled(true);
++        service.setArchiveMaintenanceProperties(properties);
++        service.setArchiveAgentExecutionPort(port);
++        when(port.lockIdentityRoot(any())).thenAnswer(call -> root(call.getArgument(0)));
++        when(port.requireControlledTarget(any(), any())).thenReturn(lockedTarget());
++        return port;
++    }
++
++    private void allowCurrentBinding() {
++        when(identities.requireActiveIdentityForBinding("0", "client-a", "owner-a", 7, AGENT))
++                .thenReturn(new AgentIdentityRegistryEntity().setCanonicalAgentId(AGENT));
++    }
++
++    private ArchiveRuntimeScope runtime() {
++        return new ArchiveRuntimeScope("0", "client-a", "owner-a", AGENT,
++                "runtime-a", "grant-a", "execution-a", "command-a", 1, 1);
++    }
++
++    private ArchiveDraftRecord emptyDraft() {
++        return new ArchiveDraftRecord(DRAFT, JOB, 0, "EDITABLE",
++                "{\"blocks\":[],\"excludedSourceRanges\":[]}", SHA, null, null);
++    }
++
++    private ArchiveMaintenanceJobRecord jobState(String state, String waitReason, long revision) {
++        ArchiveMaintenanceJobRecord base = job("DRAFT_ONLY");
++        return new ArchiveMaintenanceJobRecord(base.jobId(), base.runId(), base.collectionId(),
++                base.tenantId(), base.clientId(), base.ownerJiacn(), base.appointmentId(),
++                base.appointmentRevision(), base.agentId(), base.bindingVersion(),
++                base.permissionProfile(), base.managerAuthorizationRevision(), base.publicationMode(),
++                base.operation(), base.workId(), base.canonicalKey(), base.title(), base.sourceId(),
++                base.sourceSha256(), base.sourceSummary(), base.rightsBasis(), state, waitReason,
++                revision, base.draftId(), base.publicationId(), base.requestIntentId(),
++                base.requestSha256());
++    }
++
+     private ArchiveAgentExecutionPort.LockedIdentityRoot root(
+             ArchiveAgentExecutionPort.TargetRequest target) {
+         return new ArchiveAgentExecutionPort.LockedIdentityRoot(target.tenant(), target.client(),
