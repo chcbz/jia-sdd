@@ -320,3 +320,5 @@ API d85bc64/tree7280d0d、Web4dc65cb/tree969db74、Client5bcb/treee195已非forc
 Runner重装后的4403172/153官方SUCCESS，actual source4dc65cb/tree969db74；2878 passing、2 pending，build/scan/deploy全部成功，部署单70593938唯一主机healthy。流式读取同Run制品106572406B，SHA256 7b4dd9f327ac717918b83073b1240409a40cff5a32066a3f68782273d76d4cf1；364个dist文件及helper逐一校验manifest无遗漏。真实已登录Chromium读取线上index与JuyiHallEntry JS/CSS，三者字节和摘要均匹配本Run制品。没有新增Run或重试旧152。
 
 产品验收不等于发布成功：默认“提出需求”已创建无参考图task417“画一只鸟·1.13.50实测”，明确公孙胜后费用同意实际ISSUED；bridge POST400 CONTROLLED_IMAGE_BRIDGE_BAD_REQUEST，原请求GET404。一次原key/原正文诊断重放仍400，已停止继续重放；未生成鸟图，不将404解释为绝对无副作用。真实wrapper中expectedTaskVersion=0、requirementRevision=1、workflowVersion=2、consent expectedVersion为字符串1，已交API/Web Owner精确定位，尚未归因到具体校验行。详情仍含固定PDF文案/入口，是另一个真实UI缺陷，也已交Web Owner。全34项范围不缩减，当前不能通知可验收。证据见本目录release1.13.50/run153-release-and-product-status.json及run153-online-independent-verification.json。
+
+03:10 CST根因补证：Main核对d85源码，ControlledImagePointAndStartServiceImpl.validate将expectedTaskVersion<1判BAD_REQUEST，而Controller明确允许0，真实新task417/current为0。即初建任务零版本的合同边界不一致；API Owner已收到真实wrapper和具体校验行，待最小修复及create→consent→bridge真实回归。两次原意图失败均写orchestrator归因，停止不变输入重试；有修复候选后才开启下一次验证，不把此局部门禁当整项目无法推进。
