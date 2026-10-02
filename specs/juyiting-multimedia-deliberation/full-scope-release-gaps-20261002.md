@@ -348,3 +348,16 @@ API ae66af9/treeea12b62独立核验源码/冻结JAR/内嵌类/真实MySQL XML后
 原task417/profile/key/consent均保留。真实UI继续原点将：POST201，grant ACTIVE、原consent BOUNDv2，零版本400已修；紧接着GET assignment-operation500 ASSIGNMENT_OPERATION_INTEGRITY_ERROR。后台协调在createConversation的validCreate/text报BAD_REQUEST，两次同因后relay停止，未把已创建grant视为图片生成成功。原API Owner继续联合归因read与coordinator，Main不再重复POST/provider、不清生产数据。AC01/FD02在52仍FAIL，其余NOT_RUN，完整34项不缩减；没有本次可交付鸟图。证据见integration-evidence-20260928/release-1.13.52-progress/，当前不通知可验收。
 
 Run155终态后，Main在部署锁下核对record155、精确6084摘要及无打开FD，仅退役本地下载重复包106574481B，远端同Run制品、线上dist及API恢复文件保留；可用空间295305216→401887232B。后续验证仍可按远端同Run制品流式取证，不声称本地下载路径继续存在。后端候选51e62198/tree9a679ec4已包含read协议3绑定校验与多行instruction修复，测试尚在Owner原handle执行，未合入/发布；前端155无需为此重建。
+
+
+### 2026-10-03 CST：1.13.53安装、原议事恢复，新增缺口已分派
+
+API d355d455/tree d661691e正式本地授权制品04d1ad38/253596977B已于05:01:03安装并HTTP200/UP；develop及新release/1.13.53非force推送，旧release不动。read协议3绑定核验与仅instruction允许LF联合修复保持授权、CAS及其余控制字符约束。Main独立保留XML17项；Owner另报多行selector通过，但其XML已被后续同Task覆盖，不将该数字冒充Main独立XML统计。前端仍复用4403172/155实际3d9、2879pass/2pending及同Run制品6084，无API-only重复构建。
+
+原task417真实assignment-operation GET从500恢复200，自动打开conversation1760458004760并显示原需求；bootstrap ADMITTED，尚无executionId/本次鸟图。05:00:50及05:00:55 CST协调器实际代理提交抛UnexpectedRollbackException，relay重复同因后停止。底层授权未就绪原因尚未确证，已交原API Owner做真实Spring参与事务RED/GREEN；不关闭rollback-only检查、不反复重启或重复点将。
+
+05:09:33 CST真实UI单次选原持久消息1675335的codepoint0..4“画一只鸟”保存文字，业务POST400 CONVERSATION_ARCHIVE_INVALID_REQUEST；OPTIONS200不算成功。前端发CREATE/textSelection，现API只收create/items.assetRef。已交Web Owner核对既定文本归档合同和端点，再与API Owner冻结最小闭环；没有生成文本文件或重试。首次双击digest竞态仅源码疑点，另要求有据回归，不先认定实测缺陷。
+
+voice独立Owner交真实VarIcon3.10.9/字体loaded/公网CSS实验：microphone/settings/stop名称无glyph，idle隐藏文字使按钮空白；不是字体未加载。Main独立核验共享结论SHA c214e9dd。已将三个明确18x18 inline SVG及非mock真实窄viewport回归分配voice Main唯一Owner，保留ARIA/布局/context/CAS/行为，统一候选后云效验证，不抢跑或另开发布。本轮全部34项范围不缩减，仍不可通知验收。
+
+脱敏进度见 integration-evidence-20260928/release-1.13.53-progress/release-and-product-status.json；历史52矩阵保留当时失败，不用其500覆盖53恢复事实。
