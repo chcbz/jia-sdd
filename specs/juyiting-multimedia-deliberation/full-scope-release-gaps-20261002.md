@@ -94,3 +94,11 @@ runtime/binding/identity生产DML及free reprovision仍未执行，单行历史s
 用户明确要求“不需要重复让我确认”。结合此前已允许责任Owner恢复现有binding15、同一身份和原managed服务，Main通知Runtime Owner：同一恢复目标所必需的已发现单条detached offline runtime投影修正不再作为逐次审批阻塞；自检后执行精确CAS，保留row ID/canonical Agent及offline/无endpoint/token/task状态，与原binding/identity生命周期恢复按事务核验；已有零扣款free reprovision仅一次，未知响应先查询。API已UP，不重复start。
 
 边界不变：不新增身份、租赁、充值、凭据，不跨账号或绕过ACL，不操作无关进程。真实归属无法证明、新收费或超出目标的破坏性操作才停止对应动作并说明；不能把用户免重复确认解释为伪造缺失Provider配置或验收证据。Owner按实际结果主动汇报，不再为同一范围内正常恢复步骤反复请求确认。
+
+## 14:18 既有托管目标恢复并实际注册
+
+Runtime Owner已完成授权范围三行CAS：binding15/identity15 ACTIVE，既有runtime37投影与精确scope一致，影响行数各1。首个候选显式赋值generated-column被MySQL拒绝并完整回滚；修正候选仅更新普通字段后提交，保留了真实失败归因。14:12:41既有managed service自动从pending_ack恢复为registered，runtime有fresh last_seen及正常endpoint/token attachment。
+
+未再次启动API，未重启/停止原Client服务，未发reprovision、未建幂等键/receipt、未扣款。目标已自动恢复且出现current_task，重复reprovision不再必要，会干扰当前任务，因此不执行多余部署。原恢复目标已达成，不将未调用这个可选恢复动作作为人为阻塞。
+
+脱敏回执及SHA256已归档。该结果不证明旧Client具有新多媒体能力；仍需实际版本/能力读回、完整配置与版本化安装，避免打断目标现有任务。原API/身份恢复授权阻塞已关闭。
