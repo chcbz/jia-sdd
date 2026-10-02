@@ -304,3 +304,12 @@ Flow152部署故障仍未解除，但Main继续检查可独立验证的产品准
 API准入改根schema3/executionAuthorization与controlled V3；全局敏感字段脱敏未关闭。真实MySQL8.0.46暴露REGEXP BINARY与既有bin collation不兼容，修为保持严格小写hex的REGEXP，并仅规范化实证的三种固定字面量旧binary cast/_ascii表示；不移除CHECK。首轮DDL失败及第二轮_ascii规范化失败均保留。当前d85bc64/tree7280d0d：Main直接解析XML核对4+3共7个真实MySQL方法PASS、0fail/skip，另11个schema canonicalizer单测XML曾核对PASS；桥接XML随后被恢复测试替换，未保留独立旧XML副本，不虚填其摘要。
 
 安装恢复已纠正旧manifest：旧5c初始化器严格比较完整列、索引和CHECK集合，不能直接声称会忽略新增列。实际旧jar类加载器与Spring条件注册2项测试证明，仅关闭bridge-enabled可避开不兼容桥接准入，保留其它初始化器及V3数据；这不是生产环境完整回退演练。Main已准备旧jar硬链和精确恢复配置，正常前向配置不关闭功能。新版本1.13.50仍是候选，未创建新release refs，1.13.48/49不动。证据见 [本次固定快照](integration-evidence-20260928/primary-v3-recovery-20261002/candidate-state.json)。正式制品交接、同Run前端发布和全34项产品验收仍未完成，不通知可验收。
+
+
+### 2026-10-02 18:40 UTC 续记：1.13.50冻结、API安装及正式Run153
+
+API d85bc64/tree7280d0d、Web4dc65cb/tree969db74、Client5bcb/treee195已非force合develop并冻结各自release/1.13.50，远端readback一致，未移动1.13.48/49。API正常bootJar66测试PASS；Main逐个核验37源码hash、制品a970ca4a/253595965B和ZIP CRC，build输出已MOVE到独立staging，无后续构建输出路径写穿运行inode。
+
+首次安装新API已真实UP，但Main新增健康检查错误假设status为字符串，实际为{code:UP}，误触发自动回退；此为Main发布脚本错误，不归因应用、迁移、Runner或Flow。旧5c+仅bridge-disabled恢复配置实际启动UP，schema及V3数据保留。已按canonical launcher支持的status.code/string形状修复，并验证2份真实body及7项正负夹具；新目录、fresh PID/配置CAS下单次重装成功，PID3677903、制品a970、正常配置9a53均核对，健康UP。失败与恢复证据保留。
+
+正式前端Run153于18:38:06 UTC单次启动；推送后及Start前均无自动新Run，配置未变。官方SCM日志完整commit4dc65cb已核对，build527570069和scan527570070 RUNNING，deploy527570071 INIT。不把expected tree或旧152制品当新Run证据。最近源码比较证明b9 voice三文件字节不变，已send_input通知voice协调Main。尚待同Run正式test/build/artifact/deploy、在线字节及完整34项真实产品验证，未宣称可验收。固定证据目录 [release1.13.50](integration-evidence-20260928/release-1.13.50-20261002/candidate-freeze.json)。
