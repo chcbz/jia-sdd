@@ -241,3 +241,7 @@ Runtime Owner已留下新版真实默认构造probe及PASS回执，随后工具�
 ## 2026-10-02 20:10 用户统一授权与版本候选冻结
 
 用户已明确“统一授权”，此前共享服务维护授权缺口解除。不重复确认，不扩大到新付费资源或无关生产数据；原Runtime Owner接续fresh核对和可恢复激活。三个组件均先查release ref不存在，再非force创建并readback `release/1.13.48`：API0a4d/Webc74/Client5bcb。这是冻结候选，不是发布成功；Web实际package_version仍1.0.1。证据 `integration-evidence-20260928/release-1.13.48-freeze-20261002/candidate-freeze.json`。Frontend Owner仅获L1单次配置更新并readback，不Start；正式Run等实际运行依赖就绪。全部34产品验收仍待执行。
+
+### 2026-10-02 20:31 API已可恢复激活，尚非整体验收
+
+Runtime Owner于20:24激活API exact0a4d，制品b4e53624，PID3506165，功能properties摘要9a53e3f4；Main20:31独立核对已安装JAR完整摘要、六controller归属和HTTP200/UP。首次argv空格/NUL断言错误和第二次实际ENOSPC均发生生产变更前，原归因保留；仅清本任务失败临时inode，复用已验证同fs候选完成切换，不删foreign文件。真实Chromium新隔离profile使用测试账号登录并返回聚义厅成功，但仍是旧前端，未发需求/Provider，不计产品验收。Client迁移/共享重启及正式前端同Run部署仍待完成；34项NOT_RUN不变。
