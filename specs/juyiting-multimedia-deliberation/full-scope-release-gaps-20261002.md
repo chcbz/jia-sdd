@@ -237,3 +237,7 @@ Client `5bcb16bd8e2cf9a2fde50ac114367ae272c0335f` / tree `e195b7fb150c3d45adc512
 ### 2026-10-02 20:05 独立inactive运行构造复验完成
 
 Runtime Owner已留下新版真实默认构造probe及PASS回执，随后工具终态为model capacity error；Main直接核验现有证据，不重复重跑。源快照102文件与exact5bcb逐字节一致，local1/managed15真实ledger/CLI executor/poll protocol构造、registration投影及私有ledger持久化/replay通过；Main独立核对两份claim摘要与完整身份长度。无factory stub，scope mismatch拒绝。首次缺yauzl已通过现有同package/lock依赖只读绑定修正，失败原件保留。只证明inactive配置构造，不证明线上授权/鉴权注册或Provider；未写运行目录/环境/生产profile，未操作服务，epoch1仍候选。共享维护授权尚未收到，34项平台用例、同Run正式发布仍未完成。
+
+## 2026-10-02 20:10 用户统一授权与版本候选冻结
+
+用户已明确“统一授权”，此前共享服务维护授权缺口解除。不重复确认，不扩大到新付费资源或无关生产数据；原Runtime Owner接续fresh核对和可恢复激活。三个组件均先查release ref不存在，再非force创建并readback `release/1.13.48`：API0a4d/Webc74/Client5bcb。这是冻结候选，不是发布成功；Web实际package_version仍1.0.1。证据 `integration-evidence-20260928/release-1.13.48-freeze-20261002/candidate-freeze.json`。Frontend Owner仅获L1单次配置更新并readback，不Start；正式Run等实际运行依赖就绪。全部34产品验收仍待执行。
