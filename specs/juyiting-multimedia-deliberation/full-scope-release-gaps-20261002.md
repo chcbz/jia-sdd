@@ -82,3 +82,9 @@ Main指定Runtime Owner Shannon（01a0fa77-8e55-7151-a0b5-1b0b1b526358）执行�
 ## 13:55 Client Operator配置来源修正已合入
 
 Client feature已FFpush/readback `407db0a67d0446f345680f3fe7dab5d3d368d1b2` / tree `004678a3839e0a558196242fbe8aebb06b11974a`。Main核验5文件范围、diff、22pass/0fail/0skip报告与SHA256；未重复测试不变tree。候选不再要求上游签发binding，必须实际读取Operator冻结普通文件、验证字节摘要及精确policy tuple才能称配置来源VERIFIED。仅模板声明仍UNVERIFIED；STATIC_VALID、认证READBACK_MATCH与Provider实际兼容性保持分离。证据在integration-evidence-20260928/client-operator-binding-407db0a-20261002。未安装、未调用Provider或操作服务；原V3生成/编辑生产执行合同不变。
+
+## 13:56 API可用性恢复完成，不等于新功能部署
+
+Runtime Owner在13:50执行一次已授权canonical恢复；13:54–13:55 readback确认PID3275655、精确scope、六控制器归属及旧JAR摘要均匹配。Main独立读取10018 listener及HTTP200/UP。原API恢复阻塞已消除，不再重复start。安装的仍是旧JAR `632012a3…`，不是新多媒体候选 `b4e53624…`，不得称多媒体上线。
+
+runtime/binding/identity生产DML及free reprovision仍未执行，单行历史scope修正待追加授权。Owner原readback含实际身份scope，未直接复制；归档的是省略scope/命令行的脱敏回执及原始SHA256。同步纠正integration.yaml滞后的Web/Client pin到实际c74a/407db0a，保持“开发基线非已发布”的标注。
