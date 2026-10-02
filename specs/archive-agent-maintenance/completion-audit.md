@@ -125,3 +125,9 @@ Main 保持单 Writer Knuth，不测试或冻结其 partial API 源码。已据�
 第三轮 tree `2ef3eff637b0514a0f0220b96b4e845be26a36aa`：四套真实 MySQL，platform74/native6全PASS；maintenance145/144PASS/1新FAIL；archive311/299PASS/12FAIL（11既有+同1新），0skip。新增Dispatcher/MySQL投影测试均实际PASS，包含真实共享聊天持久化、ack回滚重投、竞争claim、readback FAILED→PASSED后续通知；这只是组件验证，不是共享 Runtime/browser。
 
 此前四类问题已收敛，剩下实际返回回执一致性：无jobBootstrap withdrawal持久落NO_TARGET，首次DTO却仍返回内存PENDING，同键replay返回NO_TARGET（其他字段一致），因此原`assertEquals(first,replay)`正当失败。已交同一Writer窄修真实首次返回事实，并要求零outbox断言绑定真实withdrawalId，不以operationKey作不匹配查询假绿。前后同tree、fresh XML与直接failure delta已保存 `evidence/native-lifecycle/business-outbox-api-attempt3/`；本包仍未提交/推送/独立复审。
+
+第四轮最终候选 `fef50a52019c2ac1c6ce2e17ca7373fa65318c53`：Main全程持锁四套真实MySQL，platform74/native6/maintenance145，定向 **225/225PASS**；archive311/300PASS/11既有FAIL/0skip，Gradle exit1，直接 introduced=[] / removed=[]，前后同tree与全fresh XML。真实首次Bootstrap NO_TARGET与same-key replay已一致；零outbox断言使用真实withdrawalId。19表schema与精确18表前代Gitblob已重新绑定；新增两类projection测试的真实执行名单及XML摘要已独立核对。原件 `evidence/native-lifecycle/business-outbox-api-attempt4/`。
+
+候选已交独立只读Reviewer，复核实际持久化/幂等ack/fencing/授权/通知收敛/迁移与锁顺序；源码冻结，无其他Writer活动。**当前只是定向组件PASS，尚未独立ACCEPT、未提交/推送该源码，不外推fullD2或Runtime/browser。** 后续API办理与章节进度facts桥及串行Web/真正Runtime开发验证任务仍NOT ACTIVATED。
+
+第四轮独立只读复审 **REJECT_LOCAL_API_SCOPE，P0=0/P1=1/P2=1**，原件 attempt4/review.json。确认实际聊天persist+ack、fencing/回放/权限/通知/迁移局部链与225PASS证据真实；P1是新增job FK造成跨合法manager下架与dispatcher的确定publication↔job反向锁环，不能以同manager行锁作泛化串行保证；P2是旧claim索引中间available列未约束，不能有效范围限制过期lease，加CASE排序仍可能在LIMIT前全扫描。已交唯一Writer锁序与有证据的最小indexed bounded分队列扫描窄修，并要求真实跨manager latch、MySQL执行计划/深future-lease队列证明。没有提交/推送未接受源码，整体仍NOT_COMPLETE。

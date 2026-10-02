@@ -1,0 +1,39 @@
+{
+  "tree": "fef50a52019c2ac1c6ce2e17ca7373fa65318c53",
+  "verdict": "REJECT_LOCAL_API_SCOPE",
+  "P0": 0,
+  "P1": 1,
+  "P2": 1,
+  "reviewer": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "submission_id": "01a0fa3b-7f36-7123-b4f0-554abadad25c",
+  "scope": "local business outbox source only, not whole feature",
+  "findings": [
+    {
+      "priority": 1,
+      "title": "cross-manager withdrawal and dispatcher reverse job-publication lock order",
+      "paths": [
+        "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java:304-365",
+        "chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java:629-635",
+        "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveBusinessOutboxDispatcher.java:133-147,203-229"
+      ],
+      "condition": "distinct legitimate manager grant rows; withdrawal holds publication and waits FK job parent while dispatcher holds job and waits publication",
+      "repair": "lock and revalidate corresponding job root before collection/work/publication; preserve bootstrap NO_TARGET; real cross-manager MySQL latch proof"
+    },
+    {
+      "priority": 2,
+      "title": "claim index does not range-bound expired leases and CASE sorting precedes LIMIT",
+      "path": "chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java:710-727",
+      "schema_path": "chat/jia-chat-mapper/src/main/resources/db/archive-maintenance-schema.sql:384",
+      "repair": "separate available/lease indices and bounded per-queue scan then merge; actual MySQL plan and deep future lease backlog proof"
+    }
+  ],
+  "confirmed": [
+    "actual chat message persistence plus outbox and source ack same transaction",
+    "claim CAS fencing ack rollback and one-message replay",
+    "generation manager revoke private-target fencing no Songjiang fallback",
+    "FAILED to PASSED readback notifications deduplicated no republish",
+    "18 to 19 exact schema migration and named drift rejection",
+    "default disabled",
+    "actual focused 225PASS archive311/300PASS/11existingFAIL introduced empty"
+  ]
+}
