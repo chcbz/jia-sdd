@@ -88,3 +88,9 @@ Client feature已FFpush/readback `407db0a67d0446f345680f3fe7dab5d3d368d1b2` / tr
 Runtime Owner在13:50执行一次已授权canonical恢复；13:54–13:55 readback确认PID3275655、精确scope、六控制器归属及旧JAR摘要均匹配。Main独立读取10018 listener及HTTP200/UP。原API恢复阻塞已消除，不再重复start。安装的仍是旧JAR `632012a3…`，不是新多媒体候选 `b4e53624…`，不得称多媒体上线。
 
 runtime/binding/identity生产DML及free reprovision仍未执行，单行历史scope修正待追加授权。Owner原readback含实际身份scope，未直接复制；归档的是省略scope/命令行的脱敏回执及原始SHA256。同步纠正integration.yaml滞后的Web/Client pin到实际c74a/407db0a，保持“开发基线非已发布”的标注。
+
+## 用户最新指令：既定恢复范围不重复确认
+
+用户明确要求“不需要重复让我确认”。结合此前已允许责任Owner恢复现有binding15、同一身份和原managed服务，Main通知Runtime Owner：同一恢复目标所必需的已发现单条detached offline runtime投影修正不再作为逐次审批阻塞；自检后执行精确CAS，保留row ID/canonical Agent及offline/无endpoint/token/task状态，与原binding/identity生命周期恢复按事务核验；已有零扣款free reprovision仅一次，未知响应先查询。API已UP，不重复start。
+
+边界不变：不新增身份、租赁、充值、凭据，不跨账号或绕过ACL，不操作无关进程。真实归属无法证明、新收费或超出目标的破坏性操作才停止对应动作并说明；不能把用户免重复确认解释为伪造缺失Provider配置或验收证据。Owner按实际结果主动汇报，不再为同一范围内正常恢复步骤反复请求确认。
