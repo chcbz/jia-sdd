@@ -41,3 +41,11 @@
 API-first候选合同必须在同一精确scope内封锁旧runtime业务派发/领取/投影覆盖，同时可保持旧连接control heartbeat、禁止其争回新runtime；指定新runtime唯一接管，保留旧backlog及撤销/查询语义。旧socket恢复/重连、API重启、未知响应、并发派发与目标变更需有真实测试。该合同尚未被实现Owner确认，不当作已有能力，不先激活fence。API Owner正核实最小入口及首次部署可行性；若不可行，明确需要覆盖共享profile的维护custody，而非循环声称安装新control后即可安装。
 
 只读证据和Main对close/block的反证：integration-evidence-20260928/profile-handoff-readiness-20261002。没有执行配置变更、进程信号或生产数据操作。
+
+## 2026-10-02 后续收敛：不为此次迁移另建无人维护的接管平台
+
+API Owner核对后纠正：1 running+4 queued属于服务端历史队列，旧Client本地inbox确为0，不能以“本地有5个旧任务”阻塞。新进程runtime ID仍每次随机，不能为了提前指定接管目标而永久复用process ID、弱化已有session/lease隔离。
+
+持久API-side takeover至少涉及CAS表、owner接口、WS/HTTP公共fence、一次性目标接管证明，以及按服务端旧队列截止线隔离（不修改旧行、不redrive）。仅一轮接管若消耗proof后要求每次重启再人工CAS，会给日常运行引入新的人工依赖；不能作为已完成长期方案或为凑本次上线直接实施。现阶段不新增这套控制面，也不执行试验性线上fence。
+
+当前最直接且可恢复的发布路径，仍需具备覆盖共享服务全部profiles的明确维护custody，再由Runtime Owner在真实无在途窗口完成一次停机状态下的配置分离及安装；OTHER_SCOPE lujunyi目前idle不产生该授权。图片Provider的实际HTTPS origin/model/Images凭据私有引用/生成编辑合同则是独立必要输入。Main会向用户仅索取这两项缺失事实，不重复索取已授权代码开发/常规发布许可。已完成源码与测试不再无意义重跑；全部34项产品验收仍NOT_RUN。
