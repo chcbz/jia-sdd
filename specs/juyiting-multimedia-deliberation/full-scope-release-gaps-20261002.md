@@ -210,3 +210,12 @@ Runtime Owner正在将inactive候选更新为5ec并用实际loader核对scope/�
 - 复用已授权的现有配置/本地 auth，密钥只经子进程环境传递；不新增图片服务器、账号或付费授权。此次技能切换不发起生图，不改 Flow、不重启共享 Agent。
 - 本机检查发现技能示例环境 `/home/isp/wsps/daily/.venv/bin/python` 不存在；系统 Python 为3.6.8，`uv python find '>=3.11' --no-python-downloads` 未找到可用解释器。技能 wrapper 依赖 Python3.11+（tomllib）；尚需为本项目准备隔离运行环境并执行 `--check`、generate/edit `--dry-run`。不得复用其他项目授权或修改原装系统 imagegen CLI 来绕过限制。
 - 平台接入仍须保留身份/执行权限、输出登记和工作空间边界；开发会话使用技能不等于平台 Agent 已部署该能力，也不替代全部34项验收。
+
+## 2026-10-02 19:32 CLI源码与发布准备收敛（未部署）
+
+- 用户指定的 `gpt-image-cli` 已真正接入 Client `aedcd3da12543f588f85f4678898f4ac3ea777b4` / tree `63cf84799ca22c297167c27f0e143e57852179ed`，以非force FF 推送融合feature与develop并readback一致。使用原装runner/imagegen/verifier，不修改系统技能，不把直接HTTP改名冒充CLI。一次性loopback出口保留START/持久claim/身份scope/上传提交；SDK内部重试不能变成第二次Provider外发。
+- 原装Python CLI+本地fake upstream实测82项core通过，安装打包64项通过，0fail/skip；真实Provider0。Main核对18源码摘要、parent/tree/clean及原始日志。该证据是Client源码/离线执行，不是正式平台或真实账号生图验收。
+- 隔离Python3.11.13、SDK3.23.0、Pillow12.3.0已准备；原skill12测试和generate/edit dry-run通过。冻结技能18文件摘要和只读权限已独立核对。必须保留venv invocation path；resolve后的基础Python没有SDK，已用失败/成功对照定位并归档v2更正。无auth/config复制入技能快照。
+- 最终前端同Run候选SHA `9a4043e26a1abcd0b22e785ff9710e45221944376d2470516068b0af3faa4ea4` 已冻结，包含3个既定UI flag、同Run helper+dist与恢复路径。19:06 live配置仍为f948…、无VMDeploy；没有Update/Start。历史Run150不可重标为本次最终发布。
+- 浏览器验收工具 `88398dfa` 修复签名URL脱敏与操作失败后继续执行的问题，离线行为自检通过；34项产品用例保持NOT_RUN。不是新Reviewer或人工审批门禁。
+- Runtime Owner正在验证exact aed的私有inactive配置。共享Client维护请求尚未获答复，不重启或改共享profile；普通API/Web发布授权不重复申请。`1.13.48`仅候选产品label，最新只读release refs确认未占用，尚未创建release refs；Web包实际仍1.0.1，公开版本不能由旧部署记录推断。
