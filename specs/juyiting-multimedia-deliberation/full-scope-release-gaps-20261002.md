@@ -384,3 +384,13 @@ Run156官方22:02:27UTC终态SUCCESS，exact c4a25123/tree d104074；build527641
 真实刷新后用户资料未hydration：保留owner/client但tenant空，当前scope由tenant/client/owner退为client/owner，与原task417持久意图不匹配。因此“查看进展”不读取原assignment，错误展示旧PDF办理区。只读核对原意图仍为ADMITTED且有controlled bridge；没有跨scope复制/扫描恢复、重复点将或生成。独立critical Writer已接最小身份恢复与隔离/race回归，尚未交付/发布。手动进入议事仅用于图标检查，不能替代自动恢复验收。
 
 34项完整矩阵继续保留：AC03的刷新子例FAIL；AC11生成媒体/断线/乱序子例仍NOT_RUN（没有媒体），标注恢复前置缺陷；AC01 PARTIAL、FD02授权等待FAIL、AC12文本保存400 FAIL维持。整体仍未可验收，task417尚无鸟图；后续先修原请求授权/能力分类与身份恢复，保持同一意图继续。
+
+### 2026-10-02 22:43 UTC：身份恢复最小修复进入Run157；保留原请求恢复要求
+
+Main真实只读GET `/user/my` 200确认服务端仍返回同用户及字符串tenantId="0"，不调用setUser、不改localStorage。独立critical Owner提交3bad445/tree7e4020f：根据完整服务端profile判断hydration，不因缓存userId跳过；scope必须tenant/client/owner齐全、保留数字/字符串0；不猜租户或迁移旧scope；异步身份generation/卸载变化阻止继续初始化。5路径限定JuyiHall、helper及相关测试；Owner定向17+26=43通过/scoped lint通过（缓存记录无原始输出文件，因此不称Main独立复跑）。Main检查精确diff与parent后FF，非force推Web develop及新release/1.13.55，旧release未移动。
+
+全156历史Run均终态且配置3eed未变；推送后再检查自动Run，22:42:12UTC单次Start返回157。22:43:10UTC正式状态RUNNING，build527664460/scan527664461 RUNNING，deploy527664462 INIT，sources.commit仍null，不能把目标3bad视作已checkout。API仍1.13.54/5fe，Client5bcb未重启；这是独立前端修复发布，不为未完成的后端凭空增加发布等待依赖。
+
+Main只读验证当前managed绘图配置：部署模块的HTTP/CLI resolver均通过，凭据存在且CLI pin匹配；公孙胜实际roster online。无Provider调用、配置修改或重启。该证据不等于live能力lookup就绪，更不等于已经生成鸟图。API Owner的4e154021正在自检离线授权分类，尚未合入/发布；Main指出原417已处WAITING_AUTHORIZATION，而旧扫描只接ADMITTED/PLANNING，故下次后端修复必须提供同意图恢复及授权回归，不能只换等待文案或重置生产数据。
+
+Run156完成后，Main在部署锁下核对record156/精确5cafe摘要/无打开FD，仅退役本线程106578156B下载重复包；远端制品、线上dist、当前API4a35及直接恢复04d1保留，可用135528448→242135040B。正式Web阶段优先使用实际约106MB下载+108MB staging空间，API未新bootJar；不设置任意预留门槛、不删foreign数据。
