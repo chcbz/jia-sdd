@@ -38,3 +38,10 @@
 - Web Owner实际分组：SFC loader mock漂移；过时字符串断言；handler extraction依赖缺失；跨suite DOM/window/storage污染嫌疑；真实挂载结构变化。按真实失败证据修复，不跳过case、不放宽身份/同意约束，不用全局XMLSerializer补丁掩盖未挂载。
 - 149终态后接收最终布局 `b9a97695214c11b824a3ec501957a5ea017157f4` / tree `24e49b76682c4cc16de615d55e87dad48df25853`，合并为 `1ee859df89ae06de450b5772f15e2411a2ff8fcc` / tree `d29b47f307b9902a57b34896a099aca299dc4864`（parents9124+b9），已推feature。三个voice文件与b9字节一致，loader及全部祖先保留。develop仍9124，未Start150。
 - voice协调Main `01a0f0b3-9b2d-78f0-ba17-3c22a6942107` 已通过send_input直接收到结果；后续不要求该线程轮询读取本线程。
+
+## 12:42 更新：Run150实际共同源码已确认
+
+- Owner针对149实际失败修复12个测试文件（全局JSDOM一致性、动态SFC/harness依赖及过时断言），候选 `c74a3864b0909c8db4489c5938a590952a56d555` / tree `fd23ba55cc1294523b62b7f3d44618fe6d3719a9`，parent1ee859；定向283PASS、2pending、exit0，不代替正式云端结果。
+- Main已FF并push/readback feature与develop为c74a，三份voice文件与最终b9字节一致。push后查询无自动新Run，单次Start于12:39:05返回150；配置仍f948d126，仅cloud_ci，hold不变。
+- Run150 job527220690日志12:39:29 clone提交收集、增量终点及完整CI_COMMIT_SHA均c74a；source API commits:null不是否定该真实日志，也不以仅目标SHA推断实际checkout。
+- 测试/构建/制品仍待终态；无部署成功结论。已直接send_input通知voiceMain01a0f0b3，证据见web-flow150目录。
