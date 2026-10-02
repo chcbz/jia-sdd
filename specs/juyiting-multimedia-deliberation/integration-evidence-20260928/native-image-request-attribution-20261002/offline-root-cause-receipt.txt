@@ -1,0 +1,43 @@
+CYF native image live-turn offline root-cause receipt
+Date: 2026-10-02 Asia/Shanghai
+Scope: existing evidence plus one explicitly authorized authenticated GET /models; no generation retry, no edit, no config/deployment change.
+
+1. Feature/config naming and effective state
+- Exact Codex 0.159.2 CLI help defines --enable NAME as config override `features.<name>=true` (plural `features`).
+- The live probe thread/start payload did not include the `config` field and did not override either features.image_generation or feature.image_generation.
+- Earlier config/read returned a `features` map but omitted image_generation; config/read alone therefore does not prove its effective value.
+- The actual live turn runtime telemetry recorded `feature.image_generation="true"`. This singular `feature.*` string is a telemetry tag for resolved runtime state, not the config key.
+- Conclusion: canonical config key is features.image_generation; no probe override was supplied; effective runtime state during the turn was true.
+
+2. Actual outbound tool declaration and raw response
+- Existing app-server stderr, RPC capture, and persisted logs contain zero occurrences of image_gen.generation, image_generation_call, tool_choice, a JSON "tools" field, or tools=.
+- The actual encoded outbound Responses request body was not captured. Whether it declared an image_generation tool is NOT_CAPTURED.
+- experimentalRawEvents was false as required. The raw upstream Responses output items and response.model field were not captured.
+- Public app-server output notifications contained completed item types userMessage=1, reasoning=1, agentMessage=1 and imageGeneration=0. No commandExecution, MCP, webSearch, dynamicToolCall, or fileChange item occurred.
+- The single /responses request completed HTTP 200 with API-key authorization attached.
+
+3. Empty agent message and notification accounting
+- Both item/started and item/completed agentMessage objects have a literal text field equal to the empty string, length 0.
+- Neither object has a content key/array. phase=final_answer, delivery=null, questions empty.
+- turn/completed status=completed, error=null, itemsView=notLoaded, items=[].
+- All additional public notifications were accounted for: thread active/idle, reasoning summary-part/delta, token usage, account rate-limit update, and remote-control disabled. No error/failure/tool/image notification occurred.
+- There were no WARN/ERROR log rows scoped to the live thread.
+- Two threadless startup warnings concerned optional ChatGPT plugin catalog sync under API-key auth; they were not model tool calls or turn errors.
+
+4. Model identity
+- Thread response and sampling/request logs identify the requested main model as gpt-5.6-luna and provider as gpt.
+- The raw upstream response model identifier was NOT_CAPTURED.
+- The image submodel is UNKNOWN because no imageGeneration call/item occurred.
+
+5. model/list source vs authenticated remote /models
+- app-server model/list was an app-server/CLI catalog readback. Its probe logs contain no /models HTTP request; it must not be represented as an authenticated proxy GET /models result.
+- A single separately authorized authenticated GET https://codex.chcbz.net/v1/models was then executed with redirects disabled. It returned HTTP 200 JSON, 1157 bytes, SHA256 8aa26e63d8f535f8acc3d4586e6f497325371272983562d5e6b19d0bfd5851a9.
+- The remote catalog returned 14 IDs and included exact IDs gpt-image-2.5, gpt-image-2.5-flare, and gpt-image-2.5-sunburst, plus gpt-image-1.5 and gpt-image-2.
+- Those model objects expose only created/id/object/owned_by. No alias, aliases, root, or parent field was supplied. Therefore no alias relationship is established.
+- This private proxy metadata does not establish public official documentation truth, actual Responses image-tool declaration, tool availability, generation entitlement, or successful image generation. No listed ID is written to config.
+
+Bounded root-cause conclusion
+- Proven: runtime feature resolved true; authenticated main-model Responses call returned HTTP 200; public turn completed with a truly empty final message and zero image/tool items.
+- Not proven: the outbound request actually contained image_generation; raw response output item types/model were not captured.
+- Remaining evidence-compatible branches are: (a) exact 0.159.2 request construction omitted the image tool despite effective feature state; (b) the tool was declared but the model did not call it; or (c) the compatible proxy transformed/ignored the tool or output. Existing evidence cannot select among these branches.
+- Do not retry the same request. A materially different future diagnostic must first capture a redacted outbound tool-name list and raw output item-type list without exposing prompt/auth; capability=true or /models presence is not a substitute.

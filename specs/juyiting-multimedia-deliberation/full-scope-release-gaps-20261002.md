@@ -160,3 +160,15 @@ Main实际源码核验（Client3619d33）：agent-client.mjs已有runNativeConve
 目标实际Codex0.159.2（binary SHA256 1748767b230ebfc3d4ab7e4e254920d0c0ad9691fd8c11f190e7d44511a4a92e）含image generation/edit内部类型；两目标使用既有custom Responses通道。尚未证明账号图片权限，但也不能因未另配Images API判不可用。实际风险收敛为CLI事件合同：Client期望顶层Responses image_generation_call，binary静态exec序列化目录未显示该item，已有正向fixture系人工注入。下一步用自有隔离app-server/schema作零模型调用metadata readback，确认准确事件及生效工具配置，再决定最小适配；不先改模型/endpoint。
 
 证据：native-image-channel-discovery-20261002，Main核验receipt摘要8d95f760。Owner回执末段“另行授权”不能成为重复确认门槛：此前既有额度内真实生成/改图授权保留，本轮先做零调用发现，不新增付费范围。shared runtime维护归属仍单独处理；尚未触发新Run或运行配置变更。
+
+## 2026-10-02 原生工具请求归因：真实调用与离线捕获分开记录
+
+实际0.159.2 app-server零模型调用readback显示`imageGeneration=true`；public产物合同为`item/completed.params.item.type=imageGeneration`，不能用现有人工顶层`image_generation_call` fixture代替。既有额度内一次实际主模型调用HTTP200且turn completed，但agentMessage为空、imageGeneration=0，无图片字节；未继续EDIT、未重试，具体原因尚未知。序列化回执失败发生在请求完成后，离线修复不算第二次Provider调用。
+
+一次真实认证GET既有proxy `/models` HTTP200，目录列出用户指定`gpt-image-2.5`及flare/sunburst字符串；仅证明该私有通道广告这些ID，不证明官方身份、别名关系或生成权限。用户随后给出root auth文件位置；仅确认key存在及权限0600，未把key值写入证据/仓库，也不因此新增付费授权。
+
+为避免重复消耗额度，Owner使用dummy key及无路由private network namespace对同版本CLI作capture-only：仅一次本地POST `/v1/responses`，主模型`gpt-5.6-luna`、tool_choice=auto，工具为request_user_input/get_goal/create_goal/update_goal/tool_search/web_search。**初始请求未直接包含image_generation或image_gen**。Sink故意返回400 diagnostic_capture_only、forward=0，不是实际Provider故障。临时auth已删、自有进程无残留。
+
+结论只缩小问题：能力广告不等于初始直接工具声明；尚须排查tool_search延迟暴露及模型/auth/provider工具装配条件，不能把初始未列图片工具直接宣布为账号不支持，更不能转而强制要求另一套Images服务。已交Runtime Owner继续零Provider离线核验；API Owner只读拆分原生generate/edit业务不变量与HTTP专属契约。暂不修改运行配置/触发Flow/部署。
+
+归档：`integration-evidence-20260928/native-image-request-attribution-20261002/manifest.json`，Main逐文件核对5份脱敏receipt/JSON SHA256。零调用能力、真实调用无结果、远程模型目录、dummy离线请求四类证据保持独立；全部不是34项产品验收PASS。全目标及共享服务OTHER_SCOPE custody边界不变。
