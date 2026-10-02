@@ -338,3 +338,11 @@ Run154 actual9cb最终FAIL：2878 passing、2 pending、1 failing。唯一失败
 Owner child3d9f9ae/tree9bee27f仅修改该测试，断言新的完整guard及持久化图像route依据，保留普通PDF/原议事事件约束；两个相关selector共55 passing。Owner磁盘受限sparse树显示413个未materialize D，不是文件系统clean，但index/commit无删除、三相关blob匹配；Main从commit干净FF，runtime src对9cb字节不变，不把缺文件状态当上线源码。已非force推develop和新release/1.13.52。全154历史Run核查无新自动/活动后19:44:44UTC单次Start155；官方19:46:19UTC仍RUNNING，build527596581/scan527596582 RUNNING，deploy527596583 INIT，actual checkout尚未读取，不假定已验证。
 
 API ae66实际启动Owner独立MySQL和Gradle验证中；新增SQL测试包含真实consent/bridge事务写入，但task/legacy/grant/requirement存在mock，不冒充完整HTTP创建或产品验收。尚无最终新API制品/安装结论。Main已准备保留原task417/key/profile的恢复路径，修复未部署前不重放。
+
+### 2026-10-03 04:18 CST：1.13.52 发布成功，真实点将后续链仍失败
+
+Run155 actual3d9f9ae/tree9bee27f：正式云端2879 passing、2 pending，构建/扫描成功。同Run首次部署单70594579失败，Runner主机healthy且106574481B包已下载；installer笼统报invalid/truncated archive。Main独立流式验证远端包全382成员和SHA6084db34，本地包摘要一致，dist实际108225702B高于失败后观测可用78721024B。仅退役本Main旧5c二级恢复三硬链，释放253586852B，保留当前d85直接恢复与新8c8a；同一helper独立stage364文件/manifest通过，不调用publish。改变资源条件后仅单次RetryPipelineJobRun部署，无新Start、无配置变化、无重建：新job527607479/单70594763成功，唯一主机healthy，Run155最终SUCCESS。原失败保留；未捕获原始errno，资源不足归因来自完整包/实际空间/同helper补救验证，不伪造ENOSPC日志。
+
+API ae66af9/treeea12b62独立核验源码/冻结JAR/内嵌类/真实MySQL XML后FF推develop并新冻结release/1.13.52；Client5bcb同样冻结52，旧release不动。API制品8c8ad5f1/253595968B，build_origin=local_user_authorized，正常启动52秒后PID3722320/UP，原配置9a53与launcher94de未改，准确Main scope与d85恢复副本保留。真实Chromium重新登录后，线上index、JuyiHallEntry JS/CSS三个摘要和大小全部与155制品一致。这里只声明版本安装成功，不把整个需求标released/accepted。
+
+原task417/profile/key/consent均保留。真实UI继续原点将：POST201，grant ACTIVE、原consent BOUNDv2，零版本400已修；紧接着GET assignment-operation500 ASSIGNMENT_OPERATION_INTEGRITY_ERROR。后台协调在createConversation的validCreate/text报BAD_REQUEST，两次同因后relay停止，未把已创建grant视为图片生成成功。原API Owner继续联合归因read与coordinator，Main不再重复POST/provider、不清生产数据。AC01/FD02在52仍FAIL，其余NOT_RUN，完整34项不缩减；没有本次可交付鸟图。证据见integration-evidence-20260928/release-1.13.52-progress/，当前不通知可验收。
