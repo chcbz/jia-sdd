@@ -182,3 +182,13 @@ Runtime Owner使用用户指定`gpt-image-2.5`完成一次JSON GENERATE和一次
 模型结论仅为该私有连接接受此请求model并生成/编辑有效图片，不证明公开官方型号或底层模型身份。原skill未保留HTTP成功码/响应结构/b64与URL来源，维持NOT_CAPTURED；不能据此证明现有Client3619的JSON `images[].image_url`及严格data[0].b64_json parser兼容。Main已安排一次materially different现有V3执行器JSON编辑诊断、捕获脱敏响应结构，失败只离线replay不盲重试。
 
 产品路线回到复用已有Agent接入+现有受控执行/upload/媒体/归档/验收链，不以新native authority迁移作为人为发布前置。是否需要HTTP payload最小适配待该真实结果决定。生成图片保留Owner分享输出路径，Git仅归档脱敏receipt及Main核验摘要：`integration-evidence-20260928/existing-codex-image-skill-20261002/`。此成功关闭“现有通道完全未知/不能生图”的缺口，不关闭平台34用例、双模式custody、正式版本发布与线上验收缺口。
+
+## 2026-10-02 真实V3执行器请求定位并修复响应兼容
+
+Client3619现有V3执行器的一次真实JSON EDIT请求HTTP200、direct response且返回有效PNG；因此无需推测或切换multipart才能接通。实际失败来自data[0]包含`b64_json,generation_id`（后者为string），旧parser要求只含b64_json而拒收。Provider调用1次，retry/fallback0；这是私有诊断而非平台lease或任务，不能计产品验收。
+
+Main独立Owner最小修复两个同构HTTP executor：允许已观测的非空string generation_id并仅作为不输出的opaque metadata，图片base64/PNG/大小/唯一结果、身份和持久claim不变。新增正向、畸形metadata、替代URL/输出身份、重复调用负向回归。旧源码2个正向均RED；修复34个executor用例PASS。扩展子集首轮缺yauzl导致49pass1fail，复用既有360KB本地依赖到自有树后54pass，不联网安装、不运行build。
+
+真实响应投影仅保留原b64、保留generation_id键/type并脱敏值：同一projection旧V3拒绝、新V3成功，输出1,764,364bytes/SHA256 `fea5ee52d8acf25ba86b3053bee1798e81cb3f73e3e56c021536bed7aef5415c`与真实Provider图一致；第二execute在fetch前被原claim拒绝。该修复验证0额外Provider请求。
+
+Client融合feature已FF/push/readback `d170c9778c51a14852b39ddc772e53d95d292d72` / tree `8f7349ec2823ecc6d10e23cab73036938b4a6098`，祖先3619保留。证据`integration-evidence-20260928/client-image-metadata-d170-20261002/manifest.json`。Runtime Owner下一步完善既有通道私有激活候选与版本化部署步骤，重核共享服务custody；当前没有生产配置写入、service操作或新Flow Run，未发布/未验收。
