@@ -255,3 +255,9 @@ Runtime Owner于20:24激活API exact0a4d，制品b4e53624，PID3506165，功能p
 ### 2026-10-02 21:33 两个独立实证失败待修
 
 官方Run151终态FAIL：build527428900失败、scan成功、deploy527428902未启动。完整日志归因由Web Owner执行，Main未retry/start。真实浏览器已登录账号对既有local/managed悬赏会话的V3 interactions/context各一次GET均503 BOUNTY_FOLLOWUP_V3_UNAVAILABLE；不是此前legacyV1不可用的推断。context只读事务内部调用锁定读为待验证嫌疑，原critical Owner正在隔离树精确归因和回归，不擅自改生产数据。两者不得互相归因；未发新生图/验收请求。证据 `integration-evidence-20260928/release-1.13.48-live-failures-20261002/`。
+
+### 2026-10-02 21:48 修复候选与真实只读事务诊断
+
+Web固定DNF墙钟门槛修复7aaca891/tree71c0536已两文件最小自检并FF推fusion feature；保留签名/RPM/allowlist/真实失败及Flow取消，只有dnf/yum显式timeout0。全bootstrap18项通过；最初17/1来自Owner sparse树未materialize已跟踪fixture，已恢复精确blob并更正，不能写成源码缺fixture。develop及冻结1.13.48仍c74，等API关联修复就绪再统一候选。
+
+API5c5580是待实际targeted测试候选：context改普通事务保留全部锁和零业务写，H2/Spring测试仍在执行准备。Main补真实MySQL零行只读诊断：普通WHERE1=0 SELECT通过，同SQL FORUPDATE被拒SQLState25006/vendor1792，回滚完成、DML0/数据行读取0。这验证部署数据库只读事务与锁定读冲突，但不冒充原HTTP异常stack或修复上线证明。既有ledger已向责任Owner开放targeted_verification，不把缺新增任务当行政门禁。

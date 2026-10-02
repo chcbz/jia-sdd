@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-02",
+  "scope": {
+    "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-release-owner-20261002",
+    "branch": "codex/mmd-ci-dnf-wait-20261002"
+  },
+  "commit": "7aaca8916bc2cad2d053328af0780913fff64bca",
+  "parent": "c74a3864b0909c8db4489c5938a590952a56d555",
+  "tree": "71c0536a8b3eeb9cbc7db9028b92ccfc05cd127c",
+  "run151_evidence": "/var/tmp/cyf-web-release-owner-20261002/evidence/flow-4403172-run151-monitor-20261002/run151-terminal-attribution-213234.json",
+  "changes": [
+    "Remove systemDependencyInstallPolicy.timeout=1200000.",
+    "Pass timeout: 0 only to DNF/YUM so it overrides runChecked finite default while Flow retains cancellation ownership.",
+    "Retain signed manager flags, fixed allowlist, RPM query, missing-only install, and failure propagation.",
+    "Cover both /usr/bin/dnf and /usr/bin/yum captured args/options and both manager failure paths."
+  ],
+  "verification": {
+    "targeted": {
+      "selector": "tests/ci-test-bootstrap.test.js --grep wall-clock cap|DNF/YUM installation failure",
+      "exit": 0,
+      "summary": "3 passing (33ms)",
+      "log": "ci-test-bootstrap-dnf-targeted.log",
+      "sha256": "776852b9ab39ab6efbbe5931f3b934bef7607b487586535fef949c18d0be32aa"
+    },
+    "static": {
+      "diff_check": "passed",
+      "contract_check": "1200000/20-minute policy absent from scoped files; timeout: 0 and signed/RPM contracts present",
+      "log": "static-contract-check.txt",
+      "sha256": "aad66638eb3d2784d4e2692ee3096e55c71b5f379e55e5ff1d2f0f6be9b3768c"
+    },
+    "unrelated_existing_fixture_failure": {
+      "selector": "tests/ci-test-bootstrap.test.js",
+      "exit": 1,
+      "summary": "17 passing, 1 failing because c74 worktree lacks tests/fixtures/juyiting/occlusion-v2-atlases/atlas-manifest.json; no package manager executed; preserved, not modified",
+      "log": "ci-test-bootstrap-targeted.log",
+      "sha256": "e6a9f8ae17fd31e71af5ea42d6396499d3444ad26eee439763a70e410b17655a"
+    }
+  },
+  "not_done": [
+    "no local Vite build",
+    "no local DNF/YUM installation/network operation",
+    "no Flow update/start/retry/cancel",
+    "no package.json or release-label change"
+  ]
+}
