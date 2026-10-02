@@ -171,3 +171,11 @@ Web第四轮 canonical verification 窄修候选 **01976566269039a0682f8ae47c582
 Web第四轮独立窄复审 **ACCEPT_LOCAL_WEB_SCOPE，P0/P1/P2=0**，canonical PASSED verification/positive draft revision及click-time负例闭合。Main本地Web commit **ae31dc44f2c8c4c8386ceaa6a18a4300d09749dc**，tree精确等于tested/reviewed **01976566269039a0682f8ae47c58240b2aee7684**，提交后clean；原件 attempt4/review-final.json。未push增量、Root gitlinks/pins保持上一远程基线。已激活唯一Knuth critical Writer补真实隔离共享Runtime/Client/HTTP与实际浏览器开发harness，baseline API2e4888ff/Webae31dc44/Clientbc035b37；Main继续拥有实际测试/浏览器/证据/Git，不把fetchfake和旧带mock先决条件fixture升级为Runtime。完整D2 source/development审计、remote exactSHA验证与最终pin/push仍待完成，84业务未执行/生产未授权不变，goal active。
 
 2026-10-02 真实Runtime补缺期间Main只读重新核对四仓远程：root f554b767/API62223001/Webbdff4786/Clientbc035b37；均为当前本地HEAD祖先，ahead分别31/6/2/0（仅本次时点，不作为最终push回执）。无前缀archive-agent-maintenance仍无远程ref，沿用既有codex分支。原件 `evidence/delivery/pre-runtime-remote-refs-20261002.json`；未执行push/fetch/checkout、未改变Source或pins，最终推送时仍重新核对exact SHA。
+
+### 2026-10-03 真实 Runtime attempt1（仅编译失败，不是运行验收）
+
+Main 在冻结 API candidate tree `560a59d1203a061967ab08065b78528091b5a324` 上持 `C:\tmp\cyf-gradle.lock` 执行 `:chat:jia-chat-starter:archiveRealRuntimeClasspath`，Gradle exit1。失败为 fixture 编译依赖缺少 `RabbitListenerEndpointRegistry` 与 Boot4 `WebServerApplicationContext` import 不匹配；没有启动 fixture JVM、初始化 Runtime 数据库或运行浏览器。原始日志及源码绑定保存于 `evidence/native-lifecycle/real-runtime-attempt1/`，已交同一唯一 Writer 最小修复，不以静态冻结代替运行证据。
+
+隔离 Alpine chroot 的真实 RabbitMQ 已由 Main 验证 `ping` 成功、Windows→WSL host-only TCP 可达，未启动全局 Docker。MySQL 保持 Windows loopback，独立任务 TCP relay 仅监听 host-only 接口并限制实际 WSL 源地址；已确认 `aam_execution` 为既有授权的空隔离 schema，不读取额外管理员凭据。Client `bc035b37` 已按 `git archive` 复制到新隔离目录并安装锁定依赖，尚未注册/执行；当前 chroot `python3 --version` 实测为 3.12.14，不沿用旧笔记中的 3.11 结论。批准 ZIP SHA256 仍为 `8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081`。
+
+全特性仍 ACTIVE / NOT_COMPLETE，真实 Runtime 场景与浏览器未验收，84 业务 case 状态未改。API/Web accepted local commits 尚未推送，根 gitlink 不提前改到未推送组件。新增扫描覆盖 MySQL/Rabbit/API-key 的实际秘密值，4526 个证据文件无命中（后续证据需重新扫描）。
