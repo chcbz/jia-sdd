@@ -130,3 +130,11 @@ Runtime Owner已按既有存储根和两目标scope填入可确定字段，Main�
 Main独立只读核验：current指向原20260926104830-29fda32，agent-client摘要与先前只读记录一致，service MainPID3274483/启动时间13:47:56未改变，API仍HTTP200/UP。其他compat链接、权限、私有状态和launcher写前基线尚待授权Runtime Owner核验，不能宣称完整恢复。Main没有删除目录或操作服务。
 
 根因已有具体证据：TEST_MODE可省略隔离路径并回退真实APP_HOME/bin/systemd/systemctl；空slug最初又被当未选实例。要求在任何副作用前强制私有fixture-root与控制stub的完整约束，不能只修slug。该检查仅针对实事故的测试隔离，不给正常发布新增任意门禁。Writer已停止测试/提升并提供事故清单；独立运行custody Owner仅核验/恢复可证明属于本事故的路径，不处理其他release/进程。
+
+## 15:37 越界残留有界清理完成，隔离修复仍在进行
+
+Runtime Owner完成精确release-归属冻结和无外部引用检查后，仅删除该事故残留；Main独立readback确认目录不存在、current/active client摘要与旧基线一致，service PID3274483及13:47:56启动时间未变。未重启、未reload、未调用Provider。恢复launcher匹配407db0a及历史源码，但事故前线上launcher摘要与全部私有文件内容摘要不可追溯，保持NOT_PROVEN；这不是全量byte-exact恢复证明。配置/状态mtime早于事故，compat links实际曾被重建，均如实记录。
+
+实现Owner正修TEST_MODE最早fail-closed私有fixture约束。Main静态检查发现全量installer仍需封住宿主npm fallback/cache/env出口，已反馈Owner；未执行该未冻结候选。40a1仍不提升，Client集成pin维持407db0a。脱敏恢复回执、Main静态检查快照及其局限保存在client-instance-fixture-incident-20261002证据目录。
+
+同测试账号仅检查最新两条既有“画一只鸟”就绪交付元数据，均为document/summary（可见MIME为PDF），无tool/model/provider/endpoint证据。未读内容/存储URI、未下载或重放；不能推断其为Provider生图或静态绘图。现有Images origin/model/合法凭据引用/合同缺口未由历史查询解决，不虚构配置继续发布。
