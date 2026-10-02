@@ -25,6 +25,9 @@ SITE_URL = 'https://kit.chaoyoufan.cn/'
 CHUNK_SIZE = 1024 * 1024
 ONLINE_VERIFY_POLL_DELAY_SECONDS = 2
 ONLINE_VERIFY_TIMEOUT_SECONDS = 30
+SCHEDULE_ROOT = Path('/var/lib/cyf-flow-release-schedule')
+SCHEDULE_INTENTS = SCHEDULE_ROOT / 'intents'
+STABLE_VERSION = re.compile(r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$')
 
 
 def fail(message):
@@ -240,8 +243,83 @@ def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
     record = dict(schema_version=1, pipeline_id=pipeline, run_id=run, branch='develop', commit=commit,
                   files=[dict(path=name, size=expected[name]['size'], sha256=expected[name]['sha256'])
                          for name in ordered])
+    package_version = stable_version(manifest.get('package_version'))
+    if package_version is not None:
+        record['package_version'] = '.'.join(str(part) for part in package_version)
     return record, expected
 
+
+
+def stable_version(value):
+    if not isinstance(value, str):
+        return None
+    matched = STABLE_VERSION.fullmatch(value)
+    return tuple(int(part) for part in matched.groups()) if matched else None
+
+
+def prior_package_version(record_path):
+    """Use a prior version only when its recorded index still identifies SITE.
+
+    A stale record is routing metadata, not an installation or scheduling gate: if
+    its index no longer matches the current public target, its version is unknown.
+    """
+    try:
+        info = record_path.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_nlink != 1:
+            return None
+        value = json.loads(record_path.read_text())
+        if not isinstance(value, dict):
+            return None
+        version = stable_version(value.get('package_version'))
+        files = value.get('files')
+        if version is None or not isinstance(files, list):
+            return None
+        recorded = next((item for item in files if isinstance(item, dict)
+                         and item.get('path') == 'index.html'), None)
+        if (not isinstance(recorded, dict) or isinstance(recorded.get('size'), bool)
+                or not isinstance(recorded.get('size'), int) or recorded['size'] < 0
+                or not isinstance(recorded.get('sha256'), str)
+                or not re.fullmatch('[0-9a-f]{64}', recorded['sha256'])):
+            return None
+        actual_path = SITE / 'index.html'
+        actual = actual_path.lstat()
+        if not stat.S_ISREG(actual.st_mode):
+            return None
+        size, digest = file_digest(actual_path)
+        if size != recorded['size'] or digest != recorded['sha256']:
+            return None
+        return version
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+def frontend_release_lane(installed, candidate):
+    if installed is None or candidate is None:
+        return 'unclassified'
+    if candidate[0] > installed[0]:
+        return 'scheduled-major'
+    if candidate[0] == installed[0] and candidate[1] - installed[1] >= 2:
+        return 'scheduled-major'
+    return 'immediate'
+
+
+def has_nightly_intent(pipeline, run, commit, kind):
+    """A scheduler-issued intent binds a delayed release to its exact Flow run."""
+    path = SCHEDULE_INTENTS / (pipeline + '-' + run + '.json')
+    try:
+        directory = SCHEDULE_INTENTS.lstat()
+        info = path.lstat()
+        if (not stat.S_ISDIR(directory.st_mode) or directory.st_uid != 0 or directory.st_mode & 0o077
+                or not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_nlink != 1
+                or stat.S_IMODE(info.st_mode) != 0o600):
+            return False
+        value = json.loads(path.read_text())
+    except (OSError, ValueError, AttributeError):
+        return False
+    return value == {
+        'schema_version': 1, 'kind': kind, 'pipeline_id': pipeline,
+        'run_id': run, 'commit': commit, 'issued_at': value.get('issued_at'),
+    } and isinstance(value.get('issued_at'), str)
 
 def target_lstat(path):
     try:
@@ -471,6 +549,20 @@ def deploy(pipeline, run, commit):
         with verified_package_handle(package, st) as package_handle:
             manifest_bytes, staged = scan_archive(package_handle, staging)
         record, expected = validate_manifest(manifest_bytes, staged, pipeline, run, commit)
+        installed_version = prior_package_version(record_path)
+        candidate_version = stable_version(record.get('package_version'))
+        lane = frontend_release_lane(installed_version, candidate_version)
+        if lane == 'unclassified':
+            print('CYF_WEB_FLOW_VERSION_ROUTE ' + json.dumps(
+                dict(run_id=run, commit=commit, installed_package_version='unknown',
+                     candidate_package_version=record.get('package_version'), lane=lane),
+                sort_keys=True), file=sys.stderr, flush=True)
+        if (lane == 'scheduled-major' and not has_nightly_intent(
+                pipeline, run, commit, 'frontend-major-nightly')):
+            print('CYF_WEB_FLOW_INSTALL=DEFERRED ' + json.dumps(
+                dict(run_id=run, commit=commit, lane=lane, reason='awaiting_00_30_nightly_intent'),
+                sort_keys=True))
+            return
         validate_site_targets(expected)
         # Transaction boundary: archive identity, coverage, sizes and hashes are all valid here.
         publish_staged(staged, expected)

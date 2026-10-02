@@ -100,7 +100,8 @@ class WebFlowStreamingTest(unittest.TestCase):
         helper.SITE_URL = 'https://fixture.invalid/'
         return helper, root, site, downloads / 'package.tgz'
 
-    def manifest(self, content, commit=COMMIT, run='92', bad_path=None, bad_digest=False):
+    def manifest(self, content, commit=COMMIT, run='92', bad_path=None, bad_digest=False,
+                 package_version=None):
         files = []
         for name, value in content.items():
             files.append(dict(
@@ -108,8 +109,11 @@ class WebFlowStreamingTest(unittest.TestCase):
                 size=len(value),
                 sha256='0' * 64 if bad_digest and name == 'index.html'
                 else hashlib.sha256(value).hexdigest()))
-        return dict(schema_version=1, pipeline_id='4403172', run_id=run, branch='develop',
-                    commit=commit, files=files)
+        result = dict(schema_version=1, pipeline_id='4403172', run_id=run, branch='develop',
+                      commit=commit, files=files)
+        if package_version is not None:
+            result['package_version'] = package_version
+        return result
 
     def archive_bytes(self, entries):
         output = io.BytesIO()
@@ -496,6 +500,107 @@ class WebFlowStreamingTest(unittest.TestCase):
             self.deploy(helper, content)
         self.assertEqual(observed, [fcntl.LOCK_EX])
         self.assertEqual((site / 'index.html').read_bytes(), content['index.html'])
+
+    def test_prior_version_requires_recorded_index_to_match_site(self):
+        helper, root, site, package = self.environment('schedule-record')
+        current_index = b'<html>installed</html>'
+        (site / 'index.html').write_bytes(current_index)
+        record = dict(
+            run_id='91', package_version='1.0.1',
+            files=[dict(path='index.html', size=len(current_index),
+                        sha256=hashlib.sha256(current_index).hexdigest())],
+        )
+        record_path = root / 'record.json'
+        record_path.write_text(json.dumps(record))
+        record_path.chmod(0o600)
+
+        self.assertEqual(helper.prior_package_version(record_path), (1, 0, 1))
+        self.assertEqual(helper.frontend_release_lane((1, 0, 1), (2, 0, 0)),
+                         'scheduled-major')
+        self.assertEqual(helper.frontend_release_lane((1, 0, 1), (1, 2, 0)),
+                         'scheduled-major')
+        self.assertEqual(helper.frontend_release_lane((1, 0, 1), (1, 1, 0)),
+                         'immediate')
+
+        (site / 'index.html').write_bytes(b'<html>replaced outside record</html>')
+        self.assertIsNone(helper.prior_package_version(record_path))
+        self.assertEqual(helper.frontend_release_lane(
+            helper.prior_package_version(record_path), (1, 13, 48)), 'unclassified')
+
+        record_path.unlink()
+        self.assertIsNone(helper.prior_package_version(record_path))
+        self.assertEqual(helper.frontend_release_lane(
+            helper.prior_package_version(record_path), (1, 13, 48)), 'unclassified')
+
+    def test_schedule_defers_matching_major_record_but_not_mismatched_record(self):
+        content = {'index.html': b'<html>candidate</html>'}
+
+        helper, root, site, package = self.environment('schedule-defer')
+        helper.SCHEDULE_ROOT = root / 'schedule'
+        helper.SCHEDULE_INTENTS = helper.SCHEDULE_ROOT / 'intents'
+        self.write_archive(package, [
+            ('file', 'release.json', json.dumps(
+                self.manifest(content, package_version='1.2.0')).encode('utf-8')),
+            ('file', 'dist/index.html', content['index.html']),
+        ])
+        installed = (site / 'index.html').read_bytes()
+        record_path = root / 'record.json'
+        record_path.write_text(json.dumps(dict(
+            run_id='91', package_version='1.0.1',
+            files=[dict(path='index.html', size=len(installed),
+                        sha256=hashlib.sha256(installed).hexdigest())],
+        )))
+        record_path.chmod(0o600)
+        before = self.snapshot(site)
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            helper.deploy('4403172', '92', COMMIT)
+        self.assertIn('CYF_WEB_FLOW_INSTALL=DEFERRED', stdout.getvalue())
+        self.assertEqual(self.snapshot(site), before)
+        self.assertEqual(json.loads(record_path.read_text())['run_id'], '91')
+
+        helper, root, site, package = self.environment('schedule-unclassified')
+        helper.SCHEDULE_ROOT = root / 'schedule'
+        helper.SCHEDULE_INTENTS = helper.SCHEDULE_ROOT / 'intents'
+        self.write_archive(package, [
+            ('file', 'release.json', json.dumps(
+                self.manifest(content, package_version='1.2.0')).encode('utf-8')),
+            ('file', 'dist/index.html', content['index.html']),
+        ])
+        record_path = root / 'record.json'
+        record_path.write_text(json.dumps(dict(
+            run_id='91', package_version='1.0.1',
+            files=[dict(path='index.html', size=len(installed),
+                        sha256=hashlib.sha256(b'not-current').hexdigest())],
+        )))
+        record_path.chmod(0o600)
+        stderr = io.StringIO()
+        with mock.patch.object(helper.urllib.request, 'urlopen',
+                               return_value=HttpResponse(content['index.html'])),                 contextlib.redirect_stderr(stderr):
+            helper.deploy('4403172', '92', COMMIT)
+        self.assertIn('"lane": "unclassified"', stderr.getvalue())
+        record = json.loads(record_path.read_text())
+        self.assertEqual((record['run_id'], record['package_version'], record['status']),
+                         ('92', '1.2.0', 'online_verified'))
+        self.assertEqual((site / 'index.html').read_bytes(), content['index.html'])
+
+    def test_manifest_records_only_stable_package_versions(self):
+        helper, root, site, package = self.environment('schedule-manifest')
+        content = {'index.html': b'<html>versioned</html>'}
+        target = root / 'staged-index.html'
+        target.write_bytes(content['index.html'])
+        staged = {'index.html': dict(path=target, size=len(content['index.html']),
+                                     sha256=hashlib.sha256(content['index.html']).hexdigest())}
+        record, expected = helper.validate_manifest(
+            json.dumps(self.manifest(content, package_version='1.13.48')).encode('utf-8'),
+            staged, '4403172', '92', COMMIT)
+        self.assertEqual(record['package_version'], '1.13.48')
+        self.assertEqual(expected['index.html']['sha256'], staged['index.html']['sha256'])
+
+        record, _ = helper.validate_manifest(
+            json.dumps(self.manifest(content, package_version='release/1.13.48')).encode('utf-8'),
+            staged, '4403172', '92', COMMIT)
+        self.assertNotIn('package_version', record)
 
     def test_source_has_no_fixed_package_or_archive_size_gate(self):
         source = SCRIPT.read_text()
