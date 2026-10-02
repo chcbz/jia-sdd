@@ -118,3 +118,7 @@ Main使用系统Chromium与私有profile，旧登录失效后通过真实登录�
 ## 双模式真实工程缺口继续实施
 
 Runtime最终只读确认旧current_task没有对应任务/成员/work-item/有效lease，不再据此禁止升级；但共享service子进程归属仍需运行Owner核对。现有生产installer/launcher不支持独立实例且通用PID匹配不适合多实例，已安排独立Client Writer实现隔离安装/控制，不因Provider配置缺失停下可做工程。详见client-instance-rollout-20261002.md；同共享service两个profile不能充当双模式验收。旧profile忙时reload会退出全进程，不把hotreload包装成安全drain，当前无生产迁移动作。
+
+## 15:00 完整API私有候选的本地静态收口
+
+Runtime Owner已按既有存储根和两目标scope填入可确定字段，Main指定的平台binding/epoch/issuer/revision进入私有候选（0600）；候选SHA256 `cfc59ed071fd27b429b07f71dabbc088fe687152d8d27cd35207f2102119f29a`。Main独立对照0a4d完整应用fixture启用键，脱敏配置索引覆盖全部相关true/fullFeatureWiring开关。此检查仅证明键覆盖，不能证明值有效或运行就绪。真实origin/model/custody/Images凭据来源及HTTP合同仍MISSING_EXTERNAL；expiry在激活时冻结。候选保持NOT_READY/INACTIVE/DO_NOT_INSTALL，未复制秘密或安装到线上。
