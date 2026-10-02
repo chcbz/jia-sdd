@@ -295,3 +295,12 @@ Flow152部署故障仍未解除，但Main继续检查可独立验证的产品准
 用exactWeb7aaca原装load/parse函数回放该真实响应，两目标均MALFORMED；JuyiHall.vue assignTask2373之后的分支会拒绝办理。仅在离线对照恢复非null authorization对象后仍UNAVAILABLE，故不是单字段修复即可恢复整条链。默认SensitiveSanitizeConfig将authorization列为NULL敏感字段，是需要原Owner核实的实际过滤路径；不得为业务对象关闭全局秘密过滤。另需核对初始点将使用的旧ControlledImageExecutionSessionLookup与CLI仅V3ready声明之间的合同，不能再把旧V1 capability当与用户主流程无关。
 
 原critical Owner已接只读归因/最小修复合同设计；这份证据是准入缺陷诊断，不是实际新任务完整操作，也不把34产品用例改成PASS。Run152制品仍保留，但即使部署恢复也尚不足以认定功能可验收。
+
+
+### 2026-10-02 18:13 UTC 续记：Runner恢复、主入口纠偏和真实MySQL通过
+
+用户重装既有Runner后，Main实际核验unit active/running、PID3630220，缺失配置已恢复；原派发阻塞解除。官方最近仍为152 FAIL，未重跑旧包、未新Start。真实浏览器又证明默认“提出需求”误入PRIVATE；Web修复4dc65cb/tree969db74已FF合Main feature，改走既有原子requirement-create及可选参考picker，补嵌入详情重入可见性回归；Owner58/46项定向通过，尚未推develop或云端验证。
+
+API准入改根schema3/executionAuthorization与controlled V3；全局敏感字段脱敏未关闭。真实MySQL8.0.46暴露REGEXP BINARY与既有bin collation不兼容，修为保持严格小写hex的REGEXP，并仅规范化实证的三种固定字面量旧binary cast/_ascii表示；不移除CHECK。首轮DDL失败及第二轮_ascii规范化失败均保留。当前d85bc64/tree7280d0d：Main直接解析XML核对4+3共7个真实MySQL方法PASS、0fail/skip，另11个schema canonicalizer单测XML曾核对PASS；桥接XML随后被恢复测试替换，未保留独立旧XML副本，不虚填其摘要。
+
+安装恢复已纠正旧manifest：旧5c初始化器严格比较完整列、索引和CHECK集合，不能直接声称会忽略新增列。实际旧jar类加载器与Spring条件注册2项测试证明，仅关闭bridge-enabled可避开不兼容桥接准入，保留其它初始化器及V3数据；这不是生产环境完整回退演练。Main已准备旧jar硬链和精确恢复配置，正常前向配置不关闭功能。新版本1.13.50仍是候选，未创建新release refs，1.13.48/49不动。证据见 [本次固定快照](integration-evidence-20260928/primary-v3-recovery-20261002/candidate-state.json)。正式制品交接、同Run前端发布和全34项产品验收仍未完成，不通知可验收。
