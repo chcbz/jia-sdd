@@ -361,3 +361,16 @@ API d355d455/tree d661691e正式本地授权制品04d1ad38/253596977B已于05:01
 voice独立Owner交真实VarIcon3.10.9/字体loaded/公网CSS实验：microphone/settings/stop名称无glyph，idle隐藏文字使按钮空白；不是字体未加载。Main独立核验共享结论SHA c214e9dd。已将三个明确18x18 inline SVG及非mock真实窄viewport回归分配voice Main唯一Owner，保留ARIA/布局/context/CAS/行为，统一候选后云效验证，不抢跑或另开发布。本轮全部34项范围不缩减，仍不可通知验收。
 
 脱敏进度见 integration-evidence-20260928/release-1.13.53-progress/release-and-product-status.json；历史52矩阵保留当时失败，不用其500覆盖53恢复事实。
+
+
+### 2026-10-02 21:54 UTC：1.13.54后端安装，前端156在跑，原需求仍未执行
+
+API5fe27328/treeeb34b44、Webc4a2512/treed104074、Client5bcb均已非force推develop及新release/1.13.54并readback，旧release不动。Main独立核验API51项定向XML/66项正常打包图XML（含复用）、JAR4a35b084/253597460B/ZIP CRC和四生产class；对04d1旧JAR逐成员比对，仅agent/chat两模块JAR变化。真实事务回归使用Spring代理、参与式REQUIRED与H2写入证据，DAO仍有mock，不冒充完整MySQL/HTTP或线上生成。Python3.6验证helper首轮误用text参数，改为universal_newlines后通过；不是制品失败。
+
+四目标fresh实际work/execution lease均0后，从验证制品可恢复安装。21:46:01UTC实际PID3793597/UP，启动57秒，配置/launcher不变，保留04d1直接恢复。原task417通过真实登录/查看进展再次GET200并显示原需求，无重复点将。当前request及step实际WAITING_AUTHORIZATION/stateVersion1、executionId=null；persisted grantACTIVE/consentBOUND并不证明当前准入tuple通过。新部署日志未再观察rollback-only，但底层实际denied原因未确定，原critical Owner继续查明并设计同意图恢复，不以永久等待冒充修复成功，不清状态或补一份新付费意图。
+
+Web包含voicee586三inline SVG最小修复及text归档digest并发、身份/选区切换、卸载和digest失败本地重试修复；34voice与7text定向通过。Main检查f6候选发现未成形body:null可能重放，补c4a回归后才集成。Web旧textSelection payload尚未改合同，归档400仍未解决。完整155历史Run查询无自动/活动、配置3eed未变后，21:44:44UTC单次Start返回156。21:54:28UTC官方source确认为c4a及f6/e586祖先，build527641071RUNNING、scan527641072SUCCESS、deploy527641073INIT；没有云端通过/制品/上线结论，当前线上仍155。已向voice Main发送source/Run通知。
+
+按实际空间顺序，只退役Main已过时d85及ae66二级副本硬链；Owner各自退役其链接后，Main锁下核对摘要/inode/nlink、无FD、当前健康与直接恢复再删自己的链接，保留全部报告。最新一次回收253595968B，可用53665792→307326976B；不清foreign文件，不设置任意预留门槛。54浏览器首启误读旧DevToolsActivePort而ECONNREFUSED，确认无遗留自身Chrome后改为等待新端口记录并就绪核验，原profile/意图保留，未重启共享服务。
+
+当前34矩阵：AC01 PARTIAL、FD02 FAIL、AC12 FAIL，其余未实测，不通知可验收。脱敏依据见integration-evidence-20260928/release-1.13.54-progress/。
