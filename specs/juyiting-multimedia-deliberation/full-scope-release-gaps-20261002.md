@@ -330,3 +330,11 @@ API Owner源码372123e仅把受控桥接expectedTaskVersion下界从1改为0，�
 Web9cbcbbe/tree7038ffb修正同任务已持久化controlledImageBridge路由在BOUND/清offer/详情重入后继续生效，不误露PDF入口；普通历史PDF任务保留。UNKNOWN显示真实message，不伪称拿到错误code。Owner47定向通过，Main两路径/FF/voice三文件字节一致核验，已非force推develop并新冻结release/1.13.51，1.13.50不动。该UI-only修复无新API合同依赖，故无需把API测试完成作为前端开跑门禁；完整153个历史Run核查无自动/活动后，于19:23:15UTC单次Start154。官方SCM确认actual9cb，build527587862 RUNNING、scan527587863 SUCCESS、deploy527587864 INIT；未声称发布完成。
 
 只退役本Main终态Run153的本地重复下载包106572406B：互斥锁下核对record153、完整SHA7b4dd9f3和无打开FD后删除；线上dist/回退及远端同Run制品均保留。原API5c直接旧恢复文件也未删。后续前端安装和API新jar打包需按实际磁盘占用串行错开，不能同时消耗不足空间。真实task417原profile/原key仍保留且browser已关闭，修复部署前不再重放。AC01/FD02按实测标FAIL，其余NOT_RUN，完整34项不缩减。
+
+### 2026-10-02 UTC 续记：保留154失败，修复断言后转新候选155
+
+Run154 actual9cb最终FAIL：2878 passing、2 pending、1 failing。唯一失败为W06 personal-workspace-task-material-links.test.js:213要求旧裸v-if表达式，与新增图片分流guard不符；扫描SUCCESS，生产build未到达，部署INIT未启动，线上仍153/4dc。没有重跑原候选或移动冻结release/1.13.51。
+
+Owner child3d9f9ae/tree9bee27f仅修改该测试，断言新的完整guard及持久化图像route依据，保留普通PDF/原议事事件约束；两个相关selector共55 passing。Owner磁盘受限sparse树显示413个未materialize D，不是文件系统clean，但index/commit无删除、三相关blob匹配；Main从commit干净FF，runtime src对9cb字节不变，不把缺文件状态当上线源码。已非force推develop和新release/1.13.52。全154历史Run核查无新自动/活动后19:44:44UTC单次Start155；官方19:46:19UTC仍RUNNING，build527596581/scan527596582 RUNNING，deploy527596583 INIT，actual checkout尚未读取，不假定已验证。
+
+API ae66实际启动Owner独立MySQL和Gradle验证中；新增SQL测试包含真实consent/bridge事务写入，但task/legacy/grant/requirement存在mock，不冒充完整HTTP创建或产品验收。尚无最终新API制品/安装结论。Main已准备保留原task417/key/profile的恢复路径，修复未部署前不重放。
