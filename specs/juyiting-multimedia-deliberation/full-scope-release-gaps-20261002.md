@@ -273,3 +273,11 @@ API5c5580/treea0e84已定向6项通过并非force推develop。测试为真实Spr
 API5c5580/d5c7fb9a在独立Main scope安装完成，PID3558818、健康UP、实际启动62秒，原properties与launcher摘要不变，旧b4可恢复文件保留。重启后浏览器旧token GET为401/空体，重新通过真实测试账号表单登录后，两条旧会话context均409 BOUNTY_FOLLOWUP_V3_CONFLICT；此前503消失，但不将旧任务合同冲突当新任务200/生图验收。
 
 Web7aaca已非force合入develop，三组件新release/1.13.49分别固定API5c5580/Web7aaca/Client5bcb并远端readback，未移动1.13.48。完整分页确认没有push自动新Run及活动Run后，Main22:19:15单次Start返回4403172/152；参数{}，raw及canonical配置CAS匹配。实际checkout、云端tests/build/artifact/deploy和34产品用例仍待观察，不能仅凭目标SHA宣称部署。共享Client授权/激活ledger旧文案已纠正；统一集成归Main MMD-U4条目，避免重复active Agent归属。
+
+### 2026-10-02 23:08 Run152测试/构建通过，部署派发故障待归因
+
+官方actual checkout7aaca与预期一致。test/build527459231 SUCCESS、scan527459232 SUCCESS；日志可见2873 passing/2 pending、E14 passed、Vite11.07s和364file manifest。more=false但本地safe reader输出截断，未声称日志全文完整。DNF已成功完成，不再是151旧超时根因。
+
+同Run制品path aone2/2049636/1790952434215/cyf_web_flow_4403172.tgz，106568069bytes；Owner内存流式SHA-256=14cb69357b2abe28fa9f88854ab23b8c22d9889d490fe2e7860a58446397ac23，不写本地重复包。部署527459233 FAIL/order70590729，hostgroup28833唯一机器clientStatus=unhealthy。机器日志API成功但deployLog空；本机无该rdc脚本日志、无downloads/152，未进入已知安装脚本。
+
+与Flow状态不同，ECS DescribeCloudAssistantStatus=true且有当前心跳，CloudAssistant InvocationCount1309；本机aliyun.service原PID持续heartbeat200/newTasksfalse。hostgroup仍绑定存在的ecs连接149711，但ListServiceConnections不证明凭据有效/调用权限。DescribeInvocations=0仅当前本机AK查询视角，不得外推Flow连接无invoke。准确平台拒绝原因尚未知，不能归因本机服务失活、磁盘、安装器或voice。未重启健康共享服务/未盲retry/未重建；继续只读核对连接/机器状态差异，有据修复后复用同Run部署。34产品用例仍NOT_RUN，未宣称可验收。
