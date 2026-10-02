@@ -374,3 +374,13 @@ Web包含voicee586三inline SVG最小修复及text归档digest并发、身份/�
 按实际空间顺序，只退役Main已过时d85及ae66二级副本硬链；Owner各自退役其链接后，Main锁下核对摘要/inode/nlink、无FD、当前健康与直接恢复再删自己的链接，保留全部报告。最新一次回收253595968B，可用53665792→307326976B；不清foreign文件，不设置任意预留门槛。54浏览器首启误读旧DevToolsActivePort而ECONNREFUSED，确认无遗留自身Chrome后改为等待新端口记录并就绪核验，原profile/意图保留，未重启共享服务。
 
 当前34矩阵：AC01 PARTIAL、FD02 FAIL、AC12 FAIL，其余未实测，不通知可验收。脱敏依据见integration-evidence-20260928/release-1.13.54-progress/。
+
+### 2026-10-02 22:18 UTC：Run156成功发布，线上图标已确认；刷新恢复发现真实缺陷
+
+Run156官方22:02:27UTC终态SUCCESS，exact c4a25123/tree d104074；build527641071、scan527641072、deploy527641073全SUCCESS，云端2887 passing/2 pending；部署单70595823单批唯一主机Success/healthy。106578156B同Run包SHA256 5cafe1d542cad1ff9596e7e2739ad40e4fc26f87b385265fc9e6f94f7a157fd9已完整流式读取382成员，364个dist文件逐一匹配manifest。22:04:37UTC真实浏览器线上index/JuyiHallEntry JS/CSS三文件大小及摘要匹配。没有为验证重新build、Start或更改Flow配置。
+
+22:15:26UTC明确进入task417已指派公孙胜的议事页，仅检查部署控件，不发送消息/点生成。实际麦克风与设置均为18x18 SVG、paintBBox非空、aria-hidden=true/focusable=false；Main已view_image确认可见。未开始录音、不宣称stop控件实际设备或Provider验收。已通过send_input向voice主控发送正式终态及线上实测。独立合并核验证据SHA256 ed52190950fe844d2007f5ac25c6cd1a20b0f6c18512fec866ff17297b78a341。
+
+真实刷新后用户资料未hydration：保留owner/client但tenant空，当前scope由tenant/client/owner退为client/owner，与原task417持久意图不匹配。因此“查看进展”不读取原assignment，错误展示旧PDF办理区。只读核对原意图仍为ADMITTED且有controlled bridge；没有跨scope复制/扫描恢复、重复点将或生成。独立critical Writer已接最小身份恢复与隔离/race回归，尚未交付/发布。手动进入议事仅用于图标检查，不能替代自动恢复验收。
+
+34项完整矩阵继续保留：AC03的刷新子例FAIL；AC11生成媒体/断线/乱序子例仍NOT_RUN（没有媒体），标注恢复前置缺陷；AC01 PARTIAL、FD02授权等待FAIL、AC12文本保存400 FAIL维持。整体仍未可验收，task417尚无鸟图；后续先修原请求授权/能力分类与身份恢复，保持同一意图继续。

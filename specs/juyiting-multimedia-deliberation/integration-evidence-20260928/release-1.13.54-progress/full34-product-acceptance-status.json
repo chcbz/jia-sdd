@@ -28,8 +28,14 @@
       "id": "AC03",
       "scenario": "双击/重试点将、刷新、多端同一意图",
       "requiredEvidence": "一次 assignment 意图对应一个会话、一个首条请求；无重复模型执行",
-      "status": "NOT_RUN",
-      "spec": "acceptance.md"
+      "status": "FAIL",
+      "spec": "acceptance.md",
+      "evidence": {
+        "webCommit": "c4a25123eaa5e34b798601ebd952e01d19eb4718",
+        "flowRun": 156,
+        "observed": "Same-browser refresh loses tenant in scope; existing original intent is not recovered. This is the refresh subcase only; double click and multi-end subcases not reverified. No duplicate generation observed.",
+        "record": "release-and-product-status.json"
+      }
     },
     {
       "id": "AC04",
@@ -85,7 +91,11 @@
       "scenario": "生成中/已就绪时刷新、断线重连、乱序/重复事件",
       "requiredEvidence": "无重复生成/part；低 revision 不回退；历史含已就绪媒体；游标失效按快照重同步无漏事件",
       "status": "NOT_RUN",
-      "spec": "acceptance.md"
+      "spec": "acceptance.md",
+      "evidence": {
+        "observed": "Prerequisite refresh-to-original-intent fails as recorded under AC03; generated-media replay/reconnect/ordering not executed because no generated asset yet.",
+        "record": "release-and-product-status.json"
+      }
     },
     {
       "id": "AC12",
