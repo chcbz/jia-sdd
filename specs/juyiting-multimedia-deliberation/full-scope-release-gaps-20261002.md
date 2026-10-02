@@ -346,3 +346,5 @@ Run155 actual3d9f9ae/tree9bee27f：正式云端2879 passing、2 pending，构建
 API ae66af9/treeea12b62独立核验源码/冻结JAR/内嵌类/真实MySQL XML后FF推develop并新冻结release/1.13.52；Client5bcb同样冻结52，旧release不动。API制品8c8ad5f1/253595968B，build_origin=local_user_authorized，正常启动52秒后PID3722320/UP，原配置9a53与launcher94de未改，准确Main scope与d85恢复副本保留。真实Chromium重新登录后，线上index、JuyiHallEntry JS/CSS三个摘要和大小全部与155制品一致。这里只声明版本安装成功，不把整个需求标released/accepted。
 
 原task417/profile/key/consent均保留。真实UI继续原点将：POST201，grant ACTIVE、原consent BOUNDv2，零版本400已修；紧接着GET assignment-operation500 ASSIGNMENT_OPERATION_INTEGRITY_ERROR。后台协调在createConversation的validCreate/text报BAD_REQUEST，两次同因后relay停止，未把已创建grant视为图片生成成功。原API Owner继续联合归因read与coordinator，Main不再重复POST/provider、不清生产数据。AC01/FD02在52仍FAIL，其余NOT_RUN，完整34项不缩减；没有本次可交付鸟图。证据见integration-evidence-20260928/release-1.13.52-progress/，当前不通知可验收。
+
+Run155终态后，Main在部署锁下核对record155、精确6084摘要及无打开FD，仅退役本地下载重复包106574481B，远端同Run制品、线上dist及API恢复文件保留；可用空间295305216→401887232B。后续验证仍可按远端同Run制品流式取证，不声称本地下载路径继续存在。后端候选51e62198/tree9a679ec4已包含read协议3绑定校验与多行instruction修复，测试尚在Owner原handle执行，未合入/发布；前端155无需为此重建。
