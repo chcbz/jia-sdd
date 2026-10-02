@@ -1,0 +1,37 @@
+{
+  "tree": "5c8b8a28550d437855e5155f381b5e4d6346d0cb",
+  "verdict": "REJECT_LOCAL_API_SCOPE",
+  "P0": 0,
+  "P1": 1,
+  "P2": 1,
+  "reviewer": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "submission_id": "01a0faa8-3494-7aa3-bdfb-348c85fa7a58",
+  "scope": "API authorized handling/progress/current-publication facts only, not whole feature",
+  "findings": [
+    {
+      "priority": 1,
+      "title": "revoked appointment remains falsely presented as current assigned agent and permission",
+      "paths": [
+        "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java:1023-1029,3531-3608,457-492",
+        "chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/maintenance/store/JdbcArchiveMaintenanceStore.java:235-240"
+      ],
+      "condition": "appointment revoke fences run and clears slot without changing persisted historical job assignee/permission/waitReason; subsequent authorized GET projects historical values as current",
+      "repair": "explicit historical snapshot vs actual current assignment/blocker; maintain manager-slot-appointment-job lock order; actual appointment-revoke/read MySQL race proof"
+    },
+    {
+      "priority": 2,
+      "title": "same strong job-revision ETag emitted for changing readback/readerTarget representation",
+      "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/http/ArchiveAdminController.java:231-237",
+      "condition": "readback PENDING FAILED PASSED changes embedded facts with unchanged job revision; no-store mitigates but validator incorrect",
+      "repair": "separate representation validator and preserved mutation revision/If-Match token; actual same job revision changing facts test"
+    }
+  ],
+  "confirmed": [
+    "least-privilege current jobread manager and foreign/revoked scope guards",
+    "actual24byte fixture complete sourcecoverage 0-9/9-12/12-21/21-24 and currentPASSEDvalidation establishes total",
+    "immutablepublication receipt versus currentverification/state separated",
+    "exactsamejobPUBLISHED/PASSED edition and currentReaderpolicy only permitsreaderTarget",
+    "no storage IO/lease across handling snapshot",
+    "232focusedPASS/archive318/307PASS/11baselineFAIL; fresh XML unchangedtree delta empty"
+  ]
+}
