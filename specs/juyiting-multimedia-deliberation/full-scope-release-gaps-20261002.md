@@ -50,3 +50,10 @@ Runtime Owner完成现有配置及精确测试账号范围只读枚举，无生�
 - API工程继续推进：CHECK literal大小写及typed schema先于父表初始化的真实缺陷已形成修复，当前候选3080dc7b/tree0105e845，完整fixture与bootJar结果尚待Owner交付，不宣称通过。
 
 只读发现不改变hold，不构成发布或34项验收证据；最小下一步是补齐真实Provider配置/运行授权，同时完成正在推进的API工程验证。
+
+## 13:32 恢复路径澄清：不将缺hosted_profile误判成必须新增
+
+- Owner补查发现binding15有合法原managed-hosting来源：唯一ACTIVE lease/initial intent、有效entitlement、原managed key及scope一致的既有claim。该路径不依赖agent_hosted_profile；此前没有可直接使用的ACTIVE目标结论仍成立，但恢复不必迁移到另一种profile发布机制。
+- 最小待授权动作是fresh CAS恢复现有binding15及同一identity生命周期，随后调用一次已有零账本扣款free reprovision恢复原managed runtime。需要明确production DML、reprovision及managed service custody授权；不新建identity/profile/key、不重绑、不租赁/充值。此时仍未授权、未执行。
+- 不应调用要求hosted_profile的通用repair端点来代替原managed-hosting恢复；新建profile属于更广迁移，不在最小方案内。Provider生成/编辑真实绑定仍独立缺失，不因身份修复自动就绪。
+- Owner明确允许共享的四份脱敏证据已校验SHA256并保存于integration-evidence-20260928/runtime-recovery-scope-20261002；其余私有配置/凭据指纹未复制。
