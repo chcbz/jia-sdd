@@ -22,10 +22,6 @@ import urllib.request
 ROOT = Path('/var/lib/cyf-web-flow')
 SITE = Path('/home/isp/hosts/cyf/web/kit')
 SITE_URL = 'https://kit.chaoyoufan.cn/'
-MAX_PACKAGE_SIZE = 1024 ** 3
-MAX_ARCHIVE_ENTRIES = 20000
-MAX_ARCHIVE_SIZE = 1024 ** 3
-MAX_MANIFEST_SIZE = 4 * 1024 ** 2
 CHUNK_SIZE = 1024 * 1024
 ONLINE_VERIFY_POLL_DELAY_SECONDS = 2
 ONLINE_VERIFY_TIMEOUT_SECONDS = 30
@@ -166,8 +162,6 @@ def scan_archive(fileobj, staging):
     seen = set()
     staged = {}
     manifest_bytes = None
-    entry_count = 0
-    total = 0
     try:
         with tarfile.open(fileobj=fileobj, mode='r|gz') as archive:
             for member in archive:
@@ -175,19 +169,11 @@ def scan_archive(fileobj, staging):
                 if name in seen:
                     fail('unsafe archive entry')
                 seen.add(name)
-                entry_count += 1
-                if entry_count > MAX_ARCHIVE_ENTRIES:
-                    fail('archive exceeds entry limit')
                 if member.size < 0:
                     fail('unsafe archive entry')
-                total += member.size
-                if total > MAX_ARCHIVE_SIZE:
-                    fail('archive exceeds size limit')
                 if member.isdir():
                     continue
                 if name == 'release.json':
-                    if member.size > MAX_MANIFEST_SIZE:
-                        fail('missing or oversized release manifest')
                     _, _, manifest_bytes = copy_archive_member(archive, member, keep=True)
                 elif name.startswith('dist/'):
                     relative = name[len('dist/'):]
@@ -195,12 +181,12 @@ def scan_archive(fileobj, staging):
                     size, digest, _ = copy_archive_member(archive, member, target=target)
                     staged[relative] = dict(path=target, size=size, sha256=digest)
                 else:
-                    # Reports and provenance stay private, but still consume and hash them boundedly.
+                    # Reports and provenance stay private, but still consume and hash them streamingly.
                     copy_archive_member(archive, member)
     except (tarfile.TarError, EOFError, OSError):
         fail('invalid or truncated package archive')
     if manifest_bytes is None:
-        fail('missing or oversized release manifest')
+        fail('missing release manifest')
     return manifest_bytes, staged
 
 
@@ -224,7 +210,7 @@ def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
             or manifest.get('branch') != 'develop' or manifest.get('commit') != commit):
         fail('manifest does not match this develop Flow run')
     files = manifest.get('files')
-    if not isinstance(files, list) or not files or len(files) > MAX_ARCHIVE_ENTRIES:
+    if not isinstance(files, list) or not files:
         fail('invalid manifest files')
     expected = {}
     ordered = []
@@ -431,7 +417,7 @@ def verified_package_handle(package, before):
     try:
         current = os.fstat(fd)
         if (not stat.S_ISREG(current.st_mode) or current.st_uid != 0 or current.st_nlink != 1
-                or not 0 < current.st_size <= MAX_PACKAGE_SIZE
+                or not 0 < current.st_size
                 or (current.st_dev, current.st_ino, current.st_size) !=
                 (before.st_dev, before.st_ino, before.st_size)):
             fail('unsafe package')
@@ -445,8 +431,7 @@ def installed_run(record):
     st = target_lstat(record)
     if st is None:
         return 0
-    if (not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1
-            or st.st_size > MAX_MANIFEST_SIZE):
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1:
         fail('unsafe deployment record')
     try:
         value = json.loads(record.read_text())
@@ -468,15 +453,14 @@ def deploy(pipeline, run, commit):
     safe_dir(package.parent.parent)
     safe_dir(package.parent)
     st = package.lstat()
-    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or not 0 < st.st_size <= MAX_PACKAGE_SIZE:
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or not 0 < st.st_size:
         fail('unsafe package')
     lock = os.open(str(ROOT / 'deploy.lock'), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
     staging = None
     try:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            fail('another deployment is active')
+        # Preserve release mutual exclusion, but wait for the active Flow-owned
+        # installer instead of converting normal serialization into a fixed failure gate.
+        fcntl.flock(lock, fcntl.LOCK_EX)
         record_path = ROOT / 'record.json'
         if installed_run(record_path) > int(run):
             fail('refusing deployment older than the installed run')

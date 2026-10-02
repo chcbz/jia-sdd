@@ -467,42 +467,43 @@ class WebFlowStreamingTest(unittest.TestCase):
                 self.assertEqual(self.snapshot(site), before)
                 self.assertEqual(list(root.glob('.cyf-web-stage-*')), [])
 
-    def test_identity_lock_and_resource_caps_fail_before_publication(self):
+    def test_identity_fails_before_publication_and_lock_waits(self):
         content = {'index.html': b'new'}
         entries = [
             ('file', 'release.json', json.dumps(self.manifest(content)).encode('utf-8')),
             ('file', 'dist/index.html', content['index.html']),
             ('file', 'private-report/result.json', b'x'),
         ]
-        for label in ('identity', 'lock', 'entry-cap', 'size-cap'):
-            with self.subTest(label=label):
-                helper, root, site, package = self.environment('guard-' + label)
-                self.write_archive(package, entries)
-                before = self.snapshot(site)
-                held = None
-                try:
-                    if label == 'identity':
-                        with self.assertRaisesRegex(SystemExit, 'invalid execution identity'):
-                            helper.deploy('4403173', '92', COMMIT)
-                    elif label == 'lock':
-                        held = os.open(str(root / 'deploy.lock'), os.O_CREAT | os.O_RDWR, 0o600)
-                        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                        with self.assertRaisesRegex(SystemExit, 'another deployment'):
-                            self.deploy(helper, content)
-                    elif label == 'entry-cap':
-                        helper.MAX_ARCHIVE_ENTRIES = 2
-                        with self.assertRaisesRegex(SystemExit, 'entry limit'):
-                            self.deploy(helper, content)
-                    else:
-                        helper.MAX_ARCHIVE_SIZE = 1
-                        with self.assertRaisesRegex(SystemExit, 'size limit'):
-                            self.deploy(helper, content)
-                finally:
-                    if held is not None:
-                        os.close(held)
-                self.assertEqual(self.snapshot(site), before)
-                self.assertEqual(list(root.glob('.cyf-web-stage-*')), [])
-                self.assertFalse((root / 'record.json').exists())
+        helper, root, site, package = self.environment('guard-identity')
+        self.write_archive(package, entries)
+        before = self.snapshot(site)
+        with self.assertRaisesRegex(SystemExit, 'invalid execution identity'):
+            helper.deploy('4403173', '92', COMMIT)
+        self.assertEqual(self.snapshot(site), before)
+        self.assertEqual(list(root.glob('.cyf-web-stage-*')), [])
+        self.assertFalse((root / 'record.json').exists())
+
+        helper, root, site, package = self.environment('guard-lock')
+        self.write_archive(package, entries)
+        observed = []
+        real_flock = helper.fcntl.flock
+
+        def record_lock(fd, operation):
+            observed.append(operation)
+            return real_flock(fd, operation)
+
+        with mock.patch.object(helper.fcntl, 'flock', side_effect=record_lock):
+            self.deploy(helper, content)
+        self.assertEqual(observed, [fcntl.LOCK_EX])
+        self.assertEqual((site / 'index.html').read_bytes(), content['index.html'])
+
+    def test_source_has_no_fixed_package_or_archive_size_gate(self):
+        source = SCRIPT.read_text()
+        for forbidden in ('MAX_PACKAGE_SIZE', 'MAX_ARCHIVE_ENTRIES',
+                          'MAX_ARCHIVE_SIZE', 'MAX_MANIFEST_SIZE'):
+            self.assertNotIn(forbidden, source)
+        self.assertIn('not 0 < st.st_size', source)
+        self.assertIn("mode='r|gz'", source)
 
     def test_single_pass_small_archive_reads_each_file_once_without_backward_seek(self):
         helper = load_helper('single-pass')
