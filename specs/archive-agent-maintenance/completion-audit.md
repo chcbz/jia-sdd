@@ -179,3 +179,4 @@ Main 在冻结 API candidate tree `560a59d1203a061967ab08065b78528091b5a324` 上
 隔离 Alpine chroot 的真实 RabbitMQ 已由 Main 验证 `ping` 成功、Windows→WSL host-only TCP 可达，未启动全局 Docker。MySQL 保持 Windows loopback，独立任务 TCP relay 仅监听 host-only 接口并限制实际 WSL 源地址；已确认 `aam_execution` 为既有授权的空隔离 schema，不读取额外管理员凭据。Client `bc035b37` 已按 `git archive` 复制到新隔离目录并安装锁定依赖，尚未注册/执行；当前 chroot `python3 --version` 实测为 3.12.14，不沿用旧笔记中的 3.11 结论。批准 ZIP SHA256 仍为 `8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081`。
 
 全特性仍 ACTIVE / NOT_COMPLETE，真实 Runtime 场景与浏览器未验收，84 业务 case 状态未改。API/Web accepted local commits 尚未推送，根 gitlink 不提前改到未推送组件。新增扫描覆盖 MySQL/Rabbit/API-key 的实际秘密值，4526 个证据文件无命中（后续证据需重新扫描）。
+Runtime attempt2 tree fbe1131b 前后不变：真实 Gradle compile PASS/exit0/31s；launcher 在 Linux 启动前拒绝 main 的 NO-SOURCE 声明目录，唯一缺失项是 chat-starter/build/classes/java/main。原件 evidence/native-lifecycle/real-runtime-attempt2/，runtime/browser 仍 not_run。已交同一 Writer 精确识别合法空输出，禁止宽泛忽略缺失 JAR。
