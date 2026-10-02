@@ -144,3 +144,13 @@ Runtime Owner完成精确release-归属冻结和无外部引用检查后，仅�
 最终3619d33d575a3b8b2c535214edbdf0cfc2740acb/tree cc166acb7177bb3bc0d18f893bdf05f934c8e194已byte-exact FF到Client融合feature并push/readback；包含40a1实例实现与后续fail-closed修复，不提升孤立40a1。Main核验clean tree、407祖先、48个payload字节摘要、installer摘要和diff。TEST_MODE要求私有fixture、全部路径/cache/HOME及显式工具stub，禁止宿主控制fallback。
 
 Owner实际无特权UID99/env-i执行实例42pass；日志为事后终端导出（同期原始stdout未落盘），明确保留限制，不伪称原始制品。受影响workspace-manager installer子集另有原始日志10pass/35按selector排除/0fail，复用本地依赖，无真实npm或联网。manifest为最终源码静态重建，不冒充已清理fixture原件。证据见client-instance-3619-20261002。这里只关闭源码/隔离修复，双模式运行、真实Provider配置、正式发布与34用例仍未完成。
+
+## 2026-10-02 用户纠正：优先复用Agent原生绘图通道
+
+用户明确指出已有“gpt-image-2.5”，要求先核实现有Agent接入通道/绘图工具；**独立Images API或另建图片服务器不是业务前置条件**。此前把受控HTTP适配器所需origin/model/key当作全功能唯一出路的门禁撤回，相关历史NOT_READY仅适用于那份HTTP配置候选，不证明现有Agent无法生图。仅在实际通道核验失败且无可复用路径后，才列具体缺配置，不预先要求新凭据/新服务。
+
+Main实际源码核验（Client3619d33）：agent-client.mjs已有runNativeConversationImage及CODEX_IMAGEGEN_NATIVE_V1分支，使用既有runCodex通道，接收生成结果后校验真实图片字节并物化到私有run目录；不是从零新增Images API才有执行入口。当前能力声明只列GENERATE_IMAGE；结果解析只接受顶层image_generation_call/completed/base64，单测为合成事件。因此“已有源码路径”不等于“实际账号工具可用”，还须核实际CLI/app-server事件、参考图编辑能力、认证通道与V3授权/幂等/upload链路适配。
+
+只读发现顺序：目标Agent实际binary/version及tool schema→既有账号工具/能力声明与合法认证通道→确认真正返回结果形态及生成/改图路径→形成最小适配范围。主控自身image_gen工具不替代目标平台Agent；MCP列表或models列表未列图片模型也不能单独判定原生工具缺失。Fast CHAT不因此加载或执行绘图工具；生成/编辑仍按已有业务授权及execution/lease/产物校验办理。
+
+模型证据纠正：用户裸名称gpt-image-2.5保持原样等待实际通道验证；侧聊和Main内部通信一度提及的flare/sunburst及“官方确认”均不采信。本轮web未得到可复核正文，直接抓取官方页面返回HTTP403；这些不足以证明型号存在或不存在，不写入运行配置。用户本次通知不新增付费授权，也不授权触发Flow/改运行配置/接管进程；本轮未作这些操作。原共享服务OTHER_SCOPE维护归属是独立问题，不与绘图服务配置混为一谈。
