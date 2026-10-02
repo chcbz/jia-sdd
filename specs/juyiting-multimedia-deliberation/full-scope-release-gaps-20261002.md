@@ -78,3 +78,7 @@ Main指定Runtime Owner Shannon（01a0fa77-8e55-7151-a0b5-1b0b1b526358）执行�
 - 完整JiaApplication真实启动、旧catalog升级后第二次幂等启动、错误scope/OR TRUE/source负向拒绝均由Owner完成；owned Redis/DB清理，重型窗口已明确移交Runtime Owner。API工程fixture/JAR缺口已关闭，运行安装、完整真实配置与双模式产品验收仍未完成。
 - Client Owner核实bindingId/epoch是本平台Operator配置/轮换栅栏，不是上游发放对象；此前要求“上游单独签发binding receipt”无生产合同依据，应撤销这一解释。候选checker的来源字段不等于外部能力证据，正在修正仅任意type/path/hash即可VERIFIED的缺陷。真实缺口为可用Images origin/model/凭据来源及合同匹配、平台独立policy冻结与认证registration/presence readback。
 - 当前生产adapter追加 `/v1/images/generations` 与 `/v1/images/edits`；编辑要求JSON images[].image_url，响应要求base64 PNG。不能由Responses理解成功或models名称列表推断该合同兼容，也不能虚构不存在的上游binding API作为硬阻塞。
+
+## 13:55 Client Operator配置来源修正已合入
+
+Client feature已FFpush/readback `407db0a67d0446f345680f3fe7dab5d3d368d1b2` / tree `004678a3839e0a558196242fbe8aebb06b11974a`。Main核验5文件范围、diff、22pass/0fail/0skip报告与SHA256；未重复测试不变tree。候选不再要求上游签发binding，必须实际读取Operator冻结普通文件、验证字节摘要及精确policy tuple才能称配置来源VERIFIED。仅模板声明仍UNVERIFIED；STATIC_VALID、认证READBACK_MATCH与Provider实际兼容性保持分离。证据在integration-evidence-20260928/client-operator-binding-407db0a-20261002。未安装、未调用Provider或操作服务；原V3生成/编辑生产执行合同不变。
