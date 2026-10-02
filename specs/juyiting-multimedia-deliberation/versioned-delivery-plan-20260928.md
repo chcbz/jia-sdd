@@ -51,3 +51,11 @@ U0/图片纵切/完整多媒体的出厂范围不变；各里程碑达到条件�
 前端正式测试、Vite生产构建和制品生成改回阿里云Flow，覆盖历史前端本地发布例外；现有本地包仅作排障证据，不能发布或替代云端同Run制品。默认复用4403172，不新建流水线、不在云端失败时回退本地。API本地例外未被本指令撤销。
 
 Main实际核验4403172全部147条历史Run无活动任务，配置仅cloud_ci，无部署阶段；保存前值后仅为build命令增加两个多媒体UI flags，单次Update/readback成功，保持部署暂停。Web8c064已fast-forward合入远端develop并读回。push后两次查询未出现自动Run，随后单次启动Run148；11:36实际RUNNING，源码checkout SHA尚待日志/制品确认，不把预期SHA当已验证。证据在 `integration-evidence-20260928/web-flow148-20261002/`。
+
+## 2026-10-02 15:55 发布执行依据更新
+
+实际远端refs复核见integration-evidence-20260928/release-number-current-baseline-20261002.json：API develop仍49a9313（已有1.13.47），Web develop为c74a386，Client develop仍29fda32；这些是源码refs，不是线上版本。1.13.48仅为下一可选编号，尚未预留或创建release，冻结前必须再次查占用。三层出厂范围及34项验收不变，不因候选号变化缩减。
+
+Web Run150已验证c74a386/tree fd23ba5、2873pass/2pending/0fail及同Run制品，但该Run只有cloud_ci，不含部署。不能向终态Run追加部署阶段，不能将其制品改标为新Run。API/Client实际运行与Provider配置就绪后，由本Main保存当前Flow配置、补齐同Run正式test/build/upload/deploy链路并readback；先核对现有自动Run，避免重复start，最终发布使用新Run自身制品和实际线上核验。此处是执行方案，尚未改Flow配置或触发新Run。
+
+Client融合feature的实例隔离源码已到3619d33，但未合develop/安装。实际顺序仍为已授权API安装与健康→有归属、无重复身份注册的Client双模式移交及能力readback→最终Web云端发布→全范围真实产品验证。Provider配置缺失不可由静态候选或旧交付PDF代替；不安装NOT_READY私有配置。
