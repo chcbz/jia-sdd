@@ -71,3 +71,10 @@ Main指定Runtime Owner Shannon（01a0fa77-8e55-7151-a0b5-1b0b1b526358）执行�
 恢复Owner在DML前发现同canonical Agent存在一条历史offline runtime：无endpoint/token/current task，但binding/client/owner投影与binding15不匹配。先前精确scope查询的“无runtime”不能外推为canonical Agent全局不存在行。注册实现按canonical Agent读取并校验scope，不能让reprovision绕过此拒绝。
 
 已在任何生产数据修改前停止binding/identity/reprovision分支，向用户请求仅对这一条既有detached offline runtime做投影CAS realignment，保留row ID与canonical Agent，保持offline且无endpoint/token/task，不新增/删除行。此前仅两行生命周期授权不自动扩展至该行。API恢复授权仍有效且独立继续，在API Owner明确释放重型验证窗口后恢复基础设施、一次canonical start及健康核验；需要API入口的free reprovision必须在API健康后执行。共享脱敏异常证据及摘要已保存。
+
+## 13:50 API完整升级与制品验证通过；Provider门禁语义纠正
+
+- Main已核验API Owner最终清单摘要、clean commit/tree、全部9个变更路径摘要、v28真实JUnit 1/0/0/0、相关证据摘要及253586846字节bootJar SHA256 `b4e53624b017901db7d50a5b9023cb029ac37330e17c4ae5aa9bc737d1b09824`。最终源码 `0a4d4299122e9041c815cae067584212d8f5176a` / tree `5036922df1d086e963fa2785c3d63da882942048` 已byte-exact FF到API融合feature并push/readback，不重跑相同tree。构建来源为local_user_authorized，仅API既有授权例外，非Flow发布或产品验收。
+- 完整JiaApplication真实启动、旧catalog升级后第二次幂等启动、错误scope/OR TRUE/source负向拒绝均由Owner完成；owned Redis/DB清理，重型窗口已明确移交Runtime Owner。API工程fixture/JAR缺口已关闭，运行安装、完整真实配置与双模式产品验收仍未完成。
+- Client Owner核实bindingId/epoch是本平台Operator配置/轮换栅栏，不是上游发放对象；此前要求“上游单独签发binding receipt”无生产合同依据，应撤销这一解释。候选checker的来源字段不等于外部能力证据，正在修正仅任意type/path/hash即可VERIFIED的缺陷。真实缺口为可用Images origin/model/凭据来源及合同匹配、平台独立policy冻结与认证registration/presence readback。
+- 当前生产adapter追加 `/v1/images/generations` 与 `/v1/images/edits`；编辑要求JSON images[].image_url，响应要求base64 PNG。不能由Responses理解成功或models名称列表推断该合同兼容，也不能虚构不存在的上游binding API作为硬阻塞。
