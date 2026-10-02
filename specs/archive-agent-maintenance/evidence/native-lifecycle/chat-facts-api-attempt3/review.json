@@ -1,0 +1,28 @@
+{
+  "tree": "c54b6a2852845d4bb2a4bad9b96b96c1d7f4f4e8",
+  "verdict": "REJECT_LOCAL_API_SCOPE",
+  "P0": 0,
+  "P1": 1,
+  "P2": 0,
+  "reviewer": "01a0f029-f104-7d53-a2e3-649f5d3651c8",
+  "submission_id": "01a0fad2-bad8-7e00-9a83-420ec758eb47",
+  "supplemental_scope_question_submission": "01a0fad9-64cc-7910-9f4f-59705017bd0f",
+  "scope": "current handling API only; not wholefeature",
+  "findings": [
+    {
+      "priority": 1,
+      "title": "current ACTIVE assignment projection ignores actual shared identity owner/binding suspension/change",
+      "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java:3544-3591",
+      "transition_path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/AgentHostedBindingTransaction.java:282-307",
+      "condition": "lawful binding suspension clears identity/runtime but archive appointment and slot remain ACTIVE; GET still gives current non-null assignee/profile though native execution fences",
+      "repair": "lock exact existing persisted identity root before manager/slot; current canonical binding/owner check; changedbinding => nonACTIVE/nullcurrentfields/reassignmentblocker plus preserved historical snapshot and independentReadereligibility; actualsharedidentityMySQLrace"
+    }
+  ],
+  "confirmed": [
+    "originalappointment-revoke P1 closed via canonical historical snapshot,current assignmentnull after revocation,legalownedtwoDBconnectionlatch",
+    "representationETagP2 closed complete serializedJSONr-sha256,bodyrevisionpreservesvNmutation/CORScompatibility",
+    "currentmanagerread/sourcecoverage/progress/currentpublicationReaderchecks preserved",
+    "233focusedPASS/archive319/308PASS/11oldFAIL/0skip/freshXML/unchangedtree/deltaempty"
+  ],
+  "not_an_execution_acl_bypass": true
+}
