@@ -121,3 +121,7 @@ Main 保持单 Writer Knuth，不测试或冻结其 partial API 源码。已据�
 第二轮 tree `0591c2a5635009c38046dd16ca828b5bc3f3fd3f` 编译通过；四套真实 MySQL实测platform74/native6全PASS，maintenance145/135PASS/10新FAIL，archive311/291PASS/20FAIL（11既有+9新），0skip。Main已核对 fresh XML、前后同 tree 和直接 failure delta；原件 `evidence/native-lifecycle/business-outbox-api-attempt2/`。
 
 实际缺陷分离：bootstrap publication无 job 时新 outbox强NOTNULL插入导致三个已有下架/历史测试回归；新增projection fixture未调用既有two-step绑定所以拿到合法NO_TARGET、没有真实消息；同名application.properties的测试资源冲突；旧readback升级fixture留下新增business outbox表形成不支持partial。已将这四类交回唯一Writer，要求修真实回归/合法fixture，不弱化ACL、CHECK或接受任意partial。新增两类projection测试本轮确实运行，失败不是未选中。局部候选仍不通过、不提交/推送，D2其他缺口保持。
+
+第三轮 tree `2ef3eff637b0514a0f0220b96b4e845be26a36aa`：四套真实 MySQL，platform74/native6全PASS；maintenance145/144PASS/1新FAIL；archive311/299PASS/12FAIL（11既有+同1新），0skip。新增Dispatcher/MySQL投影测试均实际PASS，包含真实共享聊天持久化、ack回滚重投、竞争claim、readback FAILED→PASSED后续通知；这只是组件验证，不是共享 Runtime/browser。
+
+此前四类问题已收敛，剩下实际返回回执一致性：无jobBootstrap withdrawal持久落NO_TARGET，首次DTO却仍返回内存PENDING，同键replay返回NO_TARGET（其他字段一致），因此原`assertEquals(first,replay)`正当失败。已交同一Writer窄修真实首次返回事实，并要求零outbox断言绑定真实withdrawalId，不以operationKey作不匹配查询假绿。前后同tree、fresh XML与直接failure delta已保存 `evidence/native-lifecycle/business-outbox-api-attempt3/`；本包仍未提交/推送/独立复审。
