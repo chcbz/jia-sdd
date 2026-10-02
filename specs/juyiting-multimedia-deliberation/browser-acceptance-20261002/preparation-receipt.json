@@ -18,6 +18,16 @@
       "browserLaunched": false
     },
     {
+      "command": "node offline-behavior-selfcheck.mjs",
+      "status": "PASS",
+      "browserAttached": false,
+      "browserLaunched": false,
+      "assertions": [
+        "signed URL query not persisted",
+        "failed selector stops later mutation"
+      ]
+    },
+    {
       "command": "node run-browser-acceptance.mjs --plan",
       "status": "PREPARED_NOT_EXECUTED",
       "browserAttached": false,
@@ -42,5 +52,10 @@
     "operator-owned pre-authenticated CDP endpoint",
     "authorized real server and local Agent runs with separate roots",
     "real event/ID/screenshot/artifact evidence and Owner outcome correlation"
+  ],
+  "executionSafety": [
+    "structured url/src/href evidence retains only origin/path",
+    "failed click/fill or readiness checkpoint stops remaining actions",
+    "readiness is explicit DOM condition/recoverable checkpoint; no blind sleep or timeout-and-continue"
   ]
 }

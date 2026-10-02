@@ -38,7 +38,7 @@ node specs/juyiting-multimedia-deliberation/browser-acceptance-20261002/run-brow
 node specs/juyiting-multimedia-deliberation/browser-acceptance-20261002/run-browser-acceptance.mjs --execute --primary
 ```
 
-The first two commands neither connect to CDP nor start a browser. The last command is rejected unless both `--execute` and `JYT_BROWSER_ACCEPTANCE_ALLOW_LIVE=1` are present. It runs only a declared primary slice and writes `PARTIAL_COMPLETED`; it intentionally leaves all 34 matrix statuses `NOT_RUN` until the Owner correlates real evidence. `operator-actions.primary.example.json` is a non-runnable template: copy it outside Git and replace its explicit `OPERATOR_REPLACE_*` placeholders only after a real DOM discovery snapshot.
+The first two commands neither connect to CDP nor start a browser. The last command is rejected unless both `--execute` and `JYT_BROWSER_ACCEPTANCE_ALLOW_LIVE=1` are present. Each mutation is preceded by an explicit `readyCheckpoint` (a concrete visible selector or text condition). A missing selector/condition is recorded and stops every later action; it never sleeps blindly or times out and continues. The operator may inspect the captured checkpoint and resume only from a safe, non-replaying action list. It runs only a declared primary slice and writes `PARTIAL_COMPLETED`; it intentionally leaves all 34 matrix statuses `NOT_RUN` until the Owner correlates real evidence. `operator-actions.primary.example.json` is a non-runnable template: copy it outside Git and replace its explicit `OPERATOR_REPLACE_*` placeholders only after a real DOM discovery snapshot.
 
 ## Primary vertical journey (not a claim that all 34 pass)
 
@@ -53,6 +53,6 @@ The primary slice maps AC01/03/05/07/10/14/17 and FD02/07/08/10. It does **not**
 
 ## Evidence / outcome discipline
 
-The future run records sanitized URL paths, status/MIME events, screenshots, DOM discovery, browser-downloaded filename/byte count/SHA-256, and any actual IDs observable from legitimate browser responses. Authorization headers, cookies, token/password-like values, and query strings are redacted. HTTP 200, a toast, an image URL, static demo, mock event, local generated file, or a model result outside the product does **not** make a case pass.
+The future run records sanitized URL paths, status/MIME events, screenshots, DOM discovery, browser-downloaded filename/byte count/SHA-256, and any actual IDs observable from legitimate browser responses. Authorization headers, cookies, token/password/signature-like values, and URL query strings are redacted; structured `url`/`src`/`href` evidence retains origin and path only. HTTP 200, a toast, an image URL, static demo, mock event, local generated file, or a model result outside the product does **not** make a case pass.
 
 If prerequisites, deployed flags, capability, consent, provider, local/server separation, or selector discovery are absent, record the exact real state as `BLOCKED`/`NOT_RUN`; do not simulate success. A real product contradiction is `FAIL`. No arbitrary resource or performance threshold is introduced.

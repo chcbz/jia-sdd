@@ -17,9 +17,17 @@ const primary = args.has('--primary')
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
 const json = value => JSON.stringify(value, null, 2)
 const redact = value => String(value ?? '')
-  .replace(/((?:authorization|token|password|secret|cookie)\s*[:=]\s*)[^\s,;]+/gi, '$1[REDACTED]')
+  .replace(/((?:authorization|token|password|secret|cookie|signature|x-amz-signature|credential|sig|expires)\s*[:=]\s*)[^\s,;]+/gi, '$1[REDACTED]')
   .replace(/(Bearer\s+)[^\s,;]+/gi, '$1[REDACTED]')
+  .replace(/(https?:\/\/[^\s"'<>?]+)\?[^\s"'<>]*/gi, '$1')
 const safeUrl = raw => { try { const value = new URL(raw); return `${value.origin}${value.pathname}` } catch { return '[unparseable-url]' } }
+const sanitizeEvidence = (value, key = '') => {
+  if (Array.isArray(value)) return value.map(item => sanitizeEvidence(item))
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([name, item]) => [name, sanitizeEvidence(item, name)]))
+  if (typeof value === 'string') return /(?:url|src|href)$/i.test(key) ? safeUrl(value) : redact(value)
+  return value
+}
+const isMainModule = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href === import.meta.url : false
 const required = (name) => { const value = process.env[name]; if (!value) throw new Error(`BLOCKED_MISSING_${name}`); return value }
 const loadJson = async path => JSON.parse(await readFile(path, 'utf8'))
 const writeEvidence = async (root, name, value, binary = false) => {
@@ -54,14 +62,15 @@ const importReusableCdp = async () => {
 }
 const domSnapshot = async (evaluate) => evaluate(`(() => {
   const visible = e => Boolean(e && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden');
+  const safeUrl = raw => { try { const u = new URL(raw, location.href); return u.origin + u.pathname; } catch { return '[unparseable-url]'; } };
   const list = selector => [...document.querySelectorAll(selector)].filter(visible).slice(0, 80).map(e => ({
     tag: e.tagName, text: (e.innerText || e.textContent || '').trim().slice(0, 240), aria: e.getAttribute('aria-label'),
     cls: typeof e.className === 'string' ? e.className.slice(0, 200) : '', selector
   }));
   return {
-    title: document.title, url: location.href, text: document.body?.innerText?.slice(0, 12000) || '',
+    title: document.title, url: safeUrl(location.href), text: document.body?.innerText?.slice(0, 12000) || '',
     buttons: list('button'), dialogs: list('[role="dialog"]'), images: [...document.images].filter(visible).slice(0,80).map(i => ({
-      alt: i.alt, src: i.currentSrc || i.src, naturalWidth: i.naturalWidth, naturalHeight: i.naturalHeight, complete: i.complete
+      alt: i.alt, src: safeUrl(i.currentSrc || i.src), naturalWidth: i.naturalWidth, naturalHeight: i.naturalHeight, complete: i.complete
     })), status: list('[aria-live]'), sourceCandidates: {
       hall: list('.hall-stage, .bounty-panel, .bounty-discussion-panel, [aria-label="悬赏议事 v2 状态"]'),
       media: list('.media-asset'), archive: list('.text-selection-archive'), finalization: list('.bounty-finalization')
@@ -71,7 +80,13 @@ const domSnapshot = async (evaluate) => evaluate(`(() => {
 const selectorExpression = selector => `(() => { const e = document.querySelector(${JSON.stringify(selector)}); if (!e || !e.getClientRects().length) return { ok:false, reason:'selector-not-visible' }; e.click(); return { ok:true, tag:e.tagName, text:(e.innerText||e.textContent||'').trim().slice(0,240) }; })()`
 const textClickExpression = (text, selector = 'button') => `(() => { const values=[...document.querySelectorAll(${JSON.stringify(selector)})].filter(e=>e.getClientRects().length); const e=values.find(e=>(e.innerText||e.textContent||'').trim()===${JSON.stringify(text)}); if(!e)return {ok:false,reason:'text-not-visible',text:${JSON.stringify(text)}}; e.click(); return {ok:true,tag:e.tagName,text:(e.innerText||e.textContent||'').trim()}; })()`
 const fillExpression = (selector, value) => `(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e||!e.getClientRects().length)return {ok:false,reason:'selector-not-visible'}; e.focus(); e.value=${JSON.stringify(value)}; e.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:${JSON.stringify(value)}})); e.dispatchEvent(new Event('change',{bubbles:true})); return {ok:true,tag:e.tagName}; })()`
-const proveImage = async evaluate => evaluate(`(() => [...document.images].filter(i => i.getClientRects().length).map(i => ({src:i.currentSrc||i.src,alt:i.alt,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,complete:i.complete,decoded:i.complete&&i.naturalWidth>0&&i.naturalHeight>0})) )()`)
+const proveImage = async evaluate => evaluate(`(() => { const safeUrl = raw => { try { const u = new URL(raw, location.href); return u.origin + u.pathname; } catch { return '[unparseable-url]'; } }; return [...document.images].filter(i => i.getClientRects().length).map(i => ({src:safeUrl(i.currentSrc||i.src),alt:i.alt,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,complete:i.complete,decoded:i.complete&&i.naturalWidth>0&&i.naturalHeight>0})); })()`)
+const readyExpression = condition => {
+  if (!condition || typeof condition !== 'object') throw new Error('INVALID_READY_CHECKPOINT')
+  if (condition.kind === 'selectorVisible' && typeof condition.selector === 'string') return `(() => { const e=document.querySelector(${JSON.stringify(condition.selector)}); return {ok:Boolean(e&&e.getClientRects().length), kind:'selectorVisible', selector:${JSON.stringify(condition.selector)}})()`
+  if (condition.kind === 'textVisible' && typeof condition.text === 'string') return `(() => { const e=[...document.querySelectorAll('body *')].find(x=>x.getClientRects().length&&(x.innerText||x.textContent||'').trim()===${JSON.stringify(condition.text)}); return {ok:Boolean(e), kind:'textVisible', text:${JSON.stringify(condition.text)}})()`
+  throw new Error('INVALID_READY_CHECKPOINT')
+}
 const collectResponseIds = async (cdp, responses) => {
   const found = new Map()
   const visit = (value, path = '') => {
@@ -112,20 +127,29 @@ const runActions = async ({ actions, cdp, evaluate, evidenceRoot, downloads, bas
     else if (action.type === 'clickSelector') result = await evaluate(selectorExpression(action.selector))
     else if (action.type === 'clickText') result = await evaluate(textClickExpression(action.text, action.selector || 'button'))
     else if (action.type === 'fill') result = await evaluate(fillExpression(action.selector, action.value))
+    else if (action.type === 'readyCheckpoint') result = await evaluate(readyExpression(action.condition))
     else if (action.type === 'snapshot') result = await domSnapshot(evaluate)
     else if (action.type === 'imageProof') result = await proveImage(evaluate)
     else if (action.type === 'downloadProof') result = await collectDownloads(downloads)
     else if (action.type === 'checkpoint') result = { operatorCheckpoint: String(action.note || ''), status: 'OBSERVED_NOT_ASSERTED' }
     else throw new Error(`UNSUPPORTED_ACTION_${action.type}`)
-    const artifact = await writeEvidence(evidenceRoot, `actions/${String(index + 1).padStart(2, '0')}-${name}.json`, JSON.parse(JSON.stringify(result, (_, v) => typeof v === 'string' ? redact(v) : v)))
+    const artifact = await writeEvidence(evidenceRoot, `actions/${String(index + 1).padStart(2, '0')}-${name}.json`, sanitizeEvidence(result))
     if (action.screenshot) {
       const png = await cdp.__capture(); await writeEvidence(evidenceRoot, `screenshots/${String(index + 1).padStart(2, '0')}-${name}.png`, png, true)
     }
     results.push({ index, type: action.type, name, resultFile: artifact.path, resultSha256: artifact.sha256 })
+    if (result?.ok === false) {
+      const error = new Error(`BLOCKED_ACTION_${name.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_${String(result.reason || result.kind || 'NOT_READY').toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`)
+      error.actionIndex = index; error.actionName = name
+      throw error
+    }
   }
   return results
 }
 
+export { safeUrl, sanitizeEvidence, runActions }
+
+const main = async () => {
 const plan = await loadJson(planPath)
 const ids = checkPlan(plan)
 if (!execute) {
@@ -159,11 +183,14 @@ try {
   cdp.__capture = () => captureViewportPng(cdp)
   await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads, eventsEnabled: true }).catch(() => {})
   const initial = await domSnapshot(expression => evaluate(cdp, expression))
-  await writeEvidence(evidenceRoot, 'initial-dom.json', JSON.parse(JSON.stringify(initial, (_, v) => typeof v === 'string' ? redact(v) : v)))
+  await writeEvidence(evidenceRoot, 'initial-dom.json', sanitizeEvidence(initial))
   const actionResults = await runActions({ actions: actions.actions, cdp, evaluate: expression => evaluate(cdp, expression), evidenceRoot, downloads, baseUrl })
   const final = await domSnapshot(expression => evaluate(cdp, expression))
   const observedIds = await collectResponseIds(cdp, network)
-  const manifest = { status: 'PARTIAL_COMPLETED', executionScope: 'primaryJourneyOnly', sourcePlan: { webCommit: plan.sourcePins.webCommit, webTree: plan.sourcePins.webTree }, metadata: { ...metadata, identityLabel: redact(metadata.identityLabel) }, endpoint: safeUrl(endpoint), baseUrl: safeUrl(baseUrl), actionResults, network: network.map(({ requestId, ...item }) => ({ ...item, url: redact(item.url) })), observedIds, downloads: await collectDownloads(downloads), final: JSON.parse(JSON.stringify(final, (_, v) => typeof v === 'string' ? redact(v) : v)), cases: plan.cases.map(item => ({ id: item.id, status: 'NOT_RUN' })), note: 'This recorder never promotes a case. A responsible operator must correlate the captured real events/IDs/screenshots and set each matrix outcome after review.' }
+  const manifest = { status: 'PARTIAL_COMPLETED', executionScope: 'primaryJourneyOnly', sourcePlan: { webCommit: plan.sourcePins.webCommit, webTree: plan.sourcePins.webTree }, metadata: sanitizeEvidence({ ...metadata, identityLabel: redact(metadata.identityLabel) }), endpoint: safeUrl(endpoint), baseUrl: safeUrl(baseUrl), actionResults, network: network.map(({ requestId, ...item }) => ({ ...item, url: redact(item.url) })), observedIds, downloads: await collectDownloads(downloads), final: sanitizeEvidence(final), cases: plan.cases.map(item => ({ id: item.id, status: 'NOT_RUN' })), note: 'This recorder never promotes a case. A responsible operator must correlate the captured real events/IDs/screenshots and set each matrix outcome after review.' }
   await writeEvidence(evidenceRoot, 'manifest.json', manifest)
   console.log(json({ status: manifest.status, evidenceRoot, casesRemainNotRun: 34, downloads: manifest.downloads }))
 } finally { cdp.close() }
+}
+
+if (isMainModule) await main()
