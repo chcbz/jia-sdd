@@ -322,3 +322,11 @@ Runner重装后的4403172/153官方SUCCESS，actual source4dc65cb/tree969db74；
 产品验收不等于发布成功：默认“提出需求”已创建无参考图task417“画一只鸟·1.13.50实测”，明确公孙胜后费用同意实际ISSUED；bridge POST400 CONTROLLED_IMAGE_BRIDGE_BAD_REQUEST，原请求GET404。一次原key/原正文诊断重放仍400，已停止继续重放；未生成鸟图，不将404解释为绝对无副作用。真实wrapper中expectedTaskVersion=0、requirementRevision=1、workflowVersion=2、consent expectedVersion为字符串1，已交API/Web Owner精确定位，尚未归因到具体校验行。详情仍含固定PDF文案/入口，是另一个真实UI缺陷，也已交Web Owner。全34项范围不缩减，当前不能通知可验收。证据见本目录release1.13.50/run153-release-and-product-status.json及run153-online-independent-verification.json。
 
 03:10 CST根因补证：Main核对d85源码，ControlledImagePointAndStartServiceImpl.validate将expectedTaskVersion<1判BAD_REQUEST，而Controller明确允许0，真实新task417/current为0。即初建任务零版本的合同边界不一致；API Owner已收到真实wrapper和具体校验行，待最小修复及create→consent→bridge真实回归。两次原意图失败均写orchestrator归因，停止不变输入重试；有修复候选后才开启下一次验证，不把此局部门禁当整项目无法推进。
+
+### 2026-10-02 19:38 UTC：零版本修复候选、前端1.13.51并行正式验证
+
+API Owner源码372123e仅把受控桥接expectedTaskVersion下界从1改为0，保持负值拒绝/CAS/原意图；后续ae66af9增加真实MySQL新任务零版本submit夹具，实际测试/制品仍待Owner终态，不将mock Controller/service测试称真实产品通过。
+
+Web9cbcbbe/tree7038ffb修正同任务已持久化controlledImageBridge路由在BOUND/清offer/详情重入后继续生效，不误露PDF入口；普通历史PDF任务保留。UNKNOWN显示真实message，不伪称拿到错误code。Owner47定向通过，Main两路径/FF/voice三文件字节一致核验，已非force推develop并新冻结release/1.13.51，1.13.50不动。该UI-only修复无新API合同依赖，故无需把API测试完成作为前端开跑门禁；完整153个历史Run核查无自动/活动后，于19:23:15UTC单次Start154。官方SCM确认actual9cb，build527587862 RUNNING、scan527587863 SUCCESS、deploy527587864 INIT；未声称发布完成。
+
+只退役本Main终态Run153的本地重复下载包106572406B：互斥锁下核对record153、完整SHA7b4dd9f3和无打开FD后删除；线上dist/回退及远端同Run制品均保留。原API5c直接旧恢复文件也未删。后续前端安装和API新jar打包需按实际磁盘占用串行错开，不能同时消耗不足空间。真实task417原profile/原key仍保留且browser已关闭，修复部署前不再重放。AC01/FD02按实测标FAIL，其余NOT_RUN，完整34项不缩减。
