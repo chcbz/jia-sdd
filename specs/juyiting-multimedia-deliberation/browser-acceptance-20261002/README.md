@@ -4,7 +4,7 @@
 
 ## Scope and source binding
 
-The source-derived selector catalog is pinned to Web commit `c74a3864b0909c8db4489c5938a590952a56d555`, tree `fd23ba55cc1294523b62b7f3d44618fe6d3719a9`. The future deployed build must prove all three flags effective:
+The source-derived selector catalog is pinned to Web commit `7aaca8916bc2cad2d053328af0780913fff64bca`, tree `71c0536a8b3eeb9cbc7db9028b92ccfc05cd127c`. The future deployed build must prove all three flags effective:
 
 - `VITE_JUYITING_MULTIMEDIA_DELIBERATION_V2_UI=true`
 - `VITE_JUYITING_TYPED_DELIBERATION_UI=true`
@@ -56,3 +56,7 @@ The primary slice maps AC01/03/05/07/10/14/17 and FD02/07/08/10. It does **not**
 The future run records sanitized URL paths, status/MIME events, screenshots, DOM discovery, browser-downloaded filename/byte count/SHA-256, and any actual IDs observable from legitimate browser responses. Authorization headers, cookies, token/password/signature-like values, and URL query strings are redacted; structured `url`/`src`/`href` evidence retains origin and path only. HTTP 200, a toast, an image URL, static demo, mock event, local generated file, or a model result outside the product does **not** make a case pass.
 
 If prerequisites, deployed flags, capability, consent, provider, local/server separation, or selector discovery are absent, record the exact real state as `BLOCKED`/`NOT_RUN`; do not simulate success. A real product contradiction is `FAIL`. No arbitrary resource or performance threshold is introduced.
+
+## 22:25 candidate rebind
+
+The execution plan and selector catalog now target Web `7aaca891` / tree `71c0536`. Git comparison against the original c74 preparation proves only CI bootstrap and its test changed; UI selector source is byte-identical. `preparation-receipt.json` and earlier offline logs remain historical c74 evidence. Run152 checkout is confirmed, but test/build/deploy/artifact and all34 product cases are still unproven. The rebind is not a deployment claim.
