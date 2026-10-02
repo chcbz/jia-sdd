@@ -105,3 +105,19 @@ Web attempt5 独立 **REJECT_LOCAL_WEB_SCOPE，P0=0/P1=1/P2=0**。此前202未�
 Web publication exactDTO 窄修 attempt6：tree **000572b3ab6f1901d344fb1e246219f41636eb95**。Main 六 selector **268/268PASS/0pending**，build0、前后同 tree；原件 `evidence/web-wiring/web-complete-maintenance-attempt6/`。相对attempt5仅Panel与maintenance tests，验证 immutable初始PENDING snapshot、完整currentVerification、共用权威predicate的UI/阅读/保key消费和畸形DTO负例原key恢复。独立最后1P1窄复审已激活，不提前本地commit/push Web；原失败和REJECT保持，后续outbox/真实Runtime/浏览器与D2审计未消失。
 
 Web 完整补缺最终窄复审 **ACCEPT_LOCAL_WEB_SCOPE，P0/P1/P2=0/0/0**。Main本地Web commit **a3066e0c63dc45c40e4b51c90c490908b8c685c1**，tree精确等于tested/reviewed **000572b3ab6f1901d344fb1e246219f41636eb95**，提交后clean；原件 attempt6/review-final.json。本轮Web已局部闭合，不是live API/浏览器/Runtime或全特性验收；未push该增量，Root gitlink/pinned Web仍保留远程bdff4786。下一唯一critical Writer串行业务outbox实际投影/重投/幂等CAS与扫描索引，基于API18d66419，不准扫描即DELIVERED或新增平行聊天状态机。后续真实共享Runtime+浏览器开发验证、完整D2审计与组件/Root远程提交仍须完成，goal继续active/NOT_COMPLETE。
+
+## 2026-10-02 业务 outbox 进行中的只读合同观察
+
+Main 保持单 Writer Knuth，不测试或冻结其 partial API 源码。已据当前源确认并通知同一 Writer：新 business claim/dedup CHECK 的 JOB_EVENT nullable sequence 必须显式非空，不能让 SQL UNKNOWN 放行；新投影 payload 只有 jobRef 而冻结 Web `ArchiveMaintenanceReceiptCard.vue` 只解析 `archiveMaintenance.jobId`，须保持既有 v1 输入兼容。派生 claim 表不存复制业务正文/聊天日志，真正投影与 existing event/withdrawal ack 仍须同短事务/CAS和实库验证；上述观察不是本包验收。
+
+另外，原 D2§12.2 不是仅保留安全的未核验 jobRef：要求结构化办理事实、查看维护单、仅 PUBLISHED+读回正常的打开典籍。当前冻结卡片只有 ref 和手动 GET job 按钮，没有两个跳转/阅读动作；当前 GET job DTO 也无完整 publication/verification（不能从消息或 Agent 字段补造）。D2§12.1 的实际完成章数/总数目前也未在维护单展示，须在后续逐要求审计中补真实 server progress facts（未知总数明确未知，不虚构）。Web a3066e0 的局部 ACCEPT 继续有效，但不等价这两节全部完成。准备在 API outbox 通过后串行补最小服务端事实/聊天卡与进度，再进行真实 Runtime/浏览器开发联调，不并行改冻结 Web、不倒改 D2。
+
+## Business outbox 补缺：源码冻结与第一轮实际验证
+
+2026-10-02：唯一 Writer 交回 tree `a5a4726b2495a3becee8bbae00cd8f9e25c22b33`，包含真实共享聊天持久投影、源 ack/CAS、claim fencing、19表迁移及后续 readback 状态通知；默认 business-outbox 开关仍关闭。Main 已持锁运行四 selectors，platform74/native6全PASS；maintenance/archive测试均因新增 MySQL 并发测试的 `ExecutorService.submit` 重载歧义编译失败，**二者没有执行，不复用旧 XML 造绿**。原件 `evidence/native-lifecycle/business-outbox-api-attempt1/`，前后同 tree，保留编译失败及仅实际执行的两套 fresh XML。
+
+已交回同一 Writer 仅修测试180/181行的 Callable 类型；不改变生产实现、断言或候选范围。该包未通过实库/独立复审、未提交/推送。此前 Web 局部 ACCEPT 不变；聊天办理事实、显式导航/阅读入口、实际章节进度及真正共享 Runtime/browser 开发验证仍待串行补齐，原完整 D2 范围保持。
+
+第二轮 tree `0591c2a5635009c38046dd16ca828b5bc3f3fd3f` 编译通过；四套真实 MySQL实测platform74/native6全PASS，maintenance145/135PASS/10新FAIL，archive311/291PASS/20FAIL（11既有+9新），0skip。Main已核对 fresh XML、前后同 tree 和直接 failure delta；原件 `evidence/native-lifecycle/business-outbox-api-attempt2/`。
+
+实际缺陷分离：bootstrap publication无 job 时新 outbox强NOTNULL插入导致三个已有下架/历史测试回归；新增projection fixture未调用既有two-step绑定所以拿到合法NO_TARGET、没有真实消息；同名application.properties的测试资源冲突；旧readback升级fixture留下新增business outbox表形成不支持partial。已将这四类交回唯一Writer，要求修真实回归/合法fixture，不弱化ACL、CHECK或接受任意partial。新增两类projection测试本轮确实运行，失败不是未选中。局部候选仍不通过、不提交/推送，D2其他缺口保持。
