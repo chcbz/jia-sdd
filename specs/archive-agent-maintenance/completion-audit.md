@@ -131,3 +131,9 @@ Main 保持单 Writer Knuth，不测试或冻结其 partial API 源码。已据�
 候选已交独立只读Reviewer，复核实际持久化/幂等ack/fencing/授权/通知收敛/迁移与锁顺序；源码冻结，无其他Writer活动。**当前只是定向组件PASS，尚未独立ACCEPT、未提交/推送该源码，不外推fullD2或Runtime/browser。** 后续API办理与章节进度facts桥及串行Web/真正Runtime开发验证任务仍NOT ACTIVATED。
 
 第四轮独立只读复审 **REJECT_LOCAL_API_SCOPE，P0=0/P1=1/P2=1**，原件 attempt4/review.json。确认实际聊天persist+ack、fencing/回放/权限/通知/迁移局部链与225PASS证据真实；P1是新增job FK造成跨合法manager下架与dispatcher的确定publication↔job反向锁环，不能以同manager行锁作泛化串行保证；P2是旧claim索引中间available列未约束，不能有效范围限制过期lease，加CASE排序仍可能在LIMIT前全扫描。已交唯一Writer锁序与有证据的最小indexed bounded分队列扫描窄修，并要求真实跨manager latch、MySQL执行计划/深future-lease队列证明。没有提交/推送未接受源码，整体仍NOT_COMPLETE。
+
+第五轮窄修实际验证完成：API tree **db4f974657afea99f382bd4e6c3d56d6b2ad93f6**，Main 持锁真实隔离 MySQL 四套 selectors：platform74/native6/maintenance147，定向 **227/227PASS**；archive313/302PASS/11既有FAIL/0skip，Gradle exit1。前后同 tree、全 fresh XML、相对 readback-source-api-attempt5 的 introduced=[] / removed=[]。两个新用例跨合法不同 manager 的 job-root 锁顺序与 bounded queues + 深层未来 LEASED backlog 均实际执行 PASS；原 XML 的三条 EXPLAIN 分别命中 available/lease 索引、type=range、rows=1，原件和绑定见 `evidence/native-lifecycle/business-outbox-api-attempt5/repair-case-and-explain-proof.json`。
+
+本轮 schema 已独立绑定候选 Git blob 035c1379 / LF SHA256 782a64f1 和前代18d66419的18表 Git blob 255a2cd4 / LF SHA256 5f358f3c，未复制 Writer 摘要中前代 SHA 的笔误。独立只读窄复审已激活（此前1P1/1P2），尚未提交/推送本包，不能以227PASS代替复审或整项收口。当前待补聊天办理事实、明确维护单/阅读导航、实际章节进度及共享 Runtime/browser 验证保持不变。
+
+第五轮独立只读窄复审 **ACCEPT_LOCAL_API_SCOPE，P0/P1/P2=0/0/0**：跨不同 manager 的 job→publication 锁顺序与真实阻塞 latch 证明、独立三队列范围索引和稳定有界归并均闭合。Main 已保存本地 API commit **24590693f31c2b2b9c602252689471f318772ab6**，tree 精确等于 tested/reviewed db4f9746，提交后 clean；原件 attempt5/review-final.json。尚未 push 该增量，Root gitlinks/pins 不变。下一串行唯一 critical Writer 补最小合法 GET job 办理事实/实际章节进度/current publication-reading facts，API冻结验证复审后再转 Web 聊天卡与导航；真实共享 Runtime/browser 与完整 D2 收口仍未完成，goal保持 active。

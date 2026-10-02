@@ -1,0 +1,25 @@
+{
+  "tree": "db4f974657afea99f382bd4e6c3d56d6b2ad93f6",
+  "xml": "xml/maintenance/TEST-cn.jia.chat.archive.maintenance.service.ArchiveBusinessOutboxMySqlTest.xml",
+  "xml_sha256": "76c03d92e048a16b4eb4a6c9f7194af519ba7e84571eecae38a23150921387b7",
+  "actual_cases": [
+    {
+      "name": "boundedStateQueueScansUseDueIndexesAndIgnoreDeepFutureLeaseBacklog()",
+      "classname": "cn.jia.chat.archive.maintenance.service.ArchiveBusinessOutboxMySqlTest",
+      "time": "9.56",
+      "result": "PASS"
+    },
+    {
+      "name": "crossManagerWithdrawalLocksJobRootBeforeDispatcherPublicationProjection()",
+      "classname": "cn.jia.chat.archive.maintenance.service.ArchiveBusinessOutboxMySqlTest",
+      "time": "2.968",
+      "result": "PASS"
+    }
+  ],
+  "actual_explain_original_lines": [
+    "ARCHIVE_BUSINESS_OUTBOX_EXPLAIN {state=READY, key=idx_archive_business_available, type=range, Extra=Using index condition, rows=1}",
+    "ARCHIVE_BUSINESS_OUTBOX_EXPLAIN {state=WAITING_RETRY, key=idx_archive_business_available, type=range, Extra=Using index condition, rows=1}",
+    "ARCHIVE_BUSINESS_OUTBOX_EXPLAIN {state=LEASED, key=idx_archive_business_lease, type=range, Extra=Using index condition, rows=1}"
+  ],
+  "scope": "real MySQL component tests only; not Runtime/browser E2E"
+}
