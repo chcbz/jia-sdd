@@ -102,3 +102,9 @@ Runtime Owner已完成授权范围三行CAS：binding15/identity15 ACTIVE，既�
 未再次启动API，未重启/停止原Client服务，未发reprovision、未建幂等键/receipt、未扣款。目标已自动恢复且出现current_task，重复reprovision不再必要，会干扰当前任务，因此不执行多余部署。原恢复目标已达成，不将未调用这个可选恢复动作作为人为阻塞。
 
 脱敏回执及SHA256已归档。该结果不证明旧Client具有新多媒体能力；仍需实际版本/能力读回、完整配置与版本化安装，避免打断目标现有任务。原API/身份恢复授权阻塞已关闭。
+
+## 14:30 线上配置缺口收敛
+
+只读生产catalog确认snapshot/bootstrap两表均不存在，新0a4d将走缺表初始化而非已存在CHECK比较；没有实证表明线上存在本次关注的格式drift。binding1/15均ONLINE，但当前都由同一个旧版共享Client服务刷新；独立local unit inactive，且运行版没有新typed INSPECT/V3生成/编辑声明，不能把两个ONLINE目标当作双模式新功能验收。
+
+真正必须取得的外部信息只有已授权图片服务的HTTPS origin、精确model、Images权限凭据的私有引用以及生成/编辑HTTP合同。平台binding/epoch/issuer/revision等由Operator冻结，不再作为向用户索取的上游凭证。下一步仅向用户询问图片服务配置位置，不重复请求已授予的开发/恢复许可；其他升级/模式切换计划继续准备，不打断实际在途任务。
