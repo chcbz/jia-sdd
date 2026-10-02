@@ -108,3 +108,9 @@ Runtime Owner已完成授权范围三行CAS：binding15/identity15 ACTIVE，既�
 只读生产catalog确认snapshot/bootstrap两表均不存在，新0a4d将走缺表初始化而非已存在CHECK比较；没有实证表明线上存在本次关注的格式drift。binding1/15均ONLINE，但当前都由同一个旧版共享Client服务刷新；独立local unit inactive，且运行版没有新typed INSPECT/V3生成/编辑声明，不能把两个ONLINE目标当作双模式新功能验收。
 
 真正必须取得的外部信息只有已授权图片服务的HTTPS origin、精确model、Images权限凭据的私有引用以及生成/编辑HTTP合同。平台binding/epoch/issuer/revision等由Operator冻结，不再作为向用户索取的上游凭证。下一步仅向用户询问图片服务配置位置，不重复请求已授予的开发/恢复许可；其他升级/模式切换计划继续准备，不打断实际在途任务。
+
+## 14:39 恢复后真实浏览器基线
+
+Main使用系统Chromium与私有profile，旧登录失效后通过真实登录表单重新登录指定测试账号，成功打开聚义厅和点将册，并以截图实际检查。公孙胜/吴用均展示“候命”，但无新生成/编辑能力（公孙胜未录本领、吴用仅旧能力标签）。因此runtime.current_task非空不能单独证明真实在途任务，已交Runtime Owner继续结合执行状态/lease判断升级互斥，不用陈旧字段制造无限等待，也不凭UI状态抢占。
+
+本次未提交需求/点将/模型调用/验收，未修改既有事项；只是旧部署恢复后的真实浏览器基线，不计34项新功能PASS。自有浏览器已正常关闭，截图留私有路径，仓库只归档脱敏结论与摘要。
