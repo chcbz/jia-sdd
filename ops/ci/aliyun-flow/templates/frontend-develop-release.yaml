@@ -109,7 +109,21 @@ stages:
                 const m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,files};
                 if(m.pipeline_id!=='4403172'||m.branch!=='develop'||!/^[1-9][0-9]*$/.test(m.run_id)||!/^[0-9a-f]{40,64}$/.test(m.commit))throw Error('Wrong Flow identity');
                 fs.writeFileSync(path.join(root,'release.json'),JSON.stringify(m)+'\n');
-                console.log('CYF_WEB_ARTIFACT '+JSON.stringify({pipeline:m.pipeline_id,run:m.run_id,commit:m.commit,files:files.length}));
+                const helperSource='ops/ci/aliyun-flow/host/cyf-web-flow-deploy';
+                const helperPath='installer/cyf-web-flow-deploy';
+                const expectedHelperSha='be51ee223163e5c424d641639fbd2c9540925f14dcb3f2faaba273b974e90385';
+                const helper=fs.readFileSync(helperSource);
+                const helperSha=crypto.createHash('sha256').update(helper).digest('hex');
+                if(helperSha!==expectedHelperSha)throw Error('Unexpected web deploy helper bytes');
+                fs.mkdirSync(path.join(root,'installer'),{mode:0o700});
+                fs.writeFileSync(path.join(root,helperPath),helper,{mode:0o700});
+                fs.chmodSync(path.join(root,helperPath),0o700);
+                const helperRelease={schema_version:1,pipeline_id:m.pipeline_id,run_id:m.run_id,branch:m.branch,commit:m.commit,
+                  tree:fs.readFileSync(path.join(root,'source-tree.txt'),'utf8').trim(),
+                  helper:{path:helperPath,size:helper.length,sha256:helperSha,mode:'0700'}};
+                if(!/^[0-9a-f]{40}$/.test(helperRelease.tree))throw Error('Wrong source tree');
+                fs.writeFileSync(path.join(root,'installer/helper-release.json'),JSON.stringify(helperRelease)+'\n');
+                console.log('CYF_WEB_ARTIFACT '+JSON.stringify({pipeline:m.pipeline_id,run:m.run_id,commit:m.commit,files:files.length,helper_sha256:helperSha}));
 
                 CYF_MANIFEST
           upload_artifact:
@@ -141,7 +155,241 @@ stages:
           executeUser: root
           run: |-
             set -eu
-            /usr/local/sbin/cyf-web-flow-deploy "$PIPELINE_ID" "$BUILD_NUMBER" "$CI_COMMIT_SHA"
+            python3 - "$PIPELINE_ID" "$BUILD_NUMBER" "$CI_COMMIT_SHA" \
+              "/var/lib/cyf-web-flow/downloads/${BUILD_NUMBER}/package.tgz" \
+              /usr/local/sbin/cyf-web-flow-deploy \
+              c4f446828968ae329e976daeb4014c7be945d6c335b7bb930fbb390632802541 \
+              be51ee223163e5c424d641639fbd2c9540925f14dcb3f2faaba273b974e90385 <<'CYF_WEB_HELPER_UPGRADE'
+            import fcntl
+            import hashlib
+            import json
+            import os
+            from pathlib import Path
+            import stat
+            import subprocess
+            import sys
+            import tarfile
+            import tempfile
+
+            pipeline, run, commit, archive_name, target_name, expected_old, expected_new = sys.argv[1:]
+            root = Path('/var/lib/cyf-web-flow')
+            target = Path(target_name)
+            expected_members = {'installer/cyf-web-flow-deploy', 'installer/helper-release.json'}
+
+            def fail(message):
+                raise SystemExit('cyf-web-helper-upgrade: ' + message)
+
+            def safe_dir(path):
+                info = path.lstat()
+                if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+                    fail('unsafe directory ' + str(path))
+
+            def read_regular(path):
+                try:
+                    fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW)
+                except OSError:
+                    fail('unsafe regular file ' + str(path))
+                try:
+                    before = os.fstat(fd)
+                    if not stat.S_ISREG(before.st_mode) or before.st_uid != 0 or before.st_nlink != 1:
+                        fail('unsafe regular file ' + str(path))
+                    digest = hashlib.sha256()
+                    chunks = []
+                    while True:
+                        block = os.read(fd, 1024 * 1024)
+                        if not block:
+                            break
+                        chunks.append(block)
+                        digest.update(block)
+                    after = os.fstat(fd)
+                    if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != \
+                            (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns):
+                        fail('regular file changed while reading ' + str(path))
+                    return b''.join(chunks), digest.hexdigest(), stat.S_IMODE(before.st_mode)
+                finally:
+                    os.close(fd)
+
+            def write_new(path, data, mode, exclusive=False):
+                if exclusive:
+                    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)
+                    name = None
+                else:
+                    fd, name = tempfile.mkstemp(prefix='.cyf-web-helper-', dir=str(path.parent))
+                try:
+                    os.fchmod(fd, mode)
+                    with os.fdopen(fd, 'wb') as output:
+                        output.write(data)
+                        output.flush()
+                        os.fsync(output.fileno())
+                    if name is not None:
+                        os.replace(name, str(path))
+                        name = None
+                    directory = os.open(str(path.parent), os.O_RDONLY | os.O_DIRECTORY)
+                    try:
+                        os.fsync(directory)
+                    finally:
+                        os.close(directory)
+                finally:
+                    if name is not None:
+                        try:
+                            os.unlink(name)
+                        except FileNotFoundError:
+                            pass
+
+            def unique_json(pairs):
+                value = {}
+                for key, item in pairs:
+                    if key in value:
+                        raise ValueError('duplicate JSON key')
+                    value[key] = item
+                return value
+
+            def copy_member(archive, member, destination=None):
+                extracted = archive.extractfile(member)
+                if extracted is None:
+                    fail('invalid helper artifact member')
+                digest = hashlib.sha256()
+                chunks = [] if destination is None else None
+                size = 0
+                try:
+                    output = None
+                    if destination is not None:
+                        fd = os.open(str(destination), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o700)
+                        output = os.fdopen(fd, 'wb')
+                    try:
+                        while True:
+                            block = extracted.read(1024 * 1024)
+                            if not block:
+                                break
+                            size += len(block)
+                            if size > member.size:
+                                fail('helper artifact member exceeds declared size')
+                            digest.update(block)
+                            if output is None:
+                                chunks.append(block)
+                            else:
+                                output.write(block)
+                        if size != member.size:
+                            fail('helper artifact member size mismatch')
+                        if output is not None:
+                            output.flush()
+                            os.fsync(output.fileno())
+                    finally:
+                        if output is not None:
+                            output.close()
+                finally:
+                    extracted.close()
+                return size, digest.hexdigest(), b''.join(chunks) if chunks is not None else None
+
+            def extract_candidate(archive_path, staging):
+                seen = set()
+                found = {}
+                helper_path = staging / 'candidate-helper'
+                try:
+                    with tarfile.open(str(archive_path), mode='r|gz') as archive:
+                        for member in archive:
+                            if member.name not in expected_members:
+                                continue
+                            if member.name in seen or not member.isfile() or member.size < 0:
+                                fail('unsafe helper artifact member')
+                            seen.add(member.name)
+                            if member.name == 'installer/cyf-web-flow-deploy':
+                                found[member.name] = copy_member(archive, member, helper_path)
+                            else:
+                                found[member.name] = copy_member(archive, member)
+                except (tarfile.TarError, EOFError, OSError):
+                    fail('invalid same-run helper artifact')
+                if set(found) != expected_members:
+                    fail('missing same-run helper artifact member')
+                return helper_path, found
+
+            if (pipeline != '4403172' or not run.isdigit() or int(run) <= 0
+                    or len(commit) not in (40, 64) or any(char not in '0123456789abcdef' for char in commit)):
+                fail('invalid Flow identity')
+            safe_dir(root)
+            safe_dir(target.parent)
+            archive = Path(archive_name)
+            archive_info = archive.lstat()
+            if (not stat.S_ISREG(archive_info.st_mode) or archive_info.st_uid != 0
+                    or archive_info.st_nlink != 1 or archive_info.st_size <= 0):
+                fail('unsafe same-run artifact')
+            upgrade_lock = root / 'helper-upgrade.lock'
+            lock_fd = os.open(str(upgrade_lock), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+            staging = None
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX)
+                staging = Path(tempfile.mkdtemp(prefix='.cyf-web-helper-', dir=str(root)))
+                os.chmod(str(staging), 0o700)
+                safe_dir(staging)
+                candidate_path, members = extract_candidate(archive, staging)
+                helper_size, helper_sha, _ = members['installer/cyf-web-flow-deploy']
+                if helper_sha != expected_new:
+                    fail('candidate helper digest mismatch')
+                manifest_size, manifest_sha, manifest_bytes = members['installer/helper-release.json']
+                try:
+                    release = json.loads(manifest_bytes.decode('utf-8'), object_pairs_hook=unique_json)
+                except (UnicodeDecodeError, ValueError):
+                    fail('invalid helper release manifest')
+                expected_release = dict(schema_version=1, pipeline_id=pipeline, run_id=run, branch='develop',
+                    commit=commit, tree=release.get('tree'), helper=dict(path='installer/cyf-web-flow-deploy',
+                    size=helper_size, sha256=helper_sha, mode='0700'))
+                if (not isinstance(release.get('tree'), str) or len(release['tree']) != 40
+                        or any(char not in '0123456789abcdef' for char in release['tree'])
+                        or release != expected_release):
+                    fail('helper release manifest does not match this Flow run')
+                candidate_bytes, candidate_digest, candidate_mode = read_regular(candidate_path)
+                if candidate_digest != expected_new or candidate_mode != 0o700:
+                    fail('staged helper changed')
+                current_bytes, current_digest, current_mode = read_regular(target)
+                upgraded = False
+                backup = None
+                if current_digest == expected_new:
+                    pass
+                elif current_digest == expected_old:
+                    rollback_root = root / 'helper-rollbacks'
+                    rollback_root.mkdir(mode=0o700, exist_ok=True)
+                    safe_dir(rollback_root)
+                    backup = rollback_root / (pipeline + '-' + run + '-' + expected_old + '-to-' + expected_new)
+                    if backup.exists():
+                        backup_bytes, backup_digest, _ = read_regular(backup)
+                        if backup_digest != expected_old or backup_bytes != current_bytes:
+                            fail('existing helper rollback does not match installed helper')
+                    else:
+                        write_new(backup, current_bytes, 0o600, exclusive=True)
+                    refreshed_bytes, refreshed_digest, refreshed_mode = read_regular(target)
+                    if refreshed_digest != expected_old or refreshed_bytes != current_bytes or refreshed_mode != current_mode:
+                        fail('installed helper changed before compare-and-swap')
+                    write_new(target, candidate_bytes, 0o755)
+                    upgraded = True
+                    print('CYF_WEB_HELPER_UPGRADE=INSTALLED ' + json.dumps(
+                        dict(run_id=run, previous_sha256=expected_old, candidate_sha256=expected_new,
+                             rollback_path=str(backup)), sort_keys=True), flush=True)
+                else:
+                    fail('installed helper digest is neither expected predecessor nor candidate')
+                result = subprocess.run([str(target), pipeline, run, commit], check=False)
+                if result.returncode != 0 and upgraded:
+                    installed_bytes, installed_digest, installed_mode = read_regular(target)
+                    backup_bytes, backup_digest, backup_mode = read_regular(backup)
+                    if installed_digest == expected_new and backup_digest == expected_old:
+                        write_new(target, backup_bytes, current_mode)
+                        print('CYF_WEB_HELPER_UPGRADE=ROLLED_BACK ' + json.dumps(
+                            dict(run_id=run, restored_sha256=expected_old,
+                                 failed_candidate_sha256=expected_new, rollback_path=str(backup)),
+                            sort_keys=True), flush=True)
+                    else:
+                        print('CYF_WEB_HELPER_UPGRADE=ROLLBACK_SKIPPED ' + json.dumps(
+                            dict(run_id=run, expected_candidate_sha256=expected_new,
+                                 actual_installed_sha256=installed_digest, rollback_sha256=backup_digest),
+                            sort_keys=True), file=sys.stderr, flush=True)
+                raise SystemExit(result.returncode)
+            finally:
+                try:
+                    if staging is not None:
+                        import shutil
+                        shutil.rmtree(str(staging))
+                finally:
+                    os.close(lock_fd)
+            CYF_WEB_HELPER_UPGRADE
           useEncodeBase64: false
           machineGroup: yjctjhskhk1ti9t4
           batchNumber: 1
