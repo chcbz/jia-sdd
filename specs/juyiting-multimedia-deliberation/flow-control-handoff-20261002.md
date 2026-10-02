@@ -52,3 +52,11 @@
 - 同Run包106562526 bytes，SHA256 `fb3b3b7858eccca5215c08f0fc367e6c2576bf898490e166eca19e2358c8c2c6`。Main下载后拒绝越界路径/链接，逐项验证全部364个dist文件size与SHA256、集合覆盖相等；内部release.json的pipeline/run/commit和source-tree均吻合c74a/fd23。证据receipt/verification见同目录，签名URL未归档，二进制未提交Git。
 - 这证明最终voice和融合Web源码已通过正式云端测试/构建并取得完整校验的同Run制品；不证明已部署或34项产品验收通过。hold继续因API最终测试/JAR/运行恢复、Client目标policy/custody及server既有身份恢复授权等实际依赖。
 - 已send_input将正式结果及摘要直接通知voice协调Main。没有新Run、没有取消/部署、没有本地生产构建。
+
+## 13:17 发布路径纠正：Run150不能追补部署阶段
+
+- 现有4403172模板的VMDeploy引用当前Run的上传制品，并将当前BUILD_NUMBER/CI_COMMIT_SHA传给安装器；安装器validate_manifest强校验pipeline/run/branch/commit。Run150只有cloud_ci，不能通过修改未来配置给已结束Run150追加不存在的deploy job。
+- 因此Run150保留为正式CI-only基线，不承诺直接复用其制品完成现有标准发布链。API/Client就绪后，Main保存前值、核对无活动Run，恢复经核验的既有部署配置并readback；检查自动触发后只启动一次必要的最终发布Run，由该Run测试/构建/上传/部署自己的制品。不得修改Run150清单、伪装新run_id或本地部署绕过Flow。
+- 该必要发布Run不是现在重复CI：当前hold不动。发布依据必须改为最终Run的exact源码、制品摘要、部署单和线上核验，不把150结果冒充最终发布成功。
+- package_version=1.0.1保持为150包内真实值；未来产品release版本与Git冻结ref、commit/tree、Run和制品摘要分别记录，不能仅凭ref名称声称包内版本已更新。若最终版本调整改变源码，需新Run绑定新SHA。
+- 依据：主工作区ops/ci/aliyun-flow/templates/frontend-develop-release.yaml的deploy stage、ops/ci/aliyun-flow/auto/package-web.cjs的清单身份，以及ops/ci/aliyun-flow/host/cyf-web-flow-deploy的validate_manifest。这里只更新计划，未修改Flow、未Start、未部署。
