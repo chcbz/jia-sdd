@@ -225,3 +225,7 @@ Runtime Owner正在将inactive候选更新为5ec并用实际loader核对scope/�
 Runtime Owner用exact aed及真实binding scope构造：local binding1通过；managed binding15的scope loader和CLI路径/摘要通过，但executor/ledger把完整canonical profileId（130字符）按普通SAFE_ID的100上限拒绝。此前146项离线测试通过并不能证明该真实托管身份可运行。已保存原始脱敏失败回执、记录首个root cause并交原Owner修复；不截断/替换身份、不任意加大上限、不重跑未变输入。ledger物理目录已有完整identity hash，继续保持；同时核对claim字节界限的推导。
 
 epoch1仅私有Operator候选，不是服务端真实授权/lease。真实key未加载，Provider/native/poll/execute均0，无profile/env/服务写入。共享process.env的秘密对同进程可见；exact capability scope隔离不等于per-profile秘密存储。维护授权边界和全部34项NOT_RUN保持不变。
+
+### 旧5ec私有readback证据范围更正
+
+Main只读旧probe确认其注入了`createLedger/createExecutor/createPollProtocol` stub，因此过去的PASS仅支持真实scope/profile映射、精确参数传递及registration投影，不支持实际ledger/executor构造或托管运行就绪。旧源码194测试仍保留原结果；不将配置投影成功扩写为真实执行成功。新aed候选用真实构造才暴露130/100冲突。保留所有旧原件，仅追加 `old-5ec-probe-evidence-qualification.json` 限定证据范围，无新增Provider或运行操作。
