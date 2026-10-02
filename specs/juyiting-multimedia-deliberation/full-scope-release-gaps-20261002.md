@@ -114,3 +114,7 @@ Runtime Owner已完成授权范围三行CAS：binding15/identity15 ACTIVE，既�
 Main使用系统Chromium与私有profile，旧登录失效后通过真实登录表单重新登录指定测试账号，成功打开聚义厅和点将册，并以截图实际检查。公孙胜/吴用均展示“候命”，但无新生成/编辑能力（公孙胜未录本领、吴用仅旧能力标签）。因此runtime.current_task非空不能单独证明真实在途任务，已交Runtime Owner继续结合执行状态/lease判断升级互斥，不用陈旧字段制造无限等待，也不凭UI状态抢占。
 
 本次未提交需求/点将/模型调用/验收，未修改既有事项；只是旧部署恢复后的真实浏览器基线，不计34项新功能PASS。自有浏览器已正常关闭，截图留私有路径，仓库只归档脱敏结论与摘要。
+
+## 双模式真实工程缺口继续实施
+
+Runtime最终只读确认旧current_task没有对应任务/成员/work-item/有效lease，不再据此禁止升级；但共享service子进程归属仍需运行Owner核对。现有生产installer/launcher不支持独立实例且通用PID匹配不适合多实例，已安排独立Client Writer实现隔离安装/控制，不因Provider配置缺失停下可做工程。详见client-instance-rollout-20261002.md；同共享service两个profile不能充当双模式验收。旧profile忙时reload会退出全进程，不把hotreload包装成安全drain，当前无生产迁移动作。
