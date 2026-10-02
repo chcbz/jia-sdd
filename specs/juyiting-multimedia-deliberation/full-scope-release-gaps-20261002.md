@@ -57,3 +57,11 @@ Runtime Owner完成现有配置及精确测试账号范围只读枚举，无生�
 - 最小待授权动作是fresh CAS恢复现有binding15及同一identity生命周期，随后调用一次已有零账本扣款free reprovision恢复原managed runtime。需要明确production DML、reprovision及managed service custody授权；不新建identity/profile/key、不重绑、不租赁/充值。此时仍未授权、未执行。
 - 不应调用要求hosted_profile的通用repair端点来代替原managed-hosting恢复；新建profile属于更广迁移，不在最小方案内。Provider生成/编辑真实绑定仍独立缺失，不因身份修复自动就绪。
 - Owner明确允许共享的四份脱敏证据已校验SHA256并保存于integration-evidence-20260928/runtime-recovery-scope-20261002；其余私有配置/凭据指纹未复制。
+
+## 13:35 用户明确授权：最小运行恢复
+
+用户针对上一条精确请求回复“允许”。授权范围为责任Owner接管相关服务、恢复API，且仅恢复既有binding15及同一identity，并执行一次不扣款的原managed-hosting重新部署。不新建identity/hosted_profile/key，不重绑、不租赁、不充值。图片生成/编辑provider配置仍单独NOT_READY，此授权不产生缺失的真实配置/能力证据。
+
+Main指定Runtime Owner Shannon（01a0fa77-8e55-7151-a0b5-1b0b1b526358）执行，Main不直接操作服务。执行顺序：与API Owner协调释放重型验证资源；fresh资源、原制品及进程归属校验后一次canonical API恢复并验证健康；重新核对精确scope/lease/intent/claim/key及竞争状态，在CAS事务中恢复原两行生命周期；使用fresh幂等键及expected lease version进行一次已有free reprovision，响应未知先查状态；核验实际runtime与身份注册。不得抢占foreign进程或安装NOT_READY配置。
+
+已向两名Owner直接发送授权及资源交接要求。此段只证明授权与责任分配，不证明已执行DML、恢复成功或功能可验收；实际结果以Owner脱敏回执与运行readback为准。
