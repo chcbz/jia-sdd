@@ -31,3 +31,10 @@
 - 12:15:43查询Run149 RUNNING，build/test job527208514 RUNNING、scan527208515 SUCCESS。仅cloud_ci，无部署，不取消/抢占。
 - 随后voice主控报告真实Chromium预览发现3d6桌面controls与文字重叠41px，正在最小布局修复。9124候选因此不可发布，无论149最终是否成功；保留诊断价值。等待布局新SHA再共同集成、正式云端验证，不以旧Run验证新源。
 - Client V3生产接线a7ea911已FF特性分支并远端readback，210PASS/1未启用nativeSKIP/0Provider。实际安装、最终API合同和双模式端到端仍未通过。
+
+## 12:24 更新：149终态与最终布局集成
+
+- Run149终态FAIL，job527208514 FAIL、scan527208515 SUCCESS。正式Mocha结果2809 passing、2 pending、64 failing，无可发布制品。详见terminal和failure-excerpt证据；不能将全部64归因voice。
+- Web Owner实际分组：SFC loader mock漂移；过时字符串断言；handler extraction依赖缺失；跨suite DOM/window/storage污染嫌疑；真实挂载结构变化。按真实失败证据修复，不跳过case、不放宽身份/同意约束，不用全局XMLSerializer补丁掩盖未挂载。
+- 149终态后接收最终布局 `b9a97695214c11b824a3ec501957a5ea017157f4` / tree `24e49b76682c4cc16de615d55e87dad48df25853`，合并为 `1ee859df89ae06de450b5772f15e2411a2ff8fcc` / tree `d29b47f307b9902a57b34896a099aca299dc4864`（parents9124+b9），已推feature。三个voice文件与b9字节一致，loader及全部祖先保留。develop仍9124，未Start150。
+- voice协调Main `01a0f0b3-9b2d-78f0-ba17-3c22a6942107` 已通过send_input直接收到结果；后续不要求该线程轮询读取本线程。

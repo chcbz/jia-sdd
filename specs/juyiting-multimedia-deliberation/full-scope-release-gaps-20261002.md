@@ -18,3 +18,10 @@ Client installer `b1e8cceac3e064f6d6759ac8d9c085f21374e8e1`，tree `fa630138c96a
 ## Web协作
 
 voice UX Owner `01a0faaf-fa6c-7771-8b57-d50ff13a447a` 独立树负责Composer/VoiceControls/必要Hud及voice test；本任务Web Owner `01a0fa90-6916-75c3-aca8-f5638c515f82` 独占component-behavior loader fixture。共同基线3a4cdf，最终由Main集成后冻结exact SHA，先核查自动Run再触发，保持4403172控制权与deployment hold。不使用历史Reviewer作为门禁。
+
+## 12:24 身份与合同补充
+
+- Runtime Owner只读确认测试账号既有local身份wuyong(binding1)、linchong(binding2) ACTIVE且owner/client/tenant匹配；候选选择wuyong，不新建身份、不并发注册同agentId。安装仍需现存服务custody确认，Main未控制foreign服务。
+- server既有binding15和identity为SUSPENDED，hosted-profile缺失。403为有效key后的WebSocket归属拒绝，不是公网匿名入口限制。已向用户询问仅恢复既有身份和必要关联记录的授权；尚未收到明确授权，不DML、不repair、不reprovision、不充值。不能以本次自动goal continuation推导授权。
+- Runtime Owner报告12:19 API10018无listener，原恢复Owner正在只读归因，未自动重启。
+- API候选9ab62 Owner确认producerRequestRevision由服务端解析、持久化并在执行前对照归档权威复核，不能开放Client伪造输入。Main只读验证resolver确有比较。现有Client wire绑定version/generation/assetRevision/digest，无需盲目新增字段。
