@@ -16,3 +16,10 @@
 4. 完整画鸟/修改/媒体下载保存/正式验收流程尚未联调通过。
 
 只有这些实际依赖被解决后才按统一发布计划恢复对应发布动作；不等待独立Reviewer，不以历史队列或未测算资源门槛代替实际验证。Run148旧制品（若有）不得用于之后新SHA发布。前端正式构建永久按用户本次指令使用Flow，不回退本地。
+
+## 12:08 更新：候选准备，不触发中间Run
+
+- Loader修复已byte-exact FF并推共享feature：`3b227c41a3ca1817867fd10b191990d2edae59b5`，parent `3a4cdf272be01842173a3cb2d72087c7e0e7d52f`，tree `d35f361a4536fe3b0b48e8af86586e4950ab39e5`；develop仍3a4cdf，等待voice UX最终提交统一集成。
+- Owner flags/routing selector 5 PASS exit0；实际挂载selector21 PASS后驻留，由Owner停止，不能声称exit0或正式全套通过。原仓库Mocha配置已有exit:true，本修复未新增此选项；历史非权威timeout实验也随证据保留。Main只校验source pin与证据摘要，不重复运行已通过selector。
+- 本地准备了增加 `VITE_JUYITING_FOLLOWUP_EXECUTE_V3_UI=true` 的配置候选，SHA256 `f948d126d6add4eb386ef1cfe0cc0dca7ca62a5180edd5a9fda58225028e0370`；只保留cloud_ci，尚未Update/Start。12:04云配置readback仍为原hash `dda94bd9caf9d0de4542903c03620861f416a33dbc377f73061c67c662eda688`。
+- 证据：`integration-evidence-20260928/web-sfc-loader-3b227c4-20261002/`。等待UX的最终exact SHA不影响API与Client独立修复继续；不为中间3a4重复Run。
