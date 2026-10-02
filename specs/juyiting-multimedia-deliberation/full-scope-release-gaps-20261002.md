@@ -219,3 +219,9 @@ Runtime Owner正在将inactive候选更新为5ec并用实际loader核对scope/�
 - 最终前端同Run候选SHA `9a4043e26a1abcd0b22e785ff9710e45221944376d2470516068b0af3faa4ea4` 已冻结，包含3个既定UI flag、同Run helper+dist与恢复路径。19:06 live配置仍为f948…、无VMDeploy；没有Update/Start。历史Run150不可重标为本次最终发布。
 - 浏览器验收工具 `88398dfa` 修复签名URL脱敏与操作失败后继续执行的问题，离线行为自检通过；34项产品用例保持NOT_RUN。不是新Reviewer或人工审批门禁。
 - Runtime Owner正在验证exact aed的私有inactive配置。共享Client维护请求尚未获答复，不重启或改共享profile；普通API/Web发布授权不重复申请。`1.13.48`仅候选产品label，最新只读release refs确认未占用，尚未创建release refs；Web包实际仍1.0.1，公开版本不能由旧部署记录推断。
+
+## 2026-10-02 19:44 实际托管身份长度缺陷阻止运行激活
+
+Runtime Owner用exact aed及真实binding scope构造：local binding1通过；managed binding15的scope loader和CLI路径/摘要通过，但executor/ledger把完整canonical profileId（130字符）按普通SAFE_ID的100上限拒绝。此前146项离线测试通过并不能证明该真实托管身份可运行。已保存原始脱敏失败回执、记录首个root cause并交原Owner修复；不截断/替换身份、不任意加大上限、不重跑未变输入。ledger物理目录已有完整identity hash，继续保持；同时核对claim字节界限的推导。
+
+epoch1仅私有Operator候选，不是服务端真实授权/lease。真实key未加载，Provider/native/poll/execute均0，无profile/env/服务写入。共享process.env的秘密对同进程可见；exact capability scope隔离不等于per-profile秘密存储。维护授权边界和全部34项NOT_RUN保持不变。
