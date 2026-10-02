@@ -1,0 +1,65 @@
+{
+  "run": "151",
+  "pipeline": "4403172",
+  "source_commit": "c74a3864b0909c8db4489c5938a590952a56d555",
+  "source_tree": "fd23ba55cc1294523b62b7f3d44618fe6d3719a9",
+  "official_log": {
+    "job": "527428900",
+    "queried_via": "LogPipelineJobRun",
+    "terminal_more": false,
+    "terminal_line": "[21:31:38] [cyf-ci] FAIL: spawnSync /usr/bin/dnf ETIMEDOUT"
+  },
+  "root_cause": {
+    "classification": "cloud-worker package installation exceeded a source-enforced child-process timeout; not a product/API/V3 runtime failure",
+    "source_locations": [
+      {
+        "path": "scripts/ci/prepare-runtime.mjs",
+        "line": 73,
+        "detail": "runChecked supplies a 300000 ms default child timeout"
+      },
+      {
+        "path": "scripts/ci/prepare-runtime.mjs",
+        "line": 93,
+        "detail": "systemDependencyInstallPolicy overrides the dnf timeout with fixed 1200000 ms"
+      },
+      {
+        "path": "scripts/ci/prepare-runtime.mjs",
+        "line": 127,
+        "detail": "installDependencies passes the fixed timeout to /usr/bin/dnf"
+      },
+      {
+        "path": "scripts/ci-test.mjs",
+        "line": 49,
+        "detail": "npm test invokes prepareRuntime in Flow because PIPELINE_ID is set"
+      }
+    ],
+    "timing": {
+      "dnf_log_install_completion": "2026-10-02T13:31:38Z",
+      "failure": "2026-10-02T13:31:38Z",
+      "run_start_response": "2026-10-02T13:10:07.658Z"
+    },
+    "negative_scope": [
+      "JavaScript scan succeeded",
+      "Mocha/E14 did not begin",
+      "Vite build did not begin",
+      "no artifact was produced",
+      "deployment job remained INIT",
+      "no online verification was run",
+      "API V3 context 503 is not implicated by this build failure"
+    ]
+  },
+  "minimal_source_recommendation_not_applied": {
+    "why_not_config": "the terminal error is emitted by the source-level child_process.spawnSync invocation; the final Flow YAML does not add that 1200000 ms dnf cap",
+    "change": "remove the fixed 1200000 ms DNF/YUM cap from systemDependencyInstallPolicy, and invoke that manager with Node timeout 0 (unbounded) so runChecked default cannot reintroduce a cap; retain signed package validation, fixed package allowlist, RPM probe, actual network transport timeouts, and Flow job ownership.",
+    "test_delta": "replace the current bootstrap test assertion for { timeout: 1200000 } with an assertion that the DNF/YUM call receives { timeout: 0 }; keep tests for missing-only packages, RPM-probe failures, signature options, and non-DNF command behavior.",
+    "release_impact": "this is a web source/test change and requires a new exact source commit and new same-Run Flow release; package.json version need not be changed solely for this CI-runtime correction."
+  },
+  "actions_taken": [
+    "read-only official status/log queries",
+    "no UpdatePipeline",
+    "no StartPipelineRun",
+    "no retry",
+    "no cancel",
+    "no local build"
+  ]
+}
