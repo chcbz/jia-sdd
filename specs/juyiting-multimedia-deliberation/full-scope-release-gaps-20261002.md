@@ -25,3 +25,10 @@ voice UX Owner `01a0faaf-fa6c-7771-8b57-d50ff13a447a` 独立树负责Composer/Vo
 - server既有binding15和identity为SUSPENDED，hosted-profile缺失。403为有效key后的WebSocket归属拒绝，不是公网匿名入口限制。已向用户询问仅恢复既有身份和必要关联记录的授权；尚未收到明确授权，不DML、不repair、不reprovision、不充值。不能以本次自动goal continuation推导授权。
 - Runtime Owner报告12:19 API10018无listener，原恢复Owner正在只读归因，未自动重启。
 - API候选9ab62 Owner确认producerRequestRevision由服务端解析、持久化并在执行前对照归档权威复核，不能开放Client伪造输入。Main只读验证resolver确有比较。现有Client wire绑定version/generation/assetRevision/digest，无需盲目新增字段。
+
+## 12:32 运行故障已归因
+
+- Kernel精确证据：2026-10-02 11:57:28（Asia/Shanghai）global OOM killed Java PID3155665/uid987，所属本任务旧API恢复scope；不是正常应用退出。Main已核验Owner证据SHA256SUMS，12:32仍无该PID。
+- 先前一次恢复健康是历史事实，不能当作当前可用性。唯一台账MMD-U4已记录environment_resource故障；现有API fixture PIDs3223665/3223691/3223733仍live，Main未控制、取消或重启。
+- 原一次canonical start授权已消耗，已向用户请求新的精确一次启动授权，尚未收到明确回复。不得以goal自动继续消息推导授权。
+- Client历史service Owner Agent句柄不可用，不代表foreign服务无主；未完成custody交接，不修改或重启该服务。已授权开发和现有额度测试继续执行，生产恢复/身份修复分别等待必要授权。
