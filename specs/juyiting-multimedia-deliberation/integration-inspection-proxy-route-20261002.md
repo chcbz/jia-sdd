@@ -31,3 +31,8 @@ Main 核验 portable SHA256SUMS 全部通过、七份源码前后摘要均匹配
 恢复 cgroup 合并层级后遗漏的 cpu/cpuacct 等别名已被定位并补齐；新 scope 实际六控制器归属全部通过。Owner 仅执行一次 canonical start，现有 JAR 启动成功。Main 独立核验 PID3155665、六控制器 scope、canonical RUNNING/ARTIFACT_ATTESTATION=MATCH、local health UP；启动使用原 cyf-api 身份。
 
 证据：`integration-evidence-20260928/api-recovery-main-readback-20261002.json`。公网 Web 入口200，但直接 API /login 与 /actuator/health 返回 nginx403，不能据此宣称公开鉴权链已验收；后续按实际 OAuth 路由和浏览器继续核验。原有 JAR 未换成本特性版本，完整多媒体流程仍未验收。
+
+
+11:06 恢复收口：实际监控鉴权探针为 `/agent/map`，Owner 与 Main 均实测401空响应，符合匿名鉴权边界；监控 overall_healthy=true、incident=null。直接访问禁用的 /login 或 /actuator/health 的403不构成当前服务故障。便携证据见 `integration-evidence-20260928/portable-restore-evidence-20261002.json` 和 `recovery-handoff-result-20261002.json`，该恢复子任务已 verified，无 Review 等待。临时 swap/挂载/别名非持久化，重启后须复核。
+
+11:05 直接远端版本核验仍为 API1.13.47、Web1.13.46、Client1.13.26；develop 无新增漂移。结果见 `integration-evidence-20260928/release-refs-20261002.json`，未保留编号或创建 release 分支。下一步只推进功能测试/制品/发布，不重复启动已健康 API。
