@@ -313,3 +313,10 @@ API d85bc64/tree7280d0d、Web4dc65cb/tree969db74、Client5bcb/treee195已非forc
 首次安装新API已真实UP，但Main新增健康检查错误假设status为字符串，实际为{code:UP}，误触发自动回退；此为Main发布脚本错误，不归因应用、迁移、Runner或Flow。旧5c+仅bridge-disabled恢复配置实际启动UP，schema及V3数据保留。已按canonical launcher支持的status.code/string形状修复，并验证2份真实body及7项正负夹具；新目录、fresh PID/配置CAS下单次重装成功，PID3677903、制品a970、正常配置9a53均核对，健康UP。失败与恢复证据保留。
 
 正式前端Run153于18:38:06 UTC单次启动；推送后及Start前均无自动新Run，配置未变。官方SCM日志完整commit4dc65cb已核对，build527570069和scan527570070 RUNNING，deploy527570071 INIT。不把expected tree或旧152制品当新Run证据。最近源码比较证明b9 voice三文件字节不变，已send_input通知voice协调Main。尚待同Run正式test/build/artifact/deploy、在线字节及完整34项真实产品验证，未宣称可验收。固定证据目录 [release1.13.50](integration-evidence-20260928/release-1.13.50-20261002/candidate-freeze.json)。
+
+
+### 2026-10-03 03:07 CST：Run153正式发布通过，真实点将仍被400阻断
+
+Runner重装后的4403172/153官方SUCCESS，actual source4dc65cb/tree969db74；2878 passing、2 pending，build/scan/deploy全部成功，部署单70593938唯一主机healthy。流式读取同Run制品106572406B，SHA256 7b4dd9f327ac717918b83073b1240409a40cff5a32066a3f68782273d76d4cf1；364个dist文件及helper逐一校验manifest无遗漏。真实已登录Chromium读取线上index与JuyiHallEntry JS/CSS，三者字节和摘要均匹配本Run制品。没有新增Run或重试旧152。
+
+产品验收不等于发布成功：默认“提出需求”已创建无参考图task417“画一只鸟·1.13.50实测”，明确公孙胜后费用同意实际ISSUED；bridge POST400 CONTROLLED_IMAGE_BRIDGE_BAD_REQUEST，原请求GET404。一次原key/原正文诊断重放仍400，已停止继续重放；未生成鸟图，不将404解释为绝对无副作用。真实wrapper中expectedTaskVersion=0、requirementRevision=1、workflowVersion=2、consent expectedVersion为字符串1，已交API/Web Owner精确定位，尚未归因到具体校验行。详情仍含固定PDF文案/入口，是另一个真实UI缺陷，也已交Web Owner。全34项范围不缩减，当前不能通知可验收。证据见本目录release1.13.50/run153-release-and-product-status.json及run153-online-independent-verification.json。
