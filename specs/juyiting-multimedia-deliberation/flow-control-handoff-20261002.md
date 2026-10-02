@@ -6,7 +6,7 @@
 - 当前配置：4403172 / cyf-web-release，仅 cloud_ci；保留完整测试、扫描、构建、制品上传，deployment hold 未解除。两个多媒体UI build flags为true。
 - Run148：已终态FAIL，实际源8c0643b2cabb1807ccba290a1978f7c607b6af08；scan SUCCESS、E14 PASS，Mocha global before的SFC加载器import语法错误，0pass/1fail；无可发布制品。不把本地包补作云制品。
 - 语音补丁：已核对3a4cdf272be01842173a3cb2d72087c7e0e7d52f/tree7b0eba7a6f6769909ece470efa602c2bcebfb955，parent8c064；仅defaultBrowser fetch绑定globalThis及strictreceiver回归。复用原Owner自检报告（旧源red、新源green、全voice32pass、Provider0），Main未重复声称实测。
-- Main已byte-exact FF并推送共享feature到3a4cdf；develop暂仍8c064，避免已知fixture错误触发无效Run。Web Owner正在3a4cdf基线修正SFC测试加载器，完成后Main统一合入develop、记录新exact SHA，再单次云端验证。语音线程不需再推送或触发。
+- Main已byte-exact FF并推送共享feature到3a4cdf；语音线程随后将develop FF推至同一提交，Main于2026-10-02 11:52（Asia/Shanghai）通过ls-remote独立确认develop为3a4cdf272be01842173a3cb2d72087c7e0e7d52f。同期Flow近期列表最新仍为148 FAIL，未见新Run。Web Owner正在3a4cdf基线修正SFC测试加载器，完成后Main统一合入develop、记录新exact SHA，先查自动Run再决定单次云端触发，避免重复。语音线程无需再推送或触发；控制权未移交。
 
 ## deployment hold 的实际未满足依赖
 
