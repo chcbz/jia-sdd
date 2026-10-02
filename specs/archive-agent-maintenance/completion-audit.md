@@ -137,3 +137,9 @@ Main 保持单 Writer Knuth，不测试或冻结其 partial API 源码。已据�
 本轮 schema 已独立绑定候选 Git blob 035c1379 / LF SHA256 782a64f1 和前代18d66419的18表 Git blob 255a2cd4 / LF SHA256 5f358f3c，未复制 Writer 摘要中前代 SHA 的笔误。独立只读窄复审已激活（此前1P1/1P2），尚未提交/推送本包，不能以227PASS代替复审或整项收口。当前待补聊天办理事实、明确维护单/阅读导航、实际章节进度及共享 Runtime/browser 验证保持不变。
 
 第五轮独立只读窄复审 **ACCEPT_LOCAL_API_SCOPE，P0/P1/P2=0/0/0**：跨不同 manager 的 job→publication 锁顺序与真实阻塞 latch 证明、独立三队列范围索引和稳定有界归并均闭合。Main 已保存本地 API commit **24590693f31c2b2b9c602252689471f318772ab6**，tree 精确等于 tested/reviewed db4f9746，提交后 clean；原件 attempt5/review-final.json。尚未 push 该增量，Root gitlinks/pins 不变。下一串行唯一 critical Writer 补最小合法 GET job 办理事实/实际章节进度/current publication-reading facts，API冻结验证复审后再转 Web 聊天卡与导航；真实共享 Runtime/browser 与完整 D2 收口仍未完成，goal保持 active。
+
+## API 聊天办理/真实进度 facts bridge 候选
+
+2026-10-02：API-only 七路径候选 tree **128b1bef132b6fca5f18d84c4a20aa701ba1e495**（base24590693）为原 GET job 添加向后兼容的 handling、实际 persisted chapter progress、不可变 receipt 与 current verification 分离、current readerTarget，以及 private/no-store。Main 持锁四套真实 MySQL attempt1：platform74/native6PASS；maintenance152/150PASS/2新FAIL；archive318/305PASS/13FAIL（11既有+同2新），0skip、前后同tree、全fresh XML。五个新增facts selectors实际PASS，包括三个真实MySQL/撤权latch；但整体候选仍失败。
+
+两个新引入失败位于旧confirmedIntent/三入口重放ServiceImplTest，新的getJob锁定读取在findJob(...,true)得到mock null而404；不能把五项新增PASS替代回归。已交回唯一Knuth最小修正确durable mock两种lock读取，保持生产锁/ACL、原单一intent/job/replay断言及全部测试，不skip。原件 `evidence/native-lifecycle/chat-facts-api-attempt1/`。本包尚未review/commit/push，Web/Client仍冻结，后续完整scope不变。
