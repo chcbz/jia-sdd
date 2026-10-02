@@ -138,3 +138,9 @@ Runtime Owner完成精确release-归属冻结和无外部引用检查后，仅�
 实现Owner正修TEST_MODE最早fail-closed私有fixture约束。Main静态检查发现全量installer仍需封住宿主npm fallback/cache/env出口，已反馈Owner；未执行该未冻结候选。40a1仍不提升，Client集成pin维持407db0a。脱敏恢复回执、Main静态检查快照及其局限保存在client-instance-fixture-incident-20261002证据目录。
 
 同测试账号仅检查最新两条既有“画一只鸟”就绪交付元数据，均为document/summary（可见MIME为PDF），无tool/model/provider/endpoint证据。未读内容/存储URI、未下载或重放；不能推断其为Provider生图或静态绘图。现有Images origin/model/合法凭据引用/合同缺口未由历史查询解决，不虚构配置继续发布。
+
+## 15:47 Client实例源码隔离修复已合入
+
+最终3619d33d575a3b8b2c535214edbdf0cfc2740acb/tree cc166acb7177bb3bc0d18f893bdf05f934c8e194已byte-exact FF到Client融合feature并push/readback；包含40a1实例实现与后续fail-closed修复，不提升孤立40a1。Main核验clean tree、407祖先、48个payload字节摘要、installer摘要和diff。TEST_MODE要求私有fixture、全部路径/cache/HOME及显式工具stub，禁止宿主控制fallback。
+
+Owner实际无特权UID99/env-i执行实例42pass；日志为事后终端导出（同期原始stdout未落盘），明确保留限制，不伪称原始制品。受影响workspace-manager installer子集另有原始日志10pass/35按selector排除/0fail，复用本地依赖，无真实npm或联网。manifest为最终源码静态重建，不冒充已清理fixture原件。证据见client-instance-3619-20261002。这里只关闭源码/隔离修复，双模式运行、真实Provider配置、正式发布与34用例仍未完成。
