@@ -36,3 +36,12 @@ Main 核验 portable SHA256SUMS 全部通过、七份源码前后摘要均匹配
 11:06 恢复收口：实际监控鉴权探针为 `/agent/map`，Owner 与 Main 均实测401空响应，符合匿名鉴权边界；监控 overall_healthy=true、incident=null。直接访问禁用的 /login 或 /actuator/health 的403不构成当前服务故障。便携证据见 `integration-evidence-20260928/portable-restore-evidence-20261002.json` 和 `recovery-handoff-result-20261002.json`，该恢复子任务已 verified，无 Review 等待。临时 swap/挂载/别名非持久化，重启后须复核。
 
 11:05 直接远端版本核验仍为 API1.13.47、Web1.13.46、Client1.13.26；develop 无新增漂移。结果见 `integration-evidence-20260928/release-refs-20261002.json`，未保留编号或创建 release 分支。下一步只推进功能测试/制品/发布，不重复启动已健康 API。
+
+
+## 11:11 持久图片能力接线完成源码整合
+
+Client `9f78b95baab69609f8954785d9baa2d199f62797` / tree `47676780a24e292ca19e58450b0cf68efa762a59` 已 fast-forward 推送并读回。证据文件须匹配显式摘要、profile/provider/model/原生策略，并校验拥有者和不可组/全局写；仅新启动原生隔离重新测量通过后才产生能力声明，并在已注册连接上刷新 presence。模板仍默认关闭，不将一个PNG能力宣称为音频或所有格式能力。
+
+Owner 离线报告 profile7 PASS/1 SKIP、agent-client127 PASS；原始TAP未持久化，已如实保存 console-result 索引而非伪造TAP。Main未重跑已有绿色测试，核验变更来源摘要。独立新进程实际 native bootstrap 已 PASS、exit0、零 thread/turn，复用稳定测量摘要后 declaration.enabled=true，说明证据不是只能在一次探针中使用。Main核对portable checksums、前后源码与Git对象、终态及进程退出。
+
+证据：`integration-evidence-20260928/portable-readiness-9f78b95-v1/` 与 `offline-tests-9f78b95-v1/`。这仍是源码及原生启动验证，未安装Client，也不是平台Agent已登记能力或画鸟流程验收。
