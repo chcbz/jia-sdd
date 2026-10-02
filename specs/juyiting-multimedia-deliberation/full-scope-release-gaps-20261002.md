@@ -38,3 +38,15 @@ voice UX Owner `01a0faaf-fa6c-7771-8b57-d50ff13a447a` 独立树负责Composer/Vo
 - 融合Client feature现为 `7d1d7eb6e552a1a5c68e106ccc3ec02e815c5579` / tree `81d53d246752199a8614e14184a34e8d9259532f`，包含a7ea生产接线与48文件安装payload候选（28runtime模块）。Owner定向候选16PASS；installer1PASS、40非目标SKIP。
 - Main指出并纠正原候选的1/2/15硬编码persona黑名单和预期能力/实测就绪混用；现在区分provider-binding namespace来源证据，模板仅STATIC_VALID/SYNTHETIC_EXPECTED_REGISTRATION，真实捕获比对仅READBACK_MATCH。Main同tree现有依赖环境直接静态调用确认providerBindingEvidenceStatus=UNVERIFIED、fullInstallationReadiness=false。
 - endpoint/model/binding/policy/identity/secret仍需冻结，provider局部policy不是正式成果存储、归档、selected-output等完整启用策略。未安装、未重启、未付费调用；不能以静态模板通过解除运行依赖。
+
+## 13:22 定向发现：真实生成配置与双模式目标缺口
+
+Runtime Owner完成现有配置及精确测试账号范围只读枚举，无生产写入/Provider探测/服务操作：
+
+- 现有Responses通路只证明文本/理解路径；已安装环境缺专用controlled-image key，模型目录39项未发现gpt-image/DALL-E名称。这不证明上游永不支持图片，但当前没有已验证生成/编辑endpoint/model、provider binding ID/epoch及operator政策，不得据此宣称生成就绪。
+- 精确账号范围9个persona bindings、0个hosted profiles；4条online runtime标记停在11:57:21.951，不能证明当前健康，也不能作为server模式替代目标。没有找到既有ACTIVE hosted/server目标；binding15仍SUSPENDED。双模式验收不得缩成仅本地模式。
+- 完整inactive API配置已由Owner生成并明确NOT_READY，缺失值保留MISSING占位，未安装。配置范围包含workspace/formal storage、bootstrap/execution/media、typed INSPECT、archive、selected-output/final delivery及受控图片V3，而非仅单个provider开关。
+- 需要Provider/account custodian提供真实生成/编辑绑定及专用秘密安全引用；需要服务custody移交和既有server身份/必要关联配置的明确修复授权。不得将普通开发授权扩展为新租赁、充值、创建新身份或操作foreign服务。
+- API工程继续推进：CHECK literal大小写及typed schema先于父表初始化的真实缺陷已形成修复，当前候选3080dc7b/tree0105e845，完整fixture与bootJar结果尚待Owner交付，不宣称通过。
+
+只读发现不改变hold，不构成发布或34项验收证据；最小下一步是补齐真实Provider配置/运行授权，同时完成正在推进的API工程验证。
