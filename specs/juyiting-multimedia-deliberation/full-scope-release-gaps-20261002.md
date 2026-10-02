@@ -251,3 +251,7 @@ Runtime Owner于20:24激活API exact0a4d，制品b4e53624，PID3506165，功能p
 共享Client5bcb已由原Owner完成单次重启，PID3521733，lujunyi/linchong/binding15实际registered；原Owner随后model capacity终态，Main依据统一授权接手剩余本地实例。fresh零实际lease、旧共享wuyong offline、五份配置/凭据引用摘要匹配后，Main单次启动独立wuyong-local，PID3527199，观察到真实registered和DB presence。未双注册，不重复共享重启。此前DB helper从abilities字符串推断V3能力并不正确：V3声明保存在会话，不能从该字段false断言缺失；旧V1 capability unavailable同样不代表V3失败/成功。实际V3业务仍待验收。
 
 前端正式Run151于21:10单次启动，实际checkout c74已官方核对，扫描成功、测试/构建仍运行、部署INIT；非历史150制品。冻结版本1.13.48尚未声称整体上线或验收。
+
+### 2026-10-02 21:33 两个独立实证失败待修
+
+官方Run151终态FAIL：build527428900失败、scan成功、deploy527428902未启动。完整日志归因由Web Owner执行，Main未retry/start。真实浏览器已登录账号对既有local/managed悬赏会话的V3 interactions/context各一次GET均503 BOUNTY_FOLLOWUP_V3_UNAVAILABLE；不是此前legacyV1不可用的推断。context只读事务内部调用锁定读为待验证嫌疑，原critical Owner正在隔离树精确归因和回归，不擅自改生产数据。两者不得互相归因；未发新生图/验收请求。证据 `integration-evidence-20260928/release-1.13.48-live-failures-20261002/`。
