@@ -24,3 +24,10 @@ Main 核验 portable SHA256SUMS 全部通过、七份源码前后摘要均匹配
 此结果仅证明该配置的真实图片理解；不是生产 capability 持久 readiness、客户端安装、平台鸟图生成/编辑、双接应方式或 AC01–AC22/FD01–FD12 完整验收。下一步收口实际 readiness 接线和 API 最终迁移/应用接线验证，再进入版本制品及平台流程验收。
 
 基础设施授权更新：用户已允许临时约703 MiB swap、恢复原 cgroup 挂载和归属验证；上述整改已执行，API 是否恢复另以实际健康结果更新，不能将基础设施变更当作功能发布。
+
+
+## 10:59 基础 API 恢复，不是特性发布
+
+恢复 cgroup 合并层级后遗漏的 cpu/cpuacct 等别名已被定位并补齐；新 scope 实际六控制器归属全部通过。Owner 仅执行一次 canonical start，现有 JAR 启动成功。Main 独立核验 PID3155665、六控制器 scope、canonical RUNNING/ARTIFACT_ATTESTATION=MATCH、local health UP；启动使用原 cyf-api 身份。
+
+证据：`integration-evidence-20260928/api-recovery-main-readback-20261002.json`。公网 Web 入口200，但直接 API /login 与 /actuator/health 返回 nginx403，不能据此宣称公开鉴权链已验收；后续按实际 OAuth 路由和浏览器继续核验。原有 JAR 未换成本特性版本，完整多媒体流程仍未验收。
