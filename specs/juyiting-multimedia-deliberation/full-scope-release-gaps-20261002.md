@@ -245,3 +245,9 @@ Runtime Owner已留下新版真实默认构造probe及PASS回执，随后工具�
 ### 2026-10-02 20:31 API已可恢复激活，尚非整体验收
 
 Runtime Owner于20:24激活API exact0a4d，制品b4e53624，PID3506165，功能properties摘要9a53e3f4；Main20:31独立核对已安装JAR完整摘要、六controller归属和HTTP200/UP。首次argv空格/NUL断言错误和第二次实际ENOSPC均发生生产变更前，原归因保留；仅清本任务失败临时inode，复用已验证同fs候选完成切换，不删foreign文件。真实Chromium新隔离profile使用测试账号登录并返回聚义厅成功，但仍是旧前端，未发需求/Provider，不计产品验收。Client迁移/共享重启及正式前端同Run部署仍待完成；34项NOT_RUN不变。
+
+### 2026-10-02 21:19 Client激活与正式Run151
+
+共享Client5bcb已由原Owner完成单次重启，PID3521733，lujunyi/linchong/binding15实际registered；原Owner随后model capacity终态，Main依据统一授权接手剩余本地实例。fresh零实际lease、旧共享wuyong offline、五份配置/凭据引用摘要匹配后，Main单次启动独立wuyong-local，PID3527199，观察到真实registered和DB presence。未双注册，不重复共享重启。此前DB helper从abilities字符串推断V3能力并不正确：V3声明保存在会话，不能从该字段false断言缺失；旧V1 capability unavailable同样不代表V3失败/成功。实际V3业务仍待验收。
+
+前端正式Run151于21:10单次启动，实际checkout c74已官方核对，扫描成功、测试/构建仍运行、部署INIT；非历史150制品。冻结版本1.13.48尚未声称整体上线或验收。
