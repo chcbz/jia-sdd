@@ -80,6 +80,11 @@ class WebHelperUpgradeTemplateTest(unittest.TestCase):
         self.assertIn(CANDIDATE, self.source)
         self.assertIn("/var/lib/cyf-web-flow/downloads/${BUILD_NUMBER}/package.tgz", self.source)
         self.assertIn('frozen bootstrap digest mismatch', bootstrap)
+        deploy = self.source.split('  deploy:\n', 1)[1]
+        matched = re.search(r"\n              ([0-9a-f]{64}) \\\n              '([A-Za-z0-9+/=]+)' <<'CYF_WEB_HELPER_UPGRADE_BOOTSTRAP'", deploy)
+        self.assertIsNotNone(matched)
+        self.assertEqual(matched.group(1), hashlib.sha256(UPGRADER.read_bytes()).hexdigest())
+        self.assertEqual(base64.b64decode(matched.group(2), validate=True), UPGRADER.read_bytes())
         self.assertIn("artifact: $[stages.cloud_ci.web_ci.upload_artifact.artifacts.cyf_web_flow_4403172]",
                       self.source)
 
