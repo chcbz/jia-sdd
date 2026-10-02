@@ -281,3 +281,9 @@ Web7aaca已非force合入develop，三组件新release/1.13.49分别固定API5c5
 同Run制品path aone2/2049636/1790952434215/cyf_web_flow_4403172.tgz，106568069bytes；Owner内存流式SHA-256=14cb69357b2abe28fa9f88854ab23b8c22d9889d490fe2e7860a58446397ac23，不写本地重复包。部署527459233 FAIL/order70590729，hostgroup28833唯一机器clientStatus=unhealthy。机器日志API成功但deployLog空；本机无该rdc脚本日志、无downloads/152，未进入已知安装脚本。
 
 与Flow状态不同，ECS DescribeCloudAssistantStatus=true且有当前心跳，CloudAssistant InvocationCount1309；本机aliyun.service原PID持续heartbeat200/newTasksfalse。hostgroup仍绑定存在的ecs连接149711，但ListServiceConnections不证明凭据有效/调用权限。DescribeInvocations=0仅当前本机AK查询视角，不得外推Flow连接无invoke。准确平台拒绝原因尚未知，不能归因本机服务失活、磁盘、安装器或voice。未重启健康共享服务/未盲retry/未重建；继续只读核对连接/机器状态差异，有据修复后复用同Run部署。34产品用例仍NOT_RUN，未宣称可验收。
+
+### 2026-10-02 23:14 同Run安装输入独立复验
+
+Main再次流式读取Run152实际包，不落本地tgz或解包树；压缩字节/摘要与Owner记录一致，source-tree精确71c0536，364个dist成员逐个size/SHA与release.json完全匹配且覆盖无遗漏，安装helper摘要匹配冻结be51。同Run制品确实可用于后续恢复，但不代表已部署。实际包106568069B + dist108224162B +最大文件2937819B =217730050B；此刻可用219103232B，余量仅1373182B且尚有helper/记录/并发写入，未来恢复前应fresh按实际占用核对，不能由这个时点保证足够。没有任意预留门槛/未清他人文件。
+
+23:11官方部署单仍Failed/unhealthy。连接只读API实际仅返回createTime/id/name/type/uuid，无可验证的禁用/过期/认证/账号字段；不存在可用登录态或云效控制台connector。已请求用户提供主机组28833异常详情或控制台登录态（不是再次申请授权）。现有证据不足以安全修复平台健康状态，未盲改hostgroup或retry；等待外部错误详情，目标仍为完整发布及34项真实验收。
