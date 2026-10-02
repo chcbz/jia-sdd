@@ -65,3 +65,9 @@ Runtime Owner完成现有配置及精确测试账号范围只读枚举，无生�
 Main指定Runtime Owner Shannon（01a0fa77-8e55-7151-a0b5-1b0b1b526358）执行，Main不直接操作服务。执行顺序：与API Owner协调释放重型验证资源；fresh资源、原制品及进程归属校验后一次canonical API恢复并验证健康；重新核对精确scope/lease/intent/claim/key及竞争状态，在CAS事务中恢复原两行生命周期；使用fresh幂等键及expected lease version进行一次已有free reprovision，响应未知先查状态；核验实际runtime与身份注册。不得抢占foreign进程或安装NOT_READY配置。
 
 已向两名Owner直接发送授权及资源交接要求。此段只证明授权与责任分配，不证明已执行DML、恢复成功或功能可验收；实际结果以Owner脱敏回执与运行readback为准。
+
+## 13:45 fresh CAS发现历史runtime投影不一致
+
+恢复Owner在DML前发现同canonical Agent存在一条历史offline runtime：无endpoint/token/current task，但binding/client/owner投影与binding15不匹配。先前精确scope查询的“无runtime”不能外推为canonical Agent全局不存在行。注册实现按canonical Agent读取并校验scope，不能让reprovision绕过此拒绝。
+
+已在任何生产数据修改前停止binding/identity/reprovision分支，向用户请求仅对这一条既有detached offline runtime做投影CAS realignment，保留row ID与canonical Agent，保持offline且无endpoint/token/task，不新增/删除行。此前仅两行生命周期授权不自动扩展至该行。API恢复授权仍有效且独立继续，在API Owner明确释放重型验证窗口后恢复基础设施、一次canonical start及健康核验；需要API入口的free reprovision必须在API健康后执行。共享脱敏异常证据及摘要已保存。
