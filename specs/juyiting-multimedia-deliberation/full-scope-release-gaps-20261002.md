@@ -394,3 +394,11 @@ Main真实只读GET `/user/my` 200确认服务端仍返回同用户及字符串t
 Main只读验证当前managed绘图配置：部署模块的HTTP/CLI resolver均通过，凭据存在且CLI pin匹配；公孙胜实际roster online。无Provider调用、配置修改或重启。该证据不等于live能力lookup就绪，更不等于已经生成鸟图。API Owner的4e154021正在自检离线授权分类，尚未合入/发布；Main指出原417已处WAITING_AUTHORIZATION，而旧扫描只接ADMITTED/PLANNING，故下次后端修复必须提供同意图恢复及授权回归，不能只换等待文案或重置生产数据。
 
 Run156完成后，Main在部署锁下核对record156/精确5cafe摘要/无打开FD，仅退役本线程106578156B下载重复包；远端制品、线上dist、当前API4a35及直接恢复04d1保留，可用135528448→242135040B。正式Web阶段优先使用实际约106MB下载+108MB staging空间，API未新bootJar；不设置任意预留门槛、不删foreign数据。
+
+### 2026-10-02 23:20 UTC：Run157真实失败已归因；测试夹具修正8/8通过，未冒充发布
+
+Run157实际checkout3bad445；最终FAIL，build527664460 FAIL/scan527664461 SUCCESS/deploy527664462 INIT。云端2884 passing、2 pending、8 failing，无制品/无部署。8失败来自7个历史Hall挂载夹具漏接新增identity helper及旧源码断言，不归因voice SVG。Main补真实helper接线和已hydrated测试身份，保留OAuth/generation/卸载隔离断言；新child78b83f8/tree076e96只改7tests，生产src tree与3bad逐字节一致。失败8例定向8/8通过；ESLint原有27错误未增减，不能写全lint通过。本机复用node_modules与候选lock不一致，仅便宜诊断，正式locked install仍Flow。此刻未推develop、未创建新Run；release/1.13.55不移动。
+
+API e7c3ba13/tree722b8830已完成持久等待同意图恢复；Main独立核对6源路径、12项fresh XML、8项逐字节复用authority证据及2项预期RED。尚未新打包/安装，线上仍5fe/1.13.54。磁盘按实际新JAR253.6MB与前端安装约214MB串行安排；Main仅将自有无外部连接旧fixture MySQL clean shutdown，全文件SHA验证后可恢复压缩10,520,768B，退役135MB数据目录，未动生产/foreign进程；live4a35和直接恢复04d1保留。
+
+task417没有本次鸟图，仍不可验收；保持原request/intent/grant/consent，不重放点将、不重建授权、不生产DML复位。详见本目录release-1.13.56-progress/source-progress.json；完整AC01–AC22/FD01–FD12范围不变。
