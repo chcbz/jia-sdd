@@ -31,3 +31,13 @@
 ## Owner自检范围
 
 两个隔离实例/默认实例互不写入、非法参数、持久配置保留、失败不改current、payload闭合、unit选择和foreign PID拒绝。全部用隔离目录及stub控制面，不操作真实systemd或Provider。Main接收源码后仍需实际安装/运行证据，不能把这组测试当双模式产品验收。
+
+## 2026-10-02 实际首次移交缺口
+
+运行Owner有界只读核验：binding1无有效lease/子进程/local inbox，但有旧无lease running项及4条queued，不删除、不自动重放。共享service还包含OTHER_SCOPE profile；当前idle不等于已获维护custody，也不等于新任务不会进入。既有status投影、runtime-v1 revoke均不控制当前legacy WS；新注册只换HTTP auth映射，旧WS仍参与投递，不能先启动新实例冒充互斥。
+
+**首次加载新Client控制不能依赖先重启整个共享进程。** 需要全profile明确维护custody及真实无在途窗口，或先部署API侧按owner/binding/runtime精确CAS的持久移交控制。后者还须修正初始close/block建议：已部署非managed Client在reconnect耗尽时全局shutdown(1)，关闭旧binding1连接会间接影响其它profile。不能靠延长timeout或只观察几分钟证明无影响。
+
+API-first候选合同必须在同一精确scope内封锁旧runtime业务派发/领取/投影覆盖，同时可保持旧连接control heartbeat、禁止其争回新runtime；指定新runtime唯一接管，保留旧backlog及撤销/查询语义。旧socket恢复/重连、API重启、未知响应、并发派发与目标变更需有真实测试。该合同尚未被实现Owner确认，不当作已有能力，不先激活fence。API Owner正核实最小入口及首次部署可行性；若不可行，明确需要覆盖共享profile的维护custody，而非循环声称安装新control后即可安装。
+
+只读证据和Main对close/block的反证：integration-evidence-20260928/profile-handoff-readiness-20261002。没有执行配置变更、进程信号或生产数据操作。
