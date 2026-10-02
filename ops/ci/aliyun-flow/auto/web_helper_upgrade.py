@@ -10,7 +10,7 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import stat
@@ -103,6 +103,22 @@ def unique_json(pairs):
     return value
 
 
+def normalized_archive_name(member):
+    """Match the deploy helper's GNU-tar-safe member canonicalization."""
+    if member.name in ('.', './'):
+        if not member.isdir() or member.size != 0:
+            fail('unsafe helper artifact member')
+        return '.'
+    name = member.name[2:] if member.name.startswith('./') else member.name
+    if member.isdir():
+        name = name.rstrip('/')
+    path = PurePosixPath(name)
+    if (not name or name == '.' or path.is_absolute() or '..' in path.parts or '\\' in name
+            or str(path) != name or not (member.isfile() or member.isdir())):
+        fail('unsafe helper artifact member')
+    return name
+
+
 def copy_member(archive, member, destination=None):
     extracted = archive.extractfile(member)
     if extracted is None:
@@ -159,14 +175,19 @@ def extract_candidate(archive_path, staging):
             try:
                 with tarfile.open(fileobj=source, mode='r|gz') as archive:
                     for member in archive:
-                        if member.name not in EXPECTED_MEMBERS:
-                            continue
-                        if member.name in seen or not member.isfile() or member.size < 0:
+                        name = normalized_archive_name(member)
+                        if name in seen:
                             fail('unsafe helper artifact member')
-                        seen.add(member.name)
-                        found[member.name] = copy_member(
+                        seen.add(name)
+                        if member.size < 0:
+                            fail('unsafe helper artifact member')
+                        if member.isdir():
+                            continue
+                        if name not in EXPECTED_MEMBERS:
+                            continue
+                        found[name] = copy_member(
                             archive, member,
-                            helper_path if member.name == 'installer/cyf-web-flow-deploy' else None)
+                            helper_path if name == 'installer/cyf-web-flow-deploy' else None)
             except (tarfile.TarError, EOFError, OSError):
                 fail('invalid same-run helper artifact')
         if set(found) != EXPECTED_MEMBERS:

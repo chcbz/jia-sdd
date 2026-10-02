@@ -43,19 +43,25 @@ class WebHelperUpgradeTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def package(self, tree=TREE):
+    def package(self, tree=TREE, gnu_prefix=False, extra_entries=()):
         package = self.root / 'downloads/92/package.tgz'
         package.parent.mkdir(parents=True, mode=0o700)
         helper_release = dict(
             schema_version=1, pipeline_id='4403172', run_id='92', branch='develop', commit=COMMIT,
             tree=TREE, helper=dict(path='installer/cyf-web-flow-deploy', size=len(self.candidate),
                                    sha256=self.candidate_sha, mode='0700'))
+        prefix = './' if gnu_prefix else ''
         entries = [
-            ('installer/cyf-web-flow-deploy', self.candidate),
-            ('installer/helper-release.json', json.dumps(helper_release).encode()),
-            ('source-tree.txt', (tree + '\n').encode()),
-        ]
+            (prefix + 'installer/cyf-web-flow-deploy', self.candidate),
+            (prefix + 'installer/helper-release.json', json.dumps(helper_release).encode()),
+            (prefix + 'source-tree.txt', (tree + '\n').encode()),
+        ] + list(extra_entries)
         with tarfile.open(str(package), 'w:gz') as archive:
+            if gnu_prefix:
+                root = tarfile.TarInfo('./')
+                root.type = tarfile.DIRTYPE
+                root.mode = 0o700
+                archive.addfile(root)
             for name, value in entries:
                 member = tarfile.TarInfo(name)
                 member.size = len(value)
@@ -70,7 +76,7 @@ class WebHelperUpgradeTest(unittest.TestCase):
                                       runner=runner, reporter=events.append)
 
     def test_cas_installs_candidate_and_preserves_old_root_only_rollback(self):
-        package = self.package()
+        package = self.package(gnu_prefix=True)
         calls, events = [], []
 
         def runner(args, check=False):
@@ -98,6 +104,28 @@ class WebHelperUpgradeTest(unittest.TestCase):
         calls, events = [], []
         with self.assertRaisesRegex(SystemExit, 'does not match this Flow run'):
             self.call('tree-mismatch', package,
+                      lambda args, check=False: calls.append(args) or Result(0), events)
+        self.assertEqual(calls, [])
+        self.assertEqual(self.target.read_bytes(), self.old)
+        self.assertFalse((self.root / 'helper-rollbacks').exists())
+
+    def test_gnu_alias_duplicate_is_rejected_before_cas_or_runner(self):
+        package = self.package(gnu_prefix=True,
+                               extra_entries=[('installer/cyf-web-flow-deploy', self.candidate)])
+        calls, events = [], []
+        with self.assertRaisesRegex(SystemExit, 'unsafe helper artifact member'):
+            self.call('gnu-alias-duplicate', package,
+                      lambda args, check=False: calls.append(args) or Result(0), events)
+        self.assertEqual(calls, [])
+        self.assertEqual(self.target.read_bytes(), self.old)
+        self.assertFalse((self.root / 'helper-rollbacks').exists())
+
+    def test_unsafe_member_is_rejected_before_cas_or_runner(self):
+        package = self.package(gnu_prefix=True,
+                               extra_entries=[('./../installer/cyf-web-flow-deploy', self.candidate)])
+        calls, events = [], []
+        with self.assertRaisesRegex(SystemExit, 'unsafe helper artifact member'):
+            self.call('unsafe-member', package,
                       lambda args, check=False: calls.append(args) or Result(0), events)
         self.assertEqual(calls, [])
         self.assertEqual(self.target.read_bytes(), self.old)

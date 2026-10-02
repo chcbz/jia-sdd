@@ -40,7 +40,7 @@ class WebHelperUpgradeTemplateTest(unittest.TestCase):
         self.assertEqual(upgrader, UPGRADER.read_bytes())
         self.assertEqual(hashlib.sha256(helper).hexdigest(), CANDIDATE)
         self.assertEqual(hashlib.sha256(upgrader).hexdigest(),
-                         'f35eff0dd4f880176f78fb8157b5d7a8550fd0000d2a76eebaa5a7c3d8d01f51')
+                         '4b2278413644ca9c8761715b74e3ccfe174462d6f6a7c6551fa5f4b8a75ed0d2')
         self.assertNotIn("helperSource='ops/ci/", self.node_manifest())
         self.assertIn("const expectedHelperSha='" + CANDIDATE + "'", self.source)
         self.assertIn("installer/helper-release.json", self.source)
@@ -54,6 +54,7 @@ class WebHelperUpgradeTemplateTest(unittest.TestCase):
             (export / 'dist/index.html').write_bytes(b'<html>fixture</html>')
             commit = 'a' * 40
             tree = 'b' * 40
+            (checkout / 'package.json').write_text(json.dumps({'version': '1.0.1'}) + '\n')
             (export / 'source-commit.txt').write_text(commit + '\n')
             (export / 'source-tree.txt').write_text(tree + '\n')
             self.assertFalse((checkout / 'ops/ci/aliyun-flow/host/cyf-web-flow-deploy').exists())
@@ -67,6 +68,7 @@ class WebHelperUpgradeTemplateTest(unittest.TestCase):
             self.assertEqual(hashlib.sha256(helper.read_bytes()).hexdigest(), CANDIDATE)
             self.assertEqual(release['tree'], tree)
             self.assertEqual(release['commit'], commit)
+            self.assertEqual(json.loads((export / 'release.json').read_text())['package_version'], '1.0.1')
             self.assertEqual(release['helper']['sha256'], CANDIDATE)
 
     def test_bootstrap_is_compilable_and_uses_same_run_artifact(self):
