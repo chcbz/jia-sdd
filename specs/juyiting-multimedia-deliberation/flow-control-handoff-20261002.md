@@ -23,3 +23,11 @@
 - Owner flags/routing selector 5 PASS exit0；实际挂载selector21 PASS后驻留，由Owner停止，不能声称exit0或正式全套通过。原仓库Mocha配置已有exit:true，本修复未新增此选项；历史非权威timeout实验也随证据保留。Main只校验source pin与证据摘要，不重复运行已通过selector。
 - 本地准备了增加 `VITE_JUYITING_FOLLOWUP_EXECUTE_V3_UI=true` 的配置候选，SHA256 `f948d126d6add4eb386ef1cfe0cc0dca7ca62a5180edd5a9fda58225028e0370`；只保留cloud_ci，尚未Update/Start。12:04云配置readback仍为原hash `dda94bd9caf9d0de4542903c03620861f416a33dbc377f73061c67c662eda688`。
 - 证据：`integration-evidence-20260928/web-sfc-loader-3b227c4-20261002/`。等待UX的最终exact SHA不影响API与Client独立修复继续；不为中间3a4重复Run。
+
+## 12:16 更新：Run149进行中，旧UX不可发布
+
+- 收到voice最终候选3d6后，与loader无冲突合并得到 `9124fe008b92406080fae723f0ff2518886eee74` / tree `eab41899fd4f289e8c83d192f828d79c8e0ddca7`，双方路径逐字节保持，已推feature及develop。
+- 全部148历史Run均终态；12:09单次Update第三flag成功、readback吻合f948d126。push后未见自动Run，单次Start于12:10:54返回149。12:11:17云端checkout marker确认为9124fe0。
+- 12:15:43查询Run149 RUNNING，build/test job527208514 RUNNING、scan527208515 SUCCESS。仅cloud_ci，无部署，不取消/抢占。
+- 随后voice主控报告真实Chromium预览发现3d6桌面controls与文字重叠41px，正在最小布局修复。9124候选因此不可发布，无论149最终是否成功；保留诊断价值。等待布局新SHA再共同集成、正式云端验证，不以旧Run验证新源。
+- Client V3生产接线a7ea911已FF特性分支并远端readback，210PASS/1未启用nativeSKIP/0Provider。实际安装、最终API合同和双模式端到端仍未通过。
