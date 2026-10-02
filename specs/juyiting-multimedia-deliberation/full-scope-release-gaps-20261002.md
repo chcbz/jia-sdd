@@ -32,3 +32,9 @@ voice UX Owner `01a0faaf-fa6c-7771-8b57-d50ff13a447a` 独立树负责Composer/Vo
 - 先前一次恢复健康是历史事实，不能当作当前可用性。唯一台账MMD-U4已记录environment_resource故障；现有API fixture PIDs3223665/3223691/3223733仍live，Main未控制、取消或重启。
 - 原一次canonical start授权已消耗，已向用户请求新的精确一次启动授权，尚未收到明确回复。不得以goal自动继续消息推导授权。
 - Client历史service Owner Agent句柄不可用，不代表foreign服务无主；未完成custody交接，不修改或重启该服务。已授权开发和现有额度测试继续执行，生产恢复/身份修复分别等待必要授权。
+
+## 12:59 Client安装静态候选接受
+
+- 融合Client feature现为 `7d1d7eb6e552a1a5c68e106ccc3ec02e815c5579` / tree `81d53d246752199a8614e14184a34e8d9259532f`，包含a7ea生产接线与48文件安装payload候选（28runtime模块）。Owner定向候选16PASS；installer1PASS、40非目标SKIP。
+- Main指出并纠正原候选的1/2/15硬编码persona黑名单和预期能力/实测就绪混用；现在区分provider-binding namespace来源证据，模板仅STATIC_VALID/SYNTHETIC_EXPECTED_REGISTRATION，真实捕获比对仅READBACK_MATCH。Main同tree现有依赖环境直接静态调用确认providerBindingEvidenceStatus=UNVERIFIED、fullInstallationReadiness=false。
+- endpoint/model/binding/policy/identity/secret仍需冻结，provider局部policy不是正式成果存储、归档、selected-output等完整启用策略。未安装、未重启、未付费调用；不能以静态模板通过解除运行依赖。

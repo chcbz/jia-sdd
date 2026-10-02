@@ -45,3 +45,10 @@
 - Main已FF并push/readback feature与develop为c74a，三份voice文件与最终b9字节一致。push后查询无自动新Run，单次Start于12:39:05返回150；配置仍f948d126，仅cloud_ci，hold不变。
 - Run150 job527220690日志12:39:29 clone提交收集、增量终点及完整CI_COMMIT_SHA均c74a；source API commits:null不是否定该真实日志，也不以仅目标SHA推断实际checkout。
 - 测试/构建/制品仍待终态；无部署成功结论。已直接send_input通知voiceMain01a0f0b3，证据见web-flow150目录。
+
+## 12:59 更新：Run150云端与同Run制品正式通过，未部署
+
+- 12:53:13官方readback Run150 SUCCESS，build527220690 SUCCESS、scan527220691 SUCCESS。全Mocha2873 passing、2pending、0failing；12:50:55 Vite built，12:51上传成功。包内报告再次确认同一统计。
+- 同Run包106562526 bytes，SHA256 `fb3b3b7858eccca5215c08f0fc367e6c2576bf898490e166eca19e2358c8c2c6`。Main下载后拒绝越界路径/链接，逐项验证全部364个dist文件size与SHA256、集合覆盖相等；内部release.json的pipeline/run/commit和source-tree均吻合c74a/fd23。证据receipt/verification见同目录，签名URL未归档，二进制未提交Git。
+- 这证明最终voice和融合Web源码已通过正式云端测试/构建并取得完整校验的同Run制品；不证明已部署或34项产品验收通过。hold继续因API最终测试/JAR/运行恢复、Client目标policy/custody及server既有身份恢复授权等实际依赖。
+- 已send_input将正式结果及摘要直接通知voice协调Main。没有新Run、没有取消/部署、没有本地生产构建。
