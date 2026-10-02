@@ -172,3 +172,13 @@ Main实际源码核验（Client3619d33）：agent-client.mjs已有runNativeConve
 结论只缩小问题：能力广告不等于初始直接工具声明；尚须排查tool_search延迟暴露及模型/auth/provider工具装配条件，不能把初始未列图片工具直接宣布为账号不支持，更不能转而强制要求另一套Images服务。已交Runtime Owner继续零Provider离线核验；API Owner只读拆分原生generate/edit业务不变量与HTTP专属契约。暂不修改运行配置/触发Flow/部署。
 
 归档：`integration-evidence-20260928/native-image-request-attribution-20261002/manifest.json`，Main逐文件核对5份脱敏receipt/JSON SHA256。零调用能力、真实调用无结果、远程模型目录、dummy离线请求四类证据保持独立；全部不是34项产品验收PASS。全目标及共享服务OTHER_SCOPE custody边界不变。
+
+## 2026-10-02 既有Codex图片skill实际生成与编辑成功
+
+用户要求优先使用现成skill后，核实系统imagegen fallback受宿主Python3.6/缺SDK影响不能直接运行；另一已安装`gpt-image-api`为stdlib实现，读取现有Codex配置/认证，实证endpoint匹配原有通道。没有新增图片服务器、key或独立付费账户，也没有修改skill。
+
+Runtime Owner使用用户指定`gpt-image-2.5`完成一次JSON GENERATE和一次以前稿为输入的multipart EDIT，均exit0，重试/fallback为0。生成PNG 1,940,751bytes，SHA256 `299c28a43a9d4a78db765a278109477393e29c75608c7d12c59d9b00674e8c17`；改蓝PNG 1,770,240bytes，SHA256 `74c1dd1aab92a5e6a80e6a574d9694b51c186d59cfe7a036ea2edede8af53243`。实际两图均1376×1143，与请求1024×1024不同，记录真实尺寸而不伪称size参数被严格执行。Main独立校验文件摘要/字节及view_image：同一鸟姿态、枝条、背景与构图保留，橙色胸部等羽毛改为蓝色。
+
+模型结论仅为该私有连接接受此请求model并生成/编辑有效图片，不证明公开官方型号或底层模型身份。原skill未保留HTTP成功码/响应结构/b64与URL来源，维持NOT_CAPTURED；不能据此证明现有Client3619的JSON `images[].image_url`及严格data[0].b64_json parser兼容。Main已安排一次materially different现有V3执行器JSON编辑诊断、捕获脱敏响应结构，失败只离线replay不盲重试。
+
+产品路线回到复用已有Agent接入+现有受控执行/upload/媒体/归档/验收链，不以新native authority迁移作为人为发布前置。是否需要HTTP payload最小适配待该真实结果决定。生成图片保留Owner分享输出路径，Git仅归档脱敏receipt及Main核验摘要：`integration-evidence-20260928/existing-codex-image-skill-20261002/`。此成功关闭“现有通道完全未知/不能生图”的缺口，不关闭平台34用例、双模式custody、正式版本发布与线上验收缺口。
