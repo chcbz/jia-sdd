@@ -229,3 +229,7 @@ epoch1仅私有Operator候选，不是服务端真实授权/lease。真实key未
 ### 旧5ec私有readback证据范围更正
 
 Main只读旧probe确认其注入了`createLedger/createExecutor/createPollProtocol` stub，因此过去的PASS仅支持真实scope/profile映射、精确参数传递及registration投影，不支持实际ledger/executor构造或托管运行就绪。旧源码194测试仍保留原结果；不将配置投影成功扩写为真实执行成功。新aed候选用真实构造才暴露130/100冲突。保留所有旧原件，仅追加 `old-5ec-probe-evidence-qualification.json` 限定证据范围，无新增Provider或运行操作。
+
+## 2026-10-02 19:58 canonical managed身份修复已合入
+
+Client `5bcb16bd8e2cf9a2fde50ac114367ae272c0335f` / tree `e195b7fb150c3d45adc512e876cb4516de785b5b` 已非force快进feature和develop并远端核对。按实际ManagedHost身份生成合同推导最大159字符，普通ID仍100；不截断身份、不变完整身份hash目录，同步推导ledger读界限。Owner91项通过、0fail/skip，真实130字符binding15离线构造通过；Main核验7源码和4日志摘要及父/tree/clean。Runtime Owner正独立重新探测，不把Owner离线通过替代实际运行授权/连接。Provider0、未安装、共享维护授权仍未获答复，34项产品验收仍NOT_RUN。
