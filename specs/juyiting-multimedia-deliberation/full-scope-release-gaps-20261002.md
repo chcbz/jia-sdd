@@ -202,3 +202,11 @@ Client `5ec83789d1fe603cd339ba22c332c4a0bebb5f87` / tree `80aa58cdaad96d2a82e0eb
 Runtime Owner正在将inactive候选更新为5ec并用实际loader核对scope/预期UID/权限；没有向生产复制配置。API0a4d新JAR与旧JAR恢复副本已在Owner独立0700 staging准备，Main独立核对完整SHA b4e53624…9824与632012a3…5fad及SHA256SUMS，实际两文件总505,785,550bytes，未新增固定余量门禁。staging不等于安装。
 
 共享Client维护会短暂影响lujunyi/linchong等非本次测试目标；Main已就这一个额外范围向用户明确一次维护窗口请求，尚未收到答复，不重启/reload/profile-write。普通API/Web版本发布沿用既有授权，不重复确认。最终Web同Run候选已生成但仍未Update/Start；正在核对被调用现有installer的门禁策略与真实package_version（c74为1.0.1，与历史产品release label不同），未提前冻结1.13.48或声称已发布。完整34项产品验收仍待真实部署后执行。
+
+## 2026-10-02 用户指定技能改为 gpt-image-cli
+
+- 后续图片技能入口改为 `/root/.codex/skills/gpt-image-cli/SKILL.md` 及其 `scripts/run.py`，不再以 `gpt-image-api` 作为新调用入口。保留历史诊断回执，不把旧技能成功改记为新技能成功。
+- 保留用户指定请求模型 `gpt-image-2.5`，不静默改用技能默认模型；本机原装 CLI 的模型校验接受 `gpt-image-` 前缀，但这不证明实际服务模型身份或调用成功。
+- 复用已授权的现有配置/本地 auth，密钥只经子进程环境传递；不新增图片服务器、账号或付费授权。此次技能切换不发起生图，不改 Flow、不重启共享 Agent。
+- 本机检查发现技能示例环境 `/home/isp/wsps/daily/.venv/bin/python` 不存在；系统 Python 为3.6.8，`uv python find '>=3.11' --no-python-downloads` 未找到可用解释器。技能 wrapper 依赖 Python3.11+（tomllib）；尚需为本项目准备隔离运行环境并执行 `--check`、generate/edit `--dry-run`。不得复用其他项目授权或修改原装系统 imagegen CLI 来绕过限制。
+- 平台接入仍须保留身份/执行权限、输出登记和工作空间边界；开发会话使用技能不等于平台 Agent 已部署该能力，也不替代全部34项验收。
