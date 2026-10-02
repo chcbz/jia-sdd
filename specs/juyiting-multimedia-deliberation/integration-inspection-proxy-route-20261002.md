@@ -45,3 +45,10 @@ Client `9f78b95baab69609f8954785d9baa2d199f62797` / tree `47676780a24e292ca19e58
 Owner 离线报告 profile7 PASS/1 SKIP、agent-client127 PASS；原始TAP未持久化，已如实保存 console-result 索引而非伪造TAP。Main未重跑已有绿色测试，核验变更来源摘要。独立新进程实际 native bootstrap 已 PASS、exit0、零 thread/turn，复用稳定测量摘要后 declaration.enabled=true，说明证据不是只能在一次探针中使用。Main核对portable checksums、前后源码与Git对象、终态及进程退出。
 
 证据：`integration-evidence-20260928/portable-readiness-9f78b95-v1/` 与 `offline-tests-9f78b95-v1/`。这仍是源码及原生启动验证，未安装Client，也不是平台Agent已登记能力或画鸟流程验收。
+
+
+## 11:18 Web 候选制品的实际阻碍
+
+Web `8c0643b2cabb1807ccba290a1978f7c607b6af08` 仅修复/补充生产 flags 测试（2 PASS），runtime源码未变；已Main fast-forward、push/readback。既有28项定向结果按未变源码复用，不冒充新浏览器验收。两个UI flag显式true的候选build实际exit137，Owner报告kernel global OOM、没有dist及制品摘要；保留构建失败，不发布。
+
+实际OOM后，本任务的Web重构建改为等现有API测试/bootJar自然结束再单独执行；不取消任何在途进程，不新增任意内存/磁盘数值门禁。现有API健康独立复核仍UP。证据见 `integration-evidence-20260928/web-release-prep-8c0643b/`。
