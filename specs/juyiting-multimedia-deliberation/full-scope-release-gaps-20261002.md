@@ -154,3 +154,9 @@ Main实际源码核验（Client3619d33）：agent-client.mjs已有runNativeConve
 只读发现顺序：目标Agent实际binary/version及tool schema→既有账号工具/能力声明与合法认证通道→确认真正返回结果形态及生成/改图路径→形成最小适配范围。主控自身image_gen工具不替代目标平台Agent；MCP列表或models列表未列图片模型也不能单独判定原生工具缺失。Fast CHAT不因此加载或执行绘图工具；生成/编辑仍按已有业务授权及execution/lease/产物校验办理。
 
 模型证据纠正：用户裸名称gpt-image-2.5保持原样等待实际通道验证；侧聊和Main内部通信一度提及的flare/sunburst及“官方确认”均不采信。本轮web未得到可复核正文，直接抓取官方页面返回HTTP403；这些不足以证明型号存在或不存在，不写入运行配置。用户本次通知不新增付费授权，也不授权触发Flow/改运行配置/接管进程；本轮未作这些操作。原共享服务OTHER_SCOPE维护归属是独立问题，不与绘图服务配置混为一谈。
+
+## 2026-10-02 既有Agent通道只读实证
+
+目标实际Codex0.159.2（binary SHA256 1748767b230ebfc3d4ab7e4e254920d0c0ad9691fd8c11f190e7d44511a4a92e）含image generation/edit内部类型；两目标使用既有custom Responses通道。尚未证明账号图片权限，但也不能因未另配Images API判不可用。实际风险收敛为CLI事件合同：Client期望顶层Responses image_generation_call，binary静态exec序列化目录未显示该item，已有正向fixture系人工注入。下一步用自有隔离app-server/schema作零模型调用metadata readback，确认准确事件及生效工具配置，再决定最小适配；不先改模型/endpoint。
+
+证据：native-image-channel-discovery-20261002，Main核验receipt摘要8d95f760。Owner回执末段“另行授权”不能成为重复确认门槛：此前既有额度内真实生成/改图授权保留，本轮先做零调用发现，不新增付费范围。shared runtime维护归属仍单独处理；尚未触发新Run或运行配置变更。
