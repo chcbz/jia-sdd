@@ -192,3 +192,13 @@ Main独立Owner最小修复两个同构HTTP executor：允许已观测的非空s
 真实响应投影仅保留原b64、保留generation_id键/type并脱敏值：同一projection旧V3拒绝、新V3成功，输出1,764,364bytes/SHA256 `fea5ee52d8acf25ba86b3053bee1798e81cb3f73e3e56c021536bed7aef5415c`与真实Provider图一致；第二execute在fetch前被原claim拒绝。该修复验证0额外Provider请求。
 
 Client融合feature已FF/push/readback `d170c9778c51a14852b39ddc772e53d95d292d72` / tree `8f7349ec2823ecc6d10e23cab73036938b4a6098`，祖先3619保留。证据`integration-evidence-20260928/client-image-metadata-d170-20261002/manifest.json`。Runtime Owner下一步完善既有通道私有激活候选与版本化部署步骤，重核共享服务custody；当前没有生产配置写入、service操作或新Flow Run，未发布/未验收。
+
+## 2026-10-02 托管模式图片能力映射修复已源码整合
+
+实际发现managed继承函数一律清空controlled-image配置，不能把“有配置候选”当server模式可用。责任critical Owner新增Operator私有`AGENT_MANAGED_IMAGE_SCOPES_FILE`映射，精确匹配tenant/client/owner/agent/generation/profileId；完整endpoint/keyEnv/model/binding/epoch/ledger来自私有Operator文件，拒绝继承共享默认凭据/绑定，错scope和重叠ledger关闭。Managed请求不取得新增授权。既有local及未配置managed行为保留。
+
+Client `5ec83789d1fe603cd339ba22c332c4a0bebb5f87` / tree `80aa58cdaad96d2a82e0eb30f36322df3786b47f` 已基于d170 FF/push/readback。Owner194pass/0fail/0skip（8selectors），包含scope错配/目录重叠/配置私有性及真实registration/poll组件组装；0Provider/0build/0deploy。初轮依赖缺失、后轮payload count应由48更新50的真实失败已在selfcheck归因，未掩盖。Main核验10份源码hash、原始测试与静态日志hash、父/tree/clean状态，不重复全套测试。证据`integration-evidence-20260928/client-managed-image-scope-5ec-20261002/`。
+
+Runtime Owner正在将inactive候选更新为5ec并用实际loader核对scope/预期UID/权限；没有向生产复制配置。API0a4d新JAR与旧JAR恢复副本已在Owner独立0700 staging准备，Main独立核对完整SHA b4e53624…9824与632012a3…5fad及SHA256SUMS，实际两文件总505,785,550bytes，未新增固定余量门禁。staging不等于安装。
+
+共享Client维护会短暂影响lujunyi/linchong等非本次测试目标；Main已就这一个额外范围向用户明确一次维护窗口请求，尚未收到答复，不重启/reload/profile-write。普通API/Web版本发布沿用既有授权，不重复确认。最终Web同Run候选已生成但仍未Update/Start；正在核对被调用现有installer的门禁策略与真实package_version（c74为1.0.1，与历史产品release label不同），未提前冻结1.13.48或声称已发布。完整34项产品验收仍待真实部署后执行。
