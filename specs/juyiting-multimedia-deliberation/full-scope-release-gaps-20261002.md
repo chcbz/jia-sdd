@@ -261,3 +261,15 @@ Runtime Owner于20:24激活API exact0a4d，制品b4e53624，PID3506165，功能p
 Web固定DNF墙钟门槛修复7aaca891/tree71c0536已两文件最小自检并FF推fusion feature；保留签名/RPM/allowlist/真实失败及Flow取消，只有dnf/yum显式timeout0。全bootstrap18项通过；最初17/1来自Owner sparse树未materialize已跟踪fixture，已恢复精确blob并更正，不能写成源码缺fixture。develop及冻结1.13.48仍c74，等API关联修复就绪再统一候选。
 
 API5c5580是待实际targeted测试候选：context改普通事务保留全部锁和零业务写，H2/Spring测试仍在执行准备。Main补真实MySQL零行只读诊断：普通WHERE1=0 SELECT通过，同SQL FORUPDATE被拒SQLState25006/vendor1792，回滚完成、DML0/数据行读取0。这验证部署数据库只读事务与锁定读冲突，但不冒充原HTTP异常stack或修复上线证明。既有ledger已向责任Owner开放targeted_verification，不把缺新增任务当行政门禁。
+
+### 2026-10-02 22:15 context修复源码、打包及空间故障处理
+
+API5c5580/treea0e84已定向6项通过并非force推develop。测试为真实Spring事务代理/REQUIRED传播配合mock DAO，不声称H2实际锁SQL通过；真实MySQL诊断证据范围仍如前述。正常bootJar依赖66项通过，但首轮写包实际ENOSPC；仅删除Owner无效partial，未盲重试。Main确认本任务旧b4重复source/staging同inode、摘要一致且无打开FD后，保留独立live inode并建立恢复硬链，释放253586846字节，可用空间由249696256增至503300096。改变资源条件后单次重试成功，187任务中186 up-to-date，复用原测试证据。
+
+新制品d5c7fb9a/253586852字节，仅chat-service内部context类变化；Main独立核验source/tree/clean、制品及日志/差异报告摘要。冻结制品从build输出MOVE至本次Main staging，无source软/硬链残留，避免后续build写穿运行inode。22:15已在fresh四Agent零实际lease后进入本线程API可恢复安装，尚待健康和真实V3 GET核验。Web7aaca仍待统一推develop/新Run；34项整体验收未通过，不将打包成功写成发布完成。
+
+### 2026-10-02 22:20 API就绪、1.13.49冻结及正式Run152
+
+API5c5580/d5c7fb9a在独立Main scope安装完成，PID3558818、健康UP、实际启动62秒，原properties与launcher摘要不变，旧b4可恢复文件保留。重启后浏览器旧token GET为401/空体，重新通过真实测试账号表单登录后，两条旧会话context均409 BOUNTY_FOLLOWUP_V3_CONFLICT；此前503消失，但不将旧任务合同冲突当新任务200/生图验收。
+
+Web7aaca已非force合入develop，三组件新release/1.13.49分别固定API5c5580/Web7aaca/Client5bcb并远端readback，未移动1.13.48。完整分页确认没有push自动新Run及活动Run后，Main22:19:15单次Start返回4403172/152；参数{}，raw及canonical配置CAS匹配。实际checkout、云端tests/build/artifact/deploy和34产品用例仍待观察，不能仅凭目标SHA宣称部署。共享Client授权/激活ledger旧文案已纠正；统一集成归Main MMD-U4条目，避免重复active Agent归属。
