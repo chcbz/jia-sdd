@@ -233,3 +233,7 @@ Main只读旧probe确认其注入了`createLedger/createExecutor/createPollProto
 ## 2026-10-02 19:58 canonical managed身份修复已合入
 
 Client `5bcb16bd8e2cf9a2fde50ac114367ae272c0335f` / tree `e195b7fb150c3d45adc512e876cb4516de785b5b` 已非force快进feature和develop并远端核对。按实际ManagedHost身份生成合同推导最大159字符，普通ID仍100；不截断身份、不变完整身份hash目录，同步推导ledger读界限。Owner91项通过、0fail/skip，真实130字符binding15离线构造通过；Main核验7源码和4日志摘要及父/tree/clean。Runtime Owner正独立重新探测，不把Owner离线通过替代实际运行授权/连接。Provider0、未安装、共享维护授权仍未获答复，34项产品验收仍NOT_RUN。
+
+### 2026-10-02 20:05 独立inactive运行构造复验完成
+
+Runtime Owner已留下新版真实默认构造probe及PASS回执，随后工具终态为model capacity error；Main直接核验现有证据，不重复重跑。源快照102文件与exact5bcb逐字节一致，local1/managed15真实ledger/CLI executor/poll protocol构造、registration投影及私有ledger持久化/replay通过；Main独立核对两份claim摘要与完整身份长度。无factory stub，scope mismatch拒绝。首次缺yauzl已通过现有同package/lock依赖只读绑定修正，失败原件保留。只证明inactive配置构造，不证明线上授权/鉴权注册或Provider；未写运行目录/环境/生产profile，未操作服务，epoch1仍候选。共享维护授权尚未收到，34项平台用例、同Run正式发布仍未完成。
