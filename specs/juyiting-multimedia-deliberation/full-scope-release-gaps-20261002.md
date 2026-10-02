@@ -122,3 +122,11 @@ Runtime最终只读确认旧current_task没有对应任务/成员/work-item/有�
 ## 15:00 完整API私有候选的本地静态收口
 
 Runtime Owner已按既有存储根和两目标scope填入可确定字段，Main指定的平台binding/epoch/issuer/revision进入私有候选（0600）；候选SHA256 `cfc59ed071fd27b429b07f71dabbc088fe687152d8d27cd35207f2102119f29a`。Main独立对照0a4d完整应用fixture启用键，脱敏配置索引覆盖全部相关true/fullFeatureWiring开关。此检查仅证明键覆盖，不能证明值有效或运行就绪。真实origin/model/custody/Images凭据来源及HTTP合同仍MISSING_EXTERNAL；expiry在激活时冻结。候选保持NOT_READY/INACTIVE/DO_NOT_INSTALL，未复制秘密或安装到线上。
+
+## 15:19 实例fixture越界事故，40a1候选暂停提升
+
+实例Writer报告早期空slug测试误走默认共享安装路径并写入生产root，称current/launcher已恢复，留下release-目录。即使没有systemctl重启，这也是真实生产文件写入，不能称为“未执行生产安装/无生产影响”。该候选40a1尚未合入feature/develop；既有Client pin仍407db0a。
+
+Main独立只读核验：current指向原20260926104830-29fda32，agent-client摘要与先前只读记录一致，service MainPID3274483/启动时间13:47:56未改变，API仍HTTP200/UP。其他compat链接、权限、私有状态和launcher写前基线尚待授权Runtime Owner核验，不能宣称完整恢复。Main没有删除目录或操作服务。
+
+根因已有具体证据：TEST_MODE可省略隔离路径并回退真实APP_HOME/bin/systemd/systemctl；空slug最初又被当未选实例。要求在任何副作用前强制私有fixture-root与控制stub的完整约束，不能只修slug。该检查仅针对实事故的测试隔离，不给正常发布新增任意门禁。Writer已停止测试/提升并提供事故清单；独立运行custody Owner仅核验/恢复可证明属于本事故的路径，不处理其他release/进程。
