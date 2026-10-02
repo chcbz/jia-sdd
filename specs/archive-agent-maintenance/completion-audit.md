@@ -180,3 +180,5 @@ Main 在冻结 API candidate tree `560a59d1203a061967ab08065b78528091b5a324` 上
 
 全特性仍 ACTIVE / NOT_COMPLETE，真实 Runtime 场景与浏览器未验收，84 业务 case 状态未改。API/Web accepted local commits 尚未推送，根 gitlink 不提前改到未推送组件。新增扫描覆盖 MySQL/Rabbit/API-key 的实际秘密值，4526 个证据文件无命中（后续证据需重新扫描）。
 Runtime attempt2 tree fbe1131b 前后不变：真实 Gradle compile PASS/exit0/31s；launcher 在 Linux 启动前拒绝 main 的 NO-SOURCE 声明目录，唯一缺失项是 chat-starter/build/classes/java/main。原件 evidence/native-lifecycle/real-runtime-attempt2/，runtime/browser 仍 not_run。已交同一 Writer 精确识别合法空输出，禁止宽泛忽略缺失 JAR。
+
+Runtime attempt3 tree d704cbb4 compile/export/packaging PASS，launcher 返回后两个真实记录 PID /proc 均缺失、API unavailable、ready 缺失、日志0bytes、隔离DB仍0tables，保留失败原件。attempt4 tree 1dfbfd99 的 setsid/nohup/stdin 隔离修复实际验证 VERIFIED，JVM真实开始Spring且仅 archive-real-runtime profile；bean graph 因无关可选 KefuTools 的 KefuFaqEntity compileOnly 依赖缺失失败。Main精准STOPPED本任务进程，原件 evidence/native-lifecycle/real-runtime-attempt3..4/。下一唯一Writer仅收口可选工具扫描/真实fixture局部依赖，不改共享Archive/identity/auth/register/Rabbit链；真实场景与browser未运行。
