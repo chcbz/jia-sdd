@@ -80,3 +80,15 @@
 第3.3节已实现并以API/Web1.13.60上线：原417一次UI POST200、remount无POST、同key GET200回执一致，request/step CANCELLED v4，保留原START/费用事实，不表示Provider已停止，不退款、不完成需求。详情见 `execution-abandonment-contract-20261003.md` 与 `integration-evidence-20260928/release-1.13.60/release-result.json`。
 
 Web正式Flow161通过2952项（2pending/0fail），同Run制品安装与实际浏览器摘要核对完成；Client仍为已安装ed6f保全版。第3.1/3.2节result-only lease/自动恢复尚未实现。下一步在原授权范围和新明确意图下推进真实鸟图交付，并继续实现独立结果传输恢复；不能为了恢复去重放原417 START，也不把未实现的恢复功能冒充现有能力或额外付费前置。
+
+
+## 9. 14:40 新418实证与恢复顺序修订
+
+新418已真实生成PNG并到平台STAGED，但commit返回404。确定原因是Client与API的manifest算法不一致，而非上传字节失败。精确绑定、红绿测试及Client9bfb源码见`task418-result-delivery-diagnosis-20261003.md`。运行端未升级，原生成lease已过期；不得用新意图/新Provider替代恢复。
+
+长期方案按已有字节位置分两条独立路径：
+
+1. **平台STAGED/COMMITTED优先结果对账。** 新原生runtime结果专用POST，输入原executionId、commandId、messageId、inputSnapshotDigest、canonical manifest与唯一output proof；当前runtime认证与当前owner/task/conversation ACL先校验。事务内root→原consumed authority→execution/output锁，核对原START/consent/operation/源摘要、原赋值和当前执行状态，存量STAGED摘要/长度必须相同；读存量存储校验后原子commit，已COMMITTED返回原receipt。它不返回lease、不接受文件、不读新资料、不更改原START/paid claim，也不调用Provider。原活跃lease属于其他runtime则等待；过期后当前合法runtime可以只对账结果，原START runtime/version作为不可变历史验证，不能改成新的生成授权。缺STAGED、已终止或撤权时明确拒绝，不做SQL修补。
+2. **仅本地spool时的结果专用上传lease。** 继续按第3节实现，额外持久化输出proof/fence与CAS；不能用路径1的成功冒充该路径已经完成。
+
+两条都仍待实现。先覆盖418已有STAGED，可避免重复传1.86MB与新Provider开销；不是临时放宽旧fence。必须补真实SQL回滚/幂等/跨owner/runtime/撤权/活跃lease/旧START不变、原始HTTP合同及Client零executor调用回归。
