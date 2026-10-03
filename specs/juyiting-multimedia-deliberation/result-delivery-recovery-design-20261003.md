@@ -67,3 +67,10 @@
 - 持现有发布互斥、核对实时工作/执行租约为零后重启；新 PID `3948291` / `3948327` 活跃，实际收到注册 ACK 3/1 次，managed 子进程 `3948357` 存活。旧 release 均保留。
 - 本次未触发 Provider。第3节 result-only恢复及异常终止仍未实现；旧417输出不会被新保全逻辑复活。
 - 回执：`integration-evidence-20260928/release-1.13.57-progress/client-retention-runtime-installed.json`。前文“当时仅源码”的历史保留。
+
+
+## 7. 12:19 异常终止API源码完成，尚未发布
+
+- 对应第3.3节，API `79bd6196` / tree `3ade5d77`已feature push；22定向检查通过，含17真实隔离MySQL，0Provider。具体方法、回执、锁/CAS/幂等与验证边界见 `execution-abandonment-contract-20261003.md`。
+- 不修改既有执行CHECK：通用FAILED/AGENT_DELIVERY_FAILED表示未交付，精确owner放弃原因写事务journal。stage实际持久化STAGED output但execution仍可能QUEUED，因此必须检查output行，不能只看execution状态。
+- 尚无Web放弃入口/恢复、尚未部署、未改变原417；第3.1/3.2的result-only lease与Client自动恢复仍待实现。整体34项不变，不声称可验收。
