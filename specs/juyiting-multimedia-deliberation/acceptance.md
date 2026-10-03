@@ -101,3 +101,10 @@
 - 只读正式交付仍accepted；manifest/image与工作空间v1均200，原PNG摘要2bc30dd5…一致。未重生成、未重验收、未新增保存副本、0额外Provider。曾登录旧页面后落到API根的HTTP2错误，正常返回kit完成登录；不宣称无感认证恢复。
 - AC07/AC11仅提升本次真实协议/已有媒体回放/游标续读子例；尚未新生成实时媒体或覆盖全部乱序/断线场景，完整34项仍未完成。另实测已完成request/output目录仍定期轮询，记录为优化项，不按任意SLO中断。
 - 详见[发布结果](integration-evidence-20260928/release-1.13.66/release-result.json)、同目录browser-verdict及原始失败/解环回执。
+
+## 2026-10-03 参考图固定版本新旅程（API66 / Web64）
+
+- 新419/UI选v2→独立测试源文件追加v3→明确点吴用，创建/授权回执仍为v2及2bc原图摘要；AC02仅选择、持久化、授权子例，未证明runtime字节领取。
+- 原POST201，GET assignment-operation500：MySQL JSON列重排键/空格与读取原始字节相等检查冲突。真实MySQL/公开read红测2失败；源码8359ec5修复后29通过0失败0跳过，自检后FF推develop，尚未发布。
+- 后台已建会话1760458004762，execution另行FAILED/AGENT_DELIVERY_FAILED且Provider START为null；该执行故障未归因，AC17未通过。未重放原点将、未重置状态、未修改418、0生产DML。
+- 详见[进展与限制](reference-v2-read-integrity-progress-20261003.md)。完整34项未完成，不以新源代码绿灯提升线上或产品验收。
