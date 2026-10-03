@@ -118,3 +118,8 @@
 - 非空source序列化联合record多余null导致严格Client拒收，真实HTTP红测2/10失败；最小修复后10通过。线上旧DTO/实际Jackson+部署Client的离线跨语言验证两种source红绿及10项负向通过；不是完整runtime实测或419唯一历史根因证据。
 - API按既有local_user_authorized发布，制品1d4549…、PID19026、HTTP200/UP，monitor已交回；Web无新Run。API重启实际需要重新登录，不声称无感。
 - 新正常意图的实际参考字节、local生成、实时图片与同会话改图仍待执行，完整34项仍未完成。详见[本轮发布](release-1.13.67-reference-wire-progress-20261003.md)。
+
+
+## 2026-10-03 21:54 通用资料M2源码子集
+
+Web `6a2b71e` / tree `5651935a`：66项定向回归通过，Overview统一入口、真实adapter四类型混选/payload/固定版本预览下载/移除、workspace audio两界面渲染及旧响应/身份隔离。HTTP/bytes为fixture、媒体元素是实际Vue DOM；没有真实平台后端原子受理或Agent处理证据，未新跑Chromium/Flow/生产构建/Provider。仅记录UM01/UM02相关源码子例，**不提升UM整项或原34项为通过**；Bounty/M1/M3/M4仍待接通。参见[精确候选及证据](integration-evidence-20260928/unified-materials-correction-20261003/web-source-progress.json)。

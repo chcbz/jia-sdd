@@ -103,3 +103,12 @@
 - 任务420的参考v2/点将/自动进入会话已实际观察，但执行FAILED且未Provider START；未重放418/419/420，没有新生图调用。
 - 本轮修复候选 `bb52cd7bb11a6113d389ca2b35d94f2af9626846` / tree `87a26c673384ddc19ac23e7bb9010c681cdf2b09`：全局响应脱敏器将DTO转Map重新加回source的13字段，导致NON_NULL失效；仅原生受鉴权inputs-v3方法保留其无秘密的精确DTO序列化，普通接口脱敏不变。两个有效红测失败，修复后12项通过，包括真实Filter/Controller/Advice/Converter组合、浏览器Origin/缺鉴权拒绝与来源拒绝回执回归（认证和执行服务为stub，不冒充真实账号ACL验收）。一次夹具语法错误、一次隔离source-set缺运行依赖已修正，原日志保留。
 - 候选仅独立feature推送，**未合develop、未生产构建、未发布**；预备的1.13.68不是已发布版本。纠偏通知不取消、不抢占任何Run；本轮未触发Flow或操作运行服务。
+
+## 8. 2026-10-03 21:54 实施增量（源码候选，不是上线）
+
+- Web独立`codex/mmd-unified-materials-web-20261003`：`6a2b71e2162bcdb70b48be1919209f10781d9f90` / tree `5651935a289788b7e27cc7f6957ddc0a6d696a39`，已push/readback，未合develop。
+- M2先行基础已落地：Overview仅“添加资料（可选）”，删除图片筛选/专用selectionKind/用途下拉；真实workspace adapter的图片、PDF、音频、文本四类混选固定版本进入组件提交payload；卡片预览、版本预览/下载/移除，取消与身份切换保留隔离。现阶段QuickMatter仍用既有task-link INPUT适配，**不是最终通用原子创建合同已完成**。
+- 后端workspace既有音频/GIF/WebP能力未在前端白名单接通，现补详情、上传、原生audio预览与两种workspace界面；不自动播放。显式video/HTML等MIME不按扩展名伪装为audio，SVG/HTML/script仍不内联。旧预览和文件详情晚到有真实红测，加入代次隔离，不能覆盖新选资料或撤销新Blob URL。
+- 8个真实存在的选择器共66 PASS、0失败、0pending；实际Vue组件+真实adapter、HTTP与媒体bytes为fixture，不冒充系统Chromium解码、真实账号、服务端快照或Agent验收。JS/测试ESLint零错误；两SFC有42项原有问题（基线44），按rule/message增量0，不能写全量lint已通过。
+- BountyPanel仍待替换；M1通用原子创建与兼容合同、M3非固定绘图分派、M4 FAILED终态与仅spool恢复仍未实现。不能把此局部候选合develop自动发布后称纠偏完成；待共同候选具备上线条件再由4403172正式测试/构建/同Run发布。
+- 未调用Flow Start/Update、无本地生产构建、无Provider/生产DML，不重放418/419/420。API bb52修复保留。详见[本轮源码证据](integration-evidence-20260928/unified-materials-correction-20261003/web-source-progress.json)。原34项+UM子例仍NOT_COMPLETE。
