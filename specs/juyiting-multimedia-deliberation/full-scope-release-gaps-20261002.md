@@ -414,3 +414,7 @@ Web remote develop及新release/1.13.56固定78b83f8/tree076e96。Run158正式28
 但原417只恢复了同intent RUNNING，并未交付图片：23:37:06UTC provider-start200，23:37:43UTC output-content404及failure404，不能再称生成较慢。Controller存在，Service统一Failure映射404，需查具体locator/协议/lease/权限条件；不得简单放宽ACL。部署Client在验证PNG后上传，finally无条件删除runDirectory；只读确认目标Agent目录无文件、原paid claim仍CLAIMED。没有可预览的存留PNG证据，不冒充鸟图交付、不清claim/重新付费生成。Shannon负责API精确根因；Client须补持久输出后可重传，API修复不能补回已删除字节。
 
 AC12文本归档de4dd601仍source-only，合同/迁移/测试未完成不得混入原417紧急修复。完整34项范围不变，整体仍不可验收。结构化证据：integration-evidence-20260928/release-1.13.56-progress/release-progress.json。
+
+### 2026-10-03 00:44 UTC：404修复与结果保全候选，不冒充自动恢复
+
+API25bb98a4/tree18c15bc已feature推送，RESULT authority最小修复正在唯一Owner经orchestrator验证；Main已恢复自有隔离MySQL315文件并逐一hash核验，TCP仅127.0.0.1:33793，授权只作用测试前缀，不动生产。Client8b3c35fa/treee307f98a已feature推送/readback一致：上传前保全有效PNG/receipt，404/过期/ACK不确定不删除；53相关mock通过、7可选CLI跳过。旧lane上7leaf回归红，Node含父组计9fail。此Client未合主分支、未重启runtime、无Provider调用；既有inbox/START lease不能恢复已START执行，故不宣称自动重传或原417恢复。后续独立结果传输权限与无spool终止边界见result-delivery-recovery-design-20261003.md。
