@@ -16,4 +16,4 @@
 
 ## 当前源码状态
 
-Native 精确合同已局部审查接受并本地提交；RECOVERY-13 的必要定向自检通过，独立源码复审确认三项恢复边界缺陷，单 Writer 正在修复。上述其他原规格源码缺口和完整文档尚未收口，因此本轮完整源码 push 未发生，服务端全面验证尚未执行。机器状态以 integration.yaml 为准。
+Native 精确合同与 RECOVERY-13 三项恢复边界修复均已局部审查接受并本地提交，尚未推送完整增量；新增 MySQL 恢复/升级 selectors 仅编译，待服务端执行。唯一 Writer 正在补任职/jobs/管理与 Reader works 连续分页。章节持久断点、发布 STAGING 恢复、配额/引用回收与来源清理及完整文档尚未收口，因此本轮完整源码 push 未发生，服务端全面验证尚未执行。紧凑剩余路线见 remaining-source-plan.md，机器状态以 integration.yaml 为准。

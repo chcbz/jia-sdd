@@ -340,3 +340,15 @@ Main 仅执行用户要求的必要本地自检：production/test 编译通过�
 
 
 RECOVERY-13 有界独立源码复审 **REJECT_LOCAL_RECOVERY13_SOURCE_SCOPE，确认3项P1**：一次性枚举修复声明没有实际修复事实验证、retryable属性进入根因摘要可交替绕过、原始workIds顺序/重复或COLLECTION无语义字段可伪造inputChanged。回执 `recovery13-attempt3/review.json`；本地74/41+build证据仍有效但不能抵消缺失逻辑，未因为实库未跑拒绝，也未添加原规格外全面本地门禁。已全部交回同一唯一Writer修复：复用可信runtime/installation/source/config或依赖事实并在新attempt前核验；根因排除重试属性；scope摘要按实际权限语义规范化并修相关Web请求。修复后做必要定向自检与窄复审，仍不跑本地全套，不缩减同输入实际修复入口。原规格后续分页/持久checkpoint/STAGING/配额和清理仍须完整实现，源码与文档收口后先push，再服务端全面验证。
+
+### RECOVERY-13 三项窄修冻结与必要自检
+
+Writer 已冻结真实修复事实 gate、跨 run 根因排除 retryable、实际 scope 语义规范化与 Web 隐藏 workIds 清理。候选 API tree `f8ba4e2d52d99a15c3832b150cc933a3385f11d0` / Web tree `a3f0dcd5122be69109ceb20876c1d74f5d073dff`。Main 共享锁三 class **74/74PASS、0skip、Gradle0**；Web maintenance 单 selector **41/41PASS、0pending、build0**，前后同 tree。新增实库恢复/撤权/来源绑定/前代升级 selectors 仅编译、未执行，按用户顺序留完整源码 push 后服务端。
+
+API attempt4 的局部变量 replay 重名生产编译失败原件保留，仅重命名为 committedReplay 后 attempt5 通过；Web attempt2 误用不转发 selector 的 npm wrapper，触发另一模块 Windows URL pathname 失败，未修改无关模块，direct Mocha attempt3 单 selector 通过，build 使用同冻结 tree 的 attempt2 原件。独立只读三项窄复审进行中，不提前宣布接受/提交/push 或整项完成。证据 `native-lifecycle/recovery13-attempt{4,5}/`、`recovery13-repair-freeze/` 与 `web-wiring/recovery13-web-attempt{2,3}/`。
+
+三项生产修复窄复审 **ACCEPT_LOCAL_RECOVERY13_SOURCE_SCOPE，P0/P1=0，P2=1**。P2 仅为新增 source-binding MySQL selector：原 afterRead 改摘要发生过早，事务外重核已会抛 CONTENT_VALIDATION_FAILED，预期最终事务错误码的断言不匹配。生产仍 fail-closed，不能宣称该未执行 selector 已通过；已交唯一 Writer 只修测试时序与精确断言，保留不消费 repair/不创建 run 的强负向，生产/Web冻结树不改。原回执摘要 `recovery13-attempt5/review.json`；本包不外推整项 D2 已接受。
+
+RECOVERY-13 最终窄复审 **ACCEPT_LOCAL_RECOVERY13_SOURCE_SCOPE_FINAL，P0/P1/P2=0**。唯一 P2 只改测试一次性 afterRootLock seam；生产 blob 与上一接受树完全一致。Main attempt6 再次三 class **74/74PASS、0skip、Gradle0**，前后树一致；该新增实库 selector 仍未执行。最终本地保存 API commit **0d2a6e6d4b842446a180616fc6de5bb23b2943be**（tree **782798f51ac743e4791f4a15bbdfa1bc34bb6b7c**）与 Web commit **f7c5f3ab31de3ff06ca7513c53db921f033bf505**（tree **a3f0dcd5122be69109ceb20876c1d74f5d073dff**），精确匹配冻结接受树，保存后两仓 clean。原件 `recovery13-attempt6/review-final.json`。未 push 本轮完整增量、未更新 Root gitlinks/pins，整项目标仍 active。
+
+下一唯一 Writer 已继续原 D2 连续分页：任职历史、jobs state/cursor、管理与 Reader works 的 SQL keyset 与 Web 后续页；章节 checkpoint、STAGING、配额/来源清理仍按剩余路线串行开发。当前不跑本地全面回归/Runtime 作为 push 前门禁，保持先完成完整源码和文档、再组件→Root 推送、最后服务端全面验证的用户顺序。
