@@ -67,7 +67,7 @@ v3 不把旧 `EXECUTION_PROPOSAL` 转成自动执行；已受理的旧请求只�
 
 已实施到特性分支源码：普通界面删除绘图专用入口/确认链，点将、进度、异常恢复和验收改为简短说明，不展示内部状态码、幂等键或绘图业务专用提示；正文和附件统一发送；Client 原生 CHAT/INSPECT v3 schema、文本流、最终 sidecar 与 INSPECT 原结果重投；API v3合同校验、CHAT/INSPECT事实生成与按实际在线适配器及现有服务端绑定生成动作目录。发派资料不冒充已阅读；执行描述不代替执行授权。
 
-新增源码已接入 v3 最终结果事务、统一前端投影、独立于SSE的动作消费及复用原真实USER消息的自动查阅续办；Chat实际EXECUTE已接入既有执行预约；仍待贯通，未验收：动作失败/完成回会话与前端状态收敛、spool-only字节恢复、真实MySQL/浏览器完整闭环，以及按版本发布。
+新增源码已接入 v3 最终结果事务、统一前端投影、独立于SSE的动作消费及复用原真实USER消息的自动查阅续办；Chat实际EXECUTE已接入既有执行预约；仍待贯通，未验收：spool-only字节恢复、真实MySQL/浏览器完整闭环，以及按版本发布。
 
 **不能单发界面删除来冒充新链路完成。** 需整体候选贯通后按既定发布方式验证；前端只使用云效同Run正式测试、构建、制品与线上实测。当前不增加付费授权、不重放历史418/419/420、不变更或抢占Flow。
 
@@ -150,3 +150,14 @@ API `c0c60ad5ff10242bd31583755cef881920251687` 与 Client `3e713db4a63a0029f7190
 - 原运行时来源声明和资料行校验已同步；两处既有CHECK精确扩展且先核验完整目录。实际MySQL尚未验证/迁移；上线须先升级客户端再启用新合同。普通动作来源摘要改显式规范序列化，避免JVM重启后的Map顺序影响恢复。
 - API九类68项定向诊断通过；Client源合同/原生lane/实际已装CLI假上游87项通过；另6项直接消费Java测试实际输出的JSON、独立重算摘要、私有落盘真实PNG字节及拒绝篡改。无失败/跳过；两段Client测试覆盖未改生产源码的最终候选，非重跑全套。失败及修正均保留于源码验证JSON。
 - API生成wire采用真实运行时资料行校验与Spring响应序列化，但DAO是夹具；不是实际HTTP鉴权/MySQL/Provider验收。完整CHAT/INSPECT多资料dispatch跨仓验证、终态回会话、结果恢复、真实MySQL、四步浏览器及版本发布仍待完成。两仓仅推特性分支，未合develop/未触发Flow/未上线。
+
+
+### 当前增量：结果状态回到会话（API 8fa6f70b / Web 0fd703b）
+
+- 修复真实接线断点：自动EXECUTE子请求原写PLANNING，而已有成果投影只接受RUNNING，导致成功结果无法进入会话。现按已预约执行写RUNNING。
+- v3读取在不可变outcome之外增加必填`actionProgress`，非动作/未有最终答复时为null；动作时为`{actionRequestId,state,dispatchVersion,childRequestId,childRoute,childStateVersion}`。只读原outbox及同owner/会话代次/父结果下的子请求；不新建进度表，不因读取发派或重试。
+- `state`取QUEUED/RUNNING/COMPLETED/FAILED/CANCELLED；无子请求时后三个child字段全null，只能QUEUED或FAILED。有子请求时route为INSPECT/EXECUTE，版本为非负规范十进制JavaLong字符串。输出完成必须已有Chat成果投影，不能用预约或Provider回执冒充完成。
+- 已确认执行失败/资料撤销会原子更新step/request并写会话事件；不将上传待恢复或未知网络结果当作失败。已确定的指派/会话/冻结资料变更在原事务回滚后，原子记录action_failed与DEAD；不无限重试该旧请求，不丢弃已有子请求，不抢claim。临时服务、数据库或租约错误仍保留原有恢复机制。
+- 页面只显示“等待处理 / 正在处理 / 本轮完成 / 未完成 / 已取消”。完成后不再重复旧的“处理中”正文；事件只提示GET读取，不自行认定成功或发起执行。进度版本、子请求身份、终态单调；原最终结果仍不可变。
+- API最终10类89项、Web最终8文件164项定向诊断通过，无失败/跳过。Spring/H2逐写入点回滚及afterCommit发布已测；共享Java/Web投影向量字节一致。三个聚焦文件lint干净，useHallConversation仅保留父版本原有两项诊断。
+- 仍非上线/完整验收：spool-only恢复、实际CHAT/INSPECT跨仓资料输入、真实MySQL及四步浏览器闭环后，才能合并整条候选并按版本走同Run云效发布。未变运行配置/调用Provider/触发Flow。

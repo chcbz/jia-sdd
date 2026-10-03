@@ -53,10 +53,10 @@
     }
   },
   "remaining": [
-    "Durable action completion/failure projection and result-only recovery without Provider replay.",
-    "API-generated complete CHAT/INSPECT mixed-material dispatch verification; current emitted-wire integration covers image execution inputs only.",
-    "Real MySQL migration/transaction/concurrency and migration-aware release recovery.",
-    "Four-step browser acceptance and versioned develop integration, exact-source same-Run Flow tests/build/artifact/deployment and online verification."
+    "Result-only/spool byte recovery without repeating Provider calls.",
+    "API-generated complete CHAT/INSPECT mixed-material dispatch integration; existing image input and projection vectors are narrower.",
+    "Real isolated MySQL migration/transaction/concurrency and migration-aware release recovery.",
+    "Full four-step browser acceptance, then versioned develop integration and exact-source same-Run Flow tests/build/artifact/deployment plus online verification."
   ],
   "apiFinalValidation": {
     "commit": "ca8b9458fa60131ae1fec585d3c75196f256321a",
@@ -703,6 +703,169 @@
       "client-cli-run1.log": "faf584474745700c21969fe4c902730d9ad4053bdd2695936d58959468a423b7",
       "client-api-wire-run1.log": "265a3ddb549f940182531cb03462f0f1a321623d3a89e0faa96337148e3b0904",
       "client-api-wire-run2.log": "8fa1035534fedeaa5a153eadf4c71ede014b255bec2f6bd236a2b42e4d2392a5"
+    }
+  },
+  "actionLifecycleProjection": {
+    "api": {
+      "commit": "8fa6f70b52b06be1b84bff3677dba274c52eca52",
+      "tree": "8a95c8575f49a4a8a19b2ffbc240d266443b340e",
+      "remoteReadbackExact": true,
+      "tests": [
+        {
+          "name": "cn.jia.chat.service.ChatActionContinuationTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatActionContinuationTransactionTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatActionExecutionServiceTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatActionExecutionTransactionTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatActionFinalServiceTest",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatBountyAssetProjectorTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatDeliberationOutboxRelayTest",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatDeliberationOutboxServiceTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatDeliberationServiceTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "cn.jia.chat.service.ChatTypedDeliberationSpringTransactionTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "total": 89,
+      "log": "api-run4.log"
+    },
+    "web": {
+      "commit": "0fd703bf0fea396515c7b23c9973f98225fc7ff5",
+      "tree": "296302b5561457716bfb004e5ff55dd14937d4dc",
+      "remoteReadbackExact": true,
+      "tests": 164,
+      "failures": 0,
+      "pending": 0,
+      "log": "web-final.json",
+      "testSelectors": [
+        "juyiting-action-outcome-v3",
+        "juyiting-typed-deliberation-interaction",
+        "juyiting-typed-deliberation-wire",
+        "juyiting-bounty-bootstrap-adoption",
+        "juyiting-multimedia-parts",
+        "juyiting-typed-deliberation-page-routing",
+        "juyiting-multimedia-deliberation-ui",
+        "juyiting-hall-conversation"
+      ],
+      "lint": "Three focused implementation files clean. useHallConversation retains exactly two parent diagnostics, no added errors or weakened configuration."
+    },
+    "wire": {
+      "sharedFixtureSha256": "95da8a5c3a8d8cf57ceb4284390e7ab037d01a18c68d199347bec885c5d0a467",
+      "change": "Required top-level actionProgress in unreleased v3 read projection; immutable model outcome/finalDigest unchanged. Existing outbox and exact owner/generation/parent-linked child rows are authority; no new progress table."
+    },
+    "actualBugFixed": "EXECUTE admission inserted aggregate PLANNING despite existing bound RUNNING step/execution. Existing asset projector accepts only RUNNING request, so successful output would never project. Admission now records RUNNING.",
+    "failureProjection": "Confirmed execution FAILED/INPUTS_REVOKED updates Chat step/request and execution_terminal journal atomically; unknown/staged output is not a failure. Explicit stale assignment/conversation/frozen source uses rollback then atomic action_failed+DEAD claim settlement; transient transport/DB/lease errors retain fenced retry. Cannot discard an existing child or steal a claim.",
+    "ui": "Queued/running/completed/failed/cancelled use concise headings and no new button. Independently monotonic progress with immutable final protection, GET-only SSE/catalog refresh, stale/reordered/cross-scope replies rejected; completed copy no longer repeats obsolete processing prose.",
+    "transactionEvidence": "Real Spring/H2 transactions with fixture persistence cover four terminal write rollback points and three rejection-event/settlement rollback points. After-commit-only publication tested. Not actual MySQL schema or full Agent/Chat persistence integration.",
+    "priorFailures": [
+      {
+        "log": "api-run1.log",
+        "tests": 59,
+        "failures": 1,
+        "cause": "Repeated Mockito when setup invokes existing insertEvent answer with null matcher",
+        "remediation": "Isolated per-state mocks"
+      },
+      {
+        "log": "api-run2.log",
+        "tests": 10,
+        "failures": 1,
+        "cause": "New isolated Spring transaction context omitted conditional projector property",
+        "remediation": "Enable existing property only within test context; no runtime flag change"
+      },
+      {
+        "log": "api-run3.log",
+        "tests": 10,
+        "failures": 0,
+        "scope": "Projector incremental diagnosis before adding final stale-action handling"
+      },
+      {
+        "log": "web-run1.log",
+        "cause": "Legacy test directly assigned accessor-only Node20 global crypto",
+        "remediation": "Test-local defineProperty and exact descriptor restore"
+      },
+      {
+        "log": "web-run2.log",
+        "tests": 93,
+        "failures": 1,
+        "cause": "Old test expected readOne to return a stale response even when apply rejected it",
+        "remediation": "readOne returns null for rejected projection; state immutability assertions retained"
+      }
+    ],
+    "evidenceDirectory": "/var/tmp/cyf-mmd-action-progress-main",
+    "testOrigin": "local_targeted_source_diagnostic",
+    "formalCloudVerification": false,
+    "providerCalls": 0,
+    "productionChanges": false,
+    "limitations": [
+      "Result-only/spool byte recovery without repeating Provider calls.",
+      "API-generated complete CHAT/INSPECT mixed-material dispatch integration; existing image input and projection vectors are narrower.",
+      "Real isolated MySQL migration/transaction/concurrency and migration-aware release recovery.",
+      "Full four-step browser acceptance, then versioned develop integration and exact-source same-Run Flow tests/build/artifact/deployment plus online verification.",
+      "Vue component stub warnings remain; no new full-product browser, runtime or release claim."
+    ],
+    "logSha256": {
+      "api-run1.log": "920f06e7fb2563b180631e6b6df5c2c036a4a1efa513675c76b74d32c96636b5",
+      "api-run2.log": "dce48faff7183c7d65eb9826348b70295540ae7d223f4c8ea821e56281209980",
+      "api-run3.log": "a5986cfa4aa5a04b8de50f87c7c47250e5260a900e39adf1d48605998cb55d2b",
+      "api-run4.log": "fb0f8e24764ce47ed59df715866f22c84e2d0da7255f27e5bed2a54c049be259",
+      "web-final.json": "3d37e57bf5647e1e274781f5731b443fd7ef6449290c51a729d5dc79d9f15727",
+      "web-final-stderr.log": "d2d45f576a83a25a7b9b271f570975d743fc68cab5926be4f18f0a52122d6b60"
     }
   }
 }
