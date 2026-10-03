@@ -92,3 +92,12 @@
 - 首次安装在修改前因PID CAS不匹配停止：构建期间健康监控将原Main PID4113499切换到PID4135305/healthmon scope，已部署仍API1.13.65同JAR69dde且UP。未操作新进程、未修改监控；已发conflict-alert并请原Runtime Owner协调维护归属，不盲目重试。
 - Web仍Run164，不新增前端Run；0Provider/START重放/生产DML，原418成果保留。实际修复后浏览器测试尚NOT_RUN，AC07/AC11不能提升，完整34项不宣称通过。
 - 固定证据：[1.13.66候选状态](integration-evidence-20260928/release-1.13.66/candidate-state.json)。
+
+## 2026-10-03 17:50 增量（API1.13.66实际发布，Web1.13.64不变）
+
+- 固定9d55/tree669候选及JAR d904已实际运行，PID4147942、Runtime Owner a3 scope，HTTP200/UP；配置/launcher不变，monitor已resume且maintenance=false/in_flight=null。不新增前端Run，复用正式Run164。
+- 完整保留控制面失败：attempt1 PID变化修改前停止；attempt2应用已健康却因monitor status75误触发回退，旧65实际恢复；attempt3揭示monitor.lock→canonical release锁与deploy release锁→monitor CLI的锁反序。Owner仅释放精确自有shell4147570 FD8（pidfd_getfd/flock UN，signal0），foreign monitor自然继续，未重启健康API，无attempt4。所有monitor CLI以后均置于release锁外，内部只检查maintenance marker/CAS，不能靠扩大超时或无限互等掩盖死锁。
+- 真实浏览器原418 GET200单层SSE：events3/4含权威type/会话/代次，ready4；Last-Event-ID4只返回ready，无重复旧事件。实际UI只有1次SSE GET、1次历史GET、0无效事件帧，无旧二次编码引起的resync。原图再次放大预览并视觉确认。
+- 只读正式交付仍accepted；manifest/image与工作空间v1均200，原PNG摘要2bc30dd5…一致。未重生成、未重验收、未新增保存副本、0额外Provider。曾登录旧页面后落到API根的HTTP2错误，正常返回kit完成登录；不宣称无感认证恢复。
+- AC07/AC11仅提升本次真实协议/已有媒体回放/游标续读子例；尚未新生成实时媒体或覆盖全部乱序/断线场景，完整34项仍未完成。另实测已完成request/output目录仍定期轮询，记录为优化项，不按任意SLO中断。
+- 详见[发布结果](integration-evidence-20260928/release-1.13.66/release-result.json)、同目录browser-verdict及原始失败/解环回执。

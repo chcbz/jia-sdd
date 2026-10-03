@@ -27,3 +27,9 @@
 - `ops/ci/aliyun-flow/host/cyf-api-kit`（本次将现行生命周期脚本纳入版本管理）
 
 验证：`python3 -m unittest discover -s ops/ci/aliyun-flow/tests -p 'test_api*.py' -v`。这些是隔离临时目录中的控制面测试，不调用生产生命周期，不替代应用 Flow 回归。
+
+## 2026-10-03 已证实的监控/发布锁反序
+
+API1.13.66发布已实际复现：monitor持monitor.lock调用canonical status等待release锁，而deploy持release锁调用monitor CLI，造成互等；此前CLI `75 / monitor_lock_busy`还被误判为应用失败并回退健康实例。证据见`specs/juyiting-multimedia-deliberation/integration-evidence-20260928/release-1.13.66/`。
+
+所有monitor CLI（包括status）必须放在release锁外：维护Owner先pause/status确认maintenance与无in-flight，再取发布/生命周期锁，内部仅做marker与精确CAS、安装、健康/归属检查；释放发布锁后才做status/resume/readback。明确的锁忙只表示等待，不新增任意超时，也不得以无限等待掩盖锁反序；不抢占foreign进程。此次仅精确自有FD解环是有据恢复，不应作为日常安装步骤。

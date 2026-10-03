@@ -92,3 +92,5 @@ cd web && npm run dev -- --host 0.0.0.0
 - Keep this runbook short and operational.
 - Put detailed flow diagrams or long explanations in `docs/juyiting-feature-guide.md`.
 - When fixing a repeated issue, add one sentence here under the relevant section so future sessions do not rediscover it.
+
+- 议事SSE生产回归（2026-10-03）：MVC映射返回typed `ServerSentEvent<String>`，不要对`Flux<String>`手拼`id:/data:`再让MVC编码；持久event补回type/会话/代次，错误JSON显式Content-Type。使用真实MockMvc编码器和真实浏览器验证回放/Last-Event-ID，直接断言Flux字符串不能发现双层编码。见多媒体release1.13.66证据。
