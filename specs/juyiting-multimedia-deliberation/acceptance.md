@@ -68,3 +68,11 @@
 - 可选工作空间保存服务端saved，原文件`pws_a528e9d30e944acebc27f1f23376a2ca` v1；旧前端拒绝typed回执导致界面误报。最小解析修复在4403172/164，尚不记线上修复通过。
 - 这只是图片主路径的部分真实证据：不把AC07的无刷新实时更新、AC12全部媒体、AC14文字+图筛选/不先归档等未执行分支标PASS；音频/混排/改图/固定参考版本/双模式/权限专项等仍需完整验收。API重启后实际重新登录，不宣称无感恢复。
 - 证据：[release1.13.63](integration-evidence-20260928/release-1.13.63/release-result.json)、同目录正式manifest/图片只读回执。完整34项仍未完成。
+
+## 2026-10-03 16:18 增量（Web1.13.64 / Flow4403172 Run164）
+
+- exact `0b665640dbd3de6535f7e020eac24941a232f5ff`，云效2959 PASS / 2 pending / 0 FAIL；同Run制品`9ec99791b41914771e23ba9883ba4f271e55a8dd651440255bc35c371bf5a3b1`，部署单70602569健康，364安装文件与5个公网浏览器资源字节一致。语音SVG修复e586已为祖先，无重复合入。
+- 原保存意图首次升级恢复因旧回执未保存operationId，显式重试原幂等POST，返回同一arc/file/v1；再次正常刷新后仅GET原archive operation和finalization，两者仍saved/completed。未重复生成、未重新验收、未新建副本。
+- 真实工作空间UI原图v1可预览、下载；下载字节与原图及正式交付一致。截图位于本Main证据目录`/var/tmp/cyf-mmd-bird-delivery-main-20261003/workspace-original-preview.png`和`run164-archive-finalized.png`，均已视觉核验。
+- 旧前端保存误报已消除。此轮不新增Provider调用；完整34项仍未完成，不能把图像部分闭环称为全部多媒体功能已验收。
+- 证据：[release1.13.64](integration-evidence-20260928/release-1.13.64/release-result.json)。
