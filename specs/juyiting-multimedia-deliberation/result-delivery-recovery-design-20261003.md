@@ -59,3 +59,11 @@
 - API RESULT最小修复连同preSTART失败分流已推进至`cabb8b5c`，75真实SQL相关测试通过，1.13.57可恢复安装健康；没有新增result-only lease/inbox，所以原417仍不可自动恢复。
 - Client`ed6f66c7`补齐8b保全模块的安装清单与完整import闭包回归（64安装相关+1实际隔离copy通过）。仍仅feature源码，尚未升级线上5bcb；不得把私有保全能力当成已经实现重传。
 - 详见`integration-evidence-20260928/release-1.13.57-progress/`。第3.1至3.3节仍需要独立实现、授权边界自检及业务验证。
+
+
+## 6. 10:14 Client 保全运行升级完成（不等于原417恢复）
+
+- Client `ed6f66c7` 已非force推进 develop 与冻结 `release/1.13.57`；shared/local 均由原 installer 安装，55 payload/34递归模块与源码逐项一致，配置未变。
+- 持现有发布互斥、核对实时工作/执行租约为零后重启；新 PID `3948291` / `3948327` 活跃，实际收到注册 ACK 3/1 次，managed 子进程 `3948357` 存活。旧 release 均保留。
+- 本次未触发 Provider。第3节 result-only恢复及异常终止仍未实现；旧417输出不会被新保全逻辑复活。
+- 回执：`integration-evidence-20260928/release-1.13.57-progress/client-retention-runtime-installed.json`。前文“当时仅源码”的历史保留。
