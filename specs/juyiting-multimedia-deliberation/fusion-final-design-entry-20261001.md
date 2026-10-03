@@ -1,5 +1,7 @@
 # 聚义厅统一多媒体议事：长期融合详设与施工总入口
 
+> **2026-10-03 用户纠偏（当前优先）**：[通用资料详设增量v3](unified-materials-correction-20261003.md)取代独立参考图入口及图片限定业务流程。唯一“添加资料（可选）”须支持图片/文档/音频等；Agent判断用途，通用会话、输出、保存与交付保持完整范围。不是文案改名；旧冻结绘图wire仅作执行适配与兼容，原34项需补UM01–UM10。当前尚未实现/验收本纠偏。
+
 日期：2026-10-01。特性：`juyiting-multimedia-deliberation`；SDD/API/Web/Agent Client 共用分支 `codex/juyiting-multimedia-deliberation`。
 
 本文收敛已有详设的阅读和实施顺序，**不是第二份 wire、DDL 或运行台账**；不改任何冻结合同/fixture。分支和文档已经交付，完整功能仍在实施，尚未按本特性发布或验收。
