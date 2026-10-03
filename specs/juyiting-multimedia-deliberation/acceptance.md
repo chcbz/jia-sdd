@@ -2,7 +2,7 @@
 
 > **2026-09-28 验收增量**：[详设v2第11节](fusion-detailed-design-v2.md) 新增FD01–FD12，与本文件AC01–AC22合计34项产品用例，均未因本轮代码合并自动通过。实际源码定向检查见 [整合回执](integration-baseline-20260928.md)。
 
-日期：2026-09-27；全部用例状态：**NOT_RUN**。下列是未来验收设计，不是已实现/已通过的证明；前期 fast-deliberation 79/141 测试不计入本需求。
+原始设计日期：2026-09-27；当时全部用例状态：**NOT_RUN**。最新实测增量见文末，不把原始设计表当作当前已验收状态。下列是未来验收设计，不是已实现/已通过的证明；前期 fast-deliberation 79/141 测试不计入本需求。
 
 ## 1. 环境与数据
 
@@ -60,3 +60,11 @@
 每条用例记录：ID、状态（PASS/FAIL/BLOCKED/NOT_RUN）、exact commit/tree/部署版本、执行命令或浏览器步骤、测试身份标签（不含凭据）、task/conversation/request/turn/message/part/execution/run/asset IDs、文件 MIME/字节数/SHA-256、正式 delivery/decision/task 终态、可复核截图/日志位置。
 
 图片纵切通过仅标 I1；完整 feature 要求全矩阵与专项风险回归，并有用户实际验收结论。源码测试、部署健康与产品验收分开报告；不以任意 1s/3s SLO、剩余预算或未测算资源门槛判失败。真实权限错误、文件不可预览/下载、重复执行、状态误报是实际失败。
+
+## 2026-10-03 实测增量（API1.13.63 / Web1.13.61）
+
+- 原418图片经已授权平台Agent生成；本轮仅恢复原成果，不重复Provider/START。真实会话显示、放大预览、浏览器下载均确认同一PNG：1370×1148，1,863,523字节，SHA256 `2bc30dd5c2acc8434d3be2bde0757bb5346f2d9597f43f95ed9f1ed896fe35a8`。
+- UI选中唯一原图并验收：task completed / delivery accepted；随后只读GET正式列表、manifest及正式图片均200，manifest集合与原图摘要一致。未重复验收POST。
+- 可选工作空间保存服务端saved，原文件`pws_a528e9d30e944acebc27f1f23376a2ca` v1；旧前端拒绝typed回执导致界面误报。最小解析修复在4403172/164，尚不记线上修复通过。
+- 这只是图片主路径的部分真实证据：不把AC07的无刷新实时更新、AC12全部媒体、AC14文字+图筛选/不先归档等未执行分支标PASS；音频/混排/改图/固定参考版本/双模式/权限专项等仍需完整验收。API重启后实际重新登录，不宣称无感恢复。
+- 证据：[release1.13.63](integration-evidence-20260928/release-1.13.63/release-result.json)、同目录正式manifest/图片只读回执。完整34项仍未完成。
