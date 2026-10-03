@@ -92,3 +92,11 @@ Web正式Flow161通过2952项（2pending/0fail），同Run制品安装与实际�
 2. **仅本地spool时的结果专用上传lease。** 继续按第3节实现，额外持久化输出proof/fence与CAS；不能用路径1的成功冒充该路径已经完成。
 
 两条都仍待实现。先覆盖418已有STAGED，可避免重复传1.86MB与新Provider开销；不是临时放宽旧fence。必须补真实SQL回滚/幂等/跨owner/runtime/撤权/活跃lease/旧START不变、原始HTTP合同及Client零executor调用回归。
+
+## 10. 15:32 1.13.62 已安装：原418提交恢复，展示尚未通过
+
+- API `14b1c75f` / Client `f70b735c` 均已冻结 `release/1.13.62` 并安装；API53、Client108通过/1可选跳过。Web保持1.13.61 / Run163，不重复构建。
+- 客户端按新manifest合同自动提交平台已有STAGED字节；418变为OUTPUT_COMMITTED，PNG仍为 `2bc30dd5c2acc8434d3be2bde0757bb5346f2d9597f43f95ed9f1ed896fe35a8`，原receipt/PNG/START/lease不变，仅新增ACK。0额外Provider、无生产DML、无重传/再生图。
+- 真实Chat relay暴露第二处缺陷：owner的list/readConversationOutputs将null runtime身份传给v3 runtime-only授权校验，从而GRANT_REVOKED。不能靠填造runtime身份或绕过ACL修复。
+- 后续最小修复将owner已提交结果读取与runtime执行授权拆开，保留当前owner/task/Agent/assignment、明确grant撤销、Chat ACL、consumed START及内容摘要验证；不重新读取旧参考资料或要求Provider在线。
+- 实际展示/预览/下载/保存/正式交付验收仍未通过；详见 `integration-evidence-20260928/release-1.13.62/`。
