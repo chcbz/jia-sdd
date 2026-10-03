@@ -74,3 +74,9 @@
 - 对应第3.3节，API `79bd6196` / tree `3ade5d77`已feature push；22定向检查通过，含17真实隔离MySQL，0Provider。具体方法、回执、锁/CAS/幂等与验证边界见 `execution-abandonment-contract-20261003.md`。
 - 不修改既有执行CHECK：通用FAILED/AGENT_DELIVERY_FAILED表示未交付，精确owner放弃原因写事务journal。stage实际持久化STAGED output但execution仍可能QUEUED，因此必须检查output行，不能只看execution状态。
 - 尚无Web放弃入口/恢复、尚未部署、未改变原417；第3.1/3.2的result-only lease与Client自动恢复仍待实现。整体34项不变，不声称可验收。
+
+## 8. 13:30 原417异常轮次已通过业务入口收敛
+
+第3.3节已实现并以API/Web1.13.60上线：原417一次UI POST200、remount无POST、同key GET200回执一致，request/step CANCELLED v4，保留原START/费用事实，不表示Provider已停止，不退款、不完成需求。详情见 `execution-abandonment-contract-20261003.md` 与 `integration-evidence-20260928/release-1.13.60/release-result.json`。
+
+Web正式Flow161通过2952项（2pending/0fail），同Run制品安装与实际浏览器摘要核对完成；Client仍为已安装ed6f保全版。第3.1/3.2节result-only lease/自动恢复尚未实现。下一步在原授权范围和新明确意图下推进真实鸟图交付，并继续实现独立结果传输恢复；不能为了恢复去重放原417 START，也不把未实现的恢复功能冒充现有能力或额外付费前置。
