@@ -428,7 +428,7 @@ completion_audit:
     writer_agent: 01a1020f-d374-77b1-8965-b80cf5e012b3
     base_api_commit: 659b66c323d997ee32c11f8e72b289775d7d8bf3
     base_web_commit: ae31dc44f2c8c4c8386ceaa6a18a4300d09749dc
-    status: source_frozen_self_checked_awaiting_read_only_review
+    status: implementing_three_confirmed_review_repairs
     real_verification: not_run
     whole_feature_complete: false
 
@@ -447,7 +447,7 @@ delivery_policy:
   reference: delivery-order.md
 
 recovery13_source_candidate:
-  status: source_frozen_self_checked_awaiting_read_only_review
+  status: implementing_three_confirmed_review_repairs
   api_tree: e40c10ece60181cfd49e09e721e66164ebac557a
   web_tree: b5d83dfad2a3f0f01257c0995283896000c73f3e
   api_local_targeted_classes: 3
@@ -462,8 +462,22 @@ recovery13_source_candidate:
   web_evidence: evidence/web-wiring/recovery13-web-attempt1/
   exact_previous_schema_sha256: 782a64f159bdd36df0657ad29c11bff4c7e122ad0dac56fc7f8fe30eab7408b2
   mysql_recovery_upgrade_selectors_status: not_run_deferred_to_server_after_complete_source_push
-  independent_review_status: in_progress
-  original_root_cause_repair_fact_gate_review: pending
+  independent_review_status: REJECT_LOCAL_RECOVERY13_SOURCE_SCOPE
+  original_root_cause_repair_fact_gate_review: rejected_missing_server_verified_repair_facts
   source_committed: false
   source_pushed: false
+  whole_feature_complete: false
+
+recovery13_review_repairs:
+  status: implementing
+  writer_agent: 01a1020f-d374-77b1-8965-b80cf5e012b3
+  rejected_api_tree: e40c10ece60181cfd49e09e721e66164ebac557a
+  confirmed_p1_count: 3
+  defects:
+    - structured_repair_code_not_bound_to_actual_server_verified_repair
+    - retryable_attribute_can_evade_root_cause_pair
+    - raw_workIds_can_fake_semantic_input_change
+  evidence: evidence/native-lifecycle/recovery13-attempt3/review.json
+  full_local_regression_required: false
+  server_comprehensive_verification: deferred_until_complete_source_push
   whole_feature_complete: false

@@ -337,3 +337,6 @@ Main本地保存API commit `659b66c323d997ee32c11f8e72b289775d7d8bf3` 与Client 
 Main 仅执行用户要求的必要本地自检：production/test 编译通过，service/native HTTP/schemaCatalog 三 class **74/74PASS、0skip、Gradle0**；Web 单 maintenance selector **41/41PASS、0pending，build0**，前后 source tree 相同。前两轮测试编译 long 转换错误、旧单位 fixture 缺 draft 的 404 均保留，并分别只修一处合法类型和一处该测试的合法 stub，未改生产授权、断言或全局夹具。原件 `evidence/native-lifecycle/recovery13-attempt{1,2,3}/` 和 `evidence/web-wiring/recovery13-web-attempt1/`。
 
 旧 DDL fixture 逐字节匹配 `659b66c` Git blob（34715 bytes / 19 表 / SHA256 782a64f...）；该绑定不是升级成功证据。新增实库连续失败/候选变化/修复声明消费/前代升级及 drift 负例尚未执行，遵循新交付顺序，待完整源码 push 后在服务端验证。不运行本地全套或 Runtime/browser 作为 push 前门禁，不改写原 11 API 与 1 Client 既有失败或 84 生产业务 not_run。原 D2 其他源码缺口仍待串行补齐，整个特性保持 implementing / NOT_COMPLETE。
+
+
+RECOVERY-13 有界独立源码复审 **REJECT_LOCAL_RECOVERY13_SOURCE_SCOPE，确认3项P1**：一次性枚举修复声明没有实际修复事实验证、retryable属性进入根因摘要可交替绕过、原始workIds顺序/重复或COLLECTION无语义字段可伪造inputChanged。回执 `recovery13-attempt3/review.json`；本地74/41+build证据仍有效但不能抵消缺失逻辑，未因为实库未跑拒绝，也未添加原规格外全面本地门禁。已全部交回同一唯一Writer修复：复用可信runtime/installation/source/config或依赖事实并在新attempt前核验；根因排除重试属性；scope摘要按实际权限语义规范化并修相关Web请求。修复后做必要定向自检与窄复审，仍不跑本地全套，不缩减同输入实际修复入口。原规格后续分页/持久checkpoint/STAGING/配额和清理仍须完整实现，源码与文档收口后先push，再服务端全面验证。

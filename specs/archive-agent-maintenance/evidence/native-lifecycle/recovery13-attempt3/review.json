@@ -1,0 +1,32 @@
+{
+  "verdict": "REJECT_LOCAL_RECOVERY13_SOURCE_SCOPE",
+  "reviewerAgent": "01a100e0-8707-7210-a247-5165db243567",
+  "apiTree": "e40c10ece60181cfd49e09e721e66164ebac557a",
+  "webTree": "b5d83dfad2a3f0f01257c0995283896000c73f3e",
+  "p1": 3,
+  "findings": [
+    {
+      "id": "P1-1",
+      "summary": "one-time structured manager repair declaration is not bound to server-verified actual repair facts before new run",
+      "source": "ArchiveMaintenanceServiceImpl.java:3017-3050 and recoverExecution before ensureExecution admission",
+      "sourceTest": "ArchiveMaintenanceConcurrencyMySqlTest.java:305-328 accepts repair without any actual repair"
+    },
+    {
+      "id": "P1-2",
+      "summary": "retryable boolean in root-cause fingerprint permits alternating attribute to evade same phase/code consecutive block",
+      "source": "ArchiveMaintenanceServiceImpl.java:2193-2197,3074-3075"
+    },
+    {
+      "id": "P1-3",
+      "summary": "raw unordered duplicate or irrelevant workIds changes input fingerprint without changing effective appointment scope",
+      "source": "ArchiveMaintenanceServiceImpl.java:449-453,3028-3035,3062-3067,3119-3135,3432-3438"
+    }
+  ],
+  "localApiSelfCheckPassed": 74,
+  "localWebSelfCheckPassed": 41,
+  "webBuildExit": 0,
+  "unexecutedMysqlIsNotTheReasonForReject": true,
+  "writerAgent": "01a1020f-d374-77b1-8965-b80cf5e012b3",
+  "repairStatus": "implementing_three_confirmed_source_defects",
+  "boundary": "source defects against original RECOVERY13; no new full-local-test gate; not whole D2 acceptance"
+}
