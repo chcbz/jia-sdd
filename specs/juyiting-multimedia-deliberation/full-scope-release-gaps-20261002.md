@@ -402,3 +402,15 @@ Run157实际checkout3bad445；最终FAIL，build527664460 FAIL/scan527664461 SUC
 API e7c3ba13/tree722b8830已完成持久等待同意图恢复；Main独立核对6源路径、12项fresh XML、8项逐字节复用authority证据及2项预期RED。尚未新打包/安装，线上仍5fe/1.13.54。磁盘按实际新JAR253.6MB与前端安装约214MB串行安排；Main仅将自有无外部连接旧fixture MySQL clean shutdown，全文件SHA验证后可恢复压缩10,520,768B，退役135MB数据目录，未动生产/foreign进程；live4a35和直接恢复04d1保留。
 
 task417没有本次鸟图，仍不可验收；保持原request/intent/grant/consent，不重放点将、不重建授权、不生产DML复位。详见本目录release-1.13.56-progress/source-progress.json；完整AC01–AC22/FD01–FD12范围不变。
+
+### 2026-10-03 00:24 UTC：1.13.56 前后端已发布；原417暴露输出上传404
+
+API e7/tree722b正常bootJar产物ffdda747（253597826B）已按本地明确授权发布，PID3863755，52秒HEALTH UP，配置不变、直接恢复4a35保留。v1校验器nested临时解包失败并未捕获底层IOException，不写成已证明ENOSPC；资源整改后的同源同命令v2成功，187tasks/1executed，七个改变class和JAR CRC已独立核对。
+
+Web remote develop及新release/1.13.56固定78b83f8/tree076e96。Run158正式2892passing/2pending，build527681324和scan527681325成功。首次deploy527681326/order70596770失败：主机free0与ENOSPC实测、下载55193600B不完整；deploy日志也截断，额外瞬时占盘来源未知，不归因其他Owner或声称完整wget错误。互斥下核对terminal/无FD/record156，记录hash后只退役该失败下载；实际制品+stage+新增线上文件+最大atomic文件预算219694631B，整改后可用288MB。单次只retry该Run部署，新job527694630/order70597028 SUCCESS；不重建、不Start、不改Flow配置。完整同Run106583353B包SHA256 bd7898c0d0c8941c4f9317c7c252d7c246ebab9f85806fc834ecc84ce0cc7f90，382成员/364dist逐项绑定；线上364文件及真实浏览器index/HallJS/HallCSS三资源摘要匹配。
+
+真实原profile导航刷新，开始hydration未结束时scope为空，待实际加载完成自动恢复tenant字符串0/user5与原417scope匹配，无重新登录、无setUser/localStorage迁移、无重放点将；该刷新子例通过。voicee586图标保持既有Run156线上实测结论，已send_input通知voice主控。
+
+但原417只恢复了同intent RUNNING，并未交付图片：23:37:06UTC provider-start200，23:37:43UTC output-content404及failure404，不能再称生成较慢。Controller存在，Service统一Failure映射404，需查具体locator/协议/lease/权限条件；不得简单放宽ACL。部署Client在验证PNG后上传，finally无条件删除runDirectory；只读确认目标Agent目录无文件、原paid claim仍CLAIMED。没有可预览的存留PNG证据，不冒充鸟图交付、不清claim/重新付费生成。Shannon负责API精确根因；Client须补持久输出后可重传，API修复不能补回已删除字节。
+
+AC12文本归档de4dd601仍source-only，合同/迁移/测试未完成不得混入原417紧急修复。完整34项范围不变，整体仍不可验收。结构化证据：integration-evidence-20260928/release-1.13.56-progress/release-progress.json。
