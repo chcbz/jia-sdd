@@ -1,5 +1,7 @@
 # 通用资料与多媒体协作：产品纠偏及详设增量 v3
 
+> **2026-10-03 最新实施指令**：用户明确“无需做太多兼容补丁，一切都按新方案实施”。新入口、新请求统一走通用资料与按需议事；不新增旧生图入口、双轨产品流程或回退适配工程。只保留身份隔离、幂等、未完成请求及既有内容保护，不以历史兼容覆盖率阻塞新方案。
+
 日期：2026-10-03。依据：用户明确要求“参考图就是资料的一种，不应该单独出来”，并要求主控同步修正方案、详设、开发与验收。
 
 **本增量是当前产品范围与实施优先级（文档v3不是runtime wire协议版本升级）。不是功能已实现，也不是新的发布回执。** 与早期“参考图入口”“先打通画鸟再补资料”的产品安排冲突时，以本增量为准。历史冻结 wire/fixture 保留原始内容和版本，不追改旧证据；通用合同必须单独版本化。特性名称仍为 `juyiting-multimedia-deliberation`（聚义厅多媒体悬赏议事与工作空间闭环），不另建生图产品。
@@ -15,7 +17,7 @@
 
 参考图是本次任务中一份资料的**用途**，不是文件类别、独立存储域或第二入口。画鸟只是一项端到端用例，不能替代文档整理、音频资料处理和混合资料协作。
 
-## 2. 当前实现的具体偏差（源码核对）
+## 2. 纠偏开始时的具体偏差（历史核对；实施进度见末节）
 
 - Web `HallOverview.vue` 同时有“资料（可选）”与“参考图（可选）”，选择通过 `selectionKind` 分流；`HallReferenceImagePicker.vue` 是图片专用选择器，`BountyPanel.vue` 另有入口。
 - Web `hallRequirementCreateIntent.js` 的创建合同只接收 `purpose:REFERENCE`；旧创建 v1 限 JPEG/PNG，不能通过按钮改名宣称通用附件已接入。
@@ -34,7 +36,7 @@
 
 复用现有 file/version、task-link、conversation asset/part 和 delivery 引用。避免因图片/音频/文档分别新建目录服务或重复上传；底层必要复制仍按既有生命周期和私有存储合同，不能为“去重”取消独立ACL。山寨安顿与自家接应保留各自工作目录：平台提供范围受限的领取接口及 input manifest，Agent 在私有 run 下 materialize 到 inputs，成果写 outputs 并验证上传；本机路径不能直接成为浏览器下载地址。
 
-## 4. 通用附件合同与兼容（拟议，非线上接口说明）
+## 4. 通用附件合同（非线上接口说明）
 
 ### 4.1 业务选择与服务端快照
 
@@ -47,14 +49,14 @@
 | 入口 | v3目标合同 | 当前实现与版本边界 |
 | --- | --- | --- |
 | 创建需求 | 正文 + 可选通用 `attachments:[{fileId,version}]` 原子持久化；无点将/Provider副作用 | 现有 `POST /agent/tasks/creation-operations` 及 `GET /agent/tasks/creation-operations/request` v1严格字段集不变；新增显式版本化合同，由M1固定独立v2路由或显式协商，不能向旧v1静默塞字段 |
-| 点将并议事 | explicit target + expected requirement/assignment revisions；固定所有资料引用，创建一次会话/首条请求 | 复用现有任务根事务、assignment-operation只读核对、bootstrap outbox；通用受理不暴露或强制 `GENERATE_IMAGE`，M1冻结通用路由/DTO，绘图专用点将合同仅保留旧客户端兼容 |
+| 点将并议事 | explicit target + expected requirement/assignment revisions；固定所有资料引用，创建一次会话/首条请求 | 复用现有任务根事务、assignment-operation只读核对、bootstrap outbox；通用受理不暴露或强制 `GENERATE_IMAGE`，M1冻结通用路由/DTO，绘图专用参数收敛到执行适配层，不作为新业务入口或通用点将前置 |
 | 会话补充 | 原会话+期望代次/版本+正文+本轮来源选择；形成新request/step | 复用统一 interaction admission/typed discussion，发布前冻结新schema及快照digest；不得让已有v1/v3 strict parser宽松接收未知字段 |
 | 内容读取 | 同身份/目标/任务/会话代次与精确版本绑定，读取元数据与内容分离 | 保留现有私有媒体读取、runtime scope/fence/manifest，不开放整工作空间或任意URL |
 | 事件/历史 | 同一 request/step/message/part 的增量、revision和真实终态；媒体晚到不丢 | 复用journal和SSE回放，不新造图片专用通道；FAILED必须结束等待并给出可操作原因，不自动重试执行 |
 
 新增写入口沿用幂等键：同键同body返回原意图；同键异body冲突；未知结果先GET原操作，404不证明写入未发生。鉴权错误不泄露别人的附件；版本漂移返回冲突并保留当前草稿；某项不可读要明确指出该项，不静默丢弃后执行。不支持的**处理能力**与能否选择/保存/下载该资料是不同问题。
 
-**M1尚待冻结：**精确通用路由/字段集、能力目录与媒体组合校验、版本协商、错误码及source-set/fixture映射。不得把本节示意字段直接宣称线上可用，也不得未经合同自检就改生产表或松绑冻结协议。
+**M1创建子合同已固定：**见[通用原子创建v2](unified-materials-creation-v2-contract-20261003.md)，包含显式v2路由/字段集、持久版本标签及幂等/旧恢复。点将与会话通用分派、能力目录与媒体组合校验仍待冻结/实施。不得把本节示意字段直接宣称线上可用，也不得未经合同自检就改生产表或松绑冻结协议。
 
 ### 4.3 fast 与多媒体的长期关系
 
@@ -110,5 +112,15 @@
 - M2先行基础已落地：Overview仅“添加资料（可选）”，删除图片筛选/专用selectionKind/用途下拉；真实workspace adapter的图片、PDF、音频、文本四类混选固定版本进入组件提交payload；卡片预览、版本预览/下载/移除，取消与身份切换保留隔离。现阶段QuickMatter仍用既有task-link INPUT适配，**不是最终通用原子创建合同已完成**。
 - 后端workspace既有音频/GIF/WebP能力未在前端白名单接通，现补详情、上传、原生audio预览与两种workspace界面；不自动播放。显式video/HTML等MIME不按扩展名伪装为audio，SVG/HTML/script仍不内联。旧预览和文件详情晚到有真实红测，加入代次隔离，不能覆盖新选资料或撤销新Blob URL。
 - 8个真实存在的选择器共66 PASS、0失败、0pending；实际Vue组件+真实adapter、HTTP与媒体bytes为fixture，不冒充系统Chromium解码、真实账号、服务端快照或Agent验收。JS/测试ESLint零错误；两SFC有42项原有问题（基线44），按rule/message增量0，不能写全量lint已通过。
-- BountyPanel仍待替换；M1通用原子创建与兼容合同、M3非固定绘图分派、M4 FAILED终态与仅spool恢复仍未实现。不能把此局部候选合develop自动发布后称纠偏完成；待共同候选具备上线条件再由4403172正式测试/构建/同Run发布。
+- BountyPanel仍待替换；M1通用原子创建合同、M3非固定绘图分派、M4 FAILED终态与仅spool恢复仍未实现。不能把此局部候选合develop自动发布后称纠偏完成；待共同候选具备上线条件再由4403172正式测试/构建/同Run发布。
 - 未调用Flow Start/Update、无本地生产构建、无Provider/生产DML，不重放418/419/420。API bb52修复保留。详见[本轮源码证据](integration-evidence-20260928/unified-materials-correction-20261003/web-source-progress.json)。原34项+UM子例仍NOT_COMPLETE。
+
+## 8. 2026-10-03 后续实施：新方案创建入口已接线（未发布）
+
+- API候选 `6a855a6de88b69baa9cdefe75e375a04da078249` / tree `2a3cfb55247b4051289203ea45dcbd5dc3091a00`，独立分支`codex/mmd-unified-materials-api-20261003`。通用v2创建支持图片/PDF/音频/文本及空选；复用原事务，资料、需求任一持久化失败整体回滚，不增加文件体系、不改生产schema。30定向测试PASS/0失败/0跳过（Controller/Service/H2真实事务/隔离MySQL等）。
+- Web候选 `43645f179b60ba869c9496e2722bc40d981f7783` / tree `ac4e7030c105f84d19807738478020cb1c7682f4`，独立分支`codex/mmd-unified-materials-web-20261003`。Overview与Bounty共用`HallMaterialPicker.vue`；只提交`attachments:[{fileId,version}]`。混合固定版本、统一预览/下载/取消/移除；业务层无INPUT/REFERENCE及图片过滤。
+- 两个入口均使用通用v2原子创建，Overview不再调用QuickMatter先创建再逐份关联；完整原文不截成30字标题。创建不点将、不执行、不调用Provider。未知结果进入同一原请求恢复；身份隔离/幂等保护不构成第二产品流程。资金悬赏权限范围不扩展。
+- 90项通用选择/创建/集成回归 + 14项实际JuyiHall/Bounty组件定向回归，共104 PASS/0失败/0pending；新共享组件ESLint零问题，修改文件按rule/message计数相对基线新增0。存量lint问题仍存在，不宣称全量lint已通过。
+- 测试采用真实Vue组件/真实工作空间adapter及HTTP媒体fixtures；本轮没有实际Chromium、线上Agent或浏览器解码验收。详见[创建子流程源码证据](integration-evidence-20260928/unified-materials-correction-20261003/atomic-materials-source-progress.json)。
+- **下一步只推进新方案**：通用点将与全部资料目录→Agent按需答复/澄清/查阅/执行→同会话追加与多媒体交付。失败终态投影、仅spool恢复及原34+UM整体验收仍未完成。不再安排独立参考图或旧生图入口的兼容扩展，不把局部绿测称为可验收发布。
+- 以上均独立候选，未合develop、未触发Flow或部署；既有API/Web线上版本未由本轮变更。SDD gitlinks保持真实已发布版本。
