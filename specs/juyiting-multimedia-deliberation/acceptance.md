@@ -83,3 +83,12 @@
 - API `eb9f95a6abe0402bb40168cb2d98b67d471079b3` / tree `09e6077be34bbed27007043ae97ec97ef1fd1670`，24 PASS、0FAIL、0skip，按已授权`local_user_authorized`构建发布并健康。Web继续复用Run164，未重复构建。
 - 上线实际SSE变为200，但浏览器原始字节暴露`data:data:`/`data:id:`二次包装，尚不能正常解析。**AC07实时更新与AC11回放仍不通过**，不能把HTTP200当实时展示通过。已进入真实MVC序列化回归/后续修复。
 - 详见[release1.13.65](integration-evidence-20260928/release-1.13.65/release-result.json)。没有Provider或START重放，没有修改418原图/归档/验收。
+
+## 2026-10-03 17:22 增量（API1.13.66候选，尚未上线）
+
+- 真实MVC红测在修正fixture认证后复现两项`data:data:`重复编码与一项SSE Accept异常JSON不可表示；首次fixture失败单独保留，未冒充有效产品红测。
+- exact `9d55c06a4a3b6fbc7604fe8a24d531ac762585f1` / tree `669c0d58761cf5504e95b2d2a43a3b8b85b4a484`：4项MVC+24项原MySQL/事件回归，28 PASS、0FAIL、0skip。typed ServerSentEvent交由MVC单次编码，事件type/会话/代次来自授权journal，大游标保持字符串；JSON异常显式Content-Type。未修改legacy stream或权限/写锁。
+- develop及冻结release/1.13.66已push/readback；既有授权本地正常bootJar完成，JAR `d904aa03fd2f55134c2b69f624dea35607c86dadfba247ec3797c74c4d2c5db8`。**候选不是线上版本**。
+- 首次安装在修改前因PID CAS不匹配停止：构建期间健康监控将原Main PID4113499切换到PID4135305/healthmon scope，已部署仍API1.13.65同JAR69dde且UP。未操作新进程、未修改监控；已发conflict-alert并请原Runtime Owner协调维护归属，不盲目重试。
+- Web仍Run164，不新增前端Run；0Provider/START重放/生产DML，原418成果保留。实际修复后浏览器测试尚NOT_RUN，AC07/AC11不能提升，完整34项不宣称通过。
+- 固定证据：[1.13.66候选状态](integration-evidence-20260928/release-1.13.66/candidate-state.json)。
