@@ -418,3 +418,16 @@ AC12文本归档de4dd601仍source-only，合同/迁移/测试未完成不得混�
 ### 2026-10-03 00:44 UTC：404修复与结果保全候选，不冒充自动恢复
 
 API25bb98a4/tree18c15bc已feature推送，RESULT authority最小修复正在唯一Owner经orchestrator验证；Main已恢复自有隔离MySQL315文件并逐一hash核验，TCP仅127.0.0.1:33793，授权只作用测试前缀，不动生产。Client8b3c35fa/treee307f98a已feature推送/readback一致：上传前保全有效PNG/receipt，404/过期/ACK不确定不删除；53相关mock通过、7可选CLI跳过。旧lane上7leaf回归红，Node含父组计9fail。此Client未合主分支、未重启runtime、无Provider调用；既有inbox/START lease不能恢复已START执行，故不宣称自动重传或原417恢复。后续独立结果传输权限与无spool终止边界见result-delivery-recovery-design-20261003.md。
+
+
+### 2026-10-03 09:31 API1.13.57已发布；原417仍未交付，AC12前后端继续闭环
+
+native404候选`cabb8b5c`/tree`d746ced8`已非force合remote develop并新冻结release/1.13.57。Main独立汇总Owner真实隔离MySQL XML：75项、0失败/错误/跳过；包含initial/followup preSTART failure与consumed RESULT准入。正常bootJar经orchestrator串行完成（API既有本地授权，`build_origin=local_user_authorized`），JAR253599215B/SHA256`cad49493eb88353afd3ffc8cf18d21824caa955c13785074188e7642786b35ac`；CRC、三个核心class与Gradle输出一致，仅agent-api/service两内嵌模块变化。首次CLI参数顺序错误发生在Gradle执行前，改为options-before-task后成功，未重放实际失败构建。
+
+09:25:45可恢复安装完成，PID3927834、Main1.13.57scope、health UP；properties/launcher未变，保留e7c3上一版JAR及原配置。API没有新自动Flow Run，未伪报云端结果；Web保持正式Run158/78b83f8（含e586语音SVG），未新建前端Run。实际浏览器重新登录后09:28:59读取原417 GET200，仍原request/execution RUNNING/stateVersion3、没有鸟图。新代码不会恢复已删除的旧PNG，不重付费，不生产DML，完整34项仍不可验收。
+
+Client保全源已追加真实安装清单修复：`ed6f66c7`/tree`8159d93e` feature push/readback。发现8b新增leaf漏入显式RELEASE_PAYLOAD，现55文件/34递归runtime模块逐字节完整；installer/candidate64通过0跳过，真实隔离copy闭包1通过（40非目标跳过），旧installer红测1按预期失败。旧闭包固定28断言已按真实依赖校正为实际模块+manifest完整相等，不减文件校验。Client仍未运行时升级，线上保持5bcb；没有自动重传实现。
+
+AC12 Web`8e9809ab`/tree`ecf68d4f`已feature push：31文字+3inline+34voice共68定向通过、旧源六项红测、scoped ESLint/diff通过。请求冻结为lowercase create/items[textSelection]，202和不明确回执重放同key，Unicode边界/摘要、receipt身份与revision单调性明确核验；不传客户端正文。API AC12仍由唯一Owner完成编译、真实隔离MySQL/迁移自检，未合Web develop或用本地构建代替Flow。
+
+证据：[1.13.57运行快照](integration-evidence-20260928/release-1.13.57-progress/release-progress.json)、[API制品绑定](integration-evidence-20260928/release-1.13.57-progress/api-artifact-independent-verification.json)、[AC12 Web源码](integration-evidence-20260928/release-1.13.57-progress/ac12-web-source.json)、[Client安装闭包](integration-evidence-20260928/release-1.13.57-progress/client-retention-packaging-source.json)。下一步：完成AC12 API与前端同Run集成，安装Client保全，并实现result-only恢复/无spool可审计业务终止；不把本次基础修复等同整体交付。
