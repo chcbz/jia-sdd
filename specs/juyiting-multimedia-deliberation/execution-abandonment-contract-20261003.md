@@ -63,7 +63,7 @@
 
 **已核实的重要状态语义**：CONVERSATION stage成功时 output是STAGED，但execution仍可能QUEUED。不能只看execution_state，也不能把 OUTPUT_STAGED 当作唯一安全判断。
 
-## 前端实施要求（待实现）
+## 前端实施要求（源码已实现，正式发布待核验）
 
 - 明确展示“放弃本轮未交付结果”，说明“不会撤销已发生的生成费用，也不表示已停止服务商执行”。不得把它替换为无提示的普通取消。
 - 使用当前明确request/step/execution和服务端版本，不依赖隐式选中Agent。身份/会话切换后禁止旧响应更新新界面。
@@ -87,3 +87,14 @@
 - 不触发Flow、不修改线上配置、不调用Provider、不终止原417、不合develop。完整多媒体验收仍未完成。
 - 证据：`integration-evidence-20260928/execution-abandonment-source-20261003/source-result.json`；Main原日志 `/var/tmp/cyf-mmd-execution-termination-main-20261003/`。
 - 下一步唯一集成候选纳入Web明确放弃入口、原key查询恢复、事件触发权威readback，再按版本发布；不要为了单纯新增API入口重复发布前端。
+
+## 2026-10-03 12:54 Web 源码验收（不是上线或整体验收）
+
+- Web `codex/bounty-execution-abandonment-web-20261003`：`db48052e0d812c3ff6678cc79e0803dfa748fb4b` / tree `c265a199300fb0f77f3cebd949f25bd5078127c0`，feature remote readback一致；九个路径，未更改voice/context/CAS合同。
+- 真实SFC明确告知不可撤销已发生费用、不是停止Provider；原intent先存sessionStorage并readback再POST，未知结果保原key/body，只查询或显式继续原操作，不重放生成。身份/会话变更取消自己的传输并丢弃旧回执。
+- API79bd exact22项证据复用；Web十个相关测试文件 **141 passing/0 failing/0 pending**（轻量本地辅助，不代替Flow）；包括实际createApi/useHttp/fetch、真实SFC DOM与真实SSE parser。非法foreign SSE继续使用既有“拒绝帧并重读当前授权会话”恢复，不按foreign payload改状态。
+- 新增与直接相关文件定向ESLint通过；既有集成文件同baseline对比无新增诊断，原188+2+3项未伪造全绿。
+- system Chromium133实际900/390 viewport，idle/unknown四组截图与尺寸通过、已人工查看截图；使用真实SFC/composable/CSS与禁止网络的HTTP adapter、模拟请求。不是全产品、Provider或线上验收。自有预览和浏览器均关闭。
+- 组件诊断初次入口误放在Vite SPA fallback之后，及直引第二份Vue runtime的问题均已归因修正；不是产品通过证据。测试红测/修正日志保留。
+- API已FF推develop79bd；Web暂留feature，等待API1.13.60无迁移/无配置变更的exact构建安装，再合Web develop走Flow4403172唯一同Run测试/构建/制品/部署。
+- 未操作原417、0Provider、0本地前端生产构建；result-only恢复及完整鸟图34项验收仍未完成。源码证据见 `integration-evidence-20260928/execution-abandonment-web-source-20261003/`。
