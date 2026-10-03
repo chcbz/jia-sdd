@@ -1,5 +1,7 @@
 # 开发计划与拆分
 
+> **当前收口**：完整跨仓wire定向API45/Client35、Run101失败项修复26、隔离MySQL19项独立覆盖已通过；API5c34e818/Client777f26f已推特性分支。见[当前证据](ordinary-request-source-evidence.json)与[发布顺序](ordinary-request-release-plan-v3.md)。仍需完整事务/浏览器/同Run正式发布，不以历史增量中的待办重复开工。
+
 > 当前用户交互以 [普通请求与统一动作合同](ordinary-request-actions-v3.md) 为准：四步完成，不设图片专用“受控请求”或确认链。历史冻结合同不作为新界面流程；完整发布验收仍未完成。
 
 > **2026-10-04 新方案源码进展**：[通用点将合同](generic-point-and-deliberate-contract-20261003.md)。Webe3ceaec已取消新请求绘图前置并自动接入CHAT；API78f61531 / Client1ab2b66已统一INPUT/REFERENCE32资料查阅及回执。Web287定向+14组件、API64、Client32自检通过；仅特性分支，未发布。按需查阅/执行自动编排、失败恢复和完整验收仍待完成。
