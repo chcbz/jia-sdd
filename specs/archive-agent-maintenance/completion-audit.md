@@ -328,3 +328,12 @@ Main本地保存API commit `659b66c323d997ee32c11f8e72b289775d7d8bf3` 与Client 
 ### 2026-10-03 用户调整交付顺序
 
 按用户原话“先把功能开发完，更新文档，然后提交到远端特性分支。在服务端再做全面验证”执行，详见 `delivery-order.md`。原 D2 功能缺口仍须补齐；不再把反复本地全套回归或本地 Runtime/browser 全面验证作为首次完整源码推送的前置条件。本地仅必要定向自检与明显错误检查，全面验证移到 push 后的服务端开发环境；失败后继续修复同一分支。历史证据与既有失败不删除，未发生生产部署/上架/付费授权。当前源码仍在实现，不宣称开发完成或本轮完整源码已推送。
+
+
+### RECOVERY-13 源码冻结与必要定向自检
+
+2026-10-03：唯一 Writer 已实现跨 run 稳定输入/根因失败历史、第二次阻断、恢复/改派 gate、结构化修复声明消费、恢复诊断 DTO 与 Web 操作路径，以及精确前代新增单表升级。候选 API tree `e40c10ece60181cfd49e09e721e66164ebac557a` / Web tree `b5d83dfad2a3f0f01257c0995283896000c73f3e`，尚未提交或推送本包。独立源码复审仍进行中；修复声明是否充分证明原根因实际修复正在明确核对，不预先宣称通过。
+
+Main 仅执行用户要求的必要本地自检：production/test 编译通过，service/native HTTP/schemaCatalog 三 class **74/74PASS、0skip、Gradle0**；Web 单 maintenance selector **41/41PASS、0pending，build0**，前后 source tree 相同。前两轮测试编译 long 转换错误、旧单位 fixture 缺 draft 的 404 均保留，并分别只修一处合法类型和一处该测试的合法 stub，未改生产授权、断言或全局夹具。原件 `evidence/native-lifecycle/recovery13-attempt{1,2,3}/` 和 `evidence/web-wiring/recovery13-web-attempt1/`。
+
+旧 DDL fixture 逐字节匹配 `659b66c` Git blob（34715 bytes / 19 表 / SHA256 782a64f...）；该绑定不是升级成功证据。新增实库连续失败/候选变化/修复声明消费/前代升级及 drift 负例尚未执行，遵循新交付顺序，待完整源码 push 后在服务端验证。不运行本地全套或 Runtime/browser 作为 push 前门禁，不改写原 11 API 与 1 Client 既有失败或 84 生产业务 not_run。原 D2 其他源码缺口仍待串行补齐，整个特性保持 implementing / NOT_COMPLETE。
