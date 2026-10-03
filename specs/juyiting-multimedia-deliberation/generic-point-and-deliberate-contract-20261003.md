@@ -4,7 +4,7 @@
 
 遵循用户“无需做太多兼容补丁，一切都按新方案实施”：普通需求统一添加资料、显式点将、自动悬赏议事。新点将不要求选择生成图片/编辑图片/资料用途，不以原生绘图能力或独立 Images API 配置作为进入议事的前提。旧操作只保留未完成请求与已有内容保护，不再为旧生图入口增加产品分支。
 
-本合同落实**点将与自动首轮议事源码**，不等同于完整多媒体交付已完成。API、Client 候选仅推送特性分支；Web 新点将接线、自动查阅/执行、真实媒体与正式验收仍待完成，没有此次发布或线上成功证据。
+本合同落实**点将与自动首轮议事源码**，不等同于完整多媒体交付已完成。API、Web、Client 候选仅推送特性分支；截至2026-10-04，Web新点将和CHAT会话接线、32项统一资料查阅协议已完成源码自检。自动查阅/执行编排、真实媒体与正式验收仍待完成，没有此次发布或线上成功证据。
 
 ## HTTP
 
@@ -40,16 +40,30 @@ POST 事务提交后若投影读取失败，浏览器须保留原键与原正文
 - typed 目录支持 INPUT/REFERENCE 精确关系与32项；SQL 保留 owner/client/tenant/task/file/version，并对 link_role 精确匹配。提供目录不等于已读取文件字节。
 - Client 同步接收32项混合媒体目录，仍验证来源唯一、媒体类型、会话与目标绑定；不扩大操作或付费授权。
 
+## Web新主路径（2026-10-04）
+
+- 普通单目标点将只调用新POST；没有绘图capability前置、独立图像确认框、客户端inputRefs或旧assign fallback。资金榜与多Agent流程不借此扩大授权。
+- 原存储槽的新记录为schema2，三字段正文/原键不可变；既有意图只能按原合同核对，不转换为新的议事请求。坏记录、身份/任务/目标变化不发新POST。
+- ADMITTED后用精确task/assignment/target/request/conversation绑定读取首轮并接入会话；DELIBERATE为一个CHAT turn、零execution step，不伪造正在执行。首轮turn状态/序列防回退。
+- 已确认PENDING的POST即使后续GET暂时失败，仍可只读观察原操作；不重发POST，不设任意性能取消门槛。
+- Hall详情不再另建PDF/绘图产品入口；资料摘要显示中性文件/版本，无资料同样可点将。
+
+## 统一资料查阅协议（2026-10-04）
+
+创建目录、CHAT选择器、INSPECT清单、Agent输入与最终回执统一支持既有32项资料容量，不再在16项处截断/拒绝。`INPUT`与`REFERENCE`是服务端精确关系：保持原role/version，不能为了进入查阅而把INPUT改写REFERENCE；OUTPUT、大小写别名和无效版本仍拒绝。
+
+查阅上下文、内容领取和最终提交复核都按owner/client/tenant/task/file/version及二进制精确role读取有效关联。领取/最终复核仍在既有task锁、assignment/conversation/runtime授权下，摘要/MIME/长度不放松。当前会话资产使用assetId/revision及null purpose，不强行套工作空间引用。Client保持固定API origin、manifest绑定及私有临时目录；无新的文件系统或兼容产品支路。
+
+此项仅打通数据合同，**不代表Agent已自动选择何时查阅或跨类型执行**。当前typed执行建议仍含图片限定，需要继续改为实际能力驱动；不把协议容量自检冒充音频/文档真实处理能力。
+
 ## 源码自检与剩余工作
 
-详见同目录证据 `integration-evidence-20260928/unified-materials-correction-20261003/generic-point-source-progress.json`。
+最新精确候选与日志摘要：`integration-evidence-20260928/unified-materials-correction-20261003/generic-point-inspection-source-progress-20261004.json`。历史点将59PASS、Chat51PASS/3条件MySQL未运行保留在原`generic-point-source-progress.json`，不改写历史结果。
 
-已完成：点将 Service/HTTP 59PASS；bootstrap/typed/事务相关51PASS、3个条件 MySQL 用例未运行；Client18PASS。新 SQL 的精确角色核对目前是单元夹具验证，不冒充真实 MySQL 新路径验收。此前创建/资料选择证据保持独立，不重复累加为全链路通过。
+本轮：Web287定向PASS + 14组件PASS；API64PASS/0skip；Client32PASS；Web原有lint 201项→200项，新增rule/message实例0。API新SQL是mock JDBC及合同验证，不冒充真实MySQL；Web正式测试/生产构建/制品发布仍须Flow4403172。没有本轮Provider调用、生产DML或发布。
 
 必须继续：
 
-1. Web 普通点将唯一接入此新路径，移除新请求的绘图能力前置和用途选择；保留原在途意图只读保护、身份/代次 fencing、原键恢复与自动会话接入。
-2. 资料按需查阅：目前 inspection 仍有 REFERENCE/16 限制，要统一 INPUT/32 与精确 ACL；Agent 自主查阅/执行编排尚未完成。
-3. 执行建议 → 实际能力/既有授权校验 → 执行/多媒体实时展示，不强制多一轮用户确认，不把统一授权推导成未授权扣费。
-4. 失败终态投影、仅本地 spool 未 STAGED 上传恢复、双接应、真实媒体预览/下载、归档与正式交付验收。
-5. 统一候选达到上线条件后按既定版本/Flow 政策发布；保持此前线上版本和已有内容，禁止重放418/419/420或删除 paid claim。
+1. Agent按需选择查阅并自动续议；执行建议按实际能力及既有授权协调，不强迫通用点将先走图像确认或额外重复确认，不推导未授权扣费。
+2. 失败终态投影、仅本地spool未STAGED上传恢复、双接应、会话继续补资料、真实多媒体预览/下载、归档与正式交付验收。
+3. 新路径MySQL及完整浏览器用例，统一候选达到上线条件后按既定版本/Flow政策发布；禁止重放418/419/420或删除paid claim。
