@@ -76,3 +76,10 @@
 - 真实工作空间UI原图v1可预览、下载；下载字节与原图及正式交付一致。截图位于本Main证据目录`/var/tmp/cyf-mmd-bird-delivery-main-20261003/workspace-original-preview.png`和`run164-archive-finalized.png`，均已视觉核验。
 - 旧前端保存误报已消除。此轮不新增Provider调用；完整34项仍未完成，不能把图像部分闭环称为全部多媒体功能已验收。
 - 证据：[release1.13.64](integration-evidence-20260928/release-1.13.64/release-result.json)。
+
+## 2026-10-03 16:42 增量（API1.13.65 / Web1.13.64不变）
+
+- 真实418事件GET持续404：只读事务内锁读遭MySQL1792拒绝，错误被转换成CHAT_NOT_FOUND。实际数据库仅只读诊断（0 DML）与真实Spring/MyBatis/MySQL测试均复现。修复保持所有身份/代次谓词，只有事件水位/回放改非锁读；写操作保留原锁。
+- API `eb9f95a6abe0402bb40168cb2d98b67d471079b3` / tree `09e6077be34bbed27007043ae97ec97ef1fd1670`，24 PASS、0FAIL、0skip，按已授权`local_user_authorized`构建发布并健康。Web继续复用Run164，未重复构建。
+- 上线实际SSE变为200，但浏览器原始字节暴露`data:data:`/`data:id:`二次包装，尚不能正常解析。**AC07实时更新与AC11回放仍不通过**，不能把HTTP200当实时展示通过。已进入真实MVC序列化回归/后续修复。
+- 详见[release1.13.65](integration-evidence-20260928/release-1.13.65/release-result.json)。没有Provider或START重放，没有修改418原图/归档/验收。
