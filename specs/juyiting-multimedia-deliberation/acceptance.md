@@ -108,3 +108,11 @@
 - 原POST201，GET assignment-operation500：MySQL JSON列重排键/空格与读取原始字节相等检查冲突。真实MySQL/公开read红测2失败；源码8359ec5修复后29通过0失败0跳过，自检后FF推develop，尚未发布。
 - 后台已建会话1760458004762，execution另行FAILED/AGENT_DELIVERY_FAILED且Provider START为null；该执行故障未归因，AC17未通过。未重放原点将、未重置状态、未修改418、0生产DML。
 - 详见[进展与限制](reference-v2-read-integrity-progress-20261003.md)。完整34项未完成，不以新源代码绿灯提升线上或产品验收。
+
+
+## 2026-10-03 20:30 增量（API1.13.67，Web1.13.64不变）
+
+- 原419同意图键只读GET实际200：v2/摘要/原ADMITTED会话保留；原FAILED执行和null START没有被修改。查询故障已线上验证修复，不提升整项AC02/AC17。
+- 非空source序列化联合record多余null导致严格Client拒收，真实HTTP红测2/10失败；最小修复后10通过。线上旧DTO/实际Jackson+部署Client的离线跨语言验证两种source红绿及10项负向通过；不是完整runtime实测或419唯一历史根因证据。
+- API按既有local_user_authorized发布，制品1d4549…、PID19026、HTTP200/UP，monitor已交回；Web无新Run。API重启实际需要重新登录，不声称无感。
+- 新正常意图的实际参考字节、local生成、实时图片与同会话改图仍待执行，完整34项仍未完成。详见[本轮发布](release-1.13.67-reference-wire-progress-20261003.md)。
