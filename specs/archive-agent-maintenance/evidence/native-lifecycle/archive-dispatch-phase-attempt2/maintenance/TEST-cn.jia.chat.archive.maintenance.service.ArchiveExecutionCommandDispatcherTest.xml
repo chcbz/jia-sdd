@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.archive.maintenance.service.ArchiveExecutionCommandDispatcherTest" tests="5" skipped="0" failures="1" errors="0" timestamp="2026-10-02T23:40:54.968Z" hostname="DESKTOP-AANKMQ7" time="2.312">
+  <properties/>
+  <testcase name="exactCurrentGrantDispatchesOutsideTransactionAndPortFailureFencesOnlySameRevision()" classname="cn.jia.chat.archive.maintenance.service.ArchiveExecutionCommandDispatcherTest" time="1.665"/>
+  <testcase name="consumedCanonicalDeliveryPassesRealAdapterAndDispatcherOutsideTransactions()" classname="cn.jia.chat.archive.maintenance.service.ArchiveExecutionCommandDispatcherTest" time="0.582">
+    <failure message="java.lang.IllegalArgumentException: Invalid Agent command draft: expiresAt must use the fixed controlled command delivery TTL" type="java.lang.IllegalArgumentException">java.lang.IllegalArgumentException: Invalid Agent command draft: expiresAt must use the fixed controlled command delivery TTL
+	at cn.jia.agent.service.impl.AgentCommandCanonicalCodec.invalid(AgentCommandCanonicalCodec.java:905)
+	at cn.jia.agent.service.impl.AgentCommandCanonicalCodec.requireFixedExpiry(AgentCommandCanonicalCodec.java:439)
+	at cn.jia.agent.service.impl.AgentCommandCanonicalCodec.validate(AgentCommandCanonicalCodec.java:400)
+	at cn.jia.agent.service.impl.AgentCommandCanonicalCodec.businessBytes(AgentCommandCanonicalCodec.java:167)
+	at cn.jia.chat.archive.maintenance.service.ArchiveExecutionCommandDispatcherTest.consumedCanonicalDeliveryPassesRealAdapterAndDispatcherOutsideTransactions(ArchiveExecutionCommandDispatcherTest.java:129)
+</failure>
+  </testcase>
+  <testcase name="cancelledJobIsPermanentlyRejectedButInfrastructureFailureRemainsRetryable()" classname="cn.jia.chat.archive.maintenance.service.ArchiveExecutionCommandDispatcherTest" time="0.023"/>
+  <testcase name="defaultOffRejectsWithoutReadingArchiveOrCallingAgentPort()" classname="cn.jia.chat.archive.maintenance.service.ArchiveExecutionCommandDispatcherTest" time="0.002"/>
+  <testcase name="changedAppointmentOrAclRejectsWithoutDispatchOrForeignProof()" classname="cn.jia.chat.archive.maintenance.service.ArchiveExecutionCommandDispatcherTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\Think\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.17.8\f09415827a71be7ed621c7bd02550678f28bc81c\byte-buddy-agent-1.17.8.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.dao.AgentOutboxRelayMapperMySqlTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-02T21:30:58.205Z" hostname="DESKTOP-AANKMQ7" time="1.574">
+  <properties/>
+  <testcase name="utf8ControlPatternDiscoversDueStaleAndCorruptRowsWithExactScopeAndOwnerRoots()" classname="cn.jia.agent.dao.AgentOutboxRelayMapperMySqlTest" time="1.573">
+    <failure message="org.springframework.jdbc.datasource.init.ScriptStatementFailedException: Failed to execute SQL script statement #8 of class path resource [db/agent-command-transport-schema.sql]: CREATE TRIGGER trg_command_operation_audit_no_update BEFORE UPDATE ON agent_command_operation_audit FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'D09: operation audit rows are immutable after insert'" type="org.springframework.jdbc.datasource.init.ScriptStatementFailedException">org.springframework.jdbc.datasource.init.ScriptStatementFailedException: Failed to execute SQL script statement #8 of class path resource [db/agent-command-transport-schema.sql]: CREATE TRIGGER trg_command_operation_audit_no_update BEFORE UPDATE ON agent_command_operation_audit FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'D09: operation audit rows are immutable after insert'
+	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:293)
+	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:188)
+	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:150)
+	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:126)
+	at cn.jia.agent.dao.AgentOutboxRelayMapperMySqlTest.setUp(AgentOutboxRelayMapperMySqlTest.java:65)
+Caused by: java.sql.SQLException: You do not have the SUPER privilege and binary logging is enabled (you *might* want to use the less safe log_bin_trust_function_creators variable)
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeInternal(StatementImpl.java:837)
+	at com.mysql.cj.jdbc.StatementImpl.execute(StatementImpl.java:685)
+	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:261)
+	... 4 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,63 @@
+{
+  "observedDate": "2026-10-03",
+  "reviewerAgent": "01a100e0-8707-7210-a247-5165db243567",
+  "verdict": "REJECT_D2_SOURCE_CLOSURE",
+  "p0": 0,
+  "p1": 5,
+  "p2Distinct": 3,
+  "rawReviewerP2": 4,
+  "duplicateFinding": "native validate202 also counted separately as P2 in raw report; grouped under native-exact-contract here",
+  "treeBinding": "read-only checkpoint; not asserted against source after concurrent subsequent Native repair edits",
+  "gaps": [
+    {
+      "priority": "P1",
+      "id": "RECOVERY-13",
+      "observed": "No persistent same-input/root-cause second-failure blocker or repaired-attempt gate",
+      "requirement": "design section9; acceptance RECOVERY-13"
+    },
+    {
+      "priority": "P1",
+      "id": "native-exact-contract",
+      "observed": "Old whole-draft and draft/blocks writes used by Client; validate returns200 not queryable202",
+      "requirement": "design section7.3"
+    },
+    {
+      "priority": "P1",
+      "id": "cursor-continuation",
+      "observed": "Admin jobs/managed works and reader shelf truncate to first page; Web cannot reach later pages",
+      "requirement": "design sections7.2,7.4"
+    },
+    {
+      "priority": "P1",
+      "id": "durable-chapter-checkpoints",
+      "observed": "No fixed-directory client chapter checkpoints or immutable server chapter payload references/digests",
+      "requirement": "design sections9,10.1; spec U3"
+    },
+    {
+      "priority": "P1",
+      "id": "staging-batch-resume",
+      "observed": "Maintenance publication inserts all material and activates in one transaction; durable STAGING batch recovery absent",
+      "requirement": "design section10.2"
+    },
+    {
+      "priority": "P2",
+      "id": "appointment-pagination",
+      "observed": "Unbounded appointment-history materialization",
+      "requirement": "design section7.2"
+    },
+    {
+      "priority": "P2",
+      "id": "installation-copy-quota",
+      "observed": "No quota/reference-based reclamation for immutable installation copies",
+      "requirement": "design section18.3 pre-enable P2"
+    },
+    {
+      "priority": "P2",
+      "id": "source-orphan-recovery",
+      "observed": "No bounded abandoned PENDING/reference-based source object collector",
+      "requirement": "design section10.1; RECOVERY-07"
+    }
+  ],
+  "boundary": "source requirement gaps only; existing atomicity not alleged broken; no writes/tests/services by reviewer; no production/84-case PASS invented",
+  "nextPackage": "single-writer Native exact contract currently in progress; remaining packages not waived"
+}

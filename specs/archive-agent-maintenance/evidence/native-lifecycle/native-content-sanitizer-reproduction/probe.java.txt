@@ -1,0 +1,20 @@
+import cn.jia.chat.archive.maintenance.dto.*;
+import cn.jia.chat.archive.maintenance.http.ArchiveNativeResponse;
+import cn.jia.core.security.SensitiveDataSanitizer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+class ProbeNativeContentSanitizer {
+ public static void main(String[] args) throws Exception {
+  String text="这是普通书稿里的 token=fixture_literal 并非系统凭据";
+  var range=new ArchiveSourceRangeInput(0, text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length);
+  var paragraph=new ArchiveDraftParagraphInput(1,text,List.of(range));
+  var block=new ArchiveDraftBlockInput("CHAPTER","chapter-1",1,"第一章",List.of(new ArchiveSourceRangeInput(0,9)),List.of(paragraph));
+  var content=new ArchiveDraftUpdateRequest(List.of(block),List.of());
+  var draft=new ArchiveDraftDTO("draft-a","job-a","1","DRAFT",content,"a".repeat(64),null,null);
+  var mapper=new ObjectMapper();var observed=mapper.valueToTree(SensitiveDataSanitizer.sanitize(ArchiveNativeResponse.success(draft)));
+  boolean rangesPreserved=observed.at("/data/content/blocks/0/paragraphs/0/sourceRanges/0").isObject();
+  boolean textPreserved=text.equals(observed.at("/data/content/blocks/0/paragraphs/0/text").asText());
+  System.out.println("{\"sourceRangePreserved\":"+rangesPreserved+",\"pureTextPreserved\":"+textPreserved+",\"probe\":\"same production sanitizer and nested typed Native DTO; no real credential\"}");
+  if(rangesPreserved||textPreserved)throw new IllegalStateException("Expected observed corruption did not reproduce");
+ }
+}

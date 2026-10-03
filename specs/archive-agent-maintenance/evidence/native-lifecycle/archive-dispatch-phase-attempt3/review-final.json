@@ -1,0 +1,19 @@
+{
+  "p2_nonblocking": "Previously admitted in-flight wire may arrive after revoke; native start/context/write/result still independently fence it",
+  "tree": "d1111cfe1ade556562d40e20b25e83ed0604ef6e",
+  "independent_read_only": true,
+  "reviewer": "Hopper",
+  "source_unchanged": true,
+  "p1": 0,
+  "reassessed_verdict": "ACCEPT_LOCAL_ARCHIVE_DISPATCH_PHASE_SCOPE",
+  "p0": 0,
+  "initial_verdict": "REJECT_LOCAL_ARCHIVE_DISPATCH_PHASE_SCOPE",
+  "initial_p1": "Delayed exact wire may be sent after a revoke following pre-revoke dispatch admission",
+  "basis": [
+    "design.md:150 revocation governs later writes/publication, notification is not correctness authority",
+    "design.md:661 fenceExecution revokes old write authority",
+    "design.md:671 runtime/protocol current target revalidated before handoff",
+    "native authorizeRuntimeLocked rechecks cancellation/appointment/grant/epoch/binding/manager"
+  ],
+  "boundary": "14 focused test invocations, 9 different selectors; DAO and managed session fixtures, not complete Runtime"
+}

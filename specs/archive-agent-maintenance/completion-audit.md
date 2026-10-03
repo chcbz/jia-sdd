@@ -186,3 +186,140 @@ Runtime attempt3 tree d704cbb4 compile/export/packaging PASS，launcher 返回�
 Runtime attempt5 tree 53f374f4 的定向可选工具排除实际通过：真实JVM进入Tomcat/Hikari并成功经host-only relay连接隔离MySQL，6个前置表真实创建；ChatController需要真实RedisService/StringRedisTemplate，原先排除DataRedisAutoConfiguration使启动失败，Main已精准STOPPED本任务。原件 evidence/native-lifecycle/real-runtime-attempt5/，仍无Agent注册/安装/执行或browser PASS。Main在同任务chroot启动真实Redis8.0.4，仅127.0.0.1:43981且密码认证PONG已实测，未启动任何全局服务；唯一Writer继续fixture-local真实Redis自动配置而不mock/移除ChatController。4552证据文件含实际Redis/MySQL/Rabbit/API-key秘密值扫描0命中。
 
 Runtime attempt6 tree 64d1af09 前后不变，compile/export/verified launch PASS/25s。真实 Redis auto-configuration 消除了 RedisService 的 template 装配失败；Spring 已实际到 ChatController → ArchiveMaintenanceChatCoordinator → ArchiveMaintenanceServiceImpl，但 Boot4 默认 Jackson3 下缺少 com.fasterxml.jackson ObjectMapper Bean，ready 未生成，Main 已 STOPPED 本任务。原件 evidence/native-lifecycle/real-runtime-attempt6/。已交同一 critical Writer 检查是否生产 Archive bootstrap 缺口并作有界真实配置收口，禁止仅 fixture newObjectMapper 掩盖生产启动失败或广泛 Jackson 回退；若生产源码改变，必须重新跑影响面回归和独立审查。未进行真实Agent注册/安装/命令、browser或业务验收；当前源码未推送。
+
+### 2026-10-03 Bootstrap 实际修复与后续 Runtime 初始化
+
+生产 Jackson2 bridge 的候选 `33eb5f4d` 持共享锁四套真实隔离 MySQL：platform76/native6/maintenance156，定向 **238/238PASS**；archive322/311PASS/11既有FAIL/0skip，Gradleexit1，前后同tree，直接失败集 introduced=[]/removed=[]。原件 `evidence/native-lifecycle/jackson-bootstrap-regression/`。其后新增 existing Jackson2 bean backoff exact wiring 测试，`1b69fb4a` 前后同tree，**4/4PASS**；没有替换 Boot Jackson3 HTTP mapper，组件共存不外推实际 HTTP codec。
+
+真实 attempt7 已消除 JSON Bean 缺失，暴露 enabled business outbox 两构造器无选择标注的真实生产启动错误。Main 唯一 Writer 在公开构造器添加 `@Autowired`，不改投递业务逻辑，并新增启用条件、无 Clock Bean 的直接 Spring 测试。`eb501831` 前后同tree，两 exact selector **10/10PASS/0skip**，独立只读 **ACCEPT_LOCAL_BOOTSTRAP_SCOPE，无生产P0/P1**。本地 API commit `b7a10ae3d2c63750a6df3351a03ea95f9fae0dd8`；原件 `evidence/native-lifecycle/runtime-dispatcher-bootstrap/`，尚未推送组件增量或更新 root pins。
+
+真实 attempt8 暴露 fixture classpath 缺 shared TaskTools 所需真实 TaskService，已仅为 harness 加 `:task:jia-task-service`，没有 mock 或移除共享工具。attempt9 到达共享 identity schema 的真实 trigger 创建，隔离 MySQL binlog 的安装权限导致1419；未授予应用 SUPER、未改生产环境。使用本任务已有隔离安装配置核对 localhost:34061 / `C:/tmp/aam-mysql-20260930/data/` 后，安装窗口暂启 `log_bin_trust_function_creators`，启动结束即恢复0。attempt10 消除此权限错误后暴露 fixture 缺既有 `agent_task_meta` 根表；仅将 agent mapper `db/schema.sql` 的该 CREATE DDL 逐字节复制到 test seed，生产 initializer/identity/transport 不改。
+
+attempt7–10 真实失败日志均保留，Main 已准确停止各自 JVM/relay；当前 attempt11 在新 freeze `ebe03f8134067318f47e96f934d8330fbec3edd4` 实际初始化。没有 Agent 注册、安装/执行、浏览器或业务 PASS；84 业务验收及生产授权不变，整项仍 ACTIVE / NOT_COMPLETE。其余本地 accepted API/Web 增量仍待最终联调及远程提交，不用局部启动修复冒充完整开发完成。
+
+## Fresh collaboration schema 与 Runtime attempt12
+
+attempt11 已实际失败：AgentSchemaInitializer 自己 fresh CREATE 的四张 collaboration 表漏 owner_jiacn，随后的严格索引校验拒绝。仅对齐17个 CREATE 索引，与 canonical mapper DDL/现有 ensureRequiredIndex 一致，不放宽已有库漂移。新实库测试第一轮因完整初始化遇到无关 hosted canonical CHECK 差异，3FAIL原件保留；测试改为直接调用生产 collaboration 初始化，精确验证17个完整有序列/唯一性、重复初始化、错误旧索引仍拒绝及owner隔离。前后tree `42282244ed8c987f57f33687aa3bd5458b5cc27d`，MySQL8.4.5 **3/3PASS/0skip**，Gradle0；独立只读 **ACCEPT_LOCAL_FRESH_SCHEMA_SCOPE，无P0/P1**，本地API提交 `59ca9b7793ea583f75144dcc85311604b6947a6a`。原件 `evidence/native-lifecycle/fresh-collaboration-schema-attempt1/`、`fresh-collaboration-schema-attempt2/`。
+
+Runtime attempt12 在独立新 schema `aam_execution_bootstrap12` 越过上述fresh schema，但真实 Spring启动仍失败：`JdbcPlatformInstallationStore` 为 final @Repository，class-based persistence exception translation无法CGLIB代理。Main已停止仅本任务JVM/relay，隔离MySQL安装窗口 trust setting 恢复0；原件 `evidence/native-lifecycle/real-runtime-attempt12/`。已交唯一critical Writer最小可代理性修复与真实Spring装配回归，不关闭AOP/异常翻译、不改全局proxy策略。没有Client注册/安装/执行或browser业务PASS，未推送新组件增量，完整开发仍ACTIVE/NOT_COMPLETE。
+
+Repository proxy 最小修复已真实Spring **2/2PASS/0skip**，前后prospective tree `19907e88295937586c1573d27f96da77c3a4764c`，独立只读 **ACCEPT_LOCAL_REPOSITORY_PROXY_SCOPE，无P0/P1**，API本地提交 `b6c6c5c666cc92d0f30f7bf9b15c4e382d8fde52`。仅去掉该@Repository类final，保留异常翻译及默认proxy策略；原件 `evidence/native-lifecycle/repository-proxy-bootstrap/`。
+
+Runtime13越过schema/proxy，随后失败于测试classpath上无关OpenAiAudioSpeechAutoConfiguration要求收费模型凭据。没有提供真实或假凭据绕过；已交Writer仅在test profile禁用无关模型auto-config，保留唯一显式fail-closed ChatModel double与真实共享业务链。原件 `evidence/native-lifecycle/real-runtime-attempt13/`，exact任务JVM/relay已停止、trust恢复0。此轮仍未Client注册或业务执行，不改84项状态、不推送增量。
+
+Runtime14 的实际 Spring/Rabbit/shared-component bootstrap 已到 ready（不是进程alive推断），test-only模型自动配置隔离有效，没有提供APIkey或调用收费模型；Main临时trigger安装设置核实恢复0。随后第一个真正catalog HTTP虽status200，却为Legacy E999/null：SensitiveResponseBodyAdvice将列表DTO转Map，Jackson3仍按controller声明的List<PlatformSkillCatalogView>序列化，发生cast失败。已保留ready与失败原件 `evidence/native-lifecycle/real-runtime-attempt14/`，不当HTTP PASS。Client尚未启动，Main已停止该JVM/relay。
+
+独立harness只读审查还发现P1：仅ApplicationRunner事后DATABASE校验晚于sql.init/生产DDL。已交唯一Writer将隔离检查提前到任何Spring初始化之前，用明确私网JDBC URL/确认库及仅SELECT的真实server port/datadir preflight，再保留运行后核验；不能只信isolated=true。同期仅catalog动态返回类型与真实MVC/sanitizer/Jackson3回归，不关闭globalmask。当前源码写入进行中，不能冻结partial/提交未测补丁，整项继续ACTIVE/NOT_COMPLETE。
+
+### 2026-10-03 真实 Runtime attempt15：HTTP 与注册已通过，安装派发定位新阻断
+
+catalog/sanitizer/Jackson3 回归 **7/7PASS/0skip**，编译成功；before/after tree `5b151275857c1433dcc52d63afa117d230555bcc` 一致。数据库 pre-refresh 隔离 **14/14PASS**，含 CLI/env/JSON/JVM datasource 覆盖、public endpoint、schema/serverPort/datadir/root/driver/password负例，所有案例 schema 表数前后0。独立只读接受 server bootstrap/catalog 局部范围。
+
+attempt15 真正 ready 后 catalog/capabilities/slot live HTTP 全PASS，MySQL trust 核实恢复0。Windows checkout CRLF 的 run-client.sh 入 Linux使路径含CR，首次启动失败原件保留；Writer仅LF/UTF8无BOM正规化control脚本，候选tree `1c9916003502104098a13015b46d0cdb925655d0`，独立只读接受LF source scope。Main用真实helper生成并检查CR0/BOMfalse后同步本任务文件，Client经真实WebSocket成功 registered，DB runtime online/token_hash非空。私有Main launcher末尾CR导致尾部echo后exit非0，但已核对精确Client PID，不重复启动。
+
+真实installation POST成立，但command/outbox持续PENDING，尚无安装receipt。Main仅SELECT定位真实共享relay的 `CONCAT('[',CHAR(92),'p{Cc}]')` 使用binary pattern；MySQL8.4.5实际报3995/HY000。已交唯一Writer作显式UTF8 pattern极窄修及真实production Mapper回归，不关闭relay、不篡改Client或安装状态。`evidence/native-lifecycle/real-runtime-attempt15/` 保存脱敏ready/log/HTTP/注册及阻断；MANUAL/AUTO/browser仍not_run，不宣布全特性完成、不push未验收增量。
+
+### 真实 Runtime attempt16 与共享 Inbox 接线补缺
+
+relay 字符集窄修最终候选 tree `c4c846b78e1373c6f62c047ce19475b2dbb5e39f`：完整production transport DDL、实际MySQL8.4.5/MyBatis Mapper及合同 **8/8PASS/0skip**，前后同tree；独立只读 **ACCEPT_LOCAL_RELAY_CHARSET_SCOPE，P0/P1=0**。attempt1 trust0下immutable trigger创建失败、attempt2测试fixture错误使用tenant-a被single-tenant CHECK拒绝的原件保持；attempt3只修合法tenant0及精确3819/约束名负例，不放宽DDL、不改旧D03/admin入口。Main仅对专用34061server开短暂trigger安装窗口，finally核实trust0。
+
+attempt16 真正ready、真实Client registered、catalog/capabilities/slot真实HTTP通过，安装command及outbox经真实Rabbit已PUBLISHED；消费端实际拒绝 `WIRE_CANONICAL_PROVENANCE_INVALID`。源码只读定位 shared `AgentCommandInboxServiceImpl.COMMAND_TYPES` 遗漏本特性已冻结 `PLATFORM_SKILL_INSTALL` 与 `ARCHIVE_MAINTENANCE_EXECUTE`；已交唯一Writer补精确允许类型与实际canonical wire→Inbox边界测试，不跳过provenance/source/owner/租约检查。尚无安装成功回执，MANUAL/AUTO/browser仍not_run。新原件 `evidence/native-lifecycle/real-runtime-attempt16/`；精确Client/JVM/relay和临时Web实例已停止，trust0。本次新增代码尚未提交/push，整项仍ACTIVE/NOT_COMPLETE。
+
+
+### 真实 Runtime attempt17：Inbox 通过，受控 WebSocket 接入遗漏
+
+共享 Inbox 类型接线候选 tree `e89dfe3aeb69176a47708a756b0bff6aa04db906`，真实 canonical codec / Inbox / Rabbit decoder 三 selector **46/46PASS/0skip**、Gradle0、before/after同tree；独立只读 **ACCEPT_LOCAL_INBOX_TYPE_SCOPE，P0/P1=0**，原件 `evidence/native-lifecycle/inbox-controlled-types/`。这是明确DAO组件fixture，不是传输E2E。
+
+attempt17 实际 ready、Client registered，持久runtime online/token_hash存在，catalog/capabilities/slot真HTTP通过。真实Rabbit outbox PUBLISHED，Inbox已通过canonical wire校验并到派发边界；安装实际终态FAILED/`PLATFORM_SKILL_SESSION_REJECTED`，delivery/inbox最终DEAD。只读定位共享 `AgentWebSocketHandler.dispatchManagedSkill` 仍仅支持旧SKILL_INSTALL，且受控transport tenant0与owner session匹配规则须精准核对。已交唯一critical Writer最小接入冻结两种controlled类型并补真实handler/精确注册会话及隔离负例，不跳过身份/provenance或广泛放开WebSocket。
+
+精确Client/JVM/relay已STOPPED、隔离MySQLtrust恢复0，原件 `evidence/native-lifecycle/real-runtime-attempt17/` 保留。尚无安装成功回执，MANUAL/AUTO/browser未执行，新源码未提交/push；完整goal保持ACTIVE/NOT_COMPLETE，84业务验收与生产激活授权边界不变。
+
+### 受控 WebSocket 首轮冻结验证
+
+Main 实际 Git prospective tree before/after `14d20e5e1344ddef4a6072c48d097bd0994ef101`（Writer只读估算c778不是本轮证据绑定）。四个真实selector **24tests/23PASS/1FAIL/0skip**、Gradle1：canonical codec9PASS、runtime protocol4PASS、旧raw WebSocket8PASS，新增controlled handler3中1FAIL。失败精确位于runtime负例：仅修改handshake attributes未改变server remembered session runtime，因此仍SENT；已交同一Writer检查实际合同并修合法effective-runtime夹具，不为测试改用可变client属性或弱化拒绝断言。
+
+全fresh XML/log与前后同tree记录 `evidence/native-lifecycle/controlled-websocket-attempt1/`。本轮未独立审查接受、未commit/push；runtime18仅已准备空隔离库，未启动。其他已通过局部证据与真实业务not_run边界不变。
+
+受控WebSocket夹具最小修复后的 Main tree `693dfdee1d7da40580f668b3faf649323a4c1633`：force-fresh四selector **24/24PASS/0skip**、Gradle0，前后同tree；相对失败14d仅一个测试文件38新增/10删除，未改生产代码或弱化拒绝。合法replacement socket-b/runtime-b通过真实Handler注册，证明server frozen runtime、旧socket零发送/新socket一次。全部XML/log/七路径Gitblob+字节SHA256保存 `evidence/native-lifecycle/controlled-websocket-attempt2/`；已激活独立只读安全复审，仍不代替真实Runtime/browser，也未commit/push本包。
+
+
+### 真实 Runtime attempt18：首次真实安装成功，执行派发状态阶段不匹配
+
+Main冻结tree `693dfdee1d7da40580f668b3faf649323a4c1633` 独立只读 **ACCEPT_LOCAL_CONTROLLED_WEBSOCKET_SCOPE/P0=P1=0**。四套真实隔离MySQL：platform117/114PASS/3专项opt-inSKIP、native7PASS、maintenance169PASS、archive324/313PASS/11既有FAIL；Gradle1，直接introduced=[]/removed=[]，前后同tree。单独正确opt-in运行schema三项 **3/3PASS/0skip/Gradle0**、同tree；原full-run3skip不改写。非archive的293个不同selector均有真实PASS证据，原件 `evidence/native-lifecycle/controlled-websocket-full-regression/`。
+
+attempt18 shared Runtime真正ready、Client registered，catalog/capabilities/slot实际HTTP通过，平台安装首次真实 **SUCCEEDED**（不是ACK推断），任职201/source202+COMMITTED/job201/execute202实际成立。执行Rabbit outbox PUBLISHED、Inbox canonical通过，却delivery/inbox最终DEAD/`WEBSOCKET_DISPATCH_REJECTED`；job停EXECUTION_REQUESTED。只读源码确认Dispatcher的pre-send authorize调用native inspectExecution，后者仅允许SENT/RECEIVED/STARTED/SUCCEEDED，但实际Inbox已合法更新CONSUMED；Adapter.dispatch自身已正确有单独DISPATCHABLE_DELIVERY。
+
+已交唯一critical Writer作阶段专用检查与真实adapter+dispatcher回归，不泛化扩大native/context/result的AUTHORIZED states，并保持基础设施错误可重试。另一已观察的源码缺口：capabilities/appointmentDto硬编码CLIENT_UPDATE_REQUIRED，与安装成功和execute实际可受理相矛盾；仅记录，待当前phase包验证复审后串行修复。
+
+原件 `evidence/native-lifecycle/real-runtime-attempt18/` 已保留；精确Client/JVM/relay已STOPPED、trust0，无Gradle活动。MANUAL/AUTO发布/browser未完成，新增源码未commit/push，整体ACTIVE/NOT_COMPLETE；84业务验收及生产授权边界不变。
+
+### Archive dispatch 阶段检查修复
+
+最终 Main tree `d1111cfe1ade556562d40e20b25e83ed0604ef6e`：共享锁 force-fresh Adapter4 + Dispatcher5（maintenance）+ Dispatcher5（archive），14次用例执行全部 PASS，9个不同 selector，0skip、Gradle0、前后同tree。前两轮合法 canonical commandId/固定 TTL fixture 失败原件保留，未放宽生产 codec 或 native AUTHORIZED_DELIVERY。
+
+独立只读最终 `ACCEPT_LOCAL_ARCHIVE_DISPATCH_PHASE_SCOPE`，P0/P1=0；原 stale-send P1 经 D2 §3.5/§18 复核撤回：撤销前已完成 admission 的在途不可变 wire 可能延迟到达，但撤销后的 native 读取/写入/发布仍由当前 grant/epoch/任职/管理权限阻断；冻结合同不要求绝无旧网络包送达。该运维残余不冒充新执行授权。原件 `evidence/native-lifecycle/archive-dispatch-phase-attempt3/`。唯一 Writer 正串行修复 capabilities/appointment 的真实 readiness 投影；Runtime19/浏览器尚未验证，本轮增量未提交/推送，整体仍 ACTIVE/NOT_COMPLETE。
+
+
+### Readiness 当前事实投影完成局部验证
+
+Main重新运行冻结tree `39dac3d26682898cd583fd2dab2c5faaa3b66ddf`：platform5/native5/maintenance63，**73/73PASS、0skip、Gradle0**，before/after同tree，fresh XML已归档 `evidence/native-lifecycle/readiness-projection-attempt4/`。第三轮Gradle0仍有效，但恢复后单独重跑第四轮以建立完整本轮tree绑定。独立只读 **ACCEPT_LOCAL_READINESS_SCOPE，无P0/P1**；真实identity/session/protocol与精确platform安装证明决定READY，不再固定CLIENT_UPDATE_REQUIRED；历史/跨scope/current变更fail-closed，基础设施异常不假装READY。
+
+Runtime19已经开始重新编译/独立启动，源码增量仍未commit/push，真实MANUAL/AUTO/browser尚未完成，84业务验收与生产授权状态不变。
+
+
+### Runtime19：READY 与真实派发闭合，严格 Native 响应不匹配
+
+冻结 API tree `39dac3d26682898cd583fd2dab2c5faaa3b66ddf` 的共享 Runtime/Client 实际启动、注册、目录 HTTP、安装 SUCCEEDED、任职与 capabilities READY、安装 proof executable 均通过。MANUAL真实维护单由 EXECUTION_REQUESTED进入RUNNING，证明前轮CONSUMED pre-send阶段阻断消除；但 Client报 `ARCHIVE_RECOVERY_REQUIRED: ARCHIVE_NATIVE_RESPONSE_INVALID`，未写完草稿/发布，driver exit1。Main用同一实际runtime与command/grant请求头进行只读Native result/context/draft GET，均200且data字段完整，顶层多出location，违反Client固定四键响应；记录安全shape，不存凭据/正文。
+
+原件 `evidence/native-lifecycle/real-runtime-attempt19/`。精确Client/JVM/relay已STOPPED，隔离MySQLtrust0；唯一Writer根据实际Jackson3共享MVC与Jackson2有界fixture差异修复局部native响应，不放宽Client严格解析或全局回退。MANUAL/AUTO/browser仍未完成、84业务不变，未提交/push增量。
+
+
+### Native envelope 局部复测与内容保真实际缺陷
+
+Main 冻结 API tree `24b46b10f79eb7b4570dffaaaeeeeaa109dc34b4`，两套 Native Controller selectors 各10/10 PASS，共20次执行、0failure/error/skip、Gradle0，before/after同tree；真实 SensitiveResponseBodyAdvice + Jackson3 converter + ByteArray converter 验证四键 Native envelope 与九字段 publication projection。独立只读 `ACCEPT_LOCAL_NATIVE_ENVELOPE_SCOPE`，局部P0/P1=0。前两轮编译/fixture失败保留，不改写。原件 `evidence/native-lifecycle/native-response-envelope-attempt3/`。
+
+Main 另用 typed Native draft 直接调用生产 sanitizer：默认深度将 paragraph sourceRanges[0] 变null，普通书稿 `token=fixture_literal` 被改写，sourceRangePreserved=false/pureTextPreserved=false；无真实凭据、无端口/服务。原件 `evidence/native-lifecycle/native-content-sanitizer-reproduction/`。该独立内容保真P1未解决，不据局部20PASS启动完成声明。下一步局部内容投影修复，保留系统凭据脱敏；Runtime20尚未启动，MANUAL/AUTO/browser未完成，增量未commit/push，84业务验收不变。
+
+
+### 2026-10-03 恢复后实际隔离环境重建
+
+恢复时两旧代理handle均not_found；MySQL34061无监听、volatile chroot不存在、Vite未监听。未把历史process.json/intent当成运行证明，也未重启仍活动的JVM。Main只重新启动既有隔离MySQL datadir（未重建数据库），实际核对port34061/datadir/trust0/Runtime20表数0；从已保存rootfs重新建立任务chroot，按冻结Client归档npm ci，恢复任务Rabbit/Redis与受限MySQLrelay、专用Vite。Rabbit实际ping成功、Redis认证PONG。当前LinuxNode22.23.2/Python3.12.15/JDK25.0.4如实记录，不冒称先前runtime版本。原件 `evidence/native-lifecycle/isolated-harness-recovery-20261003/`。
+
+保真修复此前仅落两个common源码文件，无DTO/测试闭合；已交新的唯一critical Writer续补，独立只读原D2源码审计另行核对。Runtime20仍未启动，目标仍active且未提交/推送本轮增量。
+
+
+### 正文保真修复：实际默认 Advice 与生产 probe 通过
+
+Main冻结API tree `f5c04aae4f3ad4b30cfd5733bed77a9f390d8a0f`：common sanitizer10/10，maintenance Native+MVC13/13，archive Native+MVC13/13，共36次执行/23个不同selector，0fail/error/skip，Gradle0、before/after同tree。生产 typed DTO sanitizer 后验 sourceRangePreserved=true/pureTextPreserved=true，与原false/false观察形成直接对照。独立只读 `ACCEPT_LOCAL_CONTENT_FIDELITY_SCOPE`，P0/P1/P2=0。有限字段级注解只保留作者内容/来源metadata/ranges，仍递归执行credential NULL/DROP/MASK与cycle保护；不关闭默认Advice、不改全局depth、不使用controller/path豁免。原件 `evidence/native-lifecycle/content-fidelity-attempt1/`。完整隔离MySQL四套回归仍在同树运行，不提前宣称通过；Runtime20尚未开始。
+
+### 原D2源码收口新检查点（未缩减目标）
+
+独立source audit另指出需按原合同补齐：RECOVERY-13同输入同根因第二次失败的blocked_root_cause诊断/修复后新attempt；Native精确PUT B/blocks而非B/draft/blocks及额外整稿写面；Native validate202 operation语义；jobs/reader works cursor连续页；appointment历史分页。Main已核对原design§7.2/7.3/7.4/§9与acceptance RECOVERY-13确有相应要求，仍需逐项源码/行为实现与精确协议兼容验证，不以当前36PASS或后续单次Runtime闭环替代这些目标。84生产业务验收、部署/生产授权边界不变；本轮增量未push，整项NOT_COMPLETE。
+
+
+### 正文保真完整隔离回归完成
+
+Main冻结API tree `f5c04aae4f3ad4b30cfd5733bed77a9f390d8a0f` 完成共享锁真实隔离MySQL四套回归：platform118/118、native security8/8、maintenance179/179 PASS；archive334项中323PASS/11既有FAIL，0skip、Gradle1。与controlled-websocket full baseline逐selector直接比较，四套introduced=[]/removed=[]，前后同tree、isolated trigger trust恢复0。原件 `evidence/native-lifecycle/content-fidelity-full-regression/`。该结果只证明增量回归无新增失败，不代表原D2缺口、真实Runtime20/浏览器或84项生产业务验收已完成；仍未提交/push本轮增量。
+
+
+### 原D2完整source audit后续缺口与恢复后的Client基线
+
+独立只读审计除已记录的Native/recovery/pagination外，确认仍需原合同的Client持久章节checkpoint、服务端不可变章节引用与digest、发布STAGING分批持久化与崩溃恢复，以及启用前installation副本配额/基于引用事实的回收、source孤儿/PENDING恢复清理。Native validate200/202是同一个修复包中的契约缺口，不按重复finding算两个独立故障。单事务发布仍有原子性保障，问题是缺少原要求的持久分批恢复；不宣称发生部分发布损坏。上述缺口未完成前，不按局部green或单次Runtime宣布整项完成。
+
+冻结Client `bc035b3757b97aac90c59c06386a7ebfa3d71162` 的恢复后Node22.23.2全套443/442PASS/1既有FAIL、0skip、exit1，failureSet直接核对无新增。首次chroot缺git及bash/readline错配导致44FAIL原件保留；只修隔离环境后重跑，不改源测试、不隐藏失败。证据 `evidence/native-lifecycle/client-restored-full-regression/`；这是Native协议修改前的baseline，不冒充正在编辑的Client验证。
+
+
+### Native精确合同attempt1：真实定向通过，复审P1继续修复
+
+Main冻结API `822cc4aea59900b9de75b4500eb9646294e0e26f`，共享锁force-fresh security8/8、maintenance118/118、archiveMVC14/14，共140次执行/126不同selector PASS，0failure/error/skip、Gradle0、before/after同tree。隔离MySQL反复schema DDL耗时3h27m，worker thread与server递增DDL计数证明执行在推进，不以静默日志推断死锁或中断foreign进程。Client冻结 `c06c30c35d07465cb80c444534dcc1b16adf5b12` 精确Git archive，Node22 npmci/syntax通过，全套444/443PASS/1同baselineFAIL、0skip、前后同tree。ZIP批准SHA不变。原件 `evidence/native-lifecycle/native-exact-contract-attempt1/`。
+
+独立只读 `REJECT_LOCAL_NATIVE_SCOPE`，P0=0/P1=1/P2=0：收到格式错误的202 envelope/receipt/Location仍默认uncertain，runner可能退到无operationId的currentvalidation查询。已仅释放Client三个路径修严格错误分类和runner级拒绝断言，保持真正网络丢202恢复；API仍822冻结。尚未accept/commit/push本包，完整API回归、原D2剩余源码和实际Runtime/browser仍须完成，84生产业务未执行状态不变。
+
+
+### Native 精确合同修复完成局部复审与源码保存
+
+2026-10-03：Client `077236cbeaa15fd5ebdfe8636b390a699d908b84` 实际 Linux Node22.23.2 全套448/447PASS/1同既有FAIL、0skip，npm ci/syntax exit0，前后同tree；真正丢失202响应可恢复，已收到的畸形envelope/receipt/Location严格失败且不查询/发布。批准ZIP摘要不变。原件 `native-exact-contract-attempt2/`，原attempt1 REJECT保留。
+
+API `822cc4aea59900b9de75b4500eb9646294e0e26f` 完整共享锁实库回归：platform118/native8/maintenance183，共309定向PASS；archive338/327PASS/11同既有FAIL，0skip、Gradle1。逐selector introduced=[]/removed=[]，XML fresh，focused前置post-freeze与本轮after index同tree（未伪造独立full-run before文件）。原件 `native-exact-contract-full-regression/`。独立最终 `ACCEPT_LOCAL_NATIVE_SCOPE`，P0/P1/P2=0；同revision不同block并发probe未执行的边界保留，不把缺probe说成已发现故障。
+
+Main本地保存API commit `659b66c323d997ee32c11f8e72b289775d7d8bf3` 与Client commit `5673cc1cece9aa266e899ec7e05a6aaaae092993`，tree精确匹配上述验证；两组件保存后clean。本轮未push、Root远程pins不变，不宣布whole-D2完成。下一唯一critical Writer Knuth正在补原RECOVERY-13：同输入同根因连续失败阻断、修复后新attempt及历史诊断保留。分页、持久章节checkpoint、发布STAGING恢复、配额/清理及实际Runtime/browser仍是后续明确缺口；84生产业务验收保持not_run，无生产激活/部署/收费授权。

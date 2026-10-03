@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.dao.AgentOutboxRelayMapperMySqlTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-02T21:32:47.469Z" hostname="DESKTOP-AANKMQ7" time="1.961">
+  <properties/>
+  <testcase name="utf8ControlPatternDiscoversDueStaleAndCorruptRowsWithExactScopeAndOwnerRoots()" classname="cn.jia.agent.dao.AgentOutboxRelayMapperMySqlTest" time="1.933">
+    <failure message="org.springframework.jdbc.UncategorizedSQLException: PreparedStatementCallback; uncategorized SQLException for SQL [INSERT INTO agent_command_delivery(&#10;    id,command_id,owner_jiacn,task_id,target_agent_id,command_type,&#10;    command_payload,command_payload_hash,status,attempt_count,next_retry_at,&#10;    active_message_id,active_attempt,expires_at,version,&#10;    tenant_id,client_id,create_time,update_time)&#10;VALUES (?,?,?,?,?,'ARCHIVE_MAINTENANCE',X'01',UNHEX(REPEAT('00',32)),&#10;        'PENDING',0,?,?,?,?,?,'tenant-a','client-a',?,?)&#10;]; SQL state [HY000]; error code [3819]; Check constraint 'chk_delivery_single_tenant' is violated." type="org.springframework.jdbc.UncategorizedSQLException">org.springframework.jdbc.UncategorizedSQLException: PreparedStatementCallback; uncategorized SQLException for SQL [INSERT INTO agent_command_delivery(
+    id,command_id,owner_jiacn,task_id,target_agent_id,command_type,
+    command_payload,command_payload_hash,status,attempt_count,next_retry_at,
+    active_message_id,active_attempt,expires_at,version,
+    tenant_id,client_id,create_time,update_time)
+VALUES (?,?,?,?,?,'ARCHIVE_MAINTENANCE',X'01',UNHEX(REPEAT('00',32)),
+        'PENDING',0,?,?,?,?,?,'tenant-a','client-a',?,?)
+]; SQL state [HY000]; error code [3819]; Check constraint 'chk_delivery_single_tenant' is violated.
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1549)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.agent.dao.AgentOutboxRelayMapperMySqlTest.insertDelivery(AgentOutboxRelayMapperMySqlTest.java:142)
+	at cn.jia.agent.dao.AgentOutboxRelayMapperMySqlTest.utf8ControlPatternDiscoversDueStaleAndCorruptRowsWithExactScopeAndOwnerRoots(AgentOutboxRelayMapperMySqlTest.java:90)
+Caused by: java.sql.SQLException: Check constraint 'chk_delivery_single_tenant' is violated.
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 5 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
