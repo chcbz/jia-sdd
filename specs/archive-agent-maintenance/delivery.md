@@ -60,3 +60,8 @@ Prerequisite doubles：identity/bootstrap/account、registration、execution adm
 有界fixture自有Java已停止；Windows host-only DB relay经独有脚本路径+PID+监听地址核验后停止。原exec stdin已关闭，未恢复accepted/rejected计数，不编造；清理回执 `evidence/delivery/owned-relay-cleanup.json`。没有停止隔离MySQL或其他任务服务。
 
 根仓 evidence 目录以 .gitattributes -text 保留原始字节；2373份已stage证据逐一核对磁盘原字节与Git blob相同（见staged-evidence-byte-proof.json）。Windows深层证据路径需Git core.longpaths=true；本次仅使用命令级 -c core.longpaths=true，未修改系统或全局Git配置。
+
+
+## 7. 当前用户交付顺序（2026-10-03）
+
+本文件前六节是已推送旧局部基线的历史事实。当前增量遵循 `delivery-order.md`：原规格功能源码收口并更新文档 → 本地必要定向自检 → 组件特性分支提交/push与远程SHA核验 → Root更新gitlinks/pins并push → 服务端全面验证与必要后续修复。全面本地回归、Runtime/browser不再是首轮完整源码push前置条件；“开发完成/已推送”和“服务端全面验证待执行/结果”必须分开声明。现阶段功能缺口仍在实现，新完整源码交付未完成。

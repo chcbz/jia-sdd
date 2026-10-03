@@ -323,3 +323,8 @@ Main冻结API `822cc4aea59900b9de75b4500eb9646294e0e26f`，共享锁force-fresh 
 API `822cc4aea59900b9de75b4500eb9646294e0e26f` 完整共享锁实库回归：platform118/native8/maintenance183，共309定向PASS；archive338/327PASS/11同既有FAIL，0skip、Gradle1。逐selector introduced=[]/removed=[]，XML fresh，focused前置post-freeze与本轮after index同tree（未伪造独立full-run before文件）。原件 `native-exact-contract-full-regression/`。独立最终 `ACCEPT_LOCAL_NATIVE_SCOPE`，P0/P1/P2=0；同revision不同block并发probe未执行的边界保留，不把缺probe说成已发现故障。
 
 Main本地保存API commit `659b66c323d997ee32c11f8e72b289775d7d8bf3` 与Client commit `5673cc1cece9aa266e899ec7e05a6aaaae092993`，tree精确匹配上述验证；两组件保存后clean。本轮未push、Root远程pins不变，不宣布whole-D2完成。下一唯一critical Writer Knuth正在补原RECOVERY-13：同输入同根因连续失败阻断、修复后新attempt及历史诊断保留。分页、持久章节checkpoint、发布STAGING恢复、配额/清理及实际Runtime/browser仍是后续明确缺口；84生产业务验收保持not_run，无生产激活/部署/收费授权。
+
+
+### 2026-10-03 用户调整交付顺序
+
+按用户原话“先把功能开发完，更新文档，然后提交到远端特性分支。在服务端再做全面验证”执行，详见 `delivery-order.md`。原 D2 功能缺口仍须补齐；不再把反复本地全套回归或本地 Runtime/browser 全面验证作为首次完整源码推送的前置条件。本地仅必要定向自检与明显错误检查，全面验证移到 push 后的服务端开发环境；失败后继续修复同一分支。历史证据与既有失败不删除，未发生生产部署/上架/付费授权。当前源码仍在实现，不宣称开发完成或本轮完整源码已推送。

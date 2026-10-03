@@ -84,3 +84,8 @@ M0 → M1 ───────────┐
 每包交付最小内容：路径范围、exact commit/tree、增量 API/迁移合同、测试 selector+fixture digest+结果、已知缺口、下一依赖的接入点。后端 ACL/事务/迁移由 critical_worker Owner 自检；前端/客户端按冻结合同由 balanced_worker，机械文档/fixtures 可 routine_worker，验证 gpt_test_runner；不启用 DeepSeek、不创建 Reviewer。
 
 M8 的 mock 不能冒充 API 集成；M6 的 ACK 不能冒充草稿完成；M9 的 fixture 不能冒充真实书上架。M10 的生产数据或模型开销超出已有授权时仅等待该操作授权，不阻塞可独立源码工作。27–46 人日仍为可复用现有底座前提下的粗估，共享底座缺陷修复按 M0 实际证据另列依赖，不自动归入本功能或承诺日历工期。
+
+
+## 当前交付顺序覆盖说明（2026-10-03）
+
+用户最新指令以 `delivery-order.md` 为准：保持原D2范围，先功能源码与文档完整收口、必要定向自检、协调特性分支提交/push，再在服务端全面验证。本文历史 Runtime/全链验证安排不得继续解释为首次完整源码push前的全面本地门禁；技术发布与真实业务激活授权仍是独立边界。
