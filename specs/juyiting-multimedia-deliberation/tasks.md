@@ -1,87 +1,77 @@
-# 开发计划与拆分
+# 聚义厅多媒体协作：待实施任务清单
 
-> **2026-10-04 设计入口已更新**：产品流程、页面原型及后续实施顺序统一以 [重新编写的详细设计](design.md) 为准。本文下方保留历史合同/实施记录，不再作为当前产品入口；历史“当前/最新/待办”均需结合其日期与源码核实。开发及发布仍暂停，本次只交付文档与原型。
+2026-10-04。对应 [待实施增量详设](implementation-design-20261004.md)；[完整产品目标](design.md)；[最新版交互原型](prototypes/adjusted/index.html)；[界面变化标注](prototypes/adjusted/annotations/index.html)。
 
-> **当前收口**：完整跨仓wire定向API45/Client35、Run101失败项修复26、隔离MySQL19项独立覆盖已通过；API5c34e818/Client777f26f已推特性分支。见[当前证据](ordinary-request-source-evidence.json)与[发布顺序](ordinary-request-release-plan-v3.md)。仍需完整事务/浏览器/同Run正式发布，不以历史增量中的待办重复开工。
+**这是一份接手清单，不是把完整详设全部重做。仅文档交付；不恢复已暂停的业务开发/发布。** 历史计划已移至 [历史存档](tasks-history-before-20261004.md)，不要重新执行其中已完成的 F0/B1 等工作包。
 
-> 当前用户交互以 [普通请求与统一动作合同](ordinary-request-actions-v3.md) 为准：四步完成，不设图片专用“受控请求”或确认链。历史冻结合同不作为新界面流程；完整发布验收仍未完成。
+## 1. 核对基线与状态含义
 
-> **2026-10-04 新方案源码进展**：[通用点将合同](generic-point-and-deliberate-contract-20261003.md)。Webe3ceaec已取消新请求绘图前置并自动接入CHAT；API78f61531 / Client1ab2b66已统一INPUT/REFERENCE32资料查阅及回执。Web287定向+14组件、API64、Client32自检通过；仅特性分支，未发布。按需查阅/执行自动编排、失败恢复和完整验收仍待完成。
+本轮通过 Git 对象只读核对下列候选，并用 `ls-remote` 核对同名远端特性分支；不是根工作区的旧 api/web checkout，也不是线上版本证明。
 
-> **2026-10-03 最新实施指令**：用户明确“无需做太多兼容补丁，一切都按新方案实施”。新入口、新请求统一走通用资料与按需议事；不新增旧生图入口、双轨产品流程或回退适配工程。只保留身份隔离、幂等、未完成请求及既有内容保护，不以历史兼容覆盖率阻塞新方案。
+| 仓库 | 候选分支 | 核对 SHA |
+|---|---|---|
+| Web | codex/mmd-unified-materials-web-20261003 | 12edde24a5eff19aa097e92359d787e73ec6129c |
+| API | codex/mmd-unified-materials-api-20261003 | 75357f13502ed0afc641200dc8601b389d6516dd |
+| Client | codex/mmd-unified-materials-client-20261003 | 777f26f39722a8f85f04b5b89f12e3c364c1a9df |
+| SDD / 原型 | codex/juyiting-multimedia-deliberation | 本次修订基于 28b37fe9；原型交互来自 d8ea407a |
 
-> **2026-10-03 用户纠偏（当前优先）**：[通用资料详设增量v3](unified-materials-correction-20261003.md)取代独立参考图入口及图片限定业务流程。唯一“添加资料（可选）”须支持图片/文档/音频等；Agent判断用途，通用会话、输出、保存与交付保持完整范围。不是文案改名；绘图专用wire仅作为执行适配，不扩展旧产品入口，原34项需补UM01–UM10。API6a855通用创建30定向PASS；Web43645已统一Overview/Bounty资料选择与v2创建104定向PASS。通用点将前后端/首轮分派和资料查阅协议已完成本轮源码自检；自动查阅/执行编排、失败终态、恢复与整体验收仍待完成，未发布。
+- **确定需调整**：候选源码与已确认原型存在可定位差异。
+- **确定需补齐**：现有合同/校验不能满足该场景，不等于相关模块全无实现。
+- **已有基础，待联调验证**：有源码/历史测试，不能重列为从零开发；失败后才拆最小修复项。
+- **待发布验收**：缺最终集成版本与真实业务闭环证据，不等于未写代码。
+- 本表是日期绑定的需求状态，不登记运行 Owner/领取状态；实际执行仍使用唯一 runtime ledger。
 
-> **2026-09-28 最新计划**：[融合实施计划v2](fusion-implementation-plan-v2.md) 优先于本文的未开始/外部F0等待描述。本轮已启动feature代码整合，后续多媒体业务包仍待实施；唯一运行台账不变。
+## 2. 不再从零开发的已有基础
 
-日期：2026-09-27。状态：planned / not started；本次仅计划，不派发 Writer、不创建独立 Reviewer、不修改运行台账。以下 Owner 为建议职责，不代表已领取；实际执行仍只登记 `/home/isp/wsps/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json`。
+| 已有基础 | 本轮定位 / 既有证据 | 接手方式 |
+|---|---|---|
+| 通用资料入口 | Web `HallMaterialPicker.vue` 已有“添加资料（可选）”、预览、移除、版本引用 | 复用，收简默认 UI；不要再做一个参考图选择器 |
+| 点将与自动议事 | Web `useHallPointAndStart.js`；API point-and-deliberate 合同与上下文 | 补页面接线、验重复/恢复，不建第二条点将流程 |
+| 密议 | `AgentPanel.vue` 明确保留“与这位好汉密议”；独立面板存在 | 保留并验证隔离，不当新模块重建 |
+| CHAT / 按需动作 / 续办 | API `ChatActionFinalService`、动作/混合资料链路；Client 候选 | 真实配对验证；不照旧 tasks 的“未开始”重写 |
+| 媒体与保存 | `HallMessageMedia.vue`、`HallMessageParts.vue`、`useHallConversationArchive.js`、文字选区组件 | 复用鉴权读取/幂等保存；补失败的格式与接线 |
+| 正式验收引擎 | `useHallBountyFinalization.js`、API `ChatSelectedOutputFinalizationService` 与 Agent 正式交付服务 | 保留事务/幂等/恢复；改交付来源和用户入口 |
+| 已有检查 | source-evidence 中跨 wire API45/Client35、隔离 MySQL19；API Flow108 历史云测及制品 | 只覆盖各自明确范围，不当全产品通过，也不无条件重复 |
 
-## 1. 推进策略
+历史证据见 [ordinary-request-source-evidence.json](ordinary-request-source-evidence.json)。本轮未查询流水线实时状态：其中 Web165 的 RUNNING 是历史记录，不是当前状态。API108 记录 2592 tests / 0 fail / 101 skipped，未部署；不得将 skipped 或制品成功写成完整业务验收。
 
-当前先冻结通用资料与按需意图合同，统一需求/议事资料入口及真实服务端快照，再完成跨类型Agent处理、终态/媒体/归档/交付联调；工作包以增量v3的M1–M5为准。保留已有图片适配器，不再以“先做画鸟、以后补通用资料”作为产品发布顺序。不承诺未经实施基线测算的人天、版本号或发布日期；M0 依据已复用代码和所需迁移给出估算。
+## 3. 真正待实施的任务
 
-### 依赖图
+所有行当前均未在本轮执行。Owner 为职责建议，不代表已派发。
 
-```text
-F0 原分支整改 ─────────────┐
-                         ↓
-M0 合同 → B1 资产存储 → B2 点将/执行 → B3 归档/验收 ─┐
-   ├──── R1 Runtime ──────┘                         ├→ I1 图片纵切
-   └──── W1 素材入口 → W2 混排/保存/验收 ────────────┘
-                                  W3 音频/文本补齐 ─→ I2 完整回归 → R0 发布准备
-```
+| ID / 优先级 | 状态与工作 | 最小范围 / 建议职责 | 依赖 | 完成条件 |
+|---|---|---|---|---|
+| T01 / P1 | **确定需调整**：事项三入口合为“提出需求”；资料默认不要求选版本 | Web：BountyPanel、HallDraftEditor、HallOverview、HallMaterialPicker | 无 | 无资料能提交；混合资料可预览/移除；一次提交，不另加工程确认；原任务/交办权限不混用 |
+| T02 / P1 | **需补页面接线并验证**：点将册承接待点将事项，只显示好汉；保留密议 | Web：AgentPanel、JuyiHall、现有 point-and-start composable | T01 接口可独立复用 | 显式 targetAgentId；点将后唯一会话/首条；密议不消费待点将事项；无事项不显示点将执行 |
+| T03 / P1 | **确定需调整**：议事去顶部资料/百宝箱快捷入口；输入区仅“＋/发送” | Web：ChatPanel、HallChatComposer、HallVoiceControls 及父级接线 | 无；同文件由一个 Owner 完成 | 资料/语音/设置在＋内；返回事项详情验收；保留语音行为与正确图标；桌面/手机不遮挡 |
+| T04 / P1 | **确定需补齐**：同会话仅发送附件，不要求捏造正文 | Web Composer / hallTypedDeliberation；API discussion 校验/上下文；Client 按需读取 | 与 T03 共用接线；详设 D3 | 双空拒绝；正文空且有合法资料可发；有权限快照、原用户消息、去重/澄清回归 |
+| T05 / P1 | **确定需补齐**：持久、明确的本次交付集合，支持跨轮修改和纯文字成果 | API / Client 合同 + Web 读取；详设 D4 | 与 T01–T04 可并行 | 改图只替换指明的稿件；未改音频/文档保留；刷新同集合；无猜测最新稿；纯文字无需伪造工具 run |
+| T06 / P1 | **确定需调整**：验收移除多选与“调整交付内容”，接 T05 | Web BountyExecutionOutputs / 事项详情；复用 finalization | T05 | 只读成果清单、预览下载、确认验收/继续修改；旧 revision 冲突不验收错稿；保存不是前置 |
+| T07 / P1 | **已有基础，待联调验证**：自动回答/澄清/按需工具，多轮与真实媒体 | API / Client / Web 接口 Owner；不先重写 | T02、T04；T05 可并行验证 | 真实 Agent 处理无资料及混合资料；可读取真实图片/音频/文件；媒体晚到可恢复；故障只补实际缺口 |
+| T08 / P1 | **已有基础，待联调验证**：文字/媒体可选保存、恢复与隔离 | API / Web；现有 archive/asset/恢复入口 | T04、T07 | 保存后空间可读同字节；刷新不重生成；跨账号/任务拒绝；密议隔离；只补失败用例 |
+| T09 / P1 | **待发布验收**：唯一集成候选、云端验证/发布、真实浏览器闭环 | 集成职责；既有 Flow 5260799 / 4403172 | T01–T08 | exact commit/tree、正式云测、同 Run 制品、运行版本及线上场景一一对应；无虚报 |
 
-F0 和 M0 可并行沟通；W1/W2 可在候选合同下做 mock，B1 可独立开发；真实 B2/I1 联调必须使用已修复基础。不同 worktree/路径归属可以并行，不做全局写锁。
+T05 是业务正确性的关键依赖，不能用“自动勾选全部”替代；T07/T08 是验证任务，不预先认定整套后端未实现。
 
-## 2. 工作包
+## 4. 推荐执行顺序
 
-| ID | 建议 Owner / 仓库与路径边界 | 工作内容与交付 | 依赖 | 最小自检与完成条件 |
-| --- | --- | --- | --- | --- |
-| F0 | 原开发；API/Web/Client | 解 6/2/1 内容冲突、F1–F4、MySQL 与 JWT 兼容；交回 exact commit/tree | 独立外部依赖 | 身份、逐目标能力、冷线程/宋江、INSPECT、START/重连回归；不只消文本冲突 |
-| M0 | API Owner（critical_worker）+ 各组件合同代表；SDD 本 feature | 冻结 DTO/wire/events、schema/索引、任务会话映射、晋升授权、格式矩阵、测试夹具；补合同案例 | 当前文档 | design.md 第 10 节关闭；接口方法/错误/幂等与旧兼容清楚，确认最小 DDL |
-| B1 | API Owner（critical_worker）；agent workspace/storage | 会话资产用途、输入精确授权、内容读/Range、output commit 与保留引用 | M0 | 不自动创建个人文件或正式交付；跨 owner/版本/路径穿越/重复提交和迁移测试 |
-| B2 | API Owner（critical_worker）；task/chat/执行桥接 | 点将 outbox/唯一议事/首条投递、上下文快照、turn-execution-part、模型意图授权、事件恢复 | M0、B1、F0 | 点将局部失败/重复、冷线程/资料、文本 final 后媒体、重指派/取消竞态测试 |
-| R1 | Client Owner（balanced_worker，合同冻结后）；`conf/codex-ws-agent/` | CONVERSATION wire、未归档资产输入、工作目录提示/校验、输出回传关联、能力广告 | M0；B1 可 mock | server/local 共用夹具；native START 先于 Provider；声明外文件不可读写/上传；旧 PRIVATE/TASK 回归 |
-| B3 | API Owner（critical_worker）；归档与正式交付协调 | 文字选区/资产保存、CAS 新版本、选定集合晋升、正式提交/用户验收/领域完成 | M0、B1、B2 | 保存失败不重生成；保存与验收独立；受信生产者/用户身份、事务及部分成功恢复 |
-| W1 | Web Owner（balanced_worker）；需求入口/空间选择器 | 统一添加资料（可选）、显式目标、通用点将自动导航及真实 bootstrap 状态 | M0 | 无参考资料可提交，资料版本/移除/草稿保留；地图与名册数据流不混淆 |
-| W2 | Web Owner（balanced_worker）；议事消息/reducer/操作面板 | parts 混排、图片预览/下载、执行状态、同会话引用、归档与最终清单 | M0、W1；B1–B3 可 mock | 乱序去重、旧消息、认证过期/身份切换、取消、晚到媒体、不误报完成 |
-| W3 | Web + API 格式负责人；媒体组件/格式策略 | 音频播放/Range/下载/保存、文本选区、普通文件预览降级、混排与移动端 | B1、B3、W2 | 不以图片通过替代音频；MIME/鉴权/保存真实字节；不把播放能力冒充生成能力 |
-| I1 | 集成 Owner + gpt_test_runner | 浏览器“无参考画鸟→改蓝色→保存/不保存均可验收”及“有参考”纵切 | F0、B1–B3、R1、W1–W2 | AC01–07、AC10、AC12–17、AC22 的图片范围；真实目标 Agent，完整 ID/摘要证据 |
-| I2 | 集成 Owner + gpt_test_runner | 全 AC 覆盖：双接应、媒体、隔离、冷恢复、多端并发、离线读取、旧协议 | I1、W3 | acceptance.md 22 项记录实际结果；未完成不标 accepted |
-| R0 | 实施 Owner | 当前发布政策下准备精确版本、迁移/兼容顺序、测试及制品摘要、线上验收 | I2 及实际发布授权 | 不伪造 Flow；当前文档阶段不触发；源码/部署/用户验收分别记录 |
+1. Web Owner 依次 T01 → T02 → T03，避免多个 Writer 同改 JuyiHall/Composer；API Owner 并行处理 T04/T05 的最小合同。
+2. T04 前后端落地后联调附件；T05 合同固定后做 T06，不等全部后端验证才开始页面工作。
+3. 用已有源码跑 T07/T08，失败按证据生成具体修复项；无故障不扩展兼容工程。
+4. 汇总唯一候选执行 T09；前后端正式测试/构建/制品/发布用云效，不以本机成功代替。
 
-M0/B1/B2/B3 有相邻 Java 路径时由同一 Owner 或显式串行交接避免交叉写；Web W1/W2/W3 默认同 Owner，只有文件归属不重叠才并行。不调度 DeepSeek，不恢复 sol_reviewer 独立审查。
+不承诺未经验证的人天，不新建独立 Reviewer，不启动新流水线，不抢占已有 Run。纯文档交付无需云端构建。
 
-## 3. 影响范围与保护项
+## 5. 测试与接手出口
 
-| 区域 | 规模判断 | 必须保护 |
-| --- | --- | --- |
-| API chat/task | 中到大 | 服务器身份、可信材料、durable request/turn、既有任务规则/宋江 |
-| API agent/workspace/delivery | 大，关键路径 | owner/client/tenant ACL、内容校验、run/lease/producer、PRIVATE/TASK、正式提交/验收 |
-| Web | 中 | 普通聊天兼容、地图/名册分离、显式点将目标、身份切换清理、移动端草稿 |
-| Client | 中 | 山寨安顿/自家接应、native START、独立 cwd、受控输入/输出、旧协议 |
-| DB | 中，增量迁移 | 唯一键/CAS、重入与存量数据兼容，不历史文件大搬迁 |
-| 运维 | 有限配置与验收 | 不换发布系统、不操作其他任务进程、不凭本机 profile 推断远端 |
+| 任务 | 优先扩充的既有测试（Web tests / API 测试类） |
+|---|---|
+| T01/T02 | juyiting-requirement-materials-intake、juyiting-point-and-start、juyiting-hosted-point-flow |
+| T03/T04 | juyiting-voice-conversation、juyiting-conversation-material-links、juyiting-typed-deliberation-wire / interaction；ChatTypedDeliberationServiceTest |
+| T05/T06 | juyiting-bounty-finalization、juyiting-finalization-task-refresh；AgentTaskSelectedOutputFinalizationControllerTest、ChatSelectedOutputFinalizationService 相关测试；新增交付修订并发用例 |
+| T07/T08 | juyiting-multimedia-parts、juyiting-conversation-archive、juyiting-bounty-output-recovery；ChatActionContinuationTest / TransactionTest、ChatMixedMaterialWireTest |
+| T09 | [增量详设验收矩阵](implementation-design-20261004.md#d7-最终验收矩阵)及完整 design.md N01–N12 |
 
-## 4. 验证层级与证据
+每项交回：精确 SHA/tree、实际变更路径、测试范围/结果、仍缺证据、一个下一步。只更新已实际满足的状态；源码完成、云测通过、上线和用户验收分别记录。
 
-- 文档阶段：仅结构、引用、合同一致性与 diff 检查，不构建/部署。
-- 实施单元层：DTO/wire 夹具、schema/事务/ACL、reducer、runtime 文件桥接；选最小相关集，证据绑定 tree SHA/selector/DB fixture digest。
-- 集成层：实际 MySQL、API/Client 配对、旧新协议混用、授权和异步恢复。Gradle 一律经 `/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py` 串行。
-- 浏览器层：记录实际部署版本、任务/会话/消息/part/执行/run/asset/file/正式交付/验收标识，验证图片解码、音频播放、下载摘要。
-- 发布层：遵循用户最新政策。2026-09-17 云效不可用时的本地授权覆盖历史 Flow-only；若本地构建须记录 build_origin=local_user_authorized、exact commit/tree/测试/制品 SHA-256，冻结 release 只在真实上线条件满足后执行。本次文档提交不创建 release。
-- 生产数据、扣费、外部资料传输仅在明确已授权范围；历史测试账号凭据不写入仓库、日志或截图。
-
-## 5. 主要风险与消解
-
-1. 原分支未整改：可以做合同和独立切片，不分叉第二套 durable 引擎；F0 回填是联调前置。
-2. 旧 PRIVATE 自动归档/TASK 自动交付：用显式新用途隔离，回归老语义，避免试稿误交付。
-3. 正式提交生产者授权：M0 冻结最小受信适配器，不能通过删鉴权加快交付。
-4. 冷线程缺上下文：数据库快照与精确资产领取，不能以 warm thread 一次成功作证明。
-5. 音频/文本白名单及媒体鉴权：逐格式验证，不靠扩展名或裸 URL；不支持格式如实降级。
-6. 重试重复收费/重复验收：稳定意图键、状态查询、分阶段恢复；404 不证明未受理。
-7. 未归档产物误清理：引用生命周期明确前不新增自动 GC；已保存/正式成果不受会话删除牵连。
-
-## 6. 交付出口
-
-每包回填：变更范围、exact commit/tree、命令与结果、合同差异、风险/剩余项。完成功能后才更新 integration pins，不能拿 dirty checkout 运行 pin。当前所有包为计划，具体执行状态只在唯一运行台账登记，本表不是第二套运行 ledger。
+**给接手 Agent：** 从本清单而不是历史 tasks 开始；按候选 SHA 核对已有能力，只实施 T01–T06 的明确差异，T07–T08 先验证再修缺口。遵循增量详设和现状原型，不大改、不加受控请求/参考图专用入口、不恢复验收多选；不要更改暂停状态或运行流水线，除非接手任务已取得相应执行授权。
