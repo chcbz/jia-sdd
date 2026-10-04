@@ -363,3 +363,22 @@ Main必要本地自检：API三class **69/69PASS、0skip、Gradle0**；Web两sel
 独立只读 **ACCEPT_LOCAL_PAGINATION_SOURCE_SCOPE，P0/P1/P2=0**。本地保存API **ffca93dcbab42051e5d7142e495b88bce4395a69**（tree **ca07470834211ba7f669813a8740b552e0a00041**）与Web **6dd4553c276c34a1d694a06a3daf11849dca0e64**（tree **88839fcc90658784d774c60530c24639ac74a243**），两仓clean、未push。Root pins仍为上一推送基线，未提前pin。
 
 下一唯一critical Writer转入API/Client章节持久checkpoint与不可变对象引用/digest；发布STAGING分批恢复、配额/引用回收、source孤儿/PENDING收敛及文档尚未收口。仍 implementing/NOT_COMPLETE，未跑本地全面回归/Runtime/browser作为push门禁，无生产部署/激活/上架/付费调用。已完成的内容保真f5c04aae36定向PASS与完整回归无新增失败事实不被旧审计重复缺口覆盖。
+
+
+### 2026-10-04 章节持久断点首轮实际检查与修复
+
+首候选API **af4452ccd1a10068c3ec150a51f97865d2bbac48** / Client **67f53cbc2dedfc158e6a6f426008f5ebb29cefda** 已接线不可变对象真实回读、短事务checkpoint引用与精确20→21表升级，以及Client原子持久化与服务端digest对账。Main必要持锁编译通过，但77 API tests中8FAIL、Gradle1；合法旧mock的draft/object/hash状态需逐处修复，未削弱生产一致性校验。
+
+精确Git archive Linux三selector实际报74/71PASS/3FAIL、exit1。三个新增checkpoint测试发现目录创建tmp改变size而触发parent inode changed；失败在测试HTTP fixture收尾前导致listener留存。Main核对自有PID16631的唯一导出cwd、exe和完整argv后TERM，只处理该自有runner child；原日志和receipt保留。父TAP计数不冒充未经收尾的自然完整运行。原件 `evidence/chapters/attempt1/`。
+
+独立旧冻结范围 **REJECT_LOCAL_CHAPTER_CHECKPOINT_SOURCE_SCOPE**，新增核心P1：真实进程重启会更换runtimeInstanceId，checkpoint外层及内层namespace都随之改变，当前固定scope Runner重建测试未覆盖实际持久恢复。唯一Writer正修稳定checkpoint目录与强身份/epoch隔离，并修目录稳定身份和合法API fixtures；旧runtime或本地记录不能因此获得新执行授权。新冻结/复测/复审尚未完成，后续STAGING/配额/源清理仍未开发，无本轮完整源码push或生产授权。
+
+### 2026-10-04 章节持久断点最终窄修与本地保存
+
+目录identity误含size导致正常临时文件创建被拒绝、真实重启namespace随runtimeInstanceId改变两项Client问题已修复。attempt2 Client精确归档Linux三selector **80/80PASS、0skip、exit0、自然结束**。API attempt2剩余3FAIL为真实权限回退而非仅fixture：旧稿checkpoint回填硬编码draft.write阻断合法validate-only/publish-only入口；现用封闭HumanCheckpointPermission枚举按入口权限确定，短事务再验当前权限/job scope/draft snapshot/CAS，不扩大fixture权限、不使用宽泛OR。
+
+API attempt3三class **77/77PASS、0fail/error/skip、Gradle0**，最终API tree **e59dd691ee84ee51645099e77ec7bd351b8fa3ce** / Client tree **533519243c6f7c815ad7155be90a36078e8e737f**，after一致。独立只读 **ACCEPT_LOCAL_CHAPTER_CHECKPOINT_SOURCE_SCOPE，P0/P1/P2=0**；review只核源码，测试由Main实际执行，新增MySQL selectors仅编译仍待push后服务端。原attempt1失败/REJECT及attempt2真实授权失败保留。
+
+本地提交API **eabd4c8f0d6be0819ae765b24eece30bf2cd1d61** / Client **c7eaddb57fb20e6253f81964cf864eb70b3baace**，commit tree精确匹配接受树。未push、Root未pin，下一唯一Writer正在补STAGING发布恢复，生命周期与最终文档仍未完成，whole-D2保持NOT_COMPLETE。
+
+用户新增两小时硬截止：北京时间 **2026-10-04 14:31:39**，未完整完成即停止，不在截止后继续写/测试/push；保留工作和未完成项，已设置一次截止唤醒。无生产部署、迁移、激活、上架或付费调用授权。

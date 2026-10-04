@@ -478,6 +478,17 @@ archive-maintainer/
 - 已知 transient 错误按既有策略退避，先查询原操作；同输入同根因连续第二次失败进入 `blocked_root_cause` 诊断，不无限循环。修改候选/完成实际修复后新 bounded attempt。
 - 互斥争用等待，不抢占、不 signal 其他进程。授权撤销或新的合法执行 epoch 拒绝旧写入是正确性控制，不是超时抢占。
 
+
+### 9.4 章节持久 checkpoint 合同（2026-10-04）
+
+- Draft 响应新增 `checkpoints:[{blockKey,draftRevision,digest,byteLength}]`，管理单章响应含 `checkpoint`。字段不包含 storage URI、owner、凭据或来源正文；正文仍在原 content 投影中。Native 严格核对数量、唯一 blockKey、当前 revision、SHA-256 和十进制字节长度，不接受额外字段。
+- 服务端章节对象复用 `AgentTaskArtifactStorage`；事务外写不可变 UTF-8 JSON 并校验真实回读字节，短事务重查当前用例权限、job/scope、draft CAS 和 Native execution epoch 后登记引用。每个 revision 保留其引用；DB 回滚不留下有效草稿章，仅可能留下未引用对象，回收属于后续生命周期包。
+- 既有草稿缺 checkpoint 时，以原 `content_json` 为权威受控回填，保持原字节、revision、hash 与验证事实。内部回填分别沿用当前服务端用例的读/编修、validate 或 publish 权限，不能把合法发布者强制升级为正文编修者。
+- Client 持久目录固定于功能 namespace 和 canonical API origin/profile/tenant/client/owner/agent scope，job/run/epoch/block 分层；随机 runtimeInstanceId 不决定文件路径，但当前实例身份继续验证。原 platform 安装 proof/stateRoot 的 runtime 隔离不变。
+- checkpoint 原子写入与 fsync，文件 0600、目录 0700；验证 owner、真实目录、symlink/hardlink/inode、完整 JSON 和精确 scope。进程重启先查询服务端 result/start/context/draft；本地事实不授执行权，不遮蔽服务端变化，换实例/epoch 仍遵循正式恢复和当前 grant，旧 epoch 的 PENDING key 不被新 epoch 使用。
+- DDL 仅新增 `archive_draft_block_checkpoint`；精确20表前代 fixture 来自 API 0d2a6e6 原 Git blob（38408 bytes，SHA-256 b17881687dd423d15fd3f73156a991f4c176ae4c0b71f87b8d515b69790832ce）。新库、已升级库与该完整前代受支持；新表残缺/drift 不被当成安全升级。
+- 上述为源码合同；实际验证状态以 integration.yaml 和章节证据为准，不把已存在的服务端 checkpoint 当成本包 STAGING 发布恢复或生命周期清理已实现。
+
 ## 10. 事务、幂等与失败恢复
 
 ### 10.1 外部 I/O 与 DB 事务分离
