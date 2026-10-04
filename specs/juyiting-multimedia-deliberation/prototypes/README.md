@@ -1,0 +1,38 @@
+# 页面原型
+
+对应 [详细设计](../design.md)。这是**可点击的文档原型**，不是现有产品截图，也不证明功能已开发或上线。
+
+## 使用
+
+用浏览器打开 [index.html](index.html)。无安装、无网络依赖、无 API / Provider 调用。
+
+- 按顺序体验：提需求 → 选择 Agent → 开始议事 → 继续补充 → 验收 → 完成。
+- “添加资料”统一多选图片、文档、音频、普通文件；可预览、取消或移除，也可以不选任何资料。
+- 会话中可引用图片、补充附件、查看新一版示意；可预览、下载示例字节，保存后在工作空间看到内容。
+- 验收可调整所选成果，不要求先保存；可以只选择文字成果。
+- 顶部灰色“原型预览”切换条仅供评审跳转，**不进入产品**。侧栏仅表示聚义厅现有入口的所在位置，不是全站导航改版。
+
+## 范围与限制
+
+Agent 名称、能力、在线状态、对话和验收均为内存演示，不查询真实平台。小鸟是手绘 SVG 示意，不冒充实际生成照片；音频为两秒合成示意音，不冒充鸟鸣、语音或 Agent 输出。文本与 CSV 是原型文件。保存/验收仅修改原型内存，刷新后重置；正式产品必须持久化。下载仅下载明确标记的示意文件。
+
+原型展示多媒体组件形态，**不是要求每次任务都返回图片、音频和文档**。本期详设不要求重做已有语音录制和全站工作空间管理；原型不模拟麦克风、权限、后端重连、模型、事务或数据库。
+
+## 原型图
+
+| 场景 | 桌面图 |
+|---|---|
+| 四步总览 | [总览](screenshots/overview.png) |
+| P1 提需求 | [页面](screenshots/01-request.png) |
+| D1 统一添加资料 | [弹层](screenshots/02-materials.png) |
+| P2 选择 Agent | [页面](screenshots/03-agents.png) |
+| P3 会话与多媒体结果 | [页面](screenshots/04-chat.png) |
+| D2 大图预览 | [弹层](screenshots/05-preview.png) |
+| P4 验收成果 | [页面](screenshots/06-accept.png) |
+| P5 已完成 | [页面](screenshots/07-done.png) |
+| P6 工作空间 | [页面](screenshots/08-workspace.png) |
+| 移动端提需求 | [390px](screenshots/09-mobile-request.png) |
+| 移动端会话 | [390px](screenshots/10-mobile-chat.png) |
+| 移动端验收 | [390px](screenshots/11-mobile-accept.png) |
+
+截图由本原型在真实 Chromium 渲染生成，非生产构建。交互及布局自检见 [prototype-checks.json](prototype-checks.json)。
