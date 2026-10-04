@@ -388,3 +388,9 @@ API attempt3三class **77/77PASS、0fail/error/skip、Gradle0**，最终API tree
 冻结API tree37875b49a5f04e3ee2b72682e3bf3ceb8baca1ea，3文件完成SEALED/PUBLISHING→逐章STAGING→完整DB读回READY→最终短事务activation；Main77/77PASS、0skip、Gradle0，before/after同树，新MySQL selectors仅编译。独立REJECT_LOCAL_PUBLICATION_RECOVERY_SOURCE_SCOPE，P1=1：PENDING管理receipt绑定首次authorizationRevision，使合法publish权限grant revision改变后原key无法恢复。已交唯一Writer窄修publication恢复的当前授权更新与审计，不放宽其他receipt。证据evidence/staging/attempt1，整项未完成、未push。
 
 发布恢复P1窄修已接受 **ACCEPT_LOCAL_PUBLICATION_RECOVERY_SOURCE_SCOPE，P0/P1/P2=0**；仅publication PENDING恢复helper允许当前合法publish授权接管，通用receipt不变，审计保存首次及最终授权revision和operationId。Main attempt2 **77/77PASS、0skip、Gradle0**，before/after同tree **ff7aae4f4beadcebfd5b2d70095bc6d8e642d8e3**，API本地commit **f7811da746b74557a9ee9fc6c16ed7c815d0cf84**精确同树，未push。新增MySQL crash/concurrent/corruption/revocation/authorization-change selectors只编译未执行。下一唯一Writer开始最后源码包：安装副本配额、引用受控回收、source孤儿/stale PENDING恢复清理；仍NOT_COMPLETE，硬截止14:31:39不变。
+
+### 14:20 生命周期源码冻结及首次必要自检失败
+
+API750369d0eaf6b8d84f48ab515c9645fd7194e6de / Client04bbf488ed773fb5342f85db069d4b859f8b676b加入source对象持久registry/22表精确前代升级、PENDING与DELETED tombstone恢复回收、scope/digest安全删除、安装真实字节配额、服务端持久RECLAIMABLE fence与Client proof受控回收。尚缺双连接grant admission与reclaim竞争selector；未独立review。
+
+Main production/test编译通过，API三class **71项/68PASS/3FAIL、0skip、Gradle1**：schemaCatalog新增表精确数目/合同预期及两个source上传fixture；Client精确Git archive Linux三files **85项/83PASS/2FAIL、0skip、exit1、自然结束**：fenced old success导致quota inventory proof不完整，以及server-authorized reclaim新增测试冲突。仍须确认并修复真实原因，不淡化全部为fixture。旧失败证据evidence/lifecycle/attempt1保留，已交唯一Writer限时窄修；API/Client未提交/推送，全特性NOT_COMPLETE，截止14:31:39后停止而非继续修。
