@@ -394,3 +394,7 @@ API attempt3三class **77/77PASS、0fail/error/skip、Gradle0**，最终API tree
 API750369d0eaf6b8d84f48ab515c9645fd7194e6de / Client04bbf488ed773fb5342f85db069d4b859f8b676b加入source对象持久registry/22表精确前代升级、PENDING与DELETED tombstone恢复回收、scope/digest安全删除、安装真实字节配额、服务端持久RECLAIMABLE fence与Client proof受控回收。尚缺双连接grant admission与reclaim竞争selector；未独立review。
 
 Main production/test编译通过，API三class **71项/68PASS/3FAIL、0skip、Gradle1**：schemaCatalog新增表精确数目/合同预期及两个source上传fixture；Client精确Git archive Linux三files **85项/83PASS/2FAIL、0skip、exit1、自然结束**：fenced old success导致quota inventory proof不完整，以及server-authorized reclaim新增测试冲突。仍须确认并修复真实原因，不淡化全部为fixture。旧失败证据evidence/lifecycle/attempt1保留，已交唯一Writer限时窄修；API/Client未提交/推送，全特性NOT_COMPLETE，截止14:31:39后停止而非继续修。
+
+### 用户两小时时限：未完成停止
+
+最后窄修后API三class71/71PASS、Gradle0，Client85/84PASS/1FAIL、0skip、exit1自然结束。真实配额回收冲突仍未修复，独立生命周期review/Agent平台tests与双连接竞争selector未完成，不声明源码完成/已推送。Writer及Reviewer已关闭，源码和两轮原失败均保留，详见stopped-at-user-deadline.md。不自动继续，需用户另行明确要求。
