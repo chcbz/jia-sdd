@@ -99,3 +99,18 @@ API `codex/mmd-attachment-only-v1-20261004`：`a847c3d42421ecf61c9828b23744b951c
 精确API提交上既有锁定orchestrator、普通依赖/AP编译图的9组定向JUnit：**112 PASS / 0 FAIL / 0 ERROR / 0 SKIP**，Agent/Chat任务均natural exit0。真实final reader与snapshot/finalDigest破坏测试、UTF8原文、混合来源、虚构执行/步骤拒绝及原媒体权限/恢复/严格wire/schema回归均通过；无数据库、真实Agent、Provider或Flow业务验收。保留首轮57项中的2个fixture失败及原日志/XML，按实际发布bytes修fixture；未修改生产逻辑绕过断言。原始日志、JUnit、失败记录、精确Git/远端测试源hash见[合并回执](implementation-evidence-20261004/completed-message-v1/manifest.json)。
 
 下一步仍是将明确文字来源接入**现有**HTTP selectedOutputs及原items持久记录/恢复，再接事项页只读展示；同时补多独立批次追加/重置的明确交付意图，不新增delivery-set服务/表/状态机。未做生产迁移、Flow、发布或付费调用；本轮无新增需用户决定的范围事项。
+
+## T05：文字验收HTTP、原条目持久化及恢复接线（2026-10-04，部分完成）
+
+API `codex/mmd-attachment-only-v1-20261004`：`88243a317bd32f0495f8c9d9041e3e3582f764d4` / tree `3a9087b100b2737c255131a79519ace2376f97a1`，已推送并独立远端读回。生产实现位于父提交 `ba984d2b`；最终子提交只补两份组合测试。Web仍未改，不重跑未变更235项/本地构建。
+
+- 原 `/agent/tasks/{taskId}/finalizations` POST接受原6字段媒体项或文字5字段项（requestId/sha256/title/purpose/messageSource）；文字messageSource严格含turnId/messageId/snapshotId/finalDigest。messageId保持十进制字符串，支持JavaLong最大值、不经JS数字截断；不存在伪造step/output/run或浏览器提供grant权限。支持有序混合来源，混杂字段、未知字段、重复来源、非规范/越界ID均拒绝。
+- 原 `chat_selected_output_finalization_item` 补来源kind及真实消息/快照字段，文字step/output为NULL。继续原operation/key与GET按key/operation恢复，只读GET不推进；receipt校验条目重建的原requestDigest，持久引用被改写时拒绝而非偷换内容。已完成/已提交操作先恢复实际Agent记录，不重读过期来源或再跑工具。
+- 文字的当前grant仅由服务器在既有owner task-root锁内解析，沿用原active grant、资料/requirement和assignment校验，Agent.prepare仍再次校验；不获得工具/付费授权。继续原lease/artifact/正式提交/owner验收，不新建交付服务、表或状态机。
+- 新建表DDL及原条目表的一次升级SQL已写入源码，schema initializer核对来源列/唯一索引/check/nullable。**既有表升级不在启动时自动执行**；正式发布时须按原授权流程与API配套迁移。本轮未对生产执行DDL或数据写入。
+
+实际验证：10组定向JUnit合计 **124 PASS / 0 FAIL / 0 ERROR / 0 SKIP**，由父提交Agent59 + 最终提交Chat65组成，三次Gradle任务natural exit0。Agent生产/测试及SQL字节在最终test-only子提交未变更，故不冒称新树上重跑Agent。新增组合用例使用真实HTTP parser、Chat store、完成来源及原final reader，确认中文多行原文/实际快照、正式进度与原键只读/重放不重复读源；JDBC、身份与Agent/grant边界仍为fixtures，不冒充部署JWT/Spring/真实Agent验收。
+
+另在**独占新建datadir、关闭网络、独有socket**的MySQL **8.0.21**执行24项SQL检查：fresh与旧schema升级、旧operation/key/digest/媒体条目不变、文本/媒体共存、NULL/零/前导零/溢出ID/错误digest/虚构step/output/未知kind/重复消息拒绝；24项通过。两个自有测试数据库已删除，自有mysqld正常退出，不复用或操作生产及其他任务实例。原始DDL/catalog、日志/JUnit和复用字节hash见[本轮合并回执](implementation-evidence-20261004/text-wire-v1/manifest.json)。
+
+**仍缺**：事项页纯文字的只读展示/验收接线，以及多独立批次明确追加/重置交付意图。不能据本批后端通过把任意ANSWER、最新消息或寒暄自动变成交付，T05/T06整体尚未完成。未调用Provider、Flow、生产迁移、release ref或部署；本轮暂无需用户决定的范围事项。
