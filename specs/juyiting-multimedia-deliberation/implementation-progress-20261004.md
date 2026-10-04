@@ -50,8 +50,27 @@ API `codex/mmd-attachment-only-v1-20261004`：`7a9418c3c4dfa5d4850b7eb02b091bdba
 
 原始日志及JUnit XML合并保存并校验压缩/解压SHA-256：[本轮回执](implementation-evidence-20261004/attachment-only-v1/manifest.json)。
 
+## 本轮继续：T05改稿关联子增量（部分完成）
+
+Web `codex/mmd-ui-input-v1-20261004`：`b1f807c717714f0eebc0b98014ad9b8a2084a6cb` / tree `c90a562e6a78c35429a4e86518397cb06f87a02f`。
+API `codex/mmd-attachment-only-v1-20261004`：`0ff0322b08ab5c01208e7bb764be72ce3d4849e3` / tree `434913fd4dd7fefe06cd5ed3060c5805b1aeec5c`。
+两个候选已推送并独立远端读回；不更新SDD集成pin/gitlink，不覆盖原脏工作区。
+
+- 现有成果目录补可选 `replaces` 精确来源（request/step/output/hash），仅来自服务端持久v3 EDIT_IMAGE输入清单并核对原摘要；新生成时的参考图、工作空间图片编辑不会冒充替换旧会话成果。读取仍经过owner/task/assignment/grant与真实字节校验，Chat另外检查父成果请求的相同会话generation/task/Agent。
+- Web目录验证、冻结上述关系，成果卡显示改稿关联并保留历史稿。新增纯函数仅对**已明确的初始清单**应用精确替换，保留其他项，拒绝失效父稿/歧义分叉；重建后冻结所见引用，不从历史或MIME猜测当前集合。
+- **生产验收尚未接入该重建函数；初始交付清单来源仍需明确持久引用。** 当前没有隐藏checkbox后自动选择历史成果，也没有声称T05/T06完成。纯文字完成消息的鉴权/快照正式交付分支仍待实现。
+
+### 实际验证
+
+- Web8组相关定向测试 **208 PASS / 0 FAIL**，包含目录/真实挂载gallery/恢复/inline results/finalization/任务刷新及会话组件；`npm run build`自然exit0。仍为本地研发验证，既有chunk和mock环境警告保留。
+- 目录源码与小测试scoped ESLint通过；gallery既有诊断baseline13/current13，rule/message元组一致，新增0。不宣称全仓lint通过。
+- API通过既有orchestrator/Gradle锁、普通依赖与AP编译图执行3组定向JUnit：**55 PASS / 0 FAIL / 0 ERROR / 0 SKIP**，Agent与Chat任务均natural exit0。包括真实服务方法的owner/root/source digest路径与原有回归；无数据库/真实Provider，不是Flow或业务验收。
+- 原始Web失败保留：v1测试用URL.pathname造成Windows重复盘符，改为fileURLToPath；v2两项静态测试依赖旧self-closing slot和空行，用真实标签定位纠正后208通过。没有改生产逻辑规避断言。
+
+原始日志、JUnit XML、来源Git blob/测试工作文件hash及压缩hash见[本轮合并回执](implementation-evidence-20261004/output-lineage-v1/manifest.json)。Windows CRLF工作文件与LF blob只允许换行归一化差异，分别记录原始SHA-256。
+
 ## 下一实际缺口
 
-第一增量T01–T04的最小源码差异已接齐，**尚未整体联调/发布/用户验收**。下一增量做T05本次成果、改稿关联与纯文字交付，然后T06只读验收；仍复用现有finalization，不自动勾选全部历史成果，不新建交付集合服务。
+第一增量T01–T04的最小源码差异已接齐，**尚未整体联调/发布/用户验收**。第二增量T05现在仅完成改稿关联底层与测试，需继续落实本次初始交付的持久精确引用、将当前清单接入生产验收及纯文字来源分支，然后T06只读验收与返回原会话。仍复用现有finalization，不自动勾选全部历史成果，不新建交付集合服务。
 
 随后在实际闭环中核对T07/T08，并按T09使用既有正式Flow测试/同Run制品发布及上线验收。Client本轮未改源码，真实空正文到Agent的配对闭环尚待联调；不将静态检查或mocks算成产品通过。未新增付费Provider调用、生产数据/迁移、Flow Run、release ref或部署。
