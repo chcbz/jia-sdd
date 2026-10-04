@@ -506,6 +506,14 @@ archive-maintainer/
 
 管理者可接管已撤任 Agent 留下的合法草稿。此时保存新的 human actor/authorization，不冒充原 Agent 发布，不复用其已撤销 grant；正文校验仍须匹配 exact candidate。
 
+### 10.2.1 持久发布恢复协议
+
+管理 job/draft 与 Native 发布使用同一恢复链。稳定 editionId 绑定冻结 candidate；首次短事务持久化 SEALED draft、PUBLISHING job、PENDING operation 和 STAGING edition，恢复原 key 不创建第二个 edition。每章在短事务先重验当前授权、Native epoch、draft/work CAS，再精确比较或写入章节与段落；已持久内容本身是断点，差异返回 ARCHIVE_STAGING_CONTENT_MISMATCH，不覆盖损坏内容。全量 DB 真实读回与冻结 material 一致后才 mark READY，最终短事务重验当前权限和 CAS 后提交 publication/active/operation/outbox，未提交的 STAGING/READY 不公开且不切旧 active。
+
+PENDING DRAFT_PUBLISH 原 operation 的合法恢复允许当前有效 publish 授权 revision 接管；通用其他 admin receipt 仍保持原 revision 合同。原 receipt 保存首次授权 revision，publication 保存提交时当前 revision，PUBLICATION_COMMITTED 审计保存二者与原 operationId，不让旧授权记录授予新执行权。失去 publish 权限仍拒绝；不得为绕过 PUBLISHING 状态改发新 key。
+
+这描述当前源码候选合同，不代表新增实库恢复 selectors 已执行；实际审查与验证事实见 integration.yaml 和 evidence/staging/。
+
 ### 10.3 锁顺序与撤任竞态
 
 首期单数据源事务方案优先；集成前验证实际 transaction manager 和数据源一致。新域统一顺序为：现有 Agent 身份根锁（按 Agent 域已冻结顺序）→ 书库管理授权/岗位 slot → appointment/平台安装 → job/run → draft → work → edition/publication。只读取不可变快照的步骤不持长锁。

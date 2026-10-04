@@ -382,3 +382,9 @@ API attempt3三class **77/77PASS、0fail/error/skip、Gradle0**，最终API tree
 本地提交API **eabd4c8f0d6be0819ae765b24eece30bf2cd1d61** / Client **c7eaddb57fb20e6253f81964cf864eb70b3baace**，commit tree精确匹配接受树。未push、Root未pin，下一唯一Writer正在补STAGING发布恢复，生命周期与最终文档仍未完成，whole-D2保持NOT_COMPLETE。
 
 用户新增两小时硬截止：北京时间 **2026-10-04 14:31:39**，未完整完成即停止，不在截止后继续写/测试/push；保留工作和未完成项，已设置一次截止唤醒。无生产部署、迁移、激活、上架或付费调用授权。
+
+### 发布恢复首候选：定向自检通过，真实恢复权限P1修复中
+
+冻结API tree37875b49a5f04e3ee2b72682e3bf3ceb8baca1ea，3文件完成SEALED/PUBLISHING→逐章STAGING→完整DB读回READY→最终短事务activation；Main77/77PASS、0skip、Gradle0，before/after同树，新MySQL selectors仅编译。独立REJECT_LOCAL_PUBLICATION_RECOVERY_SOURCE_SCOPE，P1=1：PENDING管理receipt绑定首次authorizationRevision，使合法publish权限grant revision改变后原key无法恢复。已交唯一Writer窄修publication恢复的当前授权更新与审计，不放宽其他receipt。证据evidence/staging/attempt1，整项未完成、未push。
+
+发布恢复P1窄修已接受 **ACCEPT_LOCAL_PUBLICATION_RECOVERY_SOURCE_SCOPE，P0/P1/P2=0**；仅publication PENDING恢复helper允许当前合法publish授权接管，通用receipt不变，审计保存首次及最终授权revision和operationId。Main attempt2 **77/77PASS、0skip、Gradle0**，before/after同tree **ff7aae4f4beadcebfd5b2d70095bc6d8e642d8e3**，API本地commit **f7811da746b74557a9ee9fc6c16ed7c815d0cf84**精确同树，未push。新增MySQL crash/concurrent/corruption/revocation/authorization-change selectors只编译未执行。下一唯一Writer开始最后源码包：安装副本配额、引用受控回收、source孤儿/stale PENDING恢复清理；仍NOT_COMPLETE，硬截止14:31:39不变。
