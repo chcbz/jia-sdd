@@ -126,3 +126,33 @@ Web `codex/mmd-ui-input-v1-20261004`：`846460606c415246bba557a07b8b0c76bfe12136
 - **仅前端请求/恢复合同接齐**；事项页尚未读取/渲染明确的纯文字交付来源，多独立批次追加/重置意图仍缺。没有把任意ANSWER、问候或最新回复自动列入待验收成果，不能标T05/T06整体完成。
 
 本批4组相关Web测试 **68 PASS / 0 FAIL**，含32项finalization合同/恢复测试（新增9项）、既有挂载gallery、事项页和任务刷新回归。改动composable及测试定向ESLint exit0；本地Vite build自然exit0，保留既有chunk warning。真实请求/Agent/正式Flow/发布闭环未测。测试与源码字节、构建及lint原日志hash见[本批回执](implementation-evidence-20261004/text-wire-web-v1/manifest.json)。未覆盖原脏工作区、修改集成pin/gitlink、调用Provider或执行生产迁移/部署；暂无需用户决定的新范围事项。
+
+
+## T05/T06：明确文字交付标记与事项页读取/验收（2026-10-04，部分完成）
+
+API `732f7b7f35765c47c7d12fdded4ae257905a26b1` / tree `2d609a8d2f176c55a988ce4358ef0c2deb841197`；Client新独立候选 `codex/mmd-text-deliverable-client-v1-20261004`：`f7d6d3956f8fcdc7c373ce968f1b7389753bfb58` / tree `d177772b45825f874c3f606df3d275adeeb92686`；Web `31154e0393d5509288ae92b7d5762c00458f7de8` / tree `c85a2da355303125e7c1f83c9eb7fef404a8b4fd`。均已推送并独立远端读回；Web末提交只清理新增尾空白，最终验证覆盖该工作字节。
+
+- 既有v3 interactionOutcome补可选Boolean `deliverable`，只有CHAT ANSWER允许true。缺字段历史摘要前像不变，不从ANSWER猜交付；标记进入原持久JSON/finalDigest，读取拒绝篡改，无新表/接口/服务。Client新生成合同显式给Boolean：问候、进度、澄清、文件生成说明为false，文字本身为请求完成成果才true，不当授权或验收。
+- 原typed-outcome对true返回真实turn/message/snapshot/finalDigest。事项页核对原request/task/generation/完成CHAT turn，按原UTF8文字计算hash、冻结来源并转义展示；下载仅原文Blob，不伪造step/output/run、不先保存空间。验收继续原五字段文字来源和原key/body恢复，刷新/remount不偷换新稿；文字卡不显示假asset保存按钮，原选区归档保持独立。
+- **支持边界仍为一个明确文字项且无媒体，或原单一媒体manifest及改稿链**。多文字/图文独立批次拒绝歧义，不按最新消息或历史并集。混合来源wire已支持，明确追加/重置/文字替换关系仍待补，T05/T06整体未完成。
+
+实际验证：API9组 **87 PASS /0 FAIL /0 ERROR /0 SKIP**，普通Gradle/AP图经既有orchestrator共享锁、natural exit0；未重跑不变Agent。Client3组 **34 PASS /0 FAIL /0 SKIP**，最终LF源码Node natural exit0。Web9组 **123 PASS /0 FAIL**，scoped lint与本地Vite build exit0，gallery12→12无新增诊断。Client缺依赖软链接、测试边界与CRLF上传失败日志保留，仅修自有文件/软链接，未安装或重启生产运行时。
+
+Fixture由实际API服务/read导出，hash与Web原件一致；身份/JDBC/engine仍mock，非部署Agent或发布验收。原日志/JUnit/失败回执/精确blob与fixture hash见[合并回执](implementation-evidence-20261004/text-deliverable-v1/manifest.json)。既有items升级SQL仍需授权正式发布配套执行，本轮未做生产DDL/Provider/Flow/部署/集成pin变更。用户要求无确认事项直接继续，不逐次等待。
+
+
+## T05/T06续推：服务端文字标记收口与跨轮文字关联（20261004工作包，部分完成）
+
+API候选 `6b794b0a2663a18d306ee8515d89e7fe59a09c60` / tree `ab733d02fbb49998e9ca2256340f777256d4c584`；Client候选 `213f461f404af275c8b33ca524921f0ffeabc45d` / tree `6d7a8917073d12967ca8d3f32f40a85ee6169c99`；Web候选 `0a4abbbe67fc29914d84c9aa79c0736aaa9999ec` / tree `2381bd90180cdeb49542240cb37ceaf1b0617f24`。沿用上述三个自有分支，均已推送并独立远端读回，原脏工作区及集成pin不变。
+
+- 先补齐服务端可信文字source的标记校验：即使提交精确消息引用，未标记或明确false的ANSWER仍不可进入新正式交付；不扫描回复、不把普通文字自动变成果。独立提交 `72797d13` 的9组88项回归通过，原回执见[文字标记收口](implementation-evidence-20261004/text-marker-promotion-v1/manifest.json)，最终增量的109项也覆盖此行为。
+- 复用现有DISCUSSION parentOutcomeId及真实完成消息读回，在原snapshot admissionFacts补只读 `deliveryParent`（实际outcomeId/finalDigest）。只有read-verified的已完成、同任务/指派版本、明确marked CHAT文字才广告为父来源；父链接本身不表示替换、许可或验收。
+- 原interactionOutcome JSON补可选 `deliveryRelation`，严格APPEND/REPLACE/RESET + 精确父outcomeId/finalDigest，只用于明确文字ANSWER。来源必须匹配原admission和server snapshot中的父事实，且父仍在相同scope/task/assignment，不能凭模型或浏览器捏造；关系进入原finalDigest，读取重建。旧缺字段/新null不会改变原缺字段摘要前像。无新表、接口、集合服务或状态机。
+- Client native CHAT有nullable关系schema及明确选择指令；仅复制server广告的父ID/摘要，无父或篡改父即拒绝发布final，不执行工具。原INSPECT不能成为任务交付。Web从持久关系重建一条文字因果链：APPEND保留原项，REPLACE只换其精确父文字并保留其他项，RESET弃原清单。顺序来自关系而非到达时间，不取最新回复；缺父、坏摘要、重复、分叉和断开的环拒绝猜测。
+- 普通文字续聊只在已读清、唯一明确文字链时带原父CAS，新的问候不抢父位置；多独立根、未完成/未读请求或媒体目录不推断父。未知响应保留原父/key/body。事项页实际挂载测试覆盖3种关系的展示、所见原refs/hash提交和remount冻结恢复，不先保存/生成文件、不重跑工具。
+
+最终实际验证：API11组 **109 PASS /0 FAIL /0 ERROR /0 SKIP**，普通Gradle/AP图经原orchestrator共享锁，natural exit0（含既有Spring事务fixtures）；Client3组 **37 PASS /0 FAIL /0 SKIP**，最终LF源码Node自然退出；Web9组 **130 PASS /0 FAIL**，scoped lint及本地Vite build自然exit0，gallery12→12/测试0→0无新增诊断。API真实服务/read导出的APPEND/REPLACE/RESET projection原字节在Client/Web共享，fixture hash一致；DB/身份/native engine仍mock，不冒充真实Agent或上线验收。
+
+失败回执保留：API新增测试缺import、Mockito thenReturn参数中嵌套真实reader导致unfinished stubbing，按真实日志只修fixtures、完成原root-cause matrix后重跑，不删断言/skip/AP；Web新增parser校验误插入旧v1分支导致7项失败，移回v3局部分支后全部回归通过，格式lint修正日志也保留。合并原始日志/JUnit/精确blob与fixture证据见[关联增量回执](implementation-evidence-20261004/text-relations-v1/manifest.json)。
+
+**仍是部分完成**：目前支持单一明确媒体manifest/精确改稿链，或单一根的明确跨轮文字链；图文混合/多独立manifest追加重置、修改较早非广告父文字、经澄清回覆传播文字父来源，以及自然修改媒体时原源可用性仍待接齐。不能把这一增量称作通用T05/T06完成。随后还须实际Agent/保存/刷新闭环及原正式Flow/同Run发布（配套既有items升级SQL）；未执行生产DDL、Provider、部署、release ref或集成pin变更。普通开发步骤继续，无新增需用户确认的范围事项。
