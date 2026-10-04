@@ -86,3 +86,16 @@ Web `f0f4d1fced43effbb37a216351e7e145813ff7d0` / tree `84d5b90a894cebab4243ba565
 第一增量T01–T04的最小源码差异已接齐，**尚未整体联调/发布/用户验收**。第二增量T05/T06已接通上述单批次媒体清单、只读事项验收及返回原会话，但仍需补多独立批次的明确交付意图与纯文字来源分支；不能将该子增量标成T05/T06整体完成。仍复用现有finalization，不自动勾选全部历史成果，不新建交付集合服务。
 
 随后在实际闭环中核对T07/T08，并按T09使用既有正式Flow测试/同Run制品发布及上线验收。Client本轮未改源码，真实空正文到Agent的配对闭环尚待联调；不将静态检查或mocks算成产品通过。未新增付费Provider调用、生产数据/迁移、Flow Run、release ref或部署。
+
+## T05：纯文字可信来源与现有正式交付内部适配（2026-10-04，部分完成）
+
+API `codex/mmd-attachment-only-v1-20261004`：`a847c3d42421ecf61c9828b23744b951cd997fb7` / tree `0b7e10d17d5e898ec091bb50fe8b8d7a654964c3`，已推送并独立远端读回。Web未改，沿用 `f0f4d1fc` 的235项既有证据，不冒称本轮重跑。
+
+- 只读来源直接校验已有v3 CHAT完成消息、typed admission、任务/owner/client/会话generation、实际快照及重建的finalDigest；读取原ASSISTANT字节，中文多行/末尾空白不改写。未完成、CLARIFY/ACTION_REQUEST、消息/快照/正文/摘要/任务或assignment不一致均拒绝。不会扫描/自动选择回答，寒暄不自动成为交付。
+- 实际自然议事没有interaction-step行，故文字来源使用真实request/turn/message/snapshot，**不伪造stepId、executionId、runId或outputId**。媒体保留原step/output链；文字不要求先保存空间或生成文件。
+- Agent可信内部来源union支持文字和混合来源；复用现有真实lease/artifact/正式提交/owner验收。当前grant/assignment仍由原promotion机制校验，不把文字读取结果当执行授权；原媒体摘要已有独立固定值回归，不更换在途原键/原正文。
+- **本轮尚未改公开HTTP媒体-only合同、existing-items持久字段或接上事项页文字验收**。当前仅可信来源及Agent内部适配完成，不能声称用户已能纯文字直接验收，T05/T06整体仍是部分完成。
+
+精确API提交上既有锁定orchestrator、普通依赖/AP编译图的9组定向JUnit：**112 PASS / 0 FAIL / 0 ERROR / 0 SKIP**，Agent/Chat任务均natural exit0。真实final reader与snapshot/finalDigest破坏测试、UTF8原文、混合来源、虚构执行/步骤拒绝及原媒体权限/恢复/严格wire/schema回归均通过；无数据库、真实Agent、Provider或Flow业务验收。保留首轮57项中的2个fixture失败及原日志/XML，按实际发布bytes修fixture；未修改生产逻辑绕过断言。原始日志、JUnit、失败记录、精确Git/远端测试源hash见[合并回执](implementation-evidence-20261004/completed-message-v1/manifest.json)。
+
+下一步仍是将明确文字来源接入**现有**HTTP selectedOutputs及原items持久记录/恢复，再接事项页只读展示；同时补多独立批次追加/重置的明确交付意图，不新增delivery-set服务/表/状态机。未做生产迁移、Flow、发布或付费调用；本轮无新增需用户决定的范围事项。
