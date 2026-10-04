@@ -352,3 +352,14 @@ API attempt4 的局部变量 replay 重名生产编译失败原件保留，仅�
 RECOVERY-13 最终窄复审 **ACCEPT_LOCAL_RECOVERY13_SOURCE_SCOPE_FINAL，P0/P1/P2=0**。唯一 P2 只改测试一次性 afterRootLock seam；生产 blob 与上一接受树完全一致。Main attempt6 再次三 class **74/74PASS、0skip、Gradle0**，前后树一致；该新增实库 selector 仍未执行。最终本地保存 API commit **0d2a6e6d4b842446a180616fc6de5bb23b2943be**（tree **782798f51ac743e4791f4a15bbdfa1bc34bb6b7c**）与 Web commit **f7c5f3ab31de3ff06ca7513c53db921f033bf505**（tree **a3f0dcd5122be69109ceb20876c1d74f5d073dff**），精确匹配冻结接受树，保存后两仓 clean。原件 `recovery13-attempt6/review-final.json`。未 push 本轮完整增量、未更新 Root gitlinks/pins，整项目标仍 active。
 
 下一唯一 Writer 已继续原 D2 连续分页：任职历史、jobs state/cursor、管理与 Reader works 的 SQL keyset 与 Web 后续页；章节 checkpoint、STAGING、配额/来源清理仍按剩余路线串行开发。当前不跑本地全面回归/Runtime 作为 push 前门禁，保持先完成完整源码和文档、再组件→Root 推送、最后服务端全面验证的用户顺序。
+
+
+### 2026-10-04 连续分页源码交付检查点
+
+appointments/jobs/管理与Reader works 已实现 SQL keyset + limit+1，purpose/actor/collection/state 绑定游标、每页重新授权、任职 readiness 最终短事务锁重验、PUBLISHED+READY 阅读边界和整页ETag。Web继续后续页、稳定ID去重、重复游标拒绝、state刷新及身份晚响应 fencing；EXPLICIT_WORKS覆盖第101作品。接口合同见 design§7.5。
+
+Main必要本地自检：API三class **69/69PASS、0skip、Gradle0**；Web两selectors **128/128PASS、0pending、build0**。首轮默认Mocha2000ms五循环测试timeout原件保留，第二轮仅将测试timeout设15000ms，未修改源码；不是生产性能门禁。新MySQL keyset selector仅编译，按用户顺序留完整源码push后服务端。原件 `evidence/pagination/2026-10-04-attempt1/`，tree为post-test冻结观察，不伪称有独立pre-test快照。
+
+独立只读 **ACCEPT_LOCAL_PAGINATION_SOURCE_SCOPE，P0/P1/P2=0**。本地保存API **ffca93dcbab42051e5d7142e495b88bce4395a69**（tree **ca07470834211ba7f669813a8740b552e0a00041**）与Web **6dd4553c276c34a1d694a06a3daf11849dca0e64**（tree **88839fcc90658784d774c60530c24639ac74a243**），两仓clean、未push。Root pins仍为上一推送基线，未提前pin。
+
+下一唯一critical Writer转入API/Client章节持久checkpoint与不可变对象引用/digest；发布STAGING分批恢复、配额/引用回收、source孤儿/PENDING收敛及文档尚未收口。仍 implementing/NOT_COMPLETE，未跑本地全面回归/Runtime/browser作为push门禁，无生产部署/激活/上架/付费调用。已完成的内容保真f5c04aae36定向PASS与完整回归无新增失败事实不被旧审计重复缺口覆盖。

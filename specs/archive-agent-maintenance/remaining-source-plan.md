@@ -5,8 +5,8 @@
 | 包 | 原要求 | 当前状态 | 交付要点 |
 | --- | --- | --- | --- |
 | RECOVERY-13 | 同输入同根因第二次失败阻断，真实修复后新 attempt | 三项修复与最终窄复审接受；74 API / 41 Web 定向 PASS、build PASS；已本地提交，未 push | 真实 Runtime/安装/source 修复事实，retryable 不改变根因，scope 按授权语义计算；实库新 selector 待服务端 |
-| 分页 | design §7.2、§7.4 | 唯一 Writer 实现中 | 任职当前/历史、jobs state/cursor、管理 works、Reader works 的有界连续页；SQL 稳定 keyset；每页重新授权；Web 能继续读后续页且清身份/筛选后旧请求不得回填 |
-| 章节断点 | design §9.3、§10.1 | 待开发 | Client 本 run 持久章节 digest/checkpoint；重启先读取服务端事实；服务端不可变章节对象引用/digest；复用共享存储，不建第三套文件系统 |
+| 分页 | design §7.2、§7.4 | 69 API / 128 Web PASS、build PASS，独立窄审接受；已本地提交，未 push | 任职当前/历史、jobs state/cursor、管理 works、Reader works 的有界连续页；SQL 稳定 keyset；每页重新授权；Web 能继续读后续页且清身份/筛选后旧请求不得回填 |
+| 章节断点 | design §9.3、§10.1 | 唯一 critical Writer 正在实现 API/Client 持久断点与对象引用 | Client 本 run 持久章节 digest/checkpoint；重启先读取服务端事实；服务端不可变章节对象引用/digest；复用共享存储，不建第三套文件系统 |
 | 发布恢复 | design §10.2 | 待开发 | SEALED → STAGING 分批写入，每批持久断点；崩溃重启可恢复；读回后 READY；最终 publication/active 在短事务授权和 CAS 后原子切换；旧版持续可读 |
 | 存储生命周期 | design §18.3、来源对象边界 | 待开发 | 安装副本配额、基于真实引用的受控回收；source orphan/stale PENDING 恢复与清理；只处理本功能 namespace，不扫描推导资格或删除其他任务对象 |
 | 文档与交付 | 用户交付指令 | 待收口 | 更新接口/配置/迁移/恢复/运维文档，按原要求源码收口；组件提交普通 push 并核远程 SHA 后 Root 更新 pins/gitlinks 再 push |

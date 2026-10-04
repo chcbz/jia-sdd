@@ -398,6 +398,16 @@ archive-maintainer/
 
 权限检查必须先于解释私有资源的细粒度错误。性能慢不是上述任何失败码的理由。
 
+
+### 7.5 连续列表分页（2026-10-04 实现合同）
+
+- 管理任职、作业列表和管理/读者书架统一使用 `{items,nextCursor}`；最后一页 `nextCursor=null`。管理书架保留原有作品元数据字段。旧 `/archive/v1/catalog` 形状不变。
+- `limit` 为十进制 1–100，appointments/jobs 默认 50，管理/Reader works 默认 100；非法值返回 400 `INVALID_ARCHIVE_PAGE_LIMIT`。每个后续请求只传服务端返回的不透明 `cursor`，不使用 OFFSET。
+- appointments/jobs 按唯一 ID 降序，works 按唯一 ID 升序；SQL 每次最多取 `limit+1`。游标绑定接口用途、collection、当前 actor scope 和 jobs state 筛选；跨 scope/filter 或格式损坏返回 400 `INVALID_ARCHIVE_PAGE_CURSOR`，非法 state 返回 400 `INVALID_ARCHIVE_JOB_STATE`。游标不是授权，所有页都重新认证、授权和核对当前书库。
+- 任职 readiness 外部读取后，在短事务中重新鉴权并锁定 slot、当前任职与返回任职；中途变更返回冲突，不泄漏撤权后结果。Reader 仅枚举当前 PUBLISHED 且 READY 的 active edition，ETag 包含本页内容及 nextCursor。
+- Web 按服务端游标继续读取，按稳定 ID 去重；重复游标或带游标空页拒绝，筛选刷新从第一页开始，身份/授权变更取消旧读取并 fencing 晚响应。EXPLICIT_WORKS 不再限于首 100 项。
+- keyset 是当前可见集合的连续遍历而非全程数据库快照；并发插入或变更后的完整集合需重新刷新，旧游标不提供快照授权。
+
 ## 8. 宋江 @Tool 设计
 
 首期仅增加三项协调工具：
