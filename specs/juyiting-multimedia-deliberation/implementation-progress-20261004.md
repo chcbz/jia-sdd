@@ -114,3 +114,15 @@ API `codex/mmd-attachment-only-v1-20261004`：`88243a317bd32f0495f8c9d9041e3e358
 另在**独占新建datadir、关闭网络、独有socket**的MySQL **8.0.21**执行24项SQL检查：fresh与旧schema升级、旧operation/key/digest/媒体条目不变、文本/媒体共存、NULL/零/前导零/溢出ID/错误digest/虚构step/output/未知kind/重复消息拒绝；24项通过。两个自有测试数据库已删除，自有mysqld正常退出，不复用或操作生产及其他任务实例。原始DDL/catalog、日志/JUnit和复用字节hash见[本轮合并回执](implementation-evidence-20261004/text-wire-v1/manifest.json)。
 
 **仍缺**：事项页纯文字的只读展示/验收接线，以及多独立批次明确追加/重置交付意图。不能据本批后端通过把任意ANSWER、最新消息或寒暄自动变成交付，T05/T06整体尚未完成。未调用Provider、Flow、生产迁移、release ref或部署；本轮暂无需用户决定的范围事项。
+
+
+## T05/T06：前端文字验收请求与原键恢复合同（2026-10-04，部分完成）
+
+Web `codex/mmd-ui-input-v1-20261004`：`846460606c415246bba557a07b8b0c76bfe12136` / tree `8215652635722514e6cdd24641593aa80bb2ac9f`，已推送并独立远端读回。API未改，沿用 `88243a31` 的后端合同与既有124项源码/24项隔离SQL证据，不声称本批重跑。
+
+- 原finalization composable识别严格5字段文字项及4字段messageSource，媒体继续原6字段；支持有序图文混合，不增加接口、集合服务或状态机。messageId始终为正规范十进制字符串，可保留JavaLong最大值；数字/前导零/溢出及虚构step/output/execution/run/grant均在请求前拒绝。
+- 请求、持久恢复及receipt按原消息turn/message/snapshot/finalDigest逐字段核对；相同实际消息不能靠改snapshot/digest/title重复验收。来源类型或顺序变化不能偷换原成果。
+- 新增嵌套messageSource深复制/冻结：调用方后续修改原对象不改变在途正文；未知响应、remount、只读状态查询及显式续办保持原key/body，不换键、不自动写入或执行工具。账号切换隔离晚到文字receipt及恢复记录。旧媒体恢复仍有效。
+- **仅前端请求/恢复合同接齐**；事项页尚未读取/渲染明确的纯文字交付来源，多独立批次追加/重置意图仍缺。没有把任意ANSWER、问候或最新回复自动列入待验收成果，不能标T05/T06整体完成。
+
+本批4组相关Web测试 **68 PASS / 0 FAIL**，含32项finalization合同/恢复测试（新增9项）、既有挂载gallery、事项页和任务刷新回归。改动composable及测试定向ESLint exit0；本地Vite build自然exit0，保留既有chunk warning。真实请求/Agent/正式Flow/发布闭环未测。测试与源码字节、构建及lint原日志hash见[本批回执](implementation-evidence-20261004/text-wire-web-v1/manifest.json)。未覆盖原脏工作区、修改集成pin/gitlink、调用Provider或执行生产迁移/部署；暂无需用户决定的新范围事项。
