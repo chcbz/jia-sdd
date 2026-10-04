@@ -27,7 +27,7 @@ Web 独立候选 `codex/mmd-ui-input-v1-20261004`：`58d631da0b0c1cccebf152f2f95
 - 改动小组件/voice composable和新增测试 scoped ESLint通过；BountyPanel既有11条、JuyiHall既有187条诊断保留，与原候选比较新增0。不宣称全仓 lint 全绿。
 - `git diff --check`通过；原主工作区的脏 api、日志及其他分支未覆盖。
 
-原始测试/构建/ lint日志、基线比较和 SHA-256：[一次合并回执](implementation-evidence-20261004/ui-input-v1/manifest.json)。
+原始测试/构建/ lint日志及基线比较用gzip保留原始字节，manifest同时绑定压缩文件与解压原件SHA-256，避免Git换行归一化破坏回执；证据：[一次合并回执](implementation-evidence-20261004/ui-input-v1/manifest.json)。
 
 ## 下一实际缺口
 
