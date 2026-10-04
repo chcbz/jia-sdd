@@ -69,8 +69,20 @@ API `codex/mmd-attachment-only-v1-20261004`：`0ff0322b08ab5c01208e7bb764be72ce3
 
 原始日志、JUnit XML、来源Git blob/测试工作文件hash及压缩hash见[本轮合并回执](implementation-evidence-20261004/output-lineage-v1/manifest.json)。Windows CRLF工作文件与LF blob只允许换行归一化差异，分别记录原始SHA-256。
 
+## T05/T06：事项详情媒体验收接线子增量（2026-10-04，部分完成）
+
+Web `f0f4d1fced43effbb37a216351e7e145813ff7d0` / tree `84d5b90a894cebab4243ba5656208ecfdda439f9`，仍在 `codex/mmd-ui-input-v1-20261004`，已推送并独立远端读回。API源码未改，沿用上轮 `0ff0322b08ab5c01208e7bb764be72ce3d4849e3` 的有效来源合同/55项测试证据，不宣称本轮重跑API。
+
+- 验收操作移到事项详情，议事卡保留历史稿、预览/下载/可选保存，不再有checkbox。事项页只读本次成果，复用原finalization；点击确认时提交当时实际显示的精确来源，保存不是前置。
+- **当前支持边界**：现有持久输出中仅有一个独立committed manifest批次时，将该明确批次及精确改稿关联接入生产页面；按request/step/output/hash替换一项，保留其他图/音频/文件。多轮改稿依父链重建，不依网络到达顺序。多个独立原始批次、分叉改稿或失效父稿一律提示回议事澄清，**尚未实现澄清后追加/重置交付意图的持久读取**；不是通用当前清单完成，不自动并集所有历史或挑同MIME最新版。
+- 已开始/完成的验收继续显示冻结原引用，晚到新稿、刷新或remount不替换原内容；未知响应仍查/恢复原operation与key/body，不重跑工具。
+- 事项页只读原owner/task作用域下的现有conversation/list和requests。冷读来源不唯一不猜最新；明确原会话在既有分页中查找，身份/任务/会话切换立即清理并隔离晚到响应。非法目录/权限或读取失败不能降级到旧验收路径。没有原生请求记录的既有正式事项仍由原FormalTaskDeliveryPanel领域服务处理；资金榜和明确delivery review路由保持原样，私人事项路由未改变。
+- “继续修改”只返回原会话；正在同一会话时不重置对象/草稿，跨分页只选择原history条目，身份切换或正在处理其他会话时停止切换。不点将、不创建/发送、不插入新草稿、原成果不改写。
+
+精确提交上10组相关测试 **235 PASS / 0 FAIL**；本地build自然exit0，仍保留既有chunk及mock环境警告，非Flow/真实Agent/发布验收。小组件/新增hook/catalog与相关测试scoped lint通过；与上一提交比gallery13→12、BountyPanel11→11、JuyiHall187→187、大组件测试7→7，rule/message无新增诊断。最终Git blob与测试工作文件只允许CRLF/LF差异，回执见[合并记录](implementation-evidence-20261004/task-acceptance-v1/manifest.json)。
+
 ## 下一实际缺口
 
-第一增量T01–T04的最小源码差异已接齐，**尚未整体联调/发布/用户验收**。第二增量T05现在仅完成改稿关联底层与测试，需继续落实本次初始交付的持久精确引用、将当前清单接入生产验收及纯文字来源分支，然后T06只读验收与返回原会话。仍复用现有finalization，不自动勾选全部历史成果，不新建交付集合服务。
+第一增量T01–T04的最小源码差异已接齐，**尚未整体联调/发布/用户验收**。第二增量T05/T06已接通上述单批次媒体清单、只读事项验收及返回原会话，但仍需补多独立批次的明确交付意图与纯文字来源分支；不能将该子增量标成T05/T06整体完成。仍复用现有finalization，不自动勾选全部历史成果，不新建交付集合服务。
 
 随后在实际闭环中核对T07/T08，并按T09使用既有正式Flow测试/同Run制品发布及上线验收。Client本轮未改源码，真实空正文到Agent的配对闭环尚待联调；不将静态检查或mocks算成产品通过。未新增付费Provider调用、生产数据/迁移、Flow Run、release ref或部署。
