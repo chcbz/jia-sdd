@@ -124,3 +124,7 @@ API111 CI成功/JAR健康，但F06旧SQL pin不匹配新版owner-fenced资源，
 ### 主机北京时间2026-10-06 01:17 / UTC2026-10-05 17:17 正式API完成
 
 API5260799/112最终SUCCESS，CI/唯一主机/同Run制品/JAR/record/approval/真实健康均核验，F06 PASS existing_equivalent，E05 not_admitted未调用。Web原deploy已一次恢复，Web4403172/168正式CI发布链运行，Start UNKNOWN只读核对唯一168/checkout marker/CI_SHA/time/config并写intent，没有重发。新同Run Web制品和线上dist字节待核验，T05–T09 NOT_RUN。Agent已完成；监控恢复，Web正式完成后恢复两个timer。见 [权威接续](runtime-release-20261005.md)。
+
+## 2026-10-06 01:30 三端正式上线与业务登录阻塞
+
+API112、Agent双实例4e70c4f、Web168正式发布均已完成。Web168同Run源码/tree/归档及364个dist文件安装与公开HTTPS完整字节一致；3146pass/2pending/0失败/0skipped。核对远端develop及安装record后已恢复两个既有nightly timer。刷新真实IAB出现新版统一资料入口，但随后跳转登录页，chcbz需重新登录；业务T05–T09仍NOT_RUN，不标全部完成。详细状态及证据见runtime-release-20261005.md最新权威段。

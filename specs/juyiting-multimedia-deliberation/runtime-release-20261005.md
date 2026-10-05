@@ -1,3 +1,17 @@
+## 最新权威状态（2026-10-06 01:30 CST）
+
+**三端正式发布已完成；真实chcbz业务验收尚未完成。** 用户要求立即发布已落实，无须等待下一次零点。
+
+- API5260799/112正式SUCCESS及实际JAR/record/健康完整证明保持有效；Agent共享与wuyong-local均已安装4e70c4f。不重发、不重复安装。
+- Web4403172/168最终SUCCESS，CI529287081/scan529287082/deploy529287083成功；部署单70646814唯一主机Success/client healthy。source f6b81b40ee4a579c579af4cb7ab1e0e76e362173/tree3f70c8a345ef09359b0169785ec66d5f8cdf5102，与同Run包内标记匹配。
+- 同Run归档106693786 bytes，SHA256 cfff7cab8af652fa449463f6a12ce96b007fa879d50ed6f715cd743daf6fc672；3146测试通过/2pending/0失败/0skipped。364个dist文件完整manifest覆盖、安装字节及公开HTTPS逐个size/hash完全匹配。record未变化，run168/status与phase均online_verified，版本1.0.1。完整证明UTC2026-10-05T17:27:14.674810Z。
+- 01:30核对API112/Web168安装record及两仓库远端develop均为本次源提交，随后恢复既有cyf-flow-backend-nightly.timer及cyf-flow-frontend-major-nightly.timer，均active；未手动Start任何额外Flow。
+- IAB tab1刷新后已出现新版统一“添加资料（可选）”入口，随后身份校验跳转真实登录页。之前chcbz登录已失效，**当前需要用户在现有IAB页重新登录chcbz**。不索取密码、不提取浏览器秘密。此阻塞只影响真实业务验收，不影响已完成发布。T05–T09业务仍NOT_RUN，不以CI夹具替代。
+
+证据：[Web同Run制品](implementation-evidence-20261004/runtime-release-20261005/web168-artifact-verification.json)、[线上完整字节](implementation-evidence-20261004/runtime-release-20261005/web168-online-verification.json)、[恢复调度](implementation-evidence-20261004/runtime-release-20261005/timers-restored-after-web168.json)。制品回执中的ONLINE_BYTES_PENDING是01:25阶段状态，01:27独立线上完整回执已覆盖，不改写历史。
+
+下一步仅核对chcbz登录是否恢复，然后执行新事项T05–T09真实验收（work/real-acceptance-assets已有无个人信息材料）；不重复发布/清理/419或420/schema/helper安装。登录问题已通知，不反复提醒。
+
 # 三端发布接续（2026-10-05 23:30 CST）
 
 ## 最新权威状态（主机北京时间2026-10-06 01:17 / UTC2026-10-05 17:17）
@@ -88,3 +102,4 @@ chcbz历史清理已完成，不再删除、不重放419/420、不全局重启ES
 ## 2026-10-05 23:37:40 CST 只读跟进
 
 既有00:00/00:30 timer仍active，Agent双实例active，API/Web/MySQL/Redis监控健康，无维护/恢复动作。IAB tab1已由用户登录；通过个人中心可见账号 `chcbz` 已核对，随后返回聚义厅并保留页签。登录阻塞已解除，不再请求用户登录。未创建事项、调用Agent/Provider或启动Flow；等待00:00既有发布调度，业务验收仍NOT_RUN。
+
