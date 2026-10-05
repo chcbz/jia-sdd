@@ -236,3 +236,19 @@ API `0e70e2f0d859cf1eb77817b2bf6ce257ef4d9a3d` / tree `947fa2c258d78055f80d04c2b
 失败与修复：API首轮137项中135通过/2个新admission fixture未完成Mockito stubbing（thenReturn里调用真实read触碰mock）；保留失败XML并归因一次，只将真实read预计算，v2全通过。新Web synthetic root fixture把应缺省字段写成null被严格parser拒绝，仅改fixture缺省；新mounted测试缩进75条及duplicate blank lint均只修新测试排版，未删断言/放宽生产校验。最终164及lint/build通过。
 
 **剩余**：混合清单里的单项媒体改稿仍需复用原replaces精确关联，目前拒绝猜测；legacy EXECUTE原始媒体起点与更多独立root明确意图仍需补齐。T05/T06不标完成；T07–T09实际Agent/材料/可选保存/刷新/隔离及既有正式Flow同Run发布未完成。本批未调用Provider、生产DDL/数据、部署或修改release/integration pin，没有新增需要用户确认的范围。
+
+
+## T05/T06续推：混合清单单项媒体改稿与未修改项保留（2026-10-05验证，部分完成）
+
+API `329d44fd7f8d0b2402853f5eac4cf47c99fcbed9` / tree `69d2cb5448aa165b35ead9794bac0971736f1a7d`；Client `b8d74b14739f0f7868a4d11e8ddfc40ff5ec78cb` / tree `f61a54c50f8e9d83f59f9c790380de4020841a88`；Web `bb64c8149266eb9ae91aaf4e78b6742fc8fa73c9` / tree `4f3eb69889ec2a077c366872ab50b729ebce0e76`。均沿原自有候选分支推送并远端独立读回；原脏工作区/生成声明保留，未改release或集成pin。
+
+- 不新建关系类型/集合版本：沿用原动作APPEND/RESET因果元数据及已存在的outputs `replaces(requestId/stepId/outputId/sha256)`。APPEND清单里有replaces时只替换该确切仍保留媒体，文字、同批兄弟及其他批次保留；无replaces的新输出正常追加。RESET仍先验证改稿原源，再仅保留明确新manifest。
+- 先验证整个批次相对上一份仍保留清单的原源，再应用修改：错hash/foreign/已丢弃/重复改同一原源/同批依赖拒绝；不偷选历史稿、不按最新MIME推断。API重放过程中的临时replaces不进入冻结deliveryTargets，广告仍只含原文字或实际新producer outcome＋精确outputSource。
+- 共享实际writer/read fixture接通“文字＋两批图片→只改第一批小鸟→只改较早文字→再改该小鸟并追加poster”：文字及未修改图片保持，已被替换的旧bird/blue不进入当前交付。后续自然议事只选五个仍保留媒体的真实asset refs及终端因果父；Client保持原目标和parent、不接受已经替换的历史文字。
+- mounted事项页按“修改后的文字＋五个确切媒体原源”展示及selectedOutputs验收；原key/body/hash在未知ACK、remount及无关晚到媒体中不变，不要求保存、不重启工具。
+
+验证：API15组 **140 PASS /0 FAIL /0 ERROR /0 SKIP**，Client4文件 **52 PASS /0 FAIL /0 SKIP**，Web10组 **169 PASS /0 FAIL**，scoped lint及build exit0；gallery基线12/当前12、测试0/0，无新增诊断。API/Client/Web共享fixture同字节SHA256 `bbaec5b50427035f56e49fc58b3795e5af47ce0bc17829d88863a9a4c27a71fd`。**原持久记录与execution reader、native engine及媒体HTTP仍fixture；不是实际Agent生成、部署浏览器、正式Flow或用户验收**。回执见[mixed-media-edit-v1](implementation-evidence-20261004/mixed-media-edit-v1/manifest.json)。
+
+保留失败：API/Client本批首次全部通过。Web新测试首轮66通过/2失败：网络顺序单元测试把manifest内部顺序也反转，却按有序列表比较，改为精确ref tuples排序比较（mounted所见顺序与API仍逐项相等）；mounted无关晚到request错误复用第二批step而非第四批，remount被严格URL校验拒绝，仅修该fixture来源。最终169及lint/build全通过，未放宽生产来源或权限校验。
+
+**剩余**：原legacy EXECUTE媒体起点（无typed ACTION_REQUEST basis）及更多独立root明确意图尚未接齐，仍不制造outcomeId或历史合并。T05/T06整体不标完成；T07–T09真实Agent/材料/可选保存/刷新/隔离、唯一集成候选与既有正式Flow同Run发布未完成；本批未调用Provider、生产DDL/数据、部署或修改release/integration pin，没有新增确认事项。

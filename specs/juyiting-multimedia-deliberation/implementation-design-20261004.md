@@ -85,6 +85,8 @@ Agent 读取附件目录后判断按需查阅、澄清还是执行；缺少明�
 
 2026-10-05续推：已完成EXECUTE的原ACTION_REQUEST可成为终端因果basis；原鉴权输出读取重建精确保留文字/媒体outputSource目标，较早文字REPLACE仅换该文字并保留媒体。自然议事及显式/仅附件议事保持原selectors和原因果父，事项页按所见精确原来源验收，不以保存为前置。仍未接齐混合单项媒体replaces改稿及legacy EXECUTE原媒体起点，不据此宣称全场景完成；详见media-basis进度及fixture验证边界。
 
+2026-10-05继续实施：混合因果链复用原outputs精确replaces进行单项媒体改稿。原APPEND在确切仍保留原源位置替换，未改文字/兄弟项保留，真正新输出追加；原RESET先验证原源再仅保留新manifest。整个批次先核对错hash/重复/已丢弃/同批引用，拒绝猜历史；广告及验收继续实际producer原来源。legacy EXECUTE起点及正式联调/发布仍未完成，详见mixed-media-edit回执。
+
 不预设 `delivery-set` 端点、deliverySetId / expectedDeliverySetRevision、独立状态表或专用冲突码；上一版对此的建议撤销。只有具体用例证明确实无法在现有读写接口和元数据内完成，才在实施中说明原因并做最小调整。
 
 ### 正确性底线（沿用现有机制，不增加用户步骤）
