@@ -340,3 +340,8 @@ Agent已完成。API110新JAR现健康运行，finalization确切一次性迁移
 ### 主机北京时间2026-10-06 01:04 最新接续
 
 API111 CI成功/JAR健康，但F06旧SQL pin不匹配新版owner-fenced资源，Flow FAIL；保留110/111报告，不重放schema。按当前JAR资源及已有mandatory-owner schema更新严格门禁，62回归通过；真实JAR/MySQL catalog只读equivalent及负控制拒绝已验证，未执行DDL，01:00 CAS安装。最新正式API112运行（CI529282011/deploy529282012），唯一Run/checkout/time/config只读reconcile已完成并绑定intent。Web仍API-first，T05–T09 NOT_RUN；监控健康，timer最后恢复。详见 [权威接续](runtime-release-20261005.md)。
+
+
+### 主机北京时间2026-10-06 01:17 / UTC2026-10-05 17:17 正式API完成
+
+API5260799/112最终SUCCESS，CI/唯一主机/同Run制品/JAR/record/approval/真实健康均核验，F06 PASS existing_equivalent，E05 not_admitted未调用。Web原deploy已一次恢复，Web4403172/168正式CI发布链运行，Start UNKNOWN只读核对唯一168/checkout marker/CI_SHA/time/config并写intent，没有重发。新同Run Web制品和线上dist字节待核验，T05–T09 NOT_RUN。Agent已完成；监控恢复，Web正式完成后恢复两个timer。见 [权威接续](runtime-release-20261005.md)。
