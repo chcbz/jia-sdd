@@ -172,3 +172,19 @@ API候选 `d0a3f80a45c707bb12de12cf2b0cd3558417b2c0` / tree `c2a7d724313bae6162e
 保留API首次116项中的4个fixture失败及XML：Mockito Map默认空集合与新turn stub覆盖原来源turn；显式建模nullable无来源合同、分离原来源turn后，test-only子提交全量定向重跑通过，未放宽生产断言。Web首次133通过后的两个多余空行lint失败保留，仅修格式并重跑。精确提交/tree/source字节、原始日志/JUnit/共享fixture见[本批合并回执](implementation-evidence-20261004/clarified-text-v1/manifest.json)。
 
 **仍待继续**：图文混合、多独立manifest明确追加/重置、修改较早非广告父文字、自然改媒体的原源可用性；随后实际Agent/材料/保存/刷新及既有正式Flow/同Run发布，并按正式发布授权配套已有items升级SQL。T05/T06仍部分完成，T07–T09未完成。本批未调用Provider、执行生产DDL/数据写入、部署或更改release ref/集成pin，无新增需用户确认的范围事项。
+
+
+## T05续推：自然媒体改稿接入精确原源（2026-10-05验证，20261004工作包，部分完成）
+
+API候选 `01039abb3763d0c0e873bdd93de710260eb37328` / tree `16c64cccaec44120a2436a9f2fb20002bcc9fb4e`；Client候选 `e41246c3fb743adea4d25b0f8fe499505bb12a18` / tree `bda39b4953a72dbebc406dd888f7c0422cdad3ed`；Web候选 `5b13014821cc498c481bc98c1793d1b28c2e2ffc` / tree `0ee5f15d46ff507c3201418be707c5678fb20647`。沿用原三个自有候选分支，均推送并独立远端读回；原脏工作区、Web生成声明及集成pin未纳入提交。
+
+- 普通非空CHAT、未显式选资料且未选澄清问题时，议事适配器读取现有已完成EXECUTE产物清单，复用单一明确manifest与精确replaces链解析，只把当前保留产物的持久assetId/revision加入原sourceSelectors。它们是可用上下文，不是验收交付选择、改稿意图或执行授权；无需先保存到个人空间，也不添加专用参考图选择入口。
+- 不按最新文件/MIME/到达顺序猜来源，不合并独立历史批次。晚到未投影assetRef、坏/空/重复manifest、读失败、独立根、分叉/缺父、待完成typed read、文字标记成果与媒体混合均不自动广告来源。当前上下文必须匹配任务、target、assignment、conversation generation及已提交producer；来源不明确时仍交给原议事处理，不捏造媒体绑定。
+- API原context查询增加真实产物EXECUTE step与会话的精确task/target/owner/client/generation及OUTPUT_COMMITTED关联，保留原sha256/bytes/requestId/stepId与sourceRef推导；不写入、不投影、不保存、不执行工具。已有动作执行/asset resolver继续重检真实权限和字节，Client生产逻辑不变，仅补既有native CHAT action sidecar回归。
+- 显式输入、INSPECT、已选澄清CAS不被重新绑定；空正文仍必须有显式合法附件。查询中busy防重复发送，身份/上下文/catalog漂移后不POST。未知受理跨remount/恢复仍冻结原asset refs、原body与原key，不改成新清单，也不重跑工具。
+
+实际验证：API6组 **45 PASS /0 FAIL /0 ERROR /0 SKIP**，普通Gradle/AP图经既有orchestrator共享锁，natural exit0；Client4个相关文件 **45 PASS /0 FAIL /0 SKIP**；Web9组 **142 PASS /0 FAIL**，scoped lint（含本次生产composable）及Vite build均exit0。API真实context代码导出共享fixture SHA256 `ffd8c0c4229ef3352deab03c55f66253b39579c7b0b83db6d7da80f32bc33f9b`，Client/Web保持同字节。但SQL行、session/capability与native engine/浏览器调用仍fixtures，**不是实际数据库持久数据、真实Agent改图、保存或线上业务验收**。
+
+保留失败回执：API定向首次通过；Web首次140项通过后的一个多余空行lint失败仅格式修复，扩展实际context fixture与pending/mixed回归后最终142/lint/build通过。Client两次45项运行各一个新测试fixture错误，分别是adapter input JSON字符串误当native input数组、未知source错误码猜测；保留根因矩阵和原始日志，按现有接口/精确ACTION_SELECTION_INVALID合同修正测试后45通过，未放宽生产检查。精确提交/tree/源码字节、JUnit与原始日志见[本批合并回执](implementation-evidence-20261004/media-context-v1/manifest.json)。
+
+**仍待继续**：图文混合、多独立manifest明确交付追加/重置、修改较早非广告父文字；随后实际Agent/资料/保存/刷新及既有正式Flow/同Run发布，并按正式发布授权配套已有items升级SQL。自然媒体原源的上述单明确链源码缺口已补，不代表所有歧义场景或真实联调完成。T05/T06仍部分完成，T07–T09未完成。本批未调用Provider、执行生产DDL/数据写入、部署或更改release ref/集成pin，无新增需用户确认的范围事项。
