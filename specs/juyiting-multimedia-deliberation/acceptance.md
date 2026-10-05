@@ -143,3 +143,8 @@ API329d44fd / Clientb8d74b1 / Web10ff97b已快进合入各自develop，根gitlin
 
 
 2026-10-05 21:36 CST终态补充：Web167正式SUCCESS，3146通过/2pending/0失败/0skipped，扫描与构建通过；同Run source-commit/tree匹配f6b81b4/3f70c8a，364个dist文件逐项size/hash与集合精确匹配。API109正式证据仍有效，101 skipped不能称通过。**仅正式CI与制品完成，不是可验收通知**；部署配置保持暂停，运行版本与真实T05–T09闭环尚未更新/执行，发布及现有预算内模型/工具验收调用待授权。
+
+
+### 2026-10-05 23:30 CST 三端发布接续
+
+Agent已实装Client4e70c4f，两实例payload/config已核验；主机发布脚本forward-only及现有备份别名问题已修复，26回归PASS；零点调度分页18回归PASS。API5260799现有deploy已恢复，明确新版失败向前修复、不自动降级；等待2026-10-06 00:00既有调度，未创建最终Run。Web仍CI-only且仅API健康后发布。真实业务验收NOT_RUN，T05–T09不标完成。详见 [接续说明](runtime-release-20261005.md) 与 [实际回执](implementation-evidence-20261004/runtime-release-20261005/manifest.json)。用户已授权发布及既有预算内真实调用；IAB已打开chcbz登录页待用户登录，无需传递密码。

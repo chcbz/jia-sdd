@@ -61,6 +61,20 @@ def fail(message):
     raise SystemExit('cyf-api-flow-auto-approve: ' + message)
 
 
+def validate_backup_directory(path):
+    link = path.lstat()
+    if stat.S_ISLNK(link.st_mode):
+        target = Path('/home/isp/baks/flow-api')
+        if (path != Path('/var/lib/cyf-api-flow/backups') or
+                link.st_uid != 0 or link.st_gid != 0 or
+                path.resolve() != target or target.is_symlink()):
+            fail('backup alias is unsafe')
+    actual = path.stat()
+    if (not stat.S_ISDIR(actual.st_mode) or actual.st_uid != 0 or
+            actual.st_gid != 0 or stat.S_IMODE(actual.st_mode) != 0o700):
+        fail('backup directory is unsafe')
+
+
 def digest_fileobj(handle):
     h = hashlib.sha256()
     for chunk in iter(lambda: handle.read(1024 * 1024), b''):
@@ -1116,8 +1130,7 @@ def main():
     if PACKAGE.parent.lstat().st_uid != 0 or stat.S_IMODE(PACKAGE.parent.lstat().st_mode) != 0o700:
         fail('incoming directory is unsafe')
     BACKUPS.mkdir(mode=0o700, parents=True, exist_ok=True)
-    if BACKUPS.is_symlink() or BACKUPS.lstat().st_uid != 0 or stat.S_IMODE(BACKUPS.lstat().st_mode) != 0o700:
-        fail('backup directory is unsafe')
+    validate_backup_directory(BACKUPS)
 
     lock_fd = os.open(LOCK, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     os.fchmod(lock_fd, 0o600)

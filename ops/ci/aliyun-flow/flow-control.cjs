@@ -178,11 +178,25 @@ async function getPipeline(client, org, pipeline) {
 }
 
 async function listRuns(client, org, pipeline, maxResults) {
-  const result = await body(client.listPipelineRuns(
-    org, pipeline, new SDK.ListPipelineRunsRequest({ maxResults })
-  ));
-  if (!Array.isArray(result.pipelineRuns)) fail('RUN_LIST_UNAVAILABLE');
-  return { runs: result.pipelineRuns, nextToken: result.nextToken || null };
+  const runs = [], seenRunIds = new Set(), seenTokens = new Set();
+  let nextToken;
+  do {
+    const result = await body(client.listPipelineRuns(org, pipeline,
+      new SDK.ListPipelineRunsRequest({ maxResults, nextToken })));
+    if (!Array.isArray(result.pipelineRuns)) fail('RUN_LIST_UNAVAILABLE');
+    for (const run of result.pipelineRuns) {
+      const id = String(run.pipelineRunId);
+      if (!/^[1-9][0-9]*$/.test(id)) fail('RUN_LIST_ID_INVALID');
+      if (seenRunIds.has(id)) fail('RUN_LIST_DUPLICATE_ID');
+      seenRunIds.add(id); runs.push(run);
+    }
+    nextToken = result.nextToken || undefined;
+    if (nextToken !== undefined) {
+      if (typeof nextToken !== 'string' || seenTokens.has(nextToken)) fail('RUN_LIST_PAGINATION_INVALID');
+      seenTokens.add(nextToken);
+    }
+  } while (nextToken !== undefined);
+  return { runs, nextToken: null };
 }
 
 function frozenStartContext(options, org, pipeline) {

@@ -99,3 +99,8 @@ T05 不能用“自动勾选全部历史成果”替代，但不必为它新建�
 ### 2026-10-05 21:36 CST 接手状态补充
 
 当前配套候选API329d44fd /Clientb8d74b1 /Webf6b81b4均已推develop并读回；API109 SUCCESS、Web167 SUCCESS，同Run制品及精确源SHA/tree已校验（API101 skipped；Web3146通过/2pending/0失败）。来源见 [最新回执](implementation-evidence-20261004/integration-cloud-ci-20261005/manifest.json)。T01–T06现有源码和定向测试不等于真实业务通过，T05–T09剩余仍以新流程真实运行/保存/恢复/隔离及发布验收为准。发布和真实模型/工具调用授权已向用户询问，尚未执行；不为相同候选额外重复CI-only，不恢复旧数据适配，不将CI-only制品手工部署冒充既有Flow发布。
+
+
+### 2026-10-05 23:30 CST 三端发布接续
+
+Agent已实装Client4e70c4f，两实例payload/config已核验；主机发布脚本forward-only及现有备份别名问题已修复，26回归PASS；零点调度分页18回归PASS。API5260799现有deploy已恢复，明确新版失败向前修复、不自动降级；等待2026-10-06 00:00既有调度，未创建最终Run。Web仍CI-only且仅API健康后发布。真实业务验收NOT_RUN，T05–T09不标完成。详见 [接续说明](runtime-release-20261005.md) 与 [实际回执](implementation-evidence-20261004/runtime-release-20261005/manifest.json)。用户已授权发布及既有预算内真实调用；IAB已打开chcbz登录页待用户登录，无需传递密码。

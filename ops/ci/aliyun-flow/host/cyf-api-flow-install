@@ -60,12 +60,24 @@ else
 fi
 TARGET_DIR="$(dirname "$TARGET_JAR")"
 
-for command in awk chmod chown date df flock grep mkdir mktemp python3 rm sha256sum stat; do
+for command in awk chmod chown date df flock grep mkdir mktemp python3 readlink rm sha256sum stat; do
   command -v "$command" >/dev/null 2>&1 || fail "missing command: $command"
 done
 
 mkdir -p -m 0700 "$PACKAGE_ROOT" "$PACKAGE_ROOT/incoming" "$BACKUP_ROOT"
-[[ ! -L "$PACKAGE_ROOT" && ! -L "$PACKAGE_ROOT/incoming" && ! -L "$BACKUP_ROOT" && ! -L "$TARGET_DIR" ]] || fail 'package or target directory is symlinked'
+[[ ! -L "$PACKAGE_ROOT" && ! -L "$PACKAGE_ROOT/incoming" && ! -L "$TARGET_DIR" ]] || fail 'package or target directory is symlinked'
+# Preserve the installed backup alias and durable logical record paths. No other
+# symlink is admitted, including in offline fixtures.
+validate_backup_alias() {
+  if [[ -L "$BACKUP_ROOT" ]]; then
+    [[ "$OFFLINE_TEST" == 0 && "$BACKUP_ROOT" == /var/lib/cyf-api-flow/backups \
+       && "$(stat -c '%u:%g' "$BACKUP_ROOT")" == '0:0' \
+       && "$(readlink -f "$BACKUP_ROOT")" == /home/isp/baks/flow-api \
+       && -d /home/isp/baks/flow-api && ! -L /home/isp/baks/flow-api ]] \
+       || fail 'backup alias is unsafe'
+  fi
+}
+validate_backup_alias
 if [[ -e "$TARGET_JAR" || -L "$TARGET_JAR" ]]; then
   [[ -f "$TARGET_JAR" && ! -L "$TARGET_JAR" && -s "$TARGET_JAR" && "$(stat -Lc '%h' "$TARGET_JAR")" == 1 ]] || fail 'canonical JAR is unsafe'
 fi
@@ -889,6 +901,13 @@ assert_old_or_absent() {
 
 restore_and_start() {
   local phase="$1" stop_verified=0 recovery
+  # Explicit forward-only release: preserve the candidate and diagnostics, never
+  # detach it or start an older schema-incompatible JAR after cutover failure.
+  if [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 ]]; then
+    write_record failed "$phase" forward_only_candidate_retained "$STOP_RC" \
+      || recoverable_fail 'forward-only failure record was interrupted; candidate retained'
+    fail 'forward-only release failed; candidate retained for forward repair; no old JAR restart'
+  fi
   # The rollback decision is durable before stop, detach, or restore. Recovery dispatch
   # treats this intent as monotonic and can never resume candidate promotion.
   if ! write_record rolling_back "$phase" rollback_intent "$STOP_RC"; then
