@@ -81,6 +81,8 @@ Agent 读取附件目录后判断按需查阅、澄清还是执行；缺少明�
 
 2026-10-05 已实施的较早文字目标补齐：沿原 `deliveryParent` 因果父和完成final关系重建仍保留的文字，在原admission/snapshot广告精确 `deliveryTargets`（outcomeId/finalDigest及原text）。已有 `REPLACE` 关系可选带成对 `targetOutcomeId/targetFinalDigest` 指向较早仍保留项；原parent字段不改为目标，始终是当前因果basis，澄清pending CAS另行保持。只换指定项、保留后续追加项；已丢弃/不明确/未广告目标不得推断，仍会话澄清。旧三字段关系与final摘要不变，不新增用户选择页或API/表/集合状态。源码验证范围与未完成联调见进度回执。
 
+2026-10-05 已实施的首个图文子场景：原文字 `deliveryParent` 为因果父时，已广告EXECUTE的原ACTION_REQUEST final可携带三字段APPEND/RESET，表达未来新批次明确意图；其正文仍非交付，REPLACE/target、查阅/澄清不得用此关联。事项页只在该原动作progress的真实EXECUTE child及精确同scope/task/assignment/target/代际step输出提交后，将完整manifest与原文字按明确关系展示并进入既有验收。未知验收继续原key/body，不保存、不重生成。此增量不等于媒体为父的后续混合改稿及原媒体/多独立起点已经接通，当前不明确情况仍拒绝推断；具体源码验证和边界见进度回执。
+
 不预设 `delivery-set` 端点、deliverySetId / expectedDeliverySetRevision、独立状态表或专用冲突码；上一版对此的建议撤销。只有具体用例证明确实无法在现有读写接口和元数据内完成，才在实施中说明原因并做最小调整。
 
 ### 正确性底线（沿用现有机制，不增加用户步骤）

@@ -204,3 +204,19 @@ API候选 `905adcf6b988a33de57e46e753528d16dd8c0136` / tree `6a9b07c83d60a0344dc
 保留失败回执：首次119通过；补齐admission/旧record round-trip回归后，v2新测试漏声明已有fixture的checked Exception，v3新扩展fixture漏stub精确outcome查找（120项1失败），均按原orchestrator归因、保留原日志/JUnit及根因矩阵，限于新fixture修复后v4全部120通过，未放宽生产断言。Web首次147通过后的一个多余空行lint失败仅格式修复，最终补议事因果父/原键回归后148/lint/build通过。精确源码/tree/日志/JUnit见[本批合并回执](implementation-evidence-20261004/retained-text-v1/manifest.json)。
 
 **仍待继续**：图文混合与多独立manifest明确交付追加/重置；随后实际Agent/资料/保存/刷新及既有正式Flow/同Run发布，并按正式发布授权配套已有items升级SQL。较早但仍保留的明确文字目标源码缺口已补，不代表可以恢复已丢弃历史稿或拼接不明确批次。T05/T06仍部分完成，T07–T09未完成。本批未调用Provider、执行生产DDL/数据写入、部署或更改release ref/集成pin，无新增需用户确认范围。
+
+
+## T05/T06续推：文字→明确新执行批次，追加或重置（2026-10-05验证，20261004工作包，部分完成）
+
+API `ccdf2ce8423f9e435a3bef0915788aed71ccea01` / tree `1f1130fd4ec44a2f3b54960af855385649501562`；Client `b6ca429f9ba74a09e54c32003ab295f7c4bb6764` / tree `2c7821afddd510dfd5f18b8059fe9c0650a4a043`；Web `fd5f7e87f7ef4ad17a4688b0d6b07b05ab79afe4` / tree `4f3fbe8ae7a1410f622f088bc9eb869c9257dc1c`。沿用原自有三个候选分支，均已推送并独立远端读回；原脏工作区、生成声明、集成pin与release ref未纳入。
+
+- **本次真正接通的子场景**：已明确文字成果→用户自然要求另加一批媒体→原Agent规划final明确APPEND→实际输出就绪后显示“原文字＋新manifest”；明确RESET则仅显示该新manifest。ACTION_REQUEST正文始终不是交付文字，不能在规划成功时提前当媒体完成。
+- 复用原 `deliveryRelation` 三字段、冻结 `deliveryParent`、admission/snapshot、动作outbox及child-admission/progress。仅已广告的EXECUTE可关联未来批次的APPEND/RESET，不扩大工具或权限；CLARIFY、INSPECT_INPUTS、非广告动作、动作REPLACE/target及错父/摘要拒绝。文字关系旧摘要与真实资料读取行为保持，不新增接口、表、服务、集合ID/版本或状态机。
+- 事项页从现有typed-outcome读取明确动作关系，只把其真实COMPLETED EXECUTE child与同任务/指派/target/会话generation、OUTPUT_COMMITTED step关联，再读取原鉴权outputs。未完成/失败/取消、晚到child、缺manifest、错来源、独立/分支/不完整批次不推断可验收集合；不能把ACTION_REQUEST prose、按类型最新结果或历史合并当交付。
+- APPEND保留原文字和该新完整manifest；RESET只保留该新批次。事项页仍用原selectedOutputs/finalization，按真实显示的messageSource或request/step/output/hash提交；未知ACK、remount与晚到无关批次不换原稿/key/body，显式继续先查原键，再仅重发原POST；不要求保存或重新调用工具。旧单manifest/媒体精确改稿路径不变。
+
+实际验证：API13组 **131 PASS /0 FAIL /0 ERROR /0 SKIP**，正常Gradle/AP依赖图经既有orchestrator共享锁，首次natural exit0；Client4文件 **49 PASS /0 FAIL /0 SKIP**（首次48通过，再补原API fixture/native副本49通过）；Web10组 **156 PASS /0 FAIL**，scoped lint及Vite build exit0，gallery基线12/当前12、测试0/0无新增诊断。共享实际final writer/read/progress导出SHA256 `8f1fadefb5418ab2d16cf61b9d1fcf9a55bdd32484b996dad3a17a6934784bf1`，Client/Web同字节。**outbox/admission/child记录、native engine及事项页HTTP/PNG仍fixtures，不是实际Agent生成、线上浏览器或Flow验收**。合并源码/日志/JUnit回执见[execution-batch-v1](implementation-evidence-20261004/execution-batch-v1/manifest.json)。
+
+保留Web失败：v1误将新v3 guard插入legacy v1 reader，140通过/8失败，移除该误插入而非删原断言；v2新未知ACK测试误把状态GET计入POST，154通过/2失败，只修新fixture以分开请求并模拟原键404显式重发。最终156及lint/build通过；未放宽生产来源/权限校验。API与Client未发生本批测试失败。
+
+**明确未完成**：这是“文字为父→新媒体批次”的子增量，不代表所有图文/多独立媒体场景完成。后续需让已完成媒体/动作成为原因果basis并广告精确保留目标，接通混合清单单项改稿；还需处理原legacy EXECUTE独立媒体起点及多独立manifest明确APPEND/RESET。当前这些未接线情况仍拒绝猜父/历史合并，不提前标记T05/T06完成。之后继续实际Agent/材料/可选保存/刷新/隔离及既有正式Flow同Run发布，按正式发布授权配套原items迁移。T07–T09未完成；本批未调用Provider、生产DDL/数据、部署或修改release/integration pin，未增加需要用户确认的范围。
