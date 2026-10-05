@@ -15,7 +15,7 @@ Agent 已升级；API 的现有 Flow 部署已恢复、尚未启动最终发布�
 - 现有零点调度 `flow-control.cjs` 只修 listRuns 分页。18回归通过，实际109条完整读回且无活动Run；没有创建新Run。
 - API安装器增加显式 `CYF_API_FLOW_FORWARD_ONLY=1`：候选切换后失败只写原failed记录并保留候选，不 detach/restore/旧JAR start。默认其他发布行为不改。故障记录写失败也不落入旧版恢复。
 - 实际备份根是已有别名 `/var/lib/cyf-api-flow/backups -> /home/isp/baks/flow-api`。只允许该精确root:root别名，物理目标仍root:root0700；其他别名/离线fixture别名拒绝。保持逻辑backup路径，不搬移目录、不改历史记录。
-- 两个主机helper以**实际已安装的新基线**作最小patch，在 `/tmp/cyf-release-api.lock` 下CAS/备份/原子安装/hash读回；不覆盖脏主仓库、不改launcher、不重启应用。26回归PASS/0失败/0跳过，bash语法通过。SDD代码是对应最小差异，不是整份主机文件的替换来源。
+- 两个主机helper以**实际已安装的新基线**作最小patch，在 `/tmp/cyf-release-api.lock` 下CAS/备份/原子安装/hash读回；不覆盖脏主仓库、不改launcher、不重启应用。实际主机候选26回归PASS/0失败/0跳过，bash语法通过；SDD确切源码另外在隔离Linux fixture中26回归PASS/0失败/0跳过。SDD代码是对应最小差异，不是整份主机文件的替换来源。
 - 23:23恢复API5260799原deploy段，明确forward-only；原CI源码、测试、同Run制品和主机组不变。实际配置SHA256 `a2e5d4617e110fba303a18e02115714880a4cef09a72b6858e1b08cd8d9667ed`，已normalized readback验证。未调用Start。
 
 ## 下一步（必须按顺序）
