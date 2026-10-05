@@ -79,6 +79,8 @@ Agent 读取附件目录后判断按需查阅、澄清还是执行；缺少明�
 5. **验收复用**：点击“确认验收”时将页面实际展示的精确成果引用映射为现有 `selectedOutputs`，沿用原 task/assignment version、幂等键、状态查询、正式提交和完成逻辑。字段名里的 selected 不代表 UI 必须有多选框。
 6. **文本最小补齐**：图片/文件继续原 output 通道；纯文字复用已有完成消息/文本快照存储，作为只读来源接入现有正式交付服务。当前 output-only 解析不能直接声称支持纯文字：只为这一缺口扩展受鉴权的消息来源字段/分支与对应测试，不伪造 executionId/runId，不要求先保存个人空间，不重新生成文字文件。
 
+2026-10-05 已实施的较早文字目标补齐：沿原 `deliveryParent` 因果父和完成final关系重建仍保留的文字，在原admission/snapshot广告精确 `deliveryTargets`（outcomeId/finalDigest及原text）。已有 `REPLACE` 关系可选带成对 `targetOutcomeId/targetFinalDigest` 指向较早仍保留项；原parent字段不改为目标，始终是当前因果basis，澄清pending CAS另行保持。只换指定项、保留后续追加项；已丢弃/不明确/未广告目标不得推断，仍会话澄清。旧三字段关系与final摘要不变，不新增用户选择页或API/表/集合状态。源码验证范围与未完成联调见进度回执。
+
 不预设 `delivery-set` 端点、deliverySetId / expectedDeliverySetRevision、独立状态表或专用冲突码；上一版对此的建议撤销。只有具体用例证明确实无法在现有读写接口和元数据内完成，才在实施中说明原因并做最小调整。
 
 ### 正确性底线（沿用现有机制，不增加用户步骤）

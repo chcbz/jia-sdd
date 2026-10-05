@@ -188,3 +188,19 @@ API候选 `01039abb3763d0c0e873bdd93de710260eb37328` / tree `16c64cccaec44120a24
 保留失败回执：API定向首次通过；Web首次140项通过后的一个多余空行lint失败仅格式修复，扩展实际context fixture与pending/mixed回归后最终142/lint/build通过。Client两次45项运行各一个新测试fixture错误，分别是adapter input JSON字符串误当native input数组、未知source错误码猜测；保留根因矩阵和原始日志，按现有接口/精确ACTION_SELECTION_INVALID合同修正测试后45通过，未放宽生产检查。精确提交/tree/源码字节、JUnit与原始日志见[本批合并回执](implementation-evidence-20261004/media-context-v1/manifest.json)。
 
 **仍待继续**：图文混合、多独立manifest明确交付追加/重置、修改较早非广告父文字；随后实际Agent/资料/保存/刷新及既有正式Flow/同Run发布，并按正式发布授权配套已有items升级SQL。自然媒体原源的上述单明确链源码缺口已补，不代表所有歧义场景或真实联调完成。T05/T06仍部分完成，T07–T09未完成。本批未调用Provider、执行生产DDL/数据写入、部署或更改release ref/集成pin，无新增需用户确认的范围事项。
+
+
+## T05/T06续推：修改较早文字，保留后来追加内容（2026-10-05验证，20261004工作包，部分完成）
+
+API候选 `905adcf6b988a33de57e46e753528d16dd8c0136` / tree `6a9b07c83d60a0344dc61af8b0726fef3241fb4a`；Client候选 `b5fa7359ac372a6f36425b2b8213671a20d11b3d` / tree `486452edee23f72ec6b86322303e372561518ad9`；Web候选 `f60cfbfd294c121e3fe499ae1a900c9262df57c4` / tree `ddcfee858bf4ff95982f1daa58b5c95e22c3a48b`。沿用原三个自有候选分支，均已推送并独立远端读回；原脏工作区、Web生成声明及集成pin未纳入提交。
+
+- 补齐具体场景：第一段成果→追加第二段→澄清要改哪段→只替换第一段，第二段仍保留；随后继续追加时因果父仍为最后一次真实交付结果，而不是显示顺序最后一张卡片。原文字引用/快照/hash可直接验收，不需先存个人空间或伪造execution。
+- 原admission/snapshot增加 `deliveryTargets`，只广告沿既有明确文字关系重建后仍保留的精确outcomeId/finalDigest及原text。逐个验证实际完成CHAT、scope/task/assignment、消息/快照与真实final摘要；不按最新ANSWER猜父、不读取/合并无关批次。正文是供辨别目标的非可信DATA，不作为指令。
+- 既有 `deliveryRelation` 的 `REPLACE` 可选携带成对 `targetOutcomeId/targetFinalDigest`，明确改哪一个仍保留的项；原 `parentOutcomeId/parentFinalDigest` 始终表示当前因果basis，原澄清pending CAS另行保持。缺字段、坏摘要/越界目标、已RESET或REPLACE丢弃的目标、非REPLACE携带target、错/缺广告及原快照/消息/scope变化均拒绝；无目标扩展的旧三字段关系和final摘要前像不变。
+- 服务端在原final prepare与只读恢复中检查冻结广告和实际保留来源，迭代重放原关系，不新增表、API、服务、集合ID、版本框架或状态机。Client native CHAT schema/sidecar传同一精确关系并拒绝把即时问题或任意历史文字当目标，不执行工具。前端仅扩展原reader/清单纯投影；事项页验收只提交显示的改稿和未修改第二段，原request/messageSource/sha256保持一致，未知验收remount不重新POST或换稿，后续议事仍冻结正确父/原键/body。
+
+实际验证：API12组 **120 PASS /0 FAIL /0 ERROR /0 SKIP**，普通Gradle/AP图经既有orchestrator共享锁，natural exit0；Client4个相关文件 **47 PASS /0 FAIL /0 SKIP**，首次定向通过；Web9组 **148 PASS /0 FAIL**，scoped lint及Vite build均exit0，gallery历史诊断12→12/测试0→0无新增。共享实际API writer/read fixture SHA256 `2076463b50bcba70da910ab28381ace38642f83b19e573a47a9b548d016f4da4`，Client/Web保持首次导出的同字节；最终生产代码与首次导出相同，最终projection语义/原来源/文字字节/摘要一致，但JVM Map遍历导致JSON键顺序与首次不同，保留两份raw及独立摘要，不虚报最终envelope逐字节相同。DB/身份/CAS与native engine/浏览器调用仍fixtures，**不是实际Agent、线上验收或正式Flow证明**。
+
+保留失败回执：首次119通过；补齐admission/旧record round-trip回归后，v2新测试漏声明已有fixture的checked Exception，v3新扩展fixture漏stub精确outcome查找（120项1失败），均按原orchestrator归因、保留原日志/JUnit及根因矩阵，限于新fixture修复后v4全部120通过，未放宽生产断言。Web首次147通过后的一个多余空行lint失败仅格式修复，最终补议事因果父/原键回归后148/lint/build通过。精确源码/tree/日志/JUnit见[本批合并回执](implementation-evidence-20261004/retained-text-v1/manifest.json)。
+
+**仍待继续**：图文混合与多独立manifest明确交付追加/重置；随后实际Agent/资料/保存/刷新及既有正式Flow/同Run发布，并按正式发布授权配套已有items升级SQL。较早但仍保留的明确文字目标源码缺口已补，不代表可以恢复已丢弃历史稿或拼接不明确批次。T05/T06仍部分完成，T07–T09未完成。本批未调用Provider、执行生产DDL/数据写入、部署或更改release ref/集成pin，无新增需用户确认范围。
