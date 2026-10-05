@@ -220,3 +220,19 @@ API `ccdf2ce8423f9e435a3bef0915788aed71ccea01` / tree `1f1130fd4ec44a2f3b54960af
 保留Web失败：v1误将新v3 guard插入legacy v1 reader，140通过/8失败，移除该误插入而非删原断言；v2新未知ACK测试误把状态GET计入POST，154通过/2失败，只修新fixture以分开请求并模拟原键404显式重发。最终156及lint/build通过；未放宽生产来源/权限校验。API与Client未发生本批测试失败。
 
 **明确未完成**：这是“文字为父→新媒体批次”的子增量，不代表所有图文/多独立媒体场景完成。后续需让已完成媒体/动作成为原因果basis并广告精确保留目标，接通混合清单单项改稿；还需处理原legacy EXECUTE独立媒体起点及多独立manifest明确APPEND/RESET。当前这些未接线情况仍拒绝猜父/历史合并，不提前标记T05/T06完成。之后继续实际Agent/材料/可选保存/刷新/隔离及既有正式Flow同Run发布，按正式发布授权配套原items迁移。T07–T09未完成；本批未调用Provider、生产DDL/数据、部署或修改release/integration pin，未增加需要用户确认的范围。
+
+
+## T05/T06续推：已完成媒体成为因果父，混合保留目标及较早文字改稿（2026-10-05验证，部分完成）
+
+API `0e70e2f0d859cf1eb77817b2bf6ce257ef4d9a3d` / tree `947fa2c258d78055f80d04c2bc1426ecabe77cde`；Client `b42176c51b7213ce0a7b16e5b83228960210d106` / tree `70b01245422dffac195022f8e2f88976143e850d`；Web `c0753037f56e5d6b4690a2bb7b4a6eb2879c569d` / tree `ca14b756816775e0357f35eb67dbf0afa56c68a8`。原自有候选分支均已推送并独立读回，未纳入原脏工作区/生成声明，也未修改集成pin/release ref。
+
+- 已完成EXECUTE的原ACTION_REQUEST final现在可作为后续议事因果basis；它的规划正文仍不是交付。沿用原admission/snapshot/CAS、outbox/child progress、原Step/ExecutionLink和owner鉴权execution/outputs读取，重建精确混合保留目标。文字仍为outcomeId/finalDigest/text；媒体为对应原outcomeId/finalDigest/outputSource(requestId/stepId/outputId/sha256)，一批多文件共享原outcomeId，不伪造新成果ID、不增加集合服务/接口/表/状态机。
+- 已接通“原文字→两批明确APPEND媒体→修改较早文字”：只替换仍保留的文字，四个媒体原来源完全保留；随后文字APPEND、媒体APPEND/RESET仍依明确关系重放。文字不能替换媒体组、未完成动作不能广告交付basis、变更/缺失/foreign执行拒绝冻结来源。普通讨论pending动作仍可受理但不广告媒体basis，原键重放先于重绑定。
+- 自然CHAT按原清单发送精确保留媒体asset selectors及终端因果父，不按显示顺序/最新MIME选父；显式选附件及仅附件发送保留用户所选selectors，同时绑定同一已验证媒体basis，不偷换资料。晚到asset可暂不自动选媒体但保留已验证因果父，保存不是前置。
+- 事项页实际mounted fixture覆盖较早文字改稿后显示“新文字＋四个媒体原源”，selectedOutputs与所见一致；未知ACK、remount与无关晚到outputs保持原key/body/hash，不重生成。原typed ACTION_REQUEST无关系时可作为单一明确媒体root（仅合成单元fixture）；这不代表legacy EXECUTE起点已接齐。
+
+验证：API14组 **137 PASS /0 FAIL /0 ERROR /0 SKIP**；Client4文件 **51 PASS /0 FAIL /0 SKIP**；Web10组 **164 PASS /0 FAIL**，scoped lint（包含useHallTypedDeliberation）及build exit0，gallery基线12/当前12、测试0/0无新增诊断。实际writer/read导出共享fixture SHA256 `6b4846a3caf82a45724b7a048dba6ec5f21beb0d0e7ab24b18ec685d19bce42e`，Client/Web同字节；API v2重新导出因Map序列化顺序不同hash为 `3c91404fa0f9b1c59124336918a513bfd38f555f0f578b0d39d3fdc9c569174f`，已独立核对JSON语义完全相同。**durable记录与execution reader、native引擎及媒体HTTP仍fixture，不是实际Agent/媒体生成、线上浏览器、正式Flow或用户验收**。回执见[media-basis-v1](implementation-evidence-20261004/media-basis-v1/manifest.json)。
+
+失败与修复：API首轮137项中135通过/2个新admission fixture未完成Mockito stubbing（thenReturn里调用真实read触碰mock）；保留失败XML并归因一次，只将真实read预计算，v2全通过。新Web synthetic root fixture把应缺省字段写成null被严格parser拒绝，仅改fixture缺省；新mounted测试缩进75条及duplicate blank lint均只修新测试排版，未删断言/放宽生产校验。最终164及lint/build通过。
+
+**剩余**：混合清单里的单项媒体改稿仍需复用原replaces精确关联，目前拒绝猜测；legacy EXECUTE原始媒体起点与更多独立root明确意图仍需补齐。T05/T06不标完成；T07–T09实际Agent/材料/可选保存/刷新/隔离及既有正式Flow同Run发布未完成。本批未调用Provider、生产DDL/数据、部署或修改release/integration pin，没有新增需要用户确认的范围。
