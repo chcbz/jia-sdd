@@ -1,0 +1,168 @@
+--- a/ops/ci/aliyun-flow/host/cyf-api-additive-schema
++++ b/ops/ci/aliyun-flow/host/cyf-api-additive-schema
+@@ -44,7 +44,7 @@
+ ))
+ NESTED_MAPPER_JAR = 'BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar'
+ RESOURCE_PATH = 'db/agent-task-artifact-outcome-f06.sql'
+-RESOURCE_SHA256 = '77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc'
++RESOURCE_SHA256 = 'ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75'
+ TABLE_ORDER = (
+     'agent_task_artifact_outcome',
+     'agent_task_artifact_outcome_decision',
+@@ -54,87 +54,7 @@
+ RUN_RE = re.compile(r'^[1-9][0-9]*$')
+ 
+ # This byte-exact allowlist is the API39 resource.  It is not a generic DDL parser.
+-F06_SQL_BYTES = b"""-- M4-F06 bounded additive migration candidate.
+--- DDL only: no backfill, no automatic acceptance, and no mutation of existing artifacts.
+--- Deployment requires an explicit migration action before the internal outcome service is activated.
+-
+-CREATE TABLE IF NOT EXISTS agent_task_artifact_outcome (
+-    id                              BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+-    task_id                         VARCHAR(100) NOT NULL COMMENT 'Task ID copied for exact scope fencing',
+-    artifact_id                     VARCHAR(100) NOT NULL COMMENT 'Stable logical artifact ID',
+-    artifact_version                INT NOT NULL COMMENT 'Exact immutable artifact version',
+-    outcome_state                   VARCHAR(20) NOT NULL COMMENT 'accepted/superseded',
+-    superseded_by_artifact_id       VARCHAR(100) DEFAULT NULL COMMENT 'Accepted replacement artifact ID',
+-    superseded_by_artifact_version  INT DEFAULT NULL COMMENT 'Accepted replacement artifact version',
+-    decision_id                     VARCHAR(100) NOT NULL COMMENT 'Caller supplied scoped idempotency identity',
+-    decision_digest                 CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',
+-    decided_by_agent_id             VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',
+-    decided_at                      BIGINT NOT NULL COMMENT 'Decision time',
+-    version                         BIGINT NOT NULL COMMENT 'Outcome optimistic lock version; implicit draft is zero',
+-    tenant_id                       VARCHAR(50) NOT NULL COMMENT 'Owner jiacn scope',
+-    client_id                       VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',
+-    create_time                     BIGINT DEFAULT NULL COMMENT 'Create time',
+-    update_time                     BIGINT DEFAULT NULL COMMENT 'Last modified time',
+-    PRIMARY KEY (id),
+-    UNIQUE KEY uk_artifact_outcome_version
+-        (tenant_id, client_id, artifact_id, artifact_version),
+-    KEY idx_artifact_outcome_task_state
+-        (tenant_id, client_id, task_id, outcome_state, decided_at, id),
+-    KEY idx_artifact_outcome_decision
+-        (tenant_id, client_id, task_id, decision_id, id),
+-    KEY idx_artifact_outcome_superseded_by
+-        (tenant_id, client_id, task_id,
+-         superseded_by_artifact_id, superseded_by_artifact_version),
+-    CONSTRAINT chk_artifact_outcome_state
+-        CHECK (outcome_state IN ('accepted', 'superseded')),
+-    CONSTRAINT chk_artifact_outcome_versions
+-        CHECK (artifact_version >= 1 AND version >= 1 AND decided_at > 0),
+-    CONSTRAINT chk_artifact_outcome_digest
+-        CHECK (CHAR_LENGTH(decision_digest) = 64),
+-    CONSTRAINT chk_artifact_outcome_supersession
+-        CHECK (
+-            (outcome_state = 'accepted'
+-             AND superseded_by_artifact_id IS NULL
+-             AND superseded_by_artifact_version IS NULL)
+-            OR
+-            (outcome_state = 'superseded'
+-             AND superseded_by_artifact_id IS NOT NULL
+-             AND superseded_by_artifact_version >= 1
+-             AND (artifact_id <> superseded_by_artifact_id
+-                  OR artifact_version <> superseded_by_artifact_version))
+-        )
+-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+-  COMMENT='Scoped current accepted/superseded state for immutable task artifact versions';
+-
+-CREATE TABLE IF NOT EXISTS agent_task_artifact_outcome_decision (
+-    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+-    task_id                     VARCHAR(100) NOT NULL COMMENT 'Task ID for scoped idempotency',
+-    decision_id                 VARCHAR(100) NOT NULL COMMENT 'Stable caller supplied decision identity',
+-    decision_digest             CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',
+-    accepted_artifact_id        VARCHAR(100) NOT NULL COMMENT 'Artifact accepted by this decision',
+-    accepted_artifact_version   INT NOT NULL COMMENT 'Exact immutable artifact version accepted',
+-    accepted_outcome_version    BIGINT NOT NULL COMMENT 'Accepted outcome version returned on replay',
+-    decided_by_agent_id         VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',
+-    decided_at                  BIGINT NOT NULL COMMENT 'Original committed decision time',
+-    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Owner jiacn scope',
+-    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',
+-    create_time                 BIGINT DEFAULT NULL COMMENT 'Create time',
+-    update_time                 BIGINT DEFAULT NULL COMMENT 'Last modified time',
+-    PRIMARY KEY (id),
+-    UNIQUE KEY uk_artifact_outcome_decision
+-        (tenant_id, client_id, task_id, decision_id),
+-    KEY idx_artifact_outcome_decision_accepted
+-        (tenant_id, client_id, task_id,
+-         accepted_artifact_id, accepted_artifact_version),
+-    CONSTRAINT chk_artifact_outcome_decision_versions
+-        CHECK (accepted_artifact_version >= 1
+-               AND accepted_outcome_version >= 1
+-               AND decided_at > 0),
+-    CONSTRAINT chk_artifact_outcome_decision_digest
+-        CHECK (CHAR_LENGTH(decision_digest) = 64)
+-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+-  COMMENT='Immutable scoped F06 decision identities and exact replay results';
+-"""
++F06_SQL_BYTES = b"-- M4-F06 bounded additive migration candidate.\n-- DDL only: no backfill, no automatic acceptance, and no mutation of existing artifacts.\n-- Deployment requires an explicit migration action before the internal outcome service is activated.\n\nCREATE TABLE IF NOT EXISTS agent_task_artifact_outcome (\n    id                              BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',\n    task_id                         VARCHAR(100) NOT NULL COMMENT 'Task ID copied for exact scope fencing',\n    artifact_id                     VARCHAR(100) NOT NULL COMMENT 'Stable logical artifact ID',\n    artifact_version                INT NOT NULL COMMENT 'Exact immutable artifact version',\n    outcome_state                   VARCHAR(20) NOT NULL COMMENT 'accepted/superseded',\n    superseded_by_artifact_id       VARCHAR(100) DEFAULT NULL COMMENT 'Accepted replacement artifact ID',\n    superseded_by_artifact_version  INT DEFAULT NULL COMMENT 'Accepted replacement artifact version',\n    decision_id                     VARCHAR(100) NOT NULL COMMENT 'Caller supplied scoped idempotency identity',\n    decision_digest                 CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',\n    decided_by_agent_id             VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',\n    decided_at                      BIGINT NOT NULL COMMENT 'Decision time',\n    version                         BIGINT NOT NULL COMMENT 'Outcome optimistic lock version; implicit draft is zero',\n    tenant_id                       VARCHAR(50) NOT NULL COMMENT 'Single tenant scope; always 0',\n    client_id                       VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',\n    owner_jiacn                     VARCHAR(50) NOT NULL COMMENT 'Authenticated user owner scope',\n    create_time                     BIGINT DEFAULT NULL COMMENT 'Create time',\n    update_time                     BIGINT DEFAULT NULL COMMENT 'Last modified time',\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_artifact_outcome_version\n        (tenant_id, client_id, owner_jiacn, artifact_id, artifact_version),\n    KEY idx_artifact_outcome_task_state\n        (tenant_id, client_id, owner_jiacn, task_id, outcome_state, decided_at, id),\n    KEY idx_artifact_outcome_decision\n        (tenant_id, client_id, owner_jiacn, task_id, decision_id, id),\n    KEY idx_artifact_outcome_superseded_by\n        (tenant_id, client_id, owner_jiacn, task_id,\n         superseded_by_artifact_id, superseded_by_artifact_version),\n    CONSTRAINT chk_artifact_outcome_state\n        CHECK (outcome_state IN ('accepted', 'superseded')),\n    CONSTRAINT chk_artifact_outcome_versions\n        CHECK (artifact_version >= 1 AND version >= 1 AND decided_at > 0),\n    CONSTRAINT chk_artifact_outcome_digest\n        CHECK (CHAR_LENGTH(decision_digest) = 64),\n    CONSTRAINT chk_artifact_outcome_supersession\n        CHECK (\n            (outcome_state = 'accepted'\n             AND superseded_by_artifact_id IS NULL\n             AND superseded_by_artifact_version IS NULL)\n            OR\n            (outcome_state = 'superseded'\n             AND superseded_by_artifact_id IS NOT NULL\n             AND superseded_by_artifact_version >= 1\n             AND (artifact_id <> superseded_by_artifact_id\n                  OR artifact_version <> superseded_by_artifact_version))\n        )\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Scoped current accepted/superseded state for immutable task artifact versions';\n\nCREATE TABLE IF NOT EXISTS agent_task_artifact_outcome_decision (\n    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',\n    task_id                     VARCHAR(100) NOT NULL COMMENT 'Task ID for scoped idempotency',\n    decision_id                 VARCHAR(100) NOT NULL COMMENT 'Stable caller supplied decision identity',\n    decision_digest             CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',\n    accepted_artifact_id        VARCHAR(100) NOT NULL COMMENT 'Artifact accepted by this decision',\n    accepted_artifact_version   INT NOT NULL COMMENT 'Exact immutable artifact version accepted',\n    accepted_outcome_version    BIGINT NOT NULL COMMENT 'Accepted outcome version returned on replay',\n    decided_by_agent_id         VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',\n    decided_at                  BIGINT NOT NULL COMMENT 'Original committed decision time',\n    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Single tenant scope; always 0',\n    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',\n    owner_jiacn                 VARCHAR(50) NOT NULL COMMENT 'Authenticated user owner scope',\n    create_time                 BIGINT DEFAULT NULL COMMENT 'Create time',\n    update_time                 BIGINT DEFAULT NULL COMMENT 'Last modified time',\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_artifact_outcome_decision\n        (tenant_id, client_id, owner_jiacn, task_id, decision_id),\n    KEY idx_artifact_outcome_decision_accepted\n        (tenant_id, client_id, owner_jiacn, task_id,\n         accepted_artifact_id, accepted_artifact_version),\n    CONSTRAINT chk_artifact_outcome_decision_versions\n        CHECK (accepted_artifact_version >= 1\n               AND accepted_outcome_version >= 1\n               AND decided_at > 0),\n    CONSTRAINT chk_artifact_outcome_decision_digest\n        CHECK (CHAR_LENGTH(decision_digest) = 64)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Immutable scoped F06 decision identities and exact replay results';\n"
+ 
+ 
+ class SchemaError(Exception):
+@@ -245,6 +165,14 @@
+ }
+ 
+ 
++# Mandatory current single-tenant plus authenticated-owner schema contract.
++for spec in EXPECTED_TABLES.values():
++    spec['columns'] = spec['columns'] + (column('owner_jiacn', 'varchar(50)'),)
++    spec['indexes'] = tuple((name, unique, columns[:2] + ('owner_jiacn',) + columns[2:], kind)
++                            if columns[:2] == ('tenant_id', 'client_id') else
++                            (name, unique, columns, kind)
++                            for name, unique, columns, kind in spec['indexes'])
++
+ QUERY_SQL = {
+     # Explicit DEFAULT CHARSET=utf8mb4 without COLLATE uses this session default,
+     # not jia's default charset/collation (MySQL 8.0.21 sql/sql_table.cc).
+@@ -822,7 +750,12 @@
+                 mismatches.append('column_collation')
+         elif charset is not None or column_collation is not None:
+             mismatches.append('non_string_collation')
+-    if tuple(actual_columns) != expected['columns']:
++    # Two exact current-owner layouts: authored fresh SQL or initializer-appended
++    # owner column. Neither layout accepts an old schema without owner fencing.
++    authored = list(expected['columns'])
++    owner = authored.pop()
++    authored.insert(next(i for i, value in enumerate(authored) if value[0] == 'client_id') + 1, owner)
++    if tuple(actual_columns) not in (expected['columns'], tuple(authored)):
+         mismatches.append('columns')
+ 
+     actual_indexes = []
+--- a/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema
++++ b/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema
+@@ -187,6 +187,16 @@
+     },
+ }
+ 
++
++# Current AgentSchemaInitializer owner extension is mandatory, not optional.
++# Fixed E05 CREATE SQL remains byte-identical; already-installed owner schema
++# must be complete before this post-install deployment gate can pass.
++_spec = EXPECTED_TABLES['agent_work_item_reassignment']
++_spec['columns'] = _spec['columns'] + (column('owner_jiacn', 'varchar(50)'),)
++_spec['indexes'] = _spec['indexes'] + (
++    index('idx_agent_work_item_reassignment_owner_scope', False,
++          ('tenant_id', 'client_id', 'owner_jiacn', 'task_id', 'work_item_id')),
++)
+ 
+ QUERY_SQL = {
+     # Explicit DEFAULT CHARSET=utf8mb4 without COLLATE uses this session default,
+--- a/ops/ci/aliyun-flow/host/cyf-api-flow-deploy
++++ b/ops/ci/aliyun-flow/host/cyf-api-flow-deploy
+@@ -26,7 +26,7 @@
+ SCHEMA_RUNNER = Path('/usr/local/sbin/cyf-api-additive-schema')
+ SCHEMA_RESULTS = ROOT / 'schema-results'
+ RELEASE_LOCK = Path('/tmp/cyf-release-api.lock')
+-SCHEMA_SQL_SHA256 = '77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc'
++SCHEMA_SQL_SHA256 = 'ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75'
+ SCHEMA_PASSWORD_ENV = 'CYF_F06_MYSQL_PASSWORD'
+ SCHEMA_PASSWORD_FILE = ROOT / 'f06-schema-password'
+ SCHEDULE_INTENTS = Path('/var/lib/cyf-flow-release-schedule/intents')
+@@ -548,7 +548,7 @@
+ E05_RELEASE_LOCK = RELEASE_LOCK
+ E05_SCHEMA_PASSWORD_ENV = 'CYF_E05_MYSQL_PASSWORD'
+ E05_SCHEMA_SQL_SHA256 = 'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1'
+-E05_SCHEMA_RUNNER_SHA256 = 'a6342936889e9bdfb6ecc247478f78dae06072492ec0cb761621f875f5e00cc1'
++E05_SCHEMA_RUNNER_SHA256 = 'f76fd49ec7f9cf573bcdb0ca40c401671af9a813b26cda852ceea67bc15bece7'
+ E05_REQUIRED_API_COMMIT_SHA = '52d24bb7c029ceb53286c6ebfef61e0b6b9f70dd'
+ # Permission for fixed additive SQL, not a claim that this Flow Run has succeeded.
+ # The controller binds an already-created Run to its verified source/tree/ancestor

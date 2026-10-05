@@ -203,6 +203,7 @@ expected = {
 }
 json_members = {'application.metadata.json', 'application.sidecar.json', 'dependency.provenance.json', 'receipt.json'}
 seen = set()
+report_seen = set()
 total = 0
 try:
     info = package.stat()
@@ -212,6 +213,16 @@ try:
         for member in archive:
             name = member.name[2:] if member.name.startswith('./') else member.name
             if name in ('', '.') and member.isdir():
+                continue
+            if name == 'test-results' or name.startswith('test-results/'):
+                if (name in report_seen or name.startswith('/') or '\\' in name or '\x00' in name
+                        or any(part in ('', '.', '..') for part in name.split('/'))
+                        or not (member.isdir() or (member.isreg() and member.size >= 0
+                            and (name == 'test-results/summary.json' or name.endswith('.xml'))))):
+                    raise SystemExit('unsafe or duplicate test report member')
+                report_seen.add(name)
+                # CI reports stay in the original Flow artifact; never extract them
+                # into the privileged application installation workspace.
                 continue
             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
                     or any(part in ('', '.', '..') for part in name.split('/'))
@@ -327,12 +338,23 @@ def write_all(fd, block):
         view = view[written:]
 
 seen = set()
+report_seen = set()
 total = 0
 try:
     with tarfile.open(package, 'r|gz') as archive:
         for member in archive:
             name = member.name[2:] if member.name.startswith('./') else member.name
             if name in ('', '.') and member.isdir():
+                continue
+            if name == 'test-results' or name.startswith('test-results/'):
+                if (name in report_seen or name.startswith('/') or '\\' in name or '\x00' in name
+                        or any(part in ('', '.', '..') for part in name.split('/'))
+                        or not (member.isdir() or (member.isreg() and member.size >= 0
+                            and (name == 'test-results/summary.json' or name.endswith('.xml'))))):
+                    raise SystemExit('unsafe or duplicate test report member')
+                report_seen.add(name)
+                # CI reports stay in the original Flow artifact; never extract them
+                # into the privileged application installation workspace.
                 continue
             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
                     or any(part in ('', '.', '..') for part in name.split('/'))
@@ -945,6 +967,21 @@ restore_and_start() {
   exit 1
 }
 
+resume_forward_candidate() {
+  # Explicit retry of the same failed forward-only candidate after a measured fix.
+  # Never adopt a different ticket, restore backup bytes, or start the old JAR.
+  [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_MATCH" == 1 \
+     && "$RECORD_STATUS" == failed && "$RECORD_RECOVERY" == forward_only_candidate_retained \
+     && "$TARGET_STATE" == "$JAR_SHA" ]] || return 1
+  write_record activating forward_repair candidate_retained "$STOP_RC" \
+    || recoverable_fail 'forward repair record interrupted; candidate retained'
+  if ! "$LIFECYCLE" start; then
+    restore_and_start forward_repair_start_failed
+  fi
+  lifecycle_healthy || restore_and_start forward_repair_status_failed
+  finalize_candidate
+}
+
 commit_candidate() {
   if ! consume_approval; then
     recoverable_fail 'candidate is commit-pending but approval consumption was interrupted'
@@ -1009,6 +1046,9 @@ if (( RECORD_MATCH )); then
       [[ "$TARGET_STATE" == "$OLD_SHA" ]] || fail 'prepared transaction found unexpected canonical bytes'
       ;;
     failed)
+      if [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_RECOVERY" == forward_only_candidate_retained && "$TARGET_STATE" == "$JAR_SHA" ]]; then
+        resume_forward_candidate
+      fi
       if [[ "$TARGET_STATE" == MISSING || "$TARGET_STATE" == "$JAR_SHA" ]]; then
         restore_and_start failed_rollback_recovery
       fi

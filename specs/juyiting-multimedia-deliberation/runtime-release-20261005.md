@@ -1,8 +1,43 @@
 # 三端发布接续（2026-10-05 23:30 CST）
 
-## 当前结论
+## 最新权威状态（主机北京时间2026-10-06 01:04）
 
-Agent 已升级；API 的现有 Flow 部署已恢复、尚未启动最终发布；Web 仍 CI-only。真实业务验收 **NOT_RUN**，T05–T09 未完成。不要将 API109 / Web167 的 CI-only SUCCESS 写成正式上线。
+API111最终FAIL（CI成功、同字节新版JAR健康）：F06 runner仍固定旧ownerless SQL SHA，与当前JAR自带的新owner-fenced SQL不符。旧110/111 schema报告均not_attempted，完整保留，不重放、不改历史记录。最新主机JVM PID1214410，健康monitor整体healthy/maintenance=false。
+
+已据**确切Flow111 JAR资源**更新F06固定字节允许列表和SHA为 `ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75`，只接受mandatory owner_jiacn以及owner-fenced确切索引，旧ownerless结构拒绝；只允许当前fresh/initializer两个均带owner的确切列布局，不是旧版本兼容。E05 SQL字节保持原样，仅校验本次AgentSchemaInitializer已有的mandatory owner列/精确owner index；未知列/index/check继续拒绝。没有数据库DDL/DML。历史Run49 literal fixture原样保留，当前owner衍生fixture显式标为synthetic，补旧ownerless及缺owner/index拒绝回归。
+
+- 主机候选62离线回归全部通过；01:00:00按coordinator/release/runner互斥、before SHA CAS及after读回安装。私有 `schema-owner-gate/install-result.json`。
+- 00:53:44用候选只读核对真实运行JAR内确切SQL及实际MySQL catalog：F06两表/E05一表全部equivalent；移除owner/owner index/check的负控制全部拒绝。**无DDL**，详见 `schema-owner-gate/readonly-preflight.json`。因此先证实新schema gate符合真实新版，再建新Run，不盲目循环发布。
+- 当前正式 **API5260799 Run112**（CI529282011、deploy529282012）01:00:39创建，正在运行。Start UNKNOWN只读核对唯一新增112、时间/config和真实检出相等断言完成，01:03:06 proof和controller intent已写，未重复Start。源码仍329d44fd/tree69d2cb54。
+- 当前主机helpers：F06 `076f46d84029836ee71f2a45bc7431f9425a2ba61d65a99bb82821fe4fdcf392`；E05 `f76fd49ec7f9cf573bcdb0ca40c401671af9a813b26cda852ceea67bc15bece7`；adapter `6a81032f19eddfcf41a5d6bcaa8a6da6d8fc0f5994b2860f70f572917b2ddc22`。不要用旧SDD整文件覆盖实际新基线；最小patch留存。
+
+下一步只读跟进112，**只有最终Run完整测试/制品/部署单/安装record/实际运行JAR/真实健康及F06/E05结果**核验完成，才写API健康发布回执、恢复Webdeploy一次并立即发布。112 Start与110/111schema不得重放。Agent已完成，Web待发布，T05–T09 NOT_RUN。监控已恢复，两个nightly timer仍临时暂停，API/Web正式发布完结且record匹配后恢复。后文所有“当前”均是阶段性历史，被本段覆盖。
+
+## 当前权威状态（2026-10-06 00:40 CST）
+
+用户要求立即发布，不等零点。Agent双实例已实装4e70c4f，不重复升级。API Run110测试/同Run制品通过，新版已健康运行，但最终Flow仍FAIL（发布后F06 hook拒绝test-results目录），不能称正式发布完成。原失败/runner报告完整保留，不改历史记录、不重放Run110的schema操作。
+
+- Run110依次修复：制品仅允许安全XML/summary报告且不提取；旧canonical hardlink字节相同单link规范化；launcher使用物理root-owned日志目录；仅确切失败候选可前向重启。主机40回归（39通过/1跳过）及monitor15通过。原日志别名和备份不搬移。
+- 00:23:56执行Run110 JAR内确切`chat-selected-output-finalization-completed-message-v1.sql`（SHA256 3631eb240f9775850f8b388426e3490cf5b4dc519989568d7466a0255f027407），release互斥及原MySQL named lock、catalog CAS、父/子表均0行。新增五列、nullable step/output、message唯一键和source约束均读回通过；无DML/drop，不重放。
+- 同Run110最后retry job529265324/order70645996安装成功；实际PID1203671、JAR SHA256 3170b50d19b9c28bcd734e1a6a474023be3a2e6a7a4196a12993e9fddf98caa8、attestation MATCH、端口归属及HEALTH=UP；record installed/approval consumed。该job随后因F06 package_member_invalid失败，报告两表not_attempted，不篡改为PASS。
+- 00:33:57修复F06/E05固定SQL runner的相同报告catalog问题，并repin adapter的E05 runner hash。60离线回归通过；在coordinator/release/F06 runner锁下CAS安装，不执行schema，不移除门禁。最新helper SHA见回执及最小patch。
+- 必须使用新Run验证，**API5260799 Run111**于00:34:46创建：CI529269938运行，deploy529269939待执行。Start响应UNKNOWN已只读核对唯一新增111、时间、冻结配置及真实CI相等断言329d44fd，00:39:58核对完成并在controller mutex写5260799-111.json。未重复Start。旧110失败证据保留。
+- API监控维护已00:29恢复，最新只读snapshot API/Web/MySQL/Redis/Agent健康。两个nightly timer仍临时暂停防重复，API/Web发布实际完结且records匹配后必须恢复。Web仍CI-only；在**Run111完整正式成功且同Run制品/部署/实际JAR/健康**确认后才写api-final-release-healthy-verified.json，恢复Web原deploy一次并立即启动，不等00:30。
+- IAB已登录chcbz，无需用户再次登录；T05–T09真实业务验收仍NOT_RUN，不拿fixture代替。
+
+下一步只读跟进111，不重跑Start/110schema/已安装helper；实质失败才前向修复。正式成功后立即Web，然后真实验收、恢复timers及SDD推送。
+
+## 最新覆盖指令：立即发布（2026-10-05 23:47 CST）
+
+用户明确要求“不用等0点，现在直接发布”，覆盖下面历史的夜间等待。API已通过既有controller启动 **5260799/110**，CI job529247617，deploy job529247618。Start返回UNKNOWN是Flow source缺少commint（仅repo/branch），不是未创建；已只读核对唯一新增110、创建时间23:43:05、冻结上下文/配置及真实CI检出329d44fd的相等断言，未重试Start。23:47在原controller互斥下使用既有write_intent写5260799-110.json，旧kind backend-nightly仅是既有机器契约，真实授权是本次立即发布，未伪造零点时间。
+
+两个既有timer为避免零点/00:30重复发布已**临时暂停**（不取消任何Flow/其他任务）。本次API/Web新版实际安装record匹配且发布完结后恢复原timer；若失败需前向修复，保持证据并由接续工作处理恢复，不能遗忘。API完整健康后恢复Webdeploy并**立即启动Web**，不再等00:30。真实验收仍NOT_RUN。chcbz浏览器已登录，不需再次登录。
+
+私有证据 `flow-forward-only/immediate-release-authorization.json`、`run110-reconciled.json`、真实nightly intent。完整验真仍须最终Run测试/制品/部署/运行JAR/健康，而不是上述启动证明。
+
+## 历史结论（已被上方当前状态覆盖）
+
+以下是23:30时的历史记录，不用于当前调度决策。
 
 用户最新决定：**直接升级到新版本，不兼容旧版本**。已放弃两阶段兼容包装；不得恢复该方案。新版失败保留候选、诊断与原备份，向前修复，不自动重启旧 JAR，不降级 schema。
 
@@ -18,7 +53,7 @@ Agent 已升级；API 的现有 Flow 部署已恢复、尚未启动最终发布�
 - 两个主机helper以**实际已安装的新基线**作最小patch，在 `/tmp/cyf-release-api.lock` 下CAS/备份/原子安装/hash读回；不覆盖脏主仓库、不改launcher、不重启应用。实际主机候选26回归PASS/0失败/0跳过，bash语法通过；SDD确切源码另外在隔离Linux fixture中26回归PASS/0失败/0跳过。SDD代码是对应最小差异，不是整份主机文件的替换来源。
 - 23:23恢复API5260799原deploy段，明确forward-only；原CI源码、测试、同Run制品和主机组不变。实际配置SHA256 `a2e5d4617e110fba303a18e02115714880a4cef09a72b6858e1b08cd8d9667ed`，已normalized readback验证。未调用Start。
 
-## 下一步（必须按顺序）
+## 历史夜间顺序（立即发布指令已覆盖，禁止据此等待/重复触发）
 
 1. 由已有 `cyf-flow-backend-nightly.timer` 于**2026-10-06 00:00北京时间**启动API5260799；不要提前手动启动，不重复触发。核对现有timer/最新Run/实际intent；未知Start结果只读reconcile。
 2. API目标 `329d44fd7f8d0b2402853f5eac4cf47c99fcbed9` / tree `69d2cb5448aa165b35ead9794bac0971736f1a7d`。只认新最终Run的云测、同Run制品、部署单/主机、安装record、实际运行JAR及健康。当前旧API PID19026/source b8053da6不等于目标。若失败保留证据并修新版，不自动降级。

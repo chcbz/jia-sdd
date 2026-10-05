@@ -104,3 +104,18 @@ T05 不能用“自动勾选全部历史成果”替代，但不必为它新建�
 ### 2026-10-05 23:30 CST 三端发布接续
 
 Agent已实装Client4e70c4f，两实例payload/config已核验；主机发布脚本forward-only及现有备份别名问题已修复，26回归PASS；零点调度分页18回归PASS。API5260799现有deploy已恢复，明确新版失败向前修复、不自动降级；等待2026-10-06 00:00既有调度，未创建最终Run。Web仍CI-only且仅API健康后发布。真实业务验收NOT_RUN，T05–T09不标完成。详见 [接续说明](runtime-release-20261005.md) 与 [实际回执](implementation-evidence-20261004/runtime-release-20261005/manifest.json)。用户已授权发布及既有预算内真实调用；IAB已打开chcbz登录页待用户登录，无需传递密码。
+
+
+### 2026-10-05 23:47 CST 立即发布覆盖
+
+用户明确取消零点等待。API既有Flow Run110已创建，实际检出329d44fd已只读核对并绑定发布intent，无重复Start；正在云测，尚未上线。两个timer临时暂停防重复，本次三端发布完结后恢复。API完整健康后立即发布Web。详见 [接续说明](runtime-release-20261005.md)，T05–T09及业务验收状态不变。
+
+
+### 2026-10-06 00:40 CST 立即发布实际进展
+
+Agent已完成。API110新JAR现健康运行，finalization确切一次性迁移已验证，但Flow最终FAIL：发布后schema runner仍拒绝报告目录，两表not_attempted。保留失败状态，不重放110schema。修复F06/E05 catalog及E05 hash pin，60离线回归通过并CAS安装。新API5260799/111正式测试部署正在运行，Start UNKNOWN已只读核对唯一Run/真实检出并绑定intent，未重发。Web仍API-first待111最终核验后立即发布，T05–T09 NOT_RUN。监控已恢复，两个防重timer暂未恢复。详见 [当前接续](runtime-release-20261005.md)。
+
+
+### 主机北京时间2026-10-06 01:04 最新接续
+
+API111 CI成功/JAR健康，但F06旧SQL pin不匹配新版owner-fenced资源，Flow FAIL；保留110/111报告，不重放schema。按当前JAR资源及已有mandatory-owner schema更新严格门禁，62回归通过；真实JAR/MySQL catalog只读equivalent及负控制拒绝已验证，未执行DDL，01:00 CAS安装。最新正式API112运行（CI529282011/deploy529282012），唯一Run/checkout/time/config只读reconcile已完成并绑定intent。Web仍API-first，T05–T09 NOT_RUN；监控健康，timer最后恢复。详见 [权威接续](runtime-release-20261005.md)。

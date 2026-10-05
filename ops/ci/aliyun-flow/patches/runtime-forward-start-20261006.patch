@@ -1,0 +1,68 @@
+--- a/ops/ci/aliyun-flow/host/cyf-api-kit
++++ b/ops/ci/aliyun-flow/host/cyf-api-kit
+@@ -31,7 +31,8 @@
+ RUNTIME_GID=''
+ SECRET_FILE="$DEPLOY_DIR/.jasypt-password"
+ VOICE_ENV_FILE="$DEPLOY_DIR/.voice-runtime.env"
+-LOG_DIR=/var/log/cyf-api
++# New release logs use a physical root-owned directory; historical alias is untouched.
++LOG_DIR=/var/log/cyf-api-flow
+ PID_FILE="$RUNTIME_DIR/cyf-api-kit.pid"
+ ARCHIVE_PID_FILE="$RUNTIME_DIR/archive-reader-enable.pid"
+ RUNTIME_RECORD="$RUNTIME_DIR/cyf-api-kit.runtime"
+--- a/ops/ci/aliyun-flow/host/cyf-api-flow-install
++++ b/ops/ci/aliyun-flow/host/cyf-api-flow-install
+@@ -982,6 +982,21 @@
+   exit 1
+ }
+ 
++resume_forward_candidate() {
++  # Explicit retry of the same failed forward-only candidate after a measured fix.
++  # Never adopt a different ticket, restore backup bytes, or start the old JAR.
++  [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_MATCH" == 1 \
++     && "$RECORD_STATUS" == failed && "$RECORD_RECOVERY" == forward_only_candidate_retained \
++     && "$TARGET_STATE" == "$JAR_SHA" ]] || return 1
++  write_record activating forward_repair candidate_retained "$STOP_RC" \
++    || recoverable_fail 'forward repair record interrupted; candidate retained'
++  if ! "$LIFECYCLE" start; then
++    restore_and_start forward_repair_start_failed
++  fi
++  lifecycle_healthy || restore_and_start forward_repair_status_failed
++  finalize_candidate
++}
++
+ commit_candidate() {
+   if ! consume_approval; then
+     recoverable_fail 'candidate is commit-pending but approval consumption was interrupted'
+@@ -1053,6 +1068,9 @@
+       [[ "$TARGET_STATE" == "$OLD_SHA" ]] || fail 'prepared transaction found unexpected canonical bytes'
+       ;;
+     failed)
++      if [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_RECOVERY" == forward_only_candidate_retained && "$TARGET_STATE" == "$JAR_SHA" ]]; then
++        resume_forward_candidate
++      fi
+       if [[ "$TARGET_STATE" == MISSING || "$TARGET_STATE" == "$JAR_SHA" ]]; then
+         restore_and_start failed_rollback_recovery
+       fi
+--- a/ops/maintenance/health_monitor/cyf-juyiting-recovery-carrier.py
++++ b/ops/maintenance/health_monitor/cyf-juyiting-recovery-carrier.py
+@@ -9,7 +9,7 @@
+ import sys
+ 
+ CANONICAL = "/usr/local/sbin/cyf-api-kit"
+-CANONICAL_SHA256 = "94de2c8af2745d25a9cec82276d54e52c85a63ae7349f4204b36ba5f5f5b930f"
++CANONICAL_SHA256 = "6f217a43cfcca224da722e72987b54f418aebf792ce3fa4cf348fe2e247186ac"
+ MEMORY_CGROUP_ROOT = "/sys/fs/cgroup/memory"
+ PROC_SELF_CGROUP = "/proc/self/cgroup"
+ MAX_CANONICAL_BYTES = 1024 * 1024
+--- a/ops/maintenance/health_monitor/cyf-juyiting-health.py
++++ b/ops/maintenance/health_monitor/cyf-juyiting-health.py
+@@ -29,7 +29,7 @@
+ CANONICAL = "/usr/local/sbin/cyf-api-kit"
+ SYSTEMD_RUN = "/usr/bin/systemd-run"
+ RECOVERY_CARRIER = "/usr/local/libexec/cyf-juyiting-recovery-carrier.py"
+-RECOVERY_CARRIER_SHA256 = "e907c33796a28dbf913bba1214e2691d84e3852bb9968809135ae80b4f14964f"
++RECOVERY_CARRIER_SHA256 = "b1c28771e7cd19b514a2d261d9eb8638beccd7b58c0bc6cf391f9de55b20860f"
+ MAIL_PYTHON = "/usr/bin/python3"
+ MAIL_HELPER = "/root/.local/bin/cyf-task-email"
+ MAIL_HELPER_SHA256 = "ddc540f1d450880af5bb707751cf6cd68b6492e58cb702436b19580867d3ae99"

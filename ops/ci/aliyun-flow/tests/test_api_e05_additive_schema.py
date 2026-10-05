@@ -86,7 +86,7 @@ def expected_rows(table, collation):
     return rows
 
 
-# Synthetic E05 SHOW fixture, transcribed from the fixed CREATE contract in
+# Synthetic current-owner E05 SHOW fixture, including the required initializer extension in
 # MySQL 8.0.21 SHOW spelling (including arithmetic parentheses). E05 has NOT
 # been created/read in production. Unlike F06 Run49, this is NOT live evidence.
 E05_SHOW_TEXT = """CREATE TABLE `agent_work_item_reassignment` (
@@ -115,10 +115,12 @@ E05_SHOW_TEXT = """CREATE TABLE `agent_work_item_reassignment` (
   `client_id` varchar(50) NOT NULL,
   `create_time` bigint NOT NULL,
   `update_time` bigint NOT NULL,
+  `owner_jiacn` varchar(50) NOT NULL COMMENT 'Authenticated task owner',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_work_item_reassignment_id` (`tenant_id`,`client_id`,`reassignment_id`),
   UNIQUE KEY `uk_work_item_reassignment_command` (`tenant_id`,`client_id`,`command_id`),
   KEY `idx_work_item_reassignment_latest` (`tenant_id`,`client_id`,`task_id`,`work_item_id`,`id`),
+  KEY `idx_agent_work_item_reassignment_owner_scope` (`tenant_id`,`client_id`,`owner_jiacn`,`task_id`,`work_item_id`),
   CONSTRAINT `chk_work_item_reassignment_agents` CHECK ((`previous_agent_id` <> `target_agent_id`)),
   CONSTRAINT `chk_work_item_reassignment_digest` CHECK (((char_length(`request_sha256`) = 64) and (char_length(`lease_fence_sha256`) = 64))),
   CONSTRAINT `chk_work_item_reassignment_immutable_clock` CHECK (((`create_time` > 0) and (`update_time` = `create_time`))),
@@ -572,10 +574,16 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.assertEqual(self.read_state()['creates'], [table])
         self.assertEqual(self.read_state()['tables'][table], 'equivalent')
 
+    def test_missing_owner_or_owner_index_is_rejected(self):
+        for token in ('`owner_jiacn` varchar', 'KEY `idx_agent_work_item_reassignment_owner_scope`'):
+            rows = [row for row in E05_SHOW_ROWS if not any(token in value for value in row)]
+            with self.subTest(token=token), self.assertRaises(e05.SchemaError):
+                e05.parse_show_create(rows, e05.TABLE_ORDER[0], self.collation)
+
     def test_show_is_independently_complete_closed_and_preserves_e05_arithmetic_contract(self):
         table = e05.TABLE_ORDER[0]
         columns = e05.parse_show_create(E05_SHOW_ROWS, table, self.collation)
-        self.assertEqual(len(columns), 25)
+        self.assertEqual(len(columns), 26)
         self.assertEqual(tuple(col[1:6] for col in columns), e05.EXPECTED_TABLES[table]['columns'])
         changes = [
             ('`id` bigint', '`id` int'), ('varchar(100) NOT NULL', 'varchar(100) DEFAULT NULL'),

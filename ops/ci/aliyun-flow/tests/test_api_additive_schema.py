@@ -99,7 +99,7 @@ def synthetic_show_rows(table, collation):
 # Literal read-only Run49 observation, MySQL 8.0.21; no observed columns.
 # /var/tmp/cyf-f06-run49-metadata-diagnostic/metadata.json SHA256:
 # f8846b038a27a2ecbb40b2fb74f8314ded59f74d18963f26cf24cc405d2f9f81
-RUN49_METADATA = {'checks': {'agent_task_artifact_outcome': {'chk_artifact_outcome_digest': '(char_length(`decision_digest`) = 64)',
+LEGACY_RUN49_METADATA = {'checks': {'agent_task_artifact_outcome': {'chk_artifact_outcome_digest': '(char_length(`decision_digest`) = 64)',
                                             'chk_artifact_outcome_state': '(`outcome_state` in '
                                                                           "(_utf8mb4\\'accepted\\',_utf8mb4\\'superseded\\'))",
                                             'chk_artifact_outcome_supersession': "(((`outcome_state` = _utf8mb4\\'accepted\\') and "
@@ -156,7 +156,7 @@ RUN49_GRANTS = ['GRANT USAGE ON *.* TO `cyf_f06_schema_runner`@`localhost`',
 
 # Actual CREATE-only SHOW readback; SHA256 of shared show-create.json:
 # 08aab10b81368ab50f8f03002ea89b758110cbba6e725588420a7c56d11bf6c3
-RUN49_SHOW_ROWS = [['agent_task_artifact_outcome', 'CREATE TABLE `agent_task_artifact_outcome` ('],
+LEGACY_RUN49_SHOW_ROWS = [['agent_task_artifact_outcome', 'CREATE TABLE `agent_task_artifact_outcome` ('],
  ["  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Primary key',"],
  ["  `task_id` varchar(100) NOT NULL COMMENT 'Task ID copied for exact scope fencing',"],
  ["  `artifact_id` varchar(100) NOT NULL COMMENT 'Stable logical artifact ID',"],
@@ -192,6 +192,23 @@ RUN49_SHOW_ROWS = [['agent_task_artifact_outcome', 'CREATE TABLE `agent_task_art
  [") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Scoped current "
   "accepted/superseded state for immutable task artifact versions'"]]
 
+
+# Synthetic current-owner extension of the immutable historical Run49 fixtures.
+# Historical literals above are retained; these derived fixtures are not live evidence.
+OWNER_METADATA = copy.deepcopy(LEGACY_RUN49_METADATA)
+for entries in OWNER_METADATA['indexes']['agent_task_artifact_outcome'].values():
+    if entries[0][2] == 'id':
+        continue
+    entries.insert(2, [entries[0][0], 3, 'owner_jiacn', None, 'BTREE', 'A', 'YES'])
+    for seq, entry in enumerate(entries, 1):
+        entry[1] = seq
+OWNER_SHOW_ROWS = copy.deepcopy(LEGACY_RUN49_SHOW_ROWS)
+for row in OWNER_SHOW_ROWS:
+    for i, field in enumerate(row):
+        if 'KEY ' in field:
+            row[i] = field.replace('(`tenant_id`,`client_id`,', '(`tenant_id`,`client_id`,`owner_jiacn`,')
+owner_position = next(i for i, row in enumerate(OWNER_SHOW_ROWS) if row[0].startswith('  PRIMARY KEY'))
+OWNER_SHOW_ROWS.insert(owner_position, ["  `owner_jiacn` varchar(50) NOT NULL COMMENT 'Authenticated task owner',"])
 
 FAKE_MYSQL = r'''#!/usr/bin/python3
 import json
@@ -526,14 +543,18 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
                 self.assertIn(mismatch, payload['tables'][f06.TABLE_ORDER[0]]['mismatches'])
                 self.assertEqual(self.read_state()['creates'], [])
 
+    def test_legacy_ownerless_schema_is_rejected_not_accepted_as_compatibility(self):
+        with self.assertRaises(f06.SchemaError):
+            f06.parse_show_create(LEGACY_RUN49_SHOW_ROWS, f06.TABLE_ORDER[0], self.collation)
+
     def use_run49_metadata(self, complete_synthetic_columns=False):
         # All visible metadata below is the real snapshot. Only the opt-in
         # positive case adds synthetic contract columns, NOT production evidence.
-        metadata = copy.deepcopy(RUN49_METADATA)
+        metadata = copy.deepcopy(OWNER_METADATA)
         self.state['schema_rows'] = [[hx(metadata['schema_charset']), hx(metadata['schema_collation'])]]
         first = f06.TABLE_ORDER[0]
         self.state['tables'][first] = 'equivalent'
-        self.state['show_rows'][first] = copy.deepcopy(RUN49_SHOW_ROWS)
+        self.state['show_rows'][first] = copy.deepcopy(OWNER_SHOW_ROWS)
         for table in f06.TABLE_ORDER:
             if table not in metadata['tables']:
                 continue
@@ -570,10 +591,10 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         self.assertEqual(self.read_state()['creates'], [f06.TABLE_ORDER[1]])
         self.assertEqual(self.read_state()['grants'], RUN49_GRANTS)
 
-    def test_real_show_is_complete_and_unknown_syntax_or_any_contract_drift_is_rejected(self):
+    def test_current_owner_show_is_complete_and_unknown_syntax_or_any_contract_drift_is_rejected(self):
         first = f06.TABLE_ORDER[0]
-        columns = f06.parse_show_create(RUN49_SHOW_ROWS, first, self.collation)
-        self.assertEqual(len(columns), 16)
+        columns = f06.parse_show_create(OWNER_SHOW_ROWS, first, self.collation)
+        self.assertEqual(len(columns), 17)
         self.assertEqual(tuple(col[1:6] for col in columns), f06.EXPECTED_TABLES[first]['columns'])
         changes = [
             ('`id` bigint', '`id` int'),
@@ -583,7 +604,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
             ('varchar(100) NOT NULL', 'varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL'),
             ('varchar(100) NOT NULL', 'varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL'),
             ('UNIQUE KEY `uk_', 'KEY `uk_'),
-            ('`client_id`,`artifact_id`', '`task_id`,`artifact_id`'),
+            ('`owner_jiacn`,`artifact_id`', '`task_id`,`artifact_id`'),
             ('ENGINE=InnoDB', 'ENGINE=MyISAM'),
             ('CHARSET=utf8mb4', 'CHARSET=utf8'),
             ('COLLATE=utf8mb4_0900_ai_ci', 'COLLATE=utf8mb4_bin'),
@@ -598,15 +619,15 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         ]
         for before, after in changes:
             with self.subTest(change=(before, after)):
-                rows = [[field.replace(before, after) for field in row] for row in RUN49_SHOW_ROWS]
-                self.assertNotEqual(rows, RUN49_SHOW_ROWS)
+                rows = [[field.replace(before, after) for field in row] for row in OWNER_SHOW_ROWS]
+                self.assertNotEqual(rows, OWNER_SHOW_ROWS)
                 with self.assertRaises(f06.SchemaError):
                     f06.parse_show_create(rows, first, self.collation)
-        malformed = [[], RUN49_SHOW_ROWS[:-1], RUN49_SHOW_ROWS[:1] + RUN49_SHOW_ROWS[2:]]
-        reordered = copy.deepcopy(RUN49_SHOW_ROWS)
+        malformed = [[], OWNER_SHOW_ROWS[:-1], OWNER_SHOW_ROWS[:1] + OWNER_SHOW_ROWS[2:]]
+        reordered = copy.deepcopy(OWNER_SHOW_ROWS)
         reordered[1], reordered[2] = reordered[2], reordered[1]
-        malformed.extend([reordered, RUN49_SHOW_ROWS + [['trailing SQL']],
-                          [[first + '_foreign', RUN49_SHOW_ROWS[0][1]]] + RUN49_SHOW_ROWS[1:]])
+        malformed.extend([reordered, OWNER_SHOW_ROWS + [['trailing SQL']],
+                          [[first + '_foreign', OWNER_SHOW_ROWS[0][1]]] + OWNER_SHOW_ROWS[1:]])
         for rows in malformed:
             with self.subTest(rows=rows[:1]):
                 with self.assertRaises(f06.SchemaError):
@@ -766,7 +787,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
 
     def test_actual_escaped_checks_preserve_literals_operators_and_boolean_structure(self):
         first = f06.TABLE_ORDER[0]
-        checks = RUN49_METADATA['checks'][first]
+        checks = OWNER_METADATA['checks'][first]
         for name, clause in checks.items():
             self.assertEqual(f06.normalized_check(clause),
                              f06.normalized_check(f06.EXPECTED_TABLES[first]['checks'][name]))
