@@ -276,3 +276,23 @@ API `329d44fd7f8d0b2402853f5eac4cf47c99fcbed9` / tree `69d2cb5448aa165b35ead9794
 - **尚未核验Elasticsearch索引残留**：实际配置的localhost:9200拒绝连接，同网络命名空间复核亦失败。未启动/重启搜索服务、未操作全局索引/Redis；主数据与专属文件清理完成不代表搜索索引或外部Agent副本已彻底擦除。
 
 回执：[限定清理摘要](implementation-evidence-20261004/chcbz-history-cleanup-20261005/manifest.json)。本次没有Provider调用、构建、Flow发布、release/integration pin变更；没有新兼容层或清理产品。旧适配继续取消；后续仍为当前新流程真实Agent/三端联调及既有正常发布。T05/T06真实业务验收和T07–T09仍未完成，不能因清理完成标记整个功能交付。
+
+
+## 三端候选收敛、Web云测实际失败修复与正式云测（2026-10-05，进行中）
+
+只读查询确认旧Web `4403172/165` 已FAIL（旧候选12edde24，3036通过/7失败/2pending），API `5260799/108` 的SUCCESS仅对应旧候选75357f，不可冒充本轮结果。两条当前配置均只有cloud_ci，无部署阶段；保留暂停配置，不恢复、不新增流水线。
+
+- 对7项实质失败修复测试接线：4个实际JuyiHall挂载夹具现在注入真实 `useHallDrafts`（保持原会话/阅读器/工作空间五轮状态和密议检查）；共享资料样式按真正承载的HallMaterialPicker核对；实际表单按当前“提出需求/添加”及默认固定最新版本验证，禁止版本选择控件；既有独立正式任务资料控件保留，嵌入事项只走议事，并新增mounted双场景无POST断言。Windows `.pathname` 造成的额外文件读失败改为 `fileURLToPath`，未改生产来源/授权校验或跳过测试。
+- 当前源码诊断：6文件先34通过/7失败，修复后 **42通过/0失败**；原阅读器实际Hall挂载用例 **1通过/0失败**；两文件scoped lint exit0。保留失败日志；这是低成本定向诊断，不替代正式Flow，也没有本地生产构建。
+- Web新提交 `10ff97b52b710564e9918010a437ed35621ff235` / tree `19b299885d27daf35edf146b1f3dec5afd46ccb6`，仅7个测试文件，已沿原特性分支推送；原生成声明/脏工作区未提交。
+- 现有API `329d44fd`、Client `b8d74b1`、Web `10ff97b` 对各自当前develop均为快进；已合入三个远端develop并独立读回。根api/web gitlink固定此配套源码，当前仅candidate，不标accepted/released，不改历史冻结合同/回执。
+- develop push后只读复核没有对应新Run，随后每条单次明确Start。**API `5260799/109`、Web `4403172/166` 已RUNNING**；当前Run来源显示develop但commit字段尚未报告，不提前声称checkout SHA、云测、制品成功。未重发未知请求、未取消他人Run。
+
+回执：[三端与原云测进度](implementation-evidence-20261004/integration-cloud-ci-20261005/manifest.json)。三端源码已收敛，正式云测/同Run制品仍等待；未更新API/Web/Agent实际运行版本，未调用Provider，未新增生产数据。T05–T09真实新流程联调、可选保存/恢复/隔离和上线验收仍待实测；旧数据适配不恢复。
+
+
+### 本轮正式云测与制品增量（2026-10-05 19:54 CST）
+
+API `5260799/109` 已 **SUCCESS**，实际checkout与制品receipt/metadata均为 `329d44fd7f8d0b2402853f5eac4cf47c99fcbed9`，tree与候选一致；同Run下载制品、不解压部署，已核对receipt SHA与sidecar JAR SHA。归档312份suite报告、2667个测试条目，失败/错误0，**skipped 101**（100项XML未给原因，1项缺精确Redis4.0.6测试二进制）；多个Gradle selector可能重复覆盖测试，不称2667个独立用例全部PASS。制品 SHA256 `d0fa282ac520379b69f8f302a3debd90604dc8145d4ec4120e6bc306421d6570`；JAR SHA256 `3170b50d19b9c28bcd734e1a6a474023be3a2e6a7a4196a12993e9fddf98caa8`。详见同目录 `api109-artifact-verification.json`。
+
+Web `4403172/166` 实际checkout确认 `10ff97b52b710564e9918010a437ed35621ff235`，代码扫描SUCCESS，完整测试/构建仍RUNNING。日志API more=true并提示Too many logs，不能以早期日志推断终态。未重复Start、未改部署配置。上述更新覆盖前节“SHA pending”的阶段记录，**仍未发布、未真实业务验收**。

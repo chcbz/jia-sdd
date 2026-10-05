@@ -127,3 +127,11 @@
 ## 2026-10-03 21:54 通用资料M2源码子集
 
 Web `6a2b71e` / tree `5651935a`：66项定向回归通过，Overview统一入口、真实adapter四类型混选/payload/固定版本预览下载/移除、workspace audio两界面渲染及旧响应/身份隔离。HTTP/bytes为fixture、媒体元素是实际Vue DOM；没有真实平台后端原子受理或Agent处理证据，未新跑Chromium/Flow/生产构建/Provider。仅记录UM01/UM02相关源码子例，**不提升UM整项或原34项为通过**；Bounty/M1/M3/M4仍待接通。参见[精确候选及证据](integration-evidence-20260928/unified-materials-correction-20261003/web-source-progress.json)。
+
+
+## 2026-10-05 三端候选与正式云测状态
+
+API329d44fd / Clientb8d74b1 / Web10ff97b已快进合入各自develop，根gitlink固定配套源码。旧Web Run165的7项失败已修复测试接线，当前定向诊断43PASS、不替代正式云测。原API109/Web166正在cloud_ci；尚无本轮云测终态、制品或新流程真实业务验收。暂停部署配置未改，运行版本未更新、Provider未调用。见 [本轮回执](implementation-evidence-20261004/integration-cloud-ci-20261005/manifest.json)，不自动将AC/UM/FD标为PASS。
+
+
+2026-10-05 19:54 CST补充：API109正式CI及同Run制品核验完成（312 suite XML /2667测试条目/0失败/101 skipped；不代表全业务验收）。Web166 checkout精确匹配，扫描通过，完整测试/构建仍进行中；API/Web/Client运行版本未更新。以本轮manifest和api109制品回执为准，不将源码/CI成功自动提升为线上AC通过。
