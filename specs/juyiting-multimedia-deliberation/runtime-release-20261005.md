@@ -36,3 +36,7 @@ Agent 已升级；API 的现有 Flow 部署已恢复、尚未启动最终发布�
 SDD `D:\workspace\mmd-plan-1004`，自有分支 `codex/mmd-version-progress-20261004` 推 `HEAD:refs/heads/codex/juyiting-multimedia-deliberation`。API/Web/Client worktrees及远端脏主目录保留。正式测试构建发布Flow-first；不得把CI-only制品手工安装冒充Flow发布；不使用子Agent或Reviewer；不抢占/取消别人的Run；未知写入只读核对。
 
 chcbz历史清理已完成，不再删除、不重放419/420、不全局重启ES/Redis。监控 `--status` 只读；`--check-once`可能恢复/发邮件，不用作只读探测。
+
+## 2026-10-05 23:37:40 CST 只读跟进
+
+既有00:00/00:30 timer仍active，Agent双实例active，API/Web/MySQL/Redis监控健康，无维护/恢复动作。IAB tab1已由用户登录；通过个人中心可见账号 `chcbz` 已核对，随后返回聚义厅并保留页签。登录阻塞已解除，不再请求用户登录。未创建事项、调用Agent/Provider或启动Flow；等待00:00既有发布调度，业务验收仍NOT_RUN。
