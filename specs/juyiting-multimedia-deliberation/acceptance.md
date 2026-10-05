@@ -135,3 +135,8 @@ API329d44fd / Clientb8d74b1 / Web10ff97b已快进合入各自develop，根gitlin
 
 
 2026-10-05 19:54 CST补充：API109正式CI及同Run制品核验完成（312 suite XML /2667测试条目/0失败/101 skipped；不代表全业务验收）。Web166 checkout精确匹配，扫描通过，完整测试/构建仍进行中；API/Web/Client运行版本未更新。以本轮manifest和api109制品回执为准，不将源码/CI成功自动提升为线上AC通过。
+
+
+2026-10-05 20:15 CST：Web166终态FAIL（3136通过/2pending/10失败，无制品），旧接线/入口断言已修复为Webf6b81b4，定向86PASS，lint与基线同7错误无新增。正式Web167正在运行，checkout尚未报告。API109有效证据沿用。真实运行版本/Provider闭环仍未验收，发布/调用授权待用户答复；不据此更新AC为PASS。
+
+20:17 CST只读回执：Web167实际checkout已报告f6b81b40ee4a579c579af4cb7ab1e0e76e362173，与目标一致，scan SUCCESS，完整测试/构建仍RUNNING；覆盖上段checkout pending的阶段状态。

@@ -296,3 +296,16 @@ API `329d44fd7f8d0b2402853f5eac4cf47c99fcbed9` / tree `69d2cb5448aa165b35ead9794
 API `5260799/109` 已 **SUCCESS**，实际checkout与制品receipt/metadata均为 `329d44fd7f8d0b2402853f5eac4cf47c99fcbed9`，tree与候选一致；同Run下载制品、不解压部署，已核对receipt SHA与sidecar JAR SHA。归档312份suite报告、2667个测试条目，失败/错误0，**skipped 101**（100项XML未给原因，1项缺精确Redis4.0.6测试二进制）；多个Gradle selector可能重复覆盖测试，不称2667个独立用例全部PASS。制品 SHA256 `d0fa282ac520379b69f8f302a3debd90604dc8145d4ec4120e6bc306421d6570`；JAR SHA256 `3170b50d19b9c28bcd734e1a6a474023be3a2e6a7a4196a12993e9fddf98caa8`。详见同目录 `api109-artifact-verification.json`。
 
 Web `4403172/166` 实际checkout确认 `10ff97b52b710564e9918010a437ed35621ff235`，代码扫描SUCCESS，完整测试/构建仍RUNNING。日志API more=true并提示Too many logs，不能以早期日志推断终态。未重复Start、未改部署配置。上述更新覆盖前节“SHA pending”的阶段记录，**仍未发布、未真实业务验收**。
+
+
+### Web166失败的最小修复及Web167（2026-10-05 20:15 CST）
+
+正式Flow166已FAIL：**3136 passing /2 pending /10 failing**，扫描SUCCESS，未进入完整Vite构建，无同Run制品。失败摘录已按环境/URL过滤落盘，非完整日志审计。10个失败对应5个旧测试文件：榜文创建仍期待旧createTask接线、聊天工作空间仍期待已移至＋菜单的按钮class、Overview仍期待用户已取消的版本选择器、原表单4个场景仍找“张榜”。
+
+仅调整上述5个测试文件，生产源码未改变：准确核对创建成功后点将包装器、真实Composer→ChatPanel工作空间事件链；资料默认固定最新版本且无版本控件，取消改用另一个文件验证未确认选择不污染已确认资料，保留混合预览/下载GET-only、移除、scope切换和旧ack隔离。补Windows fileURLToPath及CRLF精确闭包解析。定向 **86 passing /0 failing**；scoped lint基线7错误、候选仍7、rule/message无新增（不能写lint通过）。本地初次诊断在CRLF closure导入处中止，不能虚报本地10FAIL，正式红证据来自Flow166。
+
+Web新exact源码 `f6b81b40ee4a579c579af4cb7ab1e0e76e362173` / tree `3f70c8a345ef09359b0169785ec66d5f8cdf5102` 已推原特性分支及develop并读回；生成声明及work未提交。API/Client保持原精确候选。两次只读检查develop push未创建新Run，限定新SHA和原cloud_ci配置、确认无活动Run后仅Start一次，**4403172/167 RUNNING**（build/test529162804、scan529162805）；actual checkout尚未报告，不把expected当actual。不重复API109、不跳过测试、不改暂停部署。
+
+真实新流程仍需API/Web/Agent运行版本更新及现有模型/工具调用；已向用户提出具体发布/预算授权问题，尚未执行这些动作。当前源码/云测修复继续，不将发布授权待定误标为已验收或目标完成。
+
+20:17 CST只读回执：Web167实际checkout已报告f6b81b40ee4a579c579af4cb7ab1e0e76e362173，与目标一致，scan SUCCESS，完整测试/构建仍RUNNING；覆盖上段checkout pending的阶段状态。
