@@ -7,7 +7,7 @@
 - API5260799 **Run112 SUCCESS**，CI529282011/deploy529282012均SUCCESS；部署单70646647、唯一主机Success/client healthy。源码329d44fd/tree69d2cb54；同Run归档226549272 bytes、SHA55c0789aca1822f8dc506d8bcb3bac3a1eada79393d425cccb72ea389d59a42f；JAR3170b50d已核验与canonical、installer record、consumed approval完全匹配。
 - 实际PID1229757、attestation MATCH、端口PID归属/运行用户/真实Actuator UP均通过。当前Actuator status为对象code=UP，与正式launcher同一语义核验。云测312 suite/2667计数（部分重叠）、0fail/error/101skipped，如实保留。
 - F06 postinstall PASS，两表existing_equivalent，无DDL。E05本次**not_admitted，未调用runner**；不得把之前候选对真实E05表的只读equivalent称为正式E05激活。三端功能真实验收与schema校验仍分开。
-- 01:11:58完成私有 `flow-forward-only/api-final-release-healthy-verified.json` 完整真实API回执（实际回执UTC at为准），随后用既有restore-mmd-forward-flow-deployment.cjs恢复Web原deploy **一次**，actual config SHA23743de5835db6bc98864ebd792c26cfd5d7e0ed169902508dd750e51cc420aa，原CI/source/tests不变，不再apply。
+- 01:11:54.978（UTC2026-10-05T17:11:54.978Z）完成私有 `flow-forward-only/api-final-release-healthy-verified.json` 完整真实API回执（实际回执UTC at为准），随后用既有restore-mmd-forward-flow-deployment.cjs恢复Web原deploy **一次**，actual config SHA23743de5835db6bc98864ebd792c26cfd5d7e0ed169902508dd750e51cc420aa，原CI/source/tests不变，不再apply。
 - 既有controller已创建 **Web4403172 Run168**（build/test529287081、scan529287082、deploy529287083），01:12:55创建，CI运行中；目标f6b81b40ee4a579c579af4cb7ab1e0e76e362173/tree3f70c8a3。Start UNKNOWN已只读核对唯一168、时间/config、provider实际checkout marker及CI_COMMIT_SHA环境匹配，01:16:27 proof写回并在controller mutex写4403172-168.json。**不是backend形式的echo相等断言**，同Run包内source/tree仍待最终制品核验。没有重试Start。
 - Agent双实例4e70c4f已完成，不重复安装。监控maintenance已恢复；两个nightly timer仍临时暂停防重，**Web168正式成功且线上dist确切字节/record匹配后恢复既有两个timer**，不等待全部业务验收才恢复正常调度。
 
