@@ -309,3 +309,14 @@ Web新exact源码 `f6b81b40ee4a579c579af4cb7ab1e0e76e362173` / tree `3f70c8a345e
 真实新流程仍需API/Web/Agent运行版本更新及现有模型/工具调用；已向用户提出具体发布/预算授权问题，尚未执行这些动作。当前源码/云测修复继续，不将发布授权待定误标为已验收或目标完成。
 
 20:17 CST只读回执：Web167实际checkout已报告f6b81b40ee4a579c579af4cb7ab1e0e76e362173，与目标一致，scan SUCCESS，完整测试/构建仍RUNNING；覆盖上段checkout pending的阶段状态。
+
+
+### Web167正式云测/构建/同Run制品完成，仍未发布（2026-10-05 21:36 CST复核）
+
+Web `4403172/167` 已 **SUCCESS**，build/test529162804与scan529162805均SUCCESS。云端报告与同Run包内mochawesome统计一致：449 suites /3148注册条目，**3146 passing /2 pending /0 failing /0 skipped**；正式Vite于20:35:51完成。此前166的10项失败现均通过，未跳过测试或修改生产源码。实际checkout、包内source-commit与source-tree分别匹配 `f6b81b40ee4a579c579af4cb7ab1e0e76e362173` / `3f70c8a345ef09359b0169785ec66d5f8cdf5102`。
+
+同Run归档106693406 bytes，SHA256 `2e9b1b4167b76c8931aac843abbad8faf323a1590f75e457f1914222ca0f7a12`；只读逐成员校验，未解压安装，364个dist文件集合覆盖精确相等、逐项size/SHA256均匹配release.json。包内真实package_version仍1.0.1，不把它改称新产品发布版本。详见 `web167-artifact-verification.json`。API109已完成的正式测试/冻结JAR证据沿用（101 skipped如实保留）。三端develop再次读回为API329d44fd /Clientb8d74b1 /Webf6b81b4，与配套候选一致。
+
+21:35只读配置复核两条pipeline SHA256均与启动前相同，仍仅cloud_ci、无部署阶段；本轮没有恢复暂停配置、更新运行版本或调用Provider。现有CI-only Run不能追加不存在的部署job，不能以直接手工安装或本地包绕过既有Flow；获得发布授权后按原路径完成必要最终发布Run，由该Run使用自己的测试/构建/制品/部署身份，既有历史CI证据保留，不伪装成已部署。
+
+**仍未完成的真实结果**：实际API/Web/Agent运行版本配对，新流程无资料提需求→点将→真实成果→同会话改稿→不保存直接验收；混合资料/仅附件、文字与单项改稿保留其他成果、可选保存与刷新不重生成、跨账号/任务和密议隔离、上线精确制品核验。源码/云测已收敛，但这些T05–T09真实业务要求不能由fixture或制品通过替代。已提出具体发布及现有预算内真实调用授权问题，待用户答复；不新增旧数据兼容或独立验收工程。
