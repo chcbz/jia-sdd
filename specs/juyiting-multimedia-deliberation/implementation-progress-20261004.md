@@ -156,3 +156,19 @@ API候选 `6b794b0a2663a18d306ee8515d89e7fe59a09c60` / tree `ab733d02fbb49998e9c
 失败回执保留：API新增测试缺import、Mockito thenReturn参数中嵌套真实reader导致unfinished stubbing，按真实日志只修fixtures、完成原root-cause matrix后重跑，不删断言/skip/AP；Web新增parser校验误插入旧v1分支导致7项失败，移回v3局部分支后全部回归通过，格式lint修正日志也保留。合并原始日志/JUnit/精确blob与fixture证据见[关联增量回执](implementation-evidence-20261004/text-relations-v1/manifest.json)。
 
 **仍是部分完成**：目前支持单一明确媒体manifest/精确改稿链，或单一根的明确跨轮文字链；图文混合/多独立manifest追加重置、修改较早非广告父文字、经澄清回覆传播文字父来源，以及自然修改媒体时原源可用性仍待接齐。不能把这一增量称作通用T05/T06完成。随后还须实际Agent/保存/刷新闭环及原正式Flow/同Run发布（配套既有items升级SQL）；未执行生产DDL、Provider、部署、release ref或集成pin变更。普通开发步骤继续，无新增需用户确认的范围事项。
+
+
+## T05/T06续推：文字成果经多轮澄清传播及原CAS恢复（20261004工作包，部分完成）
+
+API候选 `d0a3f80a45c707bb12de12cf2b0cd3558417b2c0` / tree `c2a7d724313bae6162e31b85b2eaa443bb211691`；Client候选 `79bad1e3e01640b5c126d206cf2fab2cae4065c6` / tree `bd51728debc825a63452680da30c7dd10b4130ec`；Web候选 `1fb1fa4c6b6fc7de66408efdab4c05bdc2794531` / tree `5bea0c95a5410f95434f35977c35ad7756fbaafb`。沿用原三个自有候选分支，均已推送并独立远端读回；原脏工作区、生成声明及集成pin未纳入提交。
+
+- `CLARIFICATION_REPLY` 的即时父仍为原OPEN问题及其CAS，不把问题冒充文字成果。服务端另沿真实原admission/snapshot追溯文字 `deliveryParent`，可连续跨多轮澄清，始终广告原成果outcomeId/finalDigest；每轮问题通过实际v3 final reader重校验，并核对scope、任务、assignment、完成CHAT状态及上一轮ANSWERED CAS所指实际回复。
+- final在prepare和只读恢复中分别校验即时问题父/回复CAS与原文字父。坏摘要、错快照/账号/任务/assignment、错问题/回复/版本、缺来源及循环均拒绝。最初未绑定文字父的澄清不回溯推断最新ANSWER；旧合同和未绑定来源仍无文字关系。APPEND/REPLACE/RESET继续要求最终明确选择，澄清链接不自动成为替换意图。
+- Client/Web本批仅增源码回归与共享实际API projection，不新增runtime合同或入口。验证native CHAT保留原文字父、拒绝以即时问题/问题摘要替换；事项页忽略问题卡，展示并验收真实原文/新稿；未知答复受理及未知验收在remount后保持原CAS/key/body和原refs/hash，不换稿、不重跑工具。
+- 复用原outcome/admission/snapshot/pending/finalization；无新表、服务、API、状态机或审核门禁。支持范围是既有单根明确文字链经澄清继续，**并非**图文混合或多个独立manifest通用交付。
+
+实际验证：API12组 **116 PASS /0 FAIL /0 ERROR /0 SKIP**，普通Gradle/AP图经既有orchestrator共享锁，natural exit0；Client4个相关文件 **44 PASS /0 FAIL /0 SKIP**（其中既有3文件加新用例38，另6项旧文字合同回归），Node自然退出；Web9组 **133 PASS /0 FAIL**，scoped lint与本地Vite build自然exit0，gallery12→12/测试0→0无新增诊断。API真实final writer/read导出两轮澄清后的三种关系，共享fixture SHA256 `a8f5515332f6781399323edf4b11b54cf8e11bd9e80dc4004c27711e648f49d6`，Web/Client保持同字节。DB/身份/CAS持久记录与native engine仍fixtures，不冒充真实Agent、浏览器线上或Flow业务验收。
+
+保留API首次116项中的4个fixture失败及XML：Mockito Map默认空集合与新turn stub覆盖原来源turn；显式建模nullable无来源合同、分离原来源turn后，test-only子提交全量定向重跑通过，未放宽生产断言。Web首次133通过后的两个多余空行lint失败保留，仅修格式并重跑。精确提交/tree/source字节、原始日志/JUnit/共享fixture见[本批合并回执](implementation-evidence-20261004/clarified-text-v1/manifest.json)。
+
+**仍待继续**：图文混合、多独立manifest明确追加/重置、修改较早非广告父文字、自然改媒体的原源可用性；随后实际Agent/材料/保存/刷新及既有正式Flow/同Run发布，并按正式发布授权配套已有items升级SQL。T05/T06仍部分完成，T07–T09未完成。本批未调用Provider、执行生产DDL/数据写入、部署或更改release ref/集成pin，无新增需用户确认的范围事项。
