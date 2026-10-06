@@ -1,3 +1,9 @@
+## 最新阻塞更新（2026-10-06 08:12 CST）
+
+用户已提供测试账号并授权登录，浏览器已提交一次登录，未保存密码到文件/证据。实际服务端access记录：08:08:38 POST /login ->302，随后GET / ->444；真实nginx现有location /为return444，浏览器报告ERR_HTTP2_PROTOCOL_ERROR并进入data错误页，Browser Use URL policy阻止后续观察/导航。这不是已证实的密码错误，也不能据302证明登录成功。curl诊断403来自既有curl User-Agent限制，不当API整体故障；nginx自定义实例仍运行，systemd nginx inactive不证明服务停机。
+
+停止该错误页的自动UI尝试，不切浏览器/提取cookie/修改防护/用终端代替浏览器登录来绕过。需要用户在现有IAB地址栏手动回到 https://kit.chaoyoufan.cn/juyiting ，然后只读核对实际身份再继续验收；若仍需登录，沿正式页面处理。密码不写入自动化提示或Git。三端发布证据不变，T05–T09仍未完成。
+
 ## 最新权威状态（2026-10-06 01:30 CST）
 
 **三端正式发布已完成；真实chcbz业务验收尚未完成。** 用户要求立即发布已落实，无须等待下一次零点。
@@ -102,4 +108,5 @@ chcbz历史清理已完成，不再删除、不重放419/420、不全局重启ES
 ## 2026-10-05 23:37:40 CST 只读跟进
 
 既有00:00/00:30 timer仍active，Agent双实例active，API/Web/MySQL/Redis监控健康，无维护/恢复动作。IAB tab1已由用户登录；通过个人中心可见账号 `chcbz` 已核对，随后返回聚义厅并保留页签。登录阻塞已解除，不再请求用户登录。未创建事项、调用Agent/Provider或启动Flow；等待00:00既有发布调度，业务验收仍NOT_RUN。
+
 
