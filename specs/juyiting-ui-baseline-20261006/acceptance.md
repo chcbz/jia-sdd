@@ -24,3 +24,10 @@ node --check specs/juyiting-ui-baseline-20261006/prototype/baseline-ui.js
 - 当前机器的既有 Chromium launcher 指向不存在的二进制，未安装新浏览器，也没有把历史截图改记为本次通过。
 - 新补充页面是当前源码入口/字段对齐的结构原型，不承诺逐像素还原。请在后续对应页面视觉优化前补最新组件截图。
 - 文档保存不代表最新 Web 已上线，未执行本任务的 Flow Run、生产构建或部署；没有改变 API/Web gitlink，也没有产品功能 accepted/released 结论。
+
+## 同类标签修订自检 · 2026-10-06
+
+- 本次重新检查 **49 项文档原型检查通过**（新增共享样式资源与百宝箱选中态检查）；原始 48 项基准记录保存到 `checks-history/prototype-initial-20261006.json`，不改记为本次验证。
+- 前端轻量定向诊断：5 项共享样式/编译检查及 37 项首页、详情、资料执行组件检查，共 **42 项通过**。这不是 Flow 正式测试或视觉截图验收。
+- 对比父提交确认四个组件 template/script/scriptSetup 内容不变；仅引入 scoped CSS。原型及源码共享样式一致。
+- 开发提交及云端结果见 `implementation-checks.json`；本次不部署，不把 develop 合入或制品成功报告为已上线。

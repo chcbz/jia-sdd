@@ -55,6 +55,17 @@ for(const scenario of scenarios){const dom=create('chat',390,scenario),d=dom.win
  dom.window.__baselineTest.go('workspace');click(dom,'[data-action=ui-file]');click(dom,'[data-action=ui-rename]');d.querySelector('dialog[open] input').value='改名示例.md';click(dom,'[data-action=ui-rename-save]');assert.ok(d.body.textContent.includes('改名示例.md'));click(dom,'[data-action=ui-recycle]');assert.ok(d.body.textContent.includes('恢复'))
  results.push({interaction:'mine/library/file-management',result:'PASS'});dom.window.close()
 }
+{
+ const css=fs.readFileSync(path.join(dir,'hall-view-tabs.css'),'utf8')
+ for(const group of ['.hall-overview .overview-tabs','.library-panel .library-tabs','.hall-draft-editor .case-tabs','.personal-workspace.is-hall-treasure .treasure-tabs'])assert.ok(css.includes(group))
+ assert.ok(css.includes('background: #f7eae6 !important'))
+ assert.ok(css.includes('border: 0 !important'))
+ assert.ok(css.includes('button:focus-visible'))
+ const dom=create('workspace'),d=dom.window.document
+ assert.ok(d.querySelector('link[href="hall-view-tabs.css"]'))
+ assert.ok(d.querySelector('.personal-workspace.is-hall-treasure .treasure-tabs button[aria-pressed="true"]'))
+ results.push({style:'shared capsule tabs/resource and workspace selected state; not pixel acceptance',result:'PASS'});dom.window.close()
+}
 for(const source of ['prototype.js','baseline-ui.js'])assert.ok(!/\bfetch\s*\(|XMLHttpRequest|WebSocket\s*\(|getUserMedia\s*\(/.test(fs.readFileSync(path.join(dir,source),'utf8')))
 const report={checkedOn:'2026-10-06',method:'JSDOM DOM/interaction/resource checks; not Chromium or visual screenshot acceptance',status:'PASS',count:results.length,results}
 fs.writeFileSync(path.join(dir,'prototype-checks.json'),JSON.stringify(report,null,2)+'\n')
