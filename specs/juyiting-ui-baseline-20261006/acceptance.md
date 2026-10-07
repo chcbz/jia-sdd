@@ -86,3 +86,7 @@ node --check specs/juyiting-ui-baseline-20261006/prototype/baseline-ui.js
 - 前端轻量定向诊断：5 项共享样式/编译检查及 37 项首页、详情、资料执行组件检查，共 **42 项通过**。这不是 Flow 正式测试或视觉截图验收。
 - 对比父提交确认四个组件 template/script/scriptSetup 内容不变；仅引入 scoped CSS。原型及源码共享样式一致。
 - 开发提交及云端结果见 `implementation-checks.json`；本次不部署，不把 develop 合入或制品成功报告为已上线。
+
+## 产品 UI 版本发布追加验收 · 1.0.6
+
+这是后续真实产品发布，不改变上方离线原型及历史“未部署”的范围。Flow4403172/Run180 以 `ee6ca1b6beba562e0c7fa13d422857f554644471` 完成扫描、3181通过/2pending/0失败、构建、同Run制品与正式部署，部署单70689069单机Success/healthy。完整364文件安装/公网HTTPS字节匹配，登录正式页面后1440/390/320七图标尺寸与点击区、顺序、手机同排、资料直接打开及＋菜单通过；没有发送、录音、Provider、任务创建或验收动作。原始证据见 [发布记录](release-1.0.6.md)。完整业务仍NOT_COMPLETE；R01、重复正文与完成态恢复未修改。

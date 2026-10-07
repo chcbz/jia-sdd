@@ -23,7 +23,7 @@ Owner：当前聊天 `01a10e93-0cf1-7001-b42b-8fa8572f6f83`。
 - 三个产品文件的 script/script-setup 与基线逐字相同；模板事件与 disabled 表达式的 AST 多重集合完全一致（13 / 31 / 213 项）。`HallVoiceControls.vue` 全文件未改。
 - 只改 `HallChatComposer.vue`、`ChatPanel.vue` 的模板/样式及 `JuyiHall.vue` 的样式；四个相关测试文件同步新布局断言。首次界面提交为 `3044fc3`，后续 `7264539` 只修正旧测试断言，产品源码完全相同。没有修改接口、状态计算、身份/ACL、任务状态、资料引用语义、消息去重、回执恢复、语音业务处理或 API 仓库。
 - 资料 slot 从＋的隐藏容器移出，仅解除展示耦合；仍使用原事件 `open-materials → toggleMaterialPicker`、原选择器和原业务状态。
-- 当前 package version 仍为 `1.0.5`：这是 develop 界面候选，不是已安排发布的新版本。
+- 界面实现提交时 package version 为 `1.0.5`，当时只做 develop 验证、没有上线；后续用户授权的 `1.0.6` 版本化发布见 [发布记录](release-1.0.6.md)。
 
 证明：`evidence/ui-only-20261007/logic-preservation.json`。
 
@@ -52,3 +52,7 @@ node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-product-
 3. 版本化发布：后续确定版本、固定 commit、Flow 同 Run 制品及部署/线上核验后，才可声称正式页面更新。
 
 产品整体业务验收仍为 **NOT_COMPLETE**；本记录只验收上述界面范围。
+
+## 后续版本发布
+
+用户随后授权“按版本进行部署”，前端 **1.0.6 已上线并核验**：源码 `ee6ca1b`、Flow `4403172/Run180`、部署单 `70689069`。相对上方界面候选仅变更 package/lock 版本号；3181 passing、2 pending、0 failures，364 文件及 1440/390/320 正式页面一致。develop 仅验证配置已恢复，无后端发布。完整绑定与恢复路径见 [发布记录](release-1.0.6.md)；本次没有完成 R01 等业务待办。
