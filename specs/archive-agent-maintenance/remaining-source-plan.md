@@ -8,8 +8,8 @@
 | 分页 | design §7.2、§7.4 | 69 API / 128 Web PASS、build PASS，独立窄审接受；已本地提交，未 push | 任职当前/历史、jobs state/cursor、管理 works、Reader works 的有界连续页；SQL 稳定 keyset；每页重新授权；Web 能继续读后续页且清身份/筛选后旧请求不得回填 |
 | 章节断点 | design §9.3、§10.1 | 77 API / 80 Client 定向 PASS，独立窄审接受；已本地提交，未 push | Client 本 run 持久章节 digest/checkpoint；重启先读取服务端事实；服务端不可变章节对象引用/digest；复用共享存储，不建第三套文件系统 |
 | 发布恢复 | design §10.2 | 77 API 定向 PASS，独立窄审接受；已本地提交，未 push | SEALED → STAGING 分批写入，每批持久断点；崩溃重启可恢复；读回后 READY；最终 publication/active 在短事务授权和 CAS 后原子切换；旧版持续可读 |
-| 存储生命周期 | design §18.3、来源对象边界 | 用户时限停止：API71PASS，Client85/84PASS/1FAIL；未复审、未提交 | 安装副本配额、基于真实引用的受控回收；source orphan/stale PENDING 恢复与清理；只处理本功能 namespace，不扫描推导资格或删除其他任务对象 |
-| 文档与交付 | 用户交付指令 | 待收口 | 更新接口/配置/迁移/恢复/运维文档，按原要求源码收口；组件提交普通 push 并核远程 SHA 后 Root 更新 pins/gitlinks 再 push |
+| 存储生命周期 | design §18.3、来源对象边界 | 2026-10-07候选4：五项修复冻结；Chat76PASS、Client同树Linux91PASS（40代真实包）；Agent55PASS/17项Windows环境失败；新实库selector已编译；旧五项及commandless registry P2均独立闭合；Client新树Linux104PASS；源码已提交，完整push待执行 | 安装副本配额、基于真实引用的受控回收；source orphan/stale PENDING 恢复与清理；只处理本功能 namespace，不扫描推导资格或删除其他任务对象 |
+| 文档与交付 | 用户交付指令 | 源码与运维文档已收口，待完整push | 更新接口/配置/迁移/恢复/运维文档，按原要求源码收口；组件提交普通 push 并核远程 SHA 后 Root 更新 pins/gitlinks 再 push |
 | 服务端全面验证 | 用户交付指令 | 完整源码 push 后执行 | 任务独占 checkout/隔离设施；保留服务端其他 dirty 工作区与生产服务/DB；共享 Gradle 锁；逐项保留 PASS、既有失败与新增失败 |
 
 ## 包级约束
@@ -25,3 +25,7 @@
 本次剩余开发从北京时间12:31:39起最多两小时，14:31:39若完整源码、文档和远程提交未完成则停止所有开发、测试与推送，保留现有工作并报告未完成项。不得在截止后自行继续。
 
 已按两小时限制停止执行，详见 stopped-at-user-deadline.md；不得自动继续。
+
+## 显式恢复（2026-10-07）
+
+用户明确要求恢复开发，解除此前停止；2026-10-04截止与停止记录保留为历史。本轮未新设截止。先修复生命周期唯一Client冲突并补grant/reclaim双连接竞态selector，再必要定向自检、独立只读审查和文档收口，按组件→Root推送后进行服务端全面验证。fresh失败见 evidence/lifecycle/resume-20261007-baseline/。

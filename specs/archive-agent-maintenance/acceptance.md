@@ -186,3 +186,7 @@ API 冻结 prospective tree `57fad153289a06d512c53a10cb39d410dee44e44` 的四 ta
 ## 6. 2026-10-01 当前源码交付验证
 
 以 `delivery.md` 和 `integration.yaml` 的精确 commit/tree/pins 为准。Web245/245PASS+build0；API定向173PASS、archive258/11既有FAIL/0skip且delta空；Client443/442PASS/1既有FAIL/0skip且delta空；有界真实HTTP/JDBC/POSIX/Client fixture1/1PASS，MANUAL显式管理发布、AUTO/replay唯一publication/event、实际Reader读回。独立最终scope ACCEPT，不代表84业务用例或完整Runtime E2E。历史文档checker exit1仍披露，单独当前交付gate不替代它。
+
+## 2026-10-07 最新接续（覆盖历史当前状态）
+
+原D2源码与文档已收口，全部局部源码包独立接受。API5722e7fa / Web6dd4553c / Client9426030；最后生命周期Client Linux104PASS，API同树Chat76PASS及Agent17Windows环境失败原件保留。完整远程提交回执以evidence/delivery/resume-20261007/为准，组件→Root推送后再做隔离服务端全面验证。生产发布/迁移/真实任职与上架/付费调用未执行，84业务用例仍not_run；源范围接受不是whole-feature accepted。

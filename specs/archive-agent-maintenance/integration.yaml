@@ -1,5 +1,5 @@
 feature_id: archive-agent-maintenance
-status: implementing
+status: integration-ready
 owners:
   api: critical_worker
   web: balanced_worker
@@ -13,9 +13,9 @@ contract:
     Multi-work immutable editions and explicit publication use shared identity/install/execution/storage adapters.
     Preserve ItemRef/OVERVIEW-v1 and direct-Agent routing; never mix Runtime protocols or paid-market orders.
 pinned_revisions:
-  api_commit: 62223001dfeff648989efb0a79a6e28addb404a3
-  web_commit: bdff47863a99318a991e2dffb6073b8db872b5fc
-  client_commit: bc035b3757b97aac90c59c06386a7ebfa3d71162
+  api_commit: 5722e7fa2ee0d1f6a5eeb84ccf18dcfe009ae4e7
+  web_commit: 6dd4553c276c34a1d694a06a3daf11849dca0e64
+  client_commit: 9426030d4a9411429bbc1ad2bd154356a0287e3b
   root_base_commit: 01f7599ed28e84c1a44d2cc6c3dec13f7ddbeb67
 source_observation:
   evidence: source-audit.json
@@ -25,7 +25,7 @@ source_observation:
   release_evidence: false
 verification:
   documentation:
-    status: prior_delivery_consistency_pass_completion_audit_open
+    status: current_source_remote_gate_pending_root_commit
     evidence: evidence/delivery/current-delivery-check.json
     historical_checker_evidence: evidence/documentation/delivery-history-audit/
     note: >-
@@ -439,8 +439,8 @@ delivery_policy:
   components_push_before_root_gitlinks: true
   merge_master_develop_authorized: false
   production_activation_deployment_paid_model_authorized: false
-  source_development_status: stopped_incomplete_per_user_time_limit
-  complete_source_push_status: not_done
+  source_development_status: original_D2_source_and_docs_complete_independently_reviewed
+  complete_source_push_status: component_remotes_verified_root_delivery_pending
   server_comprehensive_verification_status: not_run
   reference: delivery-order.md
 
@@ -649,3 +649,174 @@ storage_lifecycle_final_unaccepted_candidate:
   missing_mysql_selector: two_connection_grant_reclaim_competition
   source_pushed: false
   whole_feature_complete: false
+
+user_explicit_resume_20261007:
+  authorization: user_requested_resume_development
+  historical_deadline: preserved_20261004_stop_not_current_deadline
+  new_deadline: not_set
+  lifecycle_baseline_reproduced: true
+  client_tree: 43ed42f1a40b9d336d1a229d6f369ce945352acb
+  client_tests: 85
+  client_pass: 84
+  client_failures: 1
+  client_skipped: 0
+  client_exit: 1
+  evidence: evidence/lifecycle/resume-20261007-baseline/
+  writer_status: resumed_unique_critical_writer
+  independent_review: not_run
+  complete_source_push: not_done
+  server_comprehensive_verification: not_run
+  whole_feature_complete: false
+
+storage_lifecycle_resume_candidate1:
+  status: rejected_RR_snapshot_installation_reference_race
+  api_tree: 3aebabe2cc75ff3113ea44f132209177ccabed53
+  client_tree: 161b741b0f425d54434e2d2b75607c1bad8ab665
+  client_tests: 85
+  client_pass: 85
+  client_failures: 0
+  client_skipped: 0
+  client_exit: 0
+  chat_tests: 71
+  chat_failures: 0
+  chat_gradle_exit: 0
+  agent_windows_tests: 66
+  agent_windows_pass: 51
+  agent_windows_failures: 15
+  agent_windows_gradle_exit: 1
+  agent_windows_failure_boundary: 14_POSIX_unsupported_and_1_missing_Windows_symlink_creation_privilege
+  mysql_grant_reclaim_race_selectors: compiled_not_executed_pending_server_after_push
+  linux_artifact_storage_tests: pending_server_after_push
+  independent_review: running_read_only
+  evidence: evidence/lifecycle/resume-20261007-candidate1/
+  source_committed: false
+  source_pushed: false
+  whole_feature_complete: false
+
+lifecycle_resume_candidate1_review:
+  verdict: REJECT_LOCAL_LIFECYCLE_SOURCE_SCOPE
+  reviewer_role: sol_reviewer
+  cross_model: false
+  configured_cross_model_provider_failed: model_not_found
+  p0: 0
+  p1: 1
+  p2: 0
+  finding: RR_old_snapshot_can_miss_committed_ACTIVE_READ_ONLY_grant
+  evidence: evidence/lifecycle/resume-20261007-candidate1/review.json
+  writer_resumed_for_narrow_fix: true
+  source_pushed: false
+  whole_feature_complete: false
+
+storage_lifecycle_resume_candidate2:
+  status: rejected_complete_lifecycle_review_4P1_1P2
+  api_tree: 32af4f243fe2fba0213638c16c463a7d3c78236e
+  client_tree: 161b741b0f425d54434e2d2b75607c1bad8ab665
+  client_result_reused_from: evidence/lifecycle/resume-20261007-candidate1/client/
+  client_tests: 85
+  client_pass: 85
+  client_failures: 0
+  client_skipped: 0
+  client_exit: 0
+  chat_tests: 72
+  chat_failures: 0
+  chat_gradle_exit: 0
+  agent_windows_tests: 67
+  agent_windows_pass: 52
+  agent_windows_failures: 15
+  agent_windows_gradle_exit: 1
+  agent_windows_failure_boundary: 14_POSIX_unsupported_and_1_missing_Windows_symlink_creation_privilege
+  mysql_grant_reclaim_old_snapshot_selector: compiled_only_pending_server_after_push
+  predecessor_fixture_sha256: f814993101130aa9185c89ccba1ba134378a2c1139c098df8fd70782f54e3e6b
+  predecessor_fixture_bytes: 40311
+  source_unchanged_and_xml_fresh: true
+  writer_closed: true
+  independent_review: REJECT_LOCAL_LIFECYCLE_SOURCE_SCOPE
+  evidence: evidence/lifecycle/resume-20261007-candidate2/
+  source_committed: false
+  source_pushed: false
+  whole_feature_complete: false
+  final_review: evidence/lifecycle/resume-20261007-candidate2/review-final.json
+  p0: 0
+  p1: 4
+  p2: 1
+  previous_RR_finding_closed: true
+  repair_writer_resumed: true
+
+storage_lifecycle_resume_candidate4:
+  status: rejected_new_client_commandless_registry_P2
+  api_tree: a0e42a3862be5b0274ebb629bab0e65be9494088
+  client_tree: b21d3c6181c5e8b7a306314024719d4f9af365f6
+  client_result_reused_from: evidence/lifecycle/resume-20261007-candidate3/client/
+  client_tests: 91
+  client_pass: 91
+  client_failures: 0
+  client_skipped: 0
+  client_exit: 0
+  client_actual_package_installations: 40
+  client_server_receipt: explicit_unit_contract_model_not_mysql
+  chat_tests: 76
+  chat_pass: 76
+  chat_gradle_exit: 0
+  agent_windows_tests: 72
+  agent_windows_pass: 55
+  agent_windows_failures: 17
+  agent_windows_gradle_exit: 1
+  agent_windows_failure_boundary: 16_POSIX_unsupported_and_1_missing_Windows_symlink_creation_privilege
+  source_unchanged_and_xml_fresh: true
+  mysql_selectors: compiled_only_pending_server_after_push
+  writer_closed: true
+  independent_review: REJECT_LOCAL_LIFECYCLE_SOURCE_SCOPE
+  evidence: evidence/lifecycle/resume-20261007-candidate4/
+  source_committed: false
+  source_pushed: false
+  whole_feature_complete: false
+  final_review: evidence/lifecycle/resume-20261007-candidate4/review-final.json
+  p0: 0
+  p1: 0
+  p2: 1
+  previous_five_findings_closed: true
+  repair_writer_resumed: true
+
+storage_lifecycle_resume_candidate5:
+  status: locally_committed_independently_accepted
+  api_tree: a0e42a3862be5b0274ebb629bab0e65be9494088
+  client_tree: b3f72d4919e30487fd4ec99968a7be3ed937658c
+  api_evidence_reused_from: evidence/lifecycle/resume-20261007-candidate4/
+  api_same_tree_no_rerun: true
+  client_tests: 104
+  client_pass: 104
+  client_failures: 0
+  client_skipped: 0
+  client_exit: 0
+  client_natural_completion: true
+  command_publication_crash: real_child_SIGKILL_empty_and_fsynced_command_temp
+  unsafe_residue_negative_cases: 9
+  chat_tests: 76
+  chat_pass: 76
+  agent_windows_tests: 72
+  agent_windows_pass: 55
+  agent_windows_failures: 17
+  agent_windows_failure_boundary: 16_POSIX_unsupported_and_1_missing_Windows_symlink_creation_privilege
+  mysql_selectors: compiled_only_pending_server_after_push
+  independent_review: ACCEPT_LOCAL_LIFECYCLE_SOURCE_SCOPE
+  evidence: evidence/lifecycle/resume-20261007-candidate5/
+  source_committed: false
+  source_pushed: false
+  whole_feature_complete: false
+
+source_completion_20261007:
+  status: complete_source_and_docs_not_whole_feature_acceptance
+  committed_api: 5722e7fa2ee0d1f6a5eeb84ccf18dcfe009ae4e7
+  committed_web: 6dd4553c276c34a1d694a06a3daf11849dca0e64
+  committed_client: 9426030d4a9411429bbc1ad2bd154356a0287e3b
+  lifecycle_review: evidence/lifecycle/resume-20261007-candidate5/review-final.json
+  scoped_packages_accepted: true
+  whole_feature_complete: false
+  business_acceptance: not_run
+
+remote_source_delivery_20261007:
+  status: components_verified_root_pending
+  components: evidence/delivery/resume-20261007/component-remotes.json
+  checker: evidence/delivery/resume-20261007/source-delivery-check.json
+  server_validation: pending_after_root_push
+  whole_feature_accepted: false

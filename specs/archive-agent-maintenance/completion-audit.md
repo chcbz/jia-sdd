@@ -398,3 +398,41 @@ Main production/test编译通过，API三class **71项/68PASS/3FAIL、0skip、Gr
 ### 用户两小时时限：未完成停止
 
 最后窄修后API三class71/71PASS、Gradle0，Client85/84PASS/1FAIL、0skip、exit1自然结束。真实配额回收冲突仍未修复，独立生命周期review/Agent平台tests与双连接竞争selector未完成，不声明源码完成/已推送。Writer及Reviewer已关闭，源码和两轮原失败均保留，详见stopped-at-user-deadline.md。不自动继续，需用户另行明确要求。
+
+## 显式恢复与fresh失败（2026-10-07）
+
+用户要求恢复开发；原停止与失败原件保留。本轮重新核验Root/API/Web/Client本地HEAD及远端分支，远程仍为旧局部基线，未完整push、未更新pins。冻结Client tree43ed42f1a40b9d336d1a229d6f369ce945352acb在Linux Node22.23.2自然运行85项，84PASS/1FAIL/0skip/exit1；唯一失败仍为服务端授权回收配额路径，actual recovery_required / expected completed，PLATFORM_SKILL_RECEIPT_PENDING: PLATFORM_SKILL_INSTALL_CONFLICT。批准ZIP摘要未变。唯一critical Writer恢复窄修及双连接grant/reclaim竞争selector；独立审查未开始，不声明源码完成。新原件 evidence/lifecycle/resume-20261007-baseline/。
+
+### 2026-10-07 生命周期候选1定向自检
+
+API tree3aebabe2cc75ff3113ea44f132209177ccabed53 / Client tree161b741b0f425d54434e2d2b75607c1bad8ab665。Client合法rename后的节点身份改用dev/ino校验，保留父目录、marker和批准包proof；原受控回收selector通过，三selectors85/85PASS/0skip/exit0自然结束。Chat三classes71/71PASS/0skip/Gradle0；Agent五classes66/51PASS/15FAIL/0skip/Gradle1，14项为Windows不支持POSIX setPosixFilePermissions，另1项为Windows缺创建symlink所需特权，原始XML/日志保留，不删除selector或放宽权限。两套API编译通过，source tree前后一致、XML全部fresh。新增双连接grant/reclaim两种锁顺序selectors已编译，实库和Linux文件系统执行留组件→Root push后的服务端验证。独立只读review进行中，尚未接受、提交或push；不得把Windows51PASS或编译结果表述为全部通过。原件evidence/lifecycle/resume-20261007-candidate1/。
+
+候选1独立GPT只读复审REJECT_LOCAL_LIFECYCLE_SOURCE_SCOPE（跨模型provider启动失败，非跨模型；P0=0/P1=1/P2=0）：result事务先普通读取建立RR快照，reclaim虽锁installation，但最终普通COUNT及非锁定NOT EXISTS仍可能漏掉等待期间已提交ACTIVE/READ_ONLY grant，错误持久RECLAIMABLE并允许删除引用副本。原两种锁顺序tests没先建立旧快照，不覆盖此窗口。已交唯一Writer做精确scope的current locking read、installref索引/精确迁移与第三个双连接旧快照selector。71API/85ClientPASS保留但不能抵消源码P1，不提交被拒候选。原件resume-20261007-candidate1/review.json。
+
+### 2026-10-07 生命周期候选2：最新冻结树定向检查
+
+API冻结tree `32af4f243fe2fba0213638c16c463a7d3c78236e`；Client保持tree `161b741b0f425d54434e2d2b75607c1bad8ab665`，明确复用候选1同树Linux三selectors85/85PASS、0skip、exit0自然完成，不冒称重新执行。Main最新Chat三classes72/72PASS、0skip、Gradle0；Agent五classes67项/52PASS/15FAIL、0skip、Gradle1，fresh XML逐项确认14项Windows POSIX unsupported和1项symlink特权限制，失败原件不删。API测试前后同树，编译包含新增MySQL selectors；实库执行后置服务端。
+
+RR P1修复在installation行锁后使用exact scope/agent/installation的`SELECT grant_ref … LIMIT 1 FOR SHARE`当前读，新增`idx_archive_execution_installation`；精确21→22迁移覆盖“索引已提交、新表未创建”恢复，错误索引/22表缺索引拒绝。新增双连接selector先建立旧RR快照再提交ACTIVE/READ_ONLY grant，两种原锁顺序selectors亦保留。前代fixture由f7811da原Git blob导出，单路径`-text`，worktree=index=原blob：21表、LF、40311 bytes、SHA256 `f814993101130aa9185c89ccba1ba134378a2c1139c098df8fd70782f54e3e6b`，不以旧Windows CRLF摘要绑定Linux制品。
+
+唯一Writer已关闭；独立SOL Reviewer继续整个生命周期包最终只读审查，不仅关闭RR finding。跨模型provider不可用事实保留，不假称跨模型。本候选尚未接受/提交/push，Root pins/gitlinks未更新；84业务用例仍not_run，生产操作未执行。原件`evidence/lifecycle/resume-20261007-candidate2/`。
+### 候选2完整生命周期复审：4P1/1P2，未提交
+
+独立同模型只读复审覆盖API36/Client6文件及直接合同，`REJECT_LOCAL_LIFECYCLE_SOURCE_SCOPE`，P0=0/P1=4/P2=1；旧RR引用快照P1已关闭（源码与新双连接测试覆盖，实库未跑）。新增具体构造：从未创建目录的reservation无法删成tombstone；旧上传借DELETED→PENDING后的当前revision发生ABA；双清理实例共享删除claim，迟到物理删除可破坏重新引用对象；Client候选无自身receipt、由后续durable receipt授权时，删target后崩溃不能恢复registry；最早32个永久安装tombstone饥饿后续候选。审查未执行这些复现，不把它们冒称已实跑失败；原定向PASS仍不能抵消源码缺陷。
+
+Reviewer已关闭，唯一critical Writer恢复仅修这5项并补精确复现测试。保持原D2、批准ZIP不变，不由Main改应用源码，不推送被拒树；API/Client尚未提交，本轮组件/Root未push。原件`evidence/lifecycle/resume-20261007-candidate2/review-final.json`。
+### 候选3：Client91PASS，API编译未通过（非Windows环境失败）
+
+五项源码修复冻结API tree9f0510efab2acca5215b2ab4845dc6b0525f3a29 / Client treeb21d3c6181c5e8b7a306314024719d4f9af365f6。Client精确Git归档Linux三files91/91PASS、0skip、exit0自然完成；新增receipt丢失后恢复/伪造scope与parent拒绝/40代真实批准包连续回收通过，服务端回执为明确unit合同模型，不替代真实MySQL。
+
+API必要编译失败：JdbcPlatformInstallationStore.java124错误引用Jackson2的com.fasterxml.jackson.databind.ObjectMapper，本项目依赖Jackson3 tools.jackson。Agent tests未执行，脚本保留的67项XML全部stale，来自旧候选2，仅作原始观察保留，不能宣称新树52PASS/15WindowsFAIL。Chat因同编译依赖未启动。唯一Writer仅修项目JSON依赖/严格解析，Client不再修改；尚未独立复审或提交推送。原件evidence/lifecycle/resume-20261007-candidate3/。
+### 候选4：最新必要自检及最终窄复审
+
+API a0e42a3862be5b0274ebb629bab0e65be9494088 / Client b21d3c6181c5e8b7a306314024719d4f9af365f6。仅改用项目Jackson3 JsonMapper且保留严格解析后，API编译通过（包括全部新增MySQLselectors），Chat三classes76/76PASS、0skip、Gradle0；Agent五classes72/55PASS/17FAIL、0skip、Gradle1，fresh XML逐项核实16POSIX unsupported+1Windows symlink权限失败，未放宽权限。API测试前后同树。Client保持b21d同树，明确复用候选3自然91PASS，不冒称重跑。唯一Writer关闭，独立SOL只读窄审核5项修复及变更相关合同/迁移/测试，尚未裁定。
+
+来源retry采用新sourceId/独立物理URI；旧代durable tombstone保留重扫晚upload。最终提交绑定本次reservation revision。平台安装journal为服务端内部列，receipt HTTP形状不扩，同结果批次稳定，优先未fence的有效副本再有界推进旧tombstone；原limit32和grant current locking read保留。平台从原f7811da精确前代一次atomic ALTER增加journal与RECLAIMABLE CHECK，partial/drift拒绝。前代platform fixture2775B、2表、LF、SHA c86b77b0047b772cc8d1b49cf773c6ce9568ab4dc69ba67e40b33938e9542e42，worktree=index=原Git blob；原blob自带EOF空行保留，不为whitespace检查破坏绑定字节。原件evidence/lifecycle/resume-20261007-candidate4/。
+候选4最终独立窄审拒绝（P0=0/P1=0/P2=1），旧RR及五项修复均已源码闭合，但Client新增command发布前崩溃的commandless registry会使后续quota inventory持续IO_FAILED。只读审查为源码构造，未冒称实跑复现。唯一Writer仅修此Client问题与定向测试；API接受修复树保持不变。未提交被拒树，组件/Root未push。原件review-final.json。
+
+### 2026-10-07 原D2源码收口（不等于验证/部署完成）
+
+最终candidate5 API a0e42a / Client b3f72d：仅Client commandless P2增量，真实SIGKILL双窗口及9异常负例新增，Linux三files104/104PASS、0skip、exit0自然结束。API同a0e42a结果明确复用candidate4，不新跑Gradle。独立只读ACCEPT_LOCAL_LIFECYCLE_SOURCE_SCOPE，P0/P1/P2=0，沿用已闭合RR和原五项结论，非跨模型。API提交5722e7fa / Client9426030精确等于接受trees，Web已有6dd4553c；源包全部收口，运维/迁移/崩溃恢复文档同步。完整远程交付和服务端验证仍为不同门槛；84用例保持not_run，不授权生产或付费操作。原件evidence/lifecycle/resume-20261007-candidate5/。

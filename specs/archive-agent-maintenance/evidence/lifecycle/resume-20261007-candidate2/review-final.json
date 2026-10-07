@@ -1,0 +1,61 @@
+{
+  "client_tree": "161b741b0f425d54434e2d2b75607c1bad8ab665",
+  "reviewer_role": "sol_reviewer",
+  "api_tree": "32af4f243fe2fba0213638c16c463a7d3c78236e",
+  "whole_feature_complete": false,
+  "findings": [
+    {
+      "file": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/FileSystemAgentTaskArtifactStorage.java",
+      "title": "Never-written source reservation remains DELETE_PENDING because absent parent directory is IO_FAILURE",
+      "required_fix": "Treat explicit NOFOLLOW missing directory as already absent, reject all other path errors",
+      "priority": "P1",
+      "lines": "174-178,237-248,414-421",
+      "id": "P1-01"
+    },
+    {
+      "file": "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceServiceImpl.java",
+      "title": "Old upload borrows reactivated reservation revision and commits deleted object",
+      "required_fix": "Carry reservation generation/revision across storage I/O and match it at final commit",
+      "priority": "P1",
+      "lines": "155-224",
+      "id": "P1-02"
+    },
+    {
+      "file": "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/service/ArchiveSourceArtifactReconciler.java",
+      "title": "Two reconcilers share deletion claim and late delete destroys new REFERENCED object",
+      "required_fix": "Cross-instance physical-delete fencing or generation-isolated physical objects with durable old-generation cleanup",
+      "priority": "P1",
+      "lines": "62-84",
+      "id": "P1-03"
+    },
+    {
+      "file": "conf/codex-ws-agent/platform-skill-manager.mjs",
+      "title": "Missing-target reclaim recovery incorrectly requires candidate own receipt despite authorizer durable receipt",
+      "required_fix": "Bind recovery to actual authorizer receipt and candidate ID plus exact candidate command/result/prepared/scope/parent proof",
+      "priority": "P1",
+      "lines": "964-1040",
+      "id": "P1-04"
+    },
+    {
+      "file": "agent/jia-agent-service/src/main/java/cn/jia/agent/platform/JdbcPlatformInstallationStore.java",
+      "title": "Oldest32 permanent RECLAIMABLE tombstones starve later real quota candidates",
+      "required_fix": "Durable bounded authorization progress without raising limit/deleting tombstones/directory-derived authority",
+      "priority": "P2",
+      "lines": "134-141",
+      "id": "P2-01"
+    }
+  ],
+  "read_only": true,
+  "source_pushed": false,
+  "verdict": "REJECT_LOCAL_LIFECYCLE_SOURCE_SCOPE",
+  "p1": 4,
+  "evidence_mode": "Specific source constructions, reproduction tests not run by reviewer",
+  "source_edited_by_reviewer": false,
+  "previous_RR_finding": "closed_source_coverage_mysql_pending",
+  "reviewer_agent": "01a11605-9359-7f72-a10e-da82cff4bf4f",
+  "scope": "All API36/Client6 HEAD-to-index files and direct contracts; previously accepted pagination/checkpoint/STAGING not re-reviewed",
+  "tests_run_by_reviewer": false,
+  "cross_model": false,
+  "p2": 1,
+  "p0": 0
+}

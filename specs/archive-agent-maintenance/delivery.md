@@ -65,3 +65,7 @@ Prerequisite doubles：identity/bootstrap/account、registration、execution adm
 ## 7. 当前用户交付顺序（2026-10-03）
 
 本文件前六节是已推送旧局部基线的历史事实。当前增量遵循 `delivery-order.md`：原规格功能源码收口并更新文档 → 本地必要定向自检 → 组件特性分支提交/push与远程SHA核验 → Root更新gitlinks/pins并push → 服务端全面验证与必要后续修复。全面本地回归、Runtime/browser不再是首轮完整源码push前置条件；“开发完成/已推送”和“服务端全面验证待执行/结果”必须分开声明。现阶段功能缺口仍在实现，新完整源码交付未完成。
+
+## 2026-10-07 最新接续（覆盖历史当前状态）
+
+原D2源码与文档已收口，全部局部源码包独立接受。API5722e7fa / Web6dd4553c / Client9426030；最后生命周期Client Linux104PASS，API同树Chat76PASS及Agent17Windows环境失败原件保留。完整远程提交回执以evidence/delivery/resume-20261007/为准，组件→Root推送后再做隔离服务端全面验证。生产发布/迁移/真实任职与上架/付费调用未执行，84业务用例仍not_run；源范围接受不是whole-feature accepted。

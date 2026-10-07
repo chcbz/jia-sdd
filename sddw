@@ -104,8 +104,8 @@ verify_feature() {
   (( missing == 0 )) || exit 1
   local manifest="$feature_dir/integration.yaml"
   local expected_api expected_web actual_api actual_web
-  expected_api=$(awk '/^  api_commit:/{print $2}' "$manifest")
-  expected_web=$(awk '/^  web_commit:/{print $2}' "$manifest")
+  expected_api=$(awk '/^pinned_revisions:/{pinned=1;next} pinned && /^[^ ]/{exit} pinned && /^  api_commit:/{gsub(/\r/, "", $2);print $2;exit}' "$manifest")
+  expected_web=$(awk '/^pinned_revisions:/{pinned=1;next} pinned && /^[^ ]/{exit} pinned && /^  web_commit:/{gsub(/\r/, "", $2);print $2;exit}' "$manifest")
   actual_api=$(git -C api rev-parse HEAD)
   actual_web=$(git -C web rev-parse HEAD)
   [[ "$expected_api" =~ ^[0-9a-f]{40}$ ]] || { echo 'integration.yaml api_commit is not pinned' >&2; exit 1; }
