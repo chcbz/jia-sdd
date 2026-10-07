@@ -11,3 +11,5 @@
 轻量检查：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-prototype.mjs`。真实浏览器：服务启动后 `node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-browser.cjs`，只启动并清理自己的临时Chromium，不运行构建或真实业务。
 
 索引/样式浏览器核验：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-index.cjs`。
+
+议事图标统一20px、1.8px描边，点击区域统一38px。定向浏览器检查：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-icons.cjs`。
