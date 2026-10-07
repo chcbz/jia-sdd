@@ -16,14 +16,20 @@ function seedBaseline(){
  if(scenario==='completed'&&state.task){if(!state.outputs.length){const ids=['image','audio','document','text'].map(type=>output(type,'一只小鸟停在枝头。',1,state));state.delivery=ids;state.messages.push({role:'AGENT',text:'本次示例成果如下。',outputs:ids});}state.task.complete=true;state.final=[...state.delivery];state.operation={id:'demo-completed-operation',outputs:[...state.final],stage:'completed',writes:1};}
 }
 const optimizedComposer=syncCurrentComposer;
-syncCurrentComposer=function(panel){optimizedComposer(panel);const ctx=conversation(),locked=ctx.pending||!!ctx.task?.complete;const voice=$('.voice-start',panel);if(voice)voice.disabled=locked;$('.composer-more',panel).disabled=locked;
+syncCurrentComposer=function(panel){optimizedComposer(panel);const ctx=conversation(),locked=ctx.pending||!!ctx.task?.complete;const voice=$('.voice-start',panel);if(voice){voice.disabled=locked;voice.innerHTML=uiIcon('mic');voice.title='语音输入';}
+ const actions=$('.composer-actions',panel);$('.composer-attach',panel)?.remove();const attach=document.createElement('button');attach.type='button';attach.className='composer-attach';attach.dataset.action='complete-materials';attach.title='添加资料';attach.setAttribute('aria-label','添加资料');attach.disabled=locked||state.baselineScenario==='recording';attach.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.3-8.3"/></svg>';actions.insertBefore(attach,$('.composer-inline-voice',actions));
+ const more=$('.composer-more',panel);more.disabled=locked||state.baselineScenario==='recording';more.title='更多操作';more.setAttribute('aria-label','更多操作');
+ $('.composer-send',panel).innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>';
+ const summary=$('.context-summary small',panel);if(summary)summary.title=summary.textContent;
  $$('.toolbar-actions button',panel).forEach(b=>{if(ctx.task?.complete&&b.dataset.action!=='ui-history')b.disabled=true;if(ctx.pending)b.disabled=true;});
  if(['waiting','streaming'].includes(state.baselineScenario)&&!ctx.pending){$$('.is-pending',panel).forEach(e=>e.remove());}
  const menu=$('.composer-more',panel);menu?.setAttribute('aria-expanded','false');
- // Scope exact UI actions to completed interactions, without moving the latest toolbar or voice.
+ // Preserve actions and state, while the compact CSS positions toolbar right and voice before send.
  const mapping={'ui-refresh':'complete-refresh','ui-history':'complete-history','ui-new':'complete-new','ui-voice':'complete-voice','ui-voice-stop':'complete-voice-stop','ui-voice-cancel':'complete-voice-cancel','ui-voice-append':'complete-voice-append','ui-voice-replace':'complete-voice-replace'};
  for(const [old,next] of Object.entries(mapping))$$(`[data-action="${old}"]`,panel).forEach(e=>e.dataset.action=next);
 };
+const completionMore=showMore;
+showMore=function(){completionMore();$('.composer-more-panel .composer-add-materials')?.remove();const more=$('.composer-more');if(more)more.setAttribute('aria-expanded',String(!!$('.composer-more-panel')));};
 const optimizedSupplement=renderSupplement;
 renderSupplement=function(){optimizedSupplement();document.title=labels[page]+' · 界面优化基准（离线交互）';const note=$('.baseline-provenance');if(note)note.textContent='优化界面 · 交互补全 2026-10-07 · 离线示例';
  $$('.workbench-account-action,.workbench-sidebar-account').forEach(e=>{e.disabled=false;e.dataset.prototypePage='account';});
@@ -66,6 +72,7 @@ document.addEventListener('click',event=>{
  const t=event.target.closest('button,[data-action]');if(!t||t.disabled)return;const action=t.dataset.action;
  if(!action?.startsWith('complete-'))return;event.preventDefault();event.stopImmediatePropagation();
  const ctx=conversation();
+ if(action==='complete-materials'){$('.composer-more-panel')?.remove();$('.composer-more')?.setAttribute('aria-expanded','false');openMaterials('chat');}
  if(action==='complete-go'){if(['detail','chat'].includes(t.dataset.page)&&!state.task){feedback('请先提出需求；或从页面与状态索引打开脱敏示例。');return;}if(t.dataset.page==='private'&&!state.privateAgentId){state.selectedAgent=state.selectedAgent||{id:'0',name:'宋江'};openPrivate();return;}go(t.dataset.page);}
  if(action==='complete-entries')openEntries();
  if(action==='complete-index')location.href='pages.html';

@@ -1,3 +1,16 @@
+# 厅内议事简化复验 · 2026-10-07
+
+本轮为用户截图提出的**离线原型新提案**，不是Web上线。完成：上部三个话头图标靠右且不另占整行；底部左侧＋/资料回形针，右侧语音麦克风/发送；资料入口外置，＋不再重复显示资料；图标保留名称、焦点及禁用反馈。
+
+- 实际Chromium全流程复验31组、70项布局检查通过，1440/390/320三种宽度均验证新的工具栏同排与输入操作顺序；无脚本异常或外部请求。
+- 72项轻量文档检查通过；资料选择、语音草稿、话头记录、会话隔离、成果与验收恢复均保留。
+- 旧历史样式的窄屏单列覆盖已定位并用当前原型局部样式修正；不改冻结source-ui.css、hall-view-tabs.css与共享来源。失败记录保留在checks-history，不改记PASS。
+- 最新截图：[手机议事](prototype/screenshots/390-chat.png)、[桌面议事](prototype/screenshots/1440-chat.png)；报告仍为prototype下本轮重新生成的browser-checks-20261007.json与prototype-checks.json。修订前记录见checks-history/before-chat-simplification-*。
+
+新布局以 [design.md的厅内议事简化提案](design.md) 为准；下方交互补全说明保留历史。真实业务R01仍待实现，没有API/Web构建、部署或业务能力完成结论。
+
+---
+
 # 交互补全验收 · 2026-10-07
 
 ## 本轮结论
