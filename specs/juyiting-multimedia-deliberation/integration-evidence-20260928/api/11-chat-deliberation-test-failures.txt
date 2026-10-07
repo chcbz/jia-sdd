@@ -1,0 +1,13 @@
+MMD-INTEGRATE-API-20260928 second chatDeliberation invocation failure
+Date: 2026-09-28
+Commit: 4e083be2edc35249f66933fafeb04fceac33cd94
+Tree: acd1311c9a7d23a748bc97caad2b03b1b2aa3e99
+Selector: :chat:jia-chat-service:chatDeliberation
+Result: 56 tests completed, 3 failed.
+Failures and attribution:
+1. ApiHostedWireV1ContractTest NoSuchMethodException: its reflective factsManifest lookup still omitted the new trusted taskMaterials Map argument.
+2. ChatConversationDurabilityContractTest asserted a deleted fast-branch comment literal ("builtin work is intentionally not tied") instead of the merged durable-admission/SmartLifecycle boundary text.
+3. ChatDeliberationOutboxRelayTest asserted a phrase across a production text line break; the prompt still explicitly states that references do not grant file-read permission.
+These are deterministic merge-test compatibility omissions on the new tree, not runtime/environment failures. The other 53 chatDeliberation tests passed.
+Remediation:
+Adapt only these three test assertions/signatures to the merged F1-safe contract; do not alter F2/F3/INSPECT business behavior. Commit and rerun the selector once on the new exact tree.

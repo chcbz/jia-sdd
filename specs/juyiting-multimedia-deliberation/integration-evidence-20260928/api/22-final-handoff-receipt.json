@@ -1,0 +1,144 @@
+{
+  "task_id": "MMD-INTEGRATE-API-20260928",
+  "generated_at": "2026-09-28T22:29:00+08:00",
+  "branch": "codex/juyiting-multimedia-deliberation",
+  "baseline_commit": "e15e1a9d947e86e5f81a3288948087466a8a879c",
+  "fast_commit": "caee54fc27a08146f9cc57219cf86c763e41c531",
+  "merge_commit": {
+    "commit": "3e608552a4750ad073e8c8bf4f821053e79fc660",
+    "tree": "9fd78c7ae206c176a7a004f1393c3bfebc1d0c94",
+    "parents": [
+      "e15e1a9d947e86e5f81a3288948087466a8a879c",
+      "caee54fc27a08146f9cc57219cf86c763e41c531"
+    ]
+  },
+  "final": {
+    "commit": "742ba9035e3a05c0f4896fd93e5cb285ddb297f6",
+    "tree": "a71e20a7d478e5abd91d114744b7f34466e7cafe",
+    "clean": true
+  },
+  "followup_commits": [
+    "4e083be2edc35249f66933fafeb04fceac33cd94",
+    "78ca7f08b1d2f02ee4079c0002d8edd7671323a8",
+    "bc4bd8b15cc06ed29bc591ad01258d1533711f2a",
+    "742ba9035e3a05c0f4896fd93e5cb285ddb297f6"
+  ],
+  "change_summary": {
+    "files": 57,
+    "insertions": 6070,
+    "deletions": 936,
+    "expected_conflicts": 6,
+    "whole_file_ours_theirs": false
+  },
+  "selectors": [
+    {
+      "selector": ":chat:jia-chat-service:chatDeliberation",
+      "tests": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "PASS",
+      "fixture_digest": "e396697691291a67b058f2985d8a95dbd323617cbb2bcb4c2ac99635e0ec0c86",
+      "evidence_key": "a88c9d2a9861016f62d3c5add371bad6b561ad733d13ce041687841ec1e5ad7b"
+    },
+    {
+      "selector": ":chat:jia-chat-service:bf08FormalFlow",
+      "tests": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "PASS",
+      "fixture_digest": "N/A",
+      "evidence_key": "f0fcfdf92c793fbc824d77778b8058cf37cee5aa534a2850b55adffa3a4a5bea"
+    },
+    {
+      "selector": ":chat:jia-chat-service:managedHostingHandshake",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "PASS",
+      "fixture_digest": "N/A",
+      "evidence_key": "87ad6f8eb11531a10f8d37cd940e946c211b40c3924f1a7afee6e1ef0ac66863"
+    },
+    {
+      "selector": ":chat:jia-chat-service:test --tests cn.jia.chat.service.JuyitingAgentRelayServiceTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "PASS",
+      "fixture_digest": "N/A",
+      "evidence_key": "561247b4dbad337ee391bb4d403555250c440b08e7babcdc02136badaaa322eb"
+    }
+  ],
+  "final_total": {
+    "tests": 129,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failure_attribution": [
+    {
+      "tree": "9fd78c7ae206c176a7a004f1393c3bfebc1d0c94",
+      "selector": "chatDeliberation",
+      "result": "compile failure",
+      "cause": "ApiHostedWireV1ContractTest used pre-F1 eventPayload signature",
+      "evidence": "10-chat-deliberation-compile-failure.txt"
+    },
+    {
+      "tree": "acd1311c9a7d23a748bc97caad2b03b1b2aa3e99",
+      "selector": "chatDeliberation",
+      "result": "56 tests / 3 failures",
+      "cause": "one reflective signature and two stale string assertions",
+      "evidence": "11-chat-deliberation-test-failures.txt"
+    },
+    {
+      "tree": "f97844bf7373b36020c04660cffadd41b8acf83d",
+      "selector": "chatDeliberation",
+      "result": "56 tests / 1 failure",
+      "cause": "canonical fixture omitted exact selectedTaskId metadata",
+      "evidence": "12-chat-deliberation-fixture-drift.txt"
+    },
+    {
+      "tree": "23a6b7d4a31095f3f1c0ddbea17873d412df84de",
+      "selector": "bf08FormalFlow",
+      "result": "compile failure (47 repeated symbols)",
+      "cause": "two missing Mockito matcher static imports",
+      "evidence": "14-bf08-compile-failure.txt"
+    }
+  ],
+  "f1": {
+    "status": "CLOSED_IN_SCOPED_API_DURABLE_PATH",
+    "details": "Trusted human and authenticated agent identities are used for durable rows/events/wire; client/payload names are adversarially tested and ignored."
+  },
+  "residual": [
+    "F2 capability negotiation incomplete",
+    "F3 complete context reconstruction incomplete",
+    "F4/INSPECT execution incomplete",
+    "No isolated MySQL/full module/bootJar/deploy/production mutation/paid model verification"
+  ],
+  "api_fixture": {
+    "path": "chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/api-hosted-wire-v1.json",
+    "sha256": "db50396c2522f7fe8c32af8027abc253782c16eee8354119b2eac643140ce6ee",
+    "provenance_path": "chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/api-hosted-wire-v1.provenance.json",
+    "provenance_file_sha256": "01f7baa3b82c3c5048505448c288298b627db89c83798ab6a0e475b228797dd7",
+    "structure_changes": [
+      "metadata adds trusted senderType/senderName/jiacn and selectedTaskId at outer and nested payload",
+      "factsManifest/contextSnapshot.facts add taskMaterials:null",
+      "contextHash and contextSnapshotId are regenerated"
+    ],
+    "client_pin_user_reported": {
+      "commit": "33e38de",
+      "fixture_sha256": "db50396c2522f7fe8c32af8027abc253782c16eee8354119b2eac643140ce6ee",
+      "status": "HASH_MATCH_REPORTED_BY_USER"
+    }
+  },
+  "scope_guards": {
+    "pushed": false,
+    "merged_to_develop": false,
+    "deployed": false,
+    "paid_model_called": false,
+    "production_dml": false
+  }
+}

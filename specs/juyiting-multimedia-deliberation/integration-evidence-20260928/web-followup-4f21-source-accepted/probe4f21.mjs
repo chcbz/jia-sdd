@@ -1,0 +1,15 @@
+import { buildFollowupIntent } from '/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-followup-owner-v3-20261001/src/composables/juyiting/hallBountyFollowupIntent.js'
+import { useHallBountyFollowup } from '/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-followup-owner-v3-20261001/src/composables/juyiting/useHallBountyFollowup.js'
+const context = { schemaVersion:1, conversationId:'conversation_fixture', conversationGeneration:'7', taskId:'task_fixture', targetAgentId:'agent_fixture', taskVersion:'0', assignmentRevision:'0', baselineGrantVersion:'1', requirementRevision:'1' }
+const make = content => buildFollowupIntent({context, content,kind:'generate_image',inputRefs:[],continuationOf:null})
+const results = []
+results.push({case:'4000 Unicode codepoints remain legal',expected:true,actual:make('🐦'.repeat(4000))!==null,codepoints:4000,UTF16CodeUnits:8000})
+results.push({case:'ISO control LF is rejected before preview',expected:false,actual:make('画\n一只鸟')!==null})
+results.push({case:'ISO control C1 NEL is rejected before preview',expected:false,actual:make('画\u0085一只鸟')!==null})
+const original = Object.getOwnPropertyDescriptor(globalThis,'crypto');Object.defineProperty(globalThis,'crypto',{value:undefined,configurable:true})
+const posts=[];const data=new Map();const storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)}
+const preview = {schemaVersion:3,requestId:'request_fixture',stepId:'step_fixture',executionIntentId:'intent_fixture',ownerPayloadSha256:'a'.repeat(64),instructionSha256:'b'.repeat(64),sourceSnapshotSha256:'c'.repeat(64),conversationGeneration:'7',taskVersion:'0',assignmentRevision:'0',grantVersion:'1',requirementRevision:'1',targetAgentId:'agent_fixture',operation:'GENERATE_IMAGE',sources:[],providerBinding:{bindingId:'binding_fixture',bindingEpoch:'1'},modelId:'model_fixture',custody:'OPERATOR_TEMPLATE',operatorPolicyRevision:'policy-r1',pricingMode:'UNPRICED_EXTERNAL_ACCOUNT',maxOutboundRequestAttempts:1}
+const lane=useHallBountyFollowup({chatApi:{get:async()=>({data:context}),create:async(path,body,options)=>{posts.push({path,key:options.headers['Idempotency-Key'],content:body.content});return {data:preview}}},actorScopeKey:()=> 'tenant\u0000client\u0000owner',authorizationGeneration:()=>1,getContext:()=>({conversationId:context.conversationId,taskId:context.taskId,targetAgentId:context.targetAgentId}),getContextGeneration:()=>1,storage,enabled:()=>true})
+const first=await lane.prepareGenerate({content:'画一只鸟'});const second=await lane.prepareGenerate({content:'画两只鸟'});lane.dispose();if(original)Object.defineProperty(globalThis,'crypto',original);else delete globalThis.crypto
+results.push({case:'absence of secure entropy must emit zero preview POSTs, never reuse a constant key',expectedPreviewPosts:0,actualPreviewPosts:posts.length,posts,first,second})
+console.log(JSON.stringify({scope:'actual immutable Web4f21 primitive and Vue composable probe using mock HTTP only; no Provider/production/browser/product PASS',results},null,2))

@@ -1,0 +1,38 @@
+
+                CREATE TABLE chat_deliberation_schema_version (
+                  version BIGINT NOT NULL,stage VARCHAR(30) NOT NULL,updated_at BIGINT NOT NULL,
+                  PRIMARY KEY(version)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
+                
+
+-- EXACT_TEXT_BLOCK_BOUNDARY --
+
+
+                CREATE TABLE chat_request (
+                  id BIGINT NOT NULL AUTO_INCREMENT,tenant_id VARCHAR(50) NOT NULL,
+                  owner_jiacn VARCHAR(50) NOT NULL,client_id VARCHAR(50) NOT NULL,
+                  request_id VARCHAR(100) NOT NULL,request_revision BIGINT NOT NULL,
+                  request_digest VARCHAR(100) NOT NULL,conversation_id VARCHAR(100) NOT NULL,
+                  conversation_generation BIGINT NOT NULL,user_message_id BIGINT NOT NULL,
+                  aggregate_state VARCHAR(30) NOT NULL,state_version BIGINT NOT NULL DEFAULT 0,
+                  created_at BIGINT NOT NULL,updated_at BIGINT NOT NULL,PRIMARY KEY(id),
+                  UNIQUE KEY uk_chat_request_scope_revision
+                    (tenant_id,owner_jiacn,client_id,request_id,request_revision)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
+                
+
+-- EXACT_TEXT_BLOCK_BOUNDARY --
+
+
+                CREATE TABLE chat_turn (
+                  turn_id VARCHAR(64) NOT NULL,tenant_id VARCHAR(50) NOT NULL,
+                  owner_jiacn VARCHAR(50) NOT NULL,client_id VARCHAR(50) NOT NULL,
+                  request_id VARCHAR(100) NOT NULL,request_revision BIGINT NOT NULL,
+                  conversation_id VARCHAR(100) NOT NULL,conversation_generation BIGINT NOT NULL,
+                  target_agent_id VARCHAR(100) NOT NULL,snapshot_id VARCHAR(64) NOT NULL,
+                  context_digest VARCHAR(100) NOT NULL,dispatch_id VARCHAR(64) NOT NULL,
+                  route VARCHAR(20) NOT NULL,state VARCHAR(30) NOT NULL,
+                  state_version BIGINT NOT NULL DEFAULT 0,last_delta_seq BIGINT NOT NULL DEFAULT 0,
+                  created_at BIGINT NOT NULL,updated_at BIGINT NOT NULL,PRIMARY KEY(turn_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
+                

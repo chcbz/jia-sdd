@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-02",
+  "target": {
+    "bindingId": 15,
+    "personaCode": "gongsunsheng",
+    "currentBindingState": "SUSPENDED",
+    "currentIdentityState": "SUSPENDED",
+    "runtimeRow": "MISSING",
+    "hostedProfileRow": "MISSING",
+    "publishedProfileSection": "MISSING"
+  },
+  "authoritativeExistingSource": {
+    "lane": "MANAGED_HOSTING",
+    "activeLeaseCount": 1,
+    "activeInitialIntentCount": 1,
+    "entitlement": "VALID",
+    "managedCredentialReference": "PRESENT_VALID_SCOPE_MATCH_NO_EXPIRY",
+    "managedClaim": "PRESENT_SCOPE_MATCH_MODE_0600",
+    "secretsIncluded": false
+  },
+  "minimumPreferredRepair": {
+    "createHostedProfile": false,
+    "createIdentity": false,
+    "rebind": false,
+    "newRental": false,
+    "newCredential": false,
+    "steps": [
+      "exact-scope CAS restore of existing binding and existing identity only",
+      "one existing zero-ledger-posting managed-hosting reprovision request",
+      "readback of runtime identity and target registration"
+    ],
+    "requiresExplicitAuthorization": [
+      "production lifecycle DML",
+      "managed-host reprovision receipt and runner action",
+      "managed service custody"
+    ]
+  },
+  "alternateBroaderMigration": {
+    "condition": "only if Main deliberately selects hosted-profile publisher lane",
+    "requiresHostedProfileInsert": true,
+    "classification": "explicit migration/adoption, not repair",
+    "authorizedNow": false
+  },
+  "providerCapabilityStatus": "NOT_READY",
+  "installCandidateAllowed": false
+}

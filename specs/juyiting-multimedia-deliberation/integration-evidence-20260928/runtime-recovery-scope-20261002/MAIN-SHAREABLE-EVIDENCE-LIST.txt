@@ -1,0 +1,39 @@
+SHAREABLE SANITIZED EVIDENCE INDEX — 2026-10-02
+
+Authorized for Main to copy:
+  MAIN-SHAREABLE-SUMMARY.md
+  MAIN-SHAREABLE-EVIDENCE-LIST.txt
+  binding15-minimal-repair-scope.redacted.json
+  MAIN-SHAREABLE-SHA256SUMS
+
+Do NOT copy other files from this directory: they are private preparation artifacts and may contain exact scope or credential-reference fingerprints.
+
+Read-only evidence represented in the shareable summary:
+1. Production MySQL transaction set read-only and rolled back:
+   - exact-scope binding/identity/runtime/hosted-profile counts;
+   - binding 15 lifecycle and missing runtime/hosted-profile row;
+   - `oauth_api_key` exact-name check for `hosted-binding-15`: zero rows;
+   - managed-hosting lease/initial-intent/managed-key joins: exactly one ACTIVE, valid, exact-scope source;
+   - no reprovision receipt currently exists for binding 15.
+2. Installed profile inspection:
+   - `/home/isp/apps/codex-ws-agent/codex-profiles.conf` exists, root-owned mode 0600;
+   - 4 profile sections total;
+   - 0 sections match binding 15's canonical Agent.
+3. Managed claim inspection:
+   - `/home/isp/apps/codex-ws-agent/managed-host/.agent-claims/<binding15-agent>.json` exists, root-owned mode 0600;
+   - contains only tenantId, clientId, ownerJiacn, and agentId;
+   - values matched the exact database scope but are omitted here.
+4. Source behavior inspected:
+   - `api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/AgentPersonaProvisioningService.java`
+   - `api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/AgentHostedBindingTransaction.java`
+   - `api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/AgentHostedProfilePublisher.java`
+   - `api/agent/jia-agent-service/src/main/java/cn/jia/agent/hosting/HostingRentApplicationService.java`
+   - `api/agent/jia-agent-service/src/main/java/cn/jia/agent/hosting/ManagedHostingCredentials.java`
+   - `api/agent/jia-agent-service/src/main/java/cn/jia/agent/hosting/UnixManagedHostingProvisioner.java`
+5. Provider readiness represented without endpoint, owner, key, or fingerprint disclosure:
+   - existing Responses route is not image-generate/edit authority;
+   - dedicated controlled-image credential absent;
+   - image model/binding/epoch/policy source absent;
+   - inactive candidate remains NOT_READY and is not installable.
+
+No production mutation or runtime operation was performed.

@@ -1,0 +1,25 @@
+{
+  "taskId": "MMD-U4-BROWSER-BASELINE-SERVICE-READINESS",
+  "sourceCommit": "b5be9eae41b1728d79f4a0ef43fdd1bd480c1a92",
+  "sourceTree": "d64f9a03af8fe4876920eba23bb76118b936fe6e",
+  "fixtureDigest": "66295ec02477ed6d951248994bbbe5990f153fc64854221441082411a8d0a770",
+  "actual": {
+    "ControlledImageBridgeMySqlTest": {
+      "tests": 4,
+      "passed": 3,
+      "failed": 1
+    },
+    "ControlledImageIntentOperationGrantMySqlTest": {
+      "started": false
+    },
+    "exit": 1
+  },
+  "failure": "legacy bridge upgrade validation rejected chk_acibo_hash after DDL succeeded",
+  "rootCause": "MySQL 8.0.46 renders a plain regexp literal against CHAR(... CHARACTER SET ascii COLLATE ascii_bin) as _ascii\\'...\\'; the controlled semantic canonicalizer normalized only the known binary cast and not this exact _ascii introducer. The CHECK itself remained enforced and strict.",
+  "catalogEvidence": "/var/tmp/cyf-mmd-api-primary-v3-admission-owner-20261002/mysql846-legacy-bridge-final-catalog.tsv",
+  "catalogEvidenceSha256": "dbcc54ff6427647bc173ce742f30b774823da2ea18244b0df1698407d252231a",
+  "xml": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-primary-v3-admission/agent/jia-agent-service/build/test-results/mmdControlledImageBridge/TEST-cn.jia.agent.service.impl.ControlledImageBridgeMySqlTest.xml",
+  "xmlSha256": "2219a82e5056014a0414e0b818defe0710c04f56fcc07986b1bf396a021ccccc",
+  "rawLog": "NOT_SAVED_BY_ORCHESTRATOR_FOR_THIS_ATTEMPT; terminal output retained in owner tool session 48234",
+  "remediation": "Normalize only _ascii plus the three frozen controlled-image regexp literals in the controlled semantic canonicalizer; keep all operators/literals/parentheses and negative drift checks unchanged."
+}

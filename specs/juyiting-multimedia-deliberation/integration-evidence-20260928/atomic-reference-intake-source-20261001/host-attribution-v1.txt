@@ -1,0 +1,53 @@
+=== kernel own daemon
+[Thu Oct  1 00:37:43 2026] [2170307]     0 2170307  8945416   163552  1728512        0             0 java
+[Thu Oct  1 00:37:43 2026] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-0.slice/session-3847.scope,task=java,pid=2170307,uid=0
+[Thu Oct  1 00:37:43 2026] Out of memory: Killed process 2170307 (java) total-vm:35781664kB, anon-rss:615084kB, file-rss:39124kB, shmem-rss:0kB, UID:0 pgtables:1688kB oom_score_adj:0
+=== memory
+MemTotal:        3813472 kB
+MemAvailable:     899564 kB
+SwapTotal:       2097148 kB
+SwapFree:         127668 kB
+=== cgroup
+13:ioasids:/
+12:perf_event:/
+11:blkio:/user.slice
+10:cpuset:/
+9:hugetlb:/
+8:devices:/user.slice
+7:pids:/user.slice/user-0.slice/session-3847.scope
+6:freezer:/
+5:net_cls,net_prio:/
+4:memory:/user.slice/user-0.slice/session-3847.scope
+3:cpu,cpuacct:/user.slice
+2:rdma:/
+1:name=systemd:/user.slice/user-0.slice/session-3847.scope
+/sys/fs/cgroup/memory/memory.limit_in_bytes
+9223372036854771712
+/sys/fs/cgroup/memory/memory.failcnt
+0
+=== own daemon terminal
+5 warnings
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+5 warnings
+=== telemetry processes
+    PID    PPID   RSS COMMAND
+2161724       1 441432 /opt/cyf/runtime/temurin-21-jre/bin/java -Xms128m -Xmx384m -Xss256k -XX:MaxMetaspaceSize=192m -XX:MaxDirectMemorySize=64m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xlog:gc*::time,uptime,tags -jar /opt/cyf/service/api/cyf-api-kit.jar --server.port=10018 --server.address=127.0.0.1 --spring.profiles.active=prod --logging.level.root=info --logging.level.org.springframework.security=info --spring.ai.mcp.client.enabled=false --spring.ai.mcp.client.toolcallback.enabled=false --spring.autoconfigure.exclude=org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration,org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration,org.springframework.ai.mcp.client.common.autoconfigure.annotations.McpClientAnnotationScannerAutoConfiguration --archive.reader.enabled=true --archive.reader.allowed-scopes[0].tenant-id=oH2zD1PUPvspicVak69uB4wDaFLg --archive.reader.allowed-scopes[0].client-id=jiafewnnv58ec2379c
+1692077 1692066 136136 /usr/local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex -c features.code_mode_host=true app-server --listen unix://
+1096765       1 128496 /home/isp/apps/mysql/bin/mysqld --no-defaults --user=root --basedir=/home/isp/apps/mysql --datadir=/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data --socket=/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock --pid-file=/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.pid --log-error=/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.log --skip-networking --mysqlx=OFF --innodb-buffer-pool-size=32M --innodb-log-file-size=8M --performance-schema=OFF --max-connections=12 --table-open-cache=64 --table-definition-cache=400 --daemonize
+3174547 3173814 66532 /home/isp/apps/mysql/bin/mysqld --defaults-file=/home/isp/apps/mysql/my.cnf --basedir=/home/isp/apps/mysql --datadir=/home/isp/apps/mysql/data --plugin-dir=/home/isp/apps/mysql/lib/plugin --user=mysql --log-error=/home/isp/logs/mysql.log --pid-file=/home/isp/apps/mysql/mysql.pid --socket=/home/isp/apps/mysql/mysql.sock --port=3306
+  28885       1 40152 /usr/local/aegis/aegis_client/aegis_13_03/AliYunDunMonitor
+2069059       1 40040 node /home/isp/apps/codex-ws-agent/agent-client.mjs
+ 120287       1 20704 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+   8150    8035 20660 /home/isp/apps/erlang/lib/erlang/erts-8.3/bin/beam.smp -W w -A 64 -P 1048576 -t 5000000 -stbt db -zdbbl 128000 -K true -B i -- -root /home/isp/apps/erlang/lib/erlang -progname erl -- -home /root -- -pa /home/isp/apps/rabbitmq/ebin -noshell -noinput -s rabbit boot -sname rabbit@iZwz9j3ip2unzhwij0bs30Z -boot start_sasl -kernel inet_default_connect_options [{nodelay,true}] -sasl errlog_type error -sasl sasl_error_logger false -rabbit error_logger {file,"/home/isp/apps/rabbitmq/var/log/rabbitmq/rabbit@iZwz9j3ip2unzhwij0bs30Z.log"} -rabbit sasl_error_logger {file,"/home/isp/apps/rabbitmq/var/log/rabbitmq/rabbit@iZwz9j3ip2unzhwij0bs30Z-sasl.log"} -rabbit enabled_plugins_file "/home/isp/apps/rabbitmq/etc/rabbitmq/enabled_plugins" -rabbit plugins_dir "/home/isp/apps/rabbitmq/plugins" -rabbit plugins_expand_dir "/home/isp/apps/rabbitmq/var/lib/rabbitmq/mnesia/rabbit@iZwz9j3ip2unzhwij0bs30Z-plugins-expand" -os_mon start_cpu_sup false -os_mon start_disksup false -os_mon start_memsup false -mnesia dir "/home/isp/apps/rabbitmq/var/lib/rabbitmq/mnesia/rabbit@iZwz9j3ip2unzhwij0bs30Z" -kernel inet_dist_listen_min 25672 -kernel inet_dist_listen_max 25672
+2071576 2071567 17484 /usr/local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex app-server
+    718     676 14228 CmsGoAgent-Worker start
+  73490       1 13168 /usr/lib/systemd/systemd-journald

@@ -1,0 +1,1074 @@
+TAP version 13
+# Subtest: managed profiles inherit only trusted runtime delivery capabilities
+ok 1 - managed profiles inherit only trusted runtime delivery capabilities
+  ---
+  duration_ms: 3.104265
+  ...
+# Subtest: busy command is durably queued instead of dropped
+ok 2 - busy command is durably queued instead of dropped
+  ---
+  duration_ms: 98.095231
+  ...
+# Subtest: processing command restart enters durable recovery-required state without re-execution
+ok 3 - processing command restart enters durable recovery-required state without re-execution
+  ---
+  duration_ms: 152.044724
+  ...
+# Subtest: durable CHAT startup drains pending exact keys and processing restart stays recovery-required
+ok 4 - durable CHAT startup drains pending exact keys and processing restart stays recovery-required
+  ---
+  duration_ms: 389.515818
+  ...
+# Subtest: durable CHAT duplicate only re-ACKs while fingerprint conflict neither ACKs nor invokes twice
+ok 5 - durable CHAT duplicate only re-ACKs while fingerprint conflict neither ACKs nor invokes twice
+  ---
+  duration_ms: 211.832992
+  ...
+# Subtest: CHAT admission still schedules and retries ACK when initial durable ACK enqueue fails
+ok 6 - CHAT admission still schedules and retries ACK when initial durable ACK enqueue fails
+  ---
+  duration_ms: 306.98649
+  ...
+# Subtest: modern CHAT trust failure enters durable recovery and emits explicit recovery ACK
+ok 7 - modern CHAT trust failure enters durable recovery and emits explicit recovery ACK
+  ---
+  duration_ms: 166.836935
+  ...
+# Subtest: CHAT and COMMAND lanes start independently in both arrival orders and after pending restart
+ok 8 - CHAT and COMMAND lanes start independently in both arrival orders and after pending restart
+  ---
+  duration_ms: 618.728094
+  ...
+# Subtest: chat.stop without conversationId cancels only the exact queued or running durable turn
+ok 9 - chat.stop without conversationId cancels only the exact queued or running durable turn
+  ---
+  duration_ms: 388.9093
+  ...
+# Subtest: typed inspection dispatch detection is fail-closed for either the INSPECT route or trusted marker
+ok 10 - typed inspection dispatch detection is fail-closed for either the INSPECT route or trusted marker
+  ---
+  duration_ms: 1.335738
+  ...
+# Subtest: processor sends INSPECT through its isolated lane and reconciles unknown acceptance without a second start
+ok 11 - processor sends INSPECT through its isolated lane and reconciles unknown acceptance without a second start
+  ---
+  duration_ms: 249.789527
+  ...
+# Subtest: processor recovery controls durably prepare a final produced by native readback before replay
+ok 12 - processor recovery controls durably prepare a final produced by native readback before replay
+  ---
+  duration_ms: 289.814428
+  ...
+# Subtest: processor retains a durably prepared INSPECT final in recovery instead of archiving local computation as completed
+ok 13 - processor retains a durably prepared INSPECT final in recovery instead of archiving local computation as completed
+  ---
+  duration_ms: 510.931737
+  ...
+# Subtest: trusted final-saved ACK wins the send-return race, archives confirmed completion and accepts duplicate receipt idempotently
+ok 14 - trusted final-saved ACK wins the send-return race, archives confirmed completion and accepts duplicate receipt idempotently
+  ---
+  duration_ms: 206.223254
+  ...
+# Subtest: final-saved duplicate ACK completes a prepared recovery after process reload and clears scheduled replay
+ok 15 - final-saved duplicate ACK completes a prepared recovery after process reload and clears scheduled replay
+  ---
+  duration_ms: 251.574556
+  ...
+# Subtest: final-saved ACK ignores unmatched legacy events but rejects ambiguous, stale, unprepared and terminal-conflicting INSPECT bindings
+ok 16 - final-saved ACK ignores unmatched legacy events but rejects ambiguous, stale, unprepared and terminal-conflicting INSPECT bindings
+  ---
+  duration_ms: 408.001869
+  ...
+# Subtest: processor ignores ordinary CHAT and unmatched legacy saved events while rejecting forged or ambiguous INSPECT acknowledgements
+ok 17 - processor ignores ordinary CHAT and unmatched legacy saved events while rejecting forged or ambiguous INSPECT acknowledgements
+  ---
+  duration_ms: 394.661792
+  ...
+# Subtest: production chat runner takes disabled and legacy messages directly to serialized final-only fallback
+ok 18 - production chat runner takes disabled and legacy messages directly to serialized final-only fallback
+  ---
+  duration_ms: 3.017105
+  ...
+# Subtest: registration and presence truthfully advertise capability contract v1 with Fast CHAT disabled by default
+ok 19 - registration and presence truthfully advertise capability contract v1 with Fast CHAT disabled by default
+  ---
+  duration_ms: 8.970805
+  ...
+# Subtest: completed typed inspection measurement republishes exact readiness only on an active registered socket
+ok 20 - completed typed inspection measurement republishes exact readiness only on an active registered socket
+  ---
+  duration_ms: 0.692861
+  ...
+# Subtest: typed inspection declaration is absent without measured contract readback and exact when ready
+ok 21 - typed inspection declaration is absent without measured contract readback and exact when ready
+  ---
+  duration_ms: 4.14074
+  ...
+# Subtest: typed inspection CA bundle path survives exact profile and fallback normalization
+ok 22 - typed inspection CA bundle path survives exact profile and fallback normalization
+  ---
+  duration_ms: 1.762516
+  ...
+# Subtest: typed deliberation declaration binds the exact locally selected schema contract and defaults legacy
+ok 23 - typed deliberation declaration binds the exact locally selected schema contract and defaults legacy
+  ---
+  duration_ms: 13.068575
+  ...
+# Subtest: capability contract advertises CHAT only after its read-only-constrained profile is configured
+ok 24 - capability contract advertises CHAT only after its read-only-constrained profile is configured
+  ---
+  duration_ms: 0.837274
+  ...
+# Subtest: capability contract refuses to advertise CHAT policy for a non-constrained Fast configuration
+ok 25 - capability contract refuses to advertise CHAT policy for a non-constrained Fast configuration
+  ---
+  duration_ms: 0.913756
+  ...
+# Subtest: legacy chat run emits final only and never fabricates delta
+ok 26 - legacy chat run emits final only and never fabricates delta
+  ---
+  duration_ms: 4.794912
+  ...
+# Subtest: task.event updates local state callback and never executes
+ok 27 - task.event updates local state callback and never executes
+  ---
+  duration_ms: 20.140706
+  ...
+# Subtest: commands execute strictly in durable enqueue order
+ok 28 - commands execute strictly in durable enqueue order
+  ---
+  duration_ms: 99.269305
+  ...
+# Subtest: corrupt queue file is quarantined while valid commands continue
+ok 29 - corrupt queue file is quarantined while valid commands continue
+  ---
+  duration_ms: 69.542298
+  ...
+# Subtest: legacy agent status is ignored only as a non-executable control notification
+ok 30 - legacy agent status is ignored only as a non-executable control notification
+  ---
+  duration_ms: 0.617745
+  ...
+# Subtest: legacy execution types, missing messageType, and ambiguous envelopes fail closed
+ok 31 - legacy execution types, missing messageType, and ambiguous envelopes fail closed
+  ---
+  duration_ms: 1.27837
+  ...
+# Subtest: runtimeInstanceId is process-scoped while WebSocket API keys use headers
+ok 32 - runtimeInstanceId is process-scoped while WebSocket API keys use headers
+  ---
+  duration_ms: 2.23433
+  ...
+# Subtest: WebSocket loader uses ws even when a built-in client is available
+ok 33 - WebSocket loader uses ws even when a built-in client is available
+  ---
+  duration_ms: 37.164576
+  ...
+# Subtest: runtime abilities only contain allowlisted Chinese business abilities
+ok 34 - runtime abilities only contain allowlisted Chinese business abilities
+  ---
+  duration_ms: 3.026569
+  ...
+# Subtest: discovered Codex tools do not become scheduling abilities
+ok 35 - discovered Codex tools do not become scheduling abilities
+  ---
+  duration_ms: 37.078227
+  ...
+# Subtest: workspace discovery maps CYF modules to Chinese project business abilities
+ok 36 - workspace discovery maps CYF modules to Chinese project business abilities
+  ---
+  duration_ms: 7.736684
+  ...
+# Subtest: module-local directories identify their CYF business domain
+ok 37 - module-local directories identify their CYF business domain
+  ---
+  duration_ms: 1.411746
+  ...
+# Subtest: broad home and generic technology workspaces produce no business abilities
+ok 38 - broad home and generic technology workspaces produce no business abilities
+  ---
+  duration_ms: 3.627354
+  ...
+# Subtest: weather files map to 天气查询 while unknown names and contents are ignored
+ok 39 - weather files map to 天气查询 while unknown names and contents are ignored
+  ---
+  duration_ms: 1.23493
+  ...
+# Subtest: workspace discovery rejects symlink roots and symlink ancestors
+ok 40 - workspace discovery rejects symlink roots and symlink ancestors
+  ---
+  duration_ms: 1.095604
+  ...
+# Subtest: empty business directories do not claim capabilities
+ok 41 - empty business directories do not claim capabilities
+  ---
+  duration_ms: 1.018622
+  ...
+# Subtest: workspace root identity check rejects ancestor replacement races
+ok 42 - workspace root identity check rejects ancestor replacement races
+  ---
+  duration_ms: 895.954714
+  ...
+# Subtest: workspace entry bounds fail closed and accept the exact root limit
+ok 43 - workspace entry bounds fail closed and accept the exact root limit
+  ---
+  duration_ms: 42.849577
+  ...
+# Subtest: workspace entry budget is shared by root and project containers
+ok 44 - workspace entry budget is shared by root and project containers
+  ---
+  duration_ms: 24.292869
+  ...
+# Subtest: FIFO and symlinked containers cannot escape bounded scanning
+ok 45 - FIFO and symlinked containers cannot escape bounded scanning
+  ---
+  duration_ms: 161.1449
+  ...
+# Subtest: managed profiles publish ONLINE only after exact authenticated registration and engine readiness
+ok 46 - managed profiles publish ONLINE only after exact authenticated registration and engine readiness
+  ---
+  duration_ms: 0.42724
+  ...
+# Subtest: register and presence refresh business abilities after directory changes
+ok 47 - register and presence refresh business abilities after directory changes
+  ---
+  duration_ms: 2.079414
+  ...
+# Subtest: oversized or malformed manifests cannot inject business labels
+ok 48 - oversized or malformed manifests cannot inject business labels
+  ---
+  duration_ms: 6.131309
+  ...
+# Subtest: profile normalization rejects controls, duplicates, and non-business labels
+ok 49 - profile normalization rejects controls, duplicates, and non-business labels
+  ---
+  duration_ms: 0.627457
+  ...
+# Subtest: installing Codex skills does not change scheduling abilities
+ok 50 - installing Codex skills does not change scheduling abilities
+  ---
+  duration_ms: 1.131754
+  ...
+# Subtest: real ws upgrade sends X-API-Key header and no query credential
+ok 51 - real ws upgrade sends X-API-Key header and no query credential
+  ---
+  duration_ms: 17.510048
+  ...
+# Subtest: fsync and rename failures fail closed before command execution
+ok 52 - fsync and rename failures fail closed before command execution
+  ---
+  duration_ms: 79.250309
+  ...
+# Subtest: claim rename and fsync failures pause the queue before execution
+ok 53 - claim rename and fsync failures pause the queue before execution
+  ---
+  duration_ms: 113.869979
+  ...
+# Subtest: malformed completed marker is quarantined instead of re-executed
+ok 54 - malformed completed marker is quarantined instead of re-executed
+  ---
+  duration_ms: 69.799129
+  ...
+# Subtest: completed marker is settled on recovery without re-execution
+ok 55 - completed marker is settled on recovery without re-execution
+  ---
+  duration_ms: 50.341584
+  ...
+# Subtest: pending commands and persistent sequence survive restart in FIFO order
+ok 56 - pending commands and persistent sequence survive restart in FIFO order
+  ---
+  duration_ms: 110.462882
+  ...
+# Subtest: semantically invalid persisted commands are quarantined and never executed
+ok 57 - semantically invalid persisted commands are quarantined and never executed
+  ---
+  duration_ms: 391.110436
+  ...
+# Subtest: queue initialization repairs existing directory and record permissions
+ok 58 - queue initialization repairs existing directory and record permissions
+  ---
+  duration_ms: 75.282906
+  ...
+# configuration warning | profile=validate | WORKSPACE_POLICY_REQUIRED: ordinary command.dispatch is blocked; chat uses a separate path
+# Subtest: chat failure and busy branches emit chat responses only
+ok 59 - chat failure and busy branches emit chat responses only
+  ---
+  duration_ms: 40.79137
+  ...
+# Subtest: public envelope preserves explicit sender identity and validate works without global WebSocket
+ok 60 - public envelope preserves explicit sender identity and validate works without global WebSocket
+  ---
+  duration_ms: 223.878016
+  ...
+# Subtest: same commandId triggers dedupe and does not re-enqueue
+ok 61 - same commandId triggers dedupe and does not re-enqueue
+  ---
+  duration_ms: 402.887576
+  ...
+# Subtest: same commandId with different payload causes fingerprint conflict and REJECTED
+ok 62 - same commandId with different payload causes fingerprint conflict and REJECTED
+  ---
+  duration_ms: 219.211801
+  ...
+# Subtest: SKILL_INSTALL commandId reuse with changed fence or digest is rejected before execution
+ok 63 - SKILL_INSTALL commandId reuse with changed fence or digest is rejected before execution
+  ---
+  duration_ms: 248.177783
+  ...
+# Subtest: completed commandId re-delivery replays terminal ACK only
+ok 64 - completed commandId re-delivery replays terminal ACK only
+  ---
+  duration_ms: 198.621104
+  ...
+# Subtest: expired command before execution is REJECTED
+ok 65 - expired command before execution is REJECTED
+  ---
+  duration_ms: 84.501444
+  ...
+# Subtest: ack outbox retains pending ACKs when send fails and replays on reconnect
+ok 66 - ack outbox retains pending ACKs when send fails and replays on reconnect
+  ---
+  duration_ms: 239.699007
+  ...
+# Subtest: live command ACKs recover from an initial RECEIVED send failure in global FIFO order
+ok 67 - live command ACKs recover from an initial RECEIVED send failure in global FIFO order
+  ---
+  duration_ms: 191.856578
+  ...
+# Subtest: older pending ACK blocks a live ACK and leaves the current durable marker false
+ok 68 - older pending ACK blocks a live ACK and leaves the current durable marker false
+  ---
+  duration_ms: 91.974376
+  ...
+# Subtest: live ACK reports success only after its own ordered marker and dequeue complete
+ok 69 - live ACK reports success only after its own ordered marker and dequeue complete
+  ---
+  duration_ms: 113.426983
+  ...
+# Subtest: two initialized ACK outboxes allocate one FIFO sequence across instances and restart
+ok 70 - two initialized ACK outboxes allocate one FIFO sequence across instances and restart
+  ---
+  duration_ms: 171.115005
+  ...
+# Subtest: duplicate ACK queueSequence is quarantined and replay fails closed before send
+ok 71 - duplicate ACK queueSequence is quarantined and replay fails closed before send
+  ---
+  duration_ms: 95.078612
+  ...
+# Subtest: valid ACK sequence rollback is detected after the outbox becomes empty
+ok 72 - valid ACK sequence rollback is detected after the outbox becomes empty
+  ---
+  duration_ms: 70.93154
+  ...
+# Subtest: pending ACK above durable high-water is quarantined on startup
+ok 73 - pending ACK above durable high-water is quarantined on startup
+  ---
+  duration_ms: 48.598715
+  ...
+# Subtest: ACK sequence lock contention and lock fsync failure fail closed without allocation
+ok 74 - ACK sequence lock contention and lock fsync failure fail closed without allocation
+  ---
+  duration_ms: 28.457775
+  ...
+# Subtest: enqueue rechecks durable quarantine after waiting for the sequence lock
+ok 75 - enqueue rechecks durable quarantine after waiting for the sequence lock
+  ---
+  duration_ms: 92.05009
+  ...
+# Subtest: replay rechecks durable quarantine after lock wait and sends nothing
+ok 76 - replay rechecks durable quarantine after lock wait and sends nothing
+  ---
+  duration_ms: 86.369916
+  ...
+# Subtest: replay-held lock makes nested enqueue fail immediately instead of deadlocking
+ok 77 - replay-held lock makes nested enqueue fail immediately instead of deadlocking
+  ---
+  duration_ms: 66.184484
+  ...
+# Subtest: ACK replay stops immediately when the first send returns false or throws
+ok 78 - ACK replay stops immediately when the first send returns false or throws
+  ---
+  duration_ms: 215.002944
+  ...
+# Subtest: ACK replay stops at a failed middle item and never sends later ACKs
+ok 79 - ACK replay stops at a failed middle item and never sends later ACKs
+  ---
+  duration_ms: 209.807268
+  ...
+# Subtest: send false or throw keeps ACK markers false and records in the durable outbox
+ok 80 - send false or throw keeps ACK markers false and records in the durable outbox
+  ---
+  duration_ms: 487.961173
+  ...
+# Subtest: ACK marker persistence failure retains sent ACK for at-least-once replay
+ok 81 - ACK marker persistence failure retains sent ACK for at-least-once replay
+  ---
+  duration_ms: 227.74618
+  ...
+# Subtest: STARTED ACK persistence failure fail-closes before command side effects
+ok 82 - STARTED ACK persistence failure fail-closes before command side effects
+  ---
+  duration_ms: 298.086489
+  ...
+# Subtest: orphan RECEIVED ledger is reconciled to recovery-required across restart
+ok 83 - orphan RECEIVED ledger is reconciled to recovery-required across restart
+  ---
+  duration_ms: 394.250065
+  ...
+# Subtest: corrupt ledger is quarantined and the profile rejects and pauses
+ok 84 - corrupt ledger is quarantined and the profile rejects and pauses
+  ---
+  duration_ms: 167.32893
+  ...
+# Subtest: corrupt ACK is quarantined with an explicit fail-closed error
+ok 85 - corrupt ACK is quarantined with an explicit fail-closed error
+  ---
+  duration_ms: 119.951285
+  ...
+# Subtest: A06 durable ledger and ACK paths enforce private permissions
+ok 86 - A06 durable ledger and ACK paths enforce private permissions
+  ---
+  duration_ms: 261.871395
+  ...
+# Subtest: ack envelope uses an independent messageId and remains A03 normalizer-compatible
+ok 87 - ack envelope uses an independent messageId and remains A03 normalizer-compatible
+  ---
+  duration_ms: 0.575396
+  ...
+# Subtest: rejected ack includes rejectReason
+ok 88 - rejected ack includes rejectReason
+  ---
+  duration_ms: 0.207797
+  ...
+# Subtest: ledger survives cross-restart and correctly identifies duplicates
+ok 89 - ledger survives cross-restart and correctly identifies duplicates
+  ---
+  duration_ms: 479.558766
+  ...
+# Subtest: fingerprint is stable for semantically identical payloads
+ok 90 - fingerprint is stable for semantically identical payloads
+  ---
+  duration_ms: 0.859504
+  ...
+# Subtest: fingerprint stays stable when payload field order changes
+ok 91 - fingerprint stays stable when payload field order changes
+  ---
+  duration_ms: 0.679612
+  ...
+# Subtest: fingerprint differs for different payloads
+ok 92 - fingerprint differs for different payloads
+  ---
+  duration_ms: 0.79577
+  ...
+# Subtest: fingerprint includes deep business payload and ignores transport redelivery metadata
+ok 93 - fingerprint includes deep business payload and ignores transport redelivery metadata
+  ---
+  duration_ms: 1.096818
+  ...
+# Subtest: same commandId is isolated across agent profiles
+ok 94 - same commandId is isolated across agent profiles
+  ---
+  duration_ms: 837.539426
+  ...
+# Subtest: completed command across restart replays terminal ACK without re-execution
+ok 95 - completed command across restart replays terminal ACK without re-execution
+  ---
+  duration_ms: 1140.012821
+  ...
+# configuration warning | profile=validate-link | WORKSPACE_POLICY_REQUIRED: ordinary command.dispatch is blocked; chat uses a separate path
+# configuration warning | profile=validate | WORKSPACE_POLICY_REQUIRED: ordinary command.dispatch is blocked; chat uses a separate path
+# Subtest: command fails and ACK reflects FAILED status
+ok 96 - command fails and ACK reflects FAILED status
+  ---
+  duration_ms: 491.917812
+  ...
+# Subtest: all 5 ACK status constants are defined
+ok 97 - all 5 ACK status constants are defined
+  ---
+  duration_ms: 0.38526
+  ...
+# Subtest: symlinked standalone entry executes validation instead of exiting as a no-op
+ok 98 - symlinked standalone entry executes validation instead of exiting as a no-op
+  ---
+  duration_ms: 282.408045
+  ...
+# Subtest: standalone --validate still works with a06 additions
+ok 99 - standalone --validate still works with a06 additions
+  ---
+  duration_ms: 308.067058
+  ...
+# Subtest: workspace file runtime auth stays process-memory only and profile configuration rejects a supplied header
+ok 100 - workspace file runtime auth stays process-memory only and profile configuration rejects a supplied header
+  ---
+  duration_ms: 2.965869
+  ...
+# Subtest: strict workspace file payload uses only its private run cwd, uploads and commits before completed reports
+ok 101 - strict workspace file payload uses only its private run cwd, uploads and commits before completed reports
+  ---
+  duration_ms: 41.715958
+  ...
+# Subtest: image workspace delivery materializes the one built-in imagegen raster before upload
+ok 102 - image workspace delivery materializes the one built-in imagegen raster before upload
+  ---
+  duration_ms: 15.592151
+  ...
+# Subtest: missing built-in imagegen result fails stably and reports it to the runtime
+ok 103 - missing built-in imagegen result fails stably and reports it to the runtime
+  ---
+  duration_ms: 12.920264
+  ...
+# Subtest: workspace file prompt never derives paths from untrusted instruction text
+ok 104 - workspace file prompt never derives paths from untrusted instruction text
+  ---
+  duration_ms: 0.484031
+  ...
+# Subtest: workspace command polling accepts only exact native queue envelopes and dispatches durable commands
+ok 105 - workspace command polling accepts only exact native queue envelopes and dispatches durable commands
+  ---
+  duration_ms: 2.177765
+  ...
+# Subtest: workspace command polling retries one stale undici socket before dispatching the read-only queue response
+ok 106 - workspace command polling retries one stale undici socket before dispatching the read-only queue response
+  ---
+  duration_ms: 1.420705
+  ...
+# Subtest: workspace command polling exposes safe failure categories while failing closed
+    # Subtest: transport
+    ok 1 - transport
+      ---
+      duration_ms: 0.731221
+      ...
+    # Subtest: refused transport
+    ok 2 - refused transport
+      ---
+      duration_ms: 0.339888
+      ...
+    # Subtest: missing response
+    ok 3 - missing response
+      ---
+      duration_ms: 0.35223
+      ...
+    # Subtest: unauthorized
+    ok 4 - unauthorized
+      ---
+      duration_ms: 0.599524
+      ...
+    # Subtest: redirect
+    ok 5 - redirect
+      ---
+      duration_ms: 0.42355
+      ...
+    # Subtest: wrong path
+    ok 6 - wrong path
+      ---
+      duration_ms: 0.385376
+      ...
+    # Subtest: wrong content type
+    ok 7 - wrong content type
+      ---
+      duration_ms: 0.396873
+      ...
+    # Subtest: invalid JSON
+    ok 8 - invalid JSON
+      ---
+      duration_ms: 0.711269
+      ...
+    # Subtest: invalid body
+    ok 9 - invalid body
+      ---
+      duration_ms: 6.648736
+      ...
+    1..9
+ok 107 - workspace command polling exposes safe failure categories while failing closed
+  ---
+  duration_ms: 21.073186
+  ...
+# Subtest: strict workspace file runtime failure reports failed only and command fingerprint binds manifests
+ok 108 - strict workspace file runtime failure reports failed only and command fingerprint binds manifests
+  ---
+  duration_ms: 1.080872
+  ...
+# Subtest: workspace file upload failure is reported failed after Codex and never completed
+ok 109 - workspace file upload failure is reported failed after Codex and never completed
+  ---
+  duration_ms: 12.806445
+  ...
+# Subtest: opt-in command execution persists and replays an exact Protocol-v1 work.result until its matching receipt
+ok 110 - opt-in command execution persists and replays an exact Protocol-v1 work.result until its matching receipt
+  ---
+  duration_ms: 187.347617
+  ...
+# Subtest: non-opt-in command types do not create execution reports
+ok 111 - non-opt-in command types do not create execution reports
+  ---
+  duration_ms: 196.046292
+  ...
+# Subtest: ACK high-water history is fully verified once and only the durable tip is reread during runtime
+ok 112 - ACK high-water history is fully verified once and only the durable tip is reread during runtime
+  ---
+  duration_ms: 2124.075402
+  ...
+# Subtest: ACK high-water replay verifies immutable secure markers without fsyncing each file
+ok 113 - ACK high-water replay verifies immutable secure markers without fsyncing each file
+  ---
+  duration_ms: 4540.532535
+  ...
+# Subtest: late correlated registration ACK restores native queue pickup without repeating execution writes
+ok 114 - late correlated registration ACK restores native queue pickup without repeating execution writes
+  ---
+  duration_ms: 2.879904
+  ...
+# Subtest: native start transport never calls Provider or repeats the start write
+ok 115 - native start transport never calls Provider or repeats the start write
+  ---
+  duration_ms: 13.429022
+  ...
+# Subtest: native start wrong-run never calls Provider or repeats the start write
+ok 116 - native start wrong-run never calls Provider or repeats the start write
+  ---
+  duration_ms: 7.458166
+  ...
+# Subtest: native start server-error never calls Provider or repeats the start write
+ok 117 - native start server-error never calls Provider or repeats the start write
+  ---
+  duration_ms: 7.523827
+  ...
+# Subtest: native start rejected never calls Provider or repeats the start write
+ok 118 - native start rejected never calls Provider or repeats the start write
+  ---
+  duration_ms: 8.219524
+  ...
+# Subtest: default-disabled modern durable CHAT is rejected without spawning the legacy runner
+ok 119 - default-disabled modern durable CHAT is rejected without spawning the legacy runner
+  ---
+  duration_ms: 944.968243
+  ...
+# Subtest: new and exactly mapped resumed sessions explicitly preserve read-only, workdir, model and approval
+ok 120 - new and exactly mapped resumed sessions explicitly preserve read-only, workdir, model and approval
+  ---
+  duration_ms: 8.709392
+  ...
+# Subtest: new and exactly mapped resumed sessions explicitly preserve workspace-write, workdir, model and approval
+ok 121 - new and exactly mapped resumed sessions explicitly preserve workspace-write, workdir, model and approval
+  ---
+  duration_ms: 2.081042
+  ...
+# Subtest: new and exactly mapped resumed sessions explicitly preserve danger-full-access, workdir, model and approval
+ok 122 - new and exactly mapped resumed sessions explicitly preserve danger-full-access, workdir, model and approval
+  ---
+  duration_ms: 1.923978
+  ...
+# Subtest: workspace image attachments are restricted to declared regular inputs
+ok 123 - workspace image attachments are restricted to declared regular inputs
+  ---
+  duration_ms: 2.484725
+  ...
+# Subtest: resume mode starts new for an unmapped conversation even when Home has history
+ok 124 - resume mode starts new for an unmapped conversation even when Home has history
+  ---
+  duration_ms: 2.171261
+  ...
+# Subtest: resume mode without a conversationId never resumes unrelated Home history
+ok 125 - resume mode without a conversationId never resumes unrelated Home history
+  ---
+  duration_ms: 1.400052
+  ...
+# Subtest: mapped session missing from the selected profile Home fails explicitly without spawning Codex
+ok 126 - mapped session missing from the selected profile Home fails explicitly without spawning Codex
+  ---
+  duration_ms: 2.917992
+  ...
+# Subtest: conversation mappings are isolated by exact agent identity and selected profile Home
+ok 127 - conversation mappings are isolated by exact agent identity and selected profile Home
+  ---
+  duration_ms: 3.488999
+  ...
+# Subtest: configured new mode and forceNew commands ignore even valid conversation mappings
+ok 128 - configured new mode and forceNew commands ignore even valid conversation mappings
+  ---
+  duration_ms: 1.741605
+  ...
+# Subtest: force-new managed command with a chat conversationId does not create a session mapping
+ok 129 - force-new managed command with a chat conversationId does not create a session mapping
+  ---
+  duration_ms: 8.566913
+  ...
+# Subtest: force-new managed command with the same chat conversationId does not overwrite its mapping
+ok 130 - force-new managed command with the same chat conversationId does not overwrite its mapping
+  ---
+  duration_ms: 5.346798
+  ...
+# Subtest: chat configured for new sessions does not persist its current thread
+ok 131 - chat configured for new sessions does not persist its current thread
+  ---
+  duration_ms: 2.163457
+  ...
+# Subtest: post-rename session-map failure reconciles committed disk state before later writes
+ok 132 - post-rename session-map failure reconciles committed disk state before later writes
+  ---
+  duration_ms: 35.172018
+  ...
+# Subtest: pre-rename session-map failure blocks later stale-memory writes
+ok 133 - pre-rename session-map failure blocks later stale-memory writes
+  ---
+  duration_ms: 27.356425
+  ...
+# Subtest: thread.started thread_id is captured and atomically persisted for the exact conversation
+ok 134 - thread.started thread_id is captured and atomically persisted for the exact conversation
+  ---
+  duration_ms: 31.425691
+  ...
+# Subtest: session files without a current-run session event are never broadly associated to a conversation
+ok 135 - session files without a current-run session event are never broadly associated to a conversation
+  ---
+  duration_ms: 3.879091
+  ...
+# Subtest: empty codexModel leaves model selection to Codex Home
+ok 136 - empty codexModel leaves model selection to Codex Home
+  ---
+  duration_ms: 1.273656
+  ...
+# Subtest: inspect-config is read-only, secret-free and distinguishes ignored metadata from runtime abilities
+ok 137 - inspect-config is read-only, secret-free and distinguishes ignored metadata from runtime abilities
+  ---
+  duration_ms: 240.757491
+  ...
+# Subtest: inspect-config works without WebSocket credentials and reports blocked commands
+ok 138 - inspect-config works without WebSocket credentials and reports blocked commands
+  ---
+  duration_ms: 274.764304
+  ...
+# Subtest: validate rejects codexSandbox=workspace-wirte instead of silently using an unintended policy or timeout
+ok 139 - validate rejects codexSandbox=workspace-wirte instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 477.032077
+  ...
+# Subtest: validate rejects codexApproval=always instead of silently using an unintended policy or timeout
+ok 140 - validate rejects codexApproval=always instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 420.176005
+  ...
+# Subtest: validate rejects codexSessionMode=reuse instead of silently using an unintended policy or timeout
+ok 141 - validate rejects codexSessionMode=reuse instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 343.727761
+  ...
+# Subtest: validate rejects codexTimeoutMs=-1 instead of silently using an unintended policy or timeout
+ok 142 - validate rejects codexTimeoutMs=-1 instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 359.807693
+  ...
+# Subtest: validate rejects codexTimeoutMs=1.5 instead of silently using an unintended policy or timeout
+ok 143 - validate rejects codexTimeoutMs=1.5 instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 435.249672
+  ...
+# Subtest: validate rejects codexTimeoutMs=invalid instead of silently using an unintended policy or timeout
+ok 144 - validate rejects codexTimeoutMs=invalid instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 685.067762
+  ...
+# Subtest: validate rejects codexTimeoutMs=2147483648 instead of silently using an unintended policy or timeout
+ok 145 - validate rejects codexTimeoutMs=2147483648 instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 311.502066
+  ...
+# Subtest: validate rejects codexTimeoutMs=false instead of silently using an unintended policy or timeout
+ok 146 - validate rejects codexTimeoutMs=false instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 328.792408
+  ...
+# Subtest: validate rejects codexTimeoutMs= instead of silently using an unintended policy or timeout
+ok 147 - validate rejects codexTimeoutMs= instead of silently using an unintended policy or timeout
+  ---
+  duration_ms: 387.640772
+  ...
+# Subtest: inspect-config returns a failing status and structured errors for malformed execution settings
+ok 148 - inspect-config returns a failing status and structured errors for malformed execution settings
+  ---
+  duration_ms: 260.047606
+  ...
+# Subtest: legacy CODEX_MODEL and zero timeout are inherited when the profile does not override them
+ok 149 - legacy CODEX_MODEL and zero timeout are inherited when the profile does not override them
+  ---
+  duration_ms: 345.967037
+  ...
+# Subtest: runtime timeout 0 does not immediately terminate the child
+ok 150 - runtime timeout 0 does not immediately terminate the child
+  ---
+  duration_ms: 114.085083
+  ...
+# Subtest: runtime timeout 10 terminates the child
+ok 151 - runtime timeout 10 terminates the child
+  ---
+  duration_ms: 43.886585
+  ...
+# Subtest: explicit profile model takes precedence over CODEX_MODEL
+ok 152 - explicit profile model takes precedence over CODEX_MODEL
+  ---
+  duration_ms: 327.552171
+  ...
+# Subtest: section-style profile template has a conservative inherited sandbox
+ok 153 - section-style profile template has a conservative inherited sandbox
+  ---
+  duration_ms: 337.212409
+  ...
+# Subtest: legacy CA bundle environment fallback reaches profile validation without exposing file contents
+ok 154 - legacy CA bundle environment fallback reaches profile validation without exposing file contents
+  ---
+  duration_ms: 714.954601
+  ...
+# Subtest: controlled image profile is default-off with no account, model, endpoint, or ledger fallback
+ok 155 - controlled image profile is default-off with no account, model, endpoint, or ledger fallback
+  ---
+  duration_ms: 4.877828
+  ...
+# Subtest: profile parsing keeps only explicit controlled settings and never infers Codex credentials
+ok 156 - profile parsing keeps only explicit controlled settings and never infers Codex credentials
+  ---
+  duration_ms: 4.284477
+  ...
+# Subtest: enabled config requires explicit HTTPS origin, key env, model, binding, long epoch, and absolute ledger root
+ok 157 - enabled config requires explicit HTTPS origin, key env, model, binding, long epoch, and absolute ledger root
+  ---
+  duration_ms: 1.879996
+  ...
+# Subtest: controlled executor cannot silently coexist with generic Codex imagegen or missing native poll
+ok 158 - controlled executor cannot silently coexist with generic Codex imagegen or missing native poll
+  ---
+  duration_ms: 0.450453
+  ...
+# Subtest: profile ledger roots may not be equal, nested, or shared across profiles
+ok 159 - profile ledger roots may not be equal, nested, or shared across profiles
+  ---
+  duration_ms: 0.783527
+  ...
+# Subtest: registration sibling is exact nine-field enabled shape only for live controlled runtime
+ok 160 - registration sibling is exact nine-field enabled shape only for live controlled runtime
+  ---
+  duration_ms: 9.438357
+  ...
+# Subtest: disabled declaration is exactly two fields for offline, missing credential, poll, config, or controlled adapter
+ok 161 - disabled declaration is exactly two fields for offline, missing credential, poll, config, or controlled adapter
+  ---
+  duration_ms: 0.574006
+  ...
+# Subtest: generic Codex executor can advertise native-v1 but never controlled credential binding
+ok 162 - generic Codex executor can advertise native-v1 but never controlled credential binding
+  ---
+  duration_ms: 1.266389
+  ...
+# Subtest: real controlled runtime registers only its sibling and fetches once after successful Provider START
+ok 163 - real controlled runtime registers only its sibling and fetches once after successful Provider START
+  ---
+  duration_ms: 467.162781
+  ...
+# Subtest: lost, malformed, or rejected Provider START never reaches the controlled Provider adapter
+    # Subtest: lost
+    ok 1 - lost
+      ---
+      duration_ms: 31.327699
+      ...
+    # Subtest: malformed
+    ok 2 - malformed
+      ---
+      duration_ms: 189.999146
+      ...
+    # Subtest: rejected
+    ok 3 - rejected
+      ---
+      duration_ms: 208.804807
+      ...
+    1..3
+ok 164 - lost, malformed, or rejected Provider START never reaches the controlled Provider adapter
+  ---
+  duration_ms: 431.436297
+  ...
+# Subtest: v3 empty generation durably claims before one exact generations request
+ok 165 - v3 empty generation durably claims before one exact generations request
+  ---
+  duration_ms: 130.65293
+  ...
+# Subtest: workspace GENERATE and exact current-conversation EDIT route to JSON edits with source-aware claims
+    # Subtest: workspace
+    ok 1 - workspace
+      ---
+      duration_ms: 131.534561
+      ...
+    # Subtest: asset
+    ok 2 - asset
+      ---
+      duration_ms: 107.29295
+      ...
+    1..2
+ok 166 - workspace GENERATE and exact current-conversation EDIT route to JSON edits with source-aware claims
+  ---
+  duration_ms: 239.938728
+  ...
+# Subtest: same command with changed operation or source revision is blocked by the original durable claim
+ok 167 - same command with changed operation or source revision is blocked by the original durable claim
+  ---
+  duration_ms: 235.299048
+  ...
+# Subtest: malformed source, wrong cardinality, and symlink fail before claim and Provider fetch
+ok 168 - malformed source, wrong cardinality, and symlink fail before claim and Provider fetch
+  ---
+  duration_ms: 54.949846
+  ...
+# Subtest: unknown network outcome retains the v3 claim and restart attempt never fetches twice
+ok 169 - unknown network outcome retains the v3 claim and restart attempt never fetches twice
+  ---
+  duration_ms: 119.634287
+  ...
+# Subtest: v3 lane uses the independent inbox, inputs-v3, exact asset source, one START, then existing PNG commit
+ok 170 - v3 lane uses the independent inbox, inputs-v3, exact asset source, one START, then existing PNG commit
+  ---
+  duration_ms: 61.420913
+  ...
+# Subtest: START ACK loss, conflict, or receipt operation/digest drift yields zero executor calls
+    # Subtest: lost
+    ok 1 - lost
+      ---
+      duration_ms: 4.152621
+      ...
+    # Subtest: conflict
+    ok 2 - conflict
+      ---
+      duration_ms: 2.497207
+      ...
+    # Subtest: operation
+    ok 3 - operation
+      ---
+      duration_ms: 2.121139
+      ...
+    # Subtest: digest
+    ok 4 - digest
+      ---
+      duration_ms: 2.179056
+      ...
+    1..4
+ok 171 - START ACK loss, conflict, or receipt operation/digest drift yields zero executor calls
+  ---
+  duration_ms: 12.552484
+  ...
+# Subtest: 17 inputs and operation/source mismatches reject before download, START, or executor
+    # Subtest: command_over
+    ok 1 - command_over
+      ---
+      duration_ms: 1.84942
+      ...
+    # Subtest: command_wrong
+    ok 2 - command_wrong
+      ---
+      duration_ms: 1.49986
+      ...
+    1..2
+ok 172 - 17 inputs and operation/source mismatches reject before download, START, or executor
+  ---
+  duration_ms: 11.214844
+  ...
+# Subtest: composed v3 runtime advertises exact source-aware GENERATE and EDIT then executes one exact-asset EDIT
+ok 173 - composed v3 runtime advertises exact source-aware GENERATE and EDIT then executes one exact-asset EDIT
+  ---
+  duration_ms: 282.707178
+  ...
+# Subtest: production v3 poller starts only with a current registration token and stops without duplicate timers
+ok 174 - production v3 poller starts only with a current registration token and stops without duplicate timers
+  ---
+  duration_ms: 8.257754
+  ...
+# Subtest: lost or drifted v3 START receipt leaves zero Provider calls and zero pre-call claims
+    # Subtest: lost
+    ok 1 - lost
+      ---
+      duration_ms: 39.55207
+      ...
+    # Subtest: drift
+    ok 2 - drift
+      ---
+      duration_ms: 32.501818
+      ...
+    1..2
+ok 175 - lost or drifted v3 START receipt leaves zero Provider calls and zero pre-call claims
+  ---
+  duration_ms: 72.925089
+  ...
+# Subtest: frozen v3 fixture and fail-closed declaration remain byte-exact without real readiness
+ok 176 - frozen v3 fixture and fail-closed declaration remain byte-exact without real readiness
+  ---
+  duration_ms: 3.541114
+  ...
+# Subtest: v3 readiness requires exact live profile, runtime, Provider policy, executor, and poll lane
+ok 177 - v3 readiness requires exact live profile, runtime, Provider policy, executor, and poll lane
+  ---
+  duration_ms: 1.754872
+  ...
+# Subtest: all valid fixture commands, source snapshots, canonical bytes, and digests parse exactly
+ok 178 - all valid fixture commands, source snapshots, canonical bytes, and digests parse exactly
+  ---
+  duration_ms: 2.291278
+  ...
+# Subtest: v2 and v3 command parsers remain disjoint and exact-field strict
+ok 179 - v2 and v3 command parsers remain disjoint and exact-field strict
+  ---
+  duration_ms: 2.656103
+  ...
+# Subtest: source union, decimal longs, operation cardinality, and duplicate sources fail closed
+ok 180 - source union, decimal longs, operation cardinality, and duplicate sources fail closed
+  ---
+  duration_ms: 1.213837
+  ...
+# Subtest: workspace, conversation, and asset source revisions are bound into the input snapshot digest
+ok 181 - workspace, conversation, and asset source revisions are bound into the input snapshot digest
+  ---
+  duration_ms: 1.265992
+  ...
+# Subtest: carrier readiness evidence is immutable and bound to exact profile, provider, model, source and result digests
+ok 182 - carrier readiness evidence is immutable and bound to exact profile, provider, model, source and result digests
+  ---
+  duration_ms: 12.792769
+  ...
+# Subtest: carrier readiness evidence rejects writable, relative, symlinked and incomplete files
+ok 183 - carrier readiness evidence rejects writable, relative, symlinked and incomplete files
+  ---
+  duration_ms: 3.411531
+  ...
+# Subtest: accepted exact 1f95 local-image evidence is consumable only under its pinned digest and model
+ok 184 - accepted exact 1f95 local-image evidence is consumable only under its pinned digest and model
+  ---
+  duration_ms: 7.268814
+  ...
+# Subtest: restricted profile explicitly enables Codex system proxy routing without embedding proxy endpoints or credentials
+ok 185 - restricted profile explicitly enables Codex system proxy routing without embedding proxy endpoints or credentials
+  ---
+  duration_ms: 0.957498
+  ...
+# Subtest: restricted profile resolves an absolute public CA symlink into private fixed bytes instead of exposing its host target tree
+ok 186 - restricted profile resolves an absolute public CA symlink into private fixed bytes instead of exposing its host target tree
+  ---
+  duration_ms: 28.271174
+  ...
+# Subtest: provider-restricted initialization fails closed when native config readback does not enable system proxy routing
+ok 187 - provider-restricted initialization fails closed when native config readback does not enable system proxy routing
+  ---
+  duration_ms: 0.680149
+  ...
+# Subtest: native attestation digest excludes process and filesystem instance telemetry but changes with trusted policy
+ok 188 - native attestation digest excludes process and filesystem instance telemetry but changes with trusted policy
+  ---
+  duration_ms: 2.860445
+  ...
+# Subtest: real bwrap profile performs a non-paid native app-server handshake with private filesystem and isolated network
+ok 189 - real bwrap profile performs a non-paid native app-server handshake with private filesystem and isolated network # SKIP
+  ---
+  duration_ms: 0.149469
+  ...
+1..189
+# tests 211
+# suites 0
+# pass 210
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 35456.774488

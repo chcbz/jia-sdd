@@ -1,0 +1,446 @@
+{
+  "date": "2026-10-01",
+  "decision": "EXPECTED_PREVIEW_REQUIRED",
+  "evidence": [
+    {
+      "claim": "binding_fields_independent",
+      "fileSha256": "e8b54cbabeca9e5177e5c236545d81756312423712146472a59ad7dde4e141d9",
+      "line": 33,
+      "needle": "String bindingId=exactId(root.get(\"bindingId\"),100);",
+      "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/handler/NativeProviderCredentialBindingDeclaration.java"
+    },
+    {
+      "claim": "binding_epoch_independent",
+      "fileSha256": "e8b54cbabeca9e5177e5c236545d81756312423712146472a59ad7dde4e141d9",
+      "line": 34,
+      "needle": "long bindingEpoch=canonicalPositiveLong(root.get(\"bindingEpoch\"));",
+      "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/handler/NativeProviderCredentialBindingDeclaration.java"
+    },
+    {
+      "claim": "model_independent",
+      "fileSha256": "e8b54cbabeca9e5177e5c236545d81756312423712146472a59ad7dde4e141d9",
+      "line": 35,
+      "needle": "String modelId=exactId(root.get(\"modelId\"),100);",
+      "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/handler/NativeProviderCredentialBindingDeclaration.java"
+    },
+    {
+      "claim": "policy_binding_epoch_match",
+      "fileSha256": "f822dd52ec4b32f72891ab5d646c6b8d89c7adc090f5904ebf55890653db51af",
+      "line": 52,
+      "needle": "requestedBindingEpoch != current.bindingEpoch()",
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/ControlledImageProviderOperatorPolicy.java"
+    },
+    {
+      "claim": "policy_model_match_separate",
+      "fileSha256": "f822dd52ec4b32f72891ab5d646c6b8d89c7adc090f5904ebf55890653db51af",
+      "line": 80,
+      "needle": "Objects.equals(current.modelId(), policy.getModelId())",
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/ControlledImageProviderOperatorPolicy.java"
+    },
+    {
+      "claim": "policy_returns_custody_revision",
+      "fileSha256": "f822dd52ec4b32f72891ab5d646c6b8d89c7adc090f5904ebf55890653db51af",
+      "line": 66,
+      "needle": "value.getModelId(), value.getCustody(), value.getIssuer(),",
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/ControlledImageProviderOperatorPolicy.java"
+    },
+    {
+      "claim": "issue_digest_binding_only",
+      "fileSha256": "a60cde0c07ff030252f5d8ff81c3aab9687b928933224676f902e40b6bf42d6f",
+      "line": 414,
+      "needle": "binding.put(\"bindingEpoch\",Long.toString(valid.bindingEpoch()));",
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskProviderCostConsentServiceImpl.java"
+    },
+    {
+      "claim": "real_ack",
+      "fileSha256": "a60cde0c07ff030252f5d8ff81c3aab9687b928933224676f902e40b6bf42d6f",
+      "line": 40,
+      "needle": "UNPRICED_EXTERNAL_ACCOUNT_ONE_IMAGE_REQUEST_ATTEMPT",
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskProviderCostConsentServiceImpl.java"
+    },
+    {
+      "claim": "instruction_limit_call",
+      "fileSha256": "90a35f5fb1aff5e15cf43e2b93ad94dcb1a9c3364a9e347befca1b9e444ad9ad",
+      "line": 1871,
+      "needle": "text(command.instruction(), \"instruction\", 4000);",
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/PersonalWorkspaceExecutionServiceImpl.java"
+    },
+    {
+      "claim": "instruction_validator",
+      "fileSha256": "90a35f5fb1aff5e15cf43e2b93ad94dcb1a9c3364a9e347befca1b9e444ad9ad",
+      "line": 2002,
+      "needle": "private static void text(String value,String name,int max)",
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/PersonalWorkspaceExecutionServiceImpl.java"
+    }
+  ],
+  "head": "8121e8d89ad0be13ddb79012b61955bac5ae8caa",
+  "pathAllowlistValidation": {
+    "count": 71,
+    "duplicates": false,
+    "paths": [
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskExecutionGrantService.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskProviderCostConsentService.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-api/src/main/java/cn/jia/agent/service/PersonalWorkspaceExecutionService.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskProviderCostConsentEntity.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/PersonalWorkspaceExecutionEntity.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentTaskProviderCostConsentDao.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/PersonalWorkspaceExecutionDao.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentTaskProviderCostConsentDaoImpl.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/PersonalWorkspaceExecutionDaoImpl.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskProviderCostConsentMapper.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/PersonalWorkspaceExecutionMapper.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskExecutionGrantServiceImpl.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskProviderCostConsentServiceImpl.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/PersonalWorkspaceExecutionServiceImpl.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/api/PersonalWorkspaceConversationRuntimeController.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentExisting",
+        "path": "agent/jia-agent-service/build.gradle"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-api/src/main/java/cn/jia/agent/service/ControlledImageFollowupAuthorityService.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/ControlledImageFollowupAuthorityDTO.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/ControlledImageIntentOperationGrantEntity.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-core/src/main/java/cn/jia/agent/entity/ControlledImageExecutionSourceV3Entity.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/ControlledImageIntentOperationGrantDao.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/ControlledImageExecutionSourceV3Dao.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/ControlledImageIntentOperationGrantDaoImpl.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/ControlledImageExecutionSourceV3DaoImpl.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/ControlledImageIntentOperationGrantMapper.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/ControlledImageExecutionSourceV3Mapper.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-mapper/src/main/resources/db/agent-controlled-image-followup-v3.sql"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializer.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentNew",
+        "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/ControlledImageFollowupAuthorityServiceImpl.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/ControlledImageIntentOperationGrantServiceTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/ControlledImageIntentOperationGrantSpringTransactionTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/ControlledImageIntentOperationGrantMySqlTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/PersonalWorkspaceControlledImageV3ExecutionTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/PersonalWorkspaceControlledImageV3StartTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializerTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentRuntimeControlledImageV3SecurityIntegrationTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskProviderCostConsentServiceImplTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/api/AgentTaskProviderCostConsentControllerTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/ControlledImageGrantAuthorityTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/ControlledImageConversationStartTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/ControlledImageBridgeAtomicitySpringTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/ControlledImageBridgeMySqlTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "agentTests",
+        "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentRuntimeSecurityIntegrationTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatBountyInteractionController.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatBountyInteractionAdmissionService.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatBountyExecutionCoordinator.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/handler/AgentWebSocketHandler.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/conversation/ChatConversationArchiveStore.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-mapper/src/main/java/cn/jia/chat/archive/conversation/JdbcChatConversationArchiveStore.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-mapper/src/main/java/cn/jia/chat/deliberation/ChatInteractionStepStore.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatExisting",
+        "path": "chat/jia-chat-service/build.gradle"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatNew",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatBountyInteractionV3Controller.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatNew",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatBountyInteractionV3Wire.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatNew",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatBountyInteractionV3PreviewService.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatNew",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatBountyInteractionV3AuthorityService.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatNew",
+        "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatConversationAssetSourceResolver.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatBountyInteractionV3ControllerTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionV3PreviewServiceTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionV3AuthorityServiceTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionV3AdmissionServiceTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatConversationAssetSourceResolverTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyExecutionCoordinatorV3Test.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyExecutionCoordinatorV3SpringTransactionTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/handler/AgentWebSocketControlledImageV3ExecutionTest.java"
+      },
+      {
+        "existsAtBaseline": false,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/handler/ControlledImageBountyExecutionV3DeclarationTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionAdmissionServiceTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionRequestStatusTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyExecutionCoordinatorTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyExecutionCoordinatorSpringTransactionTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/handler/AgentWebSocketControlledImageExecutionTest.java"
+      },
+      {
+        "existsAtBaseline": true,
+        "group": "chatTests",
+        "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/handler/ControlledImageBountyExecutionDeclarationTest.java"
+      }
+    ],
+    "wildcards": false
+  },
+  "runs": {
+    "database": false,
+    "gradle": false,
+    "provider": false
+  },
+  "tree": "e106bfa99b78c97ac2e6a765a7032a1db20dc9bf",
+  "worktreeStatus": ""
+}

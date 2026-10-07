@@ -1,0 +1,3 @@
+2026-09-28 `cyf_orchestrator.py status | rg MMD-INTEGRATE-API-20260928` exited 1 after the transition succeeded.
+Root cause: status prints only entries in `critical_path`; this newly registered task is present in runtime ledger but not in the printed critical_path list.
+No source/index/worktree mutation occurred. Remediation: verify the runtime ledger entry directly with read-only rg, then restore writer gate `implementing`.

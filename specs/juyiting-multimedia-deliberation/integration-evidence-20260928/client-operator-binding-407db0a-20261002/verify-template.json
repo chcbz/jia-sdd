@@ -1,0 +1,163 @@
+{
+  "status": "STATIC_VALID",
+  "projectionKind": "SYNTHETIC_EXPECTED_REGISTRATION",
+  "providerBindingEvidenceStatus": "UNVERIFIED",
+  "fullInstallationReadiness": false,
+  "profile": {
+    "profileId": "wuyong",
+    "agentId": "agt_existing_wuyong_candidate",
+    "codexBin": "/usr/local/bin/codex",
+    "codexHome": "/home/isp/apps/codex-ws-agent/private-homes/wuyong",
+    "codexWorkdir": "/home/isp/wsps/cyf",
+    "codexSandbox": "workspace-write",
+    "codexApproval": "never",
+    "codexSessionMode": "resume",
+    "codexTimeoutMs": 900000,
+    "chatEngine": "app-server",
+    "chatModel": "gpt-5.6-terra",
+    "chatReasoningEffort": "low",
+    "appServerEnabled": true,
+    "appServerSchemaContractId": "codex-cli-0.159.2",
+    "typedInspectionEnabled": true,
+    "typedInspectionApiOrigin": "https://api.example.invalid",
+    "typedInspectionRootDir": "/home/isp/apps/codex-ws-agent/data/typed-inspection-inputs/wuyong",
+    "typedInspectionStateRoot": "/home/isp/apps/codex-ws-agent/data/typed-inspection-state/wuyong",
+    "typedInspectionProfileId": "mmd-image-understanding-1f95df2-v1",
+    "typedInspectionEngineContractId": "codex-app-server-codex-cli-0.159.2-typed-inspection-v1",
+    "typedInspectionProviderId": "gpt",
+    "typedInspectionProviderBaseUrl": "https://codex.chcbz.net/v1",
+    "typedInspectionProviderWireApi": "responses",
+    "typedInspectionProviderNetwork": "restricted-proxy",
+    "typedInspectionNetworkConnectTimeoutMs": 15000,
+    "typedInspectionCaBundlePath": "/etc/pki/tls/certs/ca-bundle.crt",
+    "typedInspectionCarrierEvidencePath": "/home/isp/apps/codex-ws-agent/evidence/typed-inspection-local-image-gpt-5.6-terra-1f95df2.json",
+    "typedInspectionCarrierEvidenceDigest": "sha256:d22de19b1b86c988c81deadb2697e5a577fdbc9abb4982ddc015fefa7fd6bdab",
+    "typedInspectionBwrapBin": "/usr/bin/bwrap",
+    "typedInspectionSupportedInputs": [
+      {
+        "mediaKind": "image",
+        "mimeType": "image/png",
+        "carrier": "LOCAL_IMAGE",
+        "carrierContractDigest": "sha256:fb699e707ec0bef6f874c285276f6cec324406f34a2a75620ba235cf36d0244e"
+      }
+    ],
+    "workspaceFileApiOrigin": "https://api.example.invalid",
+    "workspaceFileRootDir": "/home/isp/apps/codex-ws-agent/data/private-runs/wuyong",
+    "nativeConversationHttpPollEnabled": true,
+    "nativeConversationImageGenerationEnabled": false,
+    "controlledImageHttpEnabled": true,
+    "controlledImageHttpEndpoint": "https://images.example.invalid",
+    "controlledImageHttpApiKeyEnv": "CYF_CONTROLLED_IMAGE_API_KEY",
+    "controlledImageHttpModelId": "frozen-image-model",
+    "controlledImageHttpBindingId": "controlled-binding-frozen",
+    "controlledImageHttpBindingEpoch": "7",
+    "controlledImageHttpLedgerRoot": "/home/isp/apps/codex-ws-agent/data/controlled-image-ledger/wuyong",
+    "enabled": true,
+    "isDefault": true
+  },
+  "syntheticExpectedDeclarations": {
+    "nativeProviderCredentialBinding": {
+      "schemaVersion": 1,
+      "enabled": true,
+      "providerLane": "CONTROLLED_IMAGE_HTTP_V1",
+      "bindingId": "controlled-binding-frozen",
+      "bindingEpoch": "7",
+      "modelId": "frozen-image-model",
+      "maxInputItems": 16,
+      "maxOutboundRequestAttempts": 1,
+      "precallFenceVersion": 1
+    },
+    "controlledImageBountyExecutionV3": {
+      "schemaVersion": 1,
+      "enabled": true,
+      "transport": "PERSONAL_WORKSPACE_CONTROLLED_IMAGE_HTTP_V3",
+      "commandSchemaVersions": [
+        3
+      ],
+      "leaseProtocolVersions": [
+        1
+      ],
+      "providerStartFenceVersions": [
+        3
+      ],
+      "resultCommitProtocolVersions": [
+        1
+      ],
+      "operations": [
+        {
+          "operation": "GENERATE_IMAGE",
+          "inputManifest": {
+            "schemaVersion": 3,
+            "minItems": 0,
+            "maxItems": 16,
+            "mimeTypes": [
+              "image/jpeg",
+              "image/png"
+            ],
+            "sourceKinds": [
+              "TASK_LINKED_WORKSPACE_VERSION"
+            ]
+          },
+          "resultManifest": {
+            "schemaVersion": 1,
+            "minItems": 1,
+            "maxItems": 1,
+            "outputId": "output_1",
+            "mimeTypes": [
+              "image/png"
+            ]
+          }
+        },
+        {
+          "operation": "EDIT_IMAGE",
+          "inputManifest": {
+            "schemaVersion": 3,
+            "minItems": 1,
+            "maxItems": 1,
+            "mimeTypes": [
+              "image/jpeg",
+              "image/png"
+            ],
+            "sourceKinds": [
+              "CURRENT_CONVERSATION_ASSET"
+            ]
+          },
+          "resultManifest": {
+            "schemaVersion": 1,
+            "minItems": 1,
+            "maxItems": 1,
+            "outputId": "output_1",
+            "mimeTypes": [
+              "image/png"
+            ]
+          }
+        }
+      ]
+    },
+    "typedInspection": {
+      "schemaVersion": 1,
+      "contract": "juyiting-typed-inspection-v1",
+      "enabled": true,
+      "profileId": "mmd-image-understanding-1f95df2-v1",
+      "engineContractId": "codex-app-server-codex-cli-0.159.2-typed-inspection-v1",
+      "enginePolicyDigest": "sha256:d370907dd5a82c75dee79949a03ad8bb2dfd59f60856be7ac4eba247e003c5be",
+      "toolPolicyDigest": "sha256:150f82829ec43496ae09a4eb1504ed81d5e50d4283bb47f5e428f22961f70d69",
+      "inputPolicyDigest": "sha256:39a5950107a345929d852a8b95ffec823e24c2be1c6f841fd4d3402733466b34",
+      "toolPolicy": "MANIFEST_READ_ONLY",
+      "recovery": "durable-inbox-turn-readback-v1",
+      "supportedInputs": [
+        {
+          "mediaKind": "image",
+          "mimeType": "image/png",
+          "carrier": "LOCAL_IMAGE",
+          "carrierContractDigest": "sha256:fb699e707ec0bef6f874c285276f6cec324406f34a2a75620ba235cf36d0244e"
+        }
+      ]
+    }
+  },
+  "apiPolicyDigest": "sha256:a2909d4f20c0f60c6e4b41b9464b3692614593754a8e7e4340a5aa1432b1758a",
+  "secretEnvironmentNames": [
+    "OPENCLAW_API_KEY",
+    "CYF_CONTROLLED_IMAGE_API_KEY"
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "asOf": "2026-10-07T15:37:04+08:00",
+  "status": "PASS_BUSINESS_CLOSURE_WITH_UI_GAPS",
+  "fullMultimediaAcceptance": "NOT_COMPLETE",
+  "taskId": "426",
+  "conversationId": "1760458005117",
+  "requestId": "mmd-typed-request_9d12b1aa52032f0b745b7d7fd85543c281ab4503",
+  "messageId": "1737392",
+  "operationId": "fin_e2dd17013746417c9c7022134450b3f1039a28c3d72ce6fe93dfaaa4c499588f",
+  "deliveryId": "finalization_delivery_ac7819b693c49fc89e6a562b4b40019e1dc5718c29ad179dcf37fea2727565ba",
+  "taskState": "completed",
+  "taskVersion": "4",
+  "deliveryState": "accepted",
+  "textBytes": 55,
+  "textSha256": "671eb094fbe5916c30e0a06747b5ec56a7fc54491ab000fefc863917252c59a7",
+  "originalFinalDigest": "sha256:4dbc96c4e8746c234977045936d6e9c910d0c5f73a594e5a1b6f16f0d012cebe",
+  "uiSteps": [
+    "创建",
+    "选择公孙胜",
+    "点将并议事",
+    "等待真实答复",
+    "返回点将册",
+    "关闭点将册",
+    "事项",
+    "待开工（已点将）",
+    "打开426议事",
+    "返回事项详情",
+    "查看正式成果与验收",
+    "确认验收",
+    "全页刷新",
+    "事项/已完成/426",
+    "返回详情/重开成果",
+    "查询验收状态（只读）"
+  ],
+  "networkEvidence": {
+    "pointPOST": 1,
+    "acceptPOST": 1,
+    "countScope": "point-once/accept-once CDP观察窗口；非全程连续抓包",
+    "create": "真实UI单次点击；创建时监听仅chat，未捕获agent创建POST，不能宣称POST精确计数",
+    "reloadAndStatus": "无额外finalization/讨论写；list/search/status-counts/recommend为查询型POST，不能声称全程0POST"
+  },
+  "gaps": [
+    {
+      "id": "SF01",
+      "owner": "Web",
+      "observation": "点将自动议事的返回进入点将册，不是事项详情；成果验收入口需要事项列表绕行。",
+      "minimal_fix": "原task作用域返回事项详情，提供可达的成果入口；不新建成果查询/集合系统。",
+      "acceptance": "新事项创建、点将、议事完成后正常返回即可到同事项成果验收；不需要关闭/找列表/再进入议事。",
+      "evidence": [
+        "return-to-task.json",
+        "open-items.json",
+        "assigned-tab.json",
+        "return-from-own-card-chat.json"
+      ]
+    },
+    {
+      "id": "SF02",
+      "owner": "Web",
+      "observation": "点将及验收完成后Overview卡片仍待领令/待安排，刷新后才变已完成/公孙胜。",
+      "minimal_fix": "复用成功操作回执触发当前事项Overview读取/投影刷新，保留身份隔离。",
+      "acceptance": "一次点将/验收后无需页面重载，Overview与领域状态一致；不发送第二次业务POST。",
+      "evidence": [
+        "point-once.json",
+        "accepted-readback.json",
+        "accept-once.json",
+        "refreshed-overview-loaded.json"
+      ]
+    },
+    {
+      "id": "SF03",
+      "owner": "Web",
+      "observation": "创建成功及验收后首页输入仍保留88字原需求；全页刷新后为0字。",
+      "minimal_fix": "只在创建明确成功后清空本次已提交正文，歧义/失败保留草稿。",
+      "acceptance": "成功创建后草稿清空；未受理时不清空，也不因为输入残留创建第二事项。",
+      "evidence": [
+        "create-once.json",
+        "accept-once.json",
+        "refreshed-overview-loaded.json"
+      ]
+    },
+    {
+      "id": "SF04",
+      "owner": "Web",
+      "observation": "刷新重开已完成事项成果页，恢复持久验收intent后显示继续验收/验收尚未完成；点击查询验收状态的原operation GET才恢复完成。",
+      "minimal_fix": "恢复原验收intent时自动只读核对同operation；未核对时显示未知而非尚未完成，不自动POST。",
+      "acceptance": "刷新重开保持同一operation/selectedOutputs，读取后显示需求已完成，不要求用户再次验收；未知/失败不伪报成功。",
+      "evidence": [
+        "completed-results.json",
+        "reopened-status-unknown.png",
+        "queried-accept-status.json",
+        "refreshed-server-readback.json"
+      ]
+    },
+    {
+      "id": "SF05",
+      "owner": "Web",
+      "status": "OBSERVED_DOM_NEEDS_VISIBILITY_CONFIRMATION",
+      "observation": "议事文本快照包含两处原需求（引导/原消息）；catalog仅一条request。",
+      "minimal_fix": "核对可见引导与原消息是否重复展示后再做去重，不删除服务器消息。",
+      "acceptance": "保留原消息及唯一请求；如两处均可见则只显示一份引导。",
+      "evidence": [
+        "result-ui.json",
+        "reopened-completed-card.json",
+        "refreshed-server-readback.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "task423/424不重放",
+    "无业务DML",
+    "未新增Flow构建/部署",
+    "保存/附件/改单项不是本次前置",
+    "first-server-readback的point GET缺幂等header，400仅诊断探针错误，不计应用故障"
+  ]
+}

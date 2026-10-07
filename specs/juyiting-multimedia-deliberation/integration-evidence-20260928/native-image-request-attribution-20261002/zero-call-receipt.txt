@@ -1,0 +1,42 @@
+CYF Codex app-server zero-call image capability probe
+Date: 2026-10-02 Asia/Shanghai
+Codex: 0.159.2
+Mode: independent 0700 probe home; same config/auth digests and same provider selection as binding1 target profile.
+Forbidden operations performed: none (no thread/start, turn/start, codex exec, generation/edit, deployed-profile write, service/process control outside the self-owned probe).
+
+Lifecycle
+- Schema generation exited 0.
+- RPC app-server initialized successfully and exited normally on stdin EOF with return code 0.
+- stderr lines: 0.
+- no probe app-server residue after exit.
+- Initial Python wrapper attempt failed before process creation because this host Python lacks subprocess text=; corrected to universal_newlines and executed once.
+
+RPC readback
+- initialize: userAgent reports 0.159.2; codexHome equals private probe home; linux/unix.
+- account/read refreshToken=false: account type apiKey; requiresOpenaiAuth=true. No credential value returned or recorded here.
+- config/read: effective model gpt-5.6-luna; provider gpt; no explicit features.image_generation value (null/omitted).
+- model/list: target model present, non-hidden, inputModalities=[text,image]. This is model catalog metadata, not image-generation entitlement proof.
+- experimentalFeature/list: view_image enabled=true/defaultEnabled=true/stable. No image_generation entry is exposed by this feature-list RPC.
+- mcpServerStatus/list: zero configured servers. This does not enumerate or negate built-in tools.
+- modelProvider/capabilities/read: imageGeneration=true, namespaceTools=true, webSearch=true; no RPC error.
+
+Exact 0.159.2 output contracts
+- Public consumable app-server lifecycle notification: method=item/completed; params require threadId, turnId, completedAtMs, item.
+- Image item: params.item.type=imageGeneration; required fields id,result,status,type; optional revisedPrompt,savedPath,transparentBackground,failure.
+- The only declared failure variant in this schema is type=usageLimitExceeded with limitId and optional resetsAt.
+- Raw Responses item schema also contains type=image_generation_call with required result,status,type and optional id,revised_prompt.
+- Raw Responses event emission is controlled by thread/start experimentalRawEvents and schema labels it internal-use; it was not enabled or exercised.
+- Therefore an app-server Client should consume item/completed.params.item.type=imageGeneration. A synthetic top-level image_generation_call fixture does not exercise that app-server contract.
+
+Bounded conclusion
+- Effective local provider capability readback for this exact profile/provider says imageGeneration=true.
+- Exact app-server image output schema is available and consumable without MCP.
+- This zero-call probe does not prove upstream credential acceptance, quota, actual generation/edit success, model identity, or gpt-image-2.5 availability.
+- No generic built-in tool-list RPC exists in the generated request catalog; modelProvider/capabilities/read is the relevant zero-turn capability readback. MCP count is not a built-in-tool verdict.
+
+Evidence
+- schema bundle SHA256: 7243ba241962af92ca60581f1a81808ebda4212a800f8b205f54703bcfd508c5
+- sanitized RPC summary SHA256: 87bceaf7e2199745836876ae43dc9fb2cf9984822e5677f44cd8b81ca6a5f11d
+- ItemCompletedNotification SHA256: d04b9153de38cd8302a2a418a44a65e8265d4c7586d46ea2cc801b594c6acf5b
+- RawResponseItemCompletedNotification SHA256: e41475a93885572579b0963718e46783b07f9ddb9e61f0669dac09da4d59185e
+- ModelProviderCapabilitiesReadResponse SHA256: 5c42590f728289daaa441b947617398a0ca3aa17479013b3c564a5d314a3c9cf

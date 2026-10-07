@@ -1,0 +1,41 @@
+task=MMD-U4-BROWSER-BASELINE-SERVICE-READINESS
+date=2026-10-02
+owner=critical_worker:writer
+result=BINDING15_RESTORED_AND_REGISTERED
+api_restart=NOT_PERFORMED
+
+database_transaction:
+- binding row 15 CAS committed: 1 affected; lifecycle ACTIVE
+- identity row 15 CAS committed: 1 affected; lifecycle ACTIVE
+- runtime row 37 scope realignment committed: 1 affected
+- fixed lock order: INITIAL intent -> ACTIVE lease -> binding -> identity -> runtime -> managed key -> live reprovision
+- fresh scope/lease/intent/claim/key/entitlement checks PASS
+- competing active binding 0; hosted profile 0; live reprovision 0; other canonical runtime 0
+- claim unchanged across transaction
+
+attempt_history:
+- attempt 1: MySQL rejected explicit generated-column assignment before commit; transaction rolled back, no partial mutation and no API request
+- attempt 2: materially corrected candidate updated binding status/update_time only and verified generated lifecycle/active columns; committed
+
+managed_registration:
+- existing codex-ws-agent.service remained active; no stop/restart/signal
+- 2026-10-02 14:12:41+08:00 journal: pending_ack -> registered
+- runtime row 37 readback: exact binding/client/owner/tenant/persona scope; endpoint present; token present; fresh last_seen
+- current_task became present after registration; this is a fresh runtime-state change and forbids a redundant reprovision/deployment action
+
+free_reprovision:
+- POST not sent
+- idempotency key not created
+- request/receipt status NOT_CREATED
+- economy_hosting_reprovision rows for binding15: total 0, live 0
+- reason for not sending: restoration objective completed by the existing managed service automatic retry immediately after authorized lifecycle/scope transaction; fresh runtime now has registration attachment and a current task. Sending a reprovision now would violate fresh-CAS/no-competition discipline and risk disrupting the recovered target. No JWT bypass or direct runner call was used.
+
+service_state:
+- codex-ws-agent.service active/running, existing MainPID retained
+- no foreign process or service operation performed
+
+private_sources:
+- binding15-authorized-restore-private-20261002T141213+0800.txt
+- binding15-authorized-rollback-candidate-private-20261002T141213+0800.sql
+shared_source:
+- binding15-authorized-restore-redacted-20261002T141213+0800.txt

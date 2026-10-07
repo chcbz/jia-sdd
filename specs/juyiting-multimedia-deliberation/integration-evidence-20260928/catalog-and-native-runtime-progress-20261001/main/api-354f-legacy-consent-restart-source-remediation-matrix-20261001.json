@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-01T20:44:58.979368+08:00",
+  "task_id": "MMD-U2-API-TYPED-ATOMIC-FOLLOWUP-V1-SOURCE-20261001",
+  "base_commit": "354f736a09b0e89d52306616245ba86e16897d85",
+  "base_tree": "15b9015a5734d7d46899788c904659c73535852b",
+  "actual_results": {
+    "phase1_Agent": {
+      "tests": 38,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "fresh_xml_files": 9,
+    "MySQL3_tests": "2PASS/1FAIL",
+    "phase1_Chat": "NOT_RUN",
+    "phase2_V2": "NOT_RUN",
+    "phase3_typed": "NOT_RUN",
+    "owned_schema_cleanup": "PASS"
+  },
+  "failure_evidence": "/var/tmp/cyf-mmd-api-354f-normal-verification-20261001/phase1-v3-failure-attribution.json",
+  "frozen_observed_catalog": "/var/tmp/cyf-mmd-api-purpose-union-catalog-stage5-20261001/catalog/check-constraints.json",
+  "root_cause": "V3 initializer now compares strict observed catalog but legacy AgentTaskProviderCostConsentSchemaInitializer uses the raw DDL consentPurposeCheckExpression for extended v3 expected checks in TWO places (validateCatalog and v3CheckExpressions); MySQL renders REGEXP BINARY/BETWEEN differently. Restart falsely rejects exact valid v3 catalog. Do not modify DDL expression to fix catalog comparison.",
+  "required_fix": "Introduce/reuse strict observed PURPOSE_UNION_CATALOG_CHECK accessor as catalog-only representation and route both legacy extended expectation sites to it. SQL expression, DDL, shared FundedTask/normalizer and all strict weak-check rejection remain unchanged. Test actual observed catalog acceptance by legacy validator; wrong/TRUE/OR/unenforced/missing/extra checks rejected; pristine/defaultoff acceptance remains. New real MySQL fullrestart test must pass in full normal graph; never weaken tests.",
+  "allowed_paths": [
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializer.java",
+    "agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskProviderCostConsentSchemaInitializer.java",
+    "agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentTaskProviderCostConsentSchemaInitializerTest.java",
+    "agent/jia-agent-service/src/test/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializerTest.java"
+  ],
+  "source_stage": "own clean branch/worktree, minimal child exact354f, static selfcheck noDB/Gradle/Provider. Main binds and approves source child as validation input then same Owner self-verifies fullnormal V3/V2/typed with new frozen evidence.",
+  "preserve": "Original642e 34pass3fail;354f37pass1fail and all bootstrap/preGradle observations immutable; no same candidate Gradle retry. Goldens/wires/context/SQL/storage/authorization unchanged. No source promotion/push before actual tests.",
+  "main_scope": "controlplane only no application source repair"
+}

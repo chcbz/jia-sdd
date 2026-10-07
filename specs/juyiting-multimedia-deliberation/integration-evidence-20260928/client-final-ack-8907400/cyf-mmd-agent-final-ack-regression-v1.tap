@@ -1,0 +1,590 @@
+TAP version 13
+# Subtest: managed profiles inherit only trusted runtime delivery capabilities
+ok 1 - managed profiles inherit only trusted runtime delivery capabilities # SKIP test name does not match pattern
+  ---
+  duration_ms: 1.846666
+  ...
+# Subtest: busy command is durably queued instead of dropped
+ok 2 - busy command is durably queued instead of dropped # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.262416
+  ...
+# Subtest: processing command restart enters durable recovery-required state without re-execution
+ok 3 - processing command restart enters durable recovery-required state without re-execution # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.140337
+  ...
+# Subtest: durable CHAT startup drains pending exact keys and processing restart stays recovery-required
+ok 4 - durable CHAT startup drains pending exact keys and processing restart stays recovery-required
+  ---
+  duration_ms: 822.978348
+  ...
+# Subtest: durable CHAT duplicate only re-ACKs while fingerprint conflict neither ACKs nor invokes twice
+ok 5 - durable CHAT duplicate only re-ACKs while fingerprint conflict neither ACKs nor invokes twice # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.373651
+  ...
+# Subtest: CHAT admission still schedules and retries ACK when initial durable ACK enqueue fails
+ok 6 - CHAT admission still schedules and retries ACK when initial durable ACK enqueue fails # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.177578
+  ...
+# Subtest: modern CHAT trust failure enters durable recovery and emits explicit recovery ACK
+ok 7 - modern CHAT trust failure enters durable recovery and emits explicit recovery ACK # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.154476
+  ...
+# Subtest: CHAT and COMMAND lanes start independently in both arrival orders and after pending restart
+ok 8 - CHAT and COMMAND lanes start independently in both arrival orders and after pending restart # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.160259
+  ...
+# Subtest: chat.stop without conversationId cancels only the exact queued or running durable turn
+ok 9 - chat.stop without conversationId cancels only the exact queued or running durable turn # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.308206
+  ...
+# Subtest: typed inspection dispatch detection is fail-closed for either the INSPECT route or trusted marker
+ok 10 - typed inspection dispatch detection is fail-closed for either the INSPECT route or trusted marker # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.177338
+  ...
+# Subtest: processor sends INSPECT through its isolated lane and reconciles unknown acceptance without a second start
+ok 11 - processor sends INSPECT through its isolated lane and reconciles unknown acceptance without a second start # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.229923
+  ...
+# Subtest: processor recovery controls durably prepare a final produced by native readback before replay
+ok 12 - processor recovery controls durably prepare a final produced by native readback before replay
+  ---
+  duration_ms: 463.674164
+  ...
+# Subtest: processor retains a durably prepared INSPECT final in recovery instead of archiving local computation as completed
+ok 13 - processor retains a durably prepared INSPECT final in recovery instead of archiving local computation as completed
+  ---
+  duration_ms: 426.357169
+  ...
+# Subtest: trusted final-saved ACK wins the send-return race, archives confirmed completion and accepts duplicate receipt idempotently
+ok 14 - trusted final-saved ACK wins the send-return race, archives confirmed completion and accepts duplicate receipt idempotently # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.255631
+  ...
+# Subtest: final-saved duplicate ACK completes a prepared recovery after process reload and clears scheduled replay
+ok 15 - final-saved duplicate ACK completes a prepared recovery after process reload and clears scheduled replay # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.127666
+  ...
+# Subtest: final-saved ACK rejects foreign, ambiguous, stale, unprepared and terminal-conflicting bindings
+ok 16 - final-saved ACK rejects foreign, ambiguous, stale, unprepared and terminal-conflicting bindings # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.297115
+  ...
+# Subtest: production chat runner takes disabled and legacy messages directly to serialized final-only fallback
+ok 17 - production chat runner takes disabled and legacy messages directly to serialized final-only fallback # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.2495
+  ...
+# Subtest: registration and presence truthfully advertise capability contract v1 with Fast CHAT disabled by default
+ok 18 - registration and presence truthfully advertise capability contract v1 with Fast CHAT disabled by default # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.168307
+  ...
+# Subtest: typed inspection declaration is absent without measured contract readback and exact when ready
+ok 19 - typed inspection declaration is absent without measured contract readback and exact when ready # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.166178
+  ...
+# Subtest: typed deliberation declaration binds the exact locally selected schema contract and defaults legacy
+ok 20 - typed deliberation declaration binds the exact locally selected schema contract and defaults legacy # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.096325
+  ...
+# Subtest: capability contract advertises CHAT only after its read-only-constrained profile is configured
+ok 21 - capability contract advertises CHAT only after its read-only-constrained profile is configured # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.084864
+  ...
+# Subtest: capability contract refuses to advertise CHAT policy for a non-constrained Fast configuration
+ok 22 - capability contract refuses to advertise CHAT policy for a non-constrained Fast configuration # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.109455
+  ...
+# Subtest: legacy chat run emits final only and never fabricates delta
+ok 23 - legacy chat run emits final only and never fabricates delta # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.089506
+  ...
+# Subtest: task.event updates local state callback and never executes
+ok 24 - task.event updates local state callback and never executes # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.093146
+  ...
+# Subtest: commands execute strictly in durable enqueue order
+ok 25 - commands execute strictly in durable enqueue order # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.085169
+  ...
+# Subtest: corrupt queue file is quarantined while valid commands continue
+ok 26 - corrupt queue file is quarantined while valid commands continue # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.08074
+  ...
+# Subtest: legacy agent status is ignored only as a non-executable control notification
+ok 27 - legacy agent status is ignored only as a non-executable control notification # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.250163
+  ...
+# Subtest: legacy execution types, missing messageType, and ambiguous envelopes fail closed
+ok 28 - legacy execution types, missing messageType, and ambiguous envelopes fail closed # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.132185
+  ...
+# Subtest: runtimeInstanceId is process-scoped while WebSocket API keys use headers
+ok 29 - runtimeInstanceId is process-scoped while WebSocket API keys use headers # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.092241
+  ...
+# Subtest: WebSocket loader uses ws even when a built-in client is available
+ok 30 - WebSocket loader uses ws even when a built-in client is available # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.095855
+  ...
+# Subtest: runtime abilities only contain allowlisted Chinese business abilities
+ok 31 - runtime abilities only contain allowlisted Chinese business abilities # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.084743
+  ...
+# Subtest: discovered Codex tools do not become scheduling abilities
+ok 32 - discovered Codex tools do not become scheduling abilities # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.081807
+  ...
+# Subtest: workspace discovery maps CYF modules to Chinese project business abilities
+ok 33 - workspace discovery maps CYF modules to Chinese project business abilities # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.288643
+  ...
+# Subtest: module-local directories identify their CYF business domain
+ok 34 - module-local directories identify their CYF business domain # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.125364
+  ...
+# Subtest: broad home and generic technology workspaces produce no business abilities
+ok 35 - broad home and generic technology workspaces produce no business abilities # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.104233
+  ...
+# Subtest: weather files map to 天气查询 while unknown names and contents are ignored
+ok 36 - weather files map to 天气查询 while unknown names and contents are ignored # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.080235
+  ...
+# Subtest: workspace discovery rejects symlink roots and symlink ancestors
+ok 37 - workspace discovery rejects symlink roots and symlink ancestors # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.099624
+  ...
+# Subtest: empty business directories do not claim capabilities
+ok 38 - empty business directories do not claim capabilities # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.076904
+  ...
+# Subtest: workspace root identity check rejects ancestor replacement races
+ok 39 - workspace root identity check rejects ancestor replacement races # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.072081
+  ...
+# Subtest: workspace entry bounds fail closed and accept the exact root limit
+ok 40 - workspace entry bounds fail closed and accept the exact root limit # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.074233
+  ...
+# Subtest: workspace entry budget is shared by root and project containers
+ok 41 - workspace entry budget is shared by root and project containers # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.069706
+  ...
+# Subtest: FIFO and symlinked containers cannot escape bounded scanning
+ok 42 - FIFO and symlinked containers cannot escape bounded scanning # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.095709
+  ...
+# Subtest: managed profiles publish ONLINE only after exact authenticated registration and engine readiness
+ok 43 - managed profiles publish ONLINE only after exact authenticated registration and engine readiness # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.091509
+  ...
+# Subtest: register and presence refresh business abilities after directory changes
+ok 44 - register and presence refresh business abilities after directory changes # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.098694
+  ...
+# Subtest: oversized or malformed manifests cannot inject business labels
+ok 45 - oversized or malformed manifests cannot inject business labels # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.092814
+  ...
+# Subtest: profile normalization rejects controls, duplicates, and non-business labels
+ok 46 - profile normalization rejects controls, duplicates, and non-business labels # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.074431
+  ...
+# Subtest: installing Codex skills does not change scheduling abilities
+ok 47 - installing Codex skills does not change scheduling abilities # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.083455
+  ...
+# Subtest: real ws upgrade sends X-API-Key header and no query credential
+ok 48 - real ws upgrade sends X-API-Key header and no query credential # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.072982
+  ...
+# Subtest: fsync and rename failures fail closed before command execution
+ok 49 - fsync and rename failures fail closed before command execution # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.359599
+  ...
+# Subtest: claim rename and fsync failures pause the queue before execution
+ok 50 - claim rename and fsync failures pause the queue before execution # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.09472
+  ...
+# Subtest: malformed completed marker is quarantined instead of re-executed
+ok 51 - malformed completed marker is quarantined instead of re-executed # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.084298
+  ...
+# Subtest: completed marker is settled on recovery without re-execution
+ok 52 - completed marker is settled on recovery without re-execution # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.07767
+  ...
+# Subtest: pending commands and persistent sequence survive restart in FIFO order
+ok 53 - pending commands and persistent sequence survive restart in FIFO order # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.066725
+  ...
+# Subtest: semantically invalid persisted commands are quarantined and never executed
+ok 54 - semantically invalid persisted commands are quarantined and never executed # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.067499
+  ...
+# Subtest: queue initialization repairs existing directory and record permissions
+ok 55 - queue initialization repairs existing directory and record permissions # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.08784
+  ...
+# Subtest: chat failure and busy branches emit chat responses only
+ok 56 - chat failure and busy branches emit chat responses only # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.072773
+  ...
+# Subtest: public envelope preserves explicit sender identity and validate works without global WebSocket
+ok 57 - public envelope preserves explicit sender identity and validate works without global WebSocket # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.453527
+  ...
+# Subtest: same commandId triggers dedupe and does not re-enqueue
+ok 58 - same commandId triggers dedupe and does not re-enqueue # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.11406
+  ...
+# Subtest: same commandId with different payload causes fingerprint conflict and REJECTED
+ok 59 - same commandId with different payload causes fingerprint conflict and REJECTED # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.08406
+  ...
+# Subtest: SKILL_INSTALL commandId reuse with changed fence or digest is rejected before execution
+ok 60 - SKILL_INSTALL commandId reuse with changed fence or digest is rejected before execution # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.436384
+  ...
+# Subtest: completed commandId re-delivery replays terminal ACK only
+ok 61 - completed commandId re-delivery replays terminal ACK only # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.111639
+  ...
+# Subtest: expired command before execution is REJECTED
+ok 62 - expired command before execution is REJECTED # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.136563
+  ...
+# Subtest: ack outbox retains pending ACKs when send fails and replays on reconnect
+ok 63 - ack outbox retains pending ACKs when send fails and replays on reconnect # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.122886
+  ...
+# Subtest: live command ACKs recover from an initial RECEIVED send failure in global FIFO order
+ok 64 - live command ACKs recover from an initial RECEIVED send failure in global FIFO order # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.076863
+  ...
+# Subtest: older pending ACK blocks a live ACK and leaves the current durable marker false
+ok 65 - older pending ACK blocks a live ACK and leaves the current durable marker false # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.076247
+  ...
+# Subtest: live ACK reports success only after its own ordered marker and dequeue complete
+ok 66 - live ACK reports success only after its own ordered marker and dequeue complete # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.067127
+  ...
+# Subtest: two initialized ACK outboxes allocate one FIFO sequence across instances and restart
+ok 67 - two initialized ACK outboxes allocate one FIFO sequence across instances and restart # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.086555
+  ...
+# Subtest: duplicate ACK queueSequence is quarantined and replay fails closed before send
+ok 68 - duplicate ACK queueSequence is quarantined and replay fails closed before send # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.095128
+  ...
+# Subtest: valid ACK sequence rollback is detected after the outbox becomes empty
+ok 69 - valid ACK sequence rollback is detected after the outbox becomes empty # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.096917
+  ...
+# Subtest: pending ACK above durable high-water is quarantined on startup
+ok 70 - pending ACK above durable high-water is quarantined on startup # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.222483
+  ...
+# Subtest: ACK sequence lock contention and lock fsync failure fail closed without allocation
+ok 71 - ACK sequence lock contention and lock fsync failure fail closed without allocation # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.07183
+  ...
+# Subtest: enqueue rechecks durable quarantine after waiting for the sequence lock
+ok 72 - enqueue rechecks durable quarantine after waiting for the sequence lock # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.072872
+  ...
+# Subtest: replay rechecks durable quarantine after lock wait and sends nothing
+ok 73 - replay rechecks durable quarantine after lock wait and sends nothing # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.061578
+  ...
+# Subtest: replay-held lock makes nested enqueue fail immediately instead of deadlocking
+ok 74 - replay-held lock makes nested enqueue fail immediately instead of deadlocking # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.112563
+  ...
+# Subtest: ACK replay stops immediately when the first send returns false or throws
+ok 75 - ACK replay stops immediately when the first send returns false or throws # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.104149
+  ...
+# Subtest: ACK replay stops at a failed middle item and never sends later ACKs
+ok 76 - ACK replay stops at a failed middle item and never sends later ACKs # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.102499
+  ...
+# Subtest: send false or throw keeps ACK markers false and records in the durable outbox
+ok 77 - send false or throw keeps ACK markers false and records in the durable outbox # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.089259
+  ...
+# Subtest: ACK marker persistence failure retains sent ACK for at-least-once replay
+ok 78 - ACK marker persistence failure retains sent ACK for at-least-once replay # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.072849
+  ...
+# Subtest: STARTED ACK persistence failure fail-closes before command side effects
+ok 79 - STARTED ACK persistence failure fail-closes before command side effects # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.063657
+  ...
+# Subtest: orphan RECEIVED ledger is reconciled to recovery-required across restart
+ok 80 - orphan RECEIVED ledger is reconciled to recovery-required across restart # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.063717
+  ...
+# Subtest: corrupt ledger is quarantined and the profile rejects and pauses
+ok 81 - corrupt ledger is quarantined and the profile rejects and pauses # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.066321
+  ...
+# Subtest: corrupt ACK is quarantined with an explicit fail-closed error
+ok 82 - corrupt ACK is quarantined with an explicit fail-closed error # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.059778
+  ...
+# Subtest: A06 durable ledger and ACK paths enforce private permissions
+ok 83 - A06 durable ledger and ACK paths enforce private permissions # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.071869
+  ...
+# Subtest: ack envelope uses an independent messageId and remains A03 normalizer-compatible
+ok 84 - ack envelope uses an independent messageId and remains A03 normalizer-compatible # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.064306
+  ...
+# Subtest: rejected ack includes rejectReason
+ok 85 - rejected ack includes rejectReason # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.075012
+  ...
+# Subtest: ledger survives cross-restart and correctly identifies duplicates
+ok 86 - ledger survives cross-restart and correctly identifies duplicates # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.086195
+  ...
+# Subtest: fingerprint is stable for semantically identical payloads
+ok 87 - fingerprint is stable for semantically identical payloads # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.061982
+  ...
+# Subtest: fingerprint stays stable when payload field order changes
+ok 88 - fingerprint stays stable when payload field order changes # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.144824
+  ...
+# Subtest: fingerprint differs for different payloads
+ok 89 - fingerprint differs for different payloads # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.095484
+  ...
+# Subtest: fingerprint includes deep business payload and ignores transport redelivery metadata
+ok 90 - fingerprint includes deep business payload and ignores transport redelivery metadata # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.077268
+  ...
+# Subtest: same commandId is isolated across agent profiles
+ok 91 - same commandId is isolated across agent profiles # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.094986
+  ...
+# Subtest: completed command across restart replays terminal ACK without re-execution
+ok 92 - completed command across restart replays terminal ACK without re-execution # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.070153
+  ...
+# Subtest: command fails and ACK reflects FAILED status
+ok 93 - command fails and ACK reflects FAILED status # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.127226
+  ...
+# Subtest: all 5 ACK status constants are defined
+ok 94 - all 5 ACK status constants are defined # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.074726
+  ...
+# Subtest: symlinked standalone entry executes validation instead of exiting as a no-op
+ok 95 - symlinked standalone entry executes validation instead of exiting as a no-op # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.068874
+  ...
+# Subtest: standalone --validate still works with a06 additions
+ok 96 - standalone --validate still works with a06 additions # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.06666
+  ...
+# Subtest: workspace file runtime auth stays process-memory only and profile configuration rejects a supplied header
+ok 97 - workspace file runtime auth stays process-memory only and profile configuration rejects a supplied header # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.104772
+  ...
+# Subtest: strict workspace file payload uses only its private run cwd, uploads and commits before completed reports
+ok 98 - strict workspace file payload uses only its private run cwd, uploads and commits before completed reports # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.0744
+  ...
+# Subtest: image workspace delivery materializes the one built-in imagegen raster before upload
+ok 99 - image workspace delivery materializes the one built-in imagegen raster before upload # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.073272
+  ...
+# Subtest: missing built-in imagegen result fails stably and reports it to the runtime
+ok 100 - missing built-in imagegen result fails stably and reports it to the runtime # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.065696
+  ...
+# Subtest: workspace file prompt never derives paths from untrusted instruction text
+ok 101 - workspace file prompt never derives paths from untrusted instruction text # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.065244
+  ...
+# Subtest: workspace command polling accepts only exact native queue envelopes and dispatches durable commands
+ok 102 - workspace command polling accepts only exact native queue envelopes and dispatches durable commands # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.08435
+  ...
+# Subtest: workspace command polling retries one stale undici socket before dispatching the read-only queue response
+ok 103 - workspace command polling retries one stale undici socket before dispatching the read-only queue response # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.074518
+  ...
+# Subtest: workspace command polling exposes safe failure categories while failing closed
+ok 104 - workspace command polling exposes safe failure categories while failing closed # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.066268
+  ...
+# Subtest: strict workspace file runtime failure reports failed only and command fingerprint binds manifests
+ok 105 - strict workspace file runtime failure reports failed only and command fingerprint binds manifests # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.073719
+  ...
+# Subtest: workspace file upload failure is reported failed after Codex and never completed
+ok 106 - workspace file upload failure is reported failed after Codex and never completed # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.066181
+  ...
+# Subtest: opt-in command execution persists and replays an exact Protocol-v1 work.result until its matching receipt
+ok 107 - opt-in command execution persists and replays an exact Protocol-v1 work.result until its matching receipt # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.069198
+  ...
+# Subtest: non-opt-in command types do not create execution reports
+ok 108 - non-opt-in command types do not create execution reports # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.084053
+  ...
+# Subtest: ACK high-water history is fully verified once and only the durable tip is reread during runtime
+ok 109 - ACK high-water history is fully verified once and only the durable tip is reread during runtime # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.06889
+  ...
+# Subtest: ACK high-water replay verifies immutable secure markers without fsyncing each file
+ok 110 - ACK high-water replay verifies immutable secure markers without fsyncing each file # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.076739
+  ...
+# Subtest: late correlated registration ACK restores native queue pickup without repeating execution writes
+ok 111 - late correlated registration ACK restores native queue pickup without repeating execution writes # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.084432
+  ...
+# Subtest: native start transport never calls Provider or repeats the start write
+ok 112 - native start transport never calls Provider or repeats the start write # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.074317
+  ...
+# Subtest: native start wrong-run never calls Provider or repeats the start write
+ok 113 - native start wrong-run never calls Provider or repeats the start write # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.069276
+  ...
+# Subtest: native start server-error never calls Provider or repeats the start write
+ok 114 - native start server-error never calls Provider or repeats the start write # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.063519
+  ...
+# Subtest: native start rejected never calls Provider or repeats the start write
+ok 115 - native start rejected never calls Provider or repeats the start write # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.066993
+  ...
+# Subtest: default-disabled modern durable CHAT is rejected without spawning the legacy runner
+ok 116 - default-disabled modern durable CHAT is rejected without spawning the legacy runner # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.064912
+  ...
+1..116
+# tests 116
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 113
+# todo 0
+# duration_ms 2139.105913

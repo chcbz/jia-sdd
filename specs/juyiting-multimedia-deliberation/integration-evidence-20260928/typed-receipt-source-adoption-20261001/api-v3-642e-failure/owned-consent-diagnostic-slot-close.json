@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-01T19:07:56.096899+08:00",
+  "slot": "owned-consent-diagnostic",
+  "status": "CLOSED_WITHOUT_CATALOG_COMPARISON",
+  "authorization_scope": "diagnostic only; no Gradle/test/source/docs/ledger/provider/production action",
+  "attempts": [
+    {
+      "attempt": "1",
+      "schema": "mmd642ediag7bf8049b82",
+      "result": "CONTROL_SCRIPT_FAILED",
+      "fact": "CREATE DATABASE was not followed by USE in the diagnostic mysql stdin. The script cleanup ran; post-readonly prefix count was 0. No source/test conclusion."
+    },
+    {
+      "attempt": "2",
+      "schema": "mmd642ediagd7f4e2671a",
+      "result": "CONTROL_SCRIPT_FAILED",
+      "mysql_stderr": "mysql: [Warning] Using a password on the command line interface can be insecure.\nERROR 1064 (42000) at line 131: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1\n",
+      "fact": "Fresh schema had explicit USE but the diagnostic-transcribed chk_atpcc_purpose_union SQL ended with three closing parentheses. The source line 429 ends with four closing parentheses (\"))))\"); the diagnostic SQL was not source-exact. Cleanup ran; live prefix count was 0."
+    }
+  ],
+  "source_binding": {
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-followup-v3-main-verification-20261001/agent/jia-agent-mapper/src/main/resources/db/agent-task-provider-cost-consent-v1.sql": "94676d1d40c483ff1c5f458662cfacb632a38204a27eeba9fe8dd94f2ec44192",
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-followup-v3-main-verification-20261001/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializer.java": "612bbbc254deb59ac6e221b2511995309e092b12bf043aec336501118b225dc7",
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-followup-v3-main-verification-20261001/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskProviderCostConsentSchemaInitializer.java": "2afe19d4377046fd1efe26602c12b9d91f4ebe73f8451245fe95b204a1f13998",
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-followup-v3-main-verification-20261001/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskCreationOperationSchemaInitializer.java": "fcd9e2d77f17d5a31de9ae0fd69121b5910c2850cea5c8e6cc65c435fd403eec"
+  },
+  "diagnostic_plan_v2_sha256": "722ea2e4359653452f5d6e130d9c6eb7cc52c3ffba56320c88a6559ea20cc7f6",
+  "diagnostic_transcription_boundary": {
+    "source_line_429": "                + \"(reserved_execution_id IS NOT NULL AND runtime_input_snapshot_sha256\"+hash+\"))))\";",
+    "plan_tail": " IS NOT NULL AND runtime_input_snapshot_sha256 REGEXP BINARY '^[0-9a-f]{64}$')))",
+    "source_expected_literal_sha256": "0339f1908318e3ebbdb62368cb3f23424d27300bff0cb413bbd566f085d62388",
+    "no_inference": "Because the source-exact statement was not successfully executed and the schema was dropped, no actual CHECK_CONSTRAINTS/SHOW CREATE catalog exists from this diagnostic. This does not confirm or refute the original phase-1 MySQL catalog drift."
+  },
+  "readonly_current_instance_proof": {
+    "preflight": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/mysql-diagnostic-readonly-preflight.json",
+    "postfailure_query": "UUID/datadir retained and mmd642ediag% count=0 (tool output 2026-10-01T19:07 local)",
+    "postfailure_prefix_count": 0
+  },
+  "next_step": "Slot closed. Hand the original phase-1 XML failure plus this diagnostic control-failure boundary to the source owner; owner should prepare a source-exact, independently reviewed minimal SQL reproducer before any new owned-schema run. No third diagnostic or Gradle retry was run.",
+  "no_source_or_ledger_edits": true
+}

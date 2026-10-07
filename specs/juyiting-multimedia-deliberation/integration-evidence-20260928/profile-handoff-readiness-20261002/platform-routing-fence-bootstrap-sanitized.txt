@@ -1,0 +1,27 @@
+CYF bounded read-only profile-migration bootstrap check
+Date: 2026-10-02 Asia/Shanghai
+No service operation, signal, restart, profile write, DML, identity creation, or backlog replay performed.
+
+FRESH OTHER_SCOPE PROFILE STATE
+- lujunyi runtime: online, exact active binding count=1, legacy current_task present.
+- claimed/running work items=0; live work leases=0.
+- queued personal executions=0; live personal leases=0.
+- durable local inbox pending=0, processing=0, recovery-required=0.
+- process tree has no lujunyi execution child; only the managed app-server child is present.
+- This is a point-in-time idle observation, not a stable admission fence.
+- lujunyi persisted owner scope differs from the target test-account scope.
+- Exact operational custody for that OTHER_SCOPE identity is NOT_PROVEN. A historical service-owner handle being unavailable does not transfer custody.
+
+EXISTING PLATFORM CONTROL INVENTORY
+- PUT /agent/{agentId}/status mutates runtime projection only. The live client heartbeat can overwrite it, and deployed raw WebSocket dispatch does not consult that status before sending.
+- Runtime-v1 installation revoke exists, but the installed shared client does not call /agent/runtime/v1 session/heartbeat. Both inspected active installation rows have last heartbeat about 17.2 days old; this lane is not the current legacy WebSocket session control.
+- Deployed runtime-auth bind replaces only the per-agent HTTP runtime-auth map entry. It does not close the prior WebSocket.
+- Deployed raw command dispatch iterates every matching successfully registered open session, so registering a second runtime is not a safe single-session fence.
+- Deployed AgentWebSocketHandler exposes observation/dispatch methods but no operator per-agent pause, drain, detach, or session-close method. /agent/active is read-only.
+- Therefore no existing binding1-only routing pause/session close/registration fence is available.
+
+BOOTSTRAP CONSEQUENCE
+- Client-side drain code cannot be made active in the old shared process without a process restart, and a shared restart affects OTHER_SCOPE profiles.
+- With current controls, a first client-side-control deployment requires a separately authorized whole-unit maintenance window covering every shared profile, including proven custody and a fresh no-live-lease/inbox/child check. The unit must be stopped once, binding1 removed/disabled while stopped, the shared process restarted without binding1, and only then may the independent binding1 instance register. Profile hot reload is not the bootstrap mechanism.
+- If whole-unit custody is unavailable, the non-cyclic engineering path is API-first: add a persisted exact-binding registration/dispatch fence plus exact-session close, CAS-bound to the observed old runtimeInstanceId and a one-time handoff to a different new runtimeInstanceId. Activate it for binding1 only, close/block the old binding1 socket and reconnect, then start the isolated local instance. Shared lujunyi/binding15 sessions remain outside the fence. This API-side control does not presently exist and must be implemented/tested/deployed before cutover.
+- Existing binding1 stale backlog remains preserved; no deletion or automatic replay is part of either path.
