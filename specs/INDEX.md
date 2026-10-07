@@ -29,4 +29,4 @@ Do not create a feature directory for local-only refactors unless it changes a p
 
 ## 2026-10-07 多媒体议事实际状态补录
 
-- [juyiting-multimedia-deliberation](juyiting-multimedia-deliberation/delivery-status.md)：implementing / NOT_COMPLETE。API117、Web177已版本化发布；纯文字、图文理解、原图片生成、可选保存有真实子集证据。新task426最短纯文字完整闭环通过，存在四项确定UI缺口；混合关联/验收、附件-only/澄清、音频、第二账号及Client集成仍见[剩余任务](juyiting-multimedia-deliberation/remaining-tasks-20261007.md)。历史worktree/分支已按范围清理；会话类型待明确。本轮未新增构建或部署。
+- [juyiting-multimedia-deliberation](juyiting-multimedia-deliberation/delivery-status.md)：implementing / NOT_COMPLETE。API117、Web177已版本化发布；纯文字、图文理解、原图片生成、可选保存有真实子集证据。新task426最短纯文字完整闭环通过，存在四项确定UI缺口；混合关联/验收、附件-only/澄清、音频、第二账号及Client集成仍见[剩余任务](juyiting-multimedia-deliberation/remaining-tasks-20261007.md)。历史worktree/分支已按范围清理；Codex历史子会话34个已原生删除，当前及Owner主会话保留。本轮未新增构建或部署。
