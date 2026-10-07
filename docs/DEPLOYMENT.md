@@ -1,3 +1,5 @@
+> **2026-10-07 部署路径调整：** 当前 API 实体目录已迁回 `/home/isp/hosts/cyf/api`，旧 `/opt/cyf/service/api` 仅为兼容软链接。同一 JAR、独立 `cyf-api` 身份、Java 21、统一锁、Flow 状态与备份保持不变。部署目录及 `/home/isp`、`/home/isp/hosts`、`/home/isp/hosts/cyf` 均为 root:root 0755，不可恢复为非特权可写。历史 M1/M2 发布说明不因此重新获得执行授权。
+
 # CYF 项目部署说明
 
 > ## M1 发布强制门禁（2026-07-29）

@@ -7,7 +7,7 @@ export LC_ALL=C
 cd /
 
 ACTION="${1-restart}"
-DEPLOY_DIR=/opt/cyf/service/api
+DEPLOY_DIR=/home/isp/hosts/cyf/api
 RUNTIME_DIR=/run/cyf-api
 JAR="$DEPLOY_DIR/cyf-api-kit.jar"
 JAVA=/opt/cyf/runtime/temurin-21-jre/bin/java
@@ -154,6 +154,11 @@ PY
 }
 
 load_start_requirements() {
+  local parent
+  for parent in /home /home/isp /home/isp/hosts /home/isp/hosts/cyf; do
+    [[ -d "$parent" && ! -L "$parent" && "$(stat -Lc '%u' "$parent")" == 0 ]] || die "不安全的部署父目录：$parent"
+    (( (8#$(stat -Lc '%a' "$parent") & 0022) == 0 )) || die "部署父目录可被非特权用户写入：$parent"
+  done
   [[ -d "$DEPLOY_DIR" && ! -L "$DEPLOY_DIR" ]] || die "安全部署目录不存在：$DEPLOY_DIR"
   [[ "$(stat -Lc '%a %U %G' "$DEPLOY_DIR")" == "755 root root" ]] || die "安全部署目录必须为 755 root root"
   [[ -d "$RUNTIME_DIR" && ! -L "$RUNTIME_DIR" ]] || die "安全运行目录不存在：$RUNTIME_DIR"
@@ -827,7 +832,7 @@ start_api() {
     --archive.reader.enabled=true \
     --archive.reader.allowed-scopes[0].tenant-id=oH2zD1PUPvspicVak69uB4wDaFLg \
     --archive.reader.allowed-scopes[0].client-id=jiafewnnv58ec2379c \
-  ) > "$log_file" 2>&1 < /dev/null 8>&- 9>&- &
+  ) > "$log_file" 2>&1 < /dev/null 5>&- 6>&- 7>&- 8>&- 9>&- &
   pid=$!
   ticks=''
   for _ in $(seq 1 20); do
