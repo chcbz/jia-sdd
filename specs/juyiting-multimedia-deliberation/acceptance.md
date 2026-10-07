@@ -1,3 +1,5 @@
+> **2026-10-07 原型入口纠正**：后续新需求统一基于[最近优化的UI原型](../juyiting-ui-baseline-20261006/prototype/index.html)及其页面/状态索引。本页的 `complete-20261007` / `adjusted` 是历史中间成果，不是当前界面基准；历史证据保留，真实业务仍 NOT_COMPLETE。
+
 > **2026-10-07 浏览器走查与原型补齐**：[页面交互矩阵](page-interaction-prototype-20261007.md) · [完整可点击原型](prototypes/complete-20261007/index.html) · [异常与恢复场景](prototypes/complete-20261007/scenarios.html)。仅离线设计交付，线上缺口未修复；SF05已确认可见重复，整体NOT_COMPLETE。
 
 > **2026-10-07 当前状态补录**：[已实现/发布/业务证据](delivery-status.md) · [剩余任务](remaining-tasks-20261007.md) · [新最短流程实测](shortest-flow-test-20261007.md)。下方2026-10-04及更早记录保持历史，旧“暂停/未执行”不覆盖已实际发布的API117/Web177。整体验收仍NOT_COMPLETE；不重做已实现功能、不因文档构建或部署。

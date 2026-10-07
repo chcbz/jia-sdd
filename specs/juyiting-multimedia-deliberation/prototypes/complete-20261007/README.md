@@ -1,3 +1,5 @@
+> **2026-10-07 原型入口纠正**：后续新需求统一基于[最近优化的UI原型](../../../juyiting-ui-baseline-20261006/prototype/index.html)及其页面/状态索引。本页的 `complete-20261007` / `adjusted` 是历史中间成果，不是当前界面基准；历史证据保留，真实业务仍 NOT_COMPLETE。
+
 # 浏览器走查后的完整交互原型 · 2026-10-07
 
 [打开主流程](index.html) · [分支与恢复场景](scenarios.html) · [线上走查与交互矩阵](../../page-interaction-prototype-20261007.md) · [浏览器检查](prototype-checks.json)
