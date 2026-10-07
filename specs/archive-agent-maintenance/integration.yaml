@@ -25,8 +25,9 @@ source_observation:
   release_evidence: false
 verification:
   documentation:
-    status: current_source_remote_gate_pending_root_commit
-    evidence: evidence/delivery/current-delivery-check.json
+    status: current_source_remote_pins_verified_server_validation_blocked
+    evidence: evidence/delivery/resume-20261007/source-delivery-check.json
+    historical_delivery_evidence: evidence/delivery/current-delivery-check.json
     historical_checker_evidence: evidence/documentation/delivery-history-audit/
     note: >-
       Historical validate-design.cjs exits 1 on client_historical_source_sha256:agent-client.mjs.
@@ -83,7 +84,7 @@ release:
   build_origin: null
   artifact_sha256: null
 implementation_handoff:
-  status: completion_audit_source_gaps_open
+  status: source_docs_pushed_server_validation_blocked
   entry: handoff.md
   progress: implementation-baseline.md
   current_delivery: delivery.md
@@ -93,6 +94,8 @@ implementation_handoff:
   shared_adapter_mapping: implemented_with_bounded_fixture_not_live_runtime_accepted
   neighboring_feature: juyiting-multimedia-deliberation
 document_delivery:
+  historical_record: true
+  superseded_by: remote_source_delivery_20261007
   target_branch: codex/archive-agent-maintenance
   feature_branch: codex/archive-agent-maintenance
   feature_branch_repository: root_sdd
@@ -102,6 +105,8 @@ document_delivery:
   root_remote_checked_on: '2026-10-01'
   component_refs_refreshed_for_delivery: true
 requested_delivery_remote_check:
+  historical_record: true
+  superseded_by: remote_source_delivery_20261007
   checked_on: '2026-10-01'
   repository: root_sdd
   remote_ref: refs/heads/codex/archive-agent-maintenance
@@ -111,7 +116,7 @@ requested_delivery_remote_check:
   note: Final root push is verified after commit; the commit cannot embed its own SHA.
 
 completion_audit:
-  status: source_gaps_open
+  status: source_gaps_closed_scoped_review_accepted_server_validation_blocked
   evidence: completion-audit.md
   preserves_original_scope: true
   prior_delivery_consistency_gate_is_not_feature_completion: true
@@ -426,8 +431,9 @@ completion_audit:
     writer_agent: 01a1020f-d374-77b1-8965-b80cf5e012b3
     base_api_commit: f7811da746b74557a9ee9fc6c16ed7c815d0cf84
     base_client_commit: c7eaddb57fb20e6253f81964cf864eb70b3baace
-    status: implementing
-    real_verification: not_run
+    status: source_completed_scoped_review_accepted
+    real_verification: focused_only_server_comprehensive_blocked
+    superseded_by: source_completion_20261007
     whole_feature_complete: false
 
 delivery_policy:
@@ -440,8 +446,8 @@ delivery_policy:
   merge_master_develop_authorized: false
   production_activation_deployment_paid_model_authorized: false
   source_development_status: original_D2_source_and_docs_complete_independently_reviewed
-  complete_source_push_status: component_remotes_verified_root_delivery_pending
-  server_comprehensive_verification_status: not_run
+  complete_source_push_status: all_four_repository_remotes_verified
+  server_comprehensive_verification_status: blocked_ssh_session_unavailable_results_and_cleanup_unverified
   reference: delivery-order.md
 
 recovery13_source_candidate:
@@ -815,8 +821,26 @@ source_completion_20261007:
   business_acceptance: not_run
 
 remote_source_delivery_20261007:
-  status: components_verified_root_pending
+  status: all_components_and_source_root_pushed_remote_verified
   components: evidence/delivery/resume-20261007/component-remotes.json
   checker: evidence/delivery/resume-20261007/source-delivery-check.json
-  server_validation: pending_after_root_push
+  source_root_commit: 8d77bcd325bd3cb4e6d589bc6add8071a3ceb09b
+  source_root_receipt: evidence/delivery/resume-20261007/root-source-remote-receipt.json
+  server_validation: blocked_ssh_session_unavailable
+  server_validation_evidence: evidence/delivery/resume-20261007/server-validation-status.json
+  remote_process_cleanup: unverified
+  whole_feature_accepted: false
+
+server_validation_20261007:
+  status: blocked_ssh_session_or_connection_timeout
+  evidence: evidence/delivery/resume-20261007/server-validation-status.json
+  exact_source_checkout_observed: true
+  isolated_workspace: /tmp/cyf-aam-resume-20261007
+  attempt5_exit_xml_and_results: unverified
+  remote_task_process_mysql_cleanup_and_lock_release: unverified
+  full_api_client_web_results: not_verified
+  mysql_migration_concurrency_selectors: not_verified
+  real_runtime_browser: not_run
+  production_changes: false
+  business_acceptance: not_run
   whole_feature_accepted: false

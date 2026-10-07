@@ -20,4 +20,8 @@ Native 精确合同与 RECOVERY-13 三项恢复边界修复均已局部审查接
 
 ## 2026-10-07 最新接续（覆盖历史当前状态）
 
-原D2源码与文档已收口，全部局部源码包独立接受。API5722e7fa / Web6dd4553c / Client9426030；最后生命周期Client Linux104PASS，API同树Chat76PASS及Agent17Windows环境失败原件保留。完整远程提交回执以evidence/delivery/resume-20261007/为准，组件→Root推送后再做隔离服务端全面验证。生产发布/迁移/真实任职与上架/付费调用未执行，84业务用例仍not_run；源范围接受不是whole-feature accepted。
+原D2源码与文档已收口并普通推送，全部局部源码包独立接受。API `5722e7fa2ee0d1f6a5eeb84ccf18dcfe009ae4e7` / Web `6dd4553c276c34a1d694a06a3daf11849dca0e64` / Client `9426030d4a9411429bbc1ad2bd154356a0287e3b`；Root源码交付提交 `8d77bcd325bd3cb4e6d589bc6add8071a3ceb09b` 已核对远端。最后生命周期Client Linux104PASS，API同树Chat76PASS及Agent17Windows环境失败原件保留。
+
+**服务端全面验证 BLOCKED，尚未完成。** 独占工作区已检出上述精确源码；attempt1–3配置失败且tests=0，attempt4主动停止本任务JVM，attempt5最后观察到compileJava，其后退出码/XML/结果与自有进程、MySQL关闭和Gradle锁释放均未确认。前次SSH曾公钥认证成功但session open超时，本次只读重试仍exit255/连接超时；不据此认定认证错误或唯一资源根因。完整回归、实库迁移/并发selector、真实Runtime/浏览器结果不可标PASS，远端原始attempt日志尚未取回。
+
+原件 `evidence/delivery/resume-20261007/{root-source-remote-receipt.json,server-validation-status.json,ssh-resume-readonly-20261007.log}`；恢复后先只读核本任务进程parent/cwd/argv、独占datadir及锁，不能按旧PID盲目kill或重启生产。准备脚本不是已完成验证，运行前须重新绑定真实完成尝试与精确源码。生产发布/迁移/真实任职与上架/付费调用未执行，84业务用例仍not_run/evidence=null；whole-feature accepted=false。

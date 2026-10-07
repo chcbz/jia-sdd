@@ -3,7 +3,7 @@ set -euo pipefail
 umask 077
 base=/tmp/cyf-aam-resume-20261007
 run="$base/runtime"
-[ -f "$base/evidence/api-result.json" ] && [ ! -e "$run" ]
+[ -f "$base/evidence/attempt3/api-result.json" ] && [ ! -e "$run" ]
 mkdir -p "$run/evidence" "$run/io" "$run/artifacts" "$run/mysql-data" "$run/redis" "$run/rabbit-home" "$run/rabbit-data" "$run/rabbit-log"
 exec > >(tee "$run/evidence/runtime-launch.log") 2>&1
 python3 - <<'PY'
@@ -11,10 +11,10 @@ import socket
 for p in (34161,34162,34163,34164,18121,18124):
  s=socket.socket();s.bind(('127.0.0.1',p));s.close()
 PY
-export JAVA_HOME=/home/isp/apps/jdk21 PATH=/home/isp/apps/jdk21/bin:/home/isp/apps/erlang/bin:$PATH GRADLE_USER_HOME=/home/isp/.gradle
+export JAVA_HOME=/home/isp/apps/jdk21 PATH=/home/isp/apps/jdk21/bin:/home/isp/apps/erlang/bin:$PATH GRADLE_USER_HOME=/root/.gradle
 export CYF_RUNTIME_CLASSPATH_FILE="$run/io/classpath.txt"
 cd "$base/root/api"
-flock /tmp/cyf-gradle.lock /home/isp/apps/gradle/9.3.1/bin/gradle :chat:jia-chat-starter:archiveRealRuntimeClasspath --no-daemon --max-workers=1 '-Dorg.gradle.jvmargs=-Xmx768m -XX:MaxMetaspaceSize=384m' > "$run/evidence/classpath.log" 2>&1
+flock /tmp/cyf-gradle.lock /home/isp/apps/gradle/9.3.1/bin/gradle :chat:jia-chat-starter:archiveRealRuntimeClasspath --init-script "$base/control/environment.gradle" --no-daemon --max-workers=1 '-Dorg.gradle.jvmargs=-Xmx768m -XX:MaxMetaspaceSize=384m' > "$run/evidence/classpath.log" 2>&1
 mysql_pid='';redis_pid='';rabbit_pid='';java_pid='';client_pid='';web_pid=''
 stop_exact() { local pid="$1" marker="$2"; if [ -n "$pid" ] && [ -r "/proc/$pid/cmdline" ] && tr '\0' ' ' < "/proc/$pid/cmdline" | grep -F -- "$marker" >/dev/null; then kill -TERM "$pid" || true; fi; }
 export HOME="$run/rabbit-home" RABBITMQ_NODENAME=aam_resume_20261007@localhost RABBITMQ_NODE_IP_ADDRESS=127.0.0.1 RABBITMQ_NODE_PORT=34162

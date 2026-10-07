@@ -95,12 +95,12 @@ for mode in ('manual','auto'):
  state[mode]['editions']=editions
  selected=next(e for e in (editions if isinstance(editions,list) else editions.get('editions',[])) if e.get('state')=='PUBLISHED')
  edition=selected['editionId']
- catalog=call('GET','/archive/v1/editions/'+edition+'/catalog',auth=False)
+ catalog=call('GET','/archive/v1/editions/'+edition+'/catalog')
  chapters=catalog.get('activeEdition',{}).get('chapters',[]) if isinstance(catalog,dict) else []
  assert chapters,'published catalog must have chapters'
  for chapter in chapters:
   chapterId=chapter.get('blockId',chapter.get('chapterId',chapter.get('id')))
-  content=call('GET','/archive/v1/editions/'+edition+'/chapters/'+chapterId,auth=False)
+  content=call('GET','/archive/v1/editions/'+edition+'/chapters/'+chapterId)
   assert content,'actual Reader chapter is empty'
  state[mode]['readerObserved']=True
 save()

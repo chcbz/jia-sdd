@@ -1,0 +1,20 @@
+beforeSettings { settings ->
+    if (settings.settingsDir.canonicalPath == '/tmp/cyf-aam-resume-20261007/root/api') {
+        settings.pluginManagement { includeBuild(new File(settings.settingsDir, 'plugin').absolutePath) }
+    }
+}
+gradle.beforeProject { project ->
+    if (project == project.rootProject) {
+        project.ext.snapshotsRepoUrl = 'https://maven.aliyun.com/repository/public'
+        project.ext.releasesRepoUrl = 'https://maven.aliyun.com/repository/public'
+        project.ext.repoUsername = ''
+        project.ext.repoPassword = ''
+    }
+}
+
+allprojects {
+    tasks.withType(Test).configureEach {
+        maxHeapSize = '256m'
+        jvmArgs '-XX:MaxMetaspaceSize=192m', '-Xss256k'
+    }
+}

@@ -1,6 +1,6 @@
 # 典籍阁 Agent 任职与内容维护
 
-状态：**D2 源码交付候选；组件测试与有界真实 HTTP/JDBC/POSIX/Client fixture 已形成。精确提交、远程核验和剩余验证边界以 delivery.md / integration.yaml 为准；未完成 84 项真实业务验收、部署或生产激活。**
+状态：**D2 源码与文档已完成并推送特性分支；服务端全面验证受 SSH 会话/连接超时阻断，尚未完成。精确提交与证据见 delivery.md / integration.yaml；84 项业务验收、部署与生产激活均未执行。**
 
 ## 1. 目标与结论
 
@@ -68,4 +68,4 @@
 
 ## 7. 完成边界
 
-设计完成 ≠ 局部源码完成 ≠ 集成完成 ≠ 发布完成 ≠ 内容上架完成。实施须按 acceptance.md 获取 API/Web/Client exact commit/tree、测试与制品证据、schema 迁移证据、任职/来源授权、发布记录、实际阅读结果。当前组件测试不构成 84 项业务验收；所有业务验收仍未执行。组件pins已形成且远程核验，但完成审计发现仍有D2源码需求未闭合，见completion-audit.md；不能因此宣称完整开发完成。
+设计完成 ≠ 局部源码完成 ≠ 集成完成 ≠ 发布完成 ≠ 内容上架完成。实施须按 acceptance.md 获取 API/Web/Client exact commit/tree、测试与制品证据、schema 迁移证据、任职/来源授权、发布记录、实际阅读结果。当前组件测试不构成 84 项业务验收；所有业务验收仍未执行。2026-10-07原D2源码缺口已收口、局部审查接受并完成远程源码交付，见completion-audit.md与delivery.md；服务端全面验证尚未完成，不能宣称整体验收通过。

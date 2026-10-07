@@ -436,3 +436,7 @@ API a0e42a3862be5b0274ebb629bab0e65be9494088 / Client b21d3c6181c5e8b7a306314024
 ### 2026-10-07 原D2源码收口（不等于验证/部署完成）
 
 最终candidate5 API a0e42a / Client b3f72d：仅Client commandless P2增量，真实SIGKILL双窗口及9异常负例新增，Linux三files104/104PASS、0skip、exit0自然结束。API同a0e42a结果明确复用candidate4，不新跑Gradle。独立只读ACCEPT_LOCAL_LIFECYCLE_SOURCE_SCOPE，P0/P1/P2=0，沿用已闭合RR和原五项结论，非跨模型。API提交5722e7fa / Client9426030精确等于接受trees，Web已有6dd4553c；源包全部收口，运维/迁移/崩溃恢复文档同步。完整远程交付和服务端验证仍为不同门槛；84用例保持not_run，不授权生产或付费操作。原件evidence/lifecycle/resume-20261007-candidate5/。
+
+### 2026-10-07 源码远程交付与验证阻断
+
+原D2源码与文档已完成，组件5722e7fa / 6dd4553c / 9426030先普通push并核远端，Root8d77bcd随后完成普通push。服务端精确源码checkout已观察，但全面验证尚未完成：前三轮配置失败，第四轮本任务JVM主动停止，第五轮compileJava后SSH session open超时，其后退出码/XML/本任务进程与清理未确认。只读重试仍SSH连接超时。最新证据evidence/delivery/resume-20261007/server-validation-status.json；不能将局部源码接受外推为服务端/Runtime/浏览器或84业务验收通过。
