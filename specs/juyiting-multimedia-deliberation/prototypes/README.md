@@ -1,3 +1,5 @@
+> **2026-10-07 最新完整交互入口**：[浏览器走查后补齐版](complete-20261007/index.html) · [分支场景](complete-20261007/scenarios.html) · [范围与检查](complete-20261007/README.md)。下方current/adjusted保留历史对照，生产缺口仍未修复。
+
 # 页面原型
 
 > **最新评审与实施入口：[局部调整版交互原型](adjusted/index.html) · [交互说明与截图](adjusted/README.md) · [变化红框与编号说明](adjusted/annotations/index.html)。** [实际页面基线](current/index.html)仅用于对照。下方均为旧独立原型的历史说明（包括旧验收选择行为），不是当前需求；当前验收无多选、无“调整交付内容”。

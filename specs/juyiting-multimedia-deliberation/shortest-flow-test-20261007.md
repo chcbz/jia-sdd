@@ -53,3 +53,7 @@ SF05：议事DOM快照含两处原需求；需先核对可见引导/原消息是
 first-server-readback中point查询因诊断探针未传原Idempotency-Key返回400，不属于应用失败；后续使用task/catalog/原operation只读回执，不盲重试该探针。
 
 混合改单项/精确验收、附件-only/自然澄清、音频、第二认证账号及Client develop集成仍见[余项](remaining-tasks-20261007.md)。本次通过不能替代这些NOT_COMPLETE项。
+
+## 后续只读页面走查补录
+
+[2026-10-07页面走查](page-interaction-prototype-20261007.md)已确认SF05为同一用户消息气泡内两段可见的重复正文，而非单纯DOM隐藏节点。没有新的业务写入/Agent调用证据，不能推断服务器重复请求。SF01–SF05尚未产品修复；离线原型只展示补齐后的目标交互。
