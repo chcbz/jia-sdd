@@ -23,3 +23,13 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 ```
 
 共享契约试点见 `specs/juyiting-execution-recovery/contract-pilot/README.md`。它复用实际前端消费者，但完整 Java HTTP/数据库层必须单独验证，不能以替身响应 PASS 替代。
+
+## 执行历史：单命令定向验证
+
+`execution_history_check.py --task-id TASK_ID --api /absolute/clean-api --web /absolute/pinned-web`
+
+- 加 `--check-only` 仅预检；不自动创建/接管任务或改基线。cache miss运行要求该任务已在现有验证阶段。
+- 先语法/合同检查和廉价消费者回归，再经原编排入口运行真实HTTP/MySQL测试及分层检查。无自动重试、安装、发布或前端本机生产打包。
+- 命中精确输入并核验完整证据时返回 `REUSED`，不启动Gradle/MySQL；缺失或损坏的证据不能复用。根目录普通文档变化不触发重建。
+- 一次性环境准备、凭据来源、完整命令、证据边界仍以 `specs/juyiting-execution-recovery/contract-pilot/README.md` 为唯一详细说明。
+- 工具本身的隔离测试：`python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_execution_history_check.py' -v`。这些工具测试不是实际跨端验收证据。

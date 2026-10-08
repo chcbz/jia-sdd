@@ -201,8 +201,8 @@ class HistoryCheckTest(unittest.TestCase):
         self.o.exclusive_lock.side_effect=self.unlocked
         self.o.evidence_key.return_value='key'
         cached={'status':'REUSED'}
-        args=argparse.Namespace(task_id='T')
-        with patch.object(H,'cached_summary',return_value=cached),patch.object(H,'guard') as guard,\
+        args=argparse.Namespace(task_id='T',api=Path('/api'),web=Path('/web'))
+        with patch.object(H,'source_identity',side_effect=[self.prepared['api'],self.prepared['web']]),patch.object(H,'cached_summary',return_value=cached),patch.object(H,'guard') as guard,\
              patch.object(H,'credentials') as creds,patch.object(H.subprocess,'run') as run:
             result=H.execute(args,self.o,self.prepared,time.monotonic())
         self.assertEqual('REUSED',result['status']);guard.assert_not_called();creds.assert_not_called();run.assert_not_called()
@@ -212,11 +212,11 @@ class HistoryCheckTest(unittest.TestCase):
         self.o.evidence_key.return_value='key'
         self.o.task.return_value={'owner':'ours'}
         prepared=dict(self.prepared,baseline={},files={'check-consumer.mjs':b'code'},init='init')
-        args=argparse.Namespace(task_id='T',evidence_root=self.base,node=Path('/node'),web=Path('/web'))
+        args=argparse.Namespace(task_id='T',evidence_root=self.base,node=Path('/node'),api=Path('/api'),web=Path('/web'))
         def run_once(command,**kwargs):
             kwargs['stdout'].write('SyntaxError: duplicate binding')
             return argparse.Namespace(returncode=1)
-        with patch.object(H,'cached_summary',return_value=None),patch.object(H,'guard',return_value={'owner':'ours'}),\
+        with patch.object(H,'source_identity',side_effect=[self.prepared['api'],self.prepared['web']]),patch.object(H,'cached_summary',return_value=None),patch.object(H,'guard',return_value={'owner':'ours'}),\
              patch.object(H,'credentials',return_value={'CYF_MAVEN_PASSWORD':'secret'}),\
              patch.object(H.subprocess,'run',side_effect=run_once) as run:
             with self.assertRaisesRegex(H.CheckError,'SyntaxError'):
@@ -229,11 +229,34 @@ class HistoryCheckTest(unittest.TestCase):
     def test_invalid_cache_does_not_silently_start_build(self):
         self.o.exclusive_lock.side_effect=self.unlocked
         self.o.evidence_key.return_value='key'
-        with patch.object(H,'cached_summary',side_effect=H.CheckError('tampered')),\
+        with patch.object(H,'source_identity',side_effect=[self.prepared['api'],self.prepared['web']]),patch.object(H,'cached_summary',side_effect=H.CheckError('tampered')),\
              patch.object(H.subprocess,'run') as run,patch.object(H,'credentials') as creds:
             with self.assertRaises(H.CheckError):
-                H.execute(argparse.Namespace(task_id='T'),self.o,self.prepared,time.monotonic())
+                H.execute(argparse.Namespace(task_id='T',api=Path('/api'),web=Path('/web')),self.o,self.prepared,time.monotonic())
         run.assert_not_called();creds.assert_not_called()
+
+
+    def test_changed_source_after_precheck_cannot_reuse_or_build(self):
+        with patch.object(H,'source_identity',return_value={'commit':'changed','tree':'changed'}), \
+             patch.object(H,'cached_summary') as cached,patch.object(H.subprocess,'run') as run:
+            with self.assertRaisesRegex(H.CheckError,'Source changed'):
+                H.execute(argparse.Namespace(api=Path('/api'),web=Path('/web')),self.o,self.prepared,time.monotonic())
+        cached.assert_not_called();run.assert_not_called()
+
+    def test_fingerprints_are_taken_after_lock_and_baseline_is_rechecked(self):
+        events=[]
+        @contextmanager
+        def lock(path):
+            events.append('lock');yield;events.append('unlock')
+        self.o.exclusive_lock.side_effect=lock
+        def precheck(args,orchestrator):
+            events.append('precheck');return self.prepared
+        with patch.object(H,'load_orchestrator',return_value=self.o), \
+             patch.object(H,'source_identity',return_value={'commit':'old','tree':'old'}), \
+             patch.object(H,'precheck',side_effect=precheck),patch.object(H,'execute') as execute, \
+             redirect_stdout(StringIO()):
+            self.assertEqual(2,H.main(['--task-id','T','--api',str(self.base),'--web',str(self.base)]))
+        self.assertEqual(['lock','precheck'],events);execute.assert_not_called()
 
 
 if __name__ == '__main__':

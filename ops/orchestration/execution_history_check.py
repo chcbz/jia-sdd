@@ -286,87 +286,85 @@ def attribute_failure(args, orchestrator, prepared, log, cause):
 
 def execute(args, orchestrator, prepared, started):
     key = orchestrator.evidence_key(prepared['api']['tree'], SELECTOR, prepared['fixtureDigest'])
-    # The same tree's external build output is reusable; snapshot test reports before
-    # another wrapper changes them. The orchestrator's global Gradle lock is still used.
-    lock = Path('/tmp') / ('cyf-history-check-' + prepared['api']['tree'] + '.lock')
-    with orchestrator.exclusive_lock(lock):
-        cached = cached_summary(orchestrator, key, prepared)
-        if cached:
-            cached['elapsedSeconds'] = round(time.monotonic() - started, 3)
-            return cached
-        prepared['taskAtStart'] = json.loads(json.dumps(guard(args, orchestrator, prepared)))
-        secrets = credentials(args)  # Only a cache miss needs credentials.
-        args.evidence_root.mkdir(parents=True, exist_ok=True)
-        run = Path(tempfile.mkdtemp(prefix='run-', dir=str(args.evidence_root)))
-        log = run / 'gradle.log'
-        manifest = {key: prepared[key] for key in ('api', 'web', 'identity', 'fixtureDigest', 'baseline')}
-        orchestrator.atomic_write(run / 'manifest.json', manifest, default_mode=0o600)
-        for name, data in prepared['files'].items():
-            (run / name).write_bytes(data)
-        (run / 'local-init.gradle').write_text(prepared['init'])
-        try:
-            with (run / 'consumer.log').open('w') as output:
-                cheap = subprocess.run([str(args.node), str(run / 'check-consumer.mjs'), str(args.web)],
-                                       env=clean_env(), stdout=output, stderr=subprocess.STDOUT)
-            if cheap.returncode:
-                raise CheckError(first_failure((run / 'consumer.log').read_text()))
-            feedback_seconds = round(time.monotonic() - started, 3)
-            build = args.evidence_root / 'build' / prepared['api']['tree']
-            build.mkdir(parents=True, exist_ok=True)
-            env = clean_env()
-            env.update(secrets)
-            env.update(JAVA_HOME=str(args.java_home), GRADLE_USER_HOME=str(args.gradle_user_home),
-                CYF_LOCAL_GRADLE_ACTIVE='1', CYF_LOCAL_BUILD_ROOT=str(build),
-                CYF_HISTORY_CONTRACT=str(run / 'execution-history.json'),
-                CYF_HISTORY_NODE_SCRIPT=str(run / 'check-http.mjs'), CYF_HISTORY_WEB=str(args.web),
-                CYF_HISTORY_WEB_COMMIT=prepared['web']['commit'], CYF_HISTORY_MYSQLD=str(args.mysqld),
-                CYF_HISTORY_NODE=str(args.node), CYF_HISTORY_RESULT=str(run / 'result.json'),
-                CYF_HISTORY_INPUT_DIGEST=prepared['fixtureDigest'])
-            command = [sys.executable, '-B', str(args.orchestrator), 'gradle', '--cwd', str(args.api),
-                '--tree-sha', prepared['api']['tree'], '--selector', SELECTOR, '--fixture-digest',
-                prepared['fixtureDigest'], '--artifact', str(run / 'summary.json'), args.task_id, '--',
-                str(args.gradle), '-I', str(run / 'local-init.gradle')] + SELECTOR.split() + ['--no-daemon', '--console=plain']
-            with log.open('w') as output:
-                result = subprocess.run(command, env=env, stdout=output, stderr=subprocess.STDOUT)
-            if result.returncode:
-                raise CheckError(first_failure(log.read_text()))
-            xmls = list(build.glob('*/agent__jia-agent-service/test-results/executionHistoryHttp/TEST-' + TEST_NAME + '.xml'))
-            if len(xmls) != 1:
-                raise CheckError('Expected exactly one real contract JUnit report')
-            (run / 'junit.xml').write_bytes(xmls[0].read_bytes())
-            frontend = validate_result(json.loads((run / 'result.json').read_text()), run / 'junit.xml', prepared)
-            # Do not accept source/dependency mutations while the build was waiting/running.
-            after = precheck(args, orchestrator)
-            if after['identity'] != prepared['identity'] or after['api'] != prepared['api']:
-                raise CheckError('Inputs changed during verification; no accepted evidence')
-            text = log.read_text()
-            if 'BUILD SUCCESSFUL' not in text or '> Task :validateLayering' not in text:
-                raise CheckError('Missing successful Gradle/validateLayering evidence')
-            summary = dict(manifest, status='PASS', taskId=args.task_id, selector=SELECTOR,
-                frontendAssertions=frontend['assertions'], httpRequests=frontend['requests'],
-                realMapperQueries=json.loads((run / 'result.json').read_text())['realMapperQueries'],
-                firstEffectiveFeedbackSeconds=feedback_seconds, elapsedSeconds=round(time.monotonic() - started, 3),
-                artifacts={name: digest_file(run / name) for name in
-                           ('manifest.json', 'result.json', 'junit.xml', 'gradle.log', 'consumer.log')},
-                evidence=str(run / 'summary.json'), limitations=LIMITS)
-            orchestrator.atomic_write(run / 'summary.json', summary, default_mode=0o600)
-            return summary
-        except (CheckError, OSError, ValueError, ET.ParseError) as exc:
-            cause = str(exc)
-            for value in secrets.values():
-                cause = cause.replace(value, '[redacted]')
-            # A Gradle exit-zero receipt is provisional until result/XML/input checks pass.
-            with log.open('a') as stream, redirect_stdout(stream), redirect_stderr(stream):
-                try:
-                    orchestrator.cmd_evidence_put(argparse.Namespace(task_id=args.task_id, tree_sha=prepared['api']['tree'],
-                        selector=SELECTOR, fixture_digest=prepared['fixtureDigest'], result='failed',
-                        command='execution_history_check', artifact=str(log)))
-                except SystemExit:
-                    print('Task baseline changed; no evidence overwrite. Incomplete bundle remains non-reusable.')
-            attribute_failure(args, orchestrator, prepared, log, cause)
-            orchestrator.atomic_write(run / 'failure.json', {'status': 'FAILED', 'firstDiagnostic': cause,
-                'evidence': str(log), 'elapsedSeconds': round(time.monotonic() - started, 3)}, default_mode=0o600)
-            raise CheckError(cause + '; evidence=' + str(run))
+    if source_identity(args.api) != prepared['api'] or source_identity(args.web) != prepared['web']:
+        raise CheckError('Source changed during precheck; no cached result or Gradle execution')
+    cached = cached_summary(orchestrator, key, prepared)
+    if cached:
+        cached['elapsedSeconds'] = round(time.monotonic() - started, 3)
+        return cached
+    prepared['taskAtStart'] = json.loads(json.dumps(guard(args, orchestrator, prepared)))
+    secrets = credentials(args)  # Only a cache miss needs credentials.
+    args.evidence_root.mkdir(parents=True, exist_ok=True)
+    run = Path(tempfile.mkdtemp(prefix='run-', dir=str(args.evidence_root)))
+    log = run / 'gradle.log'
+    manifest = {key: prepared[key] for key in ('api', 'web', 'identity', 'fixtureDigest', 'baseline')}
+    orchestrator.atomic_write(run / 'manifest.json', manifest, default_mode=0o600)
+    for name, data in prepared['files'].items():
+        (run / name).write_bytes(data)
+    (run / 'local-init.gradle').write_text(prepared['init'])
+    try:
+        with (run / 'consumer.log').open('w') as output:
+            cheap = subprocess.run([str(args.node), str(run / 'check-consumer.mjs'), str(args.web)],
+                                   env=clean_env(), stdout=output, stderr=subprocess.STDOUT)
+        if cheap.returncode:
+            raise CheckError(first_failure((run / 'consumer.log').read_text()))
+        feedback_seconds = round(time.monotonic() - started, 3)
+        build = args.evidence_root / 'build' / prepared['api']['tree']
+        build.mkdir(parents=True, exist_ok=True)
+        env = clean_env()
+        env.update(secrets)
+        env.update(JAVA_HOME=str(args.java_home), GRADLE_USER_HOME=str(args.gradle_user_home),
+            CYF_LOCAL_GRADLE_ACTIVE='1', CYF_LOCAL_BUILD_ROOT=str(build),
+            CYF_HISTORY_CONTRACT=str(run / 'execution-history.json'),
+            CYF_HISTORY_NODE_SCRIPT=str(run / 'check-http.mjs'), CYF_HISTORY_WEB=str(args.web),
+            CYF_HISTORY_WEB_COMMIT=prepared['web']['commit'], CYF_HISTORY_MYSQLD=str(args.mysqld),
+            CYF_HISTORY_NODE=str(args.node), CYF_HISTORY_RESULT=str(run / 'result.json'),
+            CYF_HISTORY_INPUT_DIGEST=prepared['fixtureDigest'])
+        command = [sys.executable, '-B', str(args.orchestrator), 'gradle', '--cwd', str(args.api),
+            '--tree-sha', prepared['api']['tree'], '--selector', SELECTOR, '--fixture-digest',
+            prepared['fixtureDigest'], '--artifact', str(run / 'summary.json'), args.task_id, '--',
+            str(args.gradle), '-I', str(run / 'local-init.gradle')] + SELECTOR.split() + ['--no-daemon', '--console=plain']
+        with log.open('w') as output:
+            result = subprocess.run(command, env=env, stdout=output, stderr=subprocess.STDOUT)
+        if result.returncode:
+            raise CheckError(first_failure(log.read_text()))
+        xmls = list(build.glob('*/agent__jia-agent-service/test-results/executionHistoryHttp/TEST-' + TEST_NAME + '.xml'))
+        if len(xmls) != 1:
+            raise CheckError('Expected exactly one real contract JUnit report')
+        (run / 'junit.xml').write_bytes(xmls[0].read_bytes())
+        frontend = validate_result(json.loads((run / 'result.json').read_text()), run / 'junit.xml', prepared)
+        # Do not accept source/dependency mutations while the build was waiting/running.
+        after = precheck(args, orchestrator)
+        if after['identity'] != prepared['identity'] or after['api'] != prepared['api']:
+            raise CheckError('Inputs changed during verification; no accepted evidence')
+        text = log.read_text()
+        if 'BUILD SUCCESSFUL' not in text or '> Task :validateLayering' not in text:
+            raise CheckError('Missing successful Gradle/validateLayering evidence')
+        summary = dict(manifest, status='PASS', taskId=args.task_id, selector=SELECTOR,
+            frontendAssertions=frontend['assertions'], httpRequests=frontend['requests'],
+            realMapperQueries=json.loads((run / 'result.json').read_text())['realMapperQueries'],
+            firstEffectiveFeedbackSeconds=feedback_seconds, elapsedSeconds=round(time.monotonic() - started, 3),
+            artifacts={name: digest_file(run / name) for name in
+                       ('manifest.json', 'result.json', 'junit.xml', 'gradle.log', 'consumer.log')},
+            evidence=str(run / 'summary.json'), limitations=LIMITS)
+        orchestrator.atomic_write(run / 'summary.json', summary, default_mode=0o600)
+        return summary
+    except (CheckError, OSError, ValueError, ET.ParseError) as exc:
+        cause = str(exc)
+        for value in secrets.values():
+            cause = cause.replace(value, '[redacted]')
+        # A Gradle exit-zero receipt is provisional until result/XML/input checks pass.
+        with log.open('a') as stream, redirect_stdout(stream), redirect_stderr(stream):
+            try:
+                orchestrator.cmd_evidence_put(argparse.Namespace(task_id=args.task_id, tree_sha=prepared['api']['tree'],
+                    selector=SELECTOR, fixture_digest=prepared['fixtureDigest'], result='failed',
+                    command='execution_history_check', artifact=str(log)))
+            except SystemExit:
+                print('Task baseline changed; no evidence overwrite. Incomplete bundle remains non-reusable.')
+        attribute_failure(args, orchestrator, prepared, log, cause)
+        orchestrator.atomic_write(run / 'failure.json', {'status': 'FAILED', 'firstDiagnostic': cause,
+            'evidence': str(log), 'elapsedSeconds': round(time.monotonic() - started, 3)}, default_mode=0o600)
+        raise CheckError(cause + '; evidence=' + str(run))
 
 
 def parser():
@@ -396,14 +394,22 @@ def main(argv=None):
     started = time.monotonic()
     try:
         orchestrator = load_orchestrator(args.orchestrator)
-        prepared = precheck(args, orchestrator)
         if args.check_only:
+            prepared = precheck(args, orchestrator)
             report = {'status': 'PRECHECK_OK', 'verification': 'NOT_RUN', 'api': prepared['api'],
                 'web': prepared['web'], 'baseline': prepared['baseline'], 'fixtureDigest': prepared['fixtureDigest'],
                 'elapsedSeconds': round(time.monotonic() - started, 3),
                 'nextAction': 'Owner confirms verification gate, then run without --check-only; no task transition was made'}
         else:
-            result = execute(args, orchestrator, prepared, started)
+            # Acquire the per-tree output lock BEFORE fingerprints: waiting for a
+            # prior run must not let us reuse an observation taken before the wait.
+            api = source_identity(args.api)
+            lock = Path('/tmp') / ('cyf-history-check-' + api['tree'] + '.lock')
+            with orchestrator.exclusive_lock(lock):
+                prepared = precheck(args, orchestrator)
+                if prepared['api'] != api:
+                    raise CheckError('API changed while waiting for its verification lock; restart on the confirmed candidate')
+                result = execute(args, orchestrator, prepared, started)
             report = {name: result[name] for name in ('status', 'elapsedSeconds', 'frontendAssertions',
                       'httpRequests', 'realMapperQueries', 'evidence', 'limitations')}
             if result['status'] == 'REUSED':
