@@ -120,4 +120,4 @@ For P0 identity/ACL/transaction/migration changes, use task/worktree/path-scoped
 - 冻结文件、证据和其路径不改写、不搬动；优先新增目录导航建立双向引用。需要物理归档时另核引用和证据绑定，不借整理删除历史失败或活跃待办。
 - 局部复核不更新全库 `BASELINE.yaml` 的生成日期；未复核内容明确沿用旧基线。文档状态是阅读提示，不是第二份 Owner/gate 台账。
 - 不新增独立审查、审批或应用构建；文档改动仅检查链接、内容/源码证据对应及原材料未变。整理完成不等于功能新增验收通过。
-- 样板：[聚义厅输入区 UI 收口](../specs/juyiting-ui-baseline-20261006/README.md)。
+- 样板：[聚义厅 UI 当前规格](../specs/juyiting-ui-baseline-20261006/spec.md)。
