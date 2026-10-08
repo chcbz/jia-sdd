@@ -65,3 +65,9 @@ This repository is a multi-module workspace with a Vue frontend under `web/`, Ja
 - Prefer `critical_worker` for P0 identity/ACL/transaction/migration work, `balanced_worker` (Terra Medium) for normal implementation, `explorer` (Terra Medium) for repository analysis, `fast_query` (GPT-5.4 Mini Medium) for narrow lookups, `routine_worker` for bounded mechanical work, and `adversarial_reviewer` for cross-model review.
 - Reviewers are read-only and must not repair the code they review.
 - Every Gradle command must hold `/tmp/cyf-gradle.lock`; never run parallel Gradle builds on this host.
+
+## 生产 API 安装目录（2026-10-07）
+
+- 最终部署 JAR 固定为 `/home/isp/hosts/cyf/api/cyf-api-kit.jar`；生产进程的 `-jar` 与 cwd 使用该实体目录。`/opt/cyf/service/api` 仅为兼容链接，不恢复第二套实体部署。
+- 正式构建仍走 Flow 云端；状态/下载留在 `/var/lib/cyf-api-flow`，备份留在 `/home/isp/baks`，不在生产目录本机构建。旧 M1/M2 releases 目录不作为新的生产 API 安装目标。
+- 主机控制工具 source 位于 `ops/ci/aliyun-flow/host`。路径修改/重装后执行只读 `/usr/bin/python3 -I -B /home/isp/bin/tests/test_cyf_api_canonical_path.py`；保留现行脚本的其他修复，不整文件回退到较旧版本。

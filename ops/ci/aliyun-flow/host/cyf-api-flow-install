@@ -10,7 +10,7 @@ INCOMING_PACKAGE="$PACKAGE_ROOT/incoming/package.tgz"
 APPROVAL_PATH="$PACKAGE_ROOT/approval.json"
 BACKUP_ROOT="$PACKAGE_ROOT/backups"
 RECORD_PATH="$PACKAGE_ROOT/record.json"
-TARGET_JAR=/opt/cyf/service/api/cyf-api-kit.jar
+TARGET_JAR=/home/isp/hosts/cyf/api/cyf-api-kit.jar
 LIFECYCLE=/usr/local/sbin/cyf-api-kit
 RELEASE_LOCK=/tmp/cyf-release-api.lock
 EXPECTED_ORGANIZATION=5fb7d76ee6f9d07f148529c7
@@ -82,6 +82,10 @@ if (( ! OFFLINE_TEST )); then
   [[ "$(stat -Lc '%a:%u:%g' "$PACKAGE_ROOT")" == '700:0:0' ]] || fail 'package root must be root-owned 0700'
   [[ "$(stat -Lc '%a:%u:%g' "$PACKAGE_ROOT/incoming")" == '700:0:0' ]] || fail 'incoming directory must be root-owned 0700'
   [[ "$(stat -Lc '%a:%u:%g' "$BACKUP_ROOT")" == '700:0:0' ]] || fail 'backup directory must be root-owned 0700'
+  for parent in /home /home/isp /home/isp/hosts /home/isp/hosts/cyf; do
+    [[ -d "$parent" && ! -L "$parent" && "$(stat -Lc '%u' "$parent")" == 0 ]] || fail 'target ancestor must be physical and root-owned'
+    (( (8#$(stat -Lc '%a' "$parent") & 0022) == 0 )) || fail 'target ancestor must not be group/world writable'
+  done
   [[ "$(stat -Lc '%a:%U:%G' "$TARGET_DIR")" == '755:root:root' ]] || fail 'target directory must be root-owned 0755'
   if [[ -e "$TARGET_JAR" ]]; then
     [[ "$(stat -Lc '%a:%U:%G' "$TARGET_JAR")" == '640:root:isp' ]] || fail 'target JAR must be root:isp 0640'

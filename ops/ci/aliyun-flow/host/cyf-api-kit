@@ -7,7 +7,7 @@ export LC_ALL=C
 cd /
 
 ACTION="${1-restart}"
-DEPLOY_DIR=/opt/cyf/service/api
+DEPLOY_DIR=/home/isp/hosts/cyf/api
 RUNTIME_DIR=/run/cyf-api
 JAR="$DEPLOY_DIR/cyf-api-kit.jar"
 JAVA=/opt/cyf/runtime/temurin-21-jre/bin/java
@@ -154,6 +154,11 @@ PY
 }
 
 load_start_requirements() {
+  local parent
+  for parent in /home /home/isp /home/isp/hosts /home/isp/hosts/cyf; do
+    [[ -d "$parent" && ! -L "$parent" && "$(stat -Lc '%u' "$parent")" == 0 ]] || die "不安全的部署父目录：$parent"
+    (( (8#$(stat -Lc '%a' "$parent") & 0022) == 0 )) || die "部署父目录可被非特权用户写入：$parent"
+  done
   [[ -d "$DEPLOY_DIR" && ! -L "$DEPLOY_DIR" ]] || die "安全部署目录不存在：$DEPLOY_DIR"
   [[ "$(stat -Lc '%a %U %G' "$DEPLOY_DIR")" == "755 root root" ]] || die "安全部署目录必须为 755 root root"
   [[ -d "$RUNTIME_DIR" && ! -L "$RUNTIME_DIR" ]] || die "安全运行目录不存在：$RUNTIME_DIR"
@@ -198,6 +203,7 @@ java_names = {
     'JIA_CHAT_VOICE_TRANSCRIPTION_ENABLED', 'JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER',
     'JIA_CHAT_VOICE_TRANSCRIPTION_MODEL', 'JIA_CHAT_VOICE_SYNTHESIS_ENABLED',
     'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER', 'JIA_CHAT_VOICE_SYNTHESIS_MODEL',
+    'JIA_CHAT_VOICE_SYNTHESIS_FORMATS',
     'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER_VOICE', 'SPRING_AI_OPENAI_API_KEY',
     'SPRING_AI_OPENAI_BASE_URL', 'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_API_KEY',
     'SPRING_AI_OPENAI_AUDIO_TRANSCRIPTION_BASE_URL',
@@ -220,16 +226,25 @@ for number, raw in enumerate(path.read_bytes().splitlines(), 1):
     if name not in allowed or name in values:
         raise SystemExit('unknown or duplicate configuration name on line {}'.format(number))
     values[name] = value
+provider = values.get('JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER')
+if provider == 'openai-compatible':
+    transcription_model, synthesis_model, synthesis_format = 'whisper-1', 'gpt-4o-mini-tts', 'mp3'
+elif provider == 'cliproxy-realtime':
+    transcription_model, synthesis_model, synthesis_format = 'gpt-realtime', 'gpt-realtime', 'wav'
+else:
+    raise SystemExit('unsupported voice provider profile')
 required_exact = {
     'JIA_CHAT_VOICE_ENABLED': 'true',
     'JIA_CHAT_VOICE_TRANSCRIPTION_ENABLED': 'true',
-    'JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER': 'openai-compatible',
-    'JIA_CHAT_VOICE_TRANSCRIPTION_MODEL': 'whisper-1',
+    'JIA_CHAT_VOICE_TRANSCRIPTION_PROVIDER': provider,
+    'JIA_CHAT_VOICE_TRANSCRIPTION_MODEL': transcription_model,
     'JIA_CHAT_VOICE_SYNTHESIS_ENABLED': 'true',
-    'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER': 'openai-compatible',
-    'JIA_CHAT_VOICE_SYNTHESIS_MODEL': 'gpt-4o-mini-tts',
+    'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER': provider,
+    'JIA_CHAT_VOICE_SYNTHESIS_MODEL': synthesis_model,
     'JIA_CHAT_VOICE_SYNTHESIS_PROVIDER_VOICE': 'alloy',
 }
+if provider == 'cliproxy-realtime' or 'JIA_CHAT_VOICE_SYNTHESIS_FORMATS' in values:
+    required_exact['JIA_CHAT_VOICE_SYNTHESIS_FORMATS'] = synthesis_format
 for name, expected in required_exact.items():
     if values.get(name) != expected:
         raise SystemExit('required activation setting is missing or invalid: {}'.format(name))
@@ -277,8 +292,6 @@ allowlist = set(filter(None, values.get('JIA_CHAT_VOICE_COMPATIBILITY_GATEWAY_AL
                                         'https://api.openai.com/v1').split(',')))
 if not set(provided_urls).issubset(allowlist):
     raise SystemExit('provider gateway is not allowlisted')
-if not values.get('CYF_VOICE_SMOKE_BEARER_TOKEN'):
-    raise SystemExit('authenticated smoke credential is missing')
 common_key_provided = 'SPRING_AI_OPENAI_API_KEY' in values
 common_url_provided = 'SPRING_AI_OPENAI_BASE_URL' in values
 connection_deferred = any(
@@ -819,7 +832,7 @@ start_api() {
     --archive.reader.enabled=true \
     --archive.reader.allowed-scopes[0].tenant-id=oH2zD1PUPvspicVak69uB4wDaFLg \
     --archive.reader.allowed-scopes[0].client-id=jiafewnnv58ec2379c \
-  ) > "$log_file" 2>&1 < /dev/null 8>&- 9>&- &
+  ) > "$log_file" 2>&1 < /dev/null 5>&- 6>&- 7>&- 8>&- 9>&- &
   pid=$!
   ticks=''
   for _ in $(seq 1 20); do
