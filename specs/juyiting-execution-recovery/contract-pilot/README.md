@@ -1,40 +1,48 @@
-# 执行历史契约试点（DEV-FEEDBACK-PILOT-20261008）
+# 执行历史共享契约试点
 
-选择既有只读 `GET /agent/personal-workspace/executions`，不新增产品接口或业务行为。合同样例唯一来源为 `execution-history.json`；数据全部合成，不含真实账号、凭据或需求正文。
+范围：既有只读 `GET /agent/personal-workspace/executions`。不新增产品行为，不访问生产、不登录真实账号、不调用 Provider。
 
-## 已实现与可执行范围
+## 两种验证，不混淆证据
 
-- 固定本地已核对 API/Web SHA，给出空页、首/末页、非法游标、服务不可用五个样例。
-- `check-consumer.mjs` 直接加载固定 Web 源码中的真实 `usePersonalWorkspaceExecution`，注入样例 API 响应；验证 ready/empty/error 区分、只读调用、游标分页与追加结果。
-- 使用独立、干净的 Web worktree；脚本检查 HEAD 和脏状态。依赖只复用已有 node_modules，不安装、不构建、不修改该工作区源码；未执行 lockfile/工具链完整性验证，所以结果仅作低成本诊断。
-- 禁止意外 fetch；不会登录、录音、执行任务、调用 Provider 或扣费。不能把 injected API 当成真实 HTTP。
+|入口|实际覆盖|定位|
+|---|---|---|
+|`check-consumer.mjs`|生产 Vue composable + 注入 JSON 响应，30条断言|快速消费者诊断，不证明 HTTP/数据库|
+|API `:agent:jia-agent-service:executionHistoryHttp` + `check-http.mjs`|签名 JWT → loopback Tomcat/Spring Security → 生产 Controller/事务 service/DAO/MyBatis → 独占 MySQL8；生产 createApi/useHttp/fetch → Vue 状态|真实只读跨端链路；前端部分仍是本地低成本诊断|
+
+共享期望/种子唯一来源是 `execution-history.json`。schemaVersion2 将旧的不可能分页样例（limit20、只有1条却返回游标）修正为20+1条；没有修改产品逻辑迎合测试。JSON `source` 是基线，**实际受测 commit/tree、输入摘要见 evidence**。
+
+真实链路检查：五类响应逐字段比对、20+1分页、空页与503区别、非法游标400、缺失/错误JWT401、缺失scope400、owner/client大小写及跨租户数据不泄漏、切换身份清空前端状态、`private, no-store`。应用数据库用户只授 SELECT，MyBatis禁止写操作，前后全表快照一致。未使用模拟 HTTP/SQL 返回值；历史查询之外的协作者采用失败即停的桩，防止生成/派发副作用。
+
+## 运行
+
+先查看项目 AGENTS 和最新相关 build.gradle。API 在固定干净 commit/worktree 经编排器串行执行；本机不做前端生产构建。
 
 ```bash
-node specs/juyiting-execution-recovery/contract-pilot/check-consumer.mjs \
+node /home/isp/wsps/cyf/specs/juyiting-execution-recovery/contract-pilot/check-consumer.mjs \
   /home/isp/wsps/worktrees/cyf-contract-consumer-20261008
 ```
 
-脚本引用本目录 JSON；输出包含层级及 Java/Flow NOT_RUN。非法游标/503 样例在前端仅验证错误响应不会被误当空列表，不声称前端已经发出非法游标或验证了服务端参数校验。
+真实链路的 Gradle Test 环境输入：
 
-## 后端与真实链路接入点（尚未实现/执行）
+- `CYF_HISTORY_CONTRACT`：共享JSON绝对路径。
+- `CYF_HISTORY_NODE_SCRIPT`：`check-http.mjs`绝对路径。
+- `CYF_HISTORY_WEB` / `CYF_HISTORY_WEB_COMMIT`：干净Web工作区及固定SHA（脚本还核对JSON中的Web基线）。
+- `CYF_HISTORY_MYSQLD`：MySQL8 mysqld绝对路径；只初始化自己的临时datadir、随机loopback端口，不连接已有库。
+- `CYF_HISTORY_NODE`：Node20可执行文件绝对路径。
+- `CYF_HISTORY_RESULT`：本次独占结果文件绝对路径。
 
-当前样例已被前端诊断消费，**尚未接入 Java 测试，因此不是两端共同通过的合同测试**。不把本样例加入发布门禁。
+使用项目本地消费型 Gradle init（仓库、OpenCV完整性校验不变、外置构建输出、子进程剥离Maven凭据），经 `cyf_orchestrator.py gradle` 执行以下 selector：
 
-已核对后端入口（相对于 api 仓库）：
-- `agent/jia-agent-service/src/main/java/cn/jia/agent/api/PersonalWorkspaceExecutionController.java`
-- `agent/jia-agent-api/src/main/java/cn/jia/agent/service/PersonalWorkspaceExecutionService.java` 的 ExecutionSummary/ExecutionCursor/ExecutionHistoryView
-- `agent/jia-agent-service/src/test/java/cn/jia/agent/api/PersonalWorkspaceExecutionControllerTest.java`：已有摘要白名单、private/no-store、非法游标、缺失 scope 的 MockMvc 测试；本轮没有重跑，也不是数据库链路证明。
+```
+:agent:jia-agent-service:executionHistoryHttp validateLayering
+```
 
-后续实现保持同一份 JSON，不复制成第二套期望值：
-1. 在独立固定 API 源码工作区将 JSON 作为显式测试资源输入并记录摘要；后端真实序列化结果与样例比对，非法游标须断言未调用 service。
-2. 增加隔离数据库的合成 owner-A/owner-B 数据，走真实认证/Controller/service/DAO，证明隔离、游标顺序与无创建/派发副作用。不要使用生产数据或其他任务数据库。
-3. 将真实 HTTP 响应交给前端消费者，保留请求认证、状态码、缓存头及身份切换回归。后端先读相关 build.gradle，经编排入口串行执行，并保留 validateLayering；前端正式验证仍走 Flow。
+编排证据键包含精确API tree、selector与fixture digest；digest至少覆盖JSON、Node脚本、本地init、Web commit/lockfile。结果绑定manifest、Gradle完整日志、JUnit XML与JSON；不要用新SHA描述旧测试。临时Node、Tomcat、MySQL由创建它们的测试负责关闭，不操作其他任务服务。
 
-以上未完成的层级均为 NOT_RUN；本轮没有后台服务、数据库 fixture 或生产访问，因此不宣称最小真实跨端链路已打通。
+## 证据与边界
 
-## 本轮证据
-
-- Python 开工工具：15 项隔离测试通过，原编排器19项回归通过。
-- 前端消费者：5个共享样例＋一次跨页消费，30条断言通过；没有触发全量测试/生产构建。
-- 首轮诊断发现测试脚本只传 append=true，未显式传 cursor；按真实 loadHistory 签名修正脚本后通过。原失败保留，未修改产品代码来迎合测试。
-- 日志与文件摘要见根任务 handoff `docs/implementation/handoffs/DEV-FEEDBACK-PILOT-20261008.md`；这不是正式验收证据缓存。
+- 本轮结果及源码身份见 `evidence/20261008-http.json`，执行/修复/集成记录见根目录任务handoff `EXECUTION-HISTORY-HTTP-20261008.md`。
+- 这是**执行历史只读接口**的真实链路，不代表整个聚义厅全部跨端功能已验收。
+- JWT为合成签名身份，安全链为测试专用 Spring Security 配置；不证明生产OAuth登录或整站安全配置。
+- Vue响应式状态在Node运行，不是浏览器页面渲染/E2E；复用已有node_modules，不声称依赖安装完整性验证。
+- 未运行前端正式Flow，未部署；不得当作发布门禁通过或已上线。
