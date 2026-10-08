@@ -50,6 +50,40 @@ class HistoryCheckTest(unittest.TestCase):
         self.o.EVIDENCE_PATH.write_text(json.dumps({'records': {'key': record}}))
         return result, summary
 
+    def browser_bundle(self):
+        self.prepared['identity']['browser'] = {'executable': '1'*64}
+        result, _ = self.bundle()
+        frontend = json.loads(result['frontendOutput'])
+        frontend['browser'] = {'status': 'PASS', 'checks': ['check'] * 29,
+            'requests': [{}] * 15, 'screenshots': {}}
+        for name in ('browser-desktop.png', 'browser-mobile.png', 'browser-landscape.png'):
+            (self.base / name).write_bytes(b'png-fixture')
+            frontend['browser']['screenshots'][name] = H.digest_file(self.base / name)
+        result['frontendOutput'] = frontend
+        return result
+
+    def test_browser_rejects_node_only_pass(self):
+        self.prepared['identity']['browser'] = {'executable': '1'*64}
+        result, _ = self.bundle()
+        with self.assertRaisesRegex(H.CheckError, 'rendered browser'):
+            H.validate_result(result, self.base / 'junit.xml', self.prepared)
+
+    def test_browser_accepts_complete_receipt(self):
+        result = self.browser_bundle()
+        self.assertEqual('PASS', H.validate_result(result, self.base / 'junit.xml', self.prepared)['browser']['status'])
+
+    def test_browser_rejects_tampered_screenshot(self):
+        result = self.browser_bundle()
+        (self.base / 'browser-mobile.png').write_bytes(b'changed')
+        with self.assertRaisesRegex(H.CheckError, 'digest mismatch'):
+            H.validate_result(result, self.base / 'junit.xml', self.prepared)
+
+    def test_browser_rejects_missing_viewport(self):
+        result = self.browser_bundle()
+        del result['frontendOutput']['browser']['screenshots']['browser-landscape.png']
+        with self.assertRaisesRegex(H.CheckError, 'viewport evidence'):
+            H.validate_result(result, self.base / 'junit.xml', self.prepared)
+
     def test_valid_bundle_reused_without_credentials_or_gradle(self):
         self.bundle()
         self.assertEqual('REUSED', H.cached_summary(self.o, 'key', self.prepared)['status'])

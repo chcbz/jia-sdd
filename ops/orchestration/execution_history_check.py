@@ -92,7 +92,7 @@ def source_identity(repo):
     return {'commit': git(repo, 'rev-parse', 'HEAD'), 'tree': git(repo, 'rev-parse', 'HEAD^{tree}')}
 
 
-def installed_packages(web):
+def installed_packages(web, browser=False):
     """The pinned pilot imports Vue and consola; include their dependency closure."""
     def resolve_package(start, name):
         if not re.match(r'^(?:@[\w.-]+/)?[\w.-]+$', name):
@@ -102,7 +102,7 @@ def installed_packages(web):
             if (candidate / 'package.json').is_file():
                 return candidate.resolve()
         raise CheckError('Missing installed frontend dependency: ' + name + '; no auto-install')
-    pending = [resolve_package(web, name) for name in ('vue', 'consola')]
+    pending = [resolve_package(web, name) for name in (('vue', 'consola', 'vite', '@vitejs/plugin-vue', 'ws') if browser else ('vue', 'consola'))]
     seen, packages = set(), []
     while pending:
         path = pending.pop()
@@ -113,6 +113,12 @@ def installed_packages(web):
         packages.append({'name': package['name'], 'version': package['version'], 'sha256': tree_digest(path)})
         for name in sorted(package.get('dependencies', {})):
             pending.append(resolve_package(path, name))
+        if browser:
+            for name in sorted(package.get('optionalDependencies', {})):
+                try:
+                    pending.append(resolve_package(path, name))
+                except CheckError:
+                    pass  # Platform-specific optional packages may be absent.
     return sorted(packages, key=lambda p: (p['name'], p['version'], p['sha256']))
 
 
@@ -149,15 +155,16 @@ def precheck(args, orchestrator):
     item = orchestrator.task(orchestrator.load_ledger(), args.task_id)
     if item['exact_sha_tree'] != {'commit_sha': api['commit'], 'tree_sha': api['tree']}:
         raise CheckError('Task/API commit/tree mismatch; confirm baseline explicitly, no automatic ledger change')
+    browser = getattr(args, 'browser', False)
     files = {name: (args.fixtures / name).read_bytes() for name in
-             ('execution-history.json', 'check-http.mjs', 'check-consumer.mjs')}
+             (('execution-history.json', 'check-http.mjs', 'check-consumer.mjs', 'check-browser.mjs', 'browser-entry.js') if browser else ('execution-history.json', 'check-http.mjs', 'check-consumer.mjs'))}
     fixture = json.loads(files['execution-history.json'].decode())
     if fixture.get('schemaVersion') != 2 or fixture.get('source', {}).get('webCommit') != web['commit']:
         raise CheckError('Shared contract schema/Web commit mismatch')
     cases = {c['id'] for c in fixture['cases']}
     if cases != {'empty', 'first-page', 'last-page', 'unpaired-cursor', 'unavailable'}:
         raise CheckError('Shared contract cases changed; update scoped verifier explicitly')
-    for name in ('check-http.mjs', 'check-consumer.mjs'):
+    for name in (n for n in files if n.endswith(('.mjs', '.js'))):
         capture([args.node, '--input-type=module', '--check'], files[name])
     for name in ('build.gradle', 'agent/jia-agent-service/build.gradle'):
         content = (args.api / name).read_text()  # Read current build definition before Gradle.
@@ -176,7 +183,7 @@ def precheck(args, orchestrator):
     identity = {'schema': 1, 'apiTree': api['tree'], 'web': web, 'selector': SELECTOR,
                 'fixtures': {name: digest_bytes(data) for name, data in files.items()},
                 'runner': digest_file(Path(__file__)), 'orchestrator': digest_file(args.orchestrator),
-                'localInit': digest_bytes(init.encode()), 'installedPackages': installed_packages(args.web),
+                'localInit': digest_bytes(init.encode()), 'installedPackages': installed_packages(args.web, True) if browser else installed_packages(args.web),
                 'toolchain': {'node': digest_file(args.node), 'mysqld': digest_file(args.mysqld),
                               'java': digest_file(args.java_home / 'bin/java'),
                               'javaModules': digest_file(args.java_home / 'lib/modules'),
@@ -184,6 +191,10 @@ def precheck(args, orchestrator):
                               'gradleLauncher': digest_file(args.gradle),
                               'gradleLibraries': tree_digest(gradle_home / 'lib')},
                 'gradleUserConfig': config}
+    if browser:
+        if not args.chrome.is_file():
+            raise CheckError('Missing explicit browser executable; no auto-install')
+        identity['browser'] = {'executable': digest_file(args.chrome), 'distribution': tree_digest(args.chrome.parent)}
     baseline = {'ref': args.baseline, 'freshness': 'local_ref_only_no_fetch'}
     try:
         base = git(args.api, 'rev-parse', '--verify', '--end-of-options', args.baseline + '^{commit}')
@@ -219,6 +230,16 @@ def validate_result(result, junit, prepared):
             frontend.get('fixtureSha256') != expected or frontend.get('assertions', 0) < 17 or
             frontend.get('requests', 0) < 8):
         raise CheckError('Incomplete or mismatched real HTTP/SQL/frontend result; exit zero is not acceptance')
+    if 'browser' in prepared['identity']:
+        browser = frontend.get('browser') or {}
+        if browser.get('status') != 'PASS' or len(browser.get('checks', [])) < 29 or len(browser.get('requests', [])) < 15:
+            raise CheckError('Missing complete rendered browser evidence')
+        expected_images = {'browser-desktop.png', 'browser-mobile.png', 'browser-landscape.png'}
+        if set(browser.get('screenshots', {})) != expected_images:
+            raise CheckError('Missing browser viewport evidence')
+        for name, sha in browser['screenshots'].items():
+            if digest_file(Path(junit).parent / name) != sha:
+                raise CheckError('Browser screenshot digest mismatch')
     suite = ET.parse(str(junit)).getroot()
     if (suite.get('name') != TEST_NAME or suite.get('tests') != '1' or
             any(suite.get(name) != '0' for name in ('failures', 'errors', 'skipped'))):
@@ -239,6 +260,8 @@ def cached_summary(orchestrator, key, prepared):
                 summary['identity'] != prepared['identity']):
             raise ValueError('identity mismatch')
         required = {'result.json', 'junit.xml', 'gradle.log', 'consumer.log', 'manifest.json'}
+        if 'browser' in prepared['identity']:
+            required |= {'browser-desktop.png', 'browser-mobile.png', 'browser-landscape.png'}
         if set(summary['artifacts']) != required:
             raise ValueError('missing evidence artifacts')
         for name, digest in summary['artifacts'].items():
@@ -320,6 +343,8 @@ def execute(args, orchestrator, prepared, started):
             CYF_HISTORY_WEB_COMMIT=prepared['web']['commit'], CYF_HISTORY_MYSQLD=str(args.mysqld),
             CYF_HISTORY_NODE=str(args.node), CYF_HISTORY_RESULT=str(run / 'result.json'),
             CYF_HISTORY_INPUT_DIGEST=prepared['fixtureDigest'])
+        if getattr(args, 'browser', False):
+            env.update(CYF_HISTORY_BROWSER='1', CHROME_PATH=str(args.chrome))
         command = [sys.executable, '-B', str(args.orchestrator), 'gradle', '--cwd', str(args.api),
             '--tree-sha', prepared['api']['tree'], '--selector', SELECTOR, '--fixture-digest',
             prepared['fixtureDigest'], '--artifact', str(run / 'summary.json'), args.task_id, '--',
@@ -340,13 +365,14 @@ def execute(args, orchestrator, prepared, started):
         text = log.read_text()
         if 'BUILD SUCCESSFUL' not in text or '> Task :validateLayering' not in text:
             raise CheckError('Missing successful Gradle/validateLayering evidence')
+        extra_artifacts = tuple(frontend['browser']['screenshots']) if frontend.get('browser') else ()
         summary = dict(manifest, status='PASS', taskId=args.task_id, selector=SELECTOR,
             frontendAssertions=frontend['assertions'], httpRequests=frontend['requests'],
             realMapperQueries=json.loads((run / 'result.json').read_text())['realMapperQueries'],
             firstEffectiveFeedbackSeconds=feedback_seconds, elapsedSeconds=round(time.monotonic() - started, 3),
             artifacts={name: digest_file(run / name) for name in
-                       ('manifest.json', 'result.json', 'junit.xml', 'gradle.log', 'consumer.log')},
-            evidence=str(run / 'summary.json'), limitations=LIMITS)
+                       (('manifest.json', 'result.json', 'junit.xml', 'gradle.log', 'consumer.log') + extra_artifacts)},
+            evidence=str(run / 'summary.json'), limitations=([x for x in LIMITS if x != 'No rendered browser UI'] + frontend['browser']['limitations'] if frontend.get('browser') else LIMITS))
         orchestrator.atomic_write(run / 'summary.json', summary, default_mode=0o600)
         return summary
     except (CheckError, OSError, ValueError, ET.ParseError) as exc:
@@ -372,6 +398,8 @@ def parser():
     p.add_argument('--task-id', required=True)
     p.add_argument('--api', required=True, type=Path)
     p.add_argument('--web', required=True, type=Path)
+    p.add_argument('--browser', action='store_true', help='Add standalone real Chromium history UI diagnostic')
+    p.add_argument('--chrome', type=Path, default=Path('/usr/lib64/chromium-browser/chromium-browser'), help='Explicit installed Chromium executable, distribution fingerprinted')
     p.add_argument('--baseline', default='develop', help='Local advisory baseline; no fetch or auto-merge')
     p.add_argument('--check-only', action='store_true', help='No credential extraction/build/services/evidence writes or task changes')
     p.add_argument('--fixtures', type=Path, default=ROOT / FIXTURE_DIR)

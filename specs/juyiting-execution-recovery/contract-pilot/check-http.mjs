@@ -81,7 +81,9 @@ try {
     params: malformed.request, authStore: wireAuthStore, rum: false }), error => error.status === 400 && error.code === 'BAD_REQUEST'); assertions++
   assert.ok(observations.some(x => x.status === 503)); assertions++
   assert.ok(observations.every(x => x.cache?.includes('private') && x.cache?.includes('no-store'))); assertions++
-  console.log(JSON.stringify({ status: 'PASS', layer: 'Vue-consumer_createApi_useHttp_fetch_JavaJWT_Controller_Service_MyBatis_MySQL',
+  globalThis.fetch = actualFetch
+  const browser = process.env.CYF_HISTORY_BROWSER === '1' ? await (await import('./check-browser.mjs')).checkBrowser() : null
+  console.log(JSON.stringify({ browser, status: 'PASS', layer: 'Vue-consumer_createApi_useHttp_fetch_JavaJWT_Controller_Service_MyBatis_MySQL',
     assertions, requests: observations.length, statuses: observations.map(x => x.status),
     fixtureSha256: createHash('sha256').update(fixtureBytes).digest('hex'), webCommit: fixture.source.webCommit,
     limitations: ['Synthetic signed identities, not production OAuth login', 'Vue state exercised in Node, not rendered browser UI', 'No deployment or formal frontend Flow'] }))
