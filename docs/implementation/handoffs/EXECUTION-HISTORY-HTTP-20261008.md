@@ -49,3 +49,28 @@
 本次只证明执行历史只读接口，不是所有聚义厅功能的完整验收。JWT/安全链是测试专用配置，不证明生产OAuth；前端Vue状态在Node而非浏览器，复用node_modules未证明安装完整性。未执行前端正式Flow、全量产品回归、远端push或部署；不得宣称已上线。
 
 后续如推进发布，按版本化发布流程另跑精确版本前端Flow并补浏览器/OAuth验收；不要重复创建计划文档或复跑不变tree的后端证据。
+
+
+## 提效入口落地：EXECUTION-HISTORY-CHECK-20261008
+
+- 目标：把已通过的执行历史验收变成一个可复用命令；非目标：新流程平台、全量重构、改造API/Web产品、部署或补生产OAuth/browser验收。
+- 唯一Owner：execution_history_check_owner。根任务分支 `codex/dev-feedback-pilot-20261008`，开工root base `af2e586dada6a4e9f8c245ad87e8c6cef0a74a8e`；代码提交先为 `c3a910dd`，补并发观察窗口修复后为 `f8774f07`。API仍固定已通过的033f200e4a73，Web仍固定75766a3b78c2。
+- 独占改动：`ops/orchestration/execution_history_check.py`、其隔离测试、现有orchestration README/contract-pilot README、本handoff及本任务证据目录。未修改编排器控制协议或共享技能。
+- 入口复用既有台账、归因、锁与证据缓存；没有新的统计台账/硬门槛。任务基线、Owner、验证阶段均不自动接管；旧的手工runner记录不冒充新入口的完整证据。
+- 开发验证顺序：Python隔离测试 → 实际只读预检 → 固定候选一次真实执行 → 相同输入无凭据缓存复用。工具实现的第一次单测错误是测试替身未实际落盘failure.json，修正测试替身后通过，未触发Gradle盲重试。
+- 自检补充了一个并发边界：必须先等待本任务tree的输出锁，再采集完整输入指纹，防止等待前的旧观察被当成当前缓存；cache决策前再次检查API/Web来源。新增回归覆盖，不削弱真实性/权限/锁/依赖完整性。
+- 环境和日志：只创建 `/var/tmp/cyf-execution-history-check` 的独占run及可复用build输出；正常/断言失败的进程清理由既有Java fixture持有的Process负责。不得把该入口描述为可管理其他聊天服务或保证强制中断后所有孤儿清理。
+- 输入key按语义文件摘要而非root文档commit/临时路径；覆盖真实安装的Vue/consola依赖闭包，不把它称为干净安装来源证明。外部包、Java/Node/MySQL/Gradle工具变化都会使键失效。Maven消费配置仅做摘要/显式提取，不复制/打印值。
+- `PASS`仍限于执行历史读链路；`REUSED`表示复用历史精确证据，不表示本次又跑了测试或任何版本已上线。
+
+
+### 单命令验收与真实计时
+
+- 最终入口源码 `f8774f07`：29项新入口测试 + 15项preflight回归 + 19项既有编排器回归，合计63项通过。主工作区同步后又跑同一组63项，全部通过。
+- 最终真实执行：`PASS`，首次有效廉价反馈15.264秒，命令总耗时108.014秒；Java HTTP/MySQL与前端17条断言通过（8个HTTP请求、11次mapper查询），validateLayering通过。50个编译/资源任务复用up-to-date，仅两个验证任务执行。
+- 同输入从主工作区再次调用：23.497秒 `REUSED`，无凭据参数，无新run目录，无Gradle/MySQL重跑；说明跨工作区脚本/fixtures路径变化与普通root文档变化不使键失效。缓存仍需读取源码/已安装依赖/工具内容摘要，耗时不是零，也不承诺固定时限。
+- 初版入口真实执行196.521秒、缓存15.197秒；并发观察边界修复改变了runner输入key，所以最终源码重新验证。不是相同key盲重试；仅最终版本计时用于本次交付比较。
+- 这些数据只比较一次定向验证与一次同输入证据复用，不证明“一个功能从几天变成几小时”。人工定位/实现、其他任务等待的分段耗时未独立测量，留空，不填估算。
+- 下一项真实小功能继续使用现有handoff记录定位/实现/验证/等待返工耗时；此入口仅适用于执行历史试点，不扩成全项目强制门禁或强迫无关任务运行它。
+- 持久化证据：`specs/juyiting-execution-recovery/contract-pilot/evidence/entrypoint-20261008/proof.json`，同目录保留manifest/result/JUnit/Gradle日志/工具测试日志/两次命令结果。临时缓存原件仍在 `/var/tmp/cyf-execution-history-check/run-_7sl4gv_`，清理原件后不得继续冒称缓存有效。
+- 根代码与文档已定向同步到主工作区；未覆盖无关变更，未改动API/Web产品源码，未push/部署。详细用法只维护既有contract-pilot README与orchestration入口索引，不新增计划文档。
