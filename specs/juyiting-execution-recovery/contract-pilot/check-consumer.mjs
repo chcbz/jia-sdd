@@ -60,7 +60,7 @@ try {
     assert.equal(calls.length, 2)
     assert.equal(calls[1].params.beforeCreatedAt, pages[1].request.beforeCreatedAt)
     assert.equal(calls[1].params.beforeExecutionId, pages[1].request.beforeExecutionId)
-    assert.deepEqual(adapter.history.value.map(x => x.executionId), ['pwe_contract_2', 'pwe_contract_1'])
+    assert.deepEqual(adapter.history.value.map(x => x.executionId), pages.flatMap(page => page.response.body.items.map(x => x.executionId)))
     assert.equal(adapter.historyNextCursor.value, null)
     assertions += 5
   } finally { adapter.dispose() }
