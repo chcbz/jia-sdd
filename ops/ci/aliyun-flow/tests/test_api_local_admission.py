@@ -754,5 +754,425 @@ class AdmissionTest(unittest.TestCase):
         self.assertIn(m.OPENCV_SHA,PRODUCER.read_text())
 
 
+class PublishedVerificationTest(unittest.TestCase):
+    """Private synthetic copies only; no installed helper or real batch authority."""
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='.ur05-published-private-', dir=str(Path.home()))
+        self.root = Path(self.temp.name)
+        self.addCleanup(self.temp.cleanup)
+        self.f = Fixture(self.root)
+        self.addCleanup(mock.patch.stopall)
+        mock.patch.dict(os.environ, {'PIPELINE_ID': '', 'BUILD_NUMBER': '', 'CYF_FLOW_GRADLE_ACTIVE': ''}).start()
+        with self.f.pins():
+            result = m.admit(self.f.args())
+        self.admission = Path(result['admission']['path'])
+        self.output = self.admission.parent
+        self.admitted = json.loads(self.admission.read_bytes())
+        self.pinned_sha = result['admission']['sha256']
+
+    def args(self):
+        return argparse.Namespace(verify_published=True, trusted_root=str(self.f.trusted),
+                                  admission=str(self.admission), admission_sha256=self.pinned_sha)
+
+    def argv(self, args=None):
+        args = args or self.args()
+        return ['--verify-published', '--trusted-root', args.trusted_root,
+                '--admission', args.admission, '--admission-sha256', args.admission_sha256]
+
+    def rebind_admitted(self):
+        self.f.write(self.admission, m.canonical(self.admitted))
+        # A synthetic caller deliberately supplies the new pin, to prove that
+        # projection claims alone cannot bypass ORIGINAL raw trust checks.
+        self.pinned_sha = m.sha(self.admission.read_bytes())
+
+    def copied_json(self, ref, change):
+        path = Path(ref['path'])
+        obj = json.loads(path.read_bytes())
+        change(obj)
+        data = m.canonical(obj)
+        self.f.write(path, data)
+        ref.update(m.binding(data))
+        self.rebind_admitted()
+        return obj
+
+    def raw_record_change(self, change):
+        ref = self.admitted['authority']['trustedRecord']
+        record = self.copied_json(ref, change)
+        self.copied_json(self.admitted['authority']['batchAuthority'],
+                         lambda auth: auth.update(trustedRecordSha256=ref['sha256']))
+        return record
+
+    def inventory(self):
+        # Omit atime: reads may update it. Observe bytes/inodes/modes/mtime/ctime,
+        # not just a self-reported no-write flag. Only this unit's exclusive root.
+        result = {}
+        for path in [self.root] + sorted(self.root.rglob('*')):
+            s = path.lstat()
+            result[str(path.relative_to(self.root))] = (
+                s.st_dev, s.st_ino, s.st_uid, s.st_gid, s.st_mode, s.st_nlink,
+                s.st_size, s.st_mtime_ns, s.st_ctime_ns,
+                m.sha(path.read_bytes()) if stat.S_ISREG(s.st_mode) else None)
+        return result
+
+    def verify(self, args=None):
+        with self.f.pins():
+            return m.verify_published(args or self.args())
+
+    def reject(self, code=None, argv=None):
+        before = self.inventory()
+        out = io.StringIO()
+        with self.f.pins(), contextlib.redirect_stdout(out):
+            self.assertEqual(m.main(argv or self.argv()), 1)
+        response = json.loads(out.getvalue())
+        self.assertEqual(response['format'], 'cyf-api-local-published-verification-v1')
+        self.assertEqual(response['status'], 'rejected')
+        self.assertEqual(set(response), {'format', 'status', 'code'})
+        self.assertIn(response['code'], m.SAFE_CODES)
+        if code:
+            self.assertEqual(response['code'], code)
+        self.assertEqual(self.inventory(), before)
+        self.assertNotIn(str(self.root), out.getvalue())
+        self.assertFalse(any(p.name.startswith('.admit-') for p in self.output.parent.iterdir()))
+        return response
+
+    def test_original_paths_deleted_success_without_external_reads(self):
+        import shutil
+        for path in (self.f.authority, self.f.ingress,
+                     self.f.trusted / 'proofs', self.f.trusted / 'records'):
+            shutil.rmtree(str(path))  # ONLY this unit's synthetic original paths
+        original_read = m.StableReader.read
+        reads = []
+        def copied_read(reader, path, anchor=None):
+            path = Path(path)
+            self.assertIn(self.output, path.parents)
+            reads.append(path)
+            return original_read(reader, path, anchor)
+        before = self.inventory()
+        with mock.patch.object(m.StableReader, 'read', copied_read):
+            result = self.verify()
+        self.assertEqual(result, {
+            'format': 'cyf-api-local-published-verification-v1', 'status': 'verified',
+            'scope': 'artifact-admission-only', 'productionAuthorized': False,
+            'admission': {'path': str(self.admission), **m.binding(self.admission.read_bytes())},
+            'source': {'kind': 'local-build-v1', 'identity': self.f.ident}})
+        self.assertTrue(reads)
+        self.assertEqual(self.inventory(), before)
+
+    def test_readonly_open_flags_no_umask_publish_or_state_mutation(self):
+        original_open = m.os.open
+        def readonly_open(path, flags, *args, **kwargs):
+            self.assertFalse(flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND))
+            return original_open(path, flags, *args, **kwargs)
+        before = self.inventory()
+        out = io.StringIO()
+        with self.f.pins(), mock.patch.object(m.os, 'open', readonly_open), \
+                mock.patch.object(m.os, 'umask', side_effect=AssertionError('verifier must not set umask')), \
+                mock.patch.object(m, 'admit', side_effect=AssertionError('not ingress admission')), \
+                mock.patch.object(m, 'publish', side_effect=AssertionError('must not publish')), \
+                mock.patch.object(m, 'OwnedStage', side_effect=AssertionError('must not stage')), \
+                contextlib.redirect_stdout(out):
+            self.assertEqual(m.main(self.argv()), 0)
+        response = json.loads(out.getvalue())
+        self.assertFalse(response['productionAuthorized'])
+        self.assertNotIn('installAllowed', response)
+        self.assertEqual(m.canonical(response).decode(), out.getvalue())
+        self.assertEqual(self.inventory(), before)
+
+    def test_admission_tamper_and_external_pin_mismatch(self):
+        self.f.write(self.admission, self.admission.read_bytes() + b' ')
+        self.reject('DIGEST_MISMATCH')
+        args = self.args()
+        args.admission_sha256 = '0' * 64
+        self.reject('DIGEST_MISMATCH', self.argv(args))
+
+    def test_every_copied_authority_package_payload_and_evidence_tamper(self):
+        refs = [self.admitted['authority'][k] for k in ('batchAuthority', 'trustedRecord', 'verificationRecord')]
+        refs += [self.admitted['package']] + list(self.admitted['payloads'].values())
+        refs += [s['file'] for s in self.admitted['evidence']['snapshots']]
+        for ref in refs:
+            with self.subTest(path=ref['path']):
+                path = Path(ref['path'])
+                original = path.read_bytes()
+                self.f.write(path, original + b' UNIT TAMPER')
+                self.reject()
+                self.f.write(path, original)
+
+    def test_raw_authority_projection_mismatch(self):
+        for key in ('authorityId', 'batchId'):
+            with self.subTest(key=key):
+                old = self.admitted['authority'][key]
+                self.admitted['authority'][key] = 'foreign-projection'
+                self.rebind_admitted()
+                self.reject('AUTHORITY_INVALID')
+                self.admitted['authority'][key] = old
+                self.rebind_admitted()
+
+    def test_raw_authority_pins_controller_bytes_not_projected_file_digest(self):
+        ref = self.admitted['authority']['verificationRecord']
+        path = Path(ref['path'])
+        self.f.write(path, path.read_bytes() + b' ')
+        ref.update(m.binding(path.read_bytes()))
+        self.rebind_admitted()
+        self.reject('AUTHORITY_INVALID')
+
+    def test_raw_authority_pins_original_trusted_record_bytes(self):
+        self.copied_json(self.admitted['authority']['trustedRecord'],
+                         lambda record: record['identity'].update(buildId='foreign'))
+        self.reject('AUTHORITY_INVALID')
+
+    def test_identity_projection_all_four_fields_failclosed(self):
+        for key, value in (('version', 'foreign'), ('buildId', 'foreign'),
+                           ('commit', '0' * 40), ('tree', '0' * 40)):
+            with self.subTest(key=key):
+                old = self.admitted['source']['identity'][key]
+                self.admitted['source']['identity'][key] = value
+                self.rebind_admitted()
+                self.reject('IDENTITY_MISMATCH')
+                self.admitted['source']['identity'][key] = old
+                self.rebind_admitted()
+
+    def test_kind_scope_status_production_flag_and_extra_authority_fail(self):
+        pristine = copy.deepcopy(self.admitted)
+        for field, value in (('scope', 'install'), ('status', 'verified'),
+                             ('productionAuthorized', True), ('productionAuthorized', 0)):
+            with self.subTest(field=field, value=value):
+                self.admitted = copy.deepcopy(pristine)
+                self.admitted[field] = value
+                self.rebind_admitted()
+                self.reject('AUTHORITY_INVALID')
+        self.admitted = copy.deepcopy(pristine)
+        self.admitted['source']['kind'] = 'flow-build-v1'
+        self.rebind_admitted()
+        self.reject('IDENTITY_MISMATCH')
+        self.admitted = copy.deepcopy(pristine)
+        self.admitted['installAllowed'] = True
+        self.rebind_admitted()
+        self.reject('EVIDENCE_INVALID')
+
+    def test_producer_receipt_cannot_replace_independent_authority(self):
+        ref = self.admitted['authority']['batchAuthority']
+        self.f.write(Path(ref['path']), self.f.payloads['receipt.json'])
+        ref.update(m.binding(self.f.payloads['receipt.json']))
+        self.rebind_admitted()
+        self.reject('AUTHORITY_INVALID')
+
+    def test_missing_independent_controller_observation_despite_consistent_producer(self):
+        ref = self.admitted['authority']['verificationRecord']
+        self.copied_json(ref, lambda verification: verification['observations'].update(freshBootJar=False))
+        self.copied_json(self.admitted['authority']['batchAuthority'],
+                         lambda auth: auth['verificationRecord'].update(sha256=ref['sha256'], size=ref['size']))
+        self.reject('AUTHORITY_INVALID')
+
+    def test_install_precondition_projection_mismatch(self):
+        self.admitted['installPrecondition']['canonicalJarSha256'] = '0' * 64
+        self.rebind_admitted()
+        self.reject('EVIDENCE_INVALID')
+
+    def test_missing_extra_payload_refs_and_actual_members(self):
+        original = copy.deepcopy(self.admitted)
+        del self.admitted['payloads']['receipt.json']
+        self.rebind_admitted()
+        self.reject('PACKAGE_INVALID')
+        self.admitted = copy.deepcopy(original)
+        self.admitted['payloads']['extra'] = dict(original['payloads']['receipt.json'])
+        self.rebind_admitted()
+        self.reject('PACKAGE_INVALID')
+        self.admitted = copy.deepcopy(original)
+        ref = self.admitted['package']
+        item = tarfile.TarInfo('unexpected')
+        item.size = 1
+        data = self.f.archive(extra=(item, b'x'))
+        self.f.write(Path(ref['path']), data)
+        ref.update(m.binding(data))
+        self.raw_record_change(lambda record: record.update(package=m.binding(data)))
+        # Independently synthetic verifier record is also rebound to isolate the
+        # archive member guard. It never grants real execution authorization.
+        vref = self.admitted['authority']['verificationRecord']
+        self.copied_json(vref, lambda v: v.update(package=m.binding(data)))
+        self.copied_json(self.admitted['authority']['batchAuthority'],
+                         lambda a: a['verificationRecord'].update(sha256=vref['sha256'], size=vref['size']))
+        self.reject('PACKAGE_INVALID')
+
+    def test_duplicate_missing_extra_or_reordered_snapshot_refs(self):
+        pristine = copy.deepcopy(self.admitted)
+        original = pristine['evidence']['snapshots']
+        variants = [original[:-1], original + [original[0]],
+                    [original[0], original[0]] + original[2:], list(reversed(original))]
+        for snapshots in variants:
+            with self.subTest(count=len(snapshots)):
+                self.admitted = copy.deepcopy(pristine)
+                self.admitted['evidence']['snapshots'] = copy.deepcopy(snapshots)
+                self.rebind_admitted()
+                self.reject('EVIDENCE_INVALID')
+
+    def test_raw_proof_identity_bijection_rejects_duplicate_logical_files(self):
+        self.raw_record_change(lambda r: r['snapshots'][1].update(file=dict(r['snapshots'][0]['file'])))
+        snapshot = self.admitted['evidence']['snapshots'][1]
+        data = Path(self.admitted['evidence']['snapshots'][0]['file']['path']).read_bytes()
+        self.f.write(Path(snapshot['file']['path']), data)
+        snapshot['file'].update(m.binding(data))
+        self.rebind_admitted()
+        self.reject('EVIDENCE_INVALID')
+
+    def test_missing_raw_proof_closure_cannot_pass_projection_only(self):
+        self.raw_record_change(lambda r: r['snapshots'].pop())
+        self.admitted['evidence']['snapshots'].pop()
+        self.rebind_admitted()
+        self.reject('EVIDENCE_INVALID')
+
+    def test_changed_original_path_role_or_build_evidence_projection(self):
+        pristine = copy.deepcopy(self.admitted)
+        for key, value in (('originalPath', '/synthetic/unknown'), ('role', 'unknown')):
+            with self.subTest(key=key):
+                self.admitted = copy.deepcopy(pristine)
+                self.admitted['evidence']['snapshots'][0][key] = value
+                self.rebind_admitted()
+                self.reject('EVIDENCE_INVALID')
+        self.admitted = copy.deepcopy(pristine)
+        self.admitted['evidence']['buildEvidence'] = dict(self.admitted['payloads']['receipt.json'])
+        self.rebind_admitted()
+        self.reject('EVIDENCE_INVALID')
+
+    def test_exact_published_inventory_rejects_extra_file_or_directory(self):
+        for relative in ('foreign', 'authority/foreign', 'evidence/foreign'):
+            with self.subTest(relative=relative):
+                path = self.output / relative
+                self.f.write(path, b'FOREIGN PRIVATE SYNTHETIC')
+                self.reject('EVIDENCE_INVALID')
+                path.unlink()
+        directory = self.output / 'foreign-dir'
+        directory.mkdir(mode=0o700)
+        self.reject('EVIDENCE_INVALID')
+
+    def test_projection_cannot_reference_original_or_outside_or_wrong_copied_path(self):
+        pristine = copy.deepcopy(self.admitted)
+        for value in (str(self.f.package), str(self.f.record_path),
+                      str(self.output / 'payload/receipt.json'), str(self.output / 'payload/../package.tgz')):
+            with self.subTest(value=value):
+                self.admitted = copy.deepcopy(pristine)
+                self.admitted['package']['path'] = value
+                self.rebind_admitted()
+                self.reject('PATH_UNSAFE')
+
+    def test_symlink_leaf_or_component_and_hardlink_rejected(self):
+        package = Path(self.admitted['package']['path'])
+        data = package.read_bytes()
+        package.unlink()
+        package.symlink_to(self.f.package)
+        self.reject()
+        package.unlink()
+        self.f.write(package, data)
+        link = self.root / 'unit-only-hardlink'
+        os.link(package, link)
+        self.reject('PATH_UNSAFE')
+        link.unlink()
+        authority = self.output / 'authority'
+        moved = self.output / 'private-moved-authority'
+        authority.rename(moved)
+        authority.symlink_to(moved, target_is_directory=True)
+        self.reject()
+
+    def test_unsafe_file_owner_mode_and_protected_directory_mode(self):
+        file = Path(self.admitted['authority']['batchAuthority']['path'])
+        file.chmod(0o644)
+        self.reject('PATH_UNSAFE')
+        file.chmod(0o600)
+        os.chown(file, 12345, 12345)
+        try:
+            self.reject('PATH_UNSAFE')
+        finally:
+            os.chown(file, 0, 0)
+        for directory in (self.root, self.output, self.output / 'evidence'):
+            with self.subTest(directory=directory):
+                directory.chmod(0o777)
+                self.reject('PATH_UNSAFE')
+                directory.chmod(0o700)
+
+    def test_required_admission_location_and_noncanonical_cli_paths(self):
+        for key, value in (('admission', str(self.f.record_path)),
+                           ('trusted_root', str(self.f.trusted) + '/'),
+                           ('admission', str(self.output) + '/../' + self.output.name + '/admission.json')):
+            with self.subTest(key=key):
+                args = self.args()
+                setattr(args, key, value)
+                self.reject('PATH_UNSAFE', self.argv(args))
+
+    def test_strict_admitted_json_types_duplicate_keys_and_nonfinite(self):
+        original = self.admission.read_bytes()
+        for raw in (original[:-2] + b',"status":"admitted"}\n', b'{"x":NaN}', b'{"x":1e9999}'):
+            with self.subTest(raw=raw[:16]):
+                self.f.write(self.admission, raw)
+                self.pinned_sha = m.sha(raw)
+                self.reject('EVIDENCE_INVALID')
+        self.admitted['package']['size'] = True
+        self.rebind_admitted()
+        self.reject('DIGEST_MISMATCH')
+
+    def test_root_and_flow_input_guard_before_reads(self):
+        with mock.patch.object(m.os, 'geteuid', return_value=12345), \
+                mock.patch.object(m.StableReader, 'read', side_effect=AssertionError('must not read')):
+            self.reject('ROOT_REQUIRED')
+        with mock.patch.dict(os.environ, {'CYF_FLOW_GRADLE_ACTIVE': 'fake'}), \
+                mock.patch.object(m.StableReader, 'read', side_effect=AssertionError('must not read')):
+            self.reject('INPUT_INVALID')
+
+    def test_malformed_cli_no_automatic_mode_fallback_and_safe_failure(self):
+        variants = [self.argv() + ['--opt-in'], self.argv() + ['--install'],
+                    self.argv() + ['--admission', str(self.admission)],
+                    ['--verify-published'], ['--verify-published=1'] + self.argv()[1:],
+                    ['--verify-published', '--describe'],
+                    ['--verify-published', '--trusted-ro', str(self.f.trusted),
+                     '--admission', str(self.admission), '--admission-sha256', self.pinned_sha]]
+        for argv in variants:
+            with self.subTest(argv=argv), mock.patch.object(m, 'admit', side_effect=AssertionError('no mode fallback')):
+                self.reject('INPUT_INVALID', argv)
+        with mock.patch.object(m, 'verify_published', side_effect=RuntimeError('SYNTHETIC SECRET /private/path')):
+            result = self.reject('IO_FAILURE')
+        self.assertEqual(set(result), {'format', 'status', 'code'})
+
+    def test_final_recheck_detects_copied_tamper_without_cleanup_or_publish(self):
+        original = m.CopiedProofReader.checked
+        touched = []
+        def tamper(reader, ref, anchor, code='DIGEST_MISMATCH'):
+            result = original(reader, ref, anchor, code)
+            if not touched:
+                touched.append(True)
+                package = Path(self.admitted['package']['path'])
+                self.f.write(package, package.read_bytes() + b'PEER TAMPER')
+            return result
+        out = io.StringIO()
+        with self.f.pins(), mock.patch.object(m.CopiedProofReader, 'checked', tamper), contextlib.redirect_stdout(out):
+            self.assertEqual(m.main(self.argv()), 1)
+        self.assertEqual(json.loads(out.getvalue())['code'], 'DIGEST_MISMATCH')
+        self.assertTrue(self.admission.exists())
+        self.assertFalse(any(p.name.startswith('.admit-') for p in self.output.parent.iterdir()))
+
+    def test_final_inventory_detects_peer_extra_member(self):
+        original = m.StableReader.recheck
+        def extra_member(reader):
+            result = original(reader)
+            self.f.write(self.output / 'PEER-EXTRA', b'PRIVATE SYNTHETIC')
+            return result
+        out = io.StringIO()
+        with self.f.pins(), mock.patch.object(m.StableReader, 'recheck', extra_member), contextlib.redirect_stdout(out):
+            self.assertEqual(m.main(self.argv()), 1)
+        self.assertEqual(json.loads(out.getvalue())['code'], 'EVIDENCE_INVALID')
+        self.assertTrue((self.output / 'PEER-EXTRA').is_file())
+
+    def test_describe_preserves_old_fields_and_only_adds_explicit_verifier(self):
+        value = m.describe()
+        self.assertEqual(value['format'], 'cyf-api-local-admission-interface-v1')
+        self.assertEqual(value['result'], 'cyf-api-local-admission-result-v1')
+        self.assertFalse(value['productionAuthorized'])
+        self.assertEqual(value['publishedVerifier'], {
+            'mode': '--verify-published',
+            'flags': ['--verify-published', '--trusted-root', '--admission', '--admission-sha256'],
+            'result': 'cyf-api-local-published-verification-v1', 'readOnly': True})
+        # The remapping adapter has no filesystem capability, even a test-only one.
+        node = next(n for n in ast.parse(HELPER.read_text()).body if isinstance(n, ast.ClassDef) and n.name == 'CopiedProofReader')
+        self.assertFalse(any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and
+                             n.func.attr in ('open', 'read_bytes', 'stat', 'resolve') for n in ast.walk(node)))
+
+
 if __name__=='__main__':
     unittest.main(verbosity=2)

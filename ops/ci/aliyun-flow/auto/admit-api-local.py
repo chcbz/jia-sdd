@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Root batch-authority admission ONLY; never builds, installs or controls services.
+"""Root artifact admission and read-only revalidation; no build/install/service control.
 
 A protected independent controller observation authenticates the batch decision.
 Producer JSON/logs/checksums alone are consistency, NOT execution authentication.
@@ -520,60 +520,65 @@ def verify_payloads(record, verification, payloads, reader, root):
                                    'publicArtifactVerifier': 'bootJar-original-doLast-completed'})
 
 
-def load_authority(args, reader, root, authority_root):
-    """Authenticate the root decision BEFORE inspecting a producer's claimed PASS."""
-    authority_path = below(normalized(args.batch_authority), authority_root)
-    record_path = below(normalized(args.trusted_record), root)
-    try:
-        auth_data = reader.read(authority_path, authority_root)
-        need(sha(auth_data) == args.batch_authority_sha256, 'AUTHORITY_INVALID')
-        auth = strict_json(auth_data, 'AUTHORITY_INVALID')
-        exact(auth, ('format', 'authorityId', 'scope', 'batchId', 'identity', 'trustedRecordSha256',
-                     'verificationRecord'), 'AUTHORITY_INVALID')
-        need(auth['format'] == 'cyf-api-local-batch-authority-v1' and auth['authorityId'] == AUTHORITY_ID and
-             auth['scope'] == SCOPE, 'AUTHORITY_INVALID')
-        identity(auth['identity'])
-        token(auth['batchId'], 'AUTHORITY_INVALID')
-        verification_data = reader.checked(auth['verificationRecord'], authority_root, 'AUTHORITY_INVALID')
-        verification = strict_json(verification_data, 'AUTHORITY_INVALID')
-        exact(verification, ('format', 'authorityId', 'batchId', 'identity', 'buildEvidenceSha256',
-            'package', 'payloads', 'invocationLogSha256', 'bootJarProofSha256', 'requiredTests', 'observations'), 'AUTHORITY_INVALID')
-        need(verification['format'] == 'cyf-api-local-controller-verification-v1' and
-             verification['authorityId'] == AUTHORITY_ID and verification['identity'] == auth['identity'] and
-             verification['batchId'] == auth['batchId'], 'AUTHORITY_INVALID')
-        digest(verification['package'], 'AUTHORITY_INVALID')
-        exact(verification['payloads'], MEMBERS, 'AUTHORITY_INVALID')
-        for member in MEMBERS:
-            digest(verification['payloads'][member], 'AUTHORITY_INVALID')
-        observations = exact(verification['observations'], OBSERVATIONS, 'AUTHORITY_INVALID')
-        for k, expected in OBSERVATIONS.items():
-            need(type(observations[k]) is type(expected) and observations[k] == expected, 'AUTHORITY_INVALID')
-        # An empty controller test observation is not authority for a batch,
-        # irrespective of any internally consistent producer log/receipt.
-        observed_tests = verification['requiredTests']
-        need(type(observed_tests) is list and observed_tests, 'AUTHORITY_INVALID')
-        observed_tasks = set()
-        for test in observed_tests:
-            exact(test, ('task', 'selector', 'fixtureSha256', 'reports'), 'AUTHORITY_INVALID')
-            need(type(test['task']) is str and re.fullmatch(r':[A-Za-z0-9_:-]+', test['task']) and
-                 test['task'] not in observed_tasks, 'AUTHORITY_INVALID')
-            observed_tasks.add(test['task'])
-            token(test['selector'], 'AUTHORITY_INVALID')
-            hex_value(test['fixtureSha256'], code='AUTHORITY_INVALID')
-            need(type(test['reports']) is list and test['reports'], 'AUTHORITY_INVALID')
-            for report in test['reports']:
-                exact(report, ('sha256', 'size', 'tests', 'failures', 'errors', 'skipped'), 'AUTHORITY_INVALID')
-                digest({k: report[k] for k in ('sha256', 'size')}, 'AUTHORITY_INVALID')
-                need(all(type(report[k]) is int for k in ('tests', 'failures', 'errors', 'skipped')) and
-                     report['tests'] >= report['skipped'] >= 0 and
-                     report['failures'] == report['errors'] == 0, 'AUTHORITY_INVALID')
-            need(sum(r['tests'] - r['skipped'] for r in test['reports']) > 0, 'AUTHORITY_INVALID')
-        need({':starter:publicArtifactVerifierTest', ':starter:poiProductionRuntimeClasspathTest'}.issubset(observed_tasks),
-             'AUTHORITY_INVALID')
-    except FileNotFoundError:
-        raise Rejected('AUTHORITY_INVALID') from None
-    record_data = reader.read(record_path, root)
-    need(sha(record_data) == args.trusted_record_sha256 == auth['trustedRecordSha256'], 'AUTHORITY_INVALID')
+def parse_batch_authority(auth_data, expected_sha256):
+    """Shared original root batch authority checks; never an install authorization."""
+    need(sha(auth_data) == expected_sha256, 'AUTHORITY_INVALID')
+    auth = strict_json(auth_data, 'AUTHORITY_INVALID')
+    exact(auth, ('format', 'authorityId', 'scope', 'batchId', 'identity', 'trustedRecordSha256',
+                 'verificationRecord'), 'AUTHORITY_INVALID')
+    need(auth['format'] == 'cyf-api-local-batch-authority-v1' and auth['authorityId'] == AUTHORITY_ID and
+         auth['scope'] == SCOPE, 'AUTHORITY_INVALID')
+    identity(auth['identity'])
+    token(auth['batchId'], 'AUTHORITY_INVALID')
+    return auth
+
+
+def parse_controller_verification(auth, verification_data):
+    """Validate the same independent observations for ingress and published copies."""
+    file_ref(auth['verificationRecord'], 'AUTHORITY_INVALID')
+    need(binding(verification_data) == {k: auth['verificationRecord'][k] for k in ('sha256', 'size')},
+         'AUTHORITY_INVALID')
+    verification = strict_json(verification_data, 'AUTHORITY_INVALID')
+    exact(verification, ('format', 'authorityId', 'batchId', 'identity', 'buildEvidenceSha256',
+        'package', 'payloads', 'invocationLogSha256', 'bootJarProofSha256', 'requiredTests', 'observations'), 'AUTHORITY_INVALID')
+    need(verification['format'] == 'cyf-api-local-controller-verification-v1' and
+         verification['authorityId'] == AUTHORITY_ID and verification['identity'] == auth['identity'] and
+         verification['batchId'] == auth['batchId'], 'AUTHORITY_INVALID')
+    digest(verification['package'], 'AUTHORITY_INVALID')
+    exact(verification['payloads'], MEMBERS, 'AUTHORITY_INVALID')
+    for member in MEMBERS:
+        digest(verification['payloads'][member], 'AUTHORITY_INVALID')
+    observations = exact(verification['observations'], OBSERVATIONS, 'AUTHORITY_INVALID')
+    for k, expected in OBSERVATIONS.items():
+        need(type(observations[k]) is type(expected) and observations[k] == expected, 'AUTHORITY_INVALID')
+    # An empty controller test observation is not authority for a batch,
+    # irrespective of any internally consistent producer log/receipt.
+    observed_tests = verification['requiredTests']
+    need(type(observed_tests) is list and observed_tests, 'AUTHORITY_INVALID')
+    observed_tasks = set()
+    for test in observed_tests:
+        exact(test, ('task', 'selector', 'fixtureSha256', 'reports'), 'AUTHORITY_INVALID')
+        need(type(test['task']) is str and re.fullmatch(r':[A-Za-z0-9_:-]+', test['task']) and
+             test['task'] not in observed_tasks, 'AUTHORITY_INVALID')
+        observed_tasks.add(test['task'])
+        token(test['selector'], 'AUTHORITY_INVALID')
+        hex_value(test['fixtureSha256'], code='AUTHORITY_INVALID')
+        need(type(test['reports']) is list and test['reports'], 'AUTHORITY_INVALID')
+        for report in test['reports']:
+            exact(report, ('sha256', 'size', 'tests', 'failures', 'errors', 'skipped'), 'AUTHORITY_INVALID')
+            digest({k: report[k] for k in ('sha256', 'size')}, 'AUTHORITY_INVALID')
+            need(all(type(report[k]) is int for k in ('tests', 'failures', 'errors', 'skipped')) and
+                 report['tests'] >= report['skipped'] >= 0 and
+                 report['failures'] == report['errors'] == 0, 'AUTHORITY_INVALID')
+        need(sum(r['tests'] - r['skipped'] for r in test['reports']) > 0, 'AUTHORITY_INVALID')
+    need({':starter:publicArtifactVerifierTest', ':starter:poiProductionRuntimeClasspathTest'}.issubset(observed_tasks),
+         'AUTHORITY_INVALID')
+    return verification
+
+
+def parse_trusted_record(auth, verification, record_data, expected_sha256):
+    """Validate the exact original trusted-record bytes, not projected JSON claims."""
+    need(sha(record_data) == expected_sha256 == auth['trustedRecordSha256'], 'AUTHORITY_INVALID')
     record = strict_json(record_data)
     exact(record, ('format', 'scope', 'batchId', 'identity', 'package', 'payloads', 'buildEvidence',
                    'snapshots', 'installPrecondition'))
@@ -586,6 +591,22 @@ def load_authority(args, reader, root, authority_root):
     hex_value(record['installPrecondition']['canonicalJarSha256'], code='EVIDENCE_INVALID')
     for k in ('buildEvidenceSha256', 'invocationLogSha256', 'bootJarProofSha256'):
         hex_value(verification[k], code='AUTHORITY_INVALID')
+    return record
+
+
+def load_authority(args, reader, root, authority_root):
+    """Authenticate the root decision BEFORE inspecting a producer's claimed PASS."""
+    authority_path = below(normalized(args.batch_authority), authority_root)
+    record_path = below(normalized(args.trusted_record), root)
+    try:
+        auth_data = reader.read(authority_path, authority_root)
+        auth = parse_batch_authority(auth_data, args.batch_authority_sha256)
+        verification_data = reader.checked(auth['verificationRecord'], authority_root, 'AUTHORITY_INVALID')
+        verification = parse_controller_verification(auth, verification_data)
+    except FileNotFoundError:
+        raise Rejected('AUTHORITY_INVALID') from None
+    record_data = reader.read(record_path, root)
+    record = parse_trusted_record(auth, verification, record_data, args.trusted_record_sha256)
     return record, auth, verification, record_data, auth_data, verification_data
 
 
@@ -771,13 +792,133 @@ def admit(args):
         os.close(parent_fd)
 
 
+class CopiedProofReader:
+    """Pure label-to-bytes map for the original trusted record's File identities.
+
+    No filesystem capability exists here. Old protected file paths, like original
+    builder paths inside evidence, are labels only. Shared verify_payloads checks
+    their exact identities/roles/reference closure against already-read copies.
+    """
+    def __init__(self):
+        self.copies = {}
+
+    def add(self, original, data):
+        file_ref(original)
+        path = normalized(original['path'])
+        need(path not in self.copies, 'EVIDENCE_INVALID')
+        need(binding(data) == {k: original[k] for k in ('sha256', 'size')}, 'DIGEST_MISMATCH')
+        self.copies[path] = (dict(original), data)
+
+    def checked(self, ref, unused_anchor, code='DIGEST_MISMATCH'):
+        file_ref(ref, code)
+        item = self.copies.get(normalized(ref['path']))
+        need(item is not None and item[0] == ref, code)
+        return item[1]
+
+
+def published_inventory(reader, root, output):
+    """Read-only exact original publication layout; no extra or aliased nodes."""
+    expected = {}
+    for path in reader.saved:
+        below(path, output)
+        expected.setdefault(path.parent, set()).add(path.name)
+    directories = (output, output / 'payload', output / 'authority', output / 'evidence')
+    need(set(expected) == set(directories), 'EVIDENCE_INVALID')
+    expected[output] |= {'payload', 'authority', 'evidence'}
+    for directory in directories:
+        fd, trail = open_directory(directory, True, root)
+        try:
+            need(set(os.listdir(fd)) == expected[directory], 'EVIDENCE_INVALID')
+            verify_trail(trail)
+        finally:
+            os.close(fd)
+
+
+def verify_published(args):
+    """Revalidate artifact-only copied publication without writes or old-path reads."""
+    need(args.verify_published is True, 'INPUT_INVALID')
+    need(os.geteuid() == 0, 'ROOT_REQUIRED')
+    need(not any(os.environ.get(k) for k in ('PIPELINE_ID', 'BUILD_NUMBER', 'CYF_FLOW_GRADLE_ACTIVE')), 'INPUT_INVALID')
+    hex_value(args.admission_sha256)
+    root, admission_path = normalized(args.trusted_root), normalized(args.admission)
+    output = admission_path.parent
+    need(output.parent == root / 'admitted' and admission_path.name == 'admission.json', 'PATH_UNSAFE')
+    reader = StableReader()
+    admission_data = reader.read(admission_path, root)
+    need(sha(admission_data) == args.admission_sha256, 'DIGEST_MISMATCH')
+    admitted = strict_json(admission_data)
+    exact(admitted, ('format', 'status', 'source', 'authority', 'package', 'payloads',
+                     'evidence', 'installPrecondition', 'scope', 'productionAuthorized'))
+    need(admitted['format'] == 'cyf-api-local-admitted-input-v1' and admitted['status'] == 'admitted' and
+         admitted['scope'] == SCOPE and admitted['productionAuthorized'] is False, 'AUTHORITY_INVALID')
+    source = exact(admitted['source'], ('kind', 'identity'), 'IDENTITY_MISMATCH')
+    need(source['kind'] == 'local-build-v1', 'IDENTITY_MISMATCH')
+    identity(source['identity'])
+
+    def copied(ref, relative, code='DIGEST_MISMATCH'):
+        file_ref(ref, code)
+        need(ref['path'] == str(output / relative), 'PATH_UNSAFE')
+        return reader.checked(ref, root, code)
+
+    authority = exact(admitted['authority'], ('authorityId', 'batchId', 'batchAuthority',
+                                             'trustedRecord', 'verificationRecord'), 'AUTHORITY_INVALID')
+    auth_data = copied(authority['batchAuthority'], 'authority/batch-authority.json', 'AUTHORITY_INVALID')
+    auth = parse_batch_authority(auth_data, authority['batchAuthority']['sha256'])
+    verification_data = copied(authority['verificationRecord'], 'authority/controller-verification.json', 'AUTHORITY_INVALID')
+    verification = parse_controller_verification(auth, verification_data)
+    record_data = copied(authority['trustedRecord'], 'authority/trusted-record.json', 'AUTHORITY_INVALID')
+    record = parse_trusted_record(auth, verification, record_data, authority['trustedRecord']['sha256'])
+    need(authority['authorityId'] == auth['authorityId'] and authority['batchId'] == auth['batchId'], 'AUTHORITY_INVALID')
+    need(source['identity'] == record['identity'], 'IDENTITY_MISMATCH')
+    need(admitted['installPrecondition'] == record['installPrecondition'], 'EVIDENCE_INVALID')
+
+    # Original raw proof identities bijectively map to copies. Do not transform
+    # or reload the original controller record/evidence, even if still present.
+    evidence = exact(admitted['evidence'], ('buildEvidence', 'snapshots'))
+    snapshots = evidence['snapshots']
+    need(type(record['snapshots']) is list and record['snapshots'] and
+         type(snapshots) is list and len(snapshots) == len(record['snapshots']))
+    proof_reader = CopiedProofReader()
+    build_ref = None
+    for i, (original, snapshot) in enumerate(zip(record['snapshots'], snapshots)):
+        exact(original, ('role', 'originalPath', 'file'))
+        exact(snapshot, ('role', 'originalPath', 'file'))
+        need(snapshot['role'] == original['role'] and snapshot['originalPath'] == original['originalPath'])
+        data = copied(snapshot['file'], 'evidence/%06d.bin' % i)
+        proof_reader.add(original['file'], data)
+        if original['role'] == 'build-evidence':
+            need(build_ref is None and original['file'] == record['buildEvidence'])
+            build_ref = snapshot['file']
+    need(build_ref is not None and evidence['buildEvidence'] == build_ref)
+    need(normalized(auth['verificationRecord']['path']) not in proof_reader.copies, 'EVIDENCE_INVALID')
+
+    package_data = copied(admitted['package'], 'package.tgz')
+    need(binding(package_data) == record['package'], 'DIGEST_MISMATCH')
+    payloads = payload_archive(package_data)
+    exact(admitted['payloads'], MEMBERS, 'PACKAGE_INVALID')
+    for name in MEMBERS:
+        data = copied(admitted['payloads'][name], 'payload/' + name)
+        need(data == payloads[name], 'DIGEST_MISMATCH')
+    verify_payloads(record, verification, payloads, proof_reader, root)
+    # Reads are protected throughout; final re-read detects replacement/tamper.
+    published_inventory(reader, root, output)
+    reader.recheck()
+    published_inventory(reader, root, output)
+    return {'format': 'cyf-api-local-published-verification-v1', 'status': 'verified',
+            'scope': SCOPE, 'productionAuthorized': False,
+            'admission': {'path': str(admission_path), **binding(admission_data)}, 'source': source}
+
+
 def describe():
     return {'format': 'cyf-api-local-admission-interface-v1', 'scope': SCOPE,
         'trustedRecord': 'cyf-api-local-trusted-record-v1', 'batchAuthority': 'cyf-api-local-batch-authority-v1',
         'controllerVerification': 'cyf-api-local-controller-verification-v1',
         'admittedInput': 'cyf-api-local-admitted-input-v1', 'result': 'cyf-api-local-admission-result-v1',
         'safeCodes': sorted(SAFE_CODES), 'productionAuthorized': False,
-        'trust': 'independent root controller observations required; producer consistency is not authentication'}
+        'trust': 'independent root controller observations required; producer consistency is not authentication',
+        'publishedVerifier': {'mode': '--verify-published',
+            'flags': ['--verify-published', '--trusted-root', '--admission', '--admission-sha256'],
+            'result': 'cyf-api-local-published-verification-v1', 'readOnly': True}}
 
 
 class SafeParser(argparse.ArgumentParser):
@@ -796,19 +937,35 @@ def parse(argv):
     return p.parse_args(argv)
 
 
+def parse_verification(argv):
+    p = SafeParser(add_help=False, allow_abbrev=False)
+    p.add_argument('--verify-published', action='store_true', required=True)
+    for name in ('trusted-root', 'admission', 'admission-sha256'):
+        p.add_argument('--' + name, required=True)
+    flags = [v.split('=')[0] for v in argv if v.startswith('--')]
+    need(len(flags) == 4 and len(set(flags)) == 4, 'INPUT_INVALID')
+    return p.parse_args(argv)
+
+
 def main(argv=None):
     import sys
     argv = sys.argv[1:] if argv is None else argv
+    verification_mode = any(v.split('=')[0] == '--verify-published' for v in argv)
+    result_format = ('cyf-api-local-published-verification-v1' if verification_mode
+                     else 'cyf-api-local-admission-result-v1')
     try:
         if argv == ['--describe']:
             print(canonical(describe()).decode(), end='')
             return 0
-        args = parse(argv)
-        previous = os.umask(0o077)
-        try:
-            result = admit(args)
-        finally:
-            os.umask(previous)
+        if verification_mode:
+            result = verify_published(parse_verification(argv))
+        else:
+            args = parse(argv)
+            previous = os.umask(0o077)
+            try:
+                result = admit(args)
+            finally:
+                os.umask(previous)
         print(canonical(result).decode(), end='')
         return 0
     except Rejected as exc:
@@ -821,7 +978,7 @@ def main(argv=None):
         # Unexpected parser/filesystem faults must not leak raw input or paths.
         # Publication/cleanup still run in their own finally blocks.
         code = 'IO_FAILURE'
-    print(canonical({'format': 'cyf-api-local-admission-result-v1', 'status': 'rejected', 'code': code}).decode(), end='')
+    print(canonical({'format': result_format, 'status': 'rejected', 'code': code}).decode(), end='')
     return 1
 
 
