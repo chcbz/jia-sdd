@@ -75,10 +75,10 @@ try {
   } finally { brokenAdapter.dispose() }
   // Raw wire checks also traverse production createApi/useHttp; request errors not fabricated.
   const wire = createApi(`${origin}/agent`)
-  const authStore = { authorizationGeneration: 0, token: async () => tokens.ownerA }
+  const wireAuthStore = { authorizationGeneration: 0, token: async () => tokens.ownerA }
   const malformed = fixture.cases.find(c => c.id === 'unpaired-cursor')
   await assert.rejects(wire.execute({ url: '/personal-workspace/executions', method: 'GET',
-    params: malformed.request, authStore, rum: false }), error => error.status === 400 && error.code === 'BAD_REQUEST'); assertions++
+    params: malformed.request, authStore: wireAuthStore, rum: false }), error => error.status === 400 && error.code === 'BAD_REQUEST'); assertions++
   assert.ok(observations.some(x => x.status === 503)); assertions++
   assert.ok(observations.every(x => x.cache?.includes('private') && x.cache?.includes('no-store'))); assertions++
   console.log(JSON.stringify({ status: 'PASS', layer: 'Vue-consumer_createApi_useHttp_fetch_JavaJWT_Controller_Service_MyBatis_MySQL',
