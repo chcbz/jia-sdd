@@ -113,3 +113,9 @@ SSH现已恢复；已只读观察旧任务已知进程不存在、34061关闭、
 独立源码复审 `ACCEPT_MERGE_SOURCE_SCOPE`：初轮 P1（不完整 SSE replay 游标提前推进）已修，新增9回归；最终 focused task **16/16PASS/0skip/exit0**，fresh XML且冻结树不变。attempt3/4缺失Redis/JSONPath测试运行依赖的原失败保留；只补新测试task runtimeOnly，不改断言/生产权限。Windows原五suite用FREEZE3真实结果，最后两次只有该task runtime依赖增量，复用边界另证；Linux须全部六suite实跑。
 
 组件普通merge提交均有旧特性和冻结develop两个parents，且远端exact核验：API `73c303e1213ee55a0ce20e7382e5ce9a4a440112`、Web `4a1e35eaba74b1581a15117b71b311b02c7796e5`、Client `02e131412901a9402abd5d0856aa57c0c35967c1`。源码审查是独立Sol实例，不是跨模型或全功能验收。Root同步新gitlinks/pins；服务端验证尚待新Root提交后执行。证据见 `evidence/merge-develop/20261008/review-final.json`、`component-merge-remotes.json`。84业务用例状态不变，生产操作未执行。
+
+### Linux 实库发现与最小修复（2026-10-08）
+
+首轮Gradle worker缓存缺JAR、汇总Python3.6不支持fromisoformat；均保留原件并在控制层修复，未改测试断言。重跑源73c303e的六suite fresh XML：platform141/141PASS、security10/10PASS、MVP237/149PASS/88FAIL、archive390/288PASS/102FAIL、typed91/91PASS、replay16/16PASS，0skip。其中91个不同实库用例（MVP/回归重复出现）被sourceartifact SHA CHECK初始化漂移阻断；MySQL把infix REGEXP规范化为regexp_like，而严格catalog仍按旧表达式比较。相应DDL/normalizer/initializer四blob与premerge完全一致，未冒称整个旧tree实跑基线；此外原11archive失败保留。
+
+只将当前DDL对应CHECK写成相同canonical REGEXP_LIKE，通用normalizer和严格比较/约束不放宽；新增元数据等价/改pattern拒绝/实库合法及非法SHA回归。独立 `ACCEPT_MYSQL_SHA_SOURCE_SCOPE`，本地10PASS/2MySQLskip，批准四SQLfixture/ZIP不变。API hotfix `c1e5c982ad497da3c3c13a54062d32e3c3a4e706` 已普通push核远端；Root更新pin，新源Linux实库复测待执行。不能把修复前XML或本地skip当成修复后PASS。
