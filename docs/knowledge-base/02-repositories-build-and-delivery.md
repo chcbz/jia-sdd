@@ -10,27 +10,15 @@
 
 根 `.gitmodules` 指定两个子模块均跟踪 `develop`，但可复现交付以根提交记录的 gitlink SHA 为准，而不是远端分支的未来状态。
 
-## 后端构建
+## 构建、测试与发布
 
-- 根工程：[`api/settings.gradle`](../../api/settings.gradle)；公共编译和发布规则：[`api/build.gradle`](../../api/build.gradle)。
-- 后端使用 Java library / Maven publishing；所有子工程启用 JUnit Platform。
-- `validateLayering` 是根 Gradle 校验任务，检查 mapper 不依赖 service、API 不依赖 service、DAO 所属层等边界。
-- 广泛 Gradle 命令前必须读取目标模块构建文件；本主机上每一个 Gradle 命令都需要持有 `/tmp/cyf-gradle.lock`，不得并行执行。
+当前规则（2026-10-08）：**前端 Flow、后端本地构建部署**，权威策略见 [`docs/aliyun-flow-cicd-strategy.md`](../aliyun-flow-cicd-strategy.md)。
 
-示例（按目标模块调整）：
-
-```bash
-flock /tmp/cyf-gradle.lock bash -lc 'cd api && ./gradlew validateLayering'
-flock /tmp/cyf-gradle.lock bash -lc 'cd api && ./gradlew :agent:jia-agent-service:test'
-```
-
-## 前端构建
-
-- Node 要求：`>=18.19.0`；npm 要求：`>=9.0.0`（见 [`web/package.json`](../../web/package.json)）。
-- 开发：`cd web && npm run dev -- --host 0.0.0.0`
-- 生产构建：`cd web && npm run build`
-- 默认单元测试：`cd web && npm run test`
-- 聚义厅另有地图、sprite、遮挡、SSE/公开 Beta smoke 等定向脚本，脚本清单以 `web/package.json` 为准。
+- 前端复用 `4403172`：固定 `web` 发布 commit，Flow 执行扫描、测试、Vite 生产构建及同 Run 制品部署；不要求转 `master`，不运行本机生产打包或 Flow 失败后的本地回退。
+- 后端在固定 `api` commit/tree 的干净源码目录或独立 worktree 本地测试、`validateLayering`、`bootJar` 和制品生成；所有 Gradle 经 `python3 ops/orchestration/cyf_orchestrator.py gradle ...`，先读最新相关 `build.gradle`。本地 build ID/日志及制品摘要是后端正式证据，不伪造 Flow Run。
+- 两端 `develop` 用于集成，push/合入不自动部署。发布显式绑定版本、源码、同批制品、安装记录及在线核验；测试/构建通过不等于上线。
+- 后端本地发布保留统一锁、可信制品安装、备份与恢复；生产目录 `/home/isp/hosts/cyf/api` 只安装已验证 JAR，不编译。现行 Flow 下载适配器不能直接接受本地输入，须适配验证本地制品入口，不恢复旧源码到生产脚本。
+- 本机前端开发预览和轻量诊断允许；数据库集成使用隔离 fixture，不触碰生产数据。本次规则修改不触发部署或重启。
 
 ## SDD 交付顺序
 

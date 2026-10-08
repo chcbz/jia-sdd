@@ -31,7 +31,7 @@ class AutoReleaseTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def web_package(self, bad_hash=False, wrong_source=False):
+    def web_package(self, bad_hash=False, wrong_source=False, package_version=None):
         self.web.ROOT = self.root/'web-state'
         self.web.ROOT.mkdir(mode=0o700)
         self.web.SITE = self.root/'site'
@@ -43,35 +43,47 @@ class AutoReleaseTest(unittest.TestCase):
         manifest = dict(schema_version=1, pipeline_id='4403172', run_id='92', branch='develop',
                         commit='b'*40 if wrong_source else self.commit,
                         files=[dict(path=p,size=len(v),sha256='0'*64 if bad_hash else hashlib.sha256(v).hexdigest()) for p,v in content.items()])
+        package_version = package_version or '1.0.0'
+        manifest['package_version'] = package_version
+        self.web_release_version = package_version
         with tarfile.open(str(download/'package.tgz'), 'w:gz') as archive:
             for p,v in [('release.json',json.dumps(manifest).encode())]+[('dist/'+p,v) for p,v in content.items()]+[('mochawesome-report/mochawesome.html',b'private test report')]:
                 member=tarfile.TarInfo(p); member.size=len(v);archive.addfile(member,io.BytesIO(v))
+        self.web_release_digest = hashlib.sha256((download/'package.tgz').read_bytes()).hexdigest()
         return content
 
     def test_web_same_run_installs_only_dist(self):
         files = self.web_package()
         with mock.patch.object(self.web.urllib.request,'urlopen',return_value=io.BytesIO(files['index.html'])):
-            self.web.deploy('4403172','92',self.commit)
+            self.web.deploy('4403172','92',self.commit,self.web_release_version,self.web_release_digest)
         for p,v in files.items(): self.assertEqual((self.web.SITE/p).read_bytes(),v)
         self.assertFalse((self.web.SITE/'mochawesome-report').exists())
 
     def test_web_hash_failure_does_not_publish(self):
         self.web_package(bad_hash=True)
         with self.assertRaisesRegex(SystemExit,'digest mismatch'):
-            self.web.deploy('4403172','92',self.commit)
+            self.web.deploy('4403172','92',self.commit,self.web_release_version,self.web_release_digest)
         self.assertEqual((self.web.SITE/'index.html').read_bytes(),b'old')
 
     def test_web_wrong_source_does_not_publish(self):
         self.web_package(wrong_source=True)
         with self.assertRaisesRegex(SystemExit,'does not match'):
-            self.web.deploy('4403172','92',self.commit)
+            self.web.deploy('4403172','92',self.commit,self.web_release_version,self.web_release_digest)
         self.assertEqual((self.web.SITE/'index.html').read_bytes(),b'old')
 
     def test_web_old_run_does_not_publish(self):
         self.web_package()
         (self.web.ROOT/'record.json').write_text('{"run_id":"93"}')
         with self.assertRaisesRegex(SystemExit,'older'):
-            self.web.deploy('4403172','92',self.commit)
+            self.web.deploy('4403172','92',self.commit,self.web_release_version,self.web_release_digest)
+
+    def test_web_major_release_no_longer_needs_nightly_intent(self):
+        files = self.web_package(package_version='1.2.0')
+        (self.web.ROOT/'record.json').write_text(json.dumps({
+            'run_id': '91', 'package_version': '1.0.7', 'files': []}))
+        with mock.patch.object(self.web.urllib.request, 'urlopen', return_value=io.BytesIO(files['index.html'])):
+            self.web.deploy('4403172', '92', self.commit,self.web_release_version,self.web_release_digest)
+        self.assertEqual((self.web.SITE/'index.html').read_bytes(), files['index.html'])
 
     def make_bootjar(self, path, omitted=(), test_only=False):
         packager = load('api_packager', OPS/'auto/package-api.py')
@@ -165,7 +177,9 @@ import importlib.machinery, sys
 from pathlib import Path
 m=importlib.machinery.SourceFileLoader('fixture',sys.argv[1]).load_module()
 s=Path(sys.argv[2]);m.ROOT=s;m.PACKAGE=s/'incoming/package.tgz';m.APPROVAL=s/'approval.json';m.BACKUPS=s/'backups';m.LOCK=str(s/'lock');m.INSTALLER=sys.argv[1]
-commit=sys.argv[3];sys.argv=['fixture','5260799','20',commit]
+commit=sys.argv[3]
+digest=__import__('hashlib').sha256((s/'downloads/20/package.tgz').read_bytes()).hexdigest()
+sys.argv=['fixture','5260799','20',commit,'1.2.0',digest]
 def done(installer):
     return 0
 m.invoke_installer=done
@@ -229,17 +243,20 @@ m.main()
         child.write_text('#!/bin/sh\nexit 7\n'); child.chmod(0o755)
         self.assertEqual(self.api.invoke_installer(str(child)), 7)
 
-    def test_templates_have_no_manual_gate_or_commit_ticket(self):
+    def test_develop_templates_verify_without_deployment(self):
         for name in ['backend-develop-release.yaml','frontend-develop-release.yaml']:
             text=(OPS/'templates'/name).read_text()
             self.assertIn('branch: develop',text)
             self.assertIn('branchesFilter: ^develop$',text)
             self.assertIn('- push',text)
-            self.assertIn('component: VMDeploy',text)
+            self.assertNotIn('component: VMDeploy',text)
+            self.assertNotIn('  deploy:',text)
+            self.assertIn('step: ArtifactUpload',text)
             self.assertNotIn('TICKET_ZLIB_B64',text)
             self.assertNotIn('release_guard',text)
             self.assertNotIn('FirstBatchPause',text)
-            self.assertIn('batchNumber: 1',text)
+            self.assertNotIn('cyf-api-flow-deploy',text)
+            self.assertNotIn('cyf-web-flow-deploy',text)
         api=(OPS/'templates/backend-develop-release.yaml').read_text()
         # Required regression selectors matter; an arbitrary total must not reject new tests.
         for selector in (

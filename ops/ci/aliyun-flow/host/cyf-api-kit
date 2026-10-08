@@ -6,7 +6,22 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export LC_ALL=C
 cd /
 
+# BEGIN STARTUP_DIAGNOSTICS
+# Opt-in, value-free control-plane timestamps. Never print argv/environment or
+# let an observation failure change installation/health/lock semantics.
+diagnostic_mark() {
+  [[ "${CYF_API_STARTUP_DIAGNOSTICS:-0}" == 1 ]] || return 0
+  local monotonic ignored
+  if ! IFS=' ' read -r monotonic ignored < /proc/uptime; then return 0; fi
+  [[ "$monotonic" =~ ^[0-9]+\.[0-9]+$ ]] || return 0
+  printf 'CYF_DEPLOY_TIMING component=lifecycle pid=%s point=%s monotonic_s=%s wall=%(%Y-%m-%dT%H:%M:%S%z)T\n' \
+    "$BASHPID" "$1" "$monotonic" -1 >&2 || :
+  return 0
+}
+# END STARTUP_DIAGNOSTICS
+
 ACTION="${1-restart}"
+diagnostic_mark script.enter
 DEPLOY_DIR=/home/isp/hosts/cyf/api
 RUNTIME_DIR=/run/cyf-api
 JAR="$DEPLOY_DIR/cyf-api-kit.jar"
@@ -170,7 +185,9 @@ load_start_requirements() {
   [[ "$(stat -Lc '%a %U %G' "$JAR")" == "640 root isp" ]] \
     || die "部署 JAR 必须为 640 root isp"
   [[ -x "$JAVA" && ! -L "$JAVA" ]] || die "Java 不可执行或为符号链接：$JAVA"
+  diagnostic_mark jre_validation.begin
   validate_trusted_runtime || die "Java runtime 路径必须全链路 root-owned 且不可由组/其他用户写入：$JAVA"
+  diagnostic_mark jre_validation.end
   [[ -f "$SECRET_FILE" && ! -L "$SECRET_FILE" ]] || die "Jasypt 密钥文件缺失或不安全"
   [[ "$(stat -Lc '%a %U %G' "$SECRET_FILE")" == "600 root root" ]] \
     || die "Jasypt 密钥文件必须为 600 root root"
@@ -391,8 +408,12 @@ else
   validate_lock_file "$RELEASE_LOCK_FILE" "660:0:$(id -g isp):1"
   validate_lock_file "$LOCK_FILE" "600:0:0:1"
 fi
+diagnostic_mark release_lock.begin
 acquire_release_lock_contract
+diagnostic_mark release_lock.end
+diagnostic_mark lifecycle_lock.begin
 acquire_lifecycle_lock_contract
+diagnostic_mark lifecycle_lock.end
 if [[ "$ACTION" == validate-lock-contract ]]; then
   printf 'LOCK_CONTRACT=PASS\nLOCK_ORDER=FD8,FD9\n'
   exit 0
@@ -670,10 +691,12 @@ show_status() {
   cat "$status_file"
   rm -f "$status_file"
 
+  diagnostic_mark status_jar_hash.begin
   jar_sha=''
   if [[ -f "$JAR" && ! -L "$JAR" ]]; then
     jar_sha="$(sha256sum "$JAR" | awk '{print $1}')"
   fi
+  diagnostic_mark status_jar_hash.end
   set +e
   runtime_record_matches "$pid" "$ticks" "$jar_sha"
   attestation_rc=$?
@@ -707,10 +730,13 @@ show_status() {
     return 5
   fi
   echo "RUNTIME_IDENTITY=$RUNTIME_USER($RUNTIME_UID:$RUNTIME_GID)"
+  diagnostic_mark status_health.begin
   if healthy_endpoint_owned_by "$pid" "$ticks"; then
+    diagnostic_mark status_health.end
     echo "HEALTH=UP"
     return 0
   fi
+  diagnostic_mark status_health.failed
   echo "HEALTH=NOT_READY"
   return 4
 }
@@ -771,6 +797,17 @@ report_resources() {
 }
 
 start_api() {
+  # Narrow startup loggers only: no root DEBUG, environment report, Hikari
+  # configuration, JDBC/SQL parameters, HTTP wire traffic, security or AI payloads.
+  local -a startup_debug_args=()
+  if [[ "${CYF_API_STARTUP_DIAGNOSTICS:-0}" == 1 ]]; then
+    startup_debug_args=(
+      --logging.level.org.springframework.beans.factory.support.DefaultListableBeanFactory=DEBUG
+      --logging.level.org.springframework.context.support.DefaultLifecycleProcessor=TRACE
+      --cyf.startup-tracing.enabled=true
+      --logging.level.org.mybatis.spring.mapper.ClassPathMapperScanner=DEBUG
+    )
+  fi
   local pid ticks stamp log_file elapsed listener jar_sha attestation_rc
   pid="$(current_pid)"
   if [[ -n "$pid" ]]; then
@@ -793,7 +830,9 @@ start_api() {
   [[ -z "$listener" ]] || die "端口 $PORT 已被其他进程占用：$listener"
   report_resources
 
+  diagnostic_mark startup_jar_hash.begin
   jar_sha="$(sha256sum "$JAR" | awk '{print $1}')"
+  diagnostic_mark startup_jar_hash.end
   stamp="$(date +%Y%m%d_%H%M%S)"
   log_file="$(mktemp --tmpdir="$LOG_DIR" startlog_${stamp}.XXXXXX.log)"
   chmod 0640 "$log_file"
@@ -803,6 +842,7 @@ start_api() {
   echo ">> LOG=$log_file"
 
   cd "$DEPLOY_DIR"
+  diagnostic_mark jvm_spawn.begin
   (
   local environment_name assignment name value
   while IFS= read -r environment_name; do
@@ -826,6 +866,7 @@ start_api() {
     --spring.profiles.active=prod \
     --logging.level.root=info \
     --logging.level.org.springframework.security=info \
+    "${startup_debug_args[@]}" \
     --spring.ai.mcp.client.enabled=false \
     --spring.ai.mcp.client.toolcallback.enabled=false \
     '--spring.autoconfigure.exclude=org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration,org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration' \
@@ -834,6 +875,8 @@ start_api() {
     --archive.reader.allowed-scopes[0].client-id=jiafewnnv58ec2379c \
   ) > "$log_file" 2>&1 < /dev/null 5>&- 6>&- 7>&- 8>&- 9>&- &
   pid=$!
+  diagnostic_mark jvm_spawn.end
+  diagnostic_mark startup_identity.begin
   ticks=''
   for _ in $(seq 1 20); do
     ticks="$(proc_start_ticks "$pid" 2>/dev/null || true)"
@@ -845,6 +888,8 @@ start_api() {
     || { exact_api_process "$pid" "$ticks" TERM 2>/dev/null || true; die "JAR 在启动身份捕获期间发生变化"; }
   write_pid_files "$pid"
   write_runtime_record "$pid" "$ticks" "$jar_sha"
+  diagnostic_mark startup_identity.end
+  diagnostic_mark health_wait.begin
   echo ">> Java 已启动，PID=$pid；等待实际健康状态（取消由 Flow 作业控制）"
 
   local started_at=$SECONDS next_report=60
@@ -856,13 +901,19 @@ start_api() {
       die "Java 在启动期间退出"
     fi
     if healthy_endpoint_owned_by "$pid" "$ticks"; then
+      diagnostic_mark health_wait.end
+      diagnostic_mark health_stability.begin
       sleep 5
       exact_api_process "$pid" "$ticks" || die "健康后进程立即退出或身份变化"
       listener_owned_by "$pid" || die "健康后端口所有者发生变化"
       process_owned_by_runtime_user "$pid" || die "健康后运行用户不匹配"
+      diagnostic_mark stable_jar_hash.begin
       [[ "$(sha256sum "$JAR" | awk '{print $1}')" == "$jar_sha" ]] || die "健康后 live JAR SHA 发生变化"
+      diagnostic_mark stable_jar_hash.end
       runtime_record_matches "$pid" "$ticks" "$jar_sha" || die "健康后运行制品记录不匹配"
       healthy_endpoint_owned_by "$pid" "$ticks" || die "健康状态或端口归属未能稳定"
+      diagnostic_mark health_stability.end
+      diagnostic_mark actual_ready
       echo ">> 后端启动完成"
       echo "PID=$pid"
       echo "HEALTH=UP"
@@ -881,15 +932,21 @@ start_api() {
 
 case "$ACTION" in
   status)
+    diagnostic_mark status.begin
     status_pid="$(current_pid)"
     show_status "$status_pid"
+    diagnostic_mark status.end
     ;;
   stop)
+    diagnostic_mark stop.begin
     stop_api
+    diagnostic_mark stop.end
     ;;
   start)
+    diagnostic_mark start.begin
     load_start_requirements
     start_api
+    diagnostic_mark start.end
     ;;
   restart)
     load_start_requirements

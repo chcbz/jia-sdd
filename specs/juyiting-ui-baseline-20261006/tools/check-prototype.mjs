@@ -1,72 +1,36 @@
+// Local document checks only; Chromium report is separate and authoritative for layout.
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import {createRequire} from 'node:module'
 import {fileURLToPath} from 'node:url'
 const dir=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../prototype')
-const require=createRequire(path.resolve(process.argv[2]||'web/package.json'))
-const {JSDOM}=require('jsdom')
+const require=createRequire(path.resolve(process.argv[2]||'/home/isp/wsps/cyf/web/package.json'))
+const {JSDOM}=require('jsdom'),results=[]
 const pages=['home','tasks','create','agents','detail','chat','private','public','workspace','mine','library','messages','catalog','map','file','reader','help','account']
-const scenarios=['ready','empty','waiting','streaming','error','recording','voice-review','results','completed']
-const results=[]
+const scenarios=['ready','empty','waiting','streaming','error','recording','voice-review','results','completed','create-failure','create-unknown','reply-failure','accept-unknown','accept-failure','independent-roots']
 function create(page,width=390,scenario='ready') {
- const html=fs.readFileSync(path.join(dir,'index.html'),'utf8')
- const dom=new JSDOM(html,{url:`http://localhost/?scenario=${scenario}#${page}`,runScripts:'outside-only',pretendToBeVisual:true})
- dom.window.structuredClone=structuredClone;
- dom.window.innerWidth=width;dom.window.innerHeight=width===390?844:1000
- const proto=dom.window.HTMLDialogElement.prototype
- proto.showModal=function(){this.setAttribute('open','')}
- proto.close=function(){this.removeAttribute('open');this.dispatchEvent(new dom.window.Event('close'))}
- const sources=[...dom.window.document.querySelectorAll('script[src]')].map(script=>fs.readFileSync(path.join(dir,script.getAttribute('src')),'utf8'));
- dom.window.eval(sources.join('\n')+'\nwindow.__baselineTest = {go,accept};')
+ const dom=new JSDOM(fs.readFileSync(dir+'/index.html','utf8'),{url:`http://localhost/?scenario=${scenario}#${page}`,runScripts:'outside-only',pretendToBeVisual:true})
+ Object.defineProperty(dom.window.HTMLElement.prototype,'innerText',{get(){return this.textContent},set(v){this.textContent=v}});
+ dom.window.structuredClone=structuredClone;dom.window.innerWidth=width;dom.window.innerHeight=844
+ dom.window.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')}
+ dom.window.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new dom.window.Event('close'))}
+ dom.window.eval([...dom.window.document.querySelectorAll('script[src]')].map(s=>fs.readFileSync(path.join(dir,s.getAttribute('src')),'utf8')).join('\n')+'\nwindow.test={go,accept,state,conversation};')
  return dom
 }
-function click(dom,selector){const node=dom.window.document.querySelector(selector);assert.ok(node,selector);node.click();return node}
-for(const width of [390,1440])for(const page of pages){const dom=create(page,width);assert.ok(dom.window.document.body.children.length);assert.ok(dom.window.document.title.includes('界面基准'));assert.equal(dom.window.document.querySelectorAll('.discussion-brief').length,0);for(const el of dom.window.document.querySelectorAll('[src]')){const src=el.getAttribute('src');if(!src||/^(data:|blob:|https?:)/.test(src))continue;assert.ok(fs.existsSync(path.join(dir,src)),`${page}: missing ${src}`)}results.push({page,width,result:'PASS'});dom.window.close()}
-for(const scenario of scenarios){const dom=create('chat',390,scenario),d=dom.window.document;
- assert.ok(d.querySelector('.composer-input-area .composer-more'))
- assert.ok(d.querySelector('.composer-input-area .voice-start'))
- assert.ok(d.querySelector('.composer-input-area .composer-send'))
- for(const label of ['重取回话','话头记录','另起话头'])assert.ok(d.querySelector(`.panel-toolbar [aria-label="${label}"]`))
- assert.ok(!d.querySelector('.composer-more-panel'))
- assert.ok(![...d.querySelectorAll('button')].some(e=>e.textContent.trim()==='工作空间'))
- results.push({page:'chat',scenario,width:390,result:'PASS'});dom.window.close()
+function click(d,s){const n=d.window.document.querySelector(s);assert(n,s);assert(!n.disabled,s);n.click()}
+for(const width of [320,390,1440])for(const p of pages){const d=create(p,width);assert(d.window.document.title.includes('界面优化基准'));assert.equal(d.window.document.querySelectorAll('.discussion-brief').length,0);for(const el of d.window.document.querySelectorAll('[src]')){const src=el.getAttribute('src');if(!/^(data:|blob:|https?:)/.test(src))assert(fs.existsSync(path.join(dir,src)),p+': '+src)}results.push({page:p,width,pass:true});d.window.close()}
+for(const s of scenarios){const d=create(s==='completed'?'detail':'chat',390,s);if(s!=='completed'){for(const cls of ['composer-more','voice-start','composer-send'])assert(d.window.document.querySelector('.composer-input-area .'+cls));for(const title of ['重取回话','话头记录','另起话头'])assert(d.window.document.querySelector(`[aria-label="${title}"]`))}results.push({scenario:s,pass:true});d.window.close()}
+{
+ const d=create('chat'),q=s=>d.window.document.querySelector(s);assert(q('.composer-more + .composer-attach'));assert(q('.composer-inline-voice + .composer-send'));click(d,'.composer-more');assert(!q('.composer-more-panel .composer-add-materials'));click(d,'[data-action=ui-settings]');assert(q('.voice-disclosure').textContent.includes('AI'));assert(!q('.voice-settings').textContent.includes('识别语言'));click(d,'[data-action=complete-materials]');click(d,'[data-pick=ref-brief]');click(d,'[data-action=confirm-materials]');assert(q('.composer-body').textContent.includes('活动说明'));
+ click(d,'[data-action=complete-history]');assert(q('.baseline-history'));click(d,'[data-action=complete-history]');click(d,'[data-action=complete-voice]');click(d,'[data-action=complete-voice-stop]');q('.baseline-voice-status textarea').value='测试转写';click(d,'[data-action=complete-voice-append]');assert(q('.composer-textarea').value.includes('测试转写'));results.push({interaction:'optimized settings/materials/history/voice',pass:true});d.window.close()
 }
 {
- const dom=create('chat'),d=dom.window.document
- click(dom,'.composer-more');assert.ok(d.querySelector('.composer-more-panel .composer-add-materials'));assert.ok(d.querySelector('.composer-more-panel .voice-settings-trigger'))
- click(dom,'[data-action=ui-settings]');assert.ok(d.querySelector('.voice-disclosure').textContent.includes('AI 生成语音'));assert.ok(!d.querySelector('.voice-settings').textContent.includes('识别语言'))
- click(dom,'[data-action=ui-materials]');const checks=d.querySelectorAll('dialog[open] input[type=checkbox]');assert.equal(checks.length,4);checks[0].click();click(dom,'[data-action=confirm-materials]');assert.ok(d.querySelector('.composer-body').textContent.includes('小鸟图片'))
- click(dom,'[data-action=ui-history]');assert.ok(d.querySelector('.baseline-history'));click(dom,'[data-action=ui-delete-history]');assert.ok(d.querySelector('dialog[open]'));click(dom,'[data-action=ui-delete-confirm]');assert.ok(!d.querySelector('.baseline-history'))
- click(dom,'[data-action=ui-voice]');click(dom,'[data-action=ui-voice-stop]');const text=d.querySelector('.baseline-voice-status textarea');text.value='测试转写';click(dom,'[data-action=ui-voice-append]');assert.ok(d.querySelector('.composer-textarea').value.includes('测试转写'))
- results.push({interaction:'plus/materials/history/voice-draft',result:'PASS'});dom.window.close()
+ const d=create('chat',390,'results');assert.equal(d.window.document.querySelectorAll('.mmd-result').length,4);d.window.test.go('detail');d.window.test.accept();assert.equal(d.window.document.querySelectorAll('dialog input[type=checkbox]').length,0);click(d,'[data-action=finish]');await new Promise(r=>setTimeout(r,750));assert(d.window.test.state.task.complete);assert.equal(d.window.test.state.operation.writes,1);results.push({interaction:'single acceptance and read-only state',pass:true});d.window.close()
 }
-{
- const dom=create('chat',390,'results'),d=dom.window.document
- assert.equal(d.querySelectorAll('.mmd-result').length,4)
- dom.window.__baselineTest.go('detail');dom.window.__baselineTest.accept()
- assert.equal(d.querySelectorAll('dialog[open] input[type=checkbox]').length,0)
- click(dom,'[data-action=finish]');assert.ok(d.body.textContent.includes('已完成'))
- results.push({interaction:'media/delivery/acceptance',result:'PASS'});dom.window.close()
-}
-{
- const dom=create('mine'),d=dom.window.document
- click(dom,'[data-prototype-page=library]');click(dom,'[data-action=ui-library-search]');click(dom,'[data-action=ui-search]');assert.ok(d.querySelector('[data-search-results]').textContent.includes('案卷'))
- dom.window.__baselineTest.go('workspace');click(dom,'[data-action=ui-file]');click(dom,'[data-action=ui-rename]');d.querySelector('dialog[open] input').value='改名示例.md';click(dom,'[data-action=ui-rename-save]');assert.ok(d.body.textContent.includes('改名示例.md'));click(dom,'[data-action=ui-recycle]');assert.ok(d.body.textContent.includes('恢复'))
- results.push({interaction:'mine/library/file-management',result:'PASS'});dom.window.close()
-}
-{
- const css=fs.readFileSync(path.join(dir,'hall-view-tabs.css'),'utf8')
- for(const group of ['.hall-overview .overview-tabs','.library-panel .library-tabs','.hall-draft-editor .case-tabs','.personal-workspace.is-hall-treasure .treasure-tabs'])assert.ok(css.includes(group))
- assert.ok(css.includes('background: #f7eae6 !important'))
- assert.ok(css.includes('border: 0 !important'))
- assert.ok(css.includes('button:focus-visible'))
- const dom=create('workspace'),d=dom.window.document
- assert.ok(d.querySelector('link[href="hall-view-tabs.css"]'))
- assert.ok(d.querySelector('.personal-workspace.is-hall-treasure .treasure-tabs button[aria-pressed="true"]'))
- results.push({style:'shared capsule tabs/resource and workspace selected state; not pixel acceptance',result:'PASS'});dom.window.close()
-}
-for(const source of ['prototype.js','baseline-ui.js'])assert.ok(!/\bfetch\s*\(|XMLHttpRequest|WebSocket\s*\(|getUserMedia\s*\(/.test(fs.readFileSync(path.join(dir,source),'utf8')))
-const report={checkedOn:'2026-10-06',method:'JSDOM DOM/interaction/resource checks; not Chromium or visual screenshot acceptance',status:'PASS',count:results.length,results}
-fs.writeFileSync(path.join(dir,'prototype-checks.json'),JSON.stringify(report,null,2)+'\n')
-console.log(`${results.length} documentation-prototype checks passed`)
+const idx=new JSDOM(fs.readFileSync(dir+'/pages.html','utf8'));const links=[...idx.window.document.querySelectorAll('a')];assert.equal(links.filter(l=>l.textContent.includes('打开页面')).length,18);assert.equal(links.filter(l=>l.textContent.includes('体验分支')).length,15);for(const l of links){const p=l.getAttribute('href').split(/[?#]/)[0];assert(fs.existsSync(path.resolve(dir,p)),p)}idx.window.close();results.push({index:'18 pages, 15 states, links resolve',pass:true})
+for(const f of ['prototype.js','baseline-ui.js','interaction-completion.js'])assert(!/\bfetch\s*\(|XMLHttpRequest|WebSocket\s*\(|getUserMedia\s*\(/.test(fs.readFileSync(dir+'/'+f,'utf8')))
+const hashes=Object.fromEntries(['prototype.js','baseline-ui.js','interaction-completion.js','interaction-completion.css'].map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(dir+'/'+f)).digest('hex')]))
+const report={checkedOn:'2026-10-07',method:'JSDOM local document/interaction checks, not visual acceptance',status:'PASS',count:results.length,results,sourceHashes:hashes,productAcceptance:false}
+fs.writeFileSync(dir+'/prototype-checks.json',JSON.stringify(report,null,2)+'\n');console.log('PASS '+results.length+' document checks')

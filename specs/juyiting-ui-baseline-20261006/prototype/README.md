@@ -1,29 +1,19 @@
-# 聚义厅当前源码界面基准 · 2026-10-06
+# 优化界面原型 · 交互补全 2026-10-07
 
-[打开原型](index.html#home) · [页面与状态入口](../coverage.md) · [最新议事成果状态](index.html?scenario=results#chat) · [来源](baseline-source.json)
+[打开原型](index.html#home) · [18页/15状态索引](pages.html) · [交互说明](../interaction-guide-20261007.md) · [浏览器证据](../acceptance.md)
 
-这是保存到 SDD 的离线界面基准，不是生产应用、不证明上线。复用历史脱敏页面外壳，同步当前源码中的议事布局，并补全代表性入口/状态；各区域还原层级见 [设计约定](../design.md)。不是一次完整的最新线上重新采样。
+这份原型在10月6日最新优化基准原地补全，是后续提出新需求的唯一界面入口。离线示例，不是生产应用、上线事实或真实业务通过；R01仍待实现。
 
-## 使用
+保留圆角选中标签。议事顶部三个话头图标靠右；输入栏左侧为＋/添加资料图标，右侧为语音/发送图标，＋内仅保留语音回答设置，资料入口外置。不启用麦克风、不读取账号、不连接API。状态按场景保存在当前标签页，普通刷新保持；索引链接reset=1只重置该场景一次。
 
-- 桌面沿用侧栏，手机沿用办事 / 事项 / 资料 / 我的底栏。更多入口从既有“全部入口”打开。
-- 从首页提出需求、选资料、点将并议事；在会话查看/下载/保存/引用示例成果，通过事项详情进入验收。
-- 议事顶部保留三个话头操作；输入框内有＋、语音和发送；＋展开添加资料、语音设置，无“工作空间”按钮。
-- 同类下划线视图标签统一采用浅色圆角选中态；`hall-view-tabs.css` 对齐本次开发实现，原始源码 pin 不改写，开发与验证记录见 `../implementation-checks.json`。
-- 所有反馈和存储都是本原型的脱敏演示。图片为示意 SVG，音频为示意音；录音不会启用麦克风。
-- 素材/CSS/脚本均在本目录。建议用静态 HTTP 服务打开；不依赖 `/var/tmp`、工作树或线上资源。
+静态预览：执行 `python3 /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/serve-preview.py --port 18766`（Python 3.6兼容、多线程处理本地资源）。
 
-```bash
-cd /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/prototype
-python3 -m http.server 18766 --bind 0.0.0.0
-```
+轻量检查：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-prototype.mjs`。真实浏览器：服务启动后 `node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-browser.cjs`，只启动并清理自己的临时Chromium，不运行构建或真实业务。
 
-## 自检
+索引/样式浏览器核验：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-index.cjs`。
 
-从项目根目录：
+议事图标统一20px、1.8px描边，点击区域统一38px。定向浏览器检查：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-icons.cjs`。
 
-```bash
-node specs/juyiting-ui-baseline-20261006/tools/check-prototype.mjs
-```
+## 正式环境对照（2026-10-07）
 
-此命令只读原型、执行轻量 JSDOM 演示交互并写检查记录，不运行 Vite/生产构建或真实业务。记录见 `prototype-checks.json`；它不是 Chromium 截图或真实设备视觉验收。后续修改后必须更新来源/摘要，不能沿用旧 PASS。
+[本轮差异报告](../production-diff-20261007.md)：真实页面与当前唯一原型分开取样，记录未同步提案、完成态/正文重复问题与生产更完整模块；不代表再次业务验收或上线。

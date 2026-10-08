@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Deploy a successful develop Flow artifact without per-release human tickets.
+"""Deploy an explicit version bound to its commit, Run and artifact SHA-256.
 
 Retains the existing transactional installer and same-run artifact validation.
 """
@@ -1093,12 +1093,24 @@ def invoke_installer(installer):
         return 1
 
 
+
+def validate_versioned_release(version, artifact_sha256):
+    """Explicit release identity, not a time window or compatibility gate."""
+    if (not isinstance(version, str) or not version or version != version.strip()
+            or any(ord(char) < 32 or ord(char) == 127 for char in version)):
+        fail('explicit release version is required')
+    if not isinstance(artifact_sha256, str) or not re.fullmatch('[0-9a-f]{64}', artifact_sha256):
+        fail('expected release artifact SHA-256 is required')
+    return version
+
+
 def main():
     if os.geteuid() != 0:
         fail('must run as root')
-    if len(sys.argv) != 4:
-        fail('expected pipeline id, run number, and source commit')
-    pipeline_id, run_id, source_commit = sys.argv[1:]
+    if len(sys.argv) != 6:
+        fail('expected pipeline run commit version artifact_sha256')
+    pipeline_id, run_id, source_commit, release_version, artifact_sha256 = sys.argv[1:]
+    validate_versioned_release(release_version, artifact_sha256)
     if pipeline_id != EXPECTED_PIPELINE or not RUN_ID.fullmatch(run_id):
         fail('Flow execution identity mismatch')
     if not GIT_SHA.fullmatch(source_commit):
@@ -1132,6 +1144,10 @@ def main():
         if int(previous.get('run_id', '0')) > int(run_id):
             fail('a newer run has already reached deployment; refusing stale release')
 
+    with downloaded.open('rb') as handle:
+        if digest_fileobj(handle) != artifact_sha256:
+            fail('release artifact digest mismatch')
+
     # Run-scoped downloads cannot overwrite another run being installed.
     fd, temporary = tempfile.mkstemp(prefix='.incoming-' + run_id + '-', dir=PACKAGE.parent)
     try:
@@ -1144,6 +1160,10 @@ def main():
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
+
+    with PACKAGE.open('rb') as handle:
+        if digest_fileobj(handle) != artifact_sha256:
+            fail('copied release artifact digest mismatch')
 
     with tarfile.open(PACKAGE, mode='r:*') as archive:
         members = archive.getmembers()
@@ -1247,7 +1267,17 @@ def main():
         'receipt_sha256': approval['receipt_sha256'],
         'jar_sha256': approval['jar_sha256'],
     }
-    raise SystemExit(invoke_installer(INSTALLER))
+    version_record = dict(schema_version=1, pipeline_id=pipeline_id, run_id=run_id,
+        version=release_version, commit=source_commit, tree=source['tree_sha'],
+        artifact_sha256=artifact_sha256, jar_sha256=approval['jar_sha256'],
+        receipt_sha256=approval['receipt_sha256'], status='prepared')
+    version_record_path = ROOT / ('versioned-release-' + run_id + '.json')
+    atomic_write(version_record_path, (json.dumps(version_record, sort_keys=True) + '\n').encode())
+    return_code = invoke_installer(INSTALLER)
+    version_record.update(status='verified' if return_code == 0 else 'failed',
+                          installer_exit_code=return_code)
+    atomic_write(version_record_path, (json.dumps(version_record, sort_keys=True) + '\n').encode())
+    raise SystemExit(return_code)
 
 
 if __name__ == '__main__':

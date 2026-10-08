@@ -5,6 +5,21 @@ umask 077
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export LC_ALL=C
 
+# BEGIN STARTUP_DIAGNOSTICS
+# Opt-in, value-free control-plane timestamps. Never print argv/environment or
+# let an observation failure change installation/health/lock semantics.
+diagnostic_mark() {
+  [[ "${CYF_API_STARTUP_DIAGNOSTICS:-0}" == 1 ]] || return 0
+  local monotonic ignored
+  if ! IFS=' ' read -r monotonic ignored < /proc/uptime; then return 0; fi
+  [[ "$monotonic" =~ ^[0-9]+\.[0-9]+$ ]] || return 0
+  printf 'CYF_DEPLOY_TIMING component=installer pid=%s point=%s monotonic_s=%s wall=%(%Y-%m-%dT%H:%M:%S%z)T\n' \
+    "$BASHPID" "$1" "$monotonic" -1 >&2 || :
+  return 0
+}
+# END STARTUP_DIAGNOSTICS
+
+diagnostic_mark script.enter
 PACKAGE_ROOT=/var/lib/cyf-api-flow
 INCOMING_PACKAGE="$PACKAGE_ROOT/incoming/package.tgz"
 APPROVAL_PATH="$PACKAGE_ROOT/approval.json"
@@ -104,7 +119,9 @@ fi
 exec 8<>"$RELEASE_LOCK"
 [[ "$(stat -Lc '%d:%i' "$RELEASE_LOCK")" == "$(stat -Lc '%d:%i' /proc/$$/fd/8)" ]] || fail 'release lock changed while opening'
 # Serialize releases; contention is waiting, not a failed release. Flow owns cancellation.
+diagnostic_mark release_lock.begin
 flock -x 8 || fail 'API release lock acquisition interrupted'
+diagnostic_mark release_lock.end
 LOCK_DEVICE="$(stat -Lc '%d' /proc/$$/fd/8)"
 LOCK_INODE="$(stat -Lc '%i' /proc/$$/fd/8)"
 export CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$LOCK_DEVICE" CYF_RELEASE_LOCK_INODE="$LOCK_INODE" CYF_RELEASE_LOCK_HELD=1
@@ -276,6 +293,7 @@ WORK="$(mktemp -d "$TARGET_DIR/.cyf-api-flow-install.XXXXXX")"
 cleanup() { rm -rf -- "$WORK"; }
 trap cleanup EXIT
 
+diagnostic_mark unpack_validate.begin
 mapfile -t APPROVAL_CONTEXT < <(python3 -I -B - "$INCOMING_PACKAGE" "$WORK" "$APPROVAL_PATH" "$EXPECTED_ORGANIZATION" "$EXPECTED_PIPELINE" "$EXPECTED_JOB" "$INSTALL_UID" <<'PY'
 import hashlib, json, os, re, stat, sys, tarfile, zipfile
 from pathlib import Path
@@ -487,6 +505,7 @@ chmod 0640 "$WORK/application.jar"
 [[ "$(stat -Lc '%u:%g:%a:%h' "$WORK/application.jar")" == "${INSTALL_UID}:${INSTALL_GID}:640:1" ]] || fail 'validated candidate metadata normalization failed'
 [[ "$(sha256sum "$WORK/application.jar" | awk '{print $1}')" == "$JAR_SHA" ]] || fail 'candidate changed after validation'
 
+diagnostic_mark unpack_validate.end
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 if [[ -e "$TARGET_JAR" ]]; then CURRENT_SHA="$(sha256sum "$TARGET_JAR" | awk '{print $1}')"; else CURRENT_SHA=MISSING; fi
 OLD_SHA="$CURRENT_SHA"
@@ -937,13 +956,20 @@ commit_candidate() {
   if ! write_record installed installed not_required 0; then
     recoverable_fail 'approval is consumed but installed record was interrupted'
   fi
+  diagnostic_mark commit_records.end
+  diagnostic_mark installed
   printf 'CYF_API_FLOW_INSTALL=PASS\n'
   exit 0
 }
 
 finalize_candidate() {
+  diagnostic_mark final_jar_hash.begin
   [[ "$(canonical_sha)" == "$JAR_SHA" ]] || restore_and_start commit_canonical_mismatch
+  diagnostic_mark final_jar_hash.end
+  diagnostic_mark status_final.begin
   lifecycle_healthy || restore_and_start commit_health_failed
+  diagnostic_mark status_final.end
+  diagnostic_mark commit_records.begin
   if ! write_record active_pending commit candidate_healthy "$STOP_RC"; then
     recoverable_fail 'candidate is healthy but active-pending record was interrupted'
   fi
@@ -1015,13 +1041,17 @@ if [[ "$RECORD_STATUS" != prepared || "$RECORD_MATCH" != 1 ]]; then
   write_record prepared pre_cutover not_started 255 || recoverable_fail 'prepared record write was interrupted before lifecycle mutation'
 fi
 lifecycle_admission_before_backup || fail 'insufficient space for actual rollback JAR before stopping service'
+diagnostic_mark backup.begin
 ensure_backup || fail 'durable rollback backup creation failed before stopping service'
+diagnostic_mark backup.end
 write_record activating activation ready 255 || recoverable_fail 'activation record write was interrupted before stopping service'
 
+diagnostic_mark stop_verify.begin
 if ! stop_and_verify; then
   write_record failed pre_cutover_stop previous_stop_unverified "$STOP_RC" || recoverable_fail 'pre-cutover stop record was interrupted'
   fail 'previous service stop could not be explicitly verified'
 fi
+diagnostic_mark stop_verify.end
 if (( STOP_RC != 0 )); then
   if "$LIFECYCLE" start && lifecycle_healthy; then
     write_record failed pre_cutover_stop previous_restarted_after_stop_error "$STOP_RC" || recoverable_fail 'stop-error recovery record was interrupted'
@@ -1031,13 +1061,19 @@ if (( STOP_RC != 0 )); then
   fail 'previous service stop returned an error'
 fi
 
+diagnostic_mark activate.begin
 if ! activate_candidate; then
   recoverable_fail 'canonical activation replace or fsync was interrupted'
 fi
+diagnostic_mark activate.end
+diagnostic_mark start_wait.begin
 if ! "$LIFECYCLE" start; then
   restore_and_start candidate_start_failed
 fi
+diagnostic_mark start_wait.end
+diagnostic_mark status_first.begin
 if ! lifecycle_healthy; then
   restore_and_start candidate_status_failed
 fi
+diagnostic_mark status_first.end
 finalize_candidate

@@ -91,7 +91,7 @@ document.addEventListener('click',event=>{
   const target=event.target.closest('button,[data-action]');if(!target||target.disabled)return;
   if(target.matches('.workbench-mobile-more')){
     event.preventDefault();event.stopImmediatePropagation();
-    dialog('全部入口',`<div class="mmd-more-menu">${[['办事','home'],['事项','tasks'],['资料','workspace'],['我的','mine'],['个人中心','account'],['使用帮助','help']].map(([label,next])=>button(label,'ui-go',`data-page="${next}"`)).join('')}</div>`);return;
+    dialog('全部入口',`<div class="mmd-more-menu">${prototypePages.map(([label,next])=>button(label,'ui-go',`data-page="${next}"`)).join('')}</div>`);return;
   }
   const action=target.dataset.action;
   if(!action||(!action.startsWith('ui-')&&action!=='composer-more'&&action!=='voice-settings'))return;

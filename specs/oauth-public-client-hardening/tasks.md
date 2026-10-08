@@ -1,5 +1,19 @@
 # OAuth public client hardening tasks
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+按原 SDD 中独立审查与 2026-08-24 发布记录归档；不扩大为所有账号安全/公共公测需求已完成。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-08。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+### 当前执行动作
+
+后续回归按独立缺陷单追踪，保留原 SHA 与部署证据。
+
+以下原始清单为合同/历史记录；当前完成状态采用 delivery-status 的任务映射，不能据旧未勾选项重新派工。
+<!-- END SDD delivery reconciliation -->
+
 ## API (`api/`)
 
 - [x] Add an allowlisted resource identity DTO.

@@ -1,5 +1,8 @@
 # 前端架构与调用边界
 
+> 有效性：原有章节沿用 `BASELINE.yaml` 的 2026-08-15 静态基线，未在本轮全量复核。下方“议事 UI 组件职责”独立注明 2026-10-08 核对范围；不能据此认为全部路由、HTTP 或构建说明已更新。
+
+
 ## 技术组成
 
 前端是 Vue 3 单页应用：Vite 构建、Vue Router 路由、Pinia 状态、Varlet UI、vue-i18n、PWA 工具链；聚义厅场景使用 MelonJS。Vite 使用 `@` 指向 `web/src`，生产构建按 `melonjs`、Vue、UI、Markdown、utilities 分 chunk，并可按环境变量启用压缩、旧浏览器构建与 bundle 分析。
@@ -28,3 +31,19 @@
 `web/src/components/world/JuyiHall.vue` 是页面编排点；它组合数据、任务、会话、场景、声音、面板、命令队列、后端场景状态等 composable。`web/src/game/` 将场景划分为相机、输入、地图/TMX、遮挡、实体、模拟、sprite 与 debug 子域；`HallScene.js` 为核心场景之一。
 
 角色肖像解析集中在 `useWaterMarginRoles.js`，角色元数据集中在 `constants/juyiting.js`。这两处是人物显示/名称/风格变更的稳定入口。
+
+<a id="hall-discussion-composition"></a>
+## 议事 UI 组件职责（2026-10-08 局部核对）
+
+源码基线：Web `75766a3b78c2e552ef448e924a813ed2dfc7ecd4`（本次读取的本地 `origin/develop` 引用，非实时远端/线上证明）。核对 `src/components/juyiting/ChatPanel.vue`、`HallChatComposer.vue`；控件接线在前两者核对，语音内部状态机未在本轮复核。
+
+| 层 | 责任 | 不应混入 |
+| --- | --- | --- |
+| `JuyiHall.vue` 页面编排 | 将业务上下文连接到议事面板；页面样式入口 | 不因布局调整重写身份/任务状态 |
+| `ChatPanel.vue` | 话头工具栏、会话展示、资料选择器状态及 Composer 事件转接 | 不复制输入/语音控件实现 |
+| `HallChatComposer.vue` | 草稿输入、提及、更多/资料/发送按钮、materials 插槽与语音控件挂载 | 不凭点击或前端展示判定后台任务完成 |
+| `HallVoiceControls.vue` 接线 | Composer 通过 recording-target 放置录音按钮，通过 settings-visible 控制设置；voice-apply 向上传递 | 不把菜单关闭当成语音业务终止 |
+
+布局与资料选择器解耦：`materials` 插槽在更多菜单外，`open-materials` 由 ChatPanel 的 `toggleMaterialPicker` 处理；语音设置与进行中反馈仍由独立条件控制。具体行为、禁用边界与回归入口见 [聚义厅专题](06-juyiting-end-to-end.md#hall-discussion-ui)。
+
+历史来源：[1.0.6 UI 收口导航](../../specs/juyiting-ui-baseline-20261006/README.md)。该版本的“不改业务逻辑”只描述当次 UI patch，不能套用到后续源码；本次核对版本已有额外完成态锁定逻辑。

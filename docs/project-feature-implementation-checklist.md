@@ -197,8 +197,8 @@
 
 | ID | 功能特性 / 概设 | 代码核验 | 完整度 | 后续建议 |
 | --- | --- | --- | ---: | --- |
-| OPS-01 | 前端一键构建、备份和发布 | `/home/isp/bin/cyf_web_kit_start.sh` 存在 | ✅ 92% | 输出机器可读发布记录和资源校验和 |
-| OPS-02 | 后端一键构建、部署和重启 | `/home/isp/bin/cyf_api_kit_start.sh` 存在 | ✅ 90% | 默认执行关键测试和数据库 migration check |
+| OPS-01 | 前端 Flow 扫描、测试、构建和发布 | `4403172 / cyf-web-kit` Run 86 已完整成功 | 🟡 92% | 标准 YAML 化、改用 `npm ci`，补 `develop` CI-only |
+| OPS-02 | 后端 Flow 测试、`bootJar`、不可变制品和部署 | `5260799 / cyf-api-kit-ci` Run 13 已完整成功 | 🟡 92% | 版本化 ticket 刷新 controller，补 CI-only |
 | OPS-03 | Codex Agent 启停和状态管理 | `/home/isp/bin/codex_ws_agent_start.sh` 与安装文档存在 | ✅ 92% | 统一 systemd 与脚本的单一运维入口 |
 | OPS-04 | 数据库迁移和回滚纪律 | migration 文件与部署注意事项存在 | 🟡 78% | 使用 Flyway/Liquibase 或统一 schema version 表 |
 | OPS-05 | 聚义厅 preflight、UI smoke、Agent smoke | package scripts 和测试脚本均存在 | ✅ 92% | 纳入 CI/CD，避免依赖人工顺序执行 |

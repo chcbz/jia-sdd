@@ -1,5 +1,17 @@
 # Agent workspace capability refresh design
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+历史 acceptance 与 release 均有依据，统一原顶层 accepted 与 release.released 的陈旧状态，归档 2026-08-23 交付。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-07。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+### 本次设计边界补充
+
+保留 allowlist、symlink/TOCTOU/FIFO fail-closed、不上传路径或文件内容；不产生新的 ACL 权限。
+<!-- END SDD delivery reconciliation -->
+
 ## Discovery contract
 
 每次 `agent.register` 和 `agent.presence` 构建 abilities 时，调用 `discoverWorkspaceAbilities(profile)`：
