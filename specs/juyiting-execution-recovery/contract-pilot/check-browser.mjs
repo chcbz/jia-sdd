@@ -16,7 +16,10 @@ export async function checkBrowser() {
   const chromeBinary = process.env.CHROME_PATH
   assert.ok(chromeBinary && !chromeBinary.includes("'") && !chromeBinary.includes('\n'))
   const launcher = join(output, 'browser-launcher.sh')
-  writeFileSync(launcher, `#!/bin/sh\nexec '${chromeBinary}' --no-sandbox "$@"\n`, {mode: 0o700})
+  const chromeLog = join(output, 'browser-stderr.log')
+  assert.ok(!chromeLog.includes("'") && !chromeLog.includes('\n'))
+  // The shared CDP helper discards stderr; preserve startup failures in this run.
+  writeFileSync(launcher, `#!/bin/sh\nexec '${chromeBinary}' --no-sandbox "$@" 2>'${chromeLog}'\n`, {mode: 0o700})
   process.env.CHROME_PATH = launcher
   const { launchChrome, stopChrome, evaluate, waitForExpression } = await import(pathToFileURL(join(web, 'scripts/juyiting/e13/lib/cdp-harness.mjs')))
   const origin = new URL(process.env.CYF_HISTORY_ORIGIN)
