@@ -66,13 +66,13 @@ try {
     try { await adapter.loadHistory(); assert.equal(adapter.historyState.value, 'empty'); assertions++ }
     finally { adapter.dispose() }
   }
-  const { adapter } = adapterFor('broken')
+  const { adapter: brokenAdapter } = adapterFor('broken')
   try {
-    await adapter.loadHistory()
-    assert.equal(adapter.historyState.value, 'error'); assertions++
-    assert.deepEqual(adapter.history.value, []); assertions++
-    assert.ok(adapter.historyError.value); assertions++
-  } finally { adapter.dispose() }
+    await brokenAdapter.loadHistory()
+    assert.equal(brokenAdapter.historyState.value, 'error'); assertions++
+    assert.deepEqual(brokenAdapter.history.value, []); assertions++
+    assert.ok(brokenAdapter.historyError.value); assertions++
+  } finally { brokenAdapter.dispose() }
   // Raw wire checks also traverse production createApi/useHttp; request errors not fabricated.
   const wire = createApi(`${origin}/agent`)
   const authStore = { authorizationGeneration: 0, token: async () => tokens.ownerA }
