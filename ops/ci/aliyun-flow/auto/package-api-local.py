@@ -221,7 +221,7 @@ def xml_summary(data):
             failed += f
             errors += e
             skipped += s
-        require(count > skipped and failed == errors == 0, 'TEST_EVIDENCE_INVALID')
+        require(count >= skipped and failed == errors == 0, 'TEST_EVIDENCE_INVALID')
         return {'tests': count, 'failures': failed, 'errors': errors, 'skipped': skipped}
     except (ET.ParseError, ValueError):
         raise Rejected('TEST_EVIDENCE_INVALID') from None
@@ -300,6 +300,7 @@ def verify_evidence(evidence_data, identity, source, build):
             require(str(path) not in reports_seen, 'TEST_EVIDENCE_INVALID')
             reports_seen.add(str(path))
             summaries.append({'sha256': report['sha256'], 'size': report['size'], **xml_summary(data)})
+        require(sum(s['tests'] - s['skipped'] for s in summaries) > 0, 'TEST_EVIDENCE_INVALID')
         tests.append({'task': item['task'], 'selector': item['selector'],
                       'fixtureSha256': item['fixtureSha256'], 'reports': summaries})
     require({':starter:publicArtifactVerifierTest', ':starter:poiProductionRuntimeClasspathTest'}.issubset(tasks),

@@ -291,6 +291,17 @@ class LocalPackageTest(unittest.TestCase):
             self.f.ev['tests'][0]['reports'] = [m.record(self.f.reports[0])]
             self.rejected(self.run_fixture, 'TEST_EVIDENCE_INVALID')
 
+    def test_honest_skipped_xml_does_not_discard_passed_task_reports(self):
+        skipped = self.f.build / 'TEST-honest-skipped.xml'
+        skipped.write_bytes(b'<testsuite tests="1" skipped="1"><testcase classname="SyntheticSkipped" name="optional"><skipped/></testcase></testsuite>')
+        self.f.ev['tests'][0]['reports'].append(m.record(skipped))
+        result = self.run_fixture()
+        with tarfile.open(result['package']['path']) as archive:
+            receipt = m.strict_json(archive.extractfile('receipt.json').read())
+        reports = receipt['evidence']['tests'][0]['reports']
+        self.assertEqual(sum(r['skipped'] for r in reports), 1)
+        self.assertEqual(sum(r['tests'] for r in reports), 2)
+
     def test_missing_required_security_task_and_duplicate_report(self):
         original = copy.deepcopy(self.f.ev['tests'])
         self.f.ev['tests'] = original[1:]
