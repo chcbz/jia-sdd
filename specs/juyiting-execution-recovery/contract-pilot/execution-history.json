@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "endpoint": {"method": "GET", "path": "/agent/personal-workspace/executions", "cacheControl": "private, no-store"},
+  "source": {
+    "apiCommit": "ce047c43e0f275d1ad427c484b8919213be36fa4",
+    "webCommit": "75766a3b78c2e552ef448e924a813ed2dfc7ecd4",
+    "note": "Pinned locally inspected source; not a deployed-pair assertion. Synthetic data only."
+  },
+  "cases": [
+    {"id": "empty", "request": {"limit": 20}, "response": {"status": 200, "body": {"items": [], "nextCursor": null}}, "consumerState": "empty"},
+    {"id": "first-page", "request": {"limit": 20}, "response": {"status": 200, "body": {"items": [{"executionId": "pwe_contract_2", "targetAgentId": "agent-contract", "state": "QUEUED", "outputContentMimeType": "image/png", "createdAt": 1790000000000}], "nextCursor": {"createdAt": 1790000000000, "executionId": "pwe_contract_2"}}}, "consumerState": "ready"},
+    {"id": "last-page", "request": {"limit": 20, "beforeCreatedAt": 1790000000000, "beforeExecutionId": "pwe_contract_2"}, "response": {"status": 200, "body": {"items": [{"executionId": "pwe_contract_1", "targetAgentId": "agent-contract", "state": "OUTPUT_COMMITTED", "outputContentMimeType": "image/png", "createdAt": 1789999999000}], "nextCursor": null}}, "consumerState": "ready"},
+    {"id": "unpaired-cursor", "request": {"limit": 20, "beforeCreatedAt": 1790000000000}, "response": {"status": 400, "body": {"code": "BAD_REQUEST", "message": "Invalid execution request"}}, "consumerState": "error"},
+    {"id": "unavailable", "request": {"limit": 20}, "response": {"status": 503, "body": {"code": "EXECUTION_UNAVAILABLE", "message": "Execution is temporarily unavailable"}}, "consumerState": "error"}
+  ],
+  "serverAssertions": [
+    "scope tenant/client/owner must be exact; a second owner cannot see the first owner's synthetic row",
+    "history and idempotency lookup never create or dispatch executions",
+    "successful summary contains only executionId,targetAgentId,state,outputContentMimeType,createdAt",
+    "paired cursor and limit validated; no credential, instruction, inputs or runtimeCommand in summary"
+  ],
+  "verification": {"javaHttpDatabase": "NOT_RUN", "formalFrontendFlow": "NOT_RUN", "production": "NOT_RUN"}
+}
