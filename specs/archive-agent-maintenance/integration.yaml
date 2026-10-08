@@ -1,5 +1,5 @@
 feature_id: archive-agent-maintenance
-status: integration-ready
+status: implementing
 owners:
   api: critical_worker
   web: balanced_worker
@@ -84,7 +84,7 @@ release:
   build_origin: null
   artifact_sha256: null
 implementation_handoff:
-  status: develop_merged_postmerge_repairs_pushed_server_retest_pending
+  status: develop_merged_pushed_server_validation_completed_with_remaining_failures
   entry: handoff.md
   progress: implementation-baseline.md
   current_delivery: delivery.md
@@ -846,7 +846,7 @@ server_validation_20261007:
   whole_feature_accepted: false
 
 merge_develop_20261008:
-  status: merged_source_pushed_postmerge_mysql_and_test_harness_repairs_pushed_retest_pending
+  status: merged_and_pushed_verified_with_unresolved_live_mysql_and_environment_failures
   direction: origin_develop_into_existing_feature_branches_only
   develop_root: 7997310541164ff0b4586a17cd55c59a79c4d34e
   develop_api: ce047c43e0f275d1ad427c484b8919213be36fa4
@@ -869,7 +869,7 @@ merge_develop_20261008:
   five_suite_reuse: evidence/merge-develop/20261008/local-verification-reuse.json
   ssh: recovered_old_known_task_processes_absent_port34061_closed_lock_available
   historical_attempt5_completion_receipt: unverified
-  server_validation: attempt3_failed_repaired_source_pending_attempt4
+  server_validation: attempt4_completed_fresh_0skip_failed_5_maintenance_plus_11_known_archive
   real_runtime_browser: not_run
   production_changes: false
   business_acceptance: not_run
@@ -890,7 +890,7 @@ post_merge_mysql_sha_repair_20261008:
   whole_feature_accepted: false
 
 post_merge_fixture_harness_repair_20261008:
-  status: source_reviewed_components_pushed_server_retest_pending
+  status: source_reviewed_components_pushed_server_retest_completed_not_all_passed
   api_commit: 62adf8a0b014d6ac91caea458a7f3996c668c321
   web_commit: 1a4e6fa36f12936330d0c7ac9ab968a714fcb75f
   client_commit: 33a025928afdf90729077c20dc7039bd342e7a37
@@ -899,5 +899,37 @@ post_merge_fixture_harness_repair_20261008:
   baseline_comparison: evidence/merge-develop/20261008/server-results/node-develop-baseline/comparison.json
   real_runtime_browser: not_run
   business_acceptance: not_run
+  production_changes: false
+  whole_feature_accepted: false
+
+current_merge_validation_20261008:
+  status: completed_not_all_passed_not_accepted
+  report: merge-validation-20261008.md
+  evidence: evidence/merge-develop/20261008/final-validation-summary.json
+  api_gradle_exit: 1
+  api_mysql_skipped: 0
+  maintenance_tests: 245
+  maintenance_pass: 240
+  maintenance_fail: 5
+  archive_tests: 398
+  archive_pass: 382
+  archive_fail: 16
+  known_archive_failure_methods: 11
+  unknown_live_mysql_failure_methods: 5
+  unknown_mysql_merge_regression_classification: not_proven_premerge_lane_not_runnable
+  web_local_pass: 480
+  web_linux_tests: 3240
+  web_linux_pass: 3199
+  web_linux_fail: 39
+  web_linux_pending: 2
+  web_failure_delta_vs_frozen_develop_affected_files: 0
+  web_build_exit: 0
+  client_tests: 962
+  client_pass: 952
+  client_fail: 0
+  client_skip: 10
+  source_pin_remote_raw_byte_consistency: passed_not_functional_acceptance
+  real_runtime_browser: not_run
+  business_acceptance: not_run_84_cases
   production_changes: false
   whole_feature_accepted: false

@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-08T13:33:45.022910+08:00",
+  "api_commit": "62adf8a0b014d6ac91caea458a7f3996c668c321",
+  "scope": "Final fresh isolated MySQL MVP failures; same cases also fail archive regression. Do not call them merge-introduced without an executable premerge comparison.",
+  "cases": [
+    {
+      "method": "cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest#realJdbcKeysetsPageAppointmentsJobsManagedWorksAndPublishedReaderShelf()",
+      "message": "org.springframework.jdbc.UncategorizedSQLException: PreparedStatementCallback; uncategorized SQLException for SQL [INSERT INTO archive_edition(edition_id,work_id,import_state,source_sha256,manifest_sha256,manifest_file_sha256,source_utf8_byte_length,chapter_count,preface_paragraph_count,chapter_paragraph_count,reader_paragraph_count,preface_utf8_byte_length,chapter_utf8_byte_length,reader_utf8_byte_length) VALUES (?,?,?,?,?,?,1,0,0,0,0,0,0,0)]; SQL state [HY000]; error code [3819]; Check constraint 'chk_archive_edition_counts' is violated."
+    },
+    {
+      "method": "cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest#repeatableReadRealPublishWinsBeforeWithdrawalAndStaleWorkCasLeavesEditionPublished()",
+      "message": "java.util.concurrent.ExecutionException: cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Active archive edition changed during publication staging"
+    },
+    {
+      "method": "cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest#draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication()",
+      "message": "cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Archive execution proof is not current"
+    },
+    {
+      "method": "cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest#checkpointObjectFailureRollbackAndLateAclLeaveNoReferencedChapter()",
+      "message": "org.opentest4j.AssertionFailedError: expected: <ARCHIVE_ACTION_FORBIDDEN> but was: <ARCHIVE_FORBIDDEN>"
+    },
+    {
+      "method": "cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest#dependencyRepairRequiresFailedBaselineAndSuccessfulPrivateSourceReadback()",
+      "message": "cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private source readback has not proven recovery from the blocked failure"
+    }
+  ],
+  "root_cause_and_fix": "pending; not accepted",
+  "whole_feature_accepted": false
+}

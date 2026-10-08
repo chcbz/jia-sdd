@@ -107,3 +107,9 @@ SSH现已恢复；已只读观察旧任务已知进程不存在、34061关闭、
 Node只改测试：真实ChatPanel predicate/receipt分支，可靠扫描真实import而非技能内部import字符串。初审P2发现ASI后独立block可漏依赖，原REJECT及真实复现保留；窄修后ACCEPT_POSTMERGE_NODE_HARNESS_SCOPE。Web当前同树19selectors480/480PASS、build0；Client7/7PASS及实际42-module闭包通过。Web `1a4e6fa36f12936330d0c7ac9ab968a714fcb75f` / Client `33a025928afdf90729077c20dc7039bd342e7a37` 普通push核远端。lexer是测试辅助，不是完整JS parser/安全沙箱；card stub不是实际card验收。
 
 Root仅更新当前pinned_revisions块与gitlinks，不全局替换历史SHA。新源服务端attempt4和Node full待执行；生产部署、真实Runtime/browser及84业务验收仍not_run/accepted=false。当前新结果将另行追加，不覆盖旧失败/REJECT。所有独立review是独立Sol实例，非跨模型。
+
+### 最终验证结果（2026-10-08，覆盖此前待复测状态）
+
+四仓源码合入并普通push完成。服务端attempt4全部六套fresh XML/0skip：platform141PASS、security10PASS、MVP245/240PASS/5FAIL、archive398/382PASS/16FAIL、typed91PASS、replay16PASS，Gradle exit1。5个维护实库失败同时在archive中出现，另11项已知回归保留；不能归为纯环境或任意称合并引入。Client full962/952PASS/0FAIL/10skip；Web本地480PASS，Linux full3240/3199PASS/39同develop失败/2pending，build0。Source/pin/remote/raw-byte一致性通过不是功能全绿。
+
+当前整体功能验证**未通过/未接受**，5项实库问题、已知回归和浏览器环境校验待处理；真实Runtime/browser与84业务验收未执行，生产操作为false。精确当前结果及待修方法见[merge-validation-20261008.md](merge-validation-20261008.md)及evidence/merge-develop/20261008/final-validation-summary.json。此前原失败/REJECT/历史记录不改写。
