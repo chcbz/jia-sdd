@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-02 Asia/Shanghai",
+  "scope": "existing configured gpt-image-api skill diagnostic; not platform product acceptance",
+  "skill": {
+    "skillPath": "/root/.codex/skills/gpt-image-api/SKILL.md",
+    "skillSha256": "afaeac201eb23dde686b20dd83a474b43d56292cb7c88aaa3f77b23788b3cf4d",
+    "scriptPath": "/root/.codex/skills/gpt-image-api/scripts/gpt_image.py",
+    "scriptSha256": "49d743a9569affd0d7d610e69554a793b66739a726f43c55d93538bb690fb857",
+    "scriptModified": false,
+    "implementation": "Python stdlib urllib; configured Codex base URL and auth.json; no application retry"
+  },
+  "configuration": {
+    "codexHome": "/root/.codex",
+    "configSha256": "a7775fd333b70976e84e433874be29439e861a314d314d391f6ebe77d992f99f",
+    "openaiBaseUrl": "https://codex.chcbz.net/v1",
+    "authMode": "apikey",
+    "authFileMode": "0600",
+    "credentialPresent": true,
+    "credentialValueRecorded": false,
+    "credentialDigestRecorded": false,
+    "proxyEnvironmentPresent": false
+  },
+  "redirectPreflight": {
+    "method": "POST",
+    "authorization": "absent",
+    "path": "/v1/images/generations",
+    "httpStatus": 401,
+    "locationPresent": false,
+    "redirectFollowed": false,
+    "receiptSha256": "1edc92a4e8414004594ae2e08498e7f4d4fe37604841d7cde2e316f17d8db71a"
+  },
+  "calls": {
+    "generation": {
+      "scriptInvocationCount": 1,
+      "model": "gpt-image-2.5",
+      "requestEncoding": "application/json",
+      "requestedSize": "1024x1024",
+      "quality": "low",
+      "returnCode": 0,
+      "outputPath": "/var/tmp/cyf-gpt-image-api-diagnostic-20261002-owner/bird-generate.png",
+      "outputMime": "image/png",
+      "outputBytes": 1940751,
+      "outputWidth": 1376,
+      "outputHeight": 1143,
+      "outputSha256": "299c28a43a9d4a78db765a278109477393e29c75608c7d12c59d9b00674e8c17"
+    },
+    "edit": {
+      "scriptInvocationCount": 1,
+      "model": "gpt-image-2.5",
+      "requestEncoding": "multipart/form-data",
+      "inputPath": "/var/tmp/cyf-gpt-image-api-diagnostic-20261002-owner/bird-generate.png",
+      "inputSha256": "299c28a43a9d4a78db765a278109477393e29c75608c7d12c59d9b00674e8c17",
+      "requestedSize": "1024x1024",
+      "quality": "low",
+      "returnCode": 0,
+      "outputPath": "/var/tmp/cyf-gpt-image-api-diagnostic-20261002-owner/bird-blue-edit.png",
+      "outputMime": "image/png",
+      "outputBytes": 1770240,
+      "outputWidth": 1376,
+      "outputHeight": 1143,
+      "outputSha256": "74c1dd1aab92a5e6a80e6a574d9694b51c186d59cfe7a036ea2edede8af53243"
+    },
+    "fallbackCount": 0,
+    "sameOperationRetryCount": 0
+  },
+  "responseMetadata": {
+    "httpContentType": "NOT_CAPTURED",
+    "topLevelKeys": "NOT_CAPTURED",
+    "dataItemKeys": "NOT_CAPTURED",
+    "imageTransportB64JsonOrUrl": "NOT_CAPTURED",
+    "revisedPrompt": "NOT_CAPTURED",
+    "reason": "Original skill intentionally emits only output path/model/bytes/SHA and does not persist response JSON."
+  },
+  "integrationBoundary": {
+    "proven": "Configured Images generation JSON request and multipart file edit both produced validated PNGs through the existing Codex connection.",
+    "notProven": "Client3619 current JSON edit contract using images:[{image_url:dataURL}] and its data[0].b64_json-only parser were not exercised by this skill route."
+  },
+  "visualReadback": {
+    "generation": "photorealistic bird on branch",
+    "edit": "same bird pose, branch, background and framing; plumage changed to blue",
+    "formalProductAcceptance": false
+  },
+  "cleanup": {
+    "activeOwnedHandles": 0,
+    "activeSkillProcesses": 0,
+    "additionalProviderCallsPlanned": 0
+  }
+}

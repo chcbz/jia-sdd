@@ -1,0 +1,14 @@
+import java.lang.management.ManagementFactory
+println 'MMD_JVM_OBSERVATION pid=' + ProcessHandle.current().pid() + ' version=' + org.gradle.util.GradleVersion.current() + ' maxHeap=' + Runtime.runtime.maxMemory() + ' args=' + ManagementFactory.runtimeMXBean.inputArguments
+println 'MMD_JVM_MEMORY ' + new File('/proc/self/status').readLines().findAll { it.startsWith('VmRSS:') || it.startsWith('VmHWM:') }
+gradle.projectsEvaluated {
+    allprojects {
+        tasks.withType(Test).configureEach {
+            maxParallelForks = 1
+            minHeapSize = '16m'
+            maxHeapSize = '256m'
+            jvmArgs '-XX:MaxMetaspaceSize=128m', '-Xss256k', '-XX:+UseSerialGC', '-XX:ReservedCodeCacheSize=32m', '-XX:MaxDirectMemorySize=16m', '-XX:ActiveProcessorCount=2', '-XX:-UseJVMCICompiler'
+            doFirst { println 'MMD_TEST_OBSERVATION path=' + path + ' heap=' + maxHeapSize + ' forks=' + maxParallelForks + ' jvmArgs=' + jvmArgs }
+        }
+    }
+}

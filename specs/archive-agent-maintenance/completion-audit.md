@@ -440,3 +440,19 @@ API a0e42a3862be5b0274ebb629bab0e65be9494088 / Client b21d3c6181c5e8b7a306314024
 ### 2026-10-07 源码远程交付与验证阻断
 
 原D2源码与文档已完成，组件5722e7fa / 6dd4553c / 9426030先普通push并核远端，Root8d77bcd随后完成普通push。服务端精确源码checkout已观察，但全面验证尚未完成：前三轮配置失败，第四轮本任务JVM主动停止，第五轮compileJava后SSH session open超时，其后退出码/XML/本任务进程与清理未确认。只读重试仍SSH连接超时。最新证据evidence/delivery/resume-20261007/server-validation-status.json；不能将局部源码接受外推为服务端/Runtime/浏览器或84业务验收通过。
+
+## 2026-10-08 develop 合入验证（覆盖历史当前状态）
+
+本轮方向为四仓冻结 `origin/develop` → 现有 `codex/archive-agent-maintenance*` 特性分支，不合回 develop/master，不 force-push；原 D:\workspace\chaoyoufan\project\cyf-web-kit 不动。准确提交与远端回执见 `evidence/merge-develop/20261008/`；历史 10-07 源码及验证记录不改写。
+
+本地合并候选：Web 18 个 selectors **476/476 PASS**、production build exit0。Windows API 五套产生新 XML：platform141/121PASS/17环境FAIL/3skip；security10/10PASS；maintenance237/149PASS/88skip；archive390/288PASS/11既有FAIL/91skip；typed91/90PASS/1黄金夹具CRLF环境FAIL。archive失败方法集合与已有基线完全相同 introduced=[]；typed Git index blob 与 develop 原字节一致，未改黄金hash。MySQL skip不是PASS，须在 Linux 隔离库实跑。
+
+SSH现已恢复；已只读观察旧任务已知进程不存在、34061关闭、Gradle锁可获取；没有旧attempt5自然退出/关闭回执，仍不能追认旧验证完成。独立审查首次因 DeepSeek provider 不可用失败；改用独立只读 Sol 实例，明确不是跨模型审查。新源码审查、普通提交/push和隔离服务端验证结果将另留真实回执。
+
+未进行生产部署/迁移/真实任职或上架/付费模型调用；84业务用例仍not_run/evidence=null，whole-feature accepted=false。服务端、Runtime及浏览器状态以新的 merge evidence 为准，不把组件测试等同真实业务验收。
+
+### 合并源码收口（2026-10-08）
+
+独立源码复审 `ACCEPT_MERGE_SOURCE_SCOPE`：初轮 P1（不完整 SSE replay 游标提前推进）已修，新增9回归；最终 focused task **16/16PASS/0skip/exit0**，fresh XML且冻结树不变。attempt3/4缺失Redis/JSONPath测试运行依赖的原失败保留；只补新测试task runtimeOnly，不改断言/生产权限。Windows原五suite用FREEZE3真实结果，最后两次只有该task runtime依赖增量，复用边界另证；Linux须全部六suite实跑。
+
+组件普通merge提交均有旧特性和冻结develop两个parents，且远端exact核验：API `73c303e1213ee55a0ce20e7382e5ce9a4a440112`、Web `4a1e35eaba74b1581a15117b71b311b02c7796e5`、Client `02e131412901a9402abd5d0856aa57c0c35967c1`。源码审查是独立Sol实例，不是跨模型或全功能验收。Root同步新gitlinks/pins；服务端验证尚待新Root提交后执行。证据见 `evidence/merge-develop/20261008/review-final.json`、`component-merge-remotes.json`。84业务用例状态不变，生产操作未执行。

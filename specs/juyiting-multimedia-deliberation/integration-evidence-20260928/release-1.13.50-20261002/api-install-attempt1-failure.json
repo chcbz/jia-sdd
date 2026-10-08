@@ -1,0 +1,40 @@
+{
+  "rootCause": "Main deployment helper assumed health.status string UP; actual health.status is object {code:UP,description:\"\"}. Existing canonical launcher already supports this wire. Application and migration reached real UP; Main added check falsely rejected and triggered recovery.",
+  "firstAttempt": {
+    "newPid": 3673924,
+    "newJarSha256": "a970ca4a97a9593e9aa125f6cd7adcd50f4fabb7a14dcdedf7958b40d0db61ce",
+    "nativeHealth": "UP",
+    "observedBody": {
+      "groups": [
+        "liveness",
+        "readiness"
+      ],
+      "apiVersion": "V3",
+      "status": {
+        "code": "UP",
+        "description": ""
+      },
+      "components": null
+    }
+  },
+  "recovery": {
+    "pid": 3674806,
+    "jar": "5c5580",
+    "bridgeEnabled": false,
+    "nativeHealth": "UP",
+    "observedBody": {
+      "groups": [
+        "liveness",
+        "readiness"
+      ],
+      "apiVersion": "V3",
+      "status": {
+        "code": "UP",
+        "description": ""
+      },
+      "components": null
+    },
+    "schemaAndV3Data": "preserved; no DROP/delete"
+  },
+  "remediation": "Use existing canonical launcher status normalization (status.code or status string), offline positive/negative fixtures, new attempt directory/exact fresh PID/properties/scope before one changed-input retry. No new Flow Run has started."
+}

@@ -1,0 +1,93 @@
+{
+  "at": "2026-10-01T23:51:39.131435+08:00",
+  "candidate": {
+    "commit": "da047e483c0f1a7bfcd482b179049dcbb49be36e",
+    "tree": "cf44abe26ecf1ad01954127c145944c83ae8edac",
+    "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-v3-wire-jackson3-source-owner-20261001"
+  },
+  "database": "tdiagda047cf44_catalog",
+  "expected_checks": [
+    {
+      "constraint_name": "chk_chat_typed_outcome_generation",
+      "expected_clause_source": "conversation_generation>=1"
+    },
+    {
+      "constraint_name": "chk_chat_typed_outcome_revision",
+      "expected_clause_source": "((request_revision=1) AND (assignment_revision>=0))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_outcome_digest",
+      "expected_clause_source": "REGEXP_LIKE(final_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_outcome_kind",
+      "expected_clause_source": "kind IN ('ANSWER','CLARIFY','EXECUTION_PROPOSAL')"
+    },
+    {
+      "constraint_name": "chk_chat_typed_outcome_json",
+      "expected_clause_source": "((JSON_VALID(binding_json)) AND (JSON_VALID(facts_json)) AND (JSON_VALID(outcome_json)) AND (JSON_VALID(source_catalog_json)))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_pending_state",
+      "expected_clause_source": "state IN ('OPEN','ANSWERED')"
+    },
+    {
+      "constraint_name": "chk_chat_typed_pending_version",
+      "expected_clause_source": "(state='OPEN' AND state_version=0 AND reply_request_id IS NULL AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL) OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL AND reply_idempotency_key IS NOT NULL AND REGEXP_LIKE(reply_body_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary)))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_pending_required",
+      "expected_clause_source": "JSON_VALID(required_facts_json)"
+    },
+    {
+      "constraint_name": "chk_chat_typed_proposal_state",
+      "expected_clause_source": "((state='PROPOSED') AND (state_version=0))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_proposal_operation",
+      "expected_clause_source": "operation IN ('GENERATE_IMAGE','EDIT_IMAGE')"
+    },
+    {
+      "constraint_name": "chk_chat_typed_proposal_sources",
+      "expected_clause_source": "((JSON_VALID(source_ref_ids_json)) AND (JSON_VALID(source_selectors_json)))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_proposal_parent",
+      "expected_clause_source": "(parent_request_id IS NULL AND parent_step_id IS NULL) OR (parent_request_id IS NOT NULL AND parent_step_id IS NOT NULL)"
+    },
+    {
+      "constraint_name": "chk_chat_typed_admission_generation",
+      "expected_clause_source": "conversation_generation>=1"
+    },
+    {
+      "constraint_name": "chk_chat_typed_admission_digest",
+      "expected_clause_source": "((REGEXP_LIKE(request_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))) AND (REGEXP_LIKE(body_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_admission_intent",
+      "expected_clause_source": "intent IN ('DISCUSSION','CLARIFICATION_REPLY')"
+    },
+    {
+      "constraint_name": "chk_chat_typed_admission_revision",
+      "expected_clause_source": "((request_revision=1) AND (assignment_revision>=0) AND (state_version>=0) AND (event_cursor>=0))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_admission_turns",
+      "expected_clause_source": "((JSON_VALID(turn_ids_json)) AND (JSON_VALID(source_catalog_json)))"
+    },
+    {
+      "constraint_name": "chk_chat_typed_admission_reply",
+      "expected_clause_source": "(intent='DISCUSSION' AND pending_question_id IS NULL) OR (intent='CLARIFICATION_REPLY' AND parent_outcome_id IS NOT NULL AND pending_question_id IS NOT NULL)"
+    }
+  ],
+  "hashes": {
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-v3-wire-jackson3-source-owner-20261001/chat/jia-chat-mapper/src/main/resources/db/chat-typed-deliberation-schema-v1.sql": "98af3d88d5a1212e52764e308b2361e99dbffbb7595d1196123465a0481a41a4",
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-v3-wire-jackson3-source-owner-20261001/chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/deliberation/ChatTypedDeliberationMySqlTest.java": "edf391517d50dd769dcea8fa2d367ef326ce905ab3e3b543f528d3133394bec2",
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-v3-wire-jackson3-source-owner-20261001/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializer.java": "ec02333a426b5a4f18232f52df38ff8fa8afc090e45a6fa1ce3aefa3e6880beb",
+    "/var/tmp/cyf-mmd-api-da047-catalog-diagnostic-20261001/actual-schema-v1.sql": "98af3d88d5a1212e52764e308b2361e99dbffbb7595d1196123465a0481a41a4",
+    "/var/tmp/cyf-mmd-api-da047-catalog-diagnostic-20261001/prerequisite-text-blocks.txt": "1c3e174403df90b8d3220a96a722009359862d7e7413b9526cbf4f55742a625b"
+  },
+  "mysql_socket": "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock",
+  "private_prefix": "tdiagda047cf44",
+  "purpose": "diagnostic only: actual catalog clauses and SHOW CREATE versus source expectedChecks; no Gradle/test/source edits/mode changes"
+}

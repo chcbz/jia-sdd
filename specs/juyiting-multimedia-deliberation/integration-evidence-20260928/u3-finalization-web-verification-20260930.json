@@ -1,0 +1,72 @@
+{
+  "feature_id": "juyiting-multimedia-deliberation",
+  "date": "2026-09-30",
+  "slice": "u3-finalization-web-v1",
+  "status": "source_slice_self_checked_not_product_accepted",
+  "origin": "local_user_authorized_targeted_checks_not_release",
+  "web_commit": "e81aa451d8a5358fd071cbba053cf983f5b2a371",
+  "web_tree": "35e87095e503f89376c180fe14dd42076174701c",
+  "remote_readback": "e81aa451d8a5358fd071cbba053cf983f5b2a371",
+  "branch": "codex/juyiting-multimedia-deliberation",
+  "api_pin": "194ec91a596c28f9575a64aef47a5bf7b9fb6778",
+  "api_finalization_status": "in_progress_not_integrated_or_tested",
+  "contract": {
+    "path": "finalization-contract-v1.md",
+    "sha256": "d892f3964b0c1c56acd73f85b5e5050196bd105b9f4b14a6bf9edd375d077bdd",
+    "status": "frozen_joint_wire_not_deployed"
+  },
+  "verification": {
+    "tests": 57,
+    "passing": 57,
+    "failed": 0,
+    "skipped": 0,
+    "new_finalization_cases": 23,
+    "gallery_cases": 15,
+    "catalog_cases": 6,
+    "archive_cases": 10,
+    "inline_cases": 3,
+    "syntax": "PASS",
+    "targeted_composable_eslint": "PASS",
+    "git_diff_check": "PASS",
+    "command": "node --import tsx /home/isp/wsps/cyf/web/node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec tests/juyiting-bounty-finalization.test.js tests/juyiting-bounty-output-gallery.test.js tests/juyiting-bounty-output-catalog.test.js tests/juyiting-conversation-archive.test.js tests/juyiting-bounty-inline-results.test.js",
+    "fixture_warnings": [
+      "inline transcript fixture omits BountyTextSelectionArchive stub",
+      "inline transcript fixture omits isTaskDiscussion setup value"
+    ]
+  },
+  "source_sha256": {
+    "src/composables/juyiting/useHallBountyFinalization.js": "21189ee563d14197c8844e759bbc2c11ba11bc94eea0451437f0d5ad362ad1e6",
+    "src/components/juyiting/BountyExecutionOutputs.vue": "88e41b524c705ca19696bd6ef5da46e27220519fdbce2baa95ad7a8d0fb6041b",
+    "tests/juyiting-bounty-finalization.test.js": "459d7c4dd227a58aeb5d9baf379db9bf8d992a11ab0bef098d2bba1177fd1094",
+    "tests/juyiting-bounty-output-gallery.test.js": "92ec85217d3af571e221201d6e3bb90b5a00abf05ba173bdb89d5eda47b734cb"
+  },
+  "log_sha256": "a2ff4223a36acf873204c526d92bd48c121ba64a4b023e27dd6d42d8ce43aa66",
+  "failure_attribution": [
+    {
+      "attempt": "initial four-group run",
+      "result": "45 pass, 2 fail",
+      "cause": "Two existing SFC harnesses supplied useHallConversationArchive through a wrapper and did not supply the new useHallBountyFinalization import.",
+      "remediation": "Add the actual finalization composable and version parser to those harness dependencies; do not relax receipt validation.",
+      "changed_input": true
+    },
+    {
+      "attempt": "five-group run after terminal stage regression assertion",
+      "result": "56 pass, 1 fail",
+      "cause": "Existing preview assertion exhausted 50 setImmediate rounds before the second asynchronous native SHA-256 digest and Vue image insertion completed; actual DOM contained only the first preview at assertion.",
+      "remediation": "Wait for actual image insertion using MutationObserver, leaving the native digest and blob verification intact; no additional production timeout or larger arbitrary waiting loop.",
+      "changed_input": true
+    }
+  ],
+  "browser": "NOT_RUN",
+  "formal_domain_live_acceptance": "NOT_RUN",
+  "production_build": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "release_version": null,
+  "remaining": [
+    "API trusted promotion with actual producer/work-item/run/lease",
+    "durable phase recovery and real owner decision/task completion",
+    "isolated MySQL and exact candidate API tests",
+    "real provider/double-client/media/reference/clarification end-to-end",
+    "versioned release and browser acceptance"
+  ]
+}

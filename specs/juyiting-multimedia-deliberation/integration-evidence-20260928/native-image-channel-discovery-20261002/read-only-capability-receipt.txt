@@ -1,0 +1,49 @@
+CYF target-Agent image capability read-only receipt
+Date: 2026-10-02 Asia/Shanghai
+Scope: binding1/local candidate and binding15/managed existing identity; no provider call, task run, config write, process action, or secret readout.
+
+External/public model claims
+- gpt-image-2.5 and all alleged family/alias names: UNVERIFIED / WITHDRAWN.
+- No official page body or source ID is used as evidence; direct urllib result reported by Main was HTTP 403.
+
+Installed Codex
+- npm @openai/codex: 0.159.2
+- launcher: /usr/local/lib/node_modules/@openai/codex/bin/codex.js
+- launcher sha256: 61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70
+- native binary sha256: 1748767b230ebfc3d4ab7e4e254920d0c0ad9691fd8c11f190e7d44511a4a92e
+
+Target Codex channel (both target homes previously hash-matched)
+- model: gpt-5.6-luna
+- provider transport: custom base https://codex.chcbz.net/v1, wire_api=responses, requires_openai_auth=true
+- auth source: per-home mode=apikey, 0600 auth.json key reference; value not read/output
+- no explicit image_generation feature setting; no configured MCP server or plugin registration providing image generation
+- local model catalog says supports_tools=true and input modalities text,image. This is not provider entitlement evidence.
+
+Installed binary static evidence
+- Contains features.image_generation, image_gen.generation, ImageGenerationItem, ImageGenerationBegin/End, ImageEditRequest, image_generation_call, revised_prompt/result, saved_path and transparent_background symbols.
+- App-server internal item shape is represented as ImageGenerationItem with revisedPrompt/results/savedPath and begin/end notifications.
+- Responses raw item shape is represented as image_generation_call with call_id/status/revised_prompt/result.
+- codex exec --json serializer marker enumerates item.completed envelope item kinds as agent_message, reasoning, command_execution, file_change, mcp_tool_call, web_search, todo_list; image generation is absent from that exec item-kind list.
+
+Installed Client wiring
+- Runs `codex exec --json`.
+- Current parser only captures a top-level object where type=image_generation_call, status=completed, result=base64.
+- This synthetic fixture shape is not proven to be emitted by codex exec --json 0.159.2; static serializer evidence instead indicates an item.completed envelope with a restricted item-kind catalog that omits image generation.
+- Therefore Client consumer code and fixtures do not prove live generate/edit availability and may be shape-incompatible with this exact CLI transport.
+
+Skill evidence
+- imagegen SKILL.md describes preferred host built-in image_gen plus an explicit API-key CLI fallback.
+- agents/openai.yaml contains only display metadata/default prompt, not runtime tool registration.
+- Skill presence therefore does not prove the target Agent runtime exposes image_gen.
+
+Conclusion
+- Code-path presence: YES (binary internal image generation/edit types; Client materializer).
+- Existing authentication path: YES for the custom Responses proxy generally.
+- Current account/proxy authorization for built-in image generation or edit: UNVERIFIED.
+- Exact gpt-image-2.5 model/alias: UNVERIFIED; must not be configured.
+- End-to-end Client compatibility: NOT_READY because exact codex exec JSON event compatibility is unproven and static evidence shows a likely envelope/catalog mismatch.
+
+Minimum next verification
+1. First obtain an exact non-billed tool/capability readback from the existing authenticated proxy or an existing app-server initialize/tool catalog, if that endpoint is contractually available; none was found as a persisted local artifact and none was invoked.
+2. If no zero-call readback exists, the first definitive check requires a separately authorized single quota-bounded real generate turn capturing raw JSONL, followed only after generate succeeds by one controlled edit check. Do not infer availability from skill/model catalogs.
+3. Client acceptance must cover the exact captured event envelope, not inject a synthetic top-level Responses item.

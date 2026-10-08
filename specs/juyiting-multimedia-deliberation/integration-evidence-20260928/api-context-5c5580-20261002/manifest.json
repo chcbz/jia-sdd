@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-02",
+  "task": "bounded MMD V3 context read-only transaction repair",
+  "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-mmd-v3-context-readonly-owner-20261002",
+  "branch": "codex/mmd-v3-context-readonly-20261002",
+  "parentCommit": "0a4d4299122e9041c815cae067584212d8f5176a",
+  "commit": "5c5580c77af1f9472cc31e5f7e94350fa9b3021f",
+  "tree": "a0e84dba58ed22b15e44683c662a29ea6ae711be",
+  "baseExpected": "0a4d4299122e9041c815cae067584212d8f5176a",
+  "productionEvidence": {
+    "path": "/var/tmp/cyf-mmd-release-1.13.48-runtime-main-20261002/live-v3-context-readback.json",
+    "sha256": "be9beadf27f383137bd1788be7239e4dfd7a82d7474f28422997945d34fac906"
+  },
+  "files": [
+    {
+      "path": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionV3PreviewServiceTest.java",
+      "sha256": "9aa126f3955bef678728d6a1743006d11529d6cd66799e94c2cc5f083a54ab80",
+      "bytes": 13125
+    },
+    {
+      "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatBountyInteractionV3PreviewService.java",
+      "sha256": "b913d4adcb9aaa255c61d2a7db009324e3f736f9711c9540d36814741043a2d2",
+      "bytes": 11076
+    }
+  ],
+  "rootCause": "context() opened a Spring read-only REQUIRED transaction, then currentFollowupContext joined it through AgentTaskMutationTransactionImpl and executed task/grant/identity row locks; lock persistence failures are translated by context() to PERSISTENCE_ERROR and the controller maps that to 503 BOUNTY_FOLLOWUP_V3_UNAVAILABLE.",
+  "repair": "Keep all owner/task/binding/conversation locks and zero logical writes; change only context() to a normal REQUIRED transaction. prepare() remains readOnly and unchanged.",
+  "testSource": {
+    "selector": ":chat:jia-chat-service:mmdControlledImageFollowupV3 --tests cn.jia.chat.service.ChatBountyInteractionV3PreviewServiceTest",
+    "casesAdded": [
+      "contextUsesWritableSpringTransactionForRequiredTaskAndProjectionLocks",
+      "readOnlyOuterTransactionTurnsTheRequiredLockFailureIntoUnavailable"
+    ],
+    "actualSpringProxy": true,
+    "actualAgentTaskMutationTransactionImpl": true,
+    "database": "H2 transaction fixture, no production DML",
+    "gradle": "PASS via mandatory orchestrator on exact commit/tree; one Gradle, one test fork, max-workers=1.",
+    "scopeLimitation": "The H2 test uses mocked DAOs to assert active/non-read-only Spring transaction state and exception translation; it does not claim H2 executed a locking SQL statement. Actual MySQL readonly-lock rejection is supplied separately by the zero-row JDBC diagnostic."
+  },
+  "staticSelfcheck": {
+    "path": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/source-selfcheck.log",
+    "sha256": "185efddb12d73f22a4658622b394d5324400e981690c560ef841ff03a9b7c661",
+    "diffCheck": "PASS",
+    "worktreeClean": true
+  },
+  "productionActions": "NONE",
+  "push": "NOT_RUN",
+  "rootCauseConfidence": "Source chain, real deployed-driver zero-row JDBC diagnostic, and focused Spring/JUnit regression are now proven. The production HTTP stack trace itself remains unavailable; no production GET was repeated.",
+  "databaseEvidence": {
+    "scope": "same deployed JAR/JDBC connection configuration; zero-row SELECT only, rollback, no DML and no data-row read",
+    "result": "plain zero-row SELECT passed; zero-row SELECT FOR UPDATE in JDBC readOnly transaction rejected with SQLState 25006/vendor 1792",
+    "diagnosticLog": "/var/tmp/cyf-mmd-release-1.13.48-runtime-main-20261002/readonly-lock-diagnostic.txt",
+    "diagnosticLogSha256": "f5bd5c1394f2496617eae1b151e63f11e090314a1f94f10fab053b26f9d85edd",
+    "diagnosticSource": "/var/tmp/cyf-mmd-release-1.13.48-runtime-main-20261002/ReadOnlyLockDiagnostic.java",
+    "diagnosticSourceSha256": "d234526a1fe373e946695bbb03d2e22457a01e546168c08c06a764ea0fb8a1e3"
+  },
+  "verification": {
+    "taskId": "MMD-U4-BROWSER-BASELINE-SERVICE-READINESS",
+    "selector": ":chat:jia-chat-service:mmdControlledImageFollowupV3 --tests cn.jia.chat.service.ChatBountyInteractionV3PreviewServiceTest",
+    "fixtureDigest": "7f91db92983f6d96c04f0d12b8b27f6bde58100d7b993742164399f550a95a9e",
+    "evidenceCacheKey": "f23464622316497ff2703172380ca54acff819e70f789c8fc8488eec979f0f32",
+    "result": "PASS",
+    "buildResult": "BUILD SUCCESSFUL in 2m 2s",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "testTimeSeconds": "8.155",
+    "actionableTasks": "60 total; 44 executed; 16 from cache",
+    "rawLog": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/targeted-gradle.raw.log",
+    "rawLogSha256": "f7ea0d0dc235006238ed6c3274d0eb4355d65acfbcf549c4ed73e310bcd52fb9",
+    "xml": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/TEST-cn.jia.chat.service.ChatBountyInteractionV3PreviewServiceTest.xml",
+    "xmlSha256": "3d925c46d5e9ae8e94837ba6a113e33c17d1624d0112e57f90711cc856149cd7",
+    "command": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/exact-targeted-command.txt",
+    "commandSha256": "df2a90a446bf15ed8ef95752dbed902f943538ea7b97d6972893739bf429fdad",
+    "runner": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/gradle-context-v1",
+    "runnerSha256": "d327f528812c896839aaf57d93af3f307ff8b079615c37b1cdd4644563c5db77",
+    "resourceObservationAtAdmission": {
+      "diskAvailableBytes": 231456768,
+      "memAvailableBytes": 1540759552,
+      "swapFreeBytes": 1024790528
+    },
+    "diskAvailableBytesAfter": 179191808
+  },
+  "ledger": {
+    "taskId": "MMD-U4-BROWSER-BASELINE-SERVICE-READINESS",
+    "gate": "source_accepted",
+    "owner": null,
+    "exactCommit": "5c5580c77af1f9472cc31e5f7e94350fa9b3021f",
+    "exactTree": "a0e84dba58ed22b15e44683c662a29ea6ae711be",
+    "notificationId": "e218bc5e42ad9237c057284bc94fe03984ce3962b0308c32559fd4234e99dbd8"
+  }
+}

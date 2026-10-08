@@ -1,0 +1,21 @@
+date=2026-10-02 Asia/Shanghai
+task=MMD-U4-BROWSER-BASELINE-SERVICE-READINESS
+result=BINDING15_MUTATION_STOPPED_BEFORE_DML
+
+Fresh facts:
+- binding 15 and its exact identity remain SUSPENDED.
+- authoritative ACTIVE lease/ACTIVE initial intent/valid entitlement/exact valid managed key/managed claim remain present.
+- hosted profile count=0; same-scope competing ACTIVE persona binding count=0; live reprovision count=0.
+- contrary to the previously frozen absence assumption, one historical agent_runtime row exists for the same canonical Agent.
+- row status=offline; endpoint/token/current task are absent; last seen and creation predate 2026-10-02.
+- tenant and canonical Agent match, but binding/client/owner projections do not match binding 15.
+
+Impact:
+- this is not a live competing process, but it is a durable scope mismatch.
+- AgentServiceImpl.register() loads runtime by canonical Agent and requires exact binding/client/owner before update; managed reprovision would therefore fail closed at registration rather than safely adopt this row.
+- current authorization limits lifecycle DML to exactly the binding and identity rows. No runtime row was changed, deleted, or recreated.
+
+Minimum additional authorization candidate:
+- exact CAS realignment of this one existing detached offline runtime row only, preserving row ID and canonical Agent; set only binding/client/owner/persona projection to binding 15's exact immutable scope, retain offline/no endpoint/no token/no task, and audit before/after plus rollback values.
+- no new runtime, identity, binding, profile, key, lease, rental, charge, or Provider action.
+- after that CAS and all original checks, proceed with the already-authorized free reprovision exactly once.

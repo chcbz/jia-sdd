@@ -1,0 +1,8 @@
+allprojects {
+ tasks.withType(Test).configureEach {
+  outputs.upToDateWhen { false }
+  maxParallelForks = 1
+  maxHeapSize = '256m'
+  jvmArgs '-XX:+UseSerialGC', '-XX:ActiveProcessorCount=2', '-XX:MaxMetaspaceSize=192m'
+ }
+}

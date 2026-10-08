@@ -1,0 +1,75 @@
+{
+  "authoritative_handoff": {
+    "path": "/var/tmp/cyf-mmd-infra-authorized-20261002-owner/recovery-handoff-result-20261002.json",
+    "sha256": "02ebf17d8ccb134da8dc5383c86f551851e813b3dfe3fd959aa36f1e84179dc7"
+  },
+  "boundaries": {
+    "additional_start_performed": false,
+    "gradle_run": false,
+    "repo_source_changed": false,
+    "review_gate_required": false
+  },
+  "monitor_public_auth": {
+    "check_evidence": "/var/tmp/cyf-mmd-infra-authorized-20261002-owner/final-monitor-public-auth-path-check-20261002.txt",
+    "check_sha256": "e421e6d769fc0384cc9d1d6f53387191a624e3b7aae65de9912c1b16e126a113",
+    "classification": "auth_boundary_empty_401",
+    "expected": "HTTP 401, absent Content-Type, empty body",
+    "path": "/agent/map",
+    "source": "/usr/local/libexec/cyf-juyiting-health.py",
+    "user_agent": "cyf-juyiting-health/1.0",
+    "verified": true
+  },
+  "portable_restore": {
+    "aliases": {
+      "/sys/fs/cgroup/cpu": "cpu,cpuacct",
+      "/sys/fs/cgroup/cpuacct": "cpu,cpuacct",
+      "/sys/fs/cgroup/net_cls": "net_cls,net_prio",
+      "/sys/fs/cgroup/net_prio": "net_cls,net_prio"
+    },
+    "forbidden": [
+      "foreign PID migration",
+      "foreign unit modification",
+      "global accounting/default change",
+      "nginx change",
+      "monitor reset"
+    ],
+    "persistence": "nonpersistent; cgroup tmpfs, mounts and aliases must be revalidated after reboot",
+    "preconditions": [
+      "shared PID1 mount namespace",
+      "joined target exists and is the expected cgroup-v1 mount",
+      "alias path is absent, including dangling-symlink check",
+      "never overwrite an existing path"
+    ]
+  },
+  "proof": {
+    "membership_evidence": "/var/tmp/cyf-mmd-infra-authorized-20261002-owner/cgroup-proof-alias-membership.txt",
+    "membership_sha256": "68ad987598ffcbdbde18fcea6610093d4e49267495eaaf98d3f8cf4419a4e37f",
+    "six_controller_membership": "PASS",
+    "unit": "cyf-cgroup-restore-proof-alias-20261002.scope"
+  },
+  "recorded_at": "2026-10-02T11:01:58.529664+08:00",
+  "root_cause": {
+    "before": {
+      "/sys/fs/cgroup/cpu": "ENOENT",
+      "/sys/fs/cgroup/cpuacct": "ENOENT",
+      "/sys/fs/cgroup/net_cls": "ENOENT",
+      "/sys/fs/cgroup/net_prio": "ENOENT"
+    },
+    "joined_mounts": [
+      "/sys/fs/cgroup/cpu,cpuacct",
+      "/sys/fs/cgroup/net_cls,net_prio"
+    ],
+    "summary": "legacy joined-controller mounts were restored without the single-controller alias symlinks expected by systemd v1 path resolution"
+  },
+  "runtime": {
+    "health": "UP",
+    "jar_sha256": "632012a338c1d3485f8be2502fc263847b96f8c4971ac6f67401c46182bb5fad",
+    "launcher_sha256": "94de2c8af2745d25a9cec82276d54e52c85a63ae7349f4204b36ba5f5f5b930f",
+    "pid": 3155665,
+    "scope": "cyf-api-authorized-recovery-cpu-20261002-owner.scope",
+    "six_controller_membership": "PASS"
+  },
+  "schema_version": 1,
+  "status": "source_accepted_verified",
+  "task": "cyf-mmd-infra-authorized-20261002-owner"
+}

@@ -1,0 +1,31 @@
+CYF Codex 0.159.2 live native image generation probe
+Date: 2026-10-02 Asia/Shanghai
+
+Execution boundary
+- Independent 0700 probe home and workspace.
+- Target config digest matched; target auth digest matched before use; credential value was never printed.
+- Main model remained gpt-5.6-luna and provider remained gpt. No image-model name was configured or guessed.
+- One GENERATE turn was submitted. No retry, fallback, shell drawing, download, MCP call, web-search call, extra generation call, or EDIT turn was submitted.
+
+Runtime truth
+- Actual turn logs show feature.image_generation=true.
+- Exactly one authenticated POST to the configured /responses endpoint completed HTTP 200.
+- Public app-server event stream contained one turn/started and one turn/completed.
+- Turn status: completed; turn error: null.
+- Completed item types: userMessage=1, reasoning=1, agentMessage=1.
+- Completed tool/result item counts: imageGeneration=0, commandExecution=0, mcpToolCall=0, webSearch=0, dynamicToolCall=0, fileChange=0.
+- The sole agentMessage text was empty.
+- Token usage notification: total=8417, input=8300, cachedInput=3328, output=117, reasoningOutput=36.
+
+Outcome
+- NO_IMAGE_GENERATION_ITEM.
+- No public item/completed params.item.type=imageGeneration was emitted.
+- No explicit app-server, turn, HTTP, authorization, quota, or upstream rejection error was emitted.
+- Therefore the precise cause is UNKNOWN: the authenticated main-model turn succeeded at HTTP/protocol level but did not invoke or return native image generation.
+- No bytes were returned/materialized; MIME, digest, dimensions, savedPath, and displayable image path are NOT_AVAILABLE.
+- EDIT was not attempted because the authorized prerequisite (one materializable generated image) was not met.
+- Upstream image model identity remains UNKNOWN.
+- This is diagnostic evidence only, not product acceptance.
+
+Probe wrapper note
+- The self-owned app-server had already reached EOF and produced zero stderr lines. The outer Python wrapper then exited 1 while serializing its first summary because Python 3.6 sort_keys encountered a None notification key. Raw RPC evidence had already been written. This post-processing fault did not issue or repeat any provider request. The app-server exit code itself was not persisted; no process residue remains.

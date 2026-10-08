@@ -1,0 +1,92 @@
+{
+  "verifiedAt": "2026-10-03T04:20:09.906596+00:00",
+  "commit": "79bd61966cf59ba31d1d1507c4cf0d20f19d27f2",
+  "tree": "3ade5d77fb690f3d5d914c613ab5b61cb0c1fa79",
+  "branch": "codex/bounty-execution-termination-main-20261003",
+  "remoteReadback": "79bd61966cf59ba31d1d1507c4cf0d20f19d27f2",
+  "build_origin": "local_user_authorized",
+  "selector": ":chat:jia-chat-service:mmdExecutionTermination",
+  "mysql": {
+    "version": "8.0.21",
+    "port": 33793,
+    "ownerThread": "01a0dde8-fd03-7ee0-be21-293ca13bb336",
+    "isolation": "READ_COMMITTED",
+    "schema": "production execution and chat DDL; disposable prefixed DB per test",
+    "adapters": "Task-root and conversation DAO adapters execute real scoped locking SQL; actual execution/event MyBatis and runtime stage/commit services"
+  },
+  "tests": {
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "cn.jia.chat.archive.conversation.ChatBountyExecutionTerminationMySqlTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "timestamp": "2026-10-03T04:17:00.378Z",
+      "xmlSha256": "039647a64627fac8fff7aa6a34fd0cd3e37c9cf23399c2aa5e84c77e31bc81ce",
+      "cases": [
+        "realStageAndAbandonRaceSerializeAtSameRootWithoutLostResult()",
+        "v3StartedAuthorityBindingSurvivesAbandonAndSchemaRestartWithoutReadmittingProvider()",
+        "preStartAndIncorrectIntentOrExecutionBindingAreRejected()",
+        "corruptedReceiptIsFailClosedWithoutAnotherMutation()",
+        "existingFailureIsPreservedRatherThanRelabeledAsProviderCancellation()",
+        "malformedVersionsKeysReasonsAndForgedCommandBindingsCannotWrite()",
+        "atomicTerminalReceiptPreservesStartLeaseAndUnrelatedAuthorityFieldsAndRecoversLostAck()",
+        "unknownGetDoesNotExecuteOrCreateReceipt()",
+        "actualStagedBytesBlockAbandonmentEvenBeforeExecutionProjectionChanges()",
+        "journalFailureRollsBackAllAggregatesAndEmitsNothing()",
+        "staleVersionsAndOverflowFailBeforeAnyWrite()",
+        "currentGenerationDeletionTargetAclAndAssignmentRecheckedEvenForReplay()",
+        "terminalAbandonmentRejectsRealRuntimeLateStageWithOriginalFence()",
+        "concurrentSameKeyWaitsAndReturnsSingleReceiptNotFalseConflict()",
+        "committedResultAndItsLostAckCannotBeAbandoned()",
+        "ownerClientTenantConversationAndCaseAreExactForWritesAndReceiptReads()",
+        "sameKeyWithDifferentPayloadConflictsWithoutSecondMutation()"
+      ]
+    },
+    {
+      "name": "cn.jia.chat.api.ChatBountyExecutionTerminationControllerTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "timestamp": "2026-10-03T04:16:57.341Z",
+      "xmlSha256": "c6acd4860ed734a16b8f8814533a785054ba74be126ff729b2e5bf3f3a667ff8",
+      "cases": [
+        "errorsAreOpaqueAndBounded()",
+        "rawParserRejectsUnknownDuplicateMissingNullNumericAndTrailingJson()",
+        "nonHumanOrMissingIdentityCannotMutate()",
+        "getOnlyReadsOriginalKeyAndNeverReplaysAbandonment()",
+        "exactBodyAndServerIdentityOnlyWithNoStoreReceipt()"
+      ]
+    }
+  ],
+  "files": {
+    "chat/jia-chat-service/build.gradle": "da72526240eda38b68a296f80427ff2ac5171460e5b8f2149edd82e72978e12b",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatBountyExecutionTerminationControllerTest.java": "25ffdb1686323942315251fabd536bfcfcc2f48ea021d645464bcbd6aa2bb7b0",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/archive/conversation/ChatBountyExecutionTerminationMySqlTest.java": "1661e9ade5533862210339a317bba97e90d718590123589ada996f596b949ae6",
+    "chat/jia-chat-service/src/main/java/cn/jia/chat/api/ChatBountyExecutionTerminationController.java": "9c30d862c8684f62d8a760464b2be18ce075a5f01ec6b2012552c9286598647d",
+    "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatBountyExecutionTerminationService.java": "3e1ab439bef3b21761610942c1ce319a605c733e38dfe90e42f86844581573d9"
+  },
+  "noSchemaMigration": true,
+  "executionFailureCode": "AGENT_DELIVERY_FAILED",
+  "businessAuditReason": "OWNER_ABANDONED_UNDELIVERED",
+  "providerCalls": 0,
+  "productionMutation": false,
+  "productionBuild": false,
+  "deployed": false,
+  "frontendChanged": false,
+  "flowTriggered": false,
+  "original417Terminated": false,
+  "productAcceptance": false,
+  "remaining": [
+    "Frontend explicit owner action and identity-scoped unknown-outcome recovery",
+    "Live event/readback integration",
+    "Versioned API/Web deployment and original417 business evidence",
+    "Result-only recovery; actual Agent image and full34 acceptance"
+  ]
+}

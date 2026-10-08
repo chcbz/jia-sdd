@@ -1,0 +1,22 @@
+{
+  "capturedAtUtc": "2026-09-28T18:04:36.102765+00:00",
+  "scope": "thread-owned isolated MySQL8.0.21; negative startup-contract fixture; not production",
+  "preFixApiCommit": "c331ead64d6264b57d5796d8ade7c9ff7db713a1",
+  "grantDdlSha256": "f51442ece80056d13f14e397d71e5eb85a13d6ec44821706a331f1c4de00598f",
+  "procedure": [
+    "Create fresh grant-v1 table in isolated database",
+    "Replace uk_atxg_active_task with nonunique INDEX under same name and identical columns",
+    "Check information_schema.statistics non_unique=1 while index_name remains uk_atxg_active_task",
+    "Insert two ACTIVE rows with same tenant=0/client/owner/task and distinct grant/action IDs"
+  ],
+  "observation": {
+    "non_unique": 1,
+    "same_scope_task_active_rows": 2,
+    "initializer_pre_fix_validation": "checks index names via containsAll; does not inspect uniqueness or column order"
+  },
+  "impact": "if drifted table exists the startup validator does not fail closed on broken active-grant uniqueness; production release not allowed until structural validation and negative test pass",
+  "notCovered": [
+    "Java initializer executed against this fixture (not yet run)",
+    "repairs, migrated old tables, Provider execution, any online behavior"
+  ]
+}

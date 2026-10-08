@@ -1,0 +1,181 @@
+timestamp=2026-10-02T18:25:26+08:00
+worktree=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/sdd
+base_implemented_commit=228e11665d1e50b384118f7f4268304a55b09141
+installed_sha256=c4f446828968ae329e976daeb4014c7be945d6c335b7bb930fbb390632802541
+trusted_623_sha256=c4f446828968ae329e976daeb4014c7be945d6c335b7bb930fbb390632802541
+--- no fixed resource caps / preserved controls ---
+27:ONLINE_VERIFY_TIMEOUT_SECONDS = 30
+28:SCHEDULE_ROOT = Path('/var/lib/cyf-flow-release-schedule')
+29:SCHEDULE_INTENTS = SCHEDULE_ROOT / 'intents'
+30:STABLE_VERSION = re.compile(r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$')
+95:            fail('unsafe archive entry')
+103:        fail('unsafe archive entry')
+110:        fail('unsafe archive entry')
+120:        fail('unsafe archive entry')
+138:                fail('unsafe archive entry')
+169:        with tarfile.open(fileobj=fileobj, mode='r|gz') as archive:
+173:                    fail('unsafe archive entry')
+175:                if member.size < 0:
+176:                    fail('unsafe archive entry')
+214:        fail('manifest does not match this develop Flow run')
+246:    package_version = stable_version(manifest.get('package_version'))
+247:    if package_version is not None:
+248:        record['package_version'] = '.'.join(str(part) for part in package_version)
+256:    matched = STABLE_VERSION.fullmatch(value)
+260:def prior_package_version(record_path):
+273:        version = stable_version(value.get('package_version'))
+296:def frontend_release_lane(installed, candidate):
+306:def has_nightly_intent(pipeline, run, commit, kind):
+450:            with urllib.request.urlopen(request, timeout=ONLINE_VERIFY_TIMEOUT_SECONDS) as response:
+541:        fcntl.flock(lock, fcntl.LOCK_EX)
+552:        installed_version = prior_package_version(record_path)
+553:        candidate_version = stable_version(record.get('package_version'))
+554:        lane = frontend_release_lane(installed_version, candidate_version)
+557:                dict(run_id=run, commit=commit, installed_package_version='unknown',
+558:                     candidate_package_version=record.get('package_version'), lane=lane),
+560:        if (lane == 'scheduled-major' and not has_nightly_intent(
+--- py_compile ---
+--- allowed helper diff vs actual installed ---
+diff --git a/usr/local/sbin/cyf-web-flow-deploy b/ops/ci/aliyun-flow/host/cyf-web-flow-deploy
+index 365182a8..0bd256ad 100755
+--- a/usr/local/sbin/cyf-web-flow-deploy
++++ b/ops/ci/aliyun-flow/host/cyf-web-flow-deploy
+@@ -24,6 +24,2 @@ SITE = Path('/home/isp/hosts/cyf/web/kit')
+ SITE_URL = 'https://kit.chaoyoufan.cn/'
+-MAX_PACKAGE_SIZE = 1024 ** 3
+-MAX_ARCHIVE_ENTRIES = 20000
+-MAX_ARCHIVE_SIZE = 1024 ** 3
+-MAX_MANIFEST_SIZE = 4 * 1024 ** 2
+ CHUNK_SIZE = 1024 * 1024
+@@ -171,4 +167,2 @@ def scan_archive(fileobj, staging):
+     manifest_bytes = None
+-    entry_count = 0
+-    total = 0
+     try:
+@@ -180,10 +174,4 @@ def scan_archive(fileobj, staging):
+                 seen.add(name)
+-                entry_count += 1
+-                if entry_count > MAX_ARCHIVE_ENTRIES:
+-                    fail('archive exceeds entry limit')
+                 if member.size < 0:
+                     fail('unsafe archive entry')
+-                total += member.size
+-                if total > MAX_ARCHIVE_SIZE:
+-                    fail('archive exceeds size limit')
+                 if member.isdir():
+@@ -191,4 +179,2 @@ def scan_archive(fileobj, staging):
+                 if name == 'release.json':
+-                    if member.size > MAX_MANIFEST_SIZE:
+-                        fail('missing or oversized release manifest')
+                     _, _, manifest_bytes = copy_archive_member(archive, member, keep=True)
+@@ -200,3 +186,3 @@ def scan_archive(fileobj, staging):
+                 else:
+-                    # Reports and provenance stay private, but still consume and hash them boundedly.
++                    # Reports and provenance stay private, but still consume and hash them streamingly.
+                     copy_archive_member(archive, member)
+@@ -205,3 +191,3 @@ def scan_archive(fileobj, staging):
+     if manifest_bytes is None:
+-        fail('missing or oversized release manifest')
++        fail('missing release manifest')
+     return manifest_bytes, staged
+@@ -229,3 +215,3 @@ def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
+     files = manifest.get('files')
+-    if not isinstance(files, list) or not files or len(files) > MAX_ARCHIVE_ENTRIES:
++    if not isinstance(files, list) or not files:
+         fail('invalid manifest files')
+@@ -274,10 +260,33 @@ def stable_version(value):
+ def prior_package_version(record_path):
+-    """Use a prior recorded version only as routing data, never as a gate."""
++    """Use a prior version only when its recorded index still identifies SITE.
++
++    A stale record is routing metadata, not an installation or scheduling gate: if
++    its index no longer matches the current public target, its version is unknown.
++    """
+     try:
+         info = record_path.lstat()
+-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_nlink != 1
+-                or info.st_size > MAX_MANIFEST_SIZE):
++        if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_nlink != 1:
+             return None
+         value = json.loads(record_path.read_text())
+-        return stable_version(value.get('package_version')) if isinstance(value, dict) else None
++        if not isinstance(value, dict):
++            return None
++        version = stable_version(value.get('package_version'))
++        files = value.get('files')
++        if version is None or not isinstance(files, list):
++            return None
++        recorded = next((item for item in files if isinstance(item, dict)
++                         and item.get('path') == 'index.html'), None)
++        if (not isinstance(recorded, dict) or isinstance(recorded.get('size'), bool)
++                or not isinstance(recorded.get('size'), int) or recorded['size'] < 0
++                or not isinstance(recorded.get('sha256'), str)
++                or not re.fullmatch('[0-9a-f]{64}', recorded['sha256'])):
++            return None
++        actual_path = SITE / 'index.html'
++        actual = actual_path.lstat()
++        if not stat.S_ISREG(actual.st_mode):
++            return None
++        size, digest = file_digest(actual_path)
++        if size != recorded['size'] or digest != recorded['sha256']:
++            return None
++        return version
+     except (OSError, ValueError, AttributeError):
+@@ -304,3 +313,3 @@ def has_nightly_intent(pipeline, run, commit, kind):
+                 or not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_nlink != 1
+-                or stat.S_IMODE(info.st_mode) != 0o600 or info.st_size > MAX_MANIFEST_SIZE):
++                or stat.S_IMODE(info.st_mode) != 0o600):
+             return False
+@@ -488,3 +497,3 @@ def verified_package_handle(package, before):
+         if (not stat.S_ISREG(current.st_mode) or current.st_uid != 0 or current.st_nlink != 1
+-                or not 0 < current.st_size <= MAX_PACKAGE_SIZE
++                or not 0 < current.st_size
+                 or (current.st_dev, current.st_ino, current.st_size) !=
+@@ -502,4 +511,3 @@ def installed_run(record):
+         return 0
+-    if (not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1
+-            or st.st_size > MAX_MANIFEST_SIZE):
++    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1:
+         fail('unsafe deployment record')
+@@ -525,3 +533,3 @@ def deploy(pipeline, run, commit):
+     st = package.lstat()
+-    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or not 0 < st.st_size <= MAX_PACKAGE_SIZE:
++    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or not 0 < st.st_size:
+         fail('unsafe package')
+@@ -530,6 +538,5 @@ def deploy(pipeline, run, commit):
+     try:
+-        try:
+-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+-        except BlockingIOError:
+-            fail('another deployment is active')
++        # Preserve release mutual exclusion, but wait for the active Flow-owned
++        # installer instead of converting normal serialization into a fixed failure gate.
++        fcntl.flock(lock, fcntl.LOCK_EX)
+         record_path = ROOT / 'record.json'
+@@ -544,3 +551,10 @@ def deploy(pipeline, run, commit):
+         record, expected = validate_manifest(manifest_bytes, staged, pipeline, run, commit)
+-        lane = frontend_release_lane(prior_package_version(record_path), stable_version(record.get('package_version')))
++        installed_version = prior_package_version(record_path)
++        candidate_version = stable_version(record.get('package_version'))
++        lane = frontend_release_lane(installed_version, candidate_version)
++        if lane == 'unclassified':
++            print('CYF_WEB_FLOW_VERSION_ROUTE ' + json.dumps(
++                dict(run_id=run, commit=commit, installed_package_version='unknown',
++                     candidate_package_version=record.get('package_version'), lane=lane),
++                sort_keys=True), file=sys.stderr, flush=True)
+         if (lane == 'scheduled-major' and not has_nightly_intent(
+--- targeted fixture selectors ---
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.523s
+
+OK
+CYF_WEB_FLOW_INSTALL=PASS {"commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "files": 1, "run_id": "92"}
+STREAMING_IO_EVIDENCE {"archive_bytes": 3147503, "forward_compressed_bytes": 3147503, "forward_seek_calls": 0, "legacy_backward_seeks": 2, "legacy_compressed_bytes": 9442509, "member_extract_calls": 4}
+--- online verifier selectors ---
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.039s
+
+OK
+exit=0

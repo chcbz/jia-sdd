@@ -1,0 +1,44 @@
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
+
+// Normal Gradle task/dependency graph and unmodified source sets. Output relocation
+// prevents stale loaned class files from masquerading as exact-source evidence.
+def outputRoot = new File('/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1')
+gradle.beforeProject { project ->
+    def rootKey = project.rootProject.name.replaceAll('[^A-Za-z0-9_.-]', '_')
+    def projectKey = project.path == ':' ? '_root' : project.path.substring(1).replace(':', '__')
+    project.layout.buildDirectory.set(new File(outputRoot, "${rootKey}/${projectKey}"))
+    if (project == project.rootProject) {
+        project.ext.snapshotsRepoUrl = 'https://maven.aliyun.com/repository/public'
+        project.ext.releasesRepoUrl = 'https://maven.aliyun.com/repository/public'
+        project.ext.repoUsername = ''
+        project.ext.repoPassword = ''
+    }
+}
+gradle.projectsEvaluated {
+    rootProject.allprojects.each { project ->
+        project.tasks.withType(JavaCompile).configureEach {
+            options.fork = true
+
+            // Actual v9 failure: daemon incremental classpath snapshot after javac success.
+            // Compile the complete bounded fixture sources normally; keep AP/classpath/test selectors.
+            if (path in [':agent:jia-agent-service:compileMmdU1ProviderConsentCoreJava',
+                         ':chat:jia-chat-service:compileMmdU1ProviderCredentialBindingJava']) {
+                options.incremental = false
+            }
+            options.forkOptions.memoryMaximumSize = (project.path in [':agent:jia-agent-service', ':chat:jia-chat-service', ':common:jia-common-test']) ? '384m' : '256m'
+            options.forkOptions.jvmArgs = (options.forkOptions.jvmArgs ?: []) + ['-XX:+UseSerialGC', '-XX:ActiveProcessorCount=2',
+                    '-XX:MaxMetaspaceSize=128m', '-Xss256k']
+        }
+        project.tasks.withType(Test).configureEach {
+            maxParallelForks = 1
+            maxHeapSize = '192m'
+            def retained = (getJvmArgs() ?: []).findAll { argument ->
+                !argument.startsWith('-XX:MaxMetaspaceSize=') && !argument.startsWith('-Xss')
+                    && argument != '-XX:+UseSerialGC' && !argument.startsWith('-XX:ActiveProcessorCount=')
+            }
+            setJvmArgs(retained + ['-XX:+UseSerialGC', '-XX:ActiveProcessorCount=2',
+                    '-XX:MaxMetaspaceSize=128m', '-Xss256k'])
+        }
+    }
+}

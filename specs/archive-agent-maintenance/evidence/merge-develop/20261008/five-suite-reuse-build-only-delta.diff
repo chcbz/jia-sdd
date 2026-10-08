@@ -1,0 +1,15 @@
+diff --git a/chat/jia-chat-service/build.gradle b/chat/jia-chat-service/build.gradle
+index 954cc1c6..5adc76ff 100644
+--- a/chat/jia-chat-service/build.gradle
++++ b/chat/jia-chat-service/build.gradle
+@@ -578,6 +578,10 @@ configurations.named(chatConversationReplaySourceSet.implementationConfiguration
+ configurations.named(chatConversationReplaySourceSet.runtimeOnlyConfigurationName) {
+     extendsFrom configurations.named(mmdU2TypedInspectionSourceSet.runtimeOnlyConfigurationName).get()
+ }
++dependencies {
++    add(chatConversationReplaySourceSet.runtimeOnlyConfigurationName, libs.spring.redis)
++    add(chatConversationReplaySourceSet.runtimeOnlyConfigurationName, 'com.jayway.jsonpath:json-path')
++}
+ tasks.register('chatConversationReplay', Test) {
+     group = 'verification'
+     description = 'Runs bounded replay completeness and actual SSE watermark/catch-up regressions.'

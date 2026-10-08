@@ -1,0 +1,81 @@
+{
+  "task_id": "MMD-WEB-RELEASE-OWNER-20261002",
+  "build_origin": "local_user_authorized",
+  "source": {
+    "commit": "8c0643b2cabb1807ccba290a1978f7c607b6af08",
+    "tree": "0504d915f3f8858585ad2bc98ddacebb3bdb25f8",
+    "branch": "codex/web-release-owner-20261002"
+  },
+  "existing_exact_production_build_evidence": {
+    "status": "NOT_FOUND",
+    "basis": [
+      "SDD exact-5e72 source-accepted verification report explicitly records no build.",
+      "Scoped evidence-file search found no production-bundle/build evidence for exact 5e72."
+    ]
+  },
+  "actual_checked_in_production_flags": {
+    "VITE_ECONOMY_PREVIEW_ENABLED": "true",
+    "VITE_JUYITING_VOICE_ENABLED": "true",
+    "VITE_JUYITING_MULTIMEDIA_DELIBERATION_V2_UI": null,
+    "VITE_JUYITING_TYPED_DELIBERATION_UI": null
+  },
+  "candidate_build_flags": {
+    "VITE_JUYITING_MULTIMEDIA_DELIBERATION_V2_UI": "true",
+    "VITE_JUYITING_TYPED_DELIBERATION_UI": "true"
+  },
+  "verification": {
+    "production_flags_test": {
+      "status": "PASS",
+      "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec tests/production-build-flags.test.js",
+      "passing": 2,
+      "log_sha256": "1b73da83e9db03f29477b7d2ba8607e4359c0a2de1e78a8fba5eca133410f4a3"
+    },
+    "existing_exact_5e72_targeted_tests": {
+      "status": "REUSED",
+      "passing": 28,
+      "evidence": "sdd/specs/juyiting-multimedia-deliberation/integration-evidence-20260928/web-inspection-5e72-source-accepted/final-verification-report-5e72.md"
+    },
+    "candidate_production_bundle": {
+      "status": "FAILED_ENVIRONMENT",
+      "command": "VITE_JUYITING_MULTIMEDIA_DELIBERATION_V2_UI=true VITE_JUYITING_TYPED_DELIBERATION_UI=true npm run build",
+      "artifact_sha256": null,
+      "reason": "Kernel global OOM killed Vite node process (PID 3165638) after 1305 modules transformed; no dist artifact was produced.",
+      "log_sha256": "3550b9079bc6790f786526d2daed309cd805cd6af3ff7d095953567ed19c8a96"
+    }
+  },
+  "scope": {
+    "api_gradle": "NOT_RUN",
+    "install_deploy_merge_release_ref": "NOT_RUN"
+  },
+  "actual_juyihall_wiring_static_audit": {
+    "status": "WIRED_IN_SOURCE_ONLY",
+    "trace": [
+      {
+        "stage": "requirement / typed discussion",
+        "source": "src/components/world/JuyiHall.vue:2637-2650; useHallTypedDeliberation.js",
+        "finding": "Bounty composer uses frozen typed DISCUSSION/INSPECT only when both multimedia and typed UI flags are enabled; otherwise it preserves the existing chat path."
+      },
+      {
+        "stage": "selected task reference",
+        "source": "src/components/world/JuyiHall.vue:2385-2406",
+        "finding": "Explicit clicked task and target agent are preserved; resolved task-linked reference inputRefs are passed to point-and-start, with stale/unready selection rejected."
+      },
+      {
+        "stage": "point-and-start to bounty discussion",
+        "source": "src/components/world/JuyiHall.vue:2239-2256, 2294-2408",
+        "finding": "Admitted point-and-start opens bounty discussion and adopts the authoritative bootstrap; no hidden selected-agent assignment is introduced."
+      },
+      {
+        "stage": "media preview/download/save",
+        "source": "src/components/juyiting/HallMessageParts.vue; HallMessageMedia.vue; BountyExecutionOutputs.vue",
+        "finding": "Ready scoped assets render in the transcript; preview/download read scoped bytes, gallery validates byte length/SHA-256/MIME, and archive uses the conversation-archive contract."
+      },
+      {
+        "stage": "selected-result finalization",
+        "source": "src/components/juyiting/BountyExecutionOutputs.vue; BountyDiscussionPanel.vue; JuyiHall.vue:627",
+        "finding": "Finalization uses exact selected outputs plus task/assignment versions; completion event is forwarded to loadTasks instead of locally mutating task completion."
+      }
+    ],
+    "limits": "Static/source and targeted-test evidence only. API/client readiness, browser/product execution, and AC01-22 plus FD01-12 remain unexecuted and are not marked PASS."
+  }
+}

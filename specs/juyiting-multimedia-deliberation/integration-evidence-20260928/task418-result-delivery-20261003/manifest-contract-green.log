@@ -1,0 +1,523 @@
+TAP version 13
+# Subtest: frozen fixture is byte-exact expectations only
+ok 1 - frozen fixture is byte-exact expectations only
+  ---
+  duration_ms: 3.470974
+  ...
+# Subtest: controlled sibling is v2-only while native v1 remains independently parseable
+ok 2 - controlled sibling is v2-only while native v1 remains independently parseable
+  ---
+  duration_ms: 2.135483
+  ...
+# Subtest: provider descriptor accepts core binding/model grammar and only canonical Java-long epoch strings
+ok 3 - provider descriptor accepts core binding/model grammar and only canonical Java-long epoch strings
+  ---
+  duration_ms: 1.44504
+  ...
+# Subtest: v2 command requires the exact current operator config before lease, inputs, download, or START
+ok 4 - v2 command requires the exact current operator config before lease, inputs, download, or START
+  ---
+  duration_ms: 33.932708
+  ...
+# Subtest: START wire completes exact stage and commit, while every receipt identity/config/lease mutation yields zero executor calls
+ok 5 - START wire completes exact stage and commit, while every receipt identity/config/lease mutation yields zero executor calls
+  ---
+  duration_ms: 20.360681
+  ...
+# Subtest: old START receipt or ACK loss has zero controlled execution and no fallback
+ok 6 - old START receipt or ACK loss has zero controlled execution and no fallback
+  ---
+  duration_ms: 3.052151
+  ...
+# Subtest: 17 inputs are rejected before downloading or controlled START
+ok 7 - 17 inputs are rejected before downloading or controlled START
+  ---
+  duration_ms: 1.643938
+  ...
+# Subtest: controlled executor network UNKNOWN and durable claim ambiguity never POST failure or issue a second fetch
+ok 8 - controlled executor network UNKNOWN and durable claim ambiguity never POST failure or issue a second fetch
+  ---
+  duration_ms: 24.761728
+  ...
+# Subtest: existing controlled claim ambiguity never becomes a terminal failure
+ok 9 - existing controlled claim ambiguity never becomes a terminal failure
+  ---
+  duration_ms: 3.508594
+  ...
+# Subtest: v3 lane uses the independent inbox, inputs-v3, exact asset source, one START, then existing PNG commit
+ok 10 - v3 lane uses the independent inbox, inputs-v3, exact asset source, one START, then existing PNG commit
+  ---
+  duration_ms: 46.505999
+  ...
+# Subtest: START ACK loss, conflict, or receipt operation/digest drift yields zero executor calls
+    # Subtest: lost
+    ok 1 - lost
+      ---
+      duration_ms: 3.184422
+      ...
+    # Subtest: conflict
+    ok 2 - conflict
+      ---
+      duration_ms: 2.293613
+      ...
+    # Subtest: operation
+    ok 3 - operation
+      ---
+      duration_ms: 1.907767
+      ...
+    # Subtest: digest
+    ok 4 - digest
+      ---
+      duration_ms: 2.039341
+      ...
+    1..4
+ok 11 - START ACK loss, conflict, or receipt operation/digest drift yields zero executor calls
+  ---
+  duration_ms: 10.890619
+  ...
+# Subtest: 17 inputs and operation/source mismatches reject before download, START, or executor
+    # Subtest: command_over
+    ok 1 - command_over
+      ---
+      duration_ms: 1.332522
+      ...
+    # Subtest: command_wrong
+    ok 2 - command_wrong
+      ---
+      duration_ms: 1.202889
+      ...
+    1..2
+ok 12 - 17 inputs and operation/source mismatches reject before download, START, or executor
+  ---
+  duration_ms: 3.840381
+  ...
+# Subtest: paid PNG survives upload 404, lost ACK or mismatched staging receipt without failure or Provider replay
+    # Subtest: 404
+    ok 1 - 404
+      ---
+      duration_ms: 11.347713
+      ...
+    # Subtest: lost
+    ok 2 - lost
+      ---
+      duration_ms: 10.959372
+      ...
+    # Subtest: drift
+    ok 3 - drift
+      ---
+      duration_ms: 8.712522
+      ...
+    1..3
+ok 13 - paid PNG survives upload 404, lost ACK or mismatched staging receipt without failure or Provider replay
+  ---
+  duration_ms: 31.828765
+  ...
+# Subtest: paid PNG survives uncertain commit without sending failure or repeating generation
+    # Subtest: lost
+    ok 1 - lost
+      ---
+      duration_ms: 9.991035
+      ...
+    # Subtest: drift
+    ok 2 - drift
+      ---
+      duration_ms: 10.792092
+      ...
+    1..2
+ok 14 - paid PNG survives uncertain commit without sending failure or repeating generation
+  ---
+  duration_ms: 21.552464
+  ...
+# Subtest: valid output is retained even when lease expires while Provider runs
+ok 15 - valid output is retained even when lease expires while Provider runs
+  ---
+  duration_ms: 9.15961
+  ...
+# Subtest: only a verified commit clears the private output and recovery receipt
+ok 16 - only a verified commit clears the private output and recovery receipt
+  ---
+  duration_ms: 9.905947
+  ...
+# Subtest: invalid output has no retained success record and remains an explicit failure
+ok 17 - invalid output has no retained success record and remains an explicit failure
+  ---
+  duration_ms: 2.323001
+  ...
+# Subtest: unsafe preexisting delivery path fails closed without erasing produced output or writing outside
+ok 18 - unsafe preexisting delivery path fails closed without erasing produced output or writing outside
+  ---
+  duration_ms: 2.650754
+  ...
+# Subtest: retention refuses unsafe roots and never overwrites an existing receipt
+    # Subtest: symlink
+    ok 1 - symlink
+      ---
+      duration_ms: 1.029971
+      ...
+    # Subtest: public-mode
+    ok 2 - public-mode
+      ---
+      duration_ms: 0.755138
+      ...
+    # Subtest: existing-record
+    ok 3 - existing-record
+      ---
+      duration_ms: 12.382133
+      ...
+    1..3
+ok 19 - retention refuses unsafe roots and never overwrites an existing receipt
+  ---
+  duration_ms: 14.730392
+  ...
+# Subtest: rejects malformed or reference-bearing queue commands before any claim
+ok 20 - rejects malformed or reference-bearing queue commands before any claim
+  ---
+  duration_ms: 7.77155
+  ...
+# Subtest: default native client claims then reports true failure; no paid/model call or legacy workspace endpoint
+ok 21 - default native client claims then reports true failure; no paid/model call or legacy workspace endpoint
+  ---
+  duration_ms: 28.762466
+  ...
+# Subtest: separately supplied no-charge executor stays inside scoped dirs and only exact server commit is success
+ok 22 - separately supplied no-charge executor stays inside scoped dirs and only exact server commit is success
+  ---
+  duration_ms: 5.200178
+  ...
+# Subtest: unknown claim transport outcome never retries, starts engine or reports a speculative failure
+ok 23 - unknown claim transport outcome never retries, starts engine or reports a speculative failure
+  ---
+  duration_ms: 1.105788
+  ...
+# Subtest: redirected response is rejected before claiming a command
+ok 24 - redirected response is rejected before claiming a command
+  ---
+  duration_ms: 0.643777
+  ...
+# Subtest: missing or reference-bearing input snapshot fails closed before any executor or staged output
+ok 25 - missing or reference-bearing input snapshot fails closed before any executor or staged output
+  ---
+  duration_ms: 3.676277
+  ...
+# Subtest: invalid artifact triggers fenced failure, not a completion receipt
+ok 26 - invalid artifact triggers fenced failure, not a completion receipt
+  ---
+  duration_ms: 2.375893
+  ...
+# Subtest: wrong lease receipt never starts execution, uploads or reports speculative failure
+ok 27 - wrong lease receipt never starts execution, uploads or reports speculative failure
+  ---
+  duration_ms: 0.910021
+  ...
+# Subtest: unknown commit outcome is not treated as failed or completed; no unsafe retry
+ok 28 - unknown commit outcome is not treated as failed or completed; no unsafe retry
+  ---
+  duration_ms: 3.458146
+  ...
+# Subtest: ambiguous Provider START never invokes engine, retries, uploads, or reports speculative failure
+ok 29 - ambiguous Provider START never invokes engine, retries, uploads, or reports speculative failure
+  ---
+  duration_ms: 4.434349
+  ...
+# Subtest: fenced exact reference bytes materialize in private input path and reach executor, never user filename
+ok 30 - fenced exact reference bytes materialize in private input path and reach executor, never user filename
+  ---
+  duration_ms: 14.126294
+  ...
+# Subtest: invalid, foreign or tampered references never reach executor or output upload
+ok 31 - invalid, foreign or tampered references never reach executor or output upload
+  ---
+  duration_ms: 4.940431
+  ...
+# Subtest: disabled runtime does not fetch private reference bytes or invoke a model
+ok 32 - disabled runtime does not fetch private reference bytes or invoke a model
+  ---
+  duration_ms: 1.666388
+  ...
+# Subtest: multimedia output validator checks bytes rather than filename or declared MIME alone
+ok 33 - multimedia output validator checks bytes rather than filename or declared MIME alone
+  ---
+  duration_ms: 1.049822
+  ...
+# Subtest: command parser freezes a canonical explicit identity and rejects ambiguous manifests
+    # Subtest: unknown command field
+    ok 1 - unknown command field
+      ---
+      duration_ms: 2.115747
+      ...
+    # Subtest: missing run identity
+    ok 2 - missing run identity
+      ---
+      duration_ms: 1.482463
+      ...
+    # Subtest: noncanonical task identity
+    ok 3 - noncanonical task identity
+      ---
+      duration_ms: 0.270126
+      ...
+    # Subtest: absolute input path
+    ok 4 - absolute input path
+      ---
+      duration_ms: 0.417708
+      ...
+    # Subtest: backslash path
+    ok 5 - backslash path
+      ---
+      duration_ms: 0.567201
+      ...
+    # Subtest: encoded endpoint traversal
+    ok 6 - encoded endpoint traversal
+      ---
+      duration_ms: 0.353585
+      ...
+    # Subtest: query-bearing endpoint
+    ok 7 - query-bearing endpoint
+      ---
+      duration_ms: 0.44833
+      ...
+    # Subtest: duplicate input identity
+    ok 8 - duplicate input identity
+      ---
+      duration_ms: 0.537425
+      ...
+    # Subtest: input-output path collision
+    ok 9 - input-output path collision
+      ---
+      duration_ms: 0.527883
+      ...
+    # Subtest: uppercase digest
+    ok 10 - uppercase digest
+      ---
+      duration_ms: 0.444452
+      ...
+    # Subtest: unbounded output
+    ok 11 - unbounded output
+      ---
+      duration_ms: 0.366369
+      ...
+    # Subtest: content type parameters
+    ok 12 - content type parameters
+      ---
+      duration_ms: 0.313792
+      ...
+    1..12
+ok 34 - command parser freezes a canonical explicit identity and rejects ambiguous manifests
+  ---
+  duration_ms: 13.131658
+  ...
+# Subtest: configured origin is HTTPS or explicit loopback and cannot carry path or credentials
+    # Subtest: http://api.example.test
+    ok 1 - http://api.example.test
+      ---
+      duration_ms: 2.136701
+      ...
+    # Subtest: https://user:secret@api.example.test
+    ok 2 - https://user:secret@api.example.test
+      ---
+      duration_ms: 0.306878
+      ...
+    # Subtest: https://api.example.test/base
+    ok 3 - https://api.example.test/base
+      ---
+      duration_ms: 0.247001
+      ...
+    # Subtest: https://api.example.test/?query=1
+    ok 4 - https://api.example.test/?query=1
+      ---
+      duration_ms: 0.256108
+      ...
+    1..4
+ok 35 - configured origin is HTTPS or explicit loopback and cannot carry path or credentials
+  ---
+  duration_ms: 6.448106
+  ...
+# Subtest: input materialization uses caller runtime auth transiently and verifies bytes before private publication
+ok 36 - input materialization uses caller runtime auth transiently and verifies bytes before private publication
+  ---
+  duration_ms: 16.004269
+  ...
+# Subtest: download boundary rejects redirects, response URL escape, length mismatch, digest mismatch, and secret-bearing errors
+    # Subtest: redirect
+    ok 1 - redirect
+      ---
+      duration_ms: 2.41675
+      ...
+    # Subtest: wrong response origin
+    ok 2 - wrong response origin
+      ---
+      duration_ms: 1.900664
+      ...
+    # Subtest: wrong response path
+    ok 3 - wrong response path
+      ---
+      duration_ms: 1.731012
+      ...
+    # Subtest: header length mismatch
+    ok 4 - header length mismatch
+      ---
+      duration_ms: 1.813826
+      ...
+    # Subtest: stream length mismatch
+    ok 5 - stream length mismatch
+      ---
+      duration_ms: 3.077786
+      ...
+    # Subtest: digest mismatch
+    ok 6 - digest mismatch
+      ---
+      duration_ms: 6.243739
+      ...
+    # Subtest: transport error
+    ok 7 - transport error
+      ---
+      duration_ms: 1.646203
+      ...
+    1..7
+ok 37 - download boundary rejects redirects, response URL escape, length mismatch, digest mismatch, and secret-bearing errors
+  ---
+  duration_ms: 20.225651
+  ...
+# Subtest: existing or symlinked run storage fails closed before any download
+    # Subtest: existing run directory
+    ok 1 - existing run directory
+      ---
+      duration_ms: 1.674329
+      ...
+    # Subtest: symlinked task directory
+    ok 2 - symlinked task directory
+      ---
+      duration_ms: 1.483186
+      ...
+    1..2
+ok 38 - existing or symlinked run storage fails closed before any download
+  ---
+  duration_ms: 3.883471
+  ...
+# Subtest: output collection is bound to the original manifest and emits upload multipart metadata only
+ok 39 - output collection is bound to the original manifest and emits upload multipart metadata only
+  ---
+  duration_ms: 12.991814
+  ...
+# Subtest: output collection rejects undeclared files, symlinks, oversized output, and changed input
+    # Subtest: undeclared file
+    ok 1 - undeclared file
+      ---
+      duration_ms: 13.806573
+      ...
+    # Subtest: private scratch is allowed but never declared as an upload
+    ok 2 - private scratch is allowed but never declared as an upload
+      ---
+      duration_ms: 8.181577
+      ...
+    # Subtest: symlinked output
+    ok 3 - symlinked output
+      ---
+      duration_ms: 7.42674
+      ...
+    # Subtest: oversized output
+    ok 4 - oversized output
+      ---
+      duration_ms: 9.840621
+      ...
+    # Subtest: changed input
+    ok 5 - changed input
+      ---
+      duration_ms: 8.060618
+      ...
+    1..5
+ok 40 - output collection rejects undeclared files, symlinks, oversized output, and changed input
+  ---
+  duration_ms: 48.510181
+  ...
+# Subtest: output collection verifies declared delivery bytes before any upload
+    # Subtest: fake PDF
+    ok 1 - fake PDF
+      ---
+      duration_ms: 8.95668
+      ...
+    # Subtest: fake PNG
+    ok 2 - fake PNG
+      ---
+      duration_ms: 9.345409
+      ...
+    # Subtest: fake DOCX
+    ok 3 - fake DOCX
+      ---
+      duration_ms: 9.529757
+      ...
+    # Subtest: wrong OpenXML part
+    ok 4 - wrong OpenXML part
+      ---
+      duration_ms: 10.69718
+      ...
+    1..4
+ok 41 - output collection verifies declared delivery bytes before any upload
+  ---
+  duration_ms: 47.487986
+  ...
+# Subtest: output commit manifest binds its exact task and run namespace
+ok 42 - output commit manifest binds its exact task and run namespace
+  ---
+  duration_ms: 0.916572
+  ...
+# Subtest: uploads each declared output then commits its canonical output manifest with transient runtime auth
+ok 43 - uploads each declared output then commits its canonical output manifest with transient runtime auth
+  ---
+  duration_ms: 35.855721
+  ...
+# Subtest: replays output upload and manifest commit once after an undici stale-socket failure
+ok 44 - replays output upload and manifest commit once after an undici stale-socket failure
+  ---
+  duration_ms: 12.853251
+  ...
+# Subtest: socket replay is capped at one retry and excludes other transport failures
+    # Subtest: two consecutive undici socket failures stop after the retry
+    ok 1 - two consecutive undici socket failures stop after the retry
+      ---
+      duration_ms: 12.529607
+      ...
+    # Subtest: non-undici transport failure is not retried
+    ok 2 - non-undici transport failure is not retried
+      ---
+      duration_ms: 13.11529
+      ...
+    1..2
+ok 45 - socket replay is capped at one retry and excludes other transport failures
+  ---
+  duration_ms: 26.26037
+  ...
+# Subtest: upload or commit failures fail closed without treating the manifest as committed
+    # Subtest: upload
+    ok 1 - upload
+      ---
+      duration_ms: 9.993527
+      ...
+    # Subtest: commit
+    ok 2 - commit
+      ---
+      duration_ms: 12.275793
+      ...
+    1..2
+ok 46 - upload or commit failures fail closed without treating the manifest as committed
+  ---
+  duration_ms: 22.928037
+  ...
+# Subtest: configured delivery validator must reopen every declared output before upload
+ok 47 - configured delivery validator must reopen every declared output before upload
+  ---
+  duration_ms: 26.304643
+  ...
+# Subtest: native start is bound to verified inputs and validates the exact direct receipt
+ok 48 - native start is bound to verified inputs and validates the exact direct receipt
+  ---
+  duration_ms: 7.729079
+  ...
+1..48
+# tests 100
+# suites 0
+# pass 100
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1196.872342

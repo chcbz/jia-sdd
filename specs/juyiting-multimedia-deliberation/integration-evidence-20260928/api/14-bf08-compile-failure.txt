@@ -1,0 +1,8 @@
+MMD-INTEGRATE-API-20260928 bf08FormalFlow compile failure
+Date: 2026-09-28
+Commit: bc4bd8b15cc06ed29bc591ad01258d1533711f2a
+Tree: 23a6b7d4a31095f3f1c0ddbea17873d412df84de
+Selector: :chat:jia-chat-service:bf08FormalFlow
+Result: FAILED in compileBf08FormalFlowJava; no bf08 tests executed.
+Root cause: The merged F1 adversarial additions in AgentWebSocketHandlerTest use Mockito anyString()/eq() but the conflict-resolved import block omitted those two static imports. Compiler emitted 47 repeated symbol errors from this single import omission.
+Remediation: Add only the missing static imports, commit a new exact tree, and rerun bf08FormalFlow once. No production behavior change.

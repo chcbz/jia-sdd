@@ -1,0 +1,55 @@
+{
+  "read_only_historical_snapshot_not_current_runtime_ledger": true,
+  "task": "MMD-U1-PROVIDER-CORE-BOUNDED-VERIFY-20260930",
+  "snapshot": {
+    "owner": null,
+    "exact_sha_tree": {
+      "commit_sha": "b443be0001cf2f1d3bfdbe833c9a6adf023fbeda",
+      "tree_sha": "fb8ad1baacc8f2de310fb021858cbd97a6259cc5"
+    },
+    "current_gate": "failed_attribution_required",
+    "blocker": {
+      "category": "owned_mysql_check_constraint_definition_drift",
+      "summary": "v14 real isolated-MySQL selector ran 3 tests; all 3 failed during setup before test bodies.",
+      "consecutive_failures": 1,
+      "attempts": [
+        {
+          "at": "2026-10-01T06:33:38+08:00",
+          "category": "environment_resource",
+          "evidence": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/actual-matcher-dependency-source-v9.gradle-daemon-2311071.log sha256=9289ffb8a9c76febc9deeac8c9b29e0b7a3255f3f562216fb34443562603006a; session=57094; orchestrator_pid=2310910; gradle_daemon_pid=2311071; task=:agent:jia-agent-service:compileMmdU1ProviderConsentCoreJava; 29_actionable=1_executed+28_up_to_date; XML=0",
+          "root_cause": "Gradle daemon heap is constrained to Xmx128m (reported usable max 85.3MiB); worker compiler was correctly started at Xmx384m and exited 0. The failure occurred during classpath snapshot creation, so this is an environment/build-footprint memory failure rather than a Java source assertion or the repaired Hamcrest dependency.",
+          "remediation": "Stop. Do not rerun v9 or raise heap blindly. Main must assess a materially different approved environment/build-graph remedy before another execution."
+        },
+        {
+          "at": "2026-10-01T06:52:14+08:00",
+          "category": "scoped_test_runtime_dependency_missing",
+          "evidence": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/bounded-fixture-full-javac-v10.gradle-daemon-2323588.log sha256=70f34256bf71db640c656710174db5fa93c96636ab613f53e26185a812b8b93b; session=49946; orchestrator_pid=2323499; gradle_daemon_pid=2323588; XML=5 files/tests=38/failures=5/errors=0/skipped=3; tasks=45 actionable/17 executed/28 up-to-date",
+          "root_cause": "The source-scoped agent test runtime extends production runtime and adds JUnit/Mockito/Spring Test/OAuth/MySQL, but does not supply com.jayway.jsonpath.TypeRef needed at runtime by MockMvcResultMatchers.jsonPath nor an H2 JDBC driver for the actual Spring CGLIB transaction fixture jdbc:h2:mem URL. The four controller failures and one transaction fixture failure are dependency/runtime-classpath failures, not provider-consent product assertions. v10 no-incremental compile completed past v9 classpath-snapshot heap failure.",
+          "remediation": "Stop; do not rerun v10. Hand exact diagnostics to the API Owner for a minimal immutable Gradle-only scoped runtime dependency repair, then await a new matrix/input/gate. Keep MySQL opt-in absent; its three tests are actual skipped/NOT_RUN."
+        },
+        {
+          "at": "2026-10-01T07:11:36+08:00",
+          "category": "daemon_heap_exhaustion_chat_compile_incremental_analysis",
+          "evidence": "stdout=/var/tmp/cyf-mmd-provider-consent-bounded-verification/scoped-runtime-deps-v11.actual-stdout-stderr.log sha256=a5506e17216a6320d4abcb6c9347a2c07c75c8115da995d6207440ebc1eb5ef3; daemon=/var/tmp/cyf-mmd-provider-consent-bounded-verification/scoped-runtime-deps-v11.gradle-daemon-2333164.log sha256=ecc8de9fd34ef0b5c285f33f366d43f07e8cba20612cdb5ee8c584f1b7a67e40; session=53719; launcher_pid=2333047; orchestrator_pid=2333048; gradle_daemon_pid=2333164; agent_XML=5/tests=38/failures=0/errors=0/skipped=3; chat_XML=0; tasks=55 actionable/11 executed/44 up-to-date",
+          "root_cause": "The v11 source/runtime dependency repair allowed all agent tests to execute. During :chat:jia-chat-service:compileJava, javac produced only deprecation/unchecked notes and class dependency analysis completed, then the Xmx128m Gradle daemon threw OutOfMemoryError while Gradle continued incremental classpath/output analysis. The compiler worker was Xmx384m; this is a daemon build-footprint failure after chat production compilation phase, not a chat fixture assertion/source diagnostic or a failure of the v11 runtime dependency repair.",
+          "remediation": "Stop. Do not rerun v11 or increase heap. Main may only proceed after an approved materially different init/build-footprint remedy that preserves source, dependencies, processors, selectors and test bodies; chat fixture remains NOT_RUN."
+        },
+        {
+          "at": "2026-10-01T07:18:38+08:00",
+          "category": "chat_scoped_compile_dependency_and_test_source_type_error",
+          "evidence": "stdout=/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-chat-full-javac-v12.actual-stdout-stderr.log sha256=11af77d69ee6a6c8d112a30ff4b8dbda9d60c67783e1745c9a321acbfddb5640; session=96714; launcher_pid=2341605; orchestrator_pid=2341606; gradle_daemon_pid=2341684; agent_task=UP_TO_DATE/reused_v11_XML_5_tests_38_failures_0_skipped_3; chat_XML=0; tasks=57 actionable/3 executed/54 up-to-date",
+          "root_cause": "The bounded chat source-set implementation extends production implementation but omits project(:agent:jia-agent-mapper), which owns cn.jia.agent.dao.AgentRuntimeDao used by NativeBountyCurrentBindingTest. Independently, NativeProviderCredentialBindingDeclarationTest line 31 iterates List.of(...) inferred as Map<String,? extends Object> using a Map<String,Object> loop variable; javac rejects the incompatible type. The v12 init succeeded in taking :chat:jia-chat-service:compileJava past v11 daemon heap failure, so these are the first actual bounded chat fixture compile diagnostics.",
+          "remediation": "Stop; do not rerun v12. Hand both exact diagnostics to the API Owner. A new immutable candidate must separately make the minimal scoped chat dependency declaration and correct the test-source generic type; then Main must supply new matrix/input/gate. MySQL stays NOT_RUN."
+        },
+        {
+          "at": "2026-10-01T07:45:23+08:00",
+          "category": "owned_mysql_check_constraint_definition_drift",
+          "evidence": "stdout=/var/tmp/cyf-mmd-provider-consent-bounded-verification/owned-mysql-provider-consent-v14.actual-stdout-stderr.log#sha256=b711d0008e766116474e96626ddcb48bb97b489e5e078bf43b18620529329c84; xml=/var/tmp/cyf-mmd-main-provider-core-progress/owned-mysql-v14-actual-xml/TEST-cn.jia.agent.service.impl.AgentTaskProviderCostConsentMySqlTest.xml#sha256=c8bfc4a2d8d306eaf29116843d4f0bad101fa5307889bbe9b2a4ff3d237653fb; exit=1; tests=3; failures=3; errors=0; skipped=0; candidate=b443be0001cf2f1d3bfdbe833c9a6adf023fbeda/tree=fb8ad1baacc8f2de310fb021858cbd97a6259cc5; fixture=5882cb92c7208aa830bdf304d82b3952999494ff94d573baaac2be82dc48420e",
+          "root_cause": "All selected tests fail in AgentTaskProviderCostConsentMySqlTest.setUp at AgentTaskProviderCostConsentSchemaInitializer.validateChecks:181 because the actual isolated fixture CHECK metadata/canonical definition for chk_atpcc_identity does not match the initializer expectation. No test body, CAS assertion, or Provider action ran; this is a schema-validation fixture diagnostic, not an environment/OOM failure.",
+          "remediation": "Do not rerun unchanged v14. API Owner/Main must inspect and reconcile the canonical chk_atpcc_identity DDL/normalization expectation under a new immutable candidate and matrix; verifier must not change schema, tests, source, proxy, or mysqld."
+        }
+      ]
+    },
+    "next_action": "Do not rerun unchanged v14. API Owner/Main must inspect and reconcile the canonical chk_atpcc_identity DDL/normalization expectation under a new immutable candidate and matrix; verifier must not change schema, tests, source, proxy, or mysqld."
+  }
+}

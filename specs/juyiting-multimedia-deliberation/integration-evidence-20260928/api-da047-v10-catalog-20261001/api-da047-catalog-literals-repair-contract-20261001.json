@@ -1,0 +1,59 @@
+{
+  "parent": "da047e483c0f1a7bfcd482b179049dcbb49be36e",
+  "parent_tree": "cf44abe26ecf1ad01954127c145944c83ae8edac",
+  "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-v3-wire-jackson3-source-owner-20261001",
+  "classification": "Frozen mechanical catalog representation repair; no new DDL/constraint/authorization/transaction decisions. Seven expected literal expressions match actual approved SQL catalog, differing only case/quoting/charset rendering/grouping parentheses. All non-parenthesis tokens compare equal in static diagnostic; runtime regression required. Do NOT change any normalization algorithm, CHECK enforcement, accepted names, locks or drift behaviour.",
+  "evidence": "/var/tmp/cyf-mmd-api-da047-catalog-diagnostic-20261001",
+  "static_comparison": "/var/tmp/cyf-mmd-main-controlled-bridge-progress/api-da047-check-rendering-diagnostic.json",
+  "replacements": [
+    {
+      "name": "chk_chat_typed_admission_digest",
+      "old": "((REGEXP_LIKE(request_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))) AND (REGEXP_LIKE(body_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))))",
+      "new": "(regexp_like(request_digest,cast('^sha256:[0-9a-f]{64}$' as char charset binary)) and regexp_like(body_digest,cast('^sha256:[0-9a-f]{64}$' as char charset binary)))"
+    },
+    {
+      "name": "chk_chat_typed_admission_reply",
+      "old": "(intent='DISCUSSION' AND pending_question_id IS NULL) OR (intent='CLARIFICATION_REPLY' AND parent_outcome_id IS NOT NULL AND pending_question_id IS NOT NULL)",
+      "new": "(((intent = 'DISCUSSION') and (pending_question_id is null)) or ((intent = 'CLARIFICATION_REPLY') and (parent_outcome_id is not null) and (pending_question_id is not null)))"
+    },
+    {
+      "name": "chk_chat_typed_admission_turns",
+      "old": "((JSON_VALID(turn_ids_json)) AND (JSON_VALID(source_catalog_json)))",
+      "new": "(json_valid(turn_ids_json) and json_valid(source_catalog_json))"
+    },
+    {
+      "name": "chk_chat_typed_outcome_json",
+      "old": "((JSON_VALID(binding_json)) AND (JSON_VALID(facts_json)) AND (JSON_VALID(outcome_json)) AND (JSON_VALID(source_catalog_json)))",
+      "new": "(json_valid(binding_json) and json_valid(facts_json) and json_valid(outcome_json) and json_valid(source_catalog_json))"
+    },
+    {
+      "name": "chk_chat_typed_pending_version",
+      "old": "(state='OPEN' AND state_version=0 AND reply_request_id IS NULL AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL) OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL AND reply_idempotency_key IS NOT NULL AND REGEXP_LIKE(reply_body_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary)))",
+      "new": "(((state = 'OPEN') and (state_version = 0) and (reply_request_id is null) and (reply_idempotency_key is null) and (reply_body_digest is null)) or ((state = 'ANSWERED') and (state_version = 1) and (reply_request_id is not null) and (reply_idempotency_key is not null) and regexp_like(reply_body_digest,cast('^sha256:[0-9a-f]{64}$' as char charset binary))))"
+    },
+    {
+      "name": "chk_chat_typed_proposal_parent",
+      "old": "(parent_request_id IS NULL AND parent_step_id IS NULL) OR (parent_request_id IS NOT NULL AND parent_step_id IS NOT NULL)",
+      "new": "(((parent_request_id is null) and (parent_step_id is null)) or ((parent_request_id is not null) and (parent_step_id is not null)))"
+    },
+    {
+      "name": "chk_chat_typed_proposal_sources",
+      "old": "((JSON_VALID(source_ref_ids_json)) AND (JSON_VALID(source_selectors_json)))",
+      "new": "(json_valid(source_ref_ids_json) and json_valid(source_selectors_json))"
+    }
+  ],
+  "production_expected_sha256": "f893f5aa370daebe069604d60160b29c3e577ea975f2df51fb6511377a868728",
+  "allowed_paths": [
+    "chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializer.java",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializerTest.java",
+    "chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/typed-check-catalog-mysql8021.json"
+  ],
+  "unchanged_sql_sha256": "98af3d88d5a1212e52764e308b2361e99dbffbb7595d1196123465a0481a41a4",
+  "test_requirements": [
+    "New fixture records all18 captured exact actual catalog rows and sourceSQL sha, not fabricated expected-only values.",
+    "Test existing validateChecks with whole actual18-row catalog and required enforced YES.",
+    "For each corrected7 entry, mutate one conjunction AND to OR in fixture and assert validateChecks rejects; keep all existing changed/null/weak/enforced/operator/parentheses negative tests intact.",
+    "No MySQL test skipped/weakened; real schema initialization/invalid-row/weak-check tests rerun by verifier."
+  ],
+  "execution": "SOURCE ONLY same Owner WT after terminal v10+completed diagnostic. No Gradle/DB/provider/push. Stop and report if frozen replacements insufficient."
+}

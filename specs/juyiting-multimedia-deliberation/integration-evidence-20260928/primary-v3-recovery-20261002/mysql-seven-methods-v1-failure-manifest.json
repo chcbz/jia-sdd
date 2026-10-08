@@ -1,0 +1,28 @@
+{
+  "taskId": "MMD-U4-BROWSER-BASELINE-SERVICE-READINESS",
+  "sourceCommit": "cb5050357a2beead64c3e5f86bc28b875f22a9d4",
+  "sourceTree": "8d980c17722fd9b3511f29a57365dd57bb71e325",
+  "fixtureDigest": "66295ec02477ed6d951248994bbbe5990f153fc64854221441082411a8d0a770",
+  "selectorIntent": {
+    "ControlledImageBridgeMySqlTest": 4,
+    "ControlledImageIntentOperationGrantMySqlTest": 3
+  },
+  "actualGradleSummary": {
+    "testsCompleted": 62,
+    "failed": 4,
+    "secondTaskStarted": false,
+    "exit": 1
+  },
+  "failure": {
+    "sqlState": "HY000",
+    "vendorCode": 3995,
+    "message": "Character set 'ascii_bin' cannot be used in conjunction with 'binary' in call to regexp_like.",
+    "phase": "AgentTaskProviderCostConsentSchemaInitializer.afterPropertiesSet setUp before business concurrency assertions"
+  },
+  "classification": "production DDL compatibility defect exposed by owned MySQL 8.0.46 fixture; not a concurrency assertion, resource failure, or production DB observation",
+  "log": "/var/tmp/cyf-mmd-api-primary-v3-admission-owner-20261002/mysql-seven-methods.raw.log",
+  "logSha256": "17e2c8e0c3c91c754d864420282a07e758844662fd156a1a327b22846fe25a6d",
+  "fixturePid": 3648359,
+  "fixturePort": 60399,
+  "remediation": "Preserve CHECK constraints and lowercase-hex semantics; replace redundant REGEXP BINARY only where binary collations already provide case sensitivity, bind exact observed MySQL 8.0.46 CHECK_CLAUSE, retain weak/OR TRUE/NOT ENFORCED negative validation, then rerun changed candidate once."
+}
