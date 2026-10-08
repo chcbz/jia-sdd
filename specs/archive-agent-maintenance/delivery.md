@@ -95,3 +95,15 @@ SSH现已恢复；已只读观察旧任务已知进程不存在、34061关闭、
 首轮Gradle worker缓存缺JAR、汇总Python3.6不支持fromisoformat；均保留原件并在控制层修复，未改测试断言。重跑源73c303e的六suite fresh XML：platform141/141PASS、security10/10PASS、MVP237/149PASS/88FAIL、archive390/288PASS/102FAIL、typed91/91PASS、replay16/16PASS，0skip。其中91个不同实库用例（MVP/回归重复出现）被sourceartifact SHA CHECK初始化漂移阻断；MySQL把infix REGEXP规范化为regexp_like，而严格catalog仍按旧表达式比较。相应DDL/normalizer/initializer四blob与premerge完全一致，未冒称整个旧tree实跑基线；此外原11archive失败保留。
 
 只将当前DDL对应CHECK写成相同canonical REGEXP_LIKE，通用normalizer和严格比较/约束不放宽；新增元数据等价/改pattern拒绝/实库合法及非法SHA回归。独立 `ACCEPT_MYSQL_SHA_SOURCE_SCOPE`，本地10PASS/2MySQLskip，批准四SQLfixture/ZIP不变。API hotfix `c1e5c982ad497da3c3c13a54062d32e3c3a4e706` 已普通push核远端；Root更新pin，新源Linux实库复测待执行。不能把修复前XML或本地skip当成修复后PASS。
+
+### 实库与 Node 回归修复源收口（2026-10-08）
+
+修复前 attempt3 是已完成的真实隔离 MySQL 六套：platform141/141PASS、security10/10PASS、MVP241/204PASS/37FAIL、archive394/346PASS/48FAIL、typed91/91PASS、replay16/16PASS，0skip。MySQL自有关闭、34061关闭和Gradle锁释放有回执。原日志/XML全部取回，不能把原失败改记PASS。
+
+37个维护域实库失败涉及非法fixture、漏清理表、重复command、假digest、跨服务不共享测试存储和从当前DDL派生历史输入。修复仅7路径：保留严格校验错误的最初原因、修合法fixture、加入18d66419/eb31260f两份精确历史Git blob资源；原四fixture和批准ZIP不变。独立ACCEPT_POSTMERGE_MYSQL_FIXTURE_SCOPE；本地12PASS/92MySQLskip（exit0），实库须用新源再跑。API `62adf8a0b014d6ac91caea458a7f3996c668c321` 已普通push核远端。
+
+同服务器冻结develop对照：Web四个失败文件147/108PASS/39FAIL，原merged全量40FAIL只新增inline harness一项；Client develop全量830/819PASS/1FAIL/10skip，merged新增两个依赖扫描夹具错误。目录权限负例受控制脚本umask077遮蔽，merged单独umask022真实运行PASS；不是生产ledger放宽权限。
+
+Node只改测试：真实ChatPanel predicate/receipt分支，可靠扫描真实import而非技能内部import字符串。初审P2发现ASI后独立block可漏依赖，原REJECT及真实复现保留；窄修后ACCEPT_POSTMERGE_NODE_HARNESS_SCOPE。Web当前同树19selectors480/480PASS、build0；Client7/7PASS及实际42-module闭包通过。Web `1a4e6fa36f12936330d0c7ac9ab968a714fcb75f` / Client `33a025928afdf90729077c20dc7039bd342e7a37` 普通push核远端。lexer是测试辅助，不是完整JS parser/安全沙箱；card stub不是实际card验收。
+
+Root仅更新当前pinned_revisions块与gitlinks，不全局替换历史SHA。新源服务端attempt4和Node full待执行；生产部署、真实Runtime/browser及84业务验收仍not_run/accepted=false。当前新结果将另行追加，不覆盖旧失败/REJECT。所有独立review是独立Sol实例，非跨模型。

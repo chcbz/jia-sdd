@@ -1,0 +1,59 @@
+{
+  "verdict": "ACCEPT_POSTMERGE_MYSQL_FIXTURE_SCOPE",
+  "api_head": "c1e5c982ad497da3c3c13a54062d32e3c3a4e706",
+  "api_frozen_tree": "972a3c4697456109aadf64d4646bec799ac613a6",
+  "scope": "仅复审冻结的7文件增量及直接依赖、attempt3证据",
+  "findings": { "P0": [], "P1": [], "P2": [] },
+  "verified": [
+    {
+      "path": "chat/jia-chat-service/src/main/java/cn/jia/chat/archive/maintenance/config/ArchiveMaintenanceSchemaInitializer.java",
+      "lines": "165-182,185-215",
+      "result": "仅保留首次drift异常并附加后续suppressed异常；所有原严格候选均失败后仍抛错。未增加schema接受形态，未放宽比较。"
+    },
+    {
+      "path": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveBusinessOutboxMySqlTest.java",
+      "result": "清理列表补齐archive_execution_failure，未删除或放宽断言，沿用隔离MySQL guard。"
+    },
+    {
+      "path": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveMaintenanceConcurrencyMySqlTest.java",
+      "result": "修复重复commandId、messageId不匹配、非法FAILED行构造、假draft digest及跨service不共享checkpoint存储。未绕过生产ACL/CAS/storage检查；缺失checkpoint反而显式失败。历史升级测试保留私有数据、操作结果快照及drift拒绝断言。"
+    },
+    {
+      "path": "chat/jia-chat-service/src/test/resources/db/archive-maintenance-schema-18d66419.sql",
+      "bytes": 32034, "tables": 18,
+      "sha256": "5f358f3cd71f5cd8c7ecc0c633ae3aa0770305e913fc1f0d711c5245847213c2",
+      "original_commit_blob_equals_index_equals_disk": true
+    },
+    {
+      "path": "chat/jia-chat-service/src/test/resources/db/archive-maintenance-schema-eb31260f.sql",
+      "bytes": 30916, "tables": 17,
+      "sha256": "c398de55270b8a7dd0467e796ae7a8dd0444458c51f0b437e7ac90f11a9c4118",
+      "original_commit_blob_equals_index_equals_disk": true
+    }
+  ],
+  "protected_assets": {
+    "original_four_sql_fixtures_preserved": true,
+    "all_17_to_21_table_predecessors_lack_source_artifact_table": true,
+    "historical_infix_test_targets_22_table_schema": true,
+    "new_sql_resources_exact_lf_bytes": true,
+    "zip_bytes": 40563,
+    "zip_sha256": "8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081",
+    "zip_head_index_disk_equal": true
+  },
+  "evidence": {
+    "source_snapshot_matches_review_base": true,
+    "attempt3_archiveMaintenanceMvp": { "tests": 241, "passed": 204, "failed": 37, "skipped": 0 },
+    "attempt3_archiveRegression": { "tests": 394, "passed": 346, "failed": 48, "skipped": 0, "includes_exact_11_known_baseline_failures": true, "additional_failures": 37 },
+    "diff_check_exit": 0, "unmerged_entries": 0, "unstaged_tracked_changes": 0
+  },
+  "boundaries": {
+    "independent_sol_review": true, "cross_model_review": false,
+    "reviewer_ran_tests_or_gradle": false, "reviewer_edited_or_committed_files": false,
+    "updated_tree_real_mysql_pass_verified": false, "whole_feature_accepted": false,
+    "residual_risks": [
+      "上述失败原因与修复源码对应，不代表37项已全部修复通过；须以新树attempt4结果确认。",
+      "存储及执行端口仍为测试替身，不能据此宣称真实Agent、物理存储或端到端ACL验收通过。",
+      "历史失败与既有复审回执保留，不覆盖为PASS。"
+    ]
+  }
+}

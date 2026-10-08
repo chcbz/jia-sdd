@@ -1,0 +1,30 @@
+{
+  "verdict": "REJECT",
+  "frozen_trees": { "web": "11d2f205cc5e60e5de886e001575449efc700900", "client": "08b26571ffc5bda3083997948b48c3084313305a" },
+  "scope": "仅5个测试harness路径及直接依赖",
+  "findings": {
+    "P0": [], "P1": [], "P2": [{
+      "path": "conf/codex-ws-agent/test/module-import-scanner.mjs", "lines": "148-155",
+      "issue": "方法名识别存在真实dynamic import漏报，会弱化两个payload依赖闭包断言。",
+      "source_example": "if (true) {\n  import('./missing.mjs')\n  {}\n}",
+      "reason": "这是合法的import表达式语句后接独立block。扫描器看到前一个token为“{”、右括号后为“{”，便按名为import的方法跳过，遗漏./missing.mjs。闭包因此不会读取缺失文件；原正则会捕获该依赖。",
+      "verification": "源码逐分支静态追踪；未执行示例或测试。",
+      "required_change": "仅在可证明为object/class方法时跳过；歧义情况扫描或fail closed。增加上述ASI/block形态及缺文件闭包拒绝回归。"
+    }]
+  },
+  "verified": {
+    "production_edits": false,
+    "web": "使用真实AST提取receipt predicate；保留原排序断言并增加receipt分支，未发现新增问题。card仍为stub，不能证明真实card行为。",
+    "template_expressions": "源码明确扫描${…}内可执行表达式，不把整个模板直接忽略。",
+    "path_checks": "普通相对缺文件经readFileSync失败，词法../越界显式拒绝；未执行这些检查。",
+    "approved_data_url": "当前runner从批准ZIP加载parse/check脚本，并将唯一parse-text相对import替换为data URL；该内部依赖不是release根目录缺文件。不能把此核对推广为任意生成代码的依赖证明。",
+    "zip": { "bytes": 40563, "sha256": "8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081", "head_frozen_disk_equal": true },
+    "diff_checks_exit": 0, "unstaged_changes": 0, "unmerged_entries": 0,
+    "baseline_evidence": "comparison.json记录Web新增1项、Client新增2项失败；不是当前冻结树通过证据。"
+  },
+  "boundaries": {
+    "independent_sol_review": true, "cross_model_review": false, "whole_feature_acceptance": false,
+    "reviewer_executed_tests_or_gradle": false, "reviewer_modified_files_or_committed": false,
+    "current_focused_build_and_full_results_verified": false
+  }
+}

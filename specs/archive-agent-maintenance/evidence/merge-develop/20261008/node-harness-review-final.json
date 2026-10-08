@@ -1,0 +1,33 @@
+{
+  "verdict": "ACCEPT_POSTMERGE_NODE_HARNESS_SCOPE",
+  "reviewer": "独立 Sol 实例；非跨模型复审",
+  "frozen_trees": { "Web": "11d2f205cc5e60e5de886e001575449efc700900", "Client": "3f9afe3bea47b6c1eff97e5eb51241903adf0ad9" },
+  "findings": { "P0": [], "P1": [], "P2": [] },
+  "resolved_previous_P2": {
+    "status": "源码复审确认修闭；旧 REJECT 及复现证据仍有效并应保留",
+    "helper": {
+      "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\isp-install\\conf\\codex-ws-agent\\test\\module-import-scanner.mjs",
+      "lines": "86–89、127–132、156–166",
+      "assessment": "仅经 object container 位置证明、非 literal 参数且随后为方法体时跳过。普通 block、label 和 return ASI 不再触发旧跳过条件；未证明的 class/computed 形式仍拒绝。"
+    },
+    "regression_test": {
+      "path": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\isp-install\\conf\\codex-ws-agent\\test\\module-import-scanner.test.mjs",
+      "lines": "69–84",
+      "assessment": "保留真实 import 提取断言、三个 ASI/block 变体、class fail-closed 和精确 missing-file ENOENT 断言，未弱化安全条件。"
+    }
+  },
+  "scope_confirmation": [
+    "旧 Client tree 到当前冻结 tree 的差异恰为上述两个测试辅助文件；index 与冻结 tree 一致，无 unstaged 差异。",
+    "沿用此前其余三路径的限定复审：Web inline harness、Client 两处 payload scanner；完整 Node 范围仍仅五个测试路径，无生产代码修改。",
+    "模板可执行插值扫描、computed-relative 拒绝、真实依赖读取与路径越界拒绝逻辑未改；未发现本次窄修弱化 closure 断言。",
+    "此前批准 runner/data-URL 与受保护 ZIP 的限定检查结论沿用，不扩展为任意动态模块安全保证。"
+  ],
+  "test_evidence_boundaries": {
+    "verified_main_evidence": "node-local-harness-attempt3：上述不变 Web tree 为 480/480 PASS，build exit 0。",
+    "current_client": "未核验当前 tree 的七项测试及真实 42-module closure 重跑结果；旧 tree 六项 PASS 不外推。",
+    "linux": "未核验后续 Linux full 结果。",
+    "limitations": "辅助 lexer 不是完整 ECMAScript parser 或安全沙箱；不证明任意生成/data-URL 模块依赖、真实 receipt card 行为或全功能验收。"
+  },
+  "whole_feature_accepted": false,
+  "reviewer_operations": "仅只读源码、Git 差异和已有证据检查；未执行测试、Gradle、编辑、commit、push 或生产操作。"
+}

@@ -1,0 +1,774 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" tests="83" skipped="0" failures="31" errors="0" timestamp="2026-10-08T04:15:11.236Z" hostname="iZwz9j3ip2unzhwij0bs30Z" time="327.341">
+  <properties/>
+  <testcase name="platformInstallationReclaimFenceIsDurableAndExactReplayReturnsTheSameCandidate()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="8.255"/>
+  <testcase name="nativeLifecyclePersistsStartFailureReplayAndLateTerminalReceipt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.147"/>
+  <testcase name="exactEb31260SchemaAddsReadbackWithoutChangingPrivateOrOperationFactsAndDriftFailsClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.881">
+    <failure message="java.lang.IllegalStateException: Archive maintenance schema is partial or not an exact supported predecessor" type="java.lang.IllegalStateException">java.lang.IllegalStateException: Archive maintenance schema is partial or not an exact supported predecessor
+	at cn.jia.chat.archive.maintenance.config.ArchiveMaintenanceSchemaInitializer.initialize(ArchiveMaintenanceSchemaInitializer.java:92)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.exactEb31260SchemaAddsReadbackWithoutChangingPrivateOrOperationFactsAndDriftFailsClosed(ArchiveMaintenanceConcurrencyMySqlTest.java:3196)
+</failure>
+  </testcase>
+  <testcase name="legacyBootstrapPersistsPendingThenPassesAndCategoryCountDriftFails()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.068"/>
+  <testcase name="reclaimReceiptPrioritizesLiveCopiesAheadOfThirtyTwoPermanentTombstones()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.213"/>
+  <testcase name="resolveCommittedBeforeAppointmentRevocationCreatesWholeCandidateThenFencesIt()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.501"/>
+  <testcase name="appointmentRevocationLinearizesBeforeJobFactsAndClearsOnlyCurrentAssignmentAuthority()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.439"/>
+  <testcase name="realJdbcKeysetsPageAppointmentsJobsManagedWorksAndPublishedReaderShelf()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.907">
+    <failure message="org.springframework.jdbc.UncategorizedSQLException: PreparedStatementCallback; uncategorized SQLException for SQL [INSERT INTO archive_maintenance_job(job_id,run_id,collection_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,agent_id,binding_version,permission_profile,manager_authorization_revision,publication_mode,operation_code,work_id,canonical_key,title,source_id,source_sha256,source_summary,rights_basis,state,wait_reason,revision,draft_id,request_intent_id,request_sha256) VALUES (?,NULL,?,'0','client-a','owner-a',?,1,?,'7','DRAFT_ONLY',3,'MANUAL','ADD_WORK',?,?,?,'source-a',?,'source / v1','authorized','FAILED','EXECUTION_FAILED',1,NULL,?,?)]; SQL state [HY000]; error code [3819]; Check constraint 'chk_archive_job_waiting_shape' is violated." type="org.springframework.jdbc.UncategorizedSQLException">org.springframework.jdbc.UncategorizedSQLException: PreparedStatementCallback; uncategorized SQLException for SQL [INSERT INTO archive_maintenance_job(job_id,run_id,collection_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,agent_id,binding_version,permission_profile,manager_authorization_revision,publication_mode,operation_code,work_id,canonical_key,title,source_id,source_sha256,source_summary,rights_basis,state,wait_reason,revision,draft_id,request_intent_id,request_sha256) VALUES (?,NULL,?,'0','client-a','owner-a',?,1,?,'7','DRAFT_ONLY',3,'MANUAL','ADD_WORK',?,?,?,'source-a',?,'source / v1','authorized','FAILED','EXECUTION_FAILED',1,NULL,?,?)]; SQL state [HY000]; error code [3819]; Check constraint 'chk_archive_job_waiting_shape' is violated.
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1549)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.realJdbcKeysetsPageAppointmentsJobsManagedWorksAndPublishedReaderShelf(ArchiveMaintenanceConcurrencyMySqlTest.java:3359)
+Caused by: java.sql.SQLException: Check constraint 'chk_archive_job_waiting_shape' is violated.
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 4 more
+</failure>
+  </testcase>
+  <testcase name="businessOutboxSourceAcknowledgementDriftRemainsFailClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.763"/>
+  <testcase name="productionRevocationReplacementAndReassignAdvanceEpochOnceAndFenceOldScope()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.311"/>
+  <testcase name="jobFactsReauthorizeAfterConcurrentManagerRevocationBeforeLockedSnapshot()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="7.735"/>
+  <testcase name="strictWaitingAndCancelledShapesRejectImpossibleRowsOnFreshAndUpgradedSchema()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.234">
+    <failure message="org.opentest4j.AssertionFailedError: the outbox predecessor must remain byte-bound to 18d66419 after LF normalization ==&gt; expected: &lt;5f358f3cd71f5cd8c7ecc0c633ae3aa0770305e913fc1f0d711c5245847213c2&gt; but was: &lt;527bc25401d3e087e5fc1665f9bb0570a32b8c5f119aca94a77b770d7e0e6c06&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: the outbox predecessor must remain byte-bound to 18d66419 after LF normalization ==&gt; expected: &lt;5f358f3cd71f5cd8c7ecc0c633ae3aa0770305e913fc1f0d711c5245847213c2&gt; but was: &lt;527bc25401d3e087e5fc1665f9bb0570a32b8c5f119aca94a77b770d7e0e6c06&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.businessOutboxPredecessorSchema(ArchiveMaintenanceConcurrencyMySqlTest.java:4017)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.withoutPublicationReadback(ArchiveMaintenanceConcurrencyMySqlTest.java:4025)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.previousWaitingShapeSchema(ArchiveMaintenanceConcurrencyMySqlTest.java:3995)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.strictWaitingAndCancelledShapesRejectImpossibleRowsOnFreshAndUpgradedSchema(ArchiveMaintenanceConcurrencyMySqlTest.java:2837)
+</failure>
+  </testcase>
+  <testcase name="stagingCrashResumesSameEditionAndDoesNotPublishPartialContent()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.18">
+    <failure message="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private archive checkpoint storage is unavailable" type="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException">cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private archive checkpoint storage is unavailable
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.error(ArchiveMaintenanceServiceImpl.java:5290)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.verifyCheckpointObjects(ArchiveMaintenanceServiceImpl.java:4856)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureHumanDraftCheckpoints(ArchiveMaintenanceServiceImpl.java:4760)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.publish(ArchiveMaintenanceServiceImpl.java:1889)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.stagingCrashResumesSameEditionAndDoesNotPublishPartialContent(ArchiveMaintenanceConcurrencyMySqlTest.java:1103)
+</failure>
+  </testcase>
+  <testcase name="autoValidatedNativePublishIsAtomicAndLostResponseReplaysOnePublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.605">
+    <failure message="java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed" type="java.lang.IllegalStateException">java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.insertPreparedCheckpoints(ArchiveMaintenanceServiceImpl.java:4907)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureRuntimeDraftCheckpoints$61(ArchiveMaintenanceServiceImpl.java:4803)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureRuntimeDraftCheckpoints(ArchiveMaintenanceServiceImpl.java:4788)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.validateAuthorized(ArchiveMaintenanceServiceImpl.java:2890)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.runtimeValidate(ArchiveMaintenanceServiceImpl.java:2718)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.autoValidatedNativePublishIsAtomicAndLostResponseReplaysOnePublication(ArchiveMaintenanceConcurrencyMySqlTest.java:997)
+</failure>
+  </testcase>
+  <testcase name="dependencyRepairRejectsSourceBindingChangedAfterExternalRead()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.116">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.dependencyRepairRejectsSourceBindingChangedAfterExternalRead(ArchiveMaintenanceConcurrencyMySqlTest.java:558)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 12 more
+</failure>
+  </testcase>
+  <testcase name="legacyManualPublishRecordsFailureWithoutUndoAndAuthorizedEditionReadRetriesPassed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.689"/>
+  <testcase name="genuinelyChangedSkillCandidateAllowsReassignWithoutRepairResolution()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.844">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4162)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4157)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.genuinelyChangedSkillCandidateAllowsReassignWithoutRepairResolution(ArchiveMaintenanceConcurrencyMySqlTest.java:656)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 14 more
+</failure>
+  </testcase>
+  <testcase name="nativeBlockReplayPrecedesCasAndCannotLoseLaterBlocks()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.354"/>
+  <testcase name="pendingDraftPublicationStillRejectsLostPublishPermission()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.126"/>
+  <testcase name="editionHistoryReauthorizesAndReturnsOnlyAtomicPostWithdrawalSnapshot()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.937"/>
+  <testcase name="alternatingRetryableStillBlocksTheSamePhaseAndCode()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.789">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4162)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.alternatingRetryableStillBlocksTheSamePhaseAndCode(ArchiveMaintenanceConcurrencyMySqlTest.java:580)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 13 more
+</failure>
+  </testcase>
+  <testcase name="genuinelyChangedDraftAllowsResumeWithoutConsumingARepairResolution()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.081">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4162)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4157)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.genuinelyChangedDraftAllowsResumeWithoutConsumingARepairResolution(ArchiveMaintenanceConcurrencyMySqlTest.java:637)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 14 more
+</failure>
+  </testcase>
+  <testcase name="blockedFailureRejectsReasonOnlyAndConsumesStructuredRepairResolutionOnce()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.375">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4162)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4157)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.blockedFailureRejectsReasonOnlyAndConsumesStructuredRepairResolutionOnce(ArchiveMaintenanceConcurrencyMySqlTest.java:365)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 14 more
+</failure>
+  </testcase>
+  <testcase name="completePreviousMaintenanceSchemaUpgradesAdditivelyAndMalformedBreakpointFailsClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.604">
+    <failure message="org.opentest4j.AssertionFailedError: the outbox predecessor must remain byte-bound to 18d66419 after LF normalization ==&gt; expected: &lt;5f358f3cd71f5cd8c7ecc0c633ae3aa0770305e913fc1f0d711c5245847213c2&gt; but was: &lt;527bc25401d3e087e5fc1665f9bb0570a32b8c5f119aca94a77b770d7e0e6c06&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: the outbox predecessor must remain byte-bound to 18d66419 after LF normalization ==&gt; expected: &lt;5f358f3cd71f5cd8c7ecc0c633ae3aa0770305e913fc1f0d711c5245847213c2&gt; but was: &lt;527bc25401d3e087e5fc1665f9bb0570a32b8c5f119aca94a77b770d7e0e6c06&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.businessOutboxPredecessorSchema(ArchiveMaintenanceConcurrencyMySqlTest.java:4017)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.withoutPublicationReadback(ArchiveMaintenanceConcurrencyMySqlTest.java:4025)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.legacyWaitingSchema(ArchiveMaintenanceConcurrencyMySqlTest.java:3999)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.completePreviousMaintenanceSchemaUpgradesAdditivelyAndMalformedBreakpointFailsClosed(ArchiveMaintenanceConcurrencyMySqlTest.java:2740)
+</failure>
+  </testcase>
+  <testcase name="withdrawalCasReplacementReplayAndPrivateFactsRemainImmutable()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.734"/>
+  <testcase name="exactAdminPublishKeepsImmutablePendingSnapshotAndExposesCurrentPassedReadback()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.382"/>
+  <testcase name="exactF7811daSourceLifecyclePredecessorUpgradesOnceAndRejectsDrift()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="8.126">
+    <failure message="org.opentest4j.AssertionFailedError: Archive maintenance schema drift at archive_maintenance_job.columns ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: Archive maintenance schema drift at archive_maintenance_job.columns ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:69)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:41)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:228)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.exactF7811daSourceLifecyclePredecessorUpgradesOnceAndRejectsDrift(ArchiveMaintenanceConcurrencyMySqlTest.java:2444)
+</failure>
+  </testcase>
+  <testcase name="businessOutboxIndexAndCheckDriftRemainFailClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.482"/>
+  <testcase name="hostedBindingSuspensionLinearizesWithJobFactsAndClearsCurrentIdentityAuthority()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.056"/>
+  <testcase name="waitingAndLeastPrivilegeJobFactsFailClosedForForeignOrRevokedScopes()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.512"/>
+  <testcase name="revokedPublisherCannotResumePersistedStagingCheckpoint()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.735"/>
+  <testcase name="repeatableReadRealPublishWinsBeforeWithdrawalAndStaleWorkCasLeavesEditionPublished()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="8.144">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;true&gt; but was: &lt;false&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:69)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:41)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:35)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:195)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.repeatableReadRealPublishWinsBeforeWithdrawalAndStaleWorkCasLeavesEditionPublished(ArchiveMaintenanceConcurrencyMySqlTest.java:3492)
+</failure>
+  </testcase>
+  <testcase name="managedWorksExcludeCancelledJobsButKeepFailedJobsAsExplicitRecoveryCandidates()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.988"/>
+  <testcase name="grantAdmissionLockBeforeReclaimCommitProtectsTheReferencedInstallation()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.756"/>
+  <testcase name="reviseContextReturnsExactWorkSnapshotAndConcurrentRevisionChangeBlocksAutoPublish()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.89">
+    <failure message="java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed" type="java.lang.IllegalStateException">java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.insertPreparedCheckpoints(ArchiveMaintenanceServiceImpl.java:4907)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureRuntimeDraftCheckpoints$61(ArchiveMaintenanceServiceImpl.java:4803)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureRuntimeDraftCheckpoints(ArchiveMaintenanceServiceImpl.java:4788)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.validateAuthorized(ArchiveMaintenanceServiceImpl.java:2890)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.runtimeValidate(ArchiveMaintenanceServiceImpl.java:2718)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.reviseContextReturnsExactWorkSnapshotAndConcurrentRevisionChangeBlocksAutoPublish(ArchiveMaintenanceConcurrencyMySqlTest.java:1492)
+</failure>
+  </testcase>
+  <testcase name="sourceArtifactAlteredShaRegexPatternFailsClosedOnMySql()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.456">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;Archive maintenance schema drift at archive_source_artifact_object.checks&gt; but was: &lt;Archive maintenance schema drift at archive_maintenance_job.columns&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;Archive maintenance schema drift at archive_source_artifact_object.checks&gt; but was: &lt;Archive maintenance schema drift at archive_maintenance_job.columns&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:179)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1188)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.sourceArtifactAlteredShaRegexPatternFailsClosedOnMySql(ArchiveMaintenanceConcurrencyMySqlTest.java:179)
+</failure>
+  </testcase>
+  <testcase name="changedRootCauseStartsANewBoundedPairInsteadOfBlocking()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.842">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.changedRootCauseStartsANewBoundedPairInsteadOfBlocking(ArchiveMaintenanceConcurrencyMySqlTest.java:475)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 10 more
+</failure>
+  </testcase>
+  <testcase name="draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.576">
+    <failure message="java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed" type="java.lang.IllegalStateException">java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.insertPreparedCheckpoints(ArchiveMaintenanceServiceImpl.java:4907)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureRuntimeDraftCheckpoints$61(ArchiveMaintenanceServiceImpl.java:4803)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureRuntimeDraftCheckpoints(ArchiveMaintenanceServiceImpl.java:4788)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.validateAuthorized(ArchiveMaintenanceServiceImpl.java:2890)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.runtimeValidate(ArchiveMaintenanceServiceImpl.java:2718)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.draftOnlyValidationCompletesAndReadOnlyRevocationFencesWithoutPublication(ArchiveMaintenanceConcurrencyMySqlTest.java:922)
+</failure>
+  </testcase>
+  <testcase name="explicitResumeCreatesOneHigherEpochPreservesHistoryAndFencesOldRun()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.253"/>
+  <testcase name="exact0d2a6e6CheckpointPredecessorUpgradesOnceAndPartialTableIsRejected()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="10.776"/>
+  <testcase name="checkpointObjectFailureRollbackAndLateAclLeaveNoReferencedChapter()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.482">
+    <failure message="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Archive command message is not current" type="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException">cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Archive command message is not current
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.error(ArchiveMaintenanceServiceImpl.java:5290)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$runtimeStart$46(ArchiveMaintenanceServiceImpl.java:2524)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.runtimeStart(ArchiveMaintenanceServiceImpl.java:2515)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.start(ArchiveMaintenanceConcurrencyMySqlTest.java:4151)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.checkpointObjectFailureRollbackAndLateAclLeaveNoReferencedChapter(ArchiveMaintenanceConcurrencyMySqlTest.java:811)
+</failure>
+  </testcase>
+  <testcase name="revokeWaitingBehindEnsureSeesAndFencesNewlyCommittedGrantUnderRepeatableRead()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.466"/>
+  <testcase name="managerRevocationCommittedBeforeResolvePreventsCandidateCreation()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.337"/>
+  <testcase name="dependencyRepairRechecksManagerAfterExternalReadBeforeConsumingEvidence()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.522">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.dependencyRepairRechecksManagerAfterExternalReadBeforeConsumingEvidence(ArchiveMaintenanceConcurrencyMySqlTest.java:533)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 12 more
+</failure>
+  </testcase>
+  <testcase name="lateFailureCasFailureRollsBackRunGrantJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.033"/>
+  <testcase name="configurationRepairRequiresChangedVerifiedInstallationFacts()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.705">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.configurationRepairRequiresChangedVerifiedInstallationFacts(ArchiveMaintenanceConcurrencyMySqlTest.java:490)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 12 more
+</failure>
+  </testcase>
+  <testcase name="reclaimIndexUpgradeResumesExact21TablePredecessorAndRejectsIndexDrift()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="9.593"/>
+  <testcase name="explicitScopeOrderingAndDuplicatesCannotForgeChangedExecutionInput()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.399">
+    <failure message="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Archive command message is not current" type="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException">cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Archive command message is not current
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.error(ArchiveMaintenanceServiceImpl.java:5290)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$runtimeStart$46(ArchiveMaintenanceServiceImpl.java:2524)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.runtimeStart(ArchiveMaintenanceServiceImpl.java:2515)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.start(ArchiveMaintenanceConcurrencyMySqlTest.java:4151)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.explicitScopeOrderingAndDuplicatesCannotForgeChangedExecutionInput(ArchiveMaintenanceConcurrencyMySqlTest.java:609)
+</failure>
+  </testcase>
+  <testcase name="dependencyRepairRequiresFailedBaselineAndSuccessfulPrivateSourceReadback()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.718">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.dependencyRepairRequiresFailedBaselineAndSuccessfulPrivateSourceReadback(ArchiveMaintenanceConcurrencyMySqlTest.java:514)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 12 more
+</failure>
+  </testcase>
+  <testcase name="lateStartCasFailureRollsBackRunJobAndEventTogether()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.353"/>
+  <testcase name="fortyInstallationsPersistReclaimProgressWithoutStarvingLiveCopiesAndReplayExactBatch()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="6.412"/>
+  <testcase name="explicitReassignUsesOnlySuppliedCurrentAppointmentAndNewEpoch()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.402"/>
+  <testcase name="waitingJobPersistsWithoutExecutionAndResolvesThroughExactCurrentAppointment()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.664"/>
+  <testcase name="sourceArtifactShaCheckMatchesMySqlMetadataAndRejectsInvalidSha()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.921"/>
+  <testcase name="expiredProductionFenceResumesAtNextEpochAndExactReplayKeepsOneReplacement()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.679"/>
+  <testcase name="repairedRuntimeFactsStartOneNewPairButUnchangedFactsCannotUnlockTheNextBlock()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.033">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4162)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4157)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.repairedRuntimeFactsStartOneNewPairButUnchangedFactsCannotUnlockTheNextBlock(ArchiveMaintenanceConcurrencyMySqlTest.java:419)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 14 more
+</failure>
+  </testcase>
+  <testcase name="exact659b66cSchemaUpgradesAtomicallyAndPartialOrDriftedPredecessorsFailClosed()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="9.379"/>
+  <testcase name="secondConsecutiveSameInputRootCauseBlocksKeepsHistoryAndChangedCandidateAllowsRecovery()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.584">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4162)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4157)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.secondConsecutiveSameInputRootCauseBlocksKeepsHistoryAndChangedCandidateAllowsRecovery(ArchiveMaintenanceConcurrencyMySqlTest.java:303)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 14 more
+</failure>
+  </testcase>
+  <testcase name="editionHistoryFinalSnapshotMatchesWithdrawalCommittedDuringReaderIo()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.062"/>
+  <testcase name="exactValidateReplaySurvivesLaterEditButRejectsChangedRequestAndCurrentRevocation()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.57">
+    <failure message="java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed" type="java.lang.IllegalStateException">java.lang.IllegalStateException: Prepared archive checkpoint draft digest changed
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.insertPreparedCheckpoints(ArchiveMaintenanceServiceImpl.java:4907)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureHumanDraftCheckpoints$60(ArchiveMaintenanceServiceImpl.java:4772)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureHumanDraftCheckpoints(ArchiveMaintenanceServiceImpl.java:4765)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.validateDraft(ArchiveMaintenanceServiceImpl.java:1544)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.exactValidateReplaySurvivesLaterEditButRejectsChangedRequestAndCurrentRevocation(ArchiveMaintenanceConcurrencyMySqlTest.java:3286)
+</failure>
+  </testcase>
+  <testcase name="pausedUploadCannotReferenceDeletedGenerationAfterSameKeyRetryReservesBeforeStore()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.762"/>
+  <testcase name="[1] grantState = &quot;ACTIVE&quot;" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.511"/>
+  <testcase name="[2] grantState = &quot;READ_ONLY&quot;" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.6"/>
+  <testcase name="jobHandlingFactsUseCurrentJobReadAuthorityAndOnlyPersistedTrustedProgress()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.963"/>
+  <testcase name="nativeValidationReplayUsesOriginalRequestFingerprintAfterCandidateChanges()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.092"/>
+  <testcase name="exactEighteenTablePredecessorBackfillsPendingBusinessFactsWithoutChangingPrivateBytes()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.026">
+    <failure message="org.opentest4j.AssertionFailedError: the outbox predecessor must remain byte-bound to 18d66419 after LF normalization ==&gt; expected: &lt;5f358f3cd71f5cd8c7ecc0c633ae3aa0770305e913fc1f0d711c5245847213c2&gt; but was: &lt;527bc25401d3e087e5fc1665f9bb0570a32b8c5f119aca94a77b770d7e0e6c06&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: the outbox predecessor must remain byte-bound to 18d66419 after LF normalization ==&gt; expected: &lt;5f358f3cd71f5cd8c7ecc0c633ae3aa0770305e913fc1f0d711c5245847213c2&gt; but was: &lt;527bc25401d3e087e5fc1665f9bb0570a32b8c5f119aca94a77b770d7e0e6c06&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.businessOutboxPredecessorSchema(ArchiveMaintenanceConcurrencyMySqlTest.java:4017)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.exactEighteenTablePredecessorBackfillsPendingBusinessFactsWithoutChangingPrivateBytes(ArchiveMaintenanceConcurrencyMySqlTest.java:2623)
+</failure>
+  </testcase>
+  <testcase name="pendingDraftPublicationResumesSameKeyUnderCurrentPublishAuthorization()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.606">
+    <failure message="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private archive checkpoint storage is unavailable" type="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException">cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private archive checkpoint storage is unavailable
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.error(ArchiveMaintenanceServiceImpl.java:5290)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.verifyCheckpointObjects(ArchiveMaintenanceServiceImpl.java:4856)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureHumanDraftCheckpoints(ArchiveMaintenanceServiceImpl.java:4760)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.publishDraft(ArchiveMaintenanceServiceImpl.java:1612)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.pendingDraftPublicationResumesSameKeyUnderCurrentPublishAuthorization(ArchiveMaintenanceConcurrencyMySqlTest.java:1143)
+</failure>
+  </testcase>
+  <testcase name="platformAgentRootThenManagerAndEnsureExecutionCompleteWithoutReverseLockDeadlock()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.232"/>
+  <testcase name="businessOutboxRejectsNullJobEventSequenceByItsNamedSourceConstraint()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.528"/>
+  <testcase name="twoSourceReconcilerInstancesCannotDeleteNewReferencedGenerationAndOldLateUploadRemainsTracked()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="3.206"/>
+  <testcase name="failedNativeValidationIsReadableByReceiptAndCurrentCandidateWithoutDraftPointer()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.693"/>
+  <testcase name="persistedConfirmationBindsCanonicalTurnAndAllRetriesReuseOneDurableJob()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.648"/>
+  <testcase name="sourcePrepareReturnsDurable202IdentityAndOperationLookupReauthorizesWithoutFakeJob()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.187"/>
+  <testcase name="concurrentSamePublicationKeyConvergesWithoutLosingStageCheckpoints()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.864">
+    <failure message="java.util.concurrent.ExecutionException: cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private archive checkpoint storage is unavailable" type="java.util.concurrent.ExecutionException">java.util.concurrent.ExecutionException: cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private archive checkpoint storage is unavailable
+	at java.base/java.util.concurrent.FutureTask.report(FutureTask.java:122)
+	at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:205)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.concurrentSamePublicationKeyConvergesWithoutLosingStageCheckpoints(ArchiveMaintenanceConcurrencyMySqlTest.java:1216)
+Caused by: cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceException: Private archive checkpoint storage is unavailable
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.error(ArchiveMaintenanceServiceImpl.java:5290)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.verifyCheckpointObjects(ArchiveMaintenanceServiceImpl.java:4856)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureHumanDraftCheckpoints(ArchiveMaintenanceServiceImpl.java:4760)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.publish(ArchiveMaintenanceServiceImpl.java:1889)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.lambda$concurrentSamePublicationKeyConvergesWithoutLosingStageCheckpoints$44(ArchiveMaintenanceConcurrencyMySqlTest.java:1212)
+</failure>
+  </testcase>
+  <testcase name="exactPlatformPredecessorAddsReclaimJournalAtomicallyAndRejectsPartialDrift()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="5.203"/>
+  <testcase name="collectionScopeGarbageCannotForgeChangedExecutionInput()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.525">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4174)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.createBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4162)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.collectionScopeGarbageCannotForgeChangedExecutionInput(ArchiveMaintenanceConcurrencyMySqlTest.java:589)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 13 more
+</failure>
+  </testcase>
+  <testcase name="exactAdminBlockPatchSnapshotsSurviveRevokedAppointmentAndManagedWorksKeepNullActiveHistory()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.94"/>
+  <testcase name="validationRecoveryReadsOnlyCurrentRevisionAndExactActorScope()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.464"/>
+  <testcase name="corruptedStagingCheckpointNeverBecomesReadyOrPublished()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.829">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;ARCHIVE_STAGING_CONTENT_MISMATCH&gt; but was: &lt;DEPENDENCY_UNAVAILABLE&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;ARCHIVE_STAGING_CONTENT_MISMATCH&gt; but was: &lt;DEPENDENCY_UNAVAILABLE&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:179)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1188)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.corruptedStagingCheckpointNeverBecomesReadyOrPublished(ArchiveMaintenanceConcurrencyMySqlTest.java:1256)
+</failure>
+  </testcase>
+  <testcase name="genuinelyChangedWorkScopeCandidateAllowsReassignForExistingWork()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.71">
+    <failure message="org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant&#10;(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,&#10; manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,&#10; runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,&#10; skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,&#10; expires_at,state,revision)&#10;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)&#10;]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'" type="org.springframework.dao.DuplicateKeyException">org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [INSERT INTO archive_execution_grant
+(grant_ref,run_id,tenant_id,client_id,owner_jiacn,appointment_id,appointment_revision,
+ manager_authorization_revision,agent_id,binding_version,execution_ref,command_id,active_attempt,execution_epoch,
+ runtime_instance_id,registration_hash,skill_origin,installation_ref,installation_revision,
+ skill_key,skill_version,package_sha256,dispatch_key,request_sha256,context_ref,
+ expires_at,state,revision)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',1)
+]; Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:104)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:688)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:965)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1009)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1019)
+	at cn.jia.chat.archive.maintenance.store.JdbcArchiveMaintenanceStore.insertExecutionGrant(JdbcArchiveMaintenanceStore.java:676)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.lambda$ensureExecution$21(ArchiveMaintenanceServiceImpl.java:1002)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.lambda$required$0(SpringArchiveTransactions.java:27)
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:137)
+	at cn.jia.chat.archive.service.SpringArchiveTransactions.required(SpringArchiveTransactions.java:27)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceServiceImpl.ensureExecution(ArchiveMaintenanceServiceImpl.java:936)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.driveBlockedFailure(ArchiveMaintenanceConcurrencyMySqlTest.java:4191)
+	at cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest.genuinelyChangedWorkScopeCandidateAllowsReassignForExistingWork(ArchiveMaintenanceConcurrencyMySqlTest.java:688)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-command-a' for key 'archive_execution_grant.uk_archive_execution_command'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:970)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:669)
+	... 11 more
+</failure>
+  </testcase>
+  <testcase name="reclaimFenceCommitBeforeGrantAdmissionMakesTheInstallationIneligible()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="4.222"/>
+  <testcase name="adminOperationFinalReauthorizationRejectsPublishPermissionRevokedDuringReaderIo()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.836"/>
+  <testcase name="editionFinalReauthorizationRejectsPermissionRevokedDuringReaderIo()" classname="cn.jia.chat.archive.maintenance.service.ArchiveMaintenanceConcurrencyMySqlTest" time="2.42"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
