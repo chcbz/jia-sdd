@@ -9,13 +9,15 @@ Owner: develop-sync-owner. User authorized pulling remote develop, committing an
 - Web: local relay fix already exists in remote. Merge commit5eb117fa3f7a68e9af26ea62d33e5329d603634e has exactly the same tree f6f2f4bf35055b1bc88eb2d09b2d11274dd03cdf as prior remote75766a3b. No frontend product code changed in the integration, no local production build.
 - API: candidate73f19a7d599b95438f5fbb3c0bedec63f0789d97 (tree108941dbaf5aabbe809225a6eec85f32cdbdbec6) merges remotece047c43 and local033f200e. Only adds history fixture + Gradle sourceSet; latest production code and all newer Gradle tasks preserved.
 
-## Delivered / pending
+## Delivered (verified 2026-10-09 01:28 +08:00)
 
 - Root and Web develop integration pushed; main workspaces fast-forwarded. Final root documentation receipt commit recorded by Git history.
-- API main local develop fast-forwarded to candidate; candidate backed up on origin/codex/develop-sync-api-20261009. **Remote API develop is not yet updated**, pending exact-candidate verification. No old fixed-source PASS reused as new candidate proof.
+- API local and remote develop now both73f19a7d599b95438f5fbb3c0bedec63f0789d97. Normal push completed after new exact-candidate verification; remote had not advanced. No old fixed-source PASS reused.
 - 67 orchestration tool tests +6 canonical path tests +14 voice-profile tests PASS in root integration worktree. Markdown links checked; corrected workflow link to published spec.md rather than local-only README.
-- API real HTTP/MySQL/browser +validateLayering command is queued through existing orchestrator. Evidence run /var/tmp/cyf-execution-history-check/run-t_z2p0p2; command output /var/tmp/cyf-develop-sync-20261009/api-check-1.json. Empty log while waiting is NOT test PASS.
-- Existing lock owner UR-04-20261008 reports an owned fixture process deadlock and awaits user authorization for its own cleanup. Coordination alert sent through orchestrator, no process preemption or evidence changes. Once lock releases, queued verifier may run; **it does not automatically push**. Owner must inspect result, fix actual failures if any, then normal-push candidate develop and refresh this handoff/ledger. If remote moved, re-integrate and revalidate exact changed inputs rather than force push.
+- Initial verification FAILED at Chromium CDP startup (loopback ECONNREFUSED), not a failed business assertion. Evidence: /var/tmp/cyf-execution-history-check/run-t_z2p0p2/gradle.log. Underlying startup failure remains unproven because shared helper discarded stderr. Independent binary and pinned CDP-helper launches subsequently PASS. Root commit0da047ca preserves Chromium stderr per run; no business code or assertion relaxed.
+- A retry was rejected before Gradle execution because a ledger transition omitted the explicit owner and was denied by duplicate-owner validation; corrected the transition with the existing owner, without modifying another task.
+- New exact API HTTP/MySQL/browser +validateLayering verification **PASS**: /var/tmp/cyf-execution-history-check/run-nmkv6epu/summary.json; elapsed130.447s (Gradle1m23s), first consumer feedback21.902s. 17 consumer assertions/8 HTTP requests;29 browser checks/15 browser HTTP requests;26 real mapper queries;zero forbidden calls and unchanged row snapshot. Chromium startup stderr now retained. 33 runner unit tests also PASS. This proves the tested slice, not formal frontend Flow/full Hall/OAuth or deployment.
+- Global Gradle lock respected; no cancellation or control of other owners' processes. Candidate normal-pushed only after inspecting PASS.
 - Current root gitlinks retain their prior integration baseline; no claim of a newly accepted/released component pair. No Flow start/config write/deployment/restart. Read-only current configs showed push triggers with verification/artifact work; no deployment step was added or executed by this task.
 
 ## Preservation of unrelated work
@@ -29,4 +31,4 @@ Owner: develop-sync-owner. User authorized pulling remote develop, committing an
 
 ## Next action
 
-Read queued verifier result after normal lock release. On PASS, normal push API candidate to develop, verify remote SHA, update ledger status and handoff; on failure use existing attribution/remediation. Do not kill UR-04 processes, deploy or publish unrelated drafts to finish this task.
+Requested integration/commit/push completed. Preserve unrelated unfinished local drafts for their owners. Deployment is a separate versioned release and was not performed or requested here; gitlinks still retain the prior release/integration pair.
