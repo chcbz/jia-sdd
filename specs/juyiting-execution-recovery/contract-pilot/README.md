@@ -7,6 +7,7 @@
 |入口|实际覆盖|定位|
 |---|---|---|
 |`check-consumer.mjs`|生产 Vue composable + 注入 JSON 响应，30条断言|快速消费者诊断，不证明 HTTP/数据库|
+|`execution_history_check.py --browser`|上述真实链路 + 生产 PersonalWorkspace.vue 在 Chromium 的29项检查、15次真实历史HTTP；桌面/竖屏/低高度横屏|独立组件浏览器定向诊断，不是整站/Flow验收|
 |API `:agent:jia-agent-service:executionHistoryHttp` + `check-http.mjs`|签名 JWT → loopback Tomcat/Spring Security → 生产 Controller/事务 service/DAO/MyBatis → 独占 MySQL8；生产 createApi/useHttp/fetch → Vue 状态|真实只读跨端链路；前端部分仍是本地低成本诊断|
 
 共享期望/种子唯一来源是 `execution-history.json`。schemaVersion2 将旧的不可能分页样例（limit20、只有1条却返回游标）修正为20+1条；没有修改产品逻辑迎合测试。JSON `source` 是基线，**实际受测 commit/tree、输入摘要见 evidence**。
@@ -48,5 +49,16 @@ node /home/isp/wsps/cyf/specs/juyiting-execution-recovery/contract-pilot/check-c
 - 本轮结果及源码身份见 `evidence/20261008-http.json`，执行/修复/集成记录见根目录任务handoff `EXECUTION-HISTORY-HTTP-20261008.md`。
 - 这是**执行历史只读接口**的真实链路，不代表整个聚义厅全部跨端功能已验收。
 - JWT为合成签名身份，安全链为测试专用 Spring Security 配置；不证明生产OAuth登录或整站安全配置。
-- Vue响应式状态在Node运行，不是浏览器页面渲染/E2E；复用已有node_modules，不声称依赖安装完整性验证。
+- 默认模式仅在Node运行Vue状态；`--browser`追加独立生产组件浏览器验证，边界见下文。两者复用已有node_modules，不声称依赖安装完整性验证。
 - 未运行前端正式Flow，未部署；不得当作发布门禁通过或已上线。
+
+## 浏览器历史检查（2026-10-08 已核验）
+
+在上面的单命令追加 `--browser`。使用自己的任务ID与固定源码；仍不自动认领、安装或部署。默认使用本机已有 `/usr/lib64/chromium-browser/chromium-browser`，其他主机显式传 `--chrome /absolute/path/to/chromium-binary`（实体二进制，而非外部包装脚本）。浏览器及同目录资源、Vite/Vue插件/ws实际依赖闭包、新增脚本均进入指纹；Node-only旧证据不能冒充浏览器通过。执行过程中只在loopback开放临时预览/调试端口，完成后关闭本次进程和服务。
+
+- 生产 `PersonalWorkspace.vue`、history composable、createApi/useHttp不改源码；Vite开发预览代理到同一真实Java/MySQL fixture。历史响应无mock。
+- 1440×900、390×844、844×390：20条首屏→追加21条且不重复→末页隐藏按钮；刷新回20条；ownerA切ownerB同步清空旧状态/DOM；空数据与broken身份真实503分别展示。
+- 控件先滚动到可见区域、校验中心点未遮挡，再用CDP鼠标事件操作；不是DOM `.click()`替代可操作性。三张截图及摘要纳入证据完整性检查。手机是Chromium视口模拟，不是物理设备。
+- 独立组件挂载中身份/store为合成，文件列表/roster/capabilities为明确辅助桩；初次recover限定为真实loadHistory(adopt:false)，不验证精确执行恢复、历史行选择、整站聚义厅容器或生产OAuth。没有付费Provider调用。
+- 浏览器扩展结果在 `result.json → frontendOutput → browser`（frontendOutput是JSON字符串）；命令顶层的17 assertions/8 requests仍指原Node链路，不包括额外29项浏览器检查/15次请求。
+- 当前核验API033f200e、Web75766a3b；不是主Web checkout或当前线上状态。证据归档 `evidence/browser-20261008/proof.json`；交接见 `docs/implementation/handoffs/EXECUTION-HISTORY-BROWSER-20261008.md`。不重标旧deferred任务完成。
