@@ -42,6 +42,7 @@
 - **统一版本化部署：确定发布版本 → 固定源码 commit/tree → 对应环境测试/构建 → 同批不可变制品 → 部署 → 在线核验。** 前端绑定同 Flow Run 制品；后端绑定同本地 build ID、日志和制品 SHA-256。版本、源码、制品和部署记录须对应，不得将验证成功报告为版本已上线。
 - 前端本机仅开发预览、控制面与低成本定向诊断；禁止本机生产打包、源码到生产脚本或 Flow 失败后回退本机构建。本地结果不替代精确 commit 的前端 Flow 证据。
 - 后端在固定 commit 的干净源码目录或独立 worktree 构建，不在生产安装目录编译，不发布脏工作区。所有 Gradle 测试/构建/诊断先读最新相关 `build.gradle`，通过 `python3 ops/orchestration/cyf_orchestrator.py gradle ...` 串行执行；保留依赖完整性、定向回归与 `validateLayering`。
+- 后端正式本地发布默认复用持久依赖与compile-only缓存：既有Gradle入口识别本地release opt-in及匹配的固定metadata init，无缓存参数即可启用；测试、`validateLayering`、依赖完整性及fresh最终JAR仍执行，不缓存测试/生产JAR。普通诊断和Flow不受影响，显式隔离/无编译缓存诊断保留；冷缓存不承诺热缓存耗时。用法、实际argv证据和工具回读见 `ops/orchestration/README.md`（2026-10-09核对）。
 - 后端本地发布采用可追溯制品安装，保留统一发布锁、身份/权限、备份、可恢复安装和健康/业务核验，不恢复旧 pull/build/restart 快捷脚本。现有 `*-flow-deploy` 要求真实 Run；本地制品入口需完成适配和验证后使用，不伪造云端回执。
 - 发布记录包含版本、commit/tree、前端 Flow Run 或后端本地 build ID/日志、测试摘要、制品摘要、部署顺序和在线核验。配置保存、历史回执或候选成功不等于当前发布成功。本次规则更新不直接触发构建、部署或服务重启。详见 `docs/aliyun-flow-cicd-strategy.md`。
 

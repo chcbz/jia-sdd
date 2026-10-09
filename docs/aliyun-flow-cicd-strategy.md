@@ -39,7 +39,9 @@
 
 ## 后端本地构建缓存提速（2026-10-09）
 
-普通本地后端构建通过既有 `cyf_orchestrator.py gradle` 的 `--dependency-cache-home /var/cache/cyf-gradle-local` 复用受控私有Gradle依赖缓存，不再每批使用空home。仅在干净固定commit/tree及新输出目录执行；可显式启用 `--build-cache` 配合固定本地metadata init的compile-only策略：仅JavaCompile按内容指纹复用，其余任务禁用输出缓存，测试禁止up-to-date；仍执行同批定向测试、`validateLayering`、依赖来源/SHA与fresh bootJar完整性检查，不缓存测试结果/生产JAR、不删除安全回归。home信任边界与参数冲突检查见 `ops/orchestration/README.md`。
+正式本地后端构建通过既有 `cyf_orchestrator.py gradle` **默认**复用受控私有Gradle依赖缓存，并启用compile-only输出缓存：识别本地release opt-in与匹配的固定metadata init，无缓存参数即可选择 `/var/cache/cyf-gradle-local` 并加入 `--build-cache`；显式诊断/隔离参数可覆盖，Flow和普通诊断不变。仅在干净固定commit/tree及新输出目录执行。compile-only策略：仅JavaCompile按内容指纹复用，其余任务禁用输出缓存，测试禁止up-to-date；仍执行同批定向测试、`validateLayering`、依赖来源/SHA与fresh bootJar完整性检查，不缓存测试结果/生产JAR、不删除安全回归。home信任边界与参数冲突检查见 `ops/orchestration/README.md`。
+
+2026-10-09授权收尾已按既有锁、备份与原子安装同步主机admission白名单（当前SHA `49ff62e470beadf5c5c570b007d1d30a6dd18b1f32df217274d89121ff77728b`）；cached/skipped测试、分层和bootJar仍拒绝。应用未发布/重启，历史helper catalog与authority/receipt不改写，后续发布生成新批次catalog。默认策略实现源码 `638777ed`，证据与恢复原值见原handoff。
 
 10分钟是“测试/构建/安装核验执行时间”的优化目标，不是强制超时或减免安全门禁。历史安装约307秒来自日志文件起止，未包含排队与批次中间等待；本次没有授权/触发生产安装，因此新构建加历史安装仅用于评估，不冒充完整发布达标。固定输入、实测结果与证据见 `docs/implementation/handoffs/BACKEND-RELEASE-10M-20261009.md`。冷缓存和其它源码/selector不作无实测承诺。
 

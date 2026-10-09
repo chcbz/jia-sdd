@@ -31,3 +31,21 @@
 - 只读核对：当前安装的`/usr/local/libexec/cyf-api-local/admit-api-local.py`尚不支持`--build-cache`。后续授权版本发布须正常同步并核验本次控制工具版本/摘要，之后消费对应固定新批次制品；不能绕过旧工具拒绝或伪造回执。旧工具仍可接受`--no-build-cache`依赖缓存路径，但4m49s+23s打包+历史安装约10分19秒，不声称满足目标。
 - 热缓存同SHA候选已构建/制品通过、源码可集成；生产和端到端目标仍待授权发布。日志/原始fixture/制品保持上述task私有目录，小型摘要位于`docs/implementation/evidence/backend-release-10m-20261009/summary.json`。稳定用法回写既有README和交付策略，不将实施流水账写入架构。
 - 分段定位/实现/验证/等待的完整同质时长没有完整埋点，未知不补写；仅引用真实Gradle/包装计时，未承诺整体开发周期缩短。
+
+## 用户授权收尾：BACKEND-CACHE-DEFAULTS-CLOSEOUT-20261009
+
+- Owner：backend-cache-closeout-main；2026-10-09。根branch develop/base`d01a9683`，API本地/远端develop固定`1e9111028fbdff1ae5452f64aec843e85e81ad59`/tree`0416b722d735c58af4653892b6ee269e8f9d1498`，只读远端核对。当前根/API tracked干净（收尾改动前），原untracked不动。
+- 用户授权把默认路径及安装校验工具收尾；不发布应用、不重启/停止服务、不写生产数据/DDL、不修改历史批次authority/catalog/receipt。
+- 范围：既有orchestrator只针对`CYF_LOCAL_RELEASE_OPT_IN=1`+local context默认缓存；metadata固定hash校验防旧策略启用测试缓存。正式调用没有显式cache flag时默认`--build-cache`，没有home参数时默认身份专属私有home；显式诊断参数保留。未绑定匹配metadata拒绝，不作用于Flow或普通专项诊断。
+- 实际effective argv与缓存policy存入原证据记录，fixture/producer应记录effective argv；cache命中同时核对policy，不能复用不同策略的旧整轮证据。
+- 安装变更候选只比当前root-owned helper多`--build-cache`白名单，准备原值快照、既有coordinator→release→lifecycle锁、原子替换与恢复；不改wrapper/应用/JAR或历史helper catalog。
+- 最早验证：默认策略隔离测试、旧/新admission grammar/fresh任务拒绝回归、只读canonical path8项；正式默认路径候选按同API SHA在新的私有worktree验证，不复制项目输出，保留原282测试/layering/fresh bootJar。
+
+### 收尾已核验（2026-10-09）
+- 默认策略源码commit `638777ed61029e4d94369b18d7026e5044644786`；功能在正式local release上下文自动启用，不依赖本聊天记忆。已回写项目AGENTS、既有工具README与交付策略，不修改共享skill/其它项目。
+- 新固定API worktree `/var/tmp/cyf-backend-cache-closeout-20261009/source`：调用未传`--dependency-cache-home`/`--build-cache`且未设置GRADLE_USER_HOME；命令实际补默认flag、选择受控home，effective argv与policy已在原证据cache绑定。207任务130执行/77编译命中，282pass/0fail/0error/0skip；所有原测试、layering与fresh bootJar仍实际执行。Gradle子进程134.142s，原producer核验/打包22.350s，合计156.492s（约2分36秒），不是应用发布。
+- **上一节“安装工具尚不支持新flag”的限制已经解除**：19:09:25+08:00，仅将root-owned `/usr/local/libexec/cyf-api-local/admit-api-local.py`的argv白名单增加`--build-cache`，安装前值严格匹配，不覆盖并发修改。已按既有coordinator→release→lifecycle锁，保存0700目录/0600原值备份后原子替换与回读。SHA `49ff62e470beadf5c5c570b007d1d30a6dd18b1f32df217274d89121ff77728b`与固定源码一致。
+- 安装后直接调用实际installed模块的纯校验器：接受新flag及fresh任务，12种required-task cached/up-to-date/skipped/no-source情况仍拒绝；192项隔离回归通过（orchestration92、admission92、canonical path8）。首次安装脚本把健康status对象误当字符串，在写入前停止；确认真实HTTP200/status.code=UP后修正解析，未伪报故障、未重复相同输入盲试。
+- 安装前后canonical PID1248394/startTicks15009554/JAR15d3456e全摘要/healthUP一致，应用未部署/启停、无DDL、历史catalog/authority/receipt未修改。没有伪造Flow回执或新版本发布记录。
+- 原helper备份 `/home/isp/baks/cyf-backend-cache-closeout-20261009/admit-api-local.py.before`，before SHA `a5d4f89693e02903001f148c5fdac1613d2756c26d334fd78702df054a16c32b`。若需恢复旧精确批次，先按同锁顺序检查当前helper仍归本次候选并恢复已核验原值；下一次新发布绑定当前工具生成新catalog，不能改写历史绑定。
+- 收尾证据：`docs/implementation/evidence/backend-release-10m-20261009/closeout-summary.json`及`closeout-installed-helper.json`；日志/fixture/制品在本任务私有scratch。开发/默认入口/工具同步均完成；完整应用发布10分钟目标仍未实测。新156.492s+历史307.357s=463.849s（约7分44秒）仅估算，cold/changed-source和等待不承诺。
