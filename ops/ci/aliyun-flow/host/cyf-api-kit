@@ -31,7 +31,8 @@ RUNTIME_UID=''
 RUNTIME_GID=''
 SECRET_FILE="$DEPLOY_DIR/.jasypt-password"
 VOICE_ENV_FILE="$DEPLOY_DIR/.voice-runtime.env"
-LOG_DIR=/var/log/cyf-api
+# New release logs use a physical root-owned directory; historical alias is untouched.
+LOG_DIR=/var/log/cyf-api-flow
 PID_FILE="$RUNTIME_DIR/cyf-api-kit.pid"
 ARCHIVE_PID_FILE="$RUNTIME_DIR/archive-reader-enable.pid"
 RUNTIME_RECORD="$RUNTIME_DIR/cyf-api-kit.runtime"
@@ -869,7 +870,7 @@ start_api() {
     "${startup_debug_args[@]}" \
     --spring.ai.mcp.client.enabled=false \
     --spring.ai.mcp.client.toolcallback.enabled=false \
-    '--spring.autoconfigure.exclude=org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration,org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration' \
+    '--spring.autoconfigure.exclude=org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration,org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration,org.springframework.ai.mcp.client.common.autoconfigure.annotations.McpClientAnnotationScannerAutoConfiguration' \
     --archive.reader.enabled=true \
     --archive.reader.allowed-scopes[0].tenant-id=oH2zD1PUPvspicVak69uB4wDaFLg \
     --archive.reader.allowed-scopes[0].client-id=jiafewnnv58ec2379c \
