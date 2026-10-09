@@ -6,6 +6,7 @@ Retains the existing transactional installer and same-run artifact validation.
 import fcntl
 import grp
 import hashlib
+import io
 import json
 import os
 import re
@@ -15,6 +16,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -1622,7 +1624,7 @@ class LocalReadSet:
                 return root, 0o600
         raise LocalRejected('PATH_UNSAFE')
 
-    def _open(self, path):
+    def _open(self, path, retain=True):
         anchor, mode = self._classification(path)
         directory = None
         leaf = None
@@ -1652,12 +1654,18 @@ class LocalReadSet:
             if mode == 0o755:
                 local_need(before.st_gid == 0, 'PATH_UNSAFE')
             blocks = []
+            digest = hashlib.sha256()
+            length = 0
             while True:
                 block = os.read(leaf, 1024 * 1024)
                 if not block:
                     break
-                blocks.append(block)
-            data = b''.join(blocks)
+                digest.update(block)
+                length += len(block)
+                if retain:
+                    blocks.append(block)
+            data = b''.join(blocks) if retain else digest.hexdigest()
+            local_need(length == before.st_size, 'DIGEST_MISMATCH')
             after = os.fstat(leaf)
             current_info = os.stat(path.name, dir_fd=directory, follow_symlinks=False)
             local_need(local_signature(before) == local_signature(after) == local_signature(current_info),
@@ -1667,8 +1675,9 @@ class LocalReadSet:
             identity = (before.st_dev, before.st_ino)
             local_need(identity not in self.inodes or self.inodes[identity] == path, 'PATH_UNSAFE')
             previous = self.saved.get(path)
-            local_need(previous is None or previous == (data, local_signature(before)), 'DIGEST_MISMATCH')
-            self.saved[path] = (data, local_signature(before))
+            observation = (digest.hexdigest(), length, local_signature(before))
+            local_need(previous is None or previous == observation, 'DIGEST_MISMATCH')
+            self.saved[path] = observation
             self.inodes[identity] = path
             os.lseek(leaf, 0, os.SEEK_SET)
             result = (leaf, data, before.st_size)
@@ -1691,6 +1700,21 @@ class LocalReadSet:
             return data
         finally:
             os.close(fd)
+
+    def stream(self, ref):
+        """Verify large immutable payload by digest; return this same rewound FD.
+
+        Package/JAR bytes are not retained in the closure's memory. Recheck still
+        binds the original inode, custody, size, timestamps and full SHA-256.
+        """
+        local_ref(ref)
+        fd, digest, size = self._open(local_path(ref['path']), retain=False)
+        try:
+            local_need(size == ref['size'] and digest == ref['sha256'], 'DIGEST_MISMATCH')
+        except BaseException:
+            os.close(fd)
+            raise
+        return fd
 
     def external(self, path, expected_sha256):
         """Only an external decision/authority digest, never a document self hash."""
@@ -1718,12 +1742,9 @@ class LocalReadSet:
         return fd  # caller must close; no pathname reopen between verification and exec
 
     def recheck(self):
-        for path, (data, unused) in list(self.saved.items()):
-            fd, actual, ignored = self._open(path)
-            try:
-                local_need(actual == data, 'DIGEST_MISMATCH')
-            finally:
-                os.close(fd)
+        for path in list(self.saved):
+            fd, ignored_digest, ignored_size = self._open(path, retain=False)
+            os.close(fd)
 
 
 def local_verify_publication(decision, catalog, reader):
@@ -1759,7 +1780,155 @@ def local_verify_publication(decision, catalog, reader):
     return admitted, verified
 
 
+
+def local_stream_checked(reader, ref):
+    """Validate a large copied evidence/payload ref without retaining its bytes."""
+    fd = reader.stream(ref)
+    os.close(fd)
+
+
+def local_verify_package_resources(admitted, plan, reader):
+    """Bind exact-five package, published payloads and all same-JAR SQL resources.
+
+    The protected original publication verifier authenticates build/manifests;
+    this additional read-only check binds the frozen SchemaPlan to actual nested
+    resource bytes. SQL hashes never stand in for live catalog or privilege proof.
+    """
+    seen = set()
+    fd = reader.stream(admitted['package'])
+    try:
+        with os.fdopen(fd, 'rb') as handle:
+            fd = None
+            with tarfile.open(fileobj=handle, mode='r|gz') as archive:
+                for member in archive:
+                    name = member.name
+                    local_need(name in LOCAL_MEMBERS and name not in seen and member.isreg()
+                        and member.size > 0 and not member.sparse and not member.pax_headers,
+                        'PACKAGE_INVALID')
+                    ref = admitted['payloads'][name]
+                    local_need(member.size == ref['size'], 'PACKAGE_INVALID')
+                    source = archive.extractfile(member)
+                    local_need(source is not None, 'PACKAGE_INVALID')
+                    digest = hashlib.sha256()
+                    size = 0
+                    with source:
+                        for block in iter(lambda: source.read(1024 * 1024), b''):
+                            digest.update(block)
+                            size += len(block)
+                    local_need(size == ref['size'] and digest.hexdigest() == ref['sha256'],
+                               'PACKAGE_INVALID')
+                    seen.add(name)
+        local_need(seen == set(LOCAL_MEMBERS), 'PACKAGE_INVALID')
+    except (OSError, tarfile.TarError, EOFError, ValueError):
+        raise LocalRejected('PACKAGE_INVALID') from None
+    finally:
+        if fd is not None:
+            os.close(fd)
+    for ref in admitted['payloads'].values():
+        local_stream_checked(reader, ref)
+    fd = reader.stream(admitted['payloads']['application.jar'])
+    try:
+        with os.fdopen(fd, 'rb') as handle:
+            fd = None
+            with zipfile.ZipFile(handle) as boot:
+                names = boot.namelist()
+                local_need(len(names) == len(set(names)), 'SCHEMA_RESOURCE_MISMATCH')
+                for outer in (LOCAL_AGENT_MAPPER, LOCAL_CHAT_MAPPER):
+                    entries = [v for v in plan['entries'] + plan['resourcePreconditions']
+                               if v['resourceOuter'] == outer]
+                    local_need(names.count(outer) == 1, 'SCHEMA_RESOURCE_MISMATCH')
+                    with zipfile.ZipFile(io.BytesIO(boot.read(outer))) as nested:
+                        members = nested.namelist()
+                        local_need(len(members) == len(set(members)), 'SCHEMA_RESOURCE_MISMATCH')
+                        for entry in entries:
+                            inner = entry['resourceInner']
+                            local_need(members.count(inner) == 1
+                                and hashlib.sha256(nested.read(inner)).hexdigest() == entry['sqlSha256'],
+                                'SCHEMA_RESOURCE_MISMATCH')
+    except (OSError, zipfile.BadZipFile, RuntimeError, KeyError, EOFError, ValueError):
+        raise LocalRejected('SCHEMA_RESOURCE_MISMATCH') from None
+    finally:
+        if fd is not None:
+            os.close(fd)
+    reader.recheck()
+
+
+def local_read_install_inputs(decision_path, decision_sha256):
+    """Read all immutable input refs, without observing/mutating transaction slots.
+
+    Used by read-only inspect and later by the sole original install transaction.
+    It does not create authority, approve incoming, query DB/config/health or prove
+    a current runtime/identity/inflight generation; those are install-time checks.
+    """
+    reader = LocalReadSet()
+    raw, ref = reader.external(decision_path, decision_sha256)
+    decision = local_install_decision(local_json(raw, 'AUTHORITY_INVALID'))
+    authority = local_maintenance_authority(local_json(reader.checked(decision['maintenanceAuthority']),
+                                                       'AUTHORITY_INVALID'))
+    local_authority_matches(decision, authority)
+    local_stream_checked(reader, authority['authorizationEvidence'])
+    plan = local_schema_plan(local_json(reader.checked(decision['schemaPlan']),
+                                       'SCHEMA_PREREQUISITE_MISSING'))
+    catalog = local_helper_catalog(local_json(reader.checked(decision['helperCatalog']),
+                                             'HELPER_CATALOG_MISMATCH'))
+    local_need(catalog['helpers']['cyf-api-e05-additive-schema']['sha256'] == E05_SCHEMA_RUNNER_SHA256,
+               'HELPER_CATALOG_MISMATCH')
+    for entry in plan['entries']:
+        name = 'cyf-api-additive-schema' if entry['feature'] == 'F06' else 'cyf-api-e05-additive-schema'
+        local_need(entry['runner'] == catalog['helpers'][name], 'HELPER_CATALOG_MISMATCH')
+    for name, helper in catalog['helpers'].items():
+        fd = reader.helper_fd(name, helper)
+        os.close(fd)
+    for entry in plan['resourcePreconditions']:
+        local_stream_checked(reader, entry['actualSchemaProof'])
+    for name in LOCAL_PROOF_REFS:
+        local_stream_checked(reader, plan[name])
+    for name, observation in decision['precondition'].items():
+        if name in ('installedRecord', 'approval', 'identityInventory', 'inflightInventory', 'schemaInventory') \
+                and observation is not None:
+            local_stream_checked(reader, observation)
+    admitted, verified = local_verify_publication(decision, catalog, reader)
+    for name in ('batchAuthority', 'trustedRecord', 'verificationRecord'):
+        local_stream_checked(reader, admitted['authority'][name])
+    local_stream_checked(reader, admitted['evidence']['buildEvidence'])
+    for snapshot in admitted['evidence']['snapshots']:
+        local_stream_checked(reader, snapshot['file'])
+    local_verify_package_resources(admitted, plan, reader)
+    reader.recheck()
+    binding = local_binding_from_decision(decision, ref)
+    return {'decision': decision, 'decisionRef': ref, 'authority': authority,
+            'schemaPlan': plan, 'helperCatalog': catalog, 'admitted': admitted,
+            'verified': verified, 'release': binding, 'reader': reader}
+
+
+def local_inspect(decision_path, decision_sha256):
+    inputs = local_read_install_inputs(decision_path, decision_sha256)
+    return {'status': 'inputs_verified', 'scope': 'read-only-source-inspection',
+            'source': inputs['decision']['source'], 'binding_sha256': local_binding_sha(inputs['release']),
+            'productionAuthorized': False, 'installation': 'NOT_RUN',
+            'runtimeReadiness': 'NOT_MEASURED', 'businessAcceptance': 'NOT_RUN'}
+
+
+def local_main(argv):
+    """Strict read-only CLI. No parsing fallback into historical Flow operations."""
+    try:
+        local_need(os.geteuid() == 0, 'AUTHORITY_INVALID')
+        local_need(type(argv) is list and len(argv) == 5 and argv[0] == '--local-inspect'
+            and argv[1] == '--decision' and argv[3] == '--decision-sha256', 'INPUT_INVALID')
+        result = local_inspect(argv[2], argv[4])
+    except LocalRejected as exc:
+        print(json.dumps({'status': 'rejected', 'error': exc.code}, sort_keys=True, separators=(',', ':')))
+        return 1
+    except OSError:
+        print(json.dumps({'status': 'rejected', 'error': 'IO_FAILURE'}, sort_keys=True, separators=(',', ':')))
+        return 1
+    print(json.dumps(result, sort_keys=True, separators=(',', ':')))
+    return 0
+
+
 def main():
+    if any(arg.startswith('--local-') for arg in sys.argv[1:]):
+        raise SystemExit(local_main(sys.argv[1:]))
     if os.geteuid() != 0:
         fail('must run as root')
     if len(sys.argv) != 6:

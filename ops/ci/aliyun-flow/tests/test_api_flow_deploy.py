@@ -894,5 +894,302 @@ class ApiLocalProtectedReadSetTest(unittest.TestCase):
         self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
 
 
+
+class ApiLocalReadonlyInspectTest(unittest.TestCase):
+    """Source fixtures with synthetic verifier output, NOT business acceptance.
+
+    Exercise actual protected FDs, exact-five tar and nested resource bytes. The
+    fake verifier authenticates nothing; no real build/admission/DB/service runs.
+    """
+    write = ApiLocalProtectedReadSetTest.write
+    reject = ApiLocalProtectedReadSetTest.reject
+
+    def setUp(self):
+        import ast
+        ApiLocalProtectedReadSetTest.setUp(self)
+        from unittest.mock import patch
+        # Only the private unit fixture's original runner paths move together;
+        # production has fixed SCHEMA_RUNNER/E05 paths and no root overrides.
+        self.schema_paths_patch = patch.multiple(deploy,
+            SCHEMA_RUNNER=Path(self.paths['cyf-api-additive-schema']),
+            E05_SCHEMA_RUNNER=Path(self.paths['cyf-api-e05-additive-schema']))
+        self.schema_paths_patch.start()
+        for name in ('cyf-api-additive-schema', 'cyf-api-e05-additive-schema'):
+            # Real reviewed source bytes are copied, not executed. LOCAL must
+            # keep the original parent's E05 exact runner pin as well as refs.
+            self.catalog['helpers'][name] = self.write(Path(self.paths[name]),
+                (ROOT / 'ops/ci/aliyun-flow/host' / name).read_bytes(), 0o755)
+        self.schema = self.copy(self.kernel.schema)
+        self.authority = self.copy(self.kernel.authority)
+        self.sql = {}
+        for entry in self.schema['resourcePreconditions']:
+            self.sql[(entry['resourceOuter'], entry['resourceInner'])] = (
+                'synthetic SQL resource ' + entry['name'] + '\n').encode()
+            entry['sqlSha256'] = self.hash(self.sql[(entry['resourceOuter'], entry['resourceInner'])])
+            entry['actualSchemaProof'] = self.write(self.control / (entry['name'] + '-proof.json'),
+                b'"synthetic proof bytes, NOT live schema metadata"\n')
+        for entry in self.schema['entries']:
+            name = 'cyf-api-additive-schema' if entry['feature'] == 'F06' else 'cyf-api-e05-additive-schema'
+            entry['runner'] = self.copy(self.catalog['helpers'][name])
+            module = ast.parse((ROOT / 'ops/ci/aliyun-flow/host' / name).read_text())
+            literal = 'F06_SQL_BYTES' if entry['feature'] == 'F06' else 'E05_SQL_BYTES'
+            value = [ast.literal_eval(n.value) for n in module.body if isinstance(n, ast.Assign)
+                     and any(isinstance(t, ast.Name) and t.id == literal for t in n.targets)][0]
+            self.assertEqual(self.hash(value), entry['sqlSha256'])
+            self.sql[(entry['resourceOuter'], entry['resourceInner'])] = value
+        for name in deploy.LOCAL_PROOF_REFS:
+            self.schema[name] = self.write(self.control / (name + '.json'),
+                b'"synthetic protected reference, NOT live readiness"\n')
+        for name in ('identityInventory', 'inflightInventory', 'schemaInventory'):
+            self.decision['precondition'][name] = self.write(self.control / (name + '.json'),
+                b'"synthetic inventory, NOT actual profiles or in-flight state"\n')
+        self.authority['authorizationEvidence'] = self.write(self.control / 'permission.json',
+            b'"synthetic permission fixture, NOT user production authorization"\n')
+        self.output = Path(self.decision['admission']['path']).parent
+        evidence = self.output / 'evidence'; evidence.mkdir(mode=0o700)
+        self.admitted['authority']['batchAuthority'] = self.write(evidence / 'batch.json', b'"fake batch"\n')
+        self.admitted['authority']['trustedRecord'] = self.write(evidence / 'record.json', b'"fake record"\n')
+        self.decision['controllerVerification'] = self.write(evidence / 'controller.json', b'"fake verification"\n')
+        self.admitted['authority']['verificationRecord'] = self.copy(self.decision['controllerVerification'])
+        self.decision['buildEvidence'] = self.write(evidence / 'build.json', b'"fake execution evidence"\n')
+        self.admitted['evidence'] = {'buildEvidence': self.copy(self.decision['buildEvidence']),
+            'snapshots': [{'role': 'build-evidence', 'originalPath': '/unread-original/build.json',
+                           'file': self.copy(self.decision['buildEvidence'])}]}
+        payload_dir = self.output / 'payload'; payload_dir.mkdir(mode=0o700)
+        self.payload_bytes = {name: deploy.local_canonical({'synthetic': name}) for name in deploy.LOCAL_MEMBERS}
+        self.payload_bytes['application.jar'] = self.boot_jar()
+        self.refresh_artifact()
+        self.seal()
+
+    def tearDown(self):
+        self.schema_paths_patch.stop()
+        ApiLocalProtectedReadSetTest.tearDown(self)
+
+    def boot_jar(self, duplicate=None):
+        import io, zipfile, warnings
+        output = io.BytesIO()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            with zipfile.ZipFile(output, 'w') as boot:
+                for outer in (deploy.LOCAL_AGENT_MAPPER, deploy.LOCAL_CHAT_MAPPER):
+                    nested_buffer = io.BytesIO()
+                    with zipfile.ZipFile(nested_buffer, 'w') as nested:
+                        for (current, inner), data in sorted(self.sql.items()):
+                            if current == outer:
+                                nested.writestr(inner, data)
+                                if duplicate == (current, inner): nested.writestr(inner, data)
+                    boot.writestr(outer, nested_buffer.getvalue())
+        return output.getvalue()
+
+    def refresh_artifact(self, extra=None, duplicate=None, override=None):
+        import io, tarfile
+        for name, data in self.payload_bytes.items():
+            self.admitted['payloads'][name] = self.write(self.output / 'payload' / name, data)
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode='w:gz') as archive:
+            for name, data in self.payload_bytes.items():
+                raw = data if override != name else b'changed bytes outside published payload'
+                entry = tarfile.TarInfo(name); entry.size = len(raw)
+                archive.addfile(entry, io.BytesIO(raw))
+                if duplicate == name: archive.addfile(entry, io.BytesIO(raw))
+            if extra:
+                entry = tarfile.TarInfo(extra); entry.size = 1; archive.addfile(entry, io.BytesIO(b'x'))
+        self.admitted['package'] = self.write(self.output / 'package.tgz', buffer.getvalue())
+        self.decision['package'] = {k: self.admitted['package'][k] for k in ('sha256', 'size')}
+        self.decision['payloads'] = {name: {k: ref[k] for k in ('sha256', 'size')}
+                                    for name, ref in self.admitted['payloads'].items()}
+
+    def seal(self):
+        self.decision['helperCatalog'] = self.write(self.control / 'helpers.json', deploy.local_canonical(self.catalog))
+        self.decision['schemaPlan'] = self.write(self.control / 'schema-plan.json', deploy.local_canonical(self.schema))
+        for name in ('schemaPlan', 'helperCatalog', 'precondition', 'rollbackPolicy'):
+            self.authority[name] = self.copy(self.decision[name])
+        self.authority['release'] = {k: self.copy(self.decision[k])
+                                    for k in ('source', 'admission', 'package', 'payloads')}
+        # Admission has no maintenance ref, so no recursive/self-hash authority.
+        self.decision['admission'] = self.write(self.output / 'admission.json', deploy.local_canonical(self.admitted))
+        self.authority['release']['admission'] = self.copy(self.decision['admission'])
+        self.decision['maintenanceAuthority'] = self.write(self.control / 'maintenance.json',
+                                                         deploy.local_canonical(self.authority))
+        self.decision_ref = self.write(self.control / 'decision.json', deploy.local_canonical(self.decision))
+        self.verified['admission'] = self.copy(self.decision['admission'])
+        script = b'import sys\nassert sys.argv[0].startswith("/proc/self/fd/")\nprint(' + \
+            repr(deploy.local_canonical(self.verified).decode().strip()).encode() + b')\n'
+        # This helper must be frozen before helperCatalog -> SchemaPlan -> authority.
+        # Only fake verifier script bytes change with admission, which itself does
+        # NOT reference helperCatalog; rewrite the outer documents one final time.
+        self.catalog['helpers']['admit-api-local.py'] = self.write(Path(self.paths['admit-api-local.py']), script, 0o755)
+        self.decision['helperCatalog'] = self.write(self.control / 'helpers.json', deploy.local_canonical(self.catalog))
+        self.authority['helperCatalog'] = self.copy(self.decision['helperCatalog'])
+        self.decision['maintenanceAuthority'] = self.write(self.control / 'maintenance.json',
+                                                         deploy.local_canonical(self.authority))
+        self.decision_ref = self.write(self.control / 'decision.json', deploy.local_canonical(self.decision))
+
+    def inspect(self):
+        return deploy.local_inspect(self.decision_ref['path'], self.decision_ref['sha256'])
+
+    def test_inspect_closes_all_refs_and_actual_nested_bytes_without_any_transaction_write(self):
+        from unittest.mock import patch
+        before = {p: (p.stat().st_ino, p.read_bytes()) for p in self.root.rglob('*') if p.is_file()}
+        with patch.object(deploy, 'invoke_installer', side_effect=AssertionError('must not install')), \
+             patch.object(deploy, 'atomic_write', side_effect=AssertionError('must not write')), \
+             patch.object(deploy, 'acquire_release_lock', side_effect=AssertionError('must not lock release')):
+            result = self.inspect()
+        self.assertEqual(result['status'], 'inputs_verified')
+        self.assertEqual(result['productionAuthorized'], False)
+        self.assertEqual(result['installation'], 'NOT_RUN')
+        self.assertEqual(result['runtimeReadiness'], 'NOT_MEASURED')
+        self.assertEqual(result['businessAcceptance'], 'NOT_RUN')
+        self.assertEqual(before, {p: (p.stat().st_ino, p.read_bytes()) for p in self.root.rglob('*') if p.is_file()})
+        expected = deploy.local_binding_from_decision(self.decision, self.decision_ref)
+        self.assertEqual(result['binding_sha256'], deploy.local_binding_sha(expected))
+
+    def test_inspect_rejects_wrong_decision_digest_duplicate_document_and_independent_authority_tamper(self):
+        self.reject(lambda: deploy.local_inspect(self.decision_ref['path'], 'f' * 64), 'DIGEST_MISMATCH')
+        original = Path(self.decision_ref['path']).read_bytes()
+        raw = b'{"format":"first",' + original[1:]
+        bad = self.write(Path(self.decision_ref['path']), raw)
+        self.reject(lambda: deploy.local_inspect(bad['path'], bad['sha256']), 'AUTHORITY_INVALID')
+        self.write(Path(self.decision_ref['path']), original)
+        self.authority['release']['source']['identity']['tree'] = 'f' * 40
+        ref = self.write(self.control / 'maintenance.json', deploy.local_canonical(self.authority))
+        self.decision['maintenanceAuthority'] = ref
+        self.decision_ref = self.write(self.control / 'decision.json', deploy.local_canonical(self.decision))
+        self.reject(self.inspect, 'AUTHORITY_INVALID')
+
+    def test_inspect_no_install_permission_is_inferred_from_success_or_cli(self):
+        for operation in self.authority['operations']: self.authority['operations'][operation] = False
+        self.seal()
+        result = self.inspect()
+        self.assertFalse(result['productionAuthorized'])
+        self.assertEqual(result['installation'], 'NOT_RUN')
+        self.reject(lambda: deploy.local_authority_matches(self.decision, self.authority, ('apiInstall',)),
+                    'MAINTENANCE_SCOPE_MISSING')
+
+    def test_every_schema_and_inventory_proof_is_read_not_merely_present_in_json(self):
+        refs = [self.authority['authorizationEvidence']] + \
+            [self.schema[name] for name in deploy.LOCAL_PROOF_REFS] + \
+            [x['actualSchemaProof'] for x in self.schema['resourcePreconditions']] + \
+            [self.decision['precondition'][n] for n in ('identityInventory', 'inflightInventory', 'schemaInventory')]
+        for ref in refs:
+            path = Path(ref['path']); original = path.read_bytes()
+            path.write_bytes(original + b'change')
+            self.reject(self.inspect, 'DIGEST_MISMATCH')
+            path.write_bytes(original)
+        for name in ('installedRecord', 'approval'):
+            self.decision['precondition'][name] = self.write(self.control / (name + '.json'), b'"synthetic previous"\n')
+        self.seal(); self.assertEqual(self.inspect()['status'], 'inputs_verified')
+        for name in ('installedRecord', 'approval'):
+            path = Path(self.decision['precondition'][name]['path']); original = path.read_bytes()
+            path.unlink()
+            self.reject(self.inspect, 'PATH_UNSAFE'); self.write(path, original)
+
+    def test_runner_and_helper_ref_mismatch_or_permissions_reject_before_verifier(self):
+        from unittest.mock import patch
+        self.schema['entries'][1]['runner']['size'] += 1
+        self.seal()
+        with patch('subprocess.run', side_effect=AssertionError('must not launch verifier')):
+            self.reject(self.inspect, 'HELPER_CATALOG_MISMATCH')
+        self.schema['entries'][1]['runner'] = self.copy(self.catalog['helpers']['cyf-api-e05-additive-schema'])
+        self.seal()
+        Path(self.paths['cyf-api-kit']).chmod(0o777)
+        with patch('subprocess.run', side_effect=AssertionError('must not launch verifier')):
+            self.reject(self.inspect, 'PATH_UNSAFE')
+
+    def test_package_and_copied_payload_bytes_must_be_equal_not_just_ref_hashes(self):
+        for extra, duplicate, override in [('test-results/suite.xml', None, None),
+                                           (None, 'receipt.json', None), (None, None, 'receipt.json')]:
+            self.refresh_artifact(extra, duplicate, override); self.seal()
+            self.reject(self.inspect, 'PACKAGE_INVALID')
+        self.refresh_artifact(); self.seal()
+        self.assertEqual(self.inspect()['status'], 'inputs_verified')
+        path = Path(self.admitted['payloads']['application.jar']['path']); path.write_bytes(b'changed')
+        self.reject(self.inspect, 'DIGEST_MISMATCH')
+
+    def test_same_published_jar_with_changed_missing_or_duplicate_sql_cannot_satisfy_plan(self):
+        key = (deploy.LOCAL_AGENT_MAPPER, 'db/agent-runtime-session-fence-v1.sql')
+        original = self.sql[key]
+        self.sql[key] = b'changed resource in newly published synthetic jar'
+        self.payload_bytes['application.jar'] = self.boot_jar(); self.refresh_artifact(); self.seal()
+        self.reject(self.inspect, 'SCHEMA_RESOURCE_MISMATCH')
+        self.sql[key] = original
+        self.payload_bytes['application.jar'] = self.boot_jar(duplicate=key); self.refresh_artifact(); self.seal()
+        self.reject(self.inspect, 'SCHEMA_RESOURCE_MISMATCH')
+        del self.sql[key]
+        self.payload_bytes['application.jar'] = self.boot_jar(); self.refresh_artifact(); self.seal()
+        self.reject(self.inspect, 'SCHEMA_RESOURCE_MISMATCH')
+
+    def test_copied_build_proof_and_admission_closure_are_immutable_during_verifier_child(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        path = Path(self.decision['buildEvidence']['path'])
+        # Publication verifier itself normally detects this; the parent must
+        # independently include build evidence in its final descriptor closure.
+        def fake_child(argv, **kwargs):
+            path.write_bytes(b'changed copied evidence')
+            return SimpleNamespace(returncode=0, stdout=deploy.local_canonical(self.verified), stderr=b'')
+        with patch('subprocess.run', side_effect=fake_child):
+            self.reject(self.inspect, 'DIGEST_MISMATCH')
+
+    def test_streaming_read_keeps_fd_identity_not_payload_buffers_and_detects_replacement(self):
+        ref = self.admitted['package']; reader = deploy.LocalReadSet()
+        fd = reader.stream(ref)
+        try:
+            original = Path(ref['path']).read_bytes()
+            self.assertEqual(os.read(fd, len(original)), original)
+            replacement = self.control / 'replacement'; self.write(replacement, original)
+            os.replace(replacement, ref['path'])
+            self.assertEqual(os.pread(fd, len(original), 0), original)
+            self.assertTrue(all(isinstance(value[0], str) and len(value[0]) == 64
+                                for value in reader.saved.values()))
+            self.reject(reader.recheck, 'DIGEST_MISMATCH')
+        finally: os.close(fd)
+
+    def test_e05_runner_cannot_escape_parent_exact_pin_by_refreezing_all_refs(self):
+        name = 'cyf-api-e05-additive-schema'; path = Path(self.paths[name])
+        self.catalog['helpers'][name] = self.write(path, path.read_bytes() + b'# altered helper\n', 0o755)
+        self.schema['entries'][1]['runner'] = self.copy(self.catalog['helpers'][name])
+        self.seal()
+        self.reject(self.inspect, 'HELPER_CATALOG_MISMATCH')
+
+    def test_original_publication_verifier_by_fd_rejects_self_reported_synthetic_input(self):
+        # Exercise the real source verifier, but only a rejected private unit
+        # fixture. This does NOT authenticate a successful build or admission.
+        actual = (ROOT / 'ops/ci/aliyun-flow/auto/admit-api-local.py').read_bytes()
+        name = 'admit-api-local.py'
+        self.catalog['helpers'][name] = self.write(Path(self.paths[name]), actual, 0o755)
+        self.decision['helperCatalog'] = self.write(self.control / 'helpers.json', deploy.local_canonical(self.catalog))
+        self.authority['helperCatalog'] = self.copy(self.decision['helperCatalog'])
+        self.decision['maintenanceAuthority'] = self.write(self.control / 'maintenance.json',
+                                                         deploy.local_canonical(self.authority))
+        self.decision_ref = self.write(self.control / 'decision.json', deploy.local_canonical(self.decision))
+        before = {p: (p.stat().st_ino, p.read_bytes()) for p in self.root.rglob('*') if p.is_file()}
+        self.reject(self.inspect, 'PUBLISHED_CLOSURE_INVALID')
+        self.assertEqual(before, {p: (p.stat().st_ino, p.read_bytes()) for p in self.root.rglob('*') if p.is_file()})
+
+    def test_cli_errors_are_fixed_json_and_do_not_fall_into_flow_or_create_files(self):
+        import contextlib, io
+        from unittest.mock import patch
+        for argv in ([], ['--local-install'], ['--local-inspect'],
+                     ['--local-inspect', '--decision', '/etc/passwd', '--decision-sha256', 'a' * 64],
+                     ['--local-inspect', '--decision', '/etc/passwd', '--decision-sha256', 'a' * 64, '--unknown']):
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output), patch.object(deploy, 'invoke_installer',
+                    side_effect=AssertionError('must not install')):
+                code = deploy.local_main(argv)
+            result = json.loads(output.getvalue())
+            self.assertEqual(code, 1); self.assertEqual(result['status'], 'rejected')
+            self.assertIn(result['error'], deploy.LOCAL_SAFE_CODES)
+            self.assertNotIn('/etc/passwd', output.getvalue())
+        output = io.StringIO()
+        argv = ['--local-inspect', '--decision', self.decision_ref['path'],
+                '--decision-sha256', self.decision_ref['sha256']]
+        with contextlib.redirect_stdout(output): self.assertEqual(deploy.local_main(argv), 0)
+        self.assertEqual(json.loads(output.getvalue())['status'], 'inputs_verified')
+        with patch('sys.argv', ['cyf-api-flow-deploy', '--local-install']), \
+             contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as error:
+            deploy.main()
+        self.assertEqual(error.exception.code, 1)
+
 if __name__ == '__main__':
     unittest.main()
