@@ -151,3 +151,14 @@
 - API Run36 SUCCESS，commit `5ece9141e66f27aa2d5443dada1ea816e44ca95c`，deploy order `69520177`；JAR SHA-256 `1c073e3bf7928bf9f057d81d33265fe8323384247a112ab5cd2111df811925b9`，PID3257882/health UP，包含 `80383a07` 登录表单与 CORS 修复。
 - 公网预检明确包含 x-request-id，未登录 map 返回可读401，无效 code 的 token 表单返回400 invalid_grant而非302登录页；真实账号及第三方/微信交互仍需用户重试确认。
 - 精确证据：`docs/implementation/handoffs/FLOW-AUTH-GATE-FOLLOWUP-VERIFIED-20260913.json`。
+
+
+## 前端发布验证范围与缓存（2026-10-09 核验）
+
+核验源码：Web `81f49518c3f23f794f9d37f4ac0be024d65d9f55` / tree `5595dab02479b49b3ef803eda6c84c67ef22ecb9`；Flow4403172 Run188 SUCCESS，普通验证总176秒（2分56秒），2790通过/2pending/0失败、Mocha72.298秒，Vite11.28秒，制品及并行JS扫描成功。**本次未部署/未在线核验**；不据此宣称完整版本发布或所有候选均在5分钟内。
+
+按用户追加授权，默认release profile保留业务/身份/ACL/幂等/交付/恢复及实际游戏运行时回归；16个离线资产作者工具/E13重算/E14性能验收文件单列assets/all。涉及`public/juyiting`、资产生成器、renderer、E13/E14或其fixture/验收工具修改，Owner必须在固定SHA选择`CYF_TEST_PROFILE=all`的Flow，不得用release成功代替资产验收。assets/all保留原签名/SHA及10秒预热/60秒采样。覆盖以同Run `ci-profile.json`为准（旧job标签含full tests不代表all-profile）。不改版本化发布、制品来源/摘要、部署互斥/恢复/健康或develop不自动部署规则。
+
+只读清单确认旧缓存10份历史runtime提取目录总4.145GB（未压缩），npm下载缓存仅43.73MB。新提取目录移出Flow缓存，仅清理当前独占worker恢复的旧实体目录、不跟随链接。Run188缓存归档355.91MB，归档与上传约5秒且成功；旧Run186归档2.011GB、76秒并因平台2GB上限未上传。删6个无消费者直接开发依赖，lock减少95项，保留包版本及完整性未变；删除脚手架测试并合并重复正向重算，负向篡改测试在assets/all保留。
+
+Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前值、修正严格SemVer校验并单次update/readback，根模板同步，Run188证明该配置候选成功。Flow SHA `719b28019ba51985a11a60dd2af99ed3a336d4de760004301dd0c2336e2a65a3`。详细scope/失败/授权及未验证项：`docs/implementation/handoffs/FRONTEND-RELEASE-5M-20261009.md`；正式摘要：`docs/implementation/evidence/frontend-release-5m-20261009/summary.json`。
