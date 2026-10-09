@@ -1,5 +1,17 @@
 # Design
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+已交付并归档原 2026-08-23 功能；原验收记录 API108、Client97 与运行 smoke，未在本次重复执行。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-06。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+### 本次设计边界补充
+
+保持注册/presence 能力快照、旧客户端省略值兼容、persona 仅默认值；声明能力不等于商业授权。
+<!-- END SDD delivery reconciliation -->
+
 ## Protocol
 
 `agent.register` 和 `agent.presence` 均可携带：

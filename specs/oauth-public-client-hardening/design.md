@@ -1,5 +1,17 @@
 # OAuth public client hardening design
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+按原 SDD 中独立审查与 2026-08-24 发布记录归档；不扩大为所有账号安全/公共公测需求已完成。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-08。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+### 本次设计边界补充
+
+保留 sessionStorage 一次性配置绑定 state/PKCE、JWT-only GET /resource、401 fail-closed。源码 Owner 按任务/worktree/路径隔离，不再采用跨项目唯一 Writer。
+<!-- END SDD delivery reconciliation -->
+
 ## User flow
 
 1. An authenticated operation without a valid access token begins one authorization transaction.

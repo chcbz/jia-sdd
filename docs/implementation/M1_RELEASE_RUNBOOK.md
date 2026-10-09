@@ -1,21 +1,21 @@
 # M1 Release Runbook — API + codex-ws-agent
 
-> **状态：磁盘门禁已临时清理通过（2026-08-01 17:48 CST）。** 当前 `/dev/vda1` 可用约 5.8 GiB；`jia` 库 data+index 估算约 0.64 GiB，当前空间要求取最小 5 GiB。发布前仍必须重新从第 1 节开始执行 fail-closed 门禁；本文定义获批维护窗口内的操作顺序，不是单独的执行授权。
+> **状态（2026-09-05）：历史门禁参考，当前不可直接执行。** 固定内存/磁盘 admission gate 已由用户于 2026-08-28 取消；同时 API 生产运行已迁移到 root-owned `/opt/cyf/service/api`、独立 `cyf-api` 身份和 `/run/cyf-api`。本文仍含旧 `/home/isp/hosts/cyf/api` 部署命令，必须在 release pipeline 完成新路径适配并重新独立验收后才能恢复为可执行 runbook。生产维护窗口、备份、SHA、回滚和审批门禁仍有效。
 
 ## 0. 不可绕过的边界
 
 - 禁止从脏主工作树 `/home/isp/wsps/cyf/api` 构建。
-- M1 禁止使用 `/home/isp/bin/cyf_api_kit_start.sh`：该脚本会自行 pull/build，不能证明使用锁定集成提交。
+- `/home/isp/bin/cyf_api_kit.sh` 及旧 `*_start.sh`/`*_deploy.sh` 只处理生命周期或 fail-closed 提示，不执行 pull/build/deploy；源码发布不得借此绕过 SHA-pinned pipeline。
 - API 唯一允许 source：`/home/isp/wsps/cyf/.worktrees/m1-integration-api`；expected HEAD：`c024126ae297f2a8b31c674d8b6530a8f96db556`。
 - codex-ws-agent 唯一允许 source：`/home/isp/wsps/cyf/.worktrees/m1-integration-isp-install`；expected HEAD：`d1a71ccd46809fdc70716fab1f847ca8a24222ad`。
-- **第一个生产门禁必须是第 1 节磁盘门禁。** 在它成功前，禁止 Gradle、npm、mysqldump、gzip dump、tar 或任何备份写入；唯一允许的数据库动作是估算大小的只读 `information_schema` 查询。
+- 第 1 节资源检查为非阻断观测；Gradle、npm、mysqldump、gzip dump、tar 和备份仍必须遵守维护窗口、锁、路径与回滚约束。
 - 维护窗口必须停写；A08 identity migration/apply 必须先于 A08 runtime；B09 必须重新导出、审核、approve、apply。
 - 不自动删除生产数据、sealed audit、identity history 或 smoke 行。任何清理必须使用变更单列出的精确主键并由第二人复核。
 - 以下命令只可在已批准维护窗口执行；本轮文档修复不执行这些生产命令。
 
-## 1. 第一门禁：输入、数据库估算与每个文件系统的磁盘检查
+## 1. 第一观测：输入、数据库估算与每个文件系统的资源快照
 
-以下代码块应在同一个受控 root shell 中执行。目标目录尚不存在时，`nearest_existing_dir` 会向上查找最近存在父目录；门禁通过前不创建目标目录。
+以下代码块应在同一个受控 root shell 中执行。目标目录尚不存在时，`nearest_existing_dir` 会向上查找最近存在父目录；资源 telemetry 完成前不创建目标目录，但任何固定容量观测值都不作为 admission deny。
 
 ```bash
 set -euo pipefail
@@ -158,9 +158,11 @@ PY
     fi
   done
   printf '%s' "$disk_report"
-  (( disk_failed == 0 )) || die 'one or more required filesystems are below the disk threshold'
+  if (( disk_failed != 0 )); then
+    printf 'M1 WARN: one or more filesystems are below the former threshold; continuing by user authorization dated 2026-08-28\n' >&2
+  fi
 
-  # 只有全部不同文件系统通过后才允许创建目录并持久化门禁证据。
+  # 无论是否低于旧阈值，都持久化资源观测；生产授权与路径安全约束仍适用。
   install -d -m 0700 "$BACKUP_DIR" "$RELEASE_DIR" "$AGENT_BACKUP_DIR"
   printf 'estimated_db=%s required=%s reserve=%s\n%s' \
     "$estimated_db_bytes" "$required_bytes" "$BUILD_ROLLBACK_RESERVE_BYTES" "$disk_report" \
@@ -170,7 +172,7 @@ PY
 run_disk_gate initial
 ```
 
-门禁公式是 `free space >= max(5 GiB, 2 * estimated database bytes + build/rollback reserve)`，reserve 不得小于 2 GiB；API/agent source、release、backup、API deploy、agent live app 与 agent backup 七个路径均提供映射证据，覆盖 Gradle、npm、dump、备份和 tar restore 的写目标。**2026-07-29 已知约 2.2 GiB 的环境必须在本节退出；不得继续到 Gradle/npm/dump/tar。** 不得删除未知文件、stash、worktree 或数据库历史来绕过门禁。
+旧阈值公式 `max(5 GiB, 2 * estimated database bytes + build/rollback reserve)` 仅保留为观测基准；API/agent source、release、backup、API deploy、agent live app 与 agent backup 七个路径仍记录映射证据。低于旧阈值不再退出，但不得自动删除未知文件、stash、worktree、证据或数据库历史。
 
 ## 2. 锁定 clean source 并构建可追溯 JAR
 
@@ -1377,7 +1379,7 @@ assert_rollback_prerequisites
 
 ### 10.2 再次停服务/停写，并保存当前失败现场
 
-完整恢复时磁盘可能已变化；在任何失败现场 dump/tar 前，必须重新运行第 1 节相同的全部文件系统门禁逻辑。未通过则保持服务停止并升级存储，不得跳过现场保存或覆盖旧备份。
+完整恢复时资源状态可能已变化；在任何失败现场 dump/tar 前，必须重新运行第 1 节相同的 telemetry-only 文件系统观测。低于旧固定阈值不阻断；若实际操作发生 OOM、ENOSPC、inode 耗尽或 swap thrashing，则保持服务停止、保存可得证据并按真实故障归因，不得覆盖旧备份。
 
 ```bash
 require_full_restore_approval

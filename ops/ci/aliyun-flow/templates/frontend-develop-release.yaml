@@ -106,7 +106,8 @@ stages:
                 }}
                 walk('');
                 if(!files.some(x=>x.path==='index.html'))throw Error('Missing site entry');
-                const m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,files};
+                const packageVersion=JSON.parse(fs.readFileSync('package.json','utf8')).version;
+                const m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,package_version:packageVersion,files};
                 if(m.pipeline_id!=='4403172'||m.branch!=='develop'||!/^[1-9][0-9]*$/.test(m.run_id)||!/^[0-9a-f]{40,64}$/.test(m.commit))throw Error('Wrong Flow identity');
                 fs.writeFileSync(path.join(root,'release.json'),JSON.stringify(m)+'\n');
                 console.log('CYF_WEB_ARTIFACT '+JSON.stringify({pipeline:m.pipeline_id,run:m.run_id,commit:m.commit,files:files.length}));
@@ -128,21 +129,3 @@ stages:
           javascript_scan:
             step: JavaScriptCodeScan
             with: {}
-  deploy:
-    name: Automatic frontend deployment
-    jobs:
-      deploy_web:
-        name: Install same-run dist
-        component: VMDeploy
-        with:
-          artifact: $[stages.cloud_ci.web_ci.upload_artifact.artifacts.cyf_web_flow_4403172]
-          downloadArtifact: true
-          artifactDownloadPath: /var/lib/cyf-web-flow/downloads/${BUILD_NUMBER}/package.tgz
-          executeUser: root
-          run: |-
-            set -eu
-            /usr/local/sbin/cyf-web-flow-deploy "$PIPELINE_ID" "$BUILD_NUMBER" "$CI_COMMIT_SHA"
-          useEncodeBase64: false
-          machineGroup: yjctjhskhk1ti9t4
-          batchNumber: 1
-          batchWaitTime: 0

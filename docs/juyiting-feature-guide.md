@@ -2,6 +2,10 @@
 
 > 目标：把聚义厅当前功能、前后端边界、关键数据流和后续优化入口沉淀下来，避免后续迭代时重新摸索页面结构。
 
+## 开发规范入口
+
+统一遵循 `AGENTS.md` 和 `docs/juyiting-runbook.md`。聚义厅低于 `2.0.0` 均为内测版本，不考虑旧版本兼容，以最新版本为准；本指南记录当前功能与数据流，不单独设旧版本兼容或发布门槛。
+
 ## 1. 功能定位
 
 聚义厅是面向 Agent 协作的可视化调度页面，核心体验是：
@@ -13,13 +17,13 @@
 
 页面入口位于：
 
-- `web/jia-web-kit/src/components/world/JuyiHall.vue`
+- `web/src/components/world/JuyiHall.vue`
 
 聚义厅相关前端组件位于：
 
-- `web/jia-web-kit/src/components/juyiting/`
-- `web/jia-web-kit/src/composables/juyiting/`
-- `web/jia-web-kit/src/constants/juyiting.js`
+- `web/src/components/juyiting/`
+- `web/src/composables/juyiting/`
+- `web/src/constants/juyiting.js`
 
 聚义厅相关后端模块位于：
 
@@ -129,7 +133,7 @@
 
 这个规则已有契约测试覆盖：
 
-- `web/jia-web-kit/tests/juyiting-collaboration-flow.test.js`
+- `web/tests/juyiting-collaboration-flow.test.js`
 
 相关断言包括：
 
@@ -228,20 +232,20 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `web/jia-web-kit/src/components/world/JuyiHall.vue` | 页面编排、选中态、任务指派、传令模板 |
-| `web/jia-web-kit/src/components/juyiting/HallStage.vue` | 地图舞台、房间热点、地图拖拽、AgentToken 列表 |
-| `web/jia-web-kit/src/components/juyiting/AgentPanel.vue` | 好汉名册与 Agent 详情 |
-| `web/jia-web-kit/src/components/juyiting/BountyPanel.vue` | 悬赏列表、任务详情、推荐 Agent 和指派入口 |
-| `web/jia-web-kit/src/components/juyiting/ChatPanel.vue` | 厅内传令消息面板 |
-| `web/jia-web-kit/src/components/juyiting/AgentToken.vue` | 地图人物头像令牌 |
-| `web/jia-web-kit/src/components/juyiting/SelectedAgentCard.vue` | 当前选中 Agent 快捷卡片 |
-| `web/jia-web-kit/src/composables/juyiting/useHallData.js` | 地图/名册/任务数据加载与派生状态 |
-| `web/jia-web-kit/src/composables/juyiting/useHallConversation.js` | 聚义厅会话、事件流、轮询和消息归一化 |
-| `web/jia-web-kit/src/composables/juyiting/useHallScene.js` | 场景 Agent、热点、反馈状态与巡逻路线生成 |
-| `web/jia-web-kit/src/game/scenes/HallScene.js` | melonJS 聚义厅舞台、地图层、热点和 Agent 同步 |
-| `web/jia-web-kit/src/game/entities/HallAgent.js` | melonJS 地图人物实体、动画和巡逻移动 |
-| `web/jia-web-kit/src/composables/juyiting/useWaterMarginRoles.js` | 水浒人物画像和角色映射 |
-| `web/jia-web-kit/src/constants/juyiting.js` | 状态筛选项和角色台词 |
+| `web/src/components/world/JuyiHall.vue` | 页面编排、选中态、任务指派、传令模板 |
+| `web/src/components/juyiting/HallStage.vue` | 地图舞台、房间热点、地图拖拽、AgentToken 列表 |
+| `web/src/components/juyiting/AgentPanel.vue` | 好汉名册与 Agent 详情 |
+| `web/src/components/juyiting/BountyPanel.vue` | 悬赏列表、任务详情、推荐 Agent 和指派入口 |
+| `web/src/components/juyiting/ChatPanel.vue` | 厅内传令消息面板 |
+| `web/src/components/juyiting/AgentToken.vue` | 地图人物头像令牌 |
+| `web/src/components/juyiting/SelectedAgentCard.vue` | 当前选中 Agent 快捷卡片 |
+| `web/src/composables/juyiting/useHallData.js` | 地图/名册/任务数据加载与派生状态 |
+| `web/src/composables/juyiting/useHallConversation.js` | 聚义厅会话、事件流、轮询和消息归一化 |
+| `web/src/composables/juyiting/useHallScene.js` | 场景 Agent、热点、反馈状态与巡逻路线生成 |
+| `web/src/game/scenes/HallScene.js` | melonJS 聚义厅舞台、地图层、热点和 Agent 同步 |
+| `web/src/game/entities/HallAgent.js` | melonJS 地图人物实体、动画和巡逻移动 |
+| `web/src/composables/juyiting/useWaterMarginRoles.js` | 水浒人物画像和角色映射 |
+| `web/src/constants/juyiting.js` | 状态筛选项和角色台词 |
 
 ### 6.2 后端
 
@@ -259,12 +263,14 @@
 
 | 文件 | 关注点 |
 | --- | --- |
-| `web/jia-web-kit/tests/juyiting-collaboration-flow.test.js` | 聚义厅协作流程与数据隔离契约 |
-| `web/jia-web-kit/tests/juyiting-component-behavior.test.js` | 子组件交互行为 |
-| `web/jia-web-kit/tests/juyiting-selected-agent-card.test.js` | 选中 Agent 卡片行为 |
+| `web/tests/juyiting-collaboration-flow.test.js` | 聚义厅协作流程与数据隔离契约 |
+| `web/tests/juyiting-component-behavior.test.js` | 子组件交互行为 |
+| `web/tests/juyiting-selected-agent-card.test.js` | 选中 Agent 卡片行为 |
 | `api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java` | Agent 服务行为 |
 
 ## 7. 后续优化建议
+
+> 以下为历史优化候选，不是开发门禁或已确认的当前缺陷；选取任务前核对最新实现与实际证据。
 
 ### 7.1 短期优化
 
@@ -290,42 +296,13 @@
 - 引入实时状态订阅，让 `/agent/map` 和 `/agent/roster` 的更新从手动刷新改为事件驱动。
 - 建立聚义厅可观测指标，如在线人数、任务吞吐、平均响应时长、失败率。
 
-## 8. 变更守则
+## 8. 变更与验证
 
-后续优化聚义厅时，建议遵守以下规则：
-
-1. 地图数据和名册数据保持独立。
-2. 名册筛选不得调用 `/agent/{agentId}/status` 或旧的 `/agent/active`。
-3. 任务指派必须显式传入目标 Agent。
-4. 会话消息必须保留 `conversationType: 'juyiting'` 和聚义厅 metadata。
-5. 涉及数据边界的改动必须更新 `juyiting-collaboration-flow.test.js`。
-6. 涉及后端 Agent 行为的改动必须补充或更新 `AgentServiceImplTest`。
-
-## 9. 推荐验证命令
-
-前端聚义厅契约测试：
+- 地图/名册独立、任务显式目标及会话上下文是当前契约，详见 runbook；契约变更同步更新实现、测试与文档，不为旧版本保留实现。
+- 按实际影响选择或补充测试，不要求每次修改固定测试文件。数据边界可参考 `web/tests/juyiting-collaboration-flow.test.js`，Agent 服务可参考 `api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java`。
+- 正式测试、生产构建与发布走 Flow：前端 `4403172`，后端 `5260799`，绑定精确 commit 与同 Run 制品；CI-only 仅按需诊断。develop 不自动部署，后续按明确版本发布；本地诊断与授权边界统一遵循 `AGENTS.md`，本指南不提供本机生产构建或直接 Gradle 发布命令。
+- 轻量定位当前接口调用：
 
 ```bash
-cd web/jia-web-kit
-npx.cmd mocha --require @babel/register --require ./tests/setup.js --timeout 10000 --reporter spec tests/juyiting-collaboration-flow.test.js
-```
-
-前端构建：
-
-```bash
-cd web/jia-web-kit
-npm.cmd run build
-```
-
-后端 Agent 服务测试：
-
-```bash
-cd api
-./gradlew :agent:jia-agent-service:test --tests cn.jia.agent.service.impl.AgentServiceImplTest
-```
-
-检查聚义厅是否仍引用旧 active 接口：
-
-```bash
-rg -n "/active" -S web/jia-web-kit/src api/agent --glob '!**/build/**'
+rg -n "agent/map|agent/roster|agent/active|assign-task" web/src web/tests
 ```

@@ -2,17 +2,25 @@
 
 # CYF 项目部署说明
 
-> ## M1 发布强制门禁（2026-07-29）
+> **2026-09-30 健康监控修复：** cron 探测、独立 system.slice 自动恢复及 SMTP 认证错误定位见 `docs/implementation/API_502_HEALTH_RECOVERY_20260930.md`；监控源文件维护入口为 `ops/maintenance/health_monitor/`。13:49 凭据更新后单次邮件已获 SMTP 接受；不应把 SMTP 接受等同收件箱送达。
+
+> **当前默认（2026-10-08）：前端 Flow、后端本地测试/构建/制品部署；develop 不自动部署。发布绑定明确版本、固定 commit/tree、同批制品与在线核验。保留锁、备份、恢复和身份/权限；不另设 Reviewer 或逐次人工门禁。以 `docs/aliyun-flow-cicd-strategy.md` 为准。此次规则调整未构建、部署或重启服务。**
+
+
+> **执行边界：** 前端复用 Flow `4403172`，禁止本机生产打包或 Flow 失败后的本地回退。后端使用固定源码/独立 worktree 本地构建，不在生产安装目录编译；所有 Gradle 经 orchestrator。现行 API Flow 下载适配器不是本地输入入口，须适配和验证本地制品安装契约后发布，不伪造 Run 或恢复旧源码到生产脚本。完整策略见 [`docs/aliyun-flow-cicd-strategy.md`](aliyun-flow-cicd-strategy.md)。
+
+> ## M1 历史发布约束与当前限制（更新：2026-09-05）
 >
-> 当前磁盘门禁已临时清理通过（2026-08-01 17:48 CST：`/dev/vda1` 可用约 5.8 GiB；
-> `jia` 库 data+index 估算约 0.64 GiB，当前要求取 `max(5 GiB, 2 * estimated database dump + build/rollback reserve)` = 5 GiB）。
-> 后续发布前仍必须重新执行 runbook 第 1 节门禁，且 M1 API 禁止从脏 `/home/isp/wsps/cyf/api` 构建，也禁止使用下文默认
-> `/home/isp/bin/cyf_api_kit_start.sh` 的 pull/build 路径。唯一允许 source 为
+> M1 发布流程的固定资源阈值已于 2026-08-28 取消；资源快照仅用于观测，不把旧 5 GiB 阈值作为当前发布阻断条件。
+> 后续源码发布前必须先完成 release pipeline 的新安全路径适配与独立验收；资源与数据库快照可参考历史 runbook 第 1 节，但不得直接执行其中旧部署命令。M1 API 禁止从脏 `/home/isp/wsps/cyf/api` 构建。
+> `/home/isp/bin/cyf_api_kit.sh` 统一提供已部署 JAR 的生命周期入口；旧 `*_start.sh`/`*_deploy.sh`
+> 仅作兼容转发，不再 pull/build。直接 source-to-production 快捷部署已禁用。M1 发布仍只能使用
+> `ops/release/` 的 SHA-pinned pipeline，并将唯一允许 source 设为
 > `/home/isp/wsps/cyf/.worktrees/m1-integration-api`，expected HEAD
 > `c024126ae297f2a8b31c674d8b6530a8f96db556`；发布前必须断言 clean/HEAD，构建并记录 JAR SHA-256。
 > codex-ws-agent source 锁定 `/home/isp/wsps/cyf/.worktrees/m1-integration-isp-install`，expected HEAD
 > `d1a71ccd46809fdc70716fab1f847ca8a24222ad`。
-> 磁盘门禁必须先于任何 Gradle/npm/dump/tar/备份，并逐一覆盖 source、release、backup、deploy、agent backup 所在的不同文件系统；
+> 资源观测应覆盖 source、release、backup、deploy、agent backup 所在文件系统；维护窗口、SHA、备份和审批约束不变。
 > 完整停写、备份、restore drill、迁移顺序、forward-only scoped UNIQUE、获批 DROP+CREATE 全量恢复和 fail-closed smoke 见
 > [`docs/implementation/M1_RELEASE_RUNBOOK.md`](implementation/M1_RELEASE_RUNBOOK.md)。第二轮 release guard 只要求修订该 runbook，API/isp-install HEAD 不变。
 
@@ -52,7 +60,7 @@
 
 | 组件 | 路径/配置 |
 |------|----------|
-| JDK | `/home/isp/apps/jdk21` (Java 21) |
+| 后端运行时 | `/opt/cyf/runtime/temurin-21-jre` (Java 21, root-owned) |
 | Node.js | `/home/isp/apps/node/bin/node` (v20) |
 | Gradle | `/root/.codex/memories/gradle-9.3.1/bin/gradle` |
 | MySQL | socket: `/home/isp/apps/mysql/mysql.sock`, port 3306 |
@@ -62,54 +70,72 @@
 
 ---
 
-## 三、快速发布流程
+## 三、前端 Flow / 后端本地发布与生命周期操作（2026-10-08）
 
 ### 后端
 
-> **以下快捷命令不适用于 M1。** M1 必须使用顶部锁定的 clean integration worktree 和
-> `implementation/M1_RELEASE_RUNBOOK.md`；不得让脚本自行 pull/build。
+正式测试、`validateLayering`、`bootJar` 和唯一制品生成使用本地固定 commit/tree 的干净源码目录或独立 worktree。先读最新相关 `build.gradle`，所有 Gradle 经 `python3 ops/orchestration/cyf_orchestrator.py gradle ...` 串行执行；记录本地 build ID、版本、源码、测试日志及制品 SHA-256。安装仅消费同批已验证制品，保留统一发布锁、备份、原子替换、恢复、`cyf-api` 身份和健康/业务核验。生产 `/home/isp/hosts/cyf/api` 只安装制品，不构建。旧后端 Flow 不再是默认发布入口。现行 `cyf-api-flow-deploy` 依赖真实 Run 下载，本地制品输入需适配与验证；不得伪造 Run 或直接启用旧 pull/build/restart 脚本。
+
+历史云端基线记录：Run `13` / commit `4b94cc252cfaac239c734d96ddcb1370290588e4` / 部署单 `69480251`。这是旧记录，不是当前最新上线证明、后续发布授权或本地 build 证据，不能重复执行旧配置。
+
+生命周期操作与源码发布已拆分。`isp` 用户统一使用 `/home/isp/bin/cyf_api_kit.sh`；该脚本通过
+受限 NOPASSWD sudo 调用 root-owned canonical 命令。`/home/isp/bin` 位于 `isp` 可写父路径，只是非特权
+便捷入口，不属于 root 信任边界；脚本内的 root 拒绝仅防误用。root/自动化必须只解析并执行
+`/usr/local/sbin/cyf-api-kit`，不得执行 `/home/isp/bin` 下的脚本：
 
 ```bash
-# 常规非 M1 快速路径：拉代码 → 构建 → 部署 → 重启
-bash /home/isp/bin/cyf_api_kit_start.sh
+# isp 用户统一入口；无参数默认 restart
+/home/isp/bin/cyf_api_kit.sh status
+/home/isp/bin/cyf_api_kit.sh start
+/home/isp/bin/cyf_api_kit.sh restart
+/home/isp/bin/cyf_api_kit.sh stop
+/home/isp/bin/cyf_api_kit.sh --help
+
+# deploy 子命令当前 fail-closed，仅输出迁移提示，不执行发布
+/home/isp/bin/cyf_api_kit.sh deploy
+
+# root/自动化入口；默认动作是 restart，不拉代码、不执行 Gradle
+/usr/local/sbin/cyf-api-kit status
+/usr/local/sbin/cyf-api-kit start
+/usr/local/sbin/cyf-api-kit restart
+/usr/local/sbin/cyf-api-kit stop
+
+# 以下仅为历史/隔离诊断入口，不是当前默认生产发布路径；不要在本机执行真实构建
+ops/release/verify-release.sh --input <release-input.json>
+ops/release/deploy-api.sh --input <release-input.json> --dry-run
 ```
 
-**脚本内部做了什么：**
-1. `git pull` 拉取 develop 分支最新代码
-2. `gradle :starter:bootJar -x test --no-daemon` 构建 JAR
-3. `tar zcf package.tgz` 打包
-4. 解压 → 替换 `cyf-api-kit.jar`
-5. 停止旧进程 → 启动新进程（nohup+setsid）
+`/usr/local/sbin/cyf-api-kit` 使用精确 Java/JAR 进程识别、PID/制品 SHA 运行记录、统一发布锁、
+内存/磁盘门禁和 `/actuator/health` 健康门禁；冷启动最长等待 1200 秒。注意当前已安装生命周期核心仍有资源拒绝逻辑，
+这与 M1 runbook 的非阻断资源观测不是同一实现；本次仅统一入口，不调整该核心的资源策略。Java 使用 root-owned
+Temurin 21 JRE，并降权为独立的 `cyf-api` 账号运行；可信 JAR 与密钥位于 root-owned
+`/home/isp/hosts/cyf/api/`，运行记录位于 `/run/cyf-api/`，不会从 `isp` 可写目录执行或写入 root 临时文件。
+Jasypt 密钥不暴露给交互账号 `isp`，生命周期日志写入 `/var/log/cyf-api/`。`/tmp` 下的 API 锁和
+`/run/cyf-api/` 由 `/etc/tmpfiles.d/cyf-api-locks.conf` 以 root 身份预创建。
+旧 `/home/isp/bin/cyf_api_kit_start.sh` 与 `/home/isp/bin/cyf_api_kit_deploy.sh` 仅兼容转发到统一入口；
+`deploy` 子命令保持 fail-closed，禁止绕过不可变制品、独立验证、自动回滚和生产审批门禁。
+历史 `ops/release/m2-c08*.json` 仍指向旧的 `/home/isp/hosts/cyf/api`
+运行路径，不得用于新的 `--execute`；下一次源码发布前必须先将 release pipeline 适配 root-owned JAR、
+`cyf-api` 运行身份和 `/run/cyf-api/` 记录路径，并重新独立验收。
+`implementation/M1_RELEASE_RUNBOOK.md` 当前仅保留历史门禁与迁移约束，路径适配完成前不可按其中旧部署命令执行。
 
 **JVM 参数：**
 ```
--Xms128m -Xmx512m -Xss256k -XX:MaxMetaspaceSize=192m -XX:+UseG1GC
+-Xms128m -Xmx384m -Xss256k -XX:MaxMetaspaceSize=192m -XX:MaxDirectMemorySize=64m -XX:+UseG1GC
 ```
 
 **启动参数：**
 ```
---server.port=10018 --spring.profiles.active=prod
+--server.port=10018 --server.address=0.0.0.0 --spring.profiles.active=prod
 ```
 
 ### 前端
 
-```bash
-# 一条命令：拉代码 → npm install → build → 部署
-bash /home/isp/bin/cyf_web_kit_start.sh
-```
+正式发布使用阿里云 Flow `4403172`：固定发布版本和完整源码 commit，由同 Run 执行 JavaScript 扫描、相关测试、Vite 生产构建、制品上传和主机部署，再在线核验。`develop` 合入/push 不自动部署，不要求转 `master`；按具体版本安排触发，验证成功不等于上线。不在本机打包，不因 Flow 失败转本地构建。
 
-**快速迭代约定：**
-- 当前处于快速迭代阶段，前端问题修完并本地验证通过后，直接执行 `/home/isp/bin/cyf_web_kit_start.sh` 发布。
-- 不需要手动拆分“备份、复制 dist、改权限”等步骤，除非脚本本身失败或需要临时绕过脚本排障。
-- 修复类小改动默认按“改完一个问题 → 验证通过 → 直接部署 → 线上检查通过后提交并推送”的节奏推进。
-- 前端提交在 `/home/isp/wsps/cyf/web` 仓库执行，部署成功并完成线上 smoke check 后提交相关改动并推送 `origin/develop`。
+历史云端基线记录：Run `86` / commit `e88425bd5416388e86ff1c1420502c3b571c861f` / 部署单 `69337967`。这是旧记录，不证明当前最新配置或上线状态；当前配置/Run 须实际查询，不能据此新建流水线或恢复旧 webhook。
 
-**脚本内部做了什么：**
-1. `git pull` 拉取 develop 分支
-2. `npm install` 安装依赖（如有变化）
-3. `npm run build` (= `vite build`)
-4. 旧版本备份到 `/home/isp/hosts/cyf/web/bak/`
-5. `dist/` 复制到 `/home/isp/hosts/cyf/web/kit/`（nginx 根目录）
+`/home/isp/bin/cyf_web_kit_start.sh` 不作为源码到生产发布入口；Flow 失败不授权该脚本本地生产构建或部署，本地结果不代替正式 Flow 证据。
 
 ### codex-ws-agent
 
@@ -140,8 +166,8 @@ ps -ef | grep agent-client | grep -v grep
 ### 查看日志
 
 ```bash
-# 后端启动日志
-ls -t /home/isp/hosts/cyf/api/logs/startlog_*.log | head -1 | xargs tail -50
+# 后端启动日志（仅 root 读取；isp 使用统一入口 status）
+ls -t /var/log/cyf-api/startlog_*.log | head -1 | xargs tail -50
 
 # agent 日志
 tail -f /home/isp/apps/codex-ws-agent/logs/startlog_*.log
@@ -217,7 +243,7 @@ SHOW INDEX FROM agent_task_artifact;
 | 检查项 | 命令/位置 |
 |--------|----------|
 | 后端进程 | `ps -ef \| grep cyf-api-kit` |
-| 后端端口 | `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:10018/actuator` |
+| 后端健康 | `curl -fsS http://127.0.0.1:10018/actuator/health` |
 | agent 连接 | `tail -2 /home/isp/apps/codex-ws-agent/logs/startlog_*.log` 含 `connected` |
 | 前端页面 | `curl -k -s -o /dev/null -w "%{http_code}" https://kit.chaoyoufan.cn/` |
 | nginx | `/home/isp/apps/nginx/sbin/nginx -t` |
@@ -230,9 +256,9 @@ SHOW INDEX FROM agent_task_artifact;
 |------|------|
 | 前端 500 | nginx 日志 `access.log`；文件权限 `chmod -R a+rX /home/isp/hosts/cyf/web/kit/` |
 | agent 连不上 | 检查 `tail -20 /home/isp/apps/codex-ws-agent/logs/*.log`；确认 `curl -I http://127.0.0.1:10018/ws/agent/channel?api_key=...` |
-| API 500 | `tail -100 /home/isp/hosts/cyf/api/logs/startlog_*.log \| grep ERROR` |
+| API 500/502 | root 查看 `/var/log/cyf-api/startlog_*.log`；isp 执行 `/home/isp/bin/cyf_api_kit.sh status`，root 执行 `/usr/local/sbin/cyf-api-kit status` |
 | 数据库报错 | 检查断新字段是否已执行迁移 SQL |
-| JVM OOM | `dmesg -T \| grep -i oom`；调整 `-Xmx512m` |
+| JVM OOM | `dmesg -T \| grep -i oom`；当前上限 `-Xmx384m`，调整前先复核主机资源 |
 
 ### A02 持久 Agent 身份 Schema 迁移
 
@@ -527,3 +553,10 @@ ORDER BY issue_code;
 - 多 Agent 历史任务只安全回填 member，不猜测 work-item 拆分；活动任务不伪造 B04 lease。
 - 不删除或覆盖 sealed manifest batch/rows、run 或 issue 审计；业务回退仅处理经变更单确认且未被后续业务修改的 `assignment_source='migration'` 行。
 - B09 不写 task event；待 C01 后由独立任务补充。
+
+### HTTPS 登录反向代理约束（2026-09-08）
+
+- 应用主配置 `api/starter/src/main/resources/application.properties` 显式保留 `server.forward-headers-strategy=framework`；不能只依赖公共模块的同名资源，应用根资源会遮蔽它。不要为修复登录而删除语音禁用配置。
+- API Nginx 各代理 location 清除客户端 `Forwarded`、`X-Forwarded-Prefix`，固定 `Host`/`X-Forwarded-Host` 为 `api.chaoyoufan.cn`，并由边缘覆盖 Proto/Port/For；不能仅在 server 层添加会被 location 指令覆盖的设置。
+- 回归：`:starter:test --tests cn.jia.security.LoginForwardedHeadersConfigurationTest`，所有 Gradle 仍须经 orchestrator。
+- 上线实测 HTTPS 授权入口正常请求及伪造代理头请求均302至 HTTPS 登录页，登录页200；不跟随未知跳转、不打印或保存 Cookie/token。健康检查200或匿名401不能替代该验证。

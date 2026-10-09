@@ -57,6 +57,9 @@ stages:
                   --tests cn.jia.agent.dao.AgentTaskArtifactOutcomeMapperContractTest \
                   --tests cn.jia.agent.dao.AgentCommandRecoveryMapperContractTest \
                   :agent:jia-agent-service:test \
+                  --tests cn.jia.agent.config.AgentWorkItemReassignmentStartupTest \
+                  --tests cn.jia.agent.config.AgentCommandTransportWriterConfigurationTest \
+                  --tests cn.jia.agent.service.impl.AgentCommandCanonicalCodecTest \
                   --tests cn.jia.agent.service.impl.AgentWorkItemReassignmentServiceTest \
                   --tests cn.jia.agent.service.impl.AgentWorkItemReassignmentRealTransactionTest \
                   --tests cn.jia.agent.api.AgentWorkItemReassignmentControllerTest \
@@ -107,6 +110,7 @@ stages:
                   --tests cn.jia.chat.service.ChatConversationEventBrokerTest \
                   --tests cn.jia.chat.service.ChatStreamPolicyTest \
                   :common:jia-common-core:test \
+                  --tests cn.jia.core.diagnostics.StartupTimelineTest \
                   --tests cn.jia.core.deadline.RequestDeadlineContextTest \
                   --tests cn.jia.core.deadline.RequestDeadlinePropagationTest \
                   --tests cn.jia.core.deadline.RequestDeadlineTest \
@@ -117,20 +121,17 @@ stages:
                   --tests cn.jia.core.deadline.RequestDeadlineClientHttpRequestInterceptorTest \
                   --tests cn.jia.core.config.RedisCacheConfigTest \
                   --tests cn.jia.core.elasticsearch.ElasticsearchServiceTest \
-                  --tests cn.jia.core.elasticsearch.ElasticsearchTimeoutsTest \
                   --tests cn.jia.core.filter.RequestIdFilterTest \
                   --tests cn.jia.core.interceptor.HttpRequestLogInterceptorTest \
                   --tests cn.jia.core.ldap.LdapFailureClassifierTest \
-                  --tests cn.jia.core.ldap.LdapRequestBudgetContextTest \
-                  --tests cn.jia.core.redis.RedisRequestBudgetTest \
-                  --tests cn.jia.core.redis.RedisServiceDeadlineTest \
+                  --tests cn.jia.core.redis.RedisServiceCompareDeleteTest --tests cn.jia.core.redis.RedisServiceDeadlineTest \
                   :common:jia-common-starter:test \
                   --tests cn.jia.core.amqp.RabbitMqBudgetConfigurationTest \
                   --tests cn.jia.core.deadline.RequestDeadlineConfigTest \
                   --tests cn.jia.core.deadline.RequestDeadlineExceptionHandlerTest \
                   --tests cn.jia.core.deadline.RequestDeadlineFilterTest \
                   :isp:jia-isp-service:test \
-                  --tests cn.jia.isp.ldap.LdapTimeoutsTest \
+                  --tests cn.jia.isp.ldap.LdapRequestBudgetAspectTest \
                   :oauth:jia-oauth-service:test \
                   --tests cn.jia.oauth.config.OauthConsentTemplateTest \
                   --tests cn.jia.oauth.config.OauthControllerAccountSecurityTest \
@@ -142,6 +143,7 @@ stages:
                   --tests cn.jia.sms.service.impl.SmsReplyCallbackServiceTest \
                   --tests cn.jia.sms.service.impl.SmsServiceImplTest \
                   :starter:test \
+                  --tests cn.jia.diagnostics.StartupTimelineBootTest \
                   --tests cn.jia.starter.AuthFormTransportTest --tests cn.jia.config.ApiPerformanceMetricsConfigTest \
                   --tests cn.jia.config.SmsEmailRuntimeClasspathTest \
                   --tests cn.jia.config.ElasticsearchProductionHealthIsolationTest \
@@ -279,21 +281,3 @@ stages:
               filePath:
                 - _cyf_api_flow_export/
               includePathInArtifact: false
-  deploy:
-    name: Automatic backend deployment
-    jobs:
-      deploy_api:
-        name: Install same-run artifact and check health
-        component: VMDeploy
-        with:
-          artifact: $[stages.cloud_ci.api_ci.upload_artifact.artifacts.cyf_api_flow_5260799]
-          downloadArtifact: true
-          artifactDownloadPath: /var/lib/cyf-api-flow/downloads/${BUILD_NUMBER}/package.tgz
-          executeUser: root
-          run: |-
-            set -eu
-            /usr/local/sbin/cyf-api-flow-deploy "$PIPELINE_ID" "$BUILD_NUMBER" "$CI_COMMIT_SHA"
-          useEncodeBase64: false
-          machineGroup: yjctjhskhk1ti9t4
-          batchNumber: 1
-          batchWaitTime: 0
