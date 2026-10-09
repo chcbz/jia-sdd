@@ -235,6 +235,23 @@ class LocalPackageTest(unittest.TestCase):
         self.f.refresh_log(extra='EVIDENCE_HIT key=synthetic; Gradle skipped')
         self.rejected(self.run_fixture, 'BUILD_NOT_FRESH')
 
+    def test_exact_task_execution_allows_testclasses_siblings(self):
+        siblings = '\n'.join('> Task ' + task + 'Classes' for task in self.f.tasks)
+        self.f.refresh_log(extra=siblings)
+        self.assertTrue(Path(self.run_fixture()['package']['path']).is_file())
+
+    def test_exact_task_token_rejects_prefix_only_status_and_duplicates(self):
+        task = self.f.tasks[0]
+        for extra in ('> Task ' + task + 'Classes', '> Task ' + task + 'Extra',
+                      '> Task ' + task + ':child', '> Task ' + task + '-sibling',
+                      '> Task ' + task + ' UP-TO-DATE', '> Task ' + task + ' FROM-CACHE',
+                      '> Task ' + task + ' SKIPPED', '> Task ' + task + ' NO-SOURCE'):
+            with self.subTest(extra=extra):
+                self.f.refresh_log(omit=task, extra=extra)
+                self.rejected(self.run_fixture, 'BUILD_NOT_FRESH')
+        self.f.refresh_log(extra='> Task ' + task)
+        self.rejected(self.run_fixture, 'BUILD_NOT_FRESH')
+
     def test_proof_stale_foreign_or_wrong_metadata(self):
         original = copy.deepcopy(self.f.proof)
         for mutate in (lambda p: p.update(identity={**p['identity'], 'buildId': 'foreign'}),

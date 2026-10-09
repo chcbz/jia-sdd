@@ -314,7 +314,7 @@ def xml_summary(data):
 
 def task_executed(log, task):
     need(type(task) is str and re.fullmatch(r':[A-Za-z0-9_:-]+', task))
-    matches = re.findall(r'^> Task ' + re.escape(task) + r'(.*)$', log, flags=re.MULTILINE)
+    matches = re.findall(r'^> Task ' + re.escape(task) + r'(?=\s|$)(.*)$', log, flags=re.MULTILINE)
     need(len(matches) == 1 and not matches[0].strip())
 
 

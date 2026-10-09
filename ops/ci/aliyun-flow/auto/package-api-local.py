@@ -194,7 +194,7 @@ def mail_runtime(jar):
 
 
 def task_executed(log, task):
-    lines = re.findall(r'^> Task ' + re.escape(task) + r'(.*)$', log, flags=re.MULTILINE)
+    lines = re.findall(r'^> Task ' + re.escape(task) + r'(?=\s|$)(.*)$', log, flags=re.MULTILINE)
     require(len(lines) == 1 and not lines[0].strip(), 'BUILD_NOT_FRESH')
 
 

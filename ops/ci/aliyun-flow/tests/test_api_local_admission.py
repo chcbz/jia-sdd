@@ -457,6 +457,23 @@ class AdmissionTest(unittest.TestCase):
                 self.f.ev[section][key]=value;self.f.rebuild();self.reject('EVIDENCE_INVALID')
                 self.f.ev=old;self.f.rebuild()
 
+    def test_exact_task_execution_allows_testclasses_siblings(self):
+        siblings = '\n'.join('> Task ' + task + 'Classes' for task in self.f.tasks)
+        self.f.rebuild(extra_log=siblings)
+        self.assertEqual(self.run_admission()['status'], 'admitted')
+
+    def test_exact_task_token_rejects_prefix_only_status_and_duplicates(self):
+        task = self.f.tasks[0]
+        for extra in ('> Task ' + task + 'Classes', '> Task ' + task + 'Extra',
+                      '> Task ' + task + ':child', '> Task ' + task + '-sibling',
+                      '> Task ' + task + ' UP-TO-DATE', '> Task ' + task + ' FROM-CACHE',
+                      '> Task ' + task + ' SKIPPED', '> Task ' + task + ' NO-SOURCE'):
+            with self.subTest(extra=extra):
+                self.f.rebuild(omitted_task=task, extra_log=extra)
+                self.reject('EVIDENCE_INVALID')
+        self.f.rebuild(extra_log='> Task ' + task)
+        self.reject('EVIDENCE_INVALID')
+
     def test_cached_or_missing_tasks_and_evidence_hit_rejected(self):
         for kwargs in ({'log_suffix':' UP-TO-DATE'},{'omitted_task':':starter:bootJar'},{'extra_log':'EVIDENCE_HIT selector=unit'}):
             with self.subTest(kwargs=kwargs):
