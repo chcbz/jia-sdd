@@ -109,7 +109,7 @@ class WebFlowStreamingTest(unittest.TestCase):
                 sha256='0' * 64 if bad_digest and name == 'index.html'
                 else hashlib.sha256(value).hexdigest()))
         return dict(schema_version=1, pipeline_id='4403172', run_id=run, branch='develop',
-                    commit=commit, files=files)
+                    commit=commit, files=files, package_version="1.14.0-consolidated.20261009")
 
     def archive_bytes(self, entries):
         output = io.BytesIO()
@@ -164,11 +164,16 @@ class WebFlowStreamingTest(unittest.TestCase):
                 values[relative] = ('other', st.st_mode)
         return values
 
+    def invoke(self, helper, pipeline='4403172', run='92'):
+        package = helper.ROOT / 'downloads' / run / 'package.tgz'
+        helper.deploy(pipeline, run, COMMIT, '1.14.0-consolidated.20261009',
+                      hashlib.sha256(package.read_bytes()).hexdigest())
+
     def deploy(self, helper, content, run='92'):
         with mock.patch.object(helper.urllib.request, 'urlopen',
                                return_value=HttpResponse(content['index.html'])), \
                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            helper.deploy('4403172', run, COMMIT)
+            self.invoke(helper, run=run)
 
     def test_reverse_tar_manifest_at_tail_stages_then_publishes_index_last(self):
         helper, root, site, package = self.environment('tail')
@@ -381,7 +386,7 @@ class WebFlowStreamingTest(unittest.TestCase):
                 mock.patch.object(helper.time, 'sleep') as sleep, \
                 mock.patch.object(helper, 'atomic_file', wraps=helper.atomic_file) as publish, \
                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
-            helper.deploy('4403172', '92', COMMIT)
+            self.invoke(helper)
         self.assertEqual(len(requests), 2)
         self.assertEqual(publish.call_count, 1)
         sleep.assert_called_once_with(2)
@@ -403,19 +408,19 @@ class WebFlowStreamingTest(unittest.TestCase):
         self.assertEqual((site / 'index.html').read_bytes(), content['index.html'])
         self.assertEqual(list(root.glob('.cyf-web-stage-*')), [])
 
-    def test_online_permanent_mismatch_retries_three_times_and_leaves_installed_phase(self):
+    def test_online_mismatch_waits_beyond_three_attempts_until_external_cancellation(self):
         helper, root, site, content = self.online_fixture('permanent')
         wrong = b'y' * len(content['index.html'])
         stderr = io.StringIO()
-        with mock.patch.object(helper.urllib.request, 'urlopen', side_effect=[HttpResponse(wrong) for _ in range(3)]) as urlopen, \
-                mock.patch.object(helper.time, 'sleep') as sleep, \
+        with mock.patch.object(helper.urllib.request, 'urlopen', side_effect=[HttpResponse(wrong) for _ in range(4)]) as urlopen, \
+                mock.patch.object(helper.time, 'sleep', side_effect=[None, None, None, KeyboardInterrupt()]) as sleep, \
                 contextlib.redirect_stderr(stderr):
-            with self.assertRaisesRegex(SystemExit, 'online index'):
-                helper.deploy('4403172', '92', COMMIT)
-        self.assertEqual(urlopen.call_count, 3)
-        self.assertEqual(sleep.call_args_list, [mock.call(2), mock.call(2)])
+            with self.assertRaises(KeyboardInterrupt):
+                self.invoke(helper)
+        self.assertEqual(urlopen.call_count, 4)
+        self.assertEqual(sleep.call_args_list, [mock.call(2)] * 4)
         events = self.parse_online_logs(stderr.getvalue())
-        self.assertEqual(len(events), 3)
+        self.assertEqual(len(events), 4)
         self.assertTrue(all(event['status'] == 200 and not event['match'] for event in events))
         self.assertTrue(all(event['actual_sha256'] != event['expected_sha256'] for event in events))
         record = json.loads((root / 'record.json').read_text())
@@ -423,18 +428,18 @@ class WebFlowStreamingTest(unittest.TestCase):
         self.assertEqual((site / 'index.html').read_bytes(), content['index.html'])
         self.assertEqual(list(root.glob('.cyf-web-stage-*')), [])
 
-    def test_online_exceptions_are_bounded_logged_and_leave_installed_phase(self):
+    def test_online_exceptions_are_logged_until_external_cancellation(self):
         helper, root, site, content = self.online_fixture('exception')
         stderr = io.StringIO()
         with mock.patch.object(helper.urllib.request, 'urlopen', side_effect=OSError('fixture failure')) as urlopen, \
-                mock.patch.object(helper.time, 'sleep') as sleep, \
+                mock.patch.object(helper.time, 'sleep', side_effect=[None, None, None, KeyboardInterrupt()]) as sleep, \
                 contextlib.redirect_stderr(stderr):
-            with self.assertRaisesRegex(SystemExit, 'online index'):
-                helper.deploy('4403172', '92', COMMIT)
-        self.assertEqual(urlopen.call_count, 3)
-        self.assertEqual(sleep.call_args_list, [mock.call(2), mock.call(2)])
+            with self.assertRaises(KeyboardInterrupt):
+                self.invoke(helper)
+        self.assertEqual(urlopen.call_count, 4)
+        self.assertEqual(sleep.call_args_list, [mock.call(2)] * 4)
         events = self.parse_online_logs(stderr.getvalue())
-        self.assertEqual(len(events), 3)
+        self.assertEqual(len(events), 4)
         self.assertTrue(all(event['error_type'] == 'OSError' for event in events))
         self.assertTrue(all(event['status'] is None and event['length'] == 0 for event in events))
         empty_digest = hashlib.sha256(b'').hexdigest()
@@ -483,12 +488,14 @@ class WebFlowStreamingTest(unittest.TestCase):
                 try:
                     if label == 'identity':
                         with self.assertRaisesRegex(SystemExit, 'invalid execution identity'):
-                            helper.deploy('4403173', '92', COMMIT)
+                            self.invoke(helper, pipeline='4403173')
                     elif label == 'lock':
-                        held = os.open(str(root / 'deploy.lock'), os.O_CREAT | os.O_RDWR, 0o600)
-                        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                        with self.assertRaisesRegex(SystemExit, 'another deployment'):
-                            self.deploy(helper, content)
+                        # The production lock waits rather than rejecting contention.
+                        # Simulate caller cancellation at that wait, never deadlock the test.
+                        with mock.patch.object(helper.fcntl, 'flock', side_effect=KeyboardInterrupt()) as flock:
+                            with self.assertRaises(KeyboardInterrupt):
+                                self.deploy(helper, content)
+                        self.assertEqual(flock.call_args[0][1], fcntl.LOCK_EX)
                     elif label == 'entry-cap':
                         helper.MAX_ARCHIVE_ENTRIES = 2
                         with self.assertRaisesRegex(SystemExit, 'entry limit'):
