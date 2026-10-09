@@ -11,6 +11,8 @@ import pathlib
 import shlex
 import shutil
 import string
+import stat
+import time
 import subprocess
 import sys
 import tempfile
@@ -653,6 +655,51 @@ def gradle_child_identity(args):
     return drop_identity
 
 
+def dependency_cache_environment(args, command):
+    """Opt-in reusable dependency home; never copy build outputs or user init scripts."""
+    home = getattr(args, "dependency_cache_home", None)
+    if home is None:
+        return None
+    home = pathlib.Path(home)
+    uid = getattr(args, "run_uid", None) or os.geteuid()
+    gid = getattr(args, "run_gid", None) or os.getegid()
+    if not home.is_absolute() or str(home) != os.path.normpath(str(home)):
+        raise SystemExit("Gradle cache denied: use an absolute canonical path")
+    # Check lexical ancestors before creating anything; don't follow a symlink.
+    for part in [home] + list(home.parents):
+        if part.is_symlink():
+            raise SystemExit("Gradle cache denied: symbolic links are not allowed")
+    if home.resolve() != home:
+        raise SystemExit("Gradle cache denied: cache path is not canonical")
+    if not home.exists():
+        # The caller provisions the parent; don't create arbitrary ancestor trees.
+        home.mkdir(mode=0o700)
+        if uid != os.geteuid() or gid != os.getegid():
+            os.chown(str(home), uid, gid)
+    info = home.stat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != uid or info.st_mode & 0o077:
+        raise SystemExit("Gradle cache denied: home must be private and owned by the Gradle identity")
+    # Cache data must not implicitly inject repositories, credentials or build code.
+    for name in ("gradle.properties", "init.gradle", "init.gradle.kts"):
+        if os.path.lexists(str(home / name)):
+            raise SystemExit("Gradle cache denied: implicit configuration is not allowed")
+    init_dir = home / "init.d"
+    if os.path.lexists(str(init_dir)) and (
+            init_dir.is_symlink() or not init_dir.is_dir() or any(init_dir.iterdir())):
+        raise SystemExit("Gradle cache denied: implicit init scripts are not allowed")
+    if any(arg == "-g" or arg.startswith("-g=") or
+           (arg.startswith("-g") and not arg.startswith("--")) or
+           arg.startswith("--gradle-user-home") or arg.startswith("-Dgradle.user.home")
+           for arg in command[1:]):
+        raise SystemExit("Gradle cache denied: conflicting command-line user home")
+    inherited = os.environ.get("GRADLE_USER_HOME")
+    if inherited and inherited != str(home):
+        raise SystemExit("Gradle cache denied: conflicting GRADLE_USER_HOME")
+    env = dict(os.environ, GRADLE_USER_HOME=str(home))
+    print("GRADLE_DEPENDENCY_CACHE_HOME={}".format(home), flush=True)
+    return env
+
+
 def cmd_gradle(args):
     command = args.command
     if command and command[0] == "--":
@@ -677,13 +724,22 @@ def cmd_gradle(args):
         if cached and cached.get("result") == "accepted":
             print("EVIDENCE_HIT key={}; Gradle skipped for unchanged tree/selector/fixture".format(key))
             return 0
+        env = dependency_cache_environment(args, command)
         print("GRADLE_LOCK_ACQUIRED task={} pid={}".format(args.task_id, os.getpid()), flush=True)
+        started = time.monotonic()
+        options = {"env": env} if env is not None else {}
         result = subprocess.run(
             command,
             cwd=str(cwd),
             check=False,
             preexec_fn=child_identity,
+            **options
         )
+        elapsed = time.monotonic() - started
+        print("GRADLE_EXECUTION_TIMING " + json.dumps({"task_id": args.task_id,
+            "elapsed_seconds": round(elapsed, 3), "exit_code": result.returncode,
+            "dependency_cache_home": str(args.dependency_cache_home)
+                if getattr(args, "dependency_cache_home", None) else None}), flush=True)
         if result.returncode == 0:
             with exclusive_lock(EVIDENCE_LOCK):
                 cache = load_json(EVIDENCE_PATH, empty_cache())
@@ -853,6 +909,8 @@ def build_parser():
     gradle.add_argument("--selector", required=True)
     gradle.add_argument("--fixture-digest", required=True)
     gradle.add_argument("--artifact", default=None)
+    gradle.add_argument("--dependency-cache-home", type=pathlib.Path,
+                        help="Opt-in private persistent Gradle home; no implicit init/config; not output reuse")
     gradle.add_argument("--run-uid", type=int)
     gradle.add_argument("--run-gid", type=int)
     gradle.add_argument("command", nargs=argparse.REMAINDER)

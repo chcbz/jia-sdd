@@ -474,6 +474,16 @@ class AdmissionTest(unittest.TestCase):
         self.f.rebuild(extra_log='> Task ' + task)
         self.reject('EVIDENCE_INVALID')
 
+    def test_compile_cache_flag_keeps_required_tasks_fresh(self):
+        tasks = {t['task'] for t in self.f.ev['tests']} | {':validateLayering', ':starter:bootJar'}
+        argv = list(self.f.ev['invocation']['argv'])
+        argv[argv.index('--no-build-cache')] = '--build-cache'
+        m.validate_argv(argv, tasks, {x['path'] for x in self.f.ev['invocation']['inputs']})
+        m.task_executed('> Task :agent:compileJava FROM-CACHE\n> Task :starter:bootJar\n', ':starter:bootJar')
+        for task in tasks:
+            with self.subTest(task=task), self.assertRaises(m.Rejected):
+                m.task_executed('> Task ' + task + ' FROM-CACHE\n', task)
+
     def test_cached_or_missing_tasks_and_evidence_hit_rejected(self):
         for kwargs in ({'log_suffix':' UP-TO-DATE'},{'omitted_task':':starter:bootJar'},{'extra_log':'EVIDENCE_HIT selector=unit'}):
             with self.subTest(kwargs=kwargs):

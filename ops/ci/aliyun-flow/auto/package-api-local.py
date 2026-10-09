@@ -231,7 +231,7 @@ def validate_argv(argv, required_tasks, inputs):
     require(type(argv) is list and bool(argv) and all(type(x) is str for x in argv))
     require(Path(argv[0]).name in ('gradle', 'gradlew'))
     # Public grammar only. Preserve exact task/filter ordering; never execute argv.
-    simple = {'--no-daemon', '--no-build-cache', '--rerun-tasks', '--console=plain', '--stacktrace', '--info'}
+    simple = {'--no-daemon', '--no-build-cache', '--build-cache', '--rerun-tasks', '--console=plain', '--stacktrace', '--info'}
     task = re.compile(r':[A-Za-z0-9_:-]+\Z')
     index = 1
     previous_task = None

@@ -1,4 +1,4 @@
-/* UR05 opt-in local producer metadata. No Test, dependency, included-build,
+/* Opt-in local producer metadata and compile-only cache policy. No dependency,
  * default-task, installer or Flow identity changes. External build routing and
  * pre-consumption dependency verification are explicit controller prerequisites.
  * Proof/checksum consistency is not authentication or production admission. */
@@ -97,6 +97,19 @@ settingsEvaluated { settings ->
         throw new GradleException('CYF_LOCAL_RELEASE_SETTINGS_MISMATCH')
     }
     matchedSettings = true
+}
+// Opt-in local release only: reuse content-keyed JavaCompile outputs, never
+// tests, final JARs or other task outputs. New buildRoot remains mandatory.
+// JavaCompile is already a Gradle @CacheableTask; no manual cache keys.
+gradle.beforeProject { project ->
+    project.tasks.configureEach { candidate ->
+        if (!(candidate instanceof org.gradle.api.tasks.compile.JavaCompile)) {
+            candidate.outputs.cacheIf { false }
+        }
+        if (candidate instanceof org.gradle.api.tasks.testing.Test) {
+            candidate.outputs.upToDateWhen { false }
+        }
+    }
 }
 gradle.projectsEvaluated {
     if (gradle.rootProject.projectDir.canonicalFile != sourceRoot) return

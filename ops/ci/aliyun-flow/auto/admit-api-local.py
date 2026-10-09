@@ -322,7 +322,7 @@ def validate_argv(argv, tasks, inputs):
     need(type(argv) is list and argv and all(type(x) is str for x in argv))
     need(Path(argv[0]).name in ('gradle', 'gradlew'))
     i, previous, metadata_seen = 1, None, False
-    simple = {'--no-daemon', '--no-build-cache', '--rerun-tasks', '--console=plain', '--stacktrace', '--info'}
+    simple = {'--no-daemon', '--no-build-cache', '--build-cache', '--rerun-tasks', '--console=plain', '--stacktrace', '--info'}
     while i < len(argv):
         arg = argv[i]
         if arg in ('-I', '--init-script'):

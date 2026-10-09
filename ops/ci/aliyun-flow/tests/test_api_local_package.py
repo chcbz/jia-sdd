@@ -235,6 +235,15 @@ class LocalPackageTest(unittest.TestCase):
         self.f.refresh_log(extra='EVIDENCE_HIT key=synthetic; Gradle skipped')
         self.rejected(self.run_fixture, 'BUILD_NOT_FRESH')
 
+    def test_compile_cache_flag_allows_only_fresh_required_tasks(self):
+        self.f.ev['invocation']['argv'][2] = '--build-cache'
+        self.f.refresh_log(extra='> Task :agent:compileJava FROM-CACHE')
+        package = Path(self.run_fixture()['package']['path'])
+        self.assertTrue(package.is_file())
+        package.unlink()
+        self.f.refresh_log(extra='> Task :agent:test FROM-CACHE')
+        self.rejected(self.run_fixture, 'BUILD_NOT_FRESH')
+
     def test_exact_task_execution_allows_testclasses_siblings(self):
         siblings = '\n'.join('> Task ' + task + 'Classes' for task in self.f.tasks)
         self.f.refresh_log(extra=siblings)
@@ -473,6 +482,10 @@ class LocalPackageTest(unittest.TestCase):
         self.assertIn('gradle.projectsEvaluated', text)
         self.assertIn('StandardOpenOption.CREATE_NEW', text)
         self.assertNotIn('tasks.withType', text)
+        self.assertIn('candidate instanceof org.gradle.api.tasks.compile.JavaCompile', text)
+        self.assertIn('candidate.outputs.cacheIf { false }', text)
+        self.assertIn('candidate instanceof org.gradle.api.tasks.testing.Test', text)
+        self.assertIn('candidate.outputs.upToDateWhen { false }', text)
         self.assertNotIn('includeBuild(', text)
         self.assertNotIn('defaultTasks', text)
         self.assertNotIn('setActions', text)
