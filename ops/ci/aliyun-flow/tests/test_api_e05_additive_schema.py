@@ -128,6 +128,26 @@ E05_SHOW_TEXT = """CREATE TABLE `agent_work_item_reassignment` (
 """
 E05_SHOW_ROWS = [['agent_work_item_reassignment', E05_SHOW_TEXT.splitlines()[0]]] + [
     [line] for line in E05_SHOW_TEXT.splitlines()[1:]]
+# E05_SHOW_ROWS above is the frozen historical ownerless negative. The current
+# synthetic SHOW below matches the new owner-complete CREATE, not the old bare
+# CREATE. These offline fixtures are not live MySQL or production evidence.
+CURRENT_OWNER_E05_SHOW_TEXT = E05_SHOW_TEXT.replace(
+    '  PRIMARY KEY (`id`),', "  `owner_jiacn` varchar(50) NOT NULL COMMENT 'Authenticated task owner',\n  PRIMARY KEY (`id`),").replace(
+    '  CONSTRAINT `chk_work_item_reassignment_agents`',
+    '  KEY `idx_agent_work_item_reassignment_owner_scope` '
+    '(`tenant_id`,`client_id`,`owner_jiacn`,`task_id`,`work_item_id`),\n'
+    '  CONSTRAINT `chk_work_item_reassignment_agents`')
+CURRENT_OWNER_E05_SHOW_ROWS = [
+    ['agent_work_item_reassignment', CURRENT_OWNER_E05_SHOW_TEXT.splitlines()[0]]
+] + [[line] for line in CURRENT_OWNER_E05_SHOW_TEXT.splitlines()[1:]]
+
+
+# Frozen historical ownerless negative input, raw bytes/SHA from 7245df;
+# never used as the new same-batch CREATE or a successful migration proof.
+LEGACY_OWNERLESS_SQL_BYTES = b"-- M4-E05 bounded additive migration candidate.\n-- DDL only: no backfill, no lease mutation, and no transport/history rewrite.\nCREATE TABLE IF NOT EXISTS agent_work_item_reassignment (\n    id                          BIGINT NOT NULL AUTO_INCREMENT,\n    reassignment_id             VARCHAR(100) NOT NULL COMMENT 'Deterministic scope/task/work-item/idempotency receipt identity',\n    request_sha256              CHAR(64) NOT NULL COMMENT 'Canonical exact request digest',\n    task_id                     VARCHAR(100) NOT NULL,\n    work_item_id                VARCHAR(100) NOT NULL,\n    operator_subject            VARCHAR(100) NOT NULL COMMENT 'Exact authenticated JWT sub',\n    coordinator_agent_id        VARCHAR(100) NOT NULL COMMENT 'Exact active task coordinator',\n    previous_agent_id           VARCHAR(100) NOT NULL,\n    target_agent_id             VARCHAR(100) NOT NULL,\n    source_command_id           VARCHAR(100) NOT NULL,\n    command_id                  VARCHAR(100) NOT NULL COMMENT 'New immutable WORK_ITEM_EXECUTE command',\n    message_id                  VARCHAR(100) NOT NULL,\n    outbox_event_id             VARCHAR(100) NOT NULL,\n    expected_work_item_version  BIGINT NOT NULL,\n    result_work_item_version    BIGINT NOT NULL,\n    task_version                BIGINT NOT NULL,\n    lease_fence_sha256          CHAR(64) NOT NULL COMMENT 'SHA-256 of fresh lease token; token is never stored here',\n    previous_lease_until        BIGINT NOT NULL,\n    lease_until                 BIGINT NOT NULL,\n    attempt_count               INT NOT NULL,\n    max_attempts                INT NOT NULL,\n    tenant_id                   VARCHAR(50) NOT NULL,\n    client_id                   VARCHAR(50) NOT NULL,\n    create_time                 BIGINT NOT NULL,\n    update_time                 BIGINT NOT NULL,\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_work_item_reassignment_id\n        (tenant_id, client_id, reassignment_id),\n    UNIQUE KEY uk_work_item_reassignment_command\n        (tenant_id, client_id, command_id),\n    KEY idx_work_item_reassignment_latest\n        (tenant_id, client_id, task_id, work_item_id, id),\n    CONSTRAINT chk_work_item_reassignment_digest\n        CHECK (CHAR_LENGTH(request_sha256)=64 AND CHAR_LENGTH(lease_fence_sha256)=64),\n    CONSTRAINT chk_work_item_reassignment_versions\n        CHECK (expected_work_item_version >= 0\n               AND result_work_item_version = expected_work_item_version + 1\n               AND task_version >= 0),\n    CONSTRAINT chk_work_item_reassignment_agents\n        CHECK (previous_agent_id <> target_agent_id),\n    CONSTRAINT chk_work_item_reassignment_lease\n        CHECK (previous_lease_until > 0 AND lease_until > previous_lease_until\n               AND attempt_count > 0 AND attempt_count < max_attempts),\n    CONSTRAINT chk_work_item_reassignment_immutable_clock\n        CHECK (create_time > 0 AND update_time = create_time)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Immutable E05 explicit-target expired-lease reassignment receipts';\n"
+LEGACY_OWNERLESS_SQL_SHA256 = 'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1'
+
+
 E05_CREATE_GRANTS = [
     'GRANT USAGE ON *.* TO `cyf_e05_schema_runner`@`localhost`',
     'GRANT CREATE ON `jia`.`agent_work_item_reassignment` TO `cyf_e05_schema_runner`@`localhost`',
@@ -256,7 +276,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
             'schema_rows': [[hx('utf8'), hx('utf8_general_ci')]],
             'default_rows': [[hx(self.collation)]],
             'grants': list(E05_CREATE_GRANTS),
-            'show_rows': copy.deepcopy(E05_SHOW_ROWS),
+            'show_rows': copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS),
             'expected': expected,
             'tables': {table: 'absent' for table in e05.TABLE_ORDER},
             'creates': [],
@@ -523,6 +543,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
 
     def test_existing_zero_columns_use_show_without_recreate_but_partial_columns_fail(self):
         table = e05.TABLE_ORDER[0]
+        self.state['show_rows'] = copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS)
         full = copy.deepcopy(self.state['expected'][table]['COLUMNS'])
         self.state['tables'][table] = 'equivalent'
         self.state['expected'][table]['COLUMNS'] = []
@@ -574,8 +595,8 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
 
     def test_show_is_independently_complete_closed_and_preserves_e05_arithmetic_contract(self):
         table = e05.TABLE_ORDER[0]
-        columns = e05.parse_show_create(E05_SHOW_ROWS, table, self.collation)
-        self.assertEqual(len(columns), 25)
+        columns = e05.parse_show_create(CURRENT_OWNER_E05_SHOW_ROWS, table, self.collation)
+        self.assertEqual(len(columns), 26)
         self.assertEqual(tuple(col[1:6] for col in columns), e05.EXPECTED_TABLES[table]['columns'])
         changes = [
             ('`id` bigint', '`id` int'), ('varchar(100) NOT NULL', 'varchar(100) DEFAULT NULL'),
@@ -593,21 +614,22 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         ]
         for before, after in changes:
             with self.subTest(change=(before, after)):
-                rows = [[value.replace(before, after) for value in row] for row in E05_SHOW_ROWS]
-                self.assertNotEqual(rows, E05_SHOW_ROWS)
+                rows = [[value.replace(before, after) for value in row] for row in CURRENT_OWNER_E05_SHOW_ROWS]
+                self.assertNotEqual(rows, CURRENT_OWNER_E05_SHOW_ROWS)
                 with self.assertRaises(e05.SchemaError):
                     e05.parse_show_create(rows, table, self.collation)
-        reordered = copy.deepcopy(E05_SHOW_ROWS)
+        reordered = copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS)
         reordered[1], reordered[2] = reordered[2], reordered[1]
-        for rows in (reordered, E05_SHOW_ROWS + [['trailing SQL']]):
+        for rows in (reordered, CURRENT_OWNER_E05_SHOW_ROWS + [['trailing SQL']]):
             with self.assertRaises(e05.SchemaError):
                 e05.parse_show_create(rows, table, self.collation)
         with self.assertRaises(e05.SchemaError):
-            e05.parse_show_create(E05_SHOW_ROWS, 'agent_task_artifact_outcome', self.collation)
+            e05.parse_show_create(CURRENT_OWNER_E05_SHOW_ROWS, 'agent_task_artifact_outcome', self.collation)
         self.assertEqual(set(e05.SHOW_SQL), set(e05.TABLE_ORDER))
 
     def test_good_show_cannot_mask_information_schema_drift(self):
         table = e05.TABLE_ORDER[0]
+        self.state['show_rows'] = copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS)
         self.state['expected'][table]['COLUMNS'] = []
         for drift in ('index_drift', 'index_attributes_drift', 'constraint_drift', 'check_drift', 'collation_drift'):
             with self.subTest(drift=drift):
@@ -716,7 +738,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
                           ' REPLACE ', ' GRANT ', ' TRUNCATE '):
             self.assertNotIn(forbidden, ' ' + statement.upper() + ' ')
         self.assertEqual(digest(e05.E05_SQL_BYTES),
-                         'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1')
+                         'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842')
 
     def test_create_backend_failure_is_reported_preserved_and_retryable(self):
         table = e05.TABLE_ORDER[0]
@@ -839,6 +861,156 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
                 self.assertEqual(payload['error'], 'mysql_password_environment_missing')
                 self.assertFalse((self.root / 'mysql-args.json').exists())
 
+
+    def test_preservation_e05_fixed_create_bytes_and_owner_extension_are_both_required(self):
+        self.assertEqual(e05.RESOURCE_SHA256,
+                         'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842')
+        self.assertEqual(digest(e05.E05_SQL_BYTES), e05.RESOURCE_SHA256)
+        self.assertIn(b"owner_jiacn                  VARCHAR(50) NOT NULL COMMENT 'Authenticated task owner'", e05.E05_SQL_BYTES)
+        spec = e05.EXPECTED_TABLES[e05.TABLE_ORDER[0]]
+        self.assertIn(('owner_jiacn', 'varchar(50)', 'NO', None, ''), spec['columns'])
+        self.assertIn(e05.index('idx_agent_work_item_reassignment_owner_scope', False,
+                      ('tenant_id', 'client_id', 'owner_jiacn', 'task_id', 'work_item_id')),
+                      spec['indexes'])
+
+    def test_preservation_ownerless_historical_create_show_cannot_be_current_success(self):
+        with self.assertRaises(e05.SchemaError):
+            e05.parse_show_create(E05_SHOW_ROWS, e05.TABLE_ORDER[0], self.collation)
+
+    def test_preservation_complete_current_owner_show_is_synthetic_only_and_exact(self):
+        text = E05_SHOW_TEXT.replace('  PRIMARY KEY (`id`),',
+                                    "  `owner_jiacn` varchar(50) NOT NULL COMMENT 'Authenticated task owner',\n  PRIMARY KEY (`id`),")
+        needle = '  CONSTRAINT `chk_work_item_reassignment_agents`'
+        text = text.replace(needle,
+            '  KEY `idx_agent_work_item_reassignment_owner_scope` '
+            '(`tenant_id`,`client_id`,`owner_jiacn`,`task_id`,`work_item_id`),\n' + needle)
+        rows = [[e05.TABLE_ORDER[0], text.splitlines()[0]]] + [[line] for line in text.splitlines()[1:]]
+        parsed = e05.parse_show_create(rows, e05.TABLE_ORDER[0], self.collation)
+        self.assertEqual(len(parsed), 26)
+        self.assertEqual(tuple(col[1:6] for col in parsed),
+                         e05.EXPECTED_TABLES[e05.TABLE_ORDER[0]]['columns'])
+        no_owner_index = [row for row in rows if not row[0].startswith('  KEY `idx_agent_work_item_reassignment_owner_scope`')]
+        with self.assertRaises(e05.SchemaError):
+            e05.parse_show_create(no_owner_index, e05.TABLE_ORDER[0], self.collation)
+
+    def test_preservation_missing_mandatory_owner_index_stops_before_create(self):
+        table = e05.TABLE_ORDER[0]
+        self.state['tables'][table] = 'equivalent'
+        rows = self.state['expected'][table]['STATISTICS']
+        rows[:] = [row for row in rows if row[1] != hx('idx_agent_work_item_reassignment_owner_scope')]
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'existing_schema_drift')
+        self.assertEqual(self.read_state()['creates'], [])
+
+
+    def test_oracle_sync_bare_create_cannot_satisfy_current_owner_guard(self):
+        # Frozen ownerless historical input still cannot satisfy the current
+        # contract. The new CREATE is owner-complete; an ownerless readback
+        # remains a durable unknown-result failure, never repaired or inferred.
+        table = e05.TABLE_ORDER[0]
+        self.assertEqual(digest(LEGACY_OWNERLESS_SQL_BYTES),
+                         LEGACY_OWNERLESS_SQL_SHA256)
+        self.assertNotIn(b'owner_jiacn', LEGACY_OWNERLESS_SQL_BYTES)
+        self.assertIn(('owner_jiacn', 'varchar(50)', 'NO', None, ''),
+                      e05.EXPECTED_TABLES[table]['columns'])
+        self.state['expected'][table]['COLUMNS'] = []
+        self.state['show_rows'] = copy.deepcopy(E05_SHOW_ROWS)
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'created_table_not_equivalent')
+        self.assertEqual(payload['tables'][table]['status'], 'create_result_unknown')
+        self.assertEqual(self.read_state()['creates'], [table])
+        for statement in self.read_state()['commands']:
+            self.assertNotRegex(statement.upper(), r'^(ALTER|DROP|UPDATE|INSERT|DELETE) ')
+        self.assert_no_secret_disclosure(result, payload)
+
+    def test_same_batch_owner_create_show_and_historical_input_are_distinct(self):
+        self.assertEqual(digest(LEGACY_OWNERLESS_SQL_BYTES), LEGACY_OWNERLESS_SQL_SHA256)
+        self.assertNotEqual(LEGACY_OWNERLESS_SQL_BYTES, e05.E05_SQL_BYTES)
+        self.assertNotIn(b'owner_jiacn', LEGACY_OWNERLESS_SQL_BYTES)
+        statements = e05.split_exact_statements(e05.E05_SQL_BYTES)
+        self.assertEqual(tuple(statements), e05.TABLE_ORDER)
+        self.assertIn('owner_jiacn VARCHAR(50) NOT NULL', statements[e05.TABLE_ORDER[0]])
+        self.assertIn('idx_agent_work_item_reassignment_owner_scope', statements[e05.TABLE_ORDER[0]])
+        metadata = e05.parse_show_create(CURRENT_OWNER_E05_SHOW_ROWS, e05.TABLE_ORDER[0], self.collation)
+        self.assertIn('owner_jiacn', [value[1] for value in metadata])
+        with self.assertRaises(e05.SchemaError):
+            e05.parse_show_create(E05_SHOW_ROWS, e05.TABLE_ORDER[0], self.collation)
+
+    def test_frozen_old_ownerless_artifact_rejected_before_mysql(self):
+        self.rebuild_release(resource=LEGACY_OWNERLESS_SQL_BYTES)
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'e05_resource_digest_mismatch')
+        self.assertFalse((self.root / 'mysql-args.json').exists())
+        self.assertEqual(self.read_state()['creates'], [])
+        self.assert_no_secret_disclosure(result, payload)
+
+
+
+class LocalSchemaInstalledBindingSourceTest(unittest.TestCase):
+    """LOCAL grammar with actual installed-fixture bytes, not live DB acceptance."""
+    def setUp(self):
+        from test_api_gate_policy import ApiLocalSharedInstallerSourceTest
+        from unittest.mock import patch
+        self.fixture = ApiLocalSharedInstallerSourceTest(); self.fixture.setUp()
+        self.deploy = self.fixture.deploy
+        self.inputs = self.fixture.inputs
+        for entry in self.inputs.schema['entries']:
+            from test_api_additive_schema import f06
+            from test_api_e05_additive_schema import e05
+            source = f06 if entry['feature'] == 'F06' else e05
+            entry['expectedCatalogSha256'] = digest(self.deploy.local_canonical(source.EXPECTED_TABLES))
+        self.inputs.seal(); self.fixture.stage()
+        result = self.fixture.install(); self.assertEqual(result.returncode, 0, result.stderr)
+        self.paths = {'record': self.fixture.fixture.root / 'state/record.json',
+                      'package': self.fixture.fixture.root / 'state/incoming/package.tgz',
+                      'jar': self.fixture.fixture.target}
+        self.modes = {'record': 0o600, 'package': 0o600, 'jar': 0o640}
+        self.patch = patch.object(e05, 'local_coordinator_validator', return_value=self.deploy.__dict__)
+        self.patch.start()
+
+    def tearDown(self):
+        self.patch.stop(); self.fixture.tearDown()
+
+    def verify(self):
+        return e05.verify_release_binding(self.paths, os.geteuid(), self.modes)
+
+    def test_v3_consumed_installed_record_has_typed_source_no_fake_flow_identity(self):
+        binding = self.verify()
+        self.assertEqual(binding['source'], self.inputs.decision['source'])
+        self.assertEqual(binding['binding_sha256'], self.deploy.local_binding_sha(self.fixture.binding))
+        self.assertEqual(binding['expected_catalog_sha256'], digest(self.deploy.local_canonical(e05.EXPECTED_TABLES)))
+        self.assertNotIn('run', binding)
+        e05.assert_binding_paths_unchanged(self.paths, os.geteuid(), self.modes, binding, full_digest=True)
+
+    def test_v3_installed_record_cannot_substitute_different_package(self):
+        self.paths['package'].write_bytes(b'wrong incoming after installation')
+        with self.assertRaises(e05.SchemaError) as error: self.verify()
+        self.assertEqual(error.exception.code, 'local_package_invalid')
+
+    def test_v3_unconsumed_approval_cannot_authorize_schema(self):
+        path = self.paths['record'].parent / 'approval.json'
+        approval = json.loads(path.read_text()); approval.update(consumed=False, consumed_at=None)
+        path.write_bytes(self.deploy.local_canonical(approval))
+        with self.assertRaises(e05.SchemaError) as error: self.verify()
+        self.assertEqual(error.exception.code, 'local_recovery_binding_mismatch')
+
+    def test_v3_noninstalled_phase_cannot_authorize_schema(self):
+        record = json.loads(self.paths['record'].read_text()); record.update(status='active_pending', phase='commit')
+        self.paths['record'].write_bytes(self.deploy.local_canonical(record))
+        with self.assertRaises(e05.SchemaError) as error: self.verify()
+        self.assertEqual(error.exception.code, 'local_durable_record_incomplete')
+
+    def test_v3_immutable_inputs_are_rechecked_before_original_ddl_boundary(self):
+        binding = self.verify()
+        Path(self.inputs.decision['precondition']['schemaInventory']['path']).write_bytes(b'changed schema observation')
+        with self.assertRaises(e05.SchemaError) as error:
+            e05.assert_binding_paths_unchanged(self.paths, os.geteuid(), self.modes, binding)
+        self.assertEqual(error.exception.code, 'local_immutable_input_changed')
 
 if __name__ == '__main__':
     unittest.main()
