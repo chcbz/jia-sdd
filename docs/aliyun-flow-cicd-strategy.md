@@ -37,6 +37,12 @@
 - Flow 写入先备份前值、固定候选并 readback；有活动 Run 等待，不覆盖、不取消他人任务。资源/包大小/等待时限不增加无证据阈值，详见 `docs/aliyun-flow-gate-policy.md`。
 - Flow 模板及主机工具维护源仍位于 `ops/ci/aliyun-flow/`。目录名、配置保存、历史 status 或候选成功均不等于当前版本已部署。
 
+## 后端本地构建缓存提速（2026-10-09）
+
+普通本地后端构建通过既有 `cyf_orchestrator.py gradle` 的 `--dependency-cache-home /var/cache/cyf-gradle-local` 复用受控私有Gradle依赖缓存，不再每批使用空home。仅在干净固定commit/tree及新输出目录执行；可显式启用 `--build-cache` 配合固定本地metadata init的compile-only策略：仅JavaCompile按内容指纹复用，其余任务禁用输出缓存，测试禁止up-to-date；仍执行同批定向测试、`validateLayering`、依赖来源/SHA与fresh bootJar完整性检查，不缓存测试结果/生产JAR、不删除安全回归。home信任边界与参数冲突检查见 `ops/orchestration/README.md`。
+
+10分钟是“测试/构建/安装核验执行时间”的优化目标，不是强制超时或减免安全门禁。历史安装约307秒来自日志文件起止，未包含排队与批次中间等待；本次没有授权/触发生产安装，因此新构建加历史安装仅用于评估，不冒充完整发布达标。固定输入、实测结果与证据见 `docs/implementation/handoffs/BACKEND-RELEASE-10M-20261009.md`。冷缓存和其它源码/selector不作无实测承诺。
+
 ## 历史控制面与适配器记录（截至 2026-10-06，非当前执行规范）
 
 以下原记录保留不改写；其中双端 Flow 发布契约不作为后端本地发布输入，也不能证明新本地发布入口已验收。

@@ -35,3 +35,18 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 - 工具本身的隔离测试：`python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_execution_history_check.py' -v`。这些工具测试不是实际跨端验收证据。
 
 - 执行历史可追加 `--browser`：在同一Java/MySQL存活窗口驱动生产组件Chromium页面；非整站、非正式前端Flow。源码/辅助桩/浏览器指纹/截图证据边界见同一contract-pilot README。
+
+## 后端本地构建：受控持久依赖缓存（2026-10-09）
+
+既有 `gradle` 入口增加可选 `--dependency-cache-home /var/cache/cyf-gradle-local`，位置在任务ID及 `--` 之前。固定源码的正式本地构建不再为每个build ID创建空 `GRADLE_USER_HOME`；复用同一工具链/消费仓库的私有缓存home，源码与build输出仍逐批隔离。无该参数的调用行为不变；显式使用其它home的专项工具不改写。
+
+- 参数设置子进程 `GRADLE_USER_HOME` 并输出路径readback；目录必须canonical、无符号链接、由实际Gradle身份持有且0700。首次仅创建该目录，不自动创建父路径、不复制历史配置/daemon、不清缓存或他人目录。
+- home不得有隐式 `gradle.properties`、`init.gradle(.kts)` 或非空 `init.d`；仓库/消费凭据仍由固定显式init配置管理，不将凭据写入home。冲突的环境/CLI user-home拒绝，不能悄悄落到另一个目录。
+- 第一组对照仅复用依赖/解析/脚本缓存，`--no-build-cache`下仍重新执行207任务。正式本地候选可显式 `--no-daemon --build-cache`，配合本仓固定 `local-release-metadata.init.gradle` 的compile-only策略：只允许JavaCompile按Gradle输入指纹复用（包括测试类编译），所有非JavaCompile禁用输出缓存，Test额外禁止up-to-date；不复用测试报告或旧JAR。原定向测试、`validateLayering`、OpenCV来源/SHA、PublicArtifactVerifier、POI运行类路径和fresh bootJar仍执行。
+- 参数不改证据键、源码核验、串行锁、身份或发布授权。工具新增 `GRADLE_EXECUTION_TIMING` 实测子进程耗时，计时不含获取互斥锁的等待；没有deadline/资源门禁。
+- 完整调用仍须固定任务、commit/tree、selector、fixture和工具链，逐批记录新输出/日志/制品SHA；不要直接套其它任务的示例选择器。正式发布只消费同批核验的制品。
+
+本轮测量及边界见 `/home/isp/wsps/cyf/docs/implementation/handoffs/BACKEND-RELEASE-10M-20261009.md`；不是生产安装入口，不因此重启服务。
+
+- 本地producer/admission的argv白名单允许 `--build-cache`，但不放宽所需测试/分层/bootJar任务的fresh日志要求，`FROM-CACHE`/`UP-TO-DATE`仍拒绝。`invocation.cacheHit=false`指整个验证未被EVIDENCE_HIT跳过，不表示JavaCompile未命中；实际命中以逐任务日志为准。
+- 变更仅提交源码；安装主机已有admission工具仍可能是旧白名单。后续发布须固定并核对对应工具版本/源码哈希，完成正常工具适配后再消费新argv，不跳过原验签/可信输入链。此次不安装工具、不写发布回执、不重启生产。
