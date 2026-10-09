@@ -655,6 +655,44 @@ def gradle_child_identity(args):
     return drop_identity
 
 
+def local_release_cache_defaults(args, command):
+    """Default only the opt-in fixed local release, not Flow or general diagnostics.
+
+    Returns the effective command and a non-secret policy binding. Callers that
+    assemble producer evidence record this effective argv, not the requested argv.
+    """
+    if os.environ.get("CYF_LOCAL_RELEASE_OPT_IN") != "1":
+        return list(command), None
+    if os.environ.get("CYF_LOCAL_GRADLE_ACTIVE") != "1" or os.environ.get("CYF_FLOW_GRADLE_ACTIVE") == "1":
+        raise SystemExit("Local release defaults denied: explicit local Gradle context required")
+    expected = ROOT / "ops/ci/aliyun-flow/local-release-metadata.init.gradle"
+    digest = hashlib.sha256(expected.read_bytes()).hexdigest()
+    metadata = []
+    for index, arg in enumerate(command[:-1]):
+        if arg in ("-I", "--init-script") and pathlib.Path(command[index + 1]).name == expected.name:
+            metadata.append(pathlib.Path(command[index + 1]))
+    if len(metadata) != 1:
+        raise SystemExit("Local release defaults denied: exactly one fixed metadata init is required")
+    source = metadata[0]
+    if (not source.is_absolute() or source.is_symlink() or not source.is_file() or
+            hashlib.sha256(source.read_bytes()).hexdigest() != digest):
+        raise SystemExit("Local release defaults denied: metadata init differs from the fixed compile-only policy")
+    if "--build-cache" in command and "--no-build-cache" in command:
+        raise SystemExit("Local release defaults denied: conflicting compile cache flags")
+    effective = list(command)
+    if "--build-cache" not in effective and "--no-build-cache" not in effective:
+        effective.append("--build-cache")
+    if getattr(args, "dependency_cache_home", None) is None:
+        uid = getattr(args, "run_uid", None) or os.geteuid()
+        suffix = "" if uid == 0 else "-{}".format(uid)
+        args.dependency_cache_home = pathlib.Path("/var/cache/cyf-gradle-local" + suffix)
+    policy = {"format": "cyf-local-release-cache-defaults-v1",
+              "dependency_cache_home": str(args.dependency_cache_home),
+              "compile_cache": "--build-cache" in effective,
+              "metadata_sha256": digest}
+    return effective, policy
+
+
 def dependency_cache_environment(args, command):
     """Opt-in reusable dependency home; never copy build outputs or user init scripts."""
     home = getattr(args, "dependency_cache_home", None)
@@ -708,6 +746,7 @@ def cmd_gradle(args):
         raise SystemExit("command must begin with gradle or gradlew")
 
     child_identity = gradle_child_identity(args)
+    command, release_cache_policy = local_release_cache_defaults(args, command)
     record_gradle_resource_telemetry(args.heavy)
     ledger = load_ledger()
     item = gradle_guard(ledger, args)
@@ -721,10 +760,13 @@ def cmd_gradle(args):
         with exclusive_lock(EVIDENCE_LOCK):
             cache = load_json(EVIDENCE_PATH, empty_cache())
             cached = cache.get("records", {}).get(key)
-        if cached and cached.get("result") == "accepted":
+        if (cached and cached.get("result") == "accepted" and
+                cached.get("release_cache_policy") == release_cache_policy):
             print("EVIDENCE_HIT key={}; Gradle skipped for unchanged tree/selector/fixture".format(key))
             return 0
         env = dependency_cache_environment(args, command)
+        if release_cache_policy is not None:
+            print("GRADLE_LOCAL_RELEASE_DEFAULTS " + json.dumps(release_cache_policy, sort_keys=True), flush=True)
         print("GRADLE_LOCK_ACQUIRED task={} pid={}".format(args.task_id, os.getpid()), flush=True)
         started = time.monotonic()
         options = {"env": env} if env is not None else {}
@@ -750,6 +792,8 @@ def cmd_gradle(args):
                     "fixture_digest": args.fixture_digest,
                     "result": "accepted",
                     "command": " ".join(command),
+                    "effective_argv": command,
+                    "release_cache_policy": release_cache_policy,
                     "artifact": args.artifact,
                     "recorded_at": now(),
                 }
