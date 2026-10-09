@@ -47,6 +47,8 @@ Agent schema 中的 `agent_task_meta`、`agent_task_member`、`agent_task_work_i
 
 核对 Web `e3afb42dc69272f43699c2c423b06da7539f0671` 的会话发送、取消接线和回归；API `1e9111028fbdff1ae5452f64aec843e85e81ad59` 仅只读核对 ChatController capabilities 与 relay durable admission，本轮未改后端。其余章节保留原基线，不推断当前线上版本。
 
+发送入口局部补充核对（2026-10-09，Web `74dffae9379c8259283aa653304484981a66ace7`）：文本只在 `sendHallMessage` 规范化一次，再将同一内容传入内部发送函数；同步忙碌判定复用 `isConversationBusy`，保留发送锁、语音字符串/CAS要求和能力检查后的身份隔离。下面其余协议行为仍沿用已核对的 e3afb42 基线，未改变契约。面板输入/事件去重的行为回归见 `juyiting-discussion-panel-bindings.test.js`；交付边界见 [本轮handoff](../implementation/handoffs/HALL-LIGHTWEIGHT-P1-20261009.md)。
+
 - 首次发送要求 `/chat/capabilities` 声明当前 schema2 durable 契约；失败/不支持时不 POST、不插入乐观消息、不清草稿及引用，明确提示消息未发送，下次可重新检查。不保留旧 payload 回退。
 - `/chat/stream` 仍为当前入口。每次有效发送在异步检查前锁定唯一 requestId，body 与 `Idempotency-Key` 一致，统一发送 revision、interactionHint、clientSeenVector、inputRefs。metadata 白名单、身份/作用域隔离不删。
 - 取消仅使用已知 durable turn（含版本条件）或 allPending 请求；页面和三个议事面板不再暴露旧传输停止按钮。身份切换/卸载的本地流清理、语音停止等待仍是不同语义。

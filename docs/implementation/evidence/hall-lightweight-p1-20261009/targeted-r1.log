@@ -1,0 +1,352 @@
+
+
+  discussion panel shared bindings
+    ✔ public: preserves defaults, reactive inputs and exact single event forwarding (151ms)
+    ✔ private: preserves defaults, reactive inputs and exact single event forwarding
+    ✔ bounty: preserves defaults, reactive inputs and exact single event forwarding
+    ✔ keeps bounty-only state local while forwarding typed chat inputs and recovery actions (41ms)
+
+  Juyi Hall Codex durable deliberation web contract
+    ✔ negotiates v2 before sending and keeps body requestId equal to Idempotency-Key
+    ✔ takes the send lock and reserves one requestId before delayed capability negotiation
+    ✔ fences a capability response after identity reset and never sends with stale identity
+    ✔ fences a capability response after conversation scope changes
+    ✔ does not convert AbortError during capability negotiation into legacy fallback
+    ✔ does not send or clear the draft when current protocol is unavailable (network)
+    ✔ does not send or clear the draft when current protocol is unavailable (unsupported)
+    ✔ does not send or clear the draft when current protocol is unavailable (missing-client)
+    ✔ keeps pre-admission status neutral and only renders observed runtime policy
+    ✔ emits a scene receipt only after delivered or DISPATCHED, never for accepted QUEUED
+    ✔ strips every execute/route alias from metadata and sends only controlled top-level hint
+    ✔ recovers an unknown v2 POST through request lookup without a second POST
+    ✔ does not write recovery status or messages after identity changes during unknown POST readback
+    ✔ readbacks an API-shaped unversioned final and converges a versioned queued turn to PUBLISHED
+    ✔ forces a post-final readback when an unversioned final joins stale post-error recovery
+    ✔ coalesces group final readbacks, stays busy after failure, then converges on one pending rerun
+    ✔ ignores a late unversioned-final readback after identity lifecycle reset
+    ✔ uses a true trailing debounce for continuous deltas and reads back once after final
+    ✔ keeps terminal unknown-result recovery non-busy when history reload fails
+    ✔ fails all-pending cancellation when the returned request view is invalid
+    ✔ rejects null, incomplete, and mismatched single-turn cancel views without changing state
+    ✔ cancels an exact durable turn with a canonical state version and is terminal-idempotent
+    ✔ derives group busy from every child and treats FINAL_PERSISTED/PUBLISHED as terminal
+    ✔ allows only higher live stateVersion to advance authoritative turn fields
+    ✔ merges replay final into an existing persisted message and removes its placeholder
+    ✔ rejects late delta after final and keeps same-agent turns separate
+    ✔ uses explicit allPending or exact turn cancellation targets in UI wiring
+
+  Juyi Hall durable SSE recovery
+    ✔ reconnects after a valid resync_required from the committed cursor without a replay storm (45ms)
+
+  Juyi Hall durable SSE parser
+    ✔ injects stream conversationId into API durable payloads that omit it
+    ✔ handles CRLF split across chunks and multiline data
+    ✔ does not advance cursor for invalid JSON
+    ✔ rejects an explicit conversation conflict without advancing cursor
+    ✔ rejects a cursor that conflicts with the SSE id
+    ✔ commits a valid resync_required cursor before scheduling one authoritative replay
+    ✔ rejects non-canonical cursor and Long event fields without advancing cursor
+    ✔ rejects conflicting id and eventSequence without advancing cursor
+
+  useHallConversation scoped message loading
+    ✔ retains attachment-only USER messages with exact scoped references and no invented text
+    ✔ does not fetch or schedule SSE recovery when token acquisition returns null
+    ✔ falls back to authoritative polling without reconnecting when durable SSE is unsupported
+    ✔ does not reconnect or replay when the protected SSE endpoint returns 401
+    ✔ clears stale messages when the current bounty scope has no conversation yet
+    ✔ clears only the draft while keeping scoped target agents intact
+    ✔ replaces an active @ trigger when inserting an agent mention
+    ✔ trims sent hall messages while preserving scoped payload fields
+    ✔ resolves a safe hall sender name from nickname, then username, then self label
+    ✔ labels only exact server identities as self after a history refresh or identity switch
+    ✔ normalizes persisted agent messages with metadata
+    ✔ removes control characters from persisted sender names before rendering
+    ✔ fails closed for numeric and unsafe Long wire IDs without coercion
+    ✔ normalizes the same agent name across SSE delta and final events
+    ✔ merges agent delta and final events without duplicate messages
+    ✔ reconciles an SSE agent delta when its final reply arrives on the request stream
+    ✔ reduces stream payloads for delivery, conversation id, and assistant text
+
+  useHallConversation authenticated public restore
+    ✔ restores a safe numeric backend Long using exact public scope and no trusted local jiacn
+    ✔ fails closed for unsafe numeric and malformed conversation ids
+    ✔ rejects non-public, bounty, private, and non-Juyi Hall rows before content fetch
+    ✔ deduplicates repeated restores and fences a deferred public row after a private scope switch
+    ✔ keeps restore pending through content and retries an earlier empty readiness result
+    ✔ fences a deferred authenticated restore when identity is cleared
+    ✔ keeps explicit new chat empty across reopen restores and fences deferred prior content
+
+  useHallConversation finalized reply routing
+    ✔ defers a built-in final for an existing conversation until stream end and commits once
+    ✔ makes stream end win over an existing-conversation live SSE duplicate
+    ✔ makes stream end win over a new-conversation poll duplicate before end
+    ✔ deduplicates a new-conversation poll replay after stream end
+
+  Hall conversation identity lifecycle
+    ✔ clears 1.5s and 5s sync timers and prevents their callbacks from loading after disposal
+    ✔ aborts deferred list and content requests on disposal and ignores their late success callbacks
+    ✔ cancels an opened deferred reply stream on identity clear and filters all late callbacks
+    ✔ resets an active reply when starting a new conversation and allows another send
+
+  useHallConversation history selection
+    ✔ loads only the current scoped Juyi Hall history through the authenticated list endpoint
+    ✔ switches an approved history item to persisted content and its own SSE stream
+    ✔ does not leak a late history response into a changed scope
+    ✔ does not apply late selected content after a scope change
+
+  useHallConversation history remediation
+    ✔ blocks a direct second send while the first turn is awaiting an agent reply
+    ✔ loads history pages past the collapsed backend total and deduplicates page boundaries
+    ✔ deletes a scoped history item and reloads the first page to keep pagination exact
+    ✔ locks selection, sending, and pagination while a deletion is in flight
+    ✔ deleting the active history item clears its content and suppresses automatic restoration
+    ✔ keeps the history item visible when deletion fails
+    ✔ reports selected content failure, blocks send, and retries the same selected id
+    ✔ clears the history spinner and fences a late history page when starting a new conversation
+
+  useHallConversation event-stream recovery policy
+    ✔ does not blindly reconnect the protected event stream after a 403
+    ✔ uses exponential jittered reconnects after EOF while keeping one event stream per conversation
+    ✔ pauses the conversation event stream while the page is hidden and resumes on visibility
+
+  Hall stream transport failure read-only recovery
+    ✔ does not repeat POST and reads only the same conversation until the authoritative request and persisted final both complete
+    ✔ without a server conversation ID reports unknown outcome instead of false delivery failure or resend
+
+  JuyiHall component behavior
+    ✔ classifies panel layouts for desktop, landscape touch, and portrait touch viewports
+    ✔ locks every SelectedAgentCard action and pointer surface during voice capture
+    ✔ exposes accessible modal dialog wiring and focus lifecycle hooks
+    ✔ focuses and traps a modal panel then restores the prior focus (106ms)
+    ✔ keeps panel layout a pure experience-mode projection
+    ✔ wires the exact responsive panel class and immediate HallStage interaction lock
+    ✔ locks and unlocks map interaction immediately for panels and cleans up on unmount (237ms)
+    ✔ waits for a nonzero melon layout before publishing scene readiness (113ms)
+    ✔ classifies visual viewport keyboard resizing without fitting the map transform (142ms)
+    ✔ coalesces resize races, keeps keyboard close classified, and requires an explicit orientation signal (117ms)
+    ✔ shows loading, times out at 15 seconds, retries fresh, and ignores stale ready callbacks (111ms)
+    ✔ keeps HallStage loading unless JuyitingGame confirms a built scene and publishes success once (1046ms)
+    ✔ keeps timeout terminal when the old mount resolves late and retries one fresh mount (85ms)
+    ✔ passes rollback mode into the game mount and declares lifecycle reset wiring (70ms)
+    ✔ restarts a timed-out replacement engine from a fresh authoritative snapshot (90ms)
+    ✔ blocks stage actions while loading and reapplies the loading lock after mount resolves (87ms)
+    ✔ shows an accessible return-main-hall control away from preset and hides it during a panel lock (95ms)
+    ✔ uses screen-to-world center math for return visibility at non-unit zoom (173ms)
+    ✔ throttles return refresh, polls reset completion, and cancels callbacks on unmount (71ms)
+    ✔ renders the hall scene body as a melonJS canvas shell without DOM room or agent layers
+    ✔ forwards keyboard zoom controls to the melonJS game layer (86ms)
+    ✔ leaves mobile touch drag and pinch gestures to the melonJS scene layer (72ms)
+    ✔ renders HallStage from the supplied experience mode and delegates orientation requests (78ms)
+    ✔ mounts exactly one account control in each non-readonly stage mode and forwards its event (82ms)
+    ✔ keeps the stage replay control discreet and forwards its invoking element upstream
+    ✔ uses supported Varlet icons for the orientation toggle
+    ✔ keeps the orientation glyph visible when mobile tool labels are hidden
+    ✔ uses available glyphs and accessible names for immersive overview and toolbox entries
+    ✔ keeps the floating stage header compact so it does not cover the hall map
+    ✔ renders the recruit entry and persona catalog actions
+    ✔ keeps hotspot labels in scene constants instead of the HallStage DOM
+    ✔ does not import DOM scene assets or AgentToken in HallStage
+    ✔ syncs scene agents to the melonJS game layer when ready (76ms)
+    ✔ keeps the melonJS layer filling the hall board without leaving unused page space
+    ✔ wires melonJS agent clicks back to Vue selection (68ms)
+    ✔ wires melonJS hotspot clicks back to Vue panel routing (71ms)
+    ✔ does not expose ground-click movement controls from the melonJS layer (157ms)
+    ✔ shows a scene error and retries melonJS mounting without restoring DOM rooms (78ms)
+    ✔ prevents overlapping melonJS retry mounts while retry is pending (90ms)
+    ✔ ignores stale melonJS ready callbacks after HallStage unmounts (66ms)
+    ✔ opens panels and clears locked contexts from BottomDock
+    ✔ emits explicit recommendation actions from BountyPanel
+    ✔ shows E01 exclusion reasons and score parts without allowing excluded single or group assignment
+    ✔ does not reopen BountyPanel detail modal from a stale selected task
+    ✔ emits create, multi-assign, discussion and archive actions from BountyPanel
+    ✔ prioritizes and deduplicates the selected hosted agent in embedded matter assignment
+    ✔ keeps completed embedded matters closable by exposing archive and then showing the archived receipt
+    ✔ keeps discussion disabled for unassigned bounty tasks with a readable hint
+    ✔ shows exact attachment cards for blank task messages without adding user prose or leaking into private chat
+    ✔ keeps conversation actions in the upper toolbar and preserves their events
+    ✔ removes only the redundant discussion brief, retaining task controls
+    ✔ keeps persistent command templates out of ChatPanel
+    ✔ emits explicit durable cancellation targets and offers no unscoped stop
+    ✔ opens workspace from the material picker without sending or changing the draft
+    ✔ explains that a material reference needs an established conversation
+    ✔ integrates mentions and the more menu into the ChatPanel composer (43ms)
+    ✔ renders variant-specific target chips in ChatPanel composer
+    ✔ does not expose a cross-scope mode switch inside the shared ChatPanel
+    ✔ keeps ChatPanel composer as a dedicated bottom region
+    ✔ keeps low-value SongJiang and coordination actions out of ChatPanel
+    ✔ shows a readable recovery status while chat event stream reconnects
+    ✔ emits SongJiang management commands from CommandPanel
+    ✔ emits relay and coordination actions from CoordinationPanel
+    ✔ searches and cites vector library results from LibraryPanel
+    ✔ uses roving tab focus and keyboard navigation in LibraryPanel
+    ✔ shows public beta empty and error states for LibraryPanel
+
+  JuyitingGame lifecycle guards
+[JuyitingGame] TMX prefetch failed: juyiting-hall Failed to parse URL from /juyiting/hall.tmx?v=7b304c11fd4a121d92f5fb1430f8073d4d590b3d42eb9b9a18e0e0c9bd22ff53
+    ✔ waits for the melonJS engine ready callback before video initialization (793ms)
+    ✔ inverse-maps virtual landscape pointer coordinates before melonJS reads them
+[JuyitingGame] TMX prefetch failed: juyiting-hall Failed to parse URL from /juyiting/hall.tmx?v=7b304c11fd4a121d92f5fb1430f8073d4d590b3d42eb9b9a18e0e0c9bd22ff53
+[JuyitingGame] TMX prefetch failed: juyiting-hall Failed to parse URL from /juyiting/hall.tmx?v=7b304c11fd4a121d92f5fb1430f8073d4d590b3d42eb9b9a18e0e0c9bd22ff53
+    ✔ reuses the melonJS 15 global video canvas across a portrait destroy and later map mount (1212ms)
+    ✔ ignores stale loader callbacks after destroy invalidates a mount (66ms)
+[JuyitingGame] TMX prefetch failed: juyiting-hall Failed to parse URL from /juyiting/hall.tmx?v=7b304c11fd4a121d92f5fb1430f8073d4d590b3d42eb9b9a18e0e0c9bd22ff53
+    ✔ ignores delayed ready callbacks after destroy invalidates a started game (851ms)
+
+  O03 map snapshot lifecycle contract
+    ✔ serializes snapshot destroy/remount and consumes only strict latest landscape targets
+
+  O04 shared panel session contract
+    ✔ keeps the rendered session through leave, fences stale generations, and shields the active shell
+
+  JuyiHall restored-identity initialization
+    ✔ hydrates a retained token despite a cached local ID and restores the exact tenant-zero scope before Hall data loads (188ms)
+    ✔ does not start Hall loaders after logout or account switch while profile hydration is pending (234ms)
+
+  lightweight workbench real panel navigation
+    ✔ suppresses the focusable workbench dock while the root onboarding modal is visible (113ms)
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+    ✔ keeps overview request drafting root-owned while task drafting remains a nested return (169ms)
+    ✔ keeps the expanded mobile menu within the header and bottom dock on short screens (41ms)
+    ✔ targets page-level workbench tabs without changing detail or map tabs
+    ✔ keeps tiny reflow navigation named and lets short chat windows scroll to the composer
+    ✔ repairs legacy UTF-8 mojibake in the Hall account label (119ms)
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+    ✔ returns focus to the persistent more trigger when its menu item unmounts on first open (128ms)
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Invalid vnode type when creating vnode: undefined. 
+  at <Transition name="panel" onAfterLeave=fn<handlePanelAfterLeave> > 
+  at <JuyiHall ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+    ✔ treats header utilities as root pages and returns focus to the latest visible workbench tab (206ms)
+    ✔ shows a Hall-owned return for formal delivery over an already-open primary task detail (139ms)
+    ✔ reuses the Stage, exposes the four primary mobile pages, and restores map on exit (145ms)
+
+  O04 actual-mounted JuyiHall panel identity
+    ✔ restores landscape immersion, removes portrait map controls, and preserves open panels when rotating (278ms)
+    ✔ W05 locates the existing formal delivery component using review deliveryId, never a private mark (200ms)
+    ✔ W05 keeps the legacy formal draft route separate from the single requirement toolbar and returns without clearing original input or orientation (180ms)
+    ✔ W05 opens the actual formal task detail as the third logical layer and returns one layer at a time (140ms)
+    ✔ W05 restores exact overview refs and canonical tasks without reloading filtered task lists (137ms)
+    ✔ W04 returns from treasure to the same source pane, focus and unsaved text without resetting chat (207ms)
+    ✔ W04 bounds navigation to three frames, does not consume composing Escape, and clears hidden panes on identity change (113ms)
+    ✔ retains panel/state identity for five cycles and fences stale keyed leaves (186ms)
+    ✔ cancels chat load and deferred focus when actual JuyiHall unmounts (107ms)
+    ✔ converges Escape, close button, and backdrop and restores landscape/root fallbacks (339ms)
+
+  V1-8 actual JuyiHall profile route leave guard
+    ✔ stays on cancellation, confirms a voice-only turn once, and ignores a duplicate profile click while navigation is pending (91ms)
+
+  W11 R9 actual JuyiHall stale funded acknowledgement
+    ✔ keeps B draft, selection, and journal when stale A ordinary create completes with success (168ms)
+    ✔ keeps B draft, selection, and journal when stale A ordinary create completes with unknown failure (145ms)
+    ✔ keeps B draft, selection, and journal when stale A explicit recovery completes with success (136ms)
+    ✔ keeps B draft, selection, and journal when stale A explicit recovery completes with unknown failure (148ms)
+
+  W04 shared-source save-before-leave wiring
+    ✔ retains the file source/detail through failed close, retry, rotation and one-level return; fences identity changes (176ms)
+    ✔ intercepts navigation and Escape without clearing edits; explicit abandonment does not submit (112ms)
+
+  A03 real Hall low-height layout wiring
+    ✔ enables overview before the map mounts and wires its draft action to the explicit roster while retaining the later map (175ms)
+    ✔ uses available height for fine-pointer windows without remounting the selected file pane on resize (152ms)
+
+  Juyi Hall voice mounted facade
+    ✔ puts composer transcription into the editable draft even when HUD auto-send is enabled (155ms)
+    ✔ keeps text chat usable with flag off and renders correct controls with flag on (138ms)
+    ✔ renders real inline voice glyphs and keeps action/settings semantics (composer)
+    ✔ renders real inline voice glyphs and keeps action/settings semantics (compact)
+    ✔ confirms a reviewed transcript through the voice turn and reads the correlated reply aloud
+
+  Juyi Hall voice recording format support
+    ✔ uploads an exact PCM16 mono 24k WAV named juyiting-voice.wav
+    ✔ requires AudioWorklet capture unless a deterministic recorder factory is injected
+
+  Juyi Hall voice lifecycle
+    ✔ fences late permission and uniformly stops capture resources on cancel and 5MiB overflow
+    ✔ fails capture on processor error and ignores delayed WAV validation after cancellation
+    ✔ aborts hidden transcribing and locks pending-send conflict review
+    ✔ clears waiting turns on cancel while waiting/TTS/speaking never lock Composer or map
+
+  Juyi Hall voice current-generation abort recovery
+    ✔ terminally recovers from direct STT and TTS AbortError failures
+
+  Juyi Hall voice identity and capture controls
+    ✔ fails closed on identity cleanup across permission, capture, transcription, reply, and TTS late callbacks
+    ✔ keeps cancel-and-discard reachable through capture, synthesis, and playback, with stop during recording
+    ✔ balances dispose registration and identity-cleans countdown, reply turns, and speaking playback
+
+  Juyi Hall portrait voice lock
+    ✔ restores browser timers and transport even when a Hall mount throws
+    ✔ keeps cancellation reachable and rejects panel/context changes while capture is locked (260ms)
+
+  Juyi Hall voice sending escape
+    ✔ stops waiting from reachable controls and fences late accepted/rejected sends from the next turn
+
+  Juyi Hall voice CAS and reply correlation
+    ✔ fails closed on non-string IDs and preserves null/empty/missing distinctions
+    ✔ requires a fresh CAS before applying review and supports explicit adoption under the current context
+    ✔ queues a synchronous final until voice send acceptance reaches a terminal state
+    ✔ keeps the frozen target label visible until the reply turn is terminal
+    ✔ does not carry a synchronous final from a rejected send into a retry
+    ✔ processes a reply after the former 120-second boundary and rejects an explicitly cancelled late reply without duplicate sends
+    ✔ keeps mounted Hall locked while sending and leaves text delivery active after explicitly stopping voice wait (225ms)
+    ✔ accepts exactly one new correlated final across built-in/external ordering and rejects replay
+    ✔ sends exact frozen context/metadata, falls back empty mentions to targets, and clears the original draft by revision
+
+  Juyi Hall TTS cleanup
+    ✔ uses the Window receiver for default-browser TTS while preserving its request and cleanup contract
+    ✔ labels actual TTS playback failures without mislabeling them as transcription failures
+    ✔ requests WAV and rejects a MIME/header-invalid response before playback
+    ✔ rejects a supplied Content-Length that differs from the WAV bytes
+    ✔ accepts a headerless WAV response when intrinsic RIFF length is valid
+    ✔ routes a zero-byte successful TTS response through terminal error cleanup
+    ✔ stops pending TTS or playback when reply voice is explicitly disabled and ignores stale reply callbacks
+    ✔ stops speaking playback when a new recording starts
+
+  actual JuyiHall typed natural follow-up routing
+    ✔ routes the one bounty composer through typed DISCUSSION only when the strict default-off flag is enabled
+    ✔ read-only recovers the original binding and fences identity changes before sending
+    ✔ does not expose a proposal-confirmation or image-preview branch on normal requests
+[Vue warn]: resolveComponent can only be used in render() or setup().
+    ✔ evaluates the actual page template expressions to values and forwards selector payload through the mounted bounty panel
+    ✔ adopts an actual RUNNING request and RECEIVED turn after its immutable ADMITTED receipt without another POST
+    ✔ adopts an already COMPLETED request and FINAL_PERSISTED turn for the same immutable receipt without another POST
+    ✔ rejects a late lower-version typed readback without downgrading the newer terminal request or reading content again
+    ✔ fences a late authoritative typed receipt read after target drift without content adoption or POST
+    ✔ rejects every mismatched typed receipt readback before state or transcript adoption
+    ✔ rejects an admission-domain request, non-one status revision, and nonzero receipt version before state or content adoption
+    ✔ binds a real durable final event only to authoritative typed GET readback
+
+  validated finalization completion refresh boundary
+    ✔ forwards the exact scoped completion to the page without mutating the selected task
+    ✔ wires the actual bounty page to refresh server tasks, not to a local completion mutation
+    ✔ compiles the affected templates and scripts (134ms)
+
+
+  242 passing (14s)
+

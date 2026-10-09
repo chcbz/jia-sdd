@@ -50,6 +50,8 @@
 
 **2026-10-09 会话协议收敛补充**：核对 Web `e3afb42dc69272f43699c2c423b06da7539f0671`，范围仅 `useHallConversation.js`、`JuyiHall.vue`、ChatPanel 与公议/密议/悬赏面板的发送和取消接线。发送统一当前 durable 契约，不再能力失败时切换旧 payload；面板只转发 `cancel-deliberation` 的明确 turn/allPending 目标，移除旧 `/stop_stream` 接线。普通文本响应、SSE 和只读恢复不是旧发送协议，仍保留。恢复与幂等边界见 [聚义厅专题](06-juyiting-end-to-end.md#hall-current-protocol)。这是源码基线，不代表生产发布。
 
+**2026-10-09 面板转发与发送入口补充**：核对 Web `74dffae9379c8259283aa653304484981a66ace7`，范围仅三种议事面板、静态 `discussionPanelContract.js` 和 `useHallConversation.js` 的本次差异。公共 props/events 声明只维护一份，不新增组件层；公议默认值显式覆盖，密议保留上下文副标题，悬赏过滤自身业务字段后向 ChatPanel 传递输入，typed结果/恢复及任务完成事件仍在原面板。草稿直接按 props 下传、update事件上送，不保留额外草稿代理或逐字段映射。发送同步校验复用原忙碌状态，异步身份/作用域检查不变；无消费者的 `canCancelDurable` 已删除，取消仍使用 `durableCancelTarget`。其余职责与核对基线不变，不代表线上发布。
+
 历史来源：[1.0.6 UI 收口导航](../../specs/juyiting-ui-baseline-20261006/README.md)。该版本的“不改业务逻辑”只描述当次 UI patch，不能套用到后续源码；本次核对版本已有额外完成态锁定逻辑。
 
 ### 局部源码补充：事项筛选表头（2026-10-09）
