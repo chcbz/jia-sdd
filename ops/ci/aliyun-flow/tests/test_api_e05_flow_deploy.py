@@ -484,7 +484,7 @@ raise SystemExit(%d)
         self.assertEqual(fresh.E05_SCHEMA_RUNNER_SHA256,
                          hashlib.sha256(runner.read_bytes()).hexdigest())
         self.assertEqual(fresh.E05_SCHEMA_SQL_SHA256,
-                         'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1')
+                         'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842')
         self.assertIn('runner_digest_mismatch', inspect.getsource(fresh.e05_schema_prerequisites))
 
     def test_preservation_versioned_call_shape_still_requires_every_receipt_and_jar_check(self):

@@ -44,7 +44,7 @@ EXPECTED_PACKAGE_MEMBERS = frozenset((
 ))
 NESTED_MAPPER_JAR = 'BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar'
 RESOURCE_PATH = 'db/agent-work-item-reassignment-e05.sql'
-RESOURCE_SHA256 = 'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1'
+RESOURCE_SHA256 = 'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842'
 TABLE_ORDER = ('agent_work_item_reassignment',)
 SHA256_RE = re.compile(r'^[0-9a-f]{64}$')
 GIT_RE = re.compile(r'^[0-9a-f]{40}$')
@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS agent_work_item_reassignment (
     client_id                   VARCHAR(50) NOT NULL,
     create_time                 BIGINT NOT NULL,
     update_time                 BIGINT NOT NULL,
+    owner_jiacn                  VARCHAR(50) NOT NULL COMMENT 'Authenticated task owner',
     PRIMARY KEY (id),
     UNIQUE KEY uk_work_item_reassignment_id
         (tenant_id, client_id, reassignment_id),
@@ -86,6 +87,8 @@ CREATE TABLE IF NOT EXISTS agent_work_item_reassignment (
         (tenant_id, client_id, command_id),
     KEY idx_work_item_reassignment_latest
         (tenant_id, client_id, task_id, work_item_id, id),
+    KEY idx_agent_work_item_reassignment_owner_scope
+        (tenant_id, client_id, owner_jiacn, task_id, work_item_id),
     CONSTRAINT chk_work_item_reassignment_digest
         CHECK (CHAR_LENGTH(request_sha256)=64 AND CHAR_LENGTH(lease_fence_sha256)=64),
     CONSTRAINT chk_work_item_reassignment_versions
@@ -188,9 +191,9 @@ EXPECTED_TABLES = {
 }
 
 
-# Current AgentSchemaInitializer owner extension is mandatory, not optional.
-# Fixed E05 CREATE SQL remains byte-identical; already-installed owner schema
-# must be complete before this post-install deployment gate can pass.
+# The same-batch canonical E05 CREATE now includes the mandatory owner column
+# and ordered owner-scope index. Existing ownerless tables still fail strictly;
+# CREATE IF NOT EXISTS never upgrades or infers existing owners.
 _spec = EXPECTED_TABLES['agent_work_item_reassignment']
 _spec['columns'] = _spec['columns'] + (column('owner_jiacn', 'varchar(50)'),)
 _spec['indexes'] = _spec['indexes'] + (
