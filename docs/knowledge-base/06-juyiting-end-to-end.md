@@ -42,6 +42,17 @@ Agent schema 中的 `agent_task_meta`、`agent_task_member`、`agent_task_work_i
 
 后端场景流由 `GET /agent/scenes/{sceneId}/events` 提供 SSE；支持 `sinceVersion` 和 `Last-Event-ID` 取较大游标恢复，SSE event id 为 scene version。`POST /agent/scenes/{sceneId}/phases` 上报 arrived/blocked 等阶段，并校验 report、agent、region、phase、state version 与时间。
 
+<a id="hall-current-protocol"></a>
+### 当前会话发送契约（2026-10-09 局部核对）
+
+核对 Web `e3afb42dc69272f43699c2c423b06da7539f0671` 的会话发送、取消接线和回归；API `1e9111028fbdff1ae5452f64aec843e85e81ad59` 仅只读核对 ChatController capabilities 与 relay durable admission，本轮未改后端。其余章节保留原基线，不推断当前线上版本。
+
+- 首次发送要求 `/chat/capabilities` 声明当前 schema2 durable 契约；失败/不支持时不 POST、不插入乐观消息、不清草稿及引用，明确提示消息未发送，下次可重新检查。不保留旧 payload 回退。
+- `/chat/stream` 仍为当前入口。每次有效发送在异步检查前锁定唯一 requestId，body 与 `Idempotency-Key` 一致，统一发送 revision、interactionHint、clientSeenVector、inputRefs。metadata 白名单、身份/作用域隔离不删。
+- 取消仅使用已知 durable turn（含版本条件）或 allPending 请求；页面和三个议事面板不再暴露旧传输停止按钮。身份切换/卸载的本地流清理、语音停止等待仍是不同语义。
+- POST 结果未知只 GET 原 request，不重新 POST；无 conversationId 也保持未确认请求锁。既有2秒消息轮询先核对原请求状态，再读取同会话历史；单个最终消息不代表全部子回话结束。异步返回须仍属当前身份/作用域/请求。
+- 文本流、SSE游标、断流恢复仍在使用，不能按“legacy”注释整体删除。最短诊断入口为 `juyiting-codex-fast-deliberation`、`juyiting-hall-conversation`、`juyiting-component-behavior`、`juyiting-voice-conversation`；正式证据和范围见 [本轮handoff](../implementation/handoffs/HALL-PROTOCOL-CONVERGENCE-20261009.md)，源码收敛不等于上线。
+
 ## 变更不变量
 
 1. 保持 map 与 roster 两种 Agent 语义分离。

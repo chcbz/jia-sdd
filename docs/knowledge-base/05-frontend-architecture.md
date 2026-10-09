@@ -48,6 +48,8 @@
 
 **2026-10-09 输入区轻量化补充**：核对 Web `3e9b0aff365c25faab524e905b7c2f1aff53c3f1`，仅覆盖 `HallChatComposer.vue`、`ChatPanel.vue` 的本次差异。Composer 统一草稿派生值和目标标签映射，移除无消费者的 `open-workspace` 事件/转发及重复、未使用样式；百宝箱入口仍由 ChatPanel 资料选择器直接发出 `open-workspace`。不改变协议、身份、输入锁、语音状态机或线上版本。其余本节保留原基线。
 
+**2026-10-09 会话协议收敛补充**：核对 Web `e3afb42dc69272f43699c2c423b06da7539f0671`，范围仅 `useHallConversation.js`、`JuyiHall.vue`、ChatPanel 与公议/密议/悬赏面板的发送和取消接线。发送统一当前 durable 契约，不再能力失败时切换旧 payload；面板只转发 `cancel-deliberation` 的明确 turn/allPending 目标，移除旧 `/stop_stream` 接线。普通文本响应、SSE 和只读恢复不是旧发送协议，仍保留。恢复与幂等边界见 [聚义厅专题](06-juyiting-end-to-end.md#hall-current-protocol)。这是源码基线，不代表生产发布。
+
 历史来源：[1.0.6 UI 收口导航](../../specs/juyiting-ui-baseline-20261006/README.md)。该版本的“不改业务逻辑”只描述当次 UI patch，不能套用到后续源码；本次核对版本已有额外完成态锁定逻辑。
 
 ### 局部源码补充：事项筛选表头（2026-10-09）
