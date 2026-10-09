@@ -1,17 +1,31 @@
 feature_id: single-db-tenant-gray
-title: "单库多业务区域与测试区域"
-design_version: "2.0-draft"
+title: "同库 tenant_id=1 业务测试区"
+design_version: "3.0-tenant-only-closeout"
 status: implementing
+current_delivery:
+  authority: scope-closeout-20261009.md
+  database: existing_shared_database
+  default_tenant_id: "1"
+  tenant_zero_is_public: false
+  status: not_ready
+  develop_integration: completed_pending_independent_review
+  merge_evidence: develop-integration-result-20261009.md
+  local_business_validation: pending
+  acceptance_email: not_sent
+  historical_platform_requirements_are_acceptance_prerequisites: false
 owners:
-  api: unassigned
-  web: unassigned
+  api: r4_recovery_finalize
+  web: r4_recovery_finalize
 contract:
+  api_or_event_changes: "trusted tenant identity, exact row/file/event/async isolation and tenant-partitioned browser state for the opened Hall/conversation/library/task flows"
+  compatibility: "retain develop behavior and existing owner/client ACL; tenant 0 is an ordinary region; no second business database, real payment or production external effects"
+historical_platform_contract:
   api_or_event_changes: "planned: authorized tenant selection, many-to-many client grants, single-tenant tokens, data-domain migration, tenant/pool-scoped async contracts"
   compatibility: "strict tenant baseline before new-region writes; audited LEGACY_CLIENT to DOMAIN migration; tenant lifecycle independent from deployment; same database"
 pinned_revisions:
-  api_commit: null
-  web_commit: null
-  root_base_commit: null
+  api_commit: dafb920cd919efaa535bf2a92cc3557b7e7e5160
+  web_commit: 419b52debf6485901d446c5c6faf0cdbfb197767
+  root_base_commit: c82c2a08f11f59042a6bb11034e4fb64bb866756
 verification:
   observed_at: "2026-10-03"
   runtime_v2_r4_named_permission_actual: "Same solewriter capabilitycontinuation actualnewturn UTC04:16:59.374Z gpt-6.1-sol/high verified; firstexec04:17:26.609Z correctexplicitRuntime, call_NxMJpyg6FkuVVQDXldXZSTgY actualexit0 returned04:17:27.614Z. R3baseline/R4contract-ownership/newdirectionSHA/fourHEAD-branch/fullscope PASS04:17:27.566Z; no newbusinessdelta/build, supportednamed-policy behavior checks running. No userconfirmation gate, no fallback/activation; productionfalse/[1], overallNOT READY. Earlier actualturnpending fields historical."
