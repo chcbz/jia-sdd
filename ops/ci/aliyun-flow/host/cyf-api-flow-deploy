@@ -1589,6 +1589,176 @@ def local_schema_recovery_authority(value, installed_binding):
     return value
 
 
+LOCAL_ADMISSION_ROOT = Path('/var/lib/cyf-api-local-admission')
+
+
+def local_signature(info):
+    return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid,
+            info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
+def local_directory_signature(info):
+    # Directory content timestamps may legitimately change during publication;
+    # ancestry inode, custody and mode must not change under a reader.
+    return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid)
+
+
+class LocalReadSet:
+    """No-follow protected input reader with immutable byte/dentry closure.
+
+    No directory creation, writes, installer, SQL, service or environment-derived
+    trust roots. Current mutable slots must be observed separately under FD8;
+    precondition FileRefs are independent immutable observation copies.
+    """
+    def __init__(self):
+        self.saved = {}
+        self.inodes = {}
+
+    def _classification(self, path):
+        if str(path) in LOCAL_HELPER_PATHS.values():
+            return None, 0o755
+        for root in (ROOT, LOCAL_ADMISSION_ROOT):
+            if root in path.parents:
+                return root, 0o600
+        raise LocalRejected('PATH_UNSAFE')
+
+    def _open(self, path):
+        anchor, mode = self._classification(path)
+        directory = None
+        leaf = None
+        trail = []
+        try:
+            directory = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+            current = Path('/')
+            for component in ('',) + path.parent.parts[1:]:
+                if component:
+                    new = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                  dir_fd=directory)
+                    os.close(directory)
+                    directory = new
+                    current /= component
+                info = os.fstat(directory)
+                local_need(stat.S_ISDIR(info.st_mode) and info.st_uid == 0
+                    and not info.st_mode & 0o022, 'PATH_UNSAFE')
+                if anchor is not None and (current == anchor or anchor in current.parents):
+                    local_need(stat.S_IMODE(info.st_mode) == 0o700, 'PATH_UNSAFE')
+                trail.append((current, local_directory_signature(info)))
+            leaf = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+                           dir_fd=directory)
+            before = os.fstat(leaf)
+            local_need(stat.S_ISREG(before.st_mode) and before.st_uid == 0
+                and before.st_nlink == 1 and stat.S_IMODE(before.st_mode) == mode,
+                'PATH_UNSAFE')
+            if mode == 0o755:
+                local_need(before.st_gid == 0, 'PATH_UNSAFE')
+            blocks = []
+            while True:
+                block = os.read(leaf, 1024 * 1024)
+                if not block:
+                    break
+                blocks.append(block)
+            data = b''.join(blocks)
+            after = os.fstat(leaf)
+            current_info = os.stat(path.name, dir_fd=directory, follow_symlinks=False)
+            local_need(local_signature(before) == local_signature(after) == local_signature(current_info),
+                       'DIGEST_MISMATCH')
+            for ancestor, expected in trail:
+                local_need(local_directory_signature(os.lstat(str(ancestor))) == expected, 'PATH_UNSAFE')
+            identity = (before.st_dev, before.st_ino)
+            local_need(identity not in self.inodes or self.inodes[identity] == path, 'PATH_UNSAFE')
+            previous = self.saved.get(path)
+            local_need(previous is None or previous == (data, local_signature(before)), 'DIGEST_MISMATCH')
+            self.saved[path] = (data, local_signature(before))
+            self.inodes[identity] = path
+            os.lseek(leaf, 0, os.SEEK_SET)
+            result = (leaf, data, before.st_size)
+            leaf = None
+            return result
+        except OSError:
+            raise LocalRejected('PATH_UNSAFE') from None
+        finally:
+            if leaf is not None:
+                os.close(leaf)
+            if directory is not None:
+                os.close(directory)
+
+    def checked(self, ref):
+        local_ref(ref)
+        fd, data, size = self._open(local_path(ref['path']))
+        try:
+            local_need(size == ref['size'] and hashlib.sha256(data).hexdigest() == ref['sha256'],
+                       'DIGEST_MISMATCH')
+            return data
+        finally:
+            os.close(fd)
+
+    def external(self, path, expected_sha256):
+        """Only an external decision/authority digest, never a document self hash."""
+        path = local_path(path)
+        local_hex(expected_sha256)
+        local_need(str(path) not in LOCAL_HELPER_PATHS.values(), 'PATH_UNSAFE')
+        fd, data, size = self._open(path)
+        try:
+            local_need(hashlib.sha256(data).hexdigest() == expected_sha256, 'DIGEST_MISMATCH')
+            return data, {'path': str(path), 'sha256': expected_sha256, 'size': size}
+        finally:
+            os.close(fd)
+
+    def helper_fd(self, name, ref):
+        local_ref(ref, 'HELPER_CATALOG_MISMATCH')
+        local_need(type(name) is str and name in LOCAL_HELPER_PATHS
+                   and ref['path'] == LOCAL_HELPER_PATHS[name], 'HELPER_CATALOG_MISMATCH')
+        fd, data, size = self._open(local_path(ref['path']))
+        try:
+            local_need(size == ref['size'] and hashlib.sha256(data).hexdigest() == ref['sha256'],
+                       'HELPER_CATALOG_MISMATCH')
+        except BaseException:
+            os.close(fd)
+            raise
+        return fd  # caller must close; no pathname reopen between verification and exec
+
+    def recheck(self):
+        for path, (data, unused) in list(self.saved.items()):
+            fd, actual, ignored = self._open(path)
+            try:
+                local_need(actual == data, 'DIGEST_MISMATCH')
+            finally:
+                os.close(fd)
+
+
+def local_verify_publication(decision, catalog, reader):
+    """Call only the fixed protected artifact verifier via stable FD, read-only.
+
+    This verifies artifact/build execution evidence, not maintenance permission,
+    live database/configuration/principal readiness or business acceptance.
+    """
+    local_install_decision(decision)
+    local_helper_catalog(catalog)
+    admission = local_path(decision['admission']['path'])
+    local_need(admission.name == 'admission.json'
+        and admission.parent.parent == LOCAL_ADMISSION_ROOT / 'admitted', 'PUBLISHED_CLOSURE_INVALID')
+    admitted = local_json(reader.checked(decision['admission']), 'PUBLISHED_CLOSURE_INVALID')
+    fd = reader.helper_fd('admit-api-local.py', catalog['helpers']['admit-api-local.py'])
+    try:
+        try:
+            result = subprocess.run(
+                ['/usr/bin/python3', '-I', '-B', '/proc/self/fd/' + str(fd), '--verify-published',
+                 '--trusted-root', str(LOCAL_ADMISSION_ROOT), '--admission', str(admission),
+                 '--admission-sha256', decision['admission']['sha256']],
+                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env={'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C'},
+                close_fds=True, pass_fds=(fd,))
+        except OSError:
+            raise LocalRejected('PUBLISHED_CLOSURE_INVALID') from None
+    finally:
+        os.close(fd)
+    local_need(type(result.returncode) is int and result.returncode == 0, 'PUBLISHED_CLOSURE_INVALID')
+    verified = local_json(result.stdout, 'PUBLISHED_CLOSURE_INVALID')
+    local_publication_matches(decision, admitted, verified)
+    reader.recheck()
+    return admitted, verified
+
+
 def main():
     if os.geteuid() != 0:
         fail('must run as root')

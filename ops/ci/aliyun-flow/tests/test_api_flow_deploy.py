@@ -712,5 +712,187 @@ class ApiLocalClosedContractTest(unittest.TestCase):
         self.assertEqual(str(error), 'INPUT_INVALID')
 
 
+class ApiLocalProtectedReadSetTest(unittest.TestCase):
+    """Private root fixtures and fake child response only, no actual admission.
+
+    No production paths/env trust overrides are exposed by implementation. Tests
+    temporarily patch module constants; the production caller keeps fixed roots.
+    No database/config/principal/readiness/install/business proof is inferred.
+    """
+    def setUp(self):
+        import copy
+        import hashlib
+        from unittest.mock import patch
+        self.copy = copy.deepcopy
+        self.hash = lambda data: hashlib.sha256(data).hexdigest()
+        # /tmp is intentionally world-writable and must NOT become a production
+        # trusted ancestor. This root-owned fixture uses the protected /root tree.
+        self.temp = tempfile.TemporaryDirectory(prefix='cyf-local-readset-unit-', dir='/root')
+        self.root = Path(self.temp.name)
+        self.root.chmod(0o700)
+        self.control = self.root / 'control'; self.control.mkdir(mode=0o700)
+        self.admissions = self.root / 'admission'; self.admissions.mkdir(mode=0o700)
+        helpers = self.root / 'helpers'; helpers.mkdir(mode=0o700)
+        self.paths = {name: str(helpers / name) for name in deploy.LOCAL_HELPER_PATHS}
+        self.patcher = patch.multiple(deploy, ROOT=self.control,
+            LOCAL_ADMISSION_ROOT=self.admissions, LOCAL_HELPER_PATHS=self.paths)
+        self.patcher.start()
+        self.kernel = ApiLocalClosedContractTest(); self.kernel.setUp()
+        self.decision = self.copy(self.kernel.decision)
+        self.catalog = self.copy(self.kernel.catalog)
+        self.catalog['helpers'] = {}
+        for name, path in self.paths.items():
+            self.catalog['helpers'][name] = self.write(Path(path), b'# private fake helper\n', 0o755)
+        directory = self.admissions / 'admitted'; directory.mkdir(mode=0o700)
+        directory = directory / 'private-unit'; directory.mkdir(mode=0o700)
+        self.decision['admission']['path'] = str(directory / 'admission.json')
+        self.admitted, self.verified = self.kernel.publication()
+        self.admitted['source'] = {k: self.copy(self.decision['source'][k]) for k in ('kind', 'identity')}
+        data = deploy.local_canonical(self.admitted)
+        self.decision['admission'] = self.write(directory / 'admission.json', data)
+        self.verified['admission'] = self.copy(self.decision['admission'])
+
+    def tearDown(self):
+        self.patcher.stop()
+        self.temp.cleanup()
+
+    def write(self, path, data, mode=0o600):
+        path.write_bytes(data); path.chmod(mode)
+        return {'path': str(path), 'sha256': self.hash(data), 'size': len(data)}
+
+    def reject(self, call, code=None):
+        with self.assertRaises(deploy.LocalRejected) as caught:
+            call()
+        self.assertEqual(str(caught.exception), caught.exception.code)
+        self.assertIn(caught.exception.code, deploy.LOCAL_SAFE_CODES)
+        if code is not None:
+            self.assertEqual(caught.exception.code, code)
+
+    def test_protected_reader_external_digest_and_byte_closure_do_not_write(self):
+        data = b'{"synthetic":true}\n'; ref = self.write(self.control / 'proof.json', data)
+        before = {p: (p.stat().st_ino, p.read_bytes()) for p in self.root.rglob('*') if p.is_file()}
+        reader = deploy.LocalReadSet()
+        self.assertEqual(reader.checked(ref), data)
+        actual, actual_ref = reader.external(ref['path'], ref['sha256'])
+        self.assertEqual((actual, actual_ref), (data, ref))
+        reader.recheck()
+        after = {p: (p.stat().st_ino, p.read_bytes()) for p in self.root.rglob('*') if p.is_file()}
+        self.assertEqual(before, after)
+        self.reject(lambda: reader.external(ref['path'], 'f' * 64), 'DIGEST_MISMATCH')
+        altered = dict(ref, size=ref['size'] + 1)
+        self.reject(lambda: deploy.LocalReadSet().checked(altered), 'DIGEST_MISMATCH')
+
+    def test_reader_rejects_untrusted_roots_permissions_and_nonregular_inputs(self):
+        self.reject(lambda: deploy.LocalReadSet().external('/etc/passwd', 'a' * 64), 'PATH_UNSAFE')
+        path = self.control / 'proof'; ref = self.write(path, b'fixed')
+        for mode in (0o644, 0o755, 0o666):
+            path.chmod(mode)
+            self.reject(lambda: deploy.LocalReadSet().checked(ref), 'PATH_UNSAFE')
+        path.chmod(0o600)
+        self.control.chmod(0o755)
+        self.reject(lambda: deploy.LocalReadSet().checked(ref), 'PATH_UNSAFE')
+        self.control.chmod(0o700)
+        self.root.chmod(0o777)
+        self.reject(lambda: deploy.LocalReadSet().checked(ref), 'PATH_UNSAFE')
+        self.root.chmod(0o700)
+        path.unlink(); os.mkfifo(path, 0o600)
+        self.reject(lambda: deploy.LocalReadSet().checked(ref), 'PATH_UNSAFE')
+
+    def test_leaf_and_ancestry_aliases_are_never_followed(self):
+        target = self.control / 'target'; ref = self.write(target, b'fixed')
+        alias = self.control / 'alias'; alias.symlink_to(target)
+        self.reject(lambda: deploy.LocalReadSet().checked(dict(ref, path=str(alias))), 'PATH_UNSAFE')
+        directory = self.control / 'directory'; directory.mkdir(mode=0o700)
+        nested = self.write(directory / 'nested', b'fixed')
+        alias_dir = self.control / 'dir-alias'; alias_dir.symlink_to(directory, target_is_directory=True)
+        self.reject(lambda: deploy.LocalReadSet().checked(dict(nested, path=str(alias_dir / 'nested'))), 'PATH_UNSAFE')
+        hardlink = self.control / 'hardlink'; os.link(target, hardlink)
+        self.reject(lambda: deploy.LocalReadSet().checked(ref), 'PATH_UNSAFE')
+        self.reject(lambda: deploy.LocalReadSet().checked(dict(ref, path=str(hardlink))), 'PATH_UNSAFE')
+
+    def test_recheck_rejects_changed_content_and_same_bytes_inode_replacement(self):
+        path = self.control / 'proof'; ref = self.write(path, b'fixed-one')
+        reader = deploy.LocalReadSet(); reader.checked(ref)
+        path.write_bytes(b'fixed-two')
+        self.reject(reader.recheck, 'DIGEST_MISMATCH')
+        ref = self.write(path, b'fixed-one')
+        reader = deploy.LocalReadSet(); reader.checked(ref)
+        replacement = self.control / 'replacement'; self.write(replacement, b'fixed-one')
+        os.replace(replacement, path)
+        self.reject(reader.recheck, 'DIGEST_MISMATCH')
+
+    def test_helper_descriptor_is_exact_physical_reviewed_bytes_and_no_reopen(self):
+        name = 'admit-api-local.py'; ref = self.catalog['helpers'][name]
+        reader = deploy.LocalReadSet(); fd = reader.helper_fd(name, ref)
+        try:
+            original = Path(ref['path']).read_bytes()
+            self.assertFalse(os.get_inheritable(fd))
+            self.assertEqual(os.read(fd, len(original)), original)
+            moved = self.root / 'original-helper'; Path(ref['path']).rename(moved)
+            self.write(Path(ref['path']), b'# replacement helper\n', 0o755)
+            self.assertEqual(os.pread(fd, len(original), 0), original)
+            self.reject(reader.recheck, 'DIGEST_MISMATCH')
+        finally:
+            os.close(fd)
+        self.reject(lambda: deploy.LocalReadSet().helper_fd('unknown-helper', ref), 'HELPER_CATALOG_MISMATCH')
+        self.reject(lambda: deploy.LocalReadSet().helper_fd(name, None), 'HELPER_CATALOG_MISMATCH')
+        self.reject(lambda: deploy.LocalReadSet().helper_fd(name, dict(ref, sha256='f' * 64)), 'HELPER_CATALOG_MISMATCH')
+        Path(ref['path']).chmod(0o600)
+        changed = dict(ref, sha256=self.hash(Path(ref['path']).read_bytes()), size=Path(ref['path']).stat().st_size)
+        self.reject(lambda: deploy.LocalReadSet().helper_fd(name, changed), 'PATH_UNSAFE')
+
+    def test_publication_bridge_fixed_fd_argv_clean_env_and_no_mutable_outputs(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        observed = {}
+        def fake_child(argv, **kwargs):
+            observed.update(argv=argv, kwargs=kwargs, fd=kwargs['pass_fds'][0])
+            fd = observed['fd']
+            self.assertEqual(argv, ['/usr/bin/python3', '-I', '-B', '/proc/self/fd/' + str(fd),
+                '--verify-published', '--trusted-root', str(self.admissions), '--admission',
+                self.decision['admission']['path'], '--admission-sha256', self.decision['admission']['sha256']])
+            self.assertEqual(kwargs['env'], {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C'})
+            self.assertTrue(kwargs['close_fds'])
+            self.assertEqual(kwargs['stdin'], __import__('subprocess').DEVNULL)
+            self.assertEqual(os.pread(fd, 100, 0), b'# private fake helper\n')
+            return SimpleNamespace(returncode=0, stdout=deploy.local_canonical(self.verified), stderr=b'')
+        with patch.dict(os.environ, {'CYF_F06_MYSQL_PASSWORD': 'never-forward-secret',
+                                    'PIPELINE_ID': 'must-not-inherit', 'PYTHONPATH': '/untrusted'}), \
+             patch('subprocess.run', side_effect=fake_child):
+            admitted, verified = deploy.local_verify_publication(self.decision, self.catalog, deploy.LocalReadSet())
+        self.assertEqual(admitted, self.admitted)
+        self.assertEqual(verified, self.verified)
+        with self.assertRaises(OSError): os.fstat(observed['fd'])
+        self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
+
+    def test_publication_bridge_rejects_child_error_unknown_report_and_artifact_escalation(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        bad = self.copy(self.verified); bad['productionAuthorized'] = True
+        for result in (SimpleNamespace(returncode=1, stdout=b'', stderr=b'raw-password-never-emit'),
+                       SimpleNamespace(returncode=False, stdout=deploy.local_canonical(self.verified), stderr=b''),
+                       SimpleNamespace(returncode=0, stdout=b'{"unreviewed":true}', stderr=b''),
+                       SimpleNamespace(returncode=0, stdout=deploy.local_canonical(bad), stderr=b'')):
+            with patch('subprocess.run', return_value=result):
+                self.reject(lambda: deploy.local_verify_publication(self.decision, self.catalog, deploy.LocalReadSet()),
+                            'PUBLISHED_CLOSURE_INVALID')
+        with patch('subprocess.run', side_effect=OSError('raw-password-never-emit')):
+            self.reject(lambda: deploy.local_verify_publication(self.decision, self.catalog, deploy.LocalReadSet()),
+                        'PUBLISHED_CLOSURE_INVALID')
+
+    def test_readonly_bridge_executes_private_fake_verifier_by_fd_not_repository_path(self):
+        # This actual child only emits a synthetic report. It is NOT the real
+        # artifact verifier or actual build/admission evidence.
+        script = b'import sys\nassert sys.argv[0].startswith("/proc/self/fd/")\nprint(' + \
+            repr(deploy.local_canonical(self.verified).decode().strip()).encode() + b')\n'
+        name = 'admit-api-local.py'
+        self.catalog['helpers'][name] = self.write(Path(self.paths[name]), script, 0o755)
+        before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        admitted, verified = deploy.local_verify_publication(self.decision, self.catalog, deploy.LocalReadSet())
+        self.assertEqual((admitted, verified), (self.admitted, self.verified))
+        self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
+
+
 if __name__ == '__main__':
     unittest.main()
