@@ -1,0 +1,145 @@
+{
+  "verifiedAt": "2026-09-12T11:22:22.264516+00:00",
+  "flow": {
+    "queriedAt": "2026-09-12T11:22:04.282Z",
+    "org": "5fb7d76ee6f9d07f148529c7",
+    "pipeline": "5260799",
+    "run": 23,
+    "status": "SUCCESS",
+    "sources": [
+      {
+        "repo": "https://gitee.com/chcbz/jia.git",
+        "branch": "develop",
+        "commits": [
+          "688a3e6546dcacba116f76cbec7e1d91f72764f4"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "name": "Backend develop CI",
+        "jobs": [
+          {
+            "id": 514133208,
+            "name": "Changed-scope tests and bootJar",
+            "status": "SUCCESS",
+            "actions": [
+              {
+                "type": "LogPipelineJobRun",
+                "disabled": false
+              },
+              {
+                "type": "GetPipelineArtifactUrl",
+                "disabled": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Automatic backend deployment",
+        "jobs": [
+          {
+            "id": 514138578,
+            "name": "Install same-run artifact and check health",
+            "status": "SUCCESS",
+            "actions": [
+              {
+                "type": "GetVMDeployOrder",
+                "disabled": false,
+                "deployOrderId": 69507020
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "deploy_order": {
+    "queriedAt": "2026-09-12T11:22:10.254Z",
+    "org": "5fb7d76ee6f9d07f148529c7",
+    "pipeline": "5260799",
+    "order": "69507020",
+    "status": "Success",
+    "currentBatch": 1,
+    "totalBatch": 1,
+    "hostGroupId": 28833,
+    "machines": [
+      {
+        "batch": 1,
+        "status": "Success",
+        "clientStatus": "healthy"
+      }
+    ]
+  },
+  "runtime_record": {
+    "backup": "/var/lib/cyf-api-flow/backups/20260912T111157Z-a5cc9db17022291bc129b0536d5b8c785dac9efec4bf437ea503f3e183be721d-2606555.jar",
+    "candidate_sha256": "a5cc9db17022291bc129b0536d5b8c785dac9efec4bf437ea503f3e183be721d",
+    "candidate_stop_rc": 0,
+    "phase": "installed",
+    "previous_sha256": "aa64ddf1be41147156236aa3d4f70121e2b95918d8dd2024d0cd3d0fec4df090",
+    "receipt_sha256": "c9559c37aec9b1010d17e54a577e0eb5079b38377cb3abd32367129602819c08",
+    "recovery": "not_required",
+    "run_id": "23",
+    "schema_version": 2,
+    "source_commit_sha": "688a3e6546dcacba116f76cbec7e1d91f72764f4",
+    "source_tree_sha": "608e799ad81ab3c4876b376119af322901a903ef",
+    "status": "installed",
+    "ticket_sha256": "2faacb87eeff5ae2f7a4085755493e527b5467cbd90f30b7e057fbdcc3144a7d",
+    "timestamp": "20260912T111157Z"
+  },
+  "canonical_jar": "/opt/cyf/service/api/cyf-api-kit.jar",
+  "canonical_jar_sha256": "a5cc9db17022291bc129b0536d5b8c785dac9efec4bf437ea503f3e183be721d",
+  "pid": 2607082,
+  "health": {
+    "groups": [
+      "liveness",
+      "readiness"
+    ],
+    "apiVersion": "V3",
+    "status": {
+      "code": "UP",
+      "description": ""
+    },
+    "components": null
+  },
+  "coordination_mutex_fds": {},
+  "running_jar_fds": {
+    "4": "/opt/cyf/service/api/cyf-api-kit.jar",
+    "5": "/opt/cyf/service/api/cyf-api-kit.jar"
+  },
+  "listener": "State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess\nLISTEN 0      100        127.0.0.1:10018      0.0.0.0:*    users:((\"java\",pid=2607082,fd=136))\n",
+  "helper_sha256": "d3c7bb4fa94c5628068bdac3b9ecb2b332031811c42dfd15a8b48e1113ccd311",
+  "checks": {
+    "flow_success": true,
+    "source_match": true,
+    "deploy_success": true,
+    "record_installed": true,
+    "jar_match": true,
+    "receipt_match": true,
+    "health_up": true,
+    "no_inherited_coordination_lock": true,
+    "jar_open_by_pid": true,
+    "pid_listens": true
+  },
+  "verified": true,
+  "public_smoke": {
+    "api_map_unauthenticated_http": 401,
+    "user_agent": "cyf-release-readonly-probe/1.0",
+    "evidence": "/var/tmp/cyf-api-run23-online-20260912/public-map-probe.headers",
+    "default_curl_http": 403,
+    "default_curl_reason": "Existing nginx legacy curl user-agent block, not upstream 502",
+    "public_actuator_health": "not_exposed; unmatched location closes response; only loopback health verified",
+    "authenticated_business_acceptance": "NOT_RUN"
+  },
+  "build_evidence": {
+    "selector_class_scope": 59,
+    "build_job": 514133208,
+    "status": "SUCCESS",
+    "log": "/var/tmp/cyf-run23-build-log.json",
+    "physical_bootjar_mail_runtime_guard": "PASS",
+    "repeat_build": false
+  },
+  "lock_remediation_evidence": "/var/tmp/cyf-run23-lockfd-remediation-20260912/receipt.json",
+  "remaining": "Full A16, M4/M5, authenticated Archive/client ACK and authorized paid/provider acceptance are NOT closed by this release."
+}

@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-09-17T12:53:01.823475",
+  "task_id": "V1-6-VOICE-API-READINESS-20260917",
+  "status": "code_deployed_healthy_provider_activation_excluded",
+  "worker": "01a0ace2-f89a-7840-9c61-e94634a52a98",
+  "branch": "release/1.6.0",
+  "commit": "ab7ba3f610edb4bf9ec91f8124ee1cc254dfc821",
+  "tree": "472fab9c370e4e249a861c41f7e85fdfef72ec3c",
+  "base": "5ebe423be8bbdb9cc94b9419e568818128563cad",
+  "remote_pushed": true,
+  "verification": {
+    "static": [
+      "git diff --check",
+      "path ownership",
+      "base-parent binding"
+    ],
+    "selector": ":chat:jia-chat-service:test --tests cn.jia.chat.voice.*",
+    "local_gradle": "not_run",
+    "cloud": "FAIL_without_checkout_commit_test_output_or_artifact"
+  },
+  "fixes": [
+    "TTS invalid/cross-scope reservation fails closed before Provider dispatch or release",
+    "Honor explicitly configured positive transport timeouts; remove forced 25s/3s caps",
+    "Redis lease TTL follows configured Provider timeout plus existing 30s allowance; overflow fails closed",
+    "JWT/CORS/STT JSON/TTS binary and replay/cancellation/timeout regressions added, not yet executed"
+  ],
+  "merged_to_develop": true,
+  "deployed": true,
+  "provider_calls": false,
+  "next_action": "Code release complete. Do not restart/redeploy unchanged candidate. Real Provider/paid/device acceptance remains separately scoped; continue development from component develop and freeze next release only after verification.",
+  "flow": {
+    "pipeline": "5260799",
+    "run": 85,
+    "branch": "codex/v1-6-voice-api-readiness-20260917",
+    "commit": "ab7ba3f610edb4bf9ec91f8124ee1cc254dfc821",
+    "tree": "472fab9c370e4e249a861c41f7e85fdfef72ec3c",
+    "jobs": [
+      517005968
+    ],
+    "config_sha256": "f5e349f744c45b39f9c9d984537f0748d3580aba354e594fe89e988e3a518c8d",
+    "status": "FAIL",
+    "actual_checkout_commit": null,
+    "test_summary": null,
+    "artifact_digest": null,
+    "deploy_stage_present": false,
+    "logs": [
+      {
+        "path": "/var/tmp/cyf-v1-6-readiness-20260917.jYZRGu/5260799-run85-log.json",
+        "sha256": "7c0c58e1b890875af8695dde286da97ed1f730ccfe53958e1f70ab2cd0cb9e4a",
+        "content_empty": true,
+        "more": false
+      }
+    ]
+  },
+  "develop_commit": "ab7ba3f610edb4bf9ec91f8124ee1cc254dfc821",
+  "local_verification_20260917": {
+    "sourceCommit": "a8e9170873062165176626775d66c92dfc2e7a1a",
+    "sourceTree": "7ed64de0a3519b18b14f1ea8fe82463fa0993679",
+    "build_origin": "local_user_authorized",
+    "flowRun": null,
+    "suites": [
+      {
+        "module": "chat/jia-chat-service",
+        "task": "test",
+        "tests": 146,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "agent/jia-agent-mapper",
+        "task": "v16SchemaRegressionTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "starter",
+        "task": "publicArtifactVerifierTest",
+        "tests": 64,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "limitations": [
+      "Focused relevant suites; not the entire API workspace test suite.",
+      "Production voice and paid Providers remain disabled/not exercised."
+    ],
+    "artifact": "/home/isp/wsps/cyf/deliverables/releases/v1.6.0-local-20260917/api/cyf-api-a8e9170873062165176626775d66c92dfc2e7a1a-7ed64de0a3519b18b14f1ea8fe82463fa0993679.jar",
+    "artifactBytes": 221386227,
+    "artifactSha256": "82ef8e26fe7745a9a6a01d83560ddd2d7dd7846aea1425b2c0ac89ec4f2714fb"
+  },
+  "current_delivery": "MERGED_DEVELOP_LOCAL_TESTS_AND_BUILD_PASS_NOT_DEPLOYED",
+  "release_input": "/home/isp/wsps/cyf/deliverables/releases/v1.6.0-local-20260917/release-input.json",
+  "release_outcome": "/home/isp/wsps/cyf/deliverables/releases/v1.6.0-local-20260917/release-outcome.json",
+  "release_outcome_sha256": "0c957481307b67da032ca01c907e1038cf8e75328fc236ed7caaa8772a4167b6",
+  "deployment_record": {
+    "path": "/opt/cyf/service/api/release-records/api-deploy-20260917T043450Z-a8e9170873062165176626775d66c92dfc2e7a1a-7ed64de0a3519b18b14f1ea8fe82463fa0993679-v1.6.0-local-20260917.json",
+    "sha256": "32a40a346d9664525414ae06e709ccda437b26f32b80b81978e548e0144ca94e"
+  }
+}

@@ -13,6 +13,13 @@ This repository is a multi-module workspace with a Vue frontend under `web/`, Ja
 
 - 快速迭代阶段不以稳定为首要目标；一切优先往前推进。有问题就继续修问题，修不了就优化技术栈，不做保守回退作为默认选择。
 
+## Gate Evidence Policy（2026-09-13 用户指令）
+
+- 去掉没有依据的检查；后续遇到实际问题、形成证据后再增加，不以历史脚本或文档中的固定值作为依据。
+- 发布不设置未测算的磁盘/内存预留、包大小上限或本地等待超时门槛；空间只按实际制品与回退副本计算，资源指标保留观测。
+- 保留用户明确要求的云端测试、同 Run 制品绑定，以及版本/权限/进程归属、实际健康、发布互斥和可恢复安装。互斥采用等待，不抢占、不操作其他任务进程；取消由 Flow 作业控制。
+- 新增硬门禁必须记录实际问题、证据、最小检查范围；涉及数值必须给出推导。详见 `docs/aliyun-flow-gate-policy.md`。
+
 ## Key Commands
 
 - Frontend build: `cd web && npm run build`

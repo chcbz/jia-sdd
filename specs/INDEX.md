@@ -23,6 +23,14 @@ Do not create a feature directory for local-only refactors unless it changes a p
 
 - `juyiting-unified-experience/`：已发布1.13.10-uxfix4，用户确认本轮UI；Web10fc720/API787ae631，302单元组件+39fixture浏览器+6线上HTTP+37线上UI通过。上下文及清理见`session-closeout-20260922.md`；付费闭环／真机／Runtime激活／P01仍单列待验。
 
-## 2026-09-23 design
+## 2026-10-09 同库 tenant 测试区收敛
 
-- [single-db-tenant-gray](single-db-tenant-gray/spec.md)：2.0 Draft；单库多业务区域与测试区域，tenant 表示区域（如华南、华南测试、华北），client 与区域多对多授权，部署独立。本地默认进入区域 1；覆盖选区、数据域迁移、前端、工作器与区域控制，尚未实施或部署。
+- [single-db-tenant-gray](single-db-tenant-gray/scope-closeout-20261009.md)：implementing / NOT_READY；本次仅交付同库 tenant_id=1 测试区，0 为普通业务区域而非公共兜底。先整合 develop，再独立审查与验证正常业务和跨区边界；旧多区域平台与 Runtime R1–R5 设计保留为历史，不代表验收。
+
+## 2026-09-27 多媒体悬赏议事流程优化
+
+- [juyiting-multimedia-deliberation](juyiting-multimedia-deliberation/spec.md)：draft / design-only。点将自动议事，支持可选参考资料、多媒体回复与持续修改、主动保存、选定成果验收；复用现有存储及修正后的 fast-deliberation，不建设第三套文件系统。包含详设、开发计划与 22 项待执行验收；未派发、未修改组件 gitlink、未构建/部署。
+
+## 典籍阁 Agent 任职与内容维护方案
+
+- `archive-agent-maintenance`：ready / D2，可交接其他 Agent 从 M0 实施。宋江协调或直达任职 Agent，经技能与受控 API 完成多书/不可变版本、草稿校验及授权发布；保留旧阅读、身份隔离和共享执行/存储合同，不扩旧 ItemRef。入口：[实施交接](/home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md)、[详设](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)、[开发计划](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)。84 项业务验收均未执行；仅文档提交，无派发、组件 gitlink/运行台账修改、构建部署或生产激活。

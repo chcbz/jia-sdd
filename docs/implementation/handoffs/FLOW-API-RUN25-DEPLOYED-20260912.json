@@ -1,0 +1,140 @@
+{
+  "verifiedAt": "2026-09-12T12:34:42.289642+00:00",
+  "flow": {
+    "queriedAt": "2026-09-12T12:28:19.312Z",
+    "org": "5fb7d76ee6f9d07f148529c7",
+    "pipeline": "5260799",
+    "run": 25,
+    "status": "SUCCESS",
+    "sources": [
+      {
+        "repo": "https://gitee.com/chcbz/jia.git",
+        "branch": "develop",
+        "commits": [
+          "ef1a965945fc67834569c504bda605cb00f2f783",
+          "32dad44d402c71bee312c7ebc9c530accc47aa03"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "name": "Backend develop CI",
+        "jobs": [
+          {
+            "id": 514152612,
+            "name": "Changed-scope tests and bootJar",
+            "status": "SUCCESS",
+            "actions": [
+              {
+                "type": "LogPipelineJobRun",
+                "disabled": false
+              },
+              {
+                "type": "GetPipelineArtifactUrl",
+                "disabled": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Automatic backend deployment",
+        "jobs": [
+          {
+            "id": 514152613,
+            "name": "Install same-run artifact and check health",
+            "status": "SUCCESS",
+            "actions": [
+              {
+                "type": "GetVMDeployOrder",
+                "disabled": false,
+                "deployOrderId": 69508149
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "deploy_order": {
+    "queriedAt": "2026-09-12T12:29:33.271Z",
+    "org": "5fb7d76ee6f9d07f148529c7",
+    "pipeline": "5260799",
+    "order": "69508149",
+    "status": "Success",
+    "currentBatch": 1,
+    "totalBatch": 1,
+    "hostGroupId": 28833,
+    "machines": [
+      {
+        "batch": 1,
+        "status": "Success",
+        "clientStatus": "healthy"
+      }
+    ]
+  },
+  "runtime_record": {
+    "backup": "/var/lib/cyf-api-flow/backups/20260912T120833Z-ea9de1bd5413ff0ca0ccd9eb6ad2072f65453c0d1e70625a75e5f7bf4a070d22-2658944.jar",
+    "candidate_sha256": "ea9de1bd5413ff0ca0ccd9eb6ad2072f65453c0d1e70625a75e5f7bf4a070d22",
+    "candidate_stop_rc": 0,
+    "phase": "installed",
+    "previous_sha256": "a5cc9db17022291bc129b0536d5b8c785dac9efec4bf437ea503f3e183be721d",
+    "receipt_sha256": "24d75da1565c99a20f36d3e7c9feb1454d0451145341b08c668b1ad955b17f54",
+    "recovery": "not_required",
+    "run_id": "25",
+    "schema_version": 2,
+    "source_commit_sha": "ef1a965945fc67834569c504bda605cb00f2f783",
+    "source_tree_sha": "d36fe144ca93c87436bb792e45d3811fc838983d",
+    "status": "installed",
+    "ticket_sha256": "fc51e0c2a85ac8d1761ef175c893154ddbd16a19d16c6b62c57d4afede0735b3",
+    "timestamp": "20260912T120833Z"
+  },
+  "canonical_jar": "/opt/cyf/service/api/cyf-api-kit.jar",
+  "canonical_jar_sha256": "ea9de1bd5413ff0ca0ccd9eb6ad2072f65453c0d1e70625a75e5f7bf4a070d22",
+  "pid": 2659818,
+  "health": {
+    "groups": [
+      "liveness",
+      "readiness"
+    ],
+    "apiVersion": "V3",
+    "status": {
+      "code": "UP",
+      "description": ""
+    },
+    "components": null
+  },
+  "unauthenticated_public_probe": {
+    "status": 401,
+    "expected_unauthenticated": true
+  },
+  "cloud_artifact_binding": {
+    "flow": {
+      "job_id": "cloud_ci.api_ci",
+      "organization_id": "5fb7d76ee6f9d07f148529c7",
+      "pipeline_id": "5260799",
+      "run_id": "25",
+      "source_tip_sha": "ef1a965945fc67834569c504bda605cb00f2f783"
+    },
+    "jar_sha256": "ea9de1bd5413ff0ca0ccd9eb6ad2072f65453c0d1e70625a75e5f7bf4a070d22",
+    "receipt_sha256": "24d75da1565c99a20f36d3e7c9feb1454d0451145341b08c668b1ad955b17f54",
+    "source": {
+      "branch": "develop",
+      "clean_after": true,
+      "clean_before": true,
+      "commit_sha": "ef1a965945fc67834569c504bda605cb00f2f783",
+      "tree_sha": "d36fe144ca93c87436bb792e45d3811fc838983d"
+    }
+  },
+  "test_summary": {
+    "configured_selector_classes": 63,
+    "build_tests_stage": "SUCCESS",
+    "full_case_count": "not extracted",
+    "conditional_mysql": "fixture not supplied; not real-MySQL acceptance"
+  },
+  "limitations": [
+    "No authenticated business acceptance",
+    "A16 async foundation not included",
+    "ES default-off isolation test does not enable or verify production ES"
+  ]
+}

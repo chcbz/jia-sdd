@@ -1,0 +1,137 @@
+{
+  "observedAt": "2026-09-13T17:41:03+08:00",
+  "flowStatus": "FAIL",
+  "pipeline": 5260799,
+  "run": 49,
+  "sourceCommit": "4be112cdde8397590760292eb04eb823ad88299d",
+  "sourceTree": "534c185dce7d07f90333b242120da5284d324ff5",
+  "jarSha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+  "receiptSha256": "780b4bc59ac2481dbae3ab719ddbc3b5ad1772bdebcb8b295c2f271550746060",
+  "deploymentOrder": 69528306,
+  "hostInstallationAndHealth": {
+    "observedAt": "2026-09-13T09:29:58.419172+00:00",
+    "record": {
+      "status": "installed",
+      "phase": "installed",
+      "run_id": "49",
+      "source_commit_sha": "4be112cdde8397590760292eb04eb823ad88299d",
+      "source_tree_sha": "534c185dce7d07f90333b242120da5284d324ff5",
+      "candidate_sha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+      "receipt_sha256": "780b4bc59ac2481dbae3ab719ddbc3b5ad1772bdebcb8b295c2f271550746060",
+      "recovery": "not_required"
+    },
+    "health": {
+      "http": 200,
+      "body": {
+        "groups": [
+          "liveness",
+          "readiness"
+        ],
+        "apiVersion": "V3",
+        "status": {
+          "code": "UP",
+          "description": ""
+        },
+        "components": null
+      }
+    },
+    "f06": {
+      "status": "running",
+      "error": null,
+      "action": "if this process is interrupted, inspect durable F06 table metadata and the preserved output files; never rerun this same Flow release automatically",
+      "runner_exit_code": null,
+      "run_id": "49",
+      "runner_report": null
+    },
+    "e05": {
+      "state": "result_absent"
+    },
+    "runtime": {
+      "pid": 3598374,
+      "jar": "/opt/cyf/service/api/cyf-api-kit.jar",
+      "sha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+      "matchesRun49Artifact": true
+    }
+  },
+  "schemaFailure": {
+    "action": "inspect the preserved runner report/stdout/stderr and durable table metadata; do not drop tables or rerun this same Flow release automatically",
+    "activation_claim": "schema_only_not_feature_activation",
+    "error": "created_table_not_equivalent",
+    "feature": "M4-F06-additive-schema",
+    "finished_at": "2026-09-13T09:31:24.407226Z",
+    "jar_sha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+    "lock_order": [
+      "flow_coordinator_lock",
+      "api_release_lock",
+      "f06_runner_file_lock",
+      "f06_mysql_named_lock"
+    ],
+    "pipeline_id": "5260799",
+    "prerequisites": [],
+    "receipt_sha256": "780b4bc59ac2481dbae3ab719ddbc3b5ad1772bdebcb8b295c2f271550746060",
+    "run_id": "49",
+    "runner_exit_code": 1,
+    "runner_path": "/usr/local/sbin/cyf-api-additive-schema",
+    "runner_report": {
+      "binding": {
+        "jar_sha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+        "organization": "5fb7d76ee6f9d07f148529c7",
+        "pipeline": "5260799",
+        "receipt_sha256": "780b4bc59ac2481dbae3ab719ddbc3b5ad1772bdebcb8b295c2f271550746060",
+        "run": "49",
+        "source_commit": "4be112cdde8397590760292eb04eb823ad88299d",
+        "source_tree": "534c185dce7d07f90333b242120da5284d324ff5"
+      },
+      "candidate": {
+        "resource_inner": "db/agent-task-artifact-outcome-f06.sql",
+        "resource_outer": "BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar",
+        "sql_sha256": "77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc",
+        "statement_policy": "exact_create_table_if_not_exists_only",
+        "tables": [
+          "agent_task_artifact_outcome",
+          "agent_task_artifact_outcome_decision"
+        ]
+      },
+      "error": "created_table_not_equivalent",
+      "failed_table": "agent_task_artifact_outcome",
+      "lock_order": [
+        "f06_runner_file_lock",
+        "f06_mysql_named_lock"
+      ],
+      "operation": "apply",
+      "schema_version": 1,
+      "status": "failed",
+      "tables": {
+        "agent_task_artifact_outcome": {
+          "mismatches": [
+            "check_clause:chk_artifact_outcome_state",
+            "check_clause:chk_artifact_outcome_supersession",
+            "columns",
+            "schema_charset",
+            "table_collation"
+          ],
+          "status": "create_result_drift"
+        },
+        "agent_task_artifact_outcome_decision": {
+          "status": "pending_create"
+        }
+      },
+      "transaction_model": "mysql_ddl_autocommit_per_create_no_rollback_or_drop"
+    },
+    "schema_version": 1,
+    "source_commit_sha": "4be112cdde8397590760292eb04eb823ad88299d",
+    "source_tree_sha": "534c185dce7d07f90333b242120da5284d324ff5",
+    "sql_sha256": "77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc",
+    "started_at": "2026-09-13T09:29:57.412397Z",
+    "status": "failed",
+    "stderr_path": "/var/lib/cyf-api-flow/schema-results/run-49.stderr",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_path": "/var/lib/cyf-api-flow/schema-results/run-49.stdout",
+    "stdout_sha256": "32571c5d43cdc2aad12c663ceed046b94a7bd9d36efe1448000fd572214fec23",
+    "transaction_model": "installed_record_then_mysql_ddl_autocommit_no_rollback_or_drop"
+  },
+  "readOnlyMetadataEvidence": "/var/tmp/cyf-f06-run49-metadata-diagnostic/metadata.json",
+  "installedCodeClaimOnly": true,
+  "onlineEvidence": "/var/tmp/cyf-latest-release-observation-20260913/api49-online-1730.json",
+  "next": "Fix F06 metadata/least-privilege-readiness, preserve first created table and failedRun. HealthyAPI not rolled back; no blind sameRunretry. E05/native/authenticated/paid acceptance remain."
+}
