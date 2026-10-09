@@ -1,5 +1,5 @@
-schema_version: 2
-updated_at: "2026-08-03"
+schema_version: 3
+updated_at: "2026-10-01"
 execution_policy:
   task_mode: serial
   max_active_tasks: 1
@@ -11,10 +11,12 @@ execution_policy:
   control_plane_writer: main_orchestrator
   gradle_lock: /tmp/cyf-gradle.lock
   production_changes_require_explicit_task: true
+  active_model_policy: gpt_only
+  dispatch_model_verification: required_before_counting_progress
 
 roles:
   main_orchestrator:
-    model: gpt-5.6-sol
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
     writes_control_plane: true
@@ -39,29 +41,13 @@ roles:
     reasoning_effort: medium
     writes_code: true
     task_types: [dto, fixture, repetitive_test, documentation, bounded_fix]
-  deepseek_pro_worker:
-    model: deepseek-v4-pro
-    reasoning_effort: high
-    writes_code: true
-    task_types: [m2_core, transaction, task_event, snapshot, sse, recovery_reducer]
-  deepseek_flash_worker:
-    model: deepseek-v4-flash
-    reasoning_effort: medium
-    writes_code: true
-    task_types: [dto, fixture, repetitive_test, probe, presentation_ui, accessibility]
-    escalation_required_for: [architecture, acl, concurrency, transaction, migration, versioning, replay_order]
   sol_reviewer:
     model: gpt-5.6-sol
     reasoning_effort: high
     writes_code: false
-    task_types: [deepseek_code_review, architecture_review, transaction_review, frontend_state_review]
-  deepseek_pro_reviewer:
-    model: deepseek-v4-pro
-    reasoning_effort: high
-    writes_code: false
-    task_types: [flash_code_review, ui_contract_review, test_review, sol_integration_review, merge_review, control_plane_review]
+    task_types: [independent_code_review, architecture_review, transaction_review, frontend_state_review]
   adversarial_reviewer:
-    model: deepseek-v4-pro
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
     task_types: [security_review, sql_review, concurrency_review, migration_review]
@@ -76,7 +62,7 @@ roles:
     writes_code: false
     task_types: [narrow_lookup, bounded_summary, fact_extraction]
   test_runner:
-    model: deepseek-v4-flash
+    model: gpt-5.6-luna
     reasoning_effort: medium
     writes_code: false
     task_types: [build, test, probe, smoke]
@@ -96,85 +82,85 @@ m2_routing:
   M2-00:
     writer: main_orchestrator
     support: explorer
-    reviewer: deepseek_pro_reviewer
+    reviewer: adversarial_reviewer
   C01:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C01B:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C01H:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C02:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C03:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C04:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C05:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C05F:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C06:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C07A:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C07B:
-    writer: deepseek_flash_worker
+    writer: routine_worker
     support: null
-    reviewer: deepseek_pro_reviewer
+    reviewer: adversarial_reviewer
   C07C:
-    writer: deepseek_flash_worker
+    writer: routine_worker
     support: null
-    reviewer: deepseek_pro_reviewer
+    reviewer: adversarial_reviewer
   C07:
     writer: critical_worker
     support: test_runner
-    reviewer: deepseek_pro_reviewer
+    reviewer: adversarial_reviewer
     final_gate: release_guard
   C07F:
-    writer: deepseek_pro_worker
+    writer: critical_worker
     support: test_runner
-    reviewer: sol_reviewer
+    reviewer: adversarial_reviewer
   C08A:
     writer: critical_worker
     support: test_runner
-    reviewer: deepseek_pro_reviewer
+    reviewer: adversarial_reviewer
   C08W:
     writer: critical_worker
     support: test_runner
-    reviewer: deepseek_pro_reviewer
+    reviewer: adversarial_reviewer
   C08:
     writer: main_orchestrator
     support: test_runner
-    reviewer: deepseek_pro_reviewer
+    reviewer: adversarial_reviewer
     final_gate: release_guard
 
 routing:
   - match: [M2_core, task_event, snapshot, sse, recovery_reducer]
-    writer: deepseek_pro_worker
-    reviewer: sol_reviewer
+    writer: critical_worker
+    reviewer: adversarial_reviewer
   - match: [M2_presentation_ui, M2_fixture, M2_probe, M2_repetitive_test]
-    writer: deepseek_flash_worker
-    reviewer: deepseek_pro_reviewer
+    writer: routine_worker
+    reviewer: adversarial_reviewer
   - match: [P0, identity, acl, transaction, concurrency, migration]
     writer: critical_worker
     reviewer: adversarial_reviewer
@@ -200,7 +186,7 @@ visual_policy:
   multimodal_review: required
   required_gates: [V0_baseline, V1_props, V2_fragments, V3_masks, V4_full_map, V5_release_sample]
   evidence_operator: test_runner
-  implementation_owner: deepseek_pro_worker
+  implementation_owner: critical_worker
   image_generation_model: gpt-image-2
   image_generation_default_budget: 0
   image_generation_trigger: explicit_user_approval_for_new_or_repainted_art_only
@@ -226,7 +212,23 @@ handoff_required:
   - residual_risks
   - next_dependency_unlocked
 
+retired_role_redirects:
+  # Translate old task cards; never dispatch these retired role names.
+  deepseek_pro_worker: critical_worker
+  deepseek_flash_worker: routine_worker
+  deepseek_pro_reviewer: adversarial_reviewer
+
+runtime_dispatch:
+  provider: gpt
+  cached_retired_roles: forbidden
+  current_session_review: fresh_default_agent_inheriting_current_gpt_model
+  current_session_review_effort: high
+  availability: "Registered GPT profiles preserve task tiers; confirm actual model and first tool checkpoint on every dispatch. Do not assume a profile name proves provider availability."
+  model_unavailable: "Select another authorized GPT profile while preserving task scope and review independence; never retry a retired DeepSeek role."
+
 juyiting_e17_e18_routing:
+  historical_only: true
+  # August acceptance records, not authorization for new dispatches.
   updated_at: "2026-08-14"
   policy: quality_first_gpt_budget_restored
   E17_evidence:

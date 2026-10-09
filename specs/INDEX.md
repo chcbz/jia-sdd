@@ -22,3 +22,7 @@ Do not create a feature directory for local-only refactors unless it changes a p
 ## 2026-09-22 delivery
 
 - `juyiting-unified-experience/`：已发布1.13.10-uxfix4，用户确认本轮UI；Web10fc720/API787ae631，302单元组件+39fixture浏览器+6线上HTTP+37线上UI通过。上下文及清理见`session-closeout-20260922.md`；付费闭环／真机／Runtime激活／P01仍单列待验。
+
+## 2026-09-23 design
+
+- [single-db-tenant-gray](single-db-tenant-gray/spec.md)：2.0 Draft；单库多业务区域与测试区域，tenant 表示区域（如华南、华南测试、华北），client 与区域多对多授权，部署独立。本地默认进入区域 1；覆盖选区、数据域迁移、前端、工作器与区域控制，尚未实施或部署。

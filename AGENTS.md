@@ -54,6 +54,8 @@ This repository is a multi-module workspace with a Vue frontend under `web/`, Ja
 
 - Project Agent profiles are registered in `.codex/config.toml` and defined under `.codex/agents/`.
 - Use `docs/implementation/MODEL_ROUTING.yaml` as the durable model-routing policy.
+- Active model routing is GPT-only. DeepSeek profiles are retired; historical task records do not authorize dispatching retired roles.
+- The project default and `adversarial_reviewer` use the user-selected `gpt-6.1-sol` / High. Already-loaded sessions must not reuse cached role definitions; dispatch a fresh task with the exact requested model and verify its actual model before counting review progress. Do not silently fall back if the provider rejects it.
 - Current execution is serial: one active task at a time, followed by an independent review and user confirmation.
 - Prefer `critical_worker` for P0 identity/ACL/transaction/migration work, `balanced_worker` (Terra Medium) for normal implementation, `explorer` (Terra Medium) for repository analysis, `fast_query` (GPT-5.4 Mini Medium) for narrow lookups, `routine_worker` for bounded mechanical work, and `adversarial_reviewer` for cross-model review.
 - Reviewers are read-only and must not repair the code they review.
