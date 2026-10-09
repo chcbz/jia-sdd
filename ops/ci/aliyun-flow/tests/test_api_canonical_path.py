@@ -25,4 +25,15 @@ class CanonicalApiPathTests(unittest.TestCase):
    self.assertIn('& 0022',text)
  def test_launcher_closes_migration_locks(self):
   self.assertIn('5>&- 6>&- 7>&- 8>&- 9>&- &',(HOST/'cyf-api-kit').read_text())
+ def test_preservation_backup_alias_is_exact_and_not_a_second_api_deployment(self):
+  installer=(HOST/'cyf-api-flow-install').read_text()
+  deploy=(HOST/'cyf-api-flow-deploy').read_text()
+  self.assertIn('"$BACKUP_ROOT" == /var/lib/cyf-api-flow/backups',installer)
+  self.assertIn('"$(readlink -f "$BACKUP_ROOT")" == /home/isp/baks/flow-api',installer)
+  self.assertIn("path != Path('/var/lib/cyf-api-flow/backups')",deploy)
+  self.assertIn("target = Path('/home/isp/baks/flow-api')",deploy)
+  self.assertIn('backup alias is unsafe',installer)
+  self.assertIn('target.is_symlink()',deploy)
+
+
 if __name__=='__main__':unittest.main(verbosity=2)

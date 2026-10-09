@@ -5,6 +5,21 @@ umask 077
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export LC_ALL=C
 
+# BEGIN STARTUP_DIAGNOSTICS
+# Opt-in, value-free control-plane timestamps. Never print argv/environment or
+# let an observation failure change installation/health/lock semantics.
+diagnostic_mark() {
+  [[ "${CYF_API_STARTUP_DIAGNOSTICS:-0}" == 1 ]] || return 0
+  local monotonic ignored
+  if ! IFS=' ' read -r monotonic ignored < /proc/uptime; then return 0; fi
+  [[ "$monotonic" =~ ^[0-9]+\.[0-9]+$ ]] || return 0
+  printf 'CYF_DEPLOY_TIMING component=installer pid=%s point=%s monotonic_s=%s wall=%(%Y-%m-%dT%H:%M:%S%z)T\n' \
+    "$BASHPID" "$1" "$monotonic" -1 >&2 || :
+  return 0
+}
+# END STARTUP_DIAGNOSTICS
+
+diagnostic_mark script.enter
 PACKAGE_ROOT=/var/lib/cyf-api-flow
 INCOMING_PACKAGE="$PACKAGE_ROOT/incoming/package.tgz"
 APPROVAL_PATH="$PACKAGE_ROOT/approval.json"
@@ -60,12 +75,20 @@ else
 fi
 TARGET_DIR="$(dirname "$TARGET_JAR")"
 
-for command in awk chmod chown date df flock grep mkdir mktemp python3 rm sha256sum stat; do
+for command in awk chmod chown date df flock grep mkdir mktemp python3 readlink rm sha256sum stat; do
   command -v "$command" >/dev/null 2>&1 || fail "missing command: $command"
 done
 
 mkdir -p -m 0700 "$PACKAGE_ROOT" "$PACKAGE_ROOT/incoming" "$BACKUP_ROOT"
-[[ ! -L "$PACKAGE_ROOT" && ! -L "$PACKAGE_ROOT/incoming" && ! -L "$BACKUP_ROOT" && ! -L "$TARGET_DIR" ]] || fail 'package or target directory is symlinked'
+[[ ! -L "$PACKAGE_ROOT" && ! -L "$PACKAGE_ROOT/incoming" && ! -L "$TARGET_DIR" ]] || fail 'package or target directory is symlinked'
+# Preserve the installed backup alias and durable logical record paths. No other
+# symlink is admitted, including in offline fixtures.
+validate_backup_alias() {
+  if [[ -L "$BACKUP_ROOT" ]]; then
+    [[ "$OFFLINE_TEST" == 0 && "$BACKUP_ROOT" == /var/lib/cyf-api-flow/backups        && "$(stat -c '%u:%g' "$BACKUP_ROOT")" == '0:0'        && "$(readlink -f "$BACKUP_ROOT")" == /home/isp/baks/flow-api        && -d /home/isp/baks/flow-api && ! -L /home/isp/baks/flow-api ]]        || fail 'backup alias is unsafe'
+  fi
+}
+validate_backup_alias
 if [[ -e "$TARGET_JAR" || -L "$TARGET_JAR" ]]; then
   [[ -f "$TARGET_JAR" && ! -L "$TARGET_JAR" && -s "$TARGET_JAR" && "$(stat -Lc '%h' "$TARGET_JAR")" == 1 ]] || fail 'canonical JAR is unsafe'
 fi
@@ -75,9 +98,18 @@ LIFECYCLE_MODE="$(stat -Lc '%a' "$LIFECYCLE")"
 (( (8#$LIFECYCLE_MODE & 0022) == 0 )) || fail 'lifecycle command must not be group/world writable'
 
 if (( ! OFFLINE_TEST )); then
-  [[ "$0" == /usr/local/sbin/cyf-api-flow-install && ! -L "$0" ]] || fail 'production installer must use its fixed root-owned path'
-  [[ "$(stat -Lc '%u:%a:%h' "$0")" =~ ^0:[0-7]{3}:1$ ]] || fail 'installer must be a root-owned physical file'
-  INSTALLER_MODE="$(stat -Lc '%a' "$0")"
+  INSTALLER_SELF="$0"
+  if [[ "$0" =~ ^/proc/self/fd/([0-9]+)$ ]]; then
+    # Parent verified this already-open helper FD against the maintenance catalog.
+    # It must still be the unique installed file, and is closed before descendants.
+    SUPPLIED_HELPER_FD="${BASH_REMATCH[1]}"
+    INSTALLER_SELF=/usr/local/sbin/cyf-api-flow-install
+    [[ "$(stat -Lc '%d:%i' "$0")" == "$(stat -Lc '%d:%i' "$INSTALLER_SELF")" ]] || fail 'installer FD does not match fixed helper'
+    eval "exec ${SUPPLIED_HELPER_FD}<&-"
+  fi
+  [[ "$INSTALLER_SELF" == /usr/local/sbin/cyf-api-flow-install && ! -L "$INSTALLER_SELF" ]] || fail 'production installer must use its fixed root-owned path'
+  [[ "$(stat -Lc '%u:%a:%h' "$INSTALLER_SELF")" =~ ^0:[0-7]{3}:1$ ]] || fail 'installer must be a root-owned physical file'
+  INSTALLER_MODE="$(stat -Lc '%a' "$INSTALLER_SELF")"
   (( (8#$INSTALLER_MODE & 0022) == 0 )) || fail 'installer must not be group/world writable'
   [[ "$(stat -Lc '%a:%u:%g' "$PACKAGE_ROOT")" == '700:0:0' ]] || fail 'package root must be root-owned 0700'
   [[ "$(stat -Lc '%a:%u:%g' "$PACKAGE_ROOT/incoming")" == '700:0:0' ]] || fail 'incoming directory must be root-owned 0700'
@@ -104,7 +136,9 @@ fi
 exec 8<>"$RELEASE_LOCK"
 [[ "$(stat -Lc '%d:%i' "$RELEASE_LOCK")" == "$(stat -Lc '%d:%i' /proc/$$/fd/8)" ]] || fail 'release lock changed while opening'
 # Serialize releases; contention is waiting, not a failed release. Flow owns cancellation.
+diagnostic_mark release_lock.begin
 flock -x 8 || fail 'API release lock acquisition interrupted'
+diagnostic_mark release_lock.end
 LOCK_DEVICE="$(stat -Lc '%d' /proc/$$/fd/8)"
 LOCK_INODE="$(stat -Lc '%i' /proc/$$/fd/8)"
 export CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$LOCK_DEVICE" CYF_RELEASE_LOCK_INODE="$LOCK_INODE" CYF_RELEASE_LOCK_HELD=1
@@ -122,8 +156,65 @@ chmod 0600 "$INCOMING_PACKAGE"
 [[ "$(stat -Lc '%u:%a:%h' "$APPROVAL_PATH")" == "${INSTALL_UID}:600:1" ]] || fail 'approval must be owner-controlled 0600 single-link'
 [[ ! -e "$RECORD_PATH" || ( -f "$RECORD_PATH" && ! -L "$RECORD_PATH" && "$(stat -Lc '%u:%a:%h' "$RECORD_PATH")" == "${INSTALL_UID}:600:1" ) ]] || fail 'record path is unsafe'
 
+# V3 is an explicit LOCAL source projection in the ORIGINAL transaction below.
+# The validator is the fixed coordinator, not a second installer. Production
+# never accepts an environment-selected validator or caller's Python import path.
+TRANSACTION_VALIDATOR=/usr/local/sbin/cyf-api-flow-deploy
+if (( OFFLINE_TEST )); then
+  TRANSACTION_VALIDATOR="$(dirname -- "$0")/cyf-api-flow-deploy"
+fi
+transaction_python() {
+  python3 -I -B -c '
+import os, stat, sys
+from pathlib import Path
+validator_path = Path(sys.argv.pop(1))
+# No-follow opening of the coordinator and every production ancestor.
+if os.environ.get("CYF_RELEASE_OFFLINE_TEST") != "YES":
+    for parent in (Path("/"),) + tuple(reversed(tuple(validator_path.parents)[:-1])):
+        i = os.lstat(str(parent))
+        if not stat.S_ISDIR(i.st_mode) or i.st_uid != 0 or i.st_mode & 0o022:
+            raise SystemExit("unsafe transaction validator ancestor")
+fd = os.open(str(validator_path), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+try:
+    before = os.fstat(fd)
+    if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.geteuid()
+            or before.st_nlink != 1 or before.st_mode & 0o022):
+        raise SystemExit("unsafe transaction validator")
+    with os.fdopen(os.dup(fd), "rb") as stream:
+        code = stream.read()
+    after = os.fstat(fd)
+    if before != after or after != os.lstat(str(validator_path)):
+        raise SystemExit("changed transaction validator")
+    validator = {"__name__": "_cyf_transaction_validator", "__file__": str(validator_path)}
+    exec(compile(code, str(validator_path), "exec"), validator)
+finally:
+    os.close(fd)
+# Fixture roots are available ONLY in the original opt-in offline mode. They
+# cannot select production trust paths or change authority or package validators.
+if os.environ.get("CYF_RELEASE_OFFLINE_TEST") == "YES":
+    input_root = os.environ.get("CYF_API_FLOW_INSTALL_TEST_INPUT_ROOT")
+    if input_root:
+        fixture = Path(input_root)
+        if not str(fixture).startswith("/root/cyf-local-readset-unit-"):
+            raise SystemExit("unsafe local input fixture")
+        info = os.lstat(str(fixture))
+        if (not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid()
+                or stat.S_IMODE(info.st_mode) != 0o700):
+            raise SystemExit("unsafe local input fixture")
+        validator["ROOT"] = fixture / "control"
+        validator["BACKUPS"] = Path(os.environ["CYF_API_FLOW_INSTALL_TEST_ROOT"]) / "state/backups"
+        validator["LOCAL_ADMISSION_ROOT"] = fixture / "admission"
+        paths = {name: str(fixture / "helpers" / name) for name in validator["LOCAL_HELPER_PATHS"]}
+        validator["LOCAL_HELPER_PATHS"] = paths
+        validator["SCHEMA_RUNNER"] = Path(paths["cyf-api-additive-schema"])
+        validator["E05_SCHEMA_RUNNER"] = Path(paths["cyf-api-e05-additive-schema"])
+        validator["LOCAL_RUNTIME_RECORD"] = fixture / "runtime.record"
+exec(compile(sys.stdin.read(), "<cyf-original-install-transaction>", "exec"))
+' "$TRANSACTION_VALIDATOR" "$@"
+}
+
 read_record() {
-  python3 -I -B - "$RECORD_PATH" "$INSTALL_UID" "$BACKUP_ROOT" <<'PY'
+  transaction_python "$RECORD_PATH" "$INSTALL_UID" "$BACKUP_ROOT" <<'PY'
 import json, os, re, stat, sys
 from pathlib import Path
 path = Path(sys.argv[1])
@@ -137,9 +228,23 @@ if (not stat.S_ISREG(info.st_mode) or info.st_uid != uid or info.st_nlink != 1
         or stat.S_IMODE(info.st_mode) != 0o600):
     raise SystemExit('unsafe record')
 try:
-    value = json.loads(path.read_text(encoding='utf-8'))
+    value = validator['local_json'](path.read_bytes())
 except (OSError, UnicodeDecodeError, ValueError):
     raise SystemExit('invalid record JSON')
+if value.get('schema_version') == 3:
+    try:
+        validator['local_install_record'](value, backup_root)
+    except validator['LocalRejected'] as exc:
+        raise SystemExit(exc.code)
+    release = value['release']
+    # Empty Run slot is LOCAL, never a fabricated numeric Flow identity.
+    fields = [value['status'], value['phase'], value['recovery'], value['binding_sha256'],
+              release['source']['identity']['commit'], release['source']['identity']['tree'], '',
+              release['payloads']['receipt.json']['sha256'], value['candidate_sha256'],
+              value['previous_sha256'], value['backup'], value['candidate_stop_rc'], value['timestamp']]
+    for field in fields:
+        print(field)
+    raise SystemExit(0)
 keys = {
     'schema_version', 'status', 'phase', 'recovery', 'ticket_sha256',
     'source_commit_sha', 'source_tree_sha', 'run_id', 'receipt_sha256',
@@ -195,6 +300,7 @@ expected = {
 }
 json_members = {'application.metadata.json', 'application.sidecar.json', 'dependency.provenance.json', 'receipt.json'}
 seen = set()
+report_seen = set()
 total = 0
 try:
     info = package.stat()
@@ -204,6 +310,16 @@ try:
         for member in archive:
             name = member.name[2:] if member.name.startswith('./') else member.name
             if name in ('', '.') and member.isdir():
+                continue
+            if name == 'test-results' or name.startswith('test-results/'):
+                if (name in report_seen or name.startswith('/') or '\\' in name or '\x00' in name
+                        or any(part in ('', '.', '..') for part in name.split('/'))
+                        or not (member.isdir() or (member.isreg() and member.size >= 0
+                            and (name == 'test-results/summary.json' or name.endswith('.xml'))))):
+                    raise SystemExit('unsafe or duplicate test report member')
+                report_seen.add(name)
+                # CI reports stay in the original Flow artifact; never extract them
+                # into the privileged application installation workspace.
                 continue
             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
                     or any(part in ('', '.', '..') for part in name.split('/'))
@@ -276,7 +392,8 @@ WORK="$(mktemp -d "$TARGET_DIR/.cyf-api-flow-install.XXXXXX")"
 cleanup() { rm -rf -- "$WORK"; }
 trap cleanup EXIT
 
-mapfile -t APPROVAL_CONTEXT < <(python3 -I -B - "$INCOMING_PACKAGE" "$WORK" "$APPROVAL_PATH" "$EXPECTED_ORGANIZATION" "$EXPECTED_PIPELINE" "$EXPECTED_JOB" "$INSTALL_UID" <<'PY'
+diagnostic_mark unpack_validate.begin
+mapfile -t APPROVAL_CONTEXT < <(transaction_python "$INCOMING_PACKAGE" "$WORK" "$APPROVAL_PATH" "$EXPECTED_ORGANIZATION" "$EXPECTED_PIPELINE" "$EXPECTED_JOB" "$INSTALL_UID" <<'PY'
 import hashlib, json, os, re, stat, sys, tarfile, zipfile
 from pathlib import Path
 
@@ -319,12 +436,23 @@ def write_all(fd, block):
         view = view[written:]
 
 seen = set()
+report_seen = set()
 total = 0
 try:
     with tarfile.open(package, 'r|gz') as archive:
         for member in archive:
             name = member.name[2:] if member.name.startswith('./') else member.name
             if name in ('', '.') and member.isdir():
+                continue
+            if name == 'test-results' or name.startswith('test-results/'):
+                if (name in report_seen or name.startswith('/') or '\\' in name or '\x00' in name
+                        or any(part in ('', '.', '..') for part in name.split('/'))
+                        or not (member.isdir() or (member.isreg() and member.size >= 0
+                            and (name == 'test-results/summary.json' or name.endswith('.xml'))))):
+                    raise SystemExit('unsafe or duplicate test report member')
+                report_seen.add(name)
+                # CI reports stay in the original Flow artifact; never extract them
+                # into the privileged application installation workspace.
                 continue
             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
                     or any(part in ('', '.', '..') for part in name.split('/'))
@@ -365,11 +493,50 @@ try:
     metadata = json.loads((root / 'application.metadata.json').read_text(encoding='utf-8'))
     sidecar = json.loads((root / 'application.sidecar.json').read_text(encoding='utf-8'))
     provenance = json.loads((root / 'dependency.provenance.json').read_text(encoding='utf-8'))
-    approval = json.loads(approval_path.read_text(encoding='utf-8'))
+    approval = validator['local_json'](approval_path.read_bytes())
 except (OSError, UnicodeDecodeError, ValueError):
     raise SystemExit('package or approval JSON is invalid')
 if not all(isinstance(value, dict) for value in (receipt, metadata, sidecar, provenance, approval)):
     raise SystemExit('package or approval JSON shape is invalid')
+
+if approval.get('schema_version') == 3:
+    try:
+        validator['local_approval'](approval)
+        release = approval['release']
+        inputs = validator['local_read_install_inputs'](release['decision']['path'],
+                                                        release['decision']['sha256'])
+        validator['local_need'](inputs['release'] == release, 'RECOVERY_BINDING_MISMATCH')
+        validator['local_authority_matches'](inputs['decision'], inputs['authority'],
+                                             ('apiInstall', 'apiStopStart', 'schemaApply'))
+        validator['local_need'](not report_seen, 'PACKAGE_INVALID')
+        validator['local_need'](digest(package) == release['package']['sha256']
+            and package.stat().st_size == release['package']['size'], 'PACKAGE_INVALID')
+        for name in expected:
+            ref = release['payloads'][name]
+            validator['local_need'](digest(root / name) == ref['sha256']
+                and (root / name).stat().st_size == ref['size'], 'PACKAGE_INVALID')
+        helper_root = Path(os.environ['CYF_API_FLOW_INSTALL_TEST_ROOT']) / 'bin' if (
+            os.environ.get('CYF_RELEASE_OFFLINE_TEST') == 'YES') else Path('/usr/local/sbin')
+        for name in ('cyf-api-kit', 'cyf-api-flow-install'):
+            actual = Path(validator_path) .parent / name if (
+                os.environ.get('CYF_RELEASE_OFFLINE_TEST') == 'YES' and name == 'cyf-api-flow-install') else helper_root / name
+            info = os.lstat(str(actual))
+            validator['local_need'](stat.S_ISREG(info.st_mode) and info.st_uid == expected_uid
+                and info.st_nlink == 1 and not info.st_mode & 0o022, 'HELPER_CATALOG_MISMATCH')
+            ref = inputs['helperCatalog']['helpers'][name]
+            validator['local_need'](info.st_size == ref['size'] and digest(actual) == ref['sha256'],
+                                    'HELPER_CATALOG_MISMATCH')
+        inputs['reader'].recheck()
+    except validator['LocalRejected'] as exc:
+        raise SystemExit(exc.code)
+    print('1' if approval['consumed'] else '0')
+    print(approval['binding_sha256'])
+    print(release['source']['identity']['commit'])
+    print(release['source']['identity']['tree'])
+    print('')
+    print(release['payloads']['receipt.json']['sha256'])
+    print(release['payloads']['application.jar']['sha256'])
+    raise SystemExit(0)
 
 approval_open = {
     'schema_version', 'ticket_sha256', 'source_commit_sha', 'source_tree_sha',
@@ -482,11 +649,29 @@ RUN_ID="${APPROVAL_CONTEXT[4]}"
 RECEIPT_SHA="${APPROVAL_CONTEXT[5]}"
 JAR_SHA="${APPROVAL_CONTEXT[6]}"
 
+if [[ -z "$RUN_ID" ]]; then
+  LOCAL_ROLLBACK_POLICY="$(transaction_python "$APPROVAL_PATH" <<'PYLOCAL'
+import sys
+try:
+    approval = validator['local_approval'](validator['local_json'](Path(sys.argv[1]).read_bytes()))
+    print(approval['release']['rollbackPolicy'])
+except validator['LocalRejected'] as exc:
+    raise SystemExit(exc.code)
+PYLOCAL
+)" || fail 'LOCAL rollback policy is invalid'
+  if [[ "$LOCAL_ROLLBACK_POLICY" == forward-only ]]; then
+    export CYF_API_FLOW_FORWARD_ONLY=1
+  else
+    unset CYF_API_FLOW_FORWARD_ONLY
+  fi
+fi
+
 chown "$INSTALL_OWNER:$INSTALL_GROUP" "$WORK/application.jar"
 chmod 0640 "$WORK/application.jar"
 [[ "$(stat -Lc '%u:%g:%a:%h' "$WORK/application.jar")" == "${INSTALL_UID}:${INSTALL_GID}:640:1" ]] || fail 'validated candidate metadata normalization failed'
 [[ "$(sha256sum "$WORK/application.jar" | awk '{print $1}')" == "$JAR_SHA" ]] || fail 'candidate changed after validation'
 
+diagnostic_mark unpack_validate.end
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 if [[ -e "$TARGET_JAR" ]]; then CURRENT_SHA="$(sha256sum "$TARGET_JAR" | awk '{print $1}')"; else CURRENT_SHA=MISSING; fi
 OLD_SHA="$CURRENT_SHA"
@@ -495,7 +680,7 @@ STOP_RC=255
 
 write_record() {
   local status="$1" phase="$2" recovery="$3" stop_rc="$4"
-  python3 -I -B - "$RECORD_PATH" "$INSTALL_UID" "$INSTALL_GID" "$status" "$phase" "$recovery" "$stop_rc" \
+  transaction_python "$RECORD_PATH" "$INSTALL_UID" "$INSTALL_GID" "$status" "$phase" "$recovery" "$stop_rc" \
     "$TICKET_SHA" "$SOURCE_COMMIT_SHA" "$SOURCE_TREE_SHA" "$RUN_ID" "$RECEIPT_SHA" "$JAR_SHA" "$OLD_SHA" "$BACKUP" "$STAMP" "$TEST_FAULT" "$TEST_FAULT_MARK" <<'PY'
 import json, os, stat, sys, tempfile
 from pathlib import Path
@@ -528,6 +713,24 @@ payload = {
     'previous_sha256': previous, 'backup': backup, 'candidate_stop_rc': stop_rc,
     'timestamp': timestamp,
 }
+if run_id == '':
+    try:
+        approval_path = path.parent / 'approval.json'
+        approval = validator['local_approval'](validator['local_json'](approval_path.read_bytes()))
+        validator['local_need'](approval['binding_sha256'] == ticket
+            and approval['release']['source']['identity'] ==
+                dict(version=approval['release']['source']['identity']['version'],
+                     buildId=approval['release']['source']['identity']['buildId'], commit=commit, tree=tree)
+            and approval['release']['payloads']['receipt.json']['sha256'] == receipt
+            and approval['release']['payloads']['application.jar']['sha256'] == candidate,
+            'RECOVERY_BINDING_MISMATCH')
+        payload = {'schema_version': 3, 'status': status, 'phase': phase, 'recovery': recovery,
+                   'release': approval['release'], 'binding_sha256': ticket,
+                   'candidate_sha256': candidate, 'previous_sha256': previous,
+                   'backup': backup, 'candidate_stop_rc': stop_rc, 'timestamp': timestamp}
+        validator['local_install_record'](payload, path.parent / 'backups')
+    except validator['LocalRejected'] as exc:
+        raise SystemExit(exc.code)
 fd, temporary = tempfile.mkstemp(prefix='.record.', dir=str(path.parent))
 try:
     os.fchmod(fd, 0o600)
@@ -703,7 +906,7 @@ PY
 }
 
 consume_approval() {
-  python3 -I -B - "$APPROVAL_PATH" "$INSTALL_UID" "$INSTALL_GID" "$TICKET_SHA" "$SOURCE_COMMIT_SHA" "$SOURCE_TREE_SHA" \
+  transaction_python "$APPROVAL_PATH" "$INSTALL_UID" "$INSTALL_GID" "$TICKET_SHA" "$SOURCE_COMMIT_SHA" "$SOURCE_TREE_SHA" \
     "$RUN_ID" "$RECEIPT_SHA" "$JAR_SHA" "$STAMP" "$TEST_FAULT" "$TEST_FAULT_MARK" <<'PY'
 import json, os, re, stat, sys, tempfile
 from pathlib import Path
@@ -727,7 +930,7 @@ if (not stat.S_ISREG(info.st_mode) or info.st_uid != uid or info.st_nlink != 1
         or stat.S_IMODE(info.st_mode) != 0o600):
     raise SystemExit('unsafe approval at consume')
 try:
-    approval = json.loads(path.read_text(encoding='utf-8'))
+    approval = validator['local_json'](path.read_bytes())
 except (OSError, UnicodeDecodeError, ValueError):
     raise SystemExit('approval changed before consume')
 open_keys = {'schema_version', 'ticket_sha256', 'source_commit_sha', 'source_tree_sha',
@@ -736,6 +939,19 @@ closed_keys = open_keys | {'consumed_at'}
 expected = {'schema_version': 2, 'ticket_sha256': ticket, 'source_commit_sha': commit,
             'source_tree_sha': tree, 'run_id': run_id, 'receipt_sha256': receipt,
             'jar_sha256': jar}
+if run_id == '':
+    try:
+        validator['local_approval'](approval)
+        release = approval['release']
+        validator['local_need'](approval['binding_sha256'] == ticket
+            and release['source']['identity']['commit'] == commit
+            and release['source']['identity']['tree'] == tree
+            and release['payloads']['receipt.json']['sha256'] == receipt
+            and release['payloads']['application.jar']['sha256'] == jar, 'RECOVERY_BINDING_MISMATCH')
+    except validator['LocalRejected'] as exc:
+        raise SystemExit(exc.code)
+    open_keys = closed_keys = set(approval)
+    expected = {'schema_version': 3}
 if (not isinstance(approval, dict) or set(approval) not in (open_keys, closed_keys)
         or any(approval.get(key) != value for key, value in expected.items())
         or not isinstance(approval.get('consumed'), bool)
@@ -893,6 +1109,13 @@ assert_old_or_absent() {
 
 restore_and_start() {
   local phase="$1" stop_verified=0 recovery
+  # Explicit forward-only release: preserve the candidate and diagnostics, never
+  # detach it or start an older schema-incompatible JAR after cutover failure.
+  if [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 ]]; then
+    write_record failed "$phase" forward_only_candidate_retained "$STOP_RC" \
+      || recoverable_fail 'forward-only failure record was interrupted; candidate retained'
+    fail 'forward-only release failed; candidate retained for forward repair; no old JAR restart'
+  fi
   # The rollback decision is durable before stop, detach, or restore. Recovery dispatch
   # treats this intent as monotonic and can never resume candidate promotion.
   if ! write_record rolling_back "$phase" rollback_intent "$STOP_RC"; then
@@ -930,6 +1153,21 @@ restore_and_start() {
   exit 1
 }
 
+resume_forward_candidate() {
+  # Explicit retry of the same failed forward-only candidate after a measured fix.
+  # Never adopt a different ticket, restore backup bytes, or start the old JAR.
+  [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_MATCH" == 1 \
+     && "$RECORD_STATUS" == failed && "$RECORD_RECOVERY" == forward_only_candidate_retained \
+     && "$TARGET_STATE" == "$JAR_SHA" ]] || return 1
+  write_record activating forward_repair candidate_retained "$STOP_RC" \
+    || recoverable_fail 'forward repair record interrupted; candidate retained'
+  if ! "$LIFECYCLE" start; then
+    restore_and_start forward_repair_start_failed
+  fi
+  lifecycle_healthy || restore_and_start forward_repair_status_failed
+  finalize_candidate
+}
+
 commit_candidate() {
   if ! consume_approval; then
     recoverable_fail 'candidate is commit-pending but approval consumption was interrupted'
@@ -937,13 +1175,20 @@ commit_candidate() {
   if ! write_record installed installed not_required 0; then
     recoverable_fail 'approval is consumed but installed record was interrupted'
   fi
+  diagnostic_mark commit_records.end
+  diagnostic_mark installed
   printf 'CYF_API_FLOW_INSTALL=PASS\n'
   exit 0
 }
 
 finalize_candidate() {
+  diagnostic_mark final_jar_hash.begin
   [[ "$(canonical_sha)" == "$JAR_SHA" ]] || restore_and_start commit_canonical_mismatch
+  diagnostic_mark final_jar_hash.end
+  diagnostic_mark status_final.begin
   lifecycle_healthy || restore_and_start commit_health_failed
+  diagnostic_mark status_final.end
+  diagnostic_mark commit_records.begin
   if ! write_record active_pending commit candidate_healthy "$STOP_RC"; then
     recoverable_fail 'candidate is healthy but active-pending record was interrupted'
   fi
@@ -960,6 +1205,9 @@ if [[ "$RECORD_STATUS" == installed && "$RECORD_MATCH" == 1 ]]; then
   lifecycle_healthy || fail 'installed record canonical JAR is not healthy'
   printf 'CYF_API_FLOW_INSTALL=PASS_ALREADY_INSTALLED\n'
   exit 0
+fi
+if [[ "$RECORD_STATUS" == failed && "${RECORD[2]:-}" == forward_only_candidate_retained && "$RECORD_MATCH" != 1 ]]; then
+  fail 'forward-only retained candidate belongs to another exact release'
 fi
 if [[ "$RECORD_STATUS" =~ ^(prepared|activating|active_pending|rolling_back)$ && "$RECORD_MATCH" != 1 ]]; then
   fail 'unfinished durable transaction belongs to another exact release'
@@ -994,6 +1242,9 @@ if (( RECORD_MATCH )); then
       [[ "$TARGET_STATE" == "$OLD_SHA" ]] || fail 'prepared transaction found unexpected canonical bytes'
       ;;
     failed)
+      if [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_RECOVERY" == forward_only_candidate_retained && "$TARGET_STATE" == "$JAR_SHA" ]]; then
+        resume_forward_candidate
+      fi
       if [[ "$TARGET_STATE" == MISSING || "$TARGET_STATE" == "$JAR_SHA" ]]; then
         restore_and_start failed_rollback_recovery
       fi
@@ -1009,19 +1260,38 @@ else
 fi
 OLD_JAR_BYTES="$(stat -Lc '%s' "$TARGET_JAR")"
 
+if [[ -z "$RUN_ID" && "$RECORD_MATCH" != 1 ]]; then
+  transaction_python "$APPROVAL_PATH" "$RECORD_PATH" "$TARGET_JAR" <<'PYLOCAL'
+import sys
+try:
+    approval = validator['local_approval'](validator['local_json'](Path(sys.argv[1]).read_bytes()))
+    inputs = validator['local_read_install_inputs'](approval['release']['decision']['path'],
+                                                    approval['release']['decision']['sha256'])
+    validator['local_assert_new_generation'](inputs, Path(sys.argv[2]), Path(sys.argv[3]),
+                                             approval_already_staged=approval)
+except validator['LocalRejected'] as exc:
+    raise SystemExit(exc.code)
+PYLOCAL
+  [[ $? == 0 ]] || fail 'LOCAL preconditions changed before preparing transaction'
+fi
+
 # New/prepared attempt. The durable transaction record precedes backup creation and every
 # lifecycle mutation. Backup publication and all JSON transitions fsync file and directory.
 if [[ "$RECORD_STATUS" != prepared || "$RECORD_MATCH" != 1 ]]; then
   write_record prepared pre_cutover not_started 255 || recoverable_fail 'prepared record write was interrupted before lifecycle mutation'
 fi
 lifecycle_admission_before_backup || fail 'insufficient space for actual rollback JAR before stopping service'
+diagnostic_mark backup.begin
 ensure_backup || fail 'durable rollback backup creation failed before stopping service'
+diagnostic_mark backup.end
 write_record activating activation ready 255 || recoverable_fail 'activation record write was interrupted before stopping service'
 
+diagnostic_mark stop_verify.begin
 if ! stop_and_verify; then
   write_record failed pre_cutover_stop previous_stop_unverified "$STOP_RC" || recoverable_fail 'pre-cutover stop record was interrupted'
   fail 'previous service stop could not be explicitly verified'
 fi
+diagnostic_mark stop_verify.end
 if (( STOP_RC != 0 )); then
   if "$LIFECYCLE" start && lifecycle_healthy; then
     write_record failed pre_cutover_stop previous_restarted_after_stop_error "$STOP_RC" || recoverable_fail 'stop-error recovery record was interrupted'
@@ -1031,13 +1301,19 @@ if (( STOP_RC != 0 )); then
   fail 'previous service stop returned an error'
 fi
 
+diagnostic_mark activate.begin
 if ! activate_candidate; then
   recoverable_fail 'canonical activation replace or fsync was interrupted'
 fi
+diagnostic_mark activate.end
+diagnostic_mark start_wait.begin
 if ! "$LIFECYCLE" start; then
   restore_and_start candidate_start_failed
 fi
+diagnostic_mark start_wait.end
+diagnostic_mark status_first.begin
 if ! lifecycle_healthy; then
   restore_and_start candidate_status_failed
 fi
+diagnostic_mark status_first.end
 finalize_candidate

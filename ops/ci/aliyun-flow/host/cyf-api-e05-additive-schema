@@ -44,7 +44,7 @@ EXPECTED_PACKAGE_MEMBERS = frozenset((
 ))
 NESTED_MAPPER_JAR = 'BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar'
 RESOURCE_PATH = 'db/agent-work-item-reassignment-e05.sql'
-RESOURCE_SHA256 = 'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1'
+RESOURCE_SHA256 = 'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842'
 TABLE_ORDER = ('agent_work_item_reassignment',)
 SHA256_RE = re.compile(r'^[0-9a-f]{64}$')
 GIT_RE = re.compile(r'^[0-9a-f]{40}$')
@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS agent_work_item_reassignment (
     client_id                   VARCHAR(50) NOT NULL,
     create_time                 BIGINT NOT NULL,
     update_time                 BIGINT NOT NULL,
+    owner_jiacn                  VARCHAR(50) NOT NULL COMMENT 'Authenticated task owner',
     PRIMARY KEY (id),
     UNIQUE KEY uk_work_item_reassignment_id
         (tenant_id, client_id, reassignment_id),
@@ -86,6 +87,8 @@ CREATE TABLE IF NOT EXISTS agent_work_item_reassignment (
         (tenant_id, client_id, command_id),
     KEY idx_work_item_reassignment_latest
         (tenant_id, client_id, task_id, work_item_id, id),
+    KEY idx_agent_work_item_reassignment_owner_scope
+        (tenant_id, client_id, owner_jiacn, task_id, work_item_id),
     CONSTRAINT chk_work_item_reassignment_digest
         CHECK (CHAR_LENGTH(request_sha256)=64 AND CHAR_LENGTH(lease_fence_sha256)=64),
     CONSTRAINT chk_work_item_reassignment_versions
@@ -188,6 +191,16 @@ EXPECTED_TABLES = {
 }
 
 
+# The same-batch canonical E05 CREATE now includes the mandatory owner column
+# and ordered owner-scope index. Existing ownerless tables still fail strictly;
+# CREATE IF NOT EXISTS never upgrades or infers existing owners.
+_spec = EXPECTED_TABLES['agent_work_item_reassignment']
+_spec['columns'] = _spec['columns'] + (column('owner_jiacn', 'varchar(50)'),)
+_spec['indexes'] = _spec['indexes'] + (
+    index('idx_agent_work_item_reassignment_owner_scope', False,
+          ('tenant_id', 'client_id', 'owner_jiacn', 'task_id', 'work_item_id')),
+)
+
 QUERY_SQL = {
     # Explicit DEFAULT CHARSET=utf8mb4 without COLLATE uses this session default,
     # not jia's default charset/collation (MySQL 8.0.21 sql/sql_table.cc).
@@ -281,6 +294,7 @@ def load_package(path, uid, mode):
             try:
                 with tarfile.open(fileobj=raw, mode='r:*') as archive:
                     members = {}
+                    report_seen = set()
                     root_directory_seen = False
                     for member in archive.getmembers():
                         raw_name = member.name
@@ -292,8 +306,19 @@ def load_package(path, uid, mode):
                             root_directory_seen = True
                             continue
                         normalized = raw_name[2:] if raw_name.startswith('./') else raw_name
-                        if (not normalized or normalized.startswith('/') or '..' in Path(normalized).parts
-                                or '/' in normalized or normalized in members or not member.isfile()):
+                        if (not normalized or normalized.startswith('/') or '\\' in normalized
+                                or '\x00' in normalized
+                                or any(part in ('', '.', '..') for part in normalized.split('/'))):
+                            raise SchemaError('package_member_invalid')
+                        if normalized == 'test-results' or normalized.startswith('test-results/'):
+                            if (normalized in report_seen or not (member.isdir() or
+                                    (member.isfile() and member.size >= 0 and
+                                     (normalized == 'test-results/summary.json' or normalized.endswith('.xml'))))):
+                                raise SchemaError('package_member_invalid')
+                            report_seen.add(normalized)
+                            continue
+                        if ('/' in normalized or normalized in members or not member.isfile()
+                                or member.size < 0):
                             raise SchemaError('package_member_invalid')
                         members[normalized] = member
                     if frozenset(members) != EXPECTED_PACKAGE_MEMBERS:
@@ -363,12 +388,95 @@ def exact_keys(value, keys, code):
         raise SchemaError(code)
 
 
+def local_coordinator_validator():
+    # Reuse the fixed coordinator's CLOSED LOCAL grammar and publication verifier;
+    # no alternate runner, caller-selected imports or fake numeric Flow identity.
+    offline = os.environ.get('CYF_E05_SCHEMA_OFFLINE_TEST') == 'YES'
+    path = Path(__file__).parent / 'cyf-api-flow-deploy' if offline else Path('/usr/local/sbin/cyf-api-flow-deploy')
+    if not offline:
+        for parent in (Path('/'),) + tuple(reversed(tuple(path.parents)[:-1])):
+            info = os.lstat(str(parent))
+            if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+                raise SchemaError('local_validator_path_unsafe')
+    fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        before = os.fstat(fd)
+        if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.geteuid()
+                or before.st_nlink != 1 or before.st_mode & 0o022):
+            raise SchemaError('local_validator_metadata_unsafe')
+        with os.fdopen(os.dup(fd), 'rb') as stream:
+            code = stream.read()
+        if before != os.fstat(fd) or before != os.lstat(str(path)):
+            raise SchemaError('local_validator_changed')
+        validator = {'__name__': '_cyf_local_schema_validator', '__file__': str(path)}
+        exec(compile(code, str(path), 'exec'), validator)
+    finally:
+        os.close(fd)
+    return validator
+
+
+def verify_local_release_binding(paths, uid, modes, record_bytes, record_signature):
+    validator = local_coordinator_validator()
+    try:
+        record = validator['local_install_record'](validator['local_json'](record_bytes),
+                                                    paths['record'].parent / 'backups')
+        validator['local_need'](record['status'] == 'installed' and record['phase'] == 'installed'
+            and record['recovery'] == 'not_required' and record['candidate_stop_rc'] == 0,
+            'DURABLE_RECORD_INCOMPLETE')
+        release = record['release']
+        inputs = validator['local_read_install_inputs'](release['decision']['path'], release['decision']['sha256'])
+        validator['local_need'](inputs['release'] == release, 'RECOVERY_BINDING_MISMATCH')
+        validator['local_authority_matches'](inputs['decision'], inputs['authority'], ('schemaApply',))
+        approval_raw = validator['local_read_slot'](paths['record'].parent / 'approval.json', uid=uid)
+        validator['local_need'](approval_raw is not None, 'DURABLE_RECORD_INCOMPLETE')
+        approval = validator['local_approval'](validator['local_json'](approval_raw))
+        validator['local_need'](approval['consumed'] and approval['release'] == release,
+                               'RECOVERY_BINDING_MISMATCH')
+        package_info = safe_regular(paths['package'], uid, modes['package'])
+        with paths['package'].open('rb') as stream:
+            package_digest = digest_stream(stream)
+        validator['local_need'](package_info.st_size == release['package']['size']
+            and package_digest == release['package']['sha256']
+            and file_signature(package_info) == file_signature(safe_regular(paths['package'], uid, modes['package'])),
+            'PACKAGE_INVALID')
+        canonical_digest, canonical_signature = inspect_canonical_jar(paths['jar'], uid, modes['jar'])
+        validator['local_need'](canonical_digest == record['candidate_sha256'], 'PRECONDITION_CHANGED')
+        entry = next(item for item in inputs['schemaPlan']['entries'] if item['feature'] == 'E05')
+        expected_catalog = sha256_bytes(validator['local_canonical'](EXPECTED_TABLES))
+        validator['local_need'](entry['expectedCatalogSha256'] == expected_catalog,
+                               'SCHEMA_CATALOG_DRIFT')
+        helper = Path(__file__)
+        # __file__ may be the authenticated inherited FD. Do not resolve/reopen it
+        # before checking that its original bytes still match the fixed catalog.
+        with helper.open('rb') as stream:
+            validator['local_need'](digest_stream(stream) == entry['runner']['sha256']
+                and helper.stat().st_size == entry['runner']['size'], 'HELPER_CATALOG_MISMATCH')
+        inputs['reader'].recheck()
+    except validator['LocalRejected'] as exc:
+        raise SchemaError('local_' + exc.code.lower())
+    return {
+        'source': release['source'], 'binding_sha256': record['binding_sha256'],
+        'decision_sha256': release['decision']['sha256'],
+        'schema_plan_sha256': release['schemaPlan']['sha256'],
+        'admission_sha256': release['admission']['sha256'],
+        'package_sha256': release['package']['sha256'],
+        'jar_sha256': canonical_digest, 'receipt_sha256': release['payloads']['receipt.json']['sha256'],
+        'resource_sha256': RESOURCE_SHA256, 'expected_catalog_sha256': expected_catalog,
+        'signatures': {'jar': canonical_signature, 'package': file_signature(package_info),
+                       'record': record_signature},
+        'record_bytes_sha256': sha256_bytes(record_bytes),
+        'local_inputs': inputs,
+    }
+
+
 def verify_release_binding(paths, uid, modes):
     record_bytes, record_signature = read_stable(paths['record'], uid, modes['record'])
     try:
         record = json.loads(record_bytes.decode('utf-8'))
     except (ValueError, UnicodeDecodeError):
         raise SchemaError('record_json_invalid')
+    if type(record) is dict and record.get('schema_version') == 3:
+        return verify_local_release_binding(paths, uid, modes, record_bytes, record_signature)
     record_keys = {
         'schema_version', 'status', 'phase', 'recovery', 'ticket_sha256',
         'source_commit_sha', 'source_tree_sha', 'run_id', 'receipt_sha256',
@@ -480,6 +588,11 @@ def assert_binding_paths_unchanged(paths, uid, modes, binding, full_digest=False
     record_bytes, _ = read_stable(paths['record'], uid, modes['record'])
     if sha256_bytes(record_bytes) != binding['record_bytes_sha256']:
         raise SchemaError('release_binding_changed_before_ddl')
+    if 'local_inputs' in binding:
+        try:
+            binding['local_inputs']['reader'].recheck()
+        except Exception:
+            raise SchemaError('local_immutable_input_changed')
     if full_digest:
         jar_digest, signature = inspect_canonical_jar(paths['jar'], uid, modes['jar'])
         if jar_digest != binding['jar_sha256'] or signature != binding['signatures']['jar']:
@@ -1103,7 +1216,13 @@ def run(operation, report):
     primary_error = None
     try:
         binding = verify_release_binding(paths, uid, modes)
-        report['binding'] = {
+        if 'source' in binding:
+            report.update(schema_version=2, error=None, failed_table=None)
+            report['binding'] = {key: binding[key] for key in (
+                'source', 'binding_sha256', 'decision_sha256',
+                'jar_sha256', 'receipt_sha256', 'package_sha256')}
+        else:
+            report['binding'] = {
             'organization': EXPECTED_ORG,
             'pipeline': EXPECTED_PIPELINE,
             'run': binding['run'],
@@ -1120,6 +1239,8 @@ def run(operation, report):
             'tables': list(TABLE_ORDER),
             'statement_policy': 'exact_create_table_if_not_exists_only',
         }
+        if 'source' in binding:
+            report['candidate']['expected_catalog_sha256'] = binding['expected_catalog_sha256']
         session = MysqlSession(paths['mysql'], paths['socket'], password)
         session.acquire()
         verify_metadata_privileges(session)
@@ -1207,9 +1328,15 @@ def main(argv=None):
         for table in TABLE_ORDER:
             if table not in report['tables']:
                 report['tables'][table] = table_report('not_attempted')
+        if report['schema_version'] == 2:
+            for table in TABLE_ORDER:
+                report['tables'][table].setdefault('mismatches', [])
         print(json.dumps(report, sort_keys=True, separators=(',', ':')))
         return 1
     report['status'] = 'pass'
+    if report['schema_version'] == 2:
+        for table in TABLE_ORDER:
+            report['tables'][table].setdefault('mismatches', [])
     print(json.dumps(report, sort_keys=True, separators=(',', ':')))
     return 0
 

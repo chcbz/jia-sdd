@@ -461,7 +461,7 @@ raise SystemExit(%d)
 
     def test_same_run_build_receipt_and_jar_checks_still_precede_install(self):
         source = inspect.getsource(deploy.main)
-        install = source.index('raise SystemExit(invoke_installer(INSTALLER))')
+        install = source.index('return_code = invoke_installer(INSTALLER)')
         for check in (
                 "receipt.get('status') != 'success'",
                 "receipt.get('gradle_exit_code') != 0",
@@ -469,7 +469,34 @@ raise SystemExit(%d)
                 "flow.get('run_id') != run_id",
                 "source.get('commit_sha') != source_commit",
                 "GIT_SHA.fullmatch(str(source.get('tree_sha', '')))",
-                "digest_fileobj(jar_handle) != jar_record['sha256']"):
+                "digest_fileobj(jar_handle) != jar_record['sha256']",
+                "digest_fileobj(handle) != artifact_sha256"):
+            self.assertLess(source.index(check), install)
+        self.assertEqual(source.count('invoke_installer(INSTALLER)'), 1)
+        self.assertLess(install, source.index("version_record.update(status='verified' if return_code == 0 else 'failed'"))
+        self.assertLess(install, source.index('raise SystemExit(return_code)'))
+
+    def test_preservation_final_e05_runner_bytes_match_parent_production_pin(self):
+        # Read source bytes only: no production runner or MySQL invocation.
+        fresh = importlib.machinery.SourceFileLoader(
+            'cyf_api_preservation_e05_parent_pin', str(DEPLOY)).load_module()
+        runner = ROOT / 'ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema'
+        self.assertEqual(fresh.E05_SCHEMA_RUNNER_SHA256,
+                         hashlib.sha256(runner.read_bytes()).hexdigest())
+        self.assertEqual(fresh.E05_SCHEMA_SQL_SHA256,
+                         'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842')
+        self.assertIn('runner_digest_mismatch', inspect.getsource(fresh.e05_schema_prerequisites))
+
+    def test_preservation_versioned_call_shape_still_requires_every_receipt_and_jar_check(self):
+        source = inspect.getsource(deploy.main)
+        install = source.index('return_code = invoke_installer(INSTALLER)')
+        for check in ("receipt.get('status') != 'success'",
+                      "receipt.get('gradle_exit_code') != 0",
+                      "receipt.get('bridge_exit_code') != 0",
+                      "flow.get('run_id') != run_id",
+                      "source.get('commit_sha') != source_commit",
+                      "GIT_SHA.fullmatch(str(source.get('tree_sha', '')))",
+                      "digest_fileobj(jar_handle) != jar_record['sha256']"):
             self.assertLess(source.index(check), install)
 
 

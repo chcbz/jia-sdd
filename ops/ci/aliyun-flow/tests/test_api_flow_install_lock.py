@@ -104,5 +104,29 @@ class ApiFlowInstallLockTest(unittest.TestCase):
         self.assertNotIn('another API release is active', err)
 
 
+    def test_preservation_same_fd8_precedes_package_mutation_and_lifecycle_descendants(self):
+        source = INSTALLER.read_text()
+        acquire = source.index('flock -x 8')
+        self.assertLess(acquire, source.index('chmod 0600 "$INCOMING_PACKAGE"'))
+        self.assertIn('CYF_RELEASE_LOCK_INHERITED_FD=8', source)
+        self.assertIn('CYF_RELEASE_LOCK_DEVICE="$LOCK_DEVICE"', source)
+        self.assertIn('CYF_RELEASE_LOCK_INODE="$LOCK_INODE"', source)
+        self.assertNotIn('flock -w', source)
+        self.assertNotIn('LOCK_NB', source)
+
+    def test_preservation_forward_repair_requires_exact_same_record_and_candidate(self):
+        source = INSTALLER.read_text()
+        start = source.index('resume_forward_candidate() {')
+        end = source.index('\ncommit_candidate() {', start)
+        repair = source[start:end]
+        self.assertIn('"$RECORD_MATCH" == 1', repair)
+        self.assertIn('"$RECORD_STATUS" == failed', repair)
+        self.assertIn('"$RECORD_RECOVERY" == forward_only_candidate_retained', repair)
+        self.assertIn('"$TARGET_STATE" == "$JAR_SHA"', repair)
+        self.assertIn('write_record activating forward_repair candidate_retained', repair)
+        self.assertNotIn('restore_backup', repair)
+        self.assertNotIn('detach_candidate', repair)
+
+
 if __name__ == '__main__':
     unittest.main()
