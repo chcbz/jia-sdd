@@ -40,6 +40,15 @@ Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-vi
 - 招贤令 binding calls `POST /agent/personas/{personaCode}/bind`; `mode=server` provisions `/home/isp/apps/codex-ws-agent` and `/home/isp/hosts/cyf/agent-clients/{agent}`, while `mode=local` returns user-side install/config guidance.
 - Do not use `/agent/active` for Juyi Hall.
 
+### 初步任务取消（2026-10-10源码核对）
+
+覆盖 API `36d9e5452ab8beb64b97e5570da6ede10ec38797`：所属用户调用 `POST /agent/tasks/{taskId}/cancel`，JSON 仅含整数 `expectedTaskVersion`；成功返回 `{taskId,status:"cancelled",taskVersion}`。这是后端接口，未新增前端取消按钮。
+
+- 初步仅支持无悬赏资金事实、未实际开始的普通任务。已点将但成员尚未开始也可取消；当前执行、租约、指令或不支持的资金事实返回409，不部分写入。原 `/funding/cancel` 暂不删除，不通过普通取消绕资金结算。
+- 同一事务退出邀请/已接受成员、取消待执行工作项、撤销ACTIVE执行授权、关闭无租约RETRY bootstrap，释放本任务占用；不启停共享Runtime，不清其他任务占用。保留原点将与历史事件/成果，规范终态Provider消费授权不等于悬赏托管资金，不能因此退款或重新付费。
+- 已取消的完整终态任务可用原taskVersion重复请求，回读现有结果，不新增事件/版本/退出时间。LEFT/REJECTED的completedAt是原状态服务写入的退出时钟，不应误判为实际开工证据。
+- 实现入口为 `api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskCancellationController.java` 与同组件 `service/impl/AgentTaskCancellationServiceImpl.java`；定向回归入口 `:agent:jia-agent-service:initialCancellation`。发布/具体生产操作证据单独见 `docs/implementation/handoffs/GSS-CANCEL-20261010.md`，不以源码核对代替线上成功。
+
 ## Role Portrait Rules
 
 - Role matching is done by `portraitRole(agent)` in `useWaterMarginRoles.js`.
