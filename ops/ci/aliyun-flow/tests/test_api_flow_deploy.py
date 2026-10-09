@@ -1191,5 +1191,266 @@ class ApiLocalReadonlyInspectTest(unittest.TestCase):
             deploy.main()
         self.assertEqual(error.exception.code, 1)
 
+
+class ApiLocalSchemaRecoverySourceTest(unittest.TestCase):
+    """Original installed shell fixture + mocked bounded schema children only.
+
+    No SQL/business acceptance; all permissions/proofs are marked synthetic. The
+    actual parent FD locks, FileRef closure, result persistence and retry behavior
+    are exercised, with no duplicate installer or real service/DB operations.
+    """
+    def setUp(self):
+        from unittest.mock import patch
+        from test_api_gate_policy import ApiLocalSharedInstallerSourceTest
+        from test_api_additive_schema import f06
+        from test_api_e05_additive_schema import e05
+        self.fixture = ApiLocalSharedInstallerSourceTest(); self.fixture.setUp()
+        self.i = self.fixture.inputs; f = self.fixture.fixture
+        for entry in self.i.schema['entries']:
+            module = f06 if entry['feature'] == 'F06' else e05
+            entry['expectedCatalogSha256'] = self.i.hash(deploy.local_canonical(module.EXPECTED_TABLES))
+        self.i.seal(); self.fixture.stage()
+        result = self.fixture.install(); self.assertEqual(result.returncode, 0, result.stderr)
+        for name in ('record.json', 'approval.json'):
+            self.i.write(self.i.control / name, (f.root / 'state' / name).read_bytes())
+        self.release_lock = self.i.control / 'api-release.lock'
+        self.release_lock.touch(); self.release_lock.chmod(0o660)
+        os.chown(str(self.release_lock), 0, grp.getgrnam('isp').gr_gid)
+        self.constants = patch.multiple(deploy, APPROVAL=self.i.control / 'approval.json',
+            BACKUPS=f.root / 'state/backups', LOCAL_CANONICAL_JAR=f.target,
+            RELEASE_LOCK=self.release_lock, SCHEMA_RESULTS=self.i.control / 'schema-results',
+            E05_SCHEMA_RESULTS=self.i.control / 'e05-schema-results')
+        self.constants.start()
+        self.inputs = deploy.local_read_install_inputs(self.i.decision_ref['path'], self.i.decision_ref['sha256'])
+        self.calls = []; self.fail_feature = None; self.bad_report = None
+        self.real_run = __import__('subprocess').run
+        self.passwords = patch.multiple(deploy, protected_schema_password=lambda: 'SYNTHETIC-F06',
+                                       protected_e05_schema_password=lambda: 'SYNTHETIC-E05')
+        self.passwords.start()
+        self.children = patch('subprocess.run', side_effect=self.child)
+        self.children.start()
+
+    def tearDown(self):
+        self.children.stop(); self.passwords.stop(); self.constants.stop(); self.fixture.tearDown()
+
+    def child(self, argv, **kwargs):
+        from types import SimpleNamespace
+        if argv[-1] != '--apply': return self.real_run(argv, **kwargs)
+        path = Path(os.readlink(argv[3]))
+        feature = 'E05' if path.name == 'cyf-api-e05-additive-schema' else 'F06'
+        self.calls.append(feature)
+        self.assertEqual(set(kwargs['env']), {'PATH', 'LC_ALL',
+            deploy.E05_SCHEMA_PASSWORD_ENV if feature == 'E05' else deploy.SCHEMA_PASSWORD_ENV})
+        self.assertEqual(kwargs['pass_fds'], (int(argv[3].rsplit('/', 1)[1]),))
+        # Parent owns the ORIGINAL release lock during bounded schema execution.
+        fd = os.open(str(self.release_lock), os.O_RDWR)
+        try:
+            with self.assertRaises(BlockingIOError): fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        finally: os.close(fd)
+        entry = self.inputs['schemaPlan']['entries'][0 if feature == 'F06' else 1]
+        report = self.report(entry, failure=feature == self.fail_feature)
+        if self.bad_report is not None: self.bad_report(report)
+        os.write(kwargs['stdout'], deploy.local_canonical(report))
+        os.write(kwargs['stderr'], b'private source-unit synthetic log, not a DB observation\n')
+        return SimpleNamespace(returncode=1 if feature == self.fail_feature else 0)
+
+    def report(self, entry, failure=False):
+        feature = entry['feature']; release = self.inputs['release']
+        tables = sorted(deploy.SCHEMA_TABLES) if feature == 'F06' else [deploy.E05_SCHEMA_TABLE]
+        return {'schema_version': 2, 'operation': 'apply', 'status': 'failed' if failure else 'pass',
+            'transaction_model': 'mysql_ddl_autocommit_per_create_no_rollback_or_drop',
+            'lock_order': [feature.lower() + '_runner_file_lock', feature.lower() + '_mysql_named_lock'],
+            'tables': {table: {'status': 'existing_schema_drift' if failure else 'existing_equivalent',
+                              'mismatches': ['columns'] if failure else []} for table in tables},
+            'binding': {'source': release['source'], 'binding_sha256': deploy.local_binding_sha(release),
+                'decision_sha256': release['decision']['sha256'],
+                'jar_sha256': release['payloads']['application.jar']['sha256'],
+                'receipt_sha256': release['payloads']['receipt.json']['sha256'],
+                'package_sha256': release['package']['sha256']},
+            'candidate': {'resource_outer': entry['resourceOuter'], 'resource_inner': entry['resourceInner'],
+                'sql_sha256': entry['sqlSha256'], 'expected_catalog_sha256': entry['expectedCatalogSha256'],
+                'tables': tables, 'statement_policy': entry['statementPolicy']},
+            'error': 'existing_schema_drift' if failure else None, 'failed_table': tables[0] if failure else None}
+
+    def finish(self, recovery=None):
+        return deploy.local_finish_schema(self.inputs, 0, recovery)
+
+    def recovery(self, feature):
+        entry = self.inputs['schemaPlan']['entries'][0 if feature == 'F06' else 1]
+        paths, state, unused = deploy.local_latest_schema(self.inputs, entry)
+        prior = [deploy.local_state_ref(paths['state'])]
+        prior += [deploy.local_state_ref(paths[name]) for name in ('stdout', 'stderr') if paths[name].exists()]
+        permission = self.i.write(self.i.control / 'schema-recovery-permission.json',
+            b'"synthetic recovery permission, NOT actual user authorization"\n')
+        metadata = self.i.write(self.i.control / 'schema-recovery-metadata.json',
+            b'"synthetic current metadata, NOT actual database evidence"\n')
+        value = {'format': 'cyf-api-local-schema-recovery-authority-v1', 'authorityId': deploy.LOCAL_AUTHORITY_ID,
+            'scope': 'exact-installed-release-partial-schema-reconcile', 'authorizationEvidence': permission,
+            'bindingSha256': deploy.local_binding_sha(self.inputs['release']),
+            'installDecision': self.inputs['release']['decision'], 'priorResults': prior,
+            'actualMetadataProof': metadata, 'allowedFeatures': [feature], 'schemaPlan': self.inputs['release']['schemaPlan'],
+            'canonicalJarSha256': self.inputs['release']['payloads']['application.jar']['sha256'],
+            'productionAuthorized': True}
+        ref = self.i.write(self.i.control / 'schema-recovery-authority.json', deploy.local_canonical(value))
+        return ref, value
+
+    def test_both_required_hooks_v2_results_and_summary_do_not_claim_business_acceptance(self):
+        result = self.finish()
+        self.assertEqual(result['status'], 'verified'); self.assertEqual(self.calls, ['F06', 'E05'])
+        self.assertEqual(result['businessAcceptance'], 'NOT_RUN')
+        self.assertNotIn('run_id', result); self.assertNotIn('pipeline_id', result)
+        self.assertEqual(len(result['schema_results']), 2)
+        for ref in result['schema_results']:
+            self.assertEqual(deploy.local_state_ref(Path(ref['path'])), ref)
+        before = list(self.calls)
+        self.assertEqual(self.finish()['status'], 'verified'); self.assertEqual(self.calls, before)
+
+    def test_failed_e05_is_preserved_no_implicit_retry_or_api_rollback(self):
+        self.fail_feature = 'E05'
+        result = self.finish(); self.assertEqual(result['status'], 'failed')
+        prior = {p: p.read_bytes() for p in self.i.control.rglob('*') if p.is_file()}
+        calls = list(self.calls)
+        self.fail_feature = None
+        self.assertEqual(self.finish()['status'], 'failed'); self.assertEqual(self.calls, calls)
+        self.assertEqual(deploy.local_installed_release(self.inputs)['status'], 'installed')
+        for path, data in prior.items():
+            if path != deploy.local_summary_path(self.inputs): self.assertEqual(path.read_bytes(), data)
+
+    def test_exact_separate_recovery_runs_only_e05_keeps_old_results_and_installer_record(self):
+        self.fail_feature = 'E05'; failed = self.finish()
+        old_refs = list(failed['schema_results']); old_record = (self.i.control / 'record.json').read_bytes()
+        ref, value = self.recovery('E05'); self.fail_feature = None
+        result = self.finish((ref['path'], ref['sha256']))
+        self.assertEqual(result['status'], 'verified'); self.assertEqual(self.calls, ['F06', 'E05', 'E05'])
+        self.assertEqual(result['schema_results'][0], old_refs[0])
+        self.assertNotEqual(result['schema_results'][1]['path'], old_refs[1]['path'])
+        for original in old_refs: self.assertEqual(deploy.local_state_ref(Path(original['path'])), original)
+        self.assertEqual((self.i.control / 'record.json').read_bytes(), old_record)
+        self.assertEqual(self.finish()['status'], 'verified')
+        self.assertEqual(self.calls, ['F06', 'E05', 'E05'])
+
+    def test_recovery_requires_full_prior_state_stdout_stderr_closure(self):
+        self.fail_feature = 'F06'; self.finish()
+        ref, value = self.recovery('F06'); value['priorResults'].pop()
+        ref = self.i.write(Path(ref['path']), deploy.local_canonical(value))
+        calls = list(self.calls)
+        with self.assertRaises(deploy.LocalRejected) as error: self.finish((ref['path'], ref['sha256']))
+        self.assertEqual(error.exception.code, 'SCHEMA_RECOVERY_NOT_AUTHORIZED'); self.assertEqual(self.calls, calls)
+
+    def test_running_unknown_is_not_retried_by_normal_install_continuation(self):
+        entry = self.inputs['schemaPlan']['entries'][0]
+        paths = deploy.local_schema_paths(self.inputs, entry)
+        deploy.ensure_private_directory(paths['state'].parent)
+        deploy.write_schema_state(paths['state'], deploy.local_schema_state(self.inputs, entry), create=True)
+        result = self.finish(); self.assertEqual(result['status'], 'failed'); self.assertEqual(self.calls, [])
+        self.assertIsNone(result['schema_results'][1])
+
+    def test_missing_feature_password_is_failure_not_optional_skipped_success(self):
+        from unittest.mock import patch
+        with patch.object(deploy, 'protected_schema_password', return_value=None): result = self.finish()
+        self.assertEqual(result['status'], 'failed'); self.assertEqual(self.calls, [])
+        state = json.loads(Path(result['schema_results'][0]['path']).read_text())
+        self.assertEqual(state['status'], 'blocked_precondition')
+        self.assertEqual(state['error'], 'SCHEMA_PREREQUISITE_MISSING')
+
+    def test_zero_exit_false_equivalence_cannot_finalize_success(self):
+        self.bad_report = lambda report: report['tables'][next(iter(report['tables']))].update(status='not_attempted')
+        result = self.finish(); self.assertEqual(result['status'], 'failed'); self.assertEqual(self.calls, ['F06'])
+        state = json.loads(Path(result['schema_results'][0]['path']).read_text())
+        self.assertEqual(state['error'], 'SCHEMA_RESULT_UNKNOWN')
+
+
+    def test_original_installer_by_fd_parent_mutex_held_but_parent_release_fd_closed(self):
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        incoming = self.i.control / 'incoming'; incoming.mkdir(mode=0o700)
+        package = incoming / 'package.tgz'
+        self.i.write(package, Path(self.i.admitted['package']['path']).read_bytes())
+        mutex = self.i.control / 'coordinator.lock'
+        installer_calls = []
+        def child(argv, **kwargs):
+            if argv[:2] != ['/bin/bash', '-p']: return self.child(argv, **kwargs)
+            installer_calls.append(argv)
+            self.assertEqual(len(argv), 3)
+            self.assertEqual(Path(os.readlink(argv[2])), Path(self.i.paths['cyf-api-flow-install']))
+            self.assertEqual(kwargs['pass_fds'], (int(argv[2].rsplit('/', 1)[1]),))
+            release = os.open(str(self.release_lock), os.O_RDWR)
+            parent = os.open(str(mutex), os.O_RDWR)
+            try:
+                # Key self-deadlock regression: original installer may acquire FD8.
+                fcntl.flock(release, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with self.assertRaises(BlockingIOError): fcntl.flock(parent, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            finally: os.close(release); os.close(parent)
+            self.assertNotIn('CYF_RELEASE_OFFLINE_TEST', kwargs['env'])
+            self.assertNotIn(deploy.SCHEMA_PASSWORD_ENV, kwargs['env'])
+            self.assertNotIn(deploy.E05_SCHEMA_PASSWORD_ENV, kwargs['env'])
+            return SimpleNamespace(returncode=0)
+        with patch.multiple(deploy, PACKAGE=package, LOCK=str(mutex),
+                            __file__=self.i.paths['cyf-api-flow-deploy']), \
+             patch('subprocess.run', side_effect=child):
+            result = deploy.local_install(self.i.decision_ref['path'], self.i.decision_ref['sha256'])
+        self.assertEqual(result['status'], 'verified'); self.assertEqual(len(installer_calls), 1)
+        self.assertEqual(self.calls, ['F06', 'E05'])
+
+
+    def test_fresh_local_generation_stages_exact_package_and_approval_before_sole_installer(self):
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        f = self.fixture.fixture
+        original_record = (self.i.control / 'record.json').read_bytes()
+        (self.i.control / 'record.json').unlink(); (self.i.control / 'approval.json').unlink()
+        f.target.write_bytes(f.old)
+        incoming = self.i.control / 'incoming'; incoming.mkdir(mode=0o700)
+        package = incoming / 'package.tgz'
+        mutex = self.i.control / 'coordinator.lock'
+        calls = []
+        def child(argv, **kwargs):
+            if argv[:2] != ['/bin/bash', '-p']: return self.child(argv, **kwargs)
+            calls.append(argv)
+            approval = deploy.local_approval(json.loads((self.i.control / 'approval.json').read_text()))
+            self.assertFalse(approval['consumed']); self.assertEqual(approval['release'], self.inputs['release'])
+            self.assertEqual(self.i.hash(package.read_bytes()), self.i.decision['package']['sha256'])
+            self.assertEqual(package.stat().st_mode & 0o777, 0o600)
+            self.assertFalse((self.i.control / 'record.json').exists())
+            release = os.open(str(self.release_lock), os.O_RDWR)
+            try: fcntl.flock(release, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            finally: os.close(release)
+            f.target.write_bytes(self.i.payload_bytes['application.jar'])
+            approval.update(consumed=True, consumed_at='20261009T130000Z')
+            deploy.atomic_write(self.i.control / 'approval.json', deploy.local_canonical(approval))
+            deploy.atomic_write(self.i.control / 'record.json', original_record)
+            return SimpleNamespace(returncode=0)
+        with patch.multiple(deploy, PACKAGE=package, LOCK=str(mutex),
+                            LOCAL_RUNTIME_RECORD=self.i.root / 'runtime.record',
+                            __file__=self.i.paths['cyf-api-flow-deploy']), \
+             patch('subprocess.run', side_effect=child):
+            result = deploy.local_install(self.i.decision_ref['path'], self.i.decision_ref['sha256'])
+        self.assertEqual(result['status'], 'verified'); self.assertEqual(len(calls), 1)
+        self.assertEqual(self.calls, ['F06', 'E05'])
+
+    def test_repository_coordinator_cannot_write_production_even_with_consistent_fixture_authority(self):
+        from unittest.mock import patch
+        with patch.object(deploy, 'local_coordinator_lock', side_effect=AssertionError('must reject before lock/write')):
+            with self.assertRaises(deploy.LocalRejected) as error:
+                deploy.local_install(self.i.decision_ref['path'], self.i.decision_ref['sha256'])
+        self.assertEqual(error.exception.code, 'HELPER_CATALOG_MISMATCH')
+
+    def test_exact_v2_report_rejects_flow_source_unknown_fields_and_boolean_exit(self):
+        import copy
+        entry = self.inputs['schemaPlan']['entries'][0]
+        original = self.report(entry)
+        for mutate in (
+            lambda r: r.update(schema_version=1),
+            lambda r: r['binding'].update(run='40'),
+            lambda r: r['candidate'].update(expected_catalog_sha256='f' * 64),
+            lambda r: r['tables'][next(iter(r['tables']))].update(mismatches=['secret body']),
+            lambda r: r.update(error='raw exception text'),
+        ):
+            report = copy.deepcopy(original); mutate(report)
+            with self.assertRaises(deploy.LocalRejected):
+                deploy.local_schema_report(deploy.local_canonical(report), 0, self.inputs, entry)
+        with self.assertRaises(deploy.LocalRejected):
+            deploy.local_schema_report(deploy.local_canonical(original), False, self.inputs, entry)
+
 if __name__ == '__main__':
     unittest.main()

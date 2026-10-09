@@ -549,7 +549,7 @@ E05_SCHEMA_PASSWORD_FILE = ROOT / 'e05-schema-password'
 E05_RELEASE_LOCK = RELEASE_LOCK
 E05_SCHEMA_PASSWORD_ENV = 'CYF_E05_MYSQL_PASSWORD'
 E05_SCHEMA_SQL_SHA256 = 'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842'
-E05_SCHEMA_RUNNER_SHA256 = 'd797438d67860b33f858f3c72f07d65eb76d8fa03c89bc17de12de09521b1e07'
+E05_SCHEMA_RUNNER_SHA256 = 'a4b93aea966fb85d750d23ca2dbacade7c74ac3264e2ccdd1b25fcd307310fcf'
 E05_REQUIRED_API_COMMIT_SHA = 'c64f8c4d29f7bcf1a6e153e1ae68e946d1493363'
 # Permission for fixed additive SQL, not a claim that this Flow Run has succeeded.
 # The controller binds an already-created Run to its verified source/tree/ancestor
@@ -1909,21 +1909,582 @@ def local_inspect(decision_path, decision_sha256):
             'runtimeReadiness': 'NOT_MEASURED', 'businessAcceptance': 'NOT_RUN'}
 
 
+LOCAL_CANONICAL_JAR = Path('/home/isp/hosts/cyf/api/cyf-api-kit.jar')
+LOCAL_RUNTIME_RECORD = Path('/run/cyf-api/cyf-api-kit.runtime')
+
+
+def local_read_slot(path, uid=0, mode=0o600):
+    """Mutable transaction slot, observed only while holding the original FD8."""
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return None
+    local_need(stat.S_ISREG(info.st_mode) and info.st_uid == uid and info.st_nlink == 1
+        and stat.S_IMODE(info.st_mode) == mode, 'PATH_UNSAFE')
+    fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        opened = os.fstat(fd)
+        local_need(local_signature(opened) == local_signature(info), 'PRECONDITION_CHANGED')
+        with os.fdopen(os.dup(fd), 'rb') as stream:
+            data = stream.read()
+        local_need(local_signature(os.fstat(fd)) == local_signature(opened)
+            == local_signature(path.lstat()), 'PRECONDITION_CHANGED')
+        return data
+    finally:
+        os.close(fd)
+
+
+def local_slot_matches(raw, expected):
+    if expected is None:
+        local_need(raw is None, 'PRECONDITION_CHANGED')
+    else:
+        local_need(raw is not None and len(raw) == expected['size']
+            and hashlib.sha256(raw).hexdigest() == expected['sha256'], 'PRECONDITION_CHANGED')
+
+
+def local_assert_runtime_generation(expected, jar_path):
+    """Actual current process and kit attestation, not an inferred future PID."""
+    raw = local_read_slot(LOCAL_RUNTIME_RECORD, mode=0o644)
+    local_need(raw is not None, 'CANONICAL_GENERATION_CHANGED')
+    try:
+        lines = raw.decode('ascii').splitlines()
+        observed = {}
+        for line in lines:
+            key, value = line.split('=', 1)
+            local_need(key not in observed, 'CANONICAL_GENERATION_CHANGED')
+            observed[key] = value
+        local_need(observed == {'pid': str(expected['pid']), 'start_ticks': expected['startTicks'],
+                               'jar_sha256': expected['jarSha256']}, 'CANONICAL_GENERATION_CHANGED')
+        proc = Path('/proc') / str(expected['pid'])
+        before = (proc / 'stat').read_bytes()
+        fields = before[before.rfind(b')') + 2:].split()
+        local_need(fields[19].decode('ascii') == expected['startTicks'] and fields[0] != b'Z',
+                   'CANONICAL_GENERATION_CHANGED')
+        args = (proc / 'cmdline').read_bytes().split(b'\0')
+        marker = args.index(b'-jar')
+        local_need(args[marker + 1] == os.fsencode(str(jar_path))
+            and os.readlink(str(proc / 'cwd')) == str(jar_path.parent), 'CANONICAL_GENERATION_CHANGED')
+        after = (proc / 'stat').read_bytes()
+        local_need(after[after.rfind(b')') + 2:].split()[19].decode('ascii') == expected['startTicks'],
+                   'CANONICAL_GENERATION_CHANGED')
+    except (OSError, UnicodeError, ValueError, IndexError):
+        raise LocalRejected('CANONICAL_GENERATION_CHANGED') from None
+
+
+def local_assert_new_generation(inputs, record_path, jar_path, approval_already_staged=None):
+    precondition = inputs['decision']['precondition']
+    for key in ('installedRecord', 'approval'):
+        ref = precondition[key]
+        local_need(ref is None or ref['path'] not in (
+            str(record_path), str(record_path.parent / 'approval.json')), 'PATH_UNSAFE')
+    raw_record = local_read_slot(record_path)
+    local_slot_matches(raw_record, precondition['installedRecord'])
+    if raw_record is not None:
+        record = local_json(raw_record, 'DURABLE_RECORD_INCOMPLETE')
+        local_need(type(record) is dict and record.get('status') in ('installed', 'failed'),
+                   'FOREIGN_UNFINISHED_TRANSACTION')
+        local_need(record.get('recovery') != 'forward_only_candidate_retained',
+                   'FOREIGN_UNFINISHED_TRANSACTION')
+    raw_approval = local_read_slot(record_path.parent / 'approval.json')
+    if approval_already_staged is None:
+        local_slot_matches(raw_approval, precondition['approval'])
+    else:
+        local_need(raw_approval is not None, 'PRECONDITION_CHANGED')
+        local_need(local_approval(local_json(raw_approval)) == approval_already_staged
+            and approval_already_staged['release'] == inputs['release']
+            and not approval_already_staged['consumed'], 'RECOVERY_BINDING_MISMATCH')
+    # Canonical bytes are streamed rather than loading the full JAR into memory.
+    info = jar_path.lstat()
+    local_need(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1
+        and not info.st_mode & 0o022, 'PATH_UNSAFE')
+    fd = os.open(str(jar_path), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        local_need(local_signature(os.fstat(fd)) == local_signature(info), 'PRECONDITION_CHANGED')
+        with os.fdopen(os.dup(fd), 'rb') as handle:
+            actual = digest_fileobj(handle)
+        local_need(actual == precondition['canonicalJarSha256']
+            and local_signature(os.fstat(fd)) == local_signature(jar_path.lstat())
+                == local_signature(info), 'PRECONDITION_CHANGED')
+    finally:
+        os.close(fd)
+    local_assert_runtime_generation(precondition['runtimeGeneration'], jar_path)
+    inputs['reader'].recheck()
+
+
+def local_validate_slots(inputs):
+    """Resume only the same full LOCAL binding. Foreign nonterminal is never adopted."""
+    record_path = ROOT / 'record.json'
+    record_raw, approval_raw = local_read_slot(record_path), local_read_slot(APPROVAL)
+    record = None if record_raw is None else local_json(record_raw, 'DURABLE_RECORD_INCOMPLETE')
+    approval = None if approval_raw is None else local_json(approval_raw, 'DURABLE_RECORD_INCOMPLETE')
+    binding = local_binding_sha(inputs['release'])
+    if record is not None:
+        local_need(type(record) is dict, 'DURABLE_RECORD_INCOMPLETE')
+        if record.get('schema_version') == 3:
+            local_install_record(record)
+            if record['binding_sha256'] == binding:
+                local_need(approval is not None and local_approval(approval)['release'] == inputs['release'],
+                           'RECOVERY_BINDING_MISMATCH')
+                return True
+        local_need(record.get('status') in ('installed', 'failed')
+            and record.get('recovery') != 'forward_only_candidate_retained',
+            'FOREIGN_UNFINISHED_TRANSACTION')
+    staged = None
+    if type(approval) is dict and approval.get('schema_version') == 3:
+        local_approval(approval)
+        if approval['binding_sha256'] == binding:
+            local_need(not approval['consumed'], 'RECOVERY_BINDING_MISMATCH')
+            staged = approval
+    local_assert_new_generation(inputs, record_path, LOCAL_CANONICAL_JAR, staged)
+    return staged is not None
+
+
+def local_copy_incoming(inputs):
+    admitted = inputs['admitted']
+    reader = inputs['reader']
+    source_fd = reader.stream(admitted['package'])
+    temporary = None
+    try:
+        fd, temporary = tempfile.mkstemp(prefix='.incoming-local-', dir=str(PACKAGE.parent))
+        with os.fdopen(fd, 'wb') as out, os.fdopen(os.dup(source_fd), 'rb') as src:
+            shutil.copyfileobj(src, out, 1024 * 1024)
+            out.flush()
+            os.fsync(out.fileno())
+        local_need(Path(temporary).stat().st_size == inputs['decision']['package']['size'], 'PACKAGE_INVALID')
+        with open(temporary, 'rb') as stream:
+            local_need(digest_fileobj(stream) == inputs['decision']['package']['sha256'], 'PACKAGE_INVALID')
+        reader.recheck()
+        os.replace(temporary, PACKAGE)
+        temporary = None
+        fsync_dir(PACKAGE.parent)
+    finally:
+        os.close(source_fd)
+        if temporary is not None:
+            os.unlink(temporary)
+
+
+def local_prepare_approval(inputs):
+    release = inputs['release']
+    approval = local_approval({'schema_version': 3, 'release': release,
+        'binding_sha256': local_binding_sha(release), 'consumed': False, 'consumed_at': None})
+    old = local_read_slot(APPROVAL)
+    if old is not None:
+        # Preserve the existing backup directory/alias and immutable old approval.
+        stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
+        path = BACKUPS / ('approval-before-local-' + approval['binding_sha256'] + '-' + stamp + '.json')
+        fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            with os.fdopen(fd, 'wb') as out:
+                out.write(old); out.flush(); os.fsync(out.fileno())
+        finally:
+            fsync_dir(BACKUPS)
+    atomic_write(APPROVAL, local_canonical(approval))
+    return approval
+
+
+def local_coordinator_lock():
+    fd = os.open(LOCK, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+    try:
+        info = os.fstat(fd)
+        local_need(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1
+            and stat.S_IMODE(info.st_mode) == 0o600
+            and local_signature(info) == local_signature(os.lstat(LOCK)), 'PATH_UNSAFE')
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def local_installed_release(inputs):
+    raw = local_read_slot(ROOT / 'record.json')
+    local_need(raw is not None, 'DURABLE_RECORD_INCOMPLETE')
+    record = local_install_record(local_json(raw))
+    local_need(record['release'] == inputs['release'] and record['status'] == 'installed'
+        and record['phase'] == 'installed' and record['recovery'] == 'not_required'
+        and record['candidate_stop_rc'] == 0, 'RECOVERY_BINDING_MISMATCH')
+    approval_raw = local_read_slot(APPROVAL)
+    local_need(approval_raw is not None, 'DURABLE_RECORD_INCOMPLETE')
+    approval = local_approval(local_json(approval_raw))
+    local_need(approval['release'] == inputs['release'] and approval['consumed'], 'RECOVERY_BINDING_MISMATCH')
+    info = LOCAL_CANONICAL_JAR.lstat()
+    local_need(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1
+        and not info.st_mode & 0o022, 'PATH_UNSAFE')
+    fd = os.open(str(LOCAL_CANONICAL_JAR), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        with os.fdopen(os.dup(fd), 'rb') as stream:
+            local_need(digest_fileobj(stream) == record['candidate_sha256']
+                and local_signature(info) == local_signature(os.fstat(fd))
+                    == local_signature(LOCAL_CANONICAL_JAR.lstat()), 'PRECONDITION_CHANGED')
+    finally:
+        os.close(fd)
+    inputs['reader'].recheck()
+    return record
+
+
+def local_schema_report(raw, return_code, inputs, entry):
+    report = local_json(raw, 'SCHEMA_RESULT_UNKNOWN')
+    local_exact(report, ('schema_version', 'operation', 'status', 'transaction_model', 'lock_order',
+        'tables', 'binding', 'candidate', 'error', 'failed_table'), 'SCHEMA_RESULT_UNKNOWN')
+    feature = entry['feature']
+    tables = tuple(sorted(SCHEMA_TABLES)) if feature == 'F06' else (E05_SCHEMA_TABLE,)
+    release = inputs['release']
+    expected_binding = {'source': release['source'], 'binding_sha256': local_binding_sha(release),
+        'decision_sha256': release['decision']['sha256'],
+        'jar_sha256': release['payloads']['application.jar']['sha256'],
+        'receipt_sha256': release['payloads']['receipt.json']['sha256'],
+        'package_sha256': release['package']['sha256']}
+    expected_candidate = {'resource_outer': entry['resourceOuter'], 'resource_inner': entry['resourceInner'],
+        'sql_sha256': entry['sqlSha256'], 'expected_catalog_sha256': entry['expectedCatalogSha256'],
+        'tables': list(tables), 'statement_policy': entry['statementPolicy']}
+    local_need(type(report['schema_version']) is int and report['schema_version'] == 2
+        and report['operation'] == 'apply'
+        and report['transaction_model'] == 'mysql_ddl_autocommit_per_create_no_rollback_or_drop'
+        and report['lock_order'] == [feature.lower() + '_runner_file_lock', feature.lower() + '_mysql_named_lock']
+        and report['binding'] == expected_binding and report['candidate'] == expected_candidate,
+        'SCHEMA_RESULT_UNKNOWN')
+    local_exact(report['tables'], tables, 'SCHEMA_RESULT_UNKNOWN')
+    for name, result in report['tables'].items():
+        local_exact(result, ('status', 'mismatches'), 'SCHEMA_RESULT_UNKNOWN')
+        local_need(type(result['status']) is str and re.fullmatch(r'[a-z0-9_]+', result['status'])
+            and type(result['mismatches']) is list
+            and all(type(v) is str and re.fullmatch(r'[a-z0-9_]+(?::[a-z0-9_]+)?', v) for v in result['mismatches']),
+            'SCHEMA_RESULT_UNKNOWN')
+    local_need(type(return_code) is int and 0 <= return_code <= 255, 'SCHEMA_RESULT_UNKNOWN')
+    if return_code == 0:
+        local_need(report['status'] == 'pass' and report['error'] is None and report['failed_table'] is None
+            and all(r['status'] in ('existing_equivalent', 'created_equivalent')
+                    and r['mismatches'] == [] for r in report['tables'].values()), 'SCHEMA_RESULT_UNKNOWN')
+    else:
+        local_need(report['status'] == 'failed' and type(report['error']) is str
+            and re.fullmatch(r'[a-z0-9_]+', report['error'])
+            and (report['failed_table'] is None or report['failed_table'] in tables), 'SCHEMA_RESULT_UNKNOWN')
+    return report
+
+
+def local_schema_state(inputs, entry, recovery_sha=None):
+    release = inputs['release']; feature = entry['feature']
+    return {'schema_version': 2, 'feature': 'M4-' + feature + '-additive-schema', 'status': 'running',
+        'source': release['source'], 'binding_sha256': local_binding_sha(release),
+        'decision_sha256': release['decision']['sha256'], 'schema_plan_sha256': release['schemaPlan']['sha256'],
+        'admission_sha256': release['admission']['sha256'],
+        'activation_claim': 'schema_only_not_feature_activation', 'sql_sha256': entry['sqlSha256'],
+        'runner_path': entry['runner']['path'], 'runner_sha256': entry['runner']['sha256'],
+        'expected_catalog_sha256': entry['expectedCatalogSha256'], 'started_at': utc_timestamp(),
+        'finished_at': None, 'runner_exit_code': None, 'error': None, 'action': None,
+        'prerequisites': [], 'runner_report': None,
+        'stdout_path': None, 'stdout_sha256': None, 'stderr_path': None, 'stderr_sha256': None,
+        'lock_order': ['flow_coordinator_lock', 'api_release_lock',
+                       feature.lower() + '_runner_file_lock', feature.lower() + '_mysql_named_lock'],
+        'transaction_model': 'installed_record_then_mysql_ddl_autocommit_no_rollback_or_drop',
+        'recovery_authority_sha256': recovery_sha}
+
+
+def local_schema_paths(inputs, entry, recovery_sha=None):
+    folder = SCHEMA_RESULTS if entry['feature'] == 'F06' else E05_SCHEMA_RESULTS
+    stem = 'local-' + local_binding_sha(inputs['release'])
+    if recovery_sha is not None:
+        local_hex(recovery_sha, code='SCHEMA_RECOVERY_NOT_AUTHORIZED')
+        stem += '-recovery-' + recovery_sha
+    return {key: folder / (stem + ext) for key, ext in (
+        ('state', '.json'), ('stdout', '.stdout'), ('stderr', '.stderr'))}
+
+
+def local_state_ref(path):
+    raw = local_read_slot(path)
+    local_need(raw is not None, 'SCHEMA_RESULT_UNKNOWN')
+    return {'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest(), 'size': len(raw)}
+
+
+def local_existing_schema(inputs, entry, paths, recovery_sha=None):
+    raw = local_read_slot(paths['state'])
+    if raw is None:
+        local_need(not any(p.exists() or p.is_symlink() for k, p in paths.items() if k != 'state'),
+                   'SCHEMA_RESULT_UNKNOWN')
+        return None
+    state = local_json(raw, 'SCHEMA_RESULT_UNKNOWN')
+    expected = local_schema_state(inputs, entry, recovery_sha)
+    local_exact(state, expected, 'SCHEMA_RESULT_UNKNOWN')
+    mutable = {'status', 'started_at', 'finished_at', 'runner_exit_code', 'error', 'action', 'prerequisites',
+               'runner_report', 'stdout_path', 'stdout_sha256', 'stderr_path', 'stderr_sha256'}
+    local_need(all(state[k] == expected[k] for k in expected if k not in mutable)
+        and state['status'] in ('running', 'pass', 'failed', 'blocked_precondition'), 'RECOVERY_BINDING_MISMATCH')
+    local_need(type(state['started_at']) is str and bool(state['started_at'])
+        and (state['finished_at'] is None or type(state['finished_at']) is str)
+        and (state['runner_exit_code'] is None or type(state['runner_exit_code']) is int
+             and 0 <= state['runner_exit_code'] <= 255)
+        and (state['error'] is None or state['error'] in LOCAL_SAFE_CODES)
+        and (state['action'] is None or type(state['action']) is str)
+        and type(state['prerequisites']) is list
+        and all(type(v) is str and re.fullmatch(r'[a-z0-9_]+', v) for v in state['prerequisites']),
+        'SCHEMA_RESULT_UNKNOWN')
+    for stream in ('stdout', 'stderr'):
+        name, digest = state[stream + '_path'], state[stream + '_sha256']
+        if name is not None:
+            local_need(name == str(paths[stream]), 'SCHEMA_RESULT_UNKNOWN')
+            raw_log = local_read_slot(paths[stream])
+            local_need(raw_log is not None, 'SCHEMA_RESULT_UNKNOWN')
+            if digest is not None:
+                local_need(hashlib.sha256(raw_log).hexdigest() == digest, 'SCHEMA_RESULT_UNKNOWN')
+    if state['status'] == 'pass':
+        local_need(type(state['runner_exit_code']) is int and state['runner_exit_code'] == 0
+            and state['error'] is None and state['finished_at'] is not None
+            and all(state[k] is not None for k in ('stdout_path', 'stdout_sha256', 'stderr_path', 'stderr_sha256')),
+            'SCHEMA_RESULT_UNKNOWN')
+        report = local_schema_report(local_read_slot(paths['stdout']), 0, inputs, entry)
+        local_need(state['runner_report'] == report, 'SCHEMA_RESULT_UNKNOWN')
+    return state
+
+
+def local_run_schema_once(inputs, entry, paths, recovery_sha=None):
+    existing = local_existing_schema(inputs, entry, paths, recovery_sha)
+    if existing is not None:
+        # Running/failed/blocked is NOT automatically rerun; separate recovery
+        # permission creates a new evidence generation, retaining all old files.
+        return existing
+    folder = paths['state'].parent
+    ensure_private_directory(folder)
+    local_need(folder.stat().st_gid == 0, 'PATH_UNSAFE')
+    state = local_schema_state(inputs, entry, recovery_sha)
+    write_schema_state(paths['state'], state, create=True)
+    password = protected_schema_password() if entry['feature'] == 'F06' else protected_e05_schema_password()
+    if type(password) is not str or not password or '\n' in password or '\r' in password:
+        state.update(status='blocked_precondition', finished_at=utc_timestamp(),
+            error='SCHEMA_PREREQUISITE_MISSING', prerequisites=['protected_feature_password_missing'],
+            action='Provision the fixed CREATE-only principal; separately authorize same-release schema reconciliation.')
+        write_schema_state(paths['state'], state)
+        return state
+    state.update(stdout_path=str(paths['stdout']), stderr_path=str(paths['stderr']))
+    # Publish files BEFORE announcing them in the state. A crash remains unknown,
+    # never pass; the original running record still survives for reconciliation.
+    out = os.open(str(paths['stdout']), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    err = None; helper = None; return_code = None; report = None; error = None
+    try:
+        err = os.open(str(paths['stderr']), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        write_schema_state(paths['state'], state)
+        local_installed_release(inputs)
+        name = 'cyf-api-additive-schema' if entry['feature'] == 'F06' else 'cyf-api-e05-additive-schema'
+        helper = inputs['reader'].helper_fd(name, entry['runner'])
+        inputs['reader'].recheck()
+        password_key = SCHEMA_PASSWORD_ENV if entry['feature'] == 'F06' else E05_SCHEMA_PASSWORD_ENV
+        env = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C', password_key: password}
+        try:
+            return_code = subprocess.run(['/usr/bin/python3', '-I', '-B', '/proc/self/fd/' + str(helper), '--apply'],
+                env=env, stdout=out, stderr=err, pass_fds=(helper,), close_fds=True).returncode
+        except OSError:
+            error = 'IO_FAILURE'
+        os.fsync(out); os.fsync(err)
+        if error is None:
+            try:
+                report = local_schema_report(local_read_slot(paths['stdout']), return_code, inputs, entry)
+                local_installed_release(inputs)
+            except LocalRejected as exc:
+                error = exc.code
+    finally:
+        if helper is not None: os.close(helper)
+        os.close(out)
+        if err is not None: os.close(err)
+        fsync_dir(folder)
+    state.update(status='pass' if error is None and return_code == 0 else 'failed',
+        finished_at=utc_timestamp(), runner_exit_code=return_code,
+        error=error if error is not None else (None if return_code == 0 else 'SCHEMA_CATALOG_DRIFT'),
+        action=None if error is None and return_code == 0 else
+            'Preserve candidate and all DDL evidence; introspect actual metadata and separately authorize exact schema reconciliation.',
+        runner_report=report,
+        stdout_sha256=local_state_ref(paths['stdout'])['sha256'], stderr_sha256=local_state_ref(paths['stderr'])['sha256'])
+    write_schema_state(paths['state'], state)
+    return state
+
+
+def local_release_summary(inputs, installer_exit_code, schema_results, status):
+    release = inputs['release']
+    return {'schema_version': 2, 'source': release['source'], 'binding_sha256': local_binding_sha(release),
+        'version': release['source']['identity']['version'], 'package_sha256': release['package']['sha256'],
+        'jar_sha256': release['payloads']['application.jar']['sha256'],
+        'receipt_sha256': release['payloads']['receipt.json']['sha256'],
+        'installer_exit_code': installer_exit_code, 'schema_results': schema_results,
+        'status': status, 'businessAcceptance': 'NOT_RUN'}
+
+
+def local_summary_path(inputs):
+    return ROOT / ('versioned-release-local-' + local_binding_sha(inputs['release']) + '.json')
+
+
+def local_latest_schema(inputs, entry):
+    paths = local_schema_paths(inputs, entry)
+    raw = local_read_slot(local_summary_path(inputs))
+    if raw is not None:
+        summary = local_json(raw, 'SCHEMA_RESULT_UNKNOWN')
+        expected = local_release_summary(inputs, None, None, 'prepared')
+        local_exact(summary, expected, 'SCHEMA_RESULT_UNKNOWN')
+        local_need(all(summary[k] == expected[k] for k in expected
+            if k not in ('installer_exit_code', 'schema_results', 'status')), 'RECOVERY_BINDING_MISMATCH')
+        local_need(summary['status'] in ('prepared', 'verified', 'failed')
+            and (summary['installer_exit_code'] is None
+                 or type(summary['installer_exit_code']) is int and 0 <= summary['installer_exit_code'] <= 255),
+            'SCHEMA_RESULT_UNKNOWN')
+        refs = summary['schema_results']
+        if refs is not None:
+            local_need(type(refs) is list and len(refs) == 2, 'SCHEMA_RESULT_UNKNOWN')
+            ref = refs[0 if entry['feature'] == 'F06' else 1]
+            if ref is not None:
+                local_ref(ref, 'SCHEMA_RESULT_UNKNOWN')
+                path = Path(ref['path'])
+                prefix = paths['state'].stem
+                local_need(path.parent == paths['state'].parent and path.suffix == '.json'
+                    and (path.stem == prefix or re.fullmatch(re.escape(prefix) + r'-recovery-[0-9a-f]{64}', path.stem)),
+                    'RECOVERY_BINDING_MISMATCH')
+                raw_state = local_read_slot(path)
+                local_slot_matches(raw_state, ref)
+                paths = {'state': path, 'stdout': path.with_suffix('.stdout'), 'stderr': path.with_suffix('.stderr')}
+    recovery_sha = None
+    marker = '-recovery-'
+    if marker in paths['state'].stem: recovery_sha = paths['state'].stem.split(marker)[1]
+    return paths, local_existing_schema(inputs, entry, paths, recovery_sha), recovery_sha
+
+
+def local_read_schema_recovery(inputs, path, digest):
+    raw, ref = inputs['reader'].external(path, digest)
+    authority = local_schema_recovery_authority(local_json(raw), inputs['release'])
+    for name in ('authorizationEvidence', 'actualMetadataProof', 'schemaPlan', 'installDecision'):
+        local_stream_checked(inputs['reader'], authority[name])
+    supplied = {r['path']: r for r in authority['priorResults']}
+    required = {}
+    for entry in inputs['schemaPlan']['entries']:
+        if entry['feature'] not in authority['allowedFeatures']: continue
+        paths, state, unused = local_latest_schema(inputs, entry)
+        local_need(state is not None and state['status'] != 'pass', 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+        required[str(paths['state'])] = local_state_ref(paths['state'])
+        for key in ('stdout', 'stderr'):
+            if paths[key].exists() or paths[key].is_symlink():
+                required[str(paths[key])] = local_state_ref(paths[key])
+    local_need(supplied == required, 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+    for prior in authority['priorResults']: local_stream_checked(inputs['reader'], prior)
+    inputs['reader'].recheck()
+    return authority, ref
+
+
+def local_finish_schema(inputs, installer_exit_code, recovery=None):
+    refs = [None, None]; passed = True
+    release_fd = acquire_e05_release_lock(RELEASE_LOCK)
+    try:
+        local_installed_release(inputs)
+        recovery_value = recovery_ref = None
+        if recovery is not None:
+            recovery_value, recovery_ref = local_read_schema_recovery(inputs, *recovery)
+        for index, entry in enumerate(inputs['schemaPlan']['entries']):
+            previous_paths, previous, previous_recovery = local_latest_schema(inputs, entry)
+            if recovery_value is not None and entry['feature'] in recovery_value['allowedFeatures']:
+                paths = local_schema_paths(inputs, entry, recovery_ref['sha256'])
+                state = local_run_schema_once(inputs, entry, paths, recovery_ref['sha256'])
+            elif previous is not None:
+                paths, state = previous_paths, previous
+            else:
+                paths = local_schema_paths(inputs, entry)
+                state = local_run_schema_once(inputs, entry, paths)
+            refs[index] = local_state_ref(paths['state'])
+            if state['status'] != 'pass':
+                passed = False
+                break  # F06 must succeed before the existing E05 hook can execute.
+        result = local_release_summary(inputs, installer_exit_code, refs, 'verified' if passed else 'failed')
+        atomic_write(local_summary_path(inputs), local_canonical(result))
+        return result
+    finally:
+        os.close(release_fd)
+
+
+def local_install(decision_path, decision_sha256, recovery=None):
+    inputs = local_read_install_inputs(decision_path, decision_sha256)
+    local_need(Path(__file__).resolve() == Path(LOCAL_HELPER_PATHS['cyf-api-flow-deploy']),
+               'HELPER_CATALOG_MISMATCH')
+    local_authority_matches(inputs['decision'], inputs['authority'],
+                            ('apiInstall', 'apiStopStart', 'schemaApply'))
+    mutex = local_coordinator_lock()
+    try:
+        for path in (ROOT, PACKAGE.parent):
+            info = path.lstat()
+            local_need(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and info.st_gid == 0
+                and stat.S_IMODE(info.st_mode) == 0o700, 'PATH_UNSAFE')
+        validate_backup_directory(BACKUPS)
+        if recovery is not None:
+            return local_finish_schema(inputs, 0, recovery)
+        # Stage while serialized by the old API lock. Release before invoking
+        # the original installer, which acquires FD8 itself; never parent deadlock.
+        release_fd = acquire_e05_release_lock(RELEASE_LOCK)
+        try:
+            resume = local_validate_slots(inputs)
+            if resume:
+                local_need(PACKAGE.exists(), 'RECOVERY_BINDING_MISMATCH')
+                fd = os.open(str(PACKAGE), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+                try:
+                    info = os.fstat(fd)
+                    local_need(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1
+                        and stat.S_IMODE(info.st_mode) == 0o600, 'PATH_UNSAFE')
+                    with os.fdopen(os.dup(fd), 'rb') as stream:
+                        local_need(digest_fileobj(stream) == inputs['decision']['package']['sha256']
+                            and info.st_size == inputs['decision']['package']['size'], 'RECOVERY_BINDING_MISMATCH')
+                finally:
+                    os.close(fd)
+            else:
+                local_copy_incoming(inputs)
+                local_prepare_approval(inputs)
+        finally:
+            os.close(release_fd)
+        if local_read_slot(local_summary_path(inputs)) is None:
+            atomic_write(local_summary_path(inputs), local_canonical(local_release_summary(inputs, None, None, 'prepared')))
+        # Execute the very helper FD already authenticated against helperCatalog.
+        helper_fd = inputs['reader'].helper_fd('cyf-api-flow-install',
+                                inputs['helperCatalog']['helpers']['cyf-api-flow-install'])
+        try:
+            inputs['reader'].recheck()
+            env = installer_environment()
+            # Existing offline/lifecycle override flags must not enter production.
+            for key in list(env):
+                if key.startswith(('CYF_RELEASE_', 'CYF_API_FLOW_', 'CYF_API_KIT_VALIDATION')):
+                    env.pop(key, None)
+            return_code = subprocess.run(['/bin/bash', '-p', '/proc/self/fd/' + str(helper_fd)],
+                env=env, pass_fds=(helper_fd,), close_fds=True).returncode
+        finally:
+            os.close(helper_fd)
+        # Schema consumes an INSTALLED v3 record, never an approval or exit alone.
+        if return_code != 0:
+            result = local_release_summary(inputs, return_code, None, 'failed')
+            # Preserve existing schema refs; never overwrite prior DDL evidence.
+            raw_summary = local_read_slot(local_summary_path(inputs))
+            if raw_summary is None: atomic_write(local_summary_path(inputs), local_canonical(result))
+            return result
+        return local_finish_schema(inputs, return_code)
+    finally:
+        os.close(mutex)
+
+
 def local_main(argv):
     """Strict read-only CLI. No parsing fallback into historical Flow operations."""
     try:
         local_need(os.geteuid() == 0, 'AUTHORITY_INVALID')
-        local_need(type(argv) is list and len(argv) == 5 and argv[0] == '--local-inspect'
+        local_need(type(argv) is list and len(argv) in (5, 10) and argv[0] in ('--local-inspect', '--local-install')
             and argv[1] == '--decision' and argv[3] == '--decision-sha256', 'INPUT_INVALID')
-        result = local_inspect(argv[2], argv[4])
+        recovery = None
+        if len(argv) == 10:
+            local_need(argv[0] == '--local-install' and argv[5] == '--recover-schema'
+                and argv[6] == '--schema-recovery-authority'
+                and argv[8] == '--schema-recovery-authority-sha256', 'INPUT_INVALID')
+            recovery = (argv[7], argv[9])
+        if argv[0] == '--local-inspect':
+            result = local_inspect(argv[2], argv[4])
+        else:
+            result = local_install(argv[2], argv[4], recovery)
     except LocalRejected as exc:
         print(json.dumps({'status': 'rejected', 'error': exc.code}, sort_keys=True, separators=(',', ':')))
+        return 1
+    except SchemaIntegrationError:
+        print(json.dumps({'status': 'rejected', 'error': 'SCHEMA_PREREQUISITE_MISSING'}, sort_keys=True, separators=(',', ':')))
         return 1
     except OSError:
         print(json.dumps({'status': 'rejected', 'error': 'IO_FAILURE'}, sort_keys=True, separators=(',', ':')))
         return 1
     print(json.dumps(result, sort_keys=True, separators=(',', ':')))
-    return 0
+    return 0 if result.get('status') in ('inputs_verified', 'verified') else 1
 
 
 def main():

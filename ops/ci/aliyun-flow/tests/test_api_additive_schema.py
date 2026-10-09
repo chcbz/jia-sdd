@@ -1060,5 +1060,67 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
                 f06.parse_show_create(rows, first, self.collation)
 
 
+
+class LocalSchemaInstalledBindingSourceTest(unittest.TestCase):
+    """LOCAL grammar with actual installed-fixture bytes, not live DB acceptance."""
+    def setUp(self):
+        from test_api_gate_policy import ApiLocalSharedInstallerSourceTest
+        from unittest.mock import patch
+        self.fixture = ApiLocalSharedInstallerSourceTest(); self.fixture.setUp()
+        self.deploy = self.fixture.deploy
+        self.inputs = self.fixture.inputs
+        for entry in self.inputs.schema['entries']:
+            from test_api_additive_schema import f06
+            from test_api_e05_additive_schema import e05
+            source = f06 if entry['feature'] == 'F06' else e05
+            entry['expectedCatalogSha256'] = digest(self.deploy.local_canonical(source.EXPECTED_TABLES))
+        self.inputs.seal(); self.fixture.stage()
+        result = self.fixture.install(); self.assertEqual(result.returncode, 0, result.stderr)
+        self.paths = {'record': self.fixture.fixture.root / 'state/record.json',
+                      'package': self.fixture.fixture.root / 'state/incoming/package.tgz',
+                      'jar': self.fixture.fixture.target}
+        self.modes = {'record': 0o600, 'package': 0o600, 'jar': 0o640}
+        self.patch = patch.object(f06, 'local_coordinator_validator', return_value=self.deploy.__dict__)
+        self.patch.start()
+
+    def tearDown(self):
+        self.patch.stop(); self.fixture.tearDown()
+
+    def verify(self):
+        return f06.verify_release_binding(self.paths, os.geteuid(), self.modes)
+
+    def test_v3_consumed_installed_record_has_typed_source_no_fake_flow_identity(self):
+        binding = self.verify()
+        self.assertEqual(binding['source'], self.inputs.decision['source'])
+        self.assertEqual(binding['binding_sha256'], self.deploy.local_binding_sha(self.fixture.binding))
+        self.assertEqual(binding['expected_catalog_sha256'], digest(self.deploy.local_canonical(f06.EXPECTED_TABLES)))
+        self.assertNotIn('run', binding)
+        f06.assert_binding_paths_unchanged(self.paths, os.geteuid(), self.modes, binding, full_digest=True)
+
+    def test_v3_installed_record_cannot_substitute_different_package(self):
+        self.paths['package'].write_bytes(b'wrong incoming after installation')
+        with self.assertRaises(f06.SchemaError) as error: self.verify()
+        self.assertEqual(error.exception.code, 'local_package_invalid')
+
+    def test_v3_unconsumed_approval_cannot_authorize_schema(self):
+        path = self.paths['record'].parent / 'approval.json'
+        approval = json.loads(path.read_text()); approval.update(consumed=False, consumed_at=None)
+        path.write_bytes(self.deploy.local_canonical(approval))
+        with self.assertRaises(f06.SchemaError) as error: self.verify()
+        self.assertEqual(error.exception.code, 'local_recovery_binding_mismatch')
+
+    def test_v3_noninstalled_phase_cannot_authorize_schema(self):
+        record = json.loads(self.paths['record'].read_text()); record.update(status='active_pending', phase='commit')
+        self.paths['record'].write_bytes(self.deploy.local_canonical(record))
+        with self.assertRaises(f06.SchemaError) as error: self.verify()
+        self.assertEqual(error.exception.code, 'local_durable_record_incomplete')
+
+    def test_v3_immutable_inputs_are_rechecked_before_original_ddl_boundary(self):
+        binding = self.verify()
+        Path(self.inputs.decision['precondition']['schemaInventory']['path']).write_bytes(b'changed schema observation')
+        with self.assertRaises(f06.SchemaError) as error:
+            f06.assert_binding_paths_unchanged(self.paths, os.geteuid(), self.modes, binding)
+        self.assertEqual(error.exception.code, 'local_immutable_input_changed')
+
 if __name__ == '__main__':
     unittest.main()

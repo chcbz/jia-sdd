@@ -244,5 +244,130 @@ esac
         self.assertEqual(self.target.read_bytes(), self.jar)
 
 
+
+class ApiLocalSharedInstallerSourceTest(unittest.TestCase):
+    """Real original shell transaction with SYNTHETIC verifier/kit and no MySQL.
+
+    This is source regression, not isolated business acceptance, package admission,
+    real service deployment, production authorization or Runtime readiness.
+    """
+    def setUp(self):
+        from test_api_flow_deploy import ApiLocalReadonlyInspectTest, deploy
+        self.deploy = deploy
+        self.inputs = ApiLocalReadonlyInspectTest(); self.inputs.setUp()
+        self.fixture = ApiGatePolicyTest(); self.fixture.setUp()
+        f, i = self.fixture, self.inputs
+        self.child = subprocess.Popen(['/bin/sh', '-c', 'read fixture_line', '-jar', str(f.target)],
+            cwd=str(f.target.parent), stdin=subprocess.PIPE)
+        proc = Path('/proc') / str(self.child.pid)
+        raw = (proc / 'stat').read_bytes()
+        ticks = raw[raw.rfind(b')') + 2:].split()[19].decode('ascii')
+        i.decision['precondition'].update(canonicalJarSha256=digest(f.old), installedRecord=None, approval=None,
+            runtimeGeneration={'pid': self.child.pid, 'startTicks': ticks, 'jarSha256': digest(f.old)})
+        self.runtime_ref = i.write(i.root / 'runtime.record',
+            ('pid=%s\nstart_ticks=%s\njar_sha256=%s\n' % (self.child.pid, ticks, digest(f.old))).encode(), 0o644)
+        lifecycle = f.root / 'bin/cyf-api-kit'
+        lifecycle.write_text(lifecycle.read_text().replace('start) rm -f',
+            'start) if [ -f "$root/fail-start" ]; then exit 1; fi; rm -f'))
+        for name in ('cyf-api-flow-deploy', 'cyf-api-flow-install'):
+            i.catalog['helpers'][name] = i.write(Path(i.paths[name]), (HOST / name).read_bytes(), 0o755)
+        i.catalog['helpers']['cyf-api-kit'] = i.write(Path(i.paths['cyf-api-kit']), lifecycle.read_bytes(), 0o755)
+        i.authority['operations'].update(apiInstall=True, apiStopStart=True, schemaApply=True)
+        i.admitted['installPrecondition']['canonicalJarSha256'] = digest(f.old)
+        i.seal()
+        f.env['CYF_API_FLOW_INSTALL_TEST_INPUT_ROOT'] = str(i.root)
+        self.stage()
+
+    def tearDown(self):
+        self.child.stdin.close(); self.child.wait(timeout=5)
+        self.fixture.tearDown(); self.inputs.tearDown()
+
+    def stage(self):
+        d, i, f = self.deploy, self.inputs, self.fixture
+        self.binding = d.local_binding_from_decision(i.decision, i.decision_ref)
+        approval = {'schema_version': 3, 'release': self.binding,
+                    'binding_sha256': d.local_binding_sha(self.binding), 'consumed': False, 'consumed_at': None}
+        (f.root / 'state/incoming/package.tgz').write_bytes(Path(i.admitted['package']['path']).read_bytes())
+        (f.root / 'state/incoming/package.tgz').chmod(0o600)
+        (f.root / 'state/approval.json').write_bytes(d.local_canonical(approval))
+        (f.root / 'state/approval.json').chmod(0o600)
+
+    def install(self):
+        return self.fixture.install()
+
+    def record(self):
+        return json.loads((self.fixture.root / 'state/record.json').read_text())
+
+    def test_local_same_original_transaction_consumes_v3_without_numeric_flow_identity(self):
+        result = self.install()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        record = self.record()
+        self.deploy.local_install_record(record, self.fixture.root / 'state/backups')
+        self.assertEqual(record['release'], self.binding)
+        self.assertEqual(record['status'], 'installed')
+        self.assertNotIn('run_id', record)
+        self.assertEqual(self.fixture.target.read_bytes(), self.inputs.payload_bytes['application.jar'])
+        self.assertEqual(Path(record['backup']).read_bytes(), self.fixture.old)
+        approval = self.deploy.local_approval(json.loads((self.fixture.root / 'state/approval.json').read_text()))
+        self.assertTrue(approval['consumed'])
+
+    def test_local_installed_same_binding_is_idempotent_no_second_stop_or_start(self):
+        first = self.install(); self.assertEqual(first.returncode, 0, first.stderr)
+        before = (self.fixture.root / 'calls').read_text().splitlines()
+        second = self.install(); self.assertEqual(second.returncode, 0, second.stderr)
+        after = (self.fixture.root / 'calls').read_text().splitlines()
+        self.assertEqual(before.count('start'), after.count('start'))
+        self.assertEqual(before.count('stop'), after.count('stop'))
+        self.assertIn('PASS_ALREADY_INSTALLED', second.stdout)
+
+    def test_local_changed_generation_rejects_before_durable_record_or_lifecycle(self):
+        (self.inputs.root / 'runtime.record').write_text('pid=1\nstart_ticks=1\njar_sha256=' + 'a' * 64 + '\n')
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('CANONICAL_GENERATION_CHANGED', result.stderr)
+        self.fixture.assert_untouched()
+        self.assertFalse((self.fixture.root / 'state/record.json').exists())
+
+    def test_local_foreign_decision_binding_cannot_adopt_incoming(self):
+        path = self.fixture.root / 'state/approval.json'
+        approval = json.loads(path.read_text()); approval['release']['decision']['sha256'] = 'f' * 64
+        approval['binding_sha256'] = self.deploy.local_binding_sha(approval['release'])
+        path.write_bytes(self.deploy.local_canonical(approval))
+        result = self.install(); self.assertNotEqual(result.returncode, 0)
+        self.fixture.assert_untouched()
+
+    def test_local_consumed_approval_active_pending_same_record_recovers_only_commit(self):
+        self.fixture.env['CYF_API_FLOW_TEST_FAULT'] = 'record:installed:replace'
+        first = self.install(); self.assertNotEqual(first.returncode, 0)
+        self.assertEqual(self.record()['status'], 'active_pending')
+        calls = (self.fixture.root / 'calls').read_text().splitlines()
+        second = self.install(); self.assertEqual(second.returncode, 0, second.stderr)
+        after = (self.fixture.root / 'calls').read_text().splitlines()
+        self.assertEqual(calls.count('stop'), after.count('stop'))
+        self.assertEqual(calls.count('start'), after.count('start'))
+        self.assertEqual(self.record()['status'], 'installed')
+
+    def test_local_forward_only_is_from_authority_not_caller_toggle(self):
+        (self.fixture.root / 'fail-start').touch()
+        self.fixture.env['CYF_API_FLOW_FORWARD_ONLY'] = '0'
+        first = self.install(); self.assertNotEqual(first.returncode, 0, first.stdout)
+        record = self.record()
+        self.assertEqual(record['recovery'], 'forward_only_candidate_retained')
+        self.assertEqual(self.fixture.target.read_bytes(), self.inputs.payload_bytes['application.jar'])
+        (self.fixture.root / 'fail-start').unlink()
+        second = self.install(); self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertEqual(self.record()['status'], 'installed')
+
+    def test_local_rollback_compatible_ignores_caller_forward_only_and_restores_old(self):
+        self.inputs.decision['rollbackPolicy'] = 'rollback-compatible'
+        self.inputs.authority['rollbackPolicy'] = 'rollback-compatible'
+        self.inputs.seal(); self.stage()
+        (self.fixture.root / 'fail-start').touch()
+        self.fixture.env['CYF_API_FLOW_FORWARD_ONLY'] = '1'
+        result = self.install(); self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.record()['status'], 'rolling_back')
+        self.assertEqual(self.fixture.target.read_bytes(), self.fixture.old)
+        self.assertNotEqual(self.record()['recovery'], 'forward_only_candidate_retained')
+
 if __name__ == '__main__':
     unittest.main()
