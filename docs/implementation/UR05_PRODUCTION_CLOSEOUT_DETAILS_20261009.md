@@ -1,571 +1,204 @@
-# UR05 生产收口详设：代码、配置、数据库与切流分别说明
+# UR05 未完成内容收口详设（2026-10-09）
 
-核对时间：2026-10-09T15:48:12.903669+08:00（Asia/Shanghai）。任务 UR-05-20261008；唯一收口 Owner：Main。
-本文件响应用户“具体到表字段和代码行”的要求，不是新框架/台账/验收成功回执。冻结功能范围，不新增Agent、不重复构建、不重建/点将/重放432、不操作433。
+仅整理未完成开发与未完成交付，不重列已完成实现，不将局部发布回执等同整项UR05/双端业务验收完成。已重读 [AGENTS.md:1–63](/home/isp/wsps/cyf/AGENTS.md#L1)、[README.md:1–37](/home/isp/wsps/cyf/ops/orchestration/README.md#L1)。本文只描述未完成项；已完成安装、13DDL和配置的回执单列于 `/home/isp/baks/cyf-develop-consolidation-20261009T1558/versioned-production-release-readback.json`，不新增Reviewer、框架、协议或旧版兼容。
 
-## 1. 结论与未完成项
+## 1. 固定来源与状态边界
 
-**API功能修复、固定源码本地测试及制品已完成；整套单Runtime生产交付未完成。不能把尚未部署都叫“代码未开发完”，也不能凭单元测试宣布执行链已通。**
-本次没有证据支持立即安排一套新产品功能开发。真正未闭合的是生产配置接线、有界schema应用、完整目标安装及精确切流；若沿既有路径发现必须修源码，回原Owner最小修改，不扩建检查框架。
-
-| 项目 | 当前真实状态 | 剩余动作 / Owner |
+| 固定组件 | 源码commit | tree / 用途 |
 |---|---|---|
-| API功能源码/制品 | 固定118d；原正式XML统计见下；fresh bootJar/package完成 | Main复用精确证据，不再构建 |
-| 本地准入与原installer | c58f修复系统解释器合法硬链接误拒；91准入单测PASS；六helper installed/source bytes一致 | 复用原入口，不另换installer |
-| 制品准入 | 原installed wrapper真实发布 + 独立published verifier PASS | admission保持productionAuthorized=false；另立真实maintenance authority/decision |
-| 命令生产接线 | **未完成**；只开outbox会是DB_SHADOW；ACK服务仍受Rabbit dispatch注册条件控制 | Main固定专用broker、五必要开关、精确allowed scope和在途影响范围 |
-| 数据库 | **未应用**原13DDL；F06两表/E05一表已有只读等价证据 | Main真实备份、写排除、逐条应用/readback，禁止整库SQL重放 |
-| 统一Runtime完整目标 | 801源码tar保留；不是生产安装制品 | Main走原完整installer和validator，不借宿主包 |
-| 三Agent同host配置/切流 | **未实施**；本次读取unified目标/config不存在 | Main固定三subject独立凭据/状态，精确处理共享服务公孙胜及不同owner |
-| 原432实测 | 未在候选生产版本执行 | 真发布后续验原432；结果/产物持久化与UI正确才算通过 |
+| root | `5be8cf501acdf20a7d5fa696017437c0355181e8` | 协调/安装源码基线；本文修改由Main统一提交 |
+| API | `1e9111028fbdff1ae5452f64aec843e85e81ad59` | `0416b722d735c58af4653892b6ee269e8f9d1498` |
+| Web | `c6ae76010c43153659cc6d55c902a1765c620932` | `f82ac5739135e6e7fe0f2e4f0edbcb17dbb06fa2`，冻结不改 |
+| Runtime | `5489c0e946114ec601e246a4eb93a0bff3b57c24` | `66424e5e9063f316869b00c952a3859625ece77f` |
 
-### 固定基线
+统一候选版本 `1.14.0-consolidated.20261009`。以上为首轮主目录核对的冻结来源记录，不冒称后续root HEAD、远端或全部组件当前线上版本。源码完成、正式验证、制品安装、配置/DDL交付、业务实测分开记录。
 
-- API commit `118d909685c3c27d7ebb4ff16028e8b89ab8260c` / tree `c63106eaf53282d2bf11a4c094ed22bfeead58dd`。
-- Root/helper commit `c58f13571ff19e40f7b9a91adc53e843e0fb1cd6` / tree `6dbabed4708b7a083ff7c6576f076d2f7ebcad5b`。
-- Runtime commit `801087a8d7776f5d9ee72e9b35a8ddd2d014d721` / tree `594f63efe93403531bcd60160f5a326ceef39e39`。
-- 版本 `1.14.0-ur05.20261009`；build ID `ur05-api-local-20261009T1345-cbnrgvam`。
-- 原正式测试：`{'tests': 277, 'failures': 0, 'errors': 0, 'skipped': 0}`；不把排除/未执行测试记PASS。
-- 候选JAR SHA `011dbb31b0f4352d16bf759d63e961a17038c0e3216e64eded2895e7d8b9ff42`。
-- 包 `/var/tmp/cyf-ur05-api-local-20261009T1345-cbnrgvam/package/cyf-api-1.14.0-ur05.20261009-ur05-api-local-20261009T1345-cbnrgvam.tgz`；SHA `827327e62a3c014181f10bd3ae00938ad4c14d221ff3483d015bed3ee9cfcdcd`。
-- 生产仍为canonical JAR SHA `54e6150b6cd6a3f0c72c9b1d495b60d9018a05d687f4fabbdb628d6643fe86b6`；PID225620 live；runtime record start_ticks2888023。没有停启/换JAR/DDL。
-- 读取`cyf-api-kit.service`的inactive不能判API已停；它不是本次归属判据，以原kit runtime record/PID/cwd/-jar为准。
+- 原文已先备份至 `/home/isp/baks/cyf-develop-consolidation-20261009T1558/UR05_PRODUCTION_CLOSEOUT_DETAILS_20261009.before-unfinished-only-20261009T164319.md`；SHA-256 `df4bb755b9c898a2497e73220155cd85863aad138b7c04b30f6457d9c8f7bab8`。已完成代码inventory保留在备份，不再列为待开发。
+- 工作区接续：原UR01/UR03/UR06历史工作区不再需要；后续仅主develop `/home/isp/wsps/cyf/api`、`/home/isp/wsps/cyf/web`、`/home/isp/wsps/chcbz/isp-install` 与保全patch。paid-lease详设已收口，dirty工作区是否删除由Main核完整保全后处理，本Owner不执行清理。
+- 决策来源：`/home/isp/baks/cyf-develop-consolidation-20261009T1558/api-integration-decisions.json` 的 `unfinished`、`/home/isp/baks/cyf-develop-consolidation-20261009T1558/web-integration-decisions.json` 的 `unresolved`、`/home/isp/baks/cyf-develop-consolidation-20261009T1558/runtime-integration-decisions.json` 的未适配 `decisions`；另纳入Main刚核实的MQ启动接线缺口。
+- **真实缺源码：§2 MQ provision启动接线；§3 paid-lease跨端恢复；§4 F01 Runtime context-pack适配；§5 Workspace File固定结果durable report恢复。** 已实现E05 lease/start/result恢复、原HTTP ACK/auth/fence、最新installer不列为待开发。
+- **待交付（Main正在处理，非缺源码）：§6 仅保留完整Runtime目标安装/精确subject切流及当前auth业务恢复阻塞。前后端发布、原13DDL与配置已完成，删除其待交付项。** 配置不能代替§2源码接线，发布完成不能代替业务恢复；auth根因已由原Owner定向定位，见§6.1；不写为单纯等待。
 
-## 2. 命令接线详设：仅outbox=true不够
+## 2. 未完成开发：MQ canonical provision启动/受控接线
 
-### 2.1 源码已实现链与行号
+### 2.1 已证缺口；撤回“仅缺配置”结论
 
-| 环节 | 固定代码行 | 实际行为 |
+| 真实调用链 | 固定源码与行号 | 判定 |
 |---|---|---|
-| writer/mailbox注册 | [AgentCommandTransportWriterConfiguration.java:18–38](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandTransportWriterConfiguration.java#L18) | outbox启用才有writer和mailbox查询；mailbox不是领取/执行接口 |
-| assignment捕获 | [AgentCommandTransportCapture.java:57–105](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandTransportCapture.java#L57) | 认证owner写命令；缺writer报错；返回dispatch允许状态 |
-| writer admission | [AgentCommandTransportWriterImpl.java:267–275](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandTransportWriterImpl.java#L267) | DB_SHADOW/MQ_SHADOW不可执行；精确scope才eligible |
-| gate依赖 | [AgentRabbitSafetyGate.java:75–110](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitSafetyGate.java#L75) | dispatch要求outbox/topology/publish/consume与非空allowedScopes |
-| 原consumer | [AgentCommandRabbitConsumer.java:41](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandRabbitConsumer.java#L41)、[AgentCommandRabbitConsumer.java:102–145](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandRabbitConsumer.java#L102) | Rabbit listener，拒绝scope外命令 |
-| ACK Bean | [AgentCommandRecoveryConfiguration.java:17–50](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandRecoveryConfiguration.java#L17) | agent.rabbit-dispatch.enabled=true才注册原ACK/reissue/reconnect |
-| Runtime HTTP ACK | [AgentRuntimeV1ServiceImpl.java:156–190](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentRuntimeV1ServiceImpl.java#L156) | session/fence后找ACK Bean；缺失报Runtime v1 command ACK is unavailable |
-| ACK权限/持久化 | [AgentCommandAckServiceImpl.java:50–105](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandAckServiceImpl.java#L50) | gate先验dispatch scope，事务锁+CAS推进；挪Bean也不能绕gate |
-| Runtime执行回报 | [execution-adapter.mjs:23–50](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs#L23)、[execution-adapter.mjs:86–100](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs#L86) | session WS接命令、HTTP ACK提交；心跳sidecar不是执行完成 |
+| 仅构造独立Rabbit设施 | [AgentRabbitTopologyConfiguration.java:35–58](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyConfiguration.java#L35) | 39设置RabbitAdmin autoStartup=false；50–58创建provisioner Bean，未执行provision |
+| Readiness起始/成功来源 | [AgentRabbitTopologyReadiness.java:11–33](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyReadiness.java#L11)、[AgentRabbitTopologyReadiness.java:78–81](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyReadiness.java#L78) | 初始NOT_CHECKED/NONE/NONE；canonical要求READY/PROVISION/CANONICAL_TOPOLOGY |
+| 显式canonical声明 | [AgentRabbitTopologyProvisioner.java:32–49](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyProvisioner.java#L32) | exchange→queue→binding全部成功才markProvisioned；失败markFailed并抛脱敏异常 |
+| passive存在验证 | [AgentRabbitTopologyProvisioner.java:53–77](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyProvisioner.java#L53) | 不能证明参数/binding，EXISTENCE_CONFIRMED不等于canonical READY |
+| Publisher依赖Ready | [AgentConfirmedRabbitPublisherImpl.java:96–106](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentConfirmedRabbitPublisherImpl.java#L96) | 102取snapshot，103要求canonical且manifest/request digest一致，否则TOPOLOGY_NOT_CANONICAL_READY |
+| Relay自动启动但不claim | [AgentOutboxRelayScheduler.java:69–79](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentOutboxRelayScheduler.java#L69)、[AgentOutboxRelayScheduler.java:123–127](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentOutboxRelayScheduler.java#L123)、[AgentOutboxRelayScheduler.java:166–174](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentOutboxRelayScheduler.java#L166) | autoStartup=true，phase=MAX_VALUE−100；未canonical则不discover/claim |
+| Consumer无provision顺序保证 | [AgentRabbitTopologyConfiguration.java:60–72](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyConfiguration.java#L60)、[AgentCommandRabbitConsumer.java:102–145](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentCommandRabbitConsumer.java#L102) | 本组factory/listener存在，无显式autoStartup=false/provision前置；process先验dispatch scope |
 
-**以上是源码静态链证据，不是已经实测该配置下的生产ACK。** 原逻辑具备，不证明需要新增dispatcher/ACK实现；先补现有配置输入。没有合法专用broker输入则明确缺它，不借spring.rabbitmq、其他owner凭据或绕gate。
+固定API全仓 `src/main/**/*.java` 检索 `AgentRabbitTopologyProvisioner`、`agentRabbitTopologyProvisioner`、`.provision(`：类型/Bean创建以外无生产调用，test中的显式调用不等于生产启动接线。**五开关全true、外部预建队列、broker连通、passiveVerify成功，均不能把本JVM内存Ready变真。** 原publisher/consumer/ACK无需另造，但canonical lifecycle确实缺源码；此前“只缺配置”结论撤回。
 
-### 2.2 具体配置（设计，尚未写入）
+Main现场新证据（本Owner未操作broker）：只有vhost `/`、无Agent专用用户；5672实际beam PID7747监听，systemctl inactive不等于broker停止。该输入不能满足 [AgentRabbitSafetyGate.java:133–140](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitSafetyGate.java#L133) 的专用broker/vhost准入；临操作由Main重核实际身份/归属，不据此停broker或借其他主体凭据。
 
-外部文件：`/home/isp/hosts/cyf/api/application.properties`；原before字节保存在same-JAR证据操作目录。
-候选prod defaults：[application-prod.properties:215–222](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/starter/src/main/resources/application-prod.properties#L215)。
+### 2.2 最小待实现方案、初始化顺序与失败行为
 
-| 属性 | 当前已知输入 | 执行目标 / 边界 |
+1. **一个启动调用方，不恢复自动声明。** 后续原API Owner拟在主目录新增 `/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyLifecycle.java` 最小专用topology lifecycle（详设拟新增路径，当前不存在），由现有TopologyConfiguration注册、沿原TopologyEnabledCondition生效，仅注入本组named manifest/admin/connectionFactory/readiness/provisioner。Bean构造与OFF/DB_SHADOW零broker副作用，保留admin autoStartup=false/explicitDeclarationsOnly，不替换默认/SMS Rabbit Bean、不新增公网provision接口。
+2. **原manifest唯一。** 使用 [AgentRabbitTopologyManifest.java:158–186](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitTopologyManifest.java#L158) 的两exchange、五queue、bindings/TTL/DLX与digest；启动只调用原 `provision()`，不维护第二拓扑清单，不调用purge/delete/全局admin.initialize。
+3. **初始化先后。** SafetyGate先验证开关依赖、精确scope/专用broker；相关schema initializer完成DDL/catalog；本组Bean构造完成后，lifecycle在relay和dispatch listener之前执行一次provision。只有 `READY + PROVISION + CANONICAL_TOPOLOGY + 本manifestSha256` 才开放本组消费者/relay。显式设置本组listener autoStartup=false，用原RabbitListenerEndpointRegistry的精确 `AGENT_COMMAND_DISPATCH_V1` ID启动；不能仅靠Bean依赖或ApplicationReadyEvent（容器可能先启动）。relay保留原readiness guard；lifecycle phase/容器启动时点与停机逆序用测试证明，不能未经验证猜phase常量。
+4. **受控provision/重启。** 必须在本API JVM调用同一个provisioner/readiness，外部预建资源不能冒充READY。topology-only可沿原显式开关声明但不启动业务consume/dispatch；每次API重启NOT_CHECKED重新成功provision后才能放行。复用原operationLock/幂等声明；首切片只接启动链，不扩成运维框架/定时重试/新deadline。若未来受控重provision确需支持，先关闭本组入场，再调用同实例，失败不得继续沿用旧READY。
+5. **失败fail closed。** 连接/auth/声明权限、queue参数/TTL/DLX漂移或任一binding失败，沿原FAILED/PROVISION_FAILED；不启consumer、不claim/publish、不写成功回执、不把passive覆盖当ready、不删除/改名迁就漂移。显式要求enabled的启动/激活应失败并保留诊断，不静默宣称dispatch已启用；发布disabled候选不依赖未接线MQ。安全诊断只固定stage/status/digest与允许的异常类型，不输出原异常、AMQP URL、凭据/消息正文。
+6. **停止边界。** 先关本组dispatch/relay入场，再按既有在途settlement收口，不停默认/SMS消费者或未知归属broker/共享Agent，不新增业务重放。最小修改接点为TopologyConfiguration＋新增lifecycle，必要relay启动接线限原config/scheduler；原publisher、ACK/CAS、DAO/auth不替换。本轮不实施、不更改冻结源码、不盲启生产MQ。
+
+### 2.3 必补定向测试与判定证据
+
+- 复用 [AgentRabbitTopologyProvisionerTest.java:45–123](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentRabbitTopologyProvisionerTest.java#L45) 无构造副作用/声明顺序/成功/脱敏失败；[AgentRabbitTopologyConfigurationTest.java:80–97](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentRabbitTopologyConfigurationTest.java#L80) 明确断言构造后NOT_CHECKED，新增测试必须区分构造与启动，不删旧断言来掩盖接线。
+- 拟新增主目录 `/home/isp/wsps/cyf/api/agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentRabbitTopologyLifecycleTest.java`；最小后端selector为 `:agent:jia-agent-service:test --tests cn.jia.agent.config.AgentRabbitTopologyLifecycleTest --tests cn.jia.agent.config.AgentRabbitTopologyConfigurationTest --tests cn.jia.agent.config.AgentRabbitTopologyProvisionerTest validateLayering`（后续Owner实现后由Main编排执行，本轮NOT_RUN）。输入/期望：OFF/DB_SHADOW零broker调用；topology-only一次provision、零业务消费；dispatch先canonical成功再container start/claim/send；仅外部存在/passive成功仍拒绝；重复start不重复激活；重启各自重新provision。
+- 连接/权限/参数/binding失败：FAILED/Coverage.NONE、consumer未start、零claim/send、固定错误无秘密；partial声明受控重试无purge/delete；停机顺序、default/SMS隔离、scope外拒绝保留。后端原Owner经本地orchestrator定向验证＋validateLayering，精确新SHA/tree/selector绑定。
+- 真实专用broker声明及生产业务闭环由Main依授权执行，替身不当生产证据；本轮新增接线/测试均未实现、未跑。这一缺口未收口前全UR05不能称完成。
+
+## 3. 未完成开发：paid-lease悬停恢复与persona读取
+
+### 3.1 精确缺口，不重写已有免费reprovision
+
+已有persona quote POST/agentId lease GET在 [AgentHostingRentController.java:61–82](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentHostingRentController.java#L61)，缺owner-scoped `GET /agent/personas/{personaCode}/hosting-lease`。现lookup按真实owner/registry并在207要求active binding：[HostingRentApplicationService.java:201–224](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/hosting/HostingRentApplicationService.java#L201)，不能alias新路由或放宽原guard来充作合法悬停恢复。
+
+已有REPROVISION在 [HostingRentApplicationService.java:228–277](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/hosting/HostingRentApplicationService.java#L228)，包含immutable receipt优先、intent→lease→binding→request事务、paidThrough/版本与免费请求；缺的是SUSPENDED binding+registry成对恢复接线。[HostingRentApplicationService.java:318–329](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/hosting/HostingRentApplicationService.java#L318) 仍只接受ACTIVE，不是另收费/续期/另跑Provider的需求。
+
+API保全patch `/home/isp/baks/cyf-develop-consolidation-20261009T1558/dirty-api-4/unstaged.patch`（SHA-256 `49a5b6e6d1fef7de39ef4f1e0db928f39273e1a4f24324fc928d3d5203edd19e`）删仍被 [HostingRentApplicationService.java:308–315](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/hosting/HostingRentApplicationService.java#L308) 调用的lockBindings，不能直接应用；当前方法在 [AgentHostingRentBindingMapper.java:16–22](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentHostingRentBindingMapper.java#L16)，exact/resume提案无accepted调用方。[AgentIdentityRegistryMapper.java:10–35](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentIdentityRegistryMapper.java#L10) 只有activateProvisioned/suspendUsable，无悬停恢复接线。
+
+Web [useHostingRent.js:34–43](/home/isp/wsps/cyf/web/src/composables/juyiting/useHostingRent.js#L34)、[useHostingRent.js:169–176](/home/isp/wsps/cyf/web/src/composables/juyiting/useHostingRent.js#L169) 对未绑定目标发现paid lease前可开放INITIAL并先读wallet；[useHostingRent.js:205–215](/home/isp/wsps/cyf/web/src/composables/juyiting/useHostingRent.js#L205) 的accepted receipt/unknown mutation原语义必须保留。保全 `/home/isp/baks/cyf-develop-consolidation-20261009T1558/web-owner-paid-lease-readonly.patch`（SHA-256 `bb78f5cd0a9e07cd471fbc5229fe1ef354208bf4b5ad7205c36fadbba45f6d75`）待原合同适配，其persona响应harness替换不能充当真实HTTP证明。
+
+### 3.2 真实字段与最小跨端详设
+
+| 原表与源码 | 必须核对/更新的字段 | 不可扩大 |
 |---|---|---|
-| agent.command-outbox.enabled | 候选prod216=false，外部无覆盖 | true，只开此项是DB_SHADOW |
-| agent.rabbit-topology.enabled | 候选默认false | 现有命令链目标true；必须绑定专用broker和topology |
-| agent.rabbit-publish.enabled | 候选默认false | 目标true |
-| agent.rabbit-consume.enabled | 候选默认false | 目标true |
-| agent.rabbit-dispatch.enabled | 候选默认false | 目标true，需精确allowed-scopes |
-| agent.rabbit-dispatch.allowed-scopes[0].tenant-id | 未固定 | 字符串0，无通配 |
-| agent.rabbit-dispatch.allowed-scopes[0].client-id | 未固定 | jiafewnnv58ec2379c；同client其他主体也受gate影响，须纳入在途边界，不宣称只影响三Agent |
-| agent.rabbit-broker.host/port/username/password/virtual-host | 本轮未固定/验证 | M3独立broker，vhost不得为/；合法来源、权限和topology核实；password不进文档/日志 |
-| agent.rabbit-operations.read.enabled | 候选默认false | 保持false，不新增管理入口 |
-| agent.rabbit-operations.redrive.enabled | 候选默认false | 保持false，不手工redrive/reissue432 |
-| chat.typed-deliberation.enabled | 外部100=true | 保持true |
-| cyf.chat.deliberation-schema.allow-additive-migration | 外部99=true | false，先完整catalog核对，不能以关闭迁移藏漂移 |
-| cyf.chat.typed-deliberation-schema.allow-additive-migration | 外部101=true | false，先typed完整catalog/ACTION_REQUEST核对 |
-| chat.bounty-bootstrap.enabled | 外部106=true | 保持true；原relay租约/重试真观察，不另发432 |
+| `agent_persona_binding`：[schema.sql:55–90](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/schema.sql#L55) | `id,jiacn,persona_code,agent_id,tenant_id,client_id,status,update_time`；合法status0→1 | owner_jiacn/lifecycle_status/active_persona_code/active_agent_id是生成列不可DML；保留83–84唯一激活约束 |
+| `agent_identity_registry`：[schema.sql:92–140](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/schema.sql#L92) | `canonical_agent_id,binding_id,owner_jiacn,tenant_id,client_id,lifecycle_status,suspended_at,update_time`；成对SUSPENDED→ACTIVE | 不换identity/owner；suspended_at清/留由原Owner冻结语义，RETIRED不得复活 |
+| `economy_hosting_lease`：[economy-v0-hosting-rent.sql:63–88](/home/isp/wsps/cyf/api/economy/jia-economy-mapper/src/main/resources/db/economy-v0-hosting-rent.sql#L63) | `lease_id,principal_type,principal_id,persona_code,agent_id,binding_id,status,paid_from,paid_through,latest_intent_id,version,tenant_id,client_id` | 原paid lease/intent准入；不延paidThrough、不新charge/lease |
+| `economy_hosting_reprovision`：[economy-v0-hosting-rent.sql:193–217](/home/isp/wsps/cyf/api/economy/jia-economy-mapper/src/main/resources/db/economy-v0-hosting-rent.sql#L193) | `request_id,lease_id,intent_id,agent_id,persona_code,principal_id,idempotency_key,request_hash,lease_version,paid_through,status,version,tenant_id,client_id` | 保留原幂等字节、receipt/版本链，不另发请求“恢复”未知操作 |
 
-键名用源码`agent.rabbit-dispatch`，不改成`agent.rabbit.dispatch`。属性/独立broker合同：[AgentRabbitSafetyProperties.java:7–23](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitSafetyProperties.java#L7)、[AgentRabbitSafetyProperties.java:75–86](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRabbitSafetyProperties.java#L75)。
-步骤：原值备份+SHA → 固定候选所有必要输入 → 核CLI/env/secret优先级 → 发布沿原外部配置安装 → 实际startup/gate/consumer/ACK/readiness readback。写了true、broker连通或class存在都不等于运行READY。
+1. 原API Owner定义可证明的authenticated principal→owner→persona→binding/registry→原lease/intent读取合同，认证scope＋canonical persona为输入；复用原LeaseView/admission/decimal-string版本，private/no-store。403/scope不符/读取失败不能默认为NOT_MANAGED再开放INITIAL。
+2. 原REPROVISION事务/锁顺序中补exact-scope成对CAS、唯一激活检查，核tenant/client/owner/persona/agent/binding、原paid期/lease/intent/version；任一步失败完整rollback。并发收租/撤销/retire后不得恢复，原receipt replay仍先于后续有效期/供应商状态，不重复charge/续期/Provider执行。
+3. Web未绑定打开先canonical owner-paid lookup再决定INITIAL/REPROVISION；免费恢复不以wallet/余额为前置。沿原agentId/leaseId/expectedLeaseVersion/idempotency请求，保留generation/signal、身份切换隔离、unknown operation原样重读、accepted receipt、quote失效/单调版本，不用发现另一lease丢原操作。
+4. 最小源码接点：上述Controller/service/两mapper；`/home/isp/wsps/cyf/web/src/composables/juyiting/useHostingRent.js`、[hostingRentContract.js:29–47](/home/isp/wsps/cyf/web/src/composables/juyiting/hostingRentContract.js#L29)、[HostingRentPanel.vue:39–42](/home/isp/wsps/cyf/web/src/components/juyiting/HostingRentPanel.vue#L39)及原[hosting-rent.test.js:33](/home/isp/wsps/cyf/web/tests/hosting-rent.test.js#L33)/[hosting-rent-ui.test.js:36](/home/isp/wsps/cyf/web/tests/hosting-rent-ui.test.js#L36)。合同固定后移植保全六文件patch，不在冻结候选盲合。
+5. 必保：cross-owner/tenant/client/persona、revoked/RETIRED拒绝、唯一激活冲突、晚失败rollback、并发CAS、重复idempotency原receipt、paid期不变/无新扣款；真实persona读安全前置、Web身份切换/丢响应恢复。现有UI通过不证明新路由/悬停恢复。
 
-## 3. 数据库：原13条有界DDL，表字段全部列在附录A
+[agent-identity-schema.sql:467–470](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-identity-schema.sql#L467) 只禁止RETIRED复活，不禁止SUSPENDED→ACTIVE；**无新增DDL必要性证据，不删除保护trigger**。
 
-原真实全catalog采集：219表、3404列、2082索引、853约束、354 CHECK、71 FK、37 trigger，MySQL8.0.21。采集≠全库等价≠写排除≠备份。
-F06两表/E05一表由原installed helper真实catalog比较equivalent；root只读查询不是application principal已执行CREATE证明。
+## 4. 未完成开发：F01 context-pack最新Runtime适配
 
-### 3.1 六条既有表调整
+### 4.1 后端已有，客户端缺接入
 
-| 对象 | 已观测生产状态 | 目标 | 源码行 |
-|---|---|---|---|
-| agent_hosted_profile | tenant已NOT NULL，现3 CHECK | 加chk_hosted_single_tenant (tenant_id='0')，最终四CHECK | [AgentSchemaInitializer.java:221–255](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java#L221) |
-| agent_persona_binding.tenant_id | VARCHAR(50)，nullable，default0；旧chk_agent_binding_tenant_owner | VARCHAR(50) NOT NULL DEFAULT '0'；同一ALTER DROP旧CHECK、收紧列、ADD chk_agent_binding_single_tenant | [schema.sql:55–90](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/schema.sql#L55)、[AgentSchemaInitializer.java:123–169](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java#L123) |
-| agent_runtime.runtime_installation_id | 列ABSENT，非行NULL | VARCHAR(100) NULL | [agent-runtime-session-fence-v1.sql:2](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-runtime-session-fence-v1.sql#L2) |
-| agent_runtime.runtime_host_id | 列ABSENT | VARCHAR(100) NULL | [agent-runtime-session-fence-v1.sql:3](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-runtime-session-fence-v1.sql#L3) |
-| agent_runtime.runtime_instance_id | 列ABSENT | VARCHAR(100) NULL | [agent-runtime-session-fence-v1.sql:4](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-runtime-session-fence-v1.sql#L4) |
-| agent_runtime.runtime_session_generation | 列ABSENT | BIGINT NULL | [agent-runtime-session-fence-v1.sql:5](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-runtime-session-fence-v1.sql#L5) |
+- 原GET `/agent/tasks/{taskId}/context-pack` 在 [AgentTaskContextPackController.java:43–95](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskContextPackController.java#L43)，仅expectedVersion query、不接受actor覆盖，65–66核当前Runtime proof，84–85交付re-fence；[AgentTaskContextPackController.java:139–147](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskContextPackController.java#L139) 已支持真实RuntimeAuthentication，不能写成仅旧JWT/缺auth。
+- [AgentTaskContextPackServiceImpl.java:80–110](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskContextPackServiceImpl.java#L80) 已REPEATABLE_READ只读快照、ACL/currentVersion、accepted artifacts与SHA256摘要；[AgentTaskContextPackMapper.java:9–29](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/mapper/AgentTaskContextPackMapper.java#L9) 读真实 `task_plan.id,jiacn,client_id,name,description` 安全列，不新增pack表。
+- 原字段 [schema.sql:208–236](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/schema.sql#L208) 的 `agent_task_meta.owner_jiacn,task_version,current_event_version,tenant_id,client_id`，原member239–262/work_item265–296继续提供成员/任务版本事实；不另表伪造provenance。
+- [runtime-client.mjs:82–106](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/lib/runtime-client.mjs#L82)、[runtime-client.mjs:202–216](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/lib/runtime-client.mjs#L202) 仅许可internal与精确E05 lease路径，**现在context-pack被拒绝**；[agent-client.mjs:5526–5544](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs#L5526) 有E05/Workspace File/SKILL/普通TASK分流但无F01 adapter。[agent-client.mjs:5359–5412](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs#L5359) 原command-bound E05适配已完成，不重建。
 
-不owner推断/业务DML回填，不SQL清fence；新增后的旧行NULL是执行未就绪，走原session事务建立真实fence。
+### 4.2 最小适配/验收
 
-### 3.2 D06五表/两trigger（实际均ABSENT）
+1. RuntimeV1Client只增原context-pack GET的规范taskId/expectedVersion许可，固定same origin/路径/单值query、无credentials/hash/redirect；沿当前subject session proof与generation取消，不开放所有 `/agent/` 或恢复direct JWT/API key。
+2. 原F01 schema/digest/provenance校验接当前TASK binding/prompt：核task/actor/scope/currentVersion/安全字段，轮换后的pack不得进入执行prompt，无跨Agent凭据；读取失败不得假称上下文完整。保留原普通TASK和E05 lease/start/result/ACK链，不建第二lease引擎。
+3. 主目录接点为上述runtime-client/agent-client；如需独立解析模块由原Owner固定新增路径并同步最新standalone打包清单/测试，不能把未合入旧模块当已安装文件。
+4. 待补测试：合法session GET摘要一致快照；错task/actor/owner/version、tampered digest/schema、跨origin/多余query拒绝；session轮换/撤销pack不得入prompt；原E05/ACK/安装清单不变。Node桩不冒称API/DB/生产验收。
 
-| 表 | 完整字段/索引定义源码 | 必须保留的约束 |
+保全 `9e8d78dd459aae1c8e28003eebfdc107945f6f5b` / `a0ad68e36c0f5fe97689d8e3424b5f96e4d1921e`：`/home/isp/baks/cyf-develop-consolidation-20261009T1558/pending-runtime-9e8d78dd4.patch`（SHA-256 `00ad68a8d2a6f0df2c959de00641dc377243d0edb7e192fadc47d8233e7a2bb3`）、`/home/isp/baks/cyf-develop-consolidation-20261009T1558/pending-runtime-a0ad68e36.patch`（SHA-256 `8ee8a9a0f3849f6e50bbea2b83f295a49d361e4a6b9dee7a142b1a8a98df16b5`）。其旧installer/auth/E05不复活，只向最新Runtime精确适配F01。
+
+## 5. 未完成开发：Workspace File固定结果durable report恢复
+
+### 5.1 不是“全部durable recovery未实现”
+
+[agent-client.mjs:5211–5255](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs#L5211) 已私有输入materialize/Provider前canonical start；[agent-client.mjs:5256–5295](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs#L5256) 已结果提交、unknown start/upload/commit保留recovery_required与terminal cleanupProof；[workspace-file-bridge.mjs:651–689](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/workspace-file-bridge.mjs#L651) 一次start未知不执行Provider；[workspace-file-bridge.mjs:804–830](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/workspace-file-bridge.mjs#L804) cleanup沿原path/fingerprint/device/inode，不重materialize。
+
+原E05已有不含leaseToken的原结果持久保存再提交，丢响应GET-only恢复：[agent-client.mjs:5466–5474](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs#L5466)、[agent-client.mjs:5509–5520](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs#L5509)。processor durable checkpoint/HTTP ACK与subject隔离已有：[execution-adapter.mjs:28–43](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs#L28)、[execution-adapter.mjs:88–100](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs#L88)、[runtime-host.mjs:115–158](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/lib/runtime-host.mjs#L115)，不能列为待开发。
+
+真实缺口：Workspace File bridge内存 `#runs`/当次outputs尚未形成与最新per-Agent checkpoint、native start、D06 terminal/cleanupProof一致的**跨重启固定结果report-only恢复**。[workspace-file-bridge.mjs:743–801](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/workspace-file-bridge.mjs#L743) 当前固定文件hash/length及幂等upload/commit，不证明旧durable patch已整合。
+
+### 5.2 真实原表字段（不新建结果表/DDL）
+
+| 原事实与源码 | 必须保留的字段/状态 |
+|---|---|
+| `agent_personal_workspace_execution`：[agent-personal-workspace-v1_11-executions.sql:2–40](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-personal-workspace-v1_11-executions.sql#L2) | `execution_id,owner_jiacn,task_id,run_id,target_agent_id,execution_state,grant_revision,idempotency_key,request_hash,tenant_id,client_id`；状态QUEUED/INPUTS_REVOKED/OUTPUT_COMMITTED/FAILED，不能杜撰STARTED/REPORT_PENDING写入此列 |
+| `..._execution_input`：[agent-personal-workspace-v1_11-executions.sql:42–70](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-personal-workspace-v1_11-executions.sql#L42) | `input_ref,execution_id,file_id,file_version,byte_length,content_hash,storage_uri,grant_state`及scope；沿原授权/版本，不重授权来重跑 |
+| `..._execution_output`：[agent-personal-workspace-v1_11-executions.sql:72–99](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-personal-workspace-v1_11-executions.sql#L72) | `output_id,execution_id,byte_length,content_hash,storage_uri,output_state,workspace_file_id,workspace_file_version,staged_at,committed_at`及scope；STAGED/COMMITTED，manifestId不是此表新列 |
+| D06 delivery/inbox：[agent-command-transport-schema.sql:6–42](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L6)、[agent-command-transport-schema.sql:90–124](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L90) | delivery `command_id,target_agent_id,owner_jiacn,status,active_message_id,active_attempt,version`；inbox `consumer_name,message_id,command_id,status,result_status,active_attempt,processed_at,version`及scope；保存结果不等于终态ACK已确认 |
+
+### 5.3 最小状态/恢复适配与测试
+
+1. 旧tip `e0fb44c92ecd87c52e3b0f5e87d6c3e1fd71ecc3` 保全于 `/home/isp/baks/cyf-develop-consolidation-20261009T1558/pending-runtime-e0fb44c92.patch`（SHA-256 `7a5f632a89b26de03b7cb3e949a6c1e860f83d9a1f44bebafd75351ead4cbf06`），删除最新startExecution/cleanupProof/onCommandTerminalConfirmed并用进程全局instance identity，不能直接合入。
+2. 原Owner在结果产生后、首次报告前沿原原子checkpoint机制持久固定output声明/hash/length、原upload/commit idempotency、失败code或结果body、subject/command fingerprint/run/API身份与cleanupProof。不存session/leaseToken/其他Agent秘密；拟议RUNNING/RESULT_READY/REPORT_PENDING只能是本地checkpoint态，不改原业务表ENUM。
+3. 重启核scope/fingerprint/原目录所有权/固定文件未变，取得合法当前session/fence；仅有原结果才report-only/原幂等upload恢复，丢响应沿原权威读取/receipt确认。unknown STARTED/无原结果不得重跑Provider/任务，不复制业务实现；401/403/rebind/撤销/身份冲突fail closed，不能作为网络可重试。
+4. native业务终态＋D06终态ACK均确认后，沿 [agent-client.mjs:3688–3700](/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs#L3688) terminal callback和原bridge inode proof清理；ACK/报告未知或目录被替换保留原记录，不清账/重materialize/删除其他subject目录。
+5. 最小接点：主目录agent-client的runWorkspaceFileCommand/checkpoint/terminal callback、workspace-file-bridge的固定output报告/恢复，复用原processor/runtime-host，不新增队列/状态服务。必补重启无结果不重跑、文件改变、subject/API切换、partial upload、commit丢响应、终态ACK丢响应、cleanup中断/改inode；保留原E05 prepared result/GET恢复全部断言。本轮不实现/不运行。
+
+## 6. 仅余Runtime切流与真实auth业务恢复阻塞
+
+后端发布已由Main核销：原installer `status=verified`、exit0，回执为 `/var/tmp/cyf-consolidated-api-20261009T1632-878Opf/local-install.stdout` 最后JSON；JAR摘要前缀 `15d3456e`、PID1248394、start15009554，F06/E05均PASS，原13DDL/strict postcheck与配置完成。前端Run186已发布并在线核验。以上仅作为从待交付清单删除的边界说明（Main回报，本Owner未读取安装stdout或重复操作生产），不重列为待开发、准备installer或等待发布。
+
+### 6.1 已定位的认证断点与尚未执行的恢复步骤
+
+真实公网浏览器登录、432详情/成果列表均HTTP200，但432无交付；原bootstrap为`RETRY / BOUNTY_RUNTIME_AWAITING`，采样`attempt_count=10,version=20,admitted_conversation_id=NULL,admitted_request_id=NULL`。新relay正在重试，并非旧进程PENDING0或仅需继续等待。原需求/指派/任务版本未改，无新增/重复点将或手动发消息。
+
+| 已确认断点 | 当前源码行 / 实际字段 | 最小未完成处置 |
 |---|---|---|
-| agent_command_delivery | [agent-command-transport-schema.sql:6–42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L6) | owner_jiacn VARCHAR(50) NOT NULL；uk_delivery_command=(tenant_id,client_id,owner_jiacn,command_id)；tenant/owner CHECK |
-| agent_outbox_event | [agent-command-transport-schema.sql:44–88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L44) | MEDIUMBLOB wire + BINARY(32) SHA；原event/message/delivery/command索引 |
-| agent_consumer_inbox | [agent-command-transport-schema.sql:90–124](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L90) | uk_consumer_message=(tenant_id,client_id,consumer_name,message_id)；原lease/active_attempt/version |
-| agent_command_operation_audit | [agent-command-transport-schema.sql:126–157](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L126) | append-only REQUEST/RESULT，唯一(operation_id,phase)，两不可变trigger |
-| agent_command_redrive_operation | [agent-command-transport-schema.sql:164–196](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L164) | 两STORED生成列，guard唯一索引、CAS version、原ENUM |
+| 旧WS四profile仍以`X-API-Key`连新native链，握手401 | [AgentRuntimeSecurityConfiguration.java:38](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRuntimeSecurityConfiguration.java#L38)；[AgentRuntimeAuthenticationFilter.java:99–118](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationFilter.java#L99) 明确拒绝旧key，要求`Authorization: AgentRuntime ...`及五identity headers | 交付现有统一Runtime，不恢复旧auth fallback，不关闭鉴权。当前影响吴用/林冲/卢俊义及共享managed公孙胜，不能只报API健康 |
+| 旧HTTP sidecar请求缺`hostId/runtimeInstanceId`；新PID观察到吴用session400 | [AgentRuntimeAuthenticationService.java:55–58](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationService.java#L55)；[runtime-client.mjs:169–177](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/lib/runtime-client.mjs#L169) | 配置真实持久hostId与独立boot instance，经现有session接口取得证明；日志没有具体异常分支，不能把另外两unit历史failed说成新400 |
+| 三原installation ACTIVE且manifest匹配；当前fence全NULL | `agent_runtime_v1_installation.installation_id,canonical_agent_id,status,manifest_sha256,runtime_authorization_hash`；`agent_runtime.runtime_installation_id,runtime_host_id,runtime_instance_id,runtime_session_generation,token_hash`；[AgentRuntimeAuthenticationService.java:84–104](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationService.java#L84) | 复用三原逐主体0600authorization文件（有效性仍待真实session验证），不重放已消费enrollment secret。正常事务从NULL首次绑定并generation+1，无需SQL reset/转移fence；`CHANNEL_PENDING`须继续WS注册至真实READY |
+| managed公孙胜没有该canonical的native installation | 原只读snapshot，不能借用三角色installation/credential | 单独确认其manifest/enrollment/owner和在途接续，保留共享进程其他profile；不能把三Agent恢复称四profile全恢复 |
 
-生成列：disposition_guard=IF(outcome_state='PENDING',1,NULL)；redrive_guard=IF(settlement_state IN ('SOURCE_REQUEUED','NOT_ACQUIRED'),NULL,1)，源184–185。
-owner_jiacn并非五表都有；不虚构给outbox/inbox/audit/redrive加owner。原delivery/scope校验保留。
-两CREATE trigger见[agent-command-transport-schema.sql:201–211](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L201)；**禁止执行**资源[agent-command-transport-schema.sql:198–199](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-mapper/src/main/resources/db/agent-command-transport-schema.sql#L198)的两DROP TRIGGER。
-D06 initializer表集合/完整catalog：[AgentCommandTransportSchemaInitializer.java:44–78](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandTransportSchemaInitializer.java#L44)；trigger缺失才CREATE、漂移拒绝：[AgentCommandTransportSchemaInitializer.java:459–480](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandTransportSchemaInitializer.java#L459)。
+现成CLI入口是 [agent-runtime.mjs:38–59](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/agent-runtime.mjs#L38) 的单host生命周期与 [agent-runtime.mjs:62–85](/home/isp/wsps/chcbz/isp-install/conf/cyf-agent-runtime-v1/agent-runtime.mjs#L62) 的`validate/enroll/run`。此项是**匹配客户端的安装、配置、状态接续和切流尚未完成**，不是API缺schema或需要重写认证。固定最新Runtime commit见§1，不能部署诊断报告引用的历史tip充数。
 
-### 3.3 迁移和失败恢复的实际步骤
+受控安装后依次验证`session → native WS → agent.register/receipt → protected executor typed READY`，然后只续原432，核同一bootstrap入会话/请求与最终交付。保留原checkpoint/ledger/inbox/ACK/未知STARTED；不重放、不伪造READY。只读归因和生产实测分别在 `/home/isp/baks/cyf-develop-consolidation-20261009T1558/runtime-auth-diagnosis/ur04-production-runtime-auth-diagnosis-20261009.md` 与 `/home/isp/baks/cyf-develop-consolidation-20261009T1558/production-browser/production-acceptance-report.md`。
 
-1. 固定同JAR资源/SQL SHA；临维护复核binding非法tenant/duplicate、hosted tenant和受影响完整catalog，不用DML“修成可过”。
-2. 原发布互斥+精确写排除；备份schema/data、外部config、oldJAR、安装记录。文件锁不自动排除DB/旧Agent写。
-3. 原13条按授权顺序，每条缺失才应用、已存在必须精确等价；保存statementSHA/执行结果/catalog readback。DDL不能宣称13条整体事务可回滚。
-4. 部分失败保留真实结果，归因后只恢复未完成项；不DROP新增表、不清业务行、不重置fence/队列。
-5. binding收紧后旧JAR会重加旧CHECK，不能盲退旧JAR。固定发布采取forward-only，原处理[cyf-api-flow-install:1110–1117](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-install#L1110)保留candidate/失败record，向前修复。
-6. AgentSchemaInitializer有DROP trigger方法，但本次已有identity表/保护trigger条件决定分支；[AgentSchemaInitializer.java:894–899](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java#L894)。不能只因方法存在就称启动必DROP，也不能未经catalog核实忽略它。
+### 6.2 Runtime切流待交付边界
 
-## 4. 原发布入口已实现，Main仍需补真实输入
+Main候选目标 `/home/isp/apps/cyf-agent-runtime-v1/unified`、unit `cyf-agent-runtime-v1@unified.service`、`/etc/cyf-agent-runtime-v1/unified.host.json`/`unified.conf`；host state `/home/isp/state/cyf-agent-runtime-v1/unified/host`，subjects为同级 `agents/<完整subjectSHA>/` 独立目录。以上为交付设计，不断言现场存在；manifest/installation/hash与固定payload匹配，无token正文/旧直连身份。
 
-原source/installed一致，不能再建runner或伪造proof：schemaPlan [cyf-api-flow-deploy:1329–1365](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-deploy#L1329)；authority/decision [cyf-api-flow-deploy:1382–1424](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-deploy#L1382)；四proofrefs [cyf-api-flow-deploy:1186–1187](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-deploy#L1186)；read-only inspect [cyf-api-flow-deploy:1856–1909](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-deploy#L1856)；generation实证 [cyf-api-flow-deploy:1945–1971](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-deploy#L1945)；local install [cyf-api-flow-deploy:2396–2458](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-deploy#L2396)；原installer顺序 [cyf-api-flow-install:1278–1319](/home/isp/wsps/worktrees/ur05-root-develop-integration-20261009T1413/ops/ci/aliyun-flow/host/cyf-api-flow-install#L1278)。
-
-| 必须输入 | 已有材料 | 未完成动作（Main） |
+| 入口 | Main仍需核对/处置 | 不得混同 |
 |---|---|---|
-| startupCatalogProof | 同JAR10资源、38候选startup类和registrar/条件；全metadata | 按真实启用initializer/callsite核对受影响catalog/副作用；38存在不等于38启用或PASS，不给无关类扩门禁 |
-| effectiveConfiguration | 外部原字节、候选defaults | 冻结§2完整配置输入/优先级/合法broker及scope，实际发布readback，不把推导写成live值 |
-| applicationPrincipalProof | 原PID-owned JDBC socket/processlist对应jia；元数据grant含CREATE/ALTER/INDEX/TRIGGER等 | 绑定候选真实datasource/权限/trigger definer；root SHOW/用户名存在不是实际应用连接DDL成功 |
-| boundedSchemaReceipt | 原13SQL+摘要；尚无应用结果 | 按§3备份/执行/readback形成真实回执，不能写假PASS JSON |
-| identity/inflight/schemaInventory | 历史精确scope图、较新DB投影 | 临切流更新并处理非零在途/公孙胜共享scope；数据库计数不是内存/broker排空 |
-| maintenance authority/install decision | 用户已直接授权固定API/helper/13DDL/备份恢复 | 上述实情闭合后按原结构固定root保护输入；admission保持false，不扩大其他owner转移权限 |
+| `codex-ws-agent@wuyong-local.service`＋`cyf-agent-runtime-v1@wuyong.service` | 吴用同subject旧WS/HTTP sidecar，临切流精确PID/cgroup/session/checkpoint/在途及维护权限，按原优雅退出/新session合同切入 | 心跳sidecar不是统一执行Runtime；停进程不是state交接 |
+| `codex-ws-agent.service` | 林冲/卢俊义direct与managed公孙胜共享；核subject在途及定向停止/保留路径，现路径若不能安全拆分由原Owner另列具体缺口 | 不整停影响不同owner/公孙胜/RECOVERY_REQUIRED，不假称共享进程切流只需配置 |
+| 新三subject | 原动态授权、manifest/installation/host一致、CLI/profile/schema真实READY、独立credential/env/root、registration与HTTP ACK/fence、每subject唯一执行入口 | 不SQL revoke/transfer/清fence，不重跑unknown STARTED，不共token |
 
-`local-inspect`只核输入完整性，不自己queryDB/配置/Runtime；Main不得用其exit0替代真正维护前置。
-满足事实后用原入口，以下为命令模板而非已执行记录：
+非零在途区分未admit/RECEIVED/durably STARTED/WAITING_AGENT/终态，不强制清零/kill/reset/replay；旧账本矛盾保留，不改账推成功。installation/host不符沿原拒绝，缺转移授权交Main，不猜新接口。
 
-```text
-/usr/local/sbin/cyf-api-flow-deploy --local-inspect --decision <actual-root-protected-decision> --decision-sha256 <actual-sha>
-/usr/local/sbin/cyf-api-flow-deploy --local-install --decision <same-decision> --decision-sha256 <same-sha>
-```
+## 7. 其他保全提案与收口判据
 
-完成要求installed record、canonical候选SHA、新PID/-jar/cwd、健康和schema结果匹配；installer成功不是原432业务成功。
+Web `E13_OLD_REASON_SUBSET` 是旧快照提案与Python `collision`诊断不一致：[juyiting-e13-offline-validator-contract.test.js:10–10](/home/isp/wsps/cyf/web/tests/juyiting-e13-offline-validator-contract.test.js#L10)、[validate.py:22–22](/home/isp/wsps/cyf/web/scripts/juyiting/e13/offline_pixel_renderer/validate.py#L22)、[world-model.mjs:305–305](/home/isp/wsps/cyf/web/scripts/juyiting/e13/lib/world-model.mjs#L305)。若后续采纳更窄集合由原E13 Owner统一JS/Python生产诊断及测试；**不是本次新增发布功能/强制阻塞，不删测试/覆盖现安全OAuth/E13**。
 
-## 5. 单Runtime三Agent的具体交付配置
+### 7.1 历史ops-resource-telemetry-r3：未完成独立接入，不扩框架
 
-### 5.1 目录/进程（设计，未安装/启用）
+依据 `/home/isp/baks/cyf-develop-consolidation-20261009T1558/root-tip-decisions-final.json`，历史tip `d136cb7abf76a8f87b367a11d16165591d1e162c` 的controller/evidence-envelope贡献未证明已接入；不能整包恢复，因为该tip删除当前README、execution_history_check、preflight等编排入口。
 
-- 单artifact：`/home/isp/apps/cyf-agent-runtime-v1/unified`；单unit `cyf-agent-runtime-v1@unified.service`。
-- host config：`/etc/cyf-agent-runtime-v1/unified.host.json`；env `/etc/cyf-agent-runtime-v1/unified.conf`。
-- host state：`/home/isp/state/cyf-agent-runtime-v1/unified/host`。
-- subject sibling roots：`/home/isp/state/cyf-agent-runtime-v1/unified/agents/<subjectSHA>/{state,codex-home,work,chat-work}`。
-- 每subject manifest/profile：`/etc/cyf-agent-runtime-v1/agents/<subjectSHA>/{manifest.json,profile.json}`。
-- subjectSHA由原[manifest.mjs:44–46](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/lib/manifest.mjs#L44)对stableJson(tenantId,clientId,canonicalAgentId)取完整SHA，不persona简称/hash截断。
-- 单host lifetime、多独立executor/session/socket/credential/checkpoint：[agent-runtime.mjs:38–58](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/agent-runtime.mjs#L38)。同进程不等于凭据合并。
-- 原unit validate/run：[cyf-agent-runtime-v1@.service:8–15](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/systemd/cyf-agent-runtime-v1@.service#L8)。永久错误78不启动重启循环。
+- 精确旧源码接点（仅历史tip可读，当前主目录两文件不存在）：`/home/isp/wsps/cyf/ops/orchestration/cyf_controller_executor.py` 的历史180–243行校验config/capability/原orchestrator源码摘要、275–318行入口与加载；`/home/isp/wsps/cyf/ops/orchestration/cyf_evidence_envelope.py` 的历史195–240行request/replay identity、308行起证据生成/注册。以上行号绑定历史tip，不能当作当前已交付文件链接。
+- 待补的是原用途下最小controller调用/证据封装合同与可信输入：精确task/操作、源码commit/tree/selector/fixture digest、controller-config/capability来源/权限、证据目标与幂等冲突处理；当前没有足以宣称部署/配置完成的输入或真实接入证据。不是因此另造一套runner/ledger/准入框架。
+- 保留现有 [cyf_orchestrator.py:718–737](/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py#L718) 的窄Flow remote dispatch及既有gradle/preflight/execution-history入口；原Owner若后续承接只移植独立贡献，不删除当前工具。测试须证明原CLI/锁/任务身份不变、源码/输入摘要漂移拒绝、同输入重放与不同输入冲突可判定、证据原子落盘不泄密。此历史提案未接入，不算应用业务功能或本次发布阻塞，本轮不开发/不执行。
 
-host文件只允许以下keys，所有paths必须绝对、规范、无symlink、跨subject可变root不重叠；[manifest.mjs:100–131](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/lib/manifest.mjs#L100)：
+### 7.2 旧health脚本：保留最新生产修复并校准信任输入的交付缺口
 
-```json
-{
-  "configVersion": 1,
-  "hostId": "<explicitly-fixed-host-id>",
-  "stateRoot": "/home/isp/state/cyf-agent-runtime-v1/unified/host",
-  "agents": [
-    {"manifestPath": "<wuyong-absolute>", "profilePath": "<wuyong-absolute>", "stateRoot": "<wuyong-state>"},
-    {"manifestPath": "<linchong-absolute>", "profilePath": "<linchong-absolute>", "stateRoot": "<linchong-state>"},
-    {"manifestPath": "<lujunyi-absolute>", "profilePath": "<lujunyi-absolute>", "stateRoot": "<lujunyi-state>"}
-  ]
-}
-```
+旧health tip已是root祖先，不代表其中脚本适合重新安装。当前主目录 `/home/isp/wsps/cyf/ops/health/` 的旧payload与已安装monitor/carrier不等价，**待完成是运维脚本源码整合/可信pin校准与受控交付，不是新增应用功能**。
 
-### 5.2 身份（历史inventory，临切流重新核实）
-
-| 主体 | canonicalAgentId | installationId | binding / owner边界 |
-|---|---|---|---|
-| 吴用 | `jyt-jiafewnnv58ec2379c-wuyong` | `rti_c75650221caf8b339602a0ad010a2e5b` | 1 / 原本人owner |
-| 林冲 | `jyt-jiafewnnv58ec2379c-linchong` | `rti_1afdba9aa03d1d9fc42df7dff3ae5b5a` | 2 / 与吴用同owner |
-| 卢俊义 | `jyt-jiafewnnv58ec2379c-lujunyi` | `rti_82d08529b37084c6b9399414b5d0061b` | 5 / 不同于吴用owner |
-
-三subject tenant=0 / client=jiafewnnv58ec2379c。复用真实manifest并核绑定：required runtimeProtocolVersion、manifestVersion、installationId、tenantId、clientId、canonicalAgentId、manifestSha256；原digest排除自己，[manifest.mjs:4–30](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/lib/manifest.mjs#L4)。不造hash、不SQL清fence/revoke/transfer。
-每profile固定profileId/agentId/codexBin/codexHome/codexWorkdir/chatWorkdir/workspacePolicyId；每主体原合法model/provider权限独立。
-CHAT目标：typedDeliberationEnabled=true、appServerEnabled=true、fastChatEnabled=true、chatEngine=app-server、chatSandbox=read-only、chatToolPolicy=read-only-constrained；真实CLI/schema须匹配，原READY条件 [juyiting-typed-outcome.mjs:191–212](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/codex-ws-agent/juyiting-typed-outcome.mjs#L191)。
-TASK workspacePolicyId命中原policyMap，工作区真实创建 [agent-client.mjs:6092–6099](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/codex-ws-agent/agent-client.mjs#L6092)。S01 policyFile→env型loader已修 [agent-runtime.mjs:78–79](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/agent-runtime.mjs#L78)，不是待开发。
-profile禁止legacy API key/runtime凭据明文 [manifest.mjs:59–65](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/lib/manifest.mjs#L59)；授权状态/enrollment沿原受控通道，禁止三个subject共享token。
-
-### 5.3 完整安装 / Python状态纠正
-
-- 原唯一installer wrapper [cyf_agent_runtime_v1_install.sh:13–15](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/shell/cyf_agent_runtime_v1_install.sh#L13)；原installer [install.sh:35–61](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/install.sh#L35)；validator [validate.sh:18–35](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/validate.sh#L18)。
-- Node20.20.2、Python3.11.13；npmci、release-local venv和全requirements不删。pins：python-docx0.8.11/python-pptx0.6.23/openpyxl3.1.3/Pillow10.4.0/PyPDF2 1.28.6/reportlab3.6.13；保留完整import/ABI/六格式验证，不借宿主包。
-- 原7594安装已结束FAIL：Pillow8.4源码build缺jpeg；不是仍live，也不能说换镜像就修复。后续pyvenv.cfg staging provenance修复已在源码 [install.sh:78–106](/home/isp/wsps/worktrees/ur01-unified-agent-runtime-20261008/conf/cyf-agent-runtime-v1/install.sh#L78)，不把旧cfg失败说成801缺代码。
-- 5666批次core C1–C4实际PASS但consumer总体FAIL，fixture root已清；不是801生产安装已完成。021133 install-receipt本次为空，只能记无有效finalreceipt，不能推测进程状态。
-- 801 retained源码tar SHA `8e350395752f1d4163efa1eba84f18537d459bdebda739e058c930acb0d0570a`，不当已安装制品。后续沿原installer装真实目标及原validator，不重复用户拒绝的额外隔离业务验收。
-- 当前global pip源是用户授权HTTPS清华；项目专用env已删除。新batch实际解析默认、固定URL/configSHA，显式安装env映射；不声称旧在途输入换源，保持TLS/隔离venv-cache，不trusted-host、不混extra-index。
-
-## 6. 旧服务切流与在途详设
-
-| 旧入口 | scope | 未完成处置 |
+| 精确差异/已存在修复 | 主目录或已安装安全代码证据 | 未完成处置 |
 |---|---|---|
-| codex-ws-agent@wuyong-local.service | 吴用旧WS | 切流前核精确PID/cgroup/队列/在途；有该主体明确权限才优雅停旧入口，保留ledger/checkpoint |
-| cyf-agent-runtime-v1@wuyong.service | 吴用旧HTTP-only sidecar | 与吴用WS同subject纳入切流，不把它报成新统一执行runtime |
-| codex-ws-agent.service | 林冲/卢俊义direct + managed公孙胜 | **不能整停**；先原可用定向停止/保留公孙胜方案，或另有准确授权的scope拆分；不影响433/RECOVERY_REQUIRED。若原路径不能完成，回原Owner最小scope拆分详设，不假称配置够用 |
+| 旧monitor不调用carrier只读check | [旧health.py:789–804](/home/isp/wsps/cyf/ops/health/cyf-juyiting-health.py#L789)；最新修复 [maintenance health.py:789–811](/home/isp/wsps/cyf/ops/maintenance/health_monitor/cyf-juyiting-health.py#L789)，已安装 `/usr/local/libexec/cyf-juyiting-health.py:800` 同样调用 `--check` | 合并保留预留恢复次数前的真实check；pin错误不耗次数/不伪装未知终态，不把已完成修复列为待发明 |
+| 旧carrier无 `--check` 分支 | [旧carrier.py:152–159](/home/isp/wsps/cyf/ops/health/cyf-juyiting-recovery-carrier.py#L152)；已有 [maintenance carrier.py:152–173](/home/isp/wsps/cyf/ops/maintenance/health_monitor/cyf-juyiting-recovery-carrier.py#L152)，installed carrier156行也有该分支 | 保留只读验证、不spawn Java/scope、不写状态的接口，不以旧三参数入口覆盖 |
+| SMTP认证失败仅泛化helper_failed | [旧health.py:1069–1074](/home/isp/wsps/cyf/ops/health/cyf-juyiting-health.py#L1069)；已有 [maintenance health.py:1079–1089](/home/isp/wsps/cyf/ops/maintenance/health_monitor/cyf-juyiting-health.py#L1079)，installed1086行同样分类 | 保留 `smtp_authentication_failed_<数字状态>` 脱敏分类，不输出原SMTP报文/地址/秘密；SMTP接受不等于收件箱送达 |
+| canonical目录/物理日志路径修复不能退回 | [旧health.py:1055](/home/isp/wsps/cyf/ops/health/cyf-juyiting-health.py#L1055) 仍用兼容 `/opt/cyf/service/api`；已有 [maintenance health.py:1065](/home/isp/wsps/cyf/ops/maintenance/health_monitor/cyf-juyiting-health.py#L1065) 使用 `/home/isp/hosts/cyf/api`；当前 [cyf-api-kit:34–35](/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit#L34)、[182–184](/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit#L182)、[838–840](/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit#L838) 保留物理 `/var/log/cyf-api-flow` 与权限校验 | Main已把kit source两处恢复为installed字节一致，kit该修复不再列缺源码；旧monitor/安装包整合须保留这些现行修复，不恢复旧目录/日志别名 |
+| 三层信任摘要尚未校准 | [旧carrier.py:11–12](/home/isp/wsps/cyf/ops/health/cyf-juyiting-recovery-carrier.py#L11) pin为 `63a7ba180603d021666af77e9535b93bdbdcedf0ce799d0b5e09e7718e8d0bcd`；maintenance carrier12行pin `94de2c8af2745d25a9cec82276d54e52c85a63ae7349f4204b36ba5f5f5b930f`；installed carrier12行pin `6f217a43cfcca224da722e72987b54f418aebf792ce3fa4cf348fe2e247186ac` | 本轮只读hash核得kit source及 `/usr/local/sbin/cyf-api-kit` 均为 `9685c35b8bff293f474d5f1684312ecff4f88d0cd6f87450ae6b433a992356c2`；这些carrier pin均不等于当前kit，不能直接启动新cron/恢复调用或自动信任磁盘新值 |
 
-非零在途不是强制清零：区分未admit、RECEIVED、durably STARTED、WAITING_AGENT、终态，按原幂等/sessionfence/恢复合同处理，不kill/reset/replay。
-原吴用同command root ledgerFAILED与instance SUCCEEDED矛盾保留，不改账，也不据此断言必然重复执行。
-新session若发现既有installation/host不一致按原拒绝路径停该主体激活，明确缺转移权限/支持路径；不预先开发未证明必要的新转移接口或SQL清fence。
-新host每subject唯一ACTIVE执行入口，registration ACK、durable state和实际CLI/schema ready成立，才可报切流成功。
+本轮只读已安装摘要：monitor `5a93dbd93939c0bea727547559fb12bd0731f1d5fca2b94f4dc8c3804ffcced2`、carrier `b1c28771e7cd19b514a2d261d9eb8638beccd7b58c0bc6cf391f9de55b20860f`；旧ops/health payload分别 `74e93f804cd12b5bae37f416d332485df0d698ea9bc8088e4b5f0b307e4cff45` / `440e82ab992b88778b26542e176c8f7da14c62c66e6bad32b3dcb941e908c321`。这是源码/文件摘要差异，不声称当前cron状态或实际恢复/邮件成功；没有运行monitor/check/carrier、读取秘密配置或操作生产。
 
-## 7. Main连续执行次序与完成标准
+后续原Owner最小动作：先保全source/installed各自增量，在最新生产修复之上整合唯一候选；核当前合法canonical kit后固定carrier `CANONICAL_SHA256` → 新carrier摘要 → monitor `RECOVERY_CARRIER_SHA256` → 安装器candidate摘要/回执，不能仅改一个pin。保留 [maintenance README:8–12](/home/isp/wsps/cyf/ops/maintenance/health_monitor/README.md#L8) 的root ownership、monitor.lock、备份/原子替换/readback及失败仅恢复本次写入；旧 [install.sh:123–136](/home/isp/wsps/cyf/ops/health/install.sh#L123)/[157–172](/home/isp/wsps/cyf/ops/health/install.sh#L157) 固定的是旧payload，不可直接install/install-cron覆盖生产。复用 [test_juyiting_health_recovery.py:26–40](/home/isp/wsps/cyf/ops/maintenance/tests/test_juyiting_health_recovery.py#L26)、[162–175](/home/isp/wsps/cyf/ops/maintenance/tests/test_juyiting_health_recovery.py#L162) 的只读check/pin/SMTP脱敏与原health测试，不在本轮重跑或试发邮件。真实交付需Main明确维护授权后实施，不能借此次文档收口扩权。
 
-1. 冻结§2真实配置/合法专用broker/allowed scope和旧共享服务影响范围；不等已完成子Agent。
-2. 复用同JAR与匹配catalog证据，定向补启用initializer/callsite/principal事实；不扩framework或每切片跑全套。
-3. 原锁/备份/写排除下原13DDL逐项执行/readback，产出真实有界结果。
-4. 真authority/decision→原local-inspect→原local-install；同batch候选installed、新PID/-jar/cwd/SHA/健康正确；失败forward-only。
-5. 原801完整目标安装/原validator/真CLI-schema-profile验证，非tar存在或pip成功即可。
-6. 按精确subject方案切入三Agent单host；旧重复入口退役，公孙胜/433与不同owner不越权。
-7. 真发布后续验原432，typed真实READY、原relay推进、命令RECEIVED→STARTED→终态提交、业务结果/产物持久化、UI不残留错误出征；不新建任务冒充通过。
+### 7.3 历史PhaseA与当前bounty严格schema不一致（真实未完成适配）
 
-开发完成、安装完成、健康通过、业务实测通过四个状态分开；本文件不把任何一个待执行项标为已完成。
-本次没有可比生产耗时数据，不给“再等十分钟”虚假保证。真正阻塞要列缺输入、Main/原Owner与下一动作，不用巡检替代开发。
+Main已确认当前 `agent_task_bounty_quote`、`agent_task_bounty_claim_operation`、`agent_task_bounty_settlement` 三表**均无owner_jiacn**。这与当前正式表资源/initializer一致，不能当作本次13DDL遗漏；真正未完成的是历史 `single-tenant-task-owner-ddl.sql` 三段owner扩列/索引与当前严格schema契约的统一。
 
-## 8. 原证据入口
-
-- handoff：`/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/main-handoff.json`。
-- 同批package/正式XML：`/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/UR05-actual-local-package-main-readback.json`；旧NOT_ADMITTED状态由后续真实证据推进，不改旧回执。
-- 真实admission：`/var/lib/cyf-api-local-admission/admitted/ur05-api-local-20261009T1345-cbnrgvam/admission.json`；SHA `ef65572d7de7311ef8756dc6d7144974967bcb5474ea560f94d772bdd505da79`。
-- verifier：`/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/UR05-actual-published-admission-verification-output.json`。
-- 全catalog/F06E05：`/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/UR05-actual-full-catalog-existing-f06-e05-readback.json`。
-- 同JAR/startup/config：`/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/UR05-same-jar-resource-startup-config-input-readback.json`。
-- 用户已授权：`/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/UR05-user-explicit-operation-authorization-20261009T1421.json`；旧request的not-approved历史名不能覆盖已授权事实。
-- 原13SQL plan：`/var/tmp/ur04-production-schema-minimal-plan-20261009.json`。
-
-本轮补充只读实证：2026-10-09 15:49（Asia/Shanghai），canonical PID225620/start_ticks2888023及旧JAR摘要未变；进程相关env/CLI与外部application.properties未见显式Rabbit/outbox输入（不推定其他import绝对不存在）；unified目标/config仍不存在；D06五表/两trigger及runtime四fence列仍ABSENT，binding旧CHECK及nullable状态、hosted三CHECK保持。证据：
-
-- `/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/UR05-command-wiring-targeted-config-input-readback.json`
-- `/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/production-readback-20261009/UR05-closeout-fresh-minimal-schema-readback.json`
-
-## 附录A：原13条完整SQL（尚未执行）
-
-从原plan逐字提取；每条SHA与原授权request及118d对应resourceSHA已核对。包含五表全部字段类型/null/default/索引/CHECK/生成列及两trigger。不直接批量执行跳过逐条前后置/备份。
-
-### A.1 hosted-fourth-check
-
-Statement SHA-256：`7af08350f0ee84d75ccd8f2938357f97ff96e67910a2d5185b31020937bb78ae`
-
-```sql
-ALTER TABLE agent_hosted_profile ADD CONSTRAINT chk_hosted_single_tenant CHECK (tenant_id = '0');
-```
-
-### A.2 binding-single-contract
-
-Statement SHA-256：`0f6a727b8c35a2e36c0034eb078ff840b4840371a6bf0da104d53f86a6645084`
-
-```sql
-ALTER TABLE agent_persona_binding DROP CHECK chk_agent_binding_tenant_owner, MODIFY COLUMN tenant_id VARCHAR(50) NOT NULL DEFAULT '0' COMMENT 'Single tenant scope; always 0', ADD CONSTRAINT chk_agent_binding_single_tenant CHECK (tenant_id = '0');
-```
-
-### A.3 nullable-fence-add-1
-
-Statement SHA-256：`d7eeb776b8ce0a0c941f148256939cd36c51559db7d49df3f5bcc918f65999c2`
-
-```sql
-ALTER TABLE agent_runtime ADD COLUMN runtime_installation_id VARCHAR(100) NULL;
-```
-
-### A.4 nullable-fence-add-2
-
-Statement SHA-256：`25f3ba0af6966554f27a9a7cd87a0190208a7b3a0c9f493d3768e432c000564e`
-
-```sql
-ALTER TABLE agent_runtime ADD COLUMN runtime_host_id VARCHAR(100) NULL;
-```
-
-### A.5 nullable-fence-add-3
-
-Statement SHA-256：`fe4e6a15df1db18f55c2968cfc0af20e91f4f0ac4fc3d648567e0047fef3f5c9`
-
-```sql
-ALTER TABLE agent_runtime ADD COLUMN runtime_instance_id VARCHAR(100) NULL;
-```
-
-### A.6 nullable-fence-add-4
-
-Statement SHA-256：`dc4394cdd191c0a4ebc2d205972d9ef3a1c1b2dcf6caceb682033f13efd951dc`
-
-```sql
-ALTER TABLE agent_runtime ADD COLUMN runtime_session_generation BIGINT NULL;
-```
-
-### A.7 d06-agent_command_delivery
-
-Statement SHA-256：`c80705456d83963a2dc1d5ddac75fa7de60f64314e11df028cb797d1a7055f23`
-
-```sql
-CREATE TABLE IF NOT EXISTS agent_command_delivery (
-    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
-    command_id                  VARCHAR(100) NOT NULL COMMENT 'Stable business intent idempotency key',
-    owner_jiacn                 VARCHAR(50) NOT NULL COMMENT 'Authenticated command owner; never inferred from task or Agent identity',
-    task_id                     VARCHAR(100) NOT NULL COMMENT 'Scoped task ID',
-    work_item_id                VARCHAR(100) DEFAULT NULL COMMENT 'Optional scoped work item ID',
-    target_agent_id             VARCHAR(100) NOT NULL COMMENT 'Exact canonical target Agent ID',
-    command_type                VARCHAR(64) NOT NULL COMMENT 'Frozen Agent command type',
-    command_payload             MEDIUMBLOB NOT NULL COMMENT 'Canonical business command payload bytes',
-    command_payload_hash        BINARY(32) NOT NULL COMMENT 'SHA-256 of command_payload bytes',
-    status                      VARCHAR(32) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING/PUBLISHED/CONSUMED/SENT/RECEIVED/STARTED/SUCCEEDED/WAITING_AGENT/RETRY/FAILED/EXPIRED/DEAD',
-    attempt_count               INT NOT NULL DEFAULT 0 COMMENT 'Transport issue/reissue attempt count',
-    next_retry_at               BIGINT DEFAULT NULL COMMENT 'Next eligible retry epoch millis',
-    lease_owner                 VARCHAR(100) DEFAULT NULL COMMENT 'Current scanner/dispatcher lease owner',
-    lease_until                 BIGINT DEFAULT NULL COMMENT 'Lease expiry epoch millis',
-    active_message_id           VARCHAR(100) DEFAULT NULL COMMENT 'Current transport message fence',
-    active_attempt              INT NOT NULL DEFAULT 0 COMMENT 'Current transport attempt fence',
-    expires_at                  BIGINT NOT NULL COMMENT 'Command expiry epoch millis',
-    last_error                  VARCHAR(2000) DEFAULT NULL COMMENT 'Last bounded transport error',
-    version                     BIGINT NOT NULL DEFAULT 0 COMMENT 'CAS version',
-    replay_parent_message_id    VARCHAR(100) DEFAULT NULL COMMENT 'Parent transport message for controlled replay',
-    replay_requester_id         VARCHAR(100) DEFAULT NULL COMMENT 'Replay requester identity',
-    replay_approver_id          VARCHAR(100) DEFAULT NULL COMMENT 'Replay approver identity',
-    replay_reason               VARCHAR(1000) DEFAULT NULL COMMENT 'Audited replay reason',
-    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Single tenant literal 0',
-    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',
-    create_time                 BIGINT DEFAULT NULL COMMENT 'Create time',
-    update_time                 BIGINT DEFAULT NULL COMMENT 'Update time',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_delivery_command (tenant_id, client_id, owner_jiacn, command_id),
-    KEY idx_delivery_retry (status, next_retry_at, expires_at, id),
-    KEY idx_delivery_lease (status, lease_until, id),
-    KEY idx_delivery_agent (tenant_id, client_id, owner_jiacn, target_agent_id, status, next_retry_at, id),
-    KEY idx_delivery_active_message (tenant_id, client_id, owner_jiacn, active_message_id, active_attempt),
-    CONSTRAINT chk_delivery_single_tenant CHECK (tenant_id = '0'),
-    CONSTRAINT chk_delivery_owner_nonempty CHECK (OCTET_LENGTH(owner_jiacn) BETWEEN 1 AND 50)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='Durable Agent command mailbox and business intent state';
-```
-
-### A.8 d06-agent_outbox_event
-
-Statement SHA-256：`02cd0fb8ebed7ac7161bb6d646211a314a286dc8feb5b521c6f2c651ee0386a1`
-
-```sql
-CREATE TABLE IF NOT EXISTS agent_outbox_event (
-    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
-    event_id                    VARCHAR(100) NOT NULL COMMENT 'Stable identity of this outbox row',
-    message_id                  VARCHAR(100) NOT NULL COMMENT 'Transport key; preserved for broker redrive and replaced for reissue',
-    command_id                  VARCHAR(100) NOT NULL COMMENT 'Stable business intent idempotency key',
-    delivery_id                 BIGINT NOT NULL COMMENT 'Related delivery row ID without database FK',
-    aggregate_type              VARCHAR(30) NOT NULL COMMENT 'Source aggregate type',
-    aggregate_id                VARCHAR(100) NOT NULL COMMENT 'Source aggregate ID',
-    destination                 VARCHAR(100) NOT NULL COMMENT 'Logical exchange/destination',
-    routing_key                 VARCHAR(100) NOT NULL COMMENT 'Exact Rabbit routing key',
-    wire_payload                MEDIUMBLOB NOT NULL COMMENT 'Byte-exact broker wire payload',
-    wire_payload_hash           BINARY(32) NOT NULL COMMENT 'SHA-256 of wire_payload bytes',
-    status                      VARCHAR(32) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING/CLAIMED/PUBLISHED/RETRY/FAILED/EXPIRED/DEAD',
-    attempt_count               INT NOT NULL DEFAULT 0 COMMENT 'Publish attempt count',
-    next_retry_at               BIGINT DEFAULT NULL COMMENT 'Next eligible publish epoch millis',
-    lease_owner                 VARCHAR(100) DEFAULT NULL COMMENT 'Current relay lease owner',
-    lease_until                 BIGINT DEFAULT NULL COMMENT 'Relay lease expiry epoch millis',
-    active_attempt              INT NOT NULL DEFAULT 0 COMMENT 'Current transport issue/reissue attempt fence',
-    expires_at                  BIGINT NOT NULL COMMENT 'Wire message expiry epoch millis',
-    publisher_confirm_status    VARCHAR(20) NOT NULL DEFAULT 'NONE' COMMENT 'NONE/PENDING/ACK/NACK/TIMEOUT',
-    confirmed_at                BIGINT DEFAULT NULL COMMENT 'Publisher confirm completion epoch millis',
-    confirm_error               VARCHAR(2000) DEFAULT NULL COMMENT 'Publisher confirm failure detail',
-    mandatory_return_status     VARCHAR(20) NOT NULL DEFAULT 'NONE' COMMENT 'NONE/PENDING/RETURNED/NOT_RETURNED',
-    returned_at                 BIGINT DEFAULT NULL COMMENT 'Mandatory return epoch millis',
-    return_reply_code           INT DEFAULT NULL COMMENT 'Rabbit mandatory return reply code',
-    return_reply_text           VARCHAR(1000) DEFAULT NULL COMMENT 'Rabbit mandatory return reply text',
-    published_at                BIGINT DEFAULT NULL COMMENT 'Durable published disposition epoch millis',
-    last_error                  VARCHAR(2000) DEFAULT NULL COMMENT 'Last bounded relay error',
-    version                     BIGINT NOT NULL DEFAULT 0 COMMENT 'CAS version',
-    replay_parent_message_id    VARCHAR(100) DEFAULT NULL COMMENT 'Parent transport message for controlled replay',
-    replay_requester_id         VARCHAR(100) DEFAULT NULL COMMENT 'Replay requester identity',
-    replay_approver_id          VARCHAR(100) DEFAULT NULL COMMENT 'Replay approver identity',
-    replay_reason               VARCHAR(1000) DEFAULT NULL COMMENT 'Audited replay reason',
-    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Owner jiacn scope',
-    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',
-    create_time                 BIGINT DEFAULT NULL COMMENT 'Create time',
-    update_time                 BIGINT DEFAULT NULL COMMENT 'Update time',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_outbox_event_id (tenant_id, client_id, event_id),
-    KEY idx_outbox_publish (status, next_retry_at, expires_at, id),
-    KEY idx_outbox_lease (status, lease_until, id),
-    KEY idx_outbox_message (tenant_id, client_id, message_id),
-    KEY idx_outbox_delivery (tenant_id, client_id, delivery_id, status, id),
-    KEY idx_outbox_command (tenant_id, client_id, command_id, create_time, id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='Transactional Agent command outbox with byte-exact wire payload';
-```
-
-### A.9 d06-agent_consumer_inbox
-
-Statement SHA-256：`a1acce86c05e6b4092f5db11194bfd0181dfbf3e5c3f0663876be40b8e36a6a2`
-
-```sql
-CREATE TABLE IF NOT EXISTS agent_consumer_inbox (
-    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
-    consumer_name               VARCHAR(100) NOT NULL COMMENT 'Stable logical consumer name',
-    message_id                  VARCHAR(100) NOT NULL COMMENT 'Transport idempotency key',
-    event_id                    VARCHAR(100) NOT NULL COMMENT 'Source outbox row identity',
-    command_id                  VARCHAR(100) NOT NULL COMMENT 'Stable business intent idempotency key',
-    delivery_id                 BIGINT NOT NULL COMMENT 'Related delivery row ID without database FK',
-    wire_payload                MEDIUMBLOB NOT NULL COMMENT 'Byte-exact consumed wire payload',
-    wire_payload_hash           BINARY(32) NOT NULL COMMENT 'SHA-256 of wire_payload bytes',
-    status                      VARCHAR(32) NOT NULL DEFAULT 'RECEIVED' COMMENT 'RECEIVED/PROCESSING/PROCESSED/WAITING_AGENT/RETRY/FAILED/EXPIRED/DEAD',
-    result_status               VARCHAR(32) DEFAULT NULL COMMENT 'Durable prior processing result for duplicate delivery',
-    attempt_count               INT NOT NULL DEFAULT 0 COMMENT 'Consumer processing attempt count',
-    next_retry_at               BIGINT DEFAULT NULL COMMENT 'Next eligible processing epoch millis',
-    lease_owner                 VARCHAR(100) DEFAULT NULL COMMENT 'Current consumer lease owner',
-    lease_until                 BIGINT DEFAULT NULL COMMENT 'Consumer lease expiry epoch millis',
-    active_attempt              INT NOT NULL DEFAULT 0 COMMENT 'Current consumer attempt fence',
-    expires_at                  BIGINT NOT NULL COMMENT 'Wire message expiry epoch millis',
-    processed_at                BIGINT DEFAULT NULL COMMENT 'Durable processing completion epoch millis',
-    last_error                  VARCHAR(2000) DEFAULT NULL COMMENT 'Last bounded consumer error',
-    version                     BIGINT NOT NULL DEFAULT 0 COMMENT 'CAS version',
-    replay_parent_message_id    VARCHAR(100) DEFAULT NULL COMMENT 'Parent transport message for controlled replay',
-    replay_requester_id         VARCHAR(100) DEFAULT NULL COMMENT 'Replay requester identity',
-    replay_approver_id          VARCHAR(100) DEFAULT NULL COMMENT 'Replay approver identity',
-    replay_reason               VARCHAR(1000) DEFAULT NULL COMMENT 'Audited replay reason',
-    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Owner jiacn scope',
-    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',
-    create_time                 BIGINT DEFAULT NULL COMMENT 'Create time',
-    update_time                 BIGINT DEFAULT NULL COMMENT 'Update time',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_consumer_message (tenant_id, client_id, consumer_name, message_id),
-    KEY idx_inbox_retry (status, next_retry_at, expires_at, id),
-    KEY idx_inbox_lease (status, lease_until, id),
-    KEY idx_inbox_command (tenant_id, client_id, command_id, status, id),
-    KEY idx_inbox_processed (tenant_id, client_id, consumer_name, result_status, processed_at, id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='Idempotent Agent command consumer inbox with byte-exact wire payload';
-```
-
-### A.10 d06-agent_command_operation_audit
-
-Statement SHA-256：`7d94ea6a536852ada00a389dcc65a39df61f1c7d5e10ca7fa841145c9a995540`
-
-```sql
-CREATE TABLE IF NOT EXISTS agent_command_operation_audit (
-    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
-    operation_id                VARCHAR(100) NOT NULL COMMENT 'Stable privileged operation id',
-    phase                       VARCHAR(16) NOT NULL COMMENT 'REQUEST or RESULT append-only phase',
-    operation_type              VARCHAR(32) NOT NULL COMMENT 'BROKER_REDRIVE or MANUAL_REISSUE',
-    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Owner jiacn scope',
-    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',
-    task_id                     VARCHAR(100) NOT NULL COMMENT 'Exact scoped task id',
-    target_agent_id             VARCHAR(100) NOT NULL COMMENT 'Exact target Agent id',
-    command_id                  VARCHAR(100) DEFAULT NULL COMMENT 'Validated durable business command id',
-    source_message_id           VARCHAR(100) NOT NULL COMMENT 'Requested source transport message id',
-    new_message_id              VARCHAR(100) DEFAULT NULL COMMENT 'New transport id for manual reissue',
-    delivery_id                 BIGINT NOT NULL COMMENT 'Validated or requested delivery id',
-    source_attempt              INT DEFAULT NULL COMMENT 'Validated source transport attempt',
-    new_attempt                 INT DEFAULT NULL COMMENT 'New manual reissue attempt',
-    wire_hash                   BINARY(32) DEFAULT NULL COMMENT 'Validated SHA-256 only; no payload bytes',
-    requester_id                VARCHAR(100) NOT NULL COMMENT 'Trusted authenticated requester subject',
-    approver_id                 VARCHAR(100) DEFAULT NULL COMMENT 'Trusted distinct approver subject',
-    reason                      VARCHAR(1000) NOT NULL COMMENT 'Bounded operational reason',
-    ticket_reference            VARCHAR(200) NOT NULL COMMENT 'Bounded approval/change reference',
-    requested_at                BIGINT NOT NULL COMMENT 'Request epoch millis',
-    completed_at                BIGINT DEFAULT NULL COMMENT 'Terminal result epoch millis',
-    outcome                     VARCHAR(32) NOT NULL COMMENT 'REQUESTED/SUCCEEDED/REJECTED/FAILED',
-    error_code                  VARCHAR(200) DEFAULT NULL COMMENT 'Sanitized bounded error code',
-    created_by                  VARCHAR(100) NOT NULL COMMENT 'Immutable creator identity',
-    created_at                  BIGINT NOT NULL COMMENT 'Immutable creation epoch millis',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_command_operation_phase (operation_id, phase),
-    KEY idx_command_operation_scope (tenant_id, client_id, id),
-    KEY idx_command_operation_source (tenant_id, client_id, delivery_id, source_message_id, id),
-    KEY idx_command_operation_outcome (tenant_id, client_id, operation_type, outcome, created_at, id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='Append-only privileged Agent command operation audit';
-```
-
-### A.11 d06-agent_command_redrive_operation
-
-Statement SHA-256：`4c16d737d285d0391adca200bea2ab19b4eb238a7f5932b4d8093909be954030`
-
-```sql
-CREATE TABLE IF NOT EXISTS agent_command_redrive_operation (
-    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
-    operation_id                VARCHAR(100) NOT NULL COMMENT 'Stable privileged broker-redrive operation id',
-    delivery_id                 BIGINT NOT NULL COMMENT 'Reserved durable delivery row id',
-    task_id                     VARCHAR(100) NOT NULL COMMENT 'Exact scoped task id',
-    target_agent_id             VARCHAR(100) NOT NULL COMMENT 'Exact target Agent id',
-    command_id                  VARCHAR(100) NOT NULL COMMENT 'Validated durable business command id',
-    source_event_id             VARCHAR(100) NOT NULL COMMENT 'Validated source outbox event id',
-    source_message_id           VARCHAR(100) NOT NULL COMMENT 'Byte-exact source transport message id',
-    source_attempt              INT NOT NULL COMMENT 'Validated source transport attempt',
-    wire_hash                   BINARY(32) NOT NULL COMMENT 'Validated source wire SHA-256 only; no payload bytes',
-    requester_id                VARCHAR(100) NOT NULL COMMENT 'Trusted authenticated requester subject',
-    reason                      VARCHAR(1000) NOT NULL COMMENT 'Bounded operational reason',
-    ticket_reference            VARCHAR(200) NOT NULL COMMENT 'Bounded approval/change reference',
-    outcome_state               ENUM('PENDING','SUCCEEDED','FAILED') NOT NULL DEFAULT 'PENDING' COMMENT 'Exact pending-to-terminal operation outcome',
-    settlement_state            ENUM('PENDING','SOURCE_ACKED','SOURCE_REQUEUED','NOT_ACQUIRED','UNKNOWN') NOT NULL DEFAULT 'PENDING' COMMENT 'Exact source DLQ settlement proof',
-    error_code                  VARCHAR(200) DEFAULT NULL COMMENT 'Sanitized bounded terminal error code',
-    requested_at                BIGINT NOT NULL COMMENT 'Reservation epoch millis',
-    completed_at                BIGINT DEFAULT NULL COMMENT 'Terminal persistence epoch millis',
-    version                     BIGINT NOT NULL DEFAULT 0 COMMENT 'One-way terminal CAS version',
-    disposition_guard           TINYINT GENERATED ALWAYS AS (IF(outcome_state='PENDING',1,NULL)) STORED COMMENT 'Non-null while Inbox disposition must fail closed',
-    redrive_guard               TINYINT GENERATED ALWAYS AS (IF(settlement_state IN ('SOURCE_REQUEUED','NOT_ACQUIRED'),NULL,1)) STORED COMMENT 'Non-null after active, successful, or ambiguous redrive',
-    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Owner jiacn scope',
-    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',
-    create_time                 BIGINT NOT NULL COMMENT 'Immutable reservation creation epoch millis',
-    update_time                 BIGINT NOT NULL COMMENT 'Last state CAS epoch millis',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_redrive_operation_id (tenant_id, client_id, operation_id),
-    UNIQUE KEY uk_redrive_operation_guard (tenant_id, client_id, delivery_id, source_message_id, source_attempt, redrive_guard),
-    KEY idx_redrive_operation_disposition (tenant_id, client_id, delivery_id, source_message_id, source_attempt, disposition_guard),
-    KEY idx_redrive_operation_recovery (tenant_id, client_id, outcome_state, requested_at, id),
-    KEY idx_redrive_operation_scope (tenant_id, client_id, id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='Durable privileged broker-redrive reservation and recovery state';
-```
-
-### A.12 d06-trg_command_operation_audit_no_update
-
-Statement SHA-256：`1df90b5cc820f1346d9136c754a7ce885d664039c826181f6e53f7cbf1cf5d03`
-
-```sql
-CREATE TRIGGER trg_command_operation_audit_no_update
-BEFORE UPDATE ON agent_command_operation_audit
-FOR EACH ROW
-SIGNAL SQLSTATE '45000'
-    SET MESSAGE_TEXT = 'D09: operation audit rows are immutable after insert';
-```
-
-### A.13 d06-trg_command_operation_audit_no_delete
-
-Statement SHA-256：`925f8ec73e1ad59bb51932363eb74383bf05483466bd6628615a9a696ae2cc27`
-
-```sql
-CREATE TRIGGER trg_command_operation_audit_no_delete
-BEFORE DELETE ON agent_command_operation_audit
-FOR EACH ROW
-SIGNAL SQLSTATE '45000'
-    SET MESSAGE_TEXT = 'D09: physical delete of operation audit rows is forbidden';
-```
-
-## 附录B：原38类startup inventory（存在不等于启用或catalog通过）
-
-沿用原清单，仅列源码和原注解/注册条件位置，不新增38项硬门禁。
-
-| 类源码 | 条件位置 | 已证明 / 未证明 |
+| 具体冲突 | 历史PhaseA实际片段 | 当前真实严格契约 |
 |---|---|---|
-| [AgentCommandTransportSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandTransportSchemaInitializer.java#L1) | [AgentCommandTransportSchemaConfiguration.java:12](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentCommandTransportSchemaConfiguration.java#L12) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentExecutionReportSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentExecutionReportSchemaInitializer.java#L1) | 无直接conditional证据，按原registrar/callsite核对 | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentRuntimeSessionFenceSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRuntimeSessionFenceSchemaInitializer.java#L1) | [AgentRuntimeSessionFenceSchemaInitializer.java:16](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRuntimeSessionFenceSchemaInitializer.java#L16) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentRuntimeV1SchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentRuntimeV1SchemaInitializer.java#L1) | 无直接conditional证据，按原registrar/callsite核对 | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java#L1) | [AgentSchemaInitializer.java:18](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSchemaInitializer.java#L18) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentSelectedOutputFinalizationSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSelectedOutputFinalizationSchemaInitializer.java#L1) | [AgentSelectedOutputFinalizationConfiguration.java:13](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSelectedOutputFinalizationConfiguration.java#L13) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskBountyBootstrapOutboxSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskBountyBootstrapOutboxSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskBountyQuoteSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskBountyQuoteSchemaInitializer.java#L1) | [AgentTaskFundingSchemaConfiguration.java:12](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L12)；[AgentTaskFundingSchemaConfiguration.java:18](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L18)；[AgentTaskFundingSchemaConfiguration.java:24](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L24) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskCreationOperationSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskCreationOperationSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskExecutionGrantSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskExecutionGrantSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskFormalDeliverySchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFormalDeliverySchemaInitializer.java#L1) | [AgentTaskFormalDeliveryConfiguration.java:12](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFormalDeliveryConfiguration.java#L12) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskFundingSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaInitializer.java#L1) | [AgentTaskFundingSchemaConfiguration.java:12](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L12)；[AgentTaskFundingSchemaConfiguration.java:18](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L18)；[AgentTaskFundingSchemaConfiguration.java:24](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L24) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskProviderCostConsentSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskProviderCostConsentSchemaInitializer.java#L1) | [ControlledImageProviderConfiguration.java:15](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L15)；[ControlledImageProviderConfiguration.java:16](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L16)；[ControlledImageProviderConfiguration.java:22](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L22)；[ControlledImageProviderConfiguration.java:23](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L23)；[ControlledImageProviderConfiguration.java:29](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L29)；[ControlledImageProviderConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L30) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskRequirementSnapshotSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskRequirementSnapshotSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [AgentTaskSettlementSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskSettlementSchemaInitializer.java#L1) | [AgentTaskFundingSchemaConfiguration.java:12](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L12)；[AgentTaskFundingSchemaConfiguration.java:18](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L18)；[AgentTaskFundingSchemaConfiguration.java:24](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L24) | JAR有class；不推定live Bean/全catalog等价 |
-| [ControlledImageBridgeSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageBridgeSchemaInitializer.java#L1) | [ControlledImageProviderConfiguration.java:15](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L15)；[ControlledImageProviderConfiguration.java:16](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L16)；[ControlledImageProviderConfiguration.java:22](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L22)；[ControlledImageProviderConfiguration.java:23](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L23)；[ControlledImageProviderConfiguration.java:29](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L29)；[ControlledImageProviderConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L30) | JAR有class；不推定live Bean/全catalog等价 |
-| [ControlledImageExecutionSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageExecutionSchemaInitializer.java#L1) | [ControlledImageProviderConfiguration.java:15](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L15)；[ControlledImageProviderConfiguration.java:16](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L16)；[ControlledImageProviderConfiguration.java:22](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L22)；[ControlledImageProviderConfiguration.java:23](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L23)；[ControlledImageProviderConfiguration.java:29](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L29)；[ControlledImageProviderConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageProviderConfiguration.java#L30) | JAR有class；不推定live Bean/全catalog等价 |
-| [ControlledImageFollowupV3SchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializer.java#L1) | [ControlledImageFollowupV3SchemaInitializer.java:26](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializer.java#L26)；[ControlledImageFollowupV3SchemaInitializer.java:27](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/ControlledImageFollowupV3SchemaInitializer.java#L27) | JAR有class；不推定live Bean/全catalog等价 |
-| [HallPrivateCaseSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/HallPrivateCaseSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [HallPrivateMarkSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/HallPrivateMarkSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [HallRequestDraftSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/HallRequestDraftSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [PersonalWorkspaceConversationLinkSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceConversationLinkSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [PersonalWorkspaceExecutionSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceExecutionSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [PersonalWorkspaceSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [PersonalWorkspaceTaskLinkSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceTaskLinkSchemaInitializer.java#L1) | [PersonalWorkspaceStorageConfiguration.java:30](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L30)；[PersonalWorkspaceStorageConfiguration.java:36](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L36)；[PersonalWorkspaceStorageConfiguration.java:42](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L42)；[PersonalWorkspaceStorageConfiguration.java:49](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L49)；[PersonalWorkspaceStorageConfiguration.java:55](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L55)；[PersonalWorkspaceStorageConfiguration.java:61](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L61)；[PersonalWorkspaceStorageConfiguration.java:67](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L67)；[PersonalWorkspaceStorageConfiguration.java:74](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L74)；[PersonalWorkspaceStorageConfiguration.java:81](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L81)；[PersonalWorkspaceStorageConfiguration.java:88](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L88)；[PersonalWorkspaceStorageConfiguration.java:95](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/PersonalWorkspaceStorageConfiguration.java#L95) | JAR有class；不推定live Bean/全catalog等价 |
-| [ArchiveQuestionSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveQuestionSchemaInitializer.java#L1) | [ArchiveQuestionSchemaInitializer.java:20](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveQuestionSchemaInitializer.java#L20)；[ArchiveQuestionSchemaInitializer.java:21](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveQuestionSchemaInitializer.java#L21) | JAR有class；不推定live Bean/全catalog等价 |
-| [ArchiveReaderDataSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveReaderDataSchemaInitializer.java#L1) | [ArchiveReaderDataSchemaInitializer.java:19](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveReaderDataSchemaInitializer.java#L19) | JAR有class；不推定live Bean/全catalog等价 |
-| [ArchiveSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveSchemaInitializer.java#L1) | [ArchiveSchemaInitializer.java:19](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveSchemaInitializer.java#L19) | JAR有class；不推定live Bean/全catalog等价 |
-| [ChatConversationArchiveSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatConversationArchiveSchemaInitializer.java#L1) | [ChatConversationArchiveSchemaInitializer.java:21](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatConversationArchiveSchemaInitializer.java#L21)；[ChatConversationArchiveSchemaInitializer.java:22](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatConversationArchiveSchemaInitializer.java#L22) | JAR有class；不推定live Bean/全catalog等价 |
-| [ChatDeliberationSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatDeliberationSchemaInitializer.java#L1) | [ChatDeliberationSchemaInitializer.java:25](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatDeliberationSchemaInitializer.java#L25) | JAR有class；不推定live Bean/全catalog等价 |
-| [ChatSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSchemaInitializer.java#L1) | [ChatSchemaInitializer.java:21](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSchemaInitializer.java#L21) | JAR有class；不推定live Bean/全catalog等价 |
-| [ChatSelectedOutputFinalizationSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSelectedOutputFinalizationSchemaInitializer.java#L1) | [ChatSelectedOutputFinalizationSchemaInitializer.java:21](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSelectedOutputFinalizationSchemaInitializer.java#L21)；[ChatSelectedOutputFinalizationSchemaInitializer.java:22](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSelectedOutputFinalizationSchemaInitializer.java#L22) | JAR有class；不推定live Bean/全catalog等价 |
-| [ChatTypedDeliberationSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializer.java#L1) | [ChatTypedDeliberationSchemaInitializer.java:24](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializer.java#L24) | JAR有class；不推定live Bean/全catalog等价 |
-| [EconomyHostingRentSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyHostingRentSchemaInitializer.java#L1) | [EconomyConfiguration.java:18](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyConfiguration.java#L18)；[EconomyConfiguration.java:24](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyConfiguration.java#L24) | JAR有class；不推定live Bean/全catalog等价 |
-| [EconomySchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomySchemaInitializer.java#L1) | [EconomyConfiguration.java:18](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyConfiguration.java#L18)；[EconomyConfiguration.java:24](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyConfiguration.java#L24) | JAR有class；不推定live Bean/全catalog等价 |
-| [EconomySkillApplicationSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomySkillApplicationSchemaInitializer.java#L1) | [SkillMarketplaceConfiguration.java:8](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/agent/jia-agent-service/src/main/java/cn/jia/agent/config/SkillMarketplaceConfiguration.java#L8) | JAR有class；不推定live Bean/全catalog等价 |
-| [EconomySkillSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomySkillSchemaInitializer.java#L1) | [EconomySkillMarketplaceConfiguration.java:14](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomySkillMarketplaceConfiguration.java#L14) | JAR有class；不推定live Bean/全catalog等价 |
-| [WxDailyVoteSchemaInitializer.java:1](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/wx/jia-wx-service/src/main/java/cn/jia/wx/config/WxDailyVoteSchemaInitializer.java#L1) | [WxDailyVoteSchemaInitializer.java:22](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/wx/jia-wx-service/src/main/java/cn/jia/wx/config/WxDailyVoteSchemaInitializer.java#L22)；[WxDailyVoteSchemaInitializer.java:23](/home/isp/wsps/worktrees/ur05-api-local-release-20261009T1320/wx/jia-wx-service/src/main/java/cn/jia/wx/config/WxDailyVoteSchemaInitializer.java#L23) | JAR有class；不推定live Bean/全catalog等价 |
+| quote额外owner列/owner_scope索引 | [single-tenant-task-owner-ddl.sql:166](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/single-tenant-task-owner-ddl.sql#L166) 的166–179行加nullable `owner_jiacn VARCHAR(50)`；[single-tenant-task-owner-ddl.sql:383](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/single-tenant-task-owner-ddl.sql#L383) 的383–394行建 `idx_agent_task_bounty_quote_owner_scope(tenant_id,client_id,owner_jiacn,task_id,id)` | [AgentTaskBountyQuoteSchemaInitializer.java:88](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskBountyQuoteSchemaInitializer.java#L88) 的88–95行按ordinal_position读取全部物理列，93行以 `spec.columns().equals(...)` 全列表严格相等，额外owner列必拒绝；[AgentTaskBountyQuoteSchemaInitializer.java:104](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskBountyQuoteSchemaInitializer.java#L104) 的104–124行也严格比完整索引集合，不只核必需索引 |
+| claim_operation同类冲突 | [single-tenant-task-owner-ddl.sql:180](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/single-tenant-task-owner-ddl.sql#L180) 的180–193行加同owner列；[single-tenant-task-owner-ddl.sql:397](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/single-tenant-task-owner-ddl.sql#L397) 的397–408行建 `idx_agent_task_bounty_claim_owner_scope(tenant_id,client_id,owner_jiacn,task_id,id)` | 同quote initializer，[AgentTaskBountyQuoteSchemaInitializer.java:22](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskBountyQuoteSchemaInitializer.java#L22) 的22–24行TABLES明确包含两表；正式 [agent-task-bounty-quote-v0.sql:2](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-task-bounty-quote-v0.sql#L2) 的2–74行两表无owner_jiacn，按principal_type/principal_id及原scope定义 |
+| settlement列及非唯一索引也冲突 | [single-tenant-task-owner-ddl.sql:194](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/single-tenant-task-owner-ddl.sql#L194) 的194–207行加同owner列；[single-tenant-task-owner-ddl.sql:411](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/single-tenant-task-owner-ddl.sql#L411) 的411–422行建 `idx_agent_task_bounty_settlement_owner_scope(tenant_id,client_id,owner_jiacn,task_id,id)` | **实际类为AgentTaskSettlementSchemaInitializer，不是AgentTaskBountySettlementSchemaInitializer**：[AgentTaskSettlementSchemaInitializer.java:67](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskSettlementSchemaInitializer.java#L67) 的67–78行、尤其71行按物理列完整有序列表严格相等，[AgentTaskSettlementSchemaInitializer.java:111](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskSettlementSchemaInitializer.java#L111) 的111–118行expected columns无owner；[AgentTaskSettlementSchemaInitializer.java:80](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskSettlementSchemaInitializer.java#L80) 的80–91行要求索引non_unique=0及仅原PRIMARY/两个unique完整集合，额外非唯一owner_scope索引也拒绝。正式 [agent-task-bounty-settlement-v0.sql:2](/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-task-bounty-settlement-v0.sql#L2) 的2–31行亦无owner列 |
+
+- **实际启动影响。** [AgentTaskFundingSchemaConfiguration.java:17](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskFundingSchemaConfiguration.java#L17) 的17–26行在 `economy.preview.enabled=true` 注册quote与settlement initializer；settlement [AgentTaskSettlementSchemaInitializer.java:35](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentTaskSettlementSchemaInitializer.java#L35) 的35–39行对已存在表直接validateCatalog。因此盲执行完整旧PhaseA后，在这组initializer启用的启动/重启中会因额外列/索引失败，不能用“nullable/additive”或“只加owner”宣称安全。
+- **调用边界已定向核实。** 全生产 `src/main` 未发现该SQL资源的调用；生产initializer引用各自正式quote/settlement资源，而非PhaseA。UR06 fixture [Ur06EnrollMysqlFixture.java:258](/home/isp/wsps/cyf/api/agent/jia-agent-service/src/ur06EnrollMysql/java/cn/jia/agent/acceptance/ur06/Ur06EnrollMysqlFixture.java#L258) 的258–267行 `initializeM4()` 在同一JDBC连接依次执行原E05 SQL及整个PhaseA；另默认测试仅注释提及PhaseA。fixture引用不能替代生产调用/当前严格catalog兼容证明，也不能把该旧片段自动扩入生产迁移范围。
+- **最小待补，仍只详设。** 原Owner需以当前冻结bounty表契约统一历史脚本、对应initializer/schema资源和UR06消费片段，明确哪些owner扩列/索引不适用；不能先加生产列再宽松放过strict检查，不能猜principal_id等于owner并回填历史数据。补定向合同回归：当前正式三表strict通过；额外owner列/额外owner_scope索引分别明确拒绝；适配后的PhaseA/fixture执行后再启动原initializer保持strict通过。保留ACL/幂等/主键唯一及列类型/顺序完整校验，不扩新DDL/协议/第二实现。
+- **本轮不执行未适配旧片段，不改源码/生产。** 它不属于已全部执行且strict postcheck PASS的原13DDL；Main配置已写且后端installer verified exit0，此处仅保留真实schema不一致备忘，不把已完成13DDL再次标为待交付。
+
+前后端发布、原13DDL与配置已完成，不再列为待交付；仍不等于Runtime切流/真实auth与生产命令链恢复、§2–5或全UR05完成，MQ未接线不盲启。待开发按新source及原合同断言收口，待交付按本批版本/commit/tree/制品SHA/安装配置/catalog/在线业务证据核销；已由Main核销的前后端发布、原13DDL/strict postcheck、配置与kit source恢复不重新记为待开发/待发布，不用历史回执填当前PASS；文档整理不增加发布硬门槛。
