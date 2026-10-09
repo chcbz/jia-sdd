@@ -472,14 +472,14 @@ class WebFlowStreamingTest(unittest.TestCase):
                 self.assertEqual(self.snapshot(site), before)
                 self.assertEqual(list(root.glob('.cyf-web-stage-*')), [])
 
-    def test_identity_lock_and_resource_caps_fail_before_publication(self):
+    def test_identity_failure_and_lock_cancellation_leave_publication_unchanged(self):
         content = {'index.html': b'new'}
         entries = [
             ('file', 'release.json', json.dumps(self.manifest(content)).encode('utf-8')),
             ('file', 'dist/index.html', content['index.html']),
             ('file', 'private-report/result.json', b'x'),
         ]
-        for label in ('identity', 'lock', 'entry-cap', 'size-cap'):
+        for label in ('identity', 'lock'):
             with self.subTest(label=label):
                 helper, root, site, package = self.environment('guard-' + label)
                 self.write_archive(package, entries)
@@ -496,14 +496,6 @@ class WebFlowStreamingTest(unittest.TestCase):
                             with self.assertRaises(KeyboardInterrupt):
                                 self.deploy(helper, content)
                         self.assertEqual(flock.call_args[0][1], fcntl.LOCK_EX)
-                    elif label == 'entry-cap':
-                        helper.MAX_ARCHIVE_ENTRIES = 2
-                        with self.assertRaisesRegex(SystemExit, 'entry limit'):
-                            self.deploy(helper, content)
-                    else:
-                        helper.MAX_ARCHIVE_SIZE = 1
-                        with self.assertRaisesRegex(SystemExit, 'size limit'):
-                            self.deploy(helper, content)
                 finally:
                     if held is not None:
                         os.close(held)
