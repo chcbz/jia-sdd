@@ -364,5 +364,353 @@ raise SystemExit(%d)
                 deploy.validated_release_members(archive)
 
 
+class ApiLocalClosedContractTest(unittest.TestCase):
+    """Pure synthetic type/binding units; no real authority/build/install claim.
+
+    FileRefs intentionally do not name existing files. Runtime acceptance must
+    independently verify protected descriptors/publication/proofs before calling
+    these comparison helpers. This is not the production inspector or installer.
+    """
+    def setUp(self):
+        import copy
+        self.copy = copy.deepcopy
+        self.ref = lambda label: {'path': '/var/lib/cyf-api-flow/local-fixture/' + label,
+            'sha256': 'a' * 64, 'size': 100}
+        ident = {'version': '1.0.2-unit', 'buildId': 'opaque-build.20261009',
+                 'commit': 'a' * 40, 'tree': 'b' * 40}
+        self.precondition = {
+            'canonicalJarSha256': 'c' * 64, 'installedRecord': None, 'approval': None,
+            'runtimeGeneration': {'pid': 123, 'startTicks': '456', 'jarSha256': 'c' * 64},
+            'identityInventory': self.ref('identities.json'),
+            'inflightInventory': self.ref('inflight.json'),
+            'schemaInventory': self.ref('schema-inventory.json'),
+        }
+        self.decision = {
+            'format': 'cyf-api-local-install-decision-v1', 'status': 'approved',
+            'scope': deploy.LOCAL_SCOPE, 'source': {'kind': 'local-build-v1',
+                'identity': ident, 'batchId': 'explicit-unit-batch'},
+            'admission': self.ref('admission.json'), 'package': {'sha256': 'd' * 64, 'size': 1000},
+            'payloads': {name: {'sha256': 'e' * 64, 'size': 100} for name in deploy.LOCAL_MEMBERS},
+            'buildEvidence': self.ref('build-evidence.json'),
+            'controllerVerification': self.ref('controller-verification.json'),
+            'maintenanceAuthority': self.ref('maintenance-authority.json'),
+            'precondition': self.copy(self.precondition),
+            'schemaPlan': self.ref('schema-plan.json'), 'helperCatalog': self.ref('helpers.json'),
+            'rollbackPolicy': 'forward-only', 'productionAuthorized': True,
+        }
+        self.authority = {
+            'format': 'cyf-api-local-maintenance-authority-v1', 'authorityId': deploy.LOCAL_AUTHORITY_ID,
+            'scope': deploy.LOCAL_SCOPE, 'authorizationId': 'explicit-unit-permission',
+            'authorizationEvidence': self.ref('separate-permission.json'),
+            'release': {k: self.copy(self.decision[k]) for k in ('source', 'admission', 'package', 'payloads')},
+            'schemaPlan': self.copy(self.decision['schemaPlan']),
+            'helperCatalog': self.copy(self.decision['helperCatalog']),
+            'precondition': self.copy(self.precondition),
+            'operations': {'apiInstall': True, 'apiStopStart': True, 'schemaApply': True, 'helperInstall': False},
+            'rollbackPolicy': 'forward-only', 'recoveryScope': deploy.LOCAL_RECOVERY_SCOPE,
+            'productionAuthorized': True,
+        }
+        self.schema = {
+            'format': 'cyf-api-local-schema-plan-v1',
+            'partialDdlPolicy': 'introspect-equivalent-skip-missing-only-no-drop-no-ddl-rollback',
+            'entries': [], 'resourcePreconditions': [],
+        }
+        for name in deploy.LOCAL_PROOF_REFS:
+            self.schema[name] = self.ref(name + '.json')
+        for feature, runner, inner, sql_sha in (
+            ('F06', deploy.SCHEMA_RUNNER, 'db/agent-task-artifact-outcome-f06.sql', deploy.SCHEMA_SQL_SHA256),
+            ('E05', deploy.E05_SCHEMA_RUNNER, 'db/agent-work-item-reassignment-e05.sql', deploy.E05_SCHEMA_SQL_SHA256),
+        ):
+            runner_ref = self.ref(feature)
+            runner_ref['path'] = str(runner)
+            self.schema['entries'].append({'feature': feature, 'runner': runner_ref,
+                'resourceOuter': deploy.LOCAL_AGENT_MAPPER, 'resourceInner': inner,
+                'sqlSha256': sql_sha, 'statementPolicy': 'exact_create_table_if_not_exists_only',
+                'expectedCatalogSha256': 'f' * 64})
+        for name, outer, inner in deploy.LOCAL_RESOURCES:
+            self.schema['resourcePreconditions'].append({'name': name, 'resourceOuter': outer,
+                'resourceInner': inner, 'sqlSha256': 'a' * 64, 'expectedCatalogSha256': 'f' * 64,
+                'actualSchemaProof': self.ref(name + '-proof.json')})
+        self.catalog = {'format': 'cyf-api-local-helper-catalog-v1', 'sourceCommit': 'a' * 40,
+            'sourceTree': 'b' * 40, 'helpers': {}, 'kitRole': 'reuse-installed-no-local-record-change'}
+        for name, path in deploy.LOCAL_HELPER_PATHS.items():
+            ref = self.ref(name)
+            ref['path'] = path
+            self.catalog['helpers'][name] = ref
+        self.binding = deploy.local_binding_from_decision(self.decision, self.ref('decision.json'))
+        self.approval = {'schema_version': 3, 'release': self.copy(self.binding),
+            'binding_sha256': deploy.local_binding_sha(self.binding), 'consumed': False, 'consumed_at': None}
+        self.record = {'schema_version': 3, 'status': 'prepared', 'phase': 'pre_cutover',
+            'recovery': 'not_started', 'release': self.copy(self.binding),
+            'binding_sha256': deploy.local_binding_sha(self.binding),
+            'candidate_sha256': 'e' * 64, 'previous_sha256': 'c' * 64,
+            'backup': str(deploy.BACKUPS / ('20261009T120000Z-' + 'e' * 64 + '-123.jar')),
+            'candidate_stop_rc': 255, 'timestamp': '20261009T120000Z'}
+
+    def reject(self, function, value, code=None):
+        with self.assertRaises(deploy.LocalRejected) as caught:
+            function(value)
+        self.assertIn(caught.exception.code, deploy.LOCAL_SAFE_CODES)
+        self.assertEqual(str(caught.exception), caught.exception.code)
+        if code is not None:
+            self.assertEqual(caught.exception.code, code)
+
+    def test_closed_json_rejects_duplicate_nan_float_exponent_and_bad_encoding(self):
+        for raw in (b'{"key":1,"key":2}', b'{"nested":{"k":1,"k":2}}', b'{"key":NaN}',
+                    b'{"key":Infinity}', b'{"key":1.0}', b'{"key":1e999}', b'\xff'):
+            with self.subTest(raw=repr(raw)):
+                self.reject(deploy.local_json, raw)
+        self.assertEqual(deploy.local_json(b'{"n":1,"absent":null,"flag":false}'),
+                         {'n': 1, 'absent': None, 'flag': False})
+
+    def test_file_ref_grammar_and_integer_types_are_exact_not_presence(self):
+        self.assertEqual(deploy.local_ref(self.ref('proof.json')), self.ref('proof.json'))
+        for size in (True, False, -1, 1.0, '100', None):
+            item = self.ref('proof.json'); item['size'] = size
+            self.reject(deploy.local_ref, item)
+        for path in ('relative', '//var/lib/proof', '/var//lib/proof', '/var/lib/../proof',
+                     '/var/lib/./proof', '/var/lib/proof/', '/var/lib/proof\n', '/var/lib/a\\b'):
+            item = self.ref('proof.json'); item['path'] = path
+            self.reject(deploy.local_ref, item, 'PATH_UNSAFE')
+        for digest in ('A' * 64, 'a' * 63, 'a' * 65, True, None):
+            item = self.ref('proof.json'); item['sha256'] = digest
+            self.reject(deploy.local_ref, item)
+        item = self.ref('proof.json'); item['extra'] = 'unreviewed'
+        self.reject(deploy.local_ref, item)
+
+    def test_local_source_is_opaque_and_never_flow_run_or_legacy_alias(self):
+        self.assertEqual(deploy.local_source(self.decision['source']), self.decision['source'])
+        for obj in ({**self.decision['source'], 'run_id': '120'},
+                    {**self.decision['source'], 'kind': 'flow-run-v1'},
+                    {**self.decision['source'], 'batchId': 'bad\nidentity'}):
+            self.reject(deploy.local_source, obj, 'SOURCE_IDENTITY_MISMATCH')
+        for field in ('version', 'buildId', 'commit', 'tree'):
+            for value in (None, True, '', 'bad\nvalue'):
+                obj = self.copy(self.decision['source']); obj['identity'][field] = value
+                self.reject(deploy.local_source, obj, 'SOURCE_IDENTITY_MISMATCH')
+
+    def test_precondition_requires_explicit_absence_generation_and_all_inventories(self):
+        self.assertEqual(deploy.local_precondition(self.precondition), self.precondition)
+        for key in self.precondition:
+            value = self.copy(self.precondition); del value[key]
+            self.reject(deploy.local_precondition, value)
+        for field, bad in (('pid', True), ('pid', 0), ('pid', '123'), ('startTicks', '0'),
+                           ('startTicks', 456), ('jarSha256', 'f' * 64)):
+            value = self.copy(self.precondition); value['runtimeGeneration'][field] = bad
+            self.reject(deploy.local_precondition, value, 'CANONICAL_GENERATION_CHANGED')
+        for key in ('installedRecord', 'approval'):
+            value = self.copy(self.precondition); value[key] = False
+            self.reject(deploy.local_precondition, value)
+
+    def test_schema_plan_requires_exact_ten_ordered_resources_and_four_proofs(self):
+        self.assertIs(deploy.local_schema_plan(self.schema), self.schema)
+        for name in deploy.LOCAL_PROOF_REFS:
+            value = self.copy(self.schema); del value[name]
+            self.reject(deploy.local_schema_plan, value, 'SCHEMA_PREREQUISITE_MISSING')
+            value = self.copy(self.schema); value[name] = None
+            self.reject(deploy.local_schema_plan, value, 'SCHEMA_PREREQUISITE_MISSING')
+        for index in range(len(deploy.LOCAL_RESOURCES)):
+            value = self.copy(self.schema); value['resourcePreconditions'].pop(index)
+            self.reject(deploy.local_schema_plan, value, 'SCHEMA_PREREQUISITE_MISSING')
+            value = self.copy(self.schema); del value['resourcePreconditions'][index]['actualSchemaProof']
+            self.reject(deploy.local_schema_plan, value, 'SCHEMA_PREREQUISITE_MISSING')
+            value = self.copy(self.schema); value['resourcePreconditions'][index]['expectedCatalogSha256'] = None
+            self.reject(deploy.local_schema_plan, value, 'SCHEMA_CATALOG_DRIFT')
+        value = self.copy(self.schema); value['resourcePreconditions'].reverse()
+        self.reject(deploy.local_schema_plan, value, 'SCHEMA_RESOURCE_MISMATCH')
+        value = self.copy(self.schema); value['resourcePreconditions'] += value['resourcePreconditions'][:1]
+        self.reject(deploy.local_schema_plan, value, 'SCHEMA_PREREQUISITE_MISSING')
+        value = self.copy(self.schema); value['resourcePreconditions'] = value['resourcePreconditions'][3:4] + value['resourcePreconditions'][6:7]
+        self.reject(deploy.local_schema_plan, value, 'SCHEMA_PREREQUISITE_MISSING')
+
+    def test_schema_entries_must_bind_same_batch_resources_and_exact_create_only(self):
+        for field, value in (('feature', 'F06'), ('sqlSha256', '0' * 64),
+                             ('resourceOuter', 'BOOT-INF/lib/wrong.jar'),
+                             ('resourceInner', 'db/unknown.sql'), ('statementPolicy', 'allow-alter')):
+            plan = self.copy(self.schema); plan['entries'][1][field] = value
+            self.reject(deploy.local_schema_plan, plan, 'SCHEMA_RESOURCE_MISMATCH')
+        plan = self.copy(self.schema); plan['entries'].reverse()
+        self.reject(deploy.local_schema_plan, plan, 'SCHEMA_RESOURCE_MISMATCH')
+        plan = self.copy(self.schema); plan['entries'][1]['runner']['path'] = '/tmp/unreviewed-runner'
+        self.reject(deploy.local_schema_plan, plan, 'SCHEMA_RESOURCE_MISMATCH')
+        plan = self.copy(self.schema); plan['resourcePreconditions'][1]['resourceInner'] = 'db/old-identity.sql'
+        self.reject(deploy.local_schema_plan, plan, 'SCHEMA_RESOURCE_MISMATCH')
+
+    def test_helper_catalog_is_exact_installed_paths_and_no_kit_reimplementation(self):
+        self.assertIs(deploy.local_helper_catalog(self.catalog), self.catalog)
+        for helper in deploy.LOCAL_HELPER_PATHS:
+            cat = self.copy(self.catalog); del cat['helpers'][helper]
+            self.reject(deploy.local_helper_catalog, cat, 'HELPER_CATALOG_MISMATCH')
+            cat = self.copy(self.catalog); cat['helpers'][helper]['path'] = '/tmp/' + helper
+            self.reject(deploy.local_helper_catalog, cat, 'HELPER_CATALOG_MISMATCH')
+        cat = self.copy(self.catalog); cat['kitRole'] = 'replace-kit'
+        self.reject(deploy.local_helper_catalog, cat, 'HELPER_CATALOG_MISMATCH')
+        cat = self.copy(self.catalog); cat['helpers']['second-installer'] = self.ref('second-installer')
+        self.reject(deploy.local_helper_catalog, cat, 'HELPER_CATALOG_MISMATCH')
+
+    def test_install_decision_requires_exact_permission_and_every_bound_field(self):
+        self.assertIs(deploy.local_install_decision(self.decision), self.decision)
+        for key in self.decision:
+            value = self.copy(self.decision); del value[key]
+            self.reject(deploy.local_install_decision, value)
+        for key, bad in (('productionAuthorized', 1), ('productionAuthorized', False),
+                         ('status', 'admitted'), ('scope', 'artifact-admission-only'),
+                         ('rollbackPolicy', 'env-inferred'), ('package', {'sha256': 'd' * 64, 'size': True})):
+            value = self.copy(self.decision); value[key] = bad
+            self.reject(deploy.local_install_decision, value)
+        value = self.copy(self.decision); value['run_id'] = '123'
+        self.reject(deploy.local_install_decision, value)
+
+    def test_independent_maintenance_has_exact_operations_no_cli_or_artifact_escalation(self):
+        checked = deploy.local_authority_matches(self.decision, self.authority, ('apiInstall', 'apiStopStart', 'schemaApply'))
+        self.assertIs(checked, self.authority)
+        for operation in ('apiInstall', 'apiStopStart', 'schemaApply'):
+            value = self.copy(self.authority); value['operations'][operation] = False
+            with self.assertRaises(deploy.LocalRejected) as caught:
+                deploy.local_authority_matches(self.decision, value, (operation,))
+            self.assertEqual(caught.exception.code, 'MAINTENANCE_SCOPE_MISSING')
+        for bad in (1, 'true', None):
+            value = self.copy(self.authority); value['operations']['helperInstall'] = bad
+            self.reject(deploy.local_maintenance_authority, value, 'MAINTENANCE_SCOPE_MISSING')
+        for field in ('schemaPlan', 'helperCatalog', 'precondition', 'rollbackPolicy', 'release'):
+            value = self.copy(self.authority)
+            if field == 'rollbackPolicy': value[field] = 'rollback-compatible'
+            elif field == 'precondition': value[field]['identityInventory']['sha256'] = 'f' * 64
+            elif field == 'release': value[field]['source']['batchId'] = 'foreign-batch'
+            else: value[field]['sha256'] = 'f' * 64
+            with self.assertRaises(deploy.LocalRejected) as caught:
+                deploy.local_authority_matches(self.decision, value)
+            self.assertEqual(caught.exception.code, 'AUTHORITY_INVALID')
+        value = self.copy(self.authority); value['authorizationEvidence'] = None
+        self.reject(deploy.local_maintenance_authority, value, 'AUTHORITY_INVALID')
+
+    def test_release_binding_excludes_mutable_envelope_and_is_canonical_not_self_hashed(self):
+        original = self.copy(self.binding)
+        digest = deploy.local_binding_sha(self.binding)
+        reversed_keys = dict(reversed(list(self.binding.items())))
+        self.assertEqual(deploy.local_binding_sha(reversed_keys), digest)
+        self.assertEqual(self.binding, original)
+        for field in ('source', 'decision', 'admission', 'maintenanceAuthority', 'schemaPlan', 'helperCatalog'):
+            value = self.copy(self.binding)
+            if field == 'source': value[field]['batchId'] = 'different-batch'
+            else: value[field]['sha256'] = 'f' * 64
+            self.assertNotEqual(deploy.local_binding_sha(value), digest)
+        for key in ('binding_sha256', 'run_id', 'status', 'phase'):
+            value = self.copy(self.binding); value[key] = 'unreviewed'
+            self.reject(deploy.local_binding_sha, value, 'RECOVERY_BINDING_MISMATCH')
+
+    def test_approval_v3_never_infers_consumption_or_accepts_boolean_version(self):
+        self.assertIs(deploy.local_approval(self.approval), self.approval)
+        consumed = self.copy(self.approval); consumed.update(consumed=True, consumed_at='20261009T120000Z')
+        self.assertIs(deploy.local_approval(consumed), consumed)
+        for field, bad in (('schema_version', True), ('schema_version', 2), ('consumed', 1),
+                           ('consumed_at', '20261009T120000Z'), ('binding_sha256', 'f' * 64)):
+            value = self.copy(self.approval); value[field] = bad
+            self.reject(deploy.local_approval, value)
+        value = self.copy(consumed); value['consumed_at'] = None
+        self.reject(deploy.local_approval, value)
+        value = self.copy(self.approval); del value['consumed_at']
+        self.reject(deploy.local_approval, value)
+
+    def test_install_record_retains_original_phases_exact_candidate_and_backup(self):
+        for status in ('prepared', 'activating', 'active_pending', 'rolling_back', 'installed', 'failed'):
+            value = self.copy(self.record); value['status'] = status
+            self.assertIs(deploy.local_install_record(value), value)
+        for field, bad in (('status', 'healthy-inferred-installed'), ('phase', 'bad phase'),
+                           ('recovery', 'unknown\nvalue'), ('candidate_stop_rc', True),
+                           ('candidate_stop_rc', -1), ('candidate_stop_rc', 256),
+                           ('timestamp', '2026-10-09'), ('backup', '/tmp/unreviewed.jar'),
+                           ('candidate_sha256', 'a' * 64), ('binding_sha256', 'a' * 64)):
+            value = self.copy(self.record); value[field] = bad
+            self.reject(deploy.local_install_record, value)
+        for field in self.record:
+            value = self.copy(self.record); del value[field]
+            self.reject(deploy.local_install_record, value)
+        value = self.copy(self.record); value['run_id'] = '120'
+        self.reject(deploy.local_install_record, value)
+
+    def publication(self):
+        admitted = {'format': 'cyf-api-local-admitted-input-v1', 'status': 'admitted',
+            'source': {k: self.copy(self.decision['source'][k]) for k in ('kind', 'identity')},
+            'authority': {'authorityId': deploy.LOCAL_AUTHORITY_ID,
+                'batchId': self.decision['source']['batchId'], 'batchAuthority': self.ref('batch.json'),
+                'trustedRecord': self.ref('trusted.json'),
+                'verificationRecord': self.copy(self.decision['controllerVerification'])},
+            'package': {**self.decision['package'], 'path': self.ref('package.tgz')['path']},
+            'payloads': {name: {**self.decision['payloads'][name], 'path': self.ref(name)['path']}
+                         for name in deploy.LOCAL_MEMBERS},
+            'evidence': {'buildEvidence': self.copy(self.decision['buildEvidence']),
+                'snapshots': [{'role': 'build-evidence', 'originalPath': '/original/source/build.json',
+                               'file': self.copy(self.decision['buildEvidence'])}]},
+            'installPrecondition': {'canonicalJarSha256': self.precondition['canonicalJarSha256']},
+            'scope': 'artifact-admission-only', 'productionAuthorized': False}
+        verified = {'format': 'cyf-api-local-published-verification-v1', 'status': 'verified',
+            'scope': 'artifact-admission-only', 'productionAuthorized': False,
+            'admission': self.copy(self.decision['admission']), 'source': self.copy(admitted['source'])}
+        return admitted, verified
+
+    def test_publication_projection_must_stay_artifact_only_and_match_copied_proofs(self):
+        admitted, verified = self.publication()
+        original = self.copy((admitted, verified, self.decision))
+        self.assertIs(deploy.local_publication_matches(self.decision, admitted, verified), self.decision)
+        self.assertEqual((admitted, verified, self.decision), original)
+        for field in ('productionAuthorized', 'scope', 'status'):
+            changed = self.copy(admitted)
+            changed[field] = True if field == 'productionAuthorized' else 'wrong'
+            with self.assertRaises(deploy.LocalRejected):
+                deploy.local_publication_matches(self.decision, changed, verified)
+        changed = self.copy(verified); changed['productionAuthorized'] = True
+        with self.assertRaises(deploy.LocalRejected):
+            deploy.local_publication_matches(self.decision, admitted, changed)
+        for field in ('package', 'payloads', 'buildEvidence', 'controllerVerification', 'precondition'):
+            changed = self.copy(self.decision)
+            if field == 'payloads': changed[field]['application.jar']['sha256'] = 'f' * 64
+            elif field == 'precondition':
+                changed[field]['canonicalJarSha256'] = 'f' * 64
+                changed[field]['runtimeGeneration']['jarSha256'] = 'f' * 64
+            else: changed[field]['sha256'] = 'f' * 64
+            with self.assertRaises(deploy.LocalRejected):
+                deploy.local_publication_matches(changed, admitted, verified)
+
+    def test_schema_recovery_requires_separate_exact_installed_release_and_prior_proofs(self):
+        value = {'format': 'cyf-api-local-schema-recovery-authority-v1',
+            'authorityId': deploy.LOCAL_AUTHORITY_ID,
+            'scope': 'exact-installed-release-partial-schema-reconcile',
+            'authorizationEvidence': self.ref('recovery-permission.json'),
+            'bindingSha256': deploy.local_binding_sha(self.binding),
+            'installDecision': self.copy(self.binding['decision']),
+            'priorResults': [self.ref('prior-result.json'), self.ref('prior-stdout.json')],
+            'actualMetadataProof': self.ref('actual-metadata.json'), 'allowedFeatures': ['F06', 'E05'],
+            'schemaPlan': self.copy(self.binding['schemaPlan']), 'canonicalJarSha256': 'e' * 64,
+            'productionAuthorized': True}
+        self.assertIs(deploy.local_schema_recovery_authority(value, self.binding), value)
+        for field, bad in (('productionAuthorized', False), ('scope', 'new-release'),
+                           ('bindingSha256', 'f' * 64), ('canonicalJarSha256', 'f' * 64),
+                           ('priorResults', []), ('allowedFeatures', ['E05', 'F06']),
+                           ('allowedFeatures', ['F06', 'F06']), ('actualMetadataProof', None)):
+            changed = self.copy(value); changed[field] = bad
+            with self.assertRaises(deploy.LocalRejected):
+                deploy.local_schema_recovery_authority(changed, self.binding)
+        changed = self.copy(value); changed['priorResults'] *= 2
+        with self.assertRaises(deploy.LocalRejected):
+            deploy.local_schema_recovery_authority(changed, self.binding)
+
+    def test_closed_type_helpers_do_not_read_write_or_spawn_and_emit_only_fixed_codes(self):
+        from unittest.mock import patch
+        with patch('os.open', side_effect=AssertionError('unexpected filesystem operation')), \
+             patch('subprocess.run', side_effect=AssertionError('unexpected process operation')):
+            deploy.local_install_decision(self.decision)
+            deploy.local_authority_matches(self.decision, self.authority)
+            deploy.local_schema_plan(self.schema)
+            deploy.local_helper_catalog(self.catalog)
+            deploy.local_approval(self.approval)
+            deploy.local_install_record(self.record)
+            admitted, verified = self.publication()
+            deploy.local_publication_matches(self.decision, admitted, verified)
+        error = deploy.LocalRejected('raw-secret-or-exception-body')
+        self.assertEqual(error.code, 'INPUT_INVALID')
+        self.assertEqual(str(error), 'INPUT_INVALID')
+
+
 if __name__ == '__main__':
     unittest.main()

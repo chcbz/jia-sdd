@@ -1146,6 +1146,449 @@ def validate_versioned_release(version, artifact_sha256):
     return version
 
 
+# LOCAL uses the same coordinator/installer state machine. These are closed
+# type/binding validators, NOT artifact admission, authorization creation, or
+# proof that a filesystem/database/runtime observation actually happened.
+LOCAL_SAFE_CODES = frozenset((
+    'INPUT_INVALID', 'PATH_UNSAFE', 'SOURCE_IDENTITY_MISMATCH', 'DIGEST_MISMATCH',
+    'AUTHORITY_INVALID', 'MAINTENANCE_SCOPE_MISSING', 'BUILD_EVIDENCE_INVALID',
+    'PUBLISHED_CLOSURE_INVALID', 'PACKAGE_INVALID', 'MANIFEST_METADATA_MISMATCH',
+    'HELPER_CATALOG_MISMATCH', 'PRECONDITION_CHANGED', 'FOREIGN_UNFINISHED_TRANSACTION',
+    'RECOVERY_BINDING_MISMATCH', 'CANONICAL_GENERATION_CHANGED',
+    'SCHEMA_PREREQUISITE_MISSING', 'SCHEMA_RESOURCE_MISMATCH', 'SCHEMA_CATALOG_DRIFT',
+    'SCHEMA_RESULT_UNKNOWN', 'SCHEMA_RECOVERY_NOT_AUTHORIZED',
+    'LIFECYCLE_STOP_UNPROVEN', 'LIFECYCLE_HEALTH_FAILED', 'DURABLE_RECORD_INCOMPLETE',
+    'IO_FAILURE',
+))
+LOCAL_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]*$')
+LOCAL_GIT = re.compile(r'^[0-9a-f]{40}$')
+LOCAL_STAMP = re.compile(r'^[0-9]{8}T[0-9]{6}Z$')
+LOCAL_SCOPE = 'canonical-api-versioned-install-v1'
+LOCAL_AUTHORITY_ID = 'cyf-local-release-controller-v1'
+LOCAL_RECOVERY_SCOPE = 'exact-record-only-no-new-release-no-inflight-replay'
+LOCAL_MEMBERS = tuple(sorted(EXPECTED_MEMBERS))
+LOCAL_AGENT_MAPPER = 'BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar'
+LOCAL_CHAT_MAPPER = 'BOOT-INF/lib/jia-chat-mapper-1.1.2-SNAPSHOT.jar'
+LOCAL_RESOURCES = (
+    ('identity-baseline', LOCAL_AGENT_MAPPER, 'db/schema.sql'),
+    ('identity-migration', LOCAL_AGENT_MAPPER, 'db/agent-identity-schema.sql'),
+    ('runtime-installation-v1', LOCAL_AGENT_MAPPER, 'db/agent-runtime-v1-schema.sql'),
+    ('runtime-session-fence-v1', LOCAL_AGENT_MAPPER, 'db/agent-runtime-session-fence-v1.sql'),
+    ('command-transport-d06', LOCAL_AGENT_MAPPER, 'db/agent-command-transport-schema.sql'),
+    ('execution-report-d02', LOCAL_AGENT_MAPPER, 'db/agent-execution-report-v1.sql'),
+    ('owner-phase-a', LOCAL_AGENT_MAPPER, 'db/single-tenant-task-owner-ddl.sql'),
+    ('chat-base', LOCAL_CHAT_MAPPER, 'db/chat-deliberation-schema.sql'),
+    ('chat-migration-v2', LOCAL_CHAT_MAPPER, 'db/chat-deliberation-v2-migration.sql'),
+    ('chat-typed-v1', LOCAL_CHAT_MAPPER, 'db/chat-typed-deliberation-schema-v1.sql'),
+)
+LOCAL_PROOF_REFS = ('startupCatalogProof', 'effectiveConfiguration',
+                    'applicationPrincipalProof', 'boundedSchemaReceipt')
+LOCAL_HELPER_PATHS = {
+    'cyf-api-flow-deploy': '/usr/local/sbin/cyf-api-flow-deploy',
+    'cyf-api-flow-install': '/usr/local/sbin/cyf-api-flow-install',
+    'cyf-api-kit': '/usr/local/sbin/cyf-api-kit',
+    'cyf-api-additive-schema': '/usr/local/sbin/cyf-api-additive-schema',
+    'cyf-api-e05-additive-schema': '/usr/local/sbin/cyf-api-e05-additive-schema',
+    'admit-api-local.py': '/usr/local/libexec/cyf-api-local/admit-api-local.py',
+}
+LOCAL_BINDING_KEYS = frozenset(('source', 'decision', 'admission', 'maintenanceAuthority',
+    'package', 'payloads', 'buildEvidence', 'controllerVerification', 'precondition',
+    'schemaPlan', 'helperCatalog', 'rollbackPolicy'))
+
+
+class LocalRejected(Exception):
+    def __init__(self, code):
+        if code not in LOCAL_SAFE_CODES:
+            code = 'INPUT_INVALID'
+        self.code = code
+        Exception.__init__(self, code)
+
+
+def local_need(condition, code='INPUT_INVALID'):
+    if not condition:
+        raise LocalRejected(code)
+
+
+def local_canonical(value):
+    try:
+        return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                           allow_nan=False) + '\n').encode('utf-8')
+    except (TypeError, ValueError, UnicodeError, RecursionError):
+        raise LocalRejected('INPUT_INVALID') from None
+
+
+def local_json(data, code='INPUT_INVALID'):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            local_need(key not in result, code)
+            result[key] = value
+        return result
+    def no_number(unused):
+        raise LocalRejected(code)
+    try:
+        return json.loads(data, object_pairs_hook=pairs, parse_float=no_number,
+                          parse_constant=no_number)
+    except (TypeError, ValueError, UnicodeError, RecursionError):
+        raise LocalRejected(code) from None
+
+
+def local_exact(value, keys, code='INPUT_INVALID'):
+    local_need(type(value) is dict and set(value) == set(keys), code)
+    return value
+
+
+def local_hex(value, length=64, code='DIGEST_MISMATCH'):
+    local_need(type(value) is str and re.fullmatch('[0-9a-f]{%d}' % length, value), code)
+    return value
+
+
+def local_token(value, code='SOURCE_IDENTITY_MISMATCH'):
+    local_need(type(value) is str and LOCAL_ID.fullmatch(value), code)
+    return value
+
+
+def local_path(value, code='PATH_UNSAFE'):
+    local_need(type(value) is str and value.startswith('/') and not value.startswith('//')
+               and not any(ord(c) < 32 or ord(c) == 127 for c in value)
+               and '\\' not in value, code)
+    path = Path(value)
+    local_need(str(path) == value and all(p not in ('.', '..') for p in path.parts), code)
+    return path
+
+
+def local_digest(value, code='DIGEST_MISMATCH'):
+    local_exact(value, ('sha256', 'size'), code)
+    local_hex(value['sha256'], code=code)
+    local_need(type(value['size']) is int and value['size'] >= 0, code)
+    return value
+
+
+def local_ref(value, code='PATH_UNSAFE'):
+    local_exact(value, ('path', 'sha256', 'size'), code)
+    local_path(value['path'], code)
+    local_digest({k: value[k] for k in ('sha256', 'size')}, code)
+    return value
+
+
+def local_identity(value):
+    local_exact(value, ('version', 'buildId', 'commit', 'tree'), 'SOURCE_IDENTITY_MISMATCH')
+    local_token(value['version'])
+    local_token(value['buildId'])
+    local_hex(value['commit'], 40, 'SOURCE_IDENTITY_MISMATCH')
+    local_hex(value['tree'], 40, 'SOURCE_IDENTITY_MISMATCH')
+    return value
+
+
+def local_source(value):
+    local_exact(value, ('kind', 'identity', 'batchId'), 'SOURCE_IDENTITY_MISMATCH')
+    local_need(value['kind'] == 'local-build-v1', 'SOURCE_IDENTITY_MISMATCH')
+    local_identity(value['identity'])
+    local_token(value['batchId'])
+    return value
+
+
+def local_payloads(value):
+    local_exact(value, LOCAL_MEMBERS, 'PACKAGE_INVALID')
+    for name in LOCAL_MEMBERS:
+        local_digest(value[name], 'PACKAGE_INVALID')
+        local_need(value[name]['size'] > 0, 'PACKAGE_INVALID')
+    return value
+
+
+def local_precondition(value):
+    local_exact(value, ('canonicalJarSha256', 'installedRecord', 'approval',
+        'runtimeGeneration', 'identityInventory', 'inflightInventory', 'schemaInventory'),
+        'PRECONDITION_CHANGED')
+    local_hex(value['canonicalJarSha256'], code='PRECONDITION_CHANGED')
+    for name in ('installedRecord', 'approval'):
+        if value[name] is not None:
+            local_ref(value[name], 'PRECONDITION_CHANGED')
+    for name in ('identityInventory', 'inflightInventory', 'schemaInventory'):
+        local_ref(value[name], 'PRECONDITION_CHANGED')
+    generation = local_exact(value['runtimeGeneration'], ('pid', 'startTicks', 'jarSha256'),
+                             'CANONICAL_GENERATION_CHANGED')
+    local_need(type(generation['pid']) is int and generation['pid'] > 0
+        and type(generation['startTicks']) is str
+        and re.fullmatch(r'[1-9][0-9]*', generation['startTicks']),
+        'CANONICAL_GENERATION_CHANGED')
+    local_hex(generation['jarSha256'], code='CANONICAL_GENERATION_CHANGED')
+    local_need(generation['jarSha256'] == value['canonicalJarSha256'],
+               'CANONICAL_GENERATION_CHANGED')
+    return value
+
+
+def local_rollback(value):
+    local_need(type(value) is str and value in ('rollback-compatible', 'forward-only'),
+               'AUTHORITY_INVALID')
+    return value
+
+
+def local_schema_plan(value):
+    local_exact(value, ('format', 'entries', 'resourcePreconditions', 'partialDdlPolicy')
+                + LOCAL_PROOF_REFS, 'SCHEMA_PREREQUISITE_MISSING')
+    local_need(value['format'] == 'cyf-api-local-schema-plan-v1'
+        and value['partialDdlPolicy'] == 'introspect-equivalent-skip-missing-only-no-drop-no-ddl-rollback',
+        'SCHEMA_PREREQUISITE_MISSING')
+    entries = value['entries']
+    local_need(type(entries) is list and len(entries) == 2, 'SCHEMA_RESOURCE_MISMATCH')
+    expected = (
+        ('F06', str(SCHEMA_RUNNER), 'db/agent-task-artifact-outcome-f06.sql', SCHEMA_SQL_SHA256),
+        ('E05', str(E05_SCHEMA_RUNNER), 'db/agent-work-item-reassignment-e05.sql', E05_SCHEMA_SQL_SHA256),
+    )
+    for entry, (feature, runner, inner, sql_sha) in zip(entries, expected):
+        local_exact(entry, ('feature', 'runner', 'resourceOuter', 'resourceInner', 'sqlSha256',
+                            'statementPolicy', 'expectedCatalogSha256'), 'SCHEMA_RESOURCE_MISMATCH')
+        local_ref(entry['runner'], 'HELPER_CATALOG_MISMATCH')
+        local_hex(entry['expectedCatalogSha256'], code='SCHEMA_CATALOG_DRIFT')
+        local_need(entry['feature'] == feature and entry['runner']['path'] == runner
+            and entry['resourceOuter'] == LOCAL_AGENT_MAPPER and entry['resourceInner'] == inner
+            and entry['sqlSha256'] == sql_sha
+            and entry['statementPolicy'] == 'exact_create_table_if_not_exists_only',
+            'SCHEMA_RESOURCE_MISMATCH')
+    resources = value['resourcePreconditions']
+    local_need(type(resources) is list and len(resources) == len(LOCAL_RESOURCES),
+               'SCHEMA_PREREQUISITE_MISSING')
+    for entry, (name, outer, inner) in zip(resources, LOCAL_RESOURCES):
+        local_exact(entry, ('name', 'resourceOuter', 'resourceInner', 'sqlSha256',
+                            'expectedCatalogSha256', 'actualSchemaProof'),
+                    'SCHEMA_PREREQUISITE_MISSING')
+        local_need((entry['name'], entry['resourceOuter'], entry['resourceInner']) == (name, outer, inner),
+                   'SCHEMA_RESOURCE_MISMATCH')
+        local_hex(entry['sqlSha256'], code='SCHEMA_RESOURCE_MISMATCH')
+        local_hex(entry['expectedCatalogSha256'], code='SCHEMA_CATALOG_DRIFT')
+        local_ref(entry['actualSchemaProof'], 'SCHEMA_PREREQUISITE_MISSING')
+    for name in LOCAL_PROOF_REFS:
+        local_ref(value[name], 'SCHEMA_PREREQUISITE_MISSING')
+    return value
+
+
+def local_helper_catalog(value):
+    local_exact(value, ('format', 'sourceCommit', 'sourceTree', 'helpers', 'kitRole'),
+                'HELPER_CATALOG_MISMATCH')
+    local_need(value['format'] == 'cyf-api-local-helper-catalog-v1'
+        and value['kitRole'] == 'reuse-installed-no-local-record-change', 'HELPER_CATALOG_MISMATCH')
+    local_hex(value['sourceCommit'], 40, 'HELPER_CATALOG_MISMATCH')
+    local_hex(value['sourceTree'], 40, 'HELPER_CATALOG_MISMATCH')
+    local_exact(value['helpers'], LOCAL_HELPER_PATHS, 'HELPER_CATALOG_MISMATCH')
+    for name, path in LOCAL_HELPER_PATHS.items():
+        local_ref(value['helpers'][name], 'HELPER_CATALOG_MISMATCH')
+        local_need(value['helpers'][name]['path'] == path, 'HELPER_CATALOG_MISMATCH')
+    return value
+
+
+def local_maintenance_authority(value):
+    local_exact(value, ('format', 'authorityId', 'scope', 'authorizationId',
+        'authorizationEvidence', 'release', 'schemaPlan', 'helperCatalog', 'precondition',
+        'operations', 'rollbackPolicy', 'recoveryScope', 'productionAuthorized'), 'AUTHORITY_INVALID')
+    local_need(value['format'] == 'cyf-api-local-maintenance-authority-v1'
+        and value['authorityId'] == LOCAL_AUTHORITY_ID and value['scope'] == LOCAL_SCOPE
+        and value['recoveryScope'] == LOCAL_RECOVERY_SCOPE and value['productionAuthorized'] is True,
+        'AUTHORITY_INVALID')
+    local_token(value['authorizationId'], 'AUTHORITY_INVALID')
+    local_ref(value['authorizationEvidence'], 'AUTHORITY_INVALID')
+    release = local_exact(value['release'], ('source', 'admission', 'package', 'payloads'), 'AUTHORITY_INVALID')
+    local_source(release['source'])
+    local_ref(release['admission'], 'AUTHORITY_INVALID')
+    local_digest(release['package'], 'PACKAGE_INVALID')
+    local_need(release['package']['size'] > 0, 'PACKAGE_INVALID')
+    local_payloads(release['payloads'])
+    local_ref(value['schemaPlan'], 'SCHEMA_PREREQUISITE_MISSING')
+    local_ref(value['helperCatalog'], 'HELPER_CATALOG_MISMATCH')
+    local_precondition(value['precondition'])
+    local_rollback(value['rollbackPolicy'])
+    ops = local_exact(value['operations'], ('apiInstall', 'apiStopStart', 'schemaApply', 'helperInstall'),
+                      'MAINTENANCE_SCOPE_MISSING')
+    local_need(all(type(v) is bool for v in ops.values()), 'MAINTENANCE_SCOPE_MISSING')
+    return value
+
+
+def local_install_decision(value):
+    local_exact(value, ('format', 'status', 'scope', 'source', 'admission', 'package',
+        'payloads', 'buildEvidence', 'controllerVerification', 'maintenanceAuthority',
+        'precondition', 'schemaPlan', 'helperCatalog', 'rollbackPolicy', 'productionAuthorized'),
+        'AUTHORITY_INVALID')
+    local_need(value['format'] == 'cyf-api-local-install-decision-v1' and value['status'] == 'approved'
+        and value['scope'] == LOCAL_SCOPE and value['productionAuthorized'] is True, 'AUTHORITY_INVALID')
+    local_source(value['source'])
+    local_digest(value['package'], 'PACKAGE_INVALID')
+    local_need(value['package']['size'] > 0, 'PACKAGE_INVALID')
+    local_payloads(value['payloads'])
+    for field in ('admission', 'buildEvidence', 'controllerVerification', 'maintenanceAuthority',
+                  'schemaPlan', 'helperCatalog'):
+        local_ref(value[field])
+    local_precondition(value['precondition'])
+    local_rollback(value['rollbackPolicy'])
+    return value
+
+
+def local_authority_matches(decision, authority, operations=()):
+    local_install_decision(decision)
+    local_maintenance_authority(authority)
+    for field in ('schemaPlan', 'helperCatalog', 'precondition', 'rollbackPolicy'):
+        local_need(decision[field] == authority[field], 'AUTHORITY_INVALID')
+    local_need(authority['release'] == {k: decision[k] for k in ('source', 'admission', 'package', 'payloads')},
+               'AUTHORITY_INVALID')
+    local_need(type(operations) in (tuple, list) and all(k in ('apiInstall', 'apiStopStart', 'schemaApply',
+               'helperInstall') for k in operations), 'MAINTENANCE_SCOPE_MISSING')
+    for operation in operations:
+        local_need(authority['operations'][operation] is True, 'MAINTENANCE_SCOPE_MISSING')
+    return authority
+
+
+def local_binding_from_decision(decision, decision_ref):
+    local_install_decision(decision)
+    local_ref(decision_ref)
+    release = {k: decision[k] for k in LOCAL_BINDING_KEYS if k != 'decision'}
+    release['decision'] = decision_ref
+    return local_binding(release)
+
+
+def local_binding(value):
+    local_exact(value, LOCAL_BINDING_KEYS, 'RECOVERY_BINDING_MISMATCH')
+    # One non-recursive projection: no self hash, fake Run, inferred ordering or
+    # envelope status/phase enters this immutable release identity.
+    decision = {'format': 'cyf-api-local-install-decision-v1', 'status': 'approved',
+        'scope': LOCAL_SCOPE, 'productionAuthorized': True}
+    decision.update({k: value[k] for k in LOCAL_BINDING_KEYS if k != 'decision'})
+    local_install_decision(decision)
+    local_ref(value['decision'])
+    return value
+
+
+def local_binding_sha(value):
+    local_binding(value)
+    return hashlib.sha256(local_canonical(value)).hexdigest()
+
+
+def local_approval(value):
+    local_exact(value, ('schema_version', 'release', 'binding_sha256', 'consumed', 'consumed_at'),
+                'DURABLE_RECORD_INCOMPLETE')
+    local_need(type(value['schema_version']) is int and value['schema_version'] == 3
+        and type(value['consumed']) is bool, 'DURABLE_RECORD_INCOMPLETE')
+    local_need(value['binding_sha256'] == local_binding_sha(value['release']), 'RECOVERY_BINDING_MISMATCH')
+    local_need((value['consumed'] and type(value['consumed_at']) is str
+                   and LOCAL_STAMP.fullmatch(value['consumed_at']))
+        or (not value['consumed'] and value['consumed_at'] is None), 'DURABLE_RECORD_INCOMPLETE')
+    return value
+
+
+def local_install_record(value, backup_root=None):
+    local_exact(value, ('schema_version', 'status', 'phase', 'recovery', 'release',
+        'binding_sha256', 'candidate_sha256', 'previous_sha256', 'backup', 'candidate_stop_rc',
+        'timestamp'), 'DURABLE_RECORD_INCOMPLETE')
+    local_need(type(value['schema_version']) is int and value['schema_version'] == 3
+        and value['status'] in ('prepared', 'activating', 'active_pending', 'rolling_back', 'installed', 'failed'),
+        'DURABLE_RECORD_INCOMPLETE')
+    for field in ('phase', 'recovery'):
+        local_need(type(value[field]) is str and re.fullmatch(r'[a-z0-9_]+', value[field]),
+                   'DURABLE_RECORD_INCOMPLETE')
+    local_need(value['binding_sha256'] == local_binding_sha(value['release']), 'RECOVERY_BINDING_MISMATCH')
+    local_hex(value['candidate_sha256'], code='DURABLE_RECORD_INCOMPLETE')
+    local_hex(value['previous_sha256'], code='DURABLE_RECORD_INCOMPLETE')
+    local_need(value['candidate_sha256'] == value['release']['payloads']['application.jar']['sha256'],
+               'RECOVERY_BINDING_MISMATCH')
+    local_need(type(value['candidate_stop_rc']) is int and 0 <= value['candidate_stop_rc'] <= 255
+        and type(value['timestamp']) is str and LOCAL_STAMP.fullmatch(value['timestamp']),
+        'DURABLE_RECORD_INCOMPLETE')
+    backup = local_path(value['backup'])
+    root = BACKUPS if backup_root is None else Path(backup_root)
+    local_need(backup.parent == root and re.fullmatch(re.escape(value['timestamp']) + '-' +
+               re.escape(value['candidate_sha256']) + r'-[1-9][0-9]*\.jar', backup.name),
+               'DURABLE_RECORD_INCOMPLETE')
+    return value
+
+
+def local_publication_matches(decision, admitted, verified):
+    """Check projections only; the caller MUST first run the protected verifier.
+
+    Neither this comparison nor digest consistency authenticates build execution
+    or maintenance permission. No admitted artifact is rewritten to authorized.
+    """
+    local_install_decision(decision)
+    local_exact(admitted, ('format', 'status', 'source', 'authority', 'package', 'payloads',
+                           'evidence', 'installPrecondition', 'scope', 'productionAuthorized'),
+                'PUBLISHED_CLOSURE_INVALID')
+    local_need(admitted['format'] == 'cyf-api-local-admitted-input-v1'
+        and admitted['status'] == 'admitted' and admitted['scope'] == 'artifact-admission-only'
+        and admitted['productionAuthorized'] is False, 'PUBLISHED_CLOSURE_INVALID')
+    source = local_exact(admitted['source'], ('kind', 'identity'), 'SOURCE_IDENTITY_MISMATCH')
+    local_identity(source['identity'])
+    local_need(source == {k: decision['source'][k] for k in ('kind', 'identity')},
+               'SOURCE_IDENTITY_MISMATCH')
+    authority = local_exact(admitted['authority'], ('authorityId', 'batchId', 'batchAuthority',
+                           'trustedRecord', 'verificationRecord'), 'PUBLISHED_CLOSURE_INVALID')
+    local_need(authority['authorityId'] == LOCAL_AUTHORITY_ID
+        and authority['batchId'] == decision['source']['batchId'], 'PUBLISHED_CLOSURE_INVALID')
+    for name in ('batchAuthority', 'trustedRecord', 'verificationRecord'):
+        local_ref(authority[name], 'PUBLISHED_CLOSURE_INVALID')
+    local_ref(admitted['package'], 'PACKAGE_INVALID')
+    local_need(decision['package'] == {k: admitted['package'][k] for k in ('sha256', 'size')},
+               'PACKAGE_INVALID')
+    local_exact(admitted['payloads'], LOCAL_MEMBERS, 'PACKAGE_INVALID')
+    for name in LOCAL_MEMBERS:
+        local_ref(admitted['payloads'][name], 'PACKAGE_INVALID')
+        local_need(decision['payloads'][name] == {k: admitted['payloads'][name][k]
+                                                for k in ('sha256', 'size')}, 'PACKAGE_INVALID')
+    evidence = local_exact(admitted['evidence'], ('buildEvidence', 'snapshots'),
+                           'BUILD_EVIDENCE_INVALID')
+    local_ref(evidence['buildEvidence'], 'BUILD_EVIDENCE_INVALID')
+    local_need(decision['buildEvidence'] == evidence['buildEvidence']
+        and decision['controllerVerification'] == authority['verificationRecord'],
+        'BUILD_EVIDENCE_INVALID')
+    local_need(type(evidence['snapshots']) is list and bool(evidence['snapshots']),
+               'BUILD_EVIDENCE_INVALID')
+    original_paths, copied_paths = set(), set()
+    for snapshot in evidence['snapshots']:
+        local_exact(snapshot, ('role', 'originalPath', 'file'), 'BUILD_EVIDENCE_INVALID')
+        local_token(snapshot['role'], 'BUILD_EVIDENCE_INVALID')
+        local_path(snapshot['originalPath'], 'BUILD_EVIDENCE_INVALID')
+        local_ref(snapshot['file'], 'BUILD_EVIDENCE_INVALID')
+        local_need(snapshot['originalPath'] not in original_paths and snapshot['file']['path'] not in copied_paths,
+                   'BUILD_EVIDENCE_INVALID')
+        original_paths.add(snapshot['originalPath'])
+        copied_paths.add(snapshot['file']['path'])
+    local_exact(admitted['installPrecondition'], ('canonicalJarSha256',), 'PRECONDITION_CHANGED')
+    local_need(admitted['installPrecondition']['canonicalJarSha256'] ==
+               decision['precondition']['canonicalJarSha256'], 'PRECONDITION_CHANGED')
+    local_exact(verified, ('format', 'status', 'scope', 'productionAuthorized', 'admission', 'source'),
+                'PUBLISHED_CLOSURE_INVALID')
+    local_need(verified['format'] == 'cyf-api-local-published-verification-v1'
+        and verified['status'] == 'verified' and verified['scope'] == 'artifact-admission-only'
+        and verified['productionAuthorized'] is False and verified['admission'] == decision['admission']
+        and verified['source'] == source, 'PUBLISHED_CLOSURE_INVALID')
+    return decision
+
+
+def local_schema_recovery_authority(value, installed_binding):
+    local_exact(value, ('format', 'authorityId', 'scope', 'authorizationEvidence', 'bindingSha256',
+        'installDecision', 'priorResults', 'actualMetadataProof', 'allowedFeatures', 'schemaPlan',
+        'canonicalJarSha256', 'productionAuthorized'), 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+    local_need(value['format'] == 'cyf-api-local-schema-recovery-authority-v1'
+        and value['authorityId'] == LOCAL_AUTHORITY_ID
+        and value['scope'] == 'exact-installed-release-partial-schema-reconcile'
+        and value['productionAuthorized'] is True, 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+    local_binding(installed_binding)
+    local_need(value['bindingSha256'] == local_binding_sha(installed_binding)
+        and value['installDecision'] == installed_binding['decision']
+        and value['schemaPlan'] == installed_binding['schemaPlan']
+        and value['canonicalJarSha256'] == installed_binding['payloads']['application.jar']['sha256'],
+        'RECOVERY_BINDING_MISMATCH')
+    for name in ('authorizationEvidence', 'installDecision', 'actualMetadataProof', 'schemaPlan'):
+        local_ref(value[name], 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+    features = value['allowedFeatures']
+    local_need(type(features) is list and bool(features)
+        and features in (['F06'], ['E05'], ['F06', 'E05']), 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+    prior = value['priorResults']
+    local_need(type(prior) is list and bool(prior), 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+    paths = set()
+    for ref in prior:
+        local_ref(ref, 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+        local_need(ref['path'] not in paths, 'SCHEMA_RECOVERY_NOT_AUTHORIZED')
+        paths.add(ref['path'])
+    return value
+
+
 def main():
     if os.geteuid() != 0:
         fail('must run as root')
