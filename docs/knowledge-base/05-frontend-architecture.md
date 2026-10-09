@@ -46,6 +46,8 @@
 
 布局与资料选择器解耦：`materials` 插槽在更多菜单外，`open-materials` 由 ChatPanel 的 `toggleMaterialPicker` 处理；语音设置与进行中反馈仍由独立条件控制。具体行为、禁用边界与回归入口见 [聚义厅专题](06-juyiting-end-to-end.md#hall-discussion-ui)。
 
+**2026-10-09 输入区轻量化补充**：核对 Web `3e9b0aff365c25faab524e905b7c2f1aff53c3f1`，仅覆盖 `HallChatComposer.vue`、`ChatPanel.vue` 的本次差异。Composer 统一草稿派生值和目标标签映射，移除无消费者的 `open-workspace` 事件/转发及重复、未使用样式；百宝箱入口仍由 ChatPanel 资料选择器直接发出 `open-workspace`。不改变协议、身份、输入锁、语音状态机或线上版本。其余本节保留原基线。
+
 历史来源：[1.0.6 UI 收口导航](../../specs/juyiting-ui-baseline-20261006/README.md)。该版本的“不改业务逻辑”只描述当次 UI patch，不能套用到后续源码；本次核对版本已有额外完成态锁定逻辑。
 
 ### 局部源码补充：事项筛选表头（2026-10-09）
