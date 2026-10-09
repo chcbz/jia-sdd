@@ -128,6 +128,20 @@ E05_SHOW_TEXT = """CREATE TABLE `agent_work_item_reassignment` (
 """
 E05_SHOW_ROWS = [['agent_work_item_reassignment', E05_SHOW_TEXT.splitlines()[0]]] + [
     [line] for line in E05_SHOW_TEXT.splitlines()[1:]]
+# Synthetic SHOW for an ALREADY owner-extended table only. The fixed bare E05
+# CREATE and E05_SHOW_ROWS above intentionally stay ownerless; never use this
+# projection as the result of that bare CREATE in a positive create-only test.
+CURRENT_OWNER_E05_SHOW_TEXT = E05_SHOW_TEXT.replace(
+    '  PRIMARY KEY (`id`),', '  `owner_jiacn` varchar(50) NOT NULL,\n  PRIMARY KEY (`id`),').replace(
+    '  CONSTRAINT `chk_work_item_reassignment_agents`',
+    '  KEY `idx_agent_work_item_reassignment_owner_scope` '
+    '(`tenant_id`,`client_id`,`owner_jiacn`,`task_id`,`work_item_id`),\n'
+    '  CONSTRAINT `chk_work_item_reassignment_agents`')
+CURRENT_OWNER_E05_SHOW_ROWS = [
+    ['agent_work_item_reassignment', CURRENT_OWNER_E05_SHOW_TEXT.splitlines()[0]]
+] + [[line] for line in CURRENT_OWNER_E05_SHOW_TEXT.splitlines()[1:]]
+
+
 E05_CREATE_GRANTS = [
     'GRANT USAGE ON *.* TO `cyf_e05_schema_runner`@`localhost`',
     'GRANT CREATE ON `jia`.`agent_work_item_reassignment` TO `cyf_e05_schema_runner`@`localhost`',
@@ -523,6 +537,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
 
     def test_existing_zero_columns_use_show_without_recreate_but_partial_columns_fail(self):
         table = e05.TABLE_ORDER[0]
+        self.state['show_rows'] = copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS)
         full = copy.deepcopy(self.state['expected'][table]['COLUMNS'])
         self.state['tables'][table] = 'equivalent'
         self.state['expected'][table]['COLUMNS'] = []
@@ -574,8 +589,8 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
 
     def test_show_is_independently_complete_closed_and_preserves_e05_arithmetic_contract(self):
         table = e05.TABLE_ORDER[0]
-        columns = e05.parse_show_create(E05_SHOW_ROWS, table, self.collation)
-        self.assertEqual(len(columns), 25)
+        columns = e05.parse_show_create(CURRENT_OWNER_E05_SHOW_ROWS, table, self.collation)
+        self.assertEqual(len(columns), 26)
         self.assertEqual(tuple(col[1:6] for col in columns), e05.EXPECTED_TABLES[table]['columns'])
         changes = [
             ('`id` bigint', '`id` int'), ('varchar(100) NOT NULL', 'varchar(100) DEFAULT NULL'),
@@ -593,21 +608,22 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         ]
         for before, after in changes:
             with self.subTest(change=(before, after)):
-                rows = [[value.replace(before, after) for value in row] for row in E05_SHOW_ROWS]
-                self.assertNotEqual(rows, E05_SHOW_ROWS)
+                rows = [[value.replace(before, after) for value in row] for row in CURRENT_OWNER_E05_SHOW_ROWS]
+                self.assertNotEqual(rows, CURRENT_OWNER_E05_SHOW_ROWS)
                 with self.assertRaises(e05.SchemaError):
                     e05.parse_show_create(rows, table, self.collation)
-        reordered = copy.deepcopy(E05_SHOW_ROWS)
+        reordered = copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS)
         reordered[1], reordered[2] = reordered[2], reordered[1]
-        for rows in (reordered, E05_SHOW_ROWS + [['trailing SQL']]):
+        for rows in (reordered, CURRENT_OWNER_E05_SHOW_ROWS + [['trailing SQL']]):
             with self.assertRaises(e05.SchemaError):
                 e05.parse_show_create(rows, table, self.collation)
         with self.assertRaises(e05.SchemaError):
-            e05.parse_show_create(E05_SHOW_ROWS, 'agent_task_artifact_outcome', self.collation)
+            e05.parse_show_create(CURRENT_OWNER_E05_SHOW_ROWS, 'agent_task_artifact_outcome', self.collation)
         self.assertEqual(set(e05.SHOW_SQL), set(e05.TABLE_ORDER))
 
     def test_good_show_cannot_mask_information_schema_drift(self):
         table = e05.TABLE_ORDER[0]
+        self.state['show_rows'] = copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS)
         self.state['expected'][table]['COLUMNS'] = []
         for drift in ('index_drift', 'index_attributes_drift', 'constraint_drift', 'check_drift', 'collation_drift'):
             with self.subTest(drift=drift):
@@ -881,6 +897,28 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(payload['error'], 'existing_schema_drift')
         self.assertEqual(self.read_state()['creates'], [])
+
+
+    def test_oracle_sync_bare_create_cannot_satisfy_current_owner_guard(self):
+        # Source gap, not a positive synthetic migration: the runner executes
+        # only this exact CREATE, which has neither owner column nor owner index.
+        table = e05.TABLE_ORDER[0]
+        self.assertEqual(digest(e05.E05_SQL_BYTES),
+                         'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1')
+        self.assertNotIn(b'owner_jiacn', e05.E05_SQL_BYTES)
+        self.assertIn(('owner_jiacn', 'varchar(50)', 'NO', None, ''),
+                      e05.EXPECTED_TABLES[table]['columns'])
+        self.state['expected'][table]['COLUMNS'] = []
+        self.state['show_rows'] = copy.deepcopy(E05_SHOW_ROWS)
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'created_table_not_equivalent')
+        self.assertEqual(payload['tables'][table]['status'], 'create_result_unknown')
+        self.assertEqual(self.read_state()['creates'], [table])
+        for statement in self.read_state()['commands']:
+            self.assertNotRegex(statement.upper(), r'^(ALTER|DROP|UPDATE|INSERT|DELETE) ')
+        self.assert_no_secret_disclosure(result, payload)
 
 
 if __name__ == '__main__':
