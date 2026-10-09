@@ -24,8 +24,8 @@ class Parser(argparse.ArgumentParser):
         raise Refused('INPUT_INVALID')
 
 
-def protected_file(value):
-    """Descriptor walk, physical root ancestry and root single-link helper."""
+def protected_file(value, interpreter=False):
+    """Root-protected descriptor walk; only distro interpreter may be hardlinked."""
     path = Path(value)
     fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
     try:
@@ -40,7 +40,8 @@ def protected_file(value):
         leaf = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=fd)
         s = os.fstat(leaf)
         if (not stat.S_ISREG(s.st_mode) or s.st_uid != 0 or s.st_gid != 0 or
-                s.st_nlink != 1 or s.st_mode & 0o022):
+                (s.st_nlink < 1 if interpreter else s.st_nlink != 1) or
+                (interpreter and not s.st_mode & 0o111) or s.st_mode & 0o022):
             os.close(leaf)
             raise Refused('PATH_UNSAFE')
         return leaf
@@ -74,7 +75,7 @@ def main(argv=None):
         os.close(self_fd)
         # Fixed interpreter may be a distro symlink; its real file/ancestry must
         # still be root protected. Never use an env/PATH-selected interpreter.
-        python_fd = protected_file(os.path.realpath('/usr/bin/python3'))
+        python_fd = protected_file(os.path.realpath('/usr/bin/python3'), interpreter=True)
         os.close(python_fd)
         helper_fd = protected_file(HELPER)
         try:

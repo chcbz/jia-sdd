@@ -732,7 +732,7 @@ class AdmissionTest(unittest.TestCase):
         for k in w.OPTIONS:argv+=['--'+k,getattr(args,k.replace('-','_'))]
         fd=os.open(self.f.auth_path,os.O_RDONLY)
         # Only exec interception: never execute an actual installed/root helper.
-        with mock.patch.object(w,'__file__',w.SELF),mock.patch.object(w,'protected_file',side_effect=lambda path:os.dup(fd)),mock.patch.object(w.os,'execve',side_effect=RuntimeError('unit-exec-intercept')) as execute:
+        with mock.patch.object(w,'__file__',w.SELF),mock.patch.object(w,'protected_file',side_effect=lambda path, **kwargs:os.dup(fd)),mock.patch.object(w.os,'execve',side_effect=RuntimeError('unit-exec-intercept')) as execute:
             with self.assertRaisesRegex(RuntimeError,'unit-exec-intercept'):w.main(argv)
         os.close(fd)
         python,command,env=execute.call_args[0]
@@ -756,6 +756,24 @@ class AdmissionTest(unittest.TestCase):
         with self.assertRaises(w.Refused):w.protected_file(str(self.f.auth_path))
         self.f.auth_path.chmod(0o600);self.root.chmod(0o777)
         with self.assertRaises(w.Refused):w.protected_file(str(self.f.auth_path))
+        self.root.chmod(0o700)
+
+    def test_wrapper_distro_interpreter_hardlinks_keep_helper_single_link_rule(self):
+        interpreter=self.root/'synthetic-distro-python'
+        interpreter.write_bytes(b'synthetic executable, never invoked')
+        interpreter.chmod(0o755)
+        alias=self.root/'synthetic-distro-python-m'
+        os.link(str(interpreter),str(alias))
+        self.assertEqual(interpreter.stat().st_nlink,2)
+        with self.assertRaises(w.Refused):w.protected_file(str(interpreter))
+        fd=w.protected_file(str(interpreter),interpreter=True);os.close(fd)
+        interpreter.chmod(0o775)
+        with self.assertRaises(w.Refused):w.protected_file(str(interpreter),interpreter=True)
+        interpreter.chmod(0o644)
+        with self.assertRaises(w.Refused):w.protected_file(str(interpreter),interpreter=True)
+        interpreter.chmod(0o755)
+        self.root.chmod(0o777)
+        with self.assertRaises(w.Refused):w.protected_file(str(interpreter),interpreter=True)
         self.root.chmod(0o700)
 
     def test_owned_source_only_and_no_original_mutation_or_commands(self):
