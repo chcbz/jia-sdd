@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Deploy a successful develop Flow artifact without per-release human tickets.
+"""Deploy an explicit version bound to its commit, Run and artifact SHA-256.
 
 Retains the existing transactional installer and same-run artifact validation.
 """
@@ -26,7 +26,7 @@ INSTALLER = '/usr/local/sbin/cyf-api-flow-install'
 SCHEMA_RUNNER = Path('/usr/local/sbin/cyf-api-additive-schema')
 SCHEMA_RESULTS = ROOT / 'schema-results'
 RELEASE_LOCK = Path('/tmp/cyf-release-api.lock')
-SCHEMA_SQL_SHA256 = '77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc'
+SCHEMA_SQL_SHA256 = 'ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75'
 SCHEMA_PASSWORD_ENV = 'CYF_F06_MYSQL_PASSWORD'
 SCHEMA_PASSWORD_FILE = ROOT / 'f06-schema-password'
 # v1 was inherited into the restored JVM; keep its inode untouched.
@@ -59,6 +59,48 @@ _SCHEMA_CONTEXT = None
 
 def fail(message):
     raise SystemExit('cyf-api-flow-auto-approve: ' + message)
+
+
+def validate_backup_directory(path):
+    link = path.lstat()
+    if stat.S_ISLNK(link.st_mode):
+        target = Path('/home/isp/baks/flow-api')
+        if (path != Path('/var/lib/cyf-api-flow/backups') or
+                link.st_uid != 0 or link.st_gid != 0 or
+                path.resolve() != target or target.is_symlink()):
+            fail('backup alias is unsafe')
+    actual = path.stat()
+    if (not stat.S_ISDIR(actual.st_mode) or actual.st_uid != 0 or
+            actual.st_gid != 0 or stat.S_IMODE(actual.st_mode) != 0o700):
+        fail('backup directory is unsafe')
+
+
+def validated_release_members(archive):
+    member_map = {}
+    report_seen = set()
+    for member in archive.getmembers():
+        raw = member.name
+        name = raw[2:] if raw.startswith('./') else raw
+        if name in ('', '.'):
+            if not member.isdir():
+                fail('release package root entry is unsafe')
+            continue
+        if (not name or name.startswith('/') or '\\' in name or '\x00' in name
+                or any(part in ('', '.', '..') for part in name.split('/'))):
+            fail('release package contains an unsafe path')
+        if name == 'test-results' or name.startswith('test-results/'):
+            if (name in report_seen or not (member.isdir() or (member.isreg()
+                    and member.size >= 0 and (name == 'test-results/summary.json'
+                        or name.endswith('.xml'))))):
+                fail('unsafe or duplicate test report member')
+            report_seen.add(name)
+            continue
+        if not member.isreg() or member.size < 0 or '/' in name or name in member_map:
+            fail('release package contains an unsafe member')
+        member_map[name] = member
+    if set(member_map) != EXPECTED_MEMBERS:
+        fail('release package member set is invalid')
+    return member_map
 
 
 def digest_fileobj(handle):
@@ -505,7 +547,7 @@ E05_SCHEMA_PASSWORD_FILE = ROOT / 'e05-schema-password'
 E05_RELEASE_LOCK = RELEASE_LOCK
 E05_SCHEMA_PASSWORD_ENV = 'CYF_E05_MYSQL_PASSWORD'
 E05_SCHEMA_SQL_SHA256 = 'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1'
-E05_SCHEMA_RUNNER_SHA256 = '265d36774768577335fd4bfd5f342010a9c2bd5d4a5a6d4be100e28b827b5cb6'
+E05_SCHEMA_RUNNER_SHA256 = 'd6ef15041ce84f4f7d1ecd65c8af3fa56c7bad198703afeea965150db787532f'
 E05_REQUIRED_API_COMMIT_SHA = '52d24bb7c029ceb53286c6ebfef61e0b6b9f70dd'
 # Permission for fixed additive SQL, not a claim that this Flow Run has succeeded.
 # The controller binds an already-created Run to its verified source/tree/ancestor
@@ -1093,12 +1135,24 @@ def invoke_installer(installer):
         return 1
 
 
+
+def validate_versioned_release(version, artifact_sha256):
+    """Explicit release identity, not a time window or compatibility gate."""
+    if (not isinstance(version, str) or not version or version != version.strip()
+            or any(ord(char) < 32 or ord(char) == 127 for char in version)):
+        fail('explicit release version is required')
+    if not isinstance(artifact_sha256, str) or not re.fullmatch('[0-9a-f]{64}', artifact_sha256):
+        fail('expected release artifact SHA-256 is required')
+    return version
+
+
 def main():
     if os.geteuid() != 0:
         fail('must run as root')
-    if len(sys.argv) != 4:
-        fail('expected pipeline id, run number, and source commit')
-    pipeline_id, run_id, source_commit = sys.argv[1:]
+    if len(sys.argv) != 6:
+        fail('expected pipeline run commit version artifact_sha256')
+    pipeline_id, run_id, source_commit, release_version, artifact_sha256 = sys.argv[1:]
+    validate_versioned_release(release_version, artifact_sha256)
     if pipeline_id != EXPECTED_PIPELINE or not RUN_ID.fullmatch(run_id):
         fail('Flow execution identity mismatch')
     if not GIT_SHA.fullmatch(source_commit):
@@ -1116,8 +1170,7 @@ def main():
     if PACKAGE.parent.lstat().st_uid != 0 or stat.S_IMODE(PACKAGE.parent.lstat().st_mode) != 0o700:
         fail('incoming directory is unsafe')
     BACKUPS.mkdir(mode=0o700, parents=True, exist_ok=True)
-    if BACKUPS.is_symlink() or BACKUPS.lstat().st_uid != 0 or stat.S_IMODE(BACKUPS.lstat().st_mode) != 0o700:
-        fail('backup directory is unsafe')
+    validate_backup_directory(BACKUPS)
 
     lock_fd = os.open(LOCK, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     os.fchmod(lock_fd, 0o600)
@@ -1132,6 +1185,10 @@ def main():
         if int(previous.get('run_id', '0')) > int(run_id):
             fail('a newer run has already reached deployment; refusing stale release')
 
+    with downloaded.open('rb') as handle:
+        if digest_fileobj(handle) != artifact_sha256:
+            fail('release artifact digest mismatch')
+
     # Run-scoped downloads cannot overwrite another run being installed.
     fd, temporary = tempfile.mkstemp(prefix='.incoming-' + run_id + '-', dir=PACKAGE.parent)
     try:
@@ -1145,23 +1202,12 @@ def main():
         if os.path.exists(temporary):
             os.unlink(temporary)
 
+    with PACKAGE.open('rb') as handle:
+        if digest_fileobj(handle) != artifact_sha256:
+            fail('copied release artifact digest mismatch')
+
     with tarfile.open(PACKAGE, mode='r:*') as archive:
-        members = archive.getmembers()
-        member_map = {}
-        for member in members:
-            raw = member.name
-            if raw.startswith('/') or '..' in Path(raw).parts:
-                fail('release package contains an unsafe path')
-            normalized = raw[2:] if raw.startswith('./') else raw
-            if normalized in ('', '.'):
-                if not member.isdir():
-                    fail('release package root entry is unsafe')
-                continue
-            if not member.isfile() or '/' in normalized or normalized in member_map:
-                fail('release package contains an unsafe member')
-            member_map[normalized] = member
-        if set(member_map) != EXPECTED_MEMBERS:
-            fail('release package member set is invalid')
+        member_map = validated_release_members(archive)
         receipt_handle = archive.extractfile(member_map['receipt.json'])
         if receipt_handle is None:
             fail('receipt is unavailable')
@@ -1247,7 +1293,17 @@ def main():
         'receipt_sha256': approval['receipt_sha256'],
         'jar_sha256': approval['jar_sha256'],
     }
-    raise SystemExit(invoke_installer(INSTALLER))
+    version_record = dict(schema_version=1, pipeline_id=pipeline_id, run_id=run_id,
+        version=release_version, commit=source_commit, tree=source['tree_sha'],
+        artifact_sha256=artifact_sha256, jar_sha256=approval['jar_sha256'],
+        receipt_sha256=approval['receipt_sha256'], status='prepared')
+    version_record_path = ROOT / ('versioned-release-' + run_id + '.json')
+    atomic_write(version_record_path, (json.dumps(version_record, sort_keys=True) + '\n').encode())
+    return_code = invoke_installer(INSTALLER)
+    version_record.update(status='verified' if return_code == 0 else 'failed',
+                          installer_exit_code=return_code)
+    atomic_write(version_record_path, (json.dumps(version_record, sort_keys=True) + '\n').encode())
+    raise SystemExit(return_code)
 
 
 if __name__ == '__main__':

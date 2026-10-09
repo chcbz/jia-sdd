@@ -937,5 +937,70 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         self.assertFalse((self.root / 'mysql-args.json').exists())
 
 
+    def test_preservation_f06_current_sql_and_mandatory_owner_catalog_are_exact(self):
+        self.assertEqual(f06.RESOURCE_SHA256,
+                         'ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75')
+        self.assertEqual(digest(f06.F06_SQL_BYTES), f06.RESOURCE_SHA256)
+        self.assertIn(b'owner_jiacn', f06.F06_SQL_BYTES)
+        for table in f06.TABLE_ORDER:
+            spec = f06.EXPECTED_TABLES[table]
+            self.assertIn(('owner_jiacn', 'varchar(50)', 'NO', None, ''), spec['columns'])
+            for name, unique, columns, kind in spec['indexes']:
+                if columns[:2] == ('tenant_id', 'client_id'):
+                    self.assertEqual(columns[2], 'owner_jiacn', name)
+
+    def test_preservation_raw_historical_ownerless_show_is_not_current_schema(self):
+        first = f06.TABLE_ORDER[0]
+        # Original Run49 snapshot stays literal and is NOT relabelled current/live.
+        with self.assertRaises(f06.SchemaError):
+            f06.parse_show_create(RUN49_SHOW_ROWS, first, self.collation)
+        self.use_run49_metadata()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'show_create_schema_drift')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_preservation_only_two_exact_current_owner_column_layouts_pass(self):
+        first = f06.TABLE_ORDER[0]
+        appended = synthetic_show_rows(first, self.collation)
+        columns = f06.parse_show_create(appended, first, self.collation)
+        self.assertEqual(len(columns), 17)
+        self.assertEqual(tuple(col[1:6] for col in columns), f06.EXPECTED_TABLES[first]['columns'])
+        authored = copy.deepcopy(appended)
+        owner = next(row for row in authored if row[0].startswith('  `owner_jiacn`'))
+        authored.remove(owner)
+        client = next(i for i, row in enumerate(authored) if row[0].startswith('  `client_id`'))
+        authored.insert(client + 1, owner)
+        self.assertEqual({col[1] for col in f06.parse_show_create(authored, first, self.collation)},
+                         {value[0] for value in f06.EXPECTED_TABLES[first]['columns']})
+        wrong = copy.deepcopy(authored)
+        wrong.remove(owner)
+        wrong.insert(1, owner)
+        with self.assertRaises(f06.SchemaError):
+            f06.parse_show_create(wrong, first, self.collation)
+
+    def test_preservation_missing_owner_index_or_nullable_owner_is_rejected_before_create(self):
+        first = f06.TABLE_ORDER[0]
+        self.state['tables'][first] = 'equivalent'
+        for drift in ('nullable', 'missing_index_owner'):
+            rows = expected_rows(first, self.collation)
+            if drift == 'nullable':
+                owner = next(row for row in rows['COLUMNS'] if row[2] == hx('owner_jiacn'))
+                owner[4] = hx('YES')
+            else:
+                rows['STATISTICS'] = [row for row in rows['STATISTICS'] if row[4] != hx('owner_jiacn')]
+                sequence = {}
+                for row in rows['STATISTICS']:
+                    sequence[row[1]] = sequence.get(row[1], 0) + 1
+                    row[3] = str(sequence[row[1]])
+            self.state['expected'][first] = rows
+            self.write_state()
+            with self.subTest(drift=drift):
+                result, payload = self.execute('--apply')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(payload['error'], 'existing_schema_drift')
+                self.assertEqual(self.read_state()['creates'], [])
+
+
 if __name__ == '__main__':
     unittest.main()

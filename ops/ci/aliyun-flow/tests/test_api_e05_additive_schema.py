@@ -840,5 +840,48 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
                 self.assertFalse((self.root / 'mysql-args.json').exists())
 
 
+    def test_preservation_e05_fixed_create_bytes_and_owner_extension_are_both_required(self):
+        self.assertEqual(e05.RESOURCE_SHA256,
+                         'da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1')
+        self.assertEqual(digest(e05.E05_SQL_BYTES), e05.RESOURCE_SHA256)
+        self.assertNotIn(b'owner_jiacn', e05.E05_SQL_BYTES)
+        spec = e05.EXPECTED_TABLES[e05.TABLE_ORDER[0]]
+        self.assertIn(('owner_jiacn', 'varchar(50)', 'NO', None, ''), spec['columns'])
+        self.assertIn(e05.index('idx_agent_work_item_reassignment_owner_scope', False,
+                      ('tenant_id', 'client_id', 'owner_jiacn', 'task_id', 'work_item_id')),
+                      spec['indexes'])
+
+    def test_preservation_ownerless_historical_create_show_cannot_be_current_success(self):
+        with self.assertRaises(e05.SchemaError):
+            e05.parse_show_create(E05_SHOW_ROWS, e05.TABLE_ORDER[0], self.collation)
+
+    def test_preservation_complete_current_owner_show_is_synthetic_only_and_exact(self):
+        text = E05_SHOW_TEXT.replace('  PRIMARY KEY (`id`),',
+                                    '  `owner_jiacn` varchar(50) NOT NULL,\n  PRIMARY KEY (`id`),')
+        needle = '  CONSTRAINT `chk_work_item_reassignment_agents`'
+        text = text.replace(needle,
+            '  KEY `idx_agent_work_item_reassignment_owner_scope` '
+            '(`tenant_id`,`client_id`,`owner_jiacn`,`task_id`,`work_item_id`),\n' + needle)
+        rows = [[e05.TABLE_ORDER[0], text.splitlines()[0]]] + [[line] for line in text.splitlines()[1:]]
+        parsed = e05.parse_show_create(rows, e05.TABLE_ORDER[0], self.collation)
+        self.assertEqual(len(parsed), 26)
+        self.assertEqual(tuple(col[1:6] for col in parsed),
+                         e05.EXPECTED_TABLES[e05.TABLE_ORDER[0]]['columns'])
+        no_owner_index = [row for row in rows if not row[0].startswith('  KEY `idx_agent_work_item_reassignment_owner_scope`')]
+        with self.assertRaises(e05.SchemaError):
+            e05.parse_show_create(no_owner_index, e05.TABLE_ORDER[0], self.collation)
+
+    def test_preservation_missing_mandatory_owner_index_stops_before_create(self):
+        table = e05.TABLE_ORDER[0]
+        self.state['tables'][table] = 'equivalent'
+        rows = self.state['expected'][table]['STATISTICS']
+        rows[:] = [row for row in rows if row[1] != hx('idx_agent_work_item_reassignment_owner_scope')]
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'existing_schema_drift')
+        self.assertEqual(self.read_state()['creates'], [])
+
+
 if __name__ == '__main__':
     unittest.main()

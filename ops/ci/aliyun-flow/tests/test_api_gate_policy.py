@@ -171,5 +171,78 @@ esac
         self.assertIn('verify_lock_fd', lifecycle)
 
 
+    def test_preservation_safe_flow_reports_are_not_extracted_into_privileged_workspace(self):
+        self.members['test-results/summary.json'] = b'{"synthetic":true}'
+        self.members['test-results/only-private-fixture.xml'] = b'<testsuite/>'
+        self.write_package()
+        result = self.install()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.read_bytes(), self.jar)
+        self.assertFalse(any(self.root.rglob('only-private-fixture.xml')))
+        self.assertFalse(any((self.root / 'service').glob('.cyf-api-flow-install.*')))
+
+    def test_preservation_unsafe_historical_report_path_is_rejected_before_lifecycle(self):
+        self.members['test-results/../outside.xml'] = b'forbidden'
+        self.write_package()
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('unsafe or duplicate test report member', result.stderr)
+        self.assert_untouched()
+
+    def test_preservation_offline_backup_alias_is_not_the_only_production_allowlisted_alias(self):
+        backups = self.root / 'state/backups'
+        backups.rmdir()
+        other = self.root / 'other-backups'
+        other.mkdir(mode=0o700)
+        backups.symlink_to(other, target_is_directory=True)
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('backup alias is unsafe', result.stderr)
+        self.assert_untouched()
+
+    def test_preservation_forward_only_failure_retains_candidate_and_exact_retry_finalizes(self):
+        # Existing offline-only fake lifecycle; no service/real JAR/process control.
+        lifecycle = self.root / 'bin/cyf-api-kit'
+        original = lifecycle.read_text()
+        lifecycle.write_text(original.replace('start) rm -f "$root/stopped" ;;',
+                                              'start) exit 1 ;;'))
+        self.env['CYF_API_FLOW_FORWARD_ONLY'] = '1'
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.target.read_bytes(), self.jar)
+        record = json.loads((self.root / 'state/record.json').read_text())
+        self.assertEqual(record['status'], 'failed')
+        self.assertEqual(record['recovery'], 'forward_only_candidate_retained')
+        self.assertEqual(Path(record['backup']).read_bytes(), self.old)
+        self.assertFalse(json.loads((self.root / 'state/approval.json').read_text())['consumed'])
+        calls = (self.root / 'calls').read_text().splitlines()
+        self.assertEqual(calls, ['stop', 'status', 'start'])
+        lifecycle.write_text(original)
+        recovered = self.install()
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        self.assertEqual(self.target.read_bytes(), self.jar)
+        self.assertEqual(json.loads((self.root / 'state/record.json').read_text())['status'], 'installed')
+        self.assertTrue(json.loads((self.root / 'state/approval.json').read_text())['consumed'])
+        self.assertEqual((self.root / 'calls').read_text().splitlines().count('stop'), 1)
+
+    def test_preservation_forward_only_foreign_receipt_cannot_resume_or_restore(self):
+        lifecycle = self.root / 'bin/cyf-api-kit'
+        lifecycle.write_text(lifecycle.read_text().replace('start) rm -f "$root/stopped" ;;',
+                                                         'start) exit 1 ;;'))
+        self.env['CYF_API_FLOW_FORWARD_ONLY'] = '1'
+        first = self.install()
+        self.assertNotEqual(first.returncode, 0)
+        prior_calls = (self.root / 'calls').read_bytes()
+        approval = self.root / 'state/approval.json'
+        value = json.loads(approval.read_text())
+        value['receipt_sha256'] = '9' * 64
+        approval.write_bytes(encoded(value))
+        second = self.install()
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn('does not match exact root approval', second.stderr)
+        self.assertEqual((self.root / 'calls').read_bytes(), prior_calls)
+        self.assertEqual(self.target.read_bytes(), self.jar)
+
+
 if __name__ == '__main__':
     unittest.main()

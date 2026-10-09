@@ -310,5 +310,59 @@ raise SystemExit(%d)
         self.assertNotEqual(result['stderr_sha256'], '0' * 64)
 
 
+    def test_preservation_explicit_version_and_external_artifact_digest_are_required(self):
+        self.assertEqual(deploy.validate_versioned_release('fixture-version', '1' * 64), 'fixture-version')
+        for version, digest in (('', '1' * 64), (' v', '1' * 64), ('v\n', '1' * 64), ('v', 'unknown')):
+            with self.subTest(version=version, digest=digest):
+                with self.assertRaises(SystemExit):
+                    deploy.validate_versioned_release(version, digest)
+
+    def test_preservation_version_record_keeps_all_byte_checks_before_installer(self):
+        import inspect
+        source = inspect.getsource(deploy.main)
+        install = source.index('return_code = invoke_installer(INSTALLER)')
+        for check in ("digest_fileobj(handle) != artifact_sha256",
+                      "source.get('commit_sha') != source_commit",
+                      "digest_fileobj(jar_handle) != jar_record['sha256']",
+                      "version_record_path = ROOT / ('versioned-release-' + run_id + '.json')"):
+            self.assertLess(source.index(check), install)
+        self.assertIn("status='verified' if return_code == 0 else 'failed'", source)
+
+    def test_preservation_physical_backup_directory_and_arbitrary_alias_rejection(self):
+        physical = self.base / 'physical-backups'
+        physical.mkdir(mode=0o700)
+        deploy.validate_backup_directory(physical)
+        alias = self.base / 'unapproved-alias'
+        alias.symlink_to(physical, target_is_directory=True)
+        with self.assertRaises(SystemExit):
+            deploy.validate_backup_directory(alias)
+        physical.chmod(0o755)
+        with self.assertRaises(SystemExit):
+            deploy.validate_backup_directory(physical)
+
+    def test_preservation_tar_validation_accepts_safe_historical_reports_not_extra_payload(self):
+        import io, tarfile
+        def opened(names):
+            buffer = io.BytesIO()
+            with tarfile.open(fileobj=buffer, mode='w') as tar:
+                for name in names:
+                    entry = tarfile.TarInfo(name)
+                    entry.size = 1
+                    tar.addfile(entry, io.BytesIO(b'x'))
+            buffer.seek(0)
+            return tarfile.open(fileobj=buffer, mode='r:')
+        names = sorted(deploy.EXPECTED_MEMBERS)
+        with opened(names + ['test-results/summary.json', 'test-results/suite.xml']) as archive:
+            self.assertEqual(set(deploy.validated_release_members(archive)), deploy.EXPECTED_MEMBERS)
+        for extra in ('test-results/../escape.xml', 'test-results//suite.xml',
+                      'test-results/unapproved.bin', 'test-results\\suite.xml', '/escape'):
+            with self.subTest(extra=extra), opened(names + [extra]) as archive:
+                with self.assertRaises(SystemExit):
+                    deploy.validated_release_members(archive)
+        with opened(names + ['test-results/suite.xml', 'test-results/suite.xml']) as archive:
+            with self.assertRaises(SystemExit):
+                deploy.validated_release_members(archive)
+
+
 if __name__ == '__main__':
     unittest.main()
