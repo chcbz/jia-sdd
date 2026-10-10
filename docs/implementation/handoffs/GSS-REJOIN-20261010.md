@@ -126,3 +126,45 @@
 未执行：MySQL RR/实际迁移/catalog验收、整模块回归、正式版本化制品/安装、生产配置/旧关联钥匙精确停用、共享Runtime受控重启、原公孙胜订单ACTIVE与线上免费重整。自动授权修复、凭据轮换、遗留锁强占不是本轮交付功能。前端无改动/无Flow；新用户赠款继续搁置。
 
 下一步是发布与原单生产验收，不是继续重复写一版接线：固定版本与制品、完成适用DB验证和迁移/配置，按原发布锁/备份边界安装；只续 `hrl_0fa0c7b0-bf62-4524-88fa-bed7459b795d` / `hri_063977b3-1143-4d9b-8703-fbd0e56b466a` / binding16；原初租确认后才免费重整。本轮没有生产重启、订单/资金/数据库更改。生产最后已知仍API1.14.2/旧Runtime，此处不是新的线上实测。
+
+## 2026-10-10 10:04 发布接续（用户“好的，继续”）
+- 固定已交付API24eb4ba8/tree883b559f、Runtime80eadc92/treeac7ffd57；API拟1.14.3，无Web改动/Flow。Main唯一生产操作Owner，原Knuth准备API本地制品，原Shannon准备原installer Runtime制品与配置candidate；新任务GSS-HOSTING-{API,RUNTIME}-RELEASE-20261010，不重复源码开发。
+- Main证据 `/var/tmp/cyf-gss-hosting-release-main-20261010-k4f88pgr`；已保存真实继续指令范围、现配置/record私有备份、PID/start与MySQL5表catalog。fresh原lease仍PROVISIONING/v1，intent PROVISIONING_UNKNOWN/v2；未重新付款或发REPROVISION。
+- 磁盘观测余约451MiB，正在按真实制品/安装字节需求核实，不增加任意硬门禁、不删他人文件。还未构建/迁移/安装/重启。生产操作保留原发布锁/备份/安装器；需一次共享Runtime受控重启，后续免费重整只目标subject。
+- 首次只读SQL误用canonical_agent_id导致1054，schema投影已返回但业务段未完整；核对真实字段agent_id后新v2全exit0。旧失败不覆盖。
+
+
+### 2026-10-10 10:50 发布中间回读（不是业务完成）
+- API正式整模块回归发现测试夹具并发escrow ID竞态；原Owner仅以独立AtomicInteger修复测试，生产CAS未改。最终develop已推送 `33e2344a2af02bb908a20bec1125ab7c23e8d00d` / tree `0a9b387e69e3d275f6185b953b9c1851a6469118`，1.14.3；390 PASS/0 fail/error/skip、validateLayering与fresh bootJar通过。正式batch `/var/tmp/cyf-gss-hosting-api-release-20261010-h8519ilf`，admitted同名批次；JAR SHA256 `011022e9b871245d5b39937172e5a4fa63399ad26d1cb406c8dd008cb0def663`。
+- 原coordinator→release→MySQL命名锁及fresh五表备份下，两条精确ALTER成功；旧1.14.2迁移前及新1.14.3迁移后真实MySQL8.0.21 catalog/trigger只读validator均PASS，无资金DML。证据main目录 `hosting-migration-result.json` 与 `catalog-validator/`。**旧initializer不接受新字段，不有意重启旧JAR；本次forward-only。**
+- Runtime固定80eadc92原installer制品安装到 `/home/isp/apps/cyf-agent-runtime-v1/releases/gss-hosting-runtime-20261010-80eadc924713`；原artifact同FS rename，原路径不再使用。配置四候选与API三项socket权限绑定均已备份/原子写；独立托管provider来自原专用managed-template-home静态key，未复制个人HOME/auth/trust，无模型调用成功声明。
+- 精确旧Runtime1366292正常TERM退出3秒、4锁释放；原unit一次start，新PID1654189、NRestarts=0。同PID延后收敛control socket root:isp0660；最初10秒观察过早失败保留，最终证据 `runtime-start-convergence-readback.json`。无强杀/删锁/第二次restart。
+- 原API inspector r3拒绝两项proof位于/var/tmp；同字节移至受保护输入，r4 `inputs_verified`。decision `/var/lib/cyf-api-flow/local-inputs/cyf-gss-hosting-1.14.3-20261010-r4-26fc329d34/install-decision.json`，SHA256 `8d6378a2a4b161062f0095fd868cad3992af78d81194bf99c00e65b7176cc477`。原安装器10:47起执行；10:49旧API1480161正常停止，新PID1660337启动等健康。还未确认安装最终回执。
+- 主控10:46重新观测可用2,969,133,056B，足够实际installer峰值与managed额外native快照；未因未知外部空间增长声明本任务清理成效。main的精确重复输出/旧Runtime无人引用快照清理记录保留，无他人缓存/Codex数据清理。
+- 原公孙胜lease/intent及初租reserve不变；新owned浏览器 `/var/tmp/cyf-gss-hosting-acceptance-20261010-dbXw9l` 已启动，首次登录恰逢API切换返回502，保留证据，待健康后正常登录。尚无新报价/初租/补款/免费重整或业务通过声明。
+
+
+## 2026-10-10 10:59 生产验收闭合
+
+- **开发09:53完成，正式发布10:52:40完成，业务两场景10:59:30核验PASS。** 开发与本次授权发布/验收均落于原09:02—11:02目标窗口；不是全产品/模型推理验收。
+- API1.14.3 / commit33e2344a / tree0a9b387e / build `cyf-gss-hosting-api-release-20261010-h8519ilf`，原decision r4安装exit0，原record=installed、release summary=verified、实体JAR SHA `011022e9b871245d5b39937172e5a4fa63399ad26d1cb406c8dd008cb0def663`，新PID1660337，实际health DTO `status.code=UP`。readback第一次误把status当字符串的断言失败仅观察格式错误，未出现服务健康故障。
+- Runtime80eadc9247与上述新release同源，PID1654189持续active/NRestarts0。前端无源码改动/无Flow发布。迁移、配置、锁、备份和恢复绑定见main `/var/tmp/cyf-gss-hosting-release-main-20261010-k4f88pgr`，以 `production-release-readback.json` 为最终安装回读，不改原安装摘要businessAcceptance=NOT_RUN；业务证据独立。
+
+### 原单重新入伙
+- 延续既有除名PASS及08:45受理的binding16、原lease `hrl_0fa0c7b0-bf62-4524-88fa-bed7459b795d`、intent `hri_063977b3-1143-4d9b-8703-fbd0e56b466a`；本次没有再次除名/初租/补款。
+- 原reconciler自动创建/注册真实installation `rti_facbe11685868873981163ed94a301f8`，同host `cyf-unified-065bb566a2d82210` / instance `f8f0498c-d420-443b-9ee4-cbf390c91f90` / session1，原lease ACTIVE/v2、intent ACTIVE/v4，前端点将册候命。
+- 原预留 `etx_7977c18a-cc8f-4051-ab5f-bb2bb043d463` 只结算一次，capture `etx_ffc2e7b0-8997-4e52-ae3b-9c4ccf0b7117`；原escrow CAPTURED/v2，gross=captured=1000、refund=0。当前原lease只有RESERVE/CAPTURE各一笔，无手工改ACTIVE/结算。
+- 实际起租2026-10-10 10:51:09.458 CST，到期2026-11-09 10:51:09.458 CST；钱袋可用1000、预留0、version12。
+
+### 一次免费重整
+- 10:55:58.564原生产UI点击一次“免费重整接应”，唯一bind POST HTTP202；request `hrr-43c1e5e5-b356-4be2-af98-05141ce4162b`。10:56:18.721真实SERVICE_READY/v3，耗时20.157s；初始202未当完成。
+- 同installation/host/instance，新session2，target generation2；原installation version1/enrolledAt/authorizationIssuedAt未变，未重新enroll。原lease变v3，paidFrom/paidThrough/amount均不变；免费前后wallet和ledger完整响应内容一致，金额0。
+- 同Runtime PID/start、吴用/林冲/卢俊义三个既有app-server PID/start全未变，三角色原session5未变/仍online；仅公孙胜app-server1661381正常替换为1663266。此为共享进程隔离核查，不是跨账号卢俊义业务测试。
+- 六个原任务417/421/424/429/431/433最终GET均cancelled，未复活/重建；网络无新报价或economy POST。
+- 旧broker key9在原coordinator/release锁+精确scope/owner/intent/native ACTIVE核验及行锁事务内仅status退役，保留原key行与intent审计引用，未改Runtime授权。首次预检误用不存在owner_jiacn字段已ROLLBACK；第二次现成MysqlSession marker SELECT重置ROW_COUNT导致断言回滚，核对仍原status1后第三版把UPDATE和ROW_COUNT置同command、1行提交/readback0。各失败证据保留，最终 `legacy-key-retirement-result-v3.json`，不伪称前三次均成功。
+
+### 最终证据与边界
+- `/var/tmp/cyf-gss-hosting-acceptance-20261010-dbXw9l/summary.json`：18项精确断言PASS，SHA256 `c2addda0fafc17e3e2ebcc4ddeffde6ada76b597af9fc9929ea71866057c7982`；同目录生产GET/真实MySQL只读快照、网络、前后进程、UI JSON/截图与脚本。
+- 原独占headless浏览器已请求关闭；未操作用户in-app浏览器。未新增办理任务或真实provider模型推理，不能扩大为“全部办事流程已跑通”；新用户默认资金功能继续不在本次范围。
+- 遗留观测：共享Runtime的MESSAGE_TYPE_REQUIRED原重启前即存在，本轮初租/重整仍完成。未把它归成本次新回归或声称已修复；后续若验实际新任务再按具体消息归因，不为此扩本次实现。
+- 已将Runtime制品任务及本次生产任务收为accepted。后续可回到新用户默认2000资金的单独需求讨论；不自动补款/改赠款策略/创建新任务。

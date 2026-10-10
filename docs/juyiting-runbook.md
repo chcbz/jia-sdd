@@ -49,17 +49,17 @@ Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-vi
 - 已取消的完整终态任务可用原taskVersion重复请求，回读现有结果，不新增事件/版本/退出时间。LEFT/REJECTED的completedAt是原状态服务写入的退出时钟，不应误判为实际开工证据。
 - 实现入口为 `api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskCancellationController.java` 与同组件 `service/impl/AgentTaskCancellationServiceImpl.java`；定向回归入口 `:agent:jia-agent-service:initialCancellation`。发布/具体生产操作证据单独见 `docs/implementation/handoffs/GSS-CANCEL-20261010.md`，不以源码核对代替线上成功。
 
-### 统一 Runtime 托管接线（2026-10-10源码核对；尚未发布）
+### 统一 Runtime 托管接线（2026-10-10源码与本次生产核对）
 
-覆盖 API `24eb4ba863fb1fffdd04f7899a264ccf2b7317df`、Runtime `80eadc9247132a9d6c6b3b9d7fe7b7f965e094de`；仅此范围更新，不重标其余文档基线。
+覆盖 API `33e2344a2af02bb908a20bec1125ab7c23e8d00d`（1.14.3）、Runtime `80eadc9247132a9d6c6b3b9d7fe7b7f965e094de`；仅此范围更新，不重标其余文档基线。源码实现、安装回执和业务验收分别见下述handoff。
 
-- 原 bind/初租/免费重整接口不变。Reconciler → `UnixManagedHostingProvisioner` 的 `runtime-hosting-v1` 私有 UDS → 同进程 `HostingControl` → 同一个 `RuntimeHost` 的单 subject add/recreate；没有第二服务、旧 API-key fallback 或新付款通道。
-- `prepare` 持久化候选且不激活；API 在短事务中精确 ensure installation 并绑定原 initial intent 后才 `ensure`。新订单的通道能力检查位于资金事务外，已提交幂等回执优先回读；保留身份/租约/账本/CAS。
-- 初租就绪需完整 operation/installation/host/instance/session 证据及 API 自己的 `currentRegisteredProof`。进程存在、旧 online 或持久 READY 不能单独结算。免费重整沿用 installation/授权，产生新 session/目标代次，不重新 enroll、不改租期/资金、不重启其他角色。
-- 新字段：initial intent 的 `runtime_installation_id`、`runtime_manifest_sha256`、`runtime_provision_generation`；reprovision 的 `runtime_target_generation`。显式迁移位于 API `economy/jia-economy-mapper/src/main/resources/db/migration-gss-hosting-runtime-v1-20261010.sql`，本轮未执行；应用不会自动修补旧/不匹配 catalog。
-- 配置与唯一 installer 的说明位于 Runtime `conf/cyf-agent-runtime-v1/HOSTING-CONTROL.md`：外部私有 `hostingControlPath`、独立托管 provider 模板、`socketGid` 与 API `socket-group-gid` 对齐、受限0660 socket及可在开机重建的tmpfiles父目录。不得复制其他账号HOME/凭据。授权不确定返回 RECOVERY_REQUIRED，未提供自动换钥/遗留锁强占功能。
-- 开发回归：API83通过及分层检查；Runtime157通过/1既有跳过，另桥接2通过；真实 Java→Node UDS 测试的 native enroll/session/executor 与API授权仍为合成替身，不是生产端到端。MySQL RR/实际迁移、整模块及生产发布验收未完成，不以 H2/静态schema替代。
-- 开发交付/固定原单及发布待办：`docs/implementation/handoffs/GSS-REJOIN-20261010.md`。本轮未新增订单/资金/用户赠款，也未部署或改变原线上状态。
+- 原 bind/初租/免费重整接口不变。Reconciler → `UnixManagedHostingProvisioner` 的 `runtime-hosting-v1` 私有 UDS → 同进程 `HostingControl` → 同一个 `RuntimeHost` 的单subject add/recreate；没有第二服务、旧API-key fallback或新付款通道。
+- `prepare` 持久化候选而不激活；API短事务精确ensure installation并绑定原initial intent后才`ensure`。新订单通道能力检查位于资金事务外，已提交幂等回执优先回读；保留身份/租约/账本/CAS。
+- 初租就绪必须完整operation/installation/host/instance/session证据及API独立`currentRegisteredProof`。进程存在、旧online或持久READY不能单独结算。免费重整沿用installation/授权，产生新session/目标代次，不重新enroll、不改租期/资金、不重启其他角色。
+- 新字段：initial intent的`runtime_installation_id`、`runtime_manifest_sha256`、`runtime_provision_generation`；reprovision的`runtime_target_generation`。显式迁移资源`economy/jia-economy-mapper/src/main/resources/db/migration-gss-hosting-runtime-v1-20261010.sql`，本次已执行两ALTER并通过真实MySQL8.0.21精确catalog/触发器验证。应用不自动修补旧/不匹配catalog；新增字段后旧1.14.2 initializer不接受该catalog，本次forward-only，不盲重启旧JAR。
+- Runtime配置及唯一installer说明见组件`conf/cyf-agent-runtime-v1/HOSTING-CONTROL.md`：外部私有`hostingControlPath`、独立托管provider模板、`socketGid`与API`socket-group-gid`一致；受限0660 socket与开机tmpfiles父目录。本次路径`/run/cyf-agent-runtime-v1/unified/control.sock`，runnerUid0、socketGroupGid1000。不得复制其他账号HOME/凭据；授权不确定返回RECOVERY_REQUIRED，无自动换钥/遗留锁强占功能。
+- 正式后端390通过/分层与fresh bootJar；Runtime157通过/1既有跳过，另桥接2通过。API1.14.3原本地安装器verified/healthUP、Runtime固定release已安装；本次公孙胜原单ACTIVE与一次UI免费重整SERVICE_READY已真生产验收：同installation/session1→2，原租期/钱包/账本不变，三个既有subject/PID/session未重启。旧broker key按原intent精确退役，不批量吊销。
+- 完整源码、发布批次、原lease/request、恢复边界与证据见`docs/implementation/handoffs/GSS-REJOIN-20261010.md`。这不是全产品或模型推理验收；未新增订单/任务/赠款，也没有卢俊义账号业务验收。
 
 ## Role Portrait Rules
 
