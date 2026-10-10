@@ -88,7 +88,7 @@
 1. 校验用户token（拒绝machine）、规范tenant、可信client、uid与持久用户/归属；缺tenant不默认0。通过现有scope授权，确认本次配置及该client/tenant的旧用户基线已生效。
 2. 按`(client_id,tenant_id,user_id)`读取资格；新建时严格INSERT获得行写锁，冲突回读使用同一三元组FOR UPDATE，详见3.4。EXCLUDED返回NOT_ELIGIBLE；POSTED核对完整scope/user及真实账本后返回原回执。其他scope的同uid记录不参与本次判定。
 3. 在同一个REQUIRED事务中初始化原钱包/发行账户（余额0）、调用原treasury.issue，并写POSTED/真实transaction。记账仍为用户AVAILABLE +2000000000、系统SILVER_ISSUANCE -2000000000。
-4. 固定用途`new-user-initial-grant`，确定性请求键由client+tenant+stable uid+固定用途生成，不随活动版本、金额或登录别名变化；client或tenant变化必定改变身份输入。编码固定为UTF-8 JSON数组`[clientId,tenantId,十进制uid字符串,"new-user-initial-grant"]`（标准JSON转义、无额外空白），取SHA-256小写hex作为key，不用裸分隔符拼接产生歧义。读取已POSTED时不拿新配置重算旧hash。
+4. 固定用途`new-user-initial-grant`，确定性请求键由client+tenant+stable uid+固定用途生成，不随活动版本、金额或登录别名变化；client或tenant变化必定改变身份输入。编码固定为UTF-8 JSON数组`[clientId,tenantId,十进制uid字符串,"new-user-initial-grant"]`（标准JSON转义、无额外空白），对规范编码取SHA-256，沿用E02.deterministicUuid既有转换规则（前16字节、相同version/variant位设置、UUID.toString）得到36字符key，不直接存64字符hex；原economy_transaction.idempotency_key为VARBINARY(36)，CHECK要求36字节。request_hash仍为独立32字节摘要，不与key混用；不用裸分隔符拼接产生歧义。读取已POSTED时不拿新配置重算旧hash。
 5. 原posting为REQUIRED，不独立提交；失败整体回滚。实际锁序为claim INSERT写锁 → 按AccountKey.LOCK_ORDER的零余额账户初始化锁 → 原交易幂等占位 → 原排序账户读取/CAS，不能省略初始化锁阶段。claim唯一冲突退出原事务，由非事务入口在独立代理的新事务中回读，详见3.4；不能在已被标记回滚的事务内假装继续。
 6. 业务钱包身份为client+tenant+uid，现账本仍以scope+actor作为物理账户寻址：为领取过的新用户在同一三元组记录中固定claim.actor_id，将稳定uid映射为该scope的账本payer。actor不是第四个可由调用方选择的钱包维度，不跨scope复用绑定。钱包/流水、租金、悬赏付款入口通过共享资金身份解析回用该actor；仅解析资金主体，不改业务owner/ACL、不重写历史钱包。EXCLUDED且未绑定主体者沿用已有钱包身份；已有多主体归属冲突明确报错，不自动搬钱。
 7. 金额配置2000000000；现有旧1000业务实现同步替换，不同时保留两个活动入口。GET wallet/ledger继续只读，不直接更新余额字段。
