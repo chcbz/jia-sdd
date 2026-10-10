@@ -1,6 +1,6 @@
 # 公孙胜初租/免费重整接入统一 Runtime：修复方案
 
-- 2026-10-10，Owner Main。**已按用户2小时要求派发开发（09:02—11:02 CST目标窗口）；两端编码中，尚未完成验证/迁移/发布。**
+- 2026-10-10，Owner Main。**本轮开发实现、定向回归与Java→Node控制通道联调已完成，两端已合入并推送develop；生产迁移/部署/业务验收尚未执行。09:02—11:02 CST为原开发目标窗口，交付明细见handoff最新附录。**
 - 只读源码核对：API `36d9e5452ab8beb64b97e5570da6ede10ec38797`；Runtime `2ce6fedf34832048e248fde3e07222f5ed867b7a`。2026-10-10开工只读ls-remote已核对两仓origin/develop与此基线相同；未fetch。
 - 原实测和资金事实：`/home/isp/wsps/cyf/docs/implementation/handoffs/GSS-REJOIN-20261010.md`；`/var/tmp/cyf-gss-rejoin-funded-20261010-yBc9aH/summary.json`。本文不以静态源码检查替代新的线上状态读取。
 

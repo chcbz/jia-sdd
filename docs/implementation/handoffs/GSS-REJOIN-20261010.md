@@ -95,3 +95,34 @@
 | 制品完整性和动态模块都包含 | 后端固定制品 | 原唯一installer清单 | 待测试 |
 
 后续发布准备（本轮不执行）：固定候选commit/tree及版本；Runtime原installer产生同批制品；后端本地原串行构建；备份/锁下执行精确schema迁移；配置私有control路径/受信组/托管provider模板；受控安装与共享Runtime一次重启、API安装；在线核对版本后仅续原公孙胜订单、初租ACTIVE后再原UI免费重整。不重测旧线上版本、不重下单、不补款、不建第二Runtime。共享重启涉及其他账号角色，不能冒称仅影响公孙胜。旧钥匙只按原intent精确审计停用，不批量操作。
+
+## 2026-10-10 09:53 开发交付（不是生产验收）
+
+用户目标窗口09:02—11:02；本轮约51分钟完成实现、自检、控制通道联调及双仓develop集成/推送。各微任务连续推进，不因阶段汇报或可修复失败停工；无独立Reviewer。
+
+| 仓库 | 原develop / merge parent | 已推送develop / source SHA | source tree = merge tree |
+|---|---|---|---|
+| API | 36d9e5452ab8beb64b97e5570da6ede10ec38797 | 24eb4ba863fb1fffdd04f7899a264ccf2b7317df | 883b559fae4bd5e5bc16780b7e93837a21e216e8 |
+| Runtime | 2ce6fedf34832048e248fde3e07222f5ed867b7a | 80eadc9247132a9d6c6b3b9d7fe7b7f965e094de | ac7ffd578f1a719071be6cb0ce3d3bdc0022c841 |
+
+两组件FF集成，无语义改写；受测worktree均全clean。Main回读校验源码/tree、XML和证据摘要后复用原结果，不重跑相同输入。独立worktree/branch保留本轮固定源与证据引用，未删除其他任务目录。
+
+### 实际结果与证据
+- API：最终同tree 83测试、0失败、0错误、0跳过，`validateLayering`通过。
+  - `/var/tmp/cyf-gss-hosting-api-20261010-owner-r9/delivery.json`，SHA256 `b581c8a2fcab16a9e5d16b8e63b823de6a9aa205945bf7e680d8efb4540a38c6`。
+  - touched-hosting-bridge evidence key `d6800280bf3f8a1790fd9dd03669b6a855482ec62f4dafb0b02e728e03718640`；financial-schema key `749ff8e145e5171e00f71369fb87a2c83f5a354a5364dc28adc278518a9a18ec`。
+  - 真Java `UnixManagedHostingProvisioner` ↔ AF_UNIX ↔ 真Node `HostingControl`/journal/RuntimeHost，覆盖初租、同operation重放、同installation免费新session及旧代次拒绝。API授权/currentRegisteredProof、native enrollment/session/executor使用独立合成替身；不是实际Provider/生产API/资金验收。
+- Runtime：157 PASS、0 FAIL、1既有SKIP；独立bridge 2 PASS；静态检查PASS。
+  - `/var/tmp/gss-hosting-runtime-20261010-evidence-fEccWg/delivery.json`，SHA256 `826fe1f7ec0e3268211f63401a376dba718ffffa7054ee5fc872beaaac07b579`。
+  - skip原文为历史M3跨端HTTP ACK/恢复条目NOT_RUN，保留不重标；本次控制通道测试不能替代它。
+  - 测试含真实本地子进程provider环境透传与受信组UID/GID socket访问；模型/网络服务仍未实际调用。
+- 实际工具记录：Node v20.20.2（无版本门禁）；API Java21.0.8、Gradle9.3.1、测试runner Python3.6.8。文档/核验辅助使用Python3.11，不改解释器或全局配置。
+- 测试失败按事实闭合：首次runner的Python3.6不接受text关键字，改已有universal_newlines；fixture Integer/Long通过真实JSON roundtrip比较；H2 RR真实raw行证实本事务locking-read为空/外部已提交1行，与MySQL current read不能等同。保留独立RR诊断，H2竞争测试明确READ_COMMITTED，生产CAS未放宽。旧失败日志及根因历史保留原r1/r2/r7/r8目录，最终候选未复用失败为成功。
+
+### 本轮完成 / 未完成边界
+
+已实现：installation精确ensure及schema/迁移源码；原intent安装/代次关联；事务外新预留能力检查；统一Runtime动态加入/单subject重建；私有control/journal/独立模板/权限及installer清单；当前注册证据结算与免费重整零资金、原租期不变；受影响定向回归及真Java-Node控制通道联调。
+
+未执行：MySQL RR/实际迁移/catalog验收、整模块回归、正式版本化制品/安装、生产配置/旧关联钥匙精确停用、共享Runtime受控重启、原公孙胜订单ACTIVE与线上免费重整。自动授权修复、凭据轮换、遗留锁强占不是本轮交付功能。前端无改动/无Flow；新用户赠款继续搁置。
+
+下一步是发布与原单生产验收，不是继续重复写一版接线：固定版本与制品、完成适用DB验证和迁移/配置，按原发布锁/备份边界安装；只续 `hrl_0fa0c7b0-bf62-4524-88fa-bed7459b795d` / `hri_063977b3-1143-4d9b-8703-fbd0e56b466a` / binding16；原初租确认后才免费重整。本轮没有生产重启、订单/资金/数据库更改。生产最后已知仍API1.14.2/旧Runtime，此处不是新的线上实测。

@@ -37,7 +37,7 @@ Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-vi
 - 宋江首领自动协同 uses `GET /agent/capabilities`, `POST /agent/tasks/{taskId}/recommend`, and `POST /agent/tasks/{taskId}/auto-assign`; recommendation results should remain explainable and manual assignment remains the fallback.
 - Runtime abilities are client-owned snapshots: `agent.register` and `agent.presence` may refresh `agent_runtime.abilities`; persona abilities are fallback defaults only.
 - Juyi Hall chat sends through `POST /chat/stream` and receives events from `GET /chat/conversation/events`.
-- 招贤令 binding calls `POST /agent/personas/{personaCode}/bind`; `mode=server` provisions `/home/isp/apps/codex-ws-agent` and `/home/isp/hosts/cyf/agent-clients/{agent}`, while `mode=local` returns user-side install/config guidance.
+- 招贤令 binding calls `POST /agent/personas/{personaCode}/bind`。`mode=server` 沿用租约/预留/intent，最新开发源码接入同一个统一 Runtime，不再通过旧 codex-ws-agent broker 安装；源码与上线边界见下节。`mode=local` 本轮未改，不据此推断其新验收状态。
 - Do not use `/agent/active` for Juyi Hall.
 
 ### 初步任务取消（2026-10-10源码核对）
@@ -48,6 +48,18 @@ Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-vi
 - 同一事务退出邀请/已接受成员、取消待执行工作项、撤销ACTIVE执行授权、关闭无租约RETRY bootstrap，释放本任务占用；不启停共享Runtime，不清其他任务占用。保留原点将与历史事件/成果，规范终态Provider消费授权不等于悬赏托管资金，不能因此退款或重新付费。
 - 已取消的完整终态任务可用原taskVersion重复请求，回读现有结果，不新增事件/版本/退出时间。LEFT/REJECTED的completedAt是原状态服务写入的退出时钟，不应误判为实际开工证据。
 - 实现入口为 `api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskCancellationController.java` 与同组件 `service/impl/AgentTaskCancellationServiceImpl.java`；定向回归入口 `:agent:jia-agent-service:initialCancellation`。发布/具体生产操作证据单独见 `docs/implementation/handoffs/GSS-CANCEL-20261010.md`，不以源码核对代替线上成功。
+
+### 统一 Runtime 托管接线（2026-10-10源码核对；尚未发布）
+
+覆盖 API `24eb4ba863fb1fffdd04f7899a264ccf2b7317df`、Runtime `80eadc9247132a9d6c6b3b9d7fe7b7f965e094de`；仅此范围更新，不重标其余文档基线。
+
+- 原 bind/初租/免费重整接口不变。Reconciler → `UnixManagedHostingProvisioner` 的 `runtime-hosting-v1` 私有 UDS → 同进程 `HostingControl` → 同一个 `RuntimeHost` 的单 subject add/recreate；没有第二服务、旧 API-key fallback 或新付款通道。
+- `prepare` 持久化候选且不激活；API 在短事务中精确 ensure installation 并绑定原 initial intent 后才 `ensure`。新订单的通道能力检查位于资金事务外，已提交幂等回执优先回读；保留身份/租约/账本/CAS。
+- 初租就绪需完整 operation/installation/host/instance/session 证据及 API 自己的 `currentRegisteredProof`。进程存在、旧 online 或持久 READY 不能单独结算。免费重整沿用 installation/授权，产生新 session/目标代次，不重新 enroll、不改租期/资金、不重启其他角色。
+- 新字段：initial intent 的 `runtime_installation_id`、`runtime_manifest_sha256`、`runtime_provision_generation`；reprovision 的 `runtime_target_generation`。显式迁移位于 API `economy/jia-economy-mapper/src/main/resources/db/migration-gss-hosting-runtime-v1-20261010.sql`，本轮未执行；应用不会自动修补旧/不匹配 catalog。
+- 配置与唯一 installer 的说明位于 Runtime `conf/cyf-agent-runtime-v1/HOSTING-CONTROL.md`：外部私有 `hostingControlPath`、独立托管 provider 模板、`socketGid` 与 API `socket-group-gid` 对齐、受限0660 socket及可在开机重建的tmpfiles父目录。不得复制其他账号HOME/凭据。授权不确定返回 RECOVERY_REQUIRED，未提供自动换钥/遗留锁强占功能。
+- 开发回归：API83通过及分层检查；Runtime157通过/1既有跳过，另桥接2通过；真实 Java→Node UDS 测试的 native enroll/session/executor 与API授权仍为合成替身，不是生产端到端。MySQL RR/实际迁移、整模块及生产发布验收未完成，不以 H2/静态schema替代。
+- 开发交付/固定原单及发布待办：`docs/implementation/handoffs/GSS-REJOIN-20261010.md`。本轮未新增订单/资金/用户赠款，也未部署或改变原线上状态。
 
 ## Role Portrait Rules
 
