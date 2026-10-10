@@ -33,23 +33,29 @@
 
 `economy_onboarding_grant_claim`，沿用经济表字符集/排序规则和版本化schema核验，不增加第二账本。
 
+2026-10-10核对公共字段依据：`/home/isp/wsps/cyf/api/common/jia-common-core/src/main/java/cn/jia/core/entity/BaseEntity.java`含tenantId/clientId/createTime/updateTime；`/home/isp/wsps/cyf/api/economy/jia-economy-mapper/src/main/resources/db/economy-v0-foundation.sql`的account/transaction表另有自增id，scope和时间均NOT NULL。领取表按该经济模块风格补齐，不自行增加无用途的deleted/version/create_by/update_by字段。
+
 | 字段 | 类型/约束 | 说明 |
 |---|---|---|
-| tenant_id | VARCHAR(50) NOT NULL | 来自可信认证上下文的业务区域 |
+| id | BIGINT NOT NULL AUTO_INCREMENT | 技术主键，沿用经济表风格 |
+| tenant_id | VARCHAR(50) NOT NULL，无SQL默认值 | 来自可信认证上下文的业务区域；迁移取已批准目标配置 |
 | user_id | BIGINT NOT NULL，>0 | 持久稳定用户id |
-| client_id | VARCHAR(50) NULL | 实际发款钱包的client，审计和交易定位；不是防重维度；EXCLUDED可空 |
+| client_id | VARCHAR(50) NOT NULL，无SQL默认值 | POSTING/POSTED为真实接入及发款钱包client；EXCLUDED为本次基线初始化的目标client，不声称是用户注册client |
 | actor_id | VARCHAR(100) NULL | 已绑定的钱包付款主体；EXCLUDED可空 |
 | status | VARCHAR(16) NOT NULL | POSTING / POSTED / EXCLUDED |
 | transaction_id | VARCHAR(100) NULL | 原复式账本真实交易id |
 | amount_micro | BIGINT NOT NULL DEFAULT 0 | 实际已发金额，不是钱包余额 |
 | campaign_ref | VARCHAR(100) NULL | 固定用途审计标签，不决定领取次数 |
 | reason_code | VARCHAR(32) NULL | EXCLUDED为PREEXISTING_USER |
-| create_time / update_time | BIGINT NOT NULL | 服务端毫秒时间 |
+| create_time | BIGINT NOT NULL，无SQL默认值 | 服务端创建毫秒时间，插入时明确填写，之后不改 |
+| update_time | BIGINT NOT NULL，无SQL默认值 | 插入时与create_time一致；状态实际变更时由服务端更新 |
 
-- 主键`(tenant_id,user_id)`；交易引用唯一键`(tenant_id,client_id,transaction_id)`，匹配当前账本scope。
+- 技术主键`PRIMARY KEY (id)`；业务防重唯一键`uk_onboarding_grant_user (tenant_id,user_id)`；交易引用唯一键`uk_onboarding_grant_transaction (tenant_id,client_id,transaction_id)`，匹配当前账本scope。client保留为公共字段，**不进入领取次数唯一键**。
+- “默认字段”指公共字段，不等于赋固定默认值：tenant/client不写`DEFAULT '0'`或具体client，不能缺值回退；空白值在服务边界拒绝。时间由服务端明确赋值，原生mapper插入不能假设BaseEntity注解一定触发填充。
+- claim资格查询/占位按tenant+uid，不能因公共client过滤而看不到其他client已存在的领取记录。通过当前请求ACL后使用明确的claim mapper SQL（不全局取消client隔离），检查原记录client再决定回执可见性；其他client不能覆盖原client/actor/transaction或新发一笔。EXCLUDED先按tenant+uid生效，不因其记录的初始化client不同失效。
 - POSTING：client/actor/campaign非空、amount=2000000000、transaction/reason为空，仅在同一未提交事务中存在。
 - POSTED：client/actor/campaign/transaction非空、amount>0、reason为空；回放返回原实际金额。
-- EXCLUDED：amount=0，client/actor/transaction/campaign为空，reason=PREEXISTING_USER；不伪造零金额交易。
+- EXCLUDED：client为批准的基线目标client，amount=0，actor/transaction/campaign为空，reason=PREEXISTING_USER；不伪造零金额交易或用户注册来源。
 - 不改现有account/transaction/entry/escrow主键，不复制旧309笔补款为新的POSTED。
 
 ### 3.2 复用原POST及记账服务
@@ -57,7 +63,7 @@
 请求仍为`POST /economy/onboarding-grant {}`；用户、金额、tenant/client不接受body指定。
 
 1. 校验用户token（拒绝machine）、规范tenant、可信client、uid与持久用户/归属；缺tenant不默认0。通过现有scope授权，确认本次配置及该区域旧用户基线已生效。
-2. 读取/占位并锁定`(tenant_id,user_id)`。EXCLUDED返回NOT_ELIGIBLE；POSTED返回原回执。已有记录client与当前client不符时返回明确scope不匹配，不发第二笔、不虚构该client钱包已经到账。
+2. 读取/占位并锁定`(tenant_id,user_id)`。EXCLUDED先返回NOT_ELIGIBLE；POSTED先核对记录client与当前client相符，再返回原回执。不符则返回明确scope不匹配，不发第二笔、不虚构该client钱包已经到账。
 3. 在同一个REQUIRED事务中初始化原钱包/发行账户（余额0）、调用原treasury.issue，并写POSTED/真实transaction。记账仍为用户AVAILABLE +2000000000、系统SILVER_ISSUANCE -2000000000。
 4. 固定用途`new-user-initial-grant`，确定性请求键以tenant+stable uid+固定用途生成，不随活动版本、金额、登录别名或client变化。读取已POSTED时不拿新配置重算旧hash。
 5. 原posting为REQUIRED，不独立提交；失败整体回滚。锁序保持claim → 原交易幂等占位 → 原排序账户锁。并发插入冲突须通过数据库支持的占位/锁定方式收敛，不能在已被标记回滚的事务内假装继续。
@@ -80,7 +86,7 @@
 
 ## 5. 老用户处理与发布
 
-- 原发布窗口内协调实际user_info创建写入，固定启用前旧用户集合，按当前发布区域写EXCLUDED并记录集合摘要。不能沿用历史309/310人数、最大ID或可空create_time；共享登录用户不能因client_id为空漏掉。
+- 原发布窗口内协调实际user_info创建写入，固定启用前旧用户集合，按当前发布区域写EXCLUDED并记录集合摘要。不能沿用历史309/310人数、最大ID或可空create_time；共享登录用户不能因user_info.client_id为空漏掉；领取表的client_id从本次批准的目标配置显式传入，不复制该空值、不猜用户历史来源。
 - 只处理当前明确的业务区域；不把旧用户集合向所有tenant广播。未来新增区域怎样定义新用户另议，不成为这次赠款前置开发。
 - 基线、表结构和配置验证完成才启用POST；缺基线不能因查不到claim而直接发。复用原迁移记录/安装步骤，不新建长期基线管理平台。原安装hook接线尚需确认；发布锁不能替代注册写入互斥。
 - 按固定版本/源码/制品发布：前端Flow4403172，后端本地原编排器/安装器；保留发布锁、制品摘要、备份与账本恢复边界。develop合入不自动部署。
@@ -94,6 +100,7 @@
 4. 当前配置以外的tenant/client、缺tenant、伪造uid均不获赠；合成非生产tenant值验证代码无固定0依赖，不据此宣称全站多区域可用。
 5. 任一步故障回滚，无半笔余额或持久POSTING；真实MySQL验证并发/事务，复用已有测试设施。
 6. 改金额/活动标签不重发；租金不足/重新入伙/免费重整不再触发旧赠款；前端切身份无串账。
+7. 公共字段完整写入且无固定scope默认值；技术id自增、tenant/uid唯一；跨client请求不会被隐式过滤误判为未领取；EXCLUDED的client来自固定基线配置，重放不改原client/actor/create_time。
 
 ## 7. 工作量与分工估算
 
