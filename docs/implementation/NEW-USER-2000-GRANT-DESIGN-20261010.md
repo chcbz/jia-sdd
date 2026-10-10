@@ -193,7 +193,7 @@ interface EconomyMoneyIdentityResolver {
 
 ### 3.7 精确HTTP合同（前后端共用fixture）
 
-- 请求：认证`POST /economy/onboarding-grant`，Content-Type为JSON，body仅`{}`；不接受query或多余字段。现OnboardingGrantResponse虽名`amountMicro`，实现使用MicroSilver.format格式化；本版明确为整数micro字符串，前后端同步改，GET钱包既有单位不改。
+- 请求：认证`POST /economy/onboarding-grant`，Content-Type为JSON，body仅`{}`；不接受query或多余字段。本轮补核对MicroSilver.format仅执行Long.toString，现OnboardingGrantResponse.amountMicro已是整数micro字符串；直接沿用该单位和字符串格式，仅补本方案状态/回执字段，不做单位转换，GET钱包单位也不改。
 - 首次200：`{"status":"POSTED","transactionId":"<真实ID>","amountMicro":"2000000000","campaignRef":"new-user-initial-grant","postedAt":"<服务端毫秒>","replayed":false}`。
 - 重放200：上述transactionId/金额/postedAt保持原值，replayed=true；真实postedAt从同笔账本交易取，不用重试当前时间冒充。
 - 老用户200：`{"status":"NOT_ELIGIBLE","reasonCode":"PREEXISTING_USER","amountMicro":"0","transactionId":null,"campaignRef":null,"postedAt":null,"replayed":false}`。
