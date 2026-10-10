@@ -161,25 +161,57 @@ COMMIT
 
 只把claim INSERT冲突标记为可回读冲突；发行账户/账本的其他异常按原逻辑处理，不能一律吞成“已领取”。内部捕获重复键仅可立即重抛专用运行时异常用于回滚，不能在rollback-only事务内继续SQL。调用入口不得已有外层事务；B06通过Spring集成测试确认调用边界。真实死锁/连接中断回滚后返回现有可重试错误，由同一幂等请求重试，不新增无限重试循环。整个成功领取始终只有一个REQUIRED事务，不使用REQUIRES_NEW把账本独立提交。
 
-### 3.5 资金身份接口与调用边界
+### 3.5 统一租户上下文：业务入口不传tenantId，内部记账保留明确scope
 
-N04定义普通Java值对象，不使economy-api依赖Spring Security或agent-service：
+**本版修正：统一复用已有请求上下文，不让各Controller自行拼tenant/client/uid，也不新增一套ThreadLocal。** 前版`MoneyIdentityInput(tenantId,...)`是内部设计参数，不是前端body；但放在业务入口容易造成重复解析和调用方自行选区域，现从公开资金身份接口删除。
+
+#### 已核对的现有机制（2026-10-10，第2节API基线）
+
+- `/home/isp/wsps/cyf/api/common/jia-common-service/src/main/java/cn/jia/core/context/EsContextHolder.java`已有ThreadLocal请求上下文；`EsContext`包含tenantId/clientId/jiacn/username，但没有uid和JWT sub。
+- `/home/isp/wsps/cyf/api/common/jia-common-service/src/main/java/cn/jia/core/filter/EsContextFilter.java`先清上下文、读取CTX cookie，finally再清理；不能仅因为EsContext有值就当成已认证身份。
+- `/home/isp/wsps/cyf/api/oauth/jia-oauth-resource/src/main/java/cn/jia/oauth/filter/EsSecurityContextFilter.java`从已认证JWT覆盖tenant/client/jiacn等字段。其注册配置`/home/isp/wsps/cyf/api/oauth/jia-oauth-resource/src/main/java/cn/jia/oauth/config/EsSecurityContextConfig.java`顺序为2；真实路由的过滤顺序及覆盖效果仍需用本功能集成测试验证。
+- 该安全filter当前调用的TenantClaimPolicy仍有单租户legacy fallback；资金入口必须统一要求规范tenant_id存在，并核对上下文与JWT一致，不能仅读取回退生成的tenant=0。
+- `/home/isp/wsps/cyf/api/common/jia-common-core/src/main/java/cn/jia/core/mybatis/TenantScopeHelper.java`及`/home/isp/wsps/cyf/api/common/jia-common-mapper/src/main/java/cn/jia/common/dao/BaseDaoImpl.java`部分查询采用“指定tenant OR 公共0”。**不能把该公共数据规则用于钱包/领取表**；资金中的tenant=0只能是一个明确业务区域，不能自动对所有区域可见。
+- `/home/isp/wsps/cyf/api/common/jia-common-mapper/src/main/java/cn/jia/common/handler/FieldFillHandler.java`只自动填创建/更新时间。本次源码搜索未找到能保证全部SQL精确租户隔离的TenantLine拦截器；因此不能仅删除mapper参数就宣称数据库已自动过滤。
+
+#### 业务调用方式（拟实现）
+
+N04只暴露无参的当前资金身份接口和普通Java返回对象，不让economy-api依赖Spring Security：
 
 ```java
-record MoneyIdentityInput(String tenantId, String clientId, long userId,
-                          String jiacn, String authenticatedActorId) {}
 record ResolvedMoneyIdentity(EconomyScope scope, long userId,
                              String payerId, String ownerJiacn) {}
 interface EconomyMoneyIdentityResolver {
-    ResolvedMoneyIdentity resolve(MoneyIdentityInput input);
+    ResolvedMoneyIdentity current();
 }
+
+// 业务入口：统一取得当前身份，不接受调用方指定tenant/client/userId。
+var identity = moneyIdentityResolver.current();
+return walletService.claimOnboardingGrant(identity);
 ```
 
-- 这些输入只由已验证JWT适配器产生，不绑定HTTP body；`token_kind=user`、规范tenant_id、client_id、uid、jiacn、sub逐项校验，uid用合法正long解析。
-- N05经user-api核对uid/jiacn及所属区域，不能只凭前端uid；经济服务显式依赖`:user:jia-user-api`，不依赖user-service或agent-service。具体用户归属判定由A01核对当前模型，NULL client不能当跨区授权。
-- 无claim/EXCLUDED：保留当前已认证actor及原历史行为；POSTED且client一致：使用claim.actor_id，防止登录别名导致赠款和扣款走不同钱包；其他client拒绝；已提交POSTING报数据异常。
-- grant事务直接使用已核验身份，不在同事务把刚写的POSTING当成外部污染记录再次走resolve；避免身份解析器和赠款服务循环调用/循环注入。
-- E05–E08只替换**付款主体**构造，ownerJiacn、Agent归属、订单授权保持原值；未属于资金的`sub`不全局改。任何发现已有订单资金主体与新绑定不一致，先报受影响范围，不自动迁移。
+上例是设计，不是现有方法签名；E02的旧`claimOnboardingGrant(scope, actorId)`入口由此替换，不保留可由HTTP任意选scope的旁路。
+
+- N05集中读取`SecurityContextHolder`中已认证的用户JwtAuthenticationToken和`EsContextHolder`。要求token_kind=user、规范tenant_id/client_id/uid/jiacn/sub合法；uid解析为正long；上下文tenant/client/jiacn必须与认证JWT一致。cookie-only、无上下文、未认证、machine、缺规范tenant、上下文与JWT冲突均拒绝，不能默认0。
+- uid/sub从认证JWT取得，因为EsContext当前没有这两个字段；不为本功能扩大共享EsContext结构。经user-api核对uid/jiacn及区域归属；经济服务显式依赖`:user:jia-user-api`，不依赖user-service/agent-service。具体用户区域归属由A01核对，NULL client不是跨区授权。
+- 同一个N05再解析付款主体：无claim/EXCLUDED沿用已认证actor；POSTED且client一致使用claim.actor_id；其他client拒绝；已提交POSTING报数据异常。该接口纯读取，不发钱、不改账。
+- 每个请求在进入资金事务前取得一次不可变identity快照；claim/重放/记账均使用该快照，不在事务中反复读取可变ThreadLocal。grant内部不再次调用current而把自己未提交的POSTING误认为污染，也不循环注入身份解析器和赠款服务。
+- E05–E09统一调用该无参入口或接收其只读解析结果，删除各Controller重复拼装资金身份的代码；只替换付款主体，owner/订单/Agent授权不改，不全局替换所有sub。
+
+#### 为什么mapper和后台仍保留tenant参数
+
+| 层级 | 是否由业务调用方传tenantId | 设计 |
+|---|---|---|
+| 前端/HTTP DTO | 否 | POST仍为{}，不能自报区域或uid |
+| 当前请求身份解析 | 否 | N05.current()统一校验认证和已有EsContext |
+| 事务/记账命令 | 不传零散字符串；内部传已解析identity/scope | 固定本次tenant/client/payer，复用原EconomyScope；不让记账器隐藏依赖ThreadLocal |
+| 底层claim/ledger mapper | 保留内部绑定参数 | 参数来自固定identity；SQL精确tenant，claim防重tenant+uid，不自动并入公共0 |
+| schema/旧用户基线迁移 | 保留显式配置tenant | 没有用户请求上下文，必须绑定已批准配置及批次，不能伪造登录上下文 |
+| 异步任务/后台扣款 | 不读取上一个HTTP线程的上下文 | 沿用持久订单/受信执行任务中的scope及授权；本赠款仍同步执行，不新增异步框架 |
+
+“统一获取身份”和“全局SQL自动注入”是两件事。本次选择前者并保留现记账SQL的明确隔离，不扩成全项目ORM拦截改造。若以后全局统一SQL租户处理，必须覆盖手写SQL、插入、更新、join、批处理、后台任务及公共数据例外，另设范围，不能在本次顺手移除已有WHERE条件。
+
+新增必要用例并入B04/B05/B11，不新增并行任务：JWT和cookie tenant冲突时以认证覆盖后的可信上下文为准；仅cookie无JWT拒绝；缺规范tenant即使旧filter回退0也拒绝；上下文与JWT仍冲突拒绝；同线程前后两次不同tenant请求无残留；异步无认证上下文调用current失败。请求退出清理复用现EsContextFilter，不能把ThreadLocal自动继承到线程池。
 
 ### 3.6 启用配置及基线完成判定
 
@@ -224,6 +256,7 @@ interface EconomyMoneyIdentityResolver {
 5. 任一步故障回滚，无半笔余额或持久POSTING；真实MySQL验证并发/事务，复用已有测试设施。
 6. 改金额/活动标签不重发；租金不足/重新入伙/免费重整不再触发旧赠款；前端切身份无串账。
 7. 公共字段完整写入且无固定scope默认值；技术id自增、tenant/uid唯一；跨client请求不会被隐式过滤误判为未领取；EXCLUDED的client来自固定基线配置，重放不改原client/actor/create_time。
+8. 统一current入口拒绝无认证/上下文不一致/缺规范tenant；CTX cookie不能选资金区域；请求清理无串租户，资金查询不使用tenant OR 公共0。
 
 ## 7. 半小时任务单与完成规则
 
@@ -244,11 +277,11 @@ interface EconomyMoneyIdentityResolver {
 | B01 | 后端/20分 | A01、§3.3 | N01 DDL + N02 entity，字段/索引/CHECK逐项一致 | diff与§3.3匹配；id主键、tenant/uid唯一，scope无固定默认值；补非法NULL/重复uid用例 |
 | B02 | 后端/20分 | B01 | N03五个mapper方法，仅claim表SQL | 所有写入显式公共字段；无通用delete/update；跨client可查同uid但不能改原client；补mapper用例 |
 | B03 | 后端/20分 | B01、A02 | N07 schema/baseline核验及E03/E04配置注册 | 精确schema/count/hash检查用例齐；默认禁用，缺基线不可发，不扫描新用户重建基线 |
-| B04 | 后端/20分 | A01 | N04值对象/接口、N05认证用户核验部分；E11加user-api依赖 | 合法用户与缺tenant/machine/uid不符用例齐；没有agent-service依赖环或默认scope |
-| B05 | 后端/20分 | B02、B04 | N05绑定资金主体的读取分支 | 无claim/EXCLUDED/POSTED/错client/已提交POSTING五分支用例齐；不改变业务owner；无写副作用 |
+| B04 | 后端/20分 | A01 | N04无参current接口、N05统一认证/EsContext核验；E11加user-api依赖 | 合法用户、缺tenant/machine/uid不符、cookie-only及上下文冲突用例齐；复用EsContext，无第二ThreadLocal或默认scope |
+| B05 | 后端/20分 | B02、B04 | N05.current绑定资金主体的读取分支 | 无claim/EXCLUDED/POSTED/错client/已提交POSTING五分支用例齐；不改变业务owner；无写副作用 |
 | B06 | 后端/25分 | B02–B05 | N06单事务占位→issue→markPosted；E02提供受控账户初始化复用 | 首次一笔两条分录、异常整体回滚用例齐；普通INSERT成功才获行所有权，唯一冲突回滚后新事务回读；无自调用事务失效 |
 | B07 | 后端/20分 | B06 | N06重放/老用户/并发错误处理、固定幂等key/hash | POSTED用原回执；改金额/标签不重发；不接管外部POSTING；不在rollback-only事务继续记账 |
-| B08 | 后端/20分 | B07、F01 | E01接线N05/N06，E02删除旧campaign决定领取次数的分支 | §3.7成功/老用户/错误响应及空body校验用例齐；wallet/ledger仍只读，无两个赠款实现 |
+| B08 | 后端/20分 | B07、F01 | E01接线N05/N06，E02删除旧campaign决定领取次数的分支 | §3.7成功/老用户/错误响应及空body校验用例齐；wallet/ledger仍只读且统一current入口，无两个赠款实现 |
 | B09 | 后端/20分 | B05 | E05和E06托管付款身份适配 | claim绑定payer贯穿报价/确认/续租；owner/租约ACL不改；admission和实际付款scope一致 |
 | B10 | 后端/20分 | B05 | E07/E08/E09悬赏与预览资金主体适配 | 同一用户别名变化不分裂新赠款钱包；两处悬赏Actor入口均覆盖；原owner值不被替换 |
 | B11 | 后端/25分 | B08–B10 | N08及既有wallet/hosting/bounty测试；E11接入现有定向source set | 列明实际测试类/selector，新增用例确实在source set内；无未配置MySQL就把skip报PASS |
@@ -292,7 +325,7 @@ interface EconomyMoneyIdentityResolver {
 
 | 代号 | 绝对路径及落点 |
 |---|---|
-| E01 | `/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/api/EconomyWalletController.java`：88–101领取；156–173 requireSubject；wallet/ledger共用资金解析 |
+| E01 | `/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/api/EconomyWalletController.java`：88–101领取；156–173 requireSubject改为委托统一current；wallet/ledger共用资金解析 |
 | E02 | `/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/api/EconomyWalletService.java`：109–149旧grant/幂等辅助；156–172账户初始化；61–86钱包/流水 |
 | E03 | `/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyOnboardingGrantProperties.java`：record/构造校验；新增scopes，不留旧活动可多领分支 |
 | E04 | `/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyConfiguration.java`：10–25配置/初始化bean接线；不把原五表initializer改成缺六表自动重建 |
@@ -312,7 +345,7 @@ interface EconomyMoneyIdentityResolver {
 | N01 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-mapper/src/main/resources/db/economy-onboarding-grant.sql` |
 | N02 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-core/src/main/java/cn/jia/economy/entity/EconomyOnboardingGrantClaimEntity.java` |
 | N03 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-mapper/src/main/java/cn/jia/economy/mapper/EconomyOnboardingGrantClaimMapper.java` |
-| N04 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-api/src/main/java/cn/jia/economy/service/EconomyMoneyIdentityResolver.java`（§3.5 records可嵌套定义，避免无用文件拆分） |
+| N04 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-api/src/main/java/cn/jia/economy/service/EconomyMoneyIdentityResolver.java`（§3.5无参current接口及嵌套只读结果，不暴露MoneyIdentityInput） |
 | N05 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/service/impl/EconomyMoneyIdentityResolverImpl.java` |
 | N06 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/service/impl/EconomyOnboardingGrantService.java` |
 | N07 | 拟新增`/home/isp/wsps/cyf/api/economy/jia-economy-service/src/main/java/cn/jia/economy/config/EconomyOnboardingGrantSchemaInitializer.java`，复用原schema解析规范，仅该表和固定基线校验 |
