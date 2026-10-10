@@ -91,3 +91,22 @@ Agent schema 中的 `agent_task_meta`、`agent_task_member`、`agent_task_work_i
 - 前端正式验证仍使用 Flow 的精确候选；本地仅开发预览/低成本诊断，不本机生产构建。UI 与真实发送、录音、Provider 调用和完整任务交付验收分开。
 
 组件职责见 [前端架构](05-frontend-architecture.md#hall-discussion-composition)；原型、实施经过与原发布证据只在 [历史来源导航](../../specs/juyiting-ui-baseline-20261006/README.md)按需追溯，不作为日常开发必读。
+
+## 控制回执与普通取消页面（2026-10-10 局部源码收口）
+
+### Runtime presence回执
+
+核对Runtime源码 `aa6b96aa983f47b4a4d8daff64eaf717b5781978`，仅execution-adapter控制回执路由及其回归；不是本版本线上安装声明。API `AgentWebSocketHandler.updateAgentStatus` 发出的 `agent_status_updated` 是不带messageType的presence控制回执，不应交给业务消息必填字段解析器。
+
+- 原adapter在socket/会话边界后精确识别并消费此回执，不授予ready、不修改生命周期、不重新注册。任何显式业务messageType不因外层控制type而被吞掉；注册ACK及关联错误仍受原关联/会话核验，未知事件保留业务拒绝。
+- 这修复了一条可复现的`MESSAGE_TYPE_REQUIRED`来源，不证明全部线上同码日志都是presence；上线后须另核实际安装版本及新日志。
+- 定向和受影响回归、源码与集成证据见 `/home/isp/wsps/cyf/docs/implementation/handoffs/JUYITING-FLOW-GAPS-20261010.md`。未改变全局normalizer、未恢复旧版本兼容。
+
+### 普通取消与除名前告知
+
+核对Web源码 `41a3e343e39ba5d0e41dbbcd7689f854caf17834`，仅相关页面/取消helper与测试；本地定向诊断不是正式Flow或线上验收。
+
+- 事项详情可调用已有 `POST /agent/tasks/{taskId}/cancel`；JSON仅整数expectedTaskVersion，面向无资金事实、未实际开始的open/planning/assigned，服务端为最终裁定。资金任务保持原funding/cancel，不绕资金结算。未知结果先GET原事项，不自动重发POST；拒绝和刷新待完成不伪报为全部刷新成功。
+- cancelled显示“已取消”，禁止继续办理，保留历史指派及只读成果；completed/accepted保留原验收回执视图。取消请求守卫身份/授权代次、任务与面板生命周期，不能把已取消历史指派当作新执行权限。
+- 除名前须确认：旧租约不会自动转移至新绑定，重新入伙可能重新报价收费；此操作不退款或迁移租约。仅接应故障时优先核对原租约和可用免费重整；没有租约读回证据时不暗示“无成本”。取消弹窗不发送DELETE。
+- 本次未增加运行中任务强停、退款、赠款、跨租户上线或native除名生命周期回收；详见上述handoff的测试/发布边界。

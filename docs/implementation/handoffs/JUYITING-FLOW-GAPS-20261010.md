@@ -76,3 +76,34 @@
 2. 将F01普通取消页面接线与F02取消终态展示作为同一前端收口范围；保持后端现有支持边界，无需新增取消接口。
 3. F03租约后果说明可作为同范围文案/交互修正；V02精确定位控制回执，V03按实际用户生命周期需要补验，不随意强杀/重启共享Runtime。
 4. 当前无开发Agent在执行上述新任务；本轮只保存两份文档和诊断证据。业务代码未修改，没有Gradle/Flow、DDL/DML、服务控制、生产任务创建或新的推理消费。
+
+## 六、用户选定第2/3/4项实施（23:26–23:56 CST开发窗口）
+
+2026-10-10用户要求“先做2、3、4项，半小时内完成”。冻结为F01/F02普通取消接线及终态展示、F03除名租约后果确认、V02控制回执精确分流；不包含真实付费新任务、赠款、多区域、运行中任务取消、V03再次除名验收或本轮生产发布。前述“未派发/未实施”保留为23:13诊断时点，当前进度以下表为准。
+
+| Task / 唯一Owner | 冻结源码与工作区 | 实施及验证范围 |
+|---|---|---|
+| JYT-FLOW-UI-20261010 / Turing `01a1266e-0bf6-7ce3-952f-a2cc9ad657c7` | Web base `17ecf1c0b581cab1456acff4db097a6a4d335e3d` / tree `101daa30ed9658949dcc9b1d4cccfb2e4d2ce539`；`/home/isp/wsps/worktrees/jyt-flow-ui-20261010`；`codex/jyt-flow-ui-20261010` | BountyPanel、JuyiHall、PersonaCatalogPanel、相关task actions/helper及用例；原普通取消API整数版本、重复点击、身份/任务切换、响应丢失核对、终态CTA、除名前确认。资金取消不混用。 |
+| JYT-CONTROL-RECEIPTS-20261010 / Shannon `01a12359-f327-7db3-968f-66ca8ca2b18e`（ledger alias `jyt_control_receipts_runtime_sol_20261010`） | Runtime base `80eadc9247132a9d6c6b3b9d7fe7b7f965e094de` / tree `ac7ffd578f1a719071be6cb0ce3d3bdc0022c841`；`/home/isp/wsps/worktrees/jyt-control-receipts-20261010`；`codex/jyt-control-receipts-20261010` | 原execution-adapter明确消费agent_status_updated；真实adapter/fake socket回归；保留session fencing、注册ready判定、messageType业务校验及错误透传。 |
+
+主控只维护本handoff/既有ledger并核对契约、集成结果，不新增Reviewer或重复派单。23:31查询两位Owner均active；Turing已确认裸取消回执、整数版本、身份/面板迟到响应和除名确认范围，Shannon明确回执已读项目/仓库规则、工具索引、V02及模型路由。两任务均由原Owner继续实施。
+
+完成口径：30分钟目标为实现、定向自检和可集成源码；前端本地自检不是正式Flow或线上验收，Runtime源码修复不代表运行中服务已经换版。没有以本窗口授权创建生产任务、资金变更、发布或服务重启。
+
+### 第4项开发完成（23:43 CST集成回读）
+
+- Runtime commit `aa6b96aa983f47b4a4d8daff64eaf717b5781978` / tree `829d969675c821a1b18ae0456495f97577683d75`；两个受控文件：`conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs`、`test/runtime-host.test.mjs`（后者同runtime目录）。本地及远端develop已fast-forward至此，tracked clean；主控逐文件SHA和最终日志计数核对通过。
+- 类型专属的`agent_status_updated`不再进入严格业务解析器；当前socket/会话校验后消费，不授权ready、不修改生命周期、不发新注册。携带显式messageType（包括无效值）的帧不会借控制type被吞；关联注册错误保留原拒绝路径，未知/error仍由业务路径严格拒绝。
+- 原Owner最终同源码回归：runtime-host + hosting-lifecycle + canonical-dispatch **102 PASS / 0 FAIL / 0 SKIP**；引擎边界定向 **9 PASS / 0 FAIL / 191 selector排除**；独立完整registration-ack **8 PASS / 0 FAIL / 0 SKIP**。这些测试有重叠，不相加冒充独立覆盖。Node实际v20.20.2，无版本门禁。
+- Owner证据 `/var/tmp/jyt-control-receipts-20261010-owner-ANtYvB/delivery.json`；主控集成证据 `/var/tmp/cyf-flow-gap-review-20261010-s4k07zsa/runtime-integrated.json`。首轮缺依赖、fixture错误和误替换SIGTERM用例等失败日志保留；最终输入已修正，非忽略失败。
+- **未安装/重启线上Runtime，没有新生产日志消除验收**；此前162条线上拒绝仍不能全部逐条归因本事件。
+
+### 第2/3项开发完成（23:52 CST集成回读）
+
+- Web commit `41a3e343e39ba5d0e41dbbcd7689f854caf17834` / tree `fdde801d4d97a6342bd6f3ef07c70965eed34afe`，14个范围内文件（5个业务文件、9个相关测试文件），本地/远端develop已fast-forward，tracked clean。主控核对全部文件及最终日志SHA；未重复运行相同本地选择器。
+- 普通取消使用原接口、仅发送整数expectedTaskVersion，资金取消保持独立。支持范围由后端最终核验；重复点击抑制、403/409明确反馈、响应丢失GET原事项核对、身份/任务/面板切换与A→B→A在途回切均有回归。不删除历史指派。取消终态显示“已取消”，关闭继续办理，保留只读历史成果；completed/accepted不换掉原验收回执分支。
+- 除名前Dialog明确租期不自动承接、可能重新报价收费、不退款/迁移租约，以及已有租约可先核对免费重整；未确认/取消/身份或绑定变化不DELETE。不新增退款、租期迁移或除名后端功能。
+- **15个选择器、331 PASS / 0 FAIL / 0 SKIP，仅本地定向诊断**。实际Node v20.20.2。两轮fixture缺依赖/import映射失败已通过原编排器归因，保留原日志，修正候选后331项全部通过，未删用例。Lint基线/候选129条既有错误，非完整lint PASS；Owner报告无新增错误，明细见lint-final-comparison.json。
+- Owner证据 `/var/tmp/cyf-jyt-flow-ui-20261010/delivery.json`；主控 `/var/tmp/cyf-flow-gap-review-20261010-s4k07zsa/web-integrated.json`。新取消历史文字watcher有编译/源码和既有适配器回归，未做新的真实浏览器/HTTP集成；既有Data层共享投影并发不宣称全量修复，native除名回收生命周期仍在原未覆盖范围。
+- 23:33/23:35实时读取4403172配置：源码为develop push事件，flow SHA `719b28019ba51985a11a60dd2af99ed3a336d4de760004301dd0c2336e2a65a3`，只有测试/构建/上传与扫描，无部署job。23:52:13 push后23:52:37查询尚未出现新Run，最近193是历史成功，**不作为本候选正式Flow证据**。没有手动启动、改流水线配置、发布或重启。
+- 从23:26至23:52，选定2/3/4项开发、自检、提交及组件develop集成约26分钟完成。正式前端Flow与版本化发布/线上验收尚未完成；本轮不把公孙胜新事项、赠款或线上错误消失计入完成。
