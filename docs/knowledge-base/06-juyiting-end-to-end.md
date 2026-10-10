@@ -110,3 +110,11 @@ Agent schema 中的 `agent_task_meta`、`agent_task_member`、`agent_task_work_i
 - cancelled显示“已取消”，禁止继续办理，保留历史指派及只读成果；completed/accepted保留原验收回执视图。取消请求守卫身份/授权代次、任务与面板生命周期，不能把已取消历史指派当作新执行权限。
 - 除名前须确认：旧租约不会自动转移至新绑定，重新入伙可能重新报价收费；此操作不退款或迁移租约。仅接应故障时优先核对原租约和可用免费重整；没有租约读回证据时不暗示“无成本”。取消弹窗不发送DELETE。
 - 本次未增加运行中任务强停、退款、赠款、跨租户上线或native除名生命周期回收；详见上述handoff的测试/发布边界。
+
+### 2026-10-11 局部发布核对
+
+Web1.14.4（commit `759b150a4b96ba9ba9cdb46ee1c2d290bb63dc91`，此前41a3e34业务实现不变，仅版本/fixture收口）经Flow4403172/195正式测试、构建、同Run部署并核对线上文件；Runtime `aa6b96aa983f47b4a4d8daff64eaf717b5781978` 经原installer产物发布到唯一共享Runtime，原4主体与托管状态保留。详细回执在上述handoff，不把本次局部发布升级为整套流程/Provider推理验收。
+
+Runtime的presence回执已在线正常消费，但仍有其他协议拒绝待逐帧归因。outer-frame代次不匹配此前静默拒绝，本次新增可见日志，不能仅比较日志数量断言新增拒绝；也不能凭服务运行/短窗口无MESSAGE_TYPE_REQUIRED认定所有控制帧问题消失。正常回执消费不授予readiness；实际托管READY依旧来自当前会话的原注册、executor、durable proof。历史RECOVERY_REQUIRED文件保持，不自动重放或清除。
+
+本轮真实页面只覆盖已取消事项详情/只读历史与除名前确认后取消（不执行DELETE）。首页概览“最近事项”的取消状态文案仍为“状态待核对”，不能据详情修复宣称所有摘要卡片均已统一；取消详情的辅助推荐POST尝试亦未做真实服务端验证。遗留与证据见handoff，不混入已完成口径。
