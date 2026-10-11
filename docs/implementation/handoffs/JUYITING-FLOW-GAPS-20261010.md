@@ -139,3 +139,38 @@
 - 证据 `/var/tmp/cyf-jyt-ui-readonly-20261011-xSpw0r/summary.json`、`evidence-sha256.json`；Main核验73个证据hash及业务check/manifest，独立main-ui-readback.json。初始拦截器误拦只读POST、选择器/遮挡定位和离线汇总错误均保留后修正，不归为线上办理失败。
 - **仍有页面遗留**：首页概览“最近事项”卡片把已取消显示“状态待核对”；本次范围的事项列表/详情/历史正确，未顺带扩改首页。已取消详情会尝试辅助recommend POST，本轮拦截未发送，未验其真实影响。这两点不隐藏，也未再开新Flow。Runtime其他拒绝见上段，不能宣布全站流程无缺口。
 - 最终口径：前端1.14.4+Runtime aa6b96a **已发布，定向页面验收通过，保留已列遗留项**。Main最终汇总 `/var/tmp/cyf-jyt-release-20261011-5bwaOT/release-summary.json`，包含版本/commit/tree、Flow195/同批SHA、Runtime安装/备份/新PID、验证和未覆盖边界；API/DB未变。
+
+## 2026-10-11 09:05 五项页面问题修复
+
+- Task `JYT-UI-FIVE-FIXES-20261011`，唯一源码Owner Turing `01a1266e-0bf6-7ce3-952f-a2cc9ad657c7`，原独立worktree `/home/isp/wsps/worktrees/jyt-flow-ui-20261010` / `codex/jyt-flow-ui-20261010`；Main仅集成与控制面。Web base/本地与09:01远端develop `759b150a4b96ba9ba9cdb46ee1c2d290bb63dc91` / tree `b0b7d02ebff4049a325875ef075c8a17db557cb9`，同当前线上1.14.4/Flow195；两源码目录tracked clean。
+- 目标：概览取消状态映射；详情普通取消样式与提交前确认；成果页面重复请求归因并收敛；failed准确显示失败（blocked保持独立）；验收/继续修改按钮遵循既有主题。
+- 非目标：Runtime/API/DB/资金、新用户赠款、真实生产取消/验收/除名及新发布。开发集成不自动上线。
+- 最早验证：现有真实Vue消费者fixture复现终态重复请求，确认框dismiss/context switch/双击无误提交，状态及样式回归；继续覆盖受影响挂载fixtures。定向本机结果不替代正式Flow。
+- 规则/工具：Owner须回读AGENTS.md、ops/orchestration/README.md、当前handoff和MODEL_ROUTING.yaml并确认；复用原测试/browser工具，不新增框架。
+- 09:05 Owner已ACK读取四份规则与固定基线，正在真实消费者复现并连续实现。根因初步确认为两条独立2500ms无条件轮询（验收来源catalog与成果request/outcome），不是截图即可证明后端重复执行；两层共同修复，终态只读历史也停止后台轮询。
+- Main证据 `/var/tmp/cyf-jyt-ui-five-20261011-wdTviG`；09:06本地/远端仍759b150、tracked clean，Flow现行配置SHA719b2801…与上轮恢复值一致，只含cloud_ci测试/构建/扫描/制品，无部署stage。只读查最新Run195成功，无活动Run。后续新候选做CI-only正式验证，不部署。
+
+本次交付验收（不创建真实业务事项）：
+1. 办事概览的正式任务cancelled展示已取消；未知状态仍待核对，不默认伪装正常状态。
+2. 普通取消使用主题按钮；首次点击只弹确认，确认前/放弃无取消POST。确认冻结task/version/identity，切换或版本变化不得错取消；结果未知保持仅核对原请求。
+3. 正式成果的catalog与request/outcome两条轮询在稳定终态停止；办理中保留刷新。任务/身份/显示生命周期停止旧请求，人工刷新与服务端版本变化可再读；未读取到成果不冒称成功。
+4. failed显示失败，blocked仍受阻；不改变后端状态/业务判断。
+5. 确认验收/继续修改按钮使用主题配色、尺寸、圆角及focus/disabled状态；实际挂载行为与浏览器计算样式/截图均核对，不仅搜索CSS文本。
+
+主控控制面准备仅复用前次start-verified脚本并替换候选输入/CI-only基线校验；当前未启动Flow。两次本机YAML只读解析因未安装yaml模块失败，随后改用项目已有js-yaml成功解析3个CI步骤，无包安装/配置写入或生产影响。
+
+### 09:29 源码交付与CI接续
+
+- 原Owner在09:27交付 `a63ee17c23061775821c74784bf949271e645ad3` / tree `a992988c8e9e377dcef1926685350ecf05a34137`，12文件，worktree clean；Main核对12文件SHA及最终测试日志SHA，09:29 fast-forward并push组件develop。没有改版本或部署。
+- 原Owner30个定向selector共613 PASS/0 FAIL（含受影响JuyiHall挂载fixtures），8源码静态检查PASS；触及源码lint既有160error/78warning保持、新增0，非全量lint干净。前后同挂载fixture三轮周期catalog/request/typed-outcome从各1→4改为各1→1；活跃执行、终态转换、切换/卸载、手动/版本恢复均有回归。
+- 本地实际Vue/Varlet浏览器15检查PASS：取消确认、放弃0POST、身份切换、三个主题按钮hover/focus/disabled、已完成无业务CTA、状态文案。Main发现早期Dialog截图处于入场动画中间帧，Owner仅修fixture等待、重取opacity1/transform none稳定280pxDialog及390px手机截图，主控已打开复核。合成HTTP/身份，不当作在线实际取消/验收证据。自有浏览器/driver已退出，未接触生产数据。
+- Owner完整证据 `/var/tmp/cyf-jyt-five-fixes-20261011/summary.json`、`affected-final.log`、`browser-result.json`、`poll-before.json`、`poll-after.json`；首轮fixture/浏览器时序失败及归因保留，不删除失败日志。
+- 主控ledger默认别名与另一既有任务冲突，首个transition在validate阶段失败未写入；换为本任务Main别名`jyt_ui_five_main_20261011`后进入verifying，未接管或改写他任务。
+- 09:29:40 push后未出现新自动Run，当前仍195历史成功，不作为本候选证据。Main按现行原CI-only配置/源码/无活动Run校验启动一次新验证，不修改流水线、不增加部署阶段。
+
+### 09:37 正式验证完成，未发布
+
+- Flow4403172/Run196 **SUCCESS**，源码a63ee17/treea992988c；正式测试411 suites/2889 tests：**2887 PASS / 2 pending / 0 FAIL**，扫描、Vite构建及同Run制品上传成功。初始source元数据尚空，后续真实Run source和制品内source-commit/source-tree/manifest三处均已匹配，不拿启动时空值声称绑定成功。
+- 同Run制品SHA256 `734ff59ba4b375b71cc76d4158bf86ee43efb26d48a9602b7bd198fc4141bb54`；Main只读流式核对364个dist文件的字节长度/SHA与manifest全部一致，从同制品mochawesome JSON核对正式测试计数。完整脱敏build日志122941字符/more=false；同批正式report、下载及验证记录在Main证据目录。
+- 原CI-only配置SHA仍719b28019…未改，无部署阶段/部署单；生产record文件SHA与09:06基线完全一致。**线上仍为此前1.14.4/Run195，本次五项代码尚未上线。** 本候选package metadata仍1.14.4，正式发布须确定新版本并走版本化Flow，不将本次CI制品当无记录的同版本替换；不执行数据库脚本/Runtime/API变更。
+- 最终状态 `IMPLEMENTED_INTEGRATED_CI_VERIFIED_NOT_DEPLOYED`；Main `/var/tmp/cyf-jyt-ui-five-20261011-wdTviG/summary.json`。Owner开发/定向验证约24分钟，之后Main完成集成、正式Flow和同批制品回读；源码修复完成与上线状态分开。未新增Reviewer/框架，未执行生产取消、验收、资金、除名或真实推理。
