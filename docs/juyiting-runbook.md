@@ -132,3 +132,10 @@ cd web && npm run dev -- --host 0.0.0.0
 - 语音最新契约见 `specs/juyiting-voice-realtime/design.md`；录音实现路径以对应交付 commit 为准，不将历史候选路径当作当前 checkout 的入口。保留明确 Agent/会话、发送与回复关联，网关凭据不进入浏览器；能力证明、发布、生产启用和设备验收分开报告。
 - 转写立即返回 `VOICE_UNAVAILABLE/503` 时检查 Redis 准入；已复现的 Redis4 Lua 限制及隔离回归方法见 `docs/implementation/VOICE_SEMANTIC_FIX_20261001.md`，不操作生产 Redis 数据。STT/TTS 的原生事件、音频终态与 fidelity 要求按最新语音契约验证。
 - 历史启用/测试/发布回执见 `docs/implementation/VOICE_REALTIME_ACTIVATION_20260930.md` 和 `docs/implementation/VOICE_SEMANTIC_FIX_20261001.md`；这些是历史证据，不代表当前线上 commit 或真实设备已验收。当前状态须核对精确 commit、实际 Flow Run 和在线证据。
+
+### 自家接应安装交接（2026-10-12 23:38发布核对）
+核对已上线API `0fe830d1ea` / Web `aad2ae9`（均1.14.11）、isp-install develop `a39c085`：local文书提供可信Scope的runtimeSetup，不再提供旧API Key/profile或虚构目标机路径。首次接入由目标机prepare工具生成manifest/一次性secret和非秘密handoff；本人页面显式登记六字段摘要，目标机enroll后单实例切换。查询/登记状态不等于在线，不轮询，不在响应未知时重建安装。
+
+程序、配置、状态分别归入apps/cyf-agent-runtime-v1、conf/cyf-agent-runtime-v1、state/cyf-agent-runtime-v1/INSTANCE/agents/SUBJECT/codex-home；使用目标机获授权基目录。已有Runtime升级/目录收口保留身份、授权、完整HOME和SQLite路径索引，不重新登记/enroll。唯一操作入口：`/home/isp/wsps/chcbz/isp-install/docs/cyf-agent-runtime-v1-self-host.md`，迁移见第9节；仓内codex-ws-agent仅为内嵌执行库，不是第二套服务。
+
+正式证据：安装器19项；API175项全过及同本地R2批次安装；前端Flow4403172 Run206成功（2932通过/2 pending），364安装文件及11公网资源匹配，现行API健康UP。tenant0原有限制未放宽；不创建生产installation、不付费，完整新用户登记E2E未执行。现行主机Runtime二进制仍1.0.2，页面不会自动升级远端机器。范围、OOM异常恢复及版本/摘要闭环见`docs/implementation/handoffs/SELFHOST-ONBOARDING-20261012.md`和`specs/runtime-self-host-onboarding/`。

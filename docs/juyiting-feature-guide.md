@@ -306,3 +306,7 @@
 ```bash
 rg -n "agent/map|agent/roster|agent/active|assign-task" web/src web/tests
 ```
+
+### 自家接应接入说明（2026-10-12 23:38发布核对）
+
+API `0fe830d1ea` / Web `aad2ae9` 已以1.14.11上线，isp-install `a39c085`已推develop。旧安装文书统一为Runtime真实scope、非秘密handoff显式登记/查询及程序/配置/状态目录说明。首次接入仍须本人授权登记和目标机enroll；已有Runtime升级/迁移保留身份、完整HOME和会话索引，不重新注册。ACTIVE不等于在线，页面不自动升级目标机。操作见该仓 `docs/cyf-agent-runtime-v1-self-host.md`（迁移第9节）；正式测试、发布及未执行新用户生产登记E2E的边界见CYF runbook对应小节。
