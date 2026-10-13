@@ -1,5 +1,15 @@
 # Acceptance
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+已交付并归档原 2026-08-23 功能；原验收记录 API108、Client97 与运行 smoke，未在本次重复执行。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-06。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+源码验收、生产发布、真实用户/设备验收分开。已有测试仅复用记录；本次为文档核对，无新增业务测试。未证明项保留未验证。
+<!-- END SDD delivery reconciliation -->
+
 ## Criteria
 
 1. Persona 默认 `planning`、客户端上报 `code-edit` 时，runtime 保存 `code-edit` 而非 `planning`。

@@ -13,3 +13,7 @@
 索引/样式浏览器核验：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-index.cjs`。
 
 议事图标统一20px、1.8px描边，点击区域统一38px。定向浏览器检查：`node /home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/tools/check-icons.cjs`。
+
+## 正式环境对照（2026-10-07）
+
+[本轮差异报告](../production-diff-20261007.md)：真实页面与当前唯一原型分开取样，记录未同步提案、完成态/正文重复问题与生产更完整模块；不代表再次业务验收或上线。

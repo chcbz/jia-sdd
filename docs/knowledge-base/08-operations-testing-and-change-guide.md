@@ -4,17 +4,17 @@
 
 `common:jia-common-starter` 的 `application.properties` 给出默认 profile、Hikari、Tomcat、MyBatis、PageHelper、Redis session、Jackson、Swagger/Knife4j 等共性参数。各 starter 的 `application-dev.properties` / `application-prod.properties` 补充环境值；这些值及外部环境变量才是实际运行配置来源。
 
-前端 Vite dev server 默认 8080 并使用本地 TLS 文件；生产输出 `web/dist/`。前端部署流程详见根仓 [`docs/DEPLOYMENT.md`](../DEPLOYMENT.md)，不要用文档假设替代实际脚本和运行服务状态。
+前端 Vite dev server 默认 8080 并使用本地 TLS 文件；Flow 生产构建输出 `web/dist/`。构建/测试/部署策略见 [`docs/aliyun-flow-cicd-strategy.md`](../aliyun-flow-cicd-strategy.md)，部署运行细节见 [`docs/DEPLOYMENT.md`](../DEPLOYMENT.md)。
 
 ## 验证选择
 
 | 改动范围 | 最小验证 | 补充验证 |
 | --- | --- | --- |
 | 根仓知识/规格 | Markdown 链接、路径、git status | 审阅子模块 SHA 是否正确 |
-| Web 一般改动 | `cd web && npm run build` | 对应 Mocha/组件测试 |
-| 聚义厅 UI/逻辑 | build + 相关 `web/tests/` | 地图、遮挡、scene/SSE、public beta smoke 脚本 |
-| 后端领域改动 | 目标 Gradle 模块 test | `validateLayering`，必要时集成/数据库验证 |
-| 身份、ACL、迁移、事务 | 专项测试和数据恢复计划 | 独立只读审查；不得并行 Gradle |
+| Web 一般改动 | Flow Web CI-only：`npm ci`、相关测试、Vite build | 对应 Mocha/组件测试摘要与制品 SHA |
+| 聚义厅 UI/逻辑 | Flow Web CI-only + 相关 `web/tests/` | 地图、遮挡、scene/SSE、public beta smoke 脚本 |
+| 后端领域改动 | 本地 orchestrator：固定 commit/tree 的目标 Gradle 模块 test | `validateLayering`、`bootJar`、本地 build ID/日志与制品摘要，必要时隔离集成/数据库验证 |
+| 身份、ACL、迁移、事务 | 前端 Flow / 后端本地专项测试及数据恢复计划 | Owner 自检，保留隔离 fixture、原子性及授权；不另设 Reviewer，生产动作按实际授权 |
 
 ## 变更落点速查
 

@@ -1,6 +1,8 @@
 # 典籍阁 Agent 任职与内容维护：源码交付记录
 
-日期：2026-10-01。当前状态：**implementing / NOT_COMPLETE**。以下提交与测试为已推送的上一轮局部基线，不是完整特性完成证明。独立审计确认的源码缺口及串行修复顺序见 [completion-audit.md](completion-audit.md)；旧局部结果保持不变。
+当前入口：**2026-10-13 develop 合入与功能缺口见 [merge-assessment-20261013.md](merge-assessment-20261013.md)**；以下 2026-10-01 及后续逐次记录为历史，不替代最新状态。
+
+日期：2026-10-01。当时状态：**implementing / NOT_COMPLETE**。以下提交与测试为已推送的上一轮局部基线，不是完整特性完成证明。独立审计确认的源码缺口及串行修复顺序见 [completion-audit.md](completion-audit.md)；旧局部结果保持不变。
 用户请求中的无前缀 `archive-agent-maintenance` 在远程不存在；沿用已有设计分支 `codex/archive-agent-maintenance`，不混入其他任务 develop 更新。
 原工作区 `D:/workspace/chaoyoufan/project/cyf-web-kit` 未被覆盖；实施在独立工作树，未部署、生产激活、真实典籍上架或调用付费模型。
 
@@ -113,3 +115,12 @@ Root仅更新当前pinned_revisions块与gitlinks，不全局替换历史SHA。�
 四仓源码合入并普通push完成。服务端attempt4全部六套fresh XML/0skip：platform141PASS、security10PASS、MVP245/240PASS/5FAIL、archive398/382PASS/16FAIL、typed91PASS、replay16PASS，Gradle exit1。5个维护实库失败同时在archive中出现，另11项已知回归保留；不能归为纯环境或任意称合并引入。Client full962/952PASS/0FAIL/10skip；Web本地480PASS，Linux full3240/3199PASS/39同develop失败/2pending，build0。Source/pin/remote/raw-byte一致性通过不是功能全绿。
 
 当前整体功能验证**未通过/未接受**，5项实库问题、已知回归和浏览器环境校验待处理；真实Runtime/browser与84业务验收未执行，生产操作为false。精确当前结果及待修方法见[merge-validation-20261008.md](merge-validation-20261008.md)及evidence/merge-develop/20261008/final-validation-summary.json。此前原失败/REJECT/历史记录不改写。
+
+
+## 2026-10-13 合入收口（非整体验收）
+
+最终精确组件：API `b4ccdefd96adbae6d6a149def43fb52c443df195`、Web `68c93f247ba101910200ab6122c59821f36b3faa`、Client `35b4ab6159aa20728676237a0779232cd8d628c9`，均已普通 push 并核远端。Root 当前 pins/gitlinks 与独立 Client pin 一致。18:55 查询最新 develop：Root77bd860c / API281ee445 / Webcb730681 / Client6325af1，均纳入特性分支。
+
+Web 531/531 定向 PASS；默认套件因 Windows 路径加载失败。Client Linux1005/995PASS/0FAIL/10SKIP，统一Runtime123/123PASS；首轮55+1失败与两个窄修/独立源码复核均保留。API195 Java仅语法解析0错误，无typecheck/Gradle；早期服务器MySQL初始化失败，旧8个测试契约文件未迁移。历史5个实库+11个archive失败未冒充本轮结果。
+
+本轮任务仅合入与缺口评估已收口，不等于全部特性完成。后续重点、环境与业务验收界限见 [merge-assessment-20261013.md](merge-assessment-20261013.md)。真实Runtime/浏览器全链、84项验收、部署/激活仍未执行。

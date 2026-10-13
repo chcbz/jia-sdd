@@ -1,5 +1,15 @@
 # Agent workspace capability refresh acceptance
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+历史 acceptance 与 release 均有依据，统一原顶层 accepted 与 release.released 的陈旧状态，归档 2026-08-23 交付。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-07。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+源码验收、生产发布、真实用户/设备验收分开。已有测试仅复用记录；本次为文档核对，无新增业务测试。未证明项保留未验证。
+<!-- END SDD delivery reconciliation -->
+
 ## Acceptance criteria
 
 1. CYF 工作目录可识别前端、后端、Vue、Java、Gradle、测试和文档等固定能力标签。

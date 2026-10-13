@@ -266,7 +266,7 @@ class Runtime(object):
         self.destination = Path('/usr/local/sbin')
         self.state_root = Path('/var/lib/cyf-api-flow')
         self.record = self.state_root / 'record.json'
-        self.jar = Path('/opt/cyf/service/api/cyf-api-kit.jar')
+        self.jar = Path('/home/isp/hosts/cyf/api/cyf-api-kit.jar')
         self.coordination_lock = Path('/tmp/cyf-api-flow-auto-approval-v2.lock')
         self.release_lock = Path('/tmp/cyf-release-api.lock')
         self.curl = Path('/usr/bin/curl')
@@ -282,8 +282,8 @@ class Runtime(object):
         self.protected_directories = (
             Path('/usr'), Path('/usr/local'), Path('/usr/local/sbin'),
             Path('/var'), Path('/var/lib'), Path('/var/lib/cyf-api-flow'),
-            Path('/opt'), Path('/opt/cyf'), Path('/opt/cyf/service'),
-            Path('/opt/cyf/service/api'),
+            Path('/home'), Path('/home/isp'), Path('/home/isp/hosts'), Path('/home/isp/hosts/cyf'),
+            Path('/home/isp/hosts/cyf/api'),
         )
 
 

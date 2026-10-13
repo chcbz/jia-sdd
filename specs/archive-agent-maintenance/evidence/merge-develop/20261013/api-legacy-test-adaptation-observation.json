@@ -1,0 +1,245 @@
+{
+  "scope": "Static source observations, not actual compiler diagnostics",
+  "observations": [
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 33,
+      "text": "auth=new AgentRuntimeAuthenticationService(runtimes,identities,keys,accounts,new AgentTaskEventsGate(new AgentTaskEventsProperties(false,List.of())));"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 34,
+      "text": "connected=new AtomicBoolean(true);auth.bind(\"socket-a\",\"client-a\",\"owner-a\",AGENT,\"runtime-a\",\"key-a\",TOKEN,connected::get);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 39,
+      "text": "assertThrows(IllegalArgumentException.class,()->auth.registerCommandProtocols(\"other-socket\",AGENT,List.of(PROTOCOL)));"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 40,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));assertEquals(\"runtime-a\",proof().runtimeInstanceId());"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 46,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));proof();"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 47,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of());assertThrows(IllegalArgumentException.class,this::proof);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 48,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));connected.set(false);assertThrows(IllegalArgumentException.class,this::proof);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 49,
+      "text": "connected.set(true);auth.bind(\"socket-b\",\"client-a\",\"owner-a\",AGENT,\"runtime-b\",\"key-a\",TOKEN,connected::get);assertThrows(IllegalArgumentException.class,this::proof);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 50,
+      "text": "auth.registerCommandProtocols(\"socket-b\",AGENT,List.of(PROTOCOL));auth.disconnect(\"socket-a\");assertEquals(\"runtime-b\",proof().runtimeInstanceId());"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 57,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL, ArchiveAgentExecutionPort.REQUIRED_PROTOCOL));"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 123,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 128,
+      "text": "auth.bind(\"socket-b\",\"client-a\",\"owner-a\",AGENT,\"runtime-b\",\"key-a\",TOKEN,connected::get);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 129,
+      "text": "auth.registerCommandProtocols(\"socket-b\",AGENT,List.of(PROTOCOL));"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 136,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));var first=proof();byte[] digest=first.registrationHash();digest[0]^=1;"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/handler/AgentControlledWebSocketDispatchTest.java",
+      "line": 126,
+      "text": "fixture.authentication.registerCommandProtocols(\"socket-a\", AGENT,"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/handler/AgentControlledWebSocketDispatchTest.java",
+      "line": 129,
+      "text": "fixture.authentication.registerCommandProtocols(\"socket-a\", AGENT,"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/handler/AgentControlledWebSocketDispatchTest.java",
+      "line": 247,
+      "text": "authentication = new AgentRuntimeAuthenticationService("
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/integration/ArchiveCrossComponentFixtureConfiguration.java",
+      "line": 198,
+      "text": "return new AgentRuntimeAuthenticationService(runtimes, identities, keys, accounts, gate);"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/integration/ArchiveCrossComponentFixtureServer.java",
+      "line": 244,
+      "text": "authentication.bind(ArchiveCrossComponentFixtureConfiguration.SESSION_ID,"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/integration/ArchiveCrossComponentFixtureServer.java",
+      "line": 250,
+      "text": "authentication.registerCommandProtocols(ArchiveCrossComponentFixtureConfiguration.SESSION_ID,"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java",
+      "line": 50,
+      "text": "var target = new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-a\", \"key-a\", REGISTRATION);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java",
+      "line": 156,
+      "text": "var controlled = new AgentRuntimeAuthenticationService.ControlledTarget("
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 49,
+      "text": "target=new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-a\",\"key-a\",new byte[32]);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 143,
+      "text": ".thenReturn(new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-b\",\"key-a\",new byte[32]));"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 146,
+      "text": "assertEquals(AgentRawCommandDispatchResult.rejected().status(),service.dispatch(\"0\",\"client-a\",\"owner-a\",installed.get().id(),AGENT,installed.get().commandId(),wire()).status());"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 150,
+      "text": "request();sent();byte[] wire=wire();when(sessions.dispatch(eq(\"0\"),eq(\"client-a\"),eq(AGENT),eq(\"key-a\"),any(),any())).thenAnswer(call->{"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 153,
+      "text": "service.dispatch(\"0\",\"client-a\",\"owner-a\",installed.get().id(),AGENT,installed.get().commandId(),wire);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 154,
+      "text": "verify(sessions,times(1)).dispatch(eq(\"0\"),eq(\"client-a\"),eq(AGENT),eq(\"key-a\"),any(),any());"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 156,
+      "text": "service.dispatch(\"0\",\"client-a\",\"owner-a\",installed.get().id(),AGENT,installed.get().commandId(),bad);"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 157,
+      "text": "verify(sessions,times(1)).dispatch(eq(\"0\"),eq(\"client-a\"),eq(AGENT),eq(\"key-a\"),any(),any());"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "line": 179,
+      "text": "service.dispatch(\"0\",\"client-a\",\"owner-a\",installed.get().id(),AGENT,installed.get().commandId(),wire());"
+    },
+    {
+      "file": "agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformInstalledSkillResolverTest.java",
+      "line": 47,
+      "text": ".thenReturn(new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-a\",\"key-a\",HASH));"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 41,
+      "text": "dispatcher.dispatch(\"0\", \"client-a\", \"owner-a\", \"run-a\", \"agent-a\","
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 73,
+      "text": "when(port.dispatch(any(), any(byte[].class)))"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 77,
+      "text": "dispatcher.dispatch(\"0\", \"client-a\", \"owner-a\", \"run-a\", \"agent-a\","
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 79,
+      "text": "verify(port).dispatch(any(), any(byte[].class));"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 81,
+      "text": "when(port.dispatch(any(), any())).thenThrow(new ArchiveAgentExecutionPort.Denied(\"FENCED\"));"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 84,
+      "text": "dispatcher.dispatch(\"0\", \"client-a\", \"owner-a\", \"run-a\", \"agent-a\","
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 113,
+      "text": "var controlled = new AgentRuntimeAuthenticationService.ControlledTarget("
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 139,
+      "text": "when(managed.dispatch(eq(\"0\"), eq(\"client-a\"), eq(\"agent-a\"), eq(\"key-a\"),"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 156,
+      "text": "assertEquals(AgentRawCommandDispatchResult.Status.SENT, dispatcher.dispatch("
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 159,
+      "text": "verify(managed).dispatch(eq(\"0\"), eq(\"client-a\"), eq(\"agent-a\"), eq(\"key-a\"),"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 178,
+      "text": "assertEquals(AgentRawCommandDispatchResult.Status.REJECTED, cancelledDispatcher.dispatch("
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 181,
+      "text": "verify(port, never()).dispatch(any(), any());"
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 193,
+      "text": "assertEquals(AgentRawCommandDispatchResult.Status.REJECTED, deniedDispatcher.dispatch("
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 203,
+      "text": "() -> retryableDispatcher.dispatch(\"0\", \"client-a\", \"owner-a\", \"run-a\","
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 228,
+      "text": "dispatcher.dispatch(\"0\", \"client-a\", \"owner-a\", \"run-a\", \"agent-a\","
+    },
+    {
+      "file": "chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "line": 232,
+      "text": "verify(port, never()).dispatch(any(), any());"
+    }
+  ]
+}

@@ -1,40 +1,67 @@
 # M2 可恢复实时协作执行计划
 
-> 版本：1.0（独立 release_guard 第三轮复核：PLAN-GO）  
-> 冻结日期：2026-08-03  
-> 范围：M2 持久任务事件、workspace snapshot、SSE replay/resync、前端 TaskWorkspace/Timeline  
-> 设计依据：`docs/juyiting-multi-agent-collaboration-design.md` 第 7.5、13、21、22 节  
-> 任务账本：`docs/implementation/TASKS.yaml`  
+> 版本：1.3（2026-08-17 引入 GPT-5.3 Codex Spark 快速 Writer）
+> 初始冻结日期：2026-08-03；本次策略更新：2026-08-17
+> 范围：M2 持久任务事件、workspace snapshot、SSE replay/resync、前端 TaskWorkspace/Timeline
+> 设计依据：`docs/juyiting-multi-agent-collaboration-design.md` 第 7.5、13、21、22 节
+> 任务账本：`docs/implementation/TASKS.yaml`
 > 模型路由：`docs/implementation/MODEL_ROUTING.yaml`
 
 ## 1. 执行结论
 
-M2 采用**数据库优先、严格串行、一个 worktree 一个 Writer、跨模型只读 Review**的执行方式：
+M2 改为**健康门控、任务/worktree/路径级并行 Writer 流水线**。原始任务 ID、独立 commit、验收项和状态全部保留，但把高耦合任务放入同一 Writer/worktree，减少重新探索、worktree 创建、merge、全量测试和 Reviewer 交接。
 
 ```text
-M2-00
-  -> C01 -> C01B -> C01H -> C02 -> C03 -> C04 -> C05 -> C05F -> C06
-  -> C07A -> C07B -> C07C -> C07 -> C07F -> C08A -> C08W -> C08
+源码槽 A：当前任务独占其 worktree/owned paths 的 Writer
+只读槽 B：Explorer 准备下一微阶段调用链/冲突
+只读槽 C：Fast Query 准备 acceptance -> path -> test -> evidence
+只读槽 D：GPT Test Runner 或独立 Reviewer
 ```
 
-- `deepseek-v4-pro high`：负责 C01、C01B、C01H、C02～C07A，以及 C05F/C07F 的核心实现。
-- `deepseek-v4-flash medium`：以只读 Test Runner 执行核心任务验证；只在 C07B/C 作为 Writer 负责纯展示工作。
-- 主控 `gpt-5.6-sol high` 负责 M2-00 控制面、架构冻结和进度账本；独立 Sol Reviewer 审查 DeepSeek Pro；独立 Sol integration Writer 负责 C07/C08A/C08W。
-- `deepseek-v4-pro high` Reviewer：审查 Flash 编写的 C07B/C，并交叉审查 Sol 执行的 C07/C08A/C08W 及控制面证据；不审查自己编写的核心任务。
-- `gpt-image-2`：只在 C07 确有插画、空状态图、视觉稿或图片识别需求时使用，不进入关键路径；架构图优先 Mermaid。
+执行包和硬依赖：
 
-不允许 Flash 独立承担事务、ACL、版本分配、snapshot 一致性、SSE 竞态或 reducer 状态机设计。核心任务的测试代码也由同一 Pro Writer 提交；Flash 只读运行测试和故障探针，避免同一任务出现第二个 Writer。
+```text
+BE1: C02 -> C03
+  -> BE2: C04
+  -> BE3: C05 -> C05F
+  -> FE1: C06 -> C07A
+  -> FE2: C07B -> C07C -> C07 -> C07F
+  -> WG: C08W
 
-## 2. 为什么这是当前最优分配
+BE3 accepted 后：AG/C08A 只读累计门禁可与 FE1/FE2 并行
+AG + WG accepted -> RG/C08 最终 GO/NO-GO
+```
 
-| 决策 | 依据 | 避免的风险 |
+- 独立任务允许并行源码 Writer；必须使用独立 worktree，并在开始前冻结不重叠的 owned paths。
+- C08A 默认是只读累计门禁；若发现 API 必须修复，可在独立 worktree 并行 claim，仅在路径重叠时协调交接。
+- 重型 Gradle、隔离 MySQL、npm full test/build 全局串行。
+- 每个原始任务仍有独立微阶段验收；ACCEPT 后主控自动推进，不再逐项等待用户确认。任务正常自动推进；每次完成、异常或需要用户处理时主动汇报并给出可执行下一步。
+- `docs/implementation/**` 仅由主控修改，代码 Writer 不争用控制面文件。
+
+### 当前模型健康降级
+
+2026-08-23 起按用户指令执行 OpenAI-only 路由；不再派发 DeepSeek 或运行其健康探针。2026-08-17 本机 Codex 对 `gpt-5.3-codex-spark` 的只读健康探针返回 `SPARK_OK`。为兼顾速度和门禁：
+
+- 已开始的 C04 保持 `critical_worker / GPT-5.6 Sol High`，不在候选中途换模。
+- C05～C07F 的冻结契约、分包实施与 focused tests 使用 `spark_worker / GPT-5.3 Codex Spark Medium`。
+- 新身份/ACL 语义、事务重设计、迁移或破坏性数据修改必须升级给 `critical_worker / GPT-5.6 Sol High`。
+- 验证统一使用独立 `gpt_test_runner / GPT-5.4 Mini Medium`；Review 和最终门禁继续使用只读 Sol High。
+- Writer 与 Reviewer 必须分离；Spark 不自验收、不修改控制面、不部署。
+
+## 2. 为什么这是当前更优分配
+
+| 决策 | 依据 | 提效/避险 |
 | --- | --- | --- |
-| 核心链路交给 DeepSeek V4 Pro High | C01～C06 涉及迁移、事务、CAS、连续版本、subscribe/replay 竞态、ACL、断线恢复 | 低成本模型局部实现正确但系统语义不闭环 |
-| Pro Writer 由 GPT-5.6 Sol High Review | 写审模型不同，Reviewer 不继承 Writer 结论 | 自审盲区、事务边界和恢复算法遗漏 |
-| Flash 只做机械任务和纯展示 UI | 任务边界可验证、失败影响有限 | Flash 擅自决定架构或放宽安全规则 |
-| 串行 Writer | C01～C06 强依赖，API 主工作树当前有大量未提交修改 | 重复实现、接口漂移、worktree 冲突和 Gradle 内存竞争 |
-| MySQL 为唯一事实源 | 已冻结 ADR-003；内存 Broker 只做本实例唤醒 | API 重启后事件丢失、RabbitMQ 被误当业务事实源 |
-| RabbitMQ 不进入 M2 关键路径 | RabbitMQ 可靠命令传输属于 M3/D01～D09 | M2 被消息中间件拓扑拖慢，恢复语义重复建设 |
+| C02+C03 合并为 BE1 | 同一 broker/replay runtime、DAO 和连续性状态机 | 保留 C02 微门禁，减少一次 worktree/上下文重建和中间集成 |
+| C04 单独保留 P0 门禁 | snapshot 事务、浏览器 ACL 和一致版本边界独立且高风险 | 避免 SSE/UI 需求掩盖快照一致性问题 |
+| C05+C05F 合并为 BE3 | flag 直接包裹新 endpoint，路径和测试高度重叠 | C05 先 ACCEPT，再追加默认关闭策略，省去一次 Writer/branch 交接 |
+| C06+C07A 合并为 FE1 | composable/reducer 与页面状态接入共同拥有唯一前端状态源 | 防止第二套 workspace 状态和重复恢复逻辑 |
+| C07B/C07C/C07/C07F 合并为 FE2 | 组件、JuyiHall、测试和 flag 路径重叠 | 同一 Spark Writer 严格顺序实施，消除多 Writer 冲突 |
+| C08A 只读门禁与 Web 实施重叠 | API 在 BE3 后已冻结，C08A 通常只做累计证据 | 节省等待；若需源码修复则在独立 worktree 并行 claim，路径冲突时协调 |
+| OpenAI-only 路由 | 用户已暂停 DeepSeek；Spark 本机探针通过 | 由 Spark/Terra/Luna 加速冻结契约实施，Sol 保留高风险与最终门禁 |
+| 最终 tree 才跑全量 | 多轮开发阶段重复全量测试收益低、耗时高 | targeted 开发验证 + 最终一次 full/isolated gate |
+
+剩余账面复杂度约 20 人日；执行包合并和只读门禁重叠预计节省 **3～4 个执行日**，目标约 **16～17 个复杂度日**。这是边界估算，不包含多轮 P0 驳回、基础设施故障或生产审批时间。
 
 ## 3. M2 不可变设计约束
 
@@ -59,28 +86,25 @@ M2-00
 
 ## 4. 完整任务与 Agent 分配表
 
-| 顺序 | ID | 交付目标 | Writer | Support / Test | Reviewer | 预估 |
-| ---: | --- | --- | --- | --- | --- | ---: |
-| 0 | M2-00 | 控制面、脏树、stash、累计 clean base、资源证据 | 主控 GPT-5.6 Sol High | Explorer / Flash Test Runner（只读） | DeepSeek V4 Pro High | 0.5～1 日 |
-| 1 | C01 | event Schema、Entity/DAO、event_version 分配 | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 2 日 |
-| 2 | C01B | B03～B08 全部业务写路径原子产生 event | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 3 日 |
-| 3 | C01H | B09 历史任务 event baseline 幂等迁移 | DeepSeek V4 Pro High | Flash Test Runner / 隔离 MySQL | GPT-5.6 Sol High | 2 日 |
-| 4 | C02 | TaskEventBroker 和 after-commit 唤醒 | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 2 日 |
-| 5 | C03 | replay、连续性检查、gap/resync | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 3 日 |
-| 6 | C04 | 一致版本 workspace snapshot API | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 2～2.5 日 |
-| 7 | C05 | task event SSE API、Last-Event-ID、ACL | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 2 日 |
-| 8 | C05F | 后端 M2 feature flag 默认关闭 | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 0.5 日 |
-| 9 | C06 | useTaskWorkspace/useTaskEventStream、恢复 reducer | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 3 日 |
-| 10 | C07A | TaskWorkspace 数据接入、状态和恢复提示 | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 1～1.5 日 |
-| 11 | C07B | 成员/工作项/诉求/成果/Timeline 纯展示 UI | DeepSeek V4 Flash Medium | — | DeepSeek V4 Pro High | 1～1.5 日 |
-| 12 | C07C | 响应式、可访问性、组件测试、build | DeepSeek V4 Flash Medium | — | DeepSeek V4 Pro High | 1 日 |
-| 13 | C07 | 前端子阶段集成和 Juyi Hall 回归 | 独立 GPT-5.6 Sol High | Flash Test Runner | DeepSeek V4 Pro High；Sol release_guard 终审 | 0.5 日 |
-| 14 | C07F | 前端 M2 feature flag 与 M1 安全降级 | DeepSeek V4 Pro High | Flash Test Runner | GPT-5.6 Sol High | 0.5 日 |
-| 15 | C08A | API 累计基线联合回归 | 独立 GPT-5.6 Sol High | Flash Test Runner | DeepSeek V4 Pro High | 0.75 日 |
-| 16 | C08W | Web 累计基线 test/build/回归 | 独立 GPT-5.6 Sol High | Flash Test Runner | DeepSeek V4 Pro High | 0.75 日 |
-| 17 | C08 | 双仓部署候选最终 GO/NO-GO | 主控 GPT-5.6 Sol High | Flash Test Runner | DeepSeek V4 Pro High；独立 Sol release_guard 最终门禁 | 0.5 日 |
+| 包/顺序 | 原任务 | 执行方式 | 当前 Writer/Executor | 只读 Support | Reviewer | 预估 |
+| --- | --- | --- | --- | --- | --- | ---: |
+| 已完成 | M2-00、C01、C01B、C01H | 已 accepted/integrated | 历史 Owner | 已有证据 | 已 ACCEPT | 7.5 日 |
+| BE1-1 | C02 | 同一 worktree 微阶段 1 | **Sol High critical_worker** | Terra Explorer + Mini Matrix + GPT Test | Sol High independent reviewer | 2 日 |
+| BE1-2 | C03 | C02 ACCEPT 后微阶段 2 | **同一 Sol Writer** | Terra + Mini + GPT Test | Sol High independent reviewer | 3 日 |
+| BE2 | C04 | 独立 P0 包 | **Sol High critical_worker** | Terra + Mini + GPT Test | Sol High independent reviewer | 2.5 日 |
+| BE3-1 | C05 | 同一 worktree 微阶段 1 | **GPT-5.3 Codex Spark Medium** | Terra + Mini + GPT Test | Sol High independent reviewer | 2 日 |
+| BE3-2 | C05F | C05 ACCEPT 后微阶段 2 | **同一 Spark Writer** | Mini + GPT Test | Sol High independent reviewer | 0.5 日 |
+| FE1-1 | C06 | 同一 Web worktree 微阶段 1 | **GPT-5.3 Codex Spark Medium** | Explorer + Mini + GPT Test | Sol High independent reviewer | 3 日 |
+| FE1-2 | C07A | C06 ACCEPT 后微阶段 2 | **同一 Spark Writer** | Mini + GPT Test | Sol High independent reviewer | 1.5 日 |
+| FE2-1 | C07B | 展示 UI | **GPT-5.3 Codex Spark Medium** | Explorer | Sol High independent reviewer | 1.5 日 |
+| FE2-2 | C07C | C07B 后 responsive/a11y/tests | **同一 Spark Writer** | Mini + GPT Test | Sol High independent reviewer | 1 日 |
+| FE2-3 | C07 | 集成/Juyi Hall 回归 | **同一 Spark Writer** | GPT Test | Sol High independent reviewer | 0.5 日 |
+| FE2-4 | C07F | 默认关闭和 M1 降级 | **同一 Spark Writer** | Mini + GPT Test | Sol High independent reviewer | 0.5 日 |
+| AG | C08A | BE3 后只读累计 API gate | **GPT Test Runner**；冲突才由 Sol 修复 | Mini evidence | Sol High reviewer | 0.75 日 |
+| WG | C08W | FE2 后最终 Web gate | **GPT Test Runner**；冲突才由 Terra 修复 | Mini evidence | Sol High reviewer | 0.75 日 |
+| RG | C08 | 双仓最终 GO/NO-GO | 主控 Sol High | Mini evidence | Sol reviewer + release_guard | 0.5 日 |
 
-> 任务估算沿用“人日复杂度”，不是模型运行时承诺。严格串行且含 Review/返工时，目标机器执行周期为 12～18 个执行日；遇到多轮驳回、MySQL 环境或资源阻塞时顺延。
+> 当前 C05～C07F 已冻结为 Spark 路由；除非 Spark 健康探针失败或触发 P0 升级条件，否则不在包中途换 Writer。
 
 ## 5. 每项任务详设、路径与验收
 
@@ -97,15 +121,15 @@ M2-00
 7. 后续任务只能从对应累计 base 的最新 accepted/integrated HEAD 分支，不从脏 `develop` 或文件系统复制。
 8. 建立 API 与 Web 基线构建/测试证据；测试数据库必须隔离，禁止生产 DML。
 9. 记录 B07/B08/B09 的“双状态”：源码已进入锁定 API 基线；生产迁移/回填未 apply。
-10. 资源门禁：开始 Gradle、npm 全量构建或创建集成 worktree 前，根分区可用空间必须至少 5 GiB；记录 inode、内存和 swap。2026-08-03 复核时仅约 3.0 GiB，当前不满足该门禁。
+10. 资源观测：记录磁盘、inode、内存和 swap，但自 2026-08-28 起不再以固定内存或磁盘阈值拒绝 Gradle、npm build、隔离 MySQL/Rabbit 或 integration worktree。资源不足导致的真实 OOM/ENOSPC 仍按失败归因处理，重型资源继续串行。
 11. 在 M2-00 handoff 生成控制面 SHA-256 清单，并将摘要写入 C01 首个 Git commit trailer，弥补仓库根目录不是 Git repo 的追踪缺口。
 
 **退出门槛**
 
-- 基线 SHA、两个累计 base branch/worktree、dirty checksum、stash object SHA、M1 双状态、资源门禁和测试证据写入 handoff。
+- 基线 SHA、两个累计 base branch/worktree、dirty checksum、stash object SHA、M1 双状态、资源观测和测试证据写入 handoff。
 - 所有用户未提交修改仍原样存在。
 - 若协议日志异常存在，已有独立任务 ID、Owner 和验收条件。
-- 可用空间达到至少 5 GiB 后才能退出 M2-00；不得通过删除未知文件、stash 或 worktree 绕过。
+- 不设固定可用空间或 MemAvailable admission gate；执行前仍记录资源快照。不得自动删除未知文件、stash、活跃 worktree、证据或生产数据。
 
 ### C01：task event 表和版本分配
 
@@ -124,6 +148,25 @@ M2-00
 
 ### C01B：全部业务写路径原子事件接入
 
+**写前冻结包（C01B-0，只读）**
+
+- 补齐 heartbeat、release、thread/message、archive 等 `TaskEventType` 目录缺口。
+- 冻结多 aggregate 事件固定顺序、全入口统一 task-root 锁序和事务传播边界。
+- 冻结 `event_json` payload allowlist；禁止 lease token、认证头、完整聊天正文等敏感信息。
+- 冻结 no-op、ACL 拒绝、CAS 冲突均为 0 event，以及 acceptance -> path -> test -> evidence 矩阵。
+
+**同一 Sol Writer 的微阶段**
+
+```text
+C01B-1 event catalog、payload allowlist、统一锁序、测试骨架
+C01B-2 B03 状态机 + B04 lease
+C01B-3 B05 aggregation + B06 request/artifact/result
+C01B-4 B07 thread + B08 legacy/create/assign/report/archive
+C01B-5 全入口覆盖、隔离 MySQL、联合回归
+```
+
+不得把微阶段拆给多个 Writer；每个阶段只跑 targeted tests，最终候选才由 Flash 独立跑一次模块全量和一次隔离 MySQL。
+
 **必须盘点并覆盖**
 
 - B03 task/member/work-item 状态转换。
@@ -138,7 +181,8 @@ M2-00
 - 每条成功业务写入都有规范化 event type、actor、aggregate、payload allowlist。
 - 状态写入与 event/version 更新同事务；任一失败全部回滚。
 - 无变化、幂等重放、CAS 冲突和权限拒绝不得产生伪事件。
-- 建立“业务入口 -> event type -> 测试”的完整覆盖矩阵。
+- 建立“业务入口 -> event type -> 测试 -> evidence key”的完整覆盖矩阵。
+- 承接 C01 follow-up：隔离 MySQL writer 并发/回滚、真实 Spring `@Transactional` proxy 外层回滚、duplicate event ID 失败后下一次成功 append 无版本洞。
 
 ### C01H：B09 历史任务 event baseline
 
@@ -175,7 +219,7 @@ M2-00
 
 **主要产物**
 
-- 数据库按版本分页 replay。
+- 数据库按版本分页 replay；`findAfterVersion` 必须有明确 page size/cursor，禁止一次性无界读取。
 - “先 live 后 replay”的桥接算法。
 - gap、历史截断、cursor ahead、并发新事件处理。
 - `resync_required` 规范及 reason code。
@@ -297,86 +341,100 @@ Accept: text/event-stream
 
 ## 6. Worktree 与分支分配
 
-| 任务 | Repo | Branch | Worktree |
+| 执行包/任务 | Repo | Branch | Worktree |
 | --- | --- | --- | --- |
-| M2-00 | 控制面证据 | N/A（根目录非 Git repo） | `/home/isp/wsps/cyf` |
-| 累计 API base | api | `feat/m2-api-base-20260803` | `/home/isp/wsps/cyf/.worktrees/m2-api-base` |
-| C01 | api | `feat/c01-task-event-schema` | `/home/isp/wsps/cyf/.worktrees/m2-c01-api` |
-| C01B | api | `feat/c01b-task-event-mutations` | `/home/isp/wsps/cyf/.worktrees/m2-c01b-api` |
-| C01H | api | `feat/c01h-historical-event-baseline` | `/home/isp/wsps/cyf/.worktrees/m2-c01h-api` |
-| C02 | api | `feat/c02-task-event-broker` | `/home/isp/wsps/cyf/.worktrees/m2-c02-api` |
-| C03 | api | `feat/c03-task-event-replay` | `/home/isp/wsps/cyf/.worktrees/m2-c03-api` |
-| C04 | api | `feat/c04-task-workspace` | `/home/isp/wsps/cyf/.worktrees/m2-c04-api` |
-| C05 | api | `feat/c05-task-event-sse` | `/home/isp/wsps/cyf/.worktrees/m2-c05-api` |
-| C05F | api | `feat/c05f-m2-backend-flag` | `/home/isp/wsps/cyf/.worktrees/m2-c05f-api` |
-| 累计 Web base | web | `feat/m2-web-base-20260803` | `/home/isp/wsps/cyf/.worktrees/m2-web-base` |
-| C06 | web | `feat/c06-task-event-stream` | `/home/isp/wsps/cyf/.worktrees/m2-c06-web` |
-| C07A | web | `feat/c07a-task-workspace-state` | `/home/isp/wsps/cyf/.worktrees/m2-c07a-web` |
-| C07B | web | `feat/c07b-task-workspace-ui` | `/home/isp/wsps/cyf/.worktrees/m2-c07b-web` |
-| C07C | web | `feat/c07c-task-workspace-quality` | `/home/isp/wsps/cyf/.worktrees/m2-c07c-web` |
-| C07 | web | `feat/c07-task-workspace-integration` | `/home/isp/wsps/cyf/.worktrees/m2-c07-web` |
-| C07F | web | `feat/c07f-m2-frontend-flag` | `/home/isp/wsps/cyf/.worktrees/m2-c07f-web` |
-| C08A | api | `feat/m2-api-base-20260803` | `/home/isp/wsps/cyf/.worktrees/m2-api-base` |
-| C08W | web | `feat/m2-web-base-20260803` | `/home/isp/wsps/cyf/.worktrees/m2-web-base` |
-| C08 | 控制面证据 | N/A | `/home/isp/wsps/cyf` |
+| 累计 API base / AG | api | `feat/m2-api-base-20260803` | `/home/isp/wsps/cyf/.worktrees/m2-api-base` |
+| BE1 / C02+C03 | api | `feat/c02-c03-task-event-core` | `/home/isp/wsps/cyf/.worktrees/m2-c02c03-api` |
+| BE2 / C04 | api | `feat/c04-task-workspace` | `/home/isp/wsps/cyf/.worktrees/m2-c04-api` |
+| BE3 / C05+C05F | api | `feat/c05-c05f-task-event-edge` | `/home/isp/wsps/cyf/.worktrees/m2-c05-api` |
+| 累计 Web base / WG | web | `feat/m2-web-base-20260803` | `/home/isp/wsps/cyf/.worktrees/m2-web-base` |
+| FE1 / C06+C07A | web | `feat/c06-c07a-task-workspace-state` | `/home/isp/wsps/cyf/.worktrees/m2-c06c07a-web` |
+| FE2 / C07B+C07C+C07+C07F | web | `feat/c07bcf-task-workspace-surface` | `/home/isp/wsps/cyf/.worktrees/m2-c07bcf-web` |
+| RG / C08 | 控制面 | N/A | `/home/isp/wsps/cyf` |
 
-**创建规则**
+**创建与集成规则**
 
-- M2-00 从精确 commit `c49d148...`、`2424f51...` 创建两个累计 base；不 checkout/switch 当前脏 `develop`。
-- 任务 worktree 从对应累计 base 的最新 HEAD 创建，绝不从当前脏 `api/` 文件系统复制。
-- accepted 后由独立 Sol integration Writer 将 commit 合入累计 base；Pro Reviewer 审查 merge/conflict commit。下一任务再从更新后的累计 base 创建。
-- 每个 worktree 只有一个 Writer；Reviewer 直接读取 diff 和测试证据，不修改该树。
-- 控制面文档由主控更新，避免代码 Writer 在错误 repo 中修改任务账本。
+- 执行包从对应累计 base 的最新 accepted/integrated HEAD 创建，不从 dirty `develop` 复制。
+- 一个执行包只有一个 Writer；包内每个原始任务使用独立 commit、handoff 和验收状态。
+- 前一微阶段 ACCEPT 后可在同一 worktree 继续下一微阶段，无需创建新 branch/worktree。
+- 执行包最终 accepted 后一次性 byte-exact no-ff merge 到累计 base；核对 parent/source/tree SHA，不重复完整 Review。
+- 发生冲突、语义编辑或 tree mismatch，相关证据失效并重新 Review。
+- C08A/C08W 默认由 Test Runner 执行只读累计门禁；发现必须修复时可 claim 独立任务 Writer，只有 owned paths 重叠才协调。
+- 控制面文档只由主控修改，代码 Writer 不修改 `docs/implementation/**`。
 
 ## 7. 标准执行协议
 
+### Runtime ledger / dispatch（唯一入口）
+
+- 当前执行事实只存在于 `TASKS.yaml` 的 `runtime_ledger_json`；历史 `tasks` 和 handoff 不参与调度判断。
+- 主控按显式依赖分派；同一 active Agent 不得占两个任务，但不同 ready 任务可在独立 worktree/owned paths 由不同 Writer 并行。
+- `owner.mode=support/reviewer` 始终只读，不得调用 Gradle；任一任务的 Writer/Verifier 在本任务 `current_gate` 为 verification 时均可排队获取全局 Gradle 锁。
+- accepted evidence 只按 tree SHA + exact selector + fixture digest 复用；任一变化均 MISS 并只重跑相关 selector。
+- `ops/orchestration/cyf_orchestrator.py` 是 transition、failure attribution、evidence cache、Gradle 与通知的单一可执行入口。
+- `critical_path` 仅表达依赖和晋级顺序，不构成全局 Writer 或 Gradle 准入；绝不授权终止或抢占已经运行的任务；`/tmp/cyf-gradle.lock` 的持有者和等待者都只能由 exact owner 自主管理。
+- 跨线程冲突只允许通过 `conflict-alert` 产生 `coordination_required` 告警，不得操作其他任务的进程、Gradle daemon、systemd unit 或证据目录。
+- 任何进程控制都必须同时具备 exact thread ownership 与用户/主控显式授权；协调线程本身保持 alert-only，不因获得冲突信息而取得执行权限。
+
+### Prepare（只读并行）
+
+当前执行包 Writer 工作时，主控可提前启动最多三个只读槽位：
+
+1. Explorer：下一任务调用链、依赖、allowed-path 和冲突地图。
+2. Fast Query：acceptance -> path -> test selector -> evidence 矩阵。
+3. Test Runner preparation：只读整理测试命令、selector、fixture digest 与已有 evidence key；未切到 verifier owner/gate 前不得启动 Gradle、隔离数据库或重型资源探针。
+
+准备成果只能由主控写入 handoff/preflight；只读 Agent 不得 claim、修改源码或改变冻结契约。
+
 ### Claim
 
-主控在 `TASKS.yaml` 原子写入：
+主控只通过统一入口更新 `TASKS.yaml#runtime_ledger_json`；`planned_*` 和历史 `tasks` 不是 claim：
 
 ```text
-status=claimed
-owner=<agent + model>
-reviewer=<independent agent + model>
-claimed_at / lease_until
-branch / worktree
-allowed_paths
+owner={agent, profile, mode}
+exact_sha_tree={commit_sha, tree_sha}
+current_gate=claimed|implementing|targeted_verification|verifying|review|blocked_*|accepted
+blocker=null|{category, summary, consecutive_failures, attempts}
+next_action=<one executable action>
 ```
+
+Claim 前必须确认显式依赖、独立 worktree、任务级唯一 Owner、路径所有权和证据缓存；资源快照仅作观测，不再因固定内存/磁盘阈值拒绝重型验证。`blocked_root_cause` 不允许普通 claim/transition，必须先冻结根因矩阵并通过 `authorize-remediation --matrix-ref ...` 显式开启有界整改。
 
 ### Implement
 
 Writer 必须：
 
-1. 阅读任务卡、直接依赖 handoff 和最近 build.gradle/package.json。
-2. 只修改 allowed paths；不得回滚他人修改。
-3. 先加失败测试，再实现，再运行最小验证。
-4. Gradle 命令必须持有 `/tmp/cyf-gradle.lock`，单 worker、低内存。
-5. commit message 带任务 ID；不得部署、重启生产或执行生产 DML。
-6. 提交 handoff 后把状态推进到 `review`，不能自行 accepted。
+1. 阅读任务卡、直接依赖 handoff、只读准备包和最近 build.gradle/package.json。
+2. 写前冻结契约/锁序/验收矩阵；只修改 allowed paths，不回滚他人修改。
+3. 先加失败测试，再实现；每个微阶段只运行 targeted/touched suites。需要登记可复用 evidence 时，先形成 clean commit/tree，再从该 exact worktree 运行。
+4. Gradle 只能经 `python3 ops/orchestration/cyf_orchestrator.py gradle <task>` 运行；入口校验任务 owner/current_gate、clean worktree exact commit/tree、证据缓存、磁盘和 `/tmp/cyf-gradle.lock`；不再要求任务位于 critical-path 首项。
+5. commit message 带任务 ID；handoff 记录 tree SHA 和 evidence key。
+6. 不部署、不重启生产、不执行生产 DML；提交到 `review` 后停止，不能自行 accepted。
 
-### Review
+### Verify / Review
 
-Reviewer 必须：
-
-- 只读检查任务卡、完整 diff、代码、测试和故障注入证据。
-- 输出 `ACCEPT` 或 `REJECT`，标注 P0/P1/P2、精确路径/行号及复现命令。
-- 不直接修代码；驳回后由原 Writer 在同一任务/worktree 修复。
+- 最终 candidate 由当前可用 Test Runner 独立运行一次模块全量；事务/迁移 tree 运行一次隔离 MySQL。
+- 证据键固定为 `git tree SHA + test selector + DB fixture digest`；tree、selector、fixture 未变化时复用证据。
+- Reviewer 只读检查 acceptance、diff、代码和证据，不运行 Gradle；证据无效或覆盖缺口时，退回主控并由独立 verifier 在新 gate 补跑。
+- Reviewer 输出 `ACCEPT`/`REJECT` 和 P0/P1/P2；REJECT 后仍由原 Writer 在同一 worktree 修复。
+- ACCEPT 后主控自动更新账本并推进包内下一微阶段或下一执行包；无需等待逐项用户确认，但必须主动汇报。
 
 ### Integrate
 
-- accepted 后由独立 integration Writer 合入对应 `feat/m2-*-base-20260803`，不触碰当前脏 `develop`。
-- Pro Reviewer 审查累计 base 的集成 commit；通过后状态从 `accepted -> integrated`。
-- C08 最终 GO 后才制定 base -> develop 的独立合流任务；本计划不自动操作脏 develop。
-- 集成失败不得绕过测试；回到原任务修复并重新 Review。
+- 包内微阶段 accepted 后继续在同一 source worktree；执行包全部 accepted 后再合入对应 `feat/m2-*-base-20260803`，不触碰 dirty develop。
+- 无冲突、无语义修改且 source/integration tree byte-exact：只核对 parent/source/tree SHA，不重复完整代码 Review。
+- 有冲突、语义修改、tree mismatch 或 evidence 失效：必须重新 Review/验证。
+- C08 GO 后才建立 base -> develop 的独立合流任务；本计划不自动部署或执行生产迁移。
 
 ## 8. 防重复、防漏实施机制
 
 | 风险 | 控制措施 |
 | --- | --- |
-| 两个 Agent 重复写同一功能 | `TASKS.yaml` 唯一 Owner + 串行 active task + 一个 worktree 一个 Writer |
+| 两个 Agent 重复写同一功能 | `TASKS.yaml` 每任务唯一实际 Owner + 独立 worktree/path ownership；只读 Agent 不得改源码 |
 | 接口由前后端分别猜测 | C04/C05 accepted 后冻结 contract，C06 只消费冻结接口 |
-| Writer 声称完成但缺测试 | handoff 必填 commit、changed_files、commands、results、residual_risks |
+| Writer 声称完成但缺测试 | handoff 必填 commit/tree SHA、changed_files、evidence key、commands/results、residual_risks |
 | Reviewer 顺手修代码造成责任不清 | Reviewer read-only；REJECT 后原 Writer 修复 |
+| 重复跑全量测试拖慢周期 | targeted 开发验证 + 最终 tree 一次全量/一次隔离 MySQL + evidence key 复用 |
+| byte-exact 集成重复审查 | 只核对 parent/source/tree SHA；冲突、语义修改或 tree mismatch 才复审 |
 | 子任务完成但主任务漏集成 | C07、C08A、C08W 和 C08 显式作为分层集成门禁 |
 | task_version 与事件游标混用 | ADR-006 明确 task_version=aggregate CAS，event_version/current_event_version=SSE 游标 |
 | Java Long 前端精度丢失 | contract 要求 event version 字符串；C04/C05/C06/C08W 均有精度验收 |
@@ -385,36 +443,43 @@ Reviewer 必须：
 | SSE 漏事件但普通测试通过 | C03/C05/C06/C08A/C08W 均执行连接窗口、gap、重启和重复事件故障注入 |
 | 脏主树污染 M2 | M2-00 checksum/stash manifest + 独立累计 base；M2 全程不触碰 develop worktree |
 | RabbitMQ 与 SSE 重复建设事实源 | ADR-003：M2 数据库 replay；M3 RabbitMQ 仅运输命令 |
-| UI 任务越权修改状态机 | C07B/C allowed paths/acceptance 明确禁止改 reducer、ACL 和 API 语义 |
+| UI 任务越权修改状态机 | C07B/C07C allowed paths/acceptance 明确禁止改 reducer、ACL 和 API 语义 |
 
 ## 9. 验证命令基线
 
 ### API
 
-实际模块以任务变更为准，所有 Gradle 命令必须串行持锁：
+以下命令只作为最终候选/累计门禁基线。开发阶段先跑 task card 指定的 targeted tests；`<task/tree/selector/fixture>` 必须与唯一运行台账和 evidence key 完全一致：
 
 ```bash
-flock /tmp/cyf-gradle.lock ./gradlew \
-  :agent:jia-agent-core:test \
-  :agent:jia-agent-mapper:test \
-  :agent:jia-agent-service:test \
+python3 ops/orchestration/cyf_orchestrator.py gradle <task> \
+  --heavy --tree-sha <40-char-tree> \
+  --selector 'agent-core+mapper+service module gate' \
+  --fixture-digest <digest-or-N/A> -- \
+  ./gradlew :agent:jia-agent-core:test \
+  :agent:jia-agent-mapper:test :agent:jia-agent-service:test \
   --no-daemon --max-workers=1
 ```
 
-涉及 chat 再追加：
+涉及 chat 再使用一个独立 exact selector/evidence key：
 
 ```bash
-flock /tmp/cyf-gradle.lock ./gradlew \
-  :chat:jia-chat-service:test \
-  --no-daemon --max-workers=1
+python3 ops/orchestration/cyf_orchestrator.py gradle <task> \
+  --heavy --tree-sha <40-char-tree> \
+  --selector 'chat-service module gate' --fixture-digest <digest-or-N/A> -- \
+  ./gradlew :chat:jia-chat-service:test --no-daemon --max-workers=1
 ```
 
 ### Web
+
+开发阶段运行受影响测试；最终 Web candidate 由 Test Runner 运行一次：
 
 ```bash
 cd web && npm run test
 cd web && npm run build
 ```
+
+证据键为 `git tree SHA + test selector + DB fixture digest`。C08A/C08W 承担累计全量回归；普通 Reviewer 默认复用有效证据。
 
 ### 必须有的故障注入
 
@@ -442,49 +507,28 @@ cd web && npm run build
 | Java Long 在 JS 丢精度 | P0 | 全链路字符串；大于 `2^53` 的 contract/reducer 测试 |
 | 慢 SSE 客户端拖垮服务 | P1 | 有界缓冲/断开策略、超时和资源清理测试 |
 | 前端无限重连造成请求风暴 | P1 | 指数退避、抖动、失败阈值和轮询降级 |
-| Flash 越界改架构 | P1 | profile 明确升级条件；Pro/Sol 只读 Review |
+| Flash/Luna/Terra 越界改架构 | P1 | 只接冻结契约任务；P0 语义升级给 Sol critical_worker；跨模型只读 Review |
 | B09 尚未生产执行影响历史任务 | P1 | M2 不隐式回填；snapshot 对缺失历史数据 fail closed/显式降级 |
-| 磁盘不足导致构建/集成中断 | P0 | M2-00 要求至少 5 GiB；2026-08-03 当前约 3.0 GiB，未达门禁 |
+| 磁盘不足导致构建/集成中断 | P0 | 固定空间阈值不再阻断；保留资源快照、串行执行和 ENOSPC 根因归档，禁止自动删除未知数据 |
 | gpt-image-2 资产拖慢主线 | P2 | 默认不使用；仅 C07B 可选且必须经过 build 引用验证 |
 
-## 11. 里程碑与主动汇报点
+## 11. 汇报策略
 
-每完成一项，主控必须主动向用户汇报一次，不等待追问，固定格式：
+- 原始任务 ID 仍在 `TASKS.yaml`、handoff 和 evidence 中逐项记录，但不逐项打扰用户。
+- 主控只更新 `TASKS.yaml` 内嵌 `runtime_ledger_json`；每项仅保留 `owner`、`exact_sha_tree`、`current_gate`、`blocker`、`next_action`。
+- 任务 ACCEPT 后自动推进；任务完成、验证/Review 异常、连续失败两次或需要用户动作时主动通知，并附一条可执行下一步。
+- 资源/Writer 冲突只主动发送 `coordination_required`，不得将 stale ledger、critical-path 顺序或 Gradle 锁等待解释为跨线程终止授权。
+- 每次失败先用统一入口登记 evidence/root cause/remediation；连续第二次失败转 `blocked_root_cause` 并输出根因矩阵；普通 claim/transition 被拒绝，必须用 `authorize-remediation` 绑定批准后的矩阵才能开启下一轮。
+- 内部进度继续按既有权重计算，不以“已开始”计入完成度。
 
-```text
-[任务 ID] 状态：ACCEPT / REJECT / BLOCKED
-完成：<具体交付>
-证据：<commit + tests>
-风险：<剩余风险>
-下一项：<ID + Writer + Reviewer>
-M2 总进度：<按验收权重计算百分比>
-```
+## 12. 当前状态与下一项
 
-进度只按 accepted 权重计算，不按“已开始”计入：
-
-| 任务 | 权重 |
-| --- | ---: |
-| M2-00 | 5% |
-| C01 | 5% |
-| C01B | 8% |
-| C01H | 6% |
-| C02 | 7% |
-| C03 | 11% |
-| C04 | 9% |
-| C05 | 8% |
-| C05F | 3% |
-| C06 | 10% |
-| C07A | 5% |
-| C07B | 4% |
-| C07C | 4% |
-| C07 | 3% |
-| C07F | 3% |
-| C08A | 4% |
-| C08W | 3% |
-| C08 | 2% |
-
-## 12. 启动条件与第一项
-
-第一项固定为 **M2-00**。在其 ACCEPT 前，不创建 C01 写入 worktree，不修改 API/Web 业务代码。当前已知阻塞是 2026-08-03 根分区仅约 3.0 GiB 可用，需安全释放到至少 5 GiB。
-
-M2-00 完成并创建累计 clean base 后，C01 由 `deepseek_pro_worker` 领取，`sol_reviewer` 独立审查；测试探针由 Flash `test_runner` 只读执行，不成为第二个 Writer。
+- 已完成并集成：M2-00、C01、C01B、C01H。
+- 当前累计 API base：`71e243df4d06e787c3aa6cdbf0f3bc243a6f56a2`，tree `1e0b78183719d55402b1854f3942bc6eaebe5ca8`，worktree clean。
+- 当前累计 Web base：`2424f51f375814f403ca70a9a6e9948728e595b1`，worktree clean。
+- C02 的架构/事实 preflight 已完成；RabbitMQ 明确不进入 C02。
+- 当前执行 OpenAI-only 路由，BE1 直接路由到 `critical_worker / GPT-5.6 Sol High`，不等待或探测 DeepSeek。
+- 根分区空间仅作为观测记录，不作为 admission gate；所有 Gradle/DB/npm 重型验证仍串行。
+- 下一步：创建 BE1 worktree `m2-c02c03-api`，先实施 C02；C02 独立 Review ACCEPT 后同一 Writer 继续 C03。
+- C04 claim 前必须冻结两个契约：浏览器访问 TaskWorkspace 的 ACL subject；Timeline 使用 bounded `recentEvents` 还是仅会话后事件。当前推荐 `recentEvents` 有界连续后缀。
+- 未推送、未合 dirty `develop`、未部署、未执行生产迁移。

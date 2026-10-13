@@ -1,262 +1,599 @@
-schema_version: 2
-updated_at: "2026-08-03"
+schema_version: 9
+updated_at: "2026-10-08"
+
 execution_policy:
-  task_mode: serial
-  max_active_tasks: 1
-  max_active_writers: 1
-  writer_reviewer_separation: true
-  prefer_cross_model_review: true
+  task_mode: task_worktree_path_scoped_parallel_writers
+  parallel_policy_source: user_explicit_2026_10_08
+  max_active_source_writers: 3
+  max_parallel_read_only_support: 1
+  max_threads: 5
+  default_subagent_policy: on_demand_only
+  writer_reviewer_separation: owner_self_check_no_independent_reviewer
+  prefer_cross_model_review: disabled_by_user
+  independent_reviewer_enabled: false
+  reviewer_policy_source: user_explicit_2026_09_12
+  # Historical reviewer routes below are evidence/compatibility only; do not schedule them.
   one_writer_per_worktree: true
   reviewer_read_only: true
+  support_agents_source_read_only: true
   control_plane_writer: main_orchestrator
   gradle_lock: /tmp/cyf-gradle.lock
   production_changes_require_explicit_task: true
+  automatic_promotion_after_acceptance_or_self_check: true
+  per_task_user_confirmation_required: false
+  active_progress_reporting: true
+  reporting_mode: "task_terminal_or_exception_or_user_action"
+  runtime_ledger: "docs/implementation/TASKS.yaml#runtime_ledger_json"
+  orchestration_entrypoint: "python3 ops/orchestration/cyf_orchestrator.py"
+  failure_policy:
+    attribution_before_retry: true
+    consecutive_failure_limit: 2
+    consecutive_scope: same_root_cause_and_unchanged_input
+    changed_candidate_or_user_supplied_resource_resets_attempt_scope: true
+    on_limit: blocked_root_cause_matrix
+  proactive_notification_events: [completed, abnormality, user_action_required]
+  risk_tier_policy:
+    L0:
+      scope: [read_only_query, status_check, documentation, candidate_generation, static_check]
+      review: none
+      execution: direct
+      synchronous_wait_threads: forbidden
+    L1:
+      scope: [reversible_config_write_without_runtime_side_effect, flow_yaml_update_without_start, draft_resource]
+      review: self_check
+      required_controls: [backup_previous_value, exact_candidate_hash, single_write, readback, no_blind_retry]
+      synchronous_wait_threads: forbidden
+    L2:
+      scope: [ordinary_source_change, targeted_test, cloud_build_without_deploy, noncritical_integration]
+      review: owner_self_check_then_component_verification
+      verification: smallest_relevant_selector_then_reuse_exact_tree_evidence
+    L3:
+      scope: [identity, acl, transaction, migration, production_data_change, exceptional_out_of_pipeline_restart, rollback]
+      review: owner_risk_self_check
+      final_gate: exact_authorization_and_automated_release_checks
+  flow_operation_classification:
+    update_pipeline_without_start: L1
+    start_build_without_deploy: L2
+    develop_push_verification: cloud_checks_without_deployment
+    versioned_release: authorized_pipeline_checks
+    exceptional_out_of_pipeline_production_change: L3
+  # CYF project scope only; no change to Codex/global/shared skills or live Flow configuration.
+  component_delivery_policy:
+    policy_source: user_explicit_2026_10_08
+    authority: docs/aliyun-flow-cicd-strategy.md
+    web:
+      execution: aliyun_flow
+      pipeline_id: 4403172
+      build_identity: real_flow_run
+      local_production_build: forbidden
+    api:
+      execution: local_fixed_clean_commit_worktree
+      gradle_entrypoint: ops/orchestration/cyf_orchestrator.py
+      build_identity: local_build_id_and_logs
+      default_backend_flow: disabled
+      production_directory_build: forbidden
+      local_install_adapter: pending_adaptation_and_acceptance
+    cloud_configuration_changed_by_policy_write: false
+  develop_verification_policy:
+    components: [api, web]
+    branch: develop
+    trigger: component_validation_without_deployment
+    deploy_enabled: false
+    per_run_reviewer_required: false
+    per_run_human_ticket_required: false
+    mandatory_ci_only_prerequisite: false
+    checks: [component_authoritative_tests, component_authoritative_build, same_batch_artifact_integrity]
+    high_risk_review_timing: owner_self_check_before_merge_no_independent_reviewer
+  versioned_release_policy:
+    policy_source: user_explicit_2026_10_08_preserving_no_auto_deploy_2026_10_06
+    components: [api, web]
+    trigger: explicit_version_release
+    binding: [version, commit, tree_sha, component_build_identity, artifact_digest]
+    checks: [component_authoritative_tests, component_authoritative_build, same_batch_artifact_integrity, deployment_mutex, health_and_business_check]
+    develop_push_deployment: false
+    automatic_latest_develop_schedule: false
+    per_run_reviewer_required: false
+    per_run_human_ticket_required: false
+    mandatory_ci_only_prerequisite: false
+  reviewer_wait_policy:
+    poll_only_when_l3_execution_is_ready_and_review_is_the_last_blocker: false
+    repeated_unchanged_waits: forbidden
+    l0_l1_must_not_wait_for_reviewer: true
+  cross_thread_conflict_policy:
+    action: alert_only
+    event: coordination_required
+    command: "python3 ops/orchestration/cyf_orchestrator.py conflict-alert"
+    critical_path_semantics: "admission control for new claims only; never preemption authority"
+    gradle_lock_semantics: "serialize admitted verifiers; never terminate the holder or waiters"
+    process_control_authority: "exact thread ownership plus explicit user/main-controller authorization; coordination threads remain alert-only"
+    forbidden_operations: [foreign_process_signal, foreign_gradle_daemon_operation, foreign_systemd_unit_operation, foreign_evidence_operation]
+    forbidden_blocker_categories: [critical_path_preemption, process_preemption, automatic_termination]
+  route_precedence:
+    - provider_health_fallback
+    - explicit_task_route
+    - p0_risk_route
+    - domain_route
+    - generic_route
+  source_write_rule: >-
+    当前最多 3 个源码 Writer 与 1 个只读辅助并行，线程容量 5；这是按需调度上限，不要求占满槽位。
+    不同任务可由不同 Writer 在独立 worktree 并行实施；每个任务仍只有一个源码 Owner，并在 claim 前冻结 owned paths。
+    owned paths 不重叠时不得因 critical path 或其他 Writer 而等待；路径重叠时只协调交接，不回退或抢占他人修改。
+    docs/implementation 仅由 main_orchestrator 修改；Gradle 通过 /tmp/cyf-gradle.lock 全局串行，隔离 MySQL/Rabbit 和重型磁盘资源按门禁协调。
+
+model_selection_policy:
+  policy_source: user_explicit_two_models_only_2026_10_08
+  status: configured_runtime_unverified
+  allowed_models: [gpt-6.1-sol, gpt-6-luna]
+  high_risk_model: gpt-6.1-sol
+  routine_and_support_model: gpt-6-luna
+  selection_basis: user_explicit_targets_and_task_risk_not_official_benchmark
+  reasoning_policy: preserve_role_high_or_medium_pending_runtime_validation
+  automatic_legacy_model_fallback: false
+  unavailable_model_action: report_exact_error_no_silent_substitution
+  escalation_rule: "Luna 任务涉及跨模块状态语义、启动恢复、身份/ACL、幂等、事务、并发或迁移时，协调 owned paths 与单 Owner 交接给 Sol；不新增 Reviewer。"
+  runtime_validation: not_dispatched
+  scope_note: "按用户明确指定的精确 ID 更新项目角色配置，不宣称已验证官方可用性、性能或当前会话热重载，不切换当前主会话或运行中 Agent。"
+  legacy_roles: "保留 Spark/Mini/DeepSeek 历史角色名以免破坏任务引用；模型绑定全部改为上述两种，旧健康证据不能作为新模型可用证据。"
+  invariants: "3 Writer/1 只读辅助/线程容量5；单 Owner、独立 worktree、路径隔离；Reviewer 和 DeepSeek 提供商仍禁用。"
+
+provider_health:
+  checked_at: "2026-08-23T16:20:00+08:00"
+  deepseek:
+    status: disabled_by_user
+    evidence: "2026-08-23 用户明确要求暂时所有 Agent 均不使用 DeepSeek 模型；此前亦出现 auth_unavailable。"
+    critical_path_policy: "禁止 DeepSeek 健康探针、claim 和自动恢复；所有新任务直接使用 GPT 路由。"
+    worker_fallbacks:
+      deepseek_pro_worker_backend: critical_worker
+      deepseek_pro_worker_frontend: balanced_worker
+      deepseek_flash_worker: balanced_worker
+      test_runner: gpt_test_runner
+      deepseek_pro_reviewer: sol_reviewer
+      adversarial_reviewer: sol_reviewer
+    restore_policy: "仅用户明确重新启用后才可恢复 DeepSeek；恢复前需重新冻结路由并做一次非关键路径健康探针。"
+
+# Historical M2 phase examples only; execution_policy above governs current capacity and Owner self-check.
+# These examples do not re-enable independent Reviewers or limit current work to the old phase slots.
+pipeline:
+  backend_contract_phase:
+    applies_until: C05F
+    slots:
+      A:
+        role: active_source_writer
+        capacity: 1
+        purpose: "当前任务独占其 worktree/owned paths 的源码 Writer"
+      B:
+        role: explorer
+        capacity: 1
+        purpose: "准备下一微阶段调用链、路径冲突和契约事实"
+      C:
+        role: fast_query
+        capacity: 1
+        purpose: "准备 acceptance -> path -> test -> evidence 矩阵"
+      D:
+        role: gpt_test_runner_or_reviewer
+        capacity: 1
+        purpose: "最终候选验证或独立 Review；不与重型验证重叠"
+  frontend_overlap_phase:
+    starts_after: C05F
+    slots:
+      A:
+        role: web_source_writer
+        capacity: 1
+        purpose: "C06-C07F 任务级源码 Writer；可与不重叠任务并行"
+      B:
+        role: c08a_read_only_gate
+        capacity: 1
+        purpose: "API 累计 evidence/回归门禁；发现源码问题时在独立 worktree claim，路径冲突才协调"
+      C:
+        role: explorer_or_fast_query
+        capacity: 1
+        purpose: "下一微阶段只读准备和 evidence indexing"
+      D:
+        role: gpt_test_runner_or_reviewer
+        capacity: 1
+        purpose: "串行测试或已提交阶段的独立 Review"
+  promotion_rule: >-
+    每个原始任务 ID 仍保留独立 commit、acceptance 和状态。L0/L1 在最小自检通过后直接推进；L2 在任务包或最终候选只做一次独立 Review；
+    L3 才要求阻塞式独立发布门禁。无需逐项等待用户确认；完成、异常或需要用户处理时主动汇报。仅相同根因且输入未变化的连续第二次失败停轮并输出根因矩阵。
 
 roles:
   main_orchestrator:
-    model: gpt-5.6-sol
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
     writes_control_plane: true
     task_types: [task_ledger, control_plane, claim, integration_coordination, progress_reporting]
   architect:
-    model: gpt-5.6-sol
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
     task_types: [architecture, state_machine, migration_design, risk_analysis]
   critical_worker:
-    model: gpt-5.6-sol
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: true
-    task_types: [identity, acl, concurrency, transaction, migration, p0]
+    task_types: [identity, acl, concurrency, transaction, migration, snapshot_consistency, p0]
+  spark_worker:
+    model: gpt-6-luna
+    reasoning_effort: medium
+    writes_code: true
+    availability: compatibility_alias_gpt_only
+    health_evidence: "新模型未探测；原 2026-08-17 SPARK_OK 仅为历史旧模型证据，不适用于当前绑定。"
+    task_types: [contract_frozen_backend, contract_frozen_frontend, replay_edge, sse, feature_flag, reducer_implementation, integration, focused_tests]
+    escalation_required_for: [new_identity_semantics, new_acl_semantics, transaction_redesign, migration, destructive_data_change]
   balanced_worker:
-    model: gpt-5.6-terra
+    model: gpt-6-luna
     reasoning_effort: medium
     writes_code: true
-    task_types: [backend, frontend, api, mapper, integration]
+    task_types: [contract_frozen_backend, contract_frozen_frontend, reducer_implementation, api, mapper, integration, feature_flag, presentation_ui]
   routine_worker:
-    model: gpt-5.6-luna
+    model: gpt-6-luna
     reasoning_effort: medium
     writes_code: true
-    task_types: [dto, fixture, repetitive_test, documentation, bounded_fix]
+    task_types: [dto, fixture, repetitive_test, accessibility, documentation, bounded_fix]
   deepseek_pro_worker:
-    model: deepseek-v4-pro
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: true
-    task_types: [m2_core, transaction, task_event, snapshot, sse, recovery_reducer]
+    availability: compatibility_alias_gpt_only
+    task_types: [after_commit, replay, sse, recovery_reducer, bounded_backend_core]
   deepseek_flash_worker:
-    model: deepseek-v4-flash
+    model: gpt-6-luna
     reasoning_effort: medium
     writes_code: true
-    task_types: [dto, fixture, repetitive_test, probe, presentation_ui, accessibility]
-    escalation_required_for: [architecture, acl, concurrency, transaction, migration, versioning, replay_order]
+    availability: compatibility_alias_gpt_only
+    task_types: [presentation_ui]
+    escalation_required_for: [architecture, acl, concurrency, transaction, migration, versioning, replay_order, state_machine]
   sol_reviewer:
-    model: gpt-5.6-sol
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
-    task_types: [deepseek_code_review, architecture_review, transaction_review, frontend_state_review]
+    task_types: [independent_review, deepseek_code_review, fallback_review, transaction_review, frontend_state_review]
   deepseek_pro_reviewer:
-    model: deepseek-v4-pro
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
+    availability: compatibility_alias_gpt_only
     task_types: [flash_code_review, ui_contract_review, test_review, sol_integration_review, merge_review, control_plane_review]
   adversarial_reviewer:
-    model: deepseek-v4-pro
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
-    task_types: [security_review, sql_review, concurrency_review, migration_review]
+    availability: gpt_only
+    task_types: [security_review, sql_review, concurrency_review, migration_review, transaction_review]
   explorer:
-    model: gpt-5.6-terra
+    model: gpt-6-luna
     reasoning_effort: medium
     writes_code: false
-    task_types: [code_map, dependency_map, conflict_scan]
+    task_types: [code_map, dependency_map, call_chain, conflict_scan]
   fast_query:
-    model: gpt-5.4-mini
+    model: gpt-6-luna
     reasoning_effort: medium
     writes_code: false
-    task_types: [narrow_lookup, bounded_summary, fact_extraction]
+    task_types: [narrow_lookup, acceptance_matrix, evidence_index, fact_extraction]
   test_runner:
-    model: deepseek-v4-flash
+    model: gpt-6-luna
     reasoning_effort: medium
     writes_code: false
-    task_types: [build, test, probe, smoke]
+    availability: compatibility_alias_gpt_only
+    task_types: [build, test, probe, smoke, isolated_mysql, resource_probe]
+  gpt_test_runner:
+    model: gpt-6-luna
+    reasoning_effort: medium
+    writes_code: false
+    task_types: [build, test, probe, smoke, isolated_mysql, resource_probe, evidence_cache]
   vision_reviewer:
-    model: gpt-5.6-sol
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
     multimodal: true
-    task_types: [visual_baseline_review, prop_anchor_review, fragment_boundary_review, mask_semantics_review, screenshot_regression_review]
+    task_types: [visual_baseline_review, screenshot_regression_review]
   release_guard:
-    model: gpt-5.6-sol
+    model: gpt-6.1-sol
     reasoning_effort: high
     writes_code: false
-    task_types: [integration_gate, migration_gate, deployment_gate]
+    invoke_for_risk_tier: L3
+    skip_for: [L0, L1, ordinary_L2, ordinary_versioned_release]
+    task_types: [high_risk_integration_gate, migration_gate, production_deployment_gate]
+
+m2_execution_bundles:
+  BE1:
+    title: "本地实时核心"
+    repo: api
+    tasks: [C02, C03]
+    execution: sequential_micro_gates
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+    branch: feat/c02-c03-task-event-core
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-c02c03-api
+    rule: "C02 独立 commit + Review ACCEPT 后才实施 C03；共享 Writer/worktree，避免重建上下文和重复集成。"
+  BE2:
+    title: "一致快照"
+    repo: api
+    tasks: [C04]
+    execution: isolated_p0_gate
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+    branch: feat/c04-task-workspace
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-c04-api
+  BE3:
+    title: "SSE 暴露与后端安全开关"
+    repo: api
+    tasks: [C05, C05F]
+    execution: sequential_micro_gates
+    writer: spark_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+    branch: feat/c05-c05f-task-event-edge
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-c05-api
+    rule: "C05 endpoint/ACL 独立 ACCEPT 后才追加 C05F；默认关闭策略不与 endpoint 正确性混审。"
+  AG:
+    title: "API 累计只读门禁"
+    repo: api
+    tasks: [C08A]
+    execution: read_only_overlap_after_BE3
+    executor: gpt_test_runner
+    conflict_writer: critical_worker
+    reviewer: sol_reviewer
+    support: [fast_query]
+    branch: feat/m2-api-base-20260803
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-api-base
+    parallel_with: [FE1, FE2]
+    rule: "默认不修改源码；若发现需修复，在独立 worktree claim 任务级 Writer，只有路径冲突时协调，并使相关旧证据失效。"
+  FE1:
+    title: "前端事件流与状态接入"
+    repo: web
+    tasks: [C06, C07A]
+    execution: sequential_micro_gates
+    writer: spark_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+    branch: feat/c06-c07a-task-workspace-state
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-c06c07a-web
+    rule: "C06 composable/reducer ACCEPT 后才接入 C07A；禁止第二套状态源。"
+  FE2:
+    title: "TaskWorkspace 展示、质量、集成与降级"
+    repo: web
+    tasks: [C07B, C07C, C07, C07F]
+    execution: sequential_micro_gates
+    writer: spark_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+    branch: feat/c07bcf-task-workspace-surface
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-c07bcf-web
+    rule: "同一 Terra Writer 严格按 C07B -> C07C -> C07 -> C07F 执行；不改变 FE1 冻结的 reducer/version/ACL 语义。"
+  WG:
+    title: "Web 累计只读门禁"
+    repo: web
+    tasks: [C08W]
+    execution: final_web_gate
+    executor: gpt_test_runner
+    conflict_writer: balanced_worker
+    reviewer: sol_reviewer
+    branch: feat/m2-web-base-20260803
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-web-base
+    rule: "只在 C07F 后的最终 tree 运行 test/build；任何修复均产生新 tree 并重置证据。"
+  RG:
+    title: "最终部署候选门禁"
+    repo: control_plane
+    tasks: [C08]
+    execution: final_gate
+    writer: main_orchestrator
+    reviewer: sol_reviewer
+    final_gate: release_guard
+    dependencies: [AG, WG]
 
 m2_routing:
-  M2-00:
+  M2-00: {writer: main_orchestrator, reviewer: sol_reviewer, status: accepted}
+  C01: {historical_writer: deepseek_pro_worker, reviewer: sol_reviewer, status: integrated}
+  C01B: {historical_writer: critical_worker, reviewer: sol_reviewer, status: integrated}
+  C01H: {historical_writer: critical_worker, reviewer: sol_reviewer, status: integrated}
+  C02: {bundle: BE1, writer: critical_worker, reviewer: sol_reviewer}
+  C03: {bundle: BE1, writer: critical_worker, reviewer: sol_reviewer}
+  C04: {bundle: BE2, writer: critical_worker, reviewer: sol_reviewer}
+  C05: {bundle: BE3, writer: spark_worker, reviewer: sol_reviewer}
+  C05F: {bundle: BE3, writer: spark_worker, reviewer: sol_reviewer}
+  C06: {bundle: FE1, writer: spark_worker, reviewer: sol_reviewer}
+  C07A: {bundle: FE1, writer: spark_worker, reviewer: sol_reviewer}
+  C07B: {bundle: FE2, writer: spark_worker, reviewer: sol_reviewer}
+  C07C: {bundle: FE2, writer: spark_worker, reviewer: sol_reviewer}
+  C07: {bundle: FE2, writer: spark_worker, reviewer: sol_reviewer}
+  C07F: {bundle: FE2, writer: spark_worker, reviewer: sol_reviewer}
+  C08A: {bundle: AG, executor: gpt_test_runner, conflict_writer: critical_worker, reviewer: sol_reviewer}
+  C08W: {bundle: WG, executor: gpt_test_runner, conflict_writer: balanced_worker, reviewer: sol_reviewer}
+  C08: {bundle: RG, writer: main_orchestrator, reviewer: sol_reviewer, final_gate: release_guard}
+
+
+m2_develop_convergence:
+  C09A:
+    repo: api
+    execution: successor_merge_and_oauth_identity_closure
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+    branch: codex/m2-api-successor-integration-20260823
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-api-successor-integration-20260823
+  C09W:
+    repo: web
+    execution: successor_merge_e13_and_oauth_closure
+    writer: critical_worker
+    reviewer: sol_reviewer
+    branch: codex/m2-web-successor-integration-20260823
+    worktree: /home/isp/wsps/cyf/.worktrees/m2-web-successor-integration-20260823
+  C09:
+    repo: control_plane
+    execution: root_pin_preparation_gate
     writer: main_orchestrator
-    support: explorer
-    reviewer: deepseek_pro_reviewer
-  C01:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C01B:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C01H:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C02:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C03:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C04:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C05:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C05F:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C06:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C07A:
-    writer: deepseek_pro_worker
-    support: test_runner
-    reviewer: sol_reviewer
-  C07B:
-    writer: deepseek_flash_worker
-    support: null
-    reviewer: deepseek_pro_reviewer
-  C07C:
-    writer: deepseek_flash_worker
-    support: null
-    reviewer: deepseek_pro_reviewer
-  C07:
+    reviewer: release_guard
+    dependencies: [C09A, C09W]
+
+m3_execution_bundles:
+  K0:
+    title: "M3 离线 Rabbit 启动门禁"
+    tasks: [M3-00]
     writer: critical_worker
-    support: test_runner
-    reviewer: deepseek_pro_reviewer
-    final_gate: release_guard
-  C07F:
-    writer: deepseek_pro_worker
-    support: test_runner
     reviewer: sol_reviewer
-  C08A:
+    support: [explorer, fast_query, gpt_test_runner]
+  K1:
+    title: "Outbox/Inbox/Delivery schema"
+    tasks: [D01]
     writer: critical_worker
-    support: test_runner
-    reviewer: deepseek_pro_reviewer
-  C08W:
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+  K2:
+    title: "事务 Outbox 与 Inbox 幂等"
+    tasks: [D02, D07]
+    execution: sequential_micro_gates
     writer: critical_worker
-    support: test_runner
-    reviewer: deepseek_pro_reviewer
-  C08:
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+  K3:
+    title: "Rabbit topology 与 Relay"
+    tasks: [D04, D03]
+    execution: sequential_micro_gates
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+  K4:
+    title: "Rabbit consumer 与 exact WS dispatch"
+    tasks: [D05]
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+  K5:
+    title: "WAITING_AGENT、重连与 mailbox 替换"
+    tasks: [D06, D08]
+    execution: sequential_micro_gates
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+  K6:
+    title: "指标、DLQ 查询与受控重放"
+    tasks: [D09]
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [explorer, fast_query, gpt_test_runner]
+  M3-RG:
+    title: "M3 最终源码与生产激活边界门禁"
+    tasks: [M3-RG]
     writer: main_orchestrator
-    support: test_runner
-    reviewer: deepseek_pro_reviewer
-    final_gate: release_guard
+    reviewer: release_guard
+    dependencies: [K1, K2, K3, K4, K5, K6]
+
+m3_routing:
+  M3-00: {bundle: K0, writer: critical_worker, reviewer: sol_reviewer}
+  D01: {bundle: K1, writer: critical_worker, reviewer: sol_reviewer}
+  D02: {bundle: K2, writer: critical_worker, reviewer: sol_reviewer}
+  D07: {bundle: K2, writer: critical_worker, reviewer: sol_reviewer}
+  D04: {bundle: K3, writer: critical_worker, reviewer: sol_reviewer}
+  D03: {bundle: K3, writer: critical_worker, reviewer: sol_reviewer}
+  D05: {bundle: K4, writer: critical_worker, reviewer: sol_reviewer}
+  D06: {bundle: K5, writer: critical_worker, reviewer: sol_reviewer}
+  D08: {bundle: K5, writer: critical_worker, reviewer: sol_reviewer}
+  D09: {bundle: K6, writer: critical_worker, reviewer: sol_reviewer}
+  M3-RG: {bundle: M3-RG, writer: main_orchestrator, reviewer: release_guard}
 
 routing:
-  - match: [M2_core, task_event, snapshot, sse, recovery_reducer]
-    writer: deepseek_pro_worker
-    reviewer: sol_reviewer
-  - match: [M2_presentation_ui, M2_fixture, M2_probe, M2_repetitive_test]
-    writer: deepseek_flash_worker
-    reviewer: deepseek_pro_reviewer
-  - match: [P0, identity, acl, transaction, concurrency, migration]
+  - match: [P0, identity, acl, transaction, concurrency, migration, snapshot_consistency]
     writer: critical_worker
-    reviewer: adversarial_reviewer
-  - match: [backend, frontend, api, mapper]
+    reviewer: sol_reviewer
+  - match: [after_commit, replay, sse, recovery_reducer]
+    writer: critical_worker
+    reviewer: sol_reviewer
+  - match: [contract_frozen_backend, contract_frozen_frontend, api, mapper, feature_flag, integration, presentation_ui]
     writer: balanced_worker
-    reviewer: adversarial_reviewer
-  - match: [dto, fixture, documentation, repetitive_test]
+    reviewer: sol_reviewer
+  - match: [dto, fixture, accessibility, documentation, repetitive_test]
     writer: routine_worker
-    reviewer: architect
+    reviewer: sol_reviewer
   - match: [repository_exploration, dependency_analysis, conflict_analysis]
     writer: explorer
     reviewer: null
-  - match: [narrow_lookup, bounded_summary, fact_extraction]
+  - match: [narrow_lookup, acceptance_matrix, evidence_index, fact_extraction]
     writer: fast_query
     reviewer: null
-  - match: [integration, production_release]
-    writer: critical_worker
+  - match: [verification]
+    runner: gpt_test_runner
+  - match: [exceptional_production_release]
+    writer: main_orchestrator
     reviewer: release_guard
 
+coordination_guards:
+  ledger_task_fields: [owner, exact_sha_tree, current_gate, blocker, next_action]
+  duplicate_active_agent_forbidden: true
+  critical_path_order_enforced: true
+  support_agents_may_run_gradle: false
+  reviewers_may_write_or_repair: false
+  gradle_entrypoint_required: true
+  failure_attribution_entrypoint_required: true
+
+verification_policy:
+  writer_scope: "只运行 touched-suite 或 targeted tests；不得把模块全量回归作为每轮默认动作。"
+  candidate_scope: "每个最终候选 tree 由可用 test runner 独立运行一次模块全量测试。"
+  mysql_scope: "每个最终 schema/migration/transaction tree 只运行一次隔离 MySQL；失败修复后证据键变化才重跑。"
+  reviewer_scope: "Reviewer 默认复用可验证证据，不重复全量 Gradle；仅发现证据失效、覆盖缺口或 tree 变化时补跑。"
+  cumulative_scope: "API/Web 全量累计回归集中在 C08A/C08W。"
+  heavy_commands_global_parallelism: 1
+  gradle_parallelism: 1
+  gradle_lock: /tmp/cyf-gradle.lock
+  evidence_key: "git_tree_sha + test_selector + db_fixture_digest + rabbit_topology_manifest_digest"
+  evidence_reuse: true
+  byte_exact_merge:
+    required_records: [merge_parent_sha, source_sha, source_tree_sha, merge_tree_sha]
+    full_code_review_required: false
+    full_code_review_trigger: [merge_conflict, semantic_edit, tree_mismatch]
+
+resource_policy:
+  fixed_memory_disk_admission_gate: disabled_by_user_2026_08_28
+  resource_snapshot_required: true
+  applies_before: [gradle_full_suite, npm_full_build, isolated_mysql, isolated_rabbitmq, integration_worktree]
+  below_former_threshold_action: "记录观测并继续；不得自动删除未知文件、stash、活跃 worktree、证据或生产数据。"
+  serialized_resources: [gradle, isolated_mysql, isolated_rabbitmq, heavy_disk]
+  attributable_runtime_failures: [oom, enospc, inode_exhaustion, swap_thrashing]
+
+quality_kpis:
+  p0_first_review_max_blocking_findings: 0
+  p0_max_review_rounds: 2
+  p1_ui_max_review_rounds: 1
+  module_full_test_runs_per_final_tree: 1
+  isolated_mysql_runs_per_final_tree: 1
+  duplicate_review_for_byte_exact_merge: 0
+  disk_blocks_after_claim: 0
+  deepseek_auth_wait_retries_per_bundle: 0
+  expected_cycle_reduction: "15%-25%"
+  expected_saved_execution_days: "3-4"
+
 visual_policy:
-  review_model: gpt-5.6-sol
+  review_model: gpt-6.1-sol
   review_role: vision_reviewer
-  multimodal_review: required
-  required_gates: [V0_baseline, V1_props, V2_fragments, V3_masks, V4_full_map, V5_release_sample]
-  evidence_operator: test_runner
-  implementation_owner: deepseek_pro_worker
+  multimodal_review: "仅当 C07B/C07C 引入新视觉资产或需要截图回归时 required"
   image_generation_model: gpt-image-2
-  image_generation_default_budget: 0
-  image_generation_trigger: explicit_user_approval_for_new_or_repainted_art_only
-  forbidden_image_generation_tasks: [atlas_crop, pixel_ownership, rgba_reconstruction, mask_validation, fragment_validation, ordinary_occlusion_fix]
-  default_for_architecture_diagrams: mermaid
-  critical_path: true
-  final_asset_path: web/src/assets/juyiting/
-  build_verification_required: true
+  image_generation_on_critical_path: false
 
-handoff_required:
-  - task_id
-  - writer_role
-  - writer_model
-  - reviewer_role
-  - reviewer_model
-  - branch
-  - worktree
-  - base_commit
-  - commit
-  - changed_files
-  - test_commands
-  - test_results
-  - residual_risks
-  - next_dependency_unlocked
+dual_orientation_execution_bundles:
+  O0:
+    title: "聚义厅横竖屏 Web 基线收敛"
+    tasks: [O00]
+    repo: web
+    execution: protected_parent_manifest_convergence
+    writer: critical_worker
+    reviewer: sol_reviewer
+    support: [gpt_test_runner]
+  O1:
+    title: "聚义厅横竖屏双形态体验"
+    tasks: [O01, O02, O03, O04]
+    repo: web
+    execution: sequential_micro_gates_same_writer
+    writer: balanced_worker
+    reviewer: sol_reviewer
+    support: [gpt_test_runner]
+    dependencies: [O0]
 
-juyiting_e17_e18_routing:
-  updated_at: "2026-08-14"
-  policy: quality_first_gpt_budget_restored
-  E17_evidence:
-    owner: test_runner
-    model: deepseek-v4-flash
-    reasoning_effort: medium
-    writes_code: false
-  E17_adversarial_review:
-    owner: adversarial_reviewer
-    model: deepseek-v4-pro
-    reasoning_effort: high
-    writes_code: false
-  E17_E18_control_plane:
-    owner: main_orchestrator
-    model: gpt-5.6-sol
-    reasoning_effort: high
-    writes_control_plane: true
-  E18_visual_review:
-    owner: vision_reviewer
-    model: gpt-5.6-sol
-    reasoning_effort: high
-    multimodal: true
-    verdict: APPROVE
-  E18_release_guard:
-    owner: release_guard
-    model: gpt-5.6-sol
-    reasoning_effort: high
-    writes_code: false
-  E18_deploy_smoke:
-    coordinator: main_orchestrator
-    evidence_operator: test_runner
-    evidence_operator_model: deepseek-v4-flash
-    deploy_only_after: release_guard_GO
+dual_orientation_routing:
+  O00: {bundle: O0, writer: critical_worker, reviewer: sol_reviewer}
+  O01: {bundle: O1, writer: balanced_worker, reviewer: sol_reviewer}
+  O02: {bundle: O1, writer: balanced_worker, reviewer: sol_reviewer}
+  O03: {bundle: O1, writer: balanced_worker, reviewer: sol_reviewer}
+  O04: {bundle: O1, writer: balanced_worker, reviewer: sol_reviewer, verifier: gpt_test_runner}

@@ -1,0 +1,54 @@
+diff --git a/conf/codex-ws-agent/skill-install-manager.mjs b/conf/codex-ws-agent/skill-install-manager.mjs
+index 7550d35..259c84a 100644
+--- a/conf/codex-ws-agent/skill-install-manager.mjs
++++ b/conf/codex-ws-agent/skill-install-manager.mjs
+@@ -841,6 +841,12 @@ export const extractSkillArchive = async (buffer, stagingPath, command, limits)
+   if (!identity || identity.name !== command.skillKey || identity.version !== command.skillVersion) {
+     throw new SkillInstallError(SKILL_INSTALL_FAILURE.IDENTITY_MISMATCH, 'SKILL.md name/version does not match the command identity')
+   }
++  fsyncDirectory(stagingPath)
++}
++
++// Shared extraction enforces ZIP safety and SKILL.md identity only. The platform
++// archive package has its own sealed manifest contract, not this marketplace schema.
++const validateExtractedExecutableManifest = (stagingPath, command) => {
+   let manifest = null
+   const manifestPath = resolve(stagingPath, 'manifest.json')
+   if (existsSync(manifestPath)) {
+@@ -851,7 +857,6 @@ export const extractSkillArchive = async (buffer, stagingPath, command, limits)
+       throw new SkillInstallError(SKILL_INSTALL_FAILURE.ARCHIVE_INVALID, 'executable manifest or local entrypoint is invalid')
+     }
+   }
+-  fsyncDirectory(stagingPath)
+   return manifest
+ }
+ 
+@@ -1783,11 +1788,12 @@ export class SkillInstallManager {
+         chmodSync(stagingPath, 0o700)
+         fsyncDirectory(this.stagingDir)
+         try {
+-          const manifest = await extractSkillArchive(packageBytes, stagingPath, command, {
++          await extractSkillArchive(packageBytes, stagingPath, command, {
+             maxEntries: this.maxEntries,
+             maxEntryBytes: this.maxEntryBytes,
+             maxExtractedBytes: this.maxExtractedBytes
+           })
++          const manifest = validateExtractedExecutableManifest(stagingPath, command)
+           const installedAt = String(this.now())
+           const resultEnvelope = buildSkillInstallResultEnvelope({
+             profile: this.profile,
+diff --git a/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs b/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs
+index 5378f73..237a652 100644
+--- a/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs
++++ b/conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs
+@@ -90,6 +90,10 @@ export async function createExecutionAdapterFactory({ config, instanceId, apiOri
+             const proofMismatch = layer => {
+               // Canonical skill command installationId is the PRODUCT binding.
+               // It never substitutes for the authenticated Runtime installation.
++              // Platform installation identity belongs exclusively to the business payload,
++              // even when an injected top-level value equals the current Runtime proof.
++              if (layer.messageType === 'command.dispatch' && layer.commandType === 'PLATFORM_SKILL_INSTALL'
++                  && Object.hasOwn(layer, 'installationId')) return true;
+               const productInstall = layer.messageType === 'command.dispatch' && layer.commandType === 'SKILL_INSTALL';
+               if (layer.messageType === 'command.dispatch' && (layer.tenantId !== session.tenantId || layer.clientId !== session.clientId
+                   || layer.targetAgentId !== session.canonicalAgentId || productInstall && layer.installationId === session.installationId)) return true;

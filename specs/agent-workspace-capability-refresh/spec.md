@@ -1,5 +1,13 @@
 # Agent workspace capability refresh
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+历史 acceptance 与 release 均有依据，统一原顶层 accepted 与 release.released 的陈旧状态，归档 2026-08-23 交付。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-07。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+<!-- END SDD delivery reconciliation -->
+
 ## Problem
 
 客户端只根据基础能力、Profile 配置和已安装 Skill 上报 abilities，宋江无法区分 Agent 当前工作目录中已有的项目类型、技术栈和模块范围。

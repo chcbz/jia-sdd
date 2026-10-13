@@ -1,0 +1,60 @@
+{
+  "task": "AAM-MERGE-DEVELOP-20261013",
+  "component": "Client",
+  "repository": "C:\\Users\\Think\\.codex\\worktrees\\archive-agent-maintenance\\isp-install",
+  "frozen_at": "2026-10-13T18:40:58+08:00",
+  "head": "38edf9c9a299d0ee3cec92421867cfaaf39c491d",
+  "merge_head": "6325af1d858bf6e35b3e7046bf967f2c85ba7d5b",
+  "exact_staged_tree": "a36a452dc5666f3661d304cc3c3c229cac3efd5c",
+  "staged_file_count": 10,
+  "unmerged_files": [],
+  "unstaged_files": [],
+  "task_scoped_node_npm_process_count": 0,
+  "files_changed": [
+    "conf/codex-ws-agent/package-lock.json",
+    "conf/codex-ws-agent/package.json",
+    "conf/codex-ws-agent/schemas/skill-manifest-v1.schema.json",
+    "conf/codex-ws-agent/skill-install-manager.mjs",
+    "conf/codex-ws-agent/skill-manifest.mjs",
+    "conf/codex-ws-agent/test/fixtures/skill-manifest-contract-v1.json",
+    "conf/codex-ws-agent/test/skill-install-manager.test.mjs",
+    "conf/codex-ws-agent/test/skill-manifest.test.mjs",
+    "conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs",
+    "conf/cyf-agent-runtime-v1/test/runtime-host.test.mjs"
+  ],
+  "conflict_resolution": [
+    "skill-install-manager: retained the hardened archive-safe extractSkillArchive path while preserving incoming manifest/schema validation and manifest SHA binding to marker, result, and replay.",
+    "execution-adapter: retained production module-import-scanner closure scanning, added archive/platform/scanner plus skill-manifest/schema payload entries, and preserved Ajv package-subpath dependency verification without duplicate payload entries."
+  ],
+  "targeted_verification": {
+    "npm_ci_ignore_scripts_no_audit_no_fund": "PASS; added 8 packages",
+    "ajv_2020_subpath_import": "PASS",
+    "module_import_scanner": "7/7 PASS",
+    "skill_manifest_non_symlink_selectors": "56/56 PASS",
+    "unified_execution_payload_catalog": "1/1 PASS",
+    "platform_native_runtime": "22 PASS, 1 Linux-only SKIP",
+    "node_check": "PASS for changed/relevant mjs files",
+    "git_diff_check": "PASS",
+    "git_diff_cached_check": "PASS",
+    "interrupted_a39_tests": "EXCLUDED; three user-interrupted runs are not test results"
+  },
+  "windows_environment_blocks": [
+    "skill-manifest symlink selector: Windows EPERM creating symlink (56 pass, 1 environment-blocked).",
+    "skill installer archive/SE2 selectors: 23 selectors blocked before business logic by Windows directory fsync EPERM.",
+    "runtime proof/native-route Linux selectors: process.getuid is unavailable on Windows."
+  ],
+  "proof_mismatch_review": "PLATFORM_SKILL_INSTALL business installationId remains nested in payload and is not treated as the Runtime installation proof; a forged top-level installationId remains fail-closed. Linux regression selector is in runtime-host.test.mjs around line 759.",
+  "protected_artifact": {
+    "path": "conf/codex-ws-agent/test/fixtures/archive-maintainer-1.0.0-approved.zip",
+    "bytes": 40563,
+    "sha256": "8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081"
+  },
+  "remaining_issues": [
+    "Run Linux-only Runtime/session/native-route and safe archive installation selectors; no deployment was performed.",
+    "Real nginx/gateway allowlists for archive/platform native routes are not deployed or accepted; do not broaden arbitrary /internal routes.",
+    "Real Agent appointment, content maintenance/publish, and 84-case business acceptance remain open.",
+    "API formal typecheck/compile and old session/API-key test migration remain outside this Client freeze; historical five MySQL failures are not claimed fixed.",
+    "Web default test scope changed and must not be used to claim historical 39 failures fixed."
+  ],
+  "commit_or_push_performed": false
+}

@@ -1,0 +1,24 @@
+{
+  "reviewer": "independent Sol instance, read-only; not cross-model",
+  "baseline_commit": "5bec7d2f2dee597e8acb15f004c5a5abe6bd8004",
+  "baseline_tree": "a36a452dc5666f3661d304cc3c3c229cac3efd5c",
+  "decision": "REJECT",
+  "findings": [
+    {
+      "priority": "P1",
+      "file": "conf/codex-ws-agent/skill-install-manager.mjs",
+      "line": 844,
+      "finding": "Shared extractor applies marketplace executable schema to approved archive manifest; platform installation fails before activation. Preserve archive ZIP checks and strict marketplace schema, but separate manifest semantics."
+    },
+    {
+      "priority": "P2",
+      "file": "conf/cyf-agent-runtime-v1/lib/execution-adapter.mjs",
+      "line": 90,
+      "finding": "PLATFORM top-level installationId equal to Runtime installation passes adapter; business exact-key validator still denies it, so no actual ACL bypass proven. Reject all platform top-level installationId values; preserve nested payload identity."
+    }
+  ],
+  "coverage": "Two observed regressions only; no complete API/ACK/ACL/transaction review; reviewer did not run tests. Main Linux logs inspected read-only.",
+  "source_fix_commit": "35b4ab6159aa20728676237a0779232cd8d628c9",
+  "source_fix_tree": "3a3b76743d78f44ea4b3e4fd1c2ed903f20f7fd7",
+  "verification_after_fix": "pending"
+}

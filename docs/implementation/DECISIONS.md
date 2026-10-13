@@ -253,3 +253,186 @@ publish persisted event after commit
 - 大于 `2^53` 的 event version contract/reducer 测试。
 - 跨 tenant/client/task ACL、feature flag 和 SSE 资源清理测试。
 
+
+## ADR-007：M2 自适应模型路由与单 Writer 四槽流水线
+
+- 状态：superseded by ADR-012 (2026-08-25)
+- 日期：2026-08-15
+- 决策人：M2 主控 / GPT-5.6 Sol High
+- 关联任务：C01B～C08
+- 路由事实源：`docs/implementation/MODEL_ROUTING.yaml` schema v3
+
+### 背景
+
+原 M2 路由把 C01B/C01H 等 P0 事务/迁移任务默认交给 DeepSeek Pro Writer，同时通用策略又要求 P0 由 Sol Critical Writer，存在优先级冲突。C01 的多轮 Review、隔离 MySQL 和事务传播返工还表明：完全串行准备、重复全量测试和 byte-exact 集成重复 Review 是主要等待来源。
+
+### 决策
+
+1. 显式任务路由优先于通用领域路由；P0 identity/ACL/transaction/concurrency/migration/snapshot consistency 由 GPT-5.6 Sol High `critical_worker` 实施，DeepSeek V4 Pro 只读对抗 Review。
+2. DeepSeek V4 Pro Writer 聚焦 after-commit、replay、SSE、recovery reducer；GPT-5.6 Terra 负责冻结契约后的普通接入、feature flag 和集成；Flash 只写纯展示 UI，Luna 只做机械质量工作。
+3. 全局保持一个源码 Writer，同时使用三个只读槽位：Terra Explorer 准备调用链，GPT-5.4 Mini 生成验收/证据矩阵，DeepSeek Flash 准备测试、fixture、隔离数据库和资源探针。
+4. Writer 开发阶段只跑 targeted/touched suites。最终 candidate 由独立 Test Runner 运行一次模块全量；schema/migration/transaction 最终 tree 运行一次隔离 MySQL。
+5. 验证证据按 `git tree SHA + test selector + DB fixture digest` 建键；键未变化时 Reviewer 和集成门禁复用证据。
+6. 无冲突、无语义修改且 source/integration tree byte-exact 的 no-ff merge 只核对 parent/source/tree SHA，不重复完整代码 Review；冲突、语义修改、tree mismatch 或证据失效时必须复审。
+7. 5 GiB 是资源硬下限，6.5 GiB 是 Gradle 全量、npm build、隔离 MySQL 和 integration worktree 的软门禁。低于软门禁先由 DeepSeek Pro 只读盘点，任何破坏性清理仍需明确授权。
+8. 用户逐项确认规则不变：只读槽位可以提前准备，但下一任务不得提前 claim 或成为第二个源码 Writer。
+
+### 目标与约束
+
+- P0 首轮 Review 不出现 P0/P1 finding；P0 总评审轮次不超过 2。
+- P1/UI 评审轮次不超过 1。
+- 每个最终 tree 模块全量测试不超过 1 次；必要的隔离 MySQL 不超过 1 次。
+- byte-exact 集成重复完整代码 Review 次数为 0。
+- 预计剩余 M2 周期缩短 18%～28%，约节省 2～4 个执行日；该估算不覆盖外部环境和生产审批等待。
+
+### 被否决方案
+
+- 多个 Writer 并行修改强依赖源码：会造成重复实现、契约漂移和 worktree 冲突。
+- 继续把所有 M2 核心任务交给同一模型：模型能力与任务风险不匹配，也削弱跨模型 Review 的独立性。
+- 每轮 Review 都重跑全量 Gradle/MySQL：成本高，且对相同 tree 不增加有效证据。
+- 为追求磁盘门禁自动删除未知文件、stash 或 worktree：不可审计且可能丢失用户数据。
+
+
+## ADR-007A：取消固定内存与磁盘 Admission Gate
+
+- 状态：accepted
+- 日期：2026-08-28
+- 决策人：用户 + 主控
+
+### 决策
+
+1. 固定 `MemAvailable`、5 GiB、6.5 GiB 等阈值不再拒绝 Gradle、npm build、隔离 MySQL/Rabbit、integration worktree、smoke 或恢复流程。
+2. 资源快照、旧阈值和低资源告警继续写入证据，但仅作 telemetry。
+3. Gradle、隔离 MySQL/Rabbit 和重型磁盘操作继续全局串行；不得以取消门禁为由并行抢锁。
+4. 真实 OOM、ENOSPC、inode exhausted 或 swap thrashing 必须先归因；连续两次失败仍进入 `blocked_root_cause`。
+5. 不得自动终止其他线程进程或删除 worktree、缓存、证据、生产数据来释放资源。
+
+
+## ADR-008：M2 引入 GPT-5.3 Codex Spark 快速 Writer
+
+- 状态：accepted
+- 日期：2026-08-17
+- 决策人：用户 + M2 主控
+- 关联任务：C05～C08
+- 路由事实源：`docs/implementation/MODEL_ROUTING.yaml` schema v5
+
+### 决策
+
+1. 本机 `gpt-5.3-codex-spark` 只读健康探针已返回 `SPARK_OK`。
+2. C05～C07F 已冻结且可分包的 Java/Vue 实施和 focused tests 使用 `spark_worker`，保持一个源码 Writer。
+3. 新身份/ACL 语义、事务重设计、迁移、破坏性数据变化和最终 GO/NO-GO 仍由 GPT-5.6 Sol High 负责。
+4. Spark Writer 不得自审；独立测试使用 GPT-5.4 Mini，独立 Review 和 release guard 使用 Sol High。
+5. 已产生候选的 C04 不在中途换模。若 Spark 探针失败或越过冻结合同，停止该包并升级到 Sol，不做保守回退式删减功能。
+
+### 影响
+
+- 减少合同冻结任务的等待时间，同时保留安全、事务和发布门禁质量。
+- `.codex/agents/spark-worker.toml` 与 `.codex/config.toml` 注册 durable Agent profile；当前执行可使用显式 `codex exec --model gpt-5.3-codex-spark`。
+
+## ADR-009：案卷阁阅读采用独立版本化事实域
+
+- 状态：accepted
+- 日期：2026-08-22
+- 决策人：用户 + 主控 Agent
+- 关联任务：H01～H06
+- 规格：`specs/archive-pavilion-reader-mvp/`
+
+### 决策
+
+1. 完整典籍阅读使用新的 `/archive/v1` 事实域；现有 `/chat/library/search` 继续表示项目案卷和用户记忆检索，二者不得混为同一事实源。
+2. 首版固定《水浒传》120 回不可变版本 `shuihuzhuan-zh-120-v1`；正文、章节顺序、段落边界或 hash 变化必须发布新 edition。
+3. 阅读进度、书签和私人手札按服务端认证的 `tenantId + clientId + ownerJiacn` 精确隔离，使用 CAS 和幂等写入，不回退 `Anonymous`。
+4. 吴用保持普通 Agent；首期选文提问只使用 built-in 降级角色“案卷书吏”，不读取地图选中态，不调用 `/agent/active`。
+5. 任职、悬赏和积分报酬不进入本 MVP，待阅读闭环验收后另立 SDD。
+6. H01 先冻结可执行内容/契约，H02/H03 处理 P0 schema/ACL/transaction，H04 完成阅读垂直切片，H05A/H05W 分别完成 Agent 问答后端与前端恢复，H06 执行真实环境与发布门禁。
+
+### 影响
+
+- Elasticsearch 故障不得阻塞典籍阅读和私人数据。
+- Review 不按按钮逐项进行，但 P0 migration/ACL/transaction/replay 必须即时独立 Review。
+- 当前 C08 发布 NO-GO 不阻止规格准备，但新功能不得绕过既有发布门禁上线。
+
+
+## ADR-010：M2 develop 合流保持协作域 exact tenant scope，M3 增加离线 Rabbit 启动门禁
+
+- 状态：accepted
+- 日期：2026-08-23
+- 决策人：M2/M3 主控 / GPT-5.6 Sol High
+- 关联任务：C09A、C09W、C09、M3-00、D01～D09
+
+### 决策
+
+1. `tenant_id='0'` 的通用 public/default fallback 不适用于协作任务事实域；task/member/work-item/request/artifact/event/task-thread 必须按 tenant/client/task byte-exact 查询、锁定、CAS 和授权。
+2. 历史 NULL/`'0'` 协作记录只能通过 B09/C01H 显式审计迁移处理，不得由普通请求隐式跨租户读取或写入。
+3. M2 冻结候选只在独立 integration worktree 与当前 develop 收敛；API 语义冲突修复和 Web baseline 债务关闭前，不更新 dirty develop/master 或 root gitlink。
+4. M3 在 D01 前新增 M3-00：flag 全关零副作用、非法组合 fail-fast、Rabbit Testcontainers 随机端口/账号/vhost、禁止连接本机 5672/远程 Rabbit/生产凭证。
+5. D04 前移至 D03 前，D07 前移至 D05 前；源码 accepted 与生产 not_deployed/not_migrated/not_enabled 分开记录。
+
+### 影响
+
+- C08 r6 GO 仍有效于冻结候选，但不能作为 develop 合流树的测试证据。
+- C09 会产生新的 API/Web tree；合流后必须按变更风险重跑 targeted gate。
+- M3 可离线实现，但生产 Rabbit、DDL、部署和开 flag 仍需独立变更授权。
+
+## ADR-011：D08 持久 Hall 命令扩展 canonical transport，不伪装 TASK_INVITE
+
+- 状态：accepted
+- 日期：2026-08-25
+- 决策人：M3 主控 / GPT-5.6 Sol High
+- 关联任务：D02、D05～D08
+- 预检：`docs/implementation/preflight/D08.md`
+
+### 背景
+
+`HallActionDispatcher` 当前会把 `ask_help`、`request_report`、work-item 和 context refresh 等动作在线直发，离线时写入 JVM `ConcurrentHashMap`。D08 要求数据库 delivery 成为唯一 mailbox 且 API 重启后仍可恢复；但 D02 的 canonical writer 只接受 `TASK_INVITE`，不能把其他 Hall 动作伪装成邀请，也不能继续保留第二套内存事实源。
+
+### 决策
+
+1. D08 正式扩展既有 `agent_command_delivery + agent_outbox_event + agent_consumer_inbox` transport，使其支持 Protocol v1 已有 allowlist 中的 Hall command types；不新建第二套 Hall mailbox 表或旁路 Rabbit transport。
+2. 既有 `TASK_INVITE` command ID、TTL、payload 字段顺序和 canonical bytes 必须 byte-exact 不变，D02 accepted evidence 不因 D08 被静默重写。
+3. Hall command 使用独立、受限的 canonical payload；禁止持久任意 `Map`。允许字段仅包括 action type、instruction、reason、conversation association、trigger event、autonomy/approval 和经明确 allowlist 的 bounded context scalar/list。认证头、凭证、完整聊天正文、任意嵌套对象和未知字段一律拒绝。
+4. Hall `commandId` 由 exact `tenant + client + task + targetAgent + intentId + commandType` 确定性生成；同一 intent 的同字节重试幂等，payload 或身份变化必须 conflict/fail closed。reissue 继续使用新 `messageId`、原 `commandId`。
+5. flag-on 路径在写 delivery 前执行 exact tenant/client/task/targetAgent ACL；未授权请求不得形成 delivery/outbox 审计噪声。在线与离线统一先写数据库，不再在线直发绕过事实源。
+6. `rabbit-dispatch=false` 或 M3 flags 全关时保持当前 M1 兼容路径且不得访问 M3 三表；进入 dispatch canary 后，获准 exact scope 只走 durable transport，禁止 legacy 与 Rabbit 双发。
+7. `/juyiting/agents/{agentId}/mailbox` 在 durable scope 内改为读取数据库 delivery 的有界投影，不返回 raw command payload、hash、内部 lease、replay 审批或跨 scope 存在性。旧 JVM list 不再承担事实职责。
+8. D08 必须等待 D06 accepted final HEAD/tree；不得从 D06 dirty worktree 开发。ACK/reissue/provenance 对新增 command type 的扩展必须与 D06 栅栏语义一致，并重新独立 Review。
+
+### 被否决方案
+
+- 把 `REQUEST_RESPOND`/`CONTEXT_REFRESH` 等伪装成 `TASK_INVITE`：改变 Agent 行为且破坏 canonical 幂等身份。
+- 只持久 task invite、其他 Hall action 继续内存排队：D08“唯一 mailbox”和重启恢复目标未完成。
+- 新建独立 Hall mailbox 表：形成第二事实源，绕过 D03/D05/D06/D07 的 confirm、Inbox、ACK 和 reissue 语义。
+- 在数据库事务内做 WebSocket/Rabbit I/O：扩大锁持有并破坏 after-commit/outbox 边界。
+- 持久任意 `context` Map：会引入不可控 schema、敏感信息和 canonical byte 漂移。
+
+### 验证方式
+
+- 旧 TASK_INVITE canonical golden bytes/hash 完全不变。
+- 每个新增 command type 的 canonical/golden、非法字段、超限、credential-like 内容和 duplicate-key 测试。
+- exact ACL 失败时 delivery/outbox/inbox 零写入。
+- online/offline 统一 durable 写入；重复 intent 无重复副作用；重连新 messageId/原 commandId。
+- API 重启前后从同一 MySQL delivery 恢复；旧 JVM mailbox 不参与恢复。
+- flags-off 零 M3 Bean/SQL/Rabbit 副作用；canary exact scope 无 legacy/Rabbit 双发。
+
+
+## ADR-012：取消全局唯一 Writer，改为任务/路径级并行
+
+- 状态：accepted
+- 日期：2026-08-25
+- 决策人：用户 + 主控 Agent
+- 关联范围：全部实施任务、聚义厅横竖屏 O00～O04
+- 路由事实源：`docs/implementation/MODEL_ROUTING.yaml` schema v8
+
+### 决策
+
+1. 取消“全局同时只能有一个源码 Writer”的限制。依赖已满足的独立任务可在独立 worktree 并行实施。
+2. 每个任务仍只有一个实现 Owner；claim 前必须冻结 owned paths。不同 Writer 的 owned paths 不得重叠，exact path 冲突只暂停冲突文件并协调交接，不抢占、不回退他人修改。
+3. 显式任务依赖不因并行策略取消；例如 O01 仍等待 O00 ACCEPT，D09 仍按其冻结 dependencies 判定。
+4. Reviewer、Verifier、Explorer 和准备 Agent 保持只读，不能借并行策略修复或预实现被审任务。
+5. `/tmp/cyf-gradle.lock` 继续串行所有 Gradle；隔离 MySQL/Rabbit、browser gate、production build 和重型磁盘任务按资源门禁串行或错峰。
+6. `docs/implementation/**` 仍由主控维护；生产部署、迁移、开 flag 和真实环境操作仍需独立授权。
+
+### 影响
+
+- D08 verification、D09 实施、H06 有界 runner 整改和 O00 Web 收敛可在路径无重叠时并行。
+- 进展与验收仍按 exact commit/tree、定向测试和独立 Reviewer verdict 统计；并行启动本身不计完成度。

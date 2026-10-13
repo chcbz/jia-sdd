@@ -1,6 +1,6 @@
 # 实施工作包与推进计划（D2）
 
-日期：2026-09-28。状态：**D2 历史 WBS；2026-10-07源码与文档已完成并推送，服务端全面验证 BLOCKED，未整体验收；当前证据见 delivery.md / integration.yaml**。本文件保留工作包和依赖设计，不作为实时执行台账。当前局部源码、测试证据与剩余缺口见 [implementation-baseline.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md)，机器状态见 [integration.yaml](/home/isp/wsps/cyf/specs/archive-agent-maintenance/integration.yaml)，原始证据见 [evidence/2026-09-30](/home/isp/wsps/cyf/specs/archive-agent-maintenance/evidence/2026-09-30)。84 项业务验收仍全部未执行。
+日期：2026-09-28。状态：**D2 历史 WBS；2026-10-13 最新合入与缺口见 merge-assessment-20261013.md；旧 SSH 阻塞已恢复，当前后端验证在 MySQL 初始化阶段失败，未整体验收；当前证据见 delivery.md / integration.yaml**。本文件保留工作包和依赖设计，不作为实时执行台账。当前局部源码、测试证据与剩余缺口见 [implementation-baseline.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/implementation-baseline.md)，机器状态见 [integration.yaml](/home/isp/wsps/cyf/specs/archive-agent-maintenance/integration.yaml)，原始证据见 [evidence/2026-09-30](/home/isp/wsps/cyf/specs/archive-agent-maintenance/evidence/2026-09-30)。84 项业务验收仍全部未执行。
 
 ## 1. 工作包
 

@@ -22,13 +22,10 @@ import urllib.request
 ROOT = Path('/var/lib/cyf-web-flow')
 SITE = Path('/home/isp/hosts/cyf/web/kit')
 SITE_URL = 'https://kit.chaoyoufan.cn/'
-MAX_PACKAGE_SIZE = 1024 ** 3
-MAX_ARCHIVE_ENTRIES = 20000
-MAX_ARCHIVE_SIZE = 1024 ** 3
-MAX_MANIFEST_SIZE = 4 * 1024 ** 2
 CHUNK_SIZE = 1024 * 1024
 ONLINE_VERIFY_POLL_DELAY_SECONDS = 2
 ONLINE_VERIFY_TIMEOUT_SECONDS = 30
+STABLE_VERSION = re.compile(r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$')
 
 
 def fail(message):
@@ -166,8 +163,6 @@ def scan_archive(fileobj, staging):
     seen = set()
     staged = {}
     manifest_bytes = None
-    entry_count = 0
-    total = 0
     try:
         with tarfile.open(fileobj=fileobj, mode='r|gz') as archive:
             for member in archive:
@@ -175,19 +170,11 @@ def scan_archive(fileobj, staging):
                 if name in seen:
                     fail('unsafe archive entry')
                 seen.add(name)
-                entry_count += 1
-                if entry_count > MAX_ARCHIVE_ENTRIES:
-                    fail('archive exceeds entry limit')
                 if member.size < 0:
                     fail('unsafe archive entry')
-                total += member.size
-                if total > MAX_ARCHIVE_SIZE:
-                    fail('archive exceeds size limit')
                 if member.isdir():
                     continue
                 if name == 'release.json':
-                    if member.size > MAX_MANIFEST_SIZE:
-                        fail('missing or oversized release manifest')
                     _, _, manifest_bytes = copy_archive_member(archive, member, keep=True)
                 elif name.startswith('dist/'):
                     relative = name[len('dist/'):]
@@ -195,12 +182,12 @@ def scan_archive(fileobj, staging):
                     size, digest, _ = copy_archive_member(archive, member, target=target)
                     staged[relative] = dict(path=target, size=size, sha256=digest)
                 else:
-                    # Reports and provenance stay private, but still consume and hash them boundedly.
+                    # Reports and provenance stay private, but still consume and hash them streamingly.
                     copy_archive_member(archive, member)
     except (tarfile.TarError, EOFError, OSError):
         fail('invalid or truncated package archive')
     if manifest_bytes is None:
-        fail('missing or oversized release manifest')
+        fail('missing release manifest')
     return manifest_bytes, staged
 
 
@@ -224,7 +211,7 @@ def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
             or manifest.get('branch') != 'develop' or manifest.get('commit') != commit):
         fail('manifest does not match this develop Flow run')
     files = manifest.get('files')
-    if not isinstance(files, list) or not files or len(files) > MAX_ARCHIVE_ENTRIES:
+    if not isinstance(files, list) or not files:
         fail('invalid manifest files')
     expected = {}
     ordered = []
@@ -254,7 +241,28 @@ def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
     record = dict(schema_version=1, pipeline_id=pipeline, run_id=run, branch='develop', commit=commit,
                   files=[dict(path=name, size=expected[name]['size'], sha256=expected[name]['sha256'])
                          for name in ordered])
+    package_version = stable_version(manifest.get('package_version'))
+    if package_version is not None:
+        record['package_version'] = '.'.join(str(part) for part in package_version)
     return record, expected
+
+
+
+def stable_version(value):
+    if not isinstance(value, str):
+        return None
+    matched = STABLE_VERSION.fullmatch(value)
+    return tuple(int(part) for part in matched.groups()) if matched else None
+
+
+def validate_versioned_release(version, artifact_sha256):
+    """Explicit release identity, not a time window or compatibility gate."""
+    if (not isinstance(version, str) or not version or version != version.strip()
+            or any(ord(char) < 32 or ord(char) == 127 for char in version)):
+        fail('explicit release version is required')
+    if not isinstance(artifact_sha256, str) or not re.fullmatch('[0-9a-f]{64}', artifact_sha256):
+        fail('expected release artifact SHA-256 is required')
+    return version
 
 
 def target_lstat(path):
@@ -431,7 +439,7 @@ def verified_package_handle(package, before):
     try:
         current = os.fstat(fd)
         if (not stat.S_ISREG(current.st_mode) or current.st_uid != 0 or current.st_nlink != 1
-                or not 0 < current.st_size <= MAX_PACKAGE_SIZE
+                or not 0 < current.st_size
                 or (current.st_dev, current.st_ino, current.st_size) !=
                 (before.st_dev, before.st_ino, before.st_size)):
             fail('unsafe package')
@@ -445,8 +453,7 @@ def installed_run(record):
     st = target_lstat(record)
     if st is None:
         return 0
-    if (not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1
-            or st.st_size > MAX_MANIFEST_SIZE):
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1:
         fail('unsafe deployment record')
     try:
         value = json.loads(record.read_text())
@@ -458,7 +465,8 @@ def installed_run(record):
         fail('unsafe deployment record')
 
 
-def deploy(pipeline, run, commit):
+def deploy(pipeline, run, commit, release_version, artifact_sha256):
+    validate_versioned_release(release_version, artifact_sha256)
     if (os.geteuid() != 0 or pipeline != '4403172' or not re.fullmatch('[1-9][0-9]*', run)
             or not re.fullmatch('[0-9a-f]{40,64}', commit)):
         fail('invalid execution identity')
@@ -468,15 +476,14 @@ def deploy(pipeline, run, commit):
     safe_dir(package.parent.parent)
     safe_dir(package.parent)
     st = package.lstat()
-    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or not 0 < st.st_size <= MAX_PACKAGE_SIZE:
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or not 0 < st.st_size:
         fail('unsafe package')
     lock = os.open(str(ROOT / 'deploy.lock'), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
     staging = None
     try:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            fail('another deployment is active')
+        # Preserve release mutual exclusion, but wait for the active Flow-owned
+        # installer instead of converting normal serialization into a fixed failure gate.
+        fcntl.flock(lock, fcntl.LOCK_EX)
         record_path = ROOT / 'record.json'
         if installed_run(record_path) > int(run):
             fail('refusing deployment older than the installed run')
@@ -485,8 +492,18 @@ def deploy(pipeline, run, commit):
         os.chmod(str(staging), 0o700)
         safe_dir(staging)
         with verified_package_handle(package, st) as package_handle:
+            digest = hashlib.sha256()
+            for block in iter(lambda: package_handle.read(CHUNK_SIZE), b''):
+                digest.update(block)
+            if digest.hexdigest() != artifact_sha256:
+                fail('release artifact digest mismatch')
+            package_handle.seek(0)
             manifest_bytes, staged = scan_archive(package_handle, staging)
         record, expected = validate_manifest(manifest_bytes, staged, pipeline, run, commit)
+        manifest = json.loads(manifest_bytes.decode('utf-8'), object_pairs_hook=unique_json_object)
+        if manifest.get('package_version') != release_version:
+            fail('release version differs from artifact package_version')
+        record.update(release_version=release_version, artifact_sha256=artifact_sha256)
         validate_site_targets(expected)
         # Transaction boundary: archive identity, coverage, sizes and hashes are all valid here.
         publish_staged(staged, expected)
@@ -509,6 +526,6 @@ def deploy(pipeline, run, commit):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        fail('expected pipeline, run number, source commit')
+    if len(sys.argv) != 6:
+        fail('expected pipeline run commit version artifact_sha256')
     deploy(*sys.argv[1:])

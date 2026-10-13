@@ -238,6 +238,29 @@ class FlowRemoteTest(unittest.TestCase):
         with self.assertRaisesRegex(flow_remote.RemoteError, "immutable build source"):
             flow_remote.verify_nested_gradle_absent(self.api_root)
 
+    def test_python_blob_scanner_skips_only_ticket_verified_init_script(self):
+        trusted = self.api_root / "ops/ci/aliyun-flow/cold-init.gradle"
+        trusted.parent.mkdir(parents=True)
+        nested = "tasks.register('nested', Exec) { commandLine './gradlew', 'help' }\n"
+        trusted.write_text(nested, encoding="utf-8")
+        subprocess.check_call(["git", "-C", str(self.api_root), "add", "ops/ci/aliyun-flow/cold-init.gradle"])
+        subprocess.check_call(["git", "-C", str(self.api_root), "commit", "-qm", "trusted-init"])
+        with self.assertRaisesRegex(flow_remote.RemoteError, "immutable build source"):
+            flow_remote.verify_nested_gradle_absent(self.api_root)
+        flow_remote.verify_nested_gradle_absent(
+            self.api_root, flow_remote.TRUSTED_SOURCE_SCAN_EXCLUSIONS
+        )
+        other = self.api_root / "ops/ci/aliyun-flow/other.gradle"
+        other.write_text(nested, encoding="utf-8")
+        subprocess.check_call(["git", "-C", str(self.api_root), "add", "ops/ci/aliyun-flow/other.gradle"])
+        subprocess.check_call(["git", "-C", str(self.api_root), "commit", "-qm", "untrusted-init"])
+        with self.assertRaisesRegex(flow_remote.RemoteError, "ops/ci/aliyun-flow/other.gradle"):
+            flow_remote.verify_nested_gradle_absent(
+                self.api_root, flow_remote.TRUSTED_SOURCE_SCAN_EXCLUSIONS
+            )
+        with self.assertRaisesRegex(flow_remote.RemoteError, "unexpected Gradle source scanner exclusion"):
+            flow_remote.verify_nested_gradle_absent(self.api_root, {"build.gradle"})
+
     def test_hash_tamper_expiry_unknown_field_and_dangerous_argv_rejected(self):
         ticket_path, ticket, ticket_hash = self._issue()
         raw = ticket_path.read_bytes()
@@ -434,11 +457,11 @@ class SecretBoundaryTest(unittest.TestCase):
         secret_member = "member-{}-path.jar".format(self.credentials["CYF_MAVEN_PASSWORD"])
         entries = [
             types.SimpleNamespace(filename="safe.bin", file_size=0, comment=b"", extra=b"")
-            for _ in range(100000)
+            for _ in range(150000)
         ]
         entries.append(types.SimpleNamespace(filename=secret_member, file_size=7, comment=b"", extra=b""))
         self._assert_fake_zip_limit_diagnostic(
-            entries, "entry_count", 100000, 100000, 100001, 7, 0, 100001,
+            entries, "entry_count", 150000, 150000, 150001, 7, 0, 150001,
             secret_member,
         )
 

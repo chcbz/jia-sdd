@@ -1,0 +1,71 @@
+{
+  "status": "static_contract_mismatch_not_compiler_run",
+  "observations": [
+    {
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationService.java",
+      "line": 47,
+      "text": "public AgentRuntimeAuthenticationService(AgentRuntimeDao runtimes, AgentRuntimeV1InstallationDao installations,"
+    },
+    {
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationService.java",
+      "line": 190,
+      "text": "public Receipt bind(String sessionId, Proof proof, BooleanSupplier connected) {"
+    },
+    {
+      "path": "agent/jia-agent-service/src/main/java/cn/jia/agent/security/AgentRuntimeAuthenticationService.java",
+      "line": 207,
+      "text": "public void registerReadyCommandTypes(String sessionId, Proof proof, Set<String> advertised) {"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 39,
+      "text": "assertThrows(IllegalArgumentException.class,()->auth.registerCommandProtocols(\"other-socket\",AGENT,List.of(PROTOCOL)));"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 40,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));assertEquals(\"runtime-a\",proof().runtimeInstanceId());"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 46,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));proof();"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 47,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of());assertThrows(IllegalArgumentException.class,this::proof);"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 48,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));connected.set(false);assertThrows(IllegalArgumentException.class,this::proof);"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 50,
+      "text": "auth.registerCommandProtocols(\"socket-b\",AGENT,List.of(PROTOCOL));auth.disconnect(\"socket-a\");assertEquals(\"runtime-b\",proof().runtimeInstanceId());"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 57,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL, ArchiveAgentExecutionPort.REQUIRED_PROTOCOL));"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 123,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 129,
+      "text": "auth.registerCommandProtocols(\"socket-b\",AGENT,List.of(PROTOCOL));"
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "line": 136,
+      "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));var first=proof();byte[] digest=first.registrationHash();digest[0]^=1;"
+    }
+  ],
+  "next_action": "Migrate feature test fixtures to installation-derived session proof and readyCommandTypes without restoring retired API-key execution authority."
+}

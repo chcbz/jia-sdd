@@ -1,0 +1,149 @@
+{
+  "status": "static_observation_not_compiler_output",
+  "files": [
+    {
+      "file": "api/agent/jia-agent-service/src/test/java/cn/jia/agent/archive/ArchiveAgentExecutionAdapterTest.java",
+      "observations": [
+        {
+          "line": 50,
+          "text": "var target = new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-a\", \"key-a\", REGISTRATION);"
+        },
+        {
+          "line": 156,
+          "text": "var controlled = new AgentRuntimeAuthenticationService.ControlledTarget("
+        }
+      ]
+    },
+    {
+      "file": "api/agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformInstalledSkillResolverTest.java",
+      "observations": [
+        {
+          "line": 47,
+          "text": ".thenReturn(new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-a\",\"key-a\",HASH));"
+        }
+      ]
+    },
+    {
+      "file": "api/agent/jia-agent-service/src/test/java/cn/jia/agent/platform/PlatformSkillInstallationServiceTest.java",
+      "observations": [
+        {
+          "line": 49,
+          "text": "target=new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-a\",\"key-a\",new byte[32]);"
+        },
+        {
+          "line": 143,
+          "text": ".thenReturn(new AgentRuntimeAuthenticationService.ControlledTarget(\"runtime-b\",\"key-a\",new byte[32]));"
+        }
+      ]
+    },
+    {
+      "file": "api/agent/jia-agent-service/src/test/java/cn/jia/agent/security/AgentControlledRuntimeProtocolTest.java",
+      "observations": [
+        {
+          "line": 33,
+          "text": "auth=new AgentRuntimeAuthenticationService(runtimes,identities,keys,accounts,new AgentTaskEventsGate(new AgentTaskEventsProperties(false,List.of())));"
+        },
+        {
+          "line": 34,
+          "text": "connected=new AtomicBoolean(true);auth.bind(\"socket-a\",\"client-a\",\"owner-a\",AGENT,\"runtime-a\",\"key-a\",TOKEN,connected::get);"
+        },
+        {
+          "line": 39,
+          "text": "assertThrows(IllegalArgumentException.class,()->auth.registerCommandProtocols(\"other-socket\",AGENT,List.of(PROTOCOL)));"
+        },
+        {
+          "line": 40,
+          "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));assertEquals(\"runtime-a\",proof().runtimeInstanceId());"
+        },
+        {
+          "line": 46,
+          "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));proof();"
+        },
+        {
+          "line": 47,
+          "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of());assertThrows(IllegalArgumentException.class,this::proof);"
+        },
+        {
+          "line": 48,
+          "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));connected.set(false);assertThrows(IllegalArgumentException.class,this::proof);"
+        },
+        {
+          "line": 49,
+          "text": "connected.set(true);auth.bind(\"socket-b\",\"client-a\",\"owner-a\",AGENT,\"runtime-b\",\"key-a\",TOKEN,connected::get);assertThrows(IllegalArgumentException.class,this::proof);"
+        },
+        {
+          "line": 50,
+          "text": "auth.registerCommandProtocols(\"socket-b\",AGENT,List.of(PROTOCOL));auth.disconnect(\"socket-a\");assertEquals(\"runtime-b\",proof().runtimeInstanceId());"
+        },
+        {
+          "line": 57,
+          "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL, ArchiveAgentExecutionPort.REQUIRED_PROTOCOL));"
+        },
+        {
+          "line": 123,
+          "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));"
+        },
+        {
+          "line": 128,
+          "text": "auth.bind(\"socket-b\",\"client-a\",\"owner-a\",AGENT,\"runtime-b\",\"key-a\",TOKEN,connected::get);"
+        },
+        {
+          "line": 129,
+          "text": "auth.registerCommandProtocols(\"socket-b\",AGENT,List.of(PROTOCOL));"
+        },
+        {
+          "line": 136,
+          "text": "auth.registerCommandProtocols(\"socket-a\",AGENT,List.of(PROTOCOL));var first=proof();byte[] digest=first.registrationHash();digest[0]^=1;"
+        }
+      ]
+    },
+    {
+      "file": "api/chat/jia-chat-service/src/test/java/cn/jia/chat/handler/AgentControlledWebSocketDispatchTest.java",
+      "observations": [
+        {
+          "line": 126,
+          "text": "fixture.authentication.registerCommandProtocols(\"socket-a\", AGENT,"
+        },
+        {
+          "line": 129,
+          "text": "fixture.authentication.registerCommandProtocols(\"socket-a\", AGENT,"
+        },
+        {
+          "line": 247,
+          "text": "authentication = new AgentRuntimeAuthenticationService("
+        }
+      ]
+    },
+    {
+      "file": "api/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/integration/ArchiveCrossComponentFixtureConfiguration.java",
+      "observations": [
+        {
+          "line": 198,
+          "text": "return new AgentRuntimeAuthenticationService(runtimes, identities, keys, accounts, gate);"
+        }
+      ]
+    },
+    {
+      "file": "api/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/integration/ArchiveCrossComponentFixtureServer.java",
+      "observations": [
+        {
+          "line": 244,
+          "text": "authentication.bind(ArchiveCrossComponentFixtureConfiguration.SESSION_ID,"
+        },
+        {
+          "line": 250,
+          "text": "authentication.registerCommandProtocols(ArchiveCrossComponentFixtureConfiguration.SESSION_ID,"
+        }
+      ]
+    },
+    {
+      "file": "api/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/maintenance/service/ArchiveExecutionCommandDispatcherTest.java",
+      "observations": [
+        {
+          "line": 113,
+          "text": "var controlled = new AgentRuntimeAuthenticationService.ControlledTarget("
+        }
+      ]
+    }
+  ]
+}

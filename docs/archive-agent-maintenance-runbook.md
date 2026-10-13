@@ -11,7 +11,7 @@
 - API 内容管理：`/archive/admin/v1`，权限来自当前认证管理者，不接受表单传入 owner/client/runtime 授权。
 - Native 执行：`/internal/archive/v1/jobs/{jobId}/runs/{runId}`，身份来自认证注册与当前 run/epoch，不使用用户 JWT。
 - `archive.maintenance.execution-enabled` 默认 false；平台安装/目录由 `agent.platform-skills.enabled` 独立控制。
-- Client `AGENT_PLATFORM_SKILL_INSTALL_ENABLED`、`AGENT_ARCHIVE_MAINTENANCE_ENABLED` 默认关闭。能力集合与安装/任职/发布授权是不同事实。
+- 2026-10-13 统一 Runtime 的每主体 profile 使用 `platformSkillInstallEnabled`、`archiveMaintenanceEnabled`，默认关闭；受控命令另需明确 `controlledCommandOwnerJiacn`。旧 API-key launcher/env 入口已退役，不能用于本次合入版本。当前源码 pin 与未验证边界见 `specs/archive-agent-maintenance/merge-assessment-20261013.md`。能力集合与安装/任职/发布授权是不同事实。
 - `archive.maintenance.manager-grants` 的 collection/tenant/client/owner/permissions/authorizationRevision 必须匹配显式授权；不能靠角色名字或前端按钮授予权限。启用或改授权属于另行授权的操作。
 - 批准技能包 `archive-maintainer@1.0.0` 固定 40563 bytes、SHA256 `8894d96341067dd7f9e2f45696eef44057dc61346255a0323b2d713a3c7ea081`；不能为迁就 Client 自行重打包改摘要。
 
@@ -43,7 +43,7 @@
 
 - 来源对象登记在维护域 durable registry，状态为PENDING/REFERENCED/DELETE_PENDING/DELETED；写入后DB回滚或过时PENDING均从登记行恢复，不从磁盘目录推断资格。最终提交携带本次reservation revision，不能借当前revision通过ABA；DELETED重试创建新sourceId/独立物理URI，旧代tombstone永久保留重扫，处理旧上传在清理后才落盘的情况，迟到删除不得触及新代。明确缺少尚未创建的父目录视为对象不存在；symlink/非目录/其他IO错误仍拒绝。
 - `archive.maintenance.source-cleanup-enabled`默认false；启用后按`source-cleanup-stale-millis`（默认24小时）、`source-cleanup-batch-size`（默认32）、`source-cleanup-delay-ms`（默认60000）有界轮询。时间只用于已登记未引用对象的候选筛选，不证明对象可删；短事务CAS确认删除状态后，事务外核对exact owner scope/storage URI/digest并删除，再持久完成。
-- 安装配额使用真实已验证包文件与marker字节。Client `AGENT_PLATFORM_SKILL_MAX_RETAINED_COPIES`默认2；允许一份当前安装的切换空间，默认byte预算按这三份真实包+marker字节推导，也可明确设置`AGENT_PLATFORM_SKILL_MAX_INSTALLATION_BYTES`。受保护副本超过可容纳范围时拒绝新安装，不能无凭据删旧副本。
+- 安装配额使用真实已验证包文件与marker字节。Client profile `platformSkillMaxRetainedCopies`默认2；允许一份当前安装的切换空间，默认byte预算按这三份真实包+marker字节推导，也可明确设置profile `platformSkillMaxInstallationBytes`。受保护副本超过可容纳范围时拒绝新安装，不能无凭据删旧副本。
 - 仅当前成功安装的服务端回执给出`reclaimableInstallationIds`，候选先持久RECLAIMABLE fence，阻止新grant继续引用；ACTIVE/READ_ONLY grant引用受保护。Client只在exact scope内核验旧成功回执、command、marker、inode/父目录及批准包proof后回收，不回收当前或in-flight安装，不扫描其他scope。
 - 目标目录已删、registry仍在的崩溃窗口，以授权此次回收的durable server receipt及候选ID完成registry清理；候选自身receipt响应丢失不额外阻断，但candidate command/result/prepared/scope/parent proof仍必验。未知对象、替换目录、缺proof或授权不可验证时保留现场，不自行推断安全。
 - 服务端`reclaim_batch_json`持久绑定同一结果的有界授权批次/内部cursor，receipt重放名单不变；优先尚未fence的有效副本，再推进旧RECLAIMABLE tombstone，避免最早32项永久占满。HTTP receipt形状和32上限不变。

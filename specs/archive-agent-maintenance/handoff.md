@@ -80,3 +80,23 @@ SSH现已恢复；已只读观察旧任务已知进程不存在、34061关闭、
 首轮Gradle worker缓存缺JAR、汇总Python3.6不支持fromisoformat；均保留原件并在控制层修复，未改测试断言。重跑源73c303e的六suite fresh XML：platform141/141PASS、security10/10PASS、MVP237/149PASS/88FAIL、archive390/288PASS/102FAIL、typed91/91PASS、replay16/16PASS，0skip。其中91个不同实库用例（MVP/回归重复出现）被sourceartifact SHA CHECK初始化漂移阻断；MySQL把infix REGEXP规范化为regexp_like，而严格catalog仍按旧表达式比较。相应DDL/normalizer/initializer四blob与premerge完全一致，未冒称整个旧tree实跑基线；此外原11archive失败保留。
 
 只将当前DDL对应CHECK写成相同canonical REGEXP_LIKE，通用normalizer和严格比较/约束不放宽；新增元数据等价/改pattern拒绝/实库合法及非法SHA回归。独立 `ACCEPT_MYSQL_SHA_SOURCE_SCOPE`，本地10PASS/2MySQLskip，批准四SQLfixture/ZIP不变。API hotfix `c1e5c982ad497da3c3c13a54062d32e3c3a4e706` 已普通push核远端；Root更新pin，新源Linux实库复测待执行。不能把修复前XML或本地skip当成修复后PASS。
+
+
+## 当前接续：2026-10-13 develop 合入与缺口核对
+
+任务 `AAM-MERGE-DEVELOP-20261013`：仅将已拉取的 Root/API/Web/Client develop 合入现有 `codex/archive-agent-maintenance*` 特性分支，处理新统一 Runtime 契约的合并阻断，运行受影响定向诊断并列出剩余功能/验证缺口。原工作区不动；不合回 develop/master，不部署、不激活任职/安装/上架。
+
+- 基线：Root `532eca84` / API `62adf8a0` / Web `1a4e6fa3` / Client `33a02592`。
+- 冻结 develop：Root `77bd860c` / API `0fe830d1` / Web `cb730681` / Client `a39c0856`；完整 SHA 与 fetch 原件见 `evidence/merge-develop/20261013/fetched-baseline.json`。
+- 唯一源码 Writer：`01a1349b-7218-79d1-9ec2-e34e349c0acb`，Main 仅控制面/合并协调/验证。
+- 当前处于合并与自检；2026-10-08 的 5 项实库失败、另外 11 项回归失败、39 项 Web 失败均为旧基线结果，不得复制为本轮通过或失败。84 项真实业务验收仍全部未执行。
+- 最早有效反馈：组件无未解冲突、Node 语法/新 Runtime payload 闭包、典籍与会话定向用例；后端在固定干净候选经现有 orchestrator 持共享锁执行。前端本机结果仅诊断，不做本机生产构建。
+
+
+## 2026-10-13 合入收口（非整体验收）
+
+最终精确组件：API `b4ccdefd96adbae6d6a149def43fb52c443df195`、Web `68c93f247ba101910200ab6122c59821f36b3faa`、Client `35b4ab6159aa20728676237a0779232cd8d628c9`，均已普通 push 并核远端。Root 当前 pins/gitlinks 与独立 Client pin 一致。18:55 查询最新 develop：Root77bd860c / API281ee445 / Webcb730681 / Client6325af1，均纳入特性分支。
+
+Web 531/531 定向 PASS；默认套件因 Windows 路径加载失败。Client Linux1005/995PASS/0FAIL/10SKIP，统一Runtime123/123PASS；首轮55+1失败与两个窄修/独立源码复核均保留。API195 Java仅语法解析0错误，无typecheck/Gradle；早期服务器MySQL初始化失败，旧8个测试契约文件未迁移。历史5个实库+11个archive失败未冒充本轮结果。
+
+本轮任务仅合入与缺口评估已收口，不等于全部特性完成。后续重点、环境与业务验收界限见 [merge-assessment-20261013.md](merge-assessment-20261013.md)。真实Runtime/浏览器全链、84项验收、部署/激活仍未执行。

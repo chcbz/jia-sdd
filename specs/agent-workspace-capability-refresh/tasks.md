@@ -1,5 +1,19 @@
 # Agent workspace capability refresh tasks
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+历史 acceptance 与 release 均有依据，统一原顶层 accepted 与 release.released 的陈旧状态，归档 2026-08-23 交付。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-07。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+### 当前执行动作
+
+后续 marker/工作目录识别问题按独立缺陷处理。
+
+以下原始清单为合同/历史记录；当前完成状态采用 delivery-status 的任务映射，不能据旧未勾选项重新派工。
+<!-- END SDD delivery reconciliation -->
+
 ## Client
 
 - [x] 实现受限、allowlist 化的工作目录项目能力发现。
