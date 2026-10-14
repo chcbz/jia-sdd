@@ -1,0 +1,19 @@
+API exact commit: 354f736a09b0e89d52306616245ba86e16897d85
+
+ControlledImageFollowupAuthorityService.Source (API lines 28-32) persists producerRequestRevision:
+record Source(String inputRef,String kind,String fileId,Integer fileVersion,String purpose,
+        String conversationId,Long conversationGeneration,String assetId,Long assetRevision,
+        String producerRequestId,Long producerRequestRevision,String producerStepId,
+        String producerExecutionId,String producerRunId,String producerOutputId,
+        String contentMimeType,long byteLength,String sha256,String sourceJson) { }
+
+PersonalWorkspaceExecutionService.RuntimeSource (API lines 69-71) omits producerRequestRevision from the runtime wire:
+record RuntimeSource(String kind,String fileId,String version,String purpose,String conversationId,
+        String conversationGeneration,String assetId,String assetRevision,String producerRequestId,
+        String producerStepId,String producerExecutionId,String producerRunId,String producerOutputId) { }
+
+PersonalWorkspaceExecutionServiceImpl.runtimeInputV3 (API line 996) constructs that exact RuntimeSource without producerRequestRevision.
+
+Client consequence: bind and regress the source revisions present on the exact runtime wire
+(workspace version, conversationGeneration, assetRevision, inputSnapshotDigest); do not invent an
+extra producerRequestRevision field that the exact API declaration does not emit.

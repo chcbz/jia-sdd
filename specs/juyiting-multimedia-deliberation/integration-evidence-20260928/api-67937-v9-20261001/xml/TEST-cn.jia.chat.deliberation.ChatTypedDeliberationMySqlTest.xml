@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest" tests="3" skipped="0" failures="3" errors="0" timestamp="2026-10-01T15:38:57.486Z" hostname="iZwz9j3ip2unzhwij0bs30Z" time="2.85">
+  <properties/>
+  <testcase name="pristineToV3RestartAndExactCatalogAreReady()" classname="cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest" time="1.925">
+    <failure message="org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (&#10;  pending_question_id VARCHAR(64) NOT NULL,&#10;  outcome_id VARCHAR(64) NOT NULL,&#10;  tenant_id VARCHAR(50) NOT NULL,&#10;  owner_jiacn VARCHAR(50) NOT NULL,&#10;  client_id VARCHAR(50) NOT NULL,&#10;  conversation_id VARCHAR(100) NOT NULL,&#10;  conversation_generation BIGINT NOT NULL,&#10;  state VARCHAR(20) NOT NULL,&#10;  state_version BIGINT NOT NULL DEFAULT 0,&#10;  question MEDIUMTEXT NOT NULL,&#10;  required_facts_json TEXT NOT NULL,&#10;  reply_request_id VARCHAR(100) DEFAULT NULL,&#10;  reply_idempotency_key VARCHAR(100) DEFAULT NULL,&#10;  reply_body_digest VARCHAR(100) DEFAULT NULL,&#10;  created_at BIGINT NOT NULL,&#10;  updated_at BIGINT NOT NULL,&#10;  PRIMARY KEY (pending_question_id),&#10;  UNIQUE KEY uk_chat_typed_pending_outcome&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),&#10;  KEY idx_chat_typed_pending_scope_state&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),&#10;  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)&#10;    REFERENCES chat_typed_outcome&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)&#10;    ON UPDATE RESTRICT ON DELETE RESTRICT,&#10;  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),&#10;  CONSTRAINT chk_chat_typed_pending_version CHECK&#10;    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL&#10;      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)&#10;     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL&#10;      AND reply_idempotency_key IS NOT NULL&#10;      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),&#10;  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))&#10;) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]" type="org.springframework.jdbc.BadSqlGrammarException">org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (
+  pending_question_id VARCHAR(64) NOT NULL,
+  outcome_id VARCHAR(64) NOT NULL,
+  tenant_id VARCHAR(50) NOT NULL,
+  owner_jiacn VARCHAR(50) NOT NULL,
+  client_id VARCHAR(50) NOT NULL,
+  conversation_id VARCHAR(100) NOT NULL,
+  conversation_generation BIGINT NOT NULL,
+  state VARCHAR(20) NOT NULL,
+  state_version BIGINT NOT NULL DEFAULT 0,
+  question MEDIUMTEXT NOT NULL,
+  required_facts_json TEXT NOT NULL,
+  reply_request_id VARCHAR(100) DEFAULT NULL,
+  reply_idempotency_key VARCHAR(100) DEFAULT NULL,
+  reply_body_digest VARCHAR(100) DEFAULT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (pending_question_id),
+  UNIQUE KEY uk_chat_typed_pending_outcome
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),
+  KEY idx_chat_typed_pending_scope_state
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),
+  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)
+    REFERENCES chat_typed_outcome
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)
+    ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),
+  CONSTRAINT chk_chat_typed_pending_version CHECK
+    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL
+      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)
+     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL
+      AND reply_idempotency_key IS NOT NULL
+      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),
+  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:112)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:462)
+	at cn.jia.chat.config.ChatTypedDeliberationSchemaInitializer.initialize(ChatTypedDeliberationSchemaInitializer.java:65)
+	at cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest.pristineToV3RestartAndExactCatalogAreReady(ChatTypedDeliberationMySqlTest.java:51)
+Caused by: java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ',
+  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_' at line 34
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:112)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeInternal(StatementImpl.java:837)
+	at com.mysql.cj.jdbc.StatementImpl.execute(StatementImpl.java:685)
+	at org.springframework.jdbc.core.JdbcTemplate$1ExecuteStatementCallback.doInStatement(JdbcTemplate.java:453)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 3 more
+</failure>
+  </testcase>
+  <testcase name="realUniqueForeignKeyAndCheckConstraintsRejectInvalidRows()" classname="cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest" time="0.507">
+    <failure message="org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (&#10;  pending_question_id VARCHAR(64) NOT NULL,&#10;  outcome_id VARCHAR(64) NOT NULL,&#10;  tenant_id VARCHAR(50) NOT NULL,&#10;  owner_jiacn VARCHAR(50) NOT NULL,&#10;  client_id VARCHAR(50) NOT NULL,&#10;  conversation_id VARCHAR(100) NOT NULL,&#10;  conversation_generation BIGINT NOT NULL,&#10;  state VARCHAR(20) NOT NULL,&#10;  state_version BIGINT NOT NULL DEFAULT 0,&#10;  question MEDIUMTEXT NOT NULL,&#10;  required_facts_json TEXT NOT NULL,&#10;  reply_request_id VARCHAR(100) DEFAULT NULL,&#10;  reply_idempotency_key VARCHAR(100) DEFAULT NULL,&#10;  reply_body_digest VARCHAR(100) DEFAULT NULL,&#10;  created_at BIGINT NOT NULL,&#10;  updated_at BIGINT NOT NULL,&#10;  PRIMARY KEY (pending_question_id),&#10;  UNIQUE KEY uk_chat_typed_pending_outcome&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),&#10;  KEY idx_chat_typed_pending_scope_state&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),&#10;  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)&#10;    REFERENCES chat_typed_outcome&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)&#10;    ON UPDATE RESTRICT ON DELETE RESTRICT,&#10;  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),&#10;  CONSTRAINT chk_chat_typed_pending_version CHECK&#10;    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL&#10;      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)&#10;     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL&#10;      AND reply_idempotency_key IS NOT NULL&#10;      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),&#10;  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))&#10;) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]" type="org.springframework.jdbc.BadSqlGrammarException">org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (
+  pending_question_id VARCHAR(64) NOT NULL,
+  outcome_id VARCHAR(64) NOT NULL,
+  tenant_id VARCHAR(50) NOT NULL,
+  owner_jiacn VARCHAR(50) NOT NULL,
+  client_id VARCHAR(50) NOT NULL,
+  conversation_id VARCHAR(100) NOT NULL,
+  conversation_generation BIGINT NOT NULL,
+  state VARCHAR(20) NOT NULL,
+  state_version BIGINT NOT NULL DEFAULT 0,
+  question MEDIUMTEXT NOT NULL,
+  required_facts_json TEXT NOT NULL,
+  reply_request_id VARCHAR(100) DEFAULT NULL,
+  reply_idempotency_key VARCHAR(100) DEFAULT NULL,
+  reply_body_digest VARCHAR(100) DEFAULT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (pending_question_id),
+  UNIQUE KEY uk_chat_typed_pending_outcome
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),
+  KEY idx_chat_typed_pending_scope_state
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),
+  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)
+    REFERENCES chat_typed_outcome
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)
+    ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),
+  CONSTRAINT chk_chat_typed_pending_version CHECK
+    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL
+      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)
+     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL
+      AND reply_idempotency_key IS NOT NULL
+      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),
+  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:112)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:462)
+	at cn.jia.chat.config.ChatTypedDeliberationSchemaInitializer.initialize(ChatTypedDeliberationSchemaInitializer.java:65)
+	at cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest.realUniqueForeignKeyAndCheckConstraintsRejectInvalidRows(ChatTypedDeliberationMySqlTest.java:86)
+Caused by: java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ',
+  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_' at line 34
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:112)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeInternal(StatementImpl.java:837)
+	at com.mysql.cj.jdbc.StatementImpl.execute(StatementImpl.java:685)
+	at org.springframework.jdbc.core.JdbcTemplate$1ExecuteStatementCallback.doInStatement(JdbcTemplate.java:453)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 3 more
+</failure>
+  </testcase>
+  <testcase name="partialAndSameNamedWeakenedCheckNeverBecomeReady()" classname="cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest" time="0.415">
+    <failure message="org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (&#10;  pending_question_id VARCHAR(64) NOT NULL,&#10;  outcome_id VARCHAR(64) NOT NULL,&#10;  tenant_id VARCHAR(50) NOT NULL,&#10;  owner_jiacn VARCHAR(50) NOT NULL,&#10;  client_id VARCHAR(50) NOT NULL,&#10;  conversation_id VARCHAR(100) NOT NULL,&#10;  conversation_generation BIGINT NOT NULL,&#10;  state VARCHAR(20) NOT NULL,&#10;  state_version BIGINT NOT NULL DEFAULT 0,&#10;  question MEDIUMTEXT NOT NULL,&#10;  required_facts_json TEXT NOT NULL,&#10;  reply_request_id VARCHAR(100) DEFAULT NULL,&#10;  reply_idempotency_key VARCHAR(100) DEFAULT NULL,&#10;  reply_body_digest VARCHAR(100) DEFAULT NULL,&#10;  created_at BIGINT NOT NULL,&#10;  updated_at BIGINT NOT NULL,&#10;  PRIMARY KEY (pending_question_id),&#10;  UNIQUE KEY uk_chat_typed_pending_outcome&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),&#10;  KEY idx_chat_typed_pending_scope_state&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),&#10;  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)&#10;    REFERENCES chat_typed_outcome&#10;    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)&#10;    ON UPDATE RESTRICT ON DELETE RESTRICT,&#10;  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),&#10;  CONSTRAINT chk_chat_typed_pending_version CHECK&#10;    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL&#10;      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)&#10;     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL&#10;      AND reply_idempotency_key IS NOT NULL&#10;      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),&#10;  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))&#10;) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]" type="org.springframework.jdbc.BadSqlGrammarException">org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (
+  pending_question_id VARCHAR(64) NOT NULL,
+  outcome_id VARCHAR(64) NOT NULL,
+  tenant_id VARCHAR(50) NOT NULL,
+  owner_jiacn VARCHAR(50) NOT NULL,
+  client_id VARCHAR(50) NOT NULL,
+  conversation_id VARCHAR(100) NOT NULL,
+  conversation_generation BIGINT NOT NULL,
+  state VARCHAR(20) NOT NULL,
+  state_version BIGINT NOT NULL DEFAULT 0,
+  question MEDIUMTEXT NOT NULL,
+  required_facts_json TEXT NOT NULL,
+  reply_request_id VARCHAR(100) DEFAULT NULL,
+  reply_idempotency_key VARCHAR(100) DEFAULT NULL,
+  reply_body_digest VARCHAR(100) DEFAULT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (pending_question_id),
+  UNIQUE KEY uk_chat_typed_pending_outcome
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),
+  KEY idx_chat_typed_pending_scope_state
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),
+  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)
+    REFERENCES chat_typed_outcome
+    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)
+    ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),
+  CONSTRAINT chk_chat_typed_pending_version CHECK
+    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL
+      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)
+     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL
+      AND reply_idempotency_key IS NOT NULL
+      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),
+  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:112)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:462)
+	at cn.jia.chat.config.ChatTypedDeliberationSchemaInitializer.initialize(ChatTypedDeliberationSchemaInitializer.java:65)
+	at cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest.partialAndSameNamedWeakenedCheckNeverBecomeReady(ChatTypedDeliberationMySqlTest.java:67)
+Caused by: java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ',
+  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_' at line 34
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:112)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeInternal(StatementImpl.java:837)
+	at com.mysql.cj.jdbc.StatementImpl.execute(StatementImpl.java:685)
+	at org.springframework.jdbc.core.JdbcTemplate$1ExecuteStatementCallback.doInStatement(JdbcTemplate.java:453)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 3 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

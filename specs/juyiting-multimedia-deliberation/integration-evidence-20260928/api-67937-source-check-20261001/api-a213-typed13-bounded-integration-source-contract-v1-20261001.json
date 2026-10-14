@@ -1,0 +1,52 @@
+{
+  "parent_commit": "a21378413366cfe96962ff49adf6b43d8d883d45",
+  "parent_tree": "cf0308a1bb8d2726fb338e0f2711d8052ca6222c",
+  "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-v3-wire-jackson3-source-owner-20261001",
+  "classification": "Bounded contract-frozen Java integration repair: no new identity/ACL/transaction/migration/snapshot contract or SQL changes. Main fixes scope to existing nullable facts and exact-approved DDL grammar; original transactions/locks/strict catalog/DDL hash untouched. Escalate any needed semantic expansion before writes.",
+  "actual_failure_evidence": {
+    "path": "/var/tmp/cyf-mmd-main-controlled-bridge-progress/api-a213-v7-main-actual-results-20261001.json",
+    "sha256": "801b57ddfb26c8c7190e4d56b5fa6efb8c9af9a02908536b8eb50facde1fd561"
+  },
+  "allowed_paths": [
+    "chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializer.java",
+    "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatDeliberationService.java",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializerTest.java",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatDeliberationServiceTest.java",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/handler/AgentWebSocketTypedDeliberationTest.java",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatTypedDiscussionAdmissionServiceTest.java",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatTypedDeliberationSpringTransactionTest.java"
+  ],
+  "source_hashes": {
+    "chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializer.java": "251d8ef1968b4d42a7d7b3da3ac6b0efa9e653f51975808dca43c0db1533ef1b",
+    "chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatDeliberationService.java": "bd49d66cd8806a42334f1faec3d7b6a563203dce984d8e0e86b9d6cf7d9a741b",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatTypedDeliberationSchemaInitializerTest.java": "2ffeb2ae4ec18a0a292a03c21c482e6675ee8889dbf8bb0902f457dae6e95147",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatDeliberationServiceTest.java": "089716c24d274ee065415a55a292fb18da213d01e9f33e02120df8ef21cc818c",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/handler/AgentWebSocketTypedDeliberationTest.java": "e494dd2c4162b951d0d1d1fae5d0e1df76e1848b459b73445a6a2560af78f753",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatTypedDiscussionAdmissionServiceTest.java": "536fb028b4e3b205254fb5308b5033903e40d3dec6032bb0dae42b686e9516a6",
+    "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatTypedDeliberationSpringTransactionTest.java": "1b152991c10d858ed41defcba69a0bdde6f11b07cc9fd7609205a6a2863af19e"
+  },
+  "immutable_golden_hashes": {
+    "chat/jia-chat-mapper/src/main/resources/db/chat-typed-deliberation-schema-v1.sql": "6b9775b72a7d96db27824f0c3359a17fb55a5bb6bbaaebc9391aa520652c9e3c",
+    "chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/typed-deliberation-atomic-followup-v1.json": "8630fe77f0d3efe0c2c10978f2e37c6689e4d296d3a164a58a639cfc75c9ebd1"
+  },
+  "production_change_limits": {
+    "ChatTypedDeliberationSchemaInitializer": "ddl() currently bans delete token and rejects approved ON UPDATE RESTRICT ON DELETE RESTRICT. Permit only this existing exact FK grammar while preserving create-only allowlisted4tables,statementcount, destructive DML/DDL rejection. A small pure package-private parser helper for negative tests is allowed. DO NOT change initialize/locking/migration policy/DDL/catalog checks/canonicalCheck/constraint normalization.",
+    "ChatDeliberationService": "Only replace Map.copyOf(typedFacts) atadmit line208 with an immutable defensive copy that preserves intentional null task/taskMaterials/etc in existing factsManifest, consistent with frozen canonical JSON. Do not strip/null-to-empty or change canonical/digest/snapshot authorization, transaction, dispatch, setters/final logic."
+  },
+  "test_repairs": {
+    "AgentWebSocketTypedDeliberationTest": "Supply valid FinalResult.turn fixture matching real persisted/duplicate protocol; preserve strict JSON/sidecar/no-fallback assertions and add receipt assertions if missing. No productionHandler changes.",
+    "ChatTypedDiscussionAdmissionServiceTest": "Mock admission from captured server-generated ChatMessageDTO.requestId, not invented request-new; bind exactCAS answeredByRequestId, statusURL/admissionrequest ID to same expected deterministic server identity. Preserve conflict/transaction/authority-zero assertions. Do not broaden matcher to conceal wrong ID.",
+    "ChatTypedDeliberationSpringTransactionTest": "Register existing required ChatInteractionStepStore in actual Spring fixture, including contexts registering Mockito service bean; preserve class proxy/actual transaction/rollback/CAS assertions; do not make production required@Autowired optional or remove mocks evidence writes. Inspect remaining fixture dependencies before commit.",
+    "schema_nullable_facts": "Keep existing positive4table/realMySQL tests. Add exact-approved FK clause and explicit destructive keyword/extra statement/wrong table negative parser tests; prove intended null facts survive with unchanged canonical/digest rules."
+  },
+  "prohibited": [
+    "SQL/DDL/fixturegolden changes",
+    "weaken CHECK/FK/schema readiness",
+    "remove or skip tests",
+    "change expected failures to NPE",
+    "source outside7paths",
+    "Gradle/build/manualjavac before Main verificationGO",
+    "Provider/production/push/processcontrol"
+  ],
+  "next": "Source-only child in SAME originalOwner WT after confirmed v7 terminal; preserves .gradle history for normal incremental compilation without loaned classes. Commit and report exactparent/tree/scopediff, then Main binds targetedtyped11 verification first; no blindrerun failing parent."
+}

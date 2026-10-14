@@ -1,0 +1,52 @@
+{
+  "acceptance_to_test": {
+    "CHAT_v1_compat": "TypedDeliberationFinalValidatorTest, TypedDeliberationDeclarationTest, TypedDeliberationSessionRegistryTest, ChatTypedDeliberationServiceTest",
+    "IA01-IA12": "typed-inspection-authority fixture + context/admission/authority/transaction tests",
+    "idempotency_recovery": "ChatTypedInspectionAdmissionServiceTest",
+    "identity_acl": "AgentRuntimeInspectionRouteTest, AgentInspectionInputControllerTest, ChatInspectionAuthorityServiceTest",
+    "manifest_digest": "ChatTypedInspectionContextContractTest",
+    "transaction_rollback": "ChatTypedInspectionSpringTransactionTest",
+    "v2_final_receipt": "TypedInspectionFinalValidatorTest, AgentWebSocketTypedDeliberationTest"
+  },
+  "api_catalog": [
+    "POST /chat/conversations/{conversationId}/interactions/inspection",
+    "GET /chat/conversations/{conversationId}/interactions/inspection/request",
+    "GET /chat/conversations/{conversationId}/requests/{requestId}/inspection-outcome",
+    "GET /internal/agent/chat/requests/{requestId}/turns/{turnId}/inspection/inputs/{sourceRefId}/content"
+  ],
+  "base_commit": "a6e3e06cb4fa29ed6c01d80e8d8f0ae9372a1de9",
+  "contract": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/sdd/specs/juyiting-multimedia-deliberation/typed-inspection-authority-contract-v1.md",
+  "contract_sha256": "b049f271685b8e50ed7ea3b050bd6c2bd72a4a5f1872a793d92d014fb3e784c1",
+  "event_api_additions": [
+    "registration typedInspection declaration/receipt",
+    "turn final outcomeContractVersion=2 + inspectionInputReceipt"
+  ],
+  "fixtures": {
+    "typed-inspection-authority-v1.json": "c454e024db484d1ba39c637c1da37d25ff93fd5fc2b046a5e42aa05db5d18d38",
+    "typed-inspection-input-digests-v1.json": "79941aa53a5b8822d39765e7ae12e5ba5e7fd18b53333af08e8caf637c088a00"
+  },
+  "lock_order": [
+    "task root",
+    "bounty binding",
+    "conversation",
+    "request",
+    "typed admission",
+    "turn",
+    "source authority/version"
+  ],
+  "sensitive_payload_allowlist": [
+    "browser command exact 11 keys; selector exact 6 keys",
+    "runtime typedInspection exact 11 keys; supportedInputs exact 4 keys",
+    "snapshot/manifest/scope/profile/source exact-key validation",
+    "v2 outcome/receipt/binding exact-key validation",
+    "reserved raw sidecars rejected from wire and nested payload"
+  ],
+  "staged_tree": "247133e450522398072da9961c5a0250c45cf567",
+  "task_id": "MMD-U2-DISCUSSION-INSPECT-CLOSURE-PREP-20261001",
+  "transaction_boundaries": [
+    "admission: REQUIRED rollbackFor Exception",
+    "runtime content authority: REQUIRED rollbackFor Exception",
+    "final authority + durable final/outcome: one REQUIRED transaction",
+    "recovery/outcome projection: readOnly"
+  ]
+}

@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: write operations require an explicit allowlist
+ok 1 - write operations require an explicit allowlist
+  ---
+  duration_ms: 2.519402
+  ...
+# Subtest: start refuses config drift before sending a write
+ok 2 - start refuses config drift before sending a write
+  ---
+  duration_ms: 10.052329
+  ...
+# Subtest: start writes once, requires a run id, and reads the run back
+ok 3 - start writes once, requires a run id, and reads the run back
+  ---
+  duration_ms: 2.422467
+  ...
+# Subtest: manual pipeline start accepts an explicitly source-free run only when readback is source-free
+ok 4 - manual pipeline start accepts an explicitly source-free run only when readback is source-free
+  ---
+  duration_ms: 1.322711
+  ...
+# Subtest: start rejects an expected ancestor when the actual source head moved
+ok 5 - start rejects an expected ancestor when the actual source head moved
+  ---
+  duration_ms: 1.28938
+  ...
+# Subtest: ambiguous create reconciles one exact new pipeline without another write
+ok 6 - ambiguous create reconciles one exact new pipeline without another write
+  ---
+  duration_ms: 1.956591
+  ...
+# Subtest: ambiguous update reconciles exact readback without another write
+ok 7 - ambiguous update reconciles exact readback without another write
+  ---
+  duration_ms: 1.325101
+  ...
+# Subtest: definitive create rejection stops after one write
+ok 8 - definitive create rejection stops after one write
+  ---
+  duration_ms: 0.975299
+  ...
+# Subtest: ambiguous start with one concurrent same-source run remains UNKNOWN
+ok 9 - ambiguous start with one concurrent same-source run remains UNKNOWN
+  ---
+  duration_ms: 2.22128
+  ...
+# Subtest: ambiguous start with multiple same-source runs remains UNKNOWN
+ok 10 - ambiguous start with multiple same-source runs remains UNKNOWN
+  ---
+  duration_ms: 1.459665
+  ...
+# Subtest: ambiguous create plus reconciliation read failure returns structured UNKNOWN
+ok 11 - ambiguous create plus reconciliation read failure returns structured UNKNOWN
+  ---
+  duration_ms: 1.326895
+  ...
+# Subtest: ambiguous update plus reconciliation read failure returns structured UNKNOWN
+ok 12 - ambiguous update plus reconciliation read failure returns structured UNKNOWN
+  ---
+  duration_ms: 1.021518
+  ...
+# Subtest: ambiguous start plus reconciliation read failure returns structured UNKNOWN
+ok 13 - ambiguous start plus reconciliation read failure returns structured UNKNOWN
+  ---
+  duration_ms: 1.199331
+  ...
+# Subtest: run listing reconciles every page instead of treating a 100-run history as a blocker
+ok 14 - run listing reconciles every page instead of treating a 100-run history as a blocker
+  ---
+  duration_ms: 2.965279
+  ...
+# Subtest: repeated pagination token fails closed without sending writes
+ok 15 - repeated pagination token fails closed without sending writes
+  ---
+  duration_ms: 0.876034
+  ...
+# Subtest: overlapping run identities require fresh reconciliation, not silent deduplication
+ok 16 - overlapping run identities require fresh reconciliation, not silent deduplication
+  ---
+  duration_ms: 0.386592
+  ...
+# Subtest: later page transport failure never returns an incomplete successful history
+ok 17 - later page transport failure never returns an incomplete successful history
+  ---
+  duration_ms: 0.692187
+  ...
+# Subtest: malformed later-page run id fails closed
+ok 18 - malformed later-page run id fails closed
+  ---
+  duration_ms: 0.408388
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 801.921063

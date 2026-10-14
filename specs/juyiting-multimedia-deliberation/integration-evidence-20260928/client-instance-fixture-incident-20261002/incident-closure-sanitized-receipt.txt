@@ -1,0 +1,32 @@
+status=INCIDENT_CLOSED_EXACT_RESIDUAL_REMOVED_SERVICE_UNINTERRUPTED
+scope=installer fixture escape into shared production root; independent custody audit and exact-path recovery only
+
+incident_and_attribution:
+- At approximately 2026-10-02T15:02:55+08:00, the installer fixture wrote /home/isp/apps/codex-ws-agent/releases/release-, rebuilt root compatibility symlinks, and temporarily changed current before the Writer restored current/launcher at 15:05. This was a production-root write, not a no-production-action test.
+- Exact residual identity was frozen before cleanup: manifest SHA256 885bc83a34dedc06940de96afb20a0db91d4a9dc88f65058be05ccf9ad55099b; provenance SHA256 f146d6a7bf8467adc2f1e6a65241f90140b6c5156d06c4838af2d81a690ba286; 40-character a/b test sentinels; payloadCount=48; node_modules empty.
+- Two read-only requests for Writer before/after inventory were queued. No Writer-private evidence was read. No independent pre-incident production launcher hash was returned to this Owner.
+
+launcher_baseline:
+- Current /home/isp/bin/codex_ws_agent.sh SHA256 is c38fa0c512b6ac6a97676eb42a1a47ed733d0cdce8386e7016a13bde5dec60f0, mode 0755 root:root.
+- Its bytes exactly match repository 407db0a:bin/codex_ws_agent.sh and historical e080a43eca6b50657ca30a6952a0a34f73fb161c:bin/codex_ws_agent.sh; that file has no diff between those revisions. This proves a legitimate source baseline for the restored bytes.
+- The production launcher was rewritten at 15:05, so its current mtime cannot prove its pre-incident production bytes. preincident_production_launcher_sha256=NOT_PROVEN.
+
+current_compat_config_state_unit:
+- current -> releases/20260926104830-29fda32; target mode 0755 root:root. Active agent-client.mjs SHA256 is 0a4827dd6dfaeab1d6be7a7be68e0dad7980677f7a42e9916351191d1e785bd1, matching this recovery Owner's earlier 14:30 baseline.
+- Compatibility symlinks are root-owned and point through current: agent-client.mjs, workspace-manager.mjs, README.md, .env.example, codex-home.example.toml, evidence. Their incident-window mtimes show they were rebuilt; current resolves all of them to the restored release.
+- .env 0600 root:root; codex-profiles.conf 0600 root:root; workspace-policies.json 0600 root:root; codex-session-map.json 0600 root:isp; data and data/inbox 0700 root:root; logs 0750 root:root.
+- Those private config/state files have pre-incident mtimes and incident-window ctimes consistent with the installer's chmod-only hardening path. No private contents were copied. There are no pre-incident content hashes for all of them, so byte-exact restoration of every private file is NOT_PROVEN.
+- /etc/systemd/system/codex-ws-agent.service is 0644 root:root, SHA256 76e402198fd14cf94386e0e5883ce2e123d399856082c01fae6a649c820fc3ed, with mtime/ctime 2026-09-25, before the incident.
+
+no_reference_and_cleanup:
+- Before deletion, frozen CAS established that current, compatibility links, unit, known config, running process, and external symlinks did not reference the exact residual. The first cleanup attempt stopped without deletion because its checker incorrectly counted the candidate's own internal .env.example symlink; the exact error is retained.
+- The corrected CAS pruned the candidate subtree and checked external references only. It removed only /home/isp/apps/codex-ws-agent/releases/release- (frozen dev:inode 64769:1736742). No sibling release or unknown data was removed.
+- Fresh readback: exact residual ABSENT; external symlink literal references 0; exact path references in known config/unit 0.
+
+runtime_continuity:
+- codex-ws-agent.service remains active/running with PID 3274483, start 2026-10-02T13:47:56+08:00, startticks 3249261805, InvocationID ee1e8cac30274bb0a6ba05973d066c72.
+- Service journal contains zero entries in 14:58-15:08. Recovery Owner sent no signal and performed no restart.
+- PID/start/invocation continuity proves no service restart during the incident; it does not prove all production files were byte-exactly restored. The limitations above remain explicit.
+
+recovery_actions:
+- exact residual cleanup only; no service operation, profile reload, install, candidate promotion, DML, task replay, or provider call.

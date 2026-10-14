@@ -1,0 +1,114 @@
+{
+  "observed_at": "2026-10-01T15:14:57.559156+08:00",
+  "purpose": "preserve_distinct_Client_union_and_existing_API_content_binding_domains",
+  "runtime_probe_scope": "Node String.trim and JDK21 JShell only; no application classes/Provider/DB",
+  "node": {
+    "node": "v20.20.2",
+    "scalarPoints": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      32,
+      160,
+      5760,
+      8192,
+      8193,
+      8194,
+      8195,
+      8196,
+      8197,
+      8198,
+      8199,
+      8200,
+      8201,
+      8202,
+      8232,
+      8233,
+      8239,
+      8287,
+      12288,
+      65279
+    ],
+    "hexPoints": [
+      "U+0009",
+      "U+000a",
+      "U+000b",
+      "U+000c",
+      "U+000d",
+      "U+0020",
+      "U+00a0",
+      "U+1680",
+      "U+2000",
+      "U+2001",
+      "U+2002",
+      "U+2003",
+      "U+2004",
+      "U+2005",
+      "U+2006",
+      "U+2007",
+      "U+2008",
+      "U+2009",
+      "U+200a",
+      "U+2028",
+      "U+2029",
+      "U+202f",
+      "U+205f",
+      "U+3000",
+      "U+feff"
+    ],
+    "samples": [
+      {
+        "hex": "a0",
+        "clientBlank": true
+      },
+      {
+        "hex": "feff",
+        "clientBlank": true
+      },
+      {
+        "hex": "1c",
+        "clientBlank": false
+      },
+      {
+        "hex": "85",
+        "clientBlank": false
+      },
+      {
+        "hex": "200b",
+        "clientBlank": false
+      }
+    ],
+    "scope": "actual Node String.trim predicate only, no repository engine or Provider"
+  },
+  "jdk_log": "|  Welcome to JShell -- Version 21.0.8\n|  For an introduction type: /help intro\n\njshell>  \bNBSP=false\n\njshell>  \bBOM=false\n\njshell>  \bIS4=true\n\njshell>  \b|  Goodbye\n",
+  "baseline_api_commit": "97989512351b6a409ac629e4546ce9fe698670e0",
+  "baseline_api_source": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-fusion-main-20261001/chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatDeliberationService.java",
+  "baseline_api_source_sha256": "d7883c4968e105af2e56549510efe4f783247beb661746d0c5eac17dd664fba5",
+  "baseline_api_content_predicate": "null || String.isBlank() || UTF16.length > 200000",
+  "baseline_api_identity_predicate": "null || String.isBlank() || UTF16.length > max || !equals(strip()) || ISOControl",
+  "runtime_facts": {
+    "NBSP": {
+      "Client_trim_blank": true,
+      "Java_isBlank": false
+    },
+    "BOM": {
+      "Client_trim_blank": true,
+      "Java_isBlank": false
+    },
+    "U001C": {
+      "Client_trim_blank": false,
+      "Java_isBlank": true
+    }
+  },
+  "candidate_readback": "7f6e54b8c16ff0d6b13eb5ec4f2efaf81f77a3d8",
+  "finding": "candidate used ECMAScript predicate also for API content/binding; runtime application test NOT_RUN; source mismatch motivates v1.1 clarification",
+  "not_proven": [
+    "application_JUnit",
+    "HTTP",
+    "persistFinal_transaction",
+    "browser",
+    "release"
+  ]
+}

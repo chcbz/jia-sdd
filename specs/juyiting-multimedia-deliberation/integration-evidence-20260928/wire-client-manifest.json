@@ -1,0 +1,46 @@
+{
+  "task_id": "MMD-WIRE-CONVERGENCE-20260928",
+  "scope": "Only Client hosted-wire fixture, Client provenance, runtime pins, and exact contract assertions. No Web/API write; immutable API git object read only.",
+  "api_source": {
+    "commit": "bc4bd8b15cc06ed29bc591ad01258d1533711f2a",
+    "tree": "23a6b7d4a31095f3f1c0ddbea17873d412df84de",
+    "fixture_path": "chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/api-hosted-wire-v1.json",
+    "provenance_path": "chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/api-hosted-wire-v1.provenance.json",
+    "fixture_sha256": "db50396c2522f7fe8c32af8027abc253782c16eee8354119b2eac643140ce6ee",
+    "fixture_bytes": 7308,
+    "fixture_newline_terminated": true,
+    "api_commit_baseline": "3e608552a4750ad073e8c8bf4f821053e79fc660"
+  },
+  "client": {
+    "commit": "33e38de96f157c020c0bf0b3db4bee451b3b7c3f",
+    "tree": "52fe002075307392d2f32c5d96d4b7ea88f98137",
+    "parent": "d79896e1a877cde9c6fb6278e5ad1a80dac3cf74"
+  },
+  "byte_exact": "cmp API git-show fixture to Client fixture passed; both SHA-256 equal db50396c2522f7fe8c32af8027abc253782c16eee8354119b2eac643140ce6ee.",
+  "provenance_client_schema_preserved": {
+    "schemaVersion": 1,
+    "fixtureFile": "api-hosted-wire-v1.json",
+    "provenanceStatus": "API_GENERATED_VERIFIED",
+    "apiSourcePath": "api/chat/jia-chat-service/src/chatDeliberationTest/resources/contracts/api-hosted-wire-v1.json",
+    "generatorClass": "cn.jia.chat.service.ApiHostedWireV1ContractTest",
+    "productionPath": "ChatDeliberationService.eventPayload -> ChatDeliberationOutboxRelay.hostedWire",
+    "canonicalRule": "CanonicalContextJson v1; UTF-8; lexical object keys; preserved array order; integral numbers only; one LF terminator included in sha256"
+  },
+  "commands": [
+    "git -C api show bc4bd8b15cc06ed29bc591ad01258d1533711f2a:<fixture/provenance>",
+    "cmp api-hosted-wire-v1.json client/contracts/api-hosted-wire-v1.json; sha256sum both",
+    "node --check conf/codex-ws-agent/chat-runtime.mjs; node --check conf/codex-ws-agent/agent-client.mjs",
+    "node --test test/agent-client.test.mjs test/chat-runtime.test.mjs test/managed-host.test.mjs"
+  ],
+  "verification": {
+    "result": "167 tests passing, 0 fail, 0 skipped",
+    "test_log_sha256": "b6a1844991cde3fbfcc0fc1aa02cdc2f627985e3442edefec9bb0f03fc0a4ef6",
+    "client_tree_bound": true
+  },
+  "fast_default": "No configuration enablement. env.example retains CODEX_FAST_CHAT_ENABLED=false, CODEX_APP_SERVER_ENABLED=false, CODEX_TRUE_DELTA_ENABLED=false; selected test includes default-disabled modern durable CHAT fail-closed behavior.",
+  "unresolved": [
+    "F2 per-target capability negotiation",
+    "F3 durable context reconstruction",
+    "F4 INSPECT/material-reference execution"
+  ]
+}

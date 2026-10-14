@@ -1,5 +1,13 @@
 # Agent workspace business capability refresh
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+历史 acceptance 与 release 均有依据，统一原顶层 accepted 与 release.released 的陈旧状态，归档 2026-08-23 交付。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-07。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+<!-- END SDD delivery reconciliation -->
+
 ## Problem
 
 Agent 的 `abilities` 过去混合了 Persona/Profile 固定配置、已安装 Skill 和工作区技术标签，容易长期停留在 `codex`、`shell`、`debug`、`vue`、`java` 等通用能力。宋江据此无法判断当前接入客户端实际位于哪个项目、能处理哪些项目业务，也无法在客户端切换工作目录后及时调整分配依据。

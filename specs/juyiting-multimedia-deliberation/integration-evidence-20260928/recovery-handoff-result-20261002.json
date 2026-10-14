@@ -1,0 +1,102 @@
+{
+  "artifacts": {
+    "jar_sha256": "632012a338c1d3485f8be2502fc263847b96f8c4971ac6f67401c46182bb5fad",
+    "launcher_sha256": "94de2c8af2745d25a9cec82276d54e52c85a63ae7349f4204b36ba5f5f5b930f"
+  },
+  "boundaries": {
+    "build_performed": false,
+    "deployment_performed": false,
+    "foreign_process_control": false,
+    "fstab_change": false,
+    "nginx_change": false,
+    "production_dml": false
+  },
+  "canonical_start": {
+    "CPUAccounting": true,
+    "CPUQuota": "infinity",
+    "attempts_this_stage": 1,
+    "gid": 1000,
+    "pid": 3155665,
+    "ready_after_seconds": 63,
+    "result": "PASS",
+    "start_ticks": 3248234427,
+    "uid": 987,
+    "unit": "cyf-api-authorized-recovery-cpu-20261002-owner.scope"
+  },
+  "completed_at": "2026-10-02T11:00:54.895562+08:00",
+  "evidence": {
+    "final_health_probes": "/var/tmp/cyf-mmd-infra-authorized-20261002-owner/final-health-probes-20261002.txt",
+    "final_health_probes_sha256": "1b23bc27aec36cddcabba950504aa18b1af40d0aa8c288b279c49f2ad0623092"
+  },
+  "health": {
+    "canonical": "RUNNING_UP",
+    "local_actuator": {
+      "http": 200,
+      "status_code": "UP"
+    },
+    "monitor_overall_healthy": true,
+    "monitor_public_probe": {
+      "body_bytes": 0,
+      "classification": "auth_boundary_empty_401",
+      "content_type": "absent",
+      "http": 401,
+      "path": "/agent/map"
+    },
+    "web": {
+      "http": 200,
+      "path": "/juyiting"
+    }
+  },
+  "infrastructure": {
+    "cgroup": {
+      "cgroup2": false,
+      "hierarchies": 12,
+      "mode": "v1_legacy"
+    },
+    "restored_aliases": {
+      "cpu": "cpu,cpuacct",
+      "cpuacct": "cpu,cpuacct",
+      "net_cls": "net_cls,net_prio",
+      "net_prio": "net_cls,net_prio"
+    },
+    "temporary_swap": {
+      "file_bytes": 737030144,
+      "path": "/swapfile.cyf-api-recovery-20261002",
+      "persistent": false,
+      "priority": -3,
+      "usable_bytes": 737026048
+    }
+  },
+  "monitor": {
+    "circuit_history_preserved": true,
+    "in_flight": null,
+    "reset_performed": false
+  },
+  "preserved_failed_proofs": [
+    {
+      "failure": "cpu,cpuacct inherited /system.slice/sshd.service",
+      "unit": "cyf-cgroup-restore-proof-20261002.scope"
+    },
+    {
+      "failure": "CPUAccounting=yes still inherited /system.slice/sshd.service before aliases",
+      "unit": "cyf-cgroup-restore-proof-cpu-20261002.scope"
+    }
+  ],
+  "result": "RECOVERED_HEALTHY",
+  "runtime_membership": {
+    "blkio": true,
+    "cpu,cpuacct": true,
+    "devices": true,
+    "memory": true,
+    "name=systemd": true,
+    "pids": true,
+    "scope": "/system.slice/cyf-api-authorized-recovery-cpu-20261002-owner.scope"
+  },
+  "schema_version": 1,
+  "successful_proof": {
+    "evidence_sha256": "68ad987598ffcbdbde18fcea6610093d4e49267495eaaf98d3f8cf4419a4e37f",
+    "six_controller_membership": true,
+    "unit": "cyf-cgroup-restore-proof-alias-20261002.scope"
+  },
+  "task": "cyf-mmd-infra-authorized-20261002-owner"
+}

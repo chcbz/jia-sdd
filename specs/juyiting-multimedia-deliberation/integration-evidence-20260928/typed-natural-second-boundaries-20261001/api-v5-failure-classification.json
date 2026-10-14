@@ -1,0 +1,87 @@
+{
+  "task": "MMD-U2-API-FOLLOWUP-V3-SOURCE-20261001",
+  "candidate": {
+    "commit": "5f187b5b7be61f590f4592c819f8fb481a8c7768",
+    "parents": [
+      "da1710bcbe966209015941debdcee179034a0bb7"
+    ],
+    "status_porcelain": "",
+    "tree": "cdde506acf9e4644fc8766efe89352a6599db210",
+    "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-followup-v3-main-verification-20261001"
+  },
+  "session_id": 22950,
+  "terminal_exit": 1,
+  "owned_pids": [
+    2762435,
+    2762451,
+    2762516
+  ],
+  "pids_absent": true,
+  "actual_tasks": "45tasks17executed28UP_TO_DATE",
+  "actual_XML": 9,
+  "actual_counts": {
+    "tests": 37,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0
+  },
+  "modules": {
+    "agent": {
+      "totals": {
+        "tests": 37,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_count": 9
+    },
+    "chat": {
+      "totals": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_count": 0
+    }
+  },
+  "failed_task": ":agent:jia-agent-service:mmdControlledImageFollowupV3",
+  "MySQL3": {
+    "tests": 3,
+    "failures": 3,
+    "skipped": 0,
+    "all_fail_in_setup": true,
+    "business_body_reached": false,
+    "failure": "IllegalStateException: Follow-up CHECK definition drift: controlled execution legacy.chk_pwex_controlled_consent",
+    "stack": [
+      "ControlledImageFollowupV3SchemaInitializer.validateCheckDefinitions:308",
+      "validateExactChecks:187",
+      "validateExecutionRestartCatalog:373",
+      "ControlledImageExecutionSchemaInitializer.afterPropertiesSet:64",
+      "ControlledImageIntentOperationGrantMySqlTest.setUp:46"
+    ]
+  },
+  "root_cause": "Actual isolated MySQL8.0.21 legacy CHECK catalog definition comparison rejected during setup before V3 migration/test body; exact normalized expected/actual clause values not logged, so mismatch origin not yet established",
+  "not_resource_or_compile_failure": true,
+  "remaining_scope": "Chat25 V3 NOT_RUN; entire82V2 regression NOT_RUN. No second invocation started. Agent34 PASS preserved but no62PASS.",
+  "mysql_postrun": {
+    "path": "/var/tmp/cyf-mmd-api-followup-v3-verification-20261001/followup-v5-actual-evidence/mysql-postrun-readback.json",
+    "sha256": "f281ddb4819cdf7f377b656b9eabea1ef08011cd59bf52c6f6022526235f4557"
+  },
+  "mysql_identity_matches_prefix_empty": true,
+  "evidence": {
+    "path": "/var/tmp/cyf-mmd-api-followup-v3-verification-20261001/followup-v5-actual-evidence/manifest.json",
+    "sha256": "962e163a467b4306f5cb254bdefaeecb382e17f8fbc88a9c1eed141ee235e34f"
+  },
+  "production_reuse_proof": {
+    "path": "/var/tmp/cyf-mmd-api-followup-v3-verification-20261001/memorydao-child-v5-production-reuse-proof.json",
+    "sha256": "81f0342199685c360816861259cf8c7fc7adc69e54b0339e769d1c56e07738a1"
+  },
+  "source_postrun": {
+    "head": "5f187b5b7be61f590f4592c819f8fb481a8c7768",
+    "tree": "cdde506acf9e4644fc8766efe89352a6599db210",
+    "status_porcelain": "",
+    "source_mismatches": []
+  },
+  "remediation": "Main/original source Owner diagnose actual MySQL CHECK catalog vs legacyControlledConsentCheckDdl/canonicalCheck using separately authorized exact fixture; immutable minimal child then new matrix authorization. Verifier no source/DDL edits, no Gradle retry, no V2 selector removal."
+}

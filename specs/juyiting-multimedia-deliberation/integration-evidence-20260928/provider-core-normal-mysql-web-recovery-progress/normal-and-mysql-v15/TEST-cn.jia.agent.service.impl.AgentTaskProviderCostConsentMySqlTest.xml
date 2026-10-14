@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.service.impl.AgentTaskProviderCostConsentMySqlTest" tests="3" skipped="0" failures="1" errors="0" timestamp="2026-10-01T00:01:05.987Z" hostname="iZwz9j3ip2unzhwij0bs30Z" time="5.127">
+  <properties/>
+  <testcase name="actualMySqlCheckNormalizationAcceptsPristineAndRejectsSameNamedWeakCheck()" classname="cn.jia.agent.service.impl.AgentTaskProviderCostConsentMySqlTest" time="2.238">
+    <failure message="org.springframework.jdbc.UncategorizedSQLException: StatementCallback; uncategorized SQLException for SQL [ALTER TABLE agent_task_provider_cost_consent DROP CHECK chk_atpcc_provider, ADD CONSTRAINT chk_atpcc_provider CHECK (1)]; SQL state [HY000]; error code [3812]; An expression of non-boolean type specified to a check constraint 'chk_atpcc_provider'." type="org.springframework.jdbc.UncategorizedSQLException">org.springframework.jdbc.UncategorizedSQLException: StatementCallback; uncategorized SQLException for SQL [ALTER TABLE agent_task_provider_cost_consent DROP CHECK chk_atpcc_provider, ADD CONSTRAINT chk_atpcc_provider CHECK (1)]; SQL state [HY000]; error code [3812]; An expression of non-boolean type specified to a check constraint 'chk_atpcc_provider'.
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1549)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:462)
+	at cn.jia.agent.service.impl.AgentTaskProviderCostConsentMySqlTest.actualMySqlCheckNormalizationAcceptsPristineAndRejectsSameNamedWeakCheck(AgentTaskProviderCostConsentMySqlTest.java:49)
+Caused by: java.sql.SQLException: An expression of non-boolean type specified to a check constraint 'chk_atpcc_provider'.
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeInternal(StatementImpl.java:837)
+	at com.mysql.cj.jdbc.StatementImpl.execute(StatementImpl.java:685)
+	at org.springframework.jdbc.core.JdbcTemplate$1ExecuteStatementCallback.doInStatement(JdbcTemplate.java:453)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 2 more
+</failure>
+  </testcase>
+  <testcase name="concurrentCasAllowsExactlyOneIssuedToBoundTransition()" classname="cn.jia.agent.service.impl.AgentTaskProviderCostConsentMySqlTest" time="0.864"/>
+  <testcase name="ddlReentryBinaryKeysAndProviderLifecycleChecksAreEnforced()" classname="cn.jia.agent.service.impl.AgentTaskProviderCostConsentMySqlTest" time="1.994"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[2026-10-01T00:01:06.267364774Z Test worker ERROR Log4j API could not find a logging provider.
+]]></system-err>
+</testsuite>

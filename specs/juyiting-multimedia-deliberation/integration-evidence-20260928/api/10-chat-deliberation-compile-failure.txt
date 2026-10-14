@@ -1,0 +1,15 @@
+MMD-INTEGRATE-API-20260928 first exact-tree verification failure
+Date: 2026-09-28
+Commit: 3e608552a4750ad073e8c8bf4f821053e79fc660
+Tree: 9fd78c7ae206c176a7a004f1393c3bfebc1d0c94
+Selector: :chat:jia-chat-service:chatDeliberation
+Fixture digest: 362576ec37ada2539d6676b3f79de396e5aa1a7ad435b704138f6fdd78e3006d
+Gradle entry: cyf_orchestrator.py gradle (offline, no-daemon, max-workers=1)
+Result: FAILED during compileChatDeliberationJava; no tests executed.
+Root cause:
+ApiHostedWireV1ContractTest line 131 still called ChatDeliberationService.eventPayload with the fast-branch pre-F1 signature. The merged production method now requires trusted ServerResolvedSender and trusted taskMaterials arguments before occurredAt. This is a deterministic test-contract adaptation omission, not an environment failure.
+Compiler excerpt:
+  required: ...,JuyitingConversationScope,ServerResolvedSender,Map<String,Object>,long,...
+  found:    ...,JuyitingConversationScope,long,...
+Remediation:
+Add a fixed trusted ServerResolvedSender and taskMaterials fixture to the contract test invocation, then commit a minimal follow-up and rerun on the new exact tree.

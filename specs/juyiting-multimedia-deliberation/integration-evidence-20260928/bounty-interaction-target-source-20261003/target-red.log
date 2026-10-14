@@ -1,0 +1,57 @@
+
+
+  actual JuyiHall F1 follow-up handlers
+    ✔ routes explicit composer GENERATE and output-card EDIT only to the Hall follow-up composable
+    ✔ does not route explicit F1 controls when their default-off flag is disabled
+    ✔ uses the actual F1 admitted callback only as a catalog read hint, never a synthetic result
+
+  real bounty entry binds per-Agent interactions independently of private selection
+    1) uses the exact task participant after enterBountyDiscussion with intentionally null private Agent
+    2) never selects the first of multiple targets; an explicit allowed mention selects exactly one
+    3) drops a revoked or unbound roster target instead of falling back to browser selection
+    ✔ rejects foreign participant, wrong task scope, private and public contexts
+
+
+  4 passing (80ms)
+  3 failing
+
+  1) real bounty entry binds per-Agent interactions independently of private selection
+       uses the exact task participant after enterBountyDiscussion with intentionally null private Agent:
+
+      AssertionError: expected { …(3) } to deeply equal { …(3) }
+      + expected - actual
+
+       {
+         "conversationId": "1760458004760"
+      -  "targetAgentId": ""
+      +  "targetAgentId": "agent-417"
+         "taskId": "417"
+       }
+      
+      at Context.<anonymous> (tests/juyiting-bounty-followup-page-routing.test.js:78:43)
+      at process.processImmediate (node:internal/timers:483:21)
+
+  2) real bounty entry binds per-Agent interactions independently of private selection
+       never selects the first of multiple targets; an explicit allowed mention selects exactly one:
+
+      AssertionError: expected '' to equal 'agent-other'
+      + expected - actual
+
+      +agent-other
+      
+      at Context.<anonymous> (tests/juyiting-bounty-followup-page-routing.test.js:88:52)
+      at process.processImmediate (node:internal/timers:483:21)
+
+  3) real bounty entry binds per-Agent interactions independently of private selection
+       drops a revoked or unbound roster target instead of falling back to browser selection:
+
+      AssertionError: expected '' to equal 'agent-417'
+      + expected - actual
+
+      +agent-417
+      
+      at Context.<anonymous> (tests/juyiting-bounty-followup-page-routing.test.js:97:52)
+      at process.processImmediate (node:internal/timers:483:21)
+
+
+

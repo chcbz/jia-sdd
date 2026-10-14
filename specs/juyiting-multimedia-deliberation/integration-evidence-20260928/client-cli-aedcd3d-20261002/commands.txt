@@ -1,0 +1,21 @@
+WORKDIR=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/client-gpt-image-cli-adapter-owner-20261002/conf/codex-ws-agent
+LOADER=/var/tmp/cyf-mmd-client-v3-yauzl-loader-01a0f2bb.mjs
+CYF_GPT_IMAGE_CLI_TEST_PYTHON=/home/isp/wsps/cyf/.codex-runtime/gpt-image-cli/venv/bin/python
+CYF_GPT_IMAGE_CLI_TEST_CODEX_DIR=/var/tmp/cyf-mmd-browser-readiness-runtime-owner-20261002/gpt-image-cli-snapshot-20261002T190647+0800/codex-home
+
+node --experimental-loader=$LOADER --test --test-concurrency=1 \
+ test/controlled-image-gpt-cli-config.test.mjs \
+ test/controlled-image-gpt-cli-executor-v3.test.mjs \
+ test/controlled-image-gpt-cli-runtime.test.mjs \
+ test/managed-image-scope-config.test.mjs \
+ test/controlled-image-http-provider-binding.test.mjs \
+ test/controlled-image-http-config.test.mjs \
+ test/controlled-image-http-executor.test.mjs \
+ test/controlled-image-http-runtime.test.mjs \
+ test/controlled-image-v2-bridge.test.mjs \
+ test/controlled-image-v3-executor.test.mjs \
+ test/controlled-image-v3-runtime.test.mjs
+
+node --experimental-loader=$LOADER --test --test-concurrency=1 \
+ test/instance-installer-launcher.test.mjs \
+ test/install-candidate-check.test.mjs

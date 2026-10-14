@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-02",
+  "previous_source": "5ec83789d1fe603cd339ba22c332c4a0bebb5f87",
+  "probe_path": "/var/tmp/cyf-mmd-browser-readiness-runtime-owner-20261002/client-5ec-inactive-candidate-20261002T181537+0800/zero-provider-readback.mjs",
+  "probe_sha256": "2f4eb672fd5f61d791bc9831d3a23c1aa4cdbd48cd764584055f72ac828dcefe",
+  "injected_factory_excerpt": "  createLedger: options => { ledgerOptions.push(options); return { createClaim: () => assert.fail('claim forbidden') } },\n  createExecutor: options => { executorOptions.push(options); return { execute: async () => { executorCalls++; throw new Error('execute forbidden') } } },\n  createPollProtocol: options => { pollOptions.push(options); return { poll: async () => assert.fail('poll forbidden') } },\n",
+  "supported": [
+    "exact managed scope/profile configuration resolution",
+    "passing exact identity/config into factory stubs",
+    "registration payload projection using injected ready stubs"
+  ],
+  "not_supported": [
+    "real ledger constructor readiness",
+    "real executor constructor readiness",
+    "online authentication/registration",
+    "actual managed image generation"
+  ],
+  "new_finding": "Exact aed real constructor rejects130-character canonical managed profile due generic100 limit; historical scope/projection PASS did not exercise this boundary.",
+  "old_evidence_preserved": true,
+  "new_provider_calls": 0
+}

@@ -1,0 +1,104 @@
+{
+  "boundaries": [
+    "No profile truncation, renaming, identity substitution, or ledger-directory migration.",
+    "No Provider/native call, deployment, install, service operation, shared config write, or push.",
+    "Model/account product availability remains NOT_RUN."
+  ],
+  "contract": {
+    "claimReadBound": "re-derived with maximum 159-character canonical ManagedHost profile and replay tested",
+    "commandIdContract": "unchanged SAFE_ID maximum 100 characters",
+    "managedProfileId": "exact ManagedHost.profileFor single-owner or multi-owner identity; owner bytes <=50; embedded agent must equal runtime agent",
+    "maximumManagedProfileIdCharacters": 159,
+    "ordinaryProfileId": "historical SAFE_RUNTIME_ID, 1..100 ASCII canonical characters",
+    "physicalLedgerScope": "unchanged SHA-256 of complete profileId NUL agentId"
+  },
+  "date": "2026-10-02",
+  "retainedFailures": [
+    {
+      "log": "/var/tmp/cyf-gpt-image-cli-profile-id-owner-20261002/targeted-v1.log",
+      "remediation": "supply the actual validated hosting request identity fields and the frozen CLI environment; no production behavior was weakened",
+      "result": "60 pass / 1 fail / 8 skipped",
+      "rootCause": "new ManagedHost fixture omitted tenantId/clientId when calling profileFor, so exact managed authorization correctly did not match; CLI selectors were also skipped because the first command omitted the already-available Python/Codex test environment",
+      "sha256": "334b6167fcf9b297ddf78885c65d01de8108496dcfbd0d2274fef8c5a8e1a164"
+    }
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "branch": "codex/juyiting-mmd-gpt-image-cli-profile-id-20261002",
+    "clean": true,
+    "commit": "5bcb16bd8e2cf9a2fde50ac114367ae272c0335f",
+    "parent": "aedcd3da12543f588f85f4678898f4ac3ea777b4",
+    "paths": [
+      {
+        "path": "conf/codex-ws-agent/controlled-image-gpt-cli-executor-v3.mjs",
+        "sha256": "99f632e1cbd9df972e734934f2fb89d901608571723b51dcb97aed70c27f844d"
+      },
+      {
+        "path": "conf/codex-ws-agent/controlled-image-http-config.mjs",
+        "sha256": "59fa8c1cf6a2d67a210720377a523992933fd65e4151268a9b970b203b5d7bc3"
+      },
+      {
+        "path": "conf/codex-ws-agent/controlled-image-http-executor-v3.mjs",
+        "sha256": "001cef874d40b351897d1e0fd68dcb7d1783599b7f8680613deb183869c08e78"
+      },
+      {
+        "path": "conf/codex-ws-agent/controlled-image-http-executor.mjs",
+        "sha256": "7e0a52c906a89a3c2454257ca0945894cd77fe04ffb2a651a14a59d6da17b124"
+      },
+      {
+        "path": "conf/codex-ws-agent/controlled-image-http-ledger.mjs",
+        "sha256": "21bcb8b6eecf15296cb5e92c23100c87de101dc205e20187581658a83dafc477"
+      },
+      {
+        "path": "conf/codex-ws-agent/test/controlled-image-http-ledger.test.mjs",
+        "sha256": "3e2d00ccdce395208c767fadea7354793b50e2cc8e27807b103f954d3f1ff96f"
+      },
+      {
+        "path": "conf/codex-ws-agent/test/managed-image-scope-config.test.mjs",
+        "sha256": "a2422509063487e4a70c2ae7f6ad36ffaf82270a3af26336d77f0141bd1464bd"
+      }
+    ],
+    "tree": "e195b7fb150c3d45adc512e876cb4516de785b5b"
+  },
+  "task": "canonical managed controlled-image profile identity remediation",
+  "upstreamEvidence": {
+    "runtimeReceipt": "/var/tmp/cyf-mmd-browser-readiness-runtime-owner-20261002/client-aedcd3d-cli-inactive-candidate-20261002T193457+0800/readback-receipt-sanitized.txt",
+    "sha256": "74d140491d069895b6bce48991f498cac47b69311304cb2e34d228cb8a353cde"
+  },
+  "verification": [
+    {
+      "actualUnmodifiedCliFakeLoopback": true,
+      "failed": 0,
+      "kind": "node-core",
+      "log": "/var/tmp/cyf-gpt-image-cli-profile-id-owner-20261002/core-final.log",
+      "passed": 91,
+      "realProviderCalls": 0,
+      "selectors": 12,
+      "sha256": "a5d6a48cc3c3ecf3d1bbf2254d26d38f934109d5186cdcb6817716849e316fd4",
+      "skipped": 0,
+      "tests": 91
+    },
+    {
+      "cli": "PASS",
+      "controlledImageV3Ready": true,
+      "executor": "PASS",
+      "http": "PASS",
+      "kind": "exact-binding15-offline-compose",
+      "log": "/var/tmp/cyf-gpt-image-cli-profile-id-owner-20261002/exact-binding15-offline-compose-final.log",
+      "profileIdLength": 130,
+      "realProviderCalls": 0,
+      "serviceActions": 0,
+      "sha256": "112d86debae2c4136bdc4ee341cfda81b690dcafc8b585c1777330ec9f1d8540"
+    },
+    {
+      "checks": [
+        "node --check all seven changed files",
+        "git diff --check parent..child",
+        "clean worktree"
+      ],
+      "kind": "static",
+      "log": "/var/tmp/cyf-gpt-image-cli-profile-id-owner-20261002/static-final.log",
+      "sha256": "5c9de2937f2314b2ba5d681a7c0dddb5612c701dc3677c0e1624fe2f4adc2769"
+    }
+  ]
+}

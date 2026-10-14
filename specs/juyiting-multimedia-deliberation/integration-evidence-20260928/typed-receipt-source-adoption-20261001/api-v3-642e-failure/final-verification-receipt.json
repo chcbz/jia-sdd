@@ -1,0 +1,99 @@
+{
+  "at": "2026-10-01T19:02:08.275673+08:00",
+  "task_id": "MMD-U2-API-TYPED-ATOMIC-FOLLOWUP-V1-SOURCE-20261001",
+  "candidate": {
+    "commit": "642e73238edde3354a8b23654e561a496a2691f3",
+    "tree": "b529963ae8ece8f916917e998cd25db9c7fd77f6",
+    "clean": true,
+    "status_porcelain": ""
+  },
+  "phase1": {
+    "status": "FAILED",
+    "orchestrator_exit": 1,
+    "executed_tasks": [
+      ":agent:jia-agent-service:mmdControlledImageFollowupV3"
+    ],
+    "not_executed_due_to_fail_fast": [
+      ":chat:jia-chat-service:mmdControlledImageFollowupV3"
+    ],
+    "fresh_xml": {
+      "path": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/phase1-v3-fresh-xml.json",
+      "sha256": "3b0798b8b93b06f2f1fbfb5105be24d2c183b6b0b932283ba134dc79728e1ac6",
+      "totals": {
+        "tests": 37,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0
+      },
+      "passed": 34
+    },
+    "failures": [
+      {
+        "test": "cn.jia.agent.service.impl.ControlledImageIntentOperationGrantMySqlTest#concurrentIssueForOneExecutionIntentHasExactlyOneDurableWinner()",
+        "type": "java.lang.IllegalStateException",
+        "message": "java.lang.IllegalStateException: Follow-up CHECK definition drift: agent_task_provider_cost_consent.chk_atpcc_purpose_union",
+        "text": "java.lang.IllegalStateException: Follow-up CHECK definition drift: agent_task_provider_cost_consent.chk_atpcc_purpose_union\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateCheckDefinitions(ControlledImageFollowupV3SchemaInitializer.java:315)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateExactChecks(ControlledImageFollowupV3SchemaInitializer.java:194)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateOwnedChecks(ControlledImageFollowupV3SchemaInitializer.java:231)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateConsentExtension(ControlledImageFollowupV3SchemaInitializer.java:137)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.afterPropertiesSet(ControlledImageFollowupV3SchemaInitializer.java:66)\n\tat cn.jia.agent.service.impl.ControlledImageIntentOperationGrantMySqlTest.concurrentIssueForOneExecutionIntentHasExactlyOneDurableWinner(ControlledImageIntentOperationGrantMySqlTest.java:87)"
+      },
+      {
+        "test": "cn.jia.agent.service.impl.ControlledImageIntentOperationGrantMySqlTest#pristineDefaultOffProjectionAndCompleteV3RestartAreBothAccepted()",
+        "type": "java.lang.IllegalStateException",
+        "message": "java.lang.IllegalStateException: Follow-up CHECK definition drift: agent_task_provider_cost_consent.chk_atpcc_purpose_union",
+        "text": "java.lang.IllegalStateException: Follow-up CHECK definition drift: agent_task_provider_cost_consent.chk_atpcc_purpose_union\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateCheckDefinitions(ControlledImageFollowupV3SchemaInitializer.java:315)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateExactChecks(ControlledImageFollowupV3SchemaInitializer.java:194)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateOwnedChecks(ControlledImageFollowupV3SchemaInitializer.java:231)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateConsentExtension(ControlledImageFollowupV3SchemaInitializer.java:137)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.afterPropertiesSet(ControlledImageFollowupV3SchemaInitializer.java:66)\n\tat cn.jia.agent.service.impl.ControlledImageIntentOperationGrantMySqlTest.pristineDefaultOffProjectionAndCompleteV3RestartAreBothAccepted(ControlledImageIntentOperationGrantMySqlTest.java:62)"
+      },
+      {
+        "test": "cn.jia.agent.service.impl.ControlledImageIntentOperationGrantMySqlTest#completeV3CatalogRejectsSameNamedWeakUnionAndPartialMigration()",
+        "type": "java.lang.IllegalStateException",
+        "message": "java.lang.IllegalStateException: Follow-up CHECK definition drift: agent_task_provider_cost_consent.chk_atpcc_purpose_union",
+        "text": "java.lang.IllegalStateException: Follow-up CHECK definition drift: agent_task_provider_cost_consent.chk_atpcc_purpose_union\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateCheckDefinitions(ControlledImageFollowupV3SchemaInitializer.java:315)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateExactChecks(ControlledImageFollowupV3SchemaInitializer.java:194)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateOwnedChecks(ControlledImageFollowupV3SchemaInitializer.java:231)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.validateConsentExtension(ControlledImageFollowupV3SchemaInitializer.java:137)\n\tat cn.jia.agent.config.ControlledImageFollowupV3SchemaInitializer.afterPropertiesSet(ControlledImageFollowupV3SchemaInitializer.java:66)\n\tat cn.jia.agent.service.impl.ControlledImageIntentOperationGrantMySqlTest.completeV3CatalogRejectsSameNamedWeakUnionAndPartialMigration(ControlledImageIntentOperationGrantMySqlTest.java:77)"
+      }
+    ],
+    "root_cause": {
+      "category": "actual_mysql_catalog_validation",
+      "summary": "All three actual MySQL methods in ControlledImageIntentOperationGrantMySqlTest failed because ControlledImageFollowupV3SchemaInitializer rejected agent_task_provider_cost_consent.chk_atpcc_purpose_union as CHECK definition drift at validateCheckDefinitions line 315.",
+      "attribution": "Source-only schema initializer tests passed (11 total across two schema initializer classes), while the live isolated MySQL 8.0.21 catalog validation failed. This is a real fixture/catalog compatibility failure, not a skipped selector, heap, provider, or compilation failure. No retry was run."
+    },
+    "logs": {
+      "registered_artifact": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/phase1-v3.raw-stdout-stderr.log",
+      "registered_artifact_exists": false,
+      "single_use_gradle_daemon_log": {
+        "path": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/phase1-v3.gradle-daemon-2797308.log",
+        "sha256": "2a9491fc52d57adb6235c4ddf583b6f2c99d9239d8c8746630237f68f83187fe"
+      }
+    },
+    "normal_graph_proof": {
+      "init_sha256": "8f61fa7eed56c3685a4dc914cab0023ce89bc75fac3125540bd0b1fd52c7bc6d",
+      "command_frozen_argv_sha256": "7c6fdb6c5fdf7b2f5c131e5517c35dbc3a7138624fd2ac11aba1ae7b9b60b032",
+      "observed": "Gradle resolved the ordinary production dependency task graph, compiled agent production and mmdControlledImageFollowupV3 source set via Gradle workers, then ran the normal Test task. No manual javac/classes copy/overlay was used."
+    }
+  },
+  "phase2": {
+    "path": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/phase2-v2-not-run.json",
+    "sha256": "c1d2c4ef67f467329570cbda19df99fb978267d4f9d91bec837bb9179d79b923"
+  },
+  "phase3": {
+    "path": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/phase3-typed-not-run.json",
+    "sha256": "a71bac35bff915393dcdd1e6948aed2b0be1ae6273adf1cf2bcca53b005f308e"
+  },
+  "mysql": {
+    "preflight": {
+      "path": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/mysql-live-readonly-preflight.json",
+      "sha256": "3bbff40f95162faf9eeca011c47f5569460d58dc99f57e0eb0db88768771e59f"
+    },
+    "post_phase1_cleanup": {
+      "path": "/var/tmp/cyf-mmd-api-typed-receipt-642e-verification-20261001/mysql-post-phase1-readonly-cleanup.json",
+      "sha256": "93a0f630d4568d673d91fd2a95276c00ecaf87d6f94799171caa1e713f2632b6",
+      "prefix_empty": true
+    }
+  },
+  "process_ownership_terminal": {
+    "checked_at": "2026-10-01T19:02:44.768611+08:00",
+    "remaining_actual_gradle_related_processes": [],
+    "note": "Ancestor/self inspection excluded. No Gradle/worker/orchestrator process remained; no foreign process was signaled, cancelled, killed, or otherwise controlled."
+  },
+  "scope": {
+    "source_edits": false,
+    "docs_or_ledger_edits": false,
+    "provider_build_deploy_push": false,
+    "retry": false
+  }
+}

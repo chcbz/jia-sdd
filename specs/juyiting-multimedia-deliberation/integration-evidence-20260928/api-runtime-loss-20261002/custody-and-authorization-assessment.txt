@@ -1,0 +1,23 @@
+Assessment date: 2026-10-02 Asia/Shanghai
+Operation: read-only attribution/evidence capture. No start/restart, signal, service operation, monitor reset, mount, DML, identity/config mutation, or foreign-process action was performed.
+
+CUSTODY GAP
+- Main reports that send_input to historical Client service Owner 01a086fa-3fb8-7cd0-93bd-fb1501bee548 returned "agent not found".
+- That result proves only that the historical Agent handle is unavailable. It does not prove the service process stopped, that service custody became unowned, or that custody transferred to this task.
+- No positive custody handoff to this task exists. codex-ws-agent.service therefore remains FOREIGN and must not be stopped, restarted, modified, signaled, or reassigned by this Owner.
+- Do not probe random alternative Owners. Required closure is an explicit service-custody handoff from Main/user to a named live Owner, or an explicit authorization for a separately isolated task-owned runtime/identity.
+
+OLD API ROOT CAUSE
+- The old recovered API PID 3155665 did not exit normally. Kernel journal records a host global OOM at 2026-10-02 11:57:28 +08:00 and identifies Java PID 3155665 as the killed victim.
+- Exact victim accounting in the journal: total-vm=2411208kB, anon-rss=177904kB, file-rss=4376kB, shmem-rss=0kB, UID=987, oom_score_adj=0.
+- Current absence of PID/listener is consistent with that terminal OOM event. The old scope's systemd Result=success is not evidence of a normal application exit; scope accounting cannot override the kernel kill record.
+
+RESTART AUTHORIZATION SCOPE
+- The earlier authorization was explicitly bounded to one canonical start after the authorized cgroup proof and fresh CAS. That single start was consumed by the start that created PID 3155665 and reached health.
+- It did not grant an unlimited restart loop or a second start after a later global OOM and loss of the restored cgroup mounts.
+- The monitor's three later attempts do not create authorization; they failed before native launcher dispatch and are now latched.
+- Current instructions explicitly require attribution first and prohibit a repeated start. Therefore there is NO current authorization for another API start.
+- A future start requires: separately authorized/fresh infrastructure restoration, a new unique successful scope proof, fresh stopped/no-listener/hash/lock/identity/monitor CAS, and an explicit new one-time canonical-start instruction from Main/user. No inference from the prior authorization is permitted.
+
+FOREIGN VERIFICATION WORKLOAD
+- Main identifies fixture Gradle/Java PIDs 3223665/3223691/3223733 as live and separately owned. They are observation-only for this task; no signal, cancellation, daemon action, lock manipulation, or competing heavy work is authorized.

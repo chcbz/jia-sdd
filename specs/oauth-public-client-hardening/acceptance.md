@@ -1,5 +1,15 @@
 # OAuth public client hardening acceptance
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+按原 SDD 中独立审查与 2026-08-24 发布记录归档；不扩大为所有账号安全/公共公测需求已完成。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-08。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+
+源码验收、生产发布、真实用户/设备验收分开。已有测试仅复用记录；本次为文档核对，无新增业务测试。未证明项保留未验证。
+<!-- END SDD delivery reconciliation -->
+
 ## Acceptance criteria
 
 - [x] State is unpredictable, short-lived, same-tab, configuration-bound, and consumed once.

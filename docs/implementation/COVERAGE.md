@@ -1,5 +1,23 @@
 # 多 Agent 协作实施覆盖矩阵
 
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全范围覆盖增补
+
+旧表为 2026-08-03 历史覆盖，原“未开始/实施中”不再作为当前执行结论。全部原始任务与运行任务逐项映射见 `SDD_STATUS_20260906.md`。
+
+| 范围 | 当前证据边界 | 未完成部分 |
+| --- | --- | --- |
+| A/B 身份/协作 | 历史 accepted/integrated | 不自动认定所有迁移/生产范围已执行 |
+| C 事件/snapshot/SSE/UI | 历史 accepted/integrated | 不重新派工；实际部署按发布证据 |
+| D 可靠传输 | D06/D08/D09、M3-IR accepted；M3-RG 上线记录归档 | Rabbit 激活/生产端到端未由此证明 |
+| H 案卷阁 | H01-H05W accepted，H06 发布记录归档 | 阅读/CORS/设备 follow-up |
+| O 横竖屏 | O00-O04 accepted，已有 Web 发布 | 新循环/设备验证与高度合入缺口 |
+| PWA/账号 | 多个源码包 accepted，部分历史发布 | 整体验收/凭证浏览器/生产映射 |
+| JVC 语音 | 源码/构建/离线工具已部分 accepted | 实际分阶段发布与 STT/TTS |
+| ECO W/R | 基础部分 accepted | 结算/技能/租金/UI/集成/预览发布 |
+| E/F/G M4/M5 | 原始 draft 规划保留 | 未交付，不归档 |
+<!-- END SDD delivery reconciliation -->
+
 > 状态：M1 代码集成完成，M2 基线计划已冻结（2026-08-03）  
 > 设计依据：`docs/juyiting-multi-agent-collaboration-design.md`
 

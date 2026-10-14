@@ -1,0 +1,379 @@
+{
+  "actual_new_tests": 13,
+  "actual_regression_tests": 49,
+  "actual_test_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 62
+  },
+  "actual_xml_files": 9,
+  "build_origin": "local_user_authorized",
+  "candidate": {
+    "commit": "97989512351b6a409ac629e4546ce9fe698670e0",
+    "parent": "42d6e7e4196cbde7e0a8fe5a41d3e909d954fc3d",
+    "status_porcelain": "",
+    "tree": "407555079ec0c17d5508cabdc01902c24cd7465a",
+    "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-request-index-owner-v1-20261001"
+  },
+  "daemon_pid": 2686176,
+  "evidence_key": "cfafec0bbeb9f7d78eeb91a71d33084b930b1f2adb3d4d96cf985e30b64501b7",
+  "exact_orchestrator_argv": [
+    "/usr/bin/python3",
+    "/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py",
+    "gradle",
+    "--cwd",
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-request-index-owner-v1-20261001",
+    "--tree-sha",
+    "407555079ec0c17d5508cabdc01902c24cd7465a",
+    "--selector",
+    ":chat:jia-chat-service:chatDeliberation;tests=cn.jia.chat.api.ChatBountyRequestIndexControllerTest,cn.jia.chat.service.ChatBountyRequestIndexServiceTest,cn.jia.chat.service.ChatBountyRequestIndexStoreTest*,cn.jia.chat.service.ChatDeliberationServiceTest,cn.jia.chat.service.ChatBountyInteractionRequestStatusTest,cn.jia.chat.api.ChatBountyMediaControllerTest,cn.jia.chat.api.ChatConversationArchiveControllerTest,cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest",
+    "--fixture-digest",
+    "7d212312761fd51a4f240cae9efa381624b9147ae6604e6ddbcc8c82312166e4",
+    "--artifact",
+    "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test.actual-stdout-stderr.log",
+    "MMD-U2-API-REQUEST-INDEX-V1-SOURCE-20261001",
+    "--",
+    "./gradlew",
+    "--info",
+    "--no-daemon",
+    "--max-workers=1",
+    "-I",
+    "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v1.init.gradle",
+    "-Dorg.gradle.jvmargs=-Xmx128m -XX:MaxMetaspaceSize=128m -XX:+UseSerialGC -XX:ActiveProcessorCount=2 -Xss256k -Dfile.encoding=UTF-8",
+    ":chat:jia-chat-service:chatDeliberation",
+    "--tests",
+    "cn.jia.chat.api.ChatBountyRequestIndexControllerTest",
+    "--tests",
+    "cn.jia.chat.service.ChatBountyRequestIndexServiceTest",
+    "--tests",
+    "cn.jia.chat.service.ChatBountyRequestIndexStoreTest*",
+    "--tests",
+    "cn.jia.chat.service.ChatDeliberationServiceTest",
+    "--tests",
+    "cn.jia.chat.service.ChatBountyInteractionRequestStatusTest",
+    "--tests",
+    "cn.jia.chat.api.ChatBountyMediaControllerTest",
+    "--tests",
+    "cn.jia.chat.api.ChatConversationArchiveControllerTest",
+    "--tests",
+    "cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest"
+  ],
+  "exit_code": 0,
+  "historical_failure_preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v1-actual-evidence/manifest.json",
+  "input_fixture_digest": "7d212312761fd51a4f240cae9efa381624b9147ae6604e6ddbcc8c82312166e4",
+  "launcher_pid": 2686099,
+  "limitations": [
+    "All counts are static expected NOT_RUN; no Gradle or MySQL has executed for this candidate.",
+    "Controller fixtures use standalone MockMvc with mocked service and manually created JWT principal; not a real deployed JWT filter chain or full application start.",
+    "Service fixtures instantiate ChatBountyRequestIndexService directly with a Mockito TaskRoots interface. They check reflective invocation on that test double, not injection of @Qualifier(\"agentTaskMetaDaoImpl\") into the real Spring context/DAO proxy.",
+    "Read-only REPEATABLE_READ is checked as an annotation; no real Spring transaction proxy/MVCC service transaction is exercised by these new tests.",
+    "MySQL nested cases exercise the actual store SQL against isolated tables: scope filters, 102-row pagination, low-ordinal late commit rescan, count/state_version/updated_at sums. They do not prove end-to-end new-service projection or zero writes across every production business table.",
+    "Feature-default-off is annotation metadata asserted, not application-context bean absence.",
+    "No claim of complete Spring startup, 34-product/29-fixture acceptance, Provider execution, build/deploy, or unchanged Voice/Agent test rerun.",
+    "New worktree normal Gradle history can invalidate source-path fingerprints; existing normal output is not proof of source binding, and only actual Gradle task outcome/reports can justify reuse.",
+    "The fixed output root is reused only under orchestrator global Gradle lock; no copied bytecode, manual task skips, or source overlays."
+  ],
+  "logs": [
+    {
+      "original": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test.actual-stdout-stderr.log",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/request-index-v2-test.actual-stdout-stderr.log",
+      "sha256": "76bff36e3602baabd7e9310ff908233e0d8d75541c325620dc218fdcc4b63a96"
+    },
+    {
+      "original": "/root/.gradle/daemon/9.3.1/daemon-2686176.out.log",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/daemon-2686176.out.log",
+      "sha256": "73574c08d181b6d85b65b67ef6d2e46a33e59105f430aa5bcbba0412513ab9ad"
+    }
+  ],
+  "mysql_cases_actual": [
+    {
+      "classname": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest$IsolatedMySql",
+      "name": "lateCommittedLowOrdinalRequiresNewFromZeroScanAndIsNotMisdescribedAsCrossPageSnapshot()",
+      "passed": true,
+      "time": "1.095"
+    },
+    {
+      "classname": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest$IsolatedMySql",
+      "name": "actualSqlPartitionsAllScopeCoordinatesPagesPastOneHundredAndNeverWrites()",
+      "passed": true,
+      "time": "1.673"
+    }
+  ],
+  "mysql_postrun": {
+    "exact_prefix_empty": true,
+    "path": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-mysql-postrun-readback.json",
+    "same_unix_tcp_six_field_identity": true,
+    "sha256": "c92bcee44fae7fca0e8892703ecd9fdbc58976da5888326cee9a20cca1329fa2"
+  },
+  "observed_at": "2026-10-01T14:35:43.308240+08:00",
+  "orchestrator_pid": 2686110,
+  "owned_pids_terminal": {
+    "2686099": {
+      "absent": true,
+      "ps_exit": 1,
+      "stderr": "",
+      "stdout": ""
+    },
+    "2686110": {
+      "absent": true,
+      "ps_exit": 1,
+      "stderr": "",
+      "stdout": ""
+    },
+    "2686176": {
+      "absent": true,
+      "ps_exit": 1,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "phase": "v2-test",
+  "postrun_sourcecheck": {
+    "all_candidate_file_hashes_match": true,
+    "all_contract_file_hashes_match": true,
+    "bound_candidate_file_count": 81,
+    "commit": "97989512351b6a409ac629e4546ce9fe698670e0",
+    "status_porcelain": "",
+    "tree": "407555079ec0c17d5508cabdc01902c24cd7465a"
+  },
+  "production_proof": {
+    "path": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-production-actual-evidence/manifest.json",
+    "sha256": "a6c3286da0e2fc870672dfd83c2d8131f1623bcab450ba4f992c3bf48e036a90"
+  },
+  "production_task_source": "Chat compileJava UP-TO-DATE, bound to same candidate v2-production actual forked javac; its manifest remains immutable",
+  "scope_result": "FOCUSED_RELATED_TESTS_PASSED_ONLY; full Spring Qualifier/transaction/application startup and product/build/deploy not asserted",
+  "selector": ":chat:jia-chat-service:chatDeliberation;tests=cn.jia.chat.api.ChatBountyRequestIndexControllerTest,cn.jia.chat.service.ChatBountyRequestIndexServiceTest,cn.jia.chat.service.ChatBountyRequestIndexStoreTest*,cn.jia.chat.service.ChatDeliberationServiceTest,cn.jia.chat.service.ChatBountyInteractionRequestStatusTest,cn.jia.chat.api.ChatBountyMediaControllerTest,cn.jia.chat.api.ChatConversationArchiveControllerTest,cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest",
+  "session": 50325,
+  "source_promotion": "NOT_PERFORMED; Main owns integration/FF/push",
+  "suite_results": [
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 13
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.api.ChatBountyMediaControllerTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.api.ChatBountyMediaControllerTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "485ed607c500947fd1355161357d13364a9ec32d4d1a0bfb2295f5a0ca9850ae",
+      "suite": "cn.jia.chat.api.ChatBountyMediaControllerTest"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 5
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.api.ChatBountyRequestIndexControllerTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.api.ChatBountyRequestIndexControllerTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "522190006ea395245778d5812aba5094f8b645121342fbf69b942923881279ed",
+      "suite": "cn.jia.chat.api.ChatBountyRequestIndexControllerTest"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 6
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.api.ChatConversationArchiveControllerTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.api.ChatConversationArchiveControllerTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "5412605a70a18d6cfdd142fb7ac388f73633476b801a91a4dd2d5296e4142cb2",
+      "suite": "cn.jia.chat.api.ChatConversationArchiveControllerTest"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 10
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "ce4f0edd7ba879c82c92a49723b16bce6262433b2663c07a1bf458febc2f3544",
+      "suite": "cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 5
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.service.ChatBountyInteractionRequestStatusTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.service.ChatBountyInteractionRequestStatusTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "98ce212cae69045c6feb1c678428ec7fcc4686ba621056f37d5a667567845492",
+      "suite": "cn.jia.chat.service.ChatBountyInteractionRequestStatusTest"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 5
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.service.ChatBountyRequestIndexServiceTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.service.ChatBountyRequestIndexServiceTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "ada0dc90a22e5059004154dcee321c487141a5b009fcebc6892f31345b1863ef",
+      "suite": "cn.jia.chat.service.ChatBountyRequestIndexServiceTest"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 2
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.service.ChatBountyRequestIndexStoreTest$IsolatedMySql.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.service.ChatBountyRequestIndexStoreTest$IsolatedMySql.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "7bb973c79e49ec90e79139b29640f8443f1114b80890f41be85544a51ee4c48f",
+      "suite": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest$IsolatedMySql"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 1
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.service.ChatBountyRequestIndexStoreTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.service.ChatBountyRequestIndexStoreTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "4a76e70e908eb9a6324fa122df34d4a71dcb167366d744635c81cc8936f2a3f2",
+      "suite": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 15
+      },
+      "original": "/var/tmp/cyf-mmd-provider-consent-bounded-verification/normal-graph-low-footprint-v1/jia/chat__jia-chat-service/test-results/chatDeliberation/TEST-cn.jia.chat.service.ChatDeliberationServiceTest.xml",
+      "preserved": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-actual-evidence/xml/TEST-cn.jia.chat.service.ChatDeliberationServiceTest.xml",
+      "result_source": "EXECUTED_IN_V2_TEST_NOT_OLD_XML",
+      "sha256": "1b33478606921d35cd91f28692170ea39509a7de1aa35ec9a8396d0194bfee40",
+      "suite": "cn.jia.chat.service.ChatDeliberationServiceTest"
+    }
+  ],
+  "task": "MMD-U2-API-REQUEST-INDEX-V1-SOURCE-20261001",
+  "task_outcomes_raw": [
+    "> Task :common:jia-common-core:compileJava UP-TO-DATE",
+    "> Task :agent:jia-agent-core:compileJava UP-TO-DATE",
+    "> Task :common:jia-common-api:compileJava UP-TO-DATE",
+    "> Task :agent:jia-agent-api:compileJava UP-TO-DATE",
+    "> Task :agent:jia-agent-api:processResources NO-SOURCE",
+    "> Task :agent:jia-agent-api:classes UP-TO-DATE",
+    "> Task :agent:jia-agent-api:jar UP-TO-DATE",
+    "> Task :agent:jia-agent-core:processResources NO-SOURCE",
+    "> Task :agent:jia-agent-core:classes UP-TO-DATE",
+    "> Task :agent:jia-agent-core:jar UP-TO-DATE",
+    "> Task :common:jia-common-mapper:compileJava UP-TO-DATE",
+    "> Task :agent:jia-agent-mapper:compileJava UP-TO-DATE",
+    "> Task :agent:jia-agent-mapper:processResources UP-TO-DATE",
+    "> Task :agent:jia-agent-mapper:classes UP-TO-DATE",
+    "> Task :agent:jia-agent-mapper:jar UP-TO-DATE",
+    "> Task :chat:jia-chat-core:compileJava UP-TO-DATE",
+    "> Task :chat:jia-chat-api:compileJava UP-TO-DATE",
+    "> Task :common:jia-common-core:processResources UP-TO-DATE",
+    "> Task :common:jia-common-core:classes UP-TO-DATE",
+    "> Task :common:jia-common-core:jar UP-TO-DATE",
+    "> Task :common:jia-common-service:compileJava UP-TO-DATE",
+    "> Task :economy:jia-economy-core:compileJava UP-TO-DATE",
+    "> Task :economy:jia-economy-api:compileJava UP-TO-DATE",
+    "> Task :economy:jia-economy-mapper:compileJava UP-TO-DATE",
+    "> Task :economy:jia-economy-service:compileJava UP-TO-DATE",
+    "> Task :oauth:jia-oauth-core:compileJava UP-TO-DATE",
+    "> Task :oauth:jia-oauth-api:compileJava UP-TO-DATE",
+    "> Task :task:jia-task-core:compileJava UP-TO-DATE",
+    "> Task :task:jia-task-api:compileJava UP-TO-DATE",
+    "> Task :user:jia-user-core:compileJava UP-TO-DATE",
+    "> Task :user:jia-user-api:compileJava UP-TO-DATE",
+    "> Task :agent:jia-agent-service:compileJava UP-TO-DATE",
+    "> Task :agent:jia-agent-service:processResources UP-TO-DATE",
+    "> Task :agent:jia-agent-service:classes UP-TO-DATE",
+    "> Task :agent:jia-agent-service:jar UP-TO-DATE",
+    "> Task :chat:jia-chat-api:processResources NO-SOURCE",
+    "> Task :chat:jia-chat-api:classes UP-TO-DATE",
+    "> Task :chat:jia-chat-api:jar UP-TO-DATE",
+    "> Task :chat:jia-chat-core:processResources NO-SOURCE",
+    "> Task :chat:jia-chat-core:classes UP-TO-DATE",
+    "> Task :chat:jia-chat-core:jar UP-TO-DATE",
+    "> Task :chat:jia-chat-mapper:compileJava UP-TO-DATE",
+    "> Task :chat:jia-chat-mapper:processResources UP-TO-DATE",
+    "> Task :chat:jia-chat-mapper:classes UP-TO-DATE",
+    "> Task :chat:jia-chat-mapper:jar UP-TO-DATE",
+    "> Task :kefu:jia-kefu-core:compileJava UP-TO-DATE",
+    "> Task :kefu:jia-kefu-api:compileJava UP-TO-DATE",
+    "> Task :material:jia-material-core:compileJava UP-TO-DATE",
+    "> Task :material:jia-material-api:compileJava UP-TO-DATE",
+    "> Task :point:jia-point-core:compileJava UP-TO-DATE",
+    "> Task :point:jia-point-api:compileJava UP-TO-DATE",
+    "> Task :chat:jia-chat-service:compileJava",
+    "> Task :chat:jia-chat-service:compileJava UP-TO-DATE",
+    "> Task :chat:jia-chat-service:processResources",
+    "> Task :chat:jia-chat-service:classes",
+    "> Task :common:jia-common-test:compileJava",
+    "> Task :common:jia-common-test:compileJava",
+    "> Task :chat:jia-chat-service:compileChatDeliberationJava",
+    "> Task :chat:jia-chat-service:processChatDeliberationResources",
+    "> Task :chat:jia-chat-service:chatDeliberationClasses",
+    "> Task :common:jia-common-api:processResources NO-SOURCE",
+    "> Task :common:jia-common-api:classes UP-TO-DATE",
+    "> Task :common:jia-common-api:jar",
+    "> Task :common:jia-common-mapper:processResources NO-SOURCE",
+    "> Task :common:jia-common-mapper:classes UP-TO-DATE",
+    "> Task :common:jia-common-mapper:jar",
+    "> Task :common:jia-common-service:processResources",
+    "> Task :common:jia-common-service:classes",
+    "> Task :common:jia-common-service:jar",
+    "> Task :common:jia-common-test:processResources",
+    "> Task :common:jia-common-test:classes",
+    "> Task :common:jia-common-test:jar",
+    "> Task :economy:jia-economy-api:processResources NO-SOURCE",
+    "> Task :economy:jia-economy-api:classes UP-TO-DATE",
+    "> Task :economy:jia-economy-api:jar",
+    "> Task :economy:jia-economy-core:processResources NO-SOURCE",
+    "> Task :economy:jia-economy-core:classes UP-TO-DATE",
+    "> Task :economy:jia-economy-core:jar",
+    "> Task :economy:jia-economy-mapper:processResources",
+    "> Task :economy:jia-economy-mapper:classes",
+    "> Task :economy:jia-economy-mapper:jar",
+    "> Task :economy:jia-economy-service:processResources",
+    "> Task :economy:jia-economy-service:classes",
+    "> Task :economy:jia-economy-service:jar",
+    "> Task :oauth:jia-oauth-api:processResources NO-SOURCE",
+    "> Task :oauth:jia-oauth-api:classes UP-TO-DATE",
+    "> Task :oauth:jia-oauth-api:jar",
+    "> Task :oauth:jia-oauth-core:processResources NO-SOURCE",
+    "> Task :oauth:jia-oauth-core:classes UP-TO-DATE",
+    "> Task :oauth:jia-oauth-core:jar",
+    "> Task :task:jia-task-api:processResources NO-SOURCE",
+    "> Task :task:jia-task-api:classes UP-TO-DATE",
+    "> Task :task:jia-task-api:jar",
+    "> Task :task:jia-task-core:processResources NO-SOURCE",
+    "> Task :task:jia-task-core:classes UP-TO-DATE",
+    "> Task :task:jia-task-core:jar",
+    "> Task :user:jia-user-api:processResources NO-SOURCE",
+    "> Task :user:jia-user-api:classes UP-TO-DATE",
+    "> Task :user:jia-user-api:jar",
+    "> Task :user:jia-user-core:processResources NO-SOURCE",
+    "> Task :user:jia-user-core:classes UP-TO-DATE",
+    "> Task :user:jia-user-core:jar",
+    "> Task :chat:jia-chat-service:chatDeliberation",
+    "> Task :chat:jia-chat-service:chatDeliberation",
+    "> Task :chat:jia-chat-service:chatDeliberation",
+    "> Task :chat:jia-chat-service:chatDeliberation"
+  ],
+  "terminal": "BUILD SUCCESSFUL in 1m 32s;63 actionable tasks:23 executed,40 up-to-date",
+  "test_task_source": "chatDeliberation actual Test Executor2 ran and wrote new9XML; not UP-TO-DATE reuse"
+}

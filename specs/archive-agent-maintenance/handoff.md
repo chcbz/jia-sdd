@@ -3,9 +3,7 @@
 - **特性名称**：典籍阁 Agent 任职与内容维护
 - **Feature ID**：`archive-agent-maintenance`
 - **设计版本**：D2，2026-09-28，ready / 从 M0 开始实施准备，未派发。
-- **文档交付分支**：根仓 `develop`。
-- **已准备的根仓特性分支**：`codex/archive-agent-maintenance`，与本次 D2 文档提交对齐。
-- **组件实施分支**：API/Web/Client 在 M0 冻结各自 develop 基线后由实施 Owner 创建对应特性分支；本次不预建组件分支、不改组件 gitlink。
+- **目标分支**：根仓及组件 `develop`；此交接提交只含根仓文档，不改组件 gitlink。
 
 ## 1. 给接手 Agent 的任务
 

@@ -1,0 +1,82 @@
+{
+  "scope": "official public API schema only; not Provider account access, price, usage, availability or real-call acceptance",
+  "docs_only": true,
+  "paid_provider_calls": 0,
+  "sources": [
+    {
+      "url": "https://developers.openai.com/api/reference/resources/images/methods/edit",
+      "verified_line_ranges": [
+        [
+          518,
+          541
+        ],
+        [
+          600,
+          613
+        ],
+        [
+          714,
+          727
+        ],
+        [
+          824,
+          862
+        ]
+      ],
+      "facts": [
+        "JSON body uses images array containing image_url",
+        "image_url can be base64 data URL; maxLength=20971520",
+        "GPT image input count maximum16",
+        "output_format supports png; n permits1",
+        "GPT image output uses b64_json, not returned remote URLs"
+      ]
+    },
+    {
+      "url": "https://developers.openai.com/api/reference/resources/images/methods/generate",
+      "verified_line_ranges": [
+        [
+          558,
+          577
+        ],
+        [
+          651,
+          659
+        ],
+        [
+          671,
+          687
+        ],
+        [
+          729,
+          745
+        ]
+      ],
+      "facts": [
+        "generation JSON body supports prompt/model/n/output_format",
+        "n=1 is permitted",
+        "output_format=png and b64_json output supported for GPT image models",
+        "response_format is not supported for GPT image models"
+      ]
+    }
+  ],
+  "host_direct_fetch_failures": [
+    {
+      "url": "https://developers.openai.com/api/docs/guides/image-generation",
+      "status": 403
+    },
+    {
+      "url": "https://platform.openai.com/docs/api-reference/images/create",
+      "status": 403
+    }
+  ],
+  "resolution": "Official web fetch subsequently returned complete relevant method reference; original host403 remains failed, not rewritten to success",
+  "no_model_selected": true,
+  "no_provider_account_selected": true,
+  "real_provider_compatibility": "NOT_RUN",
+  "binding_contract_sha256": "cd420f9d7e6221c3a58ee1e15f28b9a6dccbba2844cbf764d1272623c50d9bca",
+  "baselines": {
+    "api": "083f9846ee26835e6db79892e4f7186accff467a",
+    "web": "7821209c874995621d139da9047983f3b586d0b0",
+    "client": "1812e5b5d090013338265d16ca34b0b9c257da49"
+  }
+}

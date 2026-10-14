@@ -1,0 +1,76 @@
+{
+  "authorization": "/var/tmp/cyf-mmd-main-controlled-bridge-progress/api-request-index-v2-test-main-authorization-20261001.json",
+  "both_identity_match": true,
+  "exact_prefix_empty": true,
+  "expected_identity": [
+    "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock",
+    "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/",
+    "8.0.21",
+    "0",
+    "1",
+    "a0e6eed2-bb63-11f1-8f71-00163e0a4cf9"
+  ],
+  "observed_at": "2026-10-01T14:35:42.375013+08:00",
+  "preflight": "/var/tmp/cyf-mmd-main-controlled-bridge-progress/api-request-index-v2-test-main-mysql-readback-20261001.json",
+  "preflight_sha256": "8a5f85f5bbf55714fb298a1187fee87d87c0dd3ff4e6fac3fe306448cfe61c6d",
+  "reads": {
+    "tcp": {
+      "command": [
+        "/home/isp/apps/mysql/bin/mysql",
+        "--no-defaults",
+        "--batch",
+        "--raw",
+        "--skip-column-names",
+        "--user=root",
+        "--password=",
+        "--protocol=TCP",
+        "--host=127.0.0.1",
+        "--port=46139",
+        "-e",
+        "SELECT @@socket,@@datadir,@@version,@@port,@@skip_networking,@@server_uuid; SELECT schema_name FROM information_schema.schemata WHERE LEFT(schema_name,CHAR_LENGTH('mmd01a0dde8br1')) = 'mmd01a0dde8br1' ORDER BY schema_name;"
+      ],
+      "exit": 0,
+      "identity": [
+        "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock",
+        "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/",
+        "8.0.21",
+        "0",
+        "1",
+        "a0e6eed2-bb63-11f1-8f71-00163e0a4cf9"
+      ],
+      "identity_matches_preflight": true,
+      "prefix_schemas": [],
+      "stderr": "mysql: [Warning] Using a password on the command line interface can be insecure.\n",
+      "stdout": "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock\t/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/\t8.0.21\t0\t1\ta0e6eed2-bb63-11f1-8f71-00163e0a4cf9\n"
+    },
+    "unix": {
+      "command": [
+        "/home/isp/apps/mysql/bin/mysql",
+        "--no-defaults",
+        "--batch",
+        "--raw",
+        "--skip-column-names",
+        "--user=root",
+        "--password=",
+        "--protocol=SOCKET",
+        "--socket=/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock",
+        "-e",
+        "SELECT @@socket,@@datadir,@@version,@@port,@@skip_networking,@@server_uuid; SELECT schema_name FROM information_schema.schemata WHERE LEFT(schema_name,CHAR_LENGTH('mmd01a0dde8br1')) = 'mmd01a0dde8br1' ORDER BY schema_name;"
+      ],
+      "exit": 0,
+      "identity": [
+        "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock",
+        "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/",
+        "8.0.21",
+        "0",
+        "1",
+        "a0e6eed2-bb63-11f1-8f71-00163e0a4cf9"
+      ],
+      "identity_matches_preflight": true,
+      "prefix_schemas": [],
+      "stderr": "mysql: [Warning] Using a password on the command line interface can be insecure.\n",
+      "stdout": "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock\t/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/\t8.0.21\t0\t1\ta0e6eed2-bb63-11f1-8f71-00163e0a4cf9\n"
+    }
+  },
+  "scope": "readonly_owned_mysql_after_v2_test"
+}

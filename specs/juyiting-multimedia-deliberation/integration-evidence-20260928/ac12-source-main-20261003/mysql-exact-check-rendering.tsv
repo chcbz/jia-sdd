@@ -1,0 +1,9 @@
+CONSTRAINT_NAME	CHECK_CLAUSE
+chk_chat_archive_asset_revision	((`asset_revision` is null) or (`asset_revision` >= 1))
+chk_chat_archive_generation	((`conversation_generation` is null) or (`conversation_generation` >= 1))
+chk_chat_archive_key_length	(char_length(`idempotency_key`) between 8 and 160)
+chk_chat_archive_request_sha	regexp_like(`request_sha256`,_utf8mb4\'^[0-9a-f]{64}$\')
+chk_chat_archive_row_revision	(`row_revision` >= 1)
+chk_chat_archive_saved_receipt	((`state` <> _utf8mb4\'SAVED\') or ((`conversation_generation` >= 1) and (`workspace_operation_id` is not null) and (`file_id` is not null) and (`file_version` >= 1)))
+chk_chat_archive_source_union	(((`source_kind` = _utf8mb4\'assetRef\') and (`asset_id` is not null) and (`asset_revision` >= 1) and (`message_id` is null) and (`message_revision` is null) and (`selection_start_code_point` is null) and (`selection_end_code_point` is null) and (`source_sha256` is null) and (`source_snapshot_key` is null) and (`source_text` is null)) or ((`source_kind` = _utf8mb4\'textSelection\') and (`asset_id` is null) and (`asset_revision` is null) and (`conversation_generation` >= 1) and regexp_like(`message_id`,_utf8mb4\'^[1-9][0-9]{0,18}$\') and (`message_revision` >= 1) and (`selection_start_code_point` >= 0) and (`selection_end_code_point` > `selection_start_code_point`) and regexp_like(`source_sha256`,_utf8mb4\'^[0-9a-f]{64}$\') and regexp_like(`source_snapshot_key`,_utf8mb4\'^[0-9a-f]{64}$\') and (`source_text` is not null) and (length(`source_text`) > 0) and (char_length(`source_text`) = (`selection_end_code_point` - `selection_start_code_point`))))
+chk_chat_archive_state	(`state` in (_utf8mb4\'PENDING\',_utf8mb4\'SAVING\',_utf8mb4\'SAVED\',_utf8mb4\'PARTIAL_FAILED\'))

@@ -1,0 +1,149 @@
+{
+  "kind": "Static Python transcription diagnostic, not Java/runtime proof",
+  "comparisons": [
+    {
+      "name": "chk_chat_typed_admission_digest",
+      "equal": false,
+      "expected": "((REGEXP_LIKE(request_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))) AND (REGEXP_LIKE(body_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))))",
+      "actual": "(regexp_like(`request_digest`,cast(_utf8mb4\\'^sha256:[0-9a-f]{64}$\\' as char charset binary)) and regexp_like(`body_digest`,cast(_utf8mb4\\'^sha256:[0-9a-f]{64}$\\' as char charset binary)))",
+      "normalized_expected": "(regexp_like(request_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary)))and(regexp_like(body_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary)))",
+      "normalized_actual": "regexp_like(request_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary))andregexp_like(body_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary))"
+    },
+    {
+      "name": "chk_chat_typed_admission_generation",
+      "equal": true,
+      "expected": "conversation_generation>=1",
+      "actual": "(`conversation_generation` >= 1)",
+      "normalized_expected": "conversation_generation>=1",
+      "normalized_actual": "conversation_generation>=1"
+    },
+    {
+      "name": "chk_chat_typed_admission_intent",
+      "equal": true,
+      "expected": "intent IN ('DISCUSSION','CLARIFICATION_REPLY')",
+      "actual": "(`intent` in (_utf8mb4\\'DISCUSSION\\',_utf8mb4\\'CLARIFICATION_REPLY\\'))",
+      "normalized_expected": "intentin('DISCUSSION','CLARIFICATION_REPLY')",
+      "normalized_actual": "intentin('DISCUSSION','CLARIFICATION_REPLY')"
+    },
+    {
+      "name": "chk_chat_typed_admission_reply",
+      "equal": false,
+      "expected": "(intent='DISCUSSION' AND pending_question_id IS NULL) OR (intent='CLARIFICATION_REPLY' AND parent_outcome_id IS NOT NULL AND pending_question_id IS NOT NULL)",
+      "actual": "(((`intent` = _utf8mb4\\'DISCUSSION\\') and (`pending_question_id` is null)) or ((`intent` = _utf8mb4\\'CLARIFICATION_REPLY\\') and (`parent_outcome_id` is not null) and (`pending_question_id` is not null)))",
+      "normalized_expected": "(intent='DISCUSSION'andpending_question_idisnull)or(intent='CLARIFICATION_REPLY'andparent_outcome_idisnotnullandpending_question_idisnotnull)",
+      "normalized_actual": "((intent='DISCUSSION')and(pending_question_idisnull))or((intent='CLARIFICATION_REPLY')and(parent_outcome_idisnotnull)and(pending_question_idisnotnull))"
+    },
+    {
+      "name": "chk_chat_typed_admission_revision",
+      "equal": true,
+      "expected": "((request_revision=1) AND (assignment_revision>=0) AND (state_version>=0) AND (event_cursor>=0))",
+      "actual": "((`request_revision` = 1) and (`assignment_revision` >= 0) and (`state_version` >= 0) and (`event_cursor` >= 0))",
+      "normalized_expected": "request_revision=1and(assignment_revision>=0)and(state_version>=0)and(event_cursor>=0)",
+      "normalized_actual": "request_revision=1and(assignment_revision>=0)and(state_version>=0)and(event_cursor>=0)"
+    },
+    {
+      "name": "chk_chat_typed_admission_turns",
+      "equal": false,
+      "expected": "((JSON_VALID(turn_ids_json)) AND (JSON_VALID(source_catalog_json)))",
+      "actual": "(json_valid(`turn_ids_json`) and json_valid(`source_catalog_json`))",
+      "normalized_expected": "json_valid(turn_ids_json)and(json_valid(source_catalog_json))",
+      "normalized_actual": "json_valid(turn_ids_json)andjson_valid(source_catalog_json)"
+    },
+    {
+      "name": "chk_chat_typed_outcome_digest",
+      "equal": true,
+      "expected": "REGEXP_LIKE(final_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary))",
+      "actual": "regexp_like(`final_digest`,cast(_utf8mb4\\'^sha256:[0-9a-f]{64}$\\' as char charset binary))",
+      "normalized_expected": "regexp_like(final_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary))",
+      "normalized_actual": "regexp_like(final_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary))"
+    },
+    {
+      "name": "chk_chat_typed_outcome_generation",
+      "equal": true,
+      "expected": "conversation_generation>=1",
+      "actual": "(`conversation_generation` >= 1)",
+      "normalized_expected": "conversation_generation>=1",
+      "normalized_actual": "conversation_generation>=1"
+    },
+    {
+      "name": "chk_chat_typed_outcome_json",
+      "equal": false,
+      "expected": "((JSON_VALID(binding_json)) AND (JSON_VALID(facts_json)) AND (JSON_VALID(outcome_json)) AND (JSON_VALID(source_catalog_json)))",
+      "actual": "(json_valid(`binding_json`) and json_valid(`facts_json`) and json_valid(`outcome_json`) and json_valid(`source_catalog_json`))",
+      "normalized_expected": "json_valid(binding_json)and(json_valid(facts_json))and(json_valid(outcome_json))and(json_valid(source_catalog_json))",
+      "normalized_actual": "json_valid(binding_json)andjson_valid(facts_json)andjson_valid(outcome_json)andjson_valid(source_catalog_json)"
+    },
+    {
+      "name": "chk_chat_typed_outcome_kind",
+      "equal": true,
+      "expected": "kind IN ('ANSWER','CLARIFY','EXECUTION_PROPOSAL')",
+      "actual": "(`kind` in (_utf8mb4\\'ANSWER\\',_utf8mb4\\'CLARIFY\\',_utf8mb4\\'EXECUTION_PROPOSAL\\'))",
+      "normalized_expected": "kindin('ANSWER','CLARIFY','EXECUTION_PROPOSAL')",
+      "normalized_actual": "kindin('ANSWER','CLARIFY','EXECUTION_PROPOSAL')"
+    },
+    {
+      "name": "chk_chat_typed_outcome_revision",
+      "equal": true,
+      "expected": "((request_revision=1) AND (assignment_revision>=0))",
+      "actual": "((`request_revision` = 1) and (`assignment_revision` >= 0))",
+      "normalized_expected": "request_revision=1and(assignment_revision>=0)",
+      "normalized_actual": "request_revision=1and(assignment_revision>=0)"
+    },
+    {
+      "name": "chk_chat_typed_pending_required",
+      "equal": true,
+      "expected": "JSON_VALID(required_facts_json)",
+      "actual": "json_valid(`required_facts_json`)",
+      "normalized_expected": "json_valid(required_facts_json)",
+      "normalized_actual": "json_valid(required_facts_json)"
+    },
+    {
+      "name": "chk_chat_typed_pending_state",
+      "equal": true,
+      "expected": "state IN ('OPEN','ANSWERED')",
+      "actual": "(`state` in (_utf8mb4\\'OPEN\\',_utf8mb4\\'ANSWERED\\'))",
+      "normalized_expected": "statein('OPEN','ANSWERED')",
+      "normalized_actual": "statein('OPEN','ANSWERED')"
+    },
+    {
+      "name": "chk_chat_typed_pending_version",
+      "equal": false,
+      "expected": "(state='OPEN' AND state_version=0 AND reply_request_id IS NULL AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL) OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL AND reply_idempotency_key IS NOT NULL AND REGEXP_LIKE(reply_body_digest,CAST('^sha256:[0-9a-f]{64}$' AS CHAR CHARSET binary)))",
+      "actual": "(((`state` = _utf8mb4\\'OPEN\\') and (`state_version` = 0) and (`reply_request_id` is null) and (`reply_idempotency_key` is null) and (`reply_body_digest` is null)) or ((`state` = _utf8mb4\\'ANSWERED\\') and (`state_version` = 1) and (`reply_request_id` is not null) and (`reply_idempotency_key` is not null) and regexp_like(`reply_body_digest`,cast(_utf8mb4\\'^sha256:[0-9a-f]{64}$\\' as char charset binary))))",
+      "normalized_expected": "(state='OPEN'andstate_version=0andreply_request_idisnullandreply_idempotency_keyisnullandreply_body_digestisnull)or(state='ANSWERED'andstate_version=1andreply_request_idisnotnullandreply_idempotency_keyisnotnullandregexp_like(reply_body_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary)))",
+      "normalized_actual": "((state='OPEN')and(state_version=0)and(reply_request_idisnull)and(reply_idempotency_keyisnull)and(reply_body_digestisnull))or((state='ANSWERED')and(state_version=1)and(reply_request_idisnotnull)and(reply_idempotency_keyisnotnull)andregexp_like(reply_body_digest,cast('^sha256:[0-9a-f]{64}$'ascharcharsetbinary)))"
+    },
+    {
+      "name": "chk_chat_typed_proposal_operation",
+      "equal": true,
+      "expected": "operation IN ('GENERATE_IMAGE','EDIT_IMAGE')",
+      "actual": "(`operation` in (_utf8mb4\\'GENERATE_IMAGE\\',_utf8mb4\\'EDIT_IMAGE\\'))",
+      "normalized_expected": "operationin('GENERATE_IMAGE','EDIT_IMAGE')",
+      "normalized_actual": "operationin('GENERATE_IMAGE','EDIT_IMAGE')"
+    },
+    {
+      "name": "chk_chat_typed_proposal_parent",
+      "equal": false,
+      "expected": "(parent_request_id IS NULL AND parent_step_id IS NULL) OR (parent_request_id IS NOT NULL AND parent_step_id IS NOT NULL)",
+      "actual": "(((`parent_request_id` is null) and (`parent_step_id` is null)) or ((`parent_request_id` is not null) and (`parent_step_id` is not null)))",
+      "normalized_expected": "(parent_request_idisnullandparent_step_idisnull)or(parent_request_idisnotnullandparent_step_idisnotnull)",
+      "normalized_actual": "(parent_request_idisnulland(parent_step_idisnull))or(parent_request_idisnotnulland(parent_step_idisnotnull))"
+    },
+    {
+      "name": "chk_chat_typed_proposal_sources",
+      "equal": false,
+      "expected": "((JSON_VALID(source_ref_ids_json)) AND (JSON_VALID(source_selectors_json)))",
+      "actual": "(json_valid(`source_ref_ids_json`) and json_valid(`source_selectors_json`))",
+      "normalized_expected": "json_valid(source_ref_ids_json)and(json_valid(source_selectors_json))",
+      "normalized_actual": "json_valid(source_ref_ids_json)andjson_valid(source_selectors_json)"
+    },
+    {
+      "name": "chk_chat_typed_proposal_state",
+      "equal": true,
+      "expected": "((state='PROPOSED') AND (state_version=0))",
+      "actual": "((`state` = _utf8mb4\\'PROPOSED\\') and (`state_version` = 0))",
+      "normalized_expected": "(state='PROPOSED')and(state_version=0)",
+      "normalized_actual": "(state='PROPOSED')and(state_version=0)"
+    }
+  ]
+}

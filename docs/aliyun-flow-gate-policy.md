@@ -11,7 +11,7 @@
 
 ## 保留及依据
 
-- 云端测试、精确 commit/tree、同 Run 制品及线上核验：用户明确要求。
+- 按 2026-10-08 最新规则：前端云端测试与同 Flow Run 制品，后端本地测试与同 build ID 制品；两端均绑定精确 commit/tree、制品摘要及线上核验。保留历史云端证据，不将其当成本地发布证据。
 - 制品摘要、来源、路径/权限、进程身份、端口归属：防止发布错误字节、越界写入或操作其他进程。
 - 停机前按实际解压字节和回退副本大小检查可用空间；不足会使必要写入无法完成，不加固定运行预留。
 - 备份、原子替换、持久化状态与恢复：处理已经开始的部署中断，不将此扩展为日常独立审查或手工审批。
@@ -26,4 +26,4 @@
 - `ops/ci/aliyun-flow/host/cyf-api-flow-install`
 - `ops/ci/aliyun-flow/host/cyf-api-kit`（本次将现行生命周期脚本纳入版本管理）
 
-验证：`python3 -m unittest discover -s ops/ci/aliyun-flow/tests -p 'test_api*.py' -v`。这些是隔离临时目录中的控制面测试，不调用生产生命周期，不替代应用 Flow 回归。
+验证：`python3 -m unittest discover -s ops/ci/aliyun-flow/tests -p 'test_api*.py' -v`。这些是隔离临时目录中的控制面测试，不调用生产生命周期，不替代正式应用回归（前端 Flow、后端本地）。

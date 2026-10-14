@@ -117,6 +117,14 @@ Agent ──task.report──> Server     {taskId, status: "completed"}
 
 **厅内回复**：Codex 执行完毕后自动发送 `agent.message` + `task.report`，前端聚义厅界面实时显示。
 
+### 业务会话与 Codex 会话
+
+- `codexSessionMode=resume` 只续接 `agentId:conversationId` 的准确映射，且会话必须存在于该 profile 的 Codex Home；无映射执行 new，不再回退 `--last --all`。映射会话丢失明确失败。
+- 当前 CLI 的 `thread.started/thread_id` 用于保存映射；不再按 Home 最近修改的文件猜测本轮会话归属。显式 new 与隔离任务 workspace 的 forceNew 保持独立新建。
+- 聚义厅“话头记录”展示当前用户/聊天范围的业务历史，选择后继续使用原 conversationId；“另起话头”下次发送才创建新会话。历史不是 Codex 工具日志，不自动清理历史文件。
+- 旧版本已经将多个业务 ID 映射到同一 Codex session 的记录会保留；本次不自动拆分混合历史。要开始干净上下文，请另起话头。
+- 设计、准确候选与验证/发布证据：`specs/juyiting-conversation-sessions/`。版本源码在 `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`，部署副本在 `/home/isp/apps/codex-ws-agent/current/`。
+
 ### 3.3 文件内容
 
 #### `.env`
@@ -256,3 +264,11 @@ tail -f /home/isp/apps/codex-ws-agent/logs/startlog_*.log
 ```
 
 本机接入时，用户需要准备 Node.js 20+、可用的 `codex` CLI、`agent-client.mjs`、`package.json`，并向管理员获取 `OPENCLAW_API_KEY`。
+
+## 2026-10-06：typed INSPECT 网络隔离自检（T05–T09 Owner）
+
+- slirp sandbox 必须在独立、**递归 private** 的 mount namespace 内启动：固定 `/usr/bin/unshare --mount --propagation private -- /usr/bin/slirp4netns ...`，不提供直接 slirp 兜底。不关闭 sandbox/seccomp、精确进程归属、nft default-drop 或固定 provider CONNECT 代理。
+- 使用已经核对 Owner、可执行文件、startticks 和 namespace 的 `/proc/<holderPid>/ns/net` 精确路径及 `--netns-type=path`。本机 SUID bwrap 在服务 uid0/gid1000 环境中，slirp PID 模式的隐式 userns entry 实测导致后续 netns entry EPERM；相同隔离 fixture 的精确 netns 路径模式已成功 READY。
+- 外部命令的成功回读和失败 stderr 等待 `close`（stdio 排空），不能在 `exit` 时直接结算。只记录本地 nft/slirp 诊断，不记录 provider 凭据或任意 provider 错误内容。
+- 网络契约改变必须重做真实 carrier、绑定当前 profile/policy/native attestation；无模型测量成功不等于 carrier 或真实业务通过。新增验证同时核对 PID1 mountinfo 和保护进程 cgroup/startticks 未变，不在共享服务上重放危险旧路径。
+- typed INSPECT 声明与 CHAT transport capability 是独立契约。后端派发应采用独立 typed registry 的唯一当前、精确 tenant/owner/client/Agent/session READY 项，并匹配 admission manifest profile；不能放宽旧 capability 验证或伪报 READY。2026-10-06 的后端派发修复仍须绑定 Flow 与上线验证，不能把候选文档当作上线结果。

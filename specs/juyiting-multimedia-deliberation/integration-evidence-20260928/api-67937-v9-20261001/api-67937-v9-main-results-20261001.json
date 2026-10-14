@@ -1,0 +1,100 @@
+{
+  "candidate": "67937da02b811b463ba837c8a0f0bc636406df5a",
+  "counts": {
+    "tests": 65,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "xml": [
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.api.ChatTypedDeliberationControllerTest.xml",
+      "sha256": "08ba5f688fc31567abaeb7de1d9b8b229f54159675bd440ca0e7571a627d0164",
+      "tests": "4",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.config.ChatTypedDeliberationSchemaInitializerTest.xml",
+      "sha256": "eaae30ec17f567e831042220ceb29df87cbcfd370418f9b406c0db1f4db25793",
+      "tests": "7",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.deliberation.ChatTypedDeliberationMySqlTest.xml",
+      "sha256": "6446c2e14fc5a4aa5cb3540b50c163593281a93443eeca938fad7064ed6ba1ea",
+      "tests": "3",
+      "failures": [
+        {
+          "name": "pristineToV3RestartAndExactCatalogAreReady()",
+          "message": "org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (\n  pending_question_id VARCHAR(64) NOT NULL,\n  outcome_id VARCHAR(64) NOT NULL,\n  tenant_id VARCHAR(50) NOT NULL,\n  owner_jiacn VARCHAR(50) NOT NULL,\n  client_id VARCHAR(50) NOT NULL,\n  conversation_id VARCHAR(100) NOT NULL,\n  conversation_generation BIGINT NOT NULL,\n  state VARCHAR(20) NOT NULL,\n  state_version BIGINT NOT NULL DEFAULT 0,\n  question MEDIUMTEXT NOT NULL,\n  required_facts_json TEXT NOT NULL,\n  reply_request_id VARCHAR(100) DEFAULT NULL,\n  reply_idempotency_key VARCHAR(100) DEFAULT NULL,\n  reply_body_digest VARCHAR(100) DEFAULT NULL,\n  created_at BIGINT NOT NULL,\n  updated_at BIGINT NOT NULL,\n  PRIMARY KEY (pending_question_id),\n  UNIQUE KEY uk_chat_typed_pending_outcome\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),\n  KEY idx_chat_typed_pending_scope_state\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),\n  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)\n    REFERENCES chat_typed_outcome\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)\n    ON UPDATE RESTRICT ON DELETE RESTRICT,\n  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),\n  CONSTRAINT chk_chat_typed_pending_version CHECK\n    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL\n      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)\n     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL\n      AND reply_idempotency_key IS NOT NULL\n      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),\n  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]"
+        },
+        {
+          "name": "realUniqueForeignKeyAndCheckConstraintsRejectInvalidRows()",
+          "message": "org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (\n  pending_question_id VARCHAR(64) NOT NULL,\n  outcome_id VARCHAR(64) NOT NULL,\n  tenant_id VARCHAR(50) NOT NULL,\n  owner_jiacn VARCHAR(50) NOT NULL,\n  client_id VARCHAR(50) NOT NULL,\n  conversation_id VARCHAR(100) NOT NULL,\n  conversation_generation BIGINT NOT NULL,\n  state VARCHAR(20) NOT NULL,\n  state_version BIGINT NOT NULL DEFAULT 0,\n  question MEDIUMTEXT NOT NULL,\n  required_facts_json TEXT NOT NULL,\n  reply_request_id VARCHAR(100) DEFAULT NULL,\n  reply_idempotency_key VARCHAR(100) DEFAULT NULL,\n  reply_body_digest VARCHAR(100) DEFAULT NULL,\n  created_at BIGINT NOT NULL,\n  updated_at BIGINT NOT NULL,\n  PRIMARY KEY (pending_question_id),\n  UNIQUE KEY uk_chat_typed_pending_outcome\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),\n  KEY idx_chat_typed_pending_scope_state\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),\n  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)\n    REFERENCES chat_typed_outcome\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)\n    ON UPDATE RESTRICT ON DELETE RESTRICT,\n  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),\n  CONSTRAINT chk_chat_typed_pending_version CHECK\n    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL\n      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)\n     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL\n      AND reply_idempotency_key IS NOT NULL\n      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),\n  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]"
+        },
+        {
+          "name": "partialAndSameNamedWeakenedCheckNeverBecomeReady()",
+          "message": "org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [CREATE TABLE IF NOT EXISTS chat_typed_pending_question (\n  pending_question_id VARCHAR(64) NOT NULL,\n  outcome_id VARCHAR(64) NOT NULL,\n  tenant_id VARCHAR(50) NOT NULL,\n  owner_jiacn VARCHAR(50) NOT NULL,\n  client_id VARCHAR(50) NOT NULL,\n  conversation_id VARCHAR(100) NOT NULL,\n  conversation_generation BIGINT NOT NULL,\n  state VARCHAR(20) NOT NULL,\n  state_version BIGINT NOT NULL DEFAULT 0,\n  question MEDIUMTEXT NOT NULL,\n  required_facts_json TEXT NOT NULL,\n  reply_request_id VARCHAR(100) DEFAULT NULL,\n  reply_idempotency_key VARCHAR(100) DEFAULT NULL,\n  reply_body_digest VARCHAR(100) DEFAULT NULL,\n  created_at BIGINT NOT NULL,\n  updated_at BIGINT NOT NULL,\n  PRIMARY KEY (pending_question_id),\n  UNIQUE KEY uk_chat_typed_pending_outcome\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id),\n  KEY idx_chat_typed_pending_scope_state\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,state,updated_at),\n  CONSTRAINT fk_chat_typed_pending_outcome FOREIGN KEY\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)\n    REFERENCES chat_typed_outcome\n    (tenant_id,owner_jiacn,client_id,conversation_id,conversation_generation,outcome_id)\n    ON UPDATE RESTRICT ON DELETE RESTRICT,\n  CONSTRAINT chk_chat_typed_pending_state CHECK (state IN ('OPEN','ANSWERED')),\n  CONSTRAINT chk_chat_typed_pending_version CHECK\n    ((state='OPEN' AND state_version=0 AND reply_request_id IS NULL\n      AND reply_idempotency_key IS NULL AND reply_body_digest IS NULL)\n     OR (state='ANSWERED' AND state_version=1 AND reply_request_id IS NOT NULL\n      AND reply_idempotency_key IS NOT NULL\n      AND reply_body_digest REGEXP BINARY '^sha256:[0-9a-f]{64}$'))),\n  CONSTRAINT chk_chat_typed_pending_required CHECK (JSON_VALID(required_facts_json))\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin]"
+        }
+      ]
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.handler.AgentWebSocketTypedDeliberationTest.xml",
+      "sha256": "eef5f8c9c37e4fa12a233097706589f77cbd5475e2a82b1def81ac37cf7857e6",
+      "tests": "5",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.handler.TypedDeliberationDeclarationTest.xml",
+      "sha256": "64e7c85b23b8244f589f03e805784aa51158b55166372ed2cb0f95e9396ff97f",
+      "tests": "3",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.handler.TypedDeliberationSessionRegistryTest.xml",
+      "sha256": "075cade62ff0c79105c092b6ba3c3f1163a40aaced15c484eaa50199e36fee9c",
+      "tests": "5",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.service.ChatDeliberationServiceTest.xml",
+      "sha256": "7b6c4a7b7330b718fddb3beb844beba9b06cdc4bd8f36df48297f5981d3b2fbe",
+      "tests": "16",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.service.ChatTypedDeliberationContextServiceTest.xml",
+      "sha256": "b1f96d9180280cf29ec150546ef2a699b0d8c67ea2e409a86fd21ff5a1cbc1ac",
+      "tests": "4",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.service.ChatTypedDeliberationServiceTest.xml",
+      "sha256": "0d4d9a1dc7c88802acb08e492ff49946fb98147bf01b06ed0d7b1aa4698f8631",
+      "tests": "5",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.service.ChatTypedDeliberationSpringTransactionTest.xml",
+      "sha256": "fc3db0d5e101d0ff4b3c86e08eaa368575939d183f4b377dcdefdefd68ee72a9",
+      "tests": "4",
+      "failures": []
+    },
+    {
+      "path": "/var/tmp/cyf-mmd-api-typed13-child-verification-v9-20261001/phase1-typed11-fresh-xml/TEST-cn.jia.chat.service.ChatTypedDiscussionAdmissionServiceTest.xml",
+      "sha256": "f4b3875c2abf5e6c4763d588b5243a9de56156ac2b72322da5a671731e28fd2d",
+      "tests": "9",
+      "failures": [
+        {
+          "name": "freshDiscussionCreatesOneOrdinaryChatAndTypedAdmissionWithoutAuthority()",
+          "message": "org.mockito.exceptions.verification.NoInteractionsWanted: \nNo interactions wanted here:\n-> at cn.jia.chat.service.ChatTypedDiscussionAdmissionServiceTest.freshDiscussionCreatesOneOrdinaryChatAndTypedAdmissionWithoutAuthority(ChatTypedDiscussionAdmissionServiceTest.java:68)\nBut found this interaction on mock 'chatTypedDeliberationContextService':\n-> at cn.jia.chat.service.ChatTypedDiscussionAdmissionService.lambda$admit$0(ChatTypedDiscussionAdmissionService.java:88)\nActually, above is the only interaction with this mock."
+        }
+      ]
+    }
+  ],
+  "result": "61PASS_4FAIL_no_promotion",
+  "root_causes": [
+    "SQL pending-version CHECK has extra closing parenthesis; 3 real MySQL tests fail syntax",
+    "fresh discussion test verifyNoMoreInteractions missing exact expected contexts.resolve verify"
+  ]
+}

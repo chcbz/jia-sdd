@@ -14,7 +14,7 @@ class FlowControlStaticTest(unittest.TestCase):
         cls.text = CONTROL.read_text(encoding="utf-8")
 
     def test_versioned_narrow_command_surface(self):
-        self.assertIn("const CLI_VERSION = '1.0.0'", self.text)
+        self.assertIn("const CLI_VERSION = '1.1.0'", self.text)
         self.assertIn("['config', 'list', 'create', 'update', 'start', 'status']", self.text)
         self.assertIn("OPTION_NAMES", self.text)
         for forbidden in ("deletePipeline", "retryPipelineJobRun"):
@@ -24,6 +24,8 @@ class FlowControlStaticTest(unittest.TestCase):
         self.assertNotRegex(self.text, r"\b(?:retry|retries|backoff|setTimeout|setInterval)\b")
         self.assertNotRegex(self.text, r"console\.(?:log|error)\([^)]*(?:error|err|response|body)")
         self.assertIn("reconcile read-only; do not repeat a write", self.text)
+        for code in ("FLOW_API_FORBIDDEN", "FLOW_API_INVALID_YAML"):
+            self.assertIn(code, self.text)
 
     def test_credentials_are_input_only_and_not_output(self):
         self.assertIn("ALIBABA_CLOUD_ACCESS_KEY_ID", self.text)
@@ -40,10 +42,10 @@ class FlowControlStaticTest(unittest.TestCase):
     def test_candidate_hash_and_single_write_readback_gates(self):
         self.assertIn("candidate-sha256", self.text)
         self.assertIn("CANDIDATE_SHA256_MISMATCH", self.text)
-        self.assertIn("CREATE_READBACK_MISMATCH", self.text)
-        self.assertIn("UPDATE_READBACK_MISMATCH", self.text)
+        self.assertIn("canonicalFlowText", self.text)
+        self.assertIn("canonicalConfigSha256", self.text)
         self.assertEqual(1, self.text.count("client.createPipeline("))
-        self.assertIn("created.pipelinId", self.text)
+        self.assertIn("write.body.pipelinId", self.text)
         self.assertEqual(1, self.text.count("client.updatePipeline("))
         update = re.search(r"async function commandUpdate.*?\n}\n\nasync function commandStart", self.text, re.DOTALL).group(0)
         self.assertLess(update.index("getPipeline(client, org, pipeline)"), update.index("client.updatePipeline("))
@@ -65,6 +67,8 @@ class FlowControlStaticTest(unittest.TestCase):
         self.assertIn("options.allowlist", self.text)
         self.assertIn("ORG_NOT_ALLOWLISTED", self.text)
         self.assertIn("PIPELINE_NOT_ALLOWLISTED", self.text)
+        self.assertIn("WRITE_ALLOWLIST_REQUIRED", self.text)
+        self.assertIn("CREATE_NOT_ALLOWLISTED", self.text)
 
     def test_python_test_syntax(self):
         ast.parse(pathlib.Path(__file__).read_text(encoding="utf-8"))

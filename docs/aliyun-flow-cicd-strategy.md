@@ -1,48 +1,70 @@
-# CYF 阿里云 Flow 构建、测试与部署策略
+# CYF 构建、测试与部署策略：前端 Flow / 后端本地
 
-更新：2026-09-13。按用户最新要求，日常发布以可用、轻量为准。
+更新：2026-10-08，按用户最新授权调整 **CYF 项目内** 的交付默认规则；不修改 Codex 全局、其他项目或共享技能。本节为当前规范；下方历史证据不恢复旧的双端 Flow、自动部署或本机前端发布路径。本次只更新规则与指南，未修改云端配置、构建、部署或重启服务。
 
-2026-09-13 门禁调整：删除无测算依据的固定磁盘/内存预留、包大小上限和本地等待超时判败；空间按实际安装与回退字节计算，互斥等待，健康按实际状态判断。保留云端测试、同 Run 制品、身份/完整性与恢复能力。后续只有实际问题及证据才能支持新增门禁，见 `docs/aliyun-flow-gate-policy.md`。
+## 当前交付路径
 
-## 唯一默认路径
+- **前端**：阿里云云效 Flow 正式测试、生产构建、制品生成与部署；复用 `4403172`。本机只做开发预览、控制面及轻量诊断，不运行生产 Vite 打包，不因 Flow 失败回退本机构建。
+- **后端**：本地正式测试、构建、制品生成与部署；在固定完整 commit/tree 的干净源码目录或独立 worktree 执行，不在生产安装目录编译、不从脏工作区发布。所有 Gradle 操作先读最新相关 `build.gradle`，经 `python3 ops/orchestration/cyf_orchestrator.py gradle ...` 串行协调。
+- **develop 不自动部署**：push/合入只用于集成与验证；不由旧定时任务发布最新 develop。后端不再默认启动 Flow 验证/发布，现存 webhook/流水线是否调整需另有配置 readback，规则写入不等于云端已改。
+- **统一版本化部署**：确定版本 → 固定源码 commit/tree → 对应环境测试/构建 → 同批不可变制品 → 部署 → 在线核验。前端绑定真实同 Flow Run 制品，后端绑定真实同本地 build ID/日志与制品摘要。任一步失败记录真实失败，构建通过不等于已上线。
+- 按具体版本安排发布时机，不要求每次重复构建或独立 Reviewer，不新增流水线或无依据门禁。本规则不授权立即发布、重启、迁移、生产数据写入或扣费，沿用任务已有授权与恢复要求。
 
-**功能具备上线条件 → 合入组件仓库 develop → Flow 自动测试 → 构建 → 同 Run 制品 → 自动部署 → 核验。任一步失败停止，不假报成功。**
+## 固定入口与执行边界
 
-| 组件 | 默认发布流水线 | 触发分支 | 云端验证 | 迁移状态 |
-| --- | --- | --- | --- | --- |
-| 后端 | `5260799 / cyf-api-kit-ci` | develop push（包括合并） | 63 个相关测试类、validateLayering、bootJar、私仓 OpenCV 摘要 | Run25 测试/构建/部署成功，精确制品及 PID2659818/health 已核验；push 配置存在，但最新 API push 仍未观察到自动触发 |
-| 前端 | `4403172 / cyf-web-kit` | develop push（包括合并） | JavaScript 扫描、npm ci、完整 npm test、Vite build | develop push 已实际自动触发 Run93；测试/构建成功，线上410文件及9响应匹配，但 Flow 最后首页检查失败，异常整改中 |
+| 入口 | 当前用途 |
+| --- | --- |
+| `4403172 / cyf-web-release` | 前端 Flow 验证及明确版本的发布；develop 不自动部署 |
+| `ops/orchestration/cyf_orchestrator.py gradle ...` | 后端本地正式测试、构建与诊断的唯一 Gradle 入口 |
+| `/home/isp/hosts/cyf/api/cyf-api-kit.jar` | 后端最终实体安装目标；构建与安装分离 |
+| `5260799`、`5263690` | 既有后端 Flow 入口，非默认交付路径；保留历史与明确需要的云端诊断，不因本次规则调整删除或覆盖 |
+| `5263692 / cyf-web-ci` | 前端按需 CI-only 诊断，不部署 |
+| `5264702 / cyf-ops-manual` | 临时运维入口，默认只读；复用不增加操作授权 |
 
-- 不再逐次签 ticket、改 YAML、排 Reviewer、人工放行或转 master 才发布。
-- 合并前可按需使用 `5263690` / `5263692` 的 CI-only 诊断，不是必经前置步骤；它们不监听 push，避免同提交自动重复构建。
-- Flow checkout 的完整 commit/tree 才是运行源码；不发布本地脏工作区，不用本地 Gradle/Vite 替代云端。
-- 数据迁移、身份/ACL、事务或生产数据变更按自身风险在合并前处理；不把它们的独立审查套到所有普通发布。
+## 制品安装契约
 
-> 2026-09-12：用户补充连接使用权限后，前端以原流水线的当前配置为基线，仅恢复 Gitee 服务连接和 develop push 触发，保存/readback 成功；没有覆盖已有测试/构建/部署修复，也没有重复启动 Run。Run92 部署单69505789及目标主机成功；它发生在本次触发规则修改前，不等于新 webhook 已验收。
+- 前端继续使用真实 Flow Run、完整 commit、版本及同 Run 归档 SHA-256；现行 `/usr/local/sbin/cyf-web-flow-deploy PIPELINE RUN COMMIT VERSION ARTIFACT_SHA256` 不改为本地打包入口。制品 manifest 的 `package_version` 必须匹配发布版本，并核验来源、receipt 与文件完整性。
+- 后端本地测试及构建绑定同一固定源码输入；记录 build ID、commit/tree、版本、命令/selector、fixture、工具链、依赖来源、测试摘要及日志。对唯一构建 JAR 与安装包（如使用）分别记录 SHA-256，部署只消费该批已核验字节，不在安装时重编译。
+- 后端安装仍保留统一锁及锁顺序、互斥等待不抢占、可信 root 管理的 JAR/配置、`cyf-api` 运行身份、备份、原子替换、可恢复安装、必要的 schema 检查与实际健康/业务核验。数据迁移不因构建位置变更自动获准。
+- **本地发布入口须适配与验收**：现行 `/usr/local/sbin/cyf-api-flow-deploy` 是真实 Flow Run 下载契约，不能以本地 build ID 冒充 Run。为本地制品提供版本/源码/摘要绑定的安装输入并验证恢复路径后，才能实际执行本地部署；这次规则修改不宣称适配已完成，也不恢复旧 pull/build/restart 脚本或旧 M1/M2 发布输入。
+- 生产 JAR 与 cwd 固定 `/home/isp/hosts/cyf/api`；`/opt/cyf/service/api` 仅兼容链接。构建产物/日志留在源码或任务证据目录；既有 Flow 下载/状态留在 `/var/lib/cyf-api-flow`，备份留在 `/home/isp/baks`。
 
-## 固定流水线配置与部署
+## 构建与验收证据
 
-- 后端：`ops/ci/aliyun-flow/templates/backend-develop-release.yaml`。
-- 前端：`ops/ci/aliyun-flow/templates/frontend-develop-release.yaml`。
-- 后端打包脚本：`ops/ci/aliyun-flow/auto/package-api.py`；标准安装适配器：`ops/ci/aliyun-flow/host/cyf-api-flow-deploy`。
-- 前端制品清单：`ops/ci/aliyun-flow/auto/package-web.cjs`；安装脚本：`ops/ci/aliyun-flow/host/cyf-web-flow-deploy`。
-- 每次运行自动绑定 pipeline/run/commit/tree、制品哈希；不接受测试失败的制品进入部署。
-- 后端保留既有事务安装、互斥、制品验证、磁盘检查和健康检查。旧 installer 的 `ticket_sha256` 字段仅兼容承载本次运行身份摘要，不代表人工审批、不含期限或固定提交。
-- 两端下载到 Run 独立路径。主机只安装制品，不做源码编译；部署互斥，旧 Run 不覆盖已安装的新 Run。
-- 前端仅部署 dist；逐文件校验，先资源后入口，入口文件原子替换；测试报告留在 Flow。暂保留旧哈希资源供已打开页面使用，不擅自清理其他任务文件。
+- 保留身份/ACL、幂等、事务、锁归属、依赖与制品完整性及相关回归；后端 `validateLayering`、相关定向测试和发布 JAR 构建在本地执行。真实数据库集成使用隔离 fixture，不触碰生产数据。
+- 证据按 tree SHA、精确 selector 与 fixture 复用，接受有效命中时不重复执行。同根因同输入连续失败两次停止盲重试，经归因或实际修复后再验证。
+- 发布记录包含版本、完整 commit/tree、前端 Flow Run 或后端本地 build ID/日志、测试及制品摘要、目标、部署顺序、恢复信息和在线核验。后端本地正式证据不再被默认排除，历史 Flow 成功仍只证明其原输入。
+- Flow 写入先备份前值、固定候选并 readback；有活动 Run 等待，不覆盖、不取消他人任务。资源/包大小/等待时限不增加无证据阈值，详见 `docs/aliyun-flow-gate-policy.md`。
+- Flow 模板及主机工具维护源仍位于 `ops/ci/aliyun-flow/`。目录名、配置保存、历史 status 或候选成功均不等于当前版本已部署。
 
-## 操作与验收
+## 后端本地构建缓存提速（2026-10-09）
 
-1. 改配置前备份、固定候选 SHA；只写一次，再读取云端配置对账。
-2. 普通发布由 develop push 自动触发；不要为同一次 push 再手动开一条 Run。
-3. 需要手动诊断或验收时先查询现有 Run，明确目标分支与 SHA；不重试旧配置快照冒充新配置运行。
-4. 查询/日志直接由主 Agent 执行，不读取 Reviewer 历史、不排队等门禁线程。
-5. 成功必须有精确 Run、源码、测试、同 Run 制品、部署单/主机及线上校验。配置保存成功不等于部署成功。
-6. 同输入同根因连续失败两次就停止盲重试，修正根因后再试。
+正式本地后端构建通过既有 `cyf_orchestrator.py gradle` **默认**复用受控私有Gradle依赖缓存，并启用compile-only输出缓存：识别本地release opt-in与匹配的固定metadata init，无缓存参数即可选择 `/var/cache/cyf-gradle-local` 并加入 `--build-cache`；显式诊断/隔离参数可覆盖，Flow和普通诊断不变。仅在干净固定commit/tree及新输出目录执行。compile-only策略：仅JavaCompile按内容指纹复用，其余任务禁用输出缓存，测试禁止up-to-date；仍执行同批定向测试、`validateLayering`、依赖来源/SHA与fresh bootJar完整性检查，不缓存测试结果/生产JAR、不删除安全回归。home信任边界与参数冲突检查见 `ops/orchestration/README.md`。
 
-## 配置迁移状态
+2026-10-09授权收尾已按既有锁、备份与原子安装同步主机admission白名单（当前SHA `49ff62e470beadf5c5c570b007d1d30a6dd18b1f32df217274d89121ff77728b`）；cached/skipped测试、分层和bootJar仍拒绝。应用未发布/重启，历史helper catalog与authority/receipt不改写，后续发布生成新批次catalog。默认策略实现源码 `638777ed`，证据与恢复原值见原handoff。
 
-新自动发布配置的实时保存/验收结果见 `docs/aliyun-flow-develop-auto-status.json`。以下为迁移前历史证据，**不是新配置成功证据**。
+10分钟是“测试/构建/安装核验执行时间”的优化目标，不是强制超时或减免安全门禁。历史安装约307秒来自日志文件起止，未包含排队与批次中间等待；本次没有授权/触发生产安装，因此新构建加历史安装仅用于评估，不冒充完整发布达标。固定输入、实测结果与证据见 `docs/implementation/handoffs/BACKEND-RELEASE-10M-20261009.md`。冷缓存和其它源码/selector不作无实测承诺。
+
+## 历史控制面与适配器记录（截至 2026-10-06，非当前执行规范）
+
+以下原记录保留不改写；其中双端 Flow 发布契约不作为后端本地发布输入，也不能证明新本地发布入口已验收。
+
+2026-10-06 经用户授权完成控制面调整：前端单次 Update/readback 移除部署阶段；后端当前配置原已仅验证，未写入。两端 develop push 保留测试、构建与制品，不部署；两个旧 nightly timer 均 disabled/inactive，无下一触发时刻。本地 develop 模板同步移除部署阶段，7 项静态测试通过。实际证据见 `docs/aliyun-flow-versioned-deployment-switch-20261006.json`。
+
+版本发布需先准备绑定明确版本、完整 commit 的固定发布候选配置，复用上述入口；发布完成后恢复 develop 仅验证配置。2026-10-06 已通过 `5264702 / Run13` 安装版本化部署适配器，移除午夜 intent 与旧分时版本限制；运维配置已恢复。36 项本地定向测试通过，Flow 安装器执行固定的 15 项回归后完成安装；日志接口未返回测试明细，依据固定测试摘要与安装回执核验。证据见 `docs/aliyun-flow-versioned-adapter-migration-20261006.json`。本次只更新部署工具，未发布、重启应用或执行数据库变更，不能视为应用版本端到端验收。
+
+初次审计把后端历史 Run 的部署阶段误当作当前配置，已纠正；当前 YAML 才是自动部署配置证据。
+
+## 版本发布适配器契约
+
+- 前后端统一调用：`/usr/local/sbin/cyf-{api|web}-flow-deploy PIPELINE RUN COMMIT VERSION ARTIFACT_SHA256`。版本与完整 commit 必须固定；旧三参数调用不再有效，不创建 nightly intent。
+- `ARTIFACT_SHA256` 是该 Run 完整下载归档的 SHA-256，不是单独 JAR、dist 文件或目录的摘要。仍须校验 Run、commit、manifest/receipt 与文件完整性；前端 `VERSION` 必须等于制品 manifest 的 `package_version`。
+- 发布候选必须同步更新制品内嵌适配器及 helper 升级调用的接口和哈希，不能复用旧模板中冻结的三参数 helper。当前 develop 模板仅 CI，不因安装新适配器恢复部署。
+- 后端记录版本/commit/Run/制品绑定，安装与既有 schema 检查成功后才标记 verified；前端保留互斥等待、分阶段发布与实际在线核验。
+
+## 历史证据（非当前执行规范）
+
+以下保留历史 Run、迁移与部署记录；其中 develop 自动发布、旧本机例外及定时安排已不作为当前发布依据。历史事实不能代替当前版本的 Run 与在线核验。
 
 ## 2026-09-12 CI-only 验收证据
 
@@ -125,9 +147,26 @@
 - Web安装器反复gzip随机seek的独立性能问题由Owner改为有界顺序staging，并补最终只读重验诊断；不降低制品、路径或身份校验。A16异步受理基础 `9672b4bc` 已push，保持default-off，不声称执行器已完成。
 
 
+## 2026-09-12 23:00 CST 增量
+
+- Run31/f6554168 已 SUCCESS，初次容量拒绝发生在停机前，same-artifact retry69510726部署成功。canonical JAR/record/healthUP 已复核；API push 自动触发仍未证明。
+- 后端配置当前66selectors，canonical05d595b2；云端显示名并发变为cyf-api-release，ID5260799与YAML未变。E02 develop00db已提交，单次Run32观察中；Web develop1b3自动Run94观察中。仅云端终态+制品+在线证据可更新发布gitlink。
+
+
 ## 2026-09-13 登录修复与门禁精简验收
 
 - 删除无测算依据的固定资源/大小阈值及本地超时判败，24 项相关控制面回归通过；三个线上 helper 的候选摘要与 readback 一致，未清理历史备份。
 - API Run36 SUCCESS，commit `5ece9141e66f27aa2d5443dada1ea816e44ca95c`，deploy order `69520177`；JAR SHA-256 `1c073e3bf7928bf9f057d81d33265fe8323384247a112ab5cd2111df811925b9`，PID3257882/health UP，包含 `80383a07` 登录表单与 CORS 修复。
 - 公网预检明确包含 x-request-id，未登录 map 返回可读401，无效 code 的 token 表单返回400 invalid_grant而非302登录页；真实账号及第三方/微信交互仍需用户重试确认。
 - 精确证据：`docs/implementation/handoffs/FLOW-AUTH-GATE-FOLLOWUP-VERIFIED-20260913.json`。
+
+
+## 前端发布验证范围与缓存（2026-10-09 核验）
+
+核验源码：Web `81f49518c3f23f794f9d37f4ac0be024d65d9f55` / tree `5595dab02479b49b3ef803eda6c84c67ef22ecb9`；Flow4403172 Run188 SUCCESS，普通验证总176秒（2分56秒），2790通过/2pending/0失败、Mocha72.298秒，Vite11.28秒，制品及并行JS扫描成功。**本次未部署/未在线核验**；不据此宣称完整版本发布或所有候选均在5分钟内。
+
+按用户追加授权，默认release profile保留业务/身份/ACL/幂等/交付/恢复及实际游戏运行时回归；16个离线资产作者工具/E13重算/E14性能验收文件单列assets/all。涉及`public/juyiting`、资产生成器、renderer、E13/E14或其fixture/验收工具修改，Owner必须在固定SHA选择`CYF_TEST_PROFILE=all`的Flow，不得用release成功代替资产验收。assets/all保留原签名/SHA及10秒预热/60秒采样。覆盖以同Run `ci-profile.json`为准（旧job标签含full tests不代表all-profile）。不改版本化发布、制品来源/摘要、部署互斥/恢复/健康或develop不自动部署规则。
+
+只读清单确认旧缓存10份历史runtime提取目录总4.145GB（未压缩），npm下载缓存仅43.73MB。新提取目录移出Flow缓存，仅清理当前独占worker恢复的旧实体目录、不跟随链接。Run188缓存归档355.91MB，归档与上传约5秒且成功；旧Run186归档2.011GB、76秒并因平台2GB上限未上传。删6个无消费者直接开发依赖，lock减少95项，保留包版本及完整性未变；删除脚手架测试并合并重复正向重算，负向篡改测试在assets/all保留。
+
+Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前值、修正严格SemVer校验并单次update/readback，根模板同步，Run188证明该配置候选成功。Flow SHA `719b28019ba51985a11a60dd2af99ed3a336d4de760004301dd0c2336e2a65a3`。详细scope/失败/授权及未验证项：`docs/implementation/handoffs/FRONTEND-RELEASE-5M-20261009.md`；正式摘要：`docs/implementation/evidence/frontend-release-5m-20261009/summary.json`。

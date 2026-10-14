@@ -1,0 +1,270 @@
+{
+  "candidate": {
+    "commit": "97989512351b6a409ac629e4546ce9fe698670e0",
+    "parent": "42d6e7e4196cbde7e0a8fe5a41d3e909d954fc3d",
+    "status_porcelain": "",
+    "tree": "407555079ec0c17d5508cabdc01902c24cd7465a",
+    "worktree": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-request-index-owner-v1-20261001"
+  },
+  "coverage_limitations": [
+    "All counts are static expected NOT_RUN; no Gradle or MySQL has executed for this candidate.",
+    "Controller fixtures use standalone MockMvc with mocked service and manually created JWT principal; not a real deployed JWT filter chain or full application start.",
+    "Service fixtures instantiate ChatBountyRequestIndexService directly with a Mockito TaskRoots interface. They check reflective invocation on that test double, not injection of @Qualifier(\"agentTaskMetaDaoImpl\") into the real Spring context/DAO proxy.",
+    "Read-only REPEATABLE_READ is checked as an annotation; no real Spring transaction proxy/MVCC service transaction is exercised by these new tests.",
+    "MySQL nested cases exercise the actual store SQL against isolated tables: scope filters, 102-row pagination, low-ordinal late commit rescan, count/state_version/updated_at sums. They do not prove end-to-end new-service projection or zero writes across every production business table.",
+    "Feature-default-off is annotation metadata asserted, not application-context bean absence.",
+    "No claim of complete Spring startup, 34-product/29-fixture acceptance, Provider execution, build/deploy, or unchanged Voice/Agent test rerun.",
+    "New worktree normal Gradle history can invalidate source-path fingerprints; existing normal output is not proof of source binding, and only actual Gradle task outcome/reports can justify reuse.",
+    "The fixed output root is reused only under orchestrator global Gradle lock; no copied bytecode, manual task skips, or source overlays."
+  ],
+  "environment": {
+    "MMD_API_REQUEST_INDEX_MYSQL_DATABASE_PREFIX": "mmd01a0dde8br1",
+    "MMD_API_REQUEST_INDEX_MYSQL_ISOLATED_FIXTURE": "true",
+    "MMD_API_REQUEST_INDEX_MYSQL_PASSWORD": "",
+    "MMD_API_REQUEST_INDEX_MYSQL_URL": "jdbc:mysql://127.0.0.1:46139/mysql?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_0900_bin",
+    "MMD_API_REQUEST_INDEX_MYSQL_USER": "root"
+  },
+  "execution_authorized": false,
+  "gate": "preparing_waiting_main_authorization",
+  "init": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v1.init.gradle",
+  "init_sha256": "4121363e92b7ab4a7a455f4b3e90adb4d7d5e5629f7b2025192b8d9643a19442",
+  "input": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test-inputs.json",
+  "input_sha256": "7d212312761fd51a4f240cae9efa381624b9147ae6604e6ddbcc8c82312166e4",
+  "logs": {
+    "gradle_stdout_stderr": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-test.actual-stdout-stderr.log"
+  },
+  "material_strategy_change": {
+    "hypothesis_only": "Separating normal production compile and test task graphs can reduce per-daemon retained state. Not proven to prevent OOM; cache warmth is not a PASS result. Gradle alone decides UP-TO-DATE from exact current inputs.",
+    "material_change": "Two separate normal-graph invocations/daemons: production compileJava first, original eight-class chatDeliberation run second, instead of one combined test invocation from cold task history.",
+    "no_change": [
+      "candidate/tree/worktree",
+      "production and test source bodies",
+      "all normal declared dependencies/AP",
+      "original init bytes",
+      "daemon/compiler/test heap/meta flags",
+      "global serial Gradle lock and max-workers=1",
+      "62-test overall scope including two nested MySQL tests",
+      "existing private normal output root"
+    ]
+  },
+  "not_product_build_release_proof": true,
+  "overall_test_scope": {
+    "compiled_java_count": 50,
+    "existing_source_set": "chatDeliberation",
+    "expected_junit_suite_files": 9,
+    "gradle_task": ":chat:jia-chat-service:chatDeliberation",
+    "nested_selector": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest* matches root and IsolatedMySql nested class; no --tests method exclusions",
+    "runtime_status": "NOT_RUN",
+    "selected_test_classes": [
+      {
+        "class": "cn.jia.chat.api.ChatBountyRequestIndexControllerTest",
+        "group": "new_request_index",
+        "sha256": "eea27bb7cf57a4a2e5cb650b81ea8b8fd842d332f4b3fd067cf96637401efbc8",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatBountyRequestIndexControllerTest.java",
+        "static_test_annotations": 5,
+        "test_filter": "cn.jia.chat.api.ChatBountyRequestIndexControllerTest"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatBountyRequestIndexServiceTest",
+        "group": "new_request_index",
+        "sha256": "fb5a92a436fa26343b1e77dc8424b59232bc532f176b503722f83ae6b8b53e87",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyRequestIndexServiceTest.java",
+        "static_test_annotations": 5,
+        "test_filter": "cn.jia.chat.service.ChatBountyRequestIndexServiceTest"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest",
+        "group": "new_request_index",
+        "sha256": "480ad932f49894965624ad0897095ae0f7fcc3c0faa045bfe7e2e37d15ccd176",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyRequestIndexStoreTest.java",
+        "static_test_annotations": 3,
+        "test_filter": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest*"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatDeliberationServiceTest",
+        "group": "read_regression",
+        "sha256": "3d29ec308ae08d81a3a32bf7e7e733666fa64250518feb7f7a1e5f0cd0a83e5f",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatDeliberationServiceTest.java",
+        "static_test_annotations": 15,
+        "test_filter": "cn.jia.chat.service.ChatDeliberationServiceTest"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatBountyInteractionRequestStatusTest",
+        "group": "read_regression",
+        "sha256": "dc5068f37879f7d184f8872e3a6eca0537fbc79e47ff0232817075dfaf08615b",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionRequestStatusTest.java",
+        "static_test_annotations": 5,
+        "test_filter": "cn.jia.chat.service.ChatBountyInteractionRequestStatusTest"
+      },
+      {
+        "class": "cn.jia.chat.api.ChatBountyMediaControllerTest",
+        "group": "read_regression",
+        "sha256": "d5ff177ebfdfdb1984e4cb50ef0d5c4034c7d0aed79c5066ac4e8dbe236dbbf5",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatBountyMediaControllerTest.java",
+        "static_test_annotations": 13,
+        "test_filter": "cn.jia.chat.api.ChatBountyMediaControllerTest"
+      },
+      {
+        "class": "cn.jia.chat.api.ChatConversationArchiveControllerTest",
+        "group": "read_regression",
+        "sha256": "b0359e36c4fa9e4ded4e685b47bfde4ee6d3208ff4487783942d7c529c9ebce4",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatConversationArchiveControllerTest.java",
+        "static_test_annotations": 6,
+        "test_filter": "cn.jia.chat.api.ChatConversationArchiveControllerTest"
+      },
+      {
+        "class": "cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest",
+        "group": "read_regression",
+        "sha256": "88e231a49df16e23e7d86945b364e80cf579c9a38ed37d09aaab083cc146a77c",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/archive/conversation/ChatConversationArchiveServiceTest.java",
+        "static_test_annotations": 10,
+        "test_filter": "cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest"
+      }
+    ],
+    "selected_top_level_classes": 8,
+    "source_directory": "src/chatDeliberationTest/java",
+    "source_filtering": "none; all 50 declared chatDeliberation Java sources compile normally; Gradle --tests only chooses requested runtime classes",
+    "static_new_nested_mysql_test_annotations": 2,
+    "static_new_test_annotations": 13,
+    "static_regression_test_annotations": 49,
+    "static_total_test_annotations": 62
+  },
+  "phase": {
+    "authorization": "L0 PREPARATION ONLY; separate Main authorization required for this phase.",
+    "expected_test_status": "NOT_RUN",
+    "gradle_task": ":chat:jia-chat-service:chatDeliberation",
+    "name": "test",
+    "order": 2,
+    "other_phase_may_auto_start": false,
+    "production_success_required": true,
+    "test_execution": true
+  },
+  "preconditions": [
+    "Main verifies exact clean candidate, all source/contract/init/runner/input/matrix/argv hashes and parser.",
+    "Main supplies single-phase authorization and exact verifier ledger gate; runner can only call root orchestrator with global Gradle lock.",
+    "Main validates fresh owned MySQL Unix/TCP six-field identity and exact prefix empty before applicable fixture phase.",
+    "Production phase must have actual exit0 evidence and Main approval; no voice/Agent-test phase and no automatic chaining."
+  ],
+  "prior_failure": {
+    "actual_tests": 0,
+    "actual_xml": 0,
+    "confirmed_failure": "Java heap space during Chat compileJava preparation, before logged Chat compiler or test executor",
+    "exit": 1,
+    "failure_attribution_receipt": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v1-failure-attribution-receipt.json",
+    "failure_receipt_sha256": "5370324bc57363afba6a1ffd21c4f294cf4f69780220e90037ce2268e935235e",
+    "manifest": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v1-actual-evidence/manifest.json",
+    "manifest_sha256": "af48d0b616b62bf7bef15bfcd6fd3da3fa979d28ac3c4dfb163588b4eb83da82",
+    "normal_graph_tasks": "39 executed",
+    "scope_of_inference": "Daemon task/input pressure supported; exact allocation stack absent. Not an established javac/AP/snapshot/source failure."
+  },
+  "production_success_precondition": {
+    "actual_result": "NOT_RUN",
+    "argv_sha256": "94de9b7648e49bffeb23ddc9482fb361186d2b2f5a0827d269bda33e941dcfca",
+    "enforcement": "Main separately grants exact phase gate; frozen runner is not an auto-chaining script.",
+    "expected_raw_log": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-production.actual-stdout-stderr.log",
+    "input": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-production-inputs.json",
+    "input_sha256": "bcb6bcb5de1c3e24ad1c37e25b582a53d4f4bfdce48721ec633a5e24cd8dae81",
+    "matrix": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-production-matrix.json",
+    "matrix_sha256": "28507516380e7a3a5aabf34c8ab3dc7f5e2f3d416cca493dc87b0c52a2ed600a",
+    "phase": "production",
+    "required_result": "Actual exit0; validated normal production compile evidence, plus Main separately authorizes test phase.",
+    "saved_argv": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/request-index-v2-production-argv.json"
+  },
+  "runner": "/var/tmp/cyf-mmd-api-request-index-verification-20261001/owned-request-index-runner-v1.py",
+  "runner_sha256": "cf8a82ff114b8464cf575f061db6af272e656cc98b0741501e9908cd0f45f055",
+  "schema": "request-index-staged-v2-matrix",
+  "selection_for_this_phase": {
+    "compiled_java_count": 50,
+    "existing_source_set": "chatDeliberation",
+    "expected_junit_suite_files": 9,
+    "gradle_task": ":chat:jia-chat-service:chatDeliberation",
+    "nested_selector": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest* matches root and IsolatedMySql nested class; no --tests method exclusions",
+    "prior_xml_reuse": "NONE. Must distinguish actual phase2 test execution and fresh report timestamps; v1 produced no XML. Any unrelated earlier task reports are excluded.",
+    "runtime_status": "NOT_RUN",
+    "selected_test_classes": [
+      {
+        "class": "cn.jia.chat.api.ChatBountyRequestIndexControllerTest",
+        "group": "new_request_index",
+        "sha256": "eea27bb7cf57a4a2e5cb650b81ea8b8fd842d332f4b3fd067cf96637401efbc8",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatBountyRequestIndexControllerTest.java",
+        "static_test_annotations": 5,
+        "test_filter": "cn.jia.chat.api.ChatBountyRequestIndexControllerTest"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatBountyRequestIndexServiceTest",
+        "group": "new_request_index",
+        "sha256": "fb5a92a436fa26343b1e77dc8424b59232bc532f176b503722f83ae6b8b53e87",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyRequestIndexServiceTest.java",
+        "static_test_annotations": 5,
+        "test_filter": "cn.jia.chat.service.ChatBountyRequestIndexServiceTest"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest",
+        "group": "new_request_index",
+        "sha256": "480ad932f49894965624ad0897095ae0f7fcc3c0faa045bfe7e2e37d15ccd176",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyRequestIndexStoreTest.java",
+        "static_test_annotations": 3,
+        "test_filter": "cn.jia.chat.service.ChatBountyRequestIndexStoreTest*"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatDeliberationServiceTest",
+        "group": "read_regression",
+        "sha256": "3d29ec308ae08d81a3a32bf7e7e733666fa64250518feb7f7a1e5f0cd0a83e5f",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatDeliberationServiceTest.java",
+        "static_test_annotations": 15,
+        "test_filter": "cn.jia.chat.service.ChatDeliberationServiceTest"
+      },
+      {
+        "class": "cn.jia.chat.service.ChatBountyInteractionRequestStatusTest",
+        "group": "read_regression",
+        "sha256": "dc5068f37879f7d184f8872e3a6eca0537fbc79e47ff0232817075dfaf08615b",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatBountyInteractionRequestStatusTest.java",
+        "static_test_annotations": 5,
+        "test_filter": "cn.jia.chat.service.ChatBountyInteractionRequestStatusTest"
+      },
+      {
+        "class": "cn.jia.chat.api.ChatBountyMediaControllerTest",
+        "group": "read_regression",
+        "sha256": "d5ff177ebfdfdb1984e4cb50ef0d5c4034c7d0aed79c5066ac4e8dbe236dbbf5",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatBountyMediaControllerTest.java",
+        "static_test_annotations": 13,
+        "test_filter": "cn.jia.chat.api.ChatBountyMediaControllerTest"
+      },
+      {
+        "class": "cn.jia.chat.api.ChatConversationArchiveControllerTest",
+        "group": "read_regression",
+        "sha256": "b0359e36c4fa9e4ded4e685b47bfde4ee6d3208ff4487783942d7c529c9ebce4",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/ChatConversationArchiveControllerTest.java",
+        "static_test_annotations": 6,
+        "test_filter": "cn.jia.chat.api.ChatConversationArchiveControllerTest"
+      },
+      {
+        "class": "cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest",
+        "group": "read_regression",
+        "sha256": "88e231a49df16e23e7d86945b364e80cf579c9a38ed37d09aaab083cc146a77c",
+        "source": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/archive/conversation/ChatConversationArchiveServiceTest.java",
+        "static_test_annotations": 10,
+        "test_filter": "cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest"
+      }
+    ],
+    "selected_top_level_classes": 8,
+    "source_directory": "src/chatDeliberationTest/java",
+    "source_filtering": "none; all 50 declared chatDeliberation Java sources compile normally; Gradle --tests only chooses requested runtime classes",
+    "static_new_nested_mysql_test_annotations": 2,
+    "static_new_test_annotations": 13,
+    "static_regression_test_annotations": 49,
+    "static_total_test_annotations": 62
+  },
+  "selector": ":chat:jia-chat-service:chatDeliberation;tests=cn.jia.chat.api.ChatBountyRequestIndexControllerTest,cn.jia.chat.service.ChatBountyRequestIndexServiceTest,cn.jia.chat.service.ChatBountyRequestIndexStoreTest*,cn.jia.chat.service.ChatDeliberationServiceTest,cn.jia.chat.service.ChatBountyInteractionRequestStatusTest,cn.jia.chat.api.ChatBountyMediaControllerTest,cn.jia.chat.api.ChatConversationArchiveControllerTest,cn.jia.chat.archive.conversation.ChatConversationArchiveServiceTest",
+  "source_matrix": {
+    "path": "/var/tmp/cyf-mmd-main-controlled-bridge-progress/api-request-index-v1-source-matrix-20261001.json",
+    "sha256": "4eb3d3547e31de565bee3b227fcf9edcd4329ebce41146ae977ac67750dd5f4c"
+  },
+  "source_proof": {
+    "path": "/var/tmp/cyf-mmd-main-controlled-bridge-progress/api-request-index-9798-main-source-proof-20261001.json",
+    "sha256": "c6bd5c68f61e6822ab5ac242fb649f00821acb774ec50b19fd54f109b5ea9bb6"
+  },
+  "stop_policy": "Observe performance and wait for true terminal; attribute failure and stop. No automatic retry/next phase/source edit/AP disable/heap increase/manual skipping/class copies.",
+  "success_condition": "Production phase already truly exited0 and validated by Main; original eight-class run must yield actual test XML and nested MySQL2 zero skip. Static expected62 is not actual PASS.",
+  "task": "MMD-U2-API-REQUEST-INDEX-V1-SOURCE-20261001"
+}

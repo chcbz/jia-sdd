@@ -1,0 +1,130 @@
+{
+  "at": "2026-10-07T16:31:10.371Z",
+  "run": 180,
+  "status": "SUCCESS",
+  "sources": [
+    {
+      "repo": "https://gitee.com/chcbz/cyf-web-kit.git",
+      "branch": "develop",
+      "commits": [
+        {
+          "commitMsg": "chore%28release%29%3A%20version%20UI-only%20frontend%201.0.6",
+          "commitTime": "Thu Oct 8 00:16:54 2026 +0800",
+          "commitId": "ee6ca1b6beba562e0c7fa13d422857f554644471",
+          "commitAuthor": "chcbz%20%3Cchcbz%40sina.com%3E"
+        }
+      ]
+    }
+  ],
+  "stages": [
+    {
+      "name": "Frontend develop CI",
+      "jobs": [
+        {
+          "id": 530454615,
+          "name": "Locked install, full tests, and Vite build",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "disable": false,
+              "type": "LogPipelineJobRun"
+            },
+            {
+              "disable": false,
+              "params": {
+                "files": [
+                  {
+                    "fileName": "cyf_web_flow_4403172.tgz",
+                    "filePath": "aone2/2049636/1791390532515/cyf_web_flow_4403172.tgz"
+                  }
+                ]
+              },
+              "type": "GetPipelineArtifactUrl"
+            }
+          ]
+        },
+        {
+          "id": 530454616,
+          "name": "JavaScript code scan",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "disable": false,
+              "type": "LogPipelineJobRun"
+            },
+            {
+              "disable": false,
+              "params": {
+                "reportPath": "https://testing.rdc.aliyun.com/assets/2049636/4403172/f2cf3739-d47c-4051-8b53-9c98d06ba19f/index.html",
+                "redlineResult": [],
+                "reportInfo": {
+                  "Major": {
+                    "name": "issue",
+                    "style": "text-danger",
+                    "title": "Major",
+                    "value": "0",
+                    "key": "Major"
+                  },
+                  "Total": {
+                    "name": "issue",
+                    "style": "text-danger",
+                    "title": "Total",
+                    "value": "574",
+                    "key": "Total"
+                  },
+                  "Critical": {
+                    "name": "issue",
+                    "style": "text-danger",
+                    "title": "Critical",
+                    "value": "574",
+                    "key": "Critical"
+                  },
+                  "Blocker": {
+                    "name": "issue",
+                    "style": "text-danger",
+                    "title": "Blocker",
+                    "value": "0",
+                    "key": "Blocker"
+                  },
+                  "_REPORT": {
+                    "title": "report",
+                    "value": "link",
+                    "key": "_REPORT",
+                    "url": "https://testing.rdc.aliyun.com/assets/2049636/4403172/f2cf3739-d47c-4051-8b53-9c98d06ba19f/index.html"
+                  },
+                  "File": {
+                    "name": "issue",
+                    "style": "text-danger",
+                    "title": "File",
+                    "value": "574",
+                    "key": "File"
+                  }
+                }
+              },
+              "type": "GetPipelineScanReportUrl"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Versioned frontend 1.0.6 deployment",
+      "jobs": [
+        {
+          "id": 530454617,
+          "name": "Install pinned same-run 1.0.6 artifact",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "disable": false,
+              "params": {
+                "deployOrderId": 70689069
+              },
+              "type": "GetVMDeployOrder"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

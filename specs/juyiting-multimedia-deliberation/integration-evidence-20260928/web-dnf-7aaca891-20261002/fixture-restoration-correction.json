@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-02",
+  "correction": "The prior 17 passing / 1 failing result was caused by this owner worktree sparse-checkout exclusion, not by a missing source-tracked fixture in c74.",
+  "fixture": {
+    "path": "tests/fixtures/juyiting/occlusion-v2-atlases/atlas-manifest.json",
+    "c74_and_head_blob": "f3bfeb2f586aac79b99bec5b5f696028a786e982",
+    "restoration": "worktree-local sparse-checkout inclusion; content materialized from the existing index/HEAD blob; no tracked source file or source commit changed",
+    "evidence": "atlas-manifest-restoration.txt",
+    "evidence_sha256": "f93b2809b6a473d84004c99d18caba42513a3cdcc10db35c1d47060722b26fab"
+  },
+  "verification": {
+    "command": "node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --reporter spec tests/ci-test-bootstrap.test.js",
+    "result": "18 passing (615ms); exit 0",
+    "log": "ci-test-bootstrap-full-after-fixture-restore.log",
+    "log_sha256": "a728ecbd1f0aae033ff60b51bf823b73f16e52c80b4aa277767edc156d8285ab"
+  },
+  "source_identity": {
+    "commit": "7aaca8916bc2cad2d053328af0780913fff64bca",
+    "parent": "c74a3864b0909c8db4489c5938a590952a56d555",
+    "tree": "71c0536a8b3eeb9cbc7db9028b92ccfc05cd127c"
+  },
+  "preserved_prior_log": {
+    "log": "ci-test-bootstrap-targeted.log",
+    "result": "17 passing / 1 failing",
+    "cause": "sparse worktree did not materialize the tracked atlas fixture"
+  },
+  "not_done": [
+    "no local build",
+    "no DNF/YUM installation",
+    "no Flow control action",
+    "no new source commit"
+  ]
+}

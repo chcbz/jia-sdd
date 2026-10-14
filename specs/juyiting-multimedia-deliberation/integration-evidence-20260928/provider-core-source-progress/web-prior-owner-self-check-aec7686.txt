@@ -1,0 +1,19 @@
+Task: MMD-U1-WEB-PROVIDER-CONSENT-CORE-20260930
+Owner: gpt-5.6-terra / balanced_worker
+Commit: aec76860bbbbfa7a877797f3c7bc2dfa2e2e97c6
+Tree: e7bb664a86576bd4b81d389cda8ae85d693c65ab
+
+Final checks (all exit 0):
+1. npx eslint src/composables/juyiting/hallPointAndStartProviderConsent.js src/composables/juyiting/useHallPointAndStartCostConsent.js src/composables/juyiting/hallPointAndStartIntent.js src/composables/juyiting/useHallPointAndStart.js tests/juyiting-provider-consent-core.test.js
+2. node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec tests/juyiting-provider-consent-core.test.js tests/juyiting-point-and-start.test.js
+   Result: 65 passing (provider consent 19; existing point/start 46).
+3. git diff --check
+4. git push origin codex/juyiting-mmd-web-provider-consent-core
+   Remote head: aec76860bbbbfa7a877797f3c7bc2dfa2e2e97c6
+
+Failure attribution:
+- Initial ESLint found unused imports/indentation only; fixed before the successful final checks.
+- First targeted Mocha run had three test-fixture expectation defects (canonical reference sort, monotonic-version comparison baseline, revoke test GET setup); source contract behavior was not implicated. Fixtures corrected; the changed-selector rerun passed 65/65.
+
+Scope exclusions verified by source/test: no JuyiHall/BountyPanel/parser/API/Client edits; no /assign from a provider-consent extension; no paid/newStart/Provider/session/legacy fallback.
+Contract gap notified to main: candidate API view projects EXPIRED while frozen Web receipt states exclude it. Web rejects EXPIRED; no semantics invented.

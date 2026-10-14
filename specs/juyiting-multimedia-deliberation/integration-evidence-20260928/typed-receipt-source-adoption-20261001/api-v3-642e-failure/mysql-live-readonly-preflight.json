@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-01T18:57:36.970289+08:00",
+  "command": [
+    "/home/isp/apps/mysql/bin/mysql",
+    "--no-defaults",
+    "--user=root",
+    "--skip-password",
+    "--batch",
+    "--raw",
+    "--skip-column-names",
+    "--protocol=TCP",
+    "--host=127.0.0.1",
+    "--port=46139",
+    "-e",
+    "SELECT @@version,@@server_uuid,@@datadir,@@port,@@skip_networking; SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name LIKE 'mmd01a0dfv3v1%' OR schema_name LIKE 'mmd642etyped%';"
+  ],
+  "exit": 0,
+  "rows": [
+    "8.0.21\ta0e6eed2-bb63-11f1-8f71-00163e0a4cf9\t/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/\t0\t1",
+    "0"
+  ],
+  "stderr": "mysql: [Warning] Using a password on the command line interface can be insecure.\n",
+  "readonly": true,
+  "expected_identity": [
+    "8.0.21",
+    "a0e6eed2-bb63-11f1-8f71-00163e0a4cf9",
+    "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/",
+    "0",
+    "1"
+  ],
+  "exact_isolated_instance_identity_matches": true,
+  "prefixes": [
+    "mmd01a0dfv3v1",
+    "mmd642etyped"
+  ],
+  "prefix_count": 0,
+  "prefix_empty": true,
+  "authorization": "read-only TCP preflight; no schema mutation or daemon/process control"
+}

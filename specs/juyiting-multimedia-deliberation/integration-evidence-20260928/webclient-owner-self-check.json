@@ -1,0 +1,67 @@
+{
+  "task_id": "MMD-INTEGRATE-WEBCLIENT-20260928",
+  "owner": "cyf-balanced-webclient-owner",
+  "profile": "balanced_worker",
+  "date": "2026-09-28",
+  "scope": "Owner self-check receipt; isolated feature worktrees only. No push, develop merge, build, Provider call, service action, or deployment.",
+  "commits": {
+    "web": {
+      "commit": "3e37d05f7e7c68487d72abdca928112a0d0b680f",
+      "tree": "88dff45b3559f5f5579d6848e641f7ae69bbb862",
+      "parents": [
+        "9854173f7f409ca2f1c862eb153b0e3574ee58ff",
+        "96838f17fc24fbf21781be39476aa9723dee3a2c"
+      ]
+    },
+    "client": {
+      "commit": "d79896e1a877cde9c6fb6278e5ad1a80dac3cf74",
+      "tree": "058e44d057c9398971ab29c3b17ffede02861f3a",
+      "parents": [
+        "29fda32acca7a4c4f7a66a4188946853086e6dcb",
+        "68dbe8992a56c8e1041056a9123b1156d1d2b35e"
+      ]
+    }
+  },
+  "tree_test_consistency": {
+    "web": "The 86-pass test run followed the final outbound-identity/metadata correction; the following commit only completed the already-staged no-ff merge, producing the recorded tree. No source or test edit followed the run.",
+    "client": "The 167-pass test run covered the resolved staged merge; the following commit only completed that no-ff merge, producing the recorded tree. No source or test edit followed the run.",
+    "post_check": "Both committed worktrees are clean and git diff --check returned zero output."
+  },
+  "selectors_and_commands": [
+    {
+      "repository": "web",
+      "selector": "tests/juyiting-codex-fast-deliberation.test.js tests/juyiting-hall-conversation.test.js tests/juyiting-conversation-material-links.test.js tests/hall-account-navigation.test.js",
+      "command": "node --check src/composables/juyiting/hallConversationMessages.js && node --check src/composables/juyiting/useHallConversation.js && node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --reporter spec <selector>",
+      "result": "86 passing",
+      "log_sha256": "7bc48231dcd53b31a00fc62912b26107e0ed9d61f32d3486160ed95272dc56a4"
+    },
+    {
+      "repository": "client",
+      "selector": "test/agent-client.test.mjs test/chat-runtime.test.mjs test/managed-host.test.mjs",
+      "command": "node --check conf/codex-ws-agent/agent-client.mjs && node --check conf/codex-ws-agent/chat-runtime.mjs && node --test <selector>",
+      "result": "167 passing",
+      "log_sha256": "2dfd50451da38d8730d8172a371aa7bf6fbc79e7b77e744f964cd901dcc54a41"
+    }
+  ],
+  "fast_default_disabled": {
+    "env_example": [
+      "CODEX_FAST_CHAT_ENABLED=false",
+      "CODEX_APP_SERVER_ENABLED=false",
+      "CODEX_TRUE_DELTA_ENABLED=false"
+    ],
+    "runtime_default": "agent-client defaults CODEX_FAST_CHAT_ENABLED and CODEX_APP_SERVER_ENABLED to false; modern durable CHAT fails FAST_CHAT_FEATURE_DISABLED when either flag is absent.",
+    "test_coverage": "client selector includes default-disabled modern durable CHAT rejection without legacy runner; no fast configuration was enabled."
+  },
+  "invariants_retained": [
+    "develop inbound identity rendering and trusted material metadata filtering",
+    "fast durable stream/dedupe/snapshot state",
+    "native START receipt before Provider execution",
+    "ACK/reconnect behavior and managed-profile recovery",
+    "read-only-constrained policy label"
+  ],
+  "known_unresolved": [
+    "F2 API per-target capability negotiation",
+    "F3 durable context reconstruction",
+    "F4 INSPECT/material-reference execution"
+  ]
+}

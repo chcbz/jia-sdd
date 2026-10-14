@@ -6,7 +6,7 @@ multi_agent = true
 
 [agents]
 # Capacity only; CYF orchestration currently activates one task at a time.
-max_threads = 4
+max_threads = 5
 max_depth = 1
 job_max_runtime_seconds = 3600
 
@@ -16,39 +16,49 @@ config_file = "agents/architect.toml"
 nickname_candidates = ["Archimedes", "Lagrange", "Noether"]
 
 [agents.critical_worker]
-description = "Primary writer for P0 identity, ACL, concurrency, transaction, and migration implementation."
+description = "GPT-6.1 Sol High writer for P0 identity, ACL, concurrency, transaction, migration, and snapshot consistency."
 config_file = "agents/critical-worker.toml"
 nickname_candidates = ["Turing", "Shannon", "Knuth"]
 
 [agents.balanced_worker]
-description = "Balanced implementation agent for normal Java, Vue, API, mapper, and integration tasks."
+description = "Terra Medium writer for normal Java, Vue, API, mapper, feature-flag, and integration tasks."
 config_file = "agents/balanced-worker.toml"
 nickname_candidates = ["Curie", "Faraday", "Hopper"]
 
+[agents.spark_worker]
+description = "GPT-6 Luna Medium writer for contract-frozen packetized Java/Vue implementation and focused tests."
+config_file = "agents/spark-worker.toml"
+nickname_candidates = ["McCarthy", "Dijkstra", "Kay"]
+
 [agents.routine_worker]
-description = "Low-cost worker for bounded DTO, tests, fixtures, documentation, and repetitive edits."
+description = "Luna Medium writer for bounded accessibility, DTO, fixture, test, documentation, and mechanical edits."
 config_file = "agents/routine-worker.toml"
 nickname_candidates = ["Pascal", "Euler", "Gauss"]
 
 [agents.adversarial_reviewer]
-description = "Independent cross-model reviewer for security, transaction, concurrency, migration, and data-loss attacks."
+description = "GPT-6.1 Sol High independent adversarial reviewer for security, transaction, concurrency, migration, and data-loss attacks."
 config_file = "agents/adversarial-reviewer.toml"
 nickname_candidates = ["Popper", "Hume", "Kant"]
 
 [agents.explorer]
-description = "Read-only repository explorer for dependency, call-chain, conflict, and integration analysis."
+description = "Terra Medium read-only repository explorer for dependency, call-chain, conflict, and integration analysis."
 config_file = "agents/explorer.toml"
 nickname_candidates = ["Darwin", "Linnaeus", "Vesalius"]
 
 [agents.fast_query]
-description = "Very fast read-only agent for narrow lookups, summaries, and bounded fact extraction."
+description = "GPT-5.4 Mini Medium read-only agent for narrow lookups, acceptance matrices, and evidence indexing."
 config_file = "agents/fast-query.toml"
 nickname_candidates = ["Euclid", "Kepler", "Bohr"]
 
 [agents.test_runner]
-description = "Verification-only agent that runs serialized builds, tests, probes, and reports evidence without source edits."
+description = "Compatibility verification alias routed to GPT-5.6 Luna Medium; OpenAI-only policy is active."
 config_file = "agents/test-runner.toml"
 nickname_candidates = ["Feynman", "Tesla", "Galileo"]
+
+[agents.gpt_test_runner]
+description = "GPT-6 Luna Medium primary verification agent under the OpenAI-only policy."
+config_file = "agents/gpt-test-runner.toml"
+nickname_candidates = ["Ampere", "Ohm", "Volta"]
 
 [agents.release_guard]
 description = "Read-only final integration and production-release gatekeeper."
@@ -64,4 +74,3 @@ nickname_candidates = ["ShenKuoVision", "GuKaizhi", "ZhangZeduan"]
 description = "GPT-5.6 Sol High independent read-only reviewer for bounded GPT-written CYF tasks."
 config_file = "agents/sol-reviewer.toml"
 nickname_candidates = ["Leibniz", "Godel", "Raman"]
-

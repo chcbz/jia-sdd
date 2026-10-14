@@ -1,0 +1,37 @@
+{
+  "observedAt": "2026-10-12T20:29:27.523883+08:00",
+  "productionChanged": false,
+  "components": {
+    "installer": {
+      "commit": "e3d7b30aeba7b9b36f49bf6372956d78254a3ca2",
+      "tree": "86b19e3d7871d47b66e5c63fda3f7c2ce225952d",
+      "worktreeClean": true
+    },
+    "api": {
+      "commit": "0fe830d1ea39b89de89475ef2d1f21dfc7577da2",
+      "tree": "b365003e141101350af123185b2bf2ec0e80ec16",
+      "worktreeClean": true
+    },
+    "web": {
+      "commit": "3d0e9effc76f6035e0a1de37373873cb14882de3",
+      "tree": "f0ca26079d76c46a6e046aed7bfa101e8c43e756",
+      "worktreeClean": true
+    }
+  },
+  "verification": {
+    "installer": "8 offline tests PASS; real manifest/host/private-secret readers; no enrollment/network/service mutation",
+    "api": "Gradle/validateLayering NOT_RUN; filesystem ~59MiB free; source diff check PASS; existing managedHostingRegression now includes provisioning test",
+    "web": "133 targeted local Mocha/SFC tests PASS, exit 0; Flow NOT_RUN; no browser/live enrollment acceptance"
+  },
+  "testCommand": "cd /home/isp/wsps/cyf/web && node --import tsx ./node_modules/mocha/bin/mocha.js --no-config --require ./tests/setup.js --timeout 10000 --exit --reporter spec tests/runtime-self-host-onboarding.test.js tests/juyiting-flow-ui.test.js tests/juyiting-component-behavior.test.js",
+  "logs": {
+    "installer-tests.log": "f6c01a1ba7e2631f16ffe2da0cf5e7bab1934565aca2518f50bad841ac8147d4",
+    "web-targeted-tests.log": "799b4f7d364ba5d088eb1c639ffc3cbfe9b2a0d47b572f5021c6ac83e541b146",
+    "web-before-final-tests-nonexit.log": "43e2cb4f76a23f7e41ac339e2d80507dcaefee7329f83e8c96ae971c722c2afe"
+  },
+  "earlierDiagnostics": [
+    "Initial web owner test mock did not match imported agentApi and real JsonResult envelope; corrected, same affected tests rerun.",
+    "Main initial edit invocation used wrong cwd and wrote nothing; first 132-test run completed but retained event handles without --exit; exact owned finished test process stopped, then final amended 133-test run used existing project --exit convention and exited 0.",
+    "Optional skill quick_validate was unavailable because host python3 lacks PyYAML; no dependency installed and no claimed quick_validate PASS."
+  ]
+}

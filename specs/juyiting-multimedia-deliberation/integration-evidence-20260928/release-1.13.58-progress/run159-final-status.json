@@ -1,0 +1,70 @@
+{
+  "queriedAt": "2026-10-03T02:48:47.764Z",
+  "org": "5fb7d76ee6f9d07f148529c7",
+  "pipeline": "4403172",
+  "run": 159,
+  "status": "SUCCESS",
+  "sources": [
+    {
+      "repo": "https://gitee.com/chcbz/cyf-web-kit.git",
+      "branch": "develop",
+      "commits": [
+        "8e9809ab6049293a49663beef43760d299284772"
+      ]
+    }
+  ],
+  "stages": [
+    {
+      "name": "Frontend develop CI",
+      "jobs": [
+        {
+          "id": 527750657,
+          "name": "Locked install, full tests, and Vite build",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "type": "LogPipelineJobRun",
+              "disabled": false
+            },
+            {
+              "type": "GetPipelineArtifactUrl",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "id": 527750658,
+          "name": "JavaScript code scan",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "type": "LogPipelineJobRun",
+              "disabled": false
+            },
+            {
+              "type": "GetPipelineScanReportUrl",
+              "disabled": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Automatic frontend deployment",
+      "jobs": [
+        {
+          "id": 527750659,
+          "name": "Install same-run dist",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "type": "GetVMDeployOrder",
+              "disabled": false,
+              "deployOrderId": 70598595
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

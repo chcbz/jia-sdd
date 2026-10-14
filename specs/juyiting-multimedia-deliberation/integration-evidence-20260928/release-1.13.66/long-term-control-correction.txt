@@ -1,0 +1,3 @@
+Observed invariant: every monitor CLI operation can take monitor.lock and then call canonical status, which acquires the release lock. Therefore no monitor CLI (including monitor-locked-status) may run while the deploy process holds the release lock.
+Correct ordering: pause + status outside the release lock; verify maintenance=true and in_flight=null; acquire release/lifecycle locks; perform only marker/CAS/install/health/scope checks without monitor CLI; release the release lock; then run monitor status and the single resume/readback. Lock-busy status remains a wait condition; other errors remain failures.
+No canonical monitor/launcher production source was modified in this recovery.

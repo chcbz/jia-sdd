@@ -1,0 +1,68 @@
+{
+  "candidate": {
+    "head": "1496f486e361cc4f9515c8840bc459c0adb78e38",
+    "tree": "006e7e88d3bacaa3f05e81d5c09e2eaebfd53d9e",
+    "archive": "git archive"
+  },
+  "runtime": {
+    "node": "v20.20.2"
+  },
+  "results": [
+    {
+      "id": "cold-recovery-server-catalog-route-inspect",
+      "verdict": "FAIL",
+      "expected": {
+        "firstGet": "/conversations/7/requests/request-server-inspect/inspection-outcome",
+        "displayed": [
+          {
+            "purpose": "INSPECT",
+            "state": "READY",
+            "kind": "ANSWER"
+          }
+        ]
+      },
+      "actual": {
+        "firstGet": "/conversations/7/requests/request-server-inspect/typed-outcome",
+        "displayed": []
+      },
+      "trace": [
+        "/conversations/7/requests/request-server-inspect/typed-outcome"
+      ],
+      "detail": "catalog route=INSPECT; storage=null; refresh=true"
+    },
+    {
+      "id": "ready-inspect-explicit-confirm-routes-preview",
+      "verdict": "FAIL",
+      "expected": {
+        "confirmed": true,
+        "onProposalCalls": 1
+      },
+      "actual": {
+        "confirmed": false,
+        "onProposalCalls": 0
+      },
+      "trace": [
+        "/conversations/7/requests/request-ready-inspect/inspection-outcome"
+      ],
+      "detail": "purpose=INSPECT; callback=[]"
+    },
+    {
+      "id": "ready-inspect-answer-clears-waiting",
+      "verdict": "FAIL",
+      "expected": false,
+      "actual": true,
+      "trace": [
+        [
+          "POST",
+          "/conversations/7/interactions/inspection",
+          "DISCUSSION"
+        ],
+        [
+          "GET",
+          "/conversations/7/requests/request-ready-answer/inspection-outcome"
+        ]
+      ],
+      "detail": "submitted=true; inspectionStatus=\"查阅已受理，正在等待 Agent 查阅；尚未表示已读。\"; cards=[{\"purpose\":\"INSPECT\",\"kind\":\"ANSWER\"}]"
+    }
+  ]
+}

@@ -1,0 +1,450 @@
+--- relevant workspace guidance ---
+# CYF Workspace Guidance
+
+This repository is a multi-module workspace with a Vue frontend under `web/`, Java/Gradle backend modules under `api/`, and project notes under `docs/`.
+
+## Read First
+
+- For a compact project map, read `docs/codex-project-map.md`.
+- For multi-repository SDD delivery, read `docs/sdd-workflow.md`; use `docs/knowledge-base/` for current-state reverse-engineering reference.
+- For Juyi Hall work, read `docs/juyiting-runbook.md` first, then use `docs/juyiting-feature-guide.md` for deeper flow details.
+- Prefer targeted `rg` searches over broad file reads.
+
+## Fast Iteration Principle
+
+- 快速迭代阶段不以稳定为首要目标；一切优先往前推进。有问题就继续修问题，修不了就优化技术栈，不做保守回退作为默认选择。
+- 按用户 2026-09-12 最新指令：不创建独立 Reviewer。责任 Owner 自检后合入组件 develop，由云效执行相关测试、构建、同 Run 制品发布与健康核验；不把历史审查队列作为前置条件。
+
+## Availability-First Performance Policy（2026-09-13 用户最新指令）
+
+- 性能超标只记录慢请求、耗时和优化待办，不得仅因 1s/2.5s/3s/5s SLO、剩余预算不足或首帧慢而拒绝、跳过下一步、取消请求或中断流。
+- 保留真实网络错误处理、明确配置的传输超时、用户取消、身份切换取消、鉴权、幂等、事务和锁归属；不得把“继续等待”实现成绕过锁或伪报成功。
+- 不向下游传播会被强制执行的性能 deadline，不把失败加速当成功率提升。不以更大的任意数值替换旧门槛。
+- 后续优化以真实慢请求及证据排序；性能目标与实际可用性分开报告。详见 `specs/api-performance-3s-slo/spec.md` 最新修订。
+
+## Gate Evidence Policy（2026-09-13 用户指令）
+
+- 去掉没有依据的检查；后续遇到实际问题、形成证据后再增加，不以历史脚本或文档中的固定值作为依据。
+- 发布不设置未测算的磁盘/内存预留、包大小上限或本地等待超时门槛；空间只按实际制品与回退副本计算，资源指标保留观测。
+- 保留用户明确要求的云端测试、同 Run 制品绑定，以及版本/权限/进程归属、实际健康、发布互斥和可恢复安装。互斥采用等待，不抢占、不操作其他任务进程；取消由 Flow 作业控制。
+- 新增硬门禁必须记录实际问题、证据、最小检查范围；涉及数值必须给出推导。详见 `docs/aliyun-flow-gate-policy.md`。
+
+## Develop Auto-Release Policy（2026-09-12 用户指令）
+
+- 普通功能具备上线条件后合入组件仓库 `develop`，由 Flow 自动测试、构建、上传同 Run 制品并部署；成功发布，失败停止。日常发布不逐次等待 Reviewer、人工审批或短期 ticket，也不要求先发 CI-only 再重建生产。
+- 前后端正式构建与测试都在云端，本机仅轻量静态检查、开发预览和控制面操作。
+- 身份/ACL、事务、迁移等风险仍由责任 Owner 明确自检并补云端回归；取消独立 Reviewer 不等于取消身份隔离、事务正确性或生产/付费授权。授权范围外的生产数据、扣费和临时操作仍须用户明确授权。
+
+## Lightweight Gate Policy
+
+- **L0（无需门禁）**：只读查询、状态核验、文档说明、候选配置生成、本地静态检查。主 Agent 直接执行并汇报，不创建 Reviewer/等待线程。
+- **L1（自检后直接执行）**：可逆且不产生运行时副作用的配置写入，例如保存 Flow YAML 但不启动 Run、调整非生产开关、创建草稿。要求保存前值、固定候选哈希、单次写入、readback；失败先记录精确错误，不做盲目重试。无需独立 Reviewer。
+- **L2（自检合入）**：普通前后端代码、测试和非关键集成。Writer 完成最小相关自检后直接合入 develop，云效在同一次发布 Run 内执行正式测试与构建；不创建独立 Reviewer，不强制重复 CI-only。
+- **L3（风险与授权校验）**：身份/ACL、事务、迁移、生产数据和流水线外操作由责任 Owner 核对风险、精确目标、授权及恢复措施，不另起 release_guard/Reviewer。普通已授权 develop 发布按流水线自动校验推进；不得推导未授权扣费、生产 DML 或 foreign 进程操作权限。
+- 不创建、等待或轮询独立 Reviewer；仅真实测试/构建失败、目标与制品不匹配、必要授权缺失或资源互斥可以阻止对应执行。
+- Flow 特例：`UpdatePipeline` 且明确不调用 `StartPipelineRun` 属于 L1；云端构建但无部署属于 L2；普通 develop 自动发布沿用已确定的流水线自动校验，不再附加逐次 L3 审批。
+
+
+## Temporary Local Release Authorization（2026-09-17 用户最新指令）
+
+- 云效暂不可用期间，允许本地相关测试、生产构建和部署；先自检合入组件 `develop`，达到上线条件后从验证过的 exact SHA 创建冻结的 `release/<version>` 分支发布。此例外覆盖下文云端专属规定，直至用户恢复云效。
+- 不跳过测试，不伪造 Flow 成功或 Run；记录 `build_origin=local_user_authorized`、前后端 commit/tree、测试及制品 SHA-256。Gradle 仍经 orchestrator 串行运行。
+- 保留权限隔离、实际健康、进程归属、发布互斥、可恢复安装及生产数据/付费操作授权边界；不覆盖其他任务或已有 release 分支。详见 `docs/implementation/V1_6_LOCAL_RELEASE_PLAN_20260917.md`。
+
+## Build, Test, and Deployment
+
+## Versioned Release Schedule（2026-09-14 用户指令）
+
+- 后端：北京时间 06:00（含）至 24:00（不含）的 develop 自动 Run 只测试/构建和产出同 Run 制品，不自动部署；每天 00:00 汇总待发布提交，满足既有云端测试、同 Run 制品、发布互斥与实际健康条件时仅发布一次。
+- 前端：patch 和 minor 增长不足两个版本号的变更可立即发布；相对当前线上版本 major 增长或 minor 至少增长 2 的为大版本，固定在每天 00:30 发布。`1.0.x → 1.2.0` 属于大版本；版本未知只记录，不得拒绝或取消发布。
+- 时区为 Asia/Shanghai；只复用 `5260799` 与 `4403172`，不新增重复流水线，不抢占或取消其他 Flow Run。详细定义见 `docs/aliyun-flow-release-scheduling.md`。
+
+### Pipeline Reuse Policy（2026-09-13 用户指令）
+
+- 日常只使用 `5260799 / cyf-api-release` 和 `4403172 / cyf-web-release`；CI-only 可选，不新增重复发布链路。
+- 临时安装、预检、排障复用 `5264702 / cyf-ops-manual`，默认手动、只读；不因每次诊断、候选哈希变化或失败重试创建新的 `cyf-output-*` 流水线。
+- 运维入口由当前操作 Owner 串行使用：先核对无活动 Run，再保存前值、更新固定候选并 readback；正在运行时等待，不覆盖配置、不取消其他任务。安装、服务操作、数据变更仍按原授权范围执行；入口复用不等于自动获得授权。
+- 新增独立流水线仅在确有不同长期用途且用户明确授权时执行。具体清单与本次收敛记录见 `docs/aliyun-flow-cicd-strategy.md`。
+
+- The authoritative CI/CD policy is `docs/aliyun-flow-cicd-strategy.md`. Formal frontend and backend tests, production builds, artifact creation, and deployments run in Alibaba Cloud Flow.
+- Backend production pipeline: `5260799` (`cyf-api-kit-ci`, `develop`). Frontend production pipeline: `4403172` (`cyf-web-kit`, `develop`). Both pipelines now configure develop push automatic release; webhook delivery and deployment success must still be reported from actual runs. Check `docs/aliyun-flow-develop-auto-status.json`, and always bind conclusions to the exact remote commit and Flow Run.
+- Do not run local Gradle or Vite production builds by default, and do not fall back to local source-to-production scripts when Flow fails. Local success is not release evidence.
+- Local frontend dev server is allowed for interactive development: `cd web && npm run dev -- --host 0.0.0.0`. Targeted local static/unit checks are allowed only when they are materially cheaper than a build and do not replace Flow verification.
+- If an explicitly authorized diagnostic requires Gradle, inspect the nearest `build.gradle` first and invoke it only through `python3 ops/orchestration/cyf_orchestrator.py gradle ...`.
+
+## Frontend Notes
+
+- Main frontend source is `web/src/`.
+- Juyi Hall route/page composition is in `web/src/components/world/JuyiHall.vue`.
+- Juyi Hall components live in `web/src/components/juyiting/`.
+- Juyi Hall composables live in `web/src/composables/juyiting/`.
+- Juyi Hall constants live in `web/src/constants/juyiting.js`.
+--- project map ---
+# Codex Project Map
+
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 当前交付与 SDD 入口（2026-09-06）
+
+- `specs/INDEX.md`：全部跨仓需求及 delivery-status（包括补录的语音、公共公测和协作 SDD）。
+- `docs/implementation/SDD_STATUS_20260906.md`：全部运行任务和原始规划的完成/未完成映射。
+- `docs/implementation/archive/2026-09-06/README.md`：已执行的历史交付归档及保留的后续问题。
+- 本地 api/web checkout、远端 accepted commit、实际部署与 root gitlinks 不可混用；静态知识库生成基线未在本次重建。
+<!-- END SDD delivery reconciliation -->
+
+This file is a compact orientation map for future Codex sessions. It should stay short and stable; detailed feature notes belong in focused runbooks.
+
+## Top-Level Layout
+
+| Path | Purpose |
+| --- | --- |
+| `web/` | Vue frontend app, Vite build, UI components, frontend assets, frontend tests |
+| `api/` | Java backend workspace with Gradle modules for common, agent, chat, task, and ISP domains |
+| `docs/` | Project guides, implementation plans, operational notes, and the reverse-engineered knowledge base |
+| `deliverables/` | Packaged deployment artifacts and generated packages |
+
+## Git Layout
+
+- The workspace root is the `jia-sdd` coordinating Git repository.
+- `api/` and `web/` are independent Git repositories registered as submodules and pinned by the root commit.
+- Agent client development continues to follow ADR-004: versioned source lives under `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`, while `/home/isp/apps/codex-ws-agent/` is the deployment copy; no additional repository is required for economy/skill delivery.
+- Use `git status` for the coordinated delivery baseline, and `git -C api ...` or `git -C web ...` for implementation history.
+
+## Frontend Layout
+
+| Path | Purpose |
+| --- | --- |
+| `web/src/main.js` | Frontend bootstrap |
+| `web/src/router/index.js` | Route registration |
+| `web/src/components/` | Vue components grouped by feature |
+| `web/src/components/world/JuyiHall.vue` | Current Juyi Hall page composition |
+| `web/src/components/juyiting/` | Juyi Hall panels, map stage, tokens, command/chat surfaces |
+| `web/src/composables/` | Shared and feature-specific frontend logic |
+| `web/src/composables/juyiting/` | Juyi Hall data, conversation, physics, sound, and portrait logic |
+| `web/src/constants/juyiting.js` | Juyi Hall filters, role metadata, map anchors, obstacles, walk bounds |
+| `web/src/stores/` | Pinia stores and demo data |
+| `web/src/assets/` | Frontend static assets imported by source code |
+| `web/tests/` | Frontend contract and smoke tests when available |
+
+## Backend Layout
+
+| Path | Purpose |
+| --- | --- |
+| `api/agent/` | Agent runtime, persona, task metadata, roster/map/task APIs |
+| `api/chat/` | Chat conversations, messages, Juyi Hall conversation type support |
+| `api/task/` | General task planning and execution modules |
+| `api/common/` | Shared backend infrastructure, utilities, base entities, test support |
+| `api/isp/` | ISP/domain/CMS related modules |
+
+Backend modules are split into `*-core`, `*-api`, `*-mapper`, `*-service`, and `*-starter` style Gradle projects. Inspect the nearest `build.gradle` before choosing a build or test command.
+
+## Build and Test Entry Points
+
+Formal frontend/backend tests, production builds, artifacts, and deployments run in Alibaba Cloud Flow; see `docs/aliyun-flow-cicd-strategy.md`. Local default is limited to the frontend development server and low-cost diagnostics:
+
+```bash
+cd web && npm run dev -- --host 0.0.0.0
+```
+
+Do not treat a local Gradle/Vite run as release evidence. Any explicitly authorized local Gradle diagnostic must go through `python3 ops/orchestration/cyf_orchestrator.py`.
+
+## Common Search Targets
+
+- Juyi Hall UI: `rg -n "JuyiHall|聚义厅|juyiting" web/src`
+- Agent APIs: `rg -n "/agent|Agent" api/agent web/src`
+- Chat stream/events: `rg -n "chat/stream|conversation/events|juyiting" api/chat web/src`
+- Task assignment: `rg -n "assign|悬赏|tasks/search|tasks/.*/assign" api/agent web/src`
+
+## Documentation Entry Points
+
+- `docs/aliyun-flow-cicd-strategy.md`: authoritative frontend/backend Flow build, test, artifact, and deployment policy.
+- `docs/aliyun-flow-host-cleanup.md`: Flow host cleanup scope, installed script, dry-run commands, and resource measurements; no broad workspace or age-based pruning.
+- `docs/juyiting-runbook.md`: compact guide for ongoing Juyi Hall changes.
+- `docs/juyiting-occlusion-system-design.md`: extensible full-map occlusion, world sorting, TMX schema, migration, validation, and Agent execution plan.
+- `docs/juyiting-occlusion-system-execution-plan.md`: serial implementation backlog, DeepSeek/GPT allocation, handoff gates, verification, and release sequence for occlusion v2.
+- `docs/juyiting-feature-guide.md`: deeper Juyi Hall behavior and data-flow documentation.
+- `docs/juyiting-collaboration-implementation-plan.md`: historical implementation plan for collaboration flow work.
+- `docs/juyiting-multi-agent-collaboration-design.md`: target architecture, detailed design, backlog, migration, and phased rollout plan for reliable multi-Agent bounty collaboration.
+- `specs/agent-economy-marketplace/`: draft SDD for SILVER wallets, token-priced bounty settlement, and Agent skill commerce/delivery.
+- `docs/implementation/README.md`: execution control center for multi-model implementation, including the task ledger, coverage matrix, decisions, and handoff rules.
+- `docs/codex-ws-agent.md`: Codex websocket agent operational notes.
+- `docs/project-feature-implementation-checklist.md`: cross-project feature completeness and optimization checklist.
+- `docs/project-markdown-coverage-matrix.md`: one-to-one coverage record for every audited source Markdown file.
+- `docs/project-api-endpoint-audit.md`: endpoint-level mapping from interface documentation to Controllers.
+- `docs/project-plan-task-audit.md`: Task/Phase-level implementation audit for project plans.
+
+## Maintenance Rule
+
+When a future task uncovers stable project knowledge that would save repeated exploration, update this file or the relevant runbook in the same change.
+
+- `docs/knowledge-base/README.md`: task-routed entry point for current-state code, API, data, and integration reference.
+- `docs/knowledge-base/04-backend-api-index.md`: compact Controller/base-path index; use the full API inventory only for method-level details.
+- `docs/sdd-workflow.md`: multi-repository SDD lifecycle and integration gate.
+--- inspection hits ---
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/juyiting/BountyTypedOutcomeCard.vue-22-defineEmits(['reply', 'confirm-proposal'])
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/juyiting/BountyTypedOutcomeCard.vue-23-const outcome = computed(() => props.projection.outcome)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/juyiting/BountyTypedOutcomeCard.vue:24:const inspection = computed(() => props.projection?.purpose === 'INSPECT')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/juyiting/BountyTypedOutcomeCard.vue-25-const heading = computed(() => ({ ANSWER: '议事答复', CLARIFY: '需要补充', EXECUTION_PROPOSAL: '办理提议' })[outcome.value?.kind] || '议事结果')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/juyiting/BountyTypedOutcomeCard.vue-26-const operationLabel = computed(() => outcome.value?.proposal?.operation === 'EDIT_IMAGE' ? '建议修改上一稿图像' : '建议生成一张图像')
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-96-  if (!exactKeys(value, fields) || value.schemaVersion !== 2 || value.contract !== 'juyiting-typed-inspection-v1' || !typedId(value.conversationId) || !typedLong(value.conversationGeneration) || !typedId(value.requestId) || !typedLong(value.requestRevision) || !typedId(value.turnId) || !['PENDING', 'READY'].includes(value.state) || !exactKeys(value.inspection, inspectionFields) || !typedId(value.inspection.authorizationId) || !digest(value.inspection.manifestDigest) || !Array.isArray(value.inspection.sourceRefIds) || !value.inspection.sourceRefIds.length || value.inspection.sourceRefIds.some(item => !typedId(item)) || new Set(value.inspection.sourceRefIds).size !== value.inspection.sourceRefIds.length) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-97-  if ((context.conversationId && value.conversationId !== context.conversationId) || (context.conversationGeneration && value.conversationGeneration !== context.conversationGeneration) || (context.requestId && value.requestId !== context.requestId)) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js:98:  if (value.state === 'PENDING') return value.outcome === null && value.inspection.inputSummary === null ? freeze({ ...value, purpose: 'INSPECT' }) : null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-99-  if (context.taskId && value.outcome?.taskId !== context.taskId) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-100-  if (!exactKeys(value.inspection.inputSummary, inspectionSummaryFields) || !digest(value.inspection.inputSummary.inputDigest) || !Array.isArray(value.inspection.inputSummary.sources) || value.inspection.inputSummary.sources.length !== value.inspection.sourceRefIds.length || value.inspection.inputSummary.sources.some((source, index) => !exactKeys(source, inspectionReceiptSourceFields) || source.sourceRefId !== value.inspection.sourceRefIds[index] || !/^[a-f0-9]{64}$/.test(source.sha256) || !typedLong(source.byteLength, { allowZero: true }) || !['DIRECT_TEXT', 'LOCAL_IMAGE', 'LOCAL_AUDIO', 'PARSED_TEXT'].includes(source.carrier) || !digest(source.contributionDigest))) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-101-  const normalized = outcome(value.outcome)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js:102:  return normalized ? freeze({ ...value, outcome: normalized, purpose: 'INSPECT' }) : null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-103-}
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-104-export const inspectionAccepted = (value, body, conversationId) => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-105-  const accepted = discussionAccepted({ ...value, typedOutcomeUrl: `/chat/conversations/${conversationId}/requests/${value?.requestId || ''}/typed-outcome` }, body, conversationId)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js:106:  if (!accepted || value.typedOutcomeUrl !== `/chat/conversations/${conversationId}/requests/${value.requestId}/inspection-outcome`) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-107-  return freeze(value)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallTypedDeliberation.js-108-}
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyBootstrap.js-43-  if (!step || !exactTextId(step.stepId) || !long(step.stepNumber) ||
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyBootstrap.js-44-      step.taskId !== reference.taskId || step.assignmentRevision !== reference.assignmentRevision ||
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyBootstrap.js:45:      step.targetAgentId !== reference.targetAgentId || !['EXECUTE', 'INSPECT'].includes(step.kind) ||
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyBootstrap.js-46-      !wireState(step.state) || !long(step.stateVersion, true)) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyBootstrap.js-47-  if (step.kind === 'EXECUTE') {
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-574-            :typed-enabled="typedDeliberationEnabled"
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-575-            :typed-recovery-available="typedDeliberation.recoveryAvailable.value"
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue:576:            :typed-inspection-status="typedDeliberation.inspectionStatus.value"
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-577-            :draft="draft"
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-578-            :voice="hallVoice"
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2163-  onAccepted: async ({ receipt, purpose, context, isCurrent }) => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2164-    if (!isCurrent?.()) return false
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue:2165:    if (purpose === 'INSPECT') { bountyRequestCatalog.hint(); showToast('查阅已受理，正在等待 Agent 查阅；受理不表示已读。'); return true }
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2166-    const adopted = await adoptTypedDiscussionReceipt({ receipt, context, isCurrent })
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2167-    if (!isCurrent?.()) return false
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2172-    return adopted
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2173-  },
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue:2174:  onProposal: async ({ kind, content, inputRefs, assetRef, continuationOf }) => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2175-    if (!typedDeliberationEnabled.value) return false
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/components/world/JuyiHall.vue-2176-    if (kind === 'GENERATE_IMAGE') return prepareFollowupGenerate({ content, inputRefs })
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallPointAndStartIntent.js-5-const PREFIX = 'cyf.juyiting.point-and-start.v1'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallPointAndStartIntent.js-6-const clone = value => JSON.parse(JSON.stringify(value))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallPointAndStartIntent.js:7:const operations = new Set(['GENERATE_IMAGE', 'EDIT_IMAGE', 'INSPECT_INPUTS', 'GENERATE_AUDIO', 'EDIT_AUDIO'])
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallPointAndStartIntent.js-8-export const exactPointAndStartId = (value, max = 100) => typeof value === 'string' && value.length > 0 &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallPointAndStartIntent.js-9-  [...value].length <= max && value.trim() === value && [...value].every(c => {
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-5-const PENDING_LABELS = {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-6-  RECEIVED: '已受理', QUEUED: '排队中', DISPATCHED: '正在理解', UNDERSTANDING: '正在理解',
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js:7:  INSPECT: '只读检查中', STREAMING: '生成中', GENERATING: '生成中', FALLBACK: '安全回退处理中',
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-8-  RECOVERY_REQUIRED: '需要恢复核对', ACCEPTANCE_UNKNOWN: '结果未知，正在核对', UNKNOWN: '结果未知，正在核对',
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-9-  CANCEL_REQUESTED: '正在取消', COMPLETED: '已完成', PARTIAL: '部分回话已完成', FAILED: '回话失败',
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-136-  const fast = source.fastChat === true || request?.fastChat === true || /fast/i.test(`${route} ${engine} ${profile}`)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-137-  const runtime = fast ? 'Fast' : (engine || profile)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js:138:  const observedRoute = route.startsWith('CHAT') ? 'CHAT' : route.startsWith('INSPECT') ? 'INSPECT' : ''
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-139-  const observed = [runtime, observedRoute, sandbox].filter(Boolean).join(' · ')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallDeliberationState.js-140-  const phase = PENDING_LABELS[state] || ''
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-5-const clone = value => JSON.parse(JSON.stringify(value))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-6-const storagePrefix = 'cyf:hall:typed-deliberation:v1'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:7:const recordPurpose = record => record?.purpose === 'INSPECT' ? 'INSPECT' : 'CHAT'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-8-const secureKey = () => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-9-  try {
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-28-  try {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-29-    const value = JSON.parse(storage.getItem(key) || '[]')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:30:    return Array.isArray(value) ? value.filter(record => record && typeof record === 'object' && typedId(record.key) && record.body && (record.purpose === undefined || ['CHAT', 'INSPECT'].includes(record.purpose))) : []
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-31-  } catch { return [] }
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-32-}
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-52-/** Typed natural CHAT UI adapter. It owns only the frozen discussion/read wire; no model, grant, or legacy stream fallback. */
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-53-export const useHallTypedDeliberation = ({ chatApi, actorScopeKey, authorizationGeneration, getContext, getContextGeneration,
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:54:  getCatalogEntries, storage = null, enabled = () => false, onAccepted = null, onProposal = null }) => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-55-  const scope = computed(() => unref(typeof actorScopeKey === 'function' ? actorScopeKey() : actorScopeKey))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-56-  const projections = ref([]); const selectedPending = ref(null); const error = ref(''); const busy = ref(false); const storageRevision = ref(0)
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-62-    captured.authorization === unref(typeof authorizationGeneration === 'function' ? authorizationGeneration() : authorizationGeneration) &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-63-    captured.contextGeneration === getContextGeneration?.() && sameContext(captured.context, getContext?.() || {})
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:64:  const path = (context, requestId = '', purpose = 'CHAT') => `/conversations/${encodeURIComponent(context.conversationId)}/requests/${encodeURIComponent(requestId)}/${purpose === 'INSPECT' ? 'inspection-outcome' : 'typed-outcome'}`
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-65-  const sorted = values => [...values].sort((a, b) => a.requestId.localeCompare(b.requestId))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-66-  const compareLong = (one, two) => one.length - two.length || (one < two ? -1 : one > two ? 1 : 0)
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-101-      const raw = unwrap(await chatApi.get(path(captured.context, requestId, purpose), {}, { autoLoading: false, needAuth: true }))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-102-      if (!current(captured)) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:103:      const projection = purpose === 'INSPECT'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-104-        ? inspectionOutcomeProjection(raw, { conversationId: captured.context.conversationId, conversationGeneration: captured.context.conversationGeneration, taskId: captured.context.taskId, requestId })
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-105-        : typedOutcomeProjection(raw, { conversationId: captured.context.conversationId, conversationGeneration: captured.context.conversationGeneration, taskId: captured.context.taskId, requestId })
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-121-    try {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-122-      const requestIds = [...new Set((getCatalogEntries?.() || []).map(entry => entry?.request?.requestId).filter(typedId))]
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:123:      const inspectionRequestIds = [...new Set(readRecords(storage, captured.scope, captured.context).filter(record => recordPurpose(record) === 'INSPECT').map(record => record.receipt?.requestId).filter(typedId))]
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:124:      await Promise.all(requestIds.map(requestId => readOne(requestId, captured, 'CHAT')).concat(inspectionRequestIds.map(requestId => readOne(requestId, captured, 'INSPECT'))))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-125-      return current(captured)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-126-    } finally {
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-144-      !typedLong(context.assignmentRevision, { allowZero: true })) return false
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-145-    const pending = selectedPending.value
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:146:    const purpose = inspection ? 'INSPECT' : (pending?.purpose || 'CHAT')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:147:    if (purpose === 'INSPECT' && !pending && (!Array.isArray(sourceSelectors) || sourceSelectors.length === 0)) {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-148-      if (current(captured)) error.value = '请明确选择本轮交给当前 Agent 查阅的资料；未发送'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-149-      return false
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-168-    if (!body || !typedId(record?.key) || !sameContext(record.context, context) || !current(captured)) return false
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-169-    try {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:170:      const receipt = (purpose === 'INSPECT' ? inspectionAccepted : discussionAccepted)(unwrap(await chatApi.create(`/conversations/${encodeURIComponent(context.conversationId)}/interactions/${purpose === 'INSPECT' ? 'inspection' : 'discussion'}`, clone(body), apiOptions(record.key))), body, context.conversationId)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-171-      if (!current(captured)) return false
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-172-      if (!receipt) throw new Error('议事受理回执不匹配')
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-181-        persistRecords(captured, readRecords(storage, captured.scope, context).map(item => item.key === record.key
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-182-          ? { ...item, purpose, status: 'UNKNOWN' } : item))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:183:        error.value = cause?.message || (purpose === 'INSPECT' ? '查阅受理待核对；不会改走普通议事或办理' : '议事受理结果待核对；请按原键只读恢复或显式续办')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-184-      }
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-185-      return false
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-191-    const records = readRecords(storage, captured.scope, captured.context).filter(record => sameContext(record.context, captured.context))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-192-    await Promise.all(records.filter(record => typedId(record.receipt?.requestId)).map(record => readOne(record.receipt.requestId, captured, recordPurpose(record))))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:193:    await Promise.all(records.filter(record => record.status === 'UNKNOWN' && recordPurpose(record) === 'INSPECT').map(async record => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-194-      try {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-195-        const raw = unwrap(await chatApi.get(`/conversations/${encodeURIComponent(captured.context.conversationId)}/interactions/inspection/request`, {}, apiOptions(record.key)))
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-197-        if (!receipt || !current(captured)) return
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-198-        persistRecords(captured, readRecords(storage, captured.scope, captured.context).map(item => item.key === record.key
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:199:          ? { ...item, purpose: 'INSPECT', status: 'ACCEPTED', receipt: clone(receipt) } : item))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:200:        await readOne(receipt.requestId, captured, 'INSPECT')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-201-      } catch (cause) {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-202-        if (current(captured) && cause?.status && cause.status !== 404) error.value = cause?.message || '查阅恢复读取失败'
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-215-  }
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-216-  const confirmProposal = async projection => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:217:    if (projection?.purpose === 'INSPECT') return false
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-218-    const proposal = projection?.outcome?.proposal
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-219-    if (!proposal || !current(capture())) return false
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-220-    const inputs = selectorInputs(proposal)
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:221:    if (proposal.operation === 'GENERATE_IMAGE') return Boolean(await onProposal?.({ kind: 'GENERATE_IMAGE', content: proposal.instruction,
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-222-      inputRefs: inputs, continuationOf: null, projection: clone(projection) }))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-223-    if (proposal.operation === 'EDIT_IMAGE' && proposal.parent && inputs.length === 1 && inputs[0].kind === 'CURRENT_CONVERSATION_ASSET') {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:224:      return Boolean(await onProposal?.({ kind: 'EDIT_IMAGE', content: proposal.instruction, assetRef: inputs[0].assetRef,
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-225-        continuationOf: clone(proposal.parent), projection: clone(projection) }))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-226-    }
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-228-  }
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-229-  const cards = computed(() => projections.value.filter(item => item.state === 'READY' && item.outcome).map(item => Object.freeze({ ...item, key: outcomeCardKey(item) })))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:230:  const inspectionStatus = computed(() => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-231-    storageRevision.value
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:232:    if (projections.value.some(item => item.purpose === 'INSPECT' && item.state === 'PENDING')) return '正在查阅资料；受理或目录可用不表示已读。'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:233:    return readRecords(storage, scope.value, getContext?.() || {}).some(record => recordPurpose(record) === 'INSPECT' && record.status === 'ACCEPTED')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-234-      ? '查阅已受理，正在等待 Agent 查阅；尚未表示已读。' : ''
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-235-  })
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-238-  const stopCatalog = typeof getCatalogEntries === 'function' ? watch(getCatalogEntries, () => { void refresh(); void recover() }, { deep: true }) : () => {}
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-239-  const recoveryAvailable = computed(() => { storageRevision.value; return readRecords(storage, scope.value, getContext?.() || {}).some(record => record.status === 'UNKNOWN') })
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js:240:  return { projections, cards, selectedPending, error, busy, recoveryAvailable, inspectionStatus, refresh, readOne, submit, recover, resumeUnknown, choosePending, confirmProposal,
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-241-    invalidate, dispose: () => { disposed = true; invalidate(); stopScope(); stopCatalog() } }
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallTypedDeliberation.js-242-}
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/bountyRequestCatalog.js-8-const clone = value => JSON.parse(JSON.stringify(value))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/bountyRequestCatalog.js-9-const immutableRequest = request => [request.requestId, request.conversationId, request.conversationGeneration, request.userMessageId].join('\u0000')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/bountyRequestCatalog.js:10:const STEP_KINDS = new Set(['CHAT', 'INSPECT', 'EXECUTE'])
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/bountyRequestCatalog.js-11-const validStep = (step, scope) => {
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/bountyRequestCatalog.js-12-  if (!keys(step, ['stepId', 'stepNumber', 'taskId', 'assignmentRevision', 'targetAgentId', 'kind', 'state', 'stateVersion', 'executionIntentId', 'executionId', 'executionState']) ||
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-28-const intent = value => exactKeys(value, ['schemaVersion', 'interactionKind', 'taskId', 'expectedConversationGeneration',
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-29-  'expectedTaskVersion', 'expectedAssignmentRevision', 'expectedGrantVersion', 'requirementRevision', 'targetAgentId',
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js:30:  'content', 'actionProposal', 'inputRefs', 'replyTo', 'continuationOf']) && value.schemaVersion === 3 &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-31-  value.interactionKind === 'EXECUTE' && followupId(value.taskId) && followupLong(value.expectedConversationGeneration) &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-32-  followupLong(value.expectedTaskVersion, true) && followupLong(value.expectedAssignmentRevision, true) &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-33-  followupLong(value.expectedGrantVersion) && followupLong(value.requirementRevision) && followupId(value.targetAgentId) &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-34-  validContent(value.content) &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js:35:  exactKeys(value.actionProposal, ['kind']) && ['generate_image', 'edit_image'].includes(value.actionProposal.kind) &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-36-  Array.isArray(value.inputRefs) && value.inputRefs.length <= 16 && value.inputRefs.every(inputRef) && value.replyTo === null && continuation(value.continuationOf) &&
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js:37:  (value.actionProposal.kind === 'generate_image'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-38-    ? value.inputRefs.every(ref => ref.kind === 'TASK_LINKED_WORKSPACE_VERSION')
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-39-    : value.inputRefs.length === 1 && value.inputRefs[0].kind === 'CURRENT_CONVERSATION_ASSET' && value.continuationOf !== null)
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-47-    expectedAssignmentRevision: context.assignmentRevision, expectedGrantVersion: context.baselineGrantVersion,
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-48-    requirementRevision: context.requirementRevision, targetAgentId: context.targetAgentId, content: typeof content === 'string' && !isoControl(content) ? content.trim() : '',
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js:49:    actionProposal: { kind }, inputRefs: clone(inputRefs || []), replyTo: null, continuationOf: continuationOf == null ? null : clone(continuationOf) }
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-50-  return intent(body) ? Object.freeze(body) : null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallBountyFollowupIntent.js-51-}
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallBountyFollowup.js-37-    !followupDescriptor(value.modelId) || !followupDescriptor(value.custody) || !followupDescriptor(value.operatorPolicyRevision) ||
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallBountyFollowup.js-38-    value.pricingMode !== 'UNPRICED_EXTERNAL_ACCOUNT' || value.maxOutboundRequestAttempts !== 1) return null
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallBountyFollowup.js:39:  const op = intent.actionProposal.kind === 'edit_image' ? 'EDIT_IMAGE' : 'GENERATE_IMAGE'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallBountyFollowup.js-40-  if (value.conversationGeneration !== context.conversationGeneration || value.taskVersion !== context.taskVersion ||
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/useHallBountyFollowup.js-41-    value.assignmentRevision !== context.assignmentRevision || value.grantVersion !== context.baselineGrantVersion ||
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-5-const text = value => typeof value === 'string' ? value.trim().toUpperCase() : ''
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-6-const executeStep = step => text(step?.kind) === 'EXECUTE'
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js:7:const durableV2Step = step => ['EXECUTE', 'INSPECT'].includes(text(step?.kind))
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-8-
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-9-/**
+--
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-27- * A deliberately small, default-off v2 surface. The current request
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-28- * projection has no trusted CHAT schema marker, so CHAT stays on the existing
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js:29: * surface. Only durable EXECUTE/INSPECT steps identify a v2 proposal here;
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-30- * requestRevision is deliberately not a marker because legacy /chat/stream uses it.
+/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/web-inspection-owner-20261002/src/composables/juyiting/hallMultimediaDeliberationUi.js-31- */
+--- dependency/package markers ---
+total 1160
+drwxr-xr-x  9 root root   4096 Oct  2 01:10 .
+drwxr-xr-x 41 root root   4096 Oct  2 00:51 ..
+-rw-r--r--  1 root root    230 Oct  2 00:51 .babelrc
+-rw-r--r--  1 root root    147 Oct  2 00:51 .editorconfig
+-rw-r--r--  1 root root    327 Oct  2 00:51 .env
+-rw-r--r--  1 root root    328 Oct  2 00:51 .env.development
+-rw-r--r--  1 root root    332 Oct  2 00:51 .env.production
+-rw-r--r--  1 root root     76 Oct  2 00:51 .git
+-rw-r--r--  1 root root    329 Oct  2 00:51 .gitattributes
+-rw-r--r--  1 root root    266 Oct  2 00:51 .gitignore
+-rw-r--r--  1 root root    277 Oct  2 00:51 .hintrc
+-rw-r--r--  1 root root    392 Oct  2 00:51 .mocharc.json
+-rw-r--r--  1 root root      8 Oct  2 00:51 .nvmrc
+-rw-r--r--  1 root root    246 Oct  2 00:51 .postcssrc.cjs
+-rw-r--r--  1 root root   1063 Oct  2 00:51 LICENSE
+-rw-r--r--  1 root root   1959 Oct  2 00:51 README-test.md
+-rw-r--r--  1 root root   1293 Oct  2 00:51 README.md
+drwxr-xr-x  2 root root   4096 Oct  2 00:51 build
+drwxr-xr-x  3 root root   4096 Oct  2 00:51 docs
+-rw-r--r--  1 root root   4759 Oct  2 00:51 eslint.config.js
+-rw-r--r--  1 root root   4286 Oct  2 00:51 favicon.ico
+-rw-r--r--  1 root root   2581 Oct  2 00:51 index.html
+-rw-r--r--  1 root root    748 Oct  2 00:51 jsconfig.json
+-rw-r--r--  1 root root   1343 Oct  2 00:51 localhost.crt
+-rw-r--r--  1 root root   2006 Oct  2 00:51 localhost.key
+drwxr-xr-x  3 root root   4096 Oct  2 00:51 openspec
+-rw-r--r--  1 root root 445485 Oct  2 00:51 package-lock.json
+-rw-r--r--  1 root root   7453 Oct  2 00:51 package.json
+drwxr-xr-x  4 root root   4096 Oct  2 00:51 scripts
+drwxr-xr-x 12 root root   4096 Oct  2 00:51 src
+drwxr-xr-x  2 root root   4096 Oct  2 00:51 static
+-rw-r--r--  1 root root 578711 Oct  2 00:51 stats.html
+drwxr-xr-x  7 root root  12288 Oct  2 00:51 tests
+-rw-r--r--  1 root root    359 Oct  2 00:51 tsconfig.game.json
+-rw-r--r--  1 root root   4417 Oct  2 00:51 vite.config.js
+/home/isp/wsps/cyf/.worktrees/voice-realtime-web-20260930/node_modules
+/home/isp/wsps/cyf/web/node_modules
+/home/isp/wsps/cyf/web/node_modules/tsx/node_modules
+/home/isp/wsps/cyf/web/node_modules/editorconfig/node_modules
+/home/isp/wsps/cyf/web/node_modules/pkg-types/node_modules
+/home/isp/wsps/cyf/web/node_modules/prop-types/node_modules
+/home/isp/wsps/cyf/web/node_modules/postcss-url/node_modules
+/home/isp/wsps/cyf/web/node_modules/pkg-dir/node_modules
+/home/isp/wsps/cyf/web/node_modules/parse5/node_modules
+/home/isp/wsps/cyf/web/node_modules/unplugin-utils/node_modules
+/home/isp/wsps/cyf/web/node_modules/yargs-unparser/node_modules
+/home/isp/wsps/cyf/web/node_modules/mochawesome/node_modules
+/home/isp/wsps/cyf/web/node_modules/unimport/node_modules
+/home/isp/wsps/cyf/web/node_modules/yargs/node_modules
+/home/isp/wsps/cyf/web/node_modules/mochawesome-report-generator/node_modules
+/home/isp/wsps/cyf/web/node_modules/chokidar/node_modules
+/home/isp/wsps/cyf/web/node_modules/regjsparser/node_modules
+/home/isp/wsps/cyf/web/node_modules/mlly/node_modules
+/home/isp/wsps/cyf/web/node_modules/eslint-plugin-vue/node_modules
+/home/isp/wsps/cyf/web/node_modules/rollup-plugin-visualizer/node_modules
+/home/isp/wsps/cyf/web/node_modules/make-dir/node_modules
+/home/isp/wsps/cyf/web/node_modules/strip-literal/node_modules
+/home/isp/wsps/cyf/web/node_modules/vue-eslint-parser/node_modules
+/home/isp/wsps/cyf/web/node_modules/eslint/node_modules
+/home/isp/wsps/cyf/web/node_modules/esrecurse/node_modules
+/home/isp/wsps/cyf/web/node_modules/espree/node_modules
+/home/isp/wsps/cyf/web/node_modules/w3c-xmlserializer/node_modules
+/home/isp/wsps/cyf/web/node_modules/read-cache/node_modules
+/home/isp/wsps/cyf/web/node_modules/pretty-format/node_modules
+/home/isp/wsps/cyf/web/node_modules/glob/node_modules

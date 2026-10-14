@@ -1,0 +1,15 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import WebSocket from '/home/isp/wsps/cyf/web/node_modules/ws/index.js';
+const dir='/home/isp/wsps/cyf/docs/implementation/evidence/mmd-shortest-flow-20261007';
+const own=JSON.parse(await readFile(dir+'/browser-owned.json','utf8'));
+const targets=await(await fetch(`http://127.0.0.1:${own.cdpPort}/json/list`)).json();
+const target=targets.find(x=>x.type==='page' && /^https:\/\//.test(x.url)) || targets.find(x=>x.type==='page');
+const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.once('open',r);ws.once('error',j)});
+let id=0;const pending=new Map();ws.on('message',b=>{const m=JSON.parse(b);const p=pending.get(m.id);if(p){pending.delete(m.id);clearTimeout(p.t);m.error?p.j(Error(m.error.message)):p.r(m.result)}});
+const send=(method,params={})=>new Promise((r,j)=>{const n=++id;const t=setTimeout(()=>j(Error('transport timeout')),45000);pending.set(n,{r,j,t});ws.send(JSON.stringify({id:n,method,params}))});
+try{const action=process.argv[2];await send('Page.enable');if(action==='navigate'){await send('Page.navigate',{url:'https://kit.chaoyoufan.cn/juyiting'});console.log('navigation sent')}else if(action==='inspect'){const r=await send('Runtime.evaluate',{expression:`JSON.stringify({title:document.title,path:location.pathname,text:document.body.innerText.slice(0,7000),inputs:[...document.querySelectorAll('input')].map(x=>({type:x.type,name:x.name,placeholder:x.placeholder,visible:x.offsetParent!==null,form:x.form?.id,id:x.id})),buttons:[...document.querySelectorAll('button,a,input[type=submit]')].filter(x=>x.offsetParent!==null).map(x=>({tag:x.tagName,type:x.type,id:x.id,text:x.innerText,classes:x.className})).slice(0,30)})`,returnByValue:true});console.log(r.result.value);const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile(dir+'/baseline.png',Buffer.from(shot.data,'base64'));}else if(action==='login'){
+const username=process.env.CYF_TEST_USERNAME,password=process.env.CYF_TEST_PASSWORD;
+if(!username||!password)throw Error('test credentials not supplied');
+for(const [type,value] of [['text',username],['password',password]]){const r=await send('Runtime.evaluate',{expression:`(()=>{const e=[...document.querySelectorAll('input')].find(x=>x.type===${JSON.stringify(type)}&&x.offsetParent!==null);if(!e)throw Error('visible input missing');e.focus();e.select();return true})()`,returnByValue:true});if(r.exceptionDetails)throw Error('visible login input missing');await send('Input.insertText',{text:value});}
+const r=await send('Runtime.evaluate',{expression:"(()=>{document.activeElement.blur();const b=document.querySelector('#loginBtn');if(!b||b.offsetParent===null)throw Error('login button missing');b.click();return {submitted:true}})()",returnByValue:true});if(r.exceptionDetails)throw Error('login click failed');console.log(JSON.stringify(r.result.value));
+}else if(action==='close'){await send('Browser.close')}else throw Error('unknown action')}finally{ws.close()}

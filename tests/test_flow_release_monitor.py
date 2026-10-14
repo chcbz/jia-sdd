@@ -142,6 +142,24 @@ class FlowReleaseMonitorTest(unittest.TestCase):
         mail.assert_not_called()
         self.assertEqual(record, next(iter(self.state()['targets'].values()))['notices']['terminal_fail'])
 
+    def test_success_with_capped_unaccepted_mail_still_requires_controller(self):
+        record = {'attempts': 3, 'accepted': False,
+                  'receipt': {'accepted_by_mail_helper': False, 'inbox_delivery': 'unknown'}}
+        state = {'version': 1, 'targets': {self.monitor._target_key(self.target): {
+            'last_observation': {'kind': 'status', 'status': 'SUCCESS', 'commits': ['a' * 40]},
+            'notices': {'success_expected_commit': record}}}}
+        self.path.write_text(json.dumps(state))
+        for enabled in (True, False):
+            config = self.config()
+            config['mail_enabled'] = enabled
+            with mock.patch.object(self.monitor, '_flow_status', return_value=('SUCCESS', ['a' * 40])), \
+                 mock.patch.object(self.monitor, '_send_email') as mail:
+                self.assertEqual(2, self.monitor.check(config))
+                self.assertEqual(2, self.monitor.check(config))
+            mail.assert_not_called()
+            saved = next(iter(self.state()['targets'].values()))
+            self.assertEqual(record, saved['notices']['success_expected_commit'])
+
     def test_success_is_deduplicated_and_receipt_is_not_inbox_claim(self):
         with mock.patch.object(self.monitor, '_flow_status', return_value=('SUCCESS', ['a' * 40])), \
              mock.patch.object(self.monitor, '_send_email', return_value=True) as mail:
@@ -222,6 +240,86 @@ class FlowReleaseMonitorTest(unittest.TestCase):
             self.assertEqual(0, self.monitor.main(['--check', '--config', payload]))
         self.assertEqual('', stdout.getvalue())
         self.assertEqual('', stderr.getvalue())
+
+    def test_mail_disabled_pauses_without_attempt_or_receipt_and_resumes_pending_notice(self):
+        config = self.config()
+        config['mail_enabled'] = False
+        with mock.patch.object(self.monitor, '_flow_status', return_value=('FAIL', [])), \
+             mock.patch.object(self.monitor, '_send_email') as mail:
+            self.assertEqual(2, self.monitor.check(config))
+            self.assertEqual(2, self.monitor.check(config))
+        mail.assert_not_called()
+        saved = self.state()
+        target_state = next(iter(saved['targets'].values()))
+        self.assertEqual({'reason': 'mail_disabled'}, saved['mail_paused'])
+        self.assertNotIn('notices', target_state)
+        self.assertEqual({'kind': 'status', 'status': 'FAIL', 'commits': []},
+                         target_state['last_observation'])
+
+        config['mail_enabled'] = True
+        with mock.patch.object(self.monitor, '_flow_status', return_value=('FAIL', [])), \
+             mock.patch.object(self.monitor, '_send_email', return_value=False) as mail:
+            self.assertEqual(2, self.monitor.check(config))
+        mail.assert_called_once()
+        saved = self.state()
+        self.assertNotIn('mail_paused', saved)
+        record = next(iter(saved['targets'].values()))['notices']['terminal_fail']
+        self.assertEqual(1, record['attempts'])
+        self.assertFalse(record['accepted'])
+        self.assertEqual({'accepted_by_mail_helper': False, 'inbox_delivery': 'unknown'},
+                         record['receipt'])
+
+    def test_mail_enabled_rejects_non_boolean_values(self):
+        for value in (0, 1, 'false', None, [], {}):
+            with self.subTest(value=value):
+                config = self.config()
+                config['mail_enabled'] = value
+                with self.assertRaisesRegex(self.monitor.ConfigurationError, 'mail_enabled_invalid'):
+                    self.monitor._validate_config(config)
+                self.assertEqual(2, self.monitor.main(['--check', '--config', json.dumps(config)]))
+
+    def test_mail_resume_uses_only_remaining_attempts_and_keeps_cap(self):
+        record = {'attempts': 2, 'accepted': False,
+                  'receipt': {'accepted_by_mail_helper': False, 'inbox_delivery': 'unknown'}}
+        state = {'version': 1, 'targets': {self.monitor._target_key(self.target): {
+            'last_observation': {'kind': 'status', 'status': 'FAIL', 'commits': []},
+            'notices': {'terminal_fail': record}}}}
+        self.path.write_text(json.dumps(state))
+        paused = self.config()
+        paused['mail_enabled'] = False
+        with mock.patch.object(self.monitor, '_flow_status', return_value=('FAIL', [])), \
+             mock.patch.object(self.monitor, '_send_email') as mail:
+            self.assertEqual(2, self.monitor.check(paused))
+        mail.assert_not_called()
+        self.assertEqual(record, next(iter(self.state()['targets'].values()))['notices']['terminal_fail'])
+
+        resumed = self.config()
+        with mock.patch.object(self.monitor, '_flow_status', return_value=('FAIL', [])), \
+             mock.patch.object(self.monitor, '_send_email', return_value=False) as mail:
+            self.assertEqual(2, self.monitor.check(resumed))
+            self.assertEqual(2, self.monitor.check(resumed))
+        self.assertEqual(1, mail.call_count)
+        saved_record = next(iter(self.state()['targets'].values()))['notices']['terminal_fail']
+        self.assertEqual(3, saved_record['attempts'])
+        self.assertEqual(record['receipt'], saved_record['receipt'])
+
+    def test_multiple_targets_keep_error_notice_attempts_separate(self):
+        second = dict(self.target, task_id='FLOW-SECOND', pipeline='5263690', run='21',
+                      expected_commit='b' * 40)
+        config = {'targets': [self.target, second], 'state': str(self.path)}
+        with mock.patch.object(self.monitor, '_flow_status',
+                               side_effect=[self.monitor.ObservationError('flow_timeout'),
+                                            self.monitor.ObservationError('flow_output_invalid')] * 3), \
+             mock.patch.object(self.monitor, '_send_email', return_value=False) as mail:
+            self.assertEqual(0, self.monitor.check(config))
+            self.assertEqual(0, self.monitor.check(config))
+            self.assertEqual(2, self.monitor.check(config))
+        self.assertEqual(2, mail.call_count)
+        saved = self.state()['targets']
+        self.assertEqual(1, saved[self.monitor._target_key(self.target)]['notices']
+                         ['observation_error_flow_timeout']['attempts'])
+        self.assertEqual(1, saved[self.monitor._target_key(second)]['notices']
+                         ['observation_error_flow_output_invalid']['attempts'])
 
     def test_rejects_unapproved_pipeline_and_org(self):
         config = self.config()

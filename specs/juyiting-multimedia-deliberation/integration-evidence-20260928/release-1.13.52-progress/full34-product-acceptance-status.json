@@ -1,0 +1,263 @@
+{
+  "releaseLabel": "1.13.52",
+  "scope": "Full unchanged AC01-AC22 and FD01-FD12; no code/test-only product pass inferred",
+  "cases": [
+    {
+      "id": "AC01",
+      "scenario": "不选资料，输入“画一只鸟”并点将",
+      "requiredEvidence": "自动创建/复用悬赏议事并发送需求；不强制打开空间或再点生成",
+      "status": "FAIL",
+      "spec": "acceptance.md",
+      "evidence": {
+        "taskId": "417",
+        "webCommit": "3d9f9aedf1131d135016f808d0dc0af48f4b5ffb",
+        "apiCommit": "ae66af9980d7f04373c9198dfa49ac22c266ce3e",
+        "flowRun": 155,
+        "observed": "Original v0 POST201 and consentBOUND now verified; assignment-operation GET500, relay BAD_REQUEST; automatic visible discussion/media not verified.",
+        "record": "task417-real-product-failure.json"
+      }
+    },
+    {
+      "id": "AC02",
+      "scenario": "选择参考图 v2，选择后源文件产生 v3",
+      "requiredEvidence": "首条资料卡及 runtime 实际输入仍是 v2；有授权领取/摘要证据，不仅文件名",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC03",
+      "scenario": "双击/重试点将、刷新、多端同一意图",
+      "requiredEvidence": "一次 assignment 意图对应一个会话、一个首条请求；无重复模型执行",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC04",
+      "scenario": "点将成功后中断投递，恢复网络",
+      "requiredEvidence": "明确点将成功/投递待恢复，恢复同意图不重复点将；响应未知先查状态",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC05",
+      "scenario": "信息充分且能力/授权满足",
+      "requiredEvidence": "Agent 直接输出/执行，既有授权内不要求第二次开始；状态与实际执行一致",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC06",
+      "scenario": "需求确有歧义，用户回复澄清",
+      "requiredEvidence": "同会话提问和继续，澄清不持有生成 lease；补充后可继续执行",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC07",
+      "scenario": "图像生成、上传完成",
+      "requiredEvidence": "就绪后无需刷新显示；预览实际可解码、宽高有效；下载可打开且 SHA-256 与服务端一致；不是本机路径/重定向循环",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC08",
+      "scenario": "会话含音频",
+      "requiredEvidence": "可点击播放/暂停、下载、保存；有真实字节/MIME，宣称支持拖动时验证 Range；不自动播放；不要求该 Agent 会音频生成",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC09",
+      "scenario": "一条回复包含文本、多图、音频/文件；文字先结束",
+      "requiredEvidence": "混排正常，晚到媒体仍原位更新；一个附件失败不隐藏其他成果；未知格式明确预览限制但可合法下载",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC10",
+      "scenario": "未保存第一稿，直接引用“改成蓝色”",
+      "requiredEvidence": "runtime 实际取得第一稿，生成新 execution；同一会话可看旧新稿，源参考文件未被覆盖",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC11",
+      "scenario": "生成中/已就绪时刷新、断线重连、乱序/重复事件",
+      "requiredEvidence": "无重复生成/part；低 revision 不回退；历史含已就绪媒体；游标失效按快照重同步无漏事件",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC12",
+      "scenario": "保存文字片段、图片、音频和普通文件，重复点击",
+      "requiredEvidence": "仅选中项进入个人空间；普通重复保存不多副本，文本片段已冻结；保存失败只重试归档",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC13",
+      "scenario": "明确另存副本/更新已有文件，两个端使用相同旧版本更新",
+      "requiredEvidence": "另存可产生新文件；新版本需 CAS，第二个旧 expectedVersion 冲突，不覆盖他人/新版本",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC14",
+      "scenario": "不先保存，验收面板仅选择最新图片和文字",
+      "requiredEvidence": "正式成果只含选中精确集合；旧稿不进入；验收后服务端任务真正完成才显示完成",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC15",
+      "scenario": "正式提交/验收/完成各阶段分别故障；可选归档失败",
+      "requiredEvidence": "展示真实阶段，恢复原 operation 不重复收费/验收；已验收而任务未完成不误标完成；归档失败独立重试",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC16",
+      "scenario": "第二账号猜 asset/file/conversation/execution/operation ID；媒体 Range/HEAD；伪造身份",
+      "requiredEvidence": "所有访问和写入受 ACL 隔离，不能通过哈希/直链/事件越权；senderType/name 以服务端身份为准",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC17",
+      "scenario": "server 和 local 分别跑图片主流程并检查运行目录",
+      "requiredEvidence": "独立 roots/task/run；资料仅授权领取、输出仅声明上传；无需共享挂载，两种模式预览/下载均可用",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC18",
+      "scenario": "新旧客户端混用、fastChat 关闭、缺图片/INSPECT 能力",
+      "requiredEvidence": "逐目标匹配协议/能力，明确可用/不可用；现代受理后不静默降级重跑，旧文本入口仍正常",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC19",
+      "scenario": "恶意素材要求读取其他目录/工具，伪造执行意图/producer/lease，超授权收费",
+      "requiredEvidence": "服务端与 runtime 拒绝越界；只读 CHAT 无任意工具；生产者 token 不泄露浏览器",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC20",
+      "scenario": "冷线程/缓存丢失/配置变化，内置宋江及远端分别继续对话",
+      "requiredEvidence": "从授权业务历史/摘要/精确资产重建上下文；实际包含上一稿/需求，不仅 ID 或当前一句话",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC21",
+      "scenario": "生成中取消、切换身份、重新点将；旧 Agent 晚到提交",
+      "requiredEvidence": "新身份无旧内容泄漏；取消反映实际结果；旧 assignment 无权完成新分配；交接资料重新授权",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "AC22",
+      "scenario": "Agent 离线后读成果；会话删除；旧 PRIVATE/TASK/普通聊天回归",
+      "requiredEvidence": "已就绪资产依保留/权限可读；已个人保存和正式交付不随会话删除丢失；旧执行/普通聊天无语义回退",
+      "status": "NOT_RUN",
+      "spec": "acceptance.md"
+    },
+    {
+      "id": "FD01",
+      "scenario": "普通聊天保持轻量",
+      "requiredEvidence": "无附件内容物化/无执行工具启用/无execution创建；有必要对话上下文",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD02",
+      "scenario": "明确生成直接执行",
+      "requiredEvidence": "授权充分的画鸟意图可直接进入execution；不是先强制CHAT模型调用；只有一次执行",
+      "status": "FAIL",
+      "spec": "fusion-detailed-design-v2.md",
+      "evidence": {
+        "taskId": "417",
+        "webCommit": "3d9f9aedf1131d135016f808d0dc0af48f4b5ffb",
+        "apiCommit": "ae66af9980d7f04373c9198dfa49ac22c266ce3e",
+        "flowRun": 155,
+        "observed": "Original v0 POST201 and consentBOUND now verified; assignment-operation GET500, relay BAD_REQUEST; automatic visible discussion/media not verified.",
+        "record": "task417-real-product-failure.json"
+      }
+    },
+    {
+      "id": "FD03",
+      "scenario": "带资料按需加载",
+      "requiredEvidence": "精确指定版本被读取；其他空间资料未读取；元数据和真实内容读取证据区分",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD04",
+      "scenario": "模型/前端不能授权",
+      "requiredEvidence": "forged execute/grant/tool/cost 字段不能触发未授权执行，旧stream禁止仍成立",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD05",
+      "scenario": "同会话不同权限环境",
+      "requiredEvidence": "CHAT无法读取前次执行目录/私有轨迹；已发布资产可经授权再次引用",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD06",
+      "scenario": "澄清释放并安全续办",
+      "requiredEvidence": "等待用户无长执行lease；恢复重新校验grant，已完成副作用不重复",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD07",
+      "scenario": "文本结束不结束办理",
+      "requiredEvidence": "text_final后媒体仍更新；request办理完成不自动完成任务",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD08",
+      "scenario": "重试/回放不重复计费",
+      "requiredEvidence": "同意图只对应一个execution；unknown结果对账，明确新生成才新intent",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD09",
+      "scenario": "撤权/重指派竞态",
+      "requiredEvidence": "旧Agent不能领取新资料/向新assignment提交；晚到结果不会覆盖新状态",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD10",
+      "scenario": "状态查询不走重执行",
+      "requiredEvidence": "查进度只读投影，不额外触发生成/资料扫描",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD11",
+      "scenario": "新旧混用与能力真实",
+      "requiredEvidence": "每个目标协议匹配；不支持INSPECT不广告；无工具标签有实际引擎证据",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    },
+    {
+      "id": "FD12",
+      "scenario": "冷恢复与多模态",
+      "requiredEvidence": "thread缓存丢失时恢复授权事实/上稿，builtin和远端一致；image/audio/file历史可读",
+      "status": "NOT_RUN",
+      "spec": "fusion-detailed-design-v2.md"
+    }
+  ],
+  "observedRelease": "1.13.50",
+  "updatedAt": "2026-10-02T19:34:47.968794+00:00",
+  "previousFailureRetained": "1.13.50 original evidence unchanged"
+}

@@ -1,48 +1,47 @@
 feature_id: personal-center-navigation-v1-8
 version: 1.8.0
-status: implementing
+status: released
 scope:
   confirmed: juyiting_personal_center_entry
-  proposed: navigation_roundtrip_and_existing_profile_usability
-  implementation: web_only_no_api_or_schema_change_expected
+  derived: profile_preview_roundtrip_identity_and_orientation_guards
+  implementation: web_navigation_plus_existing_api_hotfix_baseline_reconciliation
 owners:
-  web_navigation: see_runtime_ledger
-  web_profile: see_runtime_ledger
-  integration: see_runtime_ledger
   exact_owner_source: docs/implementation/TASKS.yaml#runtime_ledger_json
 contract:
   design: design.md
   new_http_apis: 0
   schema_changes: 0
-  production_actions_authorized_by_this_plan: false
+  production_actions_authorized_by_this_task: false
 reference_release:
   version: 1.7.0
   api_commit: 9aaf2a315b0365ccf801012b100cf7b38cf47c62
   web_commit: 7c4902983974b748ea01d7c88e2403fa636691e6
-  note: design_reference_only_reconcile_latest_develop_before_implementation
 pinned_revisions:
-  api_commit: null
-  web_commit: null
-  root_base_commit: null
+  api_commit: 0b5cfe8cbcafcadca7dcef07874d6b397f0ab1e4
+  api_tree: 39df5045b8e644379b81bab01bd8d3f7f06c114a
+  web_commit: 7099b176e06e2322c6a79f258a4ad74d6221c358
+  web_tree: 8648f749295ee2ef44dd0f379b86fa3cddbe4b46
+  root_base_commit: 0bf9799a4a2bc279a7396454c75be7125bfe9db9
 verification:
-  source: in_progress
-  integration: not_started
+  source: passed_changed_scope
+  web_related_tests: 294
+  web_policy_tests: 7
+  api_scoped_tests: 118
+  isolated_browser_checks: 38
+  integration: final_production_assets_with_mocked_api_passed
+  full_api_suite: not_claimed_legacy_compileTestJava_debt
 acceptance:
-  status: pending
+  status: pending_user
   evidence: acceptance.md
 release:
-  status: not_started
-  proposed_branch: release/1.8.0
-  branch_created: false
-  expected_build_origin: local_user_authorized
-  reuse_unchanged_api: true
-
-implementation_started: 2026-09-17T20:34:40+08:00
-user_authorization: create_current_version_bugfix_branches_then_start_v1_8
-implementation_base:
-  web_commit: 7c4902983974b748ea01d7c88e2403fa636691e6
-  web_tree: ae9cd58d4adb7ee16678ba92b1e67de5ecb84141
-  source: fetched_origin_develop
+  status: frozen_preserved_not_standalone_deployed
+  branch: release/1.8.0
+  branch_created: true
+  remote_refs_verified: true
+  build_origin: local_user_authorized
+  flow_run: null
+  production_deployment_this_task: false
+  reuse_unchanged_api: false
 maintenance:
   api_branch: codex/bugfix/1.7.0
   web_branch: codex/bugfix/1.7.0
@@ -52,3 +51,47 @@ implementation_tasks:
   - V1-8-HALL-NAV-20260917
   - V1-8-PROFILE-NAV-20260917
   - V1-8-INTEGRATION-20260917
+  - V1-8-API-BASELINE-20260917
+readiness_evidence: docs/implementation/V1_8_RELEASE_READY_20260917.md
+local_bundle: deliverables/releases/v1.8.0-local-ready-20260917/readiness.json
+root_gitlinks: freeze_branch_pins_exact_pair_primary_dirty_checkouts_preserved
+root_freeze_branch: codex/v1-8-sdd-freeze-20260917
+
+supersession:
+  standalone_deployment: cancelled_by_user
+  bundled_into: release/1.9.2
+  previous_planned_bundle: release/1.9.0
+  frozen_source_branches_preserved: true
+  redundant_never_deployed_binaries: retired_after_verified_1_9_replacement
+  retirement_evidence: deliverables/releases/v1.8.0-local-ready-20260917/superseded-by-v1.9.json
+
+latest_bundled_delivery:
+  version: 1.9.2
+  status: deployed_healthy_scoped_regression_passed
+  api_commit: e15f7020bf77153912aafce15fc11c67b2f06e11
+  api_tree: 551c452f1a81bbc6f6b198452891d2189b967fd8
+  web_commit: 41ca32b72fda97e8066783dc702b1218305ca395
+  web_tree: 0edb17f4f5420670630ab2b0f713a644a8af4bbd
+  live_api_checks: 46
+  live_browser_checks: 113
+  root_freeze_branch: codex/v1-9-2-sdd-release-20260918
+  evidence: docs/implementation/V1_9_2_RELEASE_RESULT_20260918.md
+  acceptance: pending_user
+  historical_1_8_pins_above: preserved_frozen_not_standalone_deployed
+
+latest_post_release_refinement:
+  version: 1.9.6
+  status: deployed_healthy_pending_latest_visual_confirmation
+  scope: landscape_account_entry_avatar_only
+  web_commit: 737506e7af06bb4ea4ec2386dc507ec745297481
+  web_tree: 05f1c965cd07bb02ef5caaf551f5ab4c87fbfc21
+  api_commit_reused: e15f7020bf77153912aafce15fc11c67b2f06e11
+  api_tree_reused: 551c452f1a81bbc6f6b198452891d2189b967fd8
+  release_ref: release/1.9.6
+  release_id: v1.9.6-local-20260918
+  verification:
+    targeted_web_tests: 4_passing
+    production_build: passed
+    online_home_juyiting_service_worker: http_200
+  service_worker_cache_version: cyf-pwa-v20260918-hall-account-avatar-only-r2
+  evidence: docs/implementation/V1_9_6_HALL_ACCOUNT_ENTRY_RELEASE_20260918.md

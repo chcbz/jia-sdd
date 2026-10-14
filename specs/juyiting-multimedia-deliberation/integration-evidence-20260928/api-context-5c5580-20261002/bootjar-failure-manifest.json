@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-02",
+  "taskId": "MMD-U4-BROWSER-BASELINE-SERVICE-READINESS",
+  "buildOrigin": "local_user_authorized",
+  "sourceCommit": "5c5580c77af1f9472cc31e5f7e94350fa9b3021f",
+  "sourceTree": "a0e84dba58ed22b15e44683c662a29ea6ae711be",
+  "sourceStatusClean": true,
+  "selector": ":starter:bootJar build_origin=local_user_authorized",
+  "fixtureDigest": "7230d5c61959ed29c2de0e4f77fba6f0245df028c8b338c29a6625f03e689cf1",
+  "targetedTestEvidenceReused": "f23464622316497ff2703172380ca54acff819e70f789c8fc8488eec979f0f32",
+  "result": "FAILED_ENOSPC_NO_ARTIFACT",
+  "rootCause": "The normal :starter:bootJar graph reached bootJar after all required POI and public-artifact verifier tests passed, then the boot archive write exhausted the filesystem. Gradle also could not persist the bootJar executionHistory entry after ENOSPC.",
+  "resourceFacts": {
+    "orchestratorAdmissionDiskAvailableBytes": 283627520,
+    "diskAvailableBytesAtTerminalObservation": 544768,
+    "invalidPartialJarBytes": 250810368,
+    "invalidPartialJarSha256": "786f3e30fe6226fec7b07eee0b491ac0a77282fe4b61f776355294a7f2a08e54",
+    "diskAvailableBytesAfterRemovingOwnedInvalidPartialOnly": 251256832
+  },
+  "cleanup": {
+    "removed": "only the owned invalid partial starter/build/libs/starter-1.1.2-SNAPSHOT.jar",
+    "foreignFilesRemoved": false,
+    "buildOutputsAndEvidencePreserved": true
+  },
+  "normalGraphRequiredTests": {
+    "totals": {
+      "tests": 66,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "xml": [
+      {
+        "file": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/bootjar-test-results/TEST-cn.jia.build.dependency.PoiProductionRuntimeClasspathTest.xml",
+        "sha256": "2f07a15c9f41b93228530d1950ef6e52bb889d7d09f093da87f0ba877c885a95",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/bootjar-test-results/TEST-cn.jia.build.security.ConfigurationSecurityClassifierTest.xml",
+        "sha256": "ca34e4762e678c3820498607b0494cd22e6e424fd0faa514d4081d2fdb29220e",
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/bootjar-test-results/TEST-cn.jia.build.security.OccurrenceZipArchiveTest.xml",
+        "sha256": "99af0a14872fb4c208812df7bc06fde25dd7c63675cbdfa8b3daa50a1f9678c9",
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/bootjar-test-results/TEST-cn.jia.build.security.PublicArtifactVerifierTest.xml",
+        "sha256": "2dbb09d12cd3a6b4b7c426d72b24dcd0fa83b406d820ff2d72ebabda62ca4ff5",
+        "tests": 26,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "gradle": {
+    "exit": 1,
+    "elapsed": "2m 3s",
+    "actionableTasks": "187 total; 126 executed; 4 from cache; 57 up-to-date",
+    "rawLog": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/bootjar-gradle.raw.log",
+    "rawLogSha256": "0cf93148a030057119a82c1cef23d48d76798309c6039ac3db6476d167a4307c",
+    "runner": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/gradle-bootjar-v1",
+    "runnerSha256": "d6e370e72b75e40842ca4f5a005214ed297adad4afd12163bbc7cf36181c869f",
+    "fixtureInputs": "/var/tmp/cyf-mmd-v3-context-readonly-owner-20261002/bootjar-fixture-inputs.txt",
+    "fixtureInputsSha256": "7230d5c61959ed29c2de0e4f77fba6f0245df028c8b338c29a6625f03e689cf1"
+  },
+  "artifact": null,
+  "artifactDiff": "NOT_RUN because no complete valid bootJar exists",
+  "retry": "NOT_RUN; unchanged-input retry forbidden. Main must provide a materially different disk/output condition before reauthorization.",
+  "productionActions": "NONE",
+  "flow": "NOT_RUN",
+  "deploy": "NOT_RUN"
+}

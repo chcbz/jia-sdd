@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-09-28T17:41:09.799644+00:00",
+  "scenario": "thread-owned isolated, socket-only MySQL 8 chat durable-schema empty database and repeat apply",
+  "sourceApiCommit": "5c31ad487847dc30e3583004e14a9d0f989976f8",
+  "sourceSchemaSha256": "a6add630dfce4b30f17c7c338d12f47582856eded652cab895ab25cad37fcb5a",
+  "serverVersion": "8.0.21",
+  "database": "mmd_chat_empty",
+  "result": {
+    "firstSchemaApply": "PASS",
+    "repeatSchemaApply": "PASS",
+    "tables": [
+      "chat_context_snapshot",
+      "chat_conversation_event",
+      "chat_deliberation_schema_version",
+      "chat_dispatch_outbox",
+      "chat_request",
+      "chat_turn"
+    ]
+  },
+  "limitations": [
+    "Only existing chat-deliberation-schema.sql against new empty database; NOT existing database upgrades or new U1/U2 migrations",
+    "Does not exercise Java initializer/DDL metadata validation, Agent task grant or external auth/JWT",
+    "No paid Provider, browser test, production database or publish touched"
+  ]
+}

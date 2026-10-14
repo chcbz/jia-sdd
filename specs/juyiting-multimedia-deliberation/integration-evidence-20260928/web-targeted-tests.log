@@ -1,0 +1,119 @@
+
+
+  Juyi Hall Codex durable deliberation web contract
+    ✔ negotiates v2 before sending and keeps body requestId equal to Idempotency-Key
+    ✔ takes the send lock and reserves one requestId before delayed capability negotiation
+    ✔ fences a capability response after identity reset and never sends with stale identity
+    ✔ fences a capability response after conversation scope changes
+    ✔ does not convert AbortError during capability negotiation into legacy fallback
+    ✔ falls back to the legacy payload when capabilities are unavailable
+    ✔ keeps pre-admission status neutral and only renders observed runtime policy
+    ✔ emits a scene receipt only after delivered or DISPATCHED, never for accepted QUEUED
+    ✔ strips every execute/route alias from metadata and sends only controlled top-level hint
+    ✔ recovers an unknown v2 POST through request lookup without a second POST
+    ✔ readbacks an API-shaped unversioned final and converges a versioned queued turn to PUBLISHED
+    ✔ forces a post-final readback when an unversioned final joins stale post-error recovery
+    ✔ coalesces group final readbacks, stays busy after failure, then converges on one pending rerun
+    ✔ ignores a late unversioned-final readback after identity lifecycle reset
+    ✔ uses a true trailing debounce for continuous deltas and reads back once after final
+    ✔ keeps terminal unknown-result recovery non-busy when history reload fails
+    ✔ fails all-pending cancellation when the returned request view is invalid
+    ✔ rejects null, incomplete, and mismatched single-turn cancel views without changing state
+    ✔ cancels an exact durable turn with a canonical state version and is terminal-idempotent
+    ✔ derives group busy from every child and treats FINAL_PERSISTED/PUBLISHED as terminal
+    ✔ allows only higher live stateVersion to advance authoritative turn fields
+    ✔ merges replay final into an existing persisted message and removes its placeholder
+    ✔ rejects late delta after final and keeps same-agent turns separate
+    ✔ uses explicit allPending or exact turn cancellation targets in UI wiring
+
+  Juyi Hall durable SSE recovery
+    ✔ reconnects after a valid resync_required from the committed cursor without a replay storm
+
+  Juyi Hall durable SSE parser
+    ✔ injects stream conversationId into API durable payloads that omit it
+    ✔ handles CRLF split across chunks and multiline data
+    ✔ does not advance cursor for invalid JSON
+    ✔ rejects an explicit conversation conflict without advancing cursor
+    ✔ rejects a cursor that conflicts with the SSE id
+    ✔ commits a valid resync_required cursor before scheduling one authoritative replay
+    ✔ rejects non-canonical cursor and Long event fields without advancing cursor
+    ✔ rejects conflicting id and eventSequence without advancing cursor
+
+  useHallConversation scoped message loading
+    ✔ does not fetch or schedule SSE recovery when token acquisition returns null
+    ✔ falls back to authoritative polling without reconnecting when durable SSE is unsupported
+    ✔ does not reconnect or replay when the protected SSE endpoint returns 401
+    ✔ clears stale messages when the current bounty scope has no conversation yet
+    ✔ clears only the draft while keeping scoped target agents intact
+    ✔ replaces an active @ trigger when inserting an agent mention
+    ✔ trims sent hall messages while preserving scoped payload fields
+    ✔ resolves a safe hall sender name from nickname, then username, then self label
+    ✔ labels only exact server identities as self after a history refresh or identity switch
+    ✔ normalizes persisted agent messages with metadata
+    ✔ removes control characters from persisted sender names before rendering
+    ✔ fails closed for numeric and unsafe Long wire IDs without coercion
+    ✔ normalizes the same agent name across SSE delta and final events
+    ✔ merges agent delta and final events without duplicate messages
+    ✔ reconciles an SSE agent delta when its final reply arrives on the request stream
+    ✔ reduces stream payloads for delivery, conversation id, and assistant text
+
+  useHallConversation authenticated public restore
+    ✔ restores a safe numeric backend Long using exact public scope and no trusted local jiacn
+    ✔ fails closed for unsafe numeric and malformed conversation ids
+    ✔ rejects non-public, bounty, private, and non-Juyi Hall rows before content fetch
+    ✔ deduplicates repeated restores and fences a deferred public row after a private scope switch
+    ✔ keeps restore pending through content and retries an earlier empty readiness result
+    ✔ fences a deferred authenticated restore when identity is cleared
+    ✔ keeps explicit new chat empty across reopen restores and fences deferred prior content
+
+  useHallConversation finalized reply routing
+    ✔ defers a built-in final for an existing conversation until stream end and commits once
+    ✔ makes stream end win over an existing-conversation live SSE duplicate
+    ✔ makes stream end win over a new-conversation poll duplicate before end
+    ✔ deduplicates a new-conversation poll replay after stream end
+
+  Hall conversation identity lifecycle
+    ✔ clears 1.5s and 5s sync timers and prevents their callbacks from loading after disposal
+    ✔ aborts deferred list and content requests on disposal and ignores their late success callbacks
+    ✔ cancels an opened deferred reply stream on identity clear and filters all late callbacks
+    ✔ resets an active reply when starting a new conversation and allows another send
+
+  useHallConversation history selection
+    ✔ loads only the current scoped Juyi Hall history through the authenticated list endpoint
+    ✔ switches an approved history item to persisted content and its own SSE stream
+    ✔ does not leak a late history response into a changed scope
+    ✔ does not apply late selected content after a scope change
+
+  useHallConversation history remediation
+    ✔ blocks a direct second send while the first turn is awaiting an agent reply
+    ✔ loads history pages past the collapsed backend total and deduplicates page boundaries
+    ✔ deletes a scoped history item and reloads the first page to keep pagination exact
+    ✔ locks selection, sending, and pagination while a deletion is in flight
+    ✔ deleting the active history item clears its content and suppresses automatic restoration
+    ✔ keeps the history item visible when deletion fails
+    ✔ reports selected content failure, blocks send, and retries the same selected id
+    ✔ clears the history spinner and fences a late history page when starting a new conversation
+
+  useHallConversation event-stream recovery policy
+    ✔ does not blindly reconnect the protected event stream after a 403
+    ✔ uses exponential jittered reconnects after EOF while keeping one event stream per conversation
+    ✔ pauses the conversation event stream while the page is hidden and resumes on visibility
+
+  Hall stream transport failure read-only recovery
+    ✔ does not repeat POST and reads only the same conversation until a new persisted final exists
+    ✔ without a server conversation ID reports unknown outcome instead of false delivery failure or resend
+
+  Juyi Hall conversation material references
+    ✔ shows task-scoped fixed versions from the real task directory without turning them into chat text
+    ✔ keeps legacy execution support but limits the embedded entrance to file browsing
+
+  V1-8 hall account navigation
+    ✔ renders a current-user account entry with an avatar fallback and stops scene pointer propagation (126ms)
+    ✔ uses the global current user only and wires visible portrait and true-landscape entry points through JuyiHall
+    ✔ requires an explicit leave decision only for draft, reply, or voice activity
+
+
+  86 passing (361ms)
+
+
+web-node-targeted-tests=PASS
