@@ -139,3 +139,45 @@ cd web && npm run dev -- --host 0.0.0.0
 程序、配置、状态分别归入apps/cyf-agent-runtime-v1、conf/cyf-agent-runtime-v1、state/cyf-agent-runtime-v1/INSTANCE/agents/SUBJECT/codex-home；使用目标机获授权基目录。已有Runtime升级/目录收口保留身份、授权、完整HOME和SQLite路径索引，不重新登记/enroll。唯一操作入口：`/home/isp/wsps/chcbz/isp-install/docs/cyf-agent-runtime-v1-self-host.md`，迁移见第9节；仓内codex-ws-agent仅为内嵌执行库，不是第二套服务。
 
 正式证据：安装器19项；API175项全过及同本地R2批次安装；前端Flow4403172 Run206成功（2932通过/2 pending），364安装文件及11公网资源匹配，现行API健康UP。tenant0原有限制未放宽；不创建生产installation、不付费，完整新用户登记E2E未执行。现行主机Runtime二进制仍1.0.2，页面不会自动升级远端机器。范围、OOM异常恢复及版本/摘要闭环见`docs/implementation/handoffs/SELFHOST-ONBOARDING-20261012.md`和`specs/runtime-self-host-onboarding/`。
+
+### 技能包存储与安装摘要（2026-10-13局部源码核对）
+
+覆盖API develop `b62d6e961facae02f0645b91b1072bd688d941b5` 的I04/I05，非完整技能执行/当前线上证明。现网基础切片仍API1.14.12/0833bfe、Runtime1.0.3/6325af1；发布证据见 `specs/juyiting-skill-execution/evidence/release-20261013/summary.json`。
+
+- 唯一新增存储配置 `economy.skill.marketplace.package-store-root`，默认 `/home/isp/state/cyf-skill-packages`；对象按hash不可变寻址。quote/购买/下载在事务外prepare字节，在短事务内复验批准版本/价格/身份；旧版安装不依赖current指针。
+- 普通说明包可以无manifest；可执行包安装成功回执的manifestSha256必须绑定批准ZIP内原始字节，缺失或篡改不激活、不结算。已确认不可变回执可在对象退役后重放，仍核验主体/fence/安装身份。
+- 运行费用只登记说明，未知费用不影响描述校验；原技能包购买/退款事务不变。维护HTTP发布、目录READY、统一执行、资料识别/修改与结果提交链尚待后续实现，不把对象store.publish或单测通过当成可用技能。
+- 定向证据分别在特性目录的i04-proof.json、i05-proof.json；生产目录/配置未在本切片创建或改写。
+
+本小节新增覆盖（2026-10-13，API源码 `16fe9f92e2b7ea64cdf7a710fd284ee528cba155`）：I06的 `agent_skill_execution` 为PWE一对一附属快照/effect记录，不是新任务表；DDL是显式迁移资源，当前未在生产执行，也未接入protocol4写流。CAS只写mutable投影、递增version，终态不重开；RESULT_UNKNOWN不回READY；结果阶段对象manifest支持零文件。I08由agent定义 `SkillCapabilityLookup`、chat提供可信live-session目录索引，代际/断线/主体歧义fail closed；目录事实不授予安装entitlement或任务调用权限，该基线尚未接注册消息或权威可调用join（后续I10源码接线见下节，I11仍待实施）。I06定向130项、I08定向11项与layering均PASS；这两批源码未再次上线，不将单测或空registry当在线技能可用证明。
+
+### 技能目录与认证注册（2026-10-13局部源码核对）
+
+覆盖API源码 `02faad300b8ee27ce706e5720b31b3c221fb8bb8`、Runtime源码 `b79558e4f18b431c1ff698432b3d6a7c07aac8d5` 的I09/I10；双端已合入并push develop，尚未发布这批源码。首批在线版本沿上节发布证据，不把源码接线等同线上技能可用。
+
+- Runtime只从既有持久安装registry/marker核验的可执行manifest测量目录，不扫描任意HOME，不要求普通说明包有manifest。按runner注册表/工具摘要/完整主体provider绑定探测；费用不参与READY。具体runner与binding文件加载尚未接入，无真实适配器不得READY。
+- 完整owner scope来自已相关性校验的认证注册回执runtimeAuth，并核对安装session fence；profile、模型消息和presence均不能授予主体或能力。初次测量后额外注册一次，activation等待目录ACK；重复ACK与heartbeat只用缓存。安装变更、断线、暂停或健康撤销失效，旧异步测量不能恢复旧目录。
+- API严格解析skillExecution schemaVersion1目录，仅实际认证绑定及回执送达后激活；未知字段、非法摘要/状态、重复版本与重复JSON key不可保留旧目录，缺报告替换旧数据。目录只反映运行事实，I11仍须权威安装entitlement/descriptor及任务权限join，不直接授予调用权。
+- I09定向262项；I10 Runtime416项、Java46项及layering PASS。证据 `specs/juyiting-skill-execution/evidence/implementation-20261013/i09-proof.json` 与 `i10-proof.json`。未真实Provider调用/生产DDL/Web发布；上传图片→识别→修改完整业务验收仍NOT_RUN。
+
+
+### 技能安装与运行能力核对（2026-10-13 局部源码核验）
+
+覆盖API源码 `2fb221ae15797c819b0fcb674880730bca1cf166` 的I11a，已合入/push develop、**未发布**；当前旧action-v3实现不是最终技能执行协议。
+
+- `InstalledSkillDescriptorLookup`/`InstalledSkillDescriptorService`只读真实安装证据：精确Owner/canonical Agent、ACTIVE entitlement/order、SUCCEEDED installation及相同activation epoch、批准权限和包摘要、成功result receipt与安装/host binding。普通说明包明确NOT_EXECUTABLE；结果消息ID不等于安装command ID。包准备仍在事务外；缓存仅不可变内容，权限每目录统一末尾复读，不按技能重复读取全量entitlement。
+- `ChatActionCapabilityService.inspectInstalledSkills`只投影安装/Runtime观察：匹配当前scope/fence与manifest/runner/摘要、工具和Provider绑定要求，join后复核live目录；断线、主体歧义、缺依赖、目录切换不能保持旧运行就绪。metadata仅白名单描述/schema/输入/输出/costInfo，没有执行路径或内部主体配置。
+- `RUNTIME_READY` **不是任务可调用/执行授权**，也不会因此新增availableActions。任务ACL、目录HTTP和EXECUTE_SKILL baseline/接纳仍待I11b/I16/I18；费用信息不参与本核对，购买/退款链保持。当前receipt按installation读取尚待受控索引/schema接线；未证明生产目录读取性能，不开放未完成的HTTP路由。
+- 定向171 tests与layering PASS，包含真实H2安装/回执SQL；不是MySQL catalog/在线识图证据。历史失败、固定输入与最终证明见 `/home/isp/wsps/cyf/specs/juyiting-skill-execution/evidence/implementation-20261013/i11a-proof.json`。完整上传→识别→修改→下载仍NOT_RUN，无新配置、生产DDL、Web或本批API/Runtime发布。
+
+### 图片技能当前运行基线（2026-10-15 局部在线核验）
+
+本节仅更新吴用图片技能与相关协议边界；以上2026-10-13切片说明保留为历史基线，不代表当前线上仍未接线，也不据此宣称全部接口/全部技能完成验收。
+
+- 已上线：Web1.16.1（Flow4403172/Run213，commit `421f628c245b83466cafb70510ff69188180bdee`）；API1.16.5（本地build `cyf-interface-api-release-20261015-r12`，commit `6116a10403e0df250850e6ebb73f8123f5ac9ded`）；Runtime1.2.7（commit `6a9d8d3c1219450c19b3edfbef317e615940ab5d`）。本节不重标历史制品或历史验收。
+- 技能目录可调用必须同时满足真实安装权益、当前认证session与测量能力、任务及资料授权。认证回执先在API边界将Receipt显式投影，统一wire使用 `runtimeInstallationId` 和十进制字符串 `sessionGeneration`；Runtime不可按JS Number接收。不能因安装成功或目录不可用而重复购买或直接补数据库记录。
+- 技能包 `skillVersion`（如`1.0.0`）是语义版本，不是Long；`factsManifest`及`contextSnapshot.facts`内的action descriptor按其技能契约校验，不能误用通用`*Version`整数校验。其他状态版本/代际及CAS检查保持；取消请求的公开 `expectedStateVersion` 是可选十进制字符串，在API边界严格转Long，不放宽全局JSON类型转换。
+- 原生模型output schema按本次冻结的availableActions生成并绑定digest；无可用action时只允许ANSWER/CLARIFY。当前参数投影支持封闭对象、全部属性required的保守子集；可选属性/开放对象/`$ref`等不支持的schema明确报`ACTION_MODEL_SCHEMA_UNSUPPORTED`，不能宣称通用JSON Schema支持或静默删参数。当前image-edit参数为空封闭对象，已真实运行。
+- 任务459实际已执行image-edit，Provider结果归档为`RESULT_COMMITTED`，页面预览/下载成功，下载摘要与成果manifest匹配。三角形由蓝变黄，其余形状、文字及相对布局保留；生成图由800×600放大为1448×1086并带轻微纹理，不承诺像素级无损编辑。首次识别形状/颜色/位置正确，但Q7Z5被误读成0725，识别质量不能按“请求完成”判定全通过。
+- 费用只登记：本次目录costInfo为UNKNOWN，商品零价不等于Provider运行免费；未新增费用审批或外单功能，认证、资料隔离与第三方回调未放宽。
+- 发布/测试证据：`/var/tmp/cyf-interface-api-release-20261015-r12/`、`/var/tmp/cyf-interface-runtime-release-20261015-r8/`。在线成果与下载校验：`/var/tmp/cyf-interface-ui-acceptance-20261015-r2/task459-image-result-manifest.json`、`download-image-verification.json`；完整任务接续仍在`specs/juyiting-skill-execution/handoff.md`。

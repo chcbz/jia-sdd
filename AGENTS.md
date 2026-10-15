@@ -11,6 +11,11 @@
 - 项目地图：`docs/codex-project-map.md`；跨仓交付：`docs/sdd-workflow.md`；聚义厅：`docs/juyiting-runbook.md`。优先定向搜索，详细知识放对应指南。
 - 开工选择验证入口时，先查 `ops/orchestration/README.md` 的已有工具索引，按任务读取对应说明；不默认重新编写 runner，也不全量加载历史证据。
 
+## 统一接口规范（2026-10-14）
+
+- 前端、后端及参与本项目的 Agent Runtime 共用 `api/docs/interface-standard.md`，功能文档仅补充业务契约；实现差异及影响范围见 `api/docs/interface-standard-impact-20261014.md`。本次为规范冻结，不代表线上切换。
+- 跨仓任务、独立 worktree 和子 Agent 交接必须携带该规范的路径及固定版本；位于本目录之外的 Runtime 源码不会自动继承此文件，任务 Owner 须显式传达，不修改其他项目或全局规则。
+
 ## 开发原则
 
 - 快速迭代优先推进，问题通过修复或技术栈优化解决，不默认保守回退。

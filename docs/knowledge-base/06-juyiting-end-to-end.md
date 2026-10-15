@@ -130,3 +130,31 @@ Runtime的presence回执已在线正常消费，但仍有其他协议拒绝待�
 - 原Owner定向613 PASS及本地实际Vue/Varlet浏览器15项检查（含稳定弹窗/390px屏宽）通过；合成API/身份不是生产业务验收。正式Flow与是否发布查看现行handoff `JYT-UI-FIVE-FIXES-20261011` 段，不能据此宣称五项线上已修好。
 
 本候选正式验证补记（2026-10-11 09:37）：Flow4403172/196以同a63ee17源码完成测试2887 PASS/2 pending/0 FAIL、扫描和构建，364制品文件摘要核对通过；**CI-only、未部署**。当前线上基线仍为此前Run195，不把源码/CI通过重标为线上修复。
+
+<a id="image-skill-contract"></a>
+## 通用技能与图片交付：现行实现（2026-10-16）
+
+**覆盖与固定源码**：API `6116a10403e0df250850e6ebb73f8123f5ac9ded`、Web `421f628c245b83466cafb70510ff69188180bdee`、Runtime `6a9d8d3c1219450c19b3edfbef317e615940ab5d`；对应2026-10-15发布1.16.5/1.16.1/1.2.7。本节是局部现状，不更新2026-08-15全库静态基线，不代表所有技能/接口均线上验收。
+
+### 组成与调用链
+
+1. Web办事页关联固定图片资料版本；会话发送DISCUSSION，API冻结任务、assignment、授权资料sources和可用actions。模型原生图片载体可用于直接回答，不强制为了“识别”新增一个独立业务任务。
+2. API的`ChatActionCapabilityService`按实际安装权益、manifest、当前认证Runtime目录和任务授权计算可调用动作。安装成功不等于可调用；断线、代际/摘要不符不得保持旧READY。吴用image-edit使用现有`provider-operation`，输入资料1张，输出PNG。
+3. Runtime按冻结actions构造原生输出schema及digest；模型只能ANSWER、CLARIFY或请求其中的动作，不能凭文字创造执行权限。无动作时`action:null`。action含`actionId`、`instruction`、`sourceRefIds`、`parameters`。
+4. API接纳动作并沿现有执行链派发，Runtime通过runner/完整主体Provider binding处理。费用只登记，不新增平台执行费用审批；技能包购买事务与实际Provider计费各自独立。
+5. Provider产物按现有执行结果合同归档，`RESULT_COMMITTED`/`COMPLETE`后从execution定向结果读取outputs。Web渲染文件/图片卡片及鉴权下载；保存到工作空间不是下载或验收前置。消息文本不能冒充实际产物。
+
+### 协议与权限的代码边界
+
+- 公共规范唯一来源为[接口规范1.2](../../api/docs/interface-standard.md)，字段详设/逐接口声明在[接口目录](../../api/docs/interface-catalog/README.md)。第三方微信、GitHub/OAuth回调遵循提供方协议，不套本站信封或JWT。
+- `AgentWebSocketHandler`先把认证`Receipt`显式投影为字段Map，再由`AgentMessageWire`映射`runtimeInstallationId`与十进制字符串`sessionGeneration`。Runtime`SkillRegistry.setSession`严格接收规范正int64字符串，不转JS Number。
+- `agent-client.mjs`的持久消息版本校验区分SQL版本与技能语义版本：仅声明的`factsManifest/contextSnapshot.facts → typedDeliberation.availableActions[].skill.skillVersion`是技能版本，其他代际/修订/fence仍严格校验。
+- `ChatCancelDTO.expectedStateVersion`为可选字符串，`ChatController`严格解析规范非负int64再交给现有Long CAS；缺省语义保留，不开启全局类型强转。
+- 仅取消“任务方与Agent必须同Owner”资格限制。登录认证、任务委派/grant、资料版本ACL、安装管理权限、Runtime身份/session fence、事务和幂等全部保留；这不是新增外单业务功能。
+
+### 扩展边界与已知限制
+
+- 同runner的新技能由包manifest/参数/输入输出与绑定声明接入，不按图片/PDF/Excel/视频在任务核心中各建专用执行系统。新增runner或新能力仍须实现其适配和回归；本次没有实际证明所有媒体技能可用。
+- 原生模型schema投影目前是保守子集：封闭对象、全部属性required；不支持可选/开放对象/`$ref`等时明确`ACTION_MODEL_SCHEMA_UNSUPPORTED`，不能静默删参数、填默认值或宣称完整Draft2020-12支持。image-edit的空封闭参数对象已实际执行。
+- 当前验收：上传、形状/颜色/位置识别、蓝三角改黄、归档及真实下载通过；黑色像素字体Q7Z5两次识别为0725，**全文字识别验收失败，总体PARTIAL**。生成图放大且有轻微纹理，不承诺像素级无损修改。
+- 运行排障/配置/发布入口见[现行runbook](../juyiting-runbook.md)；原合同和逐项结果见[特性验收](../../specs/juyiting-skill-execution/acceptance.md)。临时执行器不作为长期发布入口；原始制品、失败回执、输入/输出摘要继续保留，不能清理成“全部成功”。

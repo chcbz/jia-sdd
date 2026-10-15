@@ -42,7 +42,7 @@
 
 记录新增核心文件/配置数量、部署单元数（目标不新增）、技能发现/资料解析/Provider/提交/索引各段耗时、加载技能上下文大小、第三技能接入diff。不设没有实测依据的硬时限，不预先声称提升比例。
 
-## SE-2新增必须覆盖项（均NOT_RUN）
+## SE-2新增必须覆盖项（2026-10-13历史初始状态；现状见文末）
 
 | ID | 场景 | 必须观察到的事实 |
 |---|---|---|
@@ -59,3 +59,21 @@
 ## 2026-10-13 第一层协议证据（不重标应用验收）
 
 53组Java/JS共享manifest/参数语料接受拒绝一致；Java56、Runtime172 PASS，后端分层PASS。固定source/tree与字节摘要见 evidence/implementation-20261013/proof.json。A34的纯codec/schema部分和A18/A28的Runtime安装局部已定向验证；尚未接完整HTTP/DB/技能目录、正式前端或线上场景，A01–A34整体不因此标PASS。
+
+## 2026-10-16 交付核验收口（核验发生于2026-10-15）
+
+固定发布源码见integration.yaml；原A01–A34条件保留，不批量改为PASS。
+
+| 已实际执行范围 | 结果 |
+| --- | --- |
+| API固定本地构建/分层/制品 | 362 tests，0 failure/error/skip；API1.16.5已安装 |
+| Runtime全套回归/制品 | engine985 PASS/10skip，host221 PASS/1skip；Runtime1.2.7已安装 |
+| Web正式发布 | Flow4403172/213，1.16.1；本次末轮未改前端源码 |
+| 原任务459上传图片及形状/颜色/位置识别 | PASS（原图固定版本及摘要，未新建任务） |
+| 原图字符识别 | FAIL：Q7Z5两次误读0725；复验未提示正确字符 |
+| image-edit实际调用、归档、页面下载 | PASS；RESULT_COMMITTED，PNG953064字节，与manifest摘要相同 |
+| 修改质量 | 三角形蓝→黄，其他图形/文字/相对布局保留；尺寸800×600→1448×1086，有轻微纹理，不是像素级无损 |
+
+**总结果PARTIAL_NOT_FULL_ACCEPTANCE**。不能将请求完成、构建成功或图片下载通过写成文字识别通过；PDF/Excel/视频、多技能及其他负例未在本轮线上重验。费用UNKNOWN不是免费，无重复安装/购买/改图重试。
+
+证据原字节副本及路径摘要见[evidence/release-20261015/source-index.json](evidence/release-20261015/source-index.json)；现行知识入口为[聚义厅整体SDD](../../docs/knowledge-base/06-juyiting-end-to-end.md#image-skill-contract)。发布日志和不可变制品留原位置，不因临时脚本清理删除。

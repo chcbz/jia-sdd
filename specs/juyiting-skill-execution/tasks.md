@@ -1,5 +1,8 @@
 # 直接实施任务（方案已在本轮确定）
 
+> 2026-10-16收口：下方分包与日期状态是历史执行计划，不作为当前待办。图片基础链已按integration.yaml所列三端版本上线，修改/下载通过，OCR两次错误，整体仍PARTIAL；不把所有I包或A01–A34重标完成。当前证据见acceptance.md末节，稳定实现见整体SDD的image-skill-contract章节。
+
+
 日期：2026-10-13。设计/代码定位工作已完成，不再列为未来任务。唯一本聊天 Owner 连续执行；当前合同为design-se2.md；SE-1已作历史保留。以下是本特性工作包编号，不冒充已登记/运行的 orchestration ledger ID。实际开工沿现有 handoff/ledger 工作流绑定真实任务与固定源码，不新增台账系统。
 
 每项含实现及最小定向自检，预计20～30分钟主动工作；是切片粒度而非硬 timeout/完工保证。等待单列，不取消他人流程。超出时只拆剩余具体实现，不重开“设计阶段”。依赖含共享协议就用 design-se2.md，不重复制定。
@@ -66,12 +69,23 @@
 
 正式流水线、下载、测试和部署可能超出上述主动操作分钟，单独记录，不以30分钟终止。I44/I50中真实外部调用属于实际验收，不在仅设计授权下提前执行。价格展示不额外弹出平台审批，基础运维/身份操作边界仍遵守项目规则。
 
-## 2026-10-13 实际实施状态
+## 2026-10-13 实际实施状态（20:48更新）
 
 | 包 | 状态 | 证据边界 |
 |---|---|---|
-| I01–I03 | SOURCE+TARGETED_PASS，本地develop已集成 | Java56、Runtime172、53共享语料、validateLayering；见evidence/implementation-20261013/proof.json |
-| I05 | PARTIAL | 仅Runtime安装/marker/receipt/replay绑定；API权威绑定待I04 |
-| I04、其余包 | NOT_STARTED | 不因第一层单测通过而标完整功能/发布完成 |
+| I01–I03 | RELEASED 基础切片 | API1.14.12/0833bfe与Runtime1.0.3/6325af1；release-20261013/summary.json，不是完整技能执行验收 |
+| I04 | SOURCE+TARGETED_PASS，develop已push，NOT_RELEASED | 281ee445；112 tests、layering；i04-proof.json；维护发布入口属于I54 |
+| I05 | SOURCE+TARGETED_PASS，develop已push；API新增绑定NOT_RELEASED | b62d6e96；119 tests、layering；i05-proof.json；Runtime基础已在1.0.3发布 |
+| I06 | SOURCE+TARGETED_PASS，develop已push，NOT_RELEASED | 7b0e2504；130 tests（11项新SQL）、layering；i06-proof.json；无生产DDL |
+| I08 | SOURCE+TARGETED_PASS，develop已push，NOT_RELEASED | 16fe9f92；11 tests（8项新registry）、layering；i08-proof.json；注册消息接线I10尚未实现 |
+| I09 | SOURCE+TARGETED_PASS，develop已push，NOT_RELEASED | faa5005；262 tests；i09-proof.json；具体runner/binding加载尚未实现 |
+| I10 | SOURCE+TARGETED_PASS，双端develop已push，NOT_RELEASED | API02faad300b：46 tests+layering；Runtimeb79558e：416 tests；i10-proof.json；不是安装/任务授权证明 |
+| I11 | PARTIAL：I11a SOURCE+TARGETED_PASS，develop已push，NOT_RELEASED；I11b未完成 | 2fb221ae；171 tests+layering；i11a-proof.json；仅安装/Runtime观察，不是任务可调用目录/HTTP/执行授权 |
+| 其余包 | NOT_STARTED | 不因基础切片上线而标完整功能完成 |
 
-当前真实ledger任务JYT-SKILL-SE2-20261013仍在连续实施，下一动作I04。未执行前端正式Flow、生产DDL/安装/重启/付费调用或用户完整上传识图编辑场景。
+当前真实ledger任务JYT-SKILL-SE2-20261013仍由skill_se2_owner连续实施。现网API仍1.14.12/0833bfe，完整上传→识图→编辑场景NOT_RUN；未发布无关Web，未调用付费Provider。
+
+
+## 2026-10-14 五小时基础能力实际结果（不重标完成）
+
+窗口截止2026-10-14 02:14:52。**整体未完成**：源码候选/Runtime制品准备已交付，正式API完整批次因validator依赖约束失败；前端Flow209测试/构建/扫描通过但未部署。迁移、Runtime生产激活、四包合法安装及新图片UI闭环均NOT_RUN。主任务已按原orchestrator归因并deferred，不继续后台自动安装。下一次工作从handoff末节5项接续；保留既有I项/历史证据，不把准备与子集PASS标为正式完成。
