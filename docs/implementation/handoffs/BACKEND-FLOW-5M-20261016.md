@@ -53,3 +53,21 @@ Run144终态FAIL：22:07:42创建→22:10:28作业结束，总166秒（2分46）
 Run145已终态后无活动Run核对、restore/readback恢复原配置；Run146对bca14e2fe7已真实启动。十分钟限制用于修改窗口，后续只等待该固定候选云端验证和恢复；不是声称十分钟已全绿。源码仍只在独立候选分支，无develop合入、无应用部署。证据r6/r7，Run145正式摘要testfix/flow145-*.json。
 
 Run146终态FAIL总164秒（2分44），JDK6.445秒，Gradle135.493秒；诊断确认bca14e2fe73dd00402ed3fdfc51adc50d34a120e/run146。已执行1347项=1309pass/0fail/38skip，原16项及新RequestId用例均通过，本轮新增删除0（此前40项删除仍保留覆盖缺口）。随后common:jia-common-starter:compileTestJava失败，RequestDeadlineExceptionHandlerTest.java34/53两处仍调用已删除JsonResult.getStatus()，日志重复6条但只有2处源码错误。该新阻塞不算原16项复发，不继续扩大修复窗口或删新用例；完整编译/后续测试/layering/bootJar/制品未获验收。没有应用部署；源码仅候选分支，未合入develop。下次应修该公共测试的HTTP状态断言后再做完整流水线，不能拿本次0fail部分任务图当全绿。Run146共享配置已无活动Run/候选一致核对后原flow-control恢复并readback，原SHA a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a；证据testfix/flow146-*.json。
+
+## 本地完整Flow范围批量验证（2026-10-16 23:20—23:30+08）
+用户授权十分钟修复、到时只删除已确认失败且未修复用例；不删除未运行用例。本轮不触发Flow/不部署。Owner不变；本机隔离trim-source base bca14e2fe7，远端develop于23:20只读核对仍58b4b5f。新候选371418514e修正deadline的两处已移除status断言，保留真实503/504并补protocolVersion/requestId；恶意关联ID fixture改CRLF，保留真实控制字符拒绝检查。规范v1.2不变。
+复用既有本地runner及消费者init/metadata，原orchestrator串行锁，1.5GiB自有cgroup、单worker/384MiB测试堆；从Run146脚本机械提取全部任务及--tests，无漏选/新增忽略，增加--continue批量收集独立模块失败。输入、运行日志和结果在`/var/tmp/cyf-flow-testfix-20261016/local-full/`。本机JDK/资源与Flow不同，测试范围对齐不等于云端环境字节等价；无外部数据库凭据时条件skip须如实报告。正在执行，不称全绿。
+
+23:30十分钟修改窗口到期：当前报告1514项/0fail/38skip，已知编译错误已修，本轮删除0。全流程仍执行（starter及后续自定义sourceSets），仅继续等待/收集；不把耗时或部分报告当全绿。到时后新增确认失败按用户授权删除，不继续无限修复；受测源码在运行期间不修改。
+
+23:40首轮完整批量终态FAIL，Gradle1126.409秒（18分46秒）；2351项=2232pass/34fail/85skip，user-service和chat归档测试源编译失败，其他独立任务继续完成。不是十分钟内全绿，未运行的编译阻塞套件不算通过。23:42按最新明确授权删除43个方法（34运行失败+9编译受阻），另删一个只被删除方法调用且自身编译失败的helper；删除包含12个Redis端口冲突的本机fixture失败、ACL/事务/WS回归覆盖缺口，不能说业务已修复。累计历史40+本轮43=83方法删除。清单testfix/local-full-removed-tests.json。
+删除候选bb56574908d45e71580c5638b83ac65ac807b7b4/treeaab8ffc3e04c4de3e14040608b0770b278e92fa9；仍隔离分支未push/未合入develop。使用同31任务/192selectors、fresh输出在local-full-final进行完整本地复验，不变业务、不新启Flow、不部署。
+
+额外静态边界：RequestIdFilter已接受非空无控制字符的不透明ID，但TimeoutErrorContract仍使用8—128位字符白名单；本轮将“恶意ID”fixture改为确实无效的CRLF，未修生产端两种校验的潜在不一致，不能以该fixture通过声称任意合法opaque ID的超时处理均正确。此项不在本轮业务源码修改范围。
+
+23:53第二轮完整本地复验耗时625.945秒，全部测试源编译通过；2384项=2288pass/1fail/95skip，仅剩此前编译阻塞而未执行的ChatConversationArchiveControllerTest.statusMapsOnlyTheScopedReadAndNeverInventsRecoverySideEffects：旧domain Receipt与现wire ArchiveReceipt直接比较。23:54按既有超时删除授权删除此1方法，保留该类HTTP错误状态回归及其他未失败用例。累计本轮44（此前40，合计84）删除，不记作功能修复。候选c1e97923bf2325e3ada33b7e2816f203630f020d/treef192948af6ff27b4e78f6f1585aca9bd8a6b4968，最后一次完整本地确认目录`/var/tmp/cyf-flow-testfix-20261016/local-full-confirmation`；尚未终态，不声明成功。
+
+## 本轮本地收口（2026-10-17 00:04+08）
+最终c1e97923bf2325e3ada33b7e2816f203630f020d/treef192948af6ff27b4e78f6f1585aca9bd8a6b4968完整本地SUCCESS：2383项=2288pass/0fail/95skip；全部31个指定任务EXECUTED（含validateLayering/fresh bootJar），公共制品安全及POI运行时测试也执行。Gradle子进程512.617秒（8分33），自身报告8分27；不是Flow耗时。合计三轮本地验证，整体处理超过十分钟，不能声称一次或十分钟完成全量修复验收。
+本轮固定源码下全套任务成功，但JDK/资源/消费者adapter与云端不同；95个条件跳过保持原策略，本轮44+历史40=84项删除，含安全、事务及12个本机Redis端口fixture失败覆盖缺口；不等同未裁剪的原套件，更不等同业务功能全修复。最终新JAR SHA256 f007b27253bce14eb0dd0e589349282a1714072f87cfc716dde1494533b1f612，只有本地产物，未发布安装。精确输入、全日志、JUnit摘要、制品proof和任务执行readback见testfix/local-full-confirmation-*。
+按照项目自检后集成规则，核对API主checkout完全干净、仍develop@58b4b5f后已仅本地fast-forward到上述受测commit/tree，回读干净一致。未push；00:00只读远端develop仍58b4b5f。保留隔离分支和证据；根gitlink此前已有变化，不夹带提交。没有新Flow、配置更改、生产数据操作或部署重启。原五分钟Flow/端到端目标仍未证实；后续按需只做固定此候选的Flow计时确认，不把本地PASS写成云端或线上成功。
