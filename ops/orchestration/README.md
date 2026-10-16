@@ -1,3 +1,7 @@
+# 当前交付入口（2026-10-17）
+
+前后端正式测试、构建、制品与版本部署统一走云效 Flow：前端 `4403172`，后端 `5260799`。本地工具用于控制面和定向诊断，不替代正式 Flow 验收，不执行本地生产打包/部署。develop 不自动部署；发布绑定固定源码、同 Run 制品和在线核验。规范见根 `AGENTS.md` 与 `docs/aliyun-flow-cicd-strategy.md`；本次仅改文档，不变更工具或云端配置。
+
 # 开工诊断（DEV-FEEDBACK-PILOT-20261008）
 
 在现有 `cyf_orchestrator.py` 增加 `preflight`，不另建台账或准入门禁：
@@ -14,7 +18,7 @@ python3 -B ops/orchestration/cyf_orchestrator.py preflight TASK_ID \
 - 不执行 java/node/gradle/npm、候选 selector 或 shell；不读取 fixture/凭据内容，不下载依赖、不连接数据库、不修改任务或发通知。文件存在不等于内容/schema/依赖就绪。
 - 当前 ledger 不含 owned_paths/worktree 映射，路径冲突明确 UNKNOWN；仅列其他 Writer 作为人工协调线索，不能声称无冲突。锁可用性、数据库和工具版本也未验收。
 - Findings 仅建议，正常观察退出0；未知任务、非仓库或无法读取退出2。这不是测试成功、正式构建或发布批准。
-- 前端正式验证仍走 Flow4403172；后端在干净精确输入上先读 build.gradle，再经原 gradle 入口串行验证，保留 validateLayering。preflight 不绕过现有锁、授权或失败处理。
+- 前后端正式验证分别走 Flow4403172/5260799；后端在云端干净精确输入上先读 build.gradle，再经原 gradle 入口串行验证，保留 validateLayering。preflight 不绕过现有锁、授权或失败处理。
 
 隔离测试（只创建并清理自己的临时 Git 仓库）：
 
@@ -36,9 +40,11 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 
 - 执行历史可追加 `--browser`：在同一Java/MySQL存活窗口驱动生产组件Chromium页面；非整站、非正式前端Flow。源码/辅助桩/浏览器指纹/截图证据边界见同一contract-pilot README。
 
-## 后端本地构建：受控持久依赖缓存（2026-10-09）
+## 历史后端本地构建：受控持久依赖缓存（2026-10-09）
 
-**正式本地发布现在默认启用**：既有 `gradle` 入口识别 `CYF_LOCAL_RELEASE_OPT_IN=1` + `CYF_LOCAL_GRADLE_ACTIVE=1`，核验显式metadata init的内容与固定compile-only策略一致后，无home参数默认 `/var/cache/cyf-gradle-local`（委托身份使用UID后缀），无cache flag默认加入 `--build-cache`。无需每次手传缓存参数；源码与build输出仍逐批隔离。Flow和普通专项诊断不受影响，显式 `--no-build-cache`、显式 `--dependency-cache-home` 保留诊断/隔离用途。与默认home冲突的旧 `GRADLE_USER_HOME` 需在调用端移除或明确绑定匹配home，不静默降级。
+> 2026-10-17起此节仅记录历史实现，不是当前发布入口。保留工具与证据供追溯，不授权本地生产构建或部署，不把本地 metadata init 直接移入 Flow。
+
+**2026-10-09当时的正式本地发布默认启用**：既有 `gradle` 入口识别 `CYF_LOCAL_RELEASE_OPT_IN=1` + `CYF_LOCAL_GRADLE_ACTIVE=1`，核验显式metadata init的内容与固定compile-only策略一致后，无home参数默认 `/var/cache/cyf-gradle-local`（委托身份使用UID后缀），无cache flag默认加入 `--build-cache`。无需每次手传缓存参数；源码与build输出仍逐批隔离。Flow和普通专项诊断不受影响，显式 `--no-build-cache`、显式 `--dependency-cache-home` 保留诊断/隔离用途。与默认home冲突的旧 `GRADLE_USER_HOME` 需在调用端移除或明确绑定匹配home，不静默降级。
 
 - 参数设置子进程 `GRADLE_USER_HOME` 并输出路径readback；目录必须canonical、无符号链接、由实际Gradle身份持有且0700。首次仅创建该目录，不自动创建父路径、不复制历史配置/daemon、不清缓存或他人目录。
 - home不得有隐式 `gradle.properties`、`init.gradle(.kts)` 或非空 `init.d`；仓库/消费凭据仍由固定显式init配置管理，不将凭据写入home。冲突的环境/CLI user-home拒绝，不能悄悄落到另一个目录。

@@ -1,43 +1,51 @@
-# CYF 构建、测试与部署策略：前端 Flow / 后端本地
+# CYF 构建、测试与部署策略：前后端统一云效 Flow
 
-更新：2026-10-08，按用户最新授权调整 **CYF 项目内** 的交付默认规则；不修改 Codex 全局、其他项目或共享技能。本节为当前规范；下方历史证据不恢复旧的双端 Flow、自动部署或本机前端发布路径。本次只更新规则与指南，未修改云端配置、构建、部署或重启服务。
+更新：2026-10-17，按用户授权将 **CYF 项目内** 前后端正式测试、构建、制品与部署统一到云效 Flow，取代2026-10-08的后端本地交付默认规则。不修改全局、其他项目或共享技能；下方历史记录不是当前执行指令。本次仅更新文档，不修改云端配置、不构建、不部署、不重启。
 
 ## 当前交付路径
 
-- **前端**：阿里云云效 Flow 正式测试、生产构建、制品生成与部署；复用 `4403172`。本机只做开发预览、控制面及轻量诊断，不运行生产 Vite 打包，不因 Flow 失败回退本机构建。
-- **后端**：本地正式测试、构建、制品生成与部署；在固定完整 commit/tree 的干净源码目录或独立 worktree 执行，不在生产安装目录编译、不从脏工作区发布。所有 Gradle 操作先读最新相关 `build.gradle`，经 `python3 ops/orchestration/cyf_orchestrator.py gradle ...` 串行协调。
-- **develop 不自动部署**：push/合入只用于集成与验证；不由旧定时任务发布最新 develop。后端不再默认启动 Flow 验证/发布，现存 webhook/流水线是否调整需另有配置 readback，规则写入不等于云端已改。
-- **统一版本化部署**：确定版本 → 固定源码 commit/tree → 对应环境测试/构建 → 同批不可变制品 → 部署 → 在线核验。前端绑定真实同 Flow Run 制品，后端绑定真实同本地 build ID/日志与制品摘要。任一步失败记录真实失败，构建通过不等于已上线。
-- 按具体版本安排发布时机，不要求每次重复构建或独立 Reviewer，不新增流水线或无依据门禁。本规则不授权立即发布、重启、迁移、生产数据写入或扣费，沿用任务已有授权与恢复要求。
+- **前端 `4403172`、后端 `5260799`**：正式测试、生产构建、制品生成与明确版本的部署均通过阿里云云效 Flow；复用已有流水线，不新增入口。
+- **本机边界一致**：允许开发预览、控制面和定向诊断，不运行本机生产打包或源码到生产脚本，不因 Flow 失败回退本机构建部署。本地诊断不能替代精确 commit 的正式 Flow 证据；后端既有本地发布工具和记录仅保留历史追溯，不作为新发布默认或备用入口。
+- **develop 不自动部署**：push/合入只用于集成与验证，不按旧定时任务发布最新 develop。实际触发规则、候选配置和部署阶段须在操作前实时核对，不将规则修改视为云端配置已切换。
+- **统一版本化部署**：确定版本 → 固定完整 commit/tree → Flow 测试/构建 → 同 Run 不可变制品 → Flow 部署 → 在线核验。两端均绑定真实 Run、制品摘要及部署结果，构建成功不等于已上线。
+- 按具体版本和已有授权安排发布，不增加逐阶段审批、独立 Reviewer、重复构建或无依据门禁。本次规则修改不授权立即发布、重启、迁移、生产数据写入或扣费。
 
 ## 固定入口与执行边界
 
 | 入口 | 当前用途 |
 | --- | --- |
-| `4403172 / cyf-web-release` | 前端 Flow 验证及明确版本的发布；develop 不自动部署 |
-| `ops/orchestration/cyf_orchestrator.py gradle ...` | 后端本地正式测试、构建与诊断的唯一 Gradle 入口 |
-| `/home/isp/hosts/cyf/api/cyf-api-kit.jar` | 后端最终实体安装目标；构建与安装分离 |
-| `5260799`、`5263690` | 既有后端 Flow 入口，非默认交付路径；保留历史与明确需要的云端诊断，不因本次规则调整删除或覆盖 |
-| `5263692 / cyf-web-ci` | 前端按需 CI-only 诊断，不部署 |
-| `5264702 / cyf-ops-manual` | 临时运维入口，默认只读；复用不增加操作授权 |
+| `4403172` | 前端 Flow 正式验证及版本发布；develop 不自动部署 |
+| `5260799` | 后端 Flow 正式验证及版本发布；develop 不自动部署 |
+| `ops/orchestration/cyf_orchestrator.py gradle ...` | 后端所有 Gradle 操作的串行入口；正式执行在 Flow，本地仅诊断 |
+| `/home/isp/hosts/cyf/api/cyf-api-kit.jar` | 后端最终实体安装目标；仅安装已核验的同 Run 制品 |
+| `5263690`、`5263692` | 既有后端/前端 CI-only 按需诊断入口，不默认启动、不部署 |
+| `5264702` | 临时运维入口，默认只读；复用不增加操作授权 |
 
 ## 制品安装契约
 
-- 前端继续使用真实 Flow Run、完整 commit、版本及同 Run 归档 SHA-256；现行 `/usr/local/sbin/cyf-web-flow-deploy PIPELINE RUN COMMIT VERSION ARTIFACT_SHA256` 不改为本地打包入口。制品 manifest 的 `package_version` 必须匹配发布版本，并核验来源、receipt 与文件完整性。
-- 后端本地测试及构建绑定同一固定源码输入；记录 build ID、commit/tree、版本、命令/selector、fixture、工具链、依赖来源、测试摘要及日志。对唯一构建 JAR 与安装包（如使用）分别记录 SHA-256，部署只消费该批已核验字节，不在安装时重编译。
-- 后端安装仍保留统一锁及锁顺序、互斥等待不抢占、可信 root 管理的 JAR/配置、`cyf-api` 运行身份、备份、原子替换、可恢复安装、必要的 schema 检查与实际健康/业务核验。数据迁移不因构建位置变更自动获准。
-- **本地发布入口须适配与验收**：现行 `/usr/local/sbin/cyf-api-flow-deploy` 是真实 Flow Run 下载契约，不能以本地 build ID 冒充 Run。为本地制品提供版本/源码/摘要绑定的安装输入并验证恢复路径后，才能实际执行本地部署；这次规则修改不宣称适配已完成，也不恢复旧 pull/build/restart 脚本或旧 M1/M2 发布输入。
-- 生产 JAR 与 cwd 固定 `/home/isp/hosts/cyf/api`；`/opt/cyf/service/api` 仅兼容链接。构建产物/日志留在源码或任务证据目录；既有 Flow 下载/状态留在 `/var/lib/cyf-api-flow`，备份留在 `/home/isp/baks`。
+- 前后端统一使用真实 Flow Run、完整 commit、版本及同 Run 完整归档 SHA-256；复用 `/usr/local/sbin/cyf-{api|web}-flow-deploy PIPELINE RUN COMMIT VERSION ARTIFACT_SHA256`。归档摘要不是单独 JAR/dist 摘要，须分别记录并核验；前端 manifest 的 `package_version` 必须匹配发布版本。
+- 后端在 Flow 的固定干净源码目录构建，记录命令/selector、fixture、工具链、依赖来源、测试摘要及日志。部署只消费同 Run 已核验字节，不在生产安装目录编译，不以本地 build ID 冒充 Run。
+- 保留统一锁及锁顺序、互斥等待不抢占、可信 root 管理的 JAR/配置、`cyf-api` 运行身份、备份、原子替换、可恢复安装、必要的 schema 检查及实际健康/业务核验。数据迁移不因构建位置变更自动获准。
+- 发布前核对当前 Flow 配置、同 Run 制品、helper 接口/摘要和恢复路径；验证配置须准备明确版本的发布候选后才执行部署，结束恢复原验证配置。历史适配器成功不证明新候选已适配，不恢复旧 pull/build/restart 或 M1/M2 发布输入。
+- 生产 JAR 与 cwd 固定 `/home/isp/hosts/cyf/api`；`/opt/cyf/service/api` 仅兼容链接。状态/下载路径及迁移未完成项以根 `AGENTS.md` 为准；备份留在 `/home/isp/baks`。不因本文更新改写生产目录或历史回执。
 
 ## 构建与验收证据
 
-- 保留身份/ACL、幂等、事务、锁归属、依赖与制品完整性及相关回归；后端 `validateLayering`、相关定向测试和发布 JAR 构建在本地执行。真实数据库集成使用隔离 fixture，不触碰生产数据。
-- 证据按 tree SHA、精确 selector 与 fixture 复用，接受有效命中时不重复执行。同根因同输入连续失败两次停止盲重试，经归因或实际修复后再验证。
-- 发布记录包含版本、完整 commit/tree、前端 Flow Run 或后端本地 build ID/日志、测试及制品摘要、目标、部署顺序、恢复信息和在线核验。后端本地正式证据不再被默认排除，历史 Flow 成功仍只证明其原输入。
-- Flow 写入先备份前值、固定候选并 readback；有活动 Run 等待，不覆盖、不取消他人任务。资源/包大小/等待时限不增加无证据阈值，详见 `docs/aliyun-flow-gate-policy.md`。
+- 保留身份/ACL、幂等、事务、锁归属、依赖与制品完整性及相关回归。后端先读最新相关 `build.gradle`，经原编排器串行运行；正式定向测试、`validateLayering`、PublicArtifactVerifier 与 fresh bootJar 在 Flow 执行。真实数据库集成使用隔离 fixture，不触碰生产数据。
+- 证据按 tree SHA、精确 selector、fixture、工具链及执行环境匹配复用；本地证据不冒充云端验收。同根因同输入连续失败两次停止盲重试，经归因或修复后验证。
+- 发布记录包含版本、完整 commit/tree、各组件 Flow Run/日志、测试及制品摘要、目标、部署顺序、恢复信息和在线核验。历史本地发布与 Flow 成功仅证明其原输入，不重标为本次发布。
+- Flow 写入先核对无活动 Run、备份前值、固定候选并 readback；有活动 Run 等待，不覆盖、不取消他人任务。资源/包大小/等待时限不增加无证据阈值，详见 `docs/aliyun-flow-gate-policy.md`。
 - Flow 模板及主机工具维护源仍位于 `ops/ci/aliyun-flow/`。目录名、配置保存、历史 status 或候选成功均不等于当前版本已部署。
 
-## 后端本地构建缓存提速（2026-10-09）
+## 后端 Flow 最近核验边界（2026-10-17）
+
+API `c1e97923bf2325e3ada33b7e2816f203630f020d` / tree `f192948af6ff27b4e78f6f1585aca9bd8a6b4968`，`5260799 / Run147` CI SUCCESS，258秒，2288通过/0失败/95跳过，Gradle209.346秒。仅此固定候选测试/构建/上传成功，未部署；此前按用户授权累计删除84个方法的覆盖缺口仍在，不视为原套件等价或持续五分钟保证。
+
+Run147临时JDK/compile-only优化配置已恢复原值，不能据规范更新声称默认云端模板已永久提速或已包含部署阶段。后续使用时须核对当前任务映射、固定工具与配置，再按版本发布契约执行。证据见 `docs/implementation/evidence/backend-flow-5m-20261016/testfix/flow147-*`；详细过程与恢复见 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
+
+## 历史：后端本地构建缓存提速（2026-10-09）
+
+> 自2026-10-17起不再是正式发布路径。以下仅保留当时实现、验收与恢复记录，不授权新本地构建部署。
 
 正式本地后端构建通过既有 `cyf_orchestrator.py gradle` **默认**复用受控私有Gradle依赖缓存，并启用compile-only输出缓存：识别本地release opt-in与匹配的固定metadata init，无缓存参数即可选择 `/var/cache/cyf-gradle-local` 并加入 `--build-cache`；显式诊断/隔离参数可覆盖，Flow和普通诊断不变。仅在干净固定commit/tree及新输出目录执行。compile-only策略：仅JavaCompile按内容指纹复用，其余任务禁用输出缓存，测试禁止up-to-date；仍执行同批定向测试、`validateLayering`、依赖来源/SHA与fresh bootJar完整性检查，不缓存测试结果/生产JAR、不删除安全回归。home信任边界与参数冲突检查见 `ops/orchestration/README.md`。
 
@@ -47,7 +55,7 @@
 
 ## 后端 Flow 提速实验（2026-10-16）
 
-覆盖范围：`5260799`无部署诊断；API源码固定`58b4b5f408257c6d5103d915e13c7927c1571e20`。项目默认发布分工仍以根`AGENTS.md`为准（前端Flow、后端本地），本节不启用自动部署或修改默认后端入口。
+覆盖范围：`5260799`无部署诊断；API源码固定`58b4b5f408257c6d5103d915e13c7927c1571e20`。当时采用前端Flow、后端本地分工；该默认已于2026-10-17被上文双端Flow规则取代。本节保留当时实验范围，不启用自动部署。
 
 - `prepare-backend-jdk.py`用于Flow Linux x86_64 worker：官方Dragonwell Extended21.0.11.0.11+10压缩包，固定SHA-256，仅缓存归档、每次重验并新私有目录解包。不运行yum/dnf，不执行缓存解压目录；拒绝损坏归档、链接逃逸/特殊成员，校验java/javac版本。官方OSS与GitHub发布摘要一致；云端GitHub下载曾socket timeout，实际使用官方OSS镜像，不回退系统安装。
 - 参数：`--cache "$HOME/.cache/cyf-backend-jdk-archives" --destination "$CYF_EXPERIMENT/jdk"`。destination必须全新；结果最后一行是JAVA_HOME，之前的`CYF_JDK_TIMING`为单调耗时。主机生产JRE不使用此入口，不在安装目录执行。
@@ -61,7 +69,7 @@
 
 ## 历史控制面与适配器记录（截至 2026-10-06，非当前执行规范）
 
-以下原记录保留不改写；其中双端 Flow 发布契约不作为后端本地发布输入，也不能证明新本地发布入口已验收。
+以下原记录保留不改写；历史适配器和发布证据不能证明当前配置、制品或线上版本已验收，执行以上文现行规范为准。
 
 2026-10-06 经用户授权完成控制面调整：前端单次 Update/readback 移除部署阶段；后端当前配置原已仅验证，未写入。两端 develop push 保留测试、构建与制品，不部署；两个旧 nightly timer 均 disabled/inactive，无下一触发时刻。本地 develop 模板同步移除部署阶段，7 项静态测试通过。实际证据见 `docs/aliyun-flow-versioned-deployment-switch-20261006.json`。
 
