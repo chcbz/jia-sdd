@@ -39,3 +39,9 @@ Owner backend-flow-5m-main；API clean base58b4b5f，隔离worktree `/var/tmp/cy
 
 21:59十分钟窗口收口：修正候选51a6410ec02e0fcbb82c8516f0b160eaeea1587d覆盖原32项失败（5类），没有改业务源码。真实本地验证经orchestrator串行、既有受限构建cgroup执行，第一次新输出0755被原metadata拒绝，归因后仅修自有目录0700；第二次尚在test阶段，不能声称32项已经PASS。日志与输入 `/var/tmp/cyf-flow-testfix-20261016/{test.log,input.json,result.json}`（result须确认commit和日志对应；首轮失败记录不代表第二轮终态）。
 用户最新明确“10分钟修不了就删掉”作为本次删除授权，覆盖之前本任务默认不删测试的范围：第二个隔离候选d70a0f41e6在51a6410之上仅删除其余39个失败测试方法，保留类/辅助方法/其他用例；其中含10个Runtime安全回归，明确存在覆盖缺口，绝不记作修复或验证通过。完整逐例清单`docs/implementation/evidence/backend-flow-5m-20261016/testfix/removed-tests.json`。路径 `/var/tmp/cyf-flow-testfix-20261016/trim-source`，分支codex/flow-testfix-trim-20261016。未合入develop、未push、未部署；删除候选尚未编译/验证，不复用51a6410的测试结果冒充其验收。下一步读取本次既有验证终态，再对最终候选做一次原流程验证；不继续盲目删减或重跑。
+
+## Flow144真实复测（2026-10-16）
+用户明确授权删除剩余失败并重跑Flow计时。局部本地51a6410最终72项/71通过/1失败（事件occurredAt字符串断言），并非全绿。新候选aca649bac2383a9054b2891ba930c7fc203d1f61/tree7f36c14ba95bf54b1d20c71583c83d298ec386fd删除该最后方法，累计40项删除，清单testfix/removed-tests-flow144.json。独立分支codex/flow-testfix-trim-20261016已push，未合入develop。复用原工具及JDK方案，无部署；临时配置已备份并readback，Run144已启动，实际source仍需实时核对。私有过程证据`/var/tmp/cyf-backend-flow-5m-20261016/r5`，结束后恢复配置，不将40项删除当修复或原套件等价性能。
+
+Run144终态FAIL：22:07:42创建→22:10:28作业结束，总166秒（2分46）；JDK冷准备6.265秒，Gradle136.439秒。云端压缩诊断SHA fcecc35c156f6d3b6c50ff7d4fa39904551305d788c659b6be37fd07afdb7b30已重算匹配，实际commit aca649bac2383a9054b2891ba930c7fc203d1f61/run144匹配。部分任务图1278项=1224pass/16fail/38skip；agent mapper86全PASS，agent service960项/0fail/37skip，base32全PASS，chat200项/16fail/1skip。新失败位于7个Chat/WebSocket/Voice套件，不是原40项复发。保留授权删除40项的覆盖缺口；不将166秒失败当完整构建/部署达标，未产生成功制品。只启动用户要求的这一次Flow，未再删新失败或重跑。
+22:12:21+08:00无活动Run/配置仍为本candidate核对后，原flow-control已恢复原配置并readback，SHA a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a完全一致；未部署、未改生产。正式摘要与16项失败见testfix/flow144-{timing,tests,restore-result,candidate-proof}.json及flow144-phase-timing.log。独立源码分支已push，不合入develop，任务仍被新测试失败阻塞。下一步需对这16项做明确处置后才有成功完整计时。
