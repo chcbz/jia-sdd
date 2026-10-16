@@ -33,3 +33,9 @@ Owner backend-flow-5m-main / codex。用户授权尝试优化与实测；先无�
 - 私有完整候选/配置/实际调用/日志分别位于/var/tmp/cyf-backend-flow-5m-20261016/{r2,r3,r4,restore}。固定实验远端分支codex/backend-flow-5m-20261016仍指58b4b5f，无API源码改动，不删除证据ref。
 - 生产仅执行一次原helper status，只读PID/监听归属/健康和制品证明；本任务没有安装、重启、SQL或修改其他聊天进程。
 - 定位/实现/验证/等待未独立计时，不编造开发效率收益。已证明的是JDK准备路径可压到约7秒，不是整条流水线成功或端到端五分钟。
+
+## 十分钟定向修复（2026-10-16 21:50，用户授权）
+Owner backend-flow-5m-main；API clean base58b4b5f，隔离worktree `/var/tmp/cyf-flow-testfix-20261016/source`，分支codex/flow-testfix-20261016。仅修测试fixture、保留ACL/真实事务；不修改生产、不部署。最早验证为5个已明确根因的suite及validateLayering；其余不以删除掩盖失败。
+
+21:59十分钟窗口收口：修正候选51a6410ec02e0fcbb82c8516f0b160eaeea1587d覆盖原32项失败（5类），没有改业务源码。真实本地验证经orchestrator串行、既有受限构建cgroup执行，第一次新输出0755被原metadata拒绝，归因后仅修自有目录0700；第二次尚在test阶段，不能声称32项已经PASS。日志与输入 `/var/tmp/cyf-flow-testfix-20261016/{test.log,input.json,result.json}`（result须确认commit和日志对应；首轮失败记录不代表第二轮终态）。
+用户最新明确“10分钟修不了就删掉”作为本次删除授权，覆盖之前本任务默认不删测试的范围：第二个隔离候选d70a0f41e6在51a6410之上仅删除其余39个失败测试方法，保留类/辅助方法/其他用例；其中含10个Runtime安全回归，明确存在覆盖缺口，绝不记作修复或验证通过。完整逐例清单`docs/implementation/evidence/backend-flow-5m-20261016/testfix/removed-tests.json`。路径 `/var/tmp/cyf-flow-testfix-20261016/trim-source`，分支codex/flow-testfix-trim-20261016。未合入develop、未push、未部署；删除候选尚未编译/验证，不复用51a6410的测试结果冒充其验收。下一步读取本次既有验证终态，再对最终候选做一次原流程验证；不继续盲目删减或重跑。
