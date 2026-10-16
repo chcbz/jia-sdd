@@ -71,3 +71,9 @@ Run146终态FAIL总164秒（2分44），JDK6.445秒，Gradle135.493秒；诊断�
 最终c1e97923bf2325e3ada33b7e2816f203630f020d/treef192948af6ff27b4e78f6f1585aca9bd8a6b4968完整本地SUCCESS：2383项=2288pass/0fail/95skip；全部31个指定任务EXECUTED（含validateLayering/fresh bootJar），公共制品安全及POI运行时测试也执行。Gradle子进程512.617秒（8分33），自身报告8分27；不是Flow耗时。合计三轮本地验证，整体处理超过十分钟，不能声称一次或十分钟完成全量修复验收。
 本轮固定源码下全套任务成功，但JDK/资源/消费者adapter与云端不同；95个条件跳过保持原策略，本轮44+历史40=84项删除，含安全、事务及12个本机Redis端口fixture失败覆盖缺口；不等同未裁剪的原套件，更不等同业务功能全修复。最终新JAR SHA256 f007b27253bce14eb0dd0e589349282a1714072f87cfc716dde1494533b1f612，只有本地产物，未发布安装。精确输入、全日志、JUnit摘要、制品proof和任务执行readback见testfix/local-full-confirmation-*。
 按照项目自检后集成规则，核对API主checkout完全干净、仍develop@58b4b5f后已仅本地fast-forward到上述受测commit/tree，回读干净一致。未push；00:00只读远端develop仍58b4b5f。保留隔离分支和证据；根gitlink此前已有变化，不夹带提交。没有新Flow、配置更改、生产数据操作或部署重启。原五分钟Flow/端到端目标仍未证实；后续按需只做固定此候选的Flow计时确认，不把本地PASS写成云端或线上成功。
+
+## 用户授权Flow确认（2026-10-17 00:24+08）
+用户明确“跑flow”。沿用Owner/backend-flow-5m-main，固定本地已验收c1e97923bf2325e3ada33b7e2816f203630f020d/treef192948af6ff27b4e78f6f1585aca9bd8a6b4968；只push隔离codex/flow-testfix-trim-20261016，不push develop。核对无活动Run及原配置SHA后临时应用同范围无部署候选，单次启动5260799/Run147，job536649068当前RUNNING；API尚未返回commit，待脚本断言/诊断确认。私有证据/var/tmp/cyf-backend-flow-5m-20261016/r8；结束需恢复原配置。未新增删除测试，不部署。
+
+Run147终态SUCCESS：2026-10-17 00:24:15创建→00:28:33作业结束，总258秒（4分18），Gradle209.346秒。云端压缩诊断重算SHA匹配，实际commit c1e97923bf2325e3ada33b7e2816f203630f020d/run147匹配；2383项=2288pass/0fail/95skip，编译错误0，validateLayering/fresh bootJar及同Run制品上传成功。云端日志JAR SHA256 44fe96bb04fba089eaafbb3e7da8186858d43733dc82229b185ca89934debafd；此处为认证日志声明，未独立下载制品重算。完整私有日志r8/run147-log-current.json，公开摘要testfix/flow147-*。
+无活动Run且当前配置仍属本候选核对后，已单次恢复原配置并readback，SHA a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a一致。仅证明裁剪后当前候选这一次CI在五分钟内成功；不证明未裁剪原套件等价、持续SLO或包含部署的端到端五分钟。历史84方法删除/95条件跳过及安全事务覆盖缺口仍在，本轮新增删除0，无生产部署。临时JDK优化配置随恢复撤回，不声称默认后续Run已永久提速。develop仅本地集成，远端未push。用户本次跑Flow请求完成，原完整部署五分钟目标仍未验证。
