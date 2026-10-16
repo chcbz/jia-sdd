@@ -45,3 +45,11 @@ Owner backend-flow-5m-main；API clean base58b4b5f，隔离worktree `/var/tmp/cy
 
 Run144终态FAIL：22:07:42创建→22:10:28作业结束，总166秒（2分46）；JDK冷准备6.265秒，Gradle136.439秒。云端压缩诊断SHA fcecc35c156f6d3b6c50ff7d4fa39904551305d788c659b6be37fd07afdb7b30已重算匹配，实际commit aca649bac2383a9054b2891ba930c7fc203d1f61/run144匹配。部分任务图1278项=1224pass/16fail/38skip；agent mapper86全PASS，agent service960项/0fail/37skip，base32全PASS，chat200项/16fail/1skip。新失败位于7个Chat/WebSocket/Voice套件，不是原40项复发。保留授权删除40项的覆盖缺口；不将166秒失败当完整构建/部署达标，未产生成功制品。只启动用户要求的这一次Flow，未再删新失败或重跑。
 22:12:21+08:00无活动Run/配置仍为本candidate核对后，原flow-control已恢复原配置并readback，SHA a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a完全一致；未部署、未改生产。正式摘要与16项失败见testfix/flow144-{timing,tests,restore-result,candidate-proof}.json及flow144-phase-timing.log。独立源码分支已push，不合入develop，任务仍被新测试失败阻塞。下一步需对这16项做明确处置后才有成功完整计时。
+
+## 16项Chat失败十分钟续修（2026-10-16 22:31:54+08）
+用户授权先修复、到时未修复逐项删除。唯一Owner/backend-flow-5m-main，沿用隔离trim-source和codex/flow-testfix-trim-20261016，base aca649bac2/tree7f36c14b；仅7个测试类，不改业务/生产。按2026-10-14 interface-standard固定规范修Q/R、WS messageType/data/correlationId、金额/分页/时间与真实错误HTTP；取消测试允许现行startup帧并继续核验取消传递，不延长超时。最早验证复用原Flow完整候选，结束恢复共享配置。
+
+续修首轮源码eb4da1fad322f9e3d997f7e6bdc2f259648bdfd4，Run145 FAIL总170秒；原16项Chat失败全部通过，未新增删除。部分任务图1347项=1308pass/1fail/38skip，新失败是common RequestIdFilterTest.generatesNewIdForInvalidClientValues：现行非空无控制字符契约允许旧测试列入invalid的short/space/slash/129长度值。新固定提交bca14e2fe73dd00402ed3fdfc51adc50d34a120e/tree2d445cb5e4f5d3c0cf75744586377aeda892b850将这些值列入正向回归，负向输入改null/空/空白/换行/回车/Tab；保留requestId替换/响应关联和MDC断言。22:41:43完成代码提交（从22:31:54起9分49秒），本轮0项删除。
+Run145已终态后无活动Run核对、restore/readback恢复原配置；Run146对bca14e2fe7已真实启动。十分钟限制用于修改窗口，后续只等待该固定候选云端验证和恢复；不是声称十分钟已全绿。源码仍只在独立候选分支，无develop合入、无应用部署。证据r6/r7，Run145正式摘要testfix/flow145-*.json。
+
+Run146终态FAIL总164秒（2分44），JDK6.445秒，Gradle135.493秒；诊断确认bca14e2fe73dd00402ed3fdfc51adc50d34a120e/run146。已执行1347项=1309pass/0fail/38skip，原16项及新RequestId用例均通过，本轮新增删除0（此前40项删除仍保留覆盖缺口）。随后common:jia-common-starter:compileTestJava失败，RequestDeadlineExceptionHandlerTest.java34/53两处仍调用已删除JsonResult.getStatus()，日志重复6条但只有2处源码错误。该新阻塞不算原16项复发，不继续扩大修复窗口或删新用例；完整编译/后续测试/layering/bootJar/制品未获验收。没有应用部署；源码仅候选分支，未合入develop。下次应修该公共测试的HTTP状态断言后再做完整流水线，不能拿本次0fail部分任务图当全绿。Run146共享配置已无活动Run/候选一致核对后原flow-control恢复并readback，原SHA a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a；证据testfix/flow146-*.json。
