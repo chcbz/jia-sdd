@@ -45,6 +45,20 @@
 
 10分钟是“测试/构建/安装核验执行时间”的优化目标，不是强制超时或减免安全门禁。历史安装约307秒来自日志文件起止，未包含排队与批次中间等待；本次没有授权/触发生产安装，因此新构建加历史安装仅用于评估，不冒充完整发布达标。固定输入、实测结果与证据见 `docs/implementation/handoffs/BACKEND-RELEASE-10M-20261009.md`。冷缓存和其它源码/selector不作无实测承诺。
 
+## 后端 Flow 提速实验（2026-10-16）
+
+覆盖范围：`5260799`无部署诊断；API源码固定`58b4b5f408257c6d5103d915e13c7927c1571e20`。项目默认发布分工仍以根`AGENTS.md`为准（前端Flow、后端本地），本节不启用自动部署或修改默认后端入口。
+
+- `prepare-backend-jdk.py`用于Flow Linux x86_64 worker：官方Dragonwell Extended21.0.11.0.11+10压缩包，固定SHA-256，仅缓存归档、每次重验并新私有目录解包。不运行yum/dnf，不执行缓存解压目录；拒绝损坏归档、链接逃逸/特殊成员，校验java/javac版本。官方OSS与GitHub发布摘要一致；云端GitHub下载曾socket timeout，实际使用官方OSS镜像，不回退系统安装。
+- 参数：`--cache "$HOME/.cache/cyf-backend-jdk-archives" --destination "$CYF_EXPERIMENT/jdk"`。destination必须全新；结果最后一行是JAVA_HOME，之前的`CYF_JDK_TIMING`为单调耗时。主机生产JRE不使用此入口，不在安装目录执行。
+- `flow-compile-cache.init.gradle`仅在`CYF_FLOW_GRADLE_ACTIVE=1`与`CYF_FLOW_COMPILE_CACHE_OPT_IN=1`时使用；需显式`--build-cache`。仅允许JavaCompile输出缓存；其余任务禁用输出缓存，Test、validateLayering、bootJar强制fresh。仍同时使用原cold-init的依赖完整性/凭据剥离规则，不能把本地release metadata init搬到Flow。
+- 云端也经既有orchestrator串行入口；注意argparse REMAINDER要求`gradle --cwd ... --tree-sha ... --selector ... --fixture-digest ... TASK_ID -- ./gradlew ...`，选项必须在TASK_ID之前。控制工具与单任务授权快照放源码之外并固定摘要，云端快照不是权威台账；源码工作区必须干净，build和project-cache用独立目录。
+- 实测：Run141/142/143的冷JDK准备6.138/6.470/6.697秒，证明避开历史Run139约1212秒的RPM准备路径；不是相同JDK补丁构建的严格单变量对比。Run143仍在业务测试处失败：部分执行1086项，978通过/71失败/37跳过；无成功制品，尚无热编译缓存成功对照、完整部署或300秒验收。
+- 原Flow引用的chatDeliberation已在API提交5d54634a3d删除。实验把保留的50源文件/49测试类映射到7个现行task并补2个迁移回归；不得恢复旧兼容suite或删失败测试换速度。实际映射和剩余失败清单见本次handoff。
+- 实验结束已readback恢复原配置SHA`a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`，没有应用部署/重启。候选只有在新固定源码测试成功后才能用于正式版本化发布，不将失败Run快速结束当达标。
+
+隔离工具自检：`python3 -B -m unittest discover -s ops/ci/aliyun-flow/tests -p test_backend_jdk.py -v`（12项）。完整过程/恢复/下一步见`docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`，证据在同任务evidence目录。
+
 ## 历史控制面与适配器记录（截至 2026-10-06，非当前执行规范）
 
 以下原记录保留不改写；其中双端 Flow 发布契约不作为后端本地发布输入，也不能证明新本地发布入口已验收。

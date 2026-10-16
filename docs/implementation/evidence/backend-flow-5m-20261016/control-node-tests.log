@@ -1,0 +1,75 @@
+TAP version 13
+# Subtest: write operations require an explicit allowlist
+ok 1 - write operations require an explicit allowlist
+  ---
+  duration_ms: 2.779875
+  ...
+# Subtest: start refuses config drift before sending a write
+ok 2 - start refuses config drift before sending a write
+  ---
+  duration_ms: 6.494426
+  ...
+# Subtest: start writes once, requires a run id, and reads the run back
+ok 3 - start writes once, requires a run id, and reads the run back
+  ---
+  duration_ms: 3.45813
+  ...
+# Subtest: manual pipeline start accepts an explicitly source-free run only when readback is source-free
+ok 4 - manual pipeline start accepts an explicitly source-free run only when readback is source-free
+  ---
+  duration_ms: 1.538394
+  ...
+# Subtest: start rejects an expected ancestor when the actual source head moved
+ok 5 - start rejects an expected ancestor when the actual source head moved
+  ---
+  duration_ms: 1.374861
+  ...
+# Subtest: ambiguous create reconciles one exact new pipeline without another write
+ok 6 - ambiguous create reconciles one exact new pipeline without another write
+  ---
+  duration_ms: 2.075501
+  ...
+# Subtest: ambiguous update reconciles exact readback without another write
+ok 7 - ambiguous update reconciles exact readback without another write
+  ---
+  duration_ms: 1.38173
+  ...
+# Subtest: definitive create rejection stops after one write
+ok 8 - definitive create rejection stops after one write
+  ---
+  duration_ms: 0.983617
+  ...
+# Subtest: ambiguous start with one concurrent same-source run remains UNKNOWN
+ok 9 - ambiguous start with one concurrent same-source run remains UNKNOWN
+  ---
+  duration_ms: 2.266273
+  ...
+# Subtest: ambiguous start with multiple same-source runs remains UNKNOWN
+ok 10 - ambiguous start with multiple same-source runs remains UNKNOWN
+  ---
+  duration_ms: 1.524485
+  ...
+# Subtest: ambiguous create plus reconciliation read failure returns structured UNKNOWN
+ok 11 - ambiguous create plus reconciliation read failure returns structured UNKNOWN
+  ---
+  duration_ms: 2.08159
+  ...
+# Subtest: ambiguous update plus reconciliation read failure returns structured UNKNOWN
+ok 12 - ambiguous update plus reconciliation read failure returns structured UNKNOWN
+  ---
+  duration_ms: 2.0927
+  ...
+# Subtest: ambiguous start plus reconciliation read failure returns structured UNKNOWN
+ok 13 - ambiguous start plus reconciliation read failure returns structured UNKNOWN
+  ---
+  duration_ms: 4.042065
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 702.316004
