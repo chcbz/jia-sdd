@@ -108,3 +108,31 @@ API canonical安装/receipt/现行record均与152一致，healthUP。F06原schem
 正式交付、在线范围和剩余边界汇总release-1.16.8.md；integration标accepted/released_verified仅指本任务范围，不代表历史删例覆盖/其它模块问题解决。
 
 测试会话清理（2026-10-17T12:48:22.522491+08:00）：已删除本任务r4/r5两个PKCE令牌文件和两次早期诊断遗留的自有Chrome profile，成功浏览器profile由harness关闭删除，无其他任务会话/进程操作。见evidence/session-cleanup.json；原始云效配置/状态/日志仍仅0700私有目录保留。
+
+## 用户反馈视觉复核补充（2026-10-17 14:40 +08:00）
+
+用户反馈“效果跟交互原型还是有些差异，再核对一下”。本轮Owner仅做只读视觉审计，不接管其他任务的原型／脏工作区；范围固定为点将册，接口规范v1.2不变。线上安装、本地HEAD及实际查询远端develop仍da59a4b／1.16.8／Run224。当前原型独立记录摘要，不冒充D4旧输入；主要差异在旧批准截图已存在，不能归因于原型后续更新。
+
+已在实际完整应用与当前原型三视口1440×900／390×844／320×568核对名册／详情，记录12组计算样式及截图，另补真实图片解码后6组生产观察。确认密议未通栏朱红、移动详情仍内缩卡片、刷新及技能层级近似值、关闭图标／目标尺寸、招贤按钮排列等未落实。上次滚动／功能通过不等于视觉一致。头像初始红圆为尚未显示图片，资源HTTP200且decode成功；但大PNG与缩略图及flex收缩差异需优化，不宣称永久缺图。技能名和16项真实本领不同于原型属于数据事实，不改造数据。
+
+详见visual-audit-20261017.md及evidence/visual-audit-20261017/。本轮未修改产品或原型、未测试构建发布，不重标原accepted功能历史为完整视觉验收。后续最小修复仅AgentPanel、JuyiHall限定选择器及现有测试，前端Flow验证／发布；API／数据库／Runtime不需变更。
+
+14:42审计收尾：原型前后指纹一致；只写本任务审计文档和证据，生产／原型代码未改。本任务PKCE令牌文件已删除，自有浏览器及本次18786静态预览已关闭，未操作他人会话。见final-readback.json与session-cleanup.json。
+
+## 1.16.9 小范围视觉修复启动（2026-10-17 15:35 +08:00）
+
+用户明确授权“做一轮小范围修复，完成后发布”。沿用任务JYT-AGENT-SKILL-DISPLAY-20261016，唯一Owner本聊天，ledger从accepted重新进入本轮implementing；原1.16.8发布历史保留。工作区/home/isp/wsps/cyf/web、develop，base commit da59a4b8e98920386e7ab52a77463613c2ae5a92／tree0c40c37f577836bcb77778ac8a22bdbf43769ccd，远端develop实际查询一致；线上仍Web1.16.8／224、API1.16.8／152。API无变更，本轮仅Web版本1.16.9。
+
+范围：AgentPanel.vue、JuyiHall.vue中Agent专属样式／关闭入口、现有对应测试及package版本；依据visual-audit-20261017.md。非目标：接口／数据库／Runtime／派单、其他页面主题、当前完整原型变更。保留web/AGENTS与原型及根仓其他任务脏修改，不stage这些文件。验收：三主视口视觉+720断点两侧／短屏、单双动作权限、长ID／本领、刷新及返回关闭；最早反馈现有挂载组件定向用例与真实组件开发预览计算样式，然后一次固定候选Flow4403172正式测试／构建／同Run部署与生产复核。接口规范api/docs/interface-standard.md v1.2未变。
+
+## 1.16.9 固定候选与正式Flow启动（2026-10-17 15:49 +08:00）
+
+仅6个目标文件已在Web develop提交并push：6fbdb6618b1132316a95db87cca9402de83138e8／tree212194b370ec40c2c8b1e4184ad09c5f01c1a3bb，实际ls-remote一致；未带入其他任务AGENTS／原型。133项本机定向诊断、8视口真实组件+父CSS检查通过；AgentPanel lint无问题，JuyiHall历史111 errors/82 warnings与base一致，本次新增0，不声称全量lint通过。SVG属性排版后仅补静态断言，无视觉变更；诊断与最终文件SHA绑定见evidence/visual-fix-1.16.9/local-diagnostics.json。
+
+写配置前已分页核对无活动Run、原CI-only配置精确匹配；备份在本任务0700目录。仅4403172更新为本轮1.16.9 commit/tree固定候选，触发事件关闭；start一次得到Run225，随后详情commit确认为6fbdb66。正式测试/构建与扫描后只消费225制品在Flow原生主机部署，不本机构建/部署/升级helper。API仍1.16.8／Run152。尚需同Run制品校验、安装/公网与真实浏览器验收、恢复配置。发布输入见release-input.json，不把阶段SUCCESS当成完整发布。
+
+## 1.16.9 发布及最终线上核验（2026-10-17T15:57:16.738908+08:00）
+
+Flow225 SUCCESS，CI537043473／scan537043474／deploy537043475全SUCCESS，部署单71293772，1台Success/healthy。3045通过、2原有pending、0失败；同Run archive38ffacf954924f275f38e6b0deed446aed9d54e2e7c5971203ae348e3f043a87，366安装文件/9公网资源一致。真实完整应用7视口全部通过，36次profile GET200，无Runtime exception；刷新、返回同ID重入、关闭及footer命中可达通过。头像已等待decode后截图，实际缩略图68px显示正常。真实数据与原型示例的16项本领/图片编辑差异保留。
+
+本轮配置已分页无活动Run后精确恢复并readback；develop不自动部署。只读验证，无任务/会话创建、交易、扫描、Runtime或API部署。本任务PKCE令牌已删除、线上浏览器profile已关闭清理、自有18791预览按精确cmdline归属停止。详见release-1.16.9.md及evidence/visual-fix-1.16.9/；原1.16.8历史不改写。稳定知识只局部更新既有runbook，根仓仅收本任务文档/证据和Web gitlink，不纳入其他脏改动。
