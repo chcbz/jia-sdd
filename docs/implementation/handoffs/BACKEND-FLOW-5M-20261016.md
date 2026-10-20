@@ -101,3 +101,8 @@ Owner仍backend-flow-5m-main；根基线df5af3cb，API本地与14:31远端develo
 
 14:45:45 Run199 SUCCESS：14:41:01创建→终态284秒（4分44），job283秒，Gradle161.942秒。相同API9ca2776c/tree847927f2、2728项/0失败/0错误/122跳过；独立下载制品并直接解析302份XML，逐suite执行计数与Run195一致。32个指定Gradle任务全部实际执行（含layering/fresh bootJar），无整轮EVIDENCE_HIT，未改单task fork、未删测试。归档229027426bytes/SHA d194f08eb94bf9d859d7fde0586c2ff7a2040f1886b19601c39ec474316dee75，receipt Run199/完整源码/clean以及JAR SHA a71821bea7caed3ae1d37d9dadb5accde4e4f6cebc7081b0c96a32e64851c6c3均独立核验。14:46:38无活动Run且当前配置仍等于最终candidate，保持新默认（canonical cc7d7b7d...），不恢复旧慢配置；原push和三分支过滤逐字节保留，无部署阶段。14:46远端develop仍9ca2776c，原API checkout未改。
 默认固化子项已完成，77项工具隔离自检通过；源码根提交5d79d99a及Python3.6修复34cf32ac，仅本地提交，Flow直接绑定该工具字节。公共证据default-candidate-proof/default-run199-summary/default-retained-config.json，原始配置、日志和归档继续私有保留。完整生产版本发布五分钟目标仍未完成：未指定新发布版本，本轮未改生产helper/未发布/未重启，不操作其他Owner host工具改动；后续由发布Owner在授权版本候选中纳入此profile，以真实同Run安装/ready/业务核验继续归因和验收，不拿CI284秒替代全链路目标。
+
+## 2026-10-20 继续压缩（用户“继续优化，看一下还有没有压缩空间”）
+Owner/backend-flow-5m-main；根基线9ad16e7b，14:50本地及远端API仍9ca2776c/tree847927f2且干净，云端无活动Run/默认仍Run199候选已实时核对。范围：继续无部署CI优化，优先重复平台JDK准备和913MB缓存开销，保留源码/工具/制品绑定、全部测试及锁/完整性/健康；不改生产、host脏文件或其他Owner路径。接口冻结2026-10-14不变。
+Run199总284秒中Gradle161.942秒，其余122秒；日志可见缓存restore约16秒、archive/upload约25秒。JavaBuild使用平台jdk21，而真实构建另经固定SHA Dragonwell21 helper每次校验和fresh解包；该重复准备是候选缩时点，实际收益待测。历史schema证据明确Command不是有效组件，不复用早期失败方案；仍用JavaBuild，平台bootstrap改jdk1.8，Gradle实际运行前始终强制固定校验的Dragonwell21 JAVA_HOME/PATH，无Java降级。新增仅数值、固定标签的缓存体积观测，结果嵌入既有test-results/summary.json，不新增installer不接受的归档成员；不输出凭证或文件内容，不清缓存。
+最早验证为固定同API源码一次5260799无部署完整Run；Gradle argv/selector/compile init均不改。工具26项隔离回归、内嵌Python语法和shell/diff检查通过，非应用正式验收。私有配置/备份/日志/further；后续若实测无收益不夸报提速，缓存瘦身须先取得体积分布和实际再生成代价，不能盲删依赖/编译缓存。

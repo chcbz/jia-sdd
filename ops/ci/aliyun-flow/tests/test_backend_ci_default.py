@@ -52,6 +52,14 @@ class DefaultCiTest(unittest.TestCase):
         self.assertNotIn('text=True', shell)  # Flow worker Python 3.6
         self.assertIn('universal_newlines=True', shell)
         self.assertNotIn('local-release-metadata', shell)
+        template = (BASE / 'templates/backend-develop-release.yaml').read_text()
+        self.assertIn('step: JavaBuild', template)
+        self.assertIn('jdkVersion: "1.8"', template)
+        self.assertIn('prepare-backend-jdk.py', shell)
+        self.assertLess(shell.index('export JAVA_HOME='), shell.index("'gradle','--flow-ci'"))
+        self.assertIn('CYF_CACHE_INVENTORY', shell)
+        self.assertIn("summary['cacheInventory']=result", shell)
+        self.assertNotIn("dest/'cache-inventory.json'", shell)  # installer admits summary/XML only
         subprocess.run(['bash', '-n', str(BASE / 'backend-ci-run.sh')], check=True)
 
 

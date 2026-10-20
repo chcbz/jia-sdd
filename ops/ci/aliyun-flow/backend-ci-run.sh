@@ -1,4 +1,7 @@
 set -eu
+# JavaBuild's platform JDK is only a bootstrap, never the tested toolchain.
+# The verified Dragonwell 21 archive below always replaces JAVA_HOME/PATH.
+for tool in python3 git curl tar sha256sum ldd; do command -v "$tool" >/dev/null; done
 export CYF_EXPERIMENT="$(mktemp -d /tmp/cyf-backend-flow-ci.XXXXXX)"
 printf 'CYF_FLOW_PHASE runtime.begin wall=%s monotonic=' "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime
 python3 - <<'CYFTOOLS'
@@ -323,5 +326,33 @@ summary = dict(pipeline=os.environ.get('PIPELINE_ID'), run=os.environ.get('BUILD
     countNote='Test executions; source sets can overlap. Skips remain explicit.')
 (dest / 'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('CYF_API_TEST_SUMMARY '+json.dumps(dict(counts=counts,suites=len(records))))
+# Bounded, value-free cache inventory. Observation failure does not fail a build.
+import subprocess,time
+started=time.monotonic()
+home=Path.home()
+paths={'gradle':home/'.gradle/caches', 'maven':home/'.m2',
+       'jdk_archives':home/'.cache/cyf-backend-jdk-archives',
+       'mysql_archives':home/'.cache/cyf-backend-mysql-archives',
+       'other_runtimes':home/'.cache/cyf-test-runtime', 'node':home/'.npm',
+       'yarn':home/'.yarn', 'go':Path('/go/pkg/mod'), 'all_runtime_cache':home/'.cache'}
+for label in ('modules-2','build-cache-1','jars-9','transforms-3','transforms-4','8.14.3'):
+    paths['gradle_'+label]=home/'.gradle/caches'/label
+inventory={}
+for label,path in paths.items():
+    try:
+        if path.is_symlink():
+            inventory[label]={'status':'SYMLINK_NOT_FOLLOWED'}
+        elif path.exists():
+            result=subprocess.run(['du','-sx','--block-size=1',str(path)],
+                stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,universal_newlines=True,check=False)
+            inventory[label]={'bytes':int(result.stdout.split()[0])} if result.returncode==0 else {'status':'DU_FAILED'}
+        else:
+            inventory[label]={'bytes':0}
+    except (OSError,ValueError,IndexError):
+        inventory[label]={'status':'UNKNOWN'}
+result=dict(directories=inventory,seconds=round(time.monotonic()-started,3))
+summary['cacheInventory']=result
+(dest/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+print('CYF_CACHE_INVENTORY '+json.dumps(result,sort_keys=True))
 PYTESTREPORT
 printf 'CYF_FLOW_PHASE package.end wall=%s monotonic=' "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime
