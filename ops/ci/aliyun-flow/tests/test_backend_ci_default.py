@@ -3,9 +3,11 @@ import gzip
 import hashlib
 import importlib.util
 import json
+import os
 import pathlib
 import re
 import subprocess
+import tempfile
 import unittest
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
@@ -39,16 +41,51 @@ class DefaultCiTest(unittest.TestCase):
         self.assertNotIn('VMDeploy', template)
         self.assertNotIn('\n  deploy:', template)
 
+    def test_timing_summary_survives_truncated_cloud_log_without_raw_environment(self):
+        shell = (BASE / 'backend-ci-run.sh').read_text()
+        code = shell.split("<<'PYTESTREPORT'\n", 1)[1].split('\nPYTESTREPORT', 1)[0]
+        code = code.split('# Bounded, value-free cache inventory.', 1)[0]
+        phase = dict(phase='init', rootBuild=True, elapsedSeconds=0.1, jvmUptimeSeconds=3.0,
+                     processCpuSeconds=2.0, availableProcessors=3, c1Only=False)
+        timing = dict(task=':example:test', rootBuild=True, startedSeconds=1.0, seconds=2.0,
+                      skipped=False, skipMessage=None, failed=False)
+        with tempfile.TemporaryDirectory() as temporary:
+            cwd = pathlib.Path(temporary)
+            build = cwd / 'build'
+            build.mkdir()
+            (build / 'TEST-example.xml').write_text(
+                '<testsuite name="example" tests="1" failures="0" errors="0" skipped="0"/>')
+            (build / 'gradle-output.log').write_text(
+                'UNRELATED_ENV=do-not-copy-this\nCYF_GRADLE_PHASE ' + json.dumps(phase) +
+                '\nCYF_TASK_TIMING ' + json.dumps(timing) + '\n')
+            env = dict(os.environ, CYF_FLOW_BUILD_ROOT=str(build), PIPELINE_ID='5260799',
+                       BUILD_NUMBER='1', CI_COMMIT_SHA='a' * 40)
+            subprocess.run(['python3', '-c', code], cwd=str(cwd), env=env, check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            summary = json.loads((cwd / '_cyf_api_flow_export/test-results/summary.json').read_text())
+            self.assertEqual(summary['gradlePhases'], [phase])
+            self.assertEqual(summary['taskTimings'], [timing])
+            self.assertEqual(summary['counts']['tests'], 1)
+            self.assertNotIn('do-not-copy-this', json.dumps(summary))
+
     def test_required_profile_and_quality_tasks(self):
         argv = json.loads((BASE / 'backend-ci-policy.json').read_text())['argv']
         for required in ('--parallel', '--max-workers=3', '--build-cache', 'validateLayering', ':starter:bootJar'):
             self.assertIn(required, argv)
         self.assertNotIn('-x', argv)
+        self.assertFalse(any(x.startswith('-Dorg.gradle.jvmargs=') for x in argv))
+        self.assertEqual(next(x for x in argv if x.startswith(':')),
+                         ':agent:jia-agent-mapper:test')
         self.assertEqual(argv.count('./gradlew'), 1)
         shell = (BASE / 'backend-ci-run.sh').read_text()
         self.assertIn("'gradle','--flow-ci'", shell)
         self.assertIn('CYF_FLOW_SHORT_LIVED_TEST_JVM=1', shell)
         self.assertIn('CYF_BUILD_INPUT', shell)
+        self.assertIn('CYF_GRADLE_PHASE', shell)
+        self.assertIn('startedSeconds:', shell)
+        self.assertIn("summary['gradlePhases']", shell)
+        self.assertIn("summary['taskTimings']", shell)
+        self.assertNotIn('println(cyfRuntime.inputArguments)', shell)
         self.assertNotIn('text=True', shell)  # Flow worker Python 3.6
         self.assertIn('universal_newlines=True', shell)
         self.assertNotIn('local-release-metadata', shell)

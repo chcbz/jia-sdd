@@ -145,13 +145,27 @@ stages:
                         options.compilerArgs += ['-Xmaxerrs', '1000']
                     }
                 }
+                def cyfDiagnosticStart = System.nanoTime()
+                def cyfRuntime = java.lang.management.ManagementFactory.runtimeMXBean
+                def cyfCpu = java.lang.management.ManagementFactory.operatingSystemMXBean
+                def cyfPhase = { String name ->
+                    println('CYF_GRADLE_PHASE ' + groovy.json.JsonOutput.toJson([
+                        phase: name, rootBuild: gradle.parent == null, elapsedSeconds: (System.nanoTime() - cyfDiagnosticStart) / 1000000000.0,
+                        jvmUptimeSeconds: cyfRuntime.uptime / 1000.0,
+                        processCpuSeconds: cyfCpu.processCpuTime / 1000000000.0,
+                        availableProcessors: cyfCpu.availableProcessors,
+                        c1Only: cyfRuntime.inputArguments.contains('-XX:TieredStopAtLevel=1')]))
+                }
+                cyfPhase('init')
+                gradle.projectsEvaluated { cyfPhase('projectsEvaluated') }
+                gradle.taskGraph.whenReady { cyfPhase('taskGraphReady') }
                 def cyfTaskStarts = new java.util.concurrent.ConcurrentHashMap()
                 gradle.taskGraph.beforeTask { task -> cyfTaskStarts[task.path] = System.nanoTime() }
                 gradle.taskGraph.afterTask { task, state ->
                     def started = cyfTaskStarts.remove(task.path)
                     if (started != null) {
                         println('CYF_TASK_TIMING ' + groovy.json.JsonOutput.toJson([
-                            task: task.path, seconds: (System.nanoTime() - started) / 1000000000.0,
+                            task: task.path, rootBuild: gradle.parent == null, startedSeconds: (started - cyfDiagnosticStart) / 1000000000.0, seconds: (System.nanoTime() - started) / 1000000000.0,
                             skipped: state.skipped, skipMessage: state.skipMessage, failed: state.failure != null]))
                     }
                 }
@@ -210,7 +224,8 @@ stages:
                     reports.append({'path': str(path.relative_to(root)), 'name': suite.get('name'),
                         'counts': {k: int(suite.get(k, 0)) for k in ('tests', 'failures', 'errors', 'skipped')}, 'failures': failures})
                 data = json.dumps({'commit': os.environ.get('CI_COMMIT_SHA'), 'run': os.environ.get('BUILD_NUMBER'),
-                    'compilerDiagnostics': errors, 'junitReports': reports}, separators=(',', ':'), ensure_ascii=False).encode()
+                    'compilerDiagnostics': errors, 'junitReports': reports,
+                    'gradlePhases': [json.loads(line.split(' ', 1)[1]) for line in lines if line.startswith('CYF_GRADLE_PHASE ')]}, separators=(',', ':'), ensure_ascii=False).encode()
                 compressed = base64.b64encode(gzip.compress(data)).decode()
                 print('CYF_DIAGNOSTIC_SUMMARY ' + json.dumps({'compilerErrors': len(errors), 'junitSuites': len(reports),
                     'sha256': hashlib.sha256(data).hexdigest(), 'encoding': 'gzip+base64', 'base64Bytes': len(compressed)}))
@@ -353,6 +368,13 @@ stages:
                 summary = dict(pipeline=os.environ.get('PIPELINE_ID'), run=os.environ.get('BUILD_NUMBER'),
                     commit=os.environ.get('CI_COMMIT_SHA'), counts=counts, suites=records,
                     countNote='Test executions; source sets can overlap. Skips remain explicit.')
+                # Keep numeric diagnostics in the existing summary: Flow's log API can omit the
+                # start of the replayed Gradle output even when its more flag is false.
+                gradle_lines=(root/'gradle-output.log').read_text(errors='replace').splitlines()
+                summary['gradlePhases']=[json.loads(line.split(' ',1)[1]) for line in gradle_lines
+                    if line.startswith('CYF_GRADLE_PHASE ')]
+                summary['taskTimings']=[json.loads(line.split(' ',1)[1]) for line in gradle_lines
+                    if line.startswith('CYF_TASK_TIMING ')]
                 (dest / 'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
                 print('CYF_API_TEST_SUMMARY '+json.dumps(dict(counts=counts,suites=len(records))))
                 # Bounded, value-free cache inventory. Observation failure does not fail a build.
