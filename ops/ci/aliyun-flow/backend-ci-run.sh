@@ -335,7 +335,7 @@ paths={'gradle':home/'.gradle/caches', 'maven':home/'.m2',
        'mysql_archives':home/'.cache/cyf-backend-mysql-archives',
        'other_runtimes':home/'.cache/cyf-test-runtime', 'node':home/'.npm',
        'yarn':home/'.yarn', 'go':Path('/go/pkg/mod'), 'all_runtime_cache':home/'.cache'}
-for label in ('modules-2','build-cache-1','jars-9','transforms-3','transforms-4','8.14.3'):
+for label in ('modules-2','build-cache-1','jars-9','transforms-3','transforms-4','9.3.1'):
     paths['gradle_'+label]=home/'.gradle/caches'/label
 inventory={}
 for label,path in paths.items():

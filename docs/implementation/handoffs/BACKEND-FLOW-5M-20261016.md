@@ -116,3 +116,8 @@ Run199总284秒中Gradle161.942秒，其余122秒；日志可见缓存restore约
 15:08:22最终只读readback：无活动Run、当前配置与本候选完全一致，原push/三分支过滤保留、无部署阶段；保留已验证新默认，不恢复旧慢配置。证据`docs/implementation/evidence/backend-flow-5m-20261020/further-*`；私有配置/原始日志/归档保留`/var/tmp/cyf-backend-flow-5m-20261020/further`及`repeat`。稳定知识已回写既有Flow策略。根仓及host等无关脏改动原样保留，未安装helper、未指定/发布新版本、未重启生产。
 
 本次继续压缩与复测子项完成；完整生产版本发布五分钟目标仍未完成，任务不标done。后续由授权版本Owner在固定发布候选纳入此profile，使用同Run制品和实际安装/ready/业务核验，继续拆解历史171秒部署开销。定位/实现/验证有上述时间戳，独立耗时边界未完整采集，未知留空；不把CI节省等同整体开发周期或上线节省。
+
+## 2026-10-20 缓存范围继续压缩（用户“继续优化”）
+Owner/backend-flow-5m-main；根基线67889078，15:12 API本地/只读远端develop仍9ca2776c/tree847927f2且干净；当前云端默认9671c967、无活动Run已核对。范围仅后端无部署CI，接口规范api/docs/interface-standard.md冻结2026-10-14不变；不动其他Owner脏路径/生产helper/服务。本轮复用现有Flow和工具，不新增runner。
+只读源码定向检索所有Gradle构建文件未发现mavenLocal/.m2消费者；实际cold-init显式使用Gradle仓库和源构建plugin。官方Flow YAML文档缓存配置支持cache.cacheDirs与cacheMode:remote，因此优先仅缩小远端缓存打包范围，不删除worker任何目录：保留/root/.gradle/caches及固定校验JDK/MySQL归档，移出.m2/.npm/.yarn/go和其余泛.cache。平台Maven初始化是否会重新生成仍须实测，不把447MB目录占用当压缩收益。修正库存版本标签为实际Gradle9.3.1，其余Gradle argv/测试/fork/JDK来源/SHA均不变。
+最早正式验证：固定同API源码一次迁移Run，之后同配置再跑一次确认精简缓存恢复的真实耗时与测试/制品等价。旧全量缓存可能在首Run恢复，需区分迁移Run与后续热Run；不声称冷缓存保证。原配置/固定候选位于/var/tmp/cyf-backend-flow-5m-20261020/slim；失败先归因，未知写/启动只读对账，不盲重试。成功保留有证据候选，若无收益按实际结果决定，不为指标删测试或完整性校验。
