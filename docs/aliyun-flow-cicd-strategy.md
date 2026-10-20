@@ -207,3 +207,9 @@ Run147临时JDK/compile-only优化配置已恢复原值，不能据规范更新�
 只读清单确认旧缓存10份历史runtime提取目录总4.145GB（未压缩），npm下载缓存仅43.73MB。新提取目录移出Flow缓存，仅清理当前独占worker恢复的旧实体目录、不跟随链接。Run188缓存归档355.91MB，归档与上传约5秒且成功；旧Run186归档2.011GB、76秒并因平台2GB上限未上传。删6个无消费者直接开发依赖，lock减少95项，保留包版本及完整性未变；删除脚手架测试并合并重复正向重算，负向篡改测试在assets/all保留。
 
 Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前值、修正严格SemVer校验并单次update/readback，根模板同步，Run188证明该配置候选成功。Flow SHA `719b28019ba51985a11a60dd2af99ed3a336d4de760004301dd0c2336e2a65a3`。详细scope/失败/授权及未验证项：`docs/implementation/handoffs/FRONTEND-RELEASE-5M-20261009.md`；正式摘要：`docs/implementation/evidence/frontend-release-5m-20261009/summary.json`。
+
+### 后端默认提速配置维护（2026-10-20）
+
+- 默认CI维护入口仍是 `ops/ci/aliyun-flow/templates/backend-develop-release.yaml`（名称不代表部署）。`backend-ci-run.sh`维护云端步骤，`backend-ci-policy.json`维护精确Gradle argv；修改后运行 `python3 ops/ci/aliyun-flow/prepare-backend-ci.py --output /absolute/candidate.yaml` 离线渲染，再按原控制工具无活动Run/备份/单次写/readback流程固化。不得直接保留旧版本候选的固定commit/任务snapshot作为默认。
+- 既有orchestrator的 `gradle --flow-ci` 仅用于5260799默认CI；固定配置授权只验证原分支，逐Run绑定真实commit/tree、策略SHA、完整argv、干净源码及fresh输出目录，保留原Gradle互斥。该上下文不是人类任务Owner、不读写共享ledger、不接受整轮EVIDENCE_HIT，不提供版本部署权限；正常任务入口仍按原ledger准入。
+- 默认启用Run197已验证的 `--parallel --max-workers=3`、compile-only缓存及Test-only C1；不增加每task fork、不复用Test/layering/JAR。生产JVM与JIT/性能基准不套用Test C1 profile。缓存冷启动与worker波动仍会影响耗时，单次283秒CI不是发布总耗时保证。

@@ -635,6 +635,57 @@ def gradle_guard(ledger, args):
     return item
 
 
+def flow_ci_context(args, command):
+    """Default CI authority comes from the fixed Flow config, never a task snapshot.
+
+    This narrow policy is CI-only. Version deployment still needs its own exact
+    authorized candidate and same-Run artifact; no local task is claimed here.
+    """
+    import re
+    policy_path = ROOT / "ops/ci/aliyun-flow/backend-ci-policy.json"
+    raw = policy_path.read_bytes()
+    policy = json.loads(raw)
+    env = os.environ
+    commit = env.get("CI_COMMIT_SHA", "")
+    run = env.get("BUILD_NUMBER", "")
+    if (args.task_id != "FLOW-CI-5260799" or policy.get("schema_version") != 1 or
+            policy.get("pipeline") != "5260799" or policy.get("branches") != ['develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003'] or
+            env.get("PIPELINE_ID") != "5260799" or env.get("CI_COMMIT_REF_NAME") not in policy["branches"] or
+            env.get("CYF_FLOW_GRADLE_ACTIVE") != "1" or
+            env.get("CYF_FLOW_COMPILE_CACHE_OPT_IN") != "1" or
+            env.get("CYF_FLOW_SHORT_LIVED_TEST_JVM") != "1" or
+            env.get("CYF_LOCAL_RELEASE_OPT_IN") == "1" or
+            not re.fullmatch("[0-9a-f]{40}", commit) or not re.fullmatch("[1-9][0-9]*", run) or
+            args.selector != policy.get("selector") or
+            args.fixture_digest != hashlib.sha256(raw).hexdigest()):
+        raise SystemExit("Gradle denied: invalid fixed Flow CI context/policy")
+    experiment = pathlib.Path(env.get("CYF_EXPERIMENT", ""))
+    build = pathlib.Path(env.get("CYF_FLOW_BUILD_ROOT", ""))
+    if (not experiment.is_absolute() or experiment.resolve() != experiment or
+            not experiment.name.startswith("cyf-backend-flow-ci.") or
+            experiment.parent != pathlib.Path("/tmp") or
+            experiment.stat().st_uid != os.geteuid() or experiment.stat().st_mode & 0o077 or
+            build != experiment / "build" or build.resolve() != build or
+            not build.is_dir() or any(p.name != "gradle-output.log" or not p.is_file() or p.is_symlink()
+                                      for p in build.iterdir()) or
+            args.dependency_cache_home is not None or args.run_uid is not None or args.run_gid is not None):
+        raise SystemExit("Gradle denied: Flow CI requires its fresh private build root")
+    expected = [value.replace("$CYF_EXPERIMENT", str(experiment)).replace(
+        "$CYF_FLOW_BUILD_ROOT", str(build)) for value in policy["argv"]]
+    if command != expected:
+        raise SystemExit("Gradle denied: command differs from fixed Flow CI policy")
+    # Use the existing exact-clean-worktree check and shared Gradle lock. This is
+    # not a human task/owner record and grants no deployment authority.
+    return {"exact_sha_tree": {"commit_sha": commit, "tree_sha": args.tree_sha},
+            "current_gate": "verifying"}
+
+
+def gradle_context(args, command):
+    if getattr(args, "flow_ci", False):
+        return flow_ci_context(args, command)
+    return gradle_guard(load_ledger(), args)
+
+
 def gradle_child_identity(args):
     run_uid = getattr(args, "run_uid", None)
     run_gid = getattr(args, "run_gid", None)
@@ -748,19 +799,17 @@ def cmd_gradle(args):
     child_identity = gradle_child_identity(args)
     command, release_cache_policy = local_release_cache_defaults(args, command)
     record_gradle_resource_telemetry(args.heavy)
-    ledger = load_ledger()
-    item = gradle_guard(ledger, args)
+    item = gradle_context(args, command)
     cwd = verify_exact_worktree(args.cwd or ROOT / "api", item, args.tree_sha)
     key = evidence_key(args.tree_sha, args.selector, args.fixture_digest)
 
     with exclusive_lock(GRADLE_LOCK):
-        ledger = load_ledger()
-        item = gradle_guard(ledger, args)
+        item = gradle_context(args, command)
         cwd = verify_exact_worktree(cwd, item, args.tree_sha)
         with exclusive_lock(EVIDENCE_LOCK):
             cache = load_json(EVIDENCE_PATH, empty_cache())
             cached = cache.get("records", {}).get(key)
-        if (cached and cached.get("result") == "accepted" and
+        if (not getattr(args, "flow_ci", False) and cached and cached.get("result") == "accepted" and
                 cached.get("release_cache_policy") == release_cache_policy):
             print("EVIDENCE_HIT key={}; Gradle skipped for unchanged tree/selector/fixture".format(key))
             return 0
@@ -782,7 +831,7 @@ def cmd_gradle(args):
             "elapsed_seconds": round(elapsed, 3), "exit_code": result.returncode,
             "dependency_cache_home": str(args.dependency_cache_home)
                 if getattr(args, "dependency_cache_home", None) else None}), flush=True)
-        if result.returncode == 0:
+        if result.returncode == 0 and not getattr(args, "flow_ci", False):
             with exclusive_lock(EVIDENCE_LOCK):
                 cache = load_json(EVIDENCE_PATH, empty_cache())
                 cache.setdefault("records", {})[key] = {
@@ -800,7 +849,7 @@ def cmd_gradle(args):
                 cache["updated_at"] = now()
                 atomic_write(EVIDENCE_PATH, cache)
             print("EVIDENCE_STORED key={} reusable=true".format(key))
-        else:
+        elif result.returncode != 0:
             emit_notification(
                 args.task_id,
                 "abnormality",
@@ -947,6 +996,8 @@ def build_parser():
 
     gradle = commands.add_parser("gradle")
     gradle.add_argument("task_id")
+    gradle.add_argument("--flow-ci", action="store_true",
+                        help="Fixed 5260799 develop CI policy; no task ledger or evidence reuse")
     gradle.add_argument("--heavy", action="store_true")
     gradle.add_argument("--cwd", type=pathlib.Path)
     gradle.add_argument("--tree-sha", required=True)
