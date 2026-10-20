@@ -238,3 +238,16 @@ Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前
 15:55无活动Run、配置归属核对后已单次恢复并readback原**9671c967...**默认；原push/三分支/Java21来源与SHA/并行/C1/compile-only/fresh门禁和无部署保持。运行脚本/模板/默认工具测试恢复与Run200/201相同字节，所有实验helper及其专属测试退出当前默认；只保留历史提交与证据，不删除应用测试。最终26项相关工具隔离复核通过；恢复后未为重复计时额外触发Flow。当前缓存文件可能仍为上轮快压缩格式，标准gzip可读，不单独清理或跑构建来重写。
 
 证据 `docs/implementation/evidence/backend-flow-5m-20261020/cache-investigation-*`、`slim-*`及`fast-gzip-*`。后续优先定位同源码Gradle耗时波动，或在明确授权版本发布中分段观测历史171秒部署开销；没有新版本部署/重启/在线验收，不把CI SUCCESS当完整发布五分钟达标。
+
+### Gradle续调查：只保留可核验计时（2026-10-20，诊断源码63ed6b21）
+
+覆盖范围仅5260799无部署CI、固定API `9ca2776c` / tree `847927f2`。不修改API业务、测试选择器/fixture、fork/worker数量、依赖完整性或fresh JAR规则，不含生产部署/重启验收。
+
+- 已有Run199/200/201/205/206的302份XML显示，快慢轮次的case累计时间和多个模块及bootJar同步变化，不是只有Gradle启动阶段变慢。suite/case/task累计都是并行任务的累计wall time，不是CI耗时或CPU时间，不能相加后当关键路径，也不能无证据归因worker。
+- Run207额外给Gradle自身JVM加C1：CI229秒、Gradle126.770秒，未显示明确收益，已撤回；原Test-only C1保持。Run208把最重Chat回归完整argv块提前，测试/选择器块多重集合不变：任务确实提前，但自身44.76→71.56秒，CI244秒、Gradle136.394秒，没有净收益，也已撤回。不能把“提前启动”当作“更快完成”；MySQL的具体慢因尚未拆出，不调整事务/持久性语义或等待限制来换数字。
+- 默认恢复原policy字节及任务顺序，只在既有diagnostics增加阶段elapsed/JVM uptime/进程CPU累计/处理器数和Gradle C1布尔readback，任务增加start offset；`rootBuild`区分主build和included plugin build。offset相对各自init起点，不同build不能直接相减；JVM uptime为另一锚点。所记录进程CPU仅Gradle JVM，不含Test JVM/MySQL，不能冒充整机CPU或整轮CPU耗时。
+- Flow最终日志可能省略Gradle开头，即使`more:false`也不完整。阶段与任务数值记录写入既有`test-results/summary.json`，不新增installer不支持的成员，不输出原始环境/全部JVM参数；原JUnit XML仍逐份保留。优先下载同Run制品核对，不以日志缺失断言任务没执行。观测不增加性能门槛、不授权部署。
+
+实验和精简证据见 `docs/implementation/evidence/backend-flow-5m-20261020/gradle-*`、`early-heavy-*`；原始日志/制品仍在原私有目录。当前无新增可复现缩时结论；216/228秒等历史快样本不是长期保证，也不是完整版本发布<=300秒的证明。
+
+最终原profile+计时候选 **e0e87d84...** 已通过Run209：CI **272秒（4分32）**、Gradle164.751秒，独立下载同Run制品核验302份XML，2728项/0失败/0错误/122跳过及32个指定fresh任务不变，JAR仍`a71821be...`。主build taskGraphReady为自身init后10.356秒、JVM uptime15.501秒；它们不是整轮CI/Gradle命令耗时，进程CPU也不含测试/数据库。全部453条任务计时保存在summary，补足API日志开头缺失；主/嵌套阶段标识已实测。16:28:15+08只读readback配置一致、无活动Run、原push/三分支及无部署保持。此Run是最终诊断配置验收，不宣称新增缩时；旧9671c967基线仍保留可恢复，完整发布五分钟目标未完成。

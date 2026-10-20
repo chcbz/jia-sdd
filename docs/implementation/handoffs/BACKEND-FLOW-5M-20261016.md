@@ -144,3 +144,18 @@ GZIP=-1在Run206构建布尔观测为true、实际制品gzip头XFL4，已生效�
 后续：不要再照搬已否定的447MB缓存假设；可先定向分析Gradle耗时波动，或待明确发布版本后复用已验收profile，以真实同Run安装/实际ready/业务核验优化历史171秒部署段。当前没有新版本/部署授权，不重启来凑计时；整体发布<=300秒任务不标done，本轮调查结束释放Owner。定位/实现/验证时间重叠，独立分项耗时未完整采集，未知留空；不据此宣称整体开发周期提效。
 
 末次本地核对：API HEAD仍9ca2776c，chat memory相关路径已出现其他Owner未提交改动（开工时干净，期间其他任务并行产生），本Owner未触碰或覆盖，也未将这些脏字节纳入Flow。所有本轮正式结论仅覆盖云端固定干净9ca2776c/tree847927f2，不把末次本地工作树整体称为已验收或干净。
+
+## 2026-10-20 16:08 Gradle续优化范围冻结
+Owner仍backend-flow-5m-main，已重新claim。根HEAD10f08755；16:06只读核对API本地HEAD/远端develop=9ca2776c/tree847927f2，本地其他Owner chat-memory脏改不纳入本任务。16:06云端5260799无活动Run，默认canonical9671c967，保留无部署/原push过滤。接口标准api/docs/interface-standard.md固定2026-10-14。目标仅无部署CI，不承诺整体发布<=300秒、不操作生产或其他Owner路径。
+先复用Run199/200/201/205/206归档：302suite逐XML计时。200→206 Gradle114.116→165.732秒；suite累计170.06→252.30秒、case累计150.40→222.10秒，多模块与bootJar同步放慢，不能将51秒差简单视为JVM启动或固定sleep。suite累计是并行工作量不是wall time；现有task日志最终统一回放，无可靠start offset，暂不能计算关键路径/配置空档。私有分析gradle-analysis/comparison.json。
+下一小候选仅CI Gradle单次JVM增加TieredStopAtLevel=1（原仅Test生效），原UTF-8保留，不改生产运行参数、不加fork、不改测试/fixture/任务与完整性范围；可能影响同JVM内JavaCompile执行速度，不宣传冷编译保证。既有diagnostics补窄数值阶段/任务offset和Gradle JVM选项布尔readback，不输出全部JVM参数或环境。固定同源码Flow正式验证，并独立核验同Run XML/制品/fresh任务；收益不足撤回，未知写/启动只读核对，不重复旧start-intent。
+Run207（Gradle JVM C1候选db0e052d）SUCCESS总229秒、Gradle126.770秒；独立归档/XML/receipt/JAR核验通过，原2728项/0fail/122skip、302suite及32fresh任务不变。主要agent:test47.81秒、bootJar16.26秒与既有worker快慢样本缩放相近，没有明确收益，因此不保留Gradle JVM参数。真实task offset显示Chat mmdU3Finalization到51.75秒才开始、耗44.76秒，Chat链最终118.68秒结束；不是把累计并行时长当wall time。
+下一候选仅把此重任务完整argv块提到首个应用任务，其他块相对顺序不变、所有选择器/参数块多重集合相同、原Test-only C1与3worker不变。保留窄数值阶段/任务offset；因Flow最终日志省略Gradle开头，计时存入既有summary.json（不新增归档成员）以独立验收。Run207阶段计时被API省略，不能声称已取得其配置/JVM uptime数据。新候选仅在Run207终态、无活动Run/自有配置一致后单写readback；原基线9671c967始终可恢复，不改生产/其他Owner工作树。
+Run208重任务优先候选6ca88f99 SUCCESS总244秒、Gradle136.394秒，日志范围不变；mmdU3Finalization确实由诊断offset51.75提前至16.04，但自身44.76→71.57秒、整体无净收益，因此不接受为默认，不继续猜调度/加fork。该offset从各build诊断init起算，不是Flow/Gradle进程启动的绝对秒数；此前“第52秒”仅指此诊断锚点。
+收口候选恢复原policy逐字节（含原顺序及Gradle JVM参数），只保留阶段/任务计时进既有summary。首次新观测还确认included plugin build也运行init，不能把6条阶段记录误当3条重复；追加rootBuild布尔字段区分主build/嵌套build，保留各自init相对offset及JVM uptime，不凭不同锚点相减。隔离测试实际执行既有summary Python片段，证实只保存已知计时记录/原XML、不复制任意原始日志或环境。最终只做一次原范围Flow核验，不再扩展调参；本轮尚无新增缩时收益，无部署/生产操作。
+
+## 2026-10-20 16:29 本轮收口：不保留无收益性能候选
+实现诊断源码commit63ed6b21；原policy与10f08755逐字节相同。Run207=229秒/Gradle126.770，Run208=244秒/136.394，Run209=272秒/164.751；各Run均独立下载制品、解析302份XML并核对原逐suite计数、receipt/source/JAR与32fresh任务，2728项/0失败/0错误/122跳过、JAR a71821be...不变。Run207 C1、Run208优先调度均已撤回；Run209唯一保留的是窄数值诊断，未获得额外可复现缩时收益，不把最后成功或不同worker快慢作为因果证明。
+最终候选canonical e0e87d845c012bac0defd54d2bfb9c275debfa622d6170eafeb007213c2c3b15，16:28:15独立readback匹配且无活动Run，原push/三分支/无部署保持。Run209归档229037614bytes、SHA377b11471e9bb3a389bc5001bd922e57463fec21dd4f18231fee87344969a792；summary保存453条完整task计时、3条主build及3条嵌套build阶段，原API日志仍会省略前部。正式核验在gradle-run207/208/209-summary.json，最终候选/保留配置和总览在gradle-final-candidate-proof/retained-config/investigation-summary，原始材料在原私有目录gradle-analysis/early-heavy/timing-only。API本任务无修改/无push，不覆盖其他Owner chat-memory/host等脏文件，无新版本/部署/helper安装/生产重启。
+本轮34项隔离工具检查通过（不是应用正式验收替身），稳定知识回写既有Flow策略/编排README。定位、实现、等待与验证相互重叠，独立时长未知留空，不宣称整体开发周期收益。整体生产版本发布<=300秒仍未完成，保留targeted_verification，不标done；释放本轮Owner，后续应消费已有精确计时定位测试/MySQL或待明确版本授权后观察实际部署，不再重做已否定缓存/JVM/顺序猜测。
+末次16:30:41+08只读核对API本地HEAD/tree与远端develop仍为上述9ca2776c/847927f2；其他Owner脏修改仍不属于本次Flow输入，未覆盖、未将本机整体称为干净/已验收。

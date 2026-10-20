@@ -8,6 +8,8 @@
 
 云端仍用本编排器的 `gradle --flow-ci`：精确Flow身份/策略argv/当前干净commit/tree、新输出和原Gradle锁；不读写人类任务ledger、不复用整轮结果、不授权部署。普通任务不要使用此模式，原task guard保持不变。
 
+2026-10-20续调查（诊断源码63ed6b21）只增加可核验数值计时：同Run制品的既有`test-results/summary.json`含`gradlePhases`与`taskTimings`；用`rootBuild`区分主/嵌套build，各自offset不混算，JVM uptime另列。Flow日志可能省略开头，优先查同Run summary/XML。Gradle JVM C1和重任务优先实验均无明确净收益，已撤回，原policy/顺序及Test-only C1不变；没有新增缩时保证，不部署。
+
 # 开工诊断（DEV-FEEDBACK-PILOT-20261008）
 
 在现有 `cyf_orchestrator.py` 增加 `preflight`，不另建台账或准入门禁：
