@@ -106,3 +106,13 @@ Owner仍backend-flow-5m-main；根基线df5af3cb，API本地与14:31远端develo
 Owner/backend-flow-5m-main；根基线9ad16e7b，14:50本地及远端API仍9ca2776c/tree847927f2且干净，云端无活动Run/默认仍Run199候选已实时核对。范围：继续无部署CI优化，优先重复平台JDK准备和913MB缓存开销，保留源码/工具/制品绑定、全部测试及锁/完整性/健康；不改生产、host脏文件或其他Owner路径。接口冻结2026-10-14不变。
 Run199总284秒中Gradle161.942秒，其余122秒；日志可见缓存restore约16秒、archive/upload约25秒。JavaBuild使用平台jdk21，而真实构建另经固定SHA Dragonwell21 helper每次校验和fresh解包；该重复准备是候选缩时点，实际收益待测。历史schema证据明确Command不是有效组件，不复用早期失败方案；仍用JavaBuild，平台bootstrap改jdk1.8，Gradle实际运行前始终强制固定校验的Dragonwell21 JAVA_HOME/PATH，无Java降级。新增仅数值、固定标签的缓存体积观测，结果嵌入既有test-results/summary.json，不新增installer不接受的归档成员；不输出凭证或文件内容，不清缓存。
 最早验证为固定同API源码一次5260799无部署完整Run；Gradle argv/selector/compile init均不改。工具26项隔离回归、内嵌Python语法和shell/diff检查通过，非应用正式验收。私有配置/备份/日志/further；后续若实测无收益不夸报提速，缓存瘦身须先取得体积分布和实际再生成代价，不能盲删依赖/编译缓存。
+
+15:08本轮收口：工具源码39ba13ee（根仓本地提交，未push）已离线渲染并直接绑定云端工具字节。14:54:29单次update/readback到canonical `9671c967564668b0e94bdc956db2248175c78a8f65a803187e55f4d5567ae3e2`；未增加流水线。Run200 SUCCESS，14:54:34创建→14:58:10终态216秒（3分36），job215秒、Gradle114.116秒；同配置只读核对后单次复测Run201，15:02:02→15:05:50终态228秒（3分48），job227秒、Gradle123.419秒。两Run均固定API9ca2776c/tree847927f2；启动前两次远端develop核对匹配，未修改API源码。相较Run199默认284秒少56—68秒（约20%—24%），其中Gradle本身变化38.523—47.826秒，不能将全部收益归因于平台JDK准备；两次样本不是冷缓存或持续SLO保证。
+
+两Run的同Run制品均独立下载、重算归档/JAR SHA并直接解析302份XML：2728项/0失败/0错误/122跳过逐suite与Run195一致；全部32个指定任务fresh，包含validateLayering/bootJar，无EVIDENCE_HIT，181执行/103编译缓存。实际构建仍固定校验Dragonwell21，不是Java8构建；JAR SHA仍 `a71821bea7caed3ae1d37d9dadb5accde4e4f6cebc7081b0c96a32e64851c6c3`。Run200归档229026189bytes/SHA `55430f9aaf094e4dfb2e0ef0c200509fe8f3358b40d92bf61d60472c2b535b9a`；Run201归档229026996bytes/SHA `5f3e9c0f063d5e4fc9aa1c1ffeaf19901fae6e4ffa4187ec4fcc7bf9a2c138c8`。
+
+缓存库存两次稳定：Maven447197184bytes，Gradle约1032MB（modules-2约495MB、compile cache145MB），JDK归档约218MB、MySQL归档约48MB；目录占用不等于913MB压缩归档的贡献。JavaBuild全局缓存范围仍是下一候选，但本轮没有验证完整消费者与剔除后的再生成成本，不删除.m2、不盲删Gradle版本/变换缓存，不做无实测秒数承诺。库存漏列实际Gradle9.3.1，8.14.3=0不能当作当前版本缓存为0；后续若继续瘦身先补定向证据。工具26项隔离自检已过，收尾模板4项复核通过，均不替代上述Flow正式证据。
+
+15:08:22最终只读readback：无活动Run、当前配置与本候选完全一致，原push/三分支过滤保留、无部署阶段；保留已验证新默认，不恢复旧慢配置。证据`docs/implementation/evidence/backend-flow-5m-20261020/further-*`；私有配置/原始日志/归档保留`/var/tmp/cyf-backend-flow-5m-20261020/further`及`repeat`。稳定知识已回写既有Flow策略。根仓及host等无关脏改动原样保留，未安装helper、未指定/发布新版本、未重启生产。
+
+本次继续压缩与复测子项完成；完整生产版本发布五分钟目标仍未完成，任务不标done。后续由授权版本Owner在固定发布候选纳入此profile，使用同Run制品和实际安装/ready/业务核验，继续拆解历史171秒部署开销。定位/实现/验证有上述时间戳，独立耗时边界未完整采集，未知留空；不把CI节省等同整体开发周期或上线节省。

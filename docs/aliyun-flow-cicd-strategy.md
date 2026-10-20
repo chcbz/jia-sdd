@@ -56,7 +56,7 @@ Run147临时JDK/compile-only优化配置已恢复原值，不能据规范更新�
 
 **边界：283秒只证明此固定输入的一次 CI，不是整条版本发布五分钟或持续SLO。** 已知Run195旧进程停止33秒，Spring Started56.656秒（不等于完整healthy），部署其余阶段尚缺完整计时；不靠缩短请求deadline、强杀进程、懒初始化掩盖失败或跳过完整性/健康来换时间。下一步需对授权版本发布拆解安装/实际ready与业务核验。
 
-Run196/197实验结束时在无活动Run/配置归属核对后恢复原云端配置，readback SHA `a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`；当时默认云端模板尚未永久切换；2026-10-20后续固化状态见下方“后端默认提速配置维护”，不把历史恢复动作视为当前配置。可复用profile源码已收口，正式发布Owner须把已核验参数纳入其固定候选，永久默认模板迁移仍待收口。详细证据 `docs/implementation/evidence/backend-flow-5m-20261020/`，接续 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
+Run196/197实验结束时在无活动Run/配置归属核对后恢复原云端配置，readback SHA `a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`；当时默认云端模板尚未永久切换；2026-10-20后续固化状态见下方“后端默认提速配置维护”，不把历史恢复动作视为当前配置。可复用profile源码已收口，默认CI已固化，正式发布Owner仍须把已核验参数纳入其固定版本候选；无部署默认不提供上线授权。详细证据 `docs/implementation/evidence/backend-flow-5m-20261020/`，接续 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
 
 ## 历史：后端本地构建缓存提速（2026-10-09）
 
@@ -208,11 +208,20 @@ Run196/197实验结束时在无活动Run/配置归属核对后恢复原云端配
 
 Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前值、修正严格SemVer校验并单次update/readback，根模板同步，Run188证明该配置候选成功。Flow SHA `719b28019ba51985a11a60dd2af99ed3a336d4de760004301dd0c2336e2a65a3`。详细scope/失败/授权及未验证项：`docs/implementation/handoffs/FRONTEND-RELEASE-5M-20261009.md`；正式摘要：`docs/implementation/evidence/frontend-release-5m-20261009/summary.json`。
 
-### 后端默认提速配置维护（核对：2026-10-20，工具源码34cf32ac）
+### 后端默认提速配置维护（核对：2026-10-20，工具源码39ba13ee）
 
 - 默认CI维护入口仍是 `ops/ci/aliyun-flow/templates/backend-develop-release.yaml`（名称不代表部署）。`backend-ci-run.sh`维护云端步骤，`backend-ci-policy.json`维护精确Gradle argv；修改后运行 `python3 ops/ci/aliyun-flow/prepare-backend-ci.py --output /absolute/candidate.yaml` 离线渲染，再按原控制工具无活动Run/备份/单次写/readback流程固化。不得直接保留旧版本候选的固定commit/任务snapshot作为默认。
 - 既有orchestrator的 `gradle --flow-ci` 仅用于5260799默认CI；固定配置授权只验证原分支，逐Run绑定真实commit/tree、策略SHA、完整argv、干净源码及fresh输出目录，保留原Gradle互斥。该上下文不是人类任务Owner、不读写共享ledger、不接受整轮EVIDENCE_HIT，不提供版本部署权限；正常任务入口仍按原ledger准入。
 - 默认启用Run197已验证的 `--parallel --max-workers=3`、compile-only缓存及Test-only C1；不增加每task fork、不复用Test/layering/JAR。生产JVM与JIT/性能基准不套用Test C1 profile。缓存冷启动与worker波动仍会影响耗时，单次283秒CI不是发布总耗时保证。
 
-- 已实际固化并保留云端默认，14:46 readback canonical SHA `cc7d7b7d429092a78193fa3a08a5846ff72fffb4bba474399c42c04a4359641b`；原push/分支过滤保留、无部署。`Run199 SUCCESS`：**284秒（4分44）**，Gradle161.942秒，2728项/0失败/0错误/122跳过，302套件与Run195独立XML逐项计数一致，32个指定任务全部fresh。制品独立下载核验229027426bytes/SHA `d194f08eb94bf9d859d7fde0586c2ff7a2040f1886b19601c39ec474316dee75`，Run/完整源码/clean绑定及JAR摘要均匹配。证据 `docs/implementation/evidence/backend-flow-5m-20261020/default-*`。
+- 首次固化的历史基线：14:46 readback canonical SHA `cc7d7b7d429092a78193fa3a08a5846ff72fffb4bba474399c42c04a4359641b`；原push/分支过滤保留、无部署。`Run199 SUCCESS`：**284秒（4分44）**，Gradle161.942秒，2728项/0失败/0错误/122跳过，302套件与Run195独立XML逐项计数一致，32个指定任务全部fresh。制品独立下载核验229027426bytes/SHA `d194f08eb94bf9d859d7fde0586c2ff7a2040f1886b19601c39ec474316dee75`，Run/完整源码/clean绑定及JAR摘要均匹配。证据 `docs/implementation/evidence/backend-flow-5m-20261020/default-*`。
 - 这是默认CI实测达标并固化，不代表包含生产部署的整条发布已≤300秒。Run195发布日志仅知停止33秒、健康等待61秒及稳定核验；尚缺完整部署阶段计时。后续实际版本候选应携带已验证profile，并按当前helper契约启用已有观测，不能把默认无部署CI或旧Run回执当成新版本上线证据。
+
+#### 避免重复工具链准备与缓存观测（2026-10-20）
+
+- 保留 `JavaBuild`，仅平台 bootstrap 设为预装 `jdkVersion: "1.8"`；执行 Gradle 前仍由固定 SHA 的 `prepare-backend-jdk.py` 校验、fresh解包 Dragonwell21 并强制替换 `JAVA_HOME/PATH`。这不是将编译/测试降到Java8。原argv、compile-only策略、Test C1及单task fork均不变。
+- 固定API `9ca2776c27ce3270efa0ea4c366b7de0e68e8dbb` / tree `847927f2fc9d76ca09cee79dc7aa987a627450c5`，Run200 SUCCESS **216秒（3分36）**，Gradle114.116秒；独立下载解析302份XML，2728项/0失败/0错误/122跳过与Run195逐suite一致，32个指定任务fresh，JAR摘要仍为上述 `a71821be...`。与Run199相比总计少68秒，其中Gradle自身少47.826秒，不能把全部差值归因于平台JDK准备，也不作固定节省承诺。 同配置不改源码复测Run201 SUCCESS **228秒（3分48）**、Gradle123.419秒，测试和fresh任务再次一致；两次均在5分钟内，仍不是长期SLO或冷缓存保证。
+- 缓存只做观测、不删除。Run200固定标签数值库存：Gradle缓存约1032MB（modules-2约495MB、compile cache约145MB），Maven约447MB，JDK归档约218MB，MySQL归档约48MB；这些是目录占用，**不是压缩归档贡献量**，总计不能与913MB归档直接相减。库存嵌入既有 `test-results/summary.json`，无新增installer不支持的归档成员，无文件内容/凭证输出，观测错误不作为构建门禁。
+- 进一步压缩候选是平台全局缓存范围，尤其约447MB Maven目录；当前未证明完整消费者/再生成开销，不能据此删目录或承诺节省秒数。Gradle实际版本9.3.1，当前库存中的8.14.3标签为0，不代表当前版本缓存为0；版本内变换缓存尚未细分，不盲删。固定JDK/MySQL归档及每次SHA校验保留。
+
+- 本轮保留新默认 canonical SHA `9671c967564668b0e94bdc956db2248175c78a8f65a803187e55f4d5567ae3e2`，无部署阶段，原push和分支过滤不变。Run200/201独立制品/XML、候选及最终readback证据见 `docs/implementation/evidence/backend-flow-5m-20261020/further-*`；源码实现、CI历史和当前线上版本分开记录，本轮未发布或重启生产，完整发布五分钟仍待授权版本的同Run实际验收。
