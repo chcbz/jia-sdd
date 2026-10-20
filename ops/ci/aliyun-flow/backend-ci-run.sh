@@ -19,7 +19,7 @@ CYFTOOLS
 # Quarantine only the unused Maven repository in this disposable worker; retain
 # settings.xml and all credentials, and never delete files or follow links.
 python3 - <<'PYMAVENCACHE'
-import json,os,pathlib,re,stat
+import json,os,pathlib,re
 root=pathlib.Path(os.environ['CYF_EXPERIMENT'])
 state={'status':'NOT_MOVED','moved':False}
 if (os.environ.get('PIPELINE_ID')!='5260799' or
@@ -27,7 +27,10 @@ if (os.environ.get('PIPELINE_ID')!='5260799' or
     not str(root).startswith('/tmp/cyf-backend-flow-ci.') or root.is_symlink()):
     raise RuntimeError('Maven cache relocation requires this Flow CI context')
 home=pathlib.Path.home();m2=home/'.m2';repo=m2/'repository'
-target=root/'maven-platform-repository'
+# HOME and /tmp are different filesystems on the actual worker.
+# A private sibling under HOME is outside every platform cache path.
+stash_parent=home/('.'+root.name)
+target=stash_parent/'maven-platform-repository'
 try:
     if m2.is_symlink() or repo.is_symlink():
         state['status']='SYMLINK_NOT_FOLLOWED'
@@ -35,11 +38,12 @@ try:
         state['status']='REPOSITORY_ABSENT'
     elif not repo.is_dir() or repo.stat().st_uid!=os.geteuid():
         state['status']='NOT_OWNED_DIRECTORY'
-    elif target.exists() or target.is_symlink():
+    elif stash_parent.exists() or stash_parent.is_symlink():
         state['status']='DESTINATION_EXISTS'
-    elif repo.stat().st_dev!=root.stat().st_dev:
+    elif repo.stat().st_dev!=home.stat().st_dev:
         state['status']='CROSS_DEVICE_NOT_MOVED'
     else:
+        stash_parent.mkdir(mode=0o700)
         os.rename(str(repo),str(target))
         state={'status':'MOVED_TO_PRIVATE_UNCACHED_SCRATCH','moved':True}
 except OSError:
@@ -364,7 +368,7 @@ started=time.monotonic()
 home=Path.home()
 summary['cacheRelocation']=json.loads((Path(os.environ['CYF_EXPERIMENT'])/'maven-cache-state.json').read_text())
 paths={'gradle':home/'.gradle/caches', 'maven':home/'.m2',
-       'maven_uncached_stash':Path(os.environ['CYF_EXPERIMENT'])/'maven-platform-repository',
+       'maven_uncached_stash':home/('.'+Path(os.environ['CYF_EXPERIMENT']).name)/'maven-platform-repository',
        'jdk_archives':home/'.cache/cyf-backend-jdk-archives',
        'mysql_archives':home/'.cache/cyf-backend-mysql-archives',
        'other_runtimes':home/'.cache/cyf-test-runtime', 'node':home/'.npm',

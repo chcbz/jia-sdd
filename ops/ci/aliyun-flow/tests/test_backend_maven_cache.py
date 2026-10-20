@@ -20,6 +20,8 @@ class MavenCacheTest(unittest.TestCase):
         self.addCleanup(self.scratch_tmp.cleanup)
         self.home = pathlib.Path(self.home_tmp.name)
         self.scratch = pathlib.Path(self.scratch_tmp.name)
+        self.stash_parent = self.home / ('.' + self.scratch.name)
+        self.stash = self.stash_parent / 'maven-platform-repository'
         self.m2 = self.home / '.m2'
         self.repo = self.m2 / 'repository'
         self.repo.mkdir(parents=True)
@@ -41,7 +43,7 @@ class MavenCacheTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(self.state()['moved'])
         self.assertFalse(self.repo.exists())
-        self.assertEqual((self.scratch / 'maven-platform-repository/artifact.jar').read_bytes(), b'synthetic fixture')
+        self.assertEqual((self.stash / 'artifact.jar').read_bytes(), b'synthetic fixture')
         self.assertEqual((self.m2 / 'settings.xml').read_text(), 'synthetic secret sentinel')
         self.assertNotIn('synthetic secret sentinel', result.stdout)
         self.assertNotIn(str(self.home), result.stdout)
@@ -69,7 +71,7 @@ class MavenCacheTest(unittest.TestCase):
         self.assertFalse(self.repo.exists())
 
     def test_existing_destination_is_not_overwritten(self):
-        (self.scratch / 'maven-platform-repository').mkdir()
+        self.stash_parent.mkdir()
         self.assertEqual(self.run_code().returncode, 0)
         self.assertEqual(self.state()['status'], 'DESTINATION_EXISTS')
         self.assertTrue((self.repo / 'artifact.jar').is_file())

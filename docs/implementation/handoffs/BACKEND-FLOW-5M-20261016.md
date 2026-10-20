@@ -124,3 +124,6 @@ Owner/backend-flow-5m-main；根基线67889078，15:12 API本地/只读远端dev
 
 首候选29191f5b已单次update/readback（canonical267acd98）并启动Run202。运行日志实证cacheDirs会**追加**JavaBuild默认路径而非覆盖，ARCHIVE_PATH仍含.m2及泛.cache且重复纳入JDK/MySQL子目录；因此该候选不接受为瘦身结果，也不按同输入重复跑。配置语法支持不代表达到覆盖默认范围的语义，前述候选假设被本次实测否定。
 调整方案仅在本任务独占、一次性的Flow worker里将.m2/repository原子rename到既有私有/tmp/cyf-backend-flow-ci.*/maven-platform-repository；不删除、不改.m2/settings.xml及凭证，不动Gradle或固定运行时归档，跨设备/链接/不归本身份/目标已存在均不移动。移动放在测试之前，正式同selectors成功才证明本固定范围不依赖该仓库；结束数值库存同时保留私有stash大小和.m2剩余大小，summary记录移动状态，不输出文件内容。移除追加cacheDirs配置，避免重复归档；保留默认缓存机制。6项真实嵌入脚本隔离测试验证内容/凭证保留、双层链接、缺失目录、目的冲突及错误流水线上下文，另原27项工具测试通过。所有应用正式验证仍在Flow。Run202活动期间不改云端配置、不取消任务；终态后才核对归属并单次写入新固定候选，之后一个迁移Run和一个精简缓存恢复Run完成验收。
+
+Run202终态SUCCESS/280秒，Gradle163.062秒，日志2728项/0失败/122跳过，缓存913466214→913469571bytes，确实未瘦身；没有独立下载其制品，不作该制品验收声明。无活动/归属核对后已替换为2cda8372候选（canonicalfae4f166），单次启动Run203。Run203初期真实日志为CROSS_DEVICE_NOT_MOVED：worker的.m2与/tmp不同文件系统，安全分支未移动任何文件，不是应用构建失败；不把“脚本成功”说成缓存已削减。
+下一固定候选仅将stash放到HOME下新建0700私有兄弟目录（.cyf-backend-flow-ci.*），仍处于全局缓存路径之外，先核对repo与HOME同设备再原子rename；依然不复制或删除任何文件、不触碰settings.xml、不跟随链接/覆盖目的目录。原Flow实验目录仍存状态文件；数值库存按固定标签指向新stash。工具6项实际脚本测试和模板5项复核通过。活动Run203结束前不改云端配置；HOME是否同设备及精简缓存收益仍以之后真实Run为准，若仍不能安全移动则保留原缓存并收口，不继续同根因盲试。
