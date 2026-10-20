@@ -45,7 +45,7 @@ class DefaultCiTest(unittest.TestCase):
         shell = (BASE / 'backend-ci-run.sh').read_text()
         self.assertIn("'9.3.1'", shell)
         self.assertNotIn('PYMAVENCACHE', shell)
-        self.assertIn('  TAR_OPTIONS: \"--exclude=.m2/repository\"', template)
+        self.assertIn('  - key: TAR_OPTIONS\n    value: \"--exclude=.m2/repository\"', template)
         self.assertNotIn('rm -rf', shell)
         self.assertNotIn('shutil.rmtree', shell)
         self.assertIn('sha256sum -c -', shell)
