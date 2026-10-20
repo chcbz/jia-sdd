@@ -12,8 +12,8 @@ sources:
     branchesFilter: ^(develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003)$
 defaultWorkspace: repo_0
 variables:
-  - key: TAR_OPTIONS
-    value: "--exclude=.m2/repository"
+  - key: GZIP
+    value: "-1"
 stages:
   cloud_ci:
     name: Backend develop CI
@@ -382,7 +382,9 @@ stages:
                             inventory[label]={'bytes':0}
                     except (OSError,ValueError,IndexError):
                         inventory[label]={'status':'UNKNOWN'}
-                result=dict(directories=inventory,seconds=round(time.monotonic()-started,3))
+                result=dict(directories=inventory,seconds=round(time.monotonic()-started,3),
+                    archiveEnvironment=dict(gzipFastRequested=os.environ.get('GZIP')=='-1',
+                        mavenExcludeRequested=os.environ.get('TAR_OPTIONS')=='--exclude=.m2/repository'))
                 summary['cacheInventory']=result
                 (dest/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
                 print('CYF_CACHE_INVENTORY '+json.dumps(result,sort_keys=True))

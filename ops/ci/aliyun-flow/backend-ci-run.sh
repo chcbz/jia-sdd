@@ -350,7 +350,9 @@ for label,path in paths.items():
             inventory[label]={'bytes':0}
     except (OSError,ValueError,IndexError):
         inventory[label]={'status':'UNKNOWN'}
-result=dict(directories=inventory,seconds=round(time.monotonic()-started,3))
+result=dict(directories=inventory,seconds=round(time.monotonic()-started,3),
+    archiveEnvironment=dict(gzipFastRequested=os.environ.get('GZIP')=='-1',
+        mavenExcludeRequested=os.environ.get('TAR_OPTIONS')=='--exclude=.m2/repository'))
 summary['cacheInventory']=result
 (dest/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('CYF_CACHE_INVENTORY '+json.dumps(result,sort_keys=True))

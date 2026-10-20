@@ -28,6 +28,20 @@ class CacheArchiveTest(unittest.TestCase):
         with tarfile.open(str(target)) as arc:
             return arc.getnames()
 
+    def test_fast_gzip_header_and_payload_roundtrip(self):
+        target = self.base / 'fast.tgz'
+        env = dict(os.environ, GZIP='-1')
+        env.pop('TAR_OPTIONS', None)
+        result = subprocess.run(['tar', '-czf', str(target), '-C', str(self.home), '.'],
+                                env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(target.read_bytes()[8], 4)  # gzip fast compression hint
+        with tarfile.open(str(target)) as arc:
+            for member in arc:
+                if member.isfile():
+                    self.assertEqual(arc.extractfile(member).read(),
+                                     (self.home / member.name).read_bytes())
+
     def test_relative_cache_paths_exclude_only_maven_repository(self):
         names = self.archive(['-C', str(self.home), '.m2', '.gradle', '.cache'])
         self.assertFalse(any('/repository' in n for n in names))
