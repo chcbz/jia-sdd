@@ -80,3 +80,15 @@ Run147终态SUCCESS：2026-10-17 00:24:15创建→00:28:33作业结束，总258�
 
 ## 项目交付规范切回双端Flow（2026-10-17）
 用户明确要求后端与前端一样使用云效构建和部署。Owner/backend-flow-5m-main；根仓develop基线518c06a4，API受测基线c1e97923bf。仅修改根AGENTS、交付策略、SDD流程与编排工具索引：正式测试/构建/制品/版本部署统一前端4403172、后端5260799；本地仅开发和诊断，旧本地发布说明标为历史。develop不自动部署、版本/固定源码/同Run制品/恢复/在线核验不变。AGENTS既有路径迁移未提交修改原样保留，不夹带提交；其余脏文件不动。验收为定向规范一致性断言及diff检查，无需应用构建；不改Flow配置、不触发运行或部署，不改共享技能。Run147成功仅证明该候选CI，不宣称优化已持久化或五分钟部署。
+
+## 2026-10-20 五分钟目标续办（Owner backend-flow-5m-main）
+用户要求解释当前十分钟并优化到五分钟；范围含整条发布链路计时，但本轮只授权无部署验证，不启动/停止生产或修改其他Owner任务。API本地/14:02只读远端develop均9ca2776c27ce3270efa0ea4c366b7de0e68e8dbb/tree847927f2fc9d76ca09cee79dc7aa987a627450c5，API干净；根HEAD aae93c074960580942112707e9518d831a0ff0af且大量无关脏修改原样保留。接口规范api/docs/interface-standard.md冻结2026-10-14，本轮无业务/接口改动。
+实时5260799 Run195 SUCCESS：create→terminal547秒，build375秒，deploy171秒；Run194 CI358秒，Run193完整564秒，Run192完整571秒。Run195 Gradle264.071秒、284任务（183执行/101编译缓存）、2728测试执行/0失败/122跳过；缓存归档约913MB。完整制品SHA4c08a1c70d5de09be6e676ed8ae40df84aba104489e39b5de85628f231cc258b已对主机现有incoming只读重算匹配；提取原XML计时，最慢真实MySQL套件31.910秒；大部分时间是多个串行测试JVM及Gradle/worker开销，不把其全部归因编译。VM日志明确平台省略3488行，不能声称完整部署明细；已有日志停止旧进程33秒，生产当前还可能被其他任务更新，不操作其进程。
+优化首候选：仅显式CYF_FLOW_SHORT_LIVED_TEST_JVM=1时对Test进程加入TieredStopAtLevel=1；不改生产JVM/JavaCompile/测试选择器/并发/失败策略。保持Run195全部selector及顺序，保留真实MySQL、ACL/事务、layering、制品完整性及fresh bootJar。13项工具隔离回归通过；这是工具自检不是云端验收。为真实任务续办经原orchestrator claim/transition，工具快照重新绑定本任务，不冒用CHAT-STOP任务授权。
+配置/原值/候选均在私有/var/tmp/cyf-backend-flow-5m-20261020（0700）；本轮候选triggerEvents=[]、无部署阶段。最早验证为同9ca2776c固定源码Flow全原范围A/B；结束前必须无活动Run/配置一致核对、恢复原值readback，不把CI五分钟等同完整发布五分钟。不因性能删除测试，不沿用历史84方法删除授权扩大覆盖缺口。正式精简证据docs/implementation/evidence/backend-flow-5m-20261020，原始日志私有目录保留。
+
+14:13 Run196 SUCCESS，create→terminal365秒（6分05秒），job364秒；Gradle242.079秒，284任务181执行/103编译缓存，2728执行/0失败/122跳过不变。C1降低Gradle约22秒（8.3%），但worker准备/缓存/上传合计约123秒，整条CI仅缩10秒；**未达5分钟，不称优化完成**。新增task计时显示真实MySQL所在mmdU3Finalization34.705秒、chat:test15.970秒、bootJar11.237秒，各agent/chat独立项目的测试串行是下一优化点。
+第二候选只增加同一Gradle进程内--parallel --max-workers=3（实测worker LARGE_3C6G），不并行启动Gradle、不绕原锁，不改每task单fork或全选择器。定向源码核对MySQL是独占临时datadir/socket/随机端口及逐用例唯一schema，Voice自有Redis独占随机端口；存在旧common RedisServerLoader固定端口且stop注释的历史风险，不扩大每task fork。第二轮必须实际同集合通过再接受并行；任何端口/事务失败须归因，不盲重试。云端配置当前仍本任务无部署实验，下一轮结束恢复原值。
+
+14:20 第二候选Run197 SUCCESS，create→terminal283秒（4分43），CI job282秒、Gradle160.853秒（较Run195减少103.218秒）。完整2728执行/0失败/0错误/122跳过，302suite逐项name/执行计数与Run195相同，181任务执行/103 compile-cache。仅同一Gradle进程跨项目并行，没有增加单task fork，不跑并行Gradle。独立下载本Run归档229027201bytes，SHA5129d497791befb3a87e72846eb8bce1740f06cababa1f7d0a385a02f75e1f01；receipt真实197/commit9ca2776c/tree847927f2/clean及fresh JAR绑定已核验，JAR SHAa71821be与Run195相同。没有部署/重启生产，没有永久修改触发规则。
+14:22:48+08 经原控制工具无活动Run、配置仍为自有r2候选核对后恢复原值并readback，原SHA a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a完全一致。优化目前在候选实测与可复用helper，**没有永久切换默认模板**；后续Owner须显式纳入固定版本候选，不能误称默认已提速。13项工具自检通过。完整版本发布<=300秒仍未达成/未验证，不能用CI283秒加历史估值充当完整上线实测。后续动作：对授权版本按真实安装/实际ready时标继续优化，并收口默认模板；不复用本任务旧快照冒充新候选授权，不在未授权情况下重启来做压测。稳定知识已回写既有Flow策略，精简证据保留backend-flow-5m-20261020，原始配置/日志/归档私有目录不入库。

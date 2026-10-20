@@ -119,5 +119,15 @@ class BootstrapTest(unittest.TestCase):
             self.assertIn(required, text)
 
 
+    def test_short_lived_jvm_is_opt_in_and_test_only(self):
+        text = (SCRIPT.parent / 'flow-compile-cache.init.gradle').read_text()
+        profile = text.split("if (System.getenv('CYF_FLOW_SHORT_LIVED_TEST_JVM') == '1') {", 1)[1]
+        self.assertIn('withType(org.gradle.api.tasks.testing.Test)', profile)
+        self.assertIn("task.jvmArgs '-XX:TieredStopAtLevel=1'", profile)
+        self.assertNotIn('JavaExec', profile)
+        self.assertNotIn('exclude', profile)
+        self.assertNotIn('maxParallelForks', profile)
+
+
 if __name__ == '__main__':
     unittest.main()

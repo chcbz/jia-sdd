@@ -43,6 +43,21 @@ API `c1e97923bf2325e3ada33b7e2816f203630f020d` / tree `f192948af6ff27b4e78f6f158
 
 Run147临时JDK/compile-only优化配置已恢复原值，不能据规范更新声称默认云端模板已永久提速或已包含部署阶段。后续使用时须核对当前任务映射、固定工具与配置，再按版本发布契约执行。证据见 `docs/implementation/evidence/backend-flow-5m-20261016/testfix/flow147-*`；详细过程与恢复见 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
 
+## 后端五分钟优化增量（核对：2026-10-20）
+
+固定 API commit `9ca2776c27ce3270efa0ea4c366b7de0e68e8dbb` / tree `847927f2fc9d76ca09cee79dc7aa987a627450c5`，覆盖 Run195 原全部 302 个 suite / 2728 次测试执行，0失败、0错误、122跳过（与 Run195 逐 suite 次数核对一致）。本轮不删测试，不将既有跳过或历史84方法删除写成覆盖恢复；不改生产代码/JVM，不部署。
+
+- Run195：完整版本发布547秒（9分07）；构建375秒、部署171秒。Gradle264.071秒，已有101个编译任务缓存命中，不能归因成“没开缓存”。
+- Run196：仅对短生命周期 Test JVM 启用 C1，CI365秒，Gradle242.079秒；未达五分钟。
+- Run197：同一 Gradle 进程增加 `--parallel --max-workers=3`（实测3核6GB worker），CI SUCCESS **283秒（4分43）**，Gradle160.853秒；原全部测试、真实MySQL、layering、PublicArtifactVerifier及fresh bootJar保留。103个编译任务命中；不并行启动多条Gradle、不改变单task fork数。
+- 同 Run 完整制品独立下载重算 SHA-256 `5129d497791befb3a87e72846eb8bce1740f06cababa1f7d0a385a02f75e1f01`；内嵌 receipt 的 Run/commit/tree/clean绑定核对通过，JAR SHA `a71821bea7caed3ae1d37d9dadb5accde4e4f6cebc7081b0c96a32e64851c6c3` 与Run195一致。不是历史制品冒充本轮结果。
+
+复用方式：固定新任务和源码，在现有可信工具 bundle 中纳入 `ops/ci/aliyun-flow/flow-compile-cache.init.gradle`，原 compile-only opt-in 基础上显式设 `CYF_FLOW_SHORT_LIVED_TEST_JVM=1`，经原 orchestrator 单进程传入上述并行参数。C1只改 `Test.jvmArgs`，性能/JIT基准不启用此选项；不改生产JVM。不要照搬Run197的旧任务快照、commit、fixture或私有payload作为新任务授权。
+
+**边界：283秒只证明此固定输入的一次 CI，不是整条版本发布五分钟或持续SLO。** 已知Run195旧进程停止33秒，Spring Started56.656秒（不等于完整healthy），部署其余阶段尚缺完整计时；不靠缩短请求deadline、强杀进程、懒初始化掩盖失败或跳过完整性/健康来换时间。下一步需对授权版本发布拆解安装/实际ready与业务核验。
+
+本轮在无活动Run/配置归属核对后恢复原云端配置，readback SHA `a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`；**默认云端模板尚未永久切换，不能宣称后续Run自动使用此提速配置**。可复用profile源码已收口，正式发布Owner须把已核验参数纳入其固定候选，永久默认模板迁移仍待收口。详细证据 `docs/implementation/evidence/backend-flow-5m-20261020/`，接续 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
+
 ## 历史：后端本地构建缓存提速（2026-10-09）
 
 > 自2026-10-17起不再是正式发布路径。以下仅保留当时实现、验收与恢复记录，不授权新本地构建部署。

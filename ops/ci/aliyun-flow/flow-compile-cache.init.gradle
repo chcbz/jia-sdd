@@ -14,3 +14,13 @@ gradle.beforeProject { project ->
         }
     }
 }
+
+// Only short-lived verification JVMs: never alter JavaCompile or the production JVM.
+// Explicit opt-in keeps performance/JIT benchmarks on their original VM profile.
+if (System.getenv('CYF_FLOW_SHORT_LIVED_TEST_JVM') == '1') {
+    gradle.beforeProject { project ->
+        project.tasks.withType(org.gradle.api.tasks.testing.Test).configureEach { task ->
+            task.jvmArgs '-XX:TieredStopAtLevel=1'
+        }
+    }
+}
