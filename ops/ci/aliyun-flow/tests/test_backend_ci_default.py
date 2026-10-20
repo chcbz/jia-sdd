@@ -49,6 +49,8 @@ class DefaultCiTest(unittest.TestCase):
         self.assertIn("'gradle','--flow-ci'", shell)
         self.assertIn('CYF_FLOW_SHORT_LIVED_TEST_JVM=1', shell)
         self.assertIn('CYF_BUILD_INPUT', shell)
+        self.assertNotIn('text=True', shell)  # Flow worker Python 3.6
+        self.assertIn('universal_newlines=True', shell)
         self.assertNotIn('local-release-metadata', shell)
         subprocess.run(['bash', '-n', str(BASE / 'backend-ci-run.sh')], check=True)
 

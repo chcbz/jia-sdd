@@ -166,7 +166,7 @@ stages:
                     print('CYF_BUILD_INPUT '+name+' '+hashlib.sha256(path.read_bytes()).hexdigest(),flush=True)
                 argv=[value.replace('$CYF_EXPERIMENT',str(root)).replace(
                     '$CYF_FLOW_BUILD_ROOT',os.environ['CYF_FLOW_BUILD_ROOT']) for value in policy['argv']]
-                tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+                tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],universal_newlines=True).strip()
                 sys.exit(subprocess.run([sys.executable,str(root/'ops/orchestration/cyf_orchestrator.py'),
                     'gradle','--flow-ci','--cwd',str(pathlib.Path.cwd()),'--tree-sha',tree,
                     '--selector',policy['selector'],'--fixture-digest',hashlib.sha256(raw).hexdigest(),
