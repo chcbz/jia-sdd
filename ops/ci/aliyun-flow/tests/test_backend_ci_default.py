@@ -44,8 +44,8 @@ class DefaultCiTest(unittest.TestCase):
         self.assertNotIn('cacheDirs:', template)  # platform appends, rather than replaces defaults
         shell = (BASE / 'backend-ci-run.sh').read_text()
         self.assertIn("'9.3.1'", shell)
-        self.assertIn('PYMAVENCACHE', shell)
-        self.assertIn("'cacheRelocation'", shell)
+        self.assertNotIn('PYMAVENCACHE', shell)
+        self.assertIn('  TAR_OPTIONS: \"--exclude=.m2/repository\"', template)
         self.assertNotIn('rm -rf', shell)
         self.assertNotIn('shutil.rmtree', shell)
         self.assertIn('sha256sum -c -', shell)
