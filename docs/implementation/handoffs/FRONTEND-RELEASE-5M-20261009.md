@@ -60,3 +60,43 @@
 - 无Owner交接/新Reviewer，无当前任务ledger覆盖；原共享根/后端修改保留。
 
 - 根控制面SemVer源码已提交 `9b66f9bd16f995223088e3dc1f7fdd9c23d5b99f` / tree `fa3298a08a38ef01a1b6ecd51338e8f00c546bc1`；仅模板和16输入专项回归，无其他根修改纳入该提交。
+
+## 2026-10-20 前端耗时接续：TMX 重复解析
+
+- 当前用户授权：先优化；无收益时可删除未应用的TMX相关测试。当前优先保留覆盖，不删测试、不改运行时/业务行为。
+- 唯一Owner：本聊天；范围为TMX编辑器的调用内解析复用及定向回归。非目标：扫描门禁、全局Mocha并行、生产发布、其它聊天源码。
+- 独立Web worktree：`/home/isp/wsps/cyf-worktrees/frontend-tmx-timing-20261020`；branch `codex/frontend-tmx-timing-20261020`；base commit `50107f38a757a5ce58d298965a953a353d7b48b1` / tree `2adbc30cdc5cdbd7db3f41375751113e22e448b8`。2026-10-20再次ls-remote确认develop同SHA；线上版本未另行核验。
+- 已读根/组件AGENTS、orchestration及Flow工具说明、scripts/ci/README；遵守统一接口规范`api/docs/interface-standard.md` 2026-10-14冻结版本，本任务无接口变更。不修改共享TASKS.yaml或其它Owner脏文件。
+- 基线调查：Run257测试73.095秒，TMX编辑/快照33.030秒；build143秒、并行scan133秒，部署49秒，总193秒。不同Run不当作受控对照；脱敏只读材料`/var/tmp/cyf-web-flow-timing-20261020/timing-audit.md`。
+- 最早验证：自有worktree复用已安装依赖，原TMX编辑测试定向诊断；补充跨调用/变更后缓存失效回归；不本机生产构建。正式验证须同固定SHA的Flow无部署候选；当前云配置包含发布阶段，禁止直接启动。开发完成不等于云端性能验收或发布。
+
+- 17:04 +08实时readback修正：当前云端配置SHA `31883fd59c9a33ef4847979fd99147375fda555d99498f17bc8cc5a6b94c389b`，解析后只有cloud_ci（build及scan），**当前无deploy阶段**；前述“当前含发布阶段”是误把Run257历史配置当成现行配置，已纠正。正式启动仍先保存/readback并全分页检查活动Run。
+- 实现候选：每次apply独立、单条目、仅字节相同文档的解析复用；变更后重解析、无跨调用状态，replaceRange无变化时返回原字符串；新增偏移刷新/异常后恢复与重入回归，未删测试。
+- 本机诊断：旧15项106.885秒，14pass/1 CLI 60秒超时；初版15项59.040秒，14pass/1默认2秒超时（命令未带正式10秒默认）。最后按10秒默认检查29项：编辑17项均通过；快照10pass/2原20秒case超时，总235.074秒。本机负载不可比，不能归因为算法错误或宣称流水线已提速，不再盲重试；需要干净云端固定源码验证。
+- 修改两文件ESLint及diff检查通过。typecheck:game存在基线cameraController.ts:208三处candidate possibly undefined，修改文件无新诊断；本轮不改无关相机代码。
+
+- 候选源码已推送独立分支：commit `8ece5a25a850ca5bf85a6ce91a0e6be30ab20edd`，尚未合入develop。无接口或生产版本变更。
+- 启动前全量分页查询257条历史，无活动/未知状态；保存私有原配置，固定candidate与来源，单写readback APPLIED。原CLI start对>100历史拒绝，复用原SDK窄调用先全分页核对既有Run集合/配置，然后仅启动一次；未修改共享runner。
+- 本次CI仅临时改来源到候选分支、加完整SHA断言并执行test:all（资产作者工具变化按原规则），其它build/scan/helper/制品合同不变，无deploy阶段。配置candidate SHA `cc84db0fceb783c821bd045b602b6d4c9bb4dbb16fe5e00d97839ad5a96f2fcc`，保存readback canonical相同。
+- 2026-10-20 17:15:36 +08单次启动Flow4403172 Run258；17:18 API确认实际source head为完整候选SHA。此时build运行中、scan SUCCESS135秒。all专项耗时不能与普通release Run257总耗时直接比较；不据此声称已发布/整体提速。结束后仅在配置仍为本候选且无活动Run时恢复原配置。证据私有目录`/var/tmp/cyf-web-flow-timing-20261020`。
+
+### Run258 归因（17:34 +08）
+
+- all-profile测试执行 **3547 passing / 2 pending**，已到Vite且Vite成功11.72秒；build job最终FAIL1123秒，scan SUCCESS135秒。不是TMX断言失败，也不是默认release耗时。
+- 实质失败在测试/构建后的manifest：`Wrong Flow identity`。本聊天改候选来源时仅改开头branch gate，遗漏manifest内原develop/旧候选分支白名单。旧校验正确拒绝新候选分支；不得删校验或把该Run标SUCCESS。没有上传合格制品，也未部署。
+- all测试通过只依据固定源码Run的已完成测试阶段/日志；完整all-profile制品/JSON报告缺失，不冒充完整all Run验收。完整原始材料仍私有，公开仅保留脱敏数值/源码/日志摘要。
+- 修正路径：保留全部测试与原身份校验；Owner自检后同源码fast-forward远端develop，再恢复原无部署配置，以标准develop来源进行release验证。正常release fresh测试/构建/同Run制品重新验证，不复用失败Run制品，也不因配置失误重复无关资产基准；整体性能结论只看可比release Run。
+
+- 17:38 +08 全分页258条均终态且配置仍为本候选后，单次恢复原配置并readback APPLIED：raw SHA `31883fd59c9a33ef4847979fd99147375fda555d99498f17bc8cc5a6b94c389b` / canonical `390998968e302677f3be6dc525036ff352506b14e81ff56e3f29e38cb9133c10`，与前值完全一致，无deploy、无自动触发。未放宽原manifest branch/commit身份校验。
+- Owner基于已通过17项定向及Run258已完成的all测试阶段，将Web同一提交`8ece5a25a850ca5bf85a6ce91a0e6be30ab20edd` fast-forward推送develop；tree `0debe9937c72892d6762edfef9af16f0873f77eb`。主共享Web分支/AGENTS/prototypes未改动，未切换其它Owner工作区。
+- 后续正式release CI用于校验标准来源身份/同Run制品并测量普通CI性能，是不同selector/修正配置输入，不盲重试失败all候选。后续Run号及最终结果以证据补充；没有应用部署授权扩展。
+
+### Run259 正常release CI收口（2026-10-20）
+
+- 原配置/同源码develop上单次启动Run259，**SUCCESS**。实际源码commit `8ece5a25a850ca5bf85a6ce91a0e6be30ab20edd` / tree `0debe9937c72892d6762edfef9af16f0873f77eb`；release profile **3144 passing / 2 pending / 0 failure**，注册3146（原3144+新增2），0测试删除。
+- 同Run制品106711160 bytes，SHA256 `d01df4f9f78c321446b5dc917cde587eadf2ad656581233f632e63d0306a00e6`；已独立读出source commit/tree、release manifest及ci-profile/test JSON核对。报告SHA256 `dbcb4ac38b3f0f3077f67424026d09c94b8dfe7cc678ac5b47b9323c10244f51`。不以该CI制品宣称已安装/线上验证。
+- Run257→259：TMX编辑15→17项，21.905→5.220秒；快照12项11.125→11.894秒；两文件合计33.030→17.114秒。完整release Mocha73.095→59.278秒；构建作业143→135秒，扫描133→138秒（并行）。触发→CI结束144→139秒，**不计Run257原部署49秒**；Run259无部署阶段。
+- 两个Run不同worker/时间，仅为实测前后样本，不能承诺固定缩时；当前扫描已是关键路径，继续删测试不能等比例缩短整体。用户授权的“优化不行可删除TMX测试”后备方案未启用，覆盖保留。
+- 17:43:47 +08 最终配置readback仍与原值完全相同：raw `31883fd59c9a33ef4847979fd99147375fda555d99498f17bc8cc5a6b94c389b`，无自动触发、无部署。不再修改scan范围、门禁或默认profile。
+- 脱敏稳定证据：`../evidence/frontend-release-5m-20261009/tmx-parse-reuse-20261020.json`；原始配置/日志和归档仅在0700私有目录。Python报告解析首次因主机3.8不支持removeprefix失败，修正本地解析脚本后成功；未下载第二份制品或重跑Flow。
+- 结论：本轮算法优化、develop集成与普通CI验证已完成；Run258只确认已完成的all测试阶段，仍保留Run FAIL/无制品事实。未发布、未重启、未线上核验，完整发布耗时目标不在本轮新增验收内；共享Web工作区/根gitlink不因远端集成而挪动。稳定实现说明已在组件scripts/ci/README.md。
