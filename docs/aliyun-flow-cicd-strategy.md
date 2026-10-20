@@ -56,7 +56,7 @@ Run147临时JDK/compile-only优化配置已恢复原值，不能据规范更新�
 
 **边界：283秒只证明此固定输入的一次 CI，不是整条版本发布五分钟或持续SLO。** 已知Run195旧进程停止33秒，Spring Started56.656秒（不等于完整healthy），部署其余阶段尚缺完整计时；不靠缩短请求deadline、强杀进程、懒初始化掩盖失败或跳过完整性/健康来换时间。下一步需对授权版本发布拆解安装/实际ready与业务核验。
 
-本轮在无活动Run/配置归属核对后恢复原云端配置，readback SHA `a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`；**默认云端模板尚未永久切换，不能宣称后续Run自动使用此提速配置**。可复用profile源码已收口，正式发布Owner须把已核验参数纳入其固定候选，永久默认模板迁移仍待收口。详细证据 `docs/implementation/evidence/backend-flow-5m-20261020/`，接续 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
+Run196/197实验结束时在无活动Run/配置归属核对后恢复原云端配置，readback SHA `a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`；当时默认云端模板尚未永久切换；2026-10-20后续固化状态见下方“后端默认提速配置维护”，不把历史恢复动作视为当前配置。可复用profile源码已收口，正式发布Owner须把已核验参数纳入其固定候选，永久默认模板迁移仍待收口。详细证据 `docs/implementation/evidence/backend-flow-5m-20261020/`，接续 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
 
 ## 历史：后端本地构建缓存提速（2026-10-09）
 
@@ -208,8 +208,11 @@ Run147临时JDK/compile-only优化配置已恢复原值，不能据规范更新�
 
 Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前值、修正严格SemVer校验并单次update/readback，根模板同步，Run188证明该配置候选成功。Flow SHA `719b28019ba51985a11a60dd2af99ed3a336d4de760004301dd0c2336e2a65a3`。详细scope/失败/授权及未验证项：`docs/implementation/handoffs/FRONTEND-RELEASE-5M-20261009.md`；正式摘要：`docs/implementation/evidence/frontend-release-5m-20261009/summary.json`。
 
-### 后端默认提速配置维护（2026-10-20）
+### 后端默认提速配置维护（核对：2026-10-20，工具源码34cf32ac）
 
 - 默认CI维护入口仍是 `ops/ci/aliyun-flow/templates/backend-develop-release.yaml`（名称不代表部署）。`backend-ci-run.sh`维护云端步骤，`backend-ci-policy.json`维护精确Gradle argv；修改后运行 `python3 ops/ci/aliyun-flow/prepare-backend-ci.py --output /absolute/candidate.yaml` 离线渲染，再按原控制工具无活动Run/备份/单次写/readback流程固化。不得直接保留旧版本候选的固定commit/任务snapshot作为默认。
 - 既有orchestrator的 `gradle --flow-ci` 仅用于5260799默认CI；固定配置授权只验证原分支，逐Run绑定真实commit/tree、策略SHA、完整argv、干净源码及fresh输出目录，保留原Gradle互斥。该上下文不是人类任务Owner、不读写共享ledger、不接受整轮EVIDENCE_HIT，不提供版本部署权限；正常任务入口仍按原ledger准入。
 - 默认启用Run197已验证的 `--parallel --max-workers=3`、compile-only缓存及Test-only C1；不增加每task fork、不复用Test/layering/JAR。生产JVM与JIT/性能基准不套用Test C1 profile。缓存冷启动与worker波动仍会影响耗时，单次283秒CI不是发布总耗时保证。
+
+- 已实际固化并保留云端默认，14:46 readback canonical SHA `cc7d7b7d429092a78193fa3a08a5846ff72fffb4bba474399c42c04a4359641b`；原push/分支过滤保留、无部署。`Run199 SUCCESS`：**284秒（4分44）**，Gradle161.942秒，2728项/0失败/0错误/122跳过，302套件与Run195独立XML逐项计数一致，32个指定任务全部fresh。制品独立下载核验229027426bytes/SHA `d194f08eb94bf9d859d7fde0586c2ff7a2040f1886b19601c39ec474316dee75`，Run/完整源码/clean绑定及JAR摘要均匹配。证据 `docs/implementation/evidence/backend-flow-5m-20261020/default-*`。
+- 这是默认CI实测达标并固化，不代表包含生产部署的整条发布已≤300秒。Run195发布日志仅知停止33秒、健康等待61秒及稳定核验；尚缺完整部署阶段计时。后续实际版本候选应携带已验证profile，并按当前helper契约启用已有观测，不能把默认无部署CI或旧Run回执当成新版本上线证据。

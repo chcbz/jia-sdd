@@ -2,6 +2,12 @@
 
 前后端正式测试、构建、制品与版本部署统一走云效 Flow：前端 `4403172`，后端 `5260799`。本地工具用于控制面和定向诊断，不替代正式 Flow 验收，不执行本地生产打包/部署。develop 不自动部署；发布绑定固定源码、同 Run 制品和在线核验。规范见根 `AGENTS.md` 与 `docs/aliyun-flow-cicd-strategy.md`；本次仅改文档，不变更工具或云端配置。
 
+## 后端默认 Flow CI（2026-10-20）
+
+`5260799` 默认配置的源码为 `ops/ci/aliyun-flow/backend-ci-run.sh` 和 `backend-ci-policy.json`；离线渲染使用 `prepare-backend-ci.py --output /absolute/candidate.yaml`，仍通过既有 flow-control 固化，不在本机运行Gradle。细节见 `docs/aliyun-flow-cicd-strategy.md` 的默认提速维护节。
+
+云端仍用本编排器的 `gradle --flow-ci`：精确Flow身份/策略argv/当前干净commit/tree、新输出和原Gradle锁；不读写人类任务ledger、不复用整轮结果、不授权部署。普通任务不要使用此模式，原task guard保持不变。
+
 # 开工诊断（DEV-FEEDBACK-PILOT-20261008）
 
 在现有 `cyf_orchestrator.py` 增加 `preflight`，不另建台账或准入门禁：
