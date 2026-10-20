@@ -41,13 +41,11 @@ class DefaultCiTest(unittest.TestCase):
 
     def test_cache_scope_keeps_required_bytes_without_deleting_directories(self):
         template = (BASE / 'templates/backend-develop-release.yaml').read_text()
-        expected = ('cache:\n  cacheDirs:\n    - /root/.gradle/caches\n'
-                    '    - /root/.cache/cyf-backend-jdk-archives\n'
-                    '    - /root/.cache/cyf-backend-mysql-archives\n'
-                    '  cacheMode: remote\n')
-        self.assertIn(expected, template)
+        self.assertNotIn('cacheDirs:', template)  # platform appends, rather than replaces defaults
         shell = (BASE / 'backend-ci-run.sh').read_text()
         self.assertIn("'9.3.1'", shell)
+        self.assertIn('PYMAVENCACHE', shell)
+        self.assertIn("'cacheRelocation'", shell)
         self.assertNotIn('rm -rf', shell)
         self.assertNotIn('shutil.rmtree', shell)
         self.assertIn('sha256sum -c -', shell)
