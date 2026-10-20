@@ -39,19 +39,6 @@ class DefaultCiTest(unittest.TestCase):
         self.assertNotIn('VMDeploy', template)
         self.assertNotIn('\n  deploy:', template)
 
-    def test_cache_scope_keeps_required_bytes_without_deleting_directories(self):
-        template = (BASE / 'templates/backend-develop-release.yaml').read_text()
-        self.assertNotIn('cacheDirs:', template)  # platform appends, rather than replaces defaults
-        shell = (BASE / 'backend-ci-run.sh').read_text()
-        self.assertIn("'9.3.1'", shell)
-        self.assertNotIn('PYMAVENCACHE', shell)
-        self.assertIn('  - key: GZIP\n    value: \"-1\"', template)
-        self.assertNotIn('  - key: TAR_OPTIONS', template)
-        self.assertIn('gzipFastRequested', shell)
-        self.assertNotIn('rm -rf', shell)
-        self.assertNotIn('shutil.rmtree', shell)
-        self.assertIn('sha256sum -c -', shell)
-
     def test_required_profile_and_quality_tasks(self):
         argv = json.loads((BASE / 'backend-ci-policy.json').read_text())['argv']
         for required in ('--parallel', '--max-workers=3', '--build-cache', 'validateLayering', ':starter:bootJar'):

@@ -335,7 +335,7 @@ paths={'gradle':home/'.gradle/caches', 'maven':home/'.m2',
        'mysql_archives':home/'.cache/cyf-backend-mysql-archives',
        'other_runtimes':home/'.cache/cyf-test-runtime', 'node':home/'.npm',
        'yarn':home/'.yarn', 'go':Path('/go/pkg/mod'), 'all_runtime_cache':home/'.cache'}
-for label in ('modules-2','build-cache-1','jars-9','transforms-3','transforms-4','9.3.1'):
+for label in ('modules-2','build-cache-1','jars-9','transforms-3','transforms-4','8.14.3'):
     paths['gradle_'+label]=home/'.gradle/caches'/label
 inventory={}
 for label,path in paths.items():
@@ -350,9 +350,7 @@ for label,path in paths.items():
             inventory[label]={'bytes':0}
     except (OSError,ValueError,IndexError):
         inventory[label]={'status':'UNKNOWN'}
-result=dict(directories=inventory,seconds=round(time.monotonic()-started,3),
-    archiveEnvironment=dict(gzipFastRequested=os.environ.get('GZIP')=='-1',
-        mavenExcludeRequested=os.environ.get('TAR_OPTIONS')=='--exclude=.m2/repository'))
+result=dict(directories=inventory,seconds=round(time.monotonic()-started,3))
 summary['cacheInventory']=result
 (dest/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('CYF_CACHE_INVENTORY '+json.dumps(result,sort_keys=True))

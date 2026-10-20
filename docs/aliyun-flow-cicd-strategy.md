@@ -222,6 +222,19 @@ Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前
 - 保留 `JavaBuild`，仅平台 bootstrap 设为预装 `jdkVersion: "1.8"`；执行 Gradle 前仍由固定 SHA 的 `prepare-backend-jdk.py` 校验、fresh解包 Dragonwell21 并强制替换 `JAVA_HOME/PATH`。这不是将编译/测试降到Java8。原argv、compile-only策略、Test C1及单task fork均不变。
 - 固定API `9ca2776c27ce3270efa0ea4c366b7de0e68e8dbb` / tree `847927f2fc9d76ca09cee79dc7aa987a627450c5`，Run200 SUCCESS **216秒（3分36）**，Gradle114.116秒；独立下载解析302份XML，2728项/0失败/0错误/122跳过与Run195逐suite一致，32个指定任务fresh，JAR摘要仍为上述 `a71821be...`。与Run199相比总计少68秒，其中Gradle自身少47.826秒，不能把全部差值归因于平台JDK准备，也不作固定节省承诺。 同配置不改源码复测Run201 SUCCESS **228秒（3分48）**、Gradle123.419秒，测试和fresh任务再次一致；两次均在5分钟内，仍不是长期SLO或冷缓存保证。
 - 缓存只做观测、不删除。Run200固定标签数值库存：Gradle缓存约1032MB（modules-2约495MB、compile cache约145MB），Maven约447MB，JDK归档约218MB，MySQL归档约48MB；这些是目录占用，**不是压缩归档贡献量**，总计不能与913MB归档直接相减。库存嵌入既有 `test-results/summary.json`，无新增installer不支持的归档成员，无文件内容/凭证输出，观测错误不作为构建门禁。
-- 进一步压缩候选是平台全局缓存范围，尤其约447MB Maven目录；当前未证明完整消费者/再生成开销，不能据此删目录或承诺节省秒数。Gradle实际版本9.3.1，当前库存中的8.14.3标签为0，不代表当前版本缓存为0；版本内变换缓存尚未细分，不盲删。固定JDK/MySQL归档及每次SHA校验保留。
+- 约447MB Maven目录是阶段内库存，不能推定其远端压缩贡献；15:55后续Run202—206没有证实缓存路径/移动/排除/快压缩带来可复现的额外缩时，均已撤回，见下节。Gradle实际版本9.3.1，实验库存约382.7MB；最终恢复的原默认仍有旧8.14.3=0标签，不能把该0解释为当前版本无缓存。固定JDK/MySQL归档及每次SHA校验保持不变。
 
 - 本轮保留新默认 canonical SHA `9671c967564668b0e94bdc956db2248175c78a8f65a803187e55f4d5567ae3e2`，无部署阶段，原push和分支过滤不变。Run200/201独立制品/XML、候选及最终readback证据见 `docs/implementation/evidence/backend-flow-5m-20261020/further-*`；源码实现、CI历史和当前线上版本分开记录，本轮未发布或重启生产，完整发布五分钟仍待授权版本的同Run实际验收。
+
+#### 缓存继续压缩的实测边界（2026-10-20 15:55核对）
+
+固定同API源码，Run202/203/204/205/206均CI SUCCESS，分别280/244/279/255/276秒，Gradle163.062/139.551/165.353/147.819/165.732秒。原2728项/0失败/0错误/122跳过与302suite不变；Run205/206另独立下载制品、解析XML逐suite对比Run195，并核验32个fresh任务及相同JAR摘要。源集计数可能重叠，不能累计当作独立用例。全批4分04—4分40；此前216/228秒是较快样本，不是稳定SLO，Gradle波动来源尚未单独定位。
+
+- `cacheDirs`追加JavaBuild默认目录，不覆盖默认.m2等路径；设置成功不等于有效范围变小，Run202不接受。
+- Maven仓库与/tmp、HOME均跨设备；两次原子rename候选由安全分支跳过，未复制/移动/删除缓存文件；不继续猜测目的路径、不跨盘复制或清目录。
+- GNU tar排除在隔离工具测试有效，但Run205实际缓存仍约913MB，未证实平台缓存插件上下文中的收益；撤回TAR_OPTIONS，不把库存447MB写成可节省447MB。
+- Run206的GZIP=-1确实进入构建环境，同Run制品gzip头XFL=4；但缓存打包到size仍约18秒，与Run205相同，缓存约913.46→929.04MB（增约1.7%），制品229.03→230.24MB。未获得足以接受的缩时收益，且该GNU gzip环境接口有遗留维护成本，撤回，不永久化。
+
+15:55无活动Run、配置归属核对后已单次恢复并readback原**9671c967...**默认；原push/三分支/Java21来源与SHA/并行/C1/compile-only/fresh门禁和无部署保持。运行脚本/模板/默认工具测试恢复与Run200/201相同字节，所有实验helper及其专属测试退出当前默认；只保留历史提交与证据，不删除应用测试。最终26项相关工具隔离复核通过；恢复后未为重复计时额外触发Flow。当前缓存文件可能仍为上轮快压缩格式，标准gzip可读，不单独清理或跑构建来重写。
+
+证据 `docs/implementation/evidence/backend-flow-5m-20261020/cache-investigation-*`、`slim-*`及`fast-gzip-*`。后续优先定位同源码Gradle耗时波动，或在明确授权版本发布中分段观测历史171秒部署开销；没有新版本部署/重启/在线验收，不把CI SUCCESS当完整发布五分钟达标。
