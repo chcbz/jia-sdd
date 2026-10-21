@@ -68,3 +68,11 @@ Cherry-pick in order from `/var/tmp/cyf-external-chat-20261021`:
 3. `a5c018578c1f49df915b1193b1c1f87fbb9c7088`: Flow217 missing Spring authority bean and cancellation fixture; real AgentBizException(AGENT_FORBIDDEN) translation; DB errors propagate; Mockito restub corrected.
 
 Formal Java validation remains parent Flow on integrated commit (Run217 was old candidate: 1794 tests / 3 failures / 38 skips). No new Java pass claimed here. Runtime delivery remains `c11a078e0fc365c09706d569e0c668bcdb230d9f`; no additional Runtime changes/deployment for migration.
+
+## 2026-10-21 23:32 single-Owner release wrapper
+
+Supersedes the earlier uncertainty about Flow forward-only propagation: the installed adapter preserves the environment and numeric Flow installer does not overwrite CYF_API_FLOW_FORWARD_ONLY. Six existing numeric-Flow offline installer fixtures PASS (including exact retry, failure preservation and wrong-source/artifact rejection); this is not production approval.
+
+`flow-migrate.py` loads the SHA-pinned existing adapter and wraps only its existing invoke_installer hook. Original five-argument Flow/receipt/artifact admission and coordinator lock run first; coordinator stays held throughout migration and installer. Under original release→lifecycle locks, stop only canonical API, verify no surviving canonical JVM, backup affected tables/catalog + old JAR/record, obtain a single-session named DB lock, prove immutable same-owner and original dispatch tuples, expand only exact missing columns/indexes, backfill transactionally with zero-unresolved/conflict checks, tighten grant columns, and verify original catalog preserved. SQL hash is rechecked at use; phase receipts remain private and immutable input binding is required.
+
+Release/lifecycle locks are then released while original coordinator remains held; original installer reacquires its normal locks. Forward-only=1 prevents incompatible old restart on candidate failure; wrapper verifies stopped state on nonzero/exception. No LOCAL bridge/admission, no F06/E05 edits or replacement installer. Root-only binding records actual pipeline/run/source/tree/version/archive/pins/wrapper and before-state digests. Ten offline wrapper tests PASS; no real DDL/start has executed at this revision. Host-stage same-Run verification and live postchecks remain required.
