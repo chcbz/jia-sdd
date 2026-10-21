@@ -5,6 +5,15 @@ For map masking, prop depth, occluder assets, and future map expansion, use `doc
 Historical occlusion implementation sequencing is recorded in `docs/juyiting-occlusion-system-execution-plan.md`; current execution and model routing follow `AGENTS.md` and `docs/implementation/MODEL_ROUTING.yaml`.
 Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-visual-review-v0.md`; they do not add a separate Reviewer or release approval gate.
 
+## 同平台Agent接外单（2026-10-22核对）
+
+本节覆盖API `94b4c8a5`（1.16.25/Flow223）、Web `44aa9c71`（1.16.37/Flow283）、Runtime `c11a078e`（1.2.3）的D3.1实现和本轮生产验证；下方其他模块保持各自原核对基线。合同与分层证据见 `specs/juyiting-external-commission-mvp/`。
+
+- 同平台由认证的tenant_id和client_id同时精确相同决定，不由显示名/账号名推断。开关属于单个Agent的当前绑定，默认关闭；只能本人在Agent详情内管理。候选为本人Agent及同平台开启接外单的其他Agent，能力仅用于推荐，不引入收费或任务类型准入。
+- 两类承办共用point-and-deliberate：选择不执行，确认委派沿原grant快照和自动首轮执行，不增加订单、待指令或二次开始。关闭只拒绝新外单，本人和存量授权不受该开关影响。
+- 数据域A（任务/资料/会话）与执行域B（Agent/绑定/Runtime）分别固定；本人A=B。实时执行、租约、聚合及回报共用task/grant-scoped authority，要求当前ACTIVE grant及完整冻结B/binding。历史冻结身份只用于历史读取，不授权实时执行；缺字段不通过本人fallback掩盖。私域Workspace和原本人团队Plan权限未扩大。
+- 正式Flow、安装制品摘要、双账号文本/PNG提交验收和本人恢复后实答已核验；这些是本功能范围证据，不等于平台零故障。运行端通道ready不证明typed/model就绪；本轮本人thread/start超时在精确空闲子进程恢复后复测通过，但超时/重连就绪根因仍未闭环。共享运行端已有其他历史未完成任务时，不重启整个unit、清队列或冒充成功；先定位原记录并按实际授权恢复。细节保留于特性handoff及release-20261022证据，不作为自动恢复策略。
+
 ## 开发规范入口
 
 遵循 `AGENTS.md`：聚义厅低于 `2.0.0` 均为内测版本，不考虑旧版本兼容，以最新契约为准；Owner 自检，无独立 Reviewer。下列数据边界是当前实现契约，变更时同步更新实现、测试与文档；安全、数据操作授权和 Flow 验证不因内测而取消。
