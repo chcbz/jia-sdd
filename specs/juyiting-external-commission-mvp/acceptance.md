@@ -53,3 +53,12 @@ D3-AC编号不沿用旧58项，避免把已撤范围继续当门禁。原用例�
 **已知待办**：501原轮`APP_SERVER_RPC_TIMEOUT:thread/start`已停止；新交流返回typed runtime unavailable/503，保留原幂等key及UNKNOWN意图。已核对吴用无活动turn/队列后仅SIGTERM其app-server子进程，由原supervisor恢复；原key新交流202/COMPLETED/PUBLISHED，真实回复“本人任务正常”，UI原意图ACCEPTED。没有重跑已取消轮。**外单核心验收通过，但运行端稳定性根因仍未闭环**：林冲2026-10-20的历史超时任务与当前polling异常保留，未重启共享unit或改他人任务；磁盘96%及memory索引只读为旁路风险，未证实因果。不得宣称整体零问题。
 
 本轮持久证据：`evidence/implementation/release-20261022/`（含固定版本、摘要、双账号结果、局部恢复与截图）；历史/初始状态与最终状态分开保留。
+
+### 2026-10-22 08:40 用户路径补核：AC12/AC14交互缺口未修复
+生产task503图片已生成（RESULT_COMMITTED/COMPLETE），但正式交付与提交操作均不存在，页面无验收入口。此前498/499闭环通过依赖额外用自然语言要求提交，不代表“得到结果即可找到验收入口”已通过。该直接操作路径记为未通过；本轮只读定位，没有替用户提交或验收。详见handoff同时间记录。
+
+### 2026-10-22 11:08 成果选择与验收入口回归通过
+- 修复08:40记录的直接入口缺口：新专用外单任务508，图片已生成、task ASSIGNED/currentDelivery=null，从“验收此版”一次明确确认完成finalization与formal review，COMPLETED/ACCEPTED，选中来源/hash精确一致；不靠额外自然语言“提交成果”。
+- 504本人二稿已提交后改选历史首稿验收，正式结果只含首稿；506外单图文两项统一验收并保留所选集合。顶部默认不选、卡片只预选一稿、关闭不写入、预览无下载、桌面/手机、完成后只读和刷新回读已核对。
+- API224正式2935 tests/0 failures/errors/122 skipped；Web287正式3236 passing/2 pending。版本API1.16.26/Web1.16.40，精确commit/tree、同Run制品/安装/公共资源摘要及部署健康见evidence/implementation/selected-output-acceptance-20261022。幂等/未知/授权切换等按自动测试证明，不把它们写成全部在线故障注入。
+- 本次未验收用户503或其他真实事项，未修改Runtime、未执行迁移。历史运行端稳定性风险不因本次验收重标已修复。用户1小时目标未全部达成：09:59启动、初版10:22编码、11:06三个核心在线闭环完成，随后证据收口。

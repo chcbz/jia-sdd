@@ -1,0 +1,70 @@
+{
+  "queriedAt": "2026-10-22T02:56:14.373Z",
+  "org": "5fb7d76ee6f9d07f148529c7",
+  "pipeline": "4403172",
+  "run": 287,
+  "status": "SUCCESS",
+  "sources": [
+    {
+      "repo": "https://gitee.com/chcbz/cyf-web-kit.git",
+      "branch": "develop",
+      "commits": [
+        "5ec7e2096f838136ae71b6d4a66e148756aad54d"
+      ]
+    }
+  ],
+  "stages": [
+    {
+      "name": "Frontend develop CI",
+      "jobs": [
+        {
+          "id": 540588338,
+          "name": "Locked install, full tests, and Vite build",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "type": "LogPipelineJobRun",
+              "disabled": false
+            },
+            {
+              "type": "GetPipelineArtifactUrl",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "id": 540588339,
+          "name": "JavaScript code scan",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "type": "LogPipelineJobRun",
+              "disabled": false
+            },
+            {
+              "type": "GetPipelineScanReportUrl",
+              "disabled": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Explicit 1.16.40 release; source pinned; not develop auto-deploy",
+      "jobs": [
+        {
+          "id": 540588340,
+          "name": "Authorized 1.16.40 same-run versioned deployment",
+          "status": "SUCCESS",
+          "actions": [
+            {
+              "type": "GetVMDeployOrder",
+              "disabled": false,
+              "deployOrderId": 71577223
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

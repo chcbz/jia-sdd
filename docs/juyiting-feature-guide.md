@@ -310,3 +310,13 @@ rg -n "agent/map|agent/roster|agent/active|assign-task" web/src web/tests
 ### 自家接应接入说明（2026-10-12 23:38发布核对）
 
 API `0fe830d1ea` / Web `aad2ae9` 已以1.14.11上线，isp-install `a39c085`已推develop。旧安装文书统一为Runtime真实scope、非秘密handoff显式登记/查询及程序/配置/状态目录说明。首次接入仍须本人授权登记和目标机enroll；已有Runtime升级/迁移保留身份、完整HOME和会话索引，不重新注册。ACTIVE不等于在线，页面不自动升级目标机。操作见该仓 `docs/cyf-agent-runtime-v1-self-host.md`（迁移第9节）；正式测试、发布及未执行新用户生产登记E2E的边界见CYF runbook对应小节。
+
+### 成果选择与验收（2026-10-22 定向核验）
+
+覆盖 Web `5ec7e2096f838136ae71b6d4a66e148756aad54d`（1.16.40）及 API `6dc75fc632ad697bbe29c60a8a257c637ba937d6`（1.16.26）的议事成果验收，不重标其他章节基线。
+
+- 议事右上清单勾选图标打开全部持久化成果清单，默认不选；每稿“验收此版”打开同一清单并只预选该稿。历史稿可以验收，不限最后一稿，支持多选。预览不显示下载按钮。
+- 打开、选择、返回不提交。明确确认才复用既有 selected-output finalization 和 delivery-review：来源及hash固定，提交回执与当前交付精确匹配后验收，不调用模型、不重新生成。已提交集合一致则复用，不一致时在原任务锁和版本检查下用既有 changes_requested 流程替换；不增加表或状态机。
+- 已完成事项只读；刷新只核对原操作，不自动验收。未知/失败保留原幂等键和选中集合，显式继续，不默认改验其他稿。本人与其他用户Agent使用同一链路，保留平台身份、任务ACL及授权代际校验。
+- 历史目录必须传实际 entries 数组；文字成果按已持久化、明确deliverable的CHAT完成来源读取，不把任意聊天文字当成果。
+- 源码、Flow正式测试和线上核验分开记录：API224、Web287；真实专用任务504历史文字稿、506外单图文多选、508生成图片未提交直接验收均通过。详见 `specs/juyiting-external-commission-mvp/evidence/implementation/selected-output-acceptance-20261022/`；不代表运行端历史稳定性问题已经修复。
