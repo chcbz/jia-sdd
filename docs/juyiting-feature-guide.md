@@ -6,10 +6,6 @@
 
 统一遵循 `AGENTS.md` 和 `docs/juyiting-runbook.md`。聚义厅低于 `2.0.0` 均为内测版本，不考虑旧版本兼容，以最新版本为准；本指南记录当前功能与数据流，不单独设旧版本兼容或发布门槛。
 
-### 密议默认正文（2026-10-11源码核对）
-
-仅覆盖 Web `13c1cb11d61f27806d0af29d3972edf50c9750e5` 的普通密议入口：空白草稿自动填入“请报眼下动静、可领何榜、还需哪路照应。”，不添加 `@姓名`；已有草稿及手动 @ 保持不变，密议对象仍由明确会话上下文确定。其他部分沿用原基线。此为源码行为，不代表线上已发布；证据见 `docs/implementation/handoffs/JUYITING-PRIVATE-PREFILL-20261011.md`。
-
 ## 1. 功能定位
 
 聚义厅是面向 Agent 协作的可视化调度页面，核心体验是：
@@ -304,7 +300,7 @@
 
 - 地图/名册独立、任务显式目标及会话上下文是当前契约，详见 runbook；契约变更同步更新实现、测试与文档，不为旧版本保留实现。
 - 按实际影响选择或补充测试，不要求每次修改固定测试文件。数据边界可参考 `web/tests/juyiting-collaboration-flow.test.js`，Agent 服务可参考 `api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java`。
-- 正式测试、生产构建与发布遵循项目 `AGENTS.md`：前端 Flow `4403172`，后端固定源码本地构建并经编排器验证，分别绑定同 Run / 本地 build ID 制品；不再默认启动后端 `5260799`。develop 不自动部署，后续按明确版本发布。
+- 正式测试、生产构建与发布走 Flow：前端 `4403172`，后端 `5260799`，绑定精确 commit 与同 Run 制品；CI-only 仅按需诊断。develop 不自动部署，后续按明确版本发布；本地诊断与授权边界统一遵循 `AGENTS.md`，本指南不提供本机生产构建或直接 Gradle 发布命令。
 - 轻量定位当前接口调用：
 
 ```bash
