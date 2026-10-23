@@ -556,3 +556,9 @@ SkillPackages.get按已批准版本找到实际包摘要/大小并读取store，
 普通TASK_DEFAULT后续议事，按精确deliveryParent的保留成果链把媒体输出加入本轮CURRENT_CONVERSATION_ASSET来源；不自动扫描整个历史。EXPLICIT/NONE不隐式添加。输出与资产须在当前owner/task/conversation/generation/target内精确匹配请求、步骤、outputId和SHA；不根据文件名、颜色或时间推断来源。只读资产投影未就绪时明确拒绝本次新admission，保留原幂等key重试，不降级用最初上传资料、不同步运行归档投影。
 
 `typedDeliberationAdmission.retainedOutputSources`为冻结的成果→sourceRefId关联；availableSources、技能授权和action-v5不变，不等价于替换/删除旧成果。原图仍可作为参考，模型必须根据用户意图选择具体已授权来源；不以“选择列表的最后一个”代替语义。多输出不明确时澄清，不猜测。幂等重放不得再次发现目录，后续读取继续复验ACL与完整性。
+
+## Codex版本门禁移除（2026-10-23局部源码核对）
+
+源码：isp-install `cbc1050825a40378313f283e9f25dc46d44c1ea4`/Runtime1.2.9。`app-server-adapter.mjs`移除生产版本合同注册表，不再生成/匹配协议schema；版本探测失败只记录诊断。`juyiting-typed-outcome.mjs`的typed就绪仍要求真实初始化和执行文件测量，不再按profile合同ID/CLI版本/schema摘要比较。`agent-client.mjs`与`managed-chat-scope-config.mjs`去掉合同必填和就绪限制，保留所有租户/主体/授权代际匹配；旧配置字段忽略但不参与执行分支。资源汇总使用binaryMeasured/codexCliVersion，不声称未运行的schema测量已通过。
+
+`typed-inspection-profile.mjs`默认engineContractId不再拼接CLI版本；实际执行策略仍绑定文件身份/摘要、网络、挂载和输入授权。缓存仅复用同一执行文件/资源/权限证据；CONFIGURED_EXECUTABLE_DRIFT仍报错，版本取消不意味着动态接受运行中换包。生产使用新代码须按固定app受控安装/重启重新测量；不回放历史未知请求，不把旧carrier验证迁标到新二进制。

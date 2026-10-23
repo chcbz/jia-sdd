@@ -27,3 +27,7 @@
 ## 2026-10-23局部修复范围：上一版成果作为输入
 
 本节仅覆盖API `041548f601385a3463fbba06b929991371d93d9c`的来源补齐，不改写上文2026-10-13旧基线的整体状态。普通TASK_DEFAULT后续议事须将精确deliveryParent保留链中的媒体成果加入受权来源，并提供成果与sourceRefId的关联；EXPLICIT/NONE不得扩大来源。未就绪/失效不得静默回退原始资料，不同步写归档，不凭文件名或“最新时间”猜目标，不将输入选择等同正式成果替换或验收。详见[设计补充](design.md#上一版成果进入后续议事来源2026-10-23候选补充)及[本轮记录](../../docs/implementation/handoffs/PREVIOUS-OUTPUT-REVISION-20261023.md)。
+
+## 2026-10-23后续决策：取消Codex静态版本／协议门禁
+
+用户明确取消Runtime对Codex CLI版本白名单及生成协议schema摘要匹配。Runtime1.2.9源码候选以真实App Server初始化和RPC交互为准，版本只作诊断，不要求配置合同ID；不增加通配版本或兼容双轨。身份/ACL、业务结构/消息绑定、输入输出摘要、文件完整性及隔离策略不变。代码已合入isp-install develop `cbc1050825a40378313f283e9f25dc46d44c1ea4`，不是上线完成；[本次交接](../../docs/implementation/handoffs/RUNTIME-NO-VERSION-GATE-20261023.md)记录验证和阻塞。
