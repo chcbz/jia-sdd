@@ -40,3 +40,5 @@
 - 干净候选导航：36目录、157个Markdown入口、429个本地目标通过；工具13项隔离测试通过。本轮原工作区433目标与干净候选429目标的差异来自未纳入的原有文档增量，不据此声称源码/发布验收通过。新增历史smoke-test-cases原文的3处空白告警保留，不为diff洁净改写历史材料。
 - 生产记录：Web1.16.43 / Flow295，源码`669bdc9d6439d1bd7eb71df5ed401202a648f419`，已包含图片修复`9dbd132e8bc25119c0532cbed672ab7fa4a214b3`；API1.16.30 / Flow246，源码`b0735f57a7b454fa7a6fb9886fa3914131986779`。后续Web档案阅读器/PPT等独立develop变更未因本任务发布；本次文档无需应用构建部署。
 - 本次生产浏览器证据目录：`/var/tmp/cyf-external-flow-20261021/browser/sdd-image-regression-20261023/live/`；使用ziyue，测试任务517，指定吴用。最终业务结论以本目录回归结果为准，不以此段进行中记录替代。
+
+- develop最终readback：根627675d6fc775feac533666680ed0461ad974582，Web638084d26ec9a193240566bf45b33602cef8e0e0。生产图片回归不是全量通过：事项517首次改红交付可读取，但精确尺寸不符；二次修改无增量仍在进行，最终验收未执行。完整结论追加现有优化acceptance.md及evidence/production-image-regression-20261023/report.md，不为文档导航通过重标业务成功。
