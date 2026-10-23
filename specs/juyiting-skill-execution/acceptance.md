@@ -77,3 +77,15 @@
 **总结果PARTIAL_NOT_FULL_ACCEPTANCE**。不能将请求完成、构建成功或图片下载通过写成文字识别通过；PDF/Excel/视频、多技能及其他负例未在本轮线上重验。费用UNKNOWN不是免费，无重复安装/购买/改图重试。
 
 证据原字节副本及路径摘要见[evidence/release-20261015/source-index.json](evidence/release-20261015/source-index.json)；现行知识入口为[聚义厅整体SDD](../../docs/knowledge-base/06-juyiting-end-to-end.md#image-skill-contract)。发布日志和不可变制品留原位置，不因临时脚本清理删除。
+
+## 上一版成果来源的局部复核（2026-10-23）
+
+固定API `041548f601385a3463fbba06b929991371d93d9c`，仅补A04/A05的来源部分，不将来源单测代替完整改稿/替换/生产验收。
+
+- `ChatRetainedOutputSourcesTest`：有效来源合并/去重、NONE/EXPLICIT、原来源上限、未就绪拒绝、真实resolve的输入SHA/载体/能力目录、多个输出按producer/output/SHA映射。
+- `ChatRetainedOutputAdmissionTest`：发现来源在冻结之前，冻结映射入dispatch，失败无新admission/dispatch，原key重放不重新发现。
+- `JuyitingWorkflowMySqlTest.retainedOutputLookupRequiresExactLiveOwnerAndCommittedLineage`：现行自有MySQL8临时库，精确owner/tenant/client/task/generation/target、SHA、执行状态、删除和歧义；不能用默认跳过的外部MySQL套件代替。
+- Runtime1.2.8现行消费者：关联随完整facts透传，篡改后contextHash校验拒绝；不修改Runtime协议。
+- 生产仍待本次API发布后，用ziyue/吴用及带可辨识细节的图核验第二轮inputReceipt SHA=第一轮输出SHA、预览和最终验收。PDF、精确尺寸、517历史状态不在本轮。实绩以[handoff](../../docs/implementation/handoffs/PREVIOUS-OUTPUT-REVISION-20261023.md)及同Run证据为准。
+
+正式CI结果：Flow5260799/248 SUCCESS，3047项中2921通过、126跳过、0失败/错误；本节新增10项单测和1项真实MySQL查询用例均实际执行通过。validateLayering/fresh bootJar通过；Runtime消费者2项轻量检查通过。配置已恢复，尚未部署；详见[证据摘要](evidence/previous-output-revision-20261023/README.md)。

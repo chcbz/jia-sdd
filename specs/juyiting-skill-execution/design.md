@@ -548,3 +548,11 @@ SkillPackages.get按已批准版本找到实际包摘要/大小并读取store，
 5. **复杂并行工作流：本期不建设。** 顺序技能组合和异步Provider任务恢复已覆盖当前需求。
 
 这些默认值不阻塞实现。若用户希望改变自动安装或跨角色边界，需明确变更；不是要求用户再审批整份架构。
+
+## 上一版成果进入后续议事来源（2026-10-23候选补充）
+
+源码实现API `041548f601385a3463fbba06b929991371d93d9c`（基线`b0735f57a7b454fa7a6fb9886fa3914131986779`）；本节已由Flow248局部验证，尚未部署，不重标旧范围或当前生产完成。详见[本轮handoff](../../docs/implementation/handoffs/PREVIOUS-OUTPUT-REVISION-20261023.md)。
+
+普通TASK_DEFAULT后续议事，按精确deliveryParent的保留成果链把媒体输出加入本轮CURRENT_CONVERSATION_ASSET来源；不自动扫描整个历史。EXPLICIT/NONE不隐式添加。输出与资产须在当前owner/task/conversation/generation/target内精确匹配请求、步骤、outputId和SHA；不根据文件名、颜色或时间推断来源。只读资产投影未就绪时明确拒绝本次新admission，保留原幂等key重试，不降级用最初上传资料、不同步运行归档投影。
+
+`typedDeliberationAdmission.retainedOutputSources`为冻结的成果→sourceRefId关联；availableSources、技能授权和action-v5不变，不等价于替换/删除旧成果。原图仍可作为参考，模型必须根据用户意图选择具体已授权来源；不以“选择列表的最后一个”代替语义。多输出不明确时澄清，不猜测。幂等重放不得再次发现目录，后续读取继续复验ACL与完整性。
