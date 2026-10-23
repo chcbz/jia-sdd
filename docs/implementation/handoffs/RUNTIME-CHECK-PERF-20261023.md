@@ -25,3 +25,24 @@
 - 已识别但未重构的同步路径：Python成果重开、技能安装原子辅助、Git工作区子进程、资料解析/图片衍生、初始化版本探测、队列扫描。不能无证据删除边界或宣称整个Runtime完全非阻塞。
 - 后续如获生产升级授权，使用固定app安装入口、绑定精确来源/制品和原锁/恢复保护，分别记录安装、通道健康、真实图片业务验收；不得直接重启旧@wuyong模板或以releases目录启动。
 - 定位/实现/验证/等待精确分段耗时未独立测量，留空；本次只证实上述隔离热点改善，不宣称全业务端到端缩时。
+
+## 后续授权：部署与重新验证（2026-10-23）
+
+用户追加“部署并重新验证”，授权本次Runtime1.2.8受控安装及原ziyue/吴用图片业务回归；PDF仍排除，不重放517、不清UNKNOWN、不改API/Web或Provider配置。Owner仍单Agent。
+
+- 固定发布源码为isp-install `3c993e58033d901622c24126028199cdf4e2c76f`，其运行模块与已测040991f相同；生产基线1.2.6/PID1183474。查询远端develop一致，不自动跟随后续变更。
+- 复用Flow5264702，初查无活动Run；原云端配置已私有保存。云端打包71项权威执行模块及安装器指定Runtime文件，部署消费同Run制品。现用Node/JS/Python依赖逐文件摘要核验且锁/requirements完全未变，安装时复用，不在本机重新生产打包。临时安装操作沿用原激活脚本的锁、盘点、备份与身份保护，适配固定app；操作脚本SHA固定于云端配置。
+- 4108项现用manifest通过；三个通道ready；本地pending/processing均空。盘点实际有7份RECOVERY_REQUIRED（不是旧迁移时的4份），以及既有2份RESULT_UNKNOWN；精确摘要保留，不修改或重放。服务器DISPATCHED旧记录单独保留。
+- 恢复点采用完整停写、未压缩tar并逐项compare，覆盖完整static/managed HOME及SQLite、授权、队列、配置；原程序归档至`/home/isp/baks/cyf-agent-runtime-v1/20261023-performance/old-program`。不启动备份目录，不用旧DB覆盖新事实。当前磁盘空间足够，避免前次压缩造成47分钟窗口；最终耗时以实际证据为准。
+- 临时证据：`/var/tmp/cyf-runtime-perf-release-20261023/`。初次配置schema校验被拒，readback未变；补齐步骤/作业name并规范YAML后通过，随后启动Run25。Run25精确源码正确、24通过/1失败/1跳过，失败为云镜像缺`/usr/bin/bwrap`，未进入安装；补齐bubblewrap环境依赖后Run26，禁止跳过失败测试。Run26进行中时不宣称已部署。
+- 浏览器自有会话：`/var/tmp/cyf-external-flow-20261021/browser/runtime-perf-release-20261023/`，ziyue真实登录；上传蓝色256×256 JPEG、列表即时刷新/自动选中、移动预览开关已复核。待通道恢复后再发起新事项，验收本轮色彩修改与自然二次修改链路；精确尺寸问题不属于本次性能代码，不重标已修复。
+
+### 部署与回归实绩（2026-10-23，后续授权执行）
+
+- **已部署Runtime1.2.8**：精确3c993e5/tree d502f86，Flow5264702 Run26 SUCCESS，25通过/0失败/1skip；job541738448/541738449，部署单71694237成功。同Run制品SHA `d13d2ad2fca8ac1c16d842d6cf08ece6fa60a591ba85d2251580a1cd09e3f718`。临时Flow配置已恢复readback APPLIED。
+- 固定app/PID1404284，93源文件逐项与Git匹配，依赖锁未变且复用已校验依赖，未本机生产打包；原锁、完整停写未压缩tar+compare及旧程序归档保护保留。备份`/home/isp/baks/cyf-agent-runtime-v1/20261023-performance/`，恢复见其RECOVERY.md。身份/config/unit不变，首次通道核验7恢复记录摘要不变，未清UNKNOWN。
+- 三通道吴用/林冲/卢俊义connected/registered/ready且ACK新鲜。17:23:42安装启动，17:29:02通道核验；18:07业务后读回仍同PID在线。安装与业务分别记录，不把Flow成功当整体验收。
+- ziyue/吴用新事项518：上传刷新自动选中、移动资料预览开关、办事直接预览、待点将返回列表通过；红/绿两轮执行都产出1254×1254 PNG且PC/移动实际可见；选绿色成果完成正式验收，权威review COMMITTED、task COMPLETED v4、delivery ACCEPTED v1，刷新后状态持久化。
+- **尚有明确语义失败**：自然要求“把刚交付的红图改绿”实际仍使用原蓝图source/SHA并APPEND，不是基于红色上一版修改。因此本轮只通过两轮生成/成果验收，不宣称完整二次改稿正确。纯色样本不足以掩盖此来源问题；后续须以含可辨识细节的上一版成果验证。精确尺寸/逐像素纯色、517历史状态闭合仍未修。
+- 首次review POST被自有浏览器写保护拦截，查询不存在后由UI继续原验收成功；这是测试工具注入中断，不是生产网络BUG，也不能报无中断一键验收。存在profile级ACTION_SELECTION_INVALID日志但未绑定request，不强行归因518；历史恢复仍会占chat lane，不宣称全业务耗时已优化。
+- 完整分层结论与去凭据证据：`specs/juyiting-ui-baseline-20261006/evidence/runtime-performance-release-20261023/README.md`。不发布API/Web、不改Provider/模型、不重放517、不额外扩修。PDF不验。
