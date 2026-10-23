@@ -562,3 +562,13 @@ SkillPackages.get按已批准版本找到实际包摘要/大小并读取store，
 源码：isp-install `cbc1050825a40378313f283e9f25dc46d44c1ea4`/Runtime1.2.9。`app-server-adapter.mjs`移除生产版本合同注册表，不再生成/匹配协议schema；版本探测失败只记录诊断。`juyiting-typed-outcome.mjs`的typed就绪仍要求真实初始化和执行文件测量，不再按profile合同ID/CLI版本/schema摘要比较。`agent-client.mjs`与`managed-chat-scope-config.mjs`去掉合同必填和就绪限制，保留所有租户/主体/授权代际匹配；旧配置字段忽略但不参与执行分支。资源汇总使用binaryMeasured/codexCliVersion，不声称未运行的schema测量已通过。
 
 `typed-inspection-profile.mjs`默认engineContractId不再拼接CLI版本；实际执行策略仍绑定文件身份/摘要、网络、挂载和输入授权。缓存仅复用同一执行文件/资源/权限证据；CONFIGURED_EXECUTABLE_DRIFT仍报错，版本取消不意味着动态接受运行中换包。生产使用新代码须按固定app受控安装/重启重新测量；不回放历史未知请求，不把旧carrier验证迁标到新二进制。
+
+## 消息成果续办的身份与恢复闭环（2026-10-23核对）
+
+基于线上API041548f6的task520复现，补充本次修复合同；实施/正式验证/上线状态见 `../../docs/implementation/handoffs/RUNTIME-NO-VERSION-GATE-20261023.md`，此节不声明已部署。
+
+- 任务/会话/输入资料归属与执行方技能资源归属分离。`ChatDeliveryRevisionService`准备技能包必须通过`ChatDispatchAuthorityService.forTurn`复核父turn保存的原grant元组解析executor owner，禁止用当前任务owner读取外部Agent技能，也禁止为旧review事件选择新grant。
+- 已有终态review的重投仅验证原操作摘要并复用回执/ACK，不因后续撤权、技能包不可达而重新执行；仍保留原任务scope与claim归属检查。
+- 冷包和成果内容读取在锁外；事务内重新核验原授权、taskVersion/assignmentRevision、会话代际、正式交付及父轮次，然后原子退回、创建唯一child、保存回执、ACK。准备阶段成功不等于授权缓存。
+- 已知权限拒绝与版本冲突必须写现有REJECTED回执，不长期QUEUED；身份源的数据库/网络不可用不得伪装成权限撤销。内部descriptor异常增加类型化reason，公共报文不变。其他未知依赖错误保留失败及原恢复路径，不声称本轮已统一全部故障类型。
+- 多轮资料使用父请求冻结的selector和明确formal sources，不按文件名/最近消息猜测上一版。此次仅修复单Agent委派续办；多Agent跨账号扩展不在范围。模型将改原图解释为修改文字成果仍需实测，不因权限修复标记为通过。

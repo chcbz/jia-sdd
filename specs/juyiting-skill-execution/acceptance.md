@@ -105,3 +105,7 @@ Runtime1.2.9由Flow5264702/30同Run测试/打包/安装，352通过、0失败、
 ### 生产浏览器回归及阻塞（2026-10-23 22:39）
 
 新carrier 9/9真实模型PASS、当前安装loader contractReady=true；Flow31仅配置启用成功。ziyue/吴用新任务520两轮识图PASS，精确输入SHA一致。转改图后跨账号revision入口技能包owner解析错误，REVIEW_REQUESTED持续SourceUnavailable，无子请求；这是未修复API缺陷，不是Runtime版本门禁，也不是测试浏览器写保护失败。多轮生图/改图及图片验收仍未通过，见[business-task520.json](evidence/runtime-no-version-gate-20261023/business-task520.json)。
+
+## 跨账号成果续办修复：正式CI已通过，生产待验（2026-10-24）
+
+详见[证据](evidence/revision-authority-20261023/README.md)。API b86d8cf4、Flow5260799/252，2962通过/126跳过/0失败；本次8组定向93/93、其中真实MySQL36/36。覆盖原grant解析执行方、权限永久失败回执、暂态恢复、事务回滚、重复投递与既有来源映射；没有取消ACL/幂等/锁。未部署，不重标原图编辑/上一版多轮输入/正式图片验收为通过；PDF仍按用户要求排除。

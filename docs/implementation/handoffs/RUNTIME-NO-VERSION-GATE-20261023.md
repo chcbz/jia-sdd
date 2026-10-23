@@ -51,3 +51,23 @@
 根因已从实际调用栈与固定源码确认：`ChatDeliveryRevisionService.consume:87` 用任务发起人owner而不是目标Agent真实owner调用`packages.prepare`；`InstalledSkillDescriptorService.read:33` 的合法身份域校验因此拒绝 ziyue→吴用；异常发生在review操作入库和业务catch之前，被relay当可重试错误不断回排。普通`ChatTypedDiscussionAdmissionService:105-106`已使用`dispatchAuthority.admissionTarget(...).ownerJiacn()`。模型把改原图归为修改文本成果另需回归，但不是本次队列SourceUnavailable的根因。
 
 下一条动作（后端专项，不取消权限校验）：复用现有dispatchAuthority解析受委派executor owner后准备技能包，保留任务owner用于任务/会话事务与ACL；补同账号、跨账号、授权撤销/指派变化、永久不可用不无限QUEUED及原图/文本成果目标区分的定向回归。正式Flow后重新验证现有事件幂等续办，不手工改DB/造成功；再补无输入生图、连续两轮改上一版的SHA链、PC/移动正式验收与重入。证据在本次business-task520.json。
+
+## 续办根因修复接续（2026-10-23 23:19起）
+
+用户“继续”承接架构核对与优先修复顺序。唯一Owner仍为本会话；仅API跨账号成果续办及错误分类，不改UI/Runtime、模型、计费或PDF，不手改520/519业务状态。已重新读取根/API规则、统一接口v1.2及工具索引。23:19远端develop实查仍041548f601385a3463fbba06b929991371d93d9c/tree1bc5ae21325d9763e8325f31f4cc88a53317a5f3；共享API checkout为另一任务94b4c8a5，不能混入。复用本任务干净独立worktree `/home/isp/wsps/worktrees/previous-output-revision-api-20261023`，branch `codex/previous-output-revision-api-20261023`，base041548f。线上基线沿用22:35已核验的1.16.31，非本轮重新安装证明。
+
+实现约束：先复用已提交的review回执短路重复投递；否则从原turn/dispatch冻结grant解析executor owner（不取current admission），在锁外读取技能包/正式来源；任务root事务内再次复核原grant及任务/指派/会话/成果版本后才退回并建child。owner A仍控制任务/资料，owner B只用于其技能包。身份明确FORBIDDEN使用现有DELIVERY_REVIEW_FORBIDDEN终态回执并ACK；依赖不可用仍抛给原relay恢复，不按异常文本猜原因。InstalledSkillDescriptorLookup异常只增加内部reason，不改wire或ACL。原图/上一版/正式成果引用的现有机制不另建一套。
+
+定向验证：新revision consumer覆盖跨owner/同owner、准备前撤权、准备中身份拒绝、准备后撤权/改派/任务版本变化、伪造dispatch、已完成重放、依赖恢复、claim丢失；descriptor覆盖权限错误与数据库暂态的区别。共享dispatch授权、来源继承/上一版映射、正式来源留存及真实MySQL原套件保留。先diff/源码静态检查，再Flow5260799固定候选CI-only测试/分层/build（不发布），结果与后续上线/多轮浏览器验收分别记录。没有用新测试代替已有回归，不新增流水线或审批层。
+
+### 2026-10-24：固定候选进入正式CI
+
+API候选88719ba90d4c44e0ba24de7dba83e2c621505abb/tree8c8a955a2b477b5e8ff563f7d3490d354a559c94，6文件（3生产源码、3测试）。本机diff检查与文档导航通过，不运行本机Java构建。复用实际MySQL事务套件新增跨owner提交与准备后撤权回滚，保持原并发、缺失任务、回执写失败和同事件恢复用例。
+
+Flow250在Gradle启动前被既有仅支持develop等分支的身份检查拒绝（unexpected CI branch），没有应用测试结果；保留失败、不放宽编排器分支保护。随后查询远端develop仍041548f，普通快进push88719ba；按原支持的develop绑定同一精确源码启动Flow251，CI-only无部署。临时配置/原值及单次start意图均在 `/var/tmp/cyf-revision-authority-20261023/`（251控制在r2/）；正式运行尚待结果及配置恢复。生产未改，业务未重验。
+
+### 2026-10-24：源码及正式CI通过，生产待发布
+
+Flow251暴露新增测试fixture的BaseEntity链式setter编译错误；只修测试初始化，不跳过断言。最终API b86d8cf433f88a72dbc176e1dcd05c04542b06a7/tree499e08292b7d1716549f5c788edaaefcb12a8e9e已普通快进push/readback develop。Flow5260799/252 SUCCESS（job541954398）：3088项，2962通过、126跳过、0失败/错误；8个受影响套件93/93、真实MySQL36/36，本次新增12 consumer+2 descriptor+2 SQL全部通过。validateLayering及fresh bootJar执行成功。制品223720033B/SHA e0f9494c1c60cb256bdd33a51bafdf06bc939bfd27cd0ad5c1e7b2ac4a3f54c8；JAR SHA24c6f1227292e6054b798bc98ab3f40e3ddca11ce6aa6c660b06a9b2d58ffe76。临时配置恢复APPLIED+readback，未取消他人Run。
+
+[紧凑证据](../../../specs/juyiting-skill-execution/evidence/revision-authority-20261023/README.md)。生产API/Runtime未改，520仍未以新代码验收；后续要先取得本API候选的版本化发布授权并通过同Run安装，然后在ziyue/吴用实际验证事件续办、原图编辑、连续上一版SHA、PC/移动最终验收。未知模型意图问题仍保留，不借此宣称整个图片流程完成。耗时未独立拆分统计，不补造缩时数据。
