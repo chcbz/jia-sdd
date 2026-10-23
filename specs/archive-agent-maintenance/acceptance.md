@@ -1,8 +1,10 @@
 # 验收与证据矩阵（D2）
 
+> 当前修订（2026-10-24）：用户已批准职位技能/通用技能与 4 小时实施。当前规则与源码边界见 `position-skills-contract-20261024.md`，进度与必选 A01–A12 见 `acceptance-position-skills-20261024.md`、`implementation-plan-4h-20261023.md` 及本轮 handoff；以下 D2 内容保留为历史目标，不代表本轮仍未实施，也不代表旧矩阵已验收。
+
 **以下全部为待执行验收条件，不是测试通过报告。** 本轮仅交付设计与静态文档检查；未调用应用、未运行 Gradle/Vite、未做生产内容维护。
 
-机器可读矩阵：[acceptance-cases.json](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance-cases.json)。功能要求见 [spec.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/spec.md)，合同见 [design.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)。
+机器可读矩阵：[acceptance-cases.json](acceptance-cases.json)。功能要求见 [spec.md](spec.md)，合同见 [design.md](design.md)。
 
 ## 1. 测试层级
 
@@ -155,7 +157,7 @@
 
 - 业务用例：全部 `not_run`。
 - 应用构建/测试、生产迁移、任职、安装、导入、发布：均未执行。
-- 文档静态检查结果：见 [documentation-check.json](/home/isp/wsps/cyf/specs/archive-agent-maintenance/documentation-check.json)；该文件只证明结构与自检项，不是安全认证或集成验收。
+- 文档静态检查结果：见 [documentation-check.json](documentation-check.json)；该文件只证明结构与自检项，不是安全认证或集成验收。
 
 重跑本轮静态检查：
 

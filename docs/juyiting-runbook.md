@@ -292,3 +292,9 @@ cd web && npm run dev -- --host 0.0.0.0
 - 迁移前完整停写备份含配置、身份、完整HOME/SQLite、static/managed及inbox/outbox；现行配置、manifest、安装授权摘要及原4份RECOVERY_REQUIRED记录核对未变，未重新enroll、清队列或调用付费模型。静态Agent的apps内manifest/runtime-state未迁移，仅旧程序归档；历史吴用嵌套安装内未启用的manifest和空状态目录完整归档，非现行身份。
 - 本次停止主进程09:10:26，完整备份/全量比对完成09:57:49，新主进程09:58:15启动；压缩与校验耗时较长，是本次实际成本，不作为常规维护耗时承诺。随后遇并行API启动修复导致10018拒连，未接管或重启API；后端恢复后Runtime原生自动重连，10:31:19确认三个静态通道的新PID注册、ready及新鲜回执。此为当次核验，不是持续健康或全部技能/业务验收承诺；未重跑业务模型。
 - 恢复不得直接从备份目录启动、改链接假装回退或用旧状态覆盖新业务事实。完整映射/摘要/恢复和未优化的备份耗时边界见 `docs/implementation/handoffs/RUNTIME-FIXED-DIR-20261023.md` 及私有归档 `RECOVERY.md`。
+
+## 典籍职位技能候选（2026-10-24，未部署）
+
+本轮新增两类技能 POSITION/GENERAL 与多对多职位默认技能，任职生效不等于安装就绪。backend 管业务权限，Runtime 复用 native 会话与持久安装器；典籍来源是数据，不随书名改代码。候选入口为典籍阁“任职与维护”，通用解析技能包为 archive-maintenance 1.1.1；准备包不等于已批准/安装。当前合同、受控 schema 前提和验证缺口见 `specs/archive-agent-maintenance/position-skills-contract-20261024.md`；精确候选/实际证据见该特性的 integration.yaml 和本轮 handoff。此节不改变现有线上能力或旧 D2 验收状态。
+
+本轮精确候选 API `4520d81971bbe9b093a89f2ecba4964adb18d1c1`、Web `45a217baf80c28b0c33b4da1a85f491323d1c1e0`、Client `bade440cccbf835859d790ed05f5f6cdab02ede2` 已做定向诊断（113/100/161项）；不代表正式Flow或产品E2E通过。卸任仅回收最后来源POSITION，GENERAL仍有安装资格但不保留原职位业务权限；后续部署须显式迁移/授权并取得真实安装回执。

@@ -1,0 +1,37 @@
+{
+  "queriedAt": "2026-10-23T16:59:07.134Z",
+  "pipeline": "5260799",
+  "source": [
+    {
+      "sign": "repo_0",
+      "type": "git",
+      "dataKeys": [
+        "branch",
+        "events",
+        "isBranchMode",
+        "repo",
+        "triggerFilter",
+        "webhook"
+      ],
+      "branch": "develop",
+      "events": [
+        "push"
+      ]
+    }
+  ],
+  "flowControls": [
+    "    branch: develop",
+    "    triggerEvents:",
+    "# This default never deploys. Explicit releases require a prepared same-Run deployment candidate.",
+    "                case \"${CI_COMMIT_REF_NAME:-}\" in develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003) ;; *) echo 'unexpected CI branch' >&2; exit 1 ;; esac",
+    "                test -n \"${CI_COMMIT_SHA:-}\"",
+    "                test \"$(git rev-parse HEAD)\" = \"$CI_COMMIT_SHA\"",
+    "                raw=(root/'ops/ci/aliyun-flow/backend-ci-policy.json').read_bytes()",
+    "                data = json.dumps({'commit': os.environ.get('CI_COMMIT_SHA'), 'run': os.environ.get('BUILD_NUMBER'),",
+    "                    if (env.get('PIPELINE_ID') != '5260799' or env.get('CI_COMMIT_REF_NAME') not in ('develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003')",
+    "                            or commit != env.get('CI_COMMIT_SHA') or not re.fullmatch('[0-9a-f]{40,64}', commit)",
+    "                    source = dict(branch=env.get('CI_COMMIT_REF_NAME'), commit_sha=commit, tree_sha=tree, clean_before=True, clean_after=True)",
+    "                    commit=os.environ.get('CI_COMMIT_SHA'), counts=counts, suites=records,",
+    "            name: Upload same-run release artifact"
+  ]
+}

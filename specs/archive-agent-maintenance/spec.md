@@ -1,5 +1,7 @@
 # 典籍阁 Agent 任职与内容维护
 
+> 当前修订（2026-10-24）：用户已批准职位技能/通用技能与 4 小时实施。当前规则与源码边界见 `position-skills-contract-20261024.md`，进度与必选 A01–A12 见 `acceptance-position-skills-20261024.md`、`implementation-plan-4h-20261023.md` 及本轮 handoff；以下 D2 内容保留为历史目标，不代表本轮仍未实施，也不代表旧矩阵已验收。
+
 > 文档收口（2026-10-23）：保留D2数据/权限/版本与待核项；后续通用Runtime/技能解耦方向不等于已实现。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
 
 
@@ -11,7 +13,7 @@
 
 采用组合方案：**宋江协调工具 + 典籍维护技能 + 明确任职授权 + 服务端内容管理 API**。Agent 不持有数据库凭据，不执行生产 SQL。任职绑定 canonical Agent 身份和当前 owner/binding，不绑定“吴用”显示名称。任职授权、技能安装、任务分配是三个不同的事实。
 
-阅读入口：[详细设计](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)；[工作包](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)；[验收矩阵](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md)；[源码核对](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-baseline.md)。
+阅读入口：[详细设计](design.md)；[工作包](tasks.md)；[验收矩阵](acceptance.md)；[源码核对](source-baseline.md)。
 
 ## 2. 首期范围
 

@@ -1,8 +1,10 @@
 # 典籍阁 Agent 任职与内容维护：总体方案与详细设计
 
+> 当前修订（2026-10-24）：用户已批准职位技能/通用技能与 4 小时实施。当前规则与源码边界见 `position-skills-contract-20261024.md`，进度与必选 A01–A12 见 `acceptance-position-skills-20261024.md`、`implementation-plan-4h-20261023.md` 及本轮 handoff；以下 D2 内容保留为历史目标，不代表本轮仍未实施，也不代表旧矩阵已验收。
+
 **版本：D2；日期：2026-09-28；状态：ready / 可交接实施，从 M0 基线映射开始。下文是目标合同，不是已实现能力；未派发、未测试、未部署。**
 
-> D2 已吸收兼容性复核：不扩旧 ItemRef、不建第二套调度/文件系统、保留直达吴用、区分 Runtime 协议、隔离私人来源与公开发布。实施入口见[Agent 交接](/home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md)，共享边界见 §18；D1 风险记录保留在[影响评估](/home/isp/wsps/cyf/specs/archive-agent-maintenance/impact-assessment.md)。
+> D2 已吸收兼容性复核：不扩旧 ItemRef、不建第二套调度/文件系统、保留直达吴用、区分 Runtime 协议、隔离私人来源与公开发布。实施入口见[Agent 交接](handoff.md)，共享边界见 §18；D1 风险记录保留在[影响评估](impact-assessment.md)。
 
 ## 0. 阅读导航与决策摘要
 
@@ -25,7 +27,7 @@
 
 ## 1. 经源码核对的现状与必要改动
 
-精确来源、commit、blob/hash 见 [源码基线](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-baseline.md) 与 [审计清单](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-audit.json)。远程跟踪 refs 本轮未 fetch，不代表线上；Web 本地 checkout 不完整代表现行 reader，实现前须另冻结集成基线。
+精确来源、commit、blob/hash 见 [源码基线](source-baseline.md) 与 [审计清单](source-audit.json)。远程跟踪 refs 本轮未 fetch，不代表线上；Web 本地 checkout 不完整代表现行 reader，实现前须另冻结集成基线。
 
 | 位置 | 当前观察 | 本功能的必要改动 |
 | --- | --- | --- |
@@ -595,7 +597,7 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 
 ## 15. 交付包与验收重点
 
-实施拆分见 [tasks.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)，全部测试条件见 [acceptance.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md)。核心顺序：
+实施拆分见 [tasks.md](tasks.md)，全部测试条件见 [acceptance.md](acceptance.md)。核心顺序：
 
 `基线/授权合同 → 通用内容及可读版本 → 任职与 native ACL → 平台技能安装 → 作业/内容发布 → 客户端执行 → 宋江/前端 → 集成 → 授权激活`。
 

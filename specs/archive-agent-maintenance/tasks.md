@@ -1,5 +1,7 @@
 # 实施工作包与推进计划（D2）
 
+> 当前修订（2026-10-24）：用户已批准职位技能/通用技能与 4 小时实施。当前规则与源码边界见 `position-skills-contract-20261024.md`，进度与必选 A01–A12 见 `acceptance-position-skills-20261024.md`、`implementation-plan-4h-20261023.md` 及本轮 handoff；以下 D2 内容保留为历史目标，不代表本轮仍未实施，也不代表旧矩阵已验收。
+
 日期：2026-09-28。状态：**可交接实施，未派发**。本文件是 WBS/依赖设计，不是执行台账；如获准实施，状态仅在 `/home/isp/wsps/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json` 通过 orchestrator 维护。本轮不创建 Reviewer，不创建子聊天、不安装技能、不改生产。
 
 ## 1. 工作包
