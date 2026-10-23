@@ -39,3 +39,33 @@
 4. 浏览器写保护曾拦截漏带`/agent`的首次上传和自动recommend POST；前者通过原上传幂等核对成功恢复，后者未影响显式选择吴用。这是诊断工具行为，不是产品故障；初次失败截图未作为PASS证据。
 
 原始范围内网络/状态证据保留`/var/tmp/cyf-external-flow-20261021/browser/sdd-image-regression-20261023/live/`，登录凭据/Token/浏览器会话不纳入仓库。本文和result.json均按最后观察时点记录，不表示请求此后不会完成。
+
+## 根因续查（2026-10-23 15:20 CST）
+
+本节修正上文初查范围，不重标业务验收通过。唯一Owner仍为当前会话；只读生产记录与现行程序、使用ziyue重新登录查询；未重发/取消请求、未重启或部署。基线：线上API b0735f57a7b454fa7a6fb9886fa3914131986779；Runtime1.2.6源码7dd120f5d3a61559ebf4347aa63b638f7e6a4153。五个相关安装模块与该源码逐字节SHA匹配，见runtime-source-verification.json；不是依据共享checkout HEAD推断。
+
+### 1. 尺寸不符：实际走Skill HTTP，不是旧CLI路径
+
+本次execution `pwe_835057c81738e5cd6ff961b2120fb026289127cdd255a776ebc6462d53b5`的command/result/effect与实际PNG的SHA闭合，见execution-chain.json。已安装image-edit1.0.0的entrypoint为`image-http.edit`，runner为provider-operation，parametersSchema只接受空对象；绑定model为gpt-image-2.5。`skill-runners/image-provider.mjs:15-37`只把256×256留在prompt，HTTP body没有尺寸字段，响应直接交付；`image-http-codec.mjs`只验证PNG签名/传输封套等，没有尺寸履约校验或确定性缩放。因此系统把“能解码/能归档”当作执行成功，却未保证用户要求的精确尺寸。模型实际输出1254×1254后，该结果被原样成功提交。上文CLI的`--size auto`不是本次直接根因，不能继续用于归因。
+
+修复落点是image-edit能力的参数/输出处理：明确尺寸约束，在图片执行适配器按约定处理并核验实际像素，保留原/最终摘要及效果幂等；不是为通用存储增加格式或尺寸白名单，不需要逐格式改主流程。能力变化应同步skill版本、manifest/package摘要和契约测试；不要仅靠提示词承诺。
+
+### 2. 二次请求停止位置：模型启动前的网络自检
+
+14:37:55接收二次dispatch，14:37:58资料准备完成；14:40:17 Runtime写入`RECOVERY_REQUIRED`，原因`CHAT_FAILURE: connected  blocked blocked`。同秒服务journal给出`TYPED_INSPECTION_EGRESS_CANARY_FAILED`。该record有preparation但没有engine/runningAt/engineThreadId/终稿字段，见runtime-recovery.json。这不是“模型已经生成但没流式传回”，也不是当前心跳离线。
+
+`typed-inspection-network.mjs:249-251`的负向探针要求：到受控代理可建TCP且收到HTTP403、其他主机端口及直连互联网被阻断。本次读到的是“代理TCP已连接、HTTP响应为空、另外两路被阻断”，故启动失败；`typed-inspection-profile.mjs:355-367`在attach失败后清理尚未启动的请求适配器。不能把空响应直接归因为模型服务故障，也不能将其认定为已证实的隔离绕过。
+
+**尚未证实的下层原因**：本次探针吞掉recv异常并统一为b''，既不记录异常类型，也不区分EOF、超时和响应片段；无法从现有历史证据唯一还原为什么没收到403。本轮只在独立本地代理实例验证相同拒绝分支能返回403，未重放生产请求/探测生产namespace，不能把这个替身检查写成生产网络已修复。后续应在原探针记录分阶段结果及真实socket原因，再对隔离通道定向复现；不取消安全自检、不盲增等待时限。
+
+### 3. 一次启动失败变成永久“正在回话”：恢复与后端状态缺口
+
+- Runtime先保存资料preparation再openAdapter（agent-client.mjs:4765-4769）。此处失败仍按一般CHAT_FAILURE进入恢复。
+- `canResumePreEngineInspection`（chat-runtime.mjs:212-218）只覆盖INSPECT且无preparation；本次为带资料的CHAT，无法走该分支。
+- `recoverMaterialsChat`（agent-client.mjs:4871-4875）发现没有engineThreadId，只回ACCEPTANCE_UNKNOWN；调度器按recovery_required继续读回，未把“明确尚未启动”与“上游是否接受未知”分开。这种读回不能凭空补出一个从未创建的模型turn。
+- Runtime发recovery_required ACK后，API线上`AgentWebSocketHandler:1216-1236`仅对七类确定模型合同错误更新FAILED；本次网络自检码不在`ChatDeliberationService:831-836`集合内，随后只确认dispatch收到，没有推进业务turn状态。14:40:18已见ACK回执。
+- 15:20:37北京时间重新认证GET200，仍RUNNING / DISPATCHED / lastDeltaSeq=0，见request-readback.json。前端据此保留忙态、禁用验收，属于下游表现，不应通过强开按钮或验收旧图规避。
+
+最小修复应跨Runtime/API明确“启动前确定失败”的阶段证据与处理契约：匹配原request/turn/dispatch/身份和代际、幂等记录可恢复失败并同步业务状态/事件；只有证明未启动才允许原请求受控恢复，接受未知只能读回、不可盲重执行。保留身份/ACL、锁与重复执行/扣费保护。必须覆盖启动前失败、接受未知、重复ACK、恢复成功和页面重入，不能仅加前端提示或把所有recovery_required一律FAILED。
+
+**当前结论**：尺寸履约缺失、恢复分类错误及后端失败状态未闭合均已定位到线上对应源码；触发本次自检空响应的更下层传输原因尚未唯一确定。最终验收仍未完成，本轮没有代码修复/应用测试/发布。
