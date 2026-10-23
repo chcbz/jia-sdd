@@ -31,3 +31,15 @@
 - Flow5264702/29 SUCCESS，job541894956，精确commit cbc1050825a40378313f283e9f25dc46d44c1ea4 / tree4fa8a81432bc9bc8d16d1fc12ab3c065f8d1979a。354项：352通过、0失败、2项opt-in native跳过。job日志摘要显示跳过分别为空HOME真实CLI握手和完整bwrap/profile隔离探针；前者本机真实1/1通过，后者TLS失败保留。正式CI-only不含部署作业、没有生产包安装。
 - 临时Flow配置已恢复至本轮原值，APPLIED+readback，未取消他人Run。生产1.2.8/PID1404284未变，完整图片业务验收/519状态仍未验证。
 - [紧凑证据](../../../specs/juyiting-skill-execution/evidence/runtime-no-version-gate-20261023/README.md)包含源码、测试、真实握手、未通过探针、Flow摘要及SHA清单。后续要使取消校验在线上生效，须固定1.2.9的受控发布/重启；当前不宣称已上线。
+
+## 受控发布接续（2026-10-23 21:30）
+
+用户“继续”承接1.2.9待发布及图片验收，授权本候选上线。固定cbc1050/tree4fa8a814，不追随其他提交；远端develop已回读一致。生产1.2.8/PID1404284；无pending/processing，8条recovery与3条历史DISPATCHED、2条RESULT_UNKNOWN执行保持原样。配置身份与4110项基线manifest核验通过，依赖锁未变；5264702无活动Run，配置已快照。复用既有受控安装器和Run29干净源码策略，测试/打包/安装同Run执行，安装后本机核验。不更改API/Web、CLI、模型或历史业务状态。私有证据 `/var/tmp/cyf-runtime-version-gate-release-20261023/`，恢复批次 `/home/isp/baks/cyf-agent-runtime-v1/20261023-version-gate/`。
+
+## Flow30已上线，业务继续核验（21:42）
+
+固定cbc1050/tree4fa8a814，Flow5264702/30 SUCCESS，构建541901162、部署541901163/71709927。352通过、0失败、2 opt-in跳过，93项程序文件，同Run制品SHA `3b7c32d636bc6cfcfcf926ac8eab1a8468362ac06ee0fe2dc7b8a4d511b04bd0`。安装21:39:26结束，PID1507807，21:42三Agent通道及ACK核验通过；8条恢复记录/配置身份保持。配置已恢复APPLIED。新执行策略下旧carrier证据不匹配，真实错误TYPED_INSPECTION_CARRIER_EVIDENCE_INVALID，恢复轮询另报inputPolicyDigest空引用；不改DB、不重放旧请求。复用既有9格式carrier工具，修正异步spawn调用，在本任务独立目录真实测量，未移除隔离或伪造摘要。图片业务未完成。
+
+## carrier重测与启用（22:07）
+
+复用旧工具、仅修正异步spawn调用，9图片格式实际模型turn全部PASS；当前已安装1.2.9正常loader独立重测contractReady=true，无安全/网络放宽。Flow31为配置维护（无程序包/构建），安装新证据、引用及无版本号的engineContractId，71710512成功，临时Flow配置恢复。PID1516365，93项程序文件未变，其他配置/身份与8条recovery未改。证据SHA73c3e1aa199998627c13dce35c7d4b67e867edd520a23606209867f6636ea8bc；恢复 `/home/isp/baks/cyf-agent-runtime-v1/20261023-carrier-refresh/RECOVERY.md`。程序仍Flow30发布1.2.9。浏览器新任务520、会话1760458007122，ziyue/吴用；第一轮识图已正确返回，request mmd-typed-request_fa5c03c2b31b3507f6a6eae567908eac9d2e079b，turn_a14cf345b0e6bb9a95d05958e719bce88c4f63a4，inputReceipt原图SHA a80176157363cc3233eee10e3a89851cf743f70cbdbf3952d66ef534dc7b8d97，已发送第二轮位置追问。旧519未重放，510/513 UNKNOWN仍保留。

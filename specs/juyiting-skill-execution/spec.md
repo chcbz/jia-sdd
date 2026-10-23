@@ -30,4 +30,4 @@
 
 ## 2026-10-23后续决策：取消Codex静态版本／协议门禁
 
-用户明确取消Runtime对Codex CLI版本白名单及生成协议schema摘要匹配。Runtime1.2.9源码候选以真实App Server初始化和RPC交互为准，版本只作诊断，不要求配置合同ID；不增加通配版本或兼容双轨。身份/ACL、业务结构/消息绑定、输入输出摘要、文件完整性及隔离策略不变。代码已合入isp-install develop `cbc1050825a40378313f283e9f25dc46d44c1ea4`，不是上线完成；[本次交接](../../docs/implementation/handoffs/RUNTIME-NO-VERSION-GATE-20261023.md)记录验证和阻塞。
+用户明确取消Runtime对Codex CLI版本白名单及生成协议schema摘要匹配。Runtime1.2.9以真实App Server初始化和RPC交互为准，版本只作诊断，不要求配置合同ID；不增加通配版本或兼容双轨。身份/ACL、业务结构/消息绑定、输入输出摘要、文件完整性及隔离策略不变。代码已合入isp-install develop `cbc1050825a40378313f283e9f25dc46d44c1ea4`；2026-10-23经Flow5264702/30上线，通道核验通过、图片业务仍待新carrier实测与流程验收；[本次交接](../../docs/implementation/handoffs/RUNTIME-NO-VERSION-GATE-20261023.md)记录验证和阻塞。

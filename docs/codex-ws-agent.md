@@ -272,3 +272,12 @@ tail -f /home/isp/apps/codex-ws-agent/logs/startlog_*.log
 - 外部命令的成功回读和失败 stderr 等待 `close`（stdio 排空），不能在 `exit` 时直接结算。只记录本地 nft/slirp 诊断，不记录 provider 凭据或任意 provider 错误内容。
 - 网络契约改变必须重做真实 carrier、绑定当前 profile/policy/native attestation；无模型测量成功不等于 carrier 或真实业务通过。新增验证同时核对 PID1 mountinfo 和保护进程 cgroup/startticks 未变，不在共享服务上重放危险旧路径。
 - typed INSPECT 声明与 CHAT transport capability 是独立契约。后端派发应采用独立 typed registry 的唯一当前、精确 tenant/owner/client/Agent/session READY 项，并匹配 admission manifest profile；不能放宽旧 capability 验证或伪报 READY。2026-10-06 的后端派发修复仍须绑定 Flow 与上线验证，不能把候选文档当作上线结果。
+
+## Codex升级与当前执行文件测量（2026-10-23核验）
+
+覆盖源码isp-install cbc1050825a40378313f283e9f25dc46d44c1ea4 / Runtime1.2.9，仅本机统一Runtime；发布和业务范围见 `docs/implementation/handoffs/RUNTIME-NO-VERSION-GATE-20261023.md`。
+
+- 不以Codex CLI版本白名单、固定协议schema/bundle摘要或配置合同ID判断可用；版本仅诊断，以真实初始化、RPC及业务解析为准。
+- 运行中共享Codex文件被替换时，完整性漂移仍拒绝，须受控重启重新测量，不能热接受漂移。
+- 识图carrier证据绑定真实执行文件、输入及隔离策略；升级执行文件后旧证明不能改摘要复用。按现有载体范围运行真实模型识别，再以当前安装代码的正常loader复核、原子更新证据引用并受控重启。不重放历史请求、不覆盖身份/ACK/会话状态。
+- 通道connected/registered/ready、carrier实测、浏览器识图/生图/连续改图是三层不同证据，不互相替代。旧测试失败保留，实际产品参数下重测结果另记；不得为通过而关闭隔离或改变模型/Provider。

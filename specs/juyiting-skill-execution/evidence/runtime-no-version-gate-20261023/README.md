@@ -7,6 +7,18 @@
 - 定向单测、真实CLI0.164.0空白HOME无模型握手通过；各本机套件有交叉，不能累加计数。
 - 完整隔离探针TLS阶段未通过，原始失败记录保留；未改变产品超时/网络规则，未执行模型turn，也未验证多轮图片。
 - Flow27/28测试前失败，第二轮诊断确认cache restore生成ossutil.log导致源checkout不干净。第三轮改用固定commit独立干净worktree，不忽略脏文件、不删缓存日志；Run29 SUCCESS：354项中352通过、0失败、2项明确opt-in native跳过；其中CLI初始化另有本机真实通过，完整隔离TLS不伪报通过。临时Flow配置恢复APPLIED且readback一致。
-- 当前未安装Runtime1.2.9；2026-10-23 21:13回读生产仍1.2.8/PID1404284。未重放519、未改变历史业务状态。
+- 21:13的生产1.2.8为发布前基线；21:39后已通过Flow30安装1.2.9，见下方发布补记。未重放519、未改变历史业务状态。
 
 当前交接：[RUNTIME-NO-VERSION-GATE-20261023](../../../../docs/implementation/handoffs/RUNTIME-NO-VERSION-GATE-20261023.md)。原始Flow控制和日志放`/var/tmp/cyf-runtime-no-version-gate-20261023/`；不复制凭据/完整宿主配置。
+
+## 授权发布补记（21:42）
+
+Flow5264702/30固定同一cbc1050源码，354项中352通过/0失败/2跳过；93项程序文件由同Run制品安装到固定app，部署单71709927成功。PID1507807，三Agent通道connected/registered/ready和ACK新鲜度核验通过；配置身份未改，8条recovery摘要保持。临时Flow配置恢复APPLIED。完整版本、制品/安装摘要及恢复路径见[release-flow30.json](release-flow30.json)。
+
+通道就绪不等于识图就绪：上线重新测量后旧carrier证据绑定不匹配，启动日志为TYPED_INSPECTION_CARRIER_EVIDENCE_INVALID；恢复消息还出现inputPolicyDigest空引用。保留真实阻塞，不改历史状态或伪造carrier摘要；正在独立目录用当前程序执行9种图片载体实测，随后才能启用新证据。
+
+## 当前carrier恢复（22:07）
+
+9种现有图片载体真实模型识别全部PASS；运行中1.2.9代码的正常证据加载器再次测量contractReady=true。Flow5264702/31仅安装新实测证据与吴用profile引用并受控重启（未重复构建/部署程序），部署71710512成功，配置已恢复。PID1516365；93项程序摘要未变、三通道通过、8条旧恢复记录仍未修改。启动不再出现carrier无效或inputPolicyDigest空引用；旧510/513 UNKNOWN的轮询提示不因此视为修复。见[carrier-refresh-flow31.json](carrier-refresh-flow31.json)。旧1秒TLS测试失败保留，新结果使用生产既有15秒网络超时，不改变产品超时。
+
+新浏览器任务520/会话1760458007122由ziyue指派吴用，首轮识图正确，inputReceipt命中原图SHA a8017615…；不将其当多轮改图/生图完成。

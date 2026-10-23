@@ -97,3 +97,7 @@ Flow5260799/249 SUCCESS，API1.16.31/041548f6同Run制品安装与health/readine
 ### Codex门禁取消候选（2026-10-23后续，未部署）
 
 isp-install develop cbc1050/Runtime1.2.9已取消版本/schema静态门禁。未知/缺失版本不拦截、源文件与快照篡改仍拒绝、租户/主体授权及typed解析定向测试通过；真实0.164.0空白HOME的无模型初始化1/1通过。完整隔离probe未通过Provider TLS阶段，Flow27/28因缓存日志污染checkout在测试前失败，改用固定commit干净worktree后的Flow29成功（352通过、2项opt-in native跳过）；不能把CI通过当完整业务通过，多轮识图/生图/改图及519闭合仍待验证。后续Run与最终状态以[交接](../../docs/implementation/handoffs/RUNTIME-NO-VERSION-GATE-20261023.md)为准，不改写先前生产阻塞证据。
+
+### 取消门禁发布补记（2026-10-23 21:42）
+
+Runtime1.2.9由Flow5264702/30同Run测试/打包/安装，352通过、0失败、2 opt-in跳过；部署71709927成功，93项源文件/实际PID/三通道ACK通过，配置与8条恢复记录未改。旧carrier证据失效导致吴用识图暂不可用，当前进行真实重测，不将通道PASS等同图片业务PASS。参见[本次发布证据](evidence/runtime-no-version-gate-20261023/release-flow30.json)。
