@@ -43,3 +43,11 @@
 ## carrier重测与启用（22:07）
 
 复用旧工具、仅修正异步spawn调用，9图片格式实际模型turn全部PASS；当前已安装1.2.9正常loader独立重测contractReady=true，无安全/网络放宽。Flow31为配置维护（无程序包/构建），安装新证据、引用及无版本号的engineContractId，71710512成功，临时Flow配置恢复。PID1516365，93项程序文件未变，其他配置/身份与8条recovery未改。证据SHA73c3e1aa199998627c13dce35c7d4b67e867edd520a23606209867f6636ea8bc；恢复 `/home/isp/baks/cyf-agent-runtime-v1/20261023-carrier-refresh/RECOVERY.md`。程序仍Flow30发布1.2.9。浏览器新任务520、会话1760458007122，ziyue/吴用；第一轮识图已正确返回，request mmd-typed-request_fa5c03c2b31b3507f6a6eae567908eac9d2e079b，turn_a14cf345b0e6bb9a95d05958e719bce88c4f63a4，inputReceipt原图SHA a80176157363cc3233eee10e3a89851cf743f70cbdbf3952d66ef534dc7b8d97，已发送第二轮位置追问。旧519未重放，510/513 UNKNOWN仍保留。
+
+## 本轮业务阻塞收口（22:39）
+
+任务520两轮识图PASS，原图SHA与inputReceipt匹配。第三轮请求改原图返回REVISION_REQUEST；review事件 `review_1aa227c174a6e3ebbd898819b1d5889d3ed1e8588dd75efa86f4705e8` 持续RETRY/SourceUnavailable，projection QUEUED且childRequestId=null。生产API仍1.16.31/041548f，JAR摘要67975108…与既有发布一致。本轮不修改API。
+
+根因已从实际调用栈与固定源码确认：`ChatDeliveryRevisionService.consume:87` 用任务发起人owner而不是目标Agent真实owner调用`packages.prepare`；`InstalledSkillDescriptorService.read:33` 的合法身份域校验因此拒绝 ziyue→吴用；异常发生在review操作入库和业务catch之前，被relay当可重试错误不断回排。普通`ChatTypedDiscussionAdmissionService:105-106`已使用`dispatchAuthority.admissionTarget(...).ownerJiacn()`。模型把改原图归为修改文本成果另需回归，但不是本次队列SourceUnavailable的根因。
+
+下一条动作（后端专项，不取消权限校验）：复用现有dispatchAuthority解析受委派executor owner后准备技能包，保留任务owner用于任务/会话事务与ACL；补同账号、跨账号、授权撤销/指派变化、永久不可用不无限QUEUED及原图/文本成果目标区分的定向回归。正式Flow后重新验证现有事件幂等续办，不手工改DB/造成功；再补无输入生图、连续两轮改上一版的SHA链、PC/移动正式验收与重入。证据在本次business-task520.json。

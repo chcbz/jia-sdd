@@ -22,3 +22,11 @@ Flow5264702/30固定同一cbc1050源码，354项中352通过/0失败/2跳过；9
 9种现有图片载体真实模型识别全部PASS；运行中1.2.9代码的正常证据加载器再次测量contractReady=true。Flow5264702/31仅安装新实测证据与吴用profile引用并受控重启（未重复构建/部署程序），部署71710512成功，配置已恢复。PID1516365；93项程序摘要未变、三通道通过、8条旧恢复记录仍未修改。启动不再出现carrier无效或inputPolicyDigest空引用；旧510/513 UNKNOWN的轮询提示不因此视为修复。见[carrier-refresh-flow31.json](carrier-refresh-flow31.json)。旧1秒TLS测试失败保留，新结果使用生产既有15秒网络超时，不改变产品超时。
 
 新浏览器任务520/会话1760458007122由ziyue指派吴用，首轮识图正确，inputReceipt命中原图SHA a8017615…；不将其当多轮改图/生图完成。
+
+## 浏览器回归最终状态（22:39）
+
+ziyue/吴用，任务520的两轮识图均正确，三轮输入回执均匹配原图SHA；第三轮请求改原图时返回REVISION_REQUEST，随后review outbox持续RETRY/SourceUnavailable，尚无childRequest。日志与已部署API041548f源码对应的根因：ChatDeliveryRevisionService第87行用任务owner准备目标Agent技能包，跨账号校验失败；普通讨论入口则已用dispatchAuthority.admissionTarget解析executor owner。此问题未修改API，也未绕ACL/改DB/重放519。详细输入回执、最终回复、投影与调度状态见[business-task520.json](business-task520.json)，调用栈见[task520-revision-stack.log](task520-revision-stack.log)。
+
+无输入生图、原图编辑产物、连续两轮上一版改图、图片成果PC/移动验收与完成态重入仍未验证；不要用9载体/两轮识图替代。测试浏览器曾阻止一次discussion写请求，授权正确路径后重试成功，不计产品缺陷。
+
+浏览器证据：[PC首轮识图](520-first-inspection-pc.png)、[PC修改阻塞](520-revision-blocked-pc.png)、[移动端排队状态](520-revision-queued-mobile.png)。截图仅覆盖显示的局部状态，不代表移动端图片处理完整流程验收。自有浏览器/网络采集已关闭。

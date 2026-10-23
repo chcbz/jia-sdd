@@ -101,3 +101,7 @@ isp-install develop cbc1050/Runtime1.2.9已取消版本/schema静态门禁。未
 ### 取消门禁发布补记（2026-10-23 21:42）
 
 Runtime1.2.9由Flow5264702/30同Run测试/打包/安装，352通过、0失败、2 opt-in跳过；部署71709927成功，93项源文件/实际PID/三通道ACK通过，配置与8条恢复记录未改。旧carrier证据失效导致吴用识图暂不可用，当前进行真实重测，不将通道PASS等同图片业务PASS。参见[本次发布证据](evidence/runtime-no-version-gate-20261023/release-flow30.json)。
+
+### 生产浏览器回归及阻塞（2026-10-23 22:39）
+
+新carrier 9/9真实模型PASS、当前安装loader contractReady=true；Flow31仅配置启用成功。ziyue/吴用新任务520两轮识图PASS，精确输入SHA一致。转改图后跨账号revision入口技能包owner解析错误，REVIEW_REQUESTED持续SourceUnavailable，无子请求；这是未修复API缺陷，不是Runtime版本门禁，也不是测试浏览器写保护失败。多轮生图/改图及图片验收仍未通过，见[business-task520.json](evidence/runtime-no-version-gate-20261023/business-task520.json)。
