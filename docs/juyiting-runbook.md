@@ -272,4 +272,23 @@ cd web && npm run dev -- --host 0.0.0.0
 - Web只在当前可见、owned、非system详情发该GET；手动刷新同一GET，读取最新已入库记录，不能宣称刷新了Runtime工作区。关闭、选人、身份代际变化会取消自身请求并隔离迟到响应；不取消Runtime业务。合法空本领覆盖旧摘要，但不写改派单名册对象。
 - ≤720px采用名册→详情层级，返回保留筛选/滚动；同ID重新点选不取消选择。手机详情全宽无内缩卡片，正文16px、头像68px固定且复用缩略图；刷新显示真实读取HH:mm及只读说明。>720px独立分栏滚动；详情内容滚动与底部动作是同级区域，单密议朱红通栏，双动作点将主操作／密议中性次操作，保留原资格及busy控制。关闭为44px点击区的SVG叉号，选择器限定Agent浮层，不影响其他面板。没有全局换肤或派单算法改动。
 
-完整合同见 `specs/juyiting-agent-skill-display/design-d4.md`；当前发布、真实验证及边界见同目录`release-1.16.9.md`、`handoff.md`、`evidence/visual-fix-1.16.9/online/`；1.16.8记录保留原事实。组件早期合成数据截图不是线上证据；95跳过/2 pending与继承84删例按发布记录保留。两条Flow原CI-only配置均已恢复，develop不自动部署。其余模块仍沿原基线。
+完整合同见 `specs/juyiting-agent-skill-display/design.md`；当前发布、真实验证及边界见同目录`release-1.16.9.md`、`handoff.md`、`evidence/visual-fix-1.16.9/online/`；1.16.8记录保留原事实。组件早期合成数据截图不是线上证据；95跳过/2 pending与继承84删例按发布记录保留。两条Flow原CI-only配置均已恢复，develop不自动部署。其余模块仍沿原基线。
+
+## Agent断连与健康观察（2026-10-21局部核验）
+
+核验范围：本机unified Runtime源码`134773544c44284064cd8668f501e6de263a7f4f`、制品`runtime-health-1.2.1`及主机`ops/health`巡检。其余功能沿用各自旧基线；远端Runtime未因此升级。
+
+- systemd active不等于可用：必须核对当前MainPID、连接、注册、执行就绪和有效presence回执。本机Runtime每个心跳周期原子写`/home/isp/state/cyf-agent-runtime-v1/unified/host/runtime-health.json`（0600）；监控核验快照和回执均不超过3个配置周期。当前30秒心跳，监控每分钟运行，连续3次失败按既有策略告警。时效用于观察，不中断业务流、不授予身份或重放任务。
+- 暂态网络故障（含Undici连接/请求头/响应体超时）和既有可重试HTTP错误沿用指数退避，间隔上限60秒；鉴权撤销、TLS、协议或未知永久错误保留隔离并记录脱敏分类/错误码。隔离必须先修复原因再受控恢复，不靠修改心跳时间或重新登记掩盖问题。
+- 主机巡检只覆盖本机已挂载Agent，不代表远端候选全部在线。Agent异常只告警，不自动重启共享Runtime；API沿用可信恢复carrier/生命周期锁/次数预算。carrier的`--check`须在预留次数前校验canonical精确摘要，升级canonical后需审阅并同步固定摘要，禁止自动信任新字节。
+- API除安装身份/端口/health外观察当前PID日志末1MiB的OOM/Metaspace错误；历史PID不影响新进程。此检查只告警，不替代类加载/内存根因诊断，也不因这一信号强制重启。
+- 本轮在线验证：三个本机静态通道注册和回执健康；实际任务493吴用、林冲可选，未点击承办、未调用模型。远端和历史离线主体不计入本机成功。证据及未闭环项见`docs/implementation/handoffs/REQUIREMENT-EXECUTION-20261016.md`的本轮收口，不以此重标其他任务完成。
+
+### Runtime固定目录与版本查询（2026-10-23本机迁移核验）
+
+- 现用实体程序为 `/home/isp/apps/cyf-agent-runtime-v1/app/`，仅保留一套程序；旧版本目录和`current`链接已退役。历史程序在 `/home/isp/baks/cyf-agent-runtime-v1/20261023-fixed-dir/`，压缩归档均经完整性测试与全量compare。版本号、commit/tree、依赖锁和制品摘要仍保留，不因目录固定取消版本追溯。统一规则见根`AGENTS.md`对应节。
+- 本机实际仍运行Runtime **1.2.6**，源码 `7dd120f5d3a61559ebf4347aa63b638f7e6a4153` / tree `a1ad4c9980b962865f2fe50f70e48171549d30df`，仅4个Python venv生成文件的安装路径重定位；应用代码、Node及依赖未更换。新制品清单与来源/转换记录以主机 `release-records/current.json`、`current.manifest.json` 和实际systemd/PID为准；历史 `1.2.6.json` 保留原发布事实，不当作现用路径。
+- 安装入口、模板与重定位工具已合入isp-install develop `297272f5e7af49c6bda703b37f0fc8a6a830a4a7`；源码候选1.2.7未部署。原共享源码checkout未切换；适配源码在独立worktree `/home/isp/wsps/chcbz/isp-install-worktrees/runtime-fixed-dir-20261023`，操作以固定源码的self-host指南§2.1/§7.1为准。
+- 迁移前完整停写备份含配置、身份、完整HOME/SQLite、static/managed及inbox/outbox；现行配置、manifest、安装授权摘要及原4份RECOVERY_REQUIRED记录核对未变，未重新enroll、清队列或调用付费模型。静态Agent的apps内manifest/runtime-state未迁移，仅旧程序归档；历史吴用嵌套安装内未启用的manifest和空状态目录完整归档，非现行身份。
+- 本次停止主进程09:10:26，完整备份/全量比对完成09:57:49，新主进程09:58:15启动；压缩与校验耗时较长，是本次实际成本，不作为常规维护耗时承诺。随后遇并行API启动修复导致10018拒连，未接管或重启API；后端恢复后Runtime原生自动重连，10:31:19确认三个静态通道的新PID注册、ready及新鲜回执。此为当次核验，不是持续健康或全部技能/业务验收承诺；未重跑业务模型。
+- 恢复不得直接从备份目录启动、改链接假装回退或用旧状态覆盖新业务事实。完整映射/摘要/恢复和未优化的备份耗时边界见 `docs/implementation/handoffs/RUNTIME-FIXED-DIR-20261023.md` 及私有归档 `RECOVERY.md`。

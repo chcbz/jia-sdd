@@ -65,3 +65,8 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 - 本地producer/admission的argv白名单允许 `--build-cache`，但不放宽所需测试/分层/bootJar任务的fresh日志要求，`FROM-CACHE`/`UP-TO-DATE`仍拒绝。`invocation.cacheHit=false`指整个验证未被EVIDENCE_HIT跳过，不表示JavaCompile未命中；实际命中以逐任务日志为准。
 - 2026-10-09用户授权收尾已同步安装 `/usr/local/libexec/cyf-api-local/admit-api-local.py`；回读SHA `49ff62e470beadf5c5c570b007d1d30a6dd18b1f32df217274d89121ff77728b`，新flag可用且cached required tasks仍拒绝。原值备份 `/home/isp/baks/cyf-backend-cache-closeout-20261009/admit-api-local.py.before`。安装使用既有coordinator→release→lifecycle锁和原子替换，应用PID/start/JAR/health未变，无应用发布或DDL。
 - 工具更新不改写历史批次的helper catalog/authority/receipt。下一次发布按当前固定工具重新生成对应批次的helper catalog；若恢复旧的精确批次且其catalog绑定旧工具，按同锁顺序先验证/恢复原helper（before SHA `a5d4f89693e02903001f148c5fdac1613d2756c26d334fd78702df054a16c32b`），不得绕过工具摘要或把旧回执重标新批次。
+
+
+## SDD文档链路（轻量只读）
+
+文档整理后复用 `./sddw check-docs [feature-id]`，全目录默认覆盖规则、当前索引和特性主文档，检查范围及历史例外见 [SDD说明](../../docs/sdd-workflow.md#sdd-document-check)。该命令不执行应用测试/构建、不修改pin/台账、不比较历史SHA与当前checkout；不能作为发布验收。既有 `sddw verify` 保留模板候选核验语义。工具自身定向回归：`python3 -B -m unittest discover -s ops/orchestration/tests -p test_sdd_docs.py -v`。

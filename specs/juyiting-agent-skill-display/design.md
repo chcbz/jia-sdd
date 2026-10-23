@@ -1,78 +1,60 @@
-> 历史D1：已由 `design-d2.md`、`plan-d2.md`、`acceptance-d2.md` 替代，不再作为当前开发计划。
+# 点将册技能、本领与响应式布局详设
 
-# 点将册技能、本领展示详设 D1
+日期：2026-10-17。任务JYT-AGENT-SKILL-DISPLAY-20261016，唯一Owner为本聊天Owner。本文为当前完整实施合同，替代D1—D3；不依赖旧版互相覆盖的发布指令。历史编码/验证阶段见handoff.md；1.16.8及1.16.9的限定范围发布与验收见对应release文档。本次只整理合同，不重新线上核验。
 
-日期：2026-10-16。范围和权限以 `spec.md` 为准。本文区分**已核实事实**与**待开发的目标实现**；下述接口尚不存在，不得报告为已上线。
+## 0. 范围与固定源码
 
-## 1. 已核实的源码基线
+目标：已批准完整原型的手机名册/详情分层、常驻动作、桌面分栏，以及真实技能/本领展示和只读刷新。非目标：派单算法、交易、编辑、扫描、Runtime重启、DDL、全局导航重构。
 
-完整 commit/tree、远端查询时间与规范摘要见 `evidence/source-baseline.json`（14:15:56 +08:00 开始查询）。
+核查时间见 evidence/source-baseline-d4.json（2026-10-17 10:29 +08:00）：
 
-| 仓库 | 本地 HEAD | 实查远端 develop | 结论 |
-|---|---|---|---|
-| 根仓库 | e05498ed8f8d67d791ad8d269ae5bbc00b3592e6 | 同左 | 根工作区存在43项已跟踪修改，全部保留 |
-| API | fc399976710f5b724916013926be2cbff899af8c | 同左 | 已跟踪工作区干净 |
-| Web | 2c8d6703eead623f555029341101cb688b9d448a | 421f628c245b83466cafb70510ff69188180bdee | 本地领先一条“不预填议事草稿”提交，不能回退 |
-| Runtime | 6a9d8d3c1219450c19b3edfbef317e615940ab5d | 同左 | 位于 `/home/isp/wsps/chcbz/isp-install`，本期只读 |
-
-源码核对与历史在线证据分开：`/home/isp/wsps/cyf/specs/juyiting-skill-execution/integration.yaml` 记录 Web1.16.1/421f628、API1.16.5/6116a10、Runtime1.2.7/6a9d8d3 的历史发布。本次没有执行生产数据库/API查询，因此不把该记录冒充2026-10-16当前在线观测。本功能不依赖给某个实名 Agent 预填技能。
-
-### 1.1 本领并不是已安装技能
-
-已核对路径：
-
-- Web `/home/isp/wsps/cyf/web/src/components/juyiting/AgentPanel.vue`：当前详情逐项展示 `selectedAgent.abilities`；无技能目录读取。
-- Web `/home/isp/wsps/cyf/web/src/composables/juyiting/useHallData.js`：名册使用 `agentApi.search('/roster', {pageNum:1,pageSize:100})`，从 `result.items` 读取；`reconcileSelectedAgent()` 用新名册替换选中对象。
-- API `/home/isp/wsps/cyf/api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java`：注册/状态更新保存 abilities；DTO 优先取 runtime 字段，空白才回退 persona；JSON `[]` 不是空白，不触发角色补齐。
-- Runtime `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/agent-client.mjs`：`resolveProfileAbilities = profile => discoverWorkspaceAbilities(profile)`；注册和 presence 均调用它。
-- 此版本 `profile.abilities` 会产生 `LEGACY_ABILITIES_IGNORED` 提示；存在 `discoverCodexSkills` 不意味着它参与本领投影。不能按旧文档修改 profile 的 abilities 或 SKILL.md 来刷新本领。
-- 数据表：`agent_runtime.abilities` 与 `agent_persona.abilities`；不与技能权益/安装表合并。
-
-扫描按工作区模块映射，截图16个标签恰好对应 CYF 模块：agent→智能体管理/调度，chat→会话消息/多智能体协作，task→任务协作，oauth→身份认证，user→用户体系，kefu→客服系统，point→积分体系，wx→微信生态，sms→短信服务，isp→域名与主机管理，material→内容管理，workflow→工作流编排，dwz→短链接服务；agent+chat+task再加入聚义厅协作。
-
-`evidence/ability-source-diagnostic.json` 保存固定源码中扫描函数对 `/home/isp/wsps/cyf` 的隔离诊断，输出与截图16个标签一致。它不是吴用线上 profile 证明。完整 Runtime 模块导入因本地缺少 ajv 失败，未安装依赖；诊断只执行原扫描函数片段和 Node 内置文件 API，不是正式 Runtime 测试。
-
-**结论：这批标签不应人工“换一批更像技能的标签”。本期刷新服务端最近记录；工作区没变化，本领不变是正确行为。** `docs/codex-ws-agent.md` 中“基础能力/profile/SKILL.md合并”的旧说明与当前源码不符，开发收口时仅定点更正文档，不据旧说明改实现。
-
-### 1.2 现有技能链路的可复用与不可复用部分
-
-| 对象 | 已核实行为 | 本期决定 |
+| 组件 | 本地HEAD | 查询到的远端develop/拟实施基线 |
 |---|---|---|
-| `GET /agent/{agentId}/skill-entitlements` | 只有权益、没有运行目录；经 SkillAgentVersions.requireOwned，可能维护持久版本；受市场开关控制 | 不作为纯展示聚合接口，不从前端拼权益为已安装 |
-| `GET /agent/tasks/{taskId}/skill-capabilities` | 检查已指派与当前 grant；无任务授权不列举技能 | 保持不变，不传假 taskId，不提前创建 grant |
-| `InstalledSkillDescriptorService.read` | 联查权益、订单、批准版本、安装、成功回执、交付绑定、不可变包摘要；返回 descriptor.verified | 原样复用 |
-| `ChatActionCapabilityService.inspectInstalledSkills` | 匹配 live session、安装/host、版本/摘要、runner、READY、toolchain/binding；末尾复查 Runtime | 复用并补纯离线观察分支，不改任务准入 |
-| `AgentService.requireApiKeyOwnedAgent` | 非 ForUpdate 分支只读验证身份/绑定，返回 runtime DTO；不要求在线 | 用于拥有者只读边界；禁止使用 ForUpdate 版本 |
-| `AgentRuntimeAuthenticationService.currentRegisteredProof` | 返回唯一当前认证 proof；没有或歧义均抛 IllegalArgumentException | 缺 proof 只能标“运行状态待核验”，不得武断标为离线 |
+| Web | c84c5a2a279b2a662b4b6b2f1b26c4708317b1ab | 同本地；tree 398dfd6c47996facb7fb922e6f3cdf6c88850d21 |
+| API | c1e97923bf2325e3ada33b7e2816f203630f020d | 58b4b5f408257c6d5103d915e13c7927c1571e20 |
 
-注意历史已验收的是吴用 `image-edit@1.0.0`（图片修改），不能把它显示为“图片生成”。名称来自技能 manifest.title，缺少可信标题时回退 skillKey。
+API拟实施tree：3e60bd5858735790b7886ef00a9a94614816fb75。以上是10:29准备基线，不是当前执行状态。实际已创建隔离worktree并提交双端候选，见handoff.md。API主工作区c1e9792属于另一任务的未推送测试改动（包括删除用例），不覆盖或自动合入；本任务从当时已发布到远端的58b4b5f保留完整测试实施。根脏修改与Web AGENTS.md保持。当前生产记录只读核对为API1.16.7/Web1.16.4，不是本次候选已发布。Runtime仍沿用历史6a9d8d3证据，不冒称本轮重新检查。
 
-## 2. 固定产品决策
+统一接口规范：`/home/isp/wsps/cyf/api/docs/interface-standard.md` v1.2，SHA256 `7dc50a51b5c3faa2d5311dd0f749ed2000365c34febc3c3714ba2a945180548f`。
 
-### 2.1 点将册布局
+原型唯一入口：`/home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/prototype/index.html#agents`；准确源指纹、截图和批准记录见ui-review.md。原型通过不代表产品通过。
 
-详情头像/姓名之后依次展示：
+## 1. 数据权威与接口职责
 
-1. **技能**：`已核验安装 N 项`；逐项名称、版本、安装状态、运行状态、原因。
-2. **本领**：保留原标签样式；辅助说明“Agent 本领记录，不等同于已安装技能”。
-3. **刷新技能与本领**按钮、最近读取时间；lastSeenAt 显示为“最近联络”，不是技能核验时间。
-4. 原“与这位好汉密议”“点将并议事”及其权限/顺序不变。
+本领沿用AgentService原toRuntimeDTO投影：agent_runtime.abilities，空白字符串才回退agent_persona.abilities，字面量[]保留空。技能来自安装权益/版本/回执/包摘要核验，再核对认证Runtime目录；不从本领、名字、星号或角色推导。
 
-技能区固定说明：“运行就绪不代表当前任务已获执行授权”。不用“本任务可调用”称呼本界面。
+历史源码已确认注册回调采集工作区本领，普通定时heartbeat不带abilities；profile手填abilities被忽略。refreshCapabilities会重注册并影响channelConfirmed，本期绝不调用。页面刷新只读已上报记录，不承诺重新扫描，也不把图片修改改名图片生成。
 
-选中自己的非系统 Agent：自动加载新接口。非拥有者/系统 Agent：保留原可见本领，技能区显示“仅拥有者可查看技能”；不请求私有目录，不借任务授权越权展示。
+| 接口 | 唯一职责/本期处理 |
+|---|---|
+| POST /agent/roster | 名册摘要与现有候选/本领筛选；保留abilities，不加安装技能目录 |
+| GET /agent/map | 可见地图投影；保留abilities，不带私有安装事实 |
+| GET /agent/{agentId} | 基础详情与原版本投影；保留abilities，不加技能核验 |
+| GET /agent/capabilities | 本领协作索引，继续供AI工具/WebSocket等使用；不是安装技能 |
+| skill-entitlements | 市场权益/订单关系；不加abilities，不作为详情核验接口 |
+| /agent/tasks/{taskId}/skill-capabilities | 任务授权下的CALLABLE目录；不放宽grant |
+| 新GET /agent/{agentId}/profile-capabilities | 当前owner单Agent详情/刷新；复用本领投影＋只读安装/运行观察 |
 
-不新增购买/安装按钮，不改变技能市场入口。本期只改点将册详情及其当前行的本领摘要；地图、派单候选和 SelectedAgentCard 不改。
+不删除旧接口的本领：相同权威在不同业务投影出现并不是重复存储。旧roster/基础详情经SkillRosterProjection可触发SkillAgentVersions的ForUpdate/CAS维护，权益接口还受市场开关影响；不把这些接口拼装为“无副作用刷新”。新GET走requireApiKeyOwnedAgent，无版本维护；UI不为本领另外调用旧详情/capabilities。
 
-### 2.2 刷新语义
+## 2. 确定的布局与交互
 
-- 自动触发：点将册可见时首次选中、选中 ID 改变、身份代际改变、关闭后重新打开。
-- 手动触发：详情“刷新技能与本领”。仅对当前选中 Agent 请求一次聚合 GET。
-- 不新增周期轮询；不向 Runtime 发刷新命令，不等待新心跳、不重连、不重启。
-- 请求重新读取现有 DTO 和安装/Runtime事实。服务器返回的本领在当前详情立即覆盖旧标签，包括合法空数组。
-- 不修改 `allRosterAgents`、派单计算或数据库。列表当前行用同一成功回执的本领作**展示覆盖**；其他行保持名册原投影，点开后各自读取。
-- 新一次刷新开始后撤下旧“就绪”断言，显示加载；本领旧值仅作为“上次记录”展示。失败不得保留成功绿色状态。
-- 如果业务希望强制所有 Agent 重新扫描/人工修改本领，属于另一项需求；本次不假装做了这种操作。
+### 2.1 框架和视觉
+
+- ≤720px：Agent专用全屏外框，复用--hall-visual-height的真实视口高度，避免只用100vh；保留全局关闭入口。初始只显示名册，点行进入详情，不与名册上下堆叠。
+- >720px：约43%/57%双列，minmax(0, …)，列表与详情内容独立overflow:auto；详情未选择时显示选择提示，不自动请求首个Agent。
+- 详情结构：身份区/技能/本领/刷新说明位于.agent-detail-scroll；.agent-detail-actions是其同级底部区域、flex:none。详情容器display:flex/flex-direction:column/min-height:0，内容flex:1/min-height:0/overflow:auto。不是把按钮position:fixed盖在正文上。
+- 移动底部padding包含env(safe-area-inset-bottom)；长标题、版本、原因和标签overflow-wrap:anywhere/min-width:0；按钮可换行而不横向溢出。320px与390×480必须完整看见动作。
+- 保持原型纸色、描边、朱砂本领和原头像；技能状态用文字＋颜色，不只靠颜色。刷新为次级操作，不抢密议主按钮。
+- 返回名册保留选中、筛选和列表scrollTop；关闭关闭整个点将册。返回后再次点同一Agent仍进入详情，不取消选择。
+
+### 2.2 详情信息与动作
+
+按身份→技能→本领→刷新时间/说明呈现。技能标题旁显示“已核验安装N项”，只统计installationVerified；读取中、失败、无权不显示假0。每项显示title、version、安装核验、运行状态/原因。展示“运行就绪不代表已获任务调用授权”。本领标签保留原命名，空数组为“未录本领”。
+
+无待处理任务：密议。存在待处理任务：保持现有密议/点将并议事及顺序。完全复用canStartConversation、canPointAndDeliberate、pointAndStartBusy、hasPendingTask及事件参数，不能用RUNTIME_READY替代动作授权。
+
+刷新仅针对当前可见、owned、非system详情；busy/offline不阻止只读。开始刷新撤下旧READY；部分技能源失败仍可更新本领；整体失败显示上次记录，不宣称已刷新。无后台轮询、不新增重注册调用。
 
 ## 3. 新 HTTP 契约（唯一新增路由）
 
@@ -153,11 +135,11 @@
 | HTTP | code | 条件 |
 |---|---|---|
 | 400 | BAD_REQUEST | path/query/body不合法 |
-| 401 | UNAUTHENTICATED | 缺少有效用户认证 |
+| 401 | Controller内为UNAUTHENTICATED；安全过滤器可能无JSON/code | 缺少有效用户认证；前端以HTTP status处理 |
 | 404 | AGENT_PROFILE_NOT_FOUND | owner/租户/client/绑定不匹配、agent不存在、系统agent；统一隐藏存在性 |
 | 503 | AGENT_PROFILE_UNAVAILABLE | Agent记录/认证依赖异常、数据完整性异常、无法安全完成读取 |
 
-失败使用统一信封，data=null，安全msg；不返回堆栈、内部路径或配置。不要把SQL/包损坏等故障一律翻译成404。
+Controller产生的失败使用统一信封，data=null，安全msg；不返回堆栈、内部路径或配置。Controller之前的现有安全过滤器空401保留，不称整条认证边界已迁移统一信封；前端按status=401处理。不要把SQL/包损坏等故障一律翻译成404。
 
 ## 4. API 逐文件实现
 
@@ -209,7 +191,7 @@ owner与binding再核验；如果换绑或注销则整体404
 3. 新增 `inspectInstalledSkillsWithoutRuntime(Scope)`，只读同一descriptor；不伪造fence、不调用runtime.lookup。共用private投影函数，禁止另写一份证据匹配算法。
 4. `installationVerified = descriptor.verified()` 且同key/version唯一；不可用原因不能从任意Runtime reason字符串倒推出安装真假。
 5. 正常分支state与reason保持原判定；无Runtime分支，对有效descriptor附 `SKILL_RUNTIME_UNAVAILABLE`，catalogRevision=null。
-6. 重复key/version合并为一个UNAVAILABLE项，installationVerified=false，reason=`SKILL_INSTALLATION_AMBIGUOUS`，title=skillKey；内部manifest metadata=null。此数据本就不应可执行；相关任务目录不放宽行为。
+6. 共用核验器维持原重复记录输出与UNAVAILABLE判定，不改变任务目录数量和顺序。只有新AgentProfileCapabilitiesService投影按key/version分组：重复项合并为一项，installationVerified=false、runtimeState=UNAVAILABLE、reason=`SKILL_INSTALLATION_AMBIGUOUS`、title=skillKey。
 7. Runtime前后读取不一致仍按现有逻辑降为 `SKILL_RUNTIME_CHANGED`，安装核验布尔值保持；不沿用旧READY。
 8. 更新现有全部SkillCandidate构造点，包括taskCatalog无fence分支；任务端wire字段、CALLABLE判定、权限及费用规则不变。
 
@@ -219,9 +201,9 @@ owner与binding再核验；如果换绑或注销则整体404
 
 根路径 `/home/isp/wsps/cyf/web`。不改路由、市场页面或全局HTTP协议。
 
-### 5.1 纯投影
+### 5.1 唯一新增前端模块：纯投影与文案
 
-新增 `src/composables/juyiting/hallAgentProfileCapabilities.js`：
+新增 `src/composables/juyiting/useHallAgentProfileCapabilities.js`；纯投影、原因映射与composable在同一文件分别命名导出，避免为一次展示拆出额外模块：
 
 - 导出 `agentProfileCapabilitiesProjection(raw, expectedAgentId)`：按3.2做精确字段/类型校验；不合法返回null，完整合法则返回只读对象。
 - 验证agentId完全相同、数组不重复key/version、READY⇒installationVerified=true且reasonCode=null、UNAVAILABLE⇒reason非空、目录失败不得带items/revision。
@@ -229,38 +211,53 @@ owner与binding再核验；如果换绑或注销则整体404
 - 导出显示函数：安装标签、运行标签、原因文本；所有未知合法reason统一“暂不可用”，可显示机器码供排查，不显示内部详情。
 - 已核验安装数量由installationVerified计数，不能使用items.length或Runtime READY数量代替。
 
-### 5.2 异步状态
+### 5.2 同文件内的异步状态
 
-新增 `src/composables/juyiting/useHallAgentProfileCapabilities.js`：
+同上文件导出 `useHallAgentProfileCapabilities`：
 
 参数 `{api, getAgent, identityKey, enabled}`。返回 `{projection, loading, error, refresh, reset, dispose}`。参照现有useHallSkillCapabilities，但不要复用任务目录的taskId依赖。
 
 - fingerprint=`[identityKey(), enabled(), agent.agentId, agent.boundToMe, agent.systemAgent]`，不依赖整个Agent对象，避免名册替换对象导致请求风暴。
-- enabled只在点将册可见、身份有效、Agent非系统且boundToMe=true时成立；boundToMe只是UI提示，后端仍权威核验。
+- enabled只在点将册实际可见且agentPanelRef.profileVisible为true、身份有效、Agent非系统且boundToMe=true时成立；boundToMe只是UI提示，后端仍权威核验。
 - GET使用 `agentApi.get('/'+encodeURIComponent(agentId)+'/profile-capabilities', {}, {autoLoading:false,needAuth:true,signal})`；agentApi已有`/agent`前缀，不重复拼前缀。
 - 每次开始递增epoch、abort前一个请求、清projection与error；对比发起时指纹和epoch，只有最新且未disposed结果可写入。
 - watch使用flush:'sync'；关闭点将册、切换Agent/身份时立即清空，旧成功/失败/finally都不得污染新状态。
 - refresh在loading期间按钮disabled；接口仍可被程序触发，epoch负责latest-wins。
 - 无定时器、无localStorage、无跨用户缓存；abort只取消自己的HTTP，不取消Agent工作。
 
-### 5.3 组件接线
+### 5.3 AgentPanel.vue：局部视图状态与组件契约
 
-修改 `src/components/world/JuyiHall.vue`：
+保留原props/events；新增profileCapabilities、profileCapabilitiesLoading、profileCapabilitiesError、profileReasonText（父组件传文案函数）、active、identityKey、panelSessionKey，均提供安全默认值；新增refresh-profile-capabilities事件。不从子组件引入业务模块，新增import只来自Vue，兼容既有动态SFC测试加载器。
 
-- 创建上面composable，identityKey使用已有hallIdentityScope与apiStore.authorizationGeneration；enabled使用renderedPanel==='agents'。
-- 传入AgentPanel：`profileCapabilities`、`profileCapabilitiesLoading`、`profileCapabilitiesError`；监听`refresh-profile-capabilities`。
-- 在卸载时dispose；不要修改loadAgents、派单推荐或现有taskSkillDirectory。
+内部状态：isCompactRoster（matchMedia('(max-width: 720px)')）、mobileDetailOpen、listScrollTop、最近选中行的DOM引用。挂载注册media listener，卸载移除；非浏览器测试提供matchMedia fixture。不依赖coarse pointer决定720px分界。
 
-修改 `src/components/juyiting/AgentPanel.vue`：
+暴露只读computed：canGoBack=active && isCompactRoster && mobileDetailOpen；profileVisible=active && selectedAgent有效 && (!isCompactRoster || mobileDetailOpen)；windowTitle=canGoBack ? '好汉详情' : '点将册'；暴露back()，仅能回退时清mobileDetailOpen并返回true，否则false。
 
-- 新增3个props及事件，默认值保持既有使用者可挂载；沿用当前模板，不增加子组件以免现有SFC测试加载器需要额外模块解析。
-- section明确`aria-label="技能"`与`aria-label="本领"`；heading使用同名文案。
-- 本领展示优先使用匹配当前agentId的成功profileCapabilities.abilities（包括[]），否则使用selectedAgent.abilities并标注“上次记录”；GET失败时不能写“已刷新”。
-- 列表仅当前Agent行的abilityText输入可用 `{...agent, abilities: freshAbilities}` 做显示覆盖，仍保留currentTaskTitle优先；不写回传入agent或名册数组。
-- 技能空/失败/无权文案按6节；长标题/版本/原因允许换行，保留点将和密议按钮。
-- 小屏卡片不可横向溢出；状态不仅靠颜色，提供文字；loading/error用role=status，button可键盘操作。
+| 事件 | 状态/副作用 |
+|---|---|
+| 新panelSessionKey、身份改变 | 清移动详情状态、滚动及焦点记忆；默认名册；旧请求由父级禁用/重置 |
+| 点名册行 | 保存scrollTop，mobileDetailOpen=true，发原select-agent事件；nextTick只在活动移动详情聚焦详情标题 |
+| back() | mobileDetailOpen=false；nextTick恢复scrollTop、选中行焦点；保留筛选/选中 |
+| active=false | 不强制重置父级选择；禁止请求和隐藏DOM焦点；真正关闭重开由sessionKey重置 |
+| selectedAgent变null或无效 | 回名册，不继续呈现旧详情 |
+| 外部改变有效selectedAgent | 已在详情则更新此详情；移动名册不被动跳详情 |
+| 跨720px | 保留selection；mobileDetailOpen不因resize置true，手机首次仍名册；桌面显示当前选择，返回手机恢复原移动层级 |
 
-不修改 `useHallData.js`：新的单Agent详情读取不需要全名册重取、地图重取或目录N+1。
+移动名册/详情互斥v-show并设置inert/aria-hidden，隐藏区不得键盘聚焦。详情标题tabindex=-1供进入时聚焦；内容刷新不重建整个详情DOM、不抢焦点；loading/error使用role=status。返回恢复前核对active与当前身份/session。
+
+本领优先取与当前agentId匹配的成功projection.abilities（包括[]），否则取selectedAgent.abilities并标“上次记录”。当前行通过浅拷贝{...agent, abilities:freshAbilities}展示覆盖，保留currentTaskTitle优先，不写回名册/派单对象。返回名册禁用请求并清projection，显示原名册记录；不承诺跨关闭缓存最新覆盖。
+
+### 5.4 JuyiHall.vue：父层接线、返回与布局覆盖
+
+1. 添加agentPanelRef；传入上述props与profile文案函数；composable identityKey由hallIdentityScope＋apiStore.authorizationGeneration组成。enabled同时要求renderedPanel==='agents'、agentPanelRef.profileVisible、有效身份及owner/non-system；初始化ref为空时不请求。
+2. panelSessionKey只在agents从不在panelFrames到加入时递增，不因列表/详情、请求、选人改变。卸载dispose；关闭/身份变化同步清投影；重新打开读取当前可见详情，不复用旧READY。
+3. AgentPanel的select-agent改绑handleRosterSelectAgent(agent)：若ID等于当前选中，保留选择；否则调用原selectAgent(agent)。不要修改原selectAgent的同ID取消行为，地图等调用保持原语义。
+4. 将Agent子层接入panelDepth、panelChildCanReturn、activePanelTitle，与现有tasks/treasure/library子层同模式。移动详情可返回时标题“好汉详情”，返回文案“← 名册”，名册标题“点将册”。不要新增路由或物理浏览器history协议。
+5. returnPanel在原语音/离开守卫后、弹panelFrames之前处理agentPanelRef.back()。handleHallReturn优先走已有守卫链中的Agent子层返回，不能被showRootReturn直接closePanel短路；Escape同样先回名册，名册层再沿原退出规则。关闭按钮仍调用原closePanel，不能改成只回名册；不得绕过既有草稿、语音和会话守卫。
+6. 只为agents添加紧凑全屏外框class，使用现有视口测量，不改useHallPanels全局分类。保留非Agent页面的高度、按钮和层级行为。
+7. 同时修改组件样式与父层Agent专用deep规则：移除/替换移动agent-panel-body整块overflow:auto、agent-list max-height:44vh、detail-card flex:0 0 auto；调整后部桌面grid覆盖。它们是内容挤高和动作滚走的根因，不能只改子组件。生产源直接修这些选择器，不复制冻结原型的!important补丁堆叠。
+
+不修改useHallData.js、全局HTTP、市场页面、任务skill目录或通用导航helper。列表初始加载仍走原流程；详情/刷新每次只有一个新GET，不重取roster/map。
 
 ## 6. 状态与文案映射
 
@@ -293,22 +290,63 @@ owner与binding再核验；如果换绑或注销则整体404
 
 本领空数组统一“未录本领”，不显示“没有能力”；失联时显示最近记录，不声称实时扫描成功。
 
-## 7. 数据、并发、安全与部署
+## 7. 并发、安全与版本发布
 
-- 无DDL、无数据库回填；不会清空现有abilities，不会改订单/权益/安装状态。
-- GET不会启动安装、技能测量、Provider调用、托管扣费或任务执行，不要求“空闲”才能看详情。
-- 用户仅能读取自己拥有的Agent；task grant不是读取其他人完整技能目录的替代权限。
-- 不输出manifestJson/metadataJson、包路径、entrypoint、host/installation/session标识、凭证、工具链路径、原生模型参数schema。
-- 安装核验与运行观察不是执行准入。实际执行继续使用原TaskSkillPolicyService与原执行链，不信任前端发回的READY。
-- 不新增缓存、超时或性能拒绝门槛。后续性能问题用实际观测处理，不以展示预算取消业务请求。
-- API先发布、Web后发布，按明确版本固定commit/tree、测试、同批制品、在线核验；本次详设不触发发布。
-- develop合入/push不部署；前端Flow4403172，后端固定源码本地经orchestrator。源码未完成时不填写测试PASS或线上成功。
-- 接口新增，不保留新旧双解析；既有任务接口不变。不需要Runtime新版本。
+响应是多来源观察值而非原子快照；复用安装/Runtime末尾复读及owner/绑定复查。无长事务、无写锁、不新增后台缓存。身份变化立即清空投影；晚到的成功/异常/finally均不能写当前状态。前端隐藏不是权限控制，后端始终核对owner。
 
-## 8. 验证与开发启动条件
+前后端正式测试、构建、制品和部署分别复用Flow4403172/5260799。固定发布版本及每端commit/tree，各端同Run不可变制品及SHA256；不是把两端误说成同一个Run。develop不自动部署。本机仅预览/定向诊断，禁止本地正式打包或源码到生产路径。API先健康再Web；复用发布锁、备份及可恢复安装，不改变Runtime或DB。
 
-具体测试见 `acceptance.md`，切片见 `tasks.md`。没有需要开发者再选择的接口/字段/状态/刷新方案。
+## 8. 验证与完成定义
 
-已核实但不冒充的边界：生产当前每位Agent的技能和工作区不在本次只读源码核对范围；设计不以这些动态值为前提。上线验收必须读取真实当前值，不把历史“吴用已安装image-edit”或截图中的“林冲未录本领”硬编码进断言。
+产品测试矩阵见acceptance-d4.md，执行顺序见plan-d4.md。原型证据仅作视觉审核基线；需要真实Vue组件/导航回归、双Flow正式证据与上线后只读几何/接口核验。任务动作在受控测试中验证，线上不为验收发任务、下单或调用Provider。
 
-下一步是按固定基线创建本任务隔离开发工作区、登记ledger并实施；不是再次研究“到底复用哪个接口”。基线若变化只检查本文命中路径的差异并记录，不回退其他聊天提交。
+## 9. 一次编码的精确写集与完成定义
+
+### 9.1 应用代码：6个文件
+
+API根 `/home/isp/wsps/cyf/api`：
+
+| 文件 | 类型 | 本次唯一职责 |
+|---|---|---|
+| chat/jia-chat-service/src/main/java/cn/jia/chat/api/AgentProfileCapabilitiesController.java | 新增 | 唯一GET、输入/认证上下文、HTTP边界 |
+| chat/jia-chat-service/src/main/java/cn/jia/chat/service/AgentProfileCapabilitiesService.java | 新增 | owner只读聚合、proof分支、固定DTO与异常重复项投影 |
+| chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatActionCapabilityService.java | 修改 | 内部安装核验布尔值、无Runtime观察分支；原任务wire不变 |
+
+Web根 `/home/isp/wsps/cyf/web`：
+
+| 文件 | 类型 | 本次唯一职责 |
+|---|---|---|
+| src/composables/juyiting/useHallAgentProfileCapabilities.js | 新增 | 响应闭包校验、状态文案、异步状态、身份/选择竞态 |
+| src/components/juyiting/AgentPanel.vue | 修改 | 技能/本领展示、移动层级与返回、独立滚动/常驻操作、原动作保留 |
+| src/components/world/JuyiHall.vue | 修改 | 实例化、同ID选择包装、子层导航/视口/父CSS接线、dispose |
+
+不修改依赖文件、全局HTTP客户端、路由、数据表、名册存储、派单、Runtime；不另起通用抽象或框架。
+
+### 9.2 测试代码：6个文件，与功能同轮写完
+
+- API新增 `chat/jia-chat-service/src/test/java/cn/jia/chat/service/AgentProfileCapabilitiesServiceTest.java`。
+- API新增 `chat/jia-chat-service/src/test/java/cn/jia/chat/service/ChatActionCapabilityServiceTest.java`。
+- API新增 `chat/jia-chat-service/src/test/java/cn/jia/chat/api/AgentProfileCapabilitiesControllerTest.java`。
+- Web新增 `tests/juyiting-agent-profile-capabilities.test.js`（纯投影+composable竞态）。
+- Web修改 `tests/juyiting-agent-panel-actions.test.js`（保留原按钮回归并增加技能/本领组件断言）；不再新增单独的display测试文件。
+- Web修改 `tests/juyiting-navigation-presentation.test.js`（Agent子层返回、深度、标题、同ID包装接线及非Agent回归）。
+- 使用测试内固定fixture builder，不新增环境依赖或生产凭证，不按人名写生产期望值。
+
+### 9.3 聚合方法的异常边界（不能留给实现猜测）
+
+- path/query/body验证由Controller显式抛BAD_REQUEST，不把整个方法的IllegalArgumentException都当400。
+- HostingRentHttp.actor的401映射Controller401；它的非401身份失败、HostingRentOwnerResolver的明确拒绝映射404。
+- AgentServiceImpl.AgentBizException只对AGENT_FORBIDDEN/AGENT_NOT_FOUND映射404；其它业务/基础设施错误503。使用getCode()判断，不匹配异常中文。
+- 仅在调用currentRegisteredProof的最小try/catch内将IllegalArgumentException映射为无可信Runtime；proof拿到后的scope不一致为503完整性失败，不允许退回无Runtime分支。
+- 仅InstalledSkillDescriptorLookup.SourceUnavailable映射为skills局部UNAVAILABLE；其它异常503，不能将SQL异常冒充空技能。
+- owner末尾复查在局部技能失败分支之后仍执行，不以partial success绕过身份变化。
+- 框架缺少身份依赖导致既有resolver主动拒绝仍按其明确拒绝处理；未分类依赖/数据访问异常503。不新增全局依赖健康检查。
+
+### 9.4 代码完成不是验证通过
+
+本轮全部功能和测试代码写完、无TODO/空实现、所有接线和fixture齐备、差异仅在写集内，才记CODE_WRITTEN。未编译/未测时状态仍NOT_VERIFIED。
+
+不存在“先写功能，30分钟后再把测试代码或遗漏分支算到部署阶段”的口径。验证发现必须修改代码时，补丁仍计入实际代码工作；记录实际耗时，不能维持虚假的30分钟完成结论。
+
+
+> 2026-10-17执行补充：实际改动6应用＋6测试＋3配置文件。chat/build.gradle增加测试作用域oauth-resource项目依赖以覆盖真实JWT过滤链，无外部/运行时新依赖；Web package/lock升级统一发布版本1.16.8。隔离工作区、候选commit/tree、首轮编码约24分11秒及诊断边界见handoff.md与evidence/coding-candidate.json；后续修复仍计入实际编码，不把此计时称为已验证全部完成。

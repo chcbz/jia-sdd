@@ -32,7 +32,7 @@ This file is a compact orientation map for future Codex sessions. It should stay
 
 - The workspace root is the `jia-sdd` coordinating Git repository.
 - `api/` and `web/` are independent Git repositories registered as submodules and pinned by the root commit.
-- Agent client development continues to follow ADR-004: versioned source lives under `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`, while `/home/isp/apps/codex-ws-agent/` is the deployment copy; no additional repository is required for economy/skill delivery.
+- Agent client development continues to follow ADR-004: versioned source lives under `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`, while the current CYF deployment is `/home/isp/apps/cyf-agent-runtime-v1/app/codex-ws-agent/` (fixed-directory migration recorded on 2026-10-23; see `docs/implementation/handoffs/RUNTIME-FIXED-DIR-20261023.md`); no additional repository is required for economy/skill delivery.
 - Use `git status` for the coordinated delivery baseline, and `git -C api ...` or `git -C web ...` for implementation history.
 
 ## Frontend Layout
@@ -117,3 +117,10 @@ When a future task uncovers stable project knowledge that would save repeated ex
 - `docs/knowledge-base/README.md`: task-routed entry point for current-state code, API, data, and integration reference.
 - `docs/knowledge-base/04-backend-api-index.md`: compact Controller/base-path index; use the full API inventory only for method-level details.
 - `docs/sdd-workflow.md`: multi-repository SDD lifecycle and integration gate.
+
+## 交互原型固定入口
+
+- 聚义厅：`/home/isp/wsps/cyf/web/prototypes/juyiting/index.html`；预览脚本同目录 `serve-preview.py`。
+- Web界面样式/交互修改先更新原型，再开发产品；执行规则见 `/home/isp/wsps/cyf/web/AGENTS.md` 的“原型先行”。历史方案和证据继续留在原spec目录。
+
+- 最新原型规格与本次优化任务方案（分目录维护）：`/home/isp/wsps/cyf/web/prototypes/juyiting/specs/prototype-spec.md`、`/home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/optimization/spec.md`。覆盖19页、15类共享控件；生产观察基线与未验范围单列，不等同上线状态。

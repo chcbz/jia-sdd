@@ -1,0 +1,48 @@
+feature_id: username-encoding-integrity
+status: draft
+baseline_date: 2026-09-26
+owners:
+  api: unassigned
+  web: unassigned
+  data: unassigned
+  verification: unassigned
+contract:
+  api_or_event_changes: >-
+    POST /chat/stream keeps senderName and senderType as deprecated compatibility
+    inputs but ignores them; HTTP, advisor, relay, persistence, metadata and Agent
+    WebSocket sender identity become server-authoritative.
+  compatibility: >-
+    Existing clients remain accepted. New Web clients stop sending sender identity.
+    Historical names receive display-only fallback until authorized data repair.
+  data_migration: >-
+    No DDL is assumed. Any MySQL, LDAP or chat-history write requires a separate
+    read-only audit, a SHA-256-bound manifest, compare-and-set, readback and explicit
+    production-write authorization.
+  security: >-
+    Human identity resolves from EsContext jiacn/clientId plus UserService; Agent
+    identity resolves from the authenticated session agentId plus runtime/persona.
+pinned_revisions:
+  api_commit: 3873dd6ab18992c70800658102d492c606216d63
+  api_tree: 23aa90383f125f14c5ce688ed51eb62c66a60073
+  web_commit: d030a200d95eac6cea7fb0d91c0dd915aacf3ada
+  web_tree: 49e101bb5ffa8b3d9f36baef8f3389cae65845c7
+  root_base_commit: 02d66c044a379c5b602ee854b92a56bdb1a12496
+verification:
+  source_audit: completed_20260926
+  screenshot_reproduction: completed_20260926
+  api: pending
+  web: pending
+  integration: pending
+  data_audit: pending_user_authorization
+  data_repair: pending_user_authorization
+  production: pending
+acceptance:
+  status: pending
+  evidence:
+    source_audit: source-audit-20260926.md
+    detailed_design: design.md
+    data_repair_plan: data-repair-plan.md
+notes:
+  - This draft pins audit baselines, not implementation candidates.
+  - The dirty root/API/Web worktrees were not reset or modified.
+  - specs/INDEX.md was intentionally not changed because it already contains user changes.

@@ -1,0 +1,105 @@
+# Filled by integration preparation once API, Web, and Agent Client source changes are ready.
+feature_id: agent-economy-marketplace
+status: draft
+owners:
+  api: unassigned
+  web: unassigned
+  agent_client: unassigned
+contract:
+  api_or_event_changes: major-additive
+  compatibility: "legacy unfunded tasks continue via expand/backfill/contract; funded tasks require quote+claim; SILVER is isolated from legacy user.point"
+  currency: SILVER
+  settlement_policy: GROSS_INCLUSIVE
+  funded_collaboration_mvp: single-agent-single-work-item
+  funded_group_auto: FUNDED_TEAM_NOT_SUPPORTED
+  skill_market_seller: SYSTEM:SKILL_STORE
+  skill_install_command: command.dispatch/SKILL_INSTALL
+  skill_package_delivery: signed-ticket-to-replayable-revocable-mtls-session-no-range-no-redirect
+  skill_installation_marker_path: reserved-root-dot-cyf-installation-json-forbidden-in-package-manifest
+  skill_activation_atomicity: exact-installation-row-cas-with-capture-same-transaction
+  skill_archive_path_set: marker-namespace-reserved-and-regular-file-prefix-free
+  skill_download_revocation_linearization: current-read-commit-fences-all-later-get-retries
+  skill_post_capture_refund: unsupported-in-mvp-capture-before-refund-only
+  binding_key_loss_policy: quarantined-no-reenrollment-rebind-or-entitlement-migration
+  binding_acl_visibility: revoked-or-noncurrent-binding-key-epoch-runtime-uniform-not-found-before-state-errors
+  binding_proof_of_possession: purpose-scoped-required-for-initial-register-reconnect-runtime-credentials-download-install-isolation-and-capability
+  binding_initial_enrollment: exact-create-enroll-bootstrap-header-pending-binding-candidate-key-pop-no-active-or-different-candidate-reenroll
+  binding_pending_enrollment_recovery: owner-idempotent-same-candidate-bootstrap-reissue-no-key-replacement
+  binding_pop_challenge_api: exact-request-binding-six-field-server-derived-auth-context-nonrecursive-auth-matrix-actor-idempotency-single-outstanding-stable-errors
+  binding_pop_idempotency_terminal_replay: same-key-expired-or-consumed-stable-error-never-mints-second-challenge
+  binding_pop_package_get_replay: fresh-proof-per-full-stream-no-proof-reuse
+  skill_install_start_ordering: server-current-read-exact-started-confirmed-record-before-download-or-staging
+  skill_durable_command_locking: global-position-after-installation-before-isolation-proof
+  delivery_unknown_refund_proof: signed-monotonic-absent-or-quarantined-attestation-required
+  delivery_unknown_refund_atomicity: proof-acceptance-no-funds-then-full-lock-current-read-refund-transaction
+  delivery_unknown_download_fence: installation-mutex-delivery-epoch-proof-commit-physically-fences-every-ticket-session-row
+  skill_ticket_session_revocation: lifecycle-status-independent-isolation-revocation-fields
+  skill_delivery_provenance: command-carries-package-signature-key-record-permissions-compatibility
+  publisher_key_agent_validation: exact-root-wrapper-prepinned-ed25519-root-raw32-no-padding-status-and-key-id-validity
+  usage_evidence: broker-or-provider-proof-receipt-required
+  provider_blob_api: exact-upload-and-active-egress-lease-broker-read-with-8mib-limit
+  provider_egress_descriptor: economy-authoritative-broker-validated-and-key-injected
+  provider_send_fence: durable-send-started-before-first-byte
+  provider_dispatch_recovery: dispatch-record-plus-egress-outbox-then-broker-only-same-key-replay
+  provider_egress_authority: broker-only-credential-unwrap-network-with-short-egress-lease
+  provider_wrapping_key_lifecycle: active-wrap-unwrap-to-retired-unwrap-only-until-all-frozen-deadlines
+  provider_wrapping_key_compromise: deny-new-decrypt-auth-and-egress-pre-fence-decrypt-may-finish-zeroize
+  provider_wrapping_key_compromise_fence: security-epoch-atomically-revokes-all-claimed-and-locks-dispatch-blob-get-lease-send-start-expire
+  provider_unwrap_authorization: audited-at-most-once-consume-before-single-kms-attempt-no-raw-worker-decrypt-iam
+  provider_retired_staged_recovery: abandon-and-new-invocation-key-only
+  provider_replay_deadline: authorization-frozen-replay-safe-until-or-reconcile-closed-system-risk
+  economy_resync_ledger: cutoff-bound-complete-ledgerEntries
+  m2_task_wire_compatibility: preserve-exact-version-currentVersion-no-additive-keys
+  skill_permission_authority: buyer-grant-plus-short-server-signed-lease
+  skill_capability_locking: publisher-binding-pop-runtime-snapshot-installation-command-entitlement
+  binding_rotation_locking: binding-runtime-snapshot-installation-command-entitlement-ticket-session
+  agent_client_source_repository_id: isp-install
+  agent_client_source_root: /home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent
+  agent_client_deployment_root: /home/isp/apps/codex-ws-agent
+  migration_cursor_identity: tenant-client-task-byte-exact-tuple
+  migration_cursor_encoding: strict-base64url-no-padding-utf8-jcs-tuple-decode-reencode
+  migration_batch_encoding: first-start-null-no-zero-manifest-exact-pre-post-digests-batch-id-whole-batch-cas-rollback
+  migration_risk: p0
+  transaction_risk: p0
+  identity_acl_risk: p0
+  async_replay: required
+  web_lost_key_policy: quarantined-fail-closed-no-local-replay-or-new-key
+  web_journal_plaintext_policy: business-target-hash-idempotency-key-and-body-ciphertext-only-no-local-index
+  design_bundle_manifest: specs/agent-economy-marketplace/bundle.sha256
+repositories:
+  root:
+    id: jia-sdd
+    path: /home/isp/wsps/cyf
+  api:
+    id: cyf-api
+    path: /home/isp/wsps/cyf/api
+  web:
+    id: cyf-web
+    path: /home/isp/wsps/cyf/web
+  agent_client_source:
+    id: isp-install
+    repository_path: /home/isp/wsps/chcbz/isp-install
+    subtree: conf/codex-ws-agent
+    requirement: reuse-existing-adr-004-versioned-source
+  agent_client_deployment:
+    id: codex-ws-agent-runtime
+    path: /home/isp/apps/codex-ws-agent
+    requirement: sync-from-versioned-source-and-smoke-no-git-repository-required
+pinned_revisions:
+  api_commit: null
+  web_commit: null
+  agent_client_source_commit: null
+  agent_client_source_subtree_digest: null
+  root_base_commit: null
+verification:
+  design_bundle_sha256: external-review-must-bind-sha256-of-bundle-sha256
+  api: pending
+  web: pending
+  agent_client_source: pending
+  agent_client_deployment_smoke: pending
+  integration: pending
+  isolated_mysql: pending
+  independent_review: exact-manifest-digest-dual-review-required
+acceptance:
+  status: pending
+  evidence: pending

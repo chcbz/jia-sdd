@@ -6,6 +6,9 @@
 
 # 当前开发进度（2026-10-04）
 
+> 文档收口（2026-10-23）：当前页面交互读 ../juyiting-ui-baseline-20261006/optimization/spec.md 与Web原型；技能执行读 ../juyiting-skill-execution/design.md；跨账号及成果选择读 ../juyiting-external-commission-mvp/design.md。本文后续时间线及current-state/delivery-status仅证明标注日期的观察；旧v1/v1.1中基础+补充关系保留，不能按文件名删除或当今日wire版本。
+
+
 用户已恢复按版本开发。入口/点将册/＋菜单与转写入草稿已形成 Web 候选 `58d631d`，229项定向与本地研发构建通过，已推送独立开发分支。第一增量尚缺附件-only的配套准入/续办，成果与验收、真实联调和正式发布仍待完成；**未更新集成pin、未上线、不可据此宣称完整产品可验收**。见[分版本开发回执](implementation-progress-20261004.md)。
 
 以下保留历史时点记录；其中线上版本只代表各次核验时点。
@@ -70,7 +73,7 @@
 - 最新已推送组件基线：API `87c0acc`、Web `ebb664f`、Client `607d251`；完整 commit/tree 以 `integration.yaml` 为准，历史段落不代表最新 pin。
 - **先读**：[本次详设交付与施工入口](fusion-delivery-handoff-20260930.md#本次请求的最终交付2026-10-01)，然后读[长期融合方案](long-term-fusion-plan-20260928.md)、[整体详设 v2](fusion-detailed-design-v2.md)、[多轮及每意图授权详设](long-term-followup-authority-design-20261001.md)、[媒体/存储/验收详设](design.md)。具体讨论按[原子typed合同v1](typed-deliberation-atomic-followup-contract-v1.md)与[回执补充v1.1](typed-deliberation-receipt-adoption-contract-v1.1.md)，执行按独立v3合同；版本号不是全局升级。
 - 长期统一一个会话、一套 request/turn/event 和权威内容引用；fast 是 CHAT 策略，多媒体按需查阅或执行，不默认全量加载工具/资料、不要求固定三次模型调用。模型提议不能授予执行权限。
-- 实施顺序和逐版出厂条件见[开发计划](fusion-implementation-plan-v2.md)与[分版本计划](versioned-delivery-plan-20260928.md)。自然澄清的 API 原子续办、真实 INSPECT、双接应和完整浏览器闭环仍需完成；旧示例版本号 1.13.45–1.13.47 不得直接用于本特性发布。
+- 实施顺序和逐版出厂条件见[开发计划](fusion-implementation-plan-v2.md)与[分版本计划](acceptance.md)。自然澄清的 API 原子续办、真实 INSPECT、双接应和完整浏览器闭环仍需完成；旧示例版本号 1.13.45–1.13.47 不得直接用于本特性发布。
 
 **2026-10-01 原子续办完整实施启动**：[业务冻结合同](typed-deliberation-atomic-followup-contract-v1.md)固定自然DISCUSSION、原子final、问题CAS/新CHAT续办和独立执行确认；16共同预期保持NOT_RUN。API26路径（Handler已明确交接）与Web12路径由各自Owner实际施工；每意图授权包d995已交付，094精确组合正在正常图验证，尚未提升。
 
@@ -143,7 +146,7 @@ API `42d6e7e` 已完成正常源图的33XML/211项实际组合核验并推送；
    - [2026-10-01 多轮与每意图授权详设补充](long-term-followup-authority-design-20261001.md)：资料可用/查阅分层、首轮GEN不能借权EDIT、统一follow-up与实施依赖；具体HTTP/DDL待Owner冻结。
 4. [原 UI / 媒体 / 归档与验收详设](design.md)：未被v2覆盖的合同继续有效。
 5. [融合实施计划 v2](fusion-implementation-plan-v2.md)：U0–U4工作包及Owner/依赖/验证。
-6. [分版本交付与验收计划](versioned-delivery-plan-20260928.md)：候选 1.13.45–1.13.47 的出厂条件与通知标准。
+6. [分版本交付与验收计划](acceptance.md)：候选 1.13.45–1.13.47 的出厂条件与通知标准。
 7. [验收](acceptance.md)：AC01–AC22，另加详设v2的FD01–FD12；共34项产品用例。
 8. [集成状态](integration.yaml) 与 [便携证据](integration-evidence-20260928/README.md)。
 9. [2026-09-29 轻量议事与 Agent 基础整合](integration-u2-chat-agent-convergence-20260929.md)、[受权媒体读取候选](integration-u2-media-read-20260929.md)、[U2会话执行lease集成](integration-u2-lease-20260929.md)、[U2受权输出清单](integration-u2-output-catalog-20260929.md)：均默认关闭，不等同上线。

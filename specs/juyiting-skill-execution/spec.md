@@ -1,12 +1,15 @@
 # 聚义厅技能执行收敛
 
+> 文档收口（2026-10-23）：SE-2收敛至design.md并合并澄清；SE-1不再作为实施入口，fixtures/实际结果不改。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
 - 需求核对日期：2026-10-13（Asia/Shanghai）。
 - 文档状态：SE-2实现合同已修订，自动化范围采用clarifications.md中的明确默认值；尚未实现、测试、发布或生产配置切换。
 - 唯一 Owner：本聊天主 Agent；不创建独立 Reviewer，不接管其他聊天任务。
 - 用户边界：图片/PDF/Excel/视频等通过技能扩展；平台只登记运行费用说明，不审批、不冻结、不预扣、不因价格未知拒绝执行。
 - 范围：普通办事/议事技能执行、资料可读、真实成果交付；既有技能安装、Runtime 身份、执行及归档复用。
 - 非目标：新市场、新微服务、通用 DAG 工作流、平台计费、任意第三方代码市场、自动部署；不改变技能包购买、悬赏结算、成果验收的既有业务。
-- 入口：[当前详细设计SE-2](design-se2.md)、[边界澄清](clarifications.md)、[直接实施任务](tasks.md)、[验收矩阵](acceptance.md)、[源码基线](baseline.json)、[交接](handoff.md)。
+- 入口：[当前详细设计SE-2](design.md)、[边界澄清](design.md)、[直接实施任务](tasks.md)、[验收矩阵](acceptance.md)、[源码基线](baseline.json)、[交接](handoff.md)。
 - 历史来源：`../juyiting-multimedia-deliberation/`。不改写其中冻结合同和发布证据。本设计取代本聊天此前的抽象建议，未改变线上行为。
 
 ## 可观察目标

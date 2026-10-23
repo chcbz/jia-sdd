@@ -83,3 +83,8 @@
 - 接口清单由含 Spring MVC mapping 注解的 Controller 静态提取；动态路由、网关重写、条件 Bean 和运行时 feature flag 需以部署环境为准。
 - 未执行数据库迁移、未连接生产服务、未运行广泛 Gradle 构建；本知识库不是生产配置审计或安全认证结论。
 - 变更实现仍以子仓源码为准；知识库应在跨仓交付时随 submodule 指针更新。
+
+
+## 文档链路检查边界（2026-10-23）
+
+当前入口与历史来源分别检查，使用 [SDD只读导航检查](../sdd-workflow.md#sdd-document-check)。本库API完整清单仍是旧基线：其中旧 `oauth/jia-oauth-resource/.../AuthenticationController.java` 当前不存在，不能将另一个模块的同名Controller充当原证据。此项不改写原清单或宣称API盘点已同步最新源码；旧工作台覆盖来源与before快照例外也在上述说明登记。

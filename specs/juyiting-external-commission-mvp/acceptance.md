@@ -62,3 +62,14 @@ D3-AC编号不沿用旧58项，避免把已撤范围继续当门禁。原用例�
 - 504本人二稿已提交后改选历史首稿验收，正式结果只含首稿；506外单图文两项统一验收并保留所选集合。顶部默认不选、卡片只预选一稿、关闭不写入、预览无下载、桌面/手机、完成后只读和刷新回读已核对。
 - API224正式2935 tests/0 failures/errors/122 skipped；Web287正式3236 passing/2 pending。版本API1.16.26/Web1.16.40，精确commit/tree、同Run制品/安装/公共资源摘要及部署健康见evidence/implementation/selected-output-acceptance-20261022。幂等/未知/授权切换等按自动测试证明，不把它们写成全部在线故障注入。
 - 本次未验收用户503或其他真实事项，未修改Runtime、未执行迁移。历史运行端稳定性风险不因本次验收重标已修复。用户1小时目标未全部达成：09:59启动、初版10:22编码、11:06三个核心在线闭环完成，随后证据收口。
+
+
+## 成果选择增量的精确发布记录
+
+
+- API1.16.26：6dc75fc632ad697bbe29c60a8a257c637ba937d6 / tree2e76b192ad45bda813f2b09f199f466bac0c5737，Flow5260799/224，2935 tests/0 failures/errors/122 skipped。
+- Web1.16.40：5ec7e2096f838136ae71b6d4a66e148756aad54d / tree4c180814a8b2a31d963da9e46eb94a569b93f8f9，Flow4403172/287，3236 passing/2 pending。部署主机healthy；同Run制品、安装摘要、公共入口及功能资源匹配。两端默认CI-only配置均已恢复readback。
+- 本人504：二稿已经SUBMITTED后选择历史第一稿，正式结果只含第一稿的精确来源/hash；第二稿保留CHANGES_REQUESTED历史。外单506：图片和文字两项统一验收。外单508：图片已生成而currentDelivery为空，由卡片确认直接提交+验收。三个任务均COMPLETED/ACCEPTED，未替用户验收旧事项503。
+- 桌面/手机实操已核对清单默认不选、卡片预选、历史稿、图文多选、预览无下载、完成后只读及刷新。幂等/未知恢复/身份切换等故障分支为自动回归证据，未宣称全部在线故障注入。
+- 线上实操补修默认文字目录读取及shell嵌套ref传递两处遗漏；初版编码22分钟，但最终修正和完整验收超过用户1小时目标，不宣称按时全部完成。
+- 证据：`evidence/implementation/selected-output-acceptance-20261022/`；浏览器原始资料仅留本机授权测试目录，截图路径及摘要见screenshots.json。无DDL/数据迁移/Runtime变更。
