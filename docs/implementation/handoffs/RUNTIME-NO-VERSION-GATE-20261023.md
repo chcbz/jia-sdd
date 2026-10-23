@@ -24,3 +24,10 @@
 - 完整native隔离套件两次未通过：第一次旧fixture使用provider.invalid，真实TLS失败；补可配置probe URL后采用当前配置Provider地址，首次measure成功，第二个profile测量遇到原1秒传输超时。保留失败，不修改产品网络策略/超时，也不把无模型握手当完整隔离或识图验收。证据`native-profile.log`、`native-profile-configured-provider.log`。
 - Flow5264702 Run27精确cbc1050、CI-only，CustomEnvironmentBuild在测试输出前FAIL，尚无测试结论。二次只加非秘密preflight诊断并保留全部断言，不换候选/不关闭校验、不加部署作业。查询/控制证据`/var/tmp/cyf-runtime-no-version-gate-20261023/`。
 - 当前生产仍1.2.8，未重启/安装、未修改共享CLI、未重放519，业务矩阵仍待执行。原API1.16.31发布事实不变。开发完成、云端验证、生产生效分开。
+
+## 最终CI与收尾（2026-10-23 21:17前后）
+
+- Run28确认失败根因为Flow cache restore在原checkout写入`ossutil.log`，触发干净源码断言，不是应用测试失败。没有删除该日志或忽略脏文件；Run29从精确cbc1050建立独立干净worktree再验证，相同原测试/断言保留。
+- Flow5264702/29 SUCCESS，job541894956，精确commit cbc1050825a40378313f283e9f25dc46d44c1ea4 / tree4fa8a81432bc9bc8d16d1fc12ab3c065f8d1979a。354项：352通过、0失败、2项opt-in native跳过。job日志摘要显示跳过分别为空HOME真实CLI握手和完整bwrap/profile隔离探针；前者本机真实1/1通过，后者TLS失败保留。正式CI-only不含部署作业、没有生产包安装。
+- 临时Flow配置已恢复至本轮原值，APPLIED+readback，未取消他人Run。生产1.2.8/PID1404284未变，完整图片业务验收/519状态仍未验证。
+- [紧凑证据](../../../specs/juyiting-skill-execution/evidence/runtime-no-version-gate-20261023/README.md)包含源码、测试、真实握手、未通过探针、Flow摘要及SHA清单。后续要使取消校验在线上生效，须固定1.2.9的受控发布/重启；当前不宣称已上线。
