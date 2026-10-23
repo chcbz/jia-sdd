@@ -1,47 +1,27 @@
 feature_id: juyiting-voice-conversation
-status: accepted
+status: implementing
 owners:
-  api: critical_worker
-  web: balanced_worker
+  api_profile: critical_worker
+  web_profile: balanced_worker
+  integration_profile: main_orchestrator
+  verifier_profile: gpt_test_runner
+  reviewer_profile: sol_reviewer
+  exact_owner_source: docs/implementation/TASKS.yaml#runtime_ledger_json
 contract:
-  api_or_event_changes: "POST /chat/speech/transcriptions accepts only audio/webm;codecs=opus in V1 and rejects MP4/AAC before provider dispatch; POST /chat/speech/synthesis; existing /chat/stream remains compatible"
-  compatibility: "additive, feature-flagged off by default, no DB migration; Safari/MP4/AAC is a later milestone gated by real-browser fixture plus security/compatibility validation"
+  changes_in_this_update: documentation_only
+  detailed_contract: docs/implementation/handoffs/JVC-OAI-SPRING-AI-REFACTOR.md
 pinned_revisions:
-  api_commit: 492adc7e8ff386013264c4eef4c0bf67adf34add
-  api_tree: ef888807fb3b190b65d813286a0733795763b411
-  web_commit: 97c2f8bd439dc6f7876a4d26c91d485ea7750cda
-  web_tree: 162fc64e5d8a81a77d85bf40bd50703af38e88f7
-  root_base_commit: da6a8901036491a1c0b60cd64ba90611f95665b4
+  api_commit: null
+  web_commit: null
+  root_base_commit: null
 verification:
-  api:
-    voice_selector_evidence: 7d8d5f492737cda8fe028639a66b50eb0917c8e07827938e32f49c3348509591
-    fixture_digest: 44547c9e422ad0ca70123edffbd5261030d502644048693f1d77aae7df1384b9
-    classes: 11
-    result: "48/0/0/0"
-    build_duration: "24m33s"
-    chat_controller_test_evidence: 4932082fcf0b765ab704e5040c4eeadff78b480b6127c689f5b66773f8669491
-    chat_controller_test_result: "9/0/0/0"
-    chat_controller_test_duration: "6m18s"
-  web:
-    voice_only: "23 passing"
-    production_build: pass
-    production_build_duration: "4m59s"
-  reviews:
-    api: "ACCEPT 0/0/0"
-    web_feature: "ACCEPT 0/0/0"
-    web_supplemental_attribution: "ACCEPT 0/0/0"
-    integration: "ACCEPT 0/0/2; both P2 are disclosed non-blocking metadata/baseline-harness items"
-    web_supplemental: "4 pass/2 fail/incomplete; non-blocking baseline/harness debt (stale destroy/loading assertion + incomplete visualViewport evidence)"
-  commands:
-    sddw_pin: pass
-    sddw_verify: pass
+  source: see_delivery_status_exact_task_records
+  integration: partial_not_feature_complete
+  production_activation: not_verified_by_this_audit
 acceptance:
-  status: accepted-source
-  evidence:
-    api: "Exact V1 audio/webm;codecs=opus allowlist; MP4/AAC fail-closed; API voice evidence 48/0/0/0 across 11 classes; ChatControllerTest 9/0/0/0"
-    web: "Voice-only 23 passing; production build pass; feature review ACCEPT 0/0/0"
-    regression_gap: "Existing orientation, keyboard resize, focus trap and map interaction tests remain unchecked; supplemental selected-component run is non-blocking baseline/harness debt and must not be represented as a passed complete regression criterion"
-    fixture: "WebM/Opus fixture digest 44547c9e422ad0ca70123edffbd5261030d502644048693f1d77aae7df1384b9; MP4/AAC disabled in V1"
-release:
-  production_authorized: false
-  provider_activation_authorized: false
+  status: pending
+  evidence: delivery-status.md
+delivery_reconciliation:
+  as_of: "2026-09-06T09:21:00.295553+08:00"
+  source_snapshot: docs/implementation/archive/2026-09-06/execution-snapshot.json
+  root_gitlinks_updated: false

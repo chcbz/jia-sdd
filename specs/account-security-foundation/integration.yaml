@@ -1,5 +1,5 @@
 feature_id: account-security-foundation
-status: integration-ready
+status: implementing
 owners:
   api: critical_worker
   web: balanced_worker
@@ -10,21 +10,29 @@ contract:
   compatibility: >-
     Legacy user JWTs without auth_epoch remain valid only after byte-exact unique jiacn resolution to ACTIVE/epoch zero;
     only explicit machine tokens and a strict legacy machine shape bypass user lookup. Additive columns remain on code rollback.
-  migration: implemented_and_mysql8_fixture_verified_production_pending
+  migration: pending_implementation_and_production_review
   acl_risk: p0
 pinned_revisions:
-  api_commit: 010b18cb04eda645ec991078dfde41e3251f4431
-  web_commit: 77666e8fc1b2060ff3db8374b5de4539a5e5e53d
-  root_base_commit: bda6f44bbfc886f47af3079e6351fb8390996bf8
+  api_commit: null
+  web_commit: null
+  root_base_commit: null
 verification:
   architect: accepted_2026-08-24
-  independent_security_review: accepted_api_and_web
-  api: focused_gradle_30_pass_tree_399b9f048f073cc8d47f97d8f71b8e2cc7636129
-  migration: mysql_8_0_46_pass_digests_a99594f5_and_39c022e4
-  web: focused_mocha_102_pass_eslint_build_diffcheck_pass
-  integration: root_commit_c9cf4d800b20c0bd60a12c532300dcecfe1431cf_verified
-  production_oauth_client: pending_backup_migration_and_live_smoke
-  token_ttl_24h_candidate: local_junit_7_mysql_5_7_19_14_pass_independent_review_accept_release_pending
+  independent_security_review: pending
+  api: pending
+  migration: pending
+  web: pending
+  integration: pending
+  production_oauth_client: pending
 acceptance:
-  status: token_ttl_24h_candidate_pending
-  evidence: acceptance.md
+  status: pending
+  evidence: pending
+
+delivery_reconciliation:
+  as_of: "2026-09-06T09:21:00.295553+08:00"
+  scope: historical_evidence_not_runtime_owner_ledger
+  status_document: delivery-status.md
+  archive: "未归档"
+  source_snapshot: "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+  original_pins_preserved: true
+  root_gitlinks_updated: false

@@ -25,6 +25,10 @@
 
 本目录原始内容来自代码的**静态逆向知识库**，后续按明确范围增量维护。它描述已在源码、构建配置、SQL 资源和运维资料中观察到的静态状态；不把设计草案或运行环境假设写成既成事实。实现细节以当前 checkout 的源码为准，知识条目对应的生成版本见 [`BASELINE.yaml`](BASELINE.yaml)。
 
+## 2026-10-16局部交付收口
+
+统一接口与图片技能现行实现见[聚义厅整体SDD](06-juyiting-end-to-end.md#image-skill-contract)，配置/发布/临时工具退役见[运维指南](08-operations-testing-and-change-guide.md)。固定三端源码与实际验收分开记录：修改、下载通过，OCR仍失败；未刷新全库静态盘点，也未宣称全部接口或技能验收通过。
+
 ## 最短检索路径
 
 不要默认串行读取全部文档。先按问题选择一个入口，再用标题或关键词缩小范围：
@@ -79,3 +83,8 @@
 - 接口清单由含 Spring MVC mapping 注解的 Controller 静态提取；动态路由、网关重写、条件 Bean 和运行时 feature flag 需以部署环境为准。
 - 未执行数据库迁移、未连接生产服务、未运行广泛 Gradle 构建；本知识库不是生产配置审计或安全认证结论。
 - 变更实现仍以子仓源码为准；知识库应在跨仓交付时随 submodule 指针更新。
+
+
+## 文档链路检查边界（2026-10-23）
+
+当前入口与历史来源分别检查，使用 [SDD只读导航检查](../sdd-workflow.md#sdd-document-check)。本库API完整清单仍是旧基线：其中旧 `oauth/jia-oauth-resource/.../AuthenticationController.java` 当前不存在，不能将另一个模块的同名Controller充当原证据。此项不改写原清单或宣称API盘点已同步最新源码；旧工作台覆盖来源与before快照例外也在上述说明登记。

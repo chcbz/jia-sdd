@@ -1,9 +1,9 @@
 # CYF Workspace Guidance
 
-## 规则适用范围（2026-10-08）
+## 规则适用范围（2026-10-17）
 
 - 本文件规定 **CYF 项目统一规则**，适用于本项目的前端、后端及参与任务的子 Agent，不修改 Codex 全局规则、其他项目规则或共享技能。
-- 本项目构建/测试/部署采用下述“前端 Flow、后端本地”分工；父目录说明或共享技能中旧的“双端 Flow”及自动部署默认不作为本项目执行依据。其余服务器目录、权限、身份、锁、备份与生产操作边界继续保留。
+- 本项目前后端正式测试、构建、制品生成与部署统一使用阿里云云效 Flow；覆盖此前“前端 Flow、后端本地”分工。父目录说明、共享技能或历史记录中的自动部署默认不作为本项目执行依据。其余服务器目录、权限、身份、锁、备份与生产操作边界继续保留。
 
 ## 项目入口
 
@@ -11,11 +11,16 @@
 - 项目地图：`docs/codex-project-map.md`；跨仓交付：`docs/sdd-workflow.md`；聚义厅：`docs/juyiting-runbook.md`。优先定向搜索，详细知识放对应指南。
 - 开工选择验证入口时，先查 `ops/orchestration/README.md` 的已有工具索引，按任务读取对应说明；不默认重新编写 runner，也不全量加载历史证据。
 
+## 统一接口规范（2026-10-14）
+
+- 前端、后端及参与本项目的 Agent Runtime 共用 `api/docs/interface-standard.md`，功能文档仅补充业务契约；实现差异及影响范围见 `api/docs/interface-standard-impact-20261014.md`。本次为规范冻结，不代表线上切换。
+- 跨仓任务、独立 worktree 和子 Agent 交接必须携带该规范的路径及固定版本；位于本目录之外的 Runtime 源码不会自动继承此文件，任务 Owner 须显式传达，不修改其他项目或全局规则。
+
 ## 开发原则
 
 - 快速迭代优先推进，问题通过修复或技术栈优化解决，不默认保守回退。
 - **聚义厅低于 `2.0.0` 均为内测版本，不考虑旧版本兼容，一切以最新版本为准。** 前后端、Agent 客户端、文档与测试同步采用最新契约，不保留旧版本兼容层或双轨实现；`2.0.0` 及后续策略另行明确。
-- 每项任务一个 Owner；Owner 自检后进入独立只读 Review，Review 通过后按当前用户授权确认是否合入组件 `develop`，不重复构建。改动限于任务范围，不覆盖或回退无关修改。
+- 每项任务一个 Owner；当前任务串行执行，Owner 自检后进入独立只读 Review，Review 通过后按当前用户授权确认是否合入组件 `develop`，不重复构建。改动限于任务范围，不覆盖或回退无关修改。
 - 保留身份/ACL、幂等、事务、锁归属及相关回归；生产数据、迁移、扣费和流水线外操作按实际授权与恢复要求执行。
 
 ## 文档收口
@@ -35,16 +40,16 @@
 - **评估实际收益**：沿用handoff模板记录定位/实现/验证/等待，未知留空，开发完成与发布等待分开。当前只证实执行历史验证与缓存复用可行，整体开发周期和上下文收益仍待可比任务验证；不新增台账、硬时限或无实测缩时承诺。
 - **专项工具按范围使用**：执行历史相关改动复用 `ops/orchestration/execution_history_check.py`（浏览器定向诊断加 `--browser`），详见 `specs/juyiting-execution-recovery/contract-pilot/README.md`；使用本任务和固定源码，不照搬示例ID/旧版本，不强制无关功能运行。
 
-## 构建与版本化部署（2026-10-08）
+## 构建与版本化部署（2026-10-17）
 
-- **前端走阿里云 Flow，后端走本地构建部署。** 正式前端测试、生产构建、制品与部署复用 `4403172`；后端正式测试、构建、制品生成与部署默认本地执行，不再默认启动 `5260799` 或后端 CI-only Flow。旧 Flow 入口保留历史与按需诊断用途，不新增流水线。
+- **前后端统一使用阿里云云效 Flow。** 正式测试、生产构建、制品生成与版本部署：前端复用 `4403172`，后端复用 `5260799`；不新增流水线，旧 CI-only 入口仅按需诊断。后端本地构建部署不再作为正式交付路径。
 - **develop 不自动部署。** develop 用于开发集成与验证；合入、push 或验证成功均不触发部署，也不按定时任务自动发布最新 develop。
-- **统一版本化部署：确定发布版本 → 固定源码 commit/tree → 对应环境测试/构建 → 同批不可变制品 → 部署 → 在线核验。** 前端绑定同 Flow Run 制品；后端绑定同本地 build ID、日志和制品 SHA-256。版本、源码、制品和部署记录须对应，不得将验证成功报告为版本已上线。
-- 前端本机仅开发预览、控制面与低成本定向诊断；禁止本机生产打包、源码到生产脚本或 Flow 失败后回退本机构建。本地结果不替代精确 commit 的前端 Flow 证据。
-- 后端在固定 commit 的干净源码目录或独立 worktree 构建，不在生产安装目录编译，不发布脏工作区。所有 Gradle 测试/构建/诊断先读最新相关 `build.gradle`，通过 `python3 ops/orchestration/cyf_orchestrator.py gradle ...` 串行执行；保留依赖完整性、定向回归与 `validateLayering`。
-- 后端正式本地发布默认复用持久依赖与compile-only缓存：既有Gradle入口识别本地release opt-in及匹配的固定metadata init，无缓存参数即可启用；测试、`validateLayering`、依赖完整性及fresh最终JAR仍执行，不缓存测试/生产JAR。普通诊断和Flow不受影响，显式隔离/无编译缓存诊断保留；冷缓存不承诺热缓存耗时。用法、实际argv证据和工具回读见 `ops/orchestration/README.md`（2026-10-09核对）。
-- 后端本地发布采用可追溯制品安装，保留统一发布锁、身份/权限、备份、可恢复安装和健康/业务核验，不恢复旧 pull/build/restart 快捷脚本。现有 `*-flow-deploy` 要求真实 Run；本地制品入口需完成适配和验证后使用，不伪造云端回执。
-- 发布记录包含版本、commit/tree、前端 Flow Run 或后端本地 build ID/日志、测试摘要、制品摘要、部署顺序和在线核验。配置保存、历史回执或候选成功不等于当前发布成功。本次规则更新不直接触发构建、部署或服务重启。详见 `docs/aliyun-flow-cicd-strategy.md`。
+- **统一版本化部署：确定发布版本 → 固定源码 commit/tree → Flow 测试/构建 → 同 Run 不可变制品 → Flow 部署 → 在线核验。** 两端均绑定真实 Flow Run、完整源码和制品 SHA-256；不得用本地 build ID、历史 Run 或其他批次制品冒充本次发布输入。
+- 两端本机仅开发预览、控制面和定向诊断；本地结果不替代精确 commit 的正式 Flow 证据。禁止本机生产打包、源码到生产脚本或 Flow 失败后回退本机构建部署；既有后端本地发布工具仅保留历史追溯，不因工具存在获得发布授权。
+- 后端在 Flow 的固定 commit 干净源码目录构建，不在生产安装目录编译、不发布脏工作区。所有 Gradle 测试/构建/诊断先读最新相关 `build.gradle`，通过 `python3 ops/orchestration/cyf_orchestrator.py gradle ...` 串行执行；保留依赖完整性、定向回归、`validateLayering` 和 fresh 最终 JAR。
+- 后端 Flow 可复用经校验的依赖与 compile-only 缓存，仅缓存编译输出，不缓存测试结果、分层检查或生产 JAR；运行时归档固定来源/SHA并逐次校验。沿用已验证工具，不把本地 release metadata init 直接搬入 Flow；冷缓存不承诺热缓存耗时，详见 `docs/aliyun-flow-cicd-strategy.md`。
+- 版本发布复用现有 Flow 部署适配器，消费同 Run 已核验制品，保留统一发布锁、身份/权限、备份、可恢复安装及健康/业务核验。发布前核对当前配置与 helper/制品契约；仅验证配置的 SUCCESS 不等于部署完成，不恢复旧 pull/build/restart 快捷脚本。
+- 发布记录包含版本、commit/tree、各组件 Flow Run/日志、测试摘要、制品及安装文件摘要、部署顺序和在线核验。配置保存、历史回执或候选成功不等于当前发布成功。本次只更新规范，不修改云端配置、不触发构建、部署或服务重启；Run147 的 4分18秒仅为一次 CI 成功，不是完整部署耗时保证。
 
 ## 操作边界
 
@@ -60,7 +65,7 @@
 ## 生产 API 安装目录（2026-10-07）
 
 - 最终部署 JAR 固定为 `/home/isp/hosts/cyf/api/cyf-api-kit.jar`；生产进程的 `-jar` 与 cwd 使用该实体目录。`/opt/cyf/service/api` 仅为兼容链接，不恢复第二套实体部署。
-- 后端正式构建在本地固定源码目录/独立 worktree；生产目录只安装已验证制品。既有 Flow 状态/下载仍留在 `/var/lib/cyf-api-flow`，备份留在 `/home/isp/baks`，不将历史 Flow 回执当本地 build 证据。旧 M1/M2 releases 目录不作为新的生产 API 安装目标。
+- 后端正式构建在 Flow 的固定干净源码目录；生产目录只安装同 Run 已验证制品。既有 Flow 状态/下载仍留在 `/var/lib/cyf-api-flow`，备份留在 `/home/isp/baks`，不将历史 Flow 回执当成本次发布证据。旧 M1/M2 releases 目录不作为新的生产 API 安装目标。
 - 主机控制工具 source 位于 `ops/ci/aliyun-flow/host`。路径修改/重装后执行只读 `/usr/bin/python3 -I -B /home/isp/bin/tests/test_cyf_api_canonical_path.py`；保留现行脚本的其他修复，不整文件回退到较旧版本。
 
 ## Editing Discipline

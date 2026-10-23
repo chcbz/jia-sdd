@@ -1,5 +1,8 @@
 # Agent workspace business capability refresh
 
+> 文档收口（2026-10-23）：保留工作目录能力刷新契约及原发布记录，与资料文件库不同。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
 <!-- SDD delivery reconciliation 2026-09-06 -->
 ## 2026-09-06 全量状态核对
 

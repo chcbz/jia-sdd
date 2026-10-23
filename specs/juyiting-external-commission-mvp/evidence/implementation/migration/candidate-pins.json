@@ -1,0 +1,101 @@
+{
+  "task": "JYT-EXTERNAL-D31-CHAT-20261021",
+  "mode": "PREPARATION_ONLY_NOT_APPLIED",
+  "flowPipeline": "5260799",
+  "apiBase": "510b2937696495b54a9203729784660e62c65082",
+  "chatCandidate": "a5c018578c1f49df915b1193b1c1f87fbb9c7088",
+  "parentObservedHead": "8273c0994a0b5be0262988ab8fdcfa2dc4ea7bd1",
+  "parentResourcesPinnedByContentNotFinalFlowCommit": true,
+  "target": {
+    "socket": "/home/isp/apps/mysql/mysql.sock",
+    "schema": "jia",
+    "mysqlVersionObserved": "8.0.21",
+    "serverUuidSha256": "ee9c5dc1884b5f8e6a14d460b81980202304582135c2e8e5a85f8ac0820e3128"
+  },
+  "inputs": [
+    {
+      "file": "candidate-agent-grant.sql",
+      "sha256": "11c1a0ae19f2970a408817595aee446134af4f82a4e10a5878f503af807b2f1d",
+      "source": "/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-external-commission-v1-migration.sql",
+      "status": "REFERENCE ONLY; use 00-agent-expand + 02-agent-freeze + 05-agent-finalize instead of unqualified registry UPDATE"
+    },
+    {
+      "file": "candidate-agent-policy.sql",
+      "sha256": "a0f34311a3f6549e745784c50ec8ff2c72089a7b2c2dd59ce27a30e142895ebb",
+      "source": "/home/isp/wsps/cyf/api/agent/jia-agent-mapper/src/main/resources/db/agent-external-service-policy-v1.sql",
+      "status": "requires catalog/pre-start migration approval"
+    },
+    {
+      "file": "01-chat-expand.sql",
+      "sha256": "084bd570fa96d070dced1ed7e8b6ca014dcff374861c10797f2d139d20c6bb4f",
+      "source": "/var/tmp/cyf-external-chat-20261021/chat/jia-chat-mapper/src/main/resources/db/chat-external-commission-v1-migration.sql",
+      "status": "requires preflight/backup/maintenance; once-only expansion"
+    },
+    {
+      "file": "chat-proof.cte.sql",
+      "sha256": "eba5fe7a1021efca1dd08fcb2a6b74c5da6aad08c6e224a7bf39da48af1d4d23"
+    },
+    {
+      "file": "02-chat-proven-backfill.sql",
+      "sha256": "d72e1f548e82041483bc98be80fc0054481a54f513639befb18540c6e019d9e5"
+    },
+    {
+      "file": "inspect.py",
+      "sha256": "a5145d6fdbad9495ecb0313a078c2329c9f31b3d3c5db2d9e6973832d5f3fc1c"
+    },
+    {
+      "file": "03-chat-postcheck.sql",
+      "sha256": "4fb5f51a8ceef7ce91700c63b6ae43ca31a26b70731438b145c29643f8cadc01"
+    },
+    {
+      "file": "flow-preflight.py",
+      "sha256": "9ac5badcc31d6939aade1183a7627b6d9a4e73380d778f9587d40f69f56f0acc"
+    },
+    {
+      "file": "grant-freeze.cte.sql",
+      "sha256": "cca2d35f3399a24b3c409f49d35272abdf00eb6c822d2fe744cba3d411cdb6f9"
+    },
+    {
+      "file": "00-agent-expand.sql",
+      "sha256": "095122b0520672540f5382b0d9c98ba5b22030e7df97031a9927a9d042759c6a"
+    },
+    {
+      "file": "02-agent-freeze.sql",
+      "sha256": "702c2a98ef11eb088f5b6dae547667f5ddb2b898b4455d09141bea3d8763c2d4"
+    },
+    {
+      "file": "04-agent-postcheck.sql",
+      "sha256": "c40907871a5913109949e49dc74ec0a9148c9173919c7454a0e482cec79dd9ce"
+    },
+    {
+      "file": "05-agent-finalize.sql",
+      "sha256": "801bfbe1b1b95cf34a7c3c88d8eb5c7c54543deef31891e33f7c705380f01494"
+    },
+    {
+      "file": "README.md",
+      "sha256": "b38b6399a84ed80b7584b32de64152ba6dccd5bedfe119fbb64963b3402d35f6"
+    },
+    {
+      "file": "test_preflight.py",
+      "sha256": "cd08586aa5cab699607c7cf677a3756899b0388c3d43c01862ce5e7a6e5159a1"
+    },
+    {
+      "file": "flow-migrate.py",
+      "sha256": "8899fac401f867bbc0e0251543929060627a19186a8541d61afe891d16735c12"
+    },
+    {
+      "file": "test_flow_migrate.py",
+      "sha256": "c58f1a5ce05701196672680c2af0ab6afc768ae53b49a22a5de04f3d49677807"
+    },
+    {
+      "file": "test_flow_forward_only.py",
+      "sha256": "a4ebc410d0d37d91d290551ea40f6a013d5f097c70fd8d8e0f677c041286a233"
+    }
+  ],
+  "installedHelpers": {
+    "/usr/local/sbin/cyf-api-flow-deploy": "62d7a65f952fdb0365e4338f86c91a1eed453a09610252e5f844070bec3d782d",
+    "/usr/local/sbin/cyf-api-flow-install": "f6e93bf0a09f1e29283740987861fd34b7c4b408866d2cdaf83f3053e911c390",
+    "/usr/local/sbin/cyf-api-additive-schema": "719d344d91a362e7fd141dc1172604ef82eff15db511700d132badfa7730f08a",
+    "/usr/local/sbin/cyf-api-kit": "878e2f91f2a557f2c10ca954c438b090cc370d90e99da851053e0190bc04be56"
+  }
+}

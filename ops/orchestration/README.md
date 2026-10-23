@@ -1,3 +1,15 @@
+# 当前交付入口（2026-10-17）
+
+前后端正式测试、构建、制品与版本部署统一走云效 Flow：前端 `4403172`，后端 `5260799`。本地工具用于控制面和定向诊断，不替代正式 Flow 验收，不执行本地生产打包/部署。develop 不自动部署；发布绑定固定源码、同 Run 制品和在线核验。规范见根 `AGENTS.md` 与 `docs/aliyun-flow-cicd-strategy.md`；本次仅改文档，不变更工具或云端配置。
+
+## 后端默认 Flow CI（2026-10-20）
+
+`5260799` 默认配置的源码为 `ops/ci/aliyun-flow/backend-ci-run.sh` 和 `backend-ci-policy.json`；离线渲染使用 `prepare-backend-ci.py --output /absolute/candidate.yaml`，仍通过既有 flow-control 固化，不在本机运行Gradle。细节见 `docs/aliyun-flow-cicd-strategy.md` 的默认提速维护节。
+
+云端仍用本编排器的 `gradle --flow-ci`：精确Flow身份/策略argv/当前干净commit/tree、新输出和原Gradle锁；不读写人类任务ledger、不复用整轮结果、不授权部署。普通任务不要使用此模式，原task guard保持不变。
+
+2026-10-20续调查（诊断源码63ed6b21）只增加可核验数值计时：同Run制品的既有`test-results/summary.json`含`gradlePhases`与`taskTimings`；用`rootBuild`区分主/嵌套build，各自offset不混算，JVM uptime另列。Flow日志可能省略开头，优先查同Run summary/XML。Gradle JVM C1和重任务优先实验均无明确净收益，已撤回，原policy/顺序及Test-only C1不变；没有新增缩时保证，不部署。
+
 # 开工诊断（DEV-FEEDBACK-PILOT-20261008）
 
 在现有 `cyf_orchestrator.py` 增加 `preflight`，不另建台账或准入门禁：
@@ -14,7 +26,7 @@ python3 -B ops/orchestration/cyf_orchestrator.py preflight TASK_ID \
 - 不执行 java/node/gradle/npm、候选 selector 或 shell；不读取 fixture/凭据内容，不下载依赖、不连接数据库、不修改任务或发通知。文件存在不等于内容/schema/依赖就绪。
 - 当前 ledger 不含 owned_paths/worktree 映射，路径冲突明确 UNKNOWN；仅列其他 Writer 作为人工协调线索，不能声称无冲突。锁可用性、数据库和工具版本也未验收。
 - Findings 仅建议，正常观察退出0；未知任务、非仓库或无法读取退出2。这不是测试成功、正式构建或发布批准。
-- 前端正式验证仍走 Flow4403172；后端在干净精确输入上先读 build.gradle，再经原 gradle 入口串行验证，保留 validateLayering。preflight 不绕过现有锁、授权或失败处理。
+- 前后端正式验证分别走 Flow4403172/5260799；后端在云端干净精确输入上先读 build.gradle，再经原 gradle 入口串行验证，保留 validateLayering。preflight 不绕过现有锁、授权或失败处理。
 
 隔离测试（只创建并清理自己的临时 Git 仓库）：
 
@@ -36,9 +48,11 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 
 - 执行历史可追加 `--browser`：在同一Java/MySQL存活窗口驱动生产组件Chromium页面；非整站、非正式前端Flow。源码/辅助桩/浏览器指纹/截图证据边界见同一contract-pilot README。
 
-## 后端本地构建：受控持久依赖缓存（2026-10-09）
+## 历史后端本地构建：受控持久依赖缓存（2026-10-09）
 
-**正式本地发布现在默认启用**：既有 `gradle` 入口识别 `CYF_LOCAL_RELEASE_OPT_IN=1` + `CYF_LOCAL_GRADLE_ACTIVE=1`，核验显式metadata init的内容与固定compile-only策略一致后，无home参数默认 `/var/cache/cyf-gradle-local`（委托身份使用UID后缀），无cache flag默认加入 `--build-cache`。无需每次手传缓存参数；源码与build输出仍逐批隔离。Flow和普通专项诊断不受影响，显式 `--no-build-cache`、显式 `--dependency-cache-home` 保留诊断/隔离用途。与默认home冲突的旧 `GRADLE_USER_HOME` 需在调用端移除或明确绑定匹配home，不静默降级。
+> 2026-10-17起此节仅记录历史实现，不是当前发布入口。保留工具与证据供追溯，不授权本地生产构建或部署，不把本地 metadata init 直接移入 Flow。
+
+**2026-10-09当时的正式本地发布默认启用**：既有 `gradle` 入口识别 `CYF_LOCAL_RELEASE_OPT_IN=1` + `CYF_LOCAL_GRADLE_ACTIVE=1`，核验显式metadata init的内容与固定compile-only策略一致后，无home参数默认 `/var/cache/cyf-gradle-local`（委托身份使用UID后缀），无cache flag默认加入 `--build-cache`。无需每次手传缓存参数；源码与build输出仍逐批隔离。Flow和普通专项诊断不受影响，显式 `--no-build-cache`、显式 `--dependency-cache-home` 保留诊断/隔离用途。与默认home冲突的旧 `GRADLE_USER_HOME` 需在调用端移除或明确绑定匹配home，不静默降级。
 
 - 参数设置子进程 `GRADLE_USER_HOME` 并输出路径readback；目录必须canonical、无符号链接、由实际Gradle身份持有且0700。首次仅创建该目录，不自动创建父路径、不复制历史配置/daemon、不清缓存或他人目录。
 - home不得有隐式 `gradle.properties`、`init.gradle(.kts)` 或非空 `init.d`；仓库/消费凭据仍由固定显式init配置管理，不将凭据写入home。冲突的环境/CLI user-home拒绝，不能悄悄落到另一个目录。
@@ -51,3 +65,8 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 - 本地producer/admission的argv白名单允许 `--build-cache`，但不放宽所需测试/分层/bootJar任务的fresh日志要求，`FROM-CACHE`/`UP-TO-DATE`仍拒绝。`invocation.cacheHit=false`指整个验证未被EVIDENCE_HIT跳过，不表示JavaCompile未命中；实际命中以逐任务日志为准。
 - 2026-10-09用户授权收尾已同步安装 `/usr/local/libexec/cyf-api-local/admit-api-local.py`；回读SHA `49ff62e470beadf5c5c570b007d1d30a6dd18b1f32df217274d89121ff77728b`，新flag可用且cached required tasks仍拒绝。原值备份 `/home/isp/baks/cyf-backend-cache-closeout-20261009/admit-api-local.py.before`。安装使用既有coordinator→release→lifecycle锁和原子替换，应用PID/start/JAR/health未变，无应用发布或DDL。
 - 工具更新不改写历史批次的helper catalog/authority/receipt。下一次发布按当前固定工具重新生成对应批次的helper catalog；若恢复旧的精确批次且其catalog绑定旧工具，按同锁顺序先验证/恢复原helper（before SHA `a5d4f89693e02903001f148c5fdac1613d2756c26d334fd78702df054a16c32b`），不得绕过工具摘要或把旧回执重标新批次。
+
+
+## SDD文档链路（轻量只读）
+
+文档整理后复用 `./sddw check-docs [feature-id]`，全目录默认覆盖规则、当前索引和特性主文档，检查范围及历史例外见 [SDD说明](../../docs/sdd-workflow.md#sdd-document-check)。该命令不执行应用测试/构建、不修改pin/台账、不比较历史SHA与当前checkout；不能作为发布验收。既有 `sddw verify` 保留模板候选核验语义。工具自身定向回归：`python3 -B -m unittest discover -s ops/orchestration/tests -p test_sdd_docs.py -v`。

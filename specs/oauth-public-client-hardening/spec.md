@@ -1,5 +1,8 @@
 # OAuth public client hardening
 
+> 文档收口（2026-10-23）：保留OAuth独立安全合同和原发布证据，不扩大到全部账号/公测安全完成。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
 <!-- SDD delivery reconciliation 2026-09-06 -->
 ## 2026-09-06 全量状态核对
 

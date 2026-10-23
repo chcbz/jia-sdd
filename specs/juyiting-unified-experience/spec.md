@@ -1,5 +1,8 @@
 # 聚义厅整体体验整合｜方案 v1
 
+> 文档收口（2026-10-23）：删除过期工期估算；DRAFT/SUBMISSION/RESULTS冻结契约与发布证据保留，旧调度/本地构建不生效。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
 > **2026-09-22收尾更新：** 当前已发布 `1.13.10-uxfix4`，用户确认本轮UI并授权收尾；最新实现、精确SHA、302/39/6/37测试分层与尚未验证项见 `session-closeout-20260922.md`。横屏保留沉浸地图；竖屏仅地图“横屏看全景”，不显示其他方向／地图控制按钮。本补充覆盖下文旧方向入口设计；不改写历史失败或宣称整套业务／真机验收完成。
 
 > 2026-09-22技术交付补充：1.13.10及fix1已发布，线上只读与浏览器核验通过。当前准确版本/证据见 `release-status-20260922.md`、`verification-20260922.json`；本设计目标及历史调研不是整套业务已验收声明。
@@ -83,7 +86,7 @@ Demo：`/home/isp/wsps/cyf/deliverables/design/juyiting-full-demo-20260921/juyit
 
 - `ui-detail.md`：信息架构、逐屏布局、横竖屏与层级、文案和状态。
 - `design.md`：组件、数据模型、API/异步/权限/兼容详细设计。
-- `tasks.md`、`estimate.csv`、`estimation.md`：工作拆分、依赖、估算、资源与风险。
+- `tasks.md`、`tasks.md`、`tasks.md`：工作拆分、依赖、估算、资源与风险。
 - `acceptance.md`：从证据到用户任务的验收矩阵。
 - `integration.yaml`、`source-audit.json`：设计基线，不是新实现/上线证明。
 

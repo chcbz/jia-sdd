@@ -1,5 +1,16 @@
 # Account security foundation and global session revocation
 
+> 文档收口（2026-10-23）：保留独立安全合同及撤销/迁移未完成验收；不因Cookie修复收口整项。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
+<!-- SDD delivery reconciliation 2026-09-06 -->
+## 2026-09-06 全量状态核对
+
+Cookie 修复包已在运行台账行政收口，但只记录 manifest 校验，缺 exact Git 绑定与 credentialed 生产验收；不能把整个账号安全需求标为完成。
+
+完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：未归档。原文合同及历史验收材料保留，不把发布例外标成 PASS。
+<!-- END SDD delivery reconciliation -->
+
 ## Problem
 
 聚义厅准备面向公众公测，但当前用户 access token 是不可即时撤销的自包含 JWT；`user_info` 没有账户生命周期或会话版本；现有 `DELETE /user/delete?id=...` 只是通用按 ID 删除，既不适合自助注销，也不能撤销 token、API Key 或关联数据。请求身份还可能受未清理的 `ThreadLocal` 和旧 `CTX` Cookie 影响。生产 Web OAuth client 仍允许 secret、refresh token、client credentials、Postman callback，并使用 30 天 access token。
@@ -15,7 +26,7 @@
 - 非 ACTIVE 用户不能使用交互登录、第三方登录、用户 JWT 或已有 API Key。
 - 修复 `EsContextHolder` 请求间身份泄漏、JWT/CTX 优先级与 CTX Cookie 基础属性。
 - Web 个人中心提供清晰的“退出当前设备”和“退出所有设备”。
-- 将生产 Web OAuth client 收敛为无 secret、PKCE、authorization-code-only、无 refresh/client-credentials 的 24 小时 access token 客户端（2026-09-09 TTL 调整；保留账户状态与 auth_epoch 校验）。
+- 将生产 Web OAuth client 收敛为无 secret、PKCE、authorization-code-only、无 refresh/client-credentials 的短时 access token 客户端。
 
 ## Non-goals
 

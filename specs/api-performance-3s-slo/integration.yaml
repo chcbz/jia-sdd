@@ -1,0 +1,63 @@
+feature_id: api-performance-3s-slo
+status: implementing
+owners:
+  api_profile: balanced_worker
+  critical_api_profile: critical_worker
+  web_profile: balanced_worker
+  integration_profile: main_orchestrator
+  verifier_profile: gpt_test_runner
+  reviewer_profile: sol_reviewer
+  release_profile: release_guard
+  exact_owner_source: docs/implementation/TASKS.yaml#runtime_ledger_json
+contract:
+  api_or_event_changes: planned
+  compatibility: additive_metrics_and_compatible_optimization_by_default
+  performance_default: sync_standard_p95_1s_p99_2_5s_sli3s_99pct_success_99_9pct_hard_3s
+  exceptions_registry: endpoint-slo-registry.yaml
+pinned_revisions:
+  api_commit: null
+  web_commit: null
+  root_base_commit: null
+verification:
+  route_coverage: pending
+  api: pending
+  web: pending
+  integration: pending
+  production_observation: pending
+acceptance:
+  status: pending
+  evidence: acceptance.md
+
+source_candidates:
+  api_branch: codex/perf-api-integration-20260911
+  api_commit: 5571d183fe7c612f2d5ebb272548aa5bfad77e90
+  api_tree: b993a925464701b5a17c93461cf3f558036f5d13
+  accepted_slices: [PERF-A01-HIST, PERF-A02-LOG]
+  evidence_scope: original_candidate_source_and_unit_only
+  tooling_candidate: 43e0e46f8d9a07797713adb432c3bcab770dd8b0
+  tooling_tree: e0a9c30fa385c1ff0ae42d2f70f97dd5d87bc3b9
+  tooling_branch: codex/perf-inventory-20260911
+  tooling_acceptance: accepted_r4_source_and_actual_test_evidence
+  deployed: false
+
+verification_supplements:
+  logging_gradle_tree: b993a925464701b5a17c93461cf3f558036f5d13
+  logging_gradle_selector: ":common:jia-common-service:test --tests cn.jia.core.interceptor.HttpRequestLogInterceptorTest"
+  logging_gradle_result: six_tests_pass_scoped_evidence_accepted
+  logging_gradle_evidence_key: d5ebc5886ad7954f3c6202eb268fafb2255c92dfb779ed97f880c5af3973ce43
+  full_module_and_runtime: pending
+
+verification_supplement_20260911_starter_classes:
+  api_commit: 5571d183fe7c612f2d5ebb272548aa5bfad77e90
+  api_tree: b993a925464701b5a17c93461cf3f558036f5d13
+  selector: ":starter:classes"
+  fixture_digest: N/A
+  result: accepted_r2_main_source_graph_compilation_only
+  native_exit: 0
+  tasks_executed: 75
+  tasks_up_to_date: 5
+  tests: NOT_RUN
+  evidence_key: 68feb19828d94bf6a65833732ba425be03373f953b8ef1a1ec3123cc87a2618f
+  log_sha256: 41fd4f7b993e5049ac652efabb2812dda095d84a5cea6d299e9b598fd5cba88d
+  handoff: ../../docs/implementation/handoffs/PERF-RUNTIME-PREP-20260911.md
+  runtime_artifact_startup_capture_and_slo: pending

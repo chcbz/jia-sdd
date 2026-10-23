@@ -10,7 +10,7 @@
 | How is it implemented? | `api/` and `web/` submodules |
 | Which backend/frontend pair is an integrated baseline? | The root commit's `api` and `web` gitlinks |
 
-`specs/` is the intended future state. `docs/knowledge-base/` is a reverse-engineered current-state reference. Neither replaces source code for implementation details.
+`specs/` records feature intent, current contracts and historical acceptance; use its index to distinguish active guidance from preserved history. `docs/knowledge-base/` is a reverse-engineered current-state reference. Neither replaces source code for implementation details.
 
 <a id="development-efficiency"></a>
 ## 开发效率与上下文管理（2026-10-08）
@@ -19,7 +19,7 @@
 
 1. **确认范围与基线**：使用现有任务ID和handoff，固定Owner、目标/非目标、验收、源码commit/tree和worktree。分别记录本地HEAD、远端develop（实际查询时间）、受测候选与线上版本，不能相互替代。共享工作区有未提交修改时不自动pull/reset，以免覆盖其他任务。
 2. **最小充分上下文**：从根AGENTS → 项目地图 → 相关模块/工具说明 → 当前handoff进入，按需搜索代码。日志、历史证据只记录路径及必要摘要；不要为“补全背景”全量读取。压缩/交接摘要包含目标、范围、源码、已确认结论、证据、阻塞、下一条可执行动作及禁止操作。
-3. **连续实现与分层验证**：复用已有工具，先做能暴露本次问题的定向检查，再覆盖相关回归。Owner在授权内连续推进，不逐阶段等待批准，不新增独立Reviewer。精确输入和证据完整性匹配才复用结果；前端正式验证仍走Flow，后端在固定干净源码经编排器执行；与发布授权/部署分开。
+3. **连续实现与分层验证**：复用已有工具，先做能暴露本次问题的定向检查，再覆盖相关回归。Owner在授权内连续推进，不逐阶段等待批准，不新增独立Reviewer。精确输入和证据完整性匹配才复用结果；前后端正式验证、构建和版本部署统一走Flow（2026-10-17：前端4403172、后端5260799），后端在云端固定干净源码经编排器串行执行；本地仅诊断，不替代正式Flow证据；与发布授权/部署分开。
 4. **接续与收口**：Owner向子Agent/独立worktree显式传递最新项目规则路径、任务ID、源码基线、相关工具和handoff；确认接收方读过，不假设继承聊天或自动重载。在途任务自然接续时提醒，不打断其他任务。稳定知识回写已有模块/架构/运维指南，测试事实保留原证据路径。
 5. **效果评估**：沿用[handoff模板](implementation/handoffs/TEMPLATE.md)记录定位、实现、验证、等待与返工原因；未知留空，按可比任务判断端到端收益。下一项真实业务任务优先使用现有流程；只有可证实的实际阻塞才驱动工具扩展，不为提效再建一套框架/台账/审批。
 
@@ -56,7 +56,7 @@ The API contract in `design.md` must state method/path, request/response/event s
 1. **Draft** — Create the feature: `./sddw new <feature-id> "title"`; define the problem, goal, non-goal and scope.
 2. **Ready** — Agree the contract and split `tasks.md` into `api/`, `web/`, and integration work. Identify migrations, ACL, transactions, SSE/WebSocket replay, and rollback constraints before implementation.
 3. **Implementing** — Implement in each submodule on independently reviewable commits. Do not commit one repository's source into the other or into the root.
-4. **Integration-ready** — Check out the intended API/Web commits locally, run the relevant tests, then execute `./sddw pin <feature-id>` and `./sddw verify <feature-id>`.
+4. **Integration-ready** — Use the intended clean API/Web worktrees, run relevant tests under the current workload/Flow policy, then pin only the authorized template-format candidate and run `./sddw verify <feature-id>`. Do not change shared checkouts or historical pins to make an audit pass.
 5. **Accepted** — Record test commands/results in `acceptance.md`; set `integration.yaml` status to `accepted`; commit the spec update and both submodule gitlinks together in the root repository.
 6. **Released** — Add deployment/release evidence only after the actual deployment process succeeds. The root SHA is the reproducible delivery baseline.
 
@@ -66,6 +66,10 @@ The API contract in `design.md` must state method/path, request/response/event s
 # Inspect coordinated and implementation state
 ./sddw status
 
+# Read-only current document navigation (not tests or release acceptance)
+./sddw check-docs
+./sddw check-docs agent-task-collaboration
+
 # Start a cross-repository feature
 ./sddw new agent-task-collaboration "Agent task collaboration"
 
@@ -73,7 +77,8 @@ The API contract in `design.md` must state method/path, request/response/event s
 ./sddw pin agent-task-collaboration
 ./sddw verify agent-task-collaboration
 
-git add specs/agent-task-collaboration api web docs
+git add specs/agent-task-collaboration api web
+# Stage only this task's specifically reviewed documentation paths, never all docs/.
 git commit -m "feat(sdd): integrate agent-task-collaboration"
 git push origin master
 ```
@@ -121,3 +126,31 @@ For P0 identity/ACL/transaction/migration changes, use task/worktree/path-scoped
 - 局部复核不更新全库 `BASELINE.yaml` 的生成日期；未复核内容明确沿用旧基线。文档状态是阅读提示，不是第二份 Owner/gate 台账。
 - 不新增独立审查、审批或应用构建；文档改动仅检查链接、内容/源码证据对应及原材料未变。整理完成不等于功能新增验收通过。
 - 样板：[聚义厅 UI 当前规格](../specs/juyiting-ui-baseline-20261006/spec.md)。
+
+
+<a id="sdd-document-cleanup"></a>
+## SDD 文档整理（2026-10-23）
+
+日常入口采用每项需求的 spec/design/tasks/acceptance（现有代码级详设可按需保留），入口不累加历史日期的状态覆盖。已完成的临时变更，业务契约并入现有详设、结果并入验收；被取代的版本/过期工期在确认关键内容已承接后删除，不靠文件名日期批量清理。
+
+首轮整理CYF索引、聚义厅体验优化及外单旧设计副本。根源码基线 `5e6ab2b6f1a156c320189f17d76941fbe623738a`；不修改API/Web源码，不查询远端或生产，不重标功能状态。首轮其余特性只更新索引导航；后续全目录整理范围见下文。冻结合同、原始证据、活动handoff、历史会话来源索引保留不改。
+
+精确旧路径→承接文档及项目外备份见 [sdd-document-map.json](sdd-document-map.json)。历史证据中的旧路径/摘要保留原义，用映射或备份追溯，不能把它们的旧SHA改成新文档SHA。备份含删除前原文和本轮修改前文件，恢复时仅按manifest逐文件核对，不覆盖后续修改或其他任务。
+
+
+### 全目录收口
+
+同日按用户要求继续检查全部CYF specs特性目录，逐项保留/合并结论已写入INDEX和sdd-document-map；索引包括账号/权限、Agent/Runtime、任务、媒体/资料、知识库、UI、经济和交付，以及模板/历史会话来源。已将明确取代的D1–D4/SE-1旧稿、两套旧UI提案和过期排期移出工作区；不是删除所有历史文件，也不是重判所有功能完成。
+
+技术边界在原spec/design/tasks/acceptance承接，未覆盖测试/冻结bundle/发布记录/数据修复计划继续保留；含版本的基础+增量协议不可机械删除。本轮未修改api/web源码、tools/fixtures、integration pins、运行台账、应用或生产，也不修改其他项目/全局规则。新旧文件SHA及恢复清单保存在项目外备份，原证据链接用删除映射解析，不能改旧摘要冒充新合同。
+
+
+<a id="sdd-document-check"></a>
+## 文档导航检查与候选核验分开（2026-10-23）
+
+- `./sddw check-docs [feature-id]`：复用现有SDD入口进行只读轻量检查。全目录模式覆盖根/组件AGENTS、项目地图、SDD流程/索引、知识入口、Web原型规格和特性五件套/README/体验优化主文档；核对本地Markdown链接目标（剥离query/fragment）、相关规则中的路径、删除映射及integration中既定的当前文档标量引用。历史来源目录显式作为例外，不补造功能五件套。
+- 结果 `DOCUMENT_NAVIGATION_PASS` **仅表示上述导航检查通过**。不解析全量YAML schema，不核验所有锚点/源码符号/远端链接/全部证据摘要，不执行测试、构建、发布或修改pin；API/Web未指定或历史SHA与checkout不同，不在此检查中视为功能失败。畸形/不支持的当前导航标量明确失败。
+- `./sddw verify <feature-id>` 仍是**模板格式候选的双端精确checkout比对**：要求 `pinned_revisions.api_commit/web_commit` 的现有模板形态，不是全库历史审计器。嵌套component、candidate_commit及N/A等非模板记录可用check-docs检查导航，但候选核验仍需按真实格式显式核对源码和已有验证证据；不能因为文档通过就冒称这些候选通过verify，也不为此把历史记录改成当前SHA。
+- 本轮仅修正文档指针，未改变历史源码commit/tree、测试结果或发布事实。技能SE-1原design已通过integration.previous_design指向项目外备份；复制工作区时须同时保留清理映射及备份索引，不能把新SE-2的design.md当旧稿。
+- 历史before快照中的相对路径按原位置解释，原名/摘要不改写，删除原文查`sdd-document-map.json`。旧工作台63项来源`docs/ui-workbench/feature-coverage.md`和静态API盘点中的旧resource AuthenticationController目前不在工作区；这两处是未恢复的历史来源，不是当前导航成功或功能重新验收的证明，不擅自链接到不同内容。
+- 既有索引仍区分意图、实现、历史发布和当前线上；更新本节不刷新知识库旧基线。定向工具测试：`python3 -B -m unittest discover -s ops/orchestration/tests -p test_sdd_docs.py -v`。

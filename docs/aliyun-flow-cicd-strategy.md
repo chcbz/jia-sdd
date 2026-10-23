@@ -1,43 +1,66 @@
-# CYF 构建、测试与部署策略：前端 Flow / 后端本地
+# CYF 构建、测试与部署策略：前后端统一云效 Flow
 
-更新：2026-10-08，按用户最新授权调整 **CYF 项目内** 的交付默认规则；不修改 Codex 全局、其他项目或共享技能。本节为当前规范；下方历史证据不恢复旧的双端 Flow、自动部署或本机前端发布路径。本次只更新规则与指南，未修改云端配置、构建、部署或重启服务。
+更新：2026-10-17，按用户授权将 **CYF 项目内** 前后端正式测试、构建、制品与部署统一到云效 Flow，取代2026-10-08的后端本地交付默认规则。不修改全局、其他项目或共享技能；下方历史记录不是当前执行指令。本次仅更新文档，不修改云端配置、不构建、不部署、不重启。
 
 ## 当前交付路径
 
-- **前端**：阿里云云效 Flow 正式测试、生产构建、制品生成与部署；复用 `4403172`。本机只做开发预览、控制面及轻量诊断，不运行生产 Vite 打包，不因 Flow 失败回退本机构建。
-- **后端**：本地正式测试、构建、制品生成与部署；在固定完整 commit/tree 的干净源码目录或独立 worktree 执行，不在生产安装目录编译、不从脏工作区发布。所有 Gradle 操作先读最新相关 `build.gradle`，经 `python3 ops/orchestration/cyf_orchestrator.py gradle ...` 串行协调。
-- **develop 不自动部署**：push/合入只用于集成与验证；不由旧定时任务发布最新 develop。后端不再默认启动 Flow 验证/发布，现存 webhook/流水线是否调整需另有配置 readback，规则写入不等于云端已改。
-- **统一版本化部署**：确定版本 → 固定源码 commit/tree → 对应环境测试/构建 → 同批不可变制品 → 部署 → 在线核验。前端绑定真实同 Flow Run 制品，后端绑定真实同本地 build ID/日志与制品摘要。任一步失败记录真实失败，构建通过不等于已上线。
-- 按具体版本安排发布时机，不要求每次重复构建或独立 Reviewer，不新增流水线或无依据门禁。本规则不授权立即发布、重启、迁移、生产数据写入或扣费，沿用任务已有授权与恢复要求。
+- **前端 `4403172`、后端 `5260799`**：正式测试、生产构建、制品生成与明确版本的部署均通过阿里云云效 Flow；复用已有流水线，不新增入口。
+- **本机边界一致**：允许开发预览、控制面和定向诊断，不运行本机生产打包或源码到生产脚本，不因 Flow 失败回退本机构建部署。本地诊断不能替代精确 commit 的正式 Flow 证据；后端既有本地发布工具和记录仅保留历史追溯，不作为新发布默认或备用入口。
+- **develop 不自动部署**：push/合入只用于集成与验证，不按旧定时任务发布最新 develop。实际触发规则、候选配置和部署阶段须在操作前实时核对，不将规则修改视为云端配置已切换。
+- **统一版本化部署**：确定版本 → 固定完整 commit/tree → Flow 测试/构建 → 同 Run 不可变制品 → Flow 部署 → 在线核验。两端均绑定真实 Run、制品摘要及部署结果，构建成功不等于已上线。
+- 按具体版本和已有授权安排发布，不增加逐阶段审批、独立 Reviewer、重复构建或无依据门禁。本次规则修改不授权立即发布、重启、迁移、生产数据写入或扣费。
 
 ## 固定入口与执行边界
 
 | 入口 | 当前用途 |
 | --- | --- |
-| `4403172 / cyf-web-release` | 前端 Flow 验证及明确版本的发布；develop 不自动部署 |
-| `ops/orchestration/cyf_orchestrator.py gradle ...` | 后端本地正式测试、构建与诊断的唯一 Gradle 入口 |
-| `/home/isp/hosts/cyf/api/cyf-api-kit.jar` | 后端最终实体安装目标；构建与安装分离 |
-| `5260799`、`5263690` | 既有后端 Flow 入口，非默认交付路径；保留历史与明确需要的云端诊断，不因本次规则调整删除或覆盖 |
-| `5263692 / cyf-web-ci` | 前端按需 CI-only 诊断，不部署 |
-| `5264702 / cyf-ops-manual` | 临时运维入口，默认只读；复用不增加操作授权 |
+| `4403172` | 前端 Flow 正式验证及版本发布；develop 不自动部署 |
+| `5260799` | 后端 Flow 正式验证及版本发布；develop 不自动部署 |
+| `ops/orchestration/cyf_orchestrator.py gradle ...` | 后端所有 Gradle 操作的串行入口；正式执行在 Flow，本地仅诊断 |
+| `/home/isp/hosts/cyf/api/cyf-api-kit.jar` | 后端最终实体安装目标；仅安装已核验的同 Run 制品 |
+| `5263690`、`5263692` | 既有后端/前端 CI-only 按需诊断入口，不默认启动、不部署 |
+| `5264702` | 临时运维入口，默认只读；复用不增加操作授权 |
 
 ## 制品安装契约
 
-- 前端继续使用真实 Flow Run、完整 commit、版本及同 Run 归档 SHA-256；现行 `/usr/local/sbin/cyf-web-flow-deploy PIPELINE RUN COMMIT VERSION ARTIFACT_SHA256` 不改为本地打包入口。制品 manifest 的 `package_version` 必须匹配发布版本，并核验来源、receipt 与文件完整性。
-- 后端本地测试及构建绑定同一固定源码输入；记录 build ID、commit/tree、版本、命令/selector、fixture、工具链、依赖来源、测试摘要及日志。对唯一构建 JAR 与安装包（如使用）分别记录 SHA-256，部署只消费该批已核验字节，不在安装时重编译。
-- 后端安装仍保留统一锁及锁顺序、互斥等待不抢占、可信 root 管理的 JAR/配置、`cyf-api` 运行身份、备份、原子替换、可恢复安装、必要的 schema 检查与实际健康/业务核验。数据迁移不因构建位置变更自动获准。
-- **本地发布入口须适配与验收**：现行 `/usr/local/sbin/cyf-api-flow-deploy` 是真实 Flow Run 下载契约，不能以本地 build ID 冒充 Run。为本地制品提供版本/源码/摘要绑定的安装输入并验证恢复路径后，才能实际执行本地部署；这次规则修改不宣称适配已完成，也不恢复旧 pull/build/restart 脚本或旧 M1/M2 发布输入。
-- 生产 JAR 与 cwd 固定 `/home/isp/hosts/cyf/api`；`/opt/cyf/service/api` 仅兼容链接。构建产物/日志留在源码或任务证据目录；既有 Flow 下载/状态留在 `/var/lib/cyf-api-flow`，备份留在 `/home/isp/baks`。
+- 前后端统一使用真实 Flow Run、完整 commit、版本及同 Run 完整归档 SHA-256；复用 `/usr/local/sbin/cyf-{api|web}-flow-deploy PIPELINE RUN COMMIT VERSION ARTIFACT_SHA256`。归档摘要不是单独 JAR/dist 摘要，须分别记录并核验；前端 manifest 的 `package_version` 必须匹配发布版本。
+- 后端在 Flow 的固定干净源码目录构建，记录命令/selector、fixture、工具链、依赖来源、测试摘要及日志。部署只消费同 Run 已核验字节，不在生产安装目录编译，不以本地 build ID 冒充 Run。
+- 保留统一锁及锁顺序、互斥等待不抢占、可信 root 管理的 JAR/配置、`cyf-api` 运行身份、备份、原子替换、可恢复安装、必要的 schema 检查及实际健康/业务核验。数据迁移不因构建位置变更自动获准。
+- 发布前核对当前 Flow 配置、同 Run 制品、helper 接口/摘要和恢复路径；验证配置须准备明确版本的发布候选后才执行部署，结束恢复原验证配置。历史适配器成功不证明新候选已适配，不恢复旧 pull/build/restart 或 M1/M2 发布输入。
+- 生产 JAR 与 cwd 固定 `/home/isp/hosts/cyf/api`；`/opt/cyf/service/api` 仅兼容链接。状态/下载路径及迁移未完成项以根 `AGENTS.md` 为准；备份留在 `/home/isp/baks`。不因本文更新改写生产目录或历史回执。
 
 ## 构建与验收证据
 
-- 保留身份/ACL、幂等、事务、锁归属、依赖与制品完整性及相关回归；后端 `validateLayering`、相关定向测试和发布 JAR 构建在本地执行。真实数据库集成使用隔离 fixture，不触碰生产数据。
-- 证据按 tree SHA、精确 selector 与 fixture 复用，接受有效命中时不重复执行。同根因同输入连续失败两次停止盲重试，经归因或实际修复后再验证。
-- 发布记录包含版本、完整 commit/tree、前端 Flow Run 或后端本地 build ID/日志、测试及制品摘要、目标、部署顺序、恢复信息和在线核验。后端本地正式证据不再被默认排除，历史 Flow 成功仍只证明其原输入。
-- Flow 写入先备份前值、固定候选并 readback；有活动 Run 等待，不覆盖、不取消他人任务。资源/包大小/等待时限不增加无证据阈值，详见 `docs/aliyun-flow-gate-policy.md`。
+- 保留身份/ACL、幂等、事务、锁归属、依赖与制品完整性及相关回归。后端先读最新相关 `build.gradle`，经原编排器串行运行；正式定向测试、`validateLayering`、PublicArtifactVerifier 与 fresh bootJar 在 Flow 执行。真实数据库集成使用隔离 fixture，不触碰生产数据。
+- 证据按 tree SHA、精确 selector、fixture、工具链及执行环境匹配复用；本地证据不冒充云端验收。同根因同输入连续失败两次停止盲重试，经归因或修复后验证。
+- 发布记录包含版本、完整 commit/tree、各组件 Flow Run/日志、测试及制品摘要、目标、部署顺序、恢复信息和在线核验。历史本地发布与 Flow 成功仅证明其原输入，不重标为本次发布。
+- Flow 写入先核对无活动 Run、备份前值、固定候选并 readback；有活动 Run 等待，不覆盖、不取消他人任务。资源/包大小/等待时限不增加无证据阈值，详见 `docs/aliyun-flow-gate-policy.md`。
 - Flow 模板及主机工具维护源仍位于 `ops/ci/aliyun-flow/`。目录名、配置保存、历史 status 或候选成功均不等于当前版本已部署。
 
-## 后端本地构建缓存提速（2026-10-09）
+## 后端 Flow 最近核验边界（2026-10-17）
+
+API `c1e97923bf2325e3ada33b7e2816f203630f020d` / tree `f192948af6ff27b4e78f6f1585aca9bd8a6b4968`，`5260799 / Run147` CI SUCCESS，258秒，2288通过/0失败/95跳过，Gradle209.346秒。仅此固定候选测试/构建/上传成功，未部署；此前按用户授权累计删除84个方法的覆盖缺口仍在，不视为原套件等价或持续五分钟保证。
+
+Run147临时JDK/compile-only优化配置已恢复原值，不能据规范更新声称默认云端模板已永久提速或已包含部署阶段。后续使用时须核对当前任务映射、固定工具与配置，再按版本发布契约执行。证据见 `docs/implementation/evidence/backend-flow-5m-20261016/testfix/flow147-*`；详细过程与恢复见 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
+
+## 后端五分钟优化增量（核对：2026-10-20）
+
+固定 API commit `9ca2776c27ce3270efa0ea4c366b7de0e68e8dbb` / tree `847927f2fc9d76ca09cee79dc7aa987a627450c5`，覆盖 Run195 原全部 302 个 suite / 2728 次测试执行，0失败、0错误、122跳过（与 Run195 逐 suite 次数核对一致）。本轮不删测试，不将既有跳过或历史84方法删除写成覆盖恢复；不改生产代码/JVM，不部署。
+
+- Run195：完整版本发布547秒（9分07）；构建375秒、部署171秒。Gradle264.071秒，已有101个编译任务缓存命中，不能归因成“没开缓存”。
+- Run196：仅对短生命周期 Test JVM 启用 C1，CI365秒，Gradle242.079秒；未达五分钟。
+- Run197：同一 Gradle 进程增加 `--parallel --max-workers=3`（实测3核6GB worker），CI SUCCESS **283秒（4分43）**，Gradle160.853秒；原全部测试、真实MySQL、layering、PublicArtifactVerifier及fresh bootJar保留。103个编译任务命中；不并行启动多条Gradle、不改变单task fork数。
+- 同 Run 完整制品独立下载重算 SHA-256 `5129d497791befb3a87e72846eb8bce1740f06cababa1f7d0a385a02f75e1f01`；内嵌 receipt 的 Run/commit/tree/clean绑定核对通过，JAR SHA `a71821bea7caed3ae1d37d9dadb5accde4e4f6cebc7081b0c96a32e64851c6c3` 与Run195一致。不是历史制品冒充本轮结果。
+
+复用方式：固定新任务和源码，在现有可信工具 bundle 中纳入 `ops/ci/aliyun-flow/flow-compile-cache.init.gradle`，原 compile-only opt-in 基础上显式设 `CYF_FLOW_SHORT_LIVED_TEST_JVM=1`，经原 orchestrator 单进程传入上述并行参数。C1只改 `Test.jvmArgs`，性能/JIT基准不启用此选项；不改生产JVM。不要照搬Run197的旧任务快照、commit、fixture或私有payload作为新任务授权。
+
+**边界：283秒只证明此固定输入的一次 CI，不是整条版本发布五分钟或持续SLO。** 已知Run195旧进程停止33秒，Spring Started56.656秒（不等于完整healthy），部署其余阶段尚缺完整计时；不靠缩短请求deadline、强杀进程、懒初始化掩盖失败或跳过完整性/健康来换时间。下一步需对授权版本发布拆解安装/实际ready与业务核验。
+
+Run196/197实验结束时在无活动Run/配置归属核对后恢复原云端配置，readback SHA `a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`；当时默认云端模板尚未永久切换；2026-10-20后续固化状态见下方“后端默认提速配置维护”，不把历史恢复动作视为当前配置。可复用profile源码已收口，默认CI已固化，正式发布Owner仍须把已核验参数纳入其固定版本候选；无部署默认不提供上线授权。详细证据 `docs/implementation/evidence/backend-flow-5m-20261020/`，接续 `docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`。
+
+## 历史：后端本地构建缓存提速（2026-10-09）
+
+> 自2026-10-17起不再是正式发布路径。以下仅保留当时实现、验收与恢复记录，不授权新本地构建部署。
 
 正式本地后端构建通过既有 `cyf_orchestrator.py gradle` **默认**复用受控私有Gradle依赖缓存，并启用compile-only输出缓存：识别本地release opt-in与匹配的固定metadata init，无缓存参数即可选择 `/var/cache/cyf-gradle-local` 并加入 `--build-cache`；显式诊断/隔离参数可覆盖，Flow和普通诊断不变。仅在干净固定commit/tree及新输出目录执行。compile-only策略：仅JavaCompile按内容指纹复用，其余任务禁用输出缓存，测试禁止up-to-date；仍执行同批定向测试、`validateLayering`、依赖来源/SHA与fresh bootJar完整性检查，不缓存测试结果/生产JAR、不删除安全回归。home信任边界与参数冲突检查见 `ops/orchestration/README.md`。
 
@@ -45,9 +68,23 @@
 
 10分钟是“测试/构建/安装核验执行时间”的优化目标，不是强制超时或减免安全门禁。历史安装约307秒来自日志文件起止，未包含排队与批次中间等待；本次没有授权/触发生产安装，因此新构建加历史安装仅用于评估，不冒充完整发布达标。固定输入、实测结果与证据见 `docs/implementation/handoffs/BACKEND-RELEASE-10M-20261009.md`。冷缓存和其它源码/selector不作无实测承诺。
 
+## 后端 Flow 提速实验（2026-10-16）
+
+覆盖范围：`5260799`无部署诊断；API源码固定`58b4b5f408257c6d5103d915e13c7927c1571e20`。当时采用前端Flow、后端本地分工；该默认已于2026-10-17被上文双端Flow规则取代。本节保留当时实验范围，不启用自动部署。
+
+- `prepare-backend-jdk.py`用于Flow Linux x86_64 worker：官方Dragonwell Extended21.0.11.0.11+10压缩包，固定SHA-256，仅缓存归档、每次重验并新私有目录解包。不运行yum/dnf，不执行缓存解压目录；拒绝损坏归档、链接逃逸/特殊成员，校验java/javac版本。官方OSS与GitHub发布摘要一致；云端GitHub下载曾socket timeout，实际使用官方OSS镜像，不回退系统安装。
+- 参数：`--cache "$HOME/.cache/cyf-backend-jdk-archives" --destination "$CYF_EXPERIMENT/jdk"`。destination必须全新；结果最后一行是JAVA_HOME，之前的`CYF_JDK_TIMING`为单调耗时。主机生产JRE不使用此入口，不在安装目录执行。
+- `flow-compile-cache.init.gradle`仅在`CYF_FLOW_GRADLE_ACTIVE=1`与`CYF_FLOW_COMPILE_CACHE_OPT_IN=1`时使用；需显式`--build-cache`。仅允许JavaCompile输出缓存；其余任务禁用输出缓存，Test、validateLayering、bootJar强制fresh。仍同时使用原cold-init的依赖完整性/凭据剥离规则，不能把本地release metadata init搬到Flow。
+- 云端也经既有orchestrator串行入口；注意argparse REMAINDER要求`gradle --cwd ... --tree-sha ... --selector ... --fixture-digest ... TASK_ID -- ./gradlew ...`，选项必须在TASK_ID之前。控制工具与单任务授权快照放源码之外并固定摘要，云端快照不是权威台账；源码工作区必须干净，build和project-cache用独立目录。
+- 实测：Run141/142/143的冷JDK准备6.138/6.470/6.697秒，证明避开历史Run139约1212秒的RPM准备路径；不是相同JDK补丁构建的严格单变量对比。Run143仍在业务测试处失败：部分执行1086项，978通过/71失败/37跳过；无成功制品，尚无热编译缓存成功对照、完整部署或300秒验收。
+- 原Flow引用的chatDeliberation已在API提交5d54634a3d删除。实验把保留的50源文件/49测试类映射到7个现行task并补2个迁移回归；不得恢复旧兼容suite或删失败测试换速度。实际映射和剩余失败清单见本次handoff。
+- 实验结束已readback恢复原配置SHA`a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a`，没有应用部署/重启。候选只有在新固定源码测试成功后才能用于正式版本化发布，不将失败Run快速结束当达标。
+
+隔离工具自检：`python3 -B -m unittest discover -s ops/ci/aliyun-flow/tests -p test_backend_jdk.py -v`（12项）。完整过程/恢复/下一步见`docs/implementation/handoffs/BACKEND-FLOW-5M-20261016.md`，证据在同任务evidence目录。
+
 ## 历史控制面与适配器记录（截至 2026-10-06，非当前执行规范）
 
-以下原记录保留不改写；其中双端 Flow 发布契约不作为后端本地发布输入，也不能证明新本地发布入口已验收。
+以下原记录保留不改写；历史适配器和发布证据不能证明当前配置、制品或线上版本已验收，执行以上文现行规范为准。
 
 2026-10-06 经用户授权完成控制面调整：前端单次 Update/readback 移除部署阶段；后端当前配置原已仅验证，未写入。两端 develop push 保留测试、构建与制品，不部署；两个旧 nightly timer 均 disabled/inactive，无下一触发时刻。本地 develop 模板同步移除部署阶段，7 项静态测试通过。实际证据见 `docs/aliyun-flow-versioned-deployment-switch-20261006.json`。
 
@@ -170,3 +207,47 @@
 只读清单确认旧缓存10份历史runtime提取目录总4.145GB（未压缩），npm下载缓存仅43.73MB。新提取目录移出Flow缓存，仅清理当前独占worker恢复的旧实体目录、不跟随链接。Run188缓存归档355.91MB，归档与上传约5秒且成功；旧Run186归档2.011GB、76秒并因平台2GB上限未上传。删6个无消费者直接开发依赖，lock减少95项，保留包版本及完整性未变；删除脚手架测试并合并重复正向重算，负向篡改测试在assets/all保留。
 
 Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前值、修正严格SemVer校验并单次update/readback，根模板同步，Run188证明该配置候选成功。Flow SHA `719b28019ba51985a11a60dd2af99ed3a336d4de760004301dd0c2336e2a65a3`。详细scope/失败/授权及未验证项：`docs/implementation/handoffs/FRONTEND-RELEASE-5M-20261009.md`；正式摘要：`docs/implementation/evidence/frontend-release-5m-20261009/summary.json`。
+
+### 后端默认提速配置维护（核对：2026-10-20，工具源码39ba13ee）
+
+- 默认CI维护入口仍是 `ops/ci/aliyun-flow/templates/backend-develop-release.yaml`（名称不代表部署）。`backend-ci-run.sh`维护云端步骤，`backend-ci-policy.json`维护精确Gradle argv；修改后运行 `python3 ops/ci/aliyun-flow/prepare-backend-ci.py --output /absolute/candidate.yaml` 离线渲染，再按原控制工具无活动Run/备份/单次写/readback流程固化。不得直接保留旧版本候选的固定commit/任务snapshot作为默认。
+- 既有orchestrator的 `gradle --flow-ci` 仅用于5260799默认CI；固定配置授权只验证原分支，逐Run绑定真实commit/tree、策略SHA、完整argv、干净源码及fresh输出目录，保留原Gradle互斥。该上下文不是人类任务Owner、不读写共享ledger、不接受整轮EVIDENCE_HIT，不提供版本部署权限；正常任务入口仍按原ledger准入。
+- 默认启用Run197已验证的 `--parallel --max-workers=3`、compile-only缓存及Test-only C1；不增加每task fork、不复用Test/layering/JAR。生产JVM与JIT/性能基准不套用Test C1 profile。缓存冷启动与worker波动仍会影响耗时，单次283秒CI不是发布总耗时保证。
+
+- 首次固化的历史基线：14:46 readback canonical SHA `cc7d7b7d429092a78193fa3a08a5846ff72fffb4bba474399c42c04a4359641b`；原push/分支过滤保留、无部署。`Run199 SUCCESS`：**284秒（4分44）**，Gradle161.942秒，2728项/0失败/0错误/122跳过，302套件与Run195独立XML逐项计数一致，32个指定任务全部fresh。制品独立下载核验229027426bytes/SHA `d194f08eb94bf9d859d7fde0586c2ff7a2040f1886b19601c39ec474316dee75`，Run/完整源码/clean绑定及JAR摘要均匹配。证据 `docs/implementation/evidence/backend-flow-5m-20261020/default-*`。
+- 这是默认CI实测达标并固化，不代表包含生产部署的整条发布已≤300秒。Run195发布日志仅知停止33秒、健康等待61秒及稳定核验；尚缺完整部署阶段计时。后续实际版本候选应携带已验证profile，并按当前helper契约启用已有观测，不能把默认无部署CI或旧Run回执当成新版本上线证据。
+
+#### 避免重复工具链准备与缓存观测（2026-10-20）
+
+- 保留 `JavaBuild`，仅平台 bootstrap 设为预装 `jdkVersion: "1.8"`；执行 Gradle 前仍由固定 SHA 的 `prepare-backend-jdk.py` 校验、fresh解包 Dragonwell21 并强制替换 `JAVA_HOME/PATH`。这不是将编译/测试降到Java8。原argv、compile-only策略、Test C1及单task fork均不变。
+- 固定API `9ca2776c27ce3270efa0ea4c366b7de0e68e8dbb` / tree `847927f2fc9d76ca09cee79dc7aa987a627450c5`，Run200 SUCCESS **216秒（3分36）**，Gradle114.116秒；独立下载解析302份XML，2728项/0失败/0错误/122跳过与Run195逐suite一致，32个指定任务fresh，JAR摘要仍为上述 `a71821be...`。与Run199相比总计少68秒，其中Gradle自身少47.826秒，不能把全部差值归因于平台JDK准备，也不作固定节省承诺。 同配置不改源码复测Run201 SUCCESS **228秒（3分48）**、Gradle123.419秒，测试和fresh任务再次一致；两次均在5分钟内，仍不是长期SLO或冷缓存保证。
+- 缓存只做观测、不删除。Run200固定标签数值库存：Gradle缓存约1032MB（modules-2约495MB、compile cache约145MB），Maven约447MB，JDK归档约218MB，MySQL归档约48MB；这些是目录占用，**不是压缩归档贡献量**，总计不能与913MB归档直接相减。库存嵌入既有 `test-results/summary.json`，无新增installer不支持的归档成员，无文件内容/凭证输出，观测错误不作为构建门禁。
+- 约447MB Maven目录是阶段内库存，不能推定其远端压缩贡献；15:55后续Run202—206没有证实缓存路径/移动/排除/快压缩带来可复现的额外缩时，均已撤回，见下节。Gradle实际版本9.3.1，实验库存约382.7MB；最终恢复的原默认仍有旧8.14.3=0标签，不能把该0解释为当前版本无缓存。固定JDK/MySQL归档及每次SHA校验保持不变。
+
+- 本轮保留新默认 canonical SHA `9671c967564668b0e94bdc956db2248175c78a8f65a803187e55f4d5567ae3e2`，无部署阶段，原push和分支过滤不变。Run200/201独立制品/XML、候选及最终readback证据见 `docs/implementation/evidence/backend-flow-5m-20261020/further-*`；源码实现、CI历史和当前线上版本分开记录，本轮未发布或重启生产，完整发布五分钟仍待授权版本的同Run实际验收。
+
+#### 缓存继续压缩的实测边界（2026-10-20 15:55核对）
+
+固定同API源码，Run202/203/204/205/206均CI SUCCESS，分别280/244/279/255/276秒，Gradle163.062/139.551/165.353/147.819/165.732秒。原2728项/0失败/0错误/122跳过与302suite不变；Run205/206另独立下载制品、解析XML逐suite对比Run195，并核验32个fresh任务及相同JAR摘要。源集计数可能重叠，不能累计当作独立用例。全批4分04—4分40；此前216/228秒是较快样本，不是稳定SLO，Gradle波动来源尚未单独定位。
+
+- `cacheDirs`追加JavaBuild默认目录，不覆盖默认.m2等路径；设置成功不等于有效范围变小，Run202不接受。
+- Maven仓库与/tmp、HOME均跨设备；两次原子rename候选由安全分支跳过，未复制/移动/删除缓存文件；不继续猜测目的路径、不跨盘复制或清目录。
+- GNU tar排除在隔离工具测试有效，但Run205实际缓存仍约913MB，未证实平台缓存插件上下文中的收益；撤回TAR_OPTIONS，不把库存447MB写成可节省447MB。
+- Run206的GZIP=-1确实进入构建环境，同Run制品gzip头XFL=4；但缓存打包到size仍约18秒，与Run205相同，缓存约913.46→929.04MB（增约1.7%），制品229.03→230.24MB。未获得足以接受的缩时收益，且该GNU gzip环境接口有遗留维护成本，撤回，不永久化。
+
+15:55无活动Run、配置归属核对后已单次恢复并readback原**9671c967...**默认；原push/三分支/Java21来源与SHA/并行/C1/compile-only/fresh门禁和无部署保持。运行脚本/模板/默认工具测试恢复与Run200/201相同字节，所有实验helper及其专属测试退出当前默认；只保留历史提交与证据，不删除应用测试。最终26项相关工具隔离复核通过；恢复后未为重复计时额外触发Flow。当前缓存文件可能仍为上轮快压缩格式，标准gzip可读，不单独清理或跑构建来重写。
+
+证据 `docs/implementation/evidence/backend-flow-5m-20261020/cache-investigation-*`、`slim-*`及`fast-gzip-*`。后续优先定位同源码Gradle耗时波动，或在明确授权版本发布中分段观测历史171秒部署开销；没有新版本部署/重启/在线验收，不把CI SUCCESS当完整发布五分钟达标。
+
+### Gradle续调查：只保留可核验计时（2026-10-20，诊断源码63ed6b21）
+
+覆盖范围仅5260799无部署CI、固定API `9ca2776c` / tree `847927f2`。不修改API业务、测试选择器/fixture、fork/worker数量、依赖完整性或fresh JAR规则，不含生产部署/重启验收。
+
+- 已有Run199/200/201/205/206的302份XML显示，快慢轮次的case累计时间和多个模块及bootJar同步变化，不是只有Gradle启动阶段变慢。suite/case/task累计都是并行任务的累计wall time，不是CI耗时或CPU时间，不能相加后当关键路径，也不能无证据归因worker。
+- Run207额外给Gradle自身JVM加C1：CI229秒、Gradle126.770秒，未显示明确收益，已撤回；原Test-only C1保持。Run208把最重Chat回归完整argv块提前，测试/选择器块多重集合不变：任务确实提前，但自身44.76→71.56秒，CI244秒、Gradle136.394秒，没有净收益，也已撤回。不能把“提前启动”当作“更快完成”；MySQL的具体慢因尚未拆出，不调整事务/持久性语义或等待限制来换数字。
+- 默认恢复原policy字节及任务顺序，只在既有diagnostics增加阶段elapsed/JVM uptime/进程CPU累计/处理器数和Gradle C1布尔readback，任务增加start offset；`rootBuild`区分主build和included plugin build。offset相对各自init起点，不同build不能直接相减；JVM uptime为另一锚点。所记录进程CPU仅Gradle JVM，不含Test JVM/MySQL，不能冒充整机CPU或整轮CPU耗时。
+- Flow最终日志可能省略Gradle开头，即使`more:false`也不完整。阶段与任务数值记录写入既有`test-results/summary.json`，不新增installer不支持的成员，不输出原始环境/全部JVM参数；原JUnit XML仍逐份保留。优先下载同Run制品核对，不以日志缺失断言任务没执行。观测不增加性能门槛、不授权部署。
+
+实验和精简证据见 `docs/implementation/evidence/backend-flow-5m-20261020/gradle-*`、`early-heavy-*`；原始日志/制品仍在原私有目录。当前无新增可复现缩时结论；216/228秒等历史快样本不是长期保证，也不是完整版本发布<=300秒的证明。
+
+最终原profile+计时候选 **e0e87d84...** 已通过Run209：CI **272秒（4分32）**、Gradle164.751秒，独立下载同Run制品核验302份XML，2728项/0失败/0错误/122跳过及32个指定fresh任务不变，JAR仍`a71821be...`。主build taskGraphReady为自身init后10.356秒、JVM uptime15.501秒；它们不是整轮CI/Gradle命令耗时，进程CPU也不含测试/数据库。全部453条任务计时保存在summary，补足API日志开头缺失；主/嵌套阶段标识已实测。16:28:15+08只读readback配置一致、无活动Run、原push/三分支及无部署保持。此Run是最终诊断配置验收，不宣称新增缩时；旧9671c967基线仍保留可恢复，完整发布五分钟目标未完成。

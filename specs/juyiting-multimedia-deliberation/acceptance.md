@@ -154,3 +154,11 @@ API329d44fd / Clientb8d74b1 / Web10ff97b已快进合入各自develop，根gitlin
 ### 2026-10-05 23:30 CST 三端发布接续
 
 Agent已实装Client4e70c4f，两实例payload/config已核验；主机发布脚本forward-only及现有备份别名问题已修复，26回归PASS；零点调度分页18回归PASS。API5260799现有deploy已恢复，明确新版失败向前修复、不自动降级；等待2026-10-06 00:00既有调度，未创建最终Run。Web仍CI-only且仅API健康后发布。真实业务验收NOT_RUN，T05–T09不标完成。详见 [接续说明](runtime-release-20261005.md) 与 [实际回执](implementation-evidence-20261004/runtime-release-20261005/manifest.json)。用户已授权发布及既有预算内真实调用；IAB已打开chcbz登录页待用户登录，无需传递密码。
+
+## 旧计划中的源码证据摘录（2026-10-23合并）
+
+原tasks-history-before-20261004中的结果仅为当时定向自检：API45/Client35 wire、Run101失败项修复26、MySQL19；API5c34e818/Client777f26f推特性分支，来源ordinary-request-source-evidence.json。通用点将Webe3ceaec/API78f61531/Client1ab2b66有Web287+14组件/API64/Client32自检；创建API6a855的30项、Web43645的104项。当时不等于正式发布或完整媒体链通过，原JSON证据未改变。
+
+旧versioned-delivery-plan的1.13.45–1.13.47候选号已被语音版本占用；原远端refs见 integration-evidence-20260928/release-number-current-baseline-20261001.json 和 release-number-current-baseline-20261002.json。Web150的c74a386/tree fd23ba5、2873pass/2pending仅为当时CI，不含部署；Run148/150及2026-10-01服务STOPPED是历史事实，不作为今日运行结论。完整旧文在清理备份，现行发布只按当前AGENTS。
+
+保留业务出厂范围：基座回归/冷恢复、图片生成→修改→持久字节→明确验收、完整多媒体AC/FD/UM用例、双接应与身份隔离。图片纵切不等于音频/文档通过，保存空间不是验收前置；未授权付费不执行，未知结果不重发。原contract/fixture/正式测试/部署证据均未删除。

@@ -123,7 +123,7 @@ Agent ──task.report──> Server     {taskId, status: "completed"}
 - 当前 CLI 的 `thread.started/thread_id` 用于保存映射；不再按 Home 最近修改的文件猜测本轮会话归属。显式 new 与隔离任务 workspace 的 forceNew 保持独立新建。
 - 聚义厅“话头记录”展示当前用户/聊天范围的业务历史，选择后继续使用原 conversationId；“另起话头”下次发送才创建新会话。历史不是 Codex 工具日志，不自动清理历史文件。
 - 旧版本已经将多个业务 ID 映射到同一 Codex session 的记录会保留；本次不自动拆分混合历史。要开始干净上下文，请另起话头。
-- 设计、准确候选与验证/发布证据：`specs/juyiting-conversation-sessions/`。版本源码在 `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`，部署副本在 `/home/isp/apps/codex-ws-agent/current/`。
+- 设计、准确候选与验证/发布证据：`specs/juyiting-conversation-sessions/`。版本源码在 `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`，本机现用部署副本在 `/home/isp/apps/cyf-agent-runtime-v1/app/codex-ws-agent/`。2026-10-23固定目录迁移记录见 `docs/implementation/handoffs/RUNTIME-FIXED-DIR-20261023.md`：沿用Runtime1.2.6，候选1.2.7未部署；本说明不代表其他主机已迁移。
 
 ### 3.3 文件内容
 

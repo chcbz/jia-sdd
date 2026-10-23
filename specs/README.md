@@ -5,7 +5,7 @@
 - 想了解系统如何工作：先读 [架构与模块知识入口](../docs/knowledge-base/README.md)，不是逐个遍历历史 SDD。
 - 想了解准备做什么：读对应 feature 的 spec/design；冻结提案不等于最终实现，须查目录导航和版本证据。
 - 已完成范围的稳定知识按 [收口流程](../docs/sdd-workflow.md#feature-documentation-closeout)进入架构/模块/runbook；原合同和验收留原路径取证，不继续作为当前执行步骤。
-- [INDEX.md](INDEX.md)中的日期段落是历史投影，不能当作实时状态台账；Owner/gate 仍以唯一运行台账为准。
+- [INDEX.md](INDEX.md)记录全目录文档归属、承接关系和保留边界，不是实时状态台账；历史日期记录仍只代表当时观察，Owner/gate 以唯一运行台账为准。
 
 
 <!-- SDD delivery reconciliation 2026-09-06 -->

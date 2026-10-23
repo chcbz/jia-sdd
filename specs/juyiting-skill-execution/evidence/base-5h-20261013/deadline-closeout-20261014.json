@@ -1,0 +1,242 @@
+{
+  "recordedAt": "2026-10-14T07:46:50.344869+08:00",
+  "task": "JYT-SKILL-SE2-20261013",
+  "status": "DEADLINE_MISSED_NOT_COMPLETE",
+  "deadline": "2026-10-14T02:14:52+08:00",
+  "api": {
+    "commit": "b08677b50473afee2bc9ae6844bbac2b3b8efbe8",
+    "tree": "c52f9894143283b92275a887f0dfb6398cd9e4e3",
+    "validation": {
+      "at": "2026-10-14T01:02:27+08:00",
+      "commit": "b08677b50473afee2bc9ae6844bbac2b3b8efbe8",
+      "tree": "c52f9894143283b92275a887f0dfb6398cd9e4e3",
+      "exitCode": 1,
+      "kind": "ACTUAL_FORMAL_LOCAL_RELEASE_BUILD_NOT_INSTALLED",
+      "log": "/var/tmp/cyf-skill-base-api-build-20261014-r4/local-build-sanitized.log",
+      "logSha256": "5a00d358ed137bd6d1110b6aaa31105f471f4f952bd714e6498335d2f73d03ca",
+      "tests": "READ_ACTUAL_XML",
+      "sourceCleanAfter": true,
+      "productionTouched": false
+    },
+    "tests": [
+      {
+        "task": ":agent:jia-agent-service:managedHostingRegression",
+        "reportCount": 10,
+        "counts": {
+          "tests": 109,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "status": "PASS"
+      },
+      {
+        "task": ":agent:jia-agent-service:skillManifestContract",
+        "reportCount": 4,
+        "counts": {
+          "tests": 79,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "status": "PASS"
+      },
+      {
+        "task": ":agent:jia-agent-service:skillReleaseRegression",
+        "reportCount": 19,
+        "counts": {
+          "tests": 148,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "status": "PASS"
+      },
+      {
+        "task": ":starter:publicArtifactVerifierTest",
+        "reportCount": 3,
+        "counts": {
+          "tests": 64,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "status": "PASS"
+      },
+      {
+        "task": ":starter:poiProductionRuntimeClasspathTest",
+        "reportCount": 0,
+        "counts": {
+          "tests": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "status": "NOT_COMPLETED"
+      },
+      {
+        "task": ":chat:jia-chat-service:chatDeliberation",
+        "reportCount": 0,
+        "counts": {
+          "tests": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "status": "NOT_COMPLETED"
+      },
+      {
+        "task": ":economy:jia-economy-service:skillPublicationRegression",
+        "reportCount": 0,
+        "counts": {
+          "tests": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "status": "NOT_COMPLETED"
+      }
+    ],
+    "failure": {
+      "task": ":starter:poiProductionRuntimeClasspathTest",
+      "category": "dependency_version_constraint_conflict",
+      "details": "json-schema-validator strictly1.5.9 in chat conflicts with SpringAI2.0.0/MCP2.0.0 transitive3.0.1/3.0.0 runtimeClasspath constraints"
+    },
+    "published": false
+  },
+  "web": {
+    "commit": "ebba07a1f18388f6519e3595831f59c1e708c87f",
+    "flow": {
+      "queriedAt": "2026-10-13T23:44:03.610Z",
+      "org": "5fb7d76ee6f9d07f148529c7",
+      "pipeline": "4403172",
+      "run": 209,
+      "status": "FAIL",
+      "sources": [
+        {
+          "repo": "https://gitee.com/chcbz/cyf-web-kit.git",
+          "branch": "develop",
+          "commits": [
+            "ebba07a1f18388f6519e3595831f59c1e708c87f"
+          ]
+        }
+      ],
+      "stages": [
+        {
+          "name": "Frontend develop CI",
+          "jobs": [
+            {
+              "id": 534484188,
+              "name": "Locked install, full tests, and Vite build",
+              "status": "SUCCESS",
+              "actions": [
+                {
+                  "type": "LogPipelineJobRun",
+                  "disabled": false
+                },
+                {
+                  "type": "GetPipelineArtifactUrl",
+                  "disabled": false
+                }
+              ]
+            },
+            {
+              "id": 534484189,
+              "name": "JavaScript code scan",
+              "status": "SUCCESS",
+              "actions": [
+                {
+                  "type": "LogPipelineJobRun",
+                  "disabled": false
+                },
+                {
+                  "type": "GetPipelineScanReportUrl",
+                  "disabled": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Explicit fixed-version frontend release",
+          "jobs": [
+            {
+              "id": 534484190,
+              "name": "Install verified same-run dist 1.15.0",
+              "status": "FAIL",
+              "actions": [
+                {
+                  "type": "GetVMDeployOrder",
+                  "disabled": false,
+                  "deployOrderId": 71051084
+                },
+                {
+                  "type": "RetryPipelineJobRun",
+                  "disabled": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "configurationRestoration": {
+      "version": "1.1.0",
+      "at": "2026-10-13T23:45:24.611Z",
+      "operation": "update",
+      "org": "5fb7d76ee6f9d07f148529c7",
+      "pipeline": "4403172",
+      "candidateSha256": "31883fd59c9a33ef4847979fd99147375fda555d99498f17bc8cc5a6b94c389b",
+      "requestStartedAt": "2026-10-13T23:45:22.662Z",
+      "before": {
+        "name": "cyf-web-release",
+        "configSha256": "863ea01bfe5ab6a2c7c6b23691da6b48f5e9aa86a0a120fed207a10148b19cfb",
+        "canonicalConfigSha256": "080587f0f434f7e55bc9e84024abe26309c46bc01f359997fa37d4de58fffa11",
+        "configBytes": 56613,
+        "sourceCount": 1,
+        "sourceKinds": [
+          "giteeGit"
+        ]
+      },
+      "state": "APPLIED",
+      "ambiguousResponse": false,
+      "readback": {
+        "name": "cyf-web-kit",
+        "configSha256": "31883fd59c9a33ef4847979fd99147375fda555d99498f17bc8cc5a6b94c389b",
+        "canonicalConfigSha256": "390998968e302677f3be6dc525036ff352506b14e81ff56e3f29e38cb9133c10",
+        "configBytes": 58075,
+        "sourceCount": 1,
+        "sourceKinds": [
+          "giteeGit"
+        ]
+      }
+    },
+    "published": false
+  },
+  "runtime": {
+    "commit": "d113875bfb05d72014c0675c5439633f5fa97ef2",
+    "validationEvidence": "/var/tmp/cyf-skill-base-runtime-evidence-20261014/source-validation-result.json",
+    "preparedArtifactEvidence": "/var/tmp/cyf-skill-base-runtime-release-20261014-d113875-r1/delivery-final.json",
+    "productionActivation": "NOT_RUN"
+  },
+  "production": {
+    "apiPid": 3753013,
+    "apiHealth": "UP",
+    "jarSha256": "0584d9f149633e15679491ee68877459a8dab78f94b368c7eea0b4048c9d9b1b",
+    "runtimePid": 3560650,
+    "runtimeUnit": "cyf-agent-runtime-v1@unified.service",
+    "runtimeActive": true,
+    "migration": "NOT_RUN",
+    "marketplaceConfigurationTransition": "NOT_RUN",
+    "apiReadyMarker": "ABSENT",
+    "imagesScenario": "NOT_RUN",
+    "providerCallsThisBaseRelease": false
+  },
+  "remaining": [
+    "resolve exact candidate runtimeClasspath dependency conflict and finish full formal backend batch",
+    "honest write-exclusion, backup, schema and configuration migration, same-batch API install/verify",
+    "activate verified Runtime artifact and preserved configuration; publish/approve four packages and legally install skills",
+    "release same verified frontend artifact only after API verified",
+    "actual business-page upload image→inspect→edit→download acceptance"
+  ]
+}
