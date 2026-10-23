@@ -89,3 +89,7 @@
 - 生产仍待本次API发布后，用ziyue/吴用及带可辨识细节的图核验第二轮inputReceipt SHA=第一轮输出SHA、预览和最终验收。PDF、精确尺寸、517历史状态不在本轮。实绩以[handoff](../../docs/implementation/handoffs/PREVIOUS-OUTPUT-REVISION-20261023.md)及同Run证据为准。
 
 正式CI结果：Flow5260799/248 SUCCESS，3047项中2921通过、126跳过、0失败/错误；本节新增10项单测和1项真实MySQL查询用例均实际执行通过。validateLayering/fresh bootJar通过；Runtime消费者2项轻量检查通过。配置已恢复，尚未部署；详见[证据摘要](evidence/previous-output-revision-20261023/README.md)。
+
+### 后续授权发布及生产复核（2026-10-23）
+
+Flow5260799/249 SUCCESS，API1.16.31/041548f6同Run制品安装与health/readiness通过，测试计数同上且本次11项均实际执行。当前不是“未部署”，也不是完整验收：ziyue/吴用新事项519上传/预览/指派成功，但首轮识图被Runtime的`CODEX_APP_SERVER_CONFIGURED_EXECUTABLE_DRIFT`拒绝。共享Codex已为0.164.0，Runtime仍绑定0.161.0测量且没有0.164.0合同。多轮识图、生图、改图、逐轮SHA及最终验收仍NOT_VERIFIED；不因API上线重标通过。详见[发布与阻塞证据](evidence/previous-output-release-20261023/README.md)。

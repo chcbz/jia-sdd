@@ -23,7 +23,7 @@
 - API：单/多输出映射、去重、NONE/EXPLICIT、澄清继承、来源上限、异步未就绪、错误SHA/代际/任务/目标/账户与幂等重放；保留原正式返工和提交链。
 - 最早反馈：定向源码/合同检查；正式测试使用Flow5260799固定源码，包含新增用例及validateLayering，不本机Gradle编译。
 - 线上：获对应版本发布授权并部署后，用ziyue/吴用及带可辨识细节的图进行连续修改；断言第二次inputReceipt SHA=第一次成果SHA，不能仅以颜色/能验收代替来源正确。
-- 当前状态：源码已实现并合入API develop；Flow248测试/构建通过，未部署，生产业务验收待执行。下列19:14等条目为历史进度，不代表当前待办。分段耗时尚未独立测量。
+- 当前状态：源码已合入API develop并由Flow249发布为API1.16.31；安装及健康通过，生产多轮图片验收被共享Codex升级导致的Runtime执行文件漂移阻塞。下列19:14等条目为历史进度，不代表当前待办。分段耗时尚未独立测量。
 
 ## 2026-10-23 19:14进度
 
@@ -47,3 +47,20 @@
 - 2026-10-23 19:43临时Flow配置恢复：先核对仍为本任务候选且近期无活动Run，再恢复前值；update APPLIED且readback SHA `a0c800ec81833a9251f60bb2b32cfe0e2b6e3d559b4112c499feaedfb48e0dcd`一致。未取消/修改他人Run，无部署。
 - 紧凑证据见[本轮证据](../../../specs/juyiting-skill-execution/evidence/previous-output-revision-20261023/README.md)。原始日志/制品在本任务私有目录，不复制进Git。
 - 本轮未部署API/Web/Runtime；Runtime1.2.8既有发布与此次API修复分开。下一步需确认这次API固定版本的生产发布授权，再按同Run制品契约发布，用ziyue/吴用核验二次输入SHA等于上一版输出SHA、预览与最终验收。不能把Run248 CI-only制品回执当部署回执。
+
+## 后续授权：发布并完成多轮图片验证（2026-10-23）
+
+用户明确“那就上线，然后完成验证”。仅发布固定API041548f6/tree1bc5ae2，发布版本1.16.31；Runtime/Web不变，不发布后续其他develop改动。复用5260799，同Run完整原CI+新增来源测试、制品及授权安装，无外部等待作业；不拿248的CI-only包作本次发布。
+
+生产基线为b0735f57/API1.16.30/Run246，当前schema启动隔离已生效。本修复无DDL/数据迁移，前一版本仍与数据库兼容，因此使用现行安装器正常备份/失败恢复，不沿用上一轮跨schema变更的forward-only限制。安装器现行摘要已固定，不覆盖他人维护的工具；启动诊断沿用现行设置。发布互斥预检通过，标准health工具临时pause并记录本任务marker，收尾核对所有权后恢复。控制证据：`/var/tmp/cyf-previous-output-release-20261023/`。
+
+业务范围：ziyue/吴用，带可辨识细节的上传图多轮识别/改图、纯文字生图及后续识别/改图、连续两轮修改的逐轮inputReceipt来源SHA、PC/移动预览与最终验收。PDF仍不验，尺寸/字符错误如实记录，不自动扩展修复。
+
+## 发布完成及新阻塞（2026-10-23 20:30前后）
+
+- API1.16.31/Flow5260799 Run249 SUCCESS，部署单71707194单机Success；固定041548f6/tree1bc5ae2。3047项中2921通过、126跳过、0失败/错误；本次11项测试实际执行通过。归档SHA `72b2cd6fd11cebae03f1cd52b692fa0c85e2bdd0ca94d63951b98742fbc77c52`，JAR SHA `679751080beec4f482ba3c0fa494727a981f819875ad3b25b1d1b36e94490871`，receipt SHA `d21b8418c2e10de1af76e398c49be83a4884cdf4bd25c33dc421878219fa6e7d`；与安装记录、实际文件匹配。health/readiness UP；临时Flow配置已恢复且监控已resume。
+- ziyue/吴用创建测试519（会话1760458007097），上传/刷新/自动选中、手机预览、创建与指派通过；首轮识图在模型启动前失败，未继续生图/改图调用。
+- 根因：共享Codex于2026-10-23北京时间19:20–19:21被替换为0.164.0，Runtime1.2.8仍绑定原0.161.0测量，抛`CODEX_APP_SERVER_CONFIGURED_EXECUTABLE_DRIFT`。现行Runtime合同未包含0.164.0；仅重启不足以解决版本合同不匹配。没有证据确定哪个操作者执行了升级；本次API部署不改该包。
+- 519已准备资料但无engineThreadId/runningAt，Runtime为RECOVERY_REQUIRED；后端最后回读仍RUNNING/DISPATCHED。首次停止点击被浏览器写保护拦截，未抵达后端，未冒充取消成功；不直接改数据库或重放。
+- 当前结论为 **DEPLOYED / BUSINESS_REGRESSION_BLOCKED**，非完整验收通过。后续需处理Runtime对现用Codex的适配与项目专属依赖隔离，再执行完整多轮矩阵及519状态闭合；不擅自降级共享Codex、重启其他任务或关闭完整性校验。
+- 发布、截图及根因证据见[上线回归](../../../specs/juyiting-skill-execution/evidence/previous-output-release-20261023/README.md)。之前“未部署”条目仅为其记录时点的历史事实。

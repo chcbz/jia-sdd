@@ -551,7 +551,7 @@ SkillPackages.get按已批准版本找到实际包摘要/大小并读取store，
 
 ## 上一版成果进入后续议事来源（2026-10-23候选补充）
 
-源码实现API `041548f601385a3463fbba06b929991371d93d9c`（基线`b0735f57a7b454fa7a6fb9886fa3914131986779`）；本节已由Flow248局部验证，尚未部署，不重标旧范围或当前生产完成。详见[本轮handoff](../../docs/implementation/handoffs/PREVIOUS-OUTPUT-REVISION-20261023.md)。
+源码实现API `041548f601385a3463fbba06b929991371d93d9c`（基线`b0735f57a7b454fa7a6fb9886fa3914131986779`）；本节已由Flow248/249局部验证并发布为API1.16.31；生产多轮验收被Runtime共享Codex漂移阻塞，不重标旧范围或整体完成。详见[本轮handoff](../../docs/implementation/handoffs/PREVIOUS-OUTPUT-REVISION-20261023.md)。
 
 普通TASK_DEFAULT后续议事，按精确deliveryParent的保留成果链把媒体输出加入本轮CURRENT_CONVERSATION_ASSET来源；不自动扫描整个历史。EXPLICIT/NONE不隐式添加。输出与资产须在当前owner/task/conversation/generation/target内精确匹配请求、步骤、outputId和SHA；不根据文件名、颜色或时间推断来源。只读资产投影未就绪时明确拒绝本次新admission，保留原幂等key重试，不降级用最初上传资料、不同步运行归档投影。
 
