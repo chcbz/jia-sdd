@@ -76,3 +76,7 @@ P1 persistent domain lifecycle, scoped management API, unit/transaction tests. P
 T0/target unchanged. Candidate work closed within240minutes; full four-hour objective NOT achieved because mandatory gates remain. Per-phase human time is not independently measured; do not infer performance promises. Raw logs live in owned /mnt/Workspace/aps-20261023/p4complete and client-final-pinned; only sanitized summaries/source hashes/Flow guard snapshots/visuals committed. Root source delivery, diagnostic tests, formal Flow, full Runtime/browser and production acceptance remain separate states.
 
 - Root收口结构检查通过：sddw候选pins及18个导航目标核对，git diff --check通过；仅修复14处历史Linux绝对Markdown链接为相对链接，历史验收状态未改。证据摘要见verification-20261024/README.md；不把结构通过算作业务测试。
+
+## Main-flow integration review (2026-10-24T09:30:17.343821+08:00)
+
+用户新增条件授权：不影响主流程才合入develop。已fetch并二次核验Root/API/Web/Client最新develop；API/Runtime各4处文本冲突，真实库探针确认旧职位安装器/命令与当前SM-C1、测量链不兼容。结论NO-MERGE，未改变develop或生产；未运行新的整合后Gradle/Flow。详见docs/reviews/archive-position-skills-main-flow-review-20261024.md及verification-mainflow-20261024/。下一步先统一适配当前技能管理生命周期，不以旧候选诊断替代新整合结果。
