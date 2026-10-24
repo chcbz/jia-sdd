@@ -2,6 +2,17 @@ feature_id: single-db-tenant-gray
 title: "同库 tenant_id=1 业务测试区"
 design_version: "3.0-tenant-only-closeout"
 status: implementing
+feature_push_candidate_20261024:
+  branch: feature/multi-region-tenancy
+  api_commit: a94d77e3490e5960ec00798d1408b232fe152cf5
+  api_tree: 27d38799032612bc465287581b6a71df92a93187
+  web_commit: 2a13a86a668e57905fe190a00ec636689ab3dab8
+  verification: targeted_349_pass_layering_and_bootjar_pass
+  independent_review: accept_feature_snapshot_only
+  reviewer_runtime_model: unverified
+  deployment: not_requested
+  whole_grey_acceptance: not_ready
+  frontend_tenant_selection_or_partitioning: removed
 current_delivery:
   authority: scope-closeout-20261009.md
   database: existing_shared_database
@@ -18,7 +29,7 @@ owners:
   api: r4_recovery_finalize
   web: r4_recovery_finalize
 contract:
-  api_or_event_changes: "trusted tenant identity, exact row/file/event/async isolation and tenant-partitioned browser state for the opened Hall/conversation/library/task flows"
+  api_or_event_changes: "backend trusted tenant identity and row/file/event/async isolation; browser keeps client/account state only and does not select or partition by tenant"
   compatibility: "retain develop behavior and existing owner/client ACL; tenant 0 is an ordinary region; no second business database, real payment or production external effects"
 historical_platform_contract:
   api_or_event_changes: "planned: authorized tenant selection, many-to-many client grants, single-tenant tokens, data-domain migration, tenant/pool-scoped async contracts"

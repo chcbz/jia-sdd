@@ -1,5 +1,15 @@
 # 多业务区域 2.0 验收与证据
 
+## 2026-10-24 功能分支源码收口（非整体验收）
+
+后端候选 `a94d77e3490e5960ec00798d1408b232fe152cf5` / tree `27d38799032612bc465287581b6a71df92a93187`，前端 `2a13a86a668e57905fe190a00ec636689ab3dab8`；分支均为 `feature/multi-region-tenancy`。前端已删除tenant选区、配置、登录及缓存分区，保留OAuth client与账号隔离；后端保留可信tenant上下文、统一MyBatis隔离及fixed-tenant本地配置，无新增授权表。补齐被忽略的构建校验源码，修复合入develop后两处Gradle闭合括号遗漏，未开放额外写路由。
+
+后端在干净worktree经既有编排器及 `/tmp/cyf-gradle.lock` 执行：349项/25套件，失败、错误、跳过均0；`validateLayering`与fresh `:starter:bootJar`通过，217任务实际执行，耗时720.347秒。覆盖可信上下文、真实MyBatis/H2隔离、Agent目录/查询、OAuth及无授权表存储、启动只读校验、Starter配置及制品安全校验；使用定向测试编译选择器，不冒充全后端测试。JAR SHA256 `886a236d5f18b269d1c272b12261cc7d21504c06663bcca8932ac28d4ed1c5c9`。日志 `/tmp/cyf-api-push-verify-o2EZNb/verification.log`，SHA256 `ecb0a1d30804fee75d95c7b880e5c5d3a161e49aa552c9d1a216a6102f9794b8`；同目录 `feature-push-tests.init.gradle` SHA256 `c46c0eb70d2f43ed298c1554951fe2235a7a35ffd1869397a0ad5adf78536792`。临时日志/制品路径不是远端持久制品或发布回执。
+
+独立只读复审ACCEPT，仅接受保存上述feature源码；复核候选干净、无遗漏实现、无新增真实密钥、测试XML与JAR摘要一致。审查实际模型标识无法独立核验，不计作指定模型门禁已满足。
+
+整体仍 **NOT_READY**：招贤绑定/Runtime写路由、资料→议事→任务完整写链及tenant0/1共享库双向隔离尚未验收。本轮不部署、不重启、不执行共享库DDL/DML、不合入develop，也不发送可验收邮件。前端构建与定向复审通过；此前全量3331通过、2 pending、1地图快照超时，保留失败事实。
+
 ## 2026-10-07 CHECK parser 局部独立接受，整体 NOT READY
 
 attempt-5 七 FULL Java 任务569项/56 suites，zero fail/error/skip；完整1655停止输入
