@@ -310,3 +310,14 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 - Flow315 SUCCESS，180秒；3340注册/3338PASS/2pending/0FAIL。Web1.16.47/ecf003b，tree d985c0eecaf820a4f4a6db6b1f59d6c6e738d863；制品SHA241fee3d025d5e897364a906cfd32872657629fb066a70ec61a4ae74de1dade8，实际HTML及资源字节已核对，云端配置CAS恢复。
 - 浏览器无缓存刷新、ziyue原任务523/吴用，重新进入议事，旧普通CHAT仍保留，成果列表成功展示初始文字和已生成PNG，原404不再阻塞列表。用户侧明确选择红三角图片后自然发送识图请求e058588…，模型正确回答红三角/黑方块/黄圆；没有重新上传原图或手工伪造材料。
 - 已自然发送第二轮编辑7f17341…：同一成果仅将右侧黄圆改绿，保留红三角/黑方块，已受理。结果、生图、最终验收仍待继续；未将已上线与部分回归当成全量验收。第一次生成尺寸不符仍记录，未扩大为新增图片后处理功能。
+
+
+### 2026-10-25 11:04 本轮浏览器收口（部分通过，不报全部完成）
+
+- ziyue/吴用、任务523：首轮识图 → 原图蓝三角改红 → 选择生成图再次识图 → 同图黄圆改绿 → PC/移动预览 → 手机明确选择第二张PNG并确认验收。任务GET status=completed、taskVersion=6，首页刷新显示已完成。第一张PNG尺寸不符800×600仍是不通过项，本次流程验收不抹去质量差异。
+- 第二次编辑execution pwe_cedb0ef457685806806f336bc2f4eb529f8ae0988336b9ea45660d16c52b COMPLETE；输入回执DELIVERED的SHA45328efd…恰为首张生成图，不是重新上传原图。输出1405901字节/SHAa9f24b417418a36adb70af347e55996291ae2ba5db4ff24fc6f87feced4221b5，1448×1086；实图红三角、黑方块、绿圆，已人工看图核对。
+- 新图生成另建任务525，确认候选吴用后提交；无参考图。实际skill-capabilities仅image-edit1.0.0与pdf-extract1.0.0（均CALLABLE），没有新图生成技能；模型返回CLARIFY，要求提供可编辑图片或启用生成能力。未自动购买/授予/启用技能、未用图片编辑冒充纯生图。此项待明确能力配置，PDF继续不验。
+- 操作偏差：此前任务524的浏览器候选切换表达式出错，误确认默认卢俊义；不计吴用验收，不删历史掩盖错误，已主动告知用户。525重新执行前readback确认吴用后才点将。
+- 未完成项：①新图生成能力配置与实测；②第一轮明确800×600要求未满足（1448×1086），未扩展后处理；③API重启时临时runtime不可用可被TaskSkillPolicyServiceImpl归入allowed=false、ChatActionExecutionService转永久Rejected的路径仍待修复/回归，旧action没有自动重放。没有因本轮主流程通过声称以上问题消失。
+- 根develop已收录固定Web/API gitlink、Runtime源码/Flow/摘要和完整阶段记录；本地management-contract尚不在远端基线，避免把共享未跟踪整稿合入，本次两条Native/历史隔离规则同步到远端既有specs/archive-agent-maintenance/position-skills-contract-20261024.md。未合多区域、未新建worktree、未覆盖共享脏工作区。
+- 私有浏览器证据保留/var/tmp/cyf-position-only-20261025/browser：round1-edit.png、round2-edit.png、pc-edited-image-preview.png、mobile-edited-image-preview.png、mobile-round2-acceptance-selection.png、mobile-task523-accepted.png、mobile-image-generation-capability-missing.png。测试账号密码/token未写入仓库。

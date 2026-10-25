@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-25T02:55:54.870661+00:00",
+  "at": "2026-10-25T03:05:49.037113+00:00",
   "runtime": {
     "checkedAt": "2026-10-25T02:38:47.449304+00:00",
     "pid": 3485697,
@@ -11,7 +11,7 @@
     "artifactSha256": "8224fe3c86449094b9e77c95a93d2cf03eb530b8b5f58756ba535db42b4b5cb6",
     "identityConfigUnchanged": true,
     "recoveryRecordsUnchanged": 8,
-    "businessAcceptance": "PENDING: authenticated images and PC/mobile completion",
+    "businessAcceptance": "PARTIAL: selected-image recognition, two actual edits, PC/mobile previews and mobile final acceptance task523 passed. New-image generation blocked by missing skill; 800x600 requirement failed; restart denial risk remains.",
     "tests": {
       "total": 481,
       "pass": 479,
@@ -73,7 +73,7 @@
     "schemaStatus": "pass",
     "canonicalPathTests": 8
   },
-  "business": "PARTIAL: gallery, PC/mobile previews and followup recognition passed; second edit pending; image generation/final acceptance pending.",
+  "business": "PARTIAL: selected-image recognition, two actual edits, PC/mobile previews and mobile final acceptance task523 passed. New-image generation blocked by missing skill; 800x600 requirement failed; restart denial risk remains.",
   "webRun314": {
     "at": "2026-10-25T01:59:59.305501+00:00",
     "flow": "4403172/314",
@@ -160,12 +160,15 @@
       "first edited PNG delivered after upgrade without resending",
       "PC/mobile preview of actual 1448x1086 result",
       "legacy CHAT mixed history gallery restored on Web315",
-      "selected generated image re-recognition: red triangle/black square/yellow circle"
+      "selected generated image re-recognition: red triangle/black square/yellow circle",
+      "second edit: yellow circle to green; red triangle and black square retained",
+      "second edit actual provider input SHA equals first generated image SHA",
+      "mobile selected second image acceptance completed task523, version6",
+      "refresh home shows task523 completed"
     ],
     "pending": [
-      "second edit result",
-      "new image generation",
-      "final acceptance"
+      "image generation: task525 Wu Yong capability catalog contains only image-edit and pdf-extract; no generation capability enabled",
+      "restart-time temporary runtime denial classification regression"
     ],
     "excluded": [
       "PDF"
@@ -191,6 +194,82 @@
     "followupRequests": {
       "recognition": "mmd-typed-request_e05858872873eb0d3487e8e666f5dcbcb9bc4746",
       "edit": "mmd-typed-request_7f17341c60efeb4caf9bc5fbdfb43cf38e50a964"
+    },
+    "secondEdit": {
+      "requestId": "mmd-typed-request_7f17341c60efeb4caf9bc5fbdfb43cf38e50a964",
+      "executionId": "pwe_cedb0ef457685806806f336bc2f4eb529f8ae0988336b9ea45660d16c52b",
+      "inputSha256": "45328efdb2a4872aec1b468c78bb928e18dbaecece1e6bb0e1dd482ffa8a700a",
+      "inputDelivery": "DELIVERED",
+      "sha256": "a9f24b417418a36adb70af347e55996291ae2ba5db4ff24fc6f87feced4221b5",
+      "bytes": 1405901,
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "observedColors": [
+        "red triangle",
+        "black square",
+        "green circle"
+      ]
+    },
+    "acceptance": {
+      "taskId": "523",
+      "status": "completed",
+      "taskVersion": "6",
+      "completedAt": 1792897131433,
+      "scope": "selected second edit, not first-turn requested 800x600 quality pass"
+    },
+    "generation": {
+      "taskId": "525",
+      "conversationId": "1760458007419",
+      "requestId": "mmd-typed-request_1b54ffb134b50512daaf40a5e84cd91e983507de",
+      "agent": "吴用",
+      "state": "CLARIFY",
+      "capabilities": {
+        "catalogRevision": "1",
+        "items": [
+          {
+            "skillKey": "image-edit",
+            "skillVersion": "1.0.0",
+            "title": "图片编辑",
+            "state": "CALLABLE",
+            "reasonCode": null,
+            "costInfo": {
+              "mode": "UNKNOWN",
+              "amount": null,
+              "currency": null,
+              "source": null,
+              "description": "由绑定服务商收费，平台仅登记说明。",
+              "unit": "image",
+              "updatedAt": null
+            }
+          },
+          {
+            "skillKey": "pdf-extract",
+            "skillVersion": "1.0.0",
+            "title": "PDF 正文读取",
+            "state": "CALLABLE",
+            "reasonCode": null,
+            "costInfo": {
+              "mode": "UNKNOWN",
+              "amount": null,
+              "currency": null,
+              "source": null,
+              "description": null,
+              "unit": null,
+              "updatedAt": null
+            }
+          }
+        ]
+      },
+      "sideEffect": "no generation capability granted or enabled by test operator"
+    },
+    "operatorMistake": {
+      "taskId": "524",
+      "agent": "卢俊义",
+      "reason": "candidate-switch browser expression failed; default candidate was confirmed accidentally",
+      "excludedFromAcceptance": true,
+      "historyPreserved": true
     }
   },
   "webRun315": {
@@ -542,6 +621,6 @@
         "sha256": "6e1f2e968ee578de7dd4be936d5420c5481fb7c79386e4e807e09bdc933fb170"
       }
     ],
-    "business": "Verified legacy ordinary CHAT no longer blocks output gallery or selected-image followup; second edit pending"
+    "business": "Legacy CHAT mixed gallery and continuation verified on production; task523 selected image accepted"
   }
 }
