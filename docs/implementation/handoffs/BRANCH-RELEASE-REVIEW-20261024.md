@@ -401,3 +401,71 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 - 实际UI验收包含finalizations和delivery-review-operations两次写入。诊断浏览器先后拦截了未授权的两条路径；逐条精确许可后使用“继续原验收”完成原操作，未重新生成。先前`generate-accepted-result.json`记录的是恢复前状态，不作为最终验收证据；最终为`generate-task-final.json`、`generate-image-proof.json`、`api303-pure-generate-mobile-complete.png`。曾命名`mobile-accepted`的截图实际上仍失败，不能凭文件名认定验收成功。
 - 尚未完成：①image-generate/image-edit1.2.0管理员发布、Owner正常升级及精确尺寸生产验证（现有账号403）；②议事在途动作临时离线恢复真实生产验证。原技能管理安装恢复、纯生图成功、之前523多轮识图/改图验收都不能替代上述两项。PDF按用户要求排除。
 - 下一步：有发布权限的管理员通过既有发布API发布同Run47两份不可变包，先核对发布目录写权限与正常升级报价路径，再由吴用Owner安装/升级；不直接写产品/权益，不自行给账号授ROLE_ADMIN。其后进行精确尺寸及在途动作恢复的同链验收，补最终回溯结论。本次仅阶段收口，不声明全部交付完成。
+
+### 2026-10-25 14:53 原维护发布入口核实（继续授权）
+
+- 用户质疑必须管理员，后要求继续。已找到10月22日PDF安装记录及原root维护harness：授权OS root调用固定线上JAR中的原SkillPackagePublicationService，非普通用户HTTP入口，不改账号角色、不直接写商品/权益。此前只检查HTTP403就判定须用户提供管理员账号，遗漏了项目已有入口，现纠正。
+- 当前维护输入固定Flow303/JAR SHA6b4cc435…、两份Flow47技能ZIP、产品CAS=2、tenant0/client jiafewnnv58ec2379c；保留coordinator→API发布锁（非阻塞获取）、真实DB身份和原publisher事务/摘要/不可变版本。原harness仅将“新产品CAS=0”改为本次已有产品精确CAS=2并原值传入服务；轻量JDK-only辅助类编译，无应用构建/启动/调度器。原工具源码/类摘要及新辅助类记录在maintenance-upgrade/binding；probe两包解析通过、readback未发布，尚未执行写入。
+- 恢复：任意不明确结果先readback，不重复发布/下单，不删不可变版本或回滚已发生的安装事实。旧1.0.0包/既有权益保留。两项1.0→1.2免费升级政策仅在零价目标包确认发布后按既有COVERED合同精确配置，保存原值，不直接写安装/权益；Owner仍必须通过正常quote/change取得升级授权。
+
+### 2026-10-25 15:18 管理升级修复上线与无重启验证
+
+- 原root维护入口已发布两份1.2.0，原发布服务/CAS/摘要/事务与发布锁保留，未改业务账号角色。两条1.0→1.2的COVERED零价政策已保存前值并readback；通过Owner正常quote/change升级，未直接写安装/权益/回执。
+- API1.17.5 `e7e6f7e3b90bbe8f7d00abc85f5dcaec3bc33de3` / tree `21ee90d0eeb0a8c31ad7b97d7478482df23e766b` 已合develop并由Flow5260799/304部署，约498秒SUCCESS。3307注册、3143通过、164skip、0失败/错误；定向管理发送与review guard通过。JAR SHA `db843f3a65eeb5d7ab7c7d81df822eb14a4d400c9c08ac6f9fe590f6ef96e4b7`，同Run源码/制品/安装、schema pass和readiness UP均核对，默认配置CAS恢复。
+- 原生图升级单 `sc_9bb87f44ef314abc819afac3ce3f46bb` 原ACTIVATE自动恢复RESULT/APPLIED，最终SUCCEEDED/runtimeSynced=true/1.2.0 READY；未重新下单。随后不重启API或Runtime，通过正常Owner报价/UPGRADE提交改图单 `sc_3858a90fa3a14b4d9ccbf730daf7f215`，约10秒SUCCEEDED/runtimeSynced=true/1.2.0 READY。两项目录revision6。
+- 根因边界：源码已证实管理连接就绪错误依赖执行目录AVAILABLE，修复使管理通道仅依赖已认证、durable healthy、精确owner/tenant/client/Agent与当前session/fence；执行目录和权益准入没有放宽。首次目录失效的Runtime触发原因尚无直接证据，不声称PREPARE必然导致目录失效。不重启的第二次完整升级证明新链路可完成，不将重启本身等同根因证明。
+- 证据：`image-size-fix/management-liveness/verification.json`、`skills-after.json`及原quote/change响应。剩余：ziyue精确尺寸生图/改图/PC移动验收、在途业务动作断线恢复；此前525的1254×1254纯生图验收不代替这些项。
+
+### 2026-10-25 15:33 精确尺寸回归发现与修复候选
+
+- ziyue正常页面创建任务526、指派吴用，会话1760458007471。创建/点将首次被测试驱动误列写路径拦截，按真实creation-operations/v2与point-and-deliberate精确许可后使用原操作恢复，未重复创建；不是服务端业务故障。
+- 原请求 `mmd-typed-request_474234162f7e9bf646200621bfaa2eed43d9504c` 在模型启动前失败，Runtime原recovery记录明确 `CHAT_FAILURE: ACTION_MODEL_SCHEMA_UNSUPPORTED`。已冻结目录中两图片技能1.2.0均带合法可选size及pattern，而模型适配器只支持全字段必填且不接受pattern；这才是此次“正在理解”未出图的直接原因。与早前历史ACTION_SELECTION_INVALID不混为一谈。证据 `image-size-fix/model-schema-diagnosis.json`。
+- 修复Runtime候选1.3.6/engine1.1.3 `c4688cf792a2a24668b601fab6e5cea624df7e0c`，tree `f550488e1cfeb1a344e579d5622c3a48896bda5f` 已合isp-install develop。只改现有模型schema适配、规范化、原关键回归和版本；不覆写技能1.2.0包/不改权益。不把合法可选参数设成业务必填，也不删除执行时manifest完整校验。
+- 本机轻量定向20/20通过。Flow48因启动清单漏列本次model-schema定向套件，于部署前受控取消，约79秒；不是成功/发布证据。修正selector后Flow49使用同一固定源码，保留原回归并补受影响套件；不是因达时限拆Run重置，原终态和日志保留run48-canceled。Flow49仍在进行，后续据真实结果填写。
+- 原任务尚未生成图片、未完成尺寸验收；恢复记录不自动重放。发布后通过当前用户原“停止本轮回复”完成旧请求终态，再正常续议同一任务，不能改写数据库状态或伪造Provider完成。
+
+### 2026-10-25 15:42 安装空间阻塞与恢复保护
+
+- Flow49云端539注册、537通过、2skip、0失败；安装在停止服务前失败：完整停写快照按实际目录计算需2,358,145,024字节，候选暂存后剩余约1.63GB。无PREPARED_STOPPING/STOPPED记录，线上PID3561946与Runtime1.3.5未变，不将测试成功当上线。
+- 已清理本任务4份可从同Run tgz恢复的重复payload解包目录，保留制品、测试与源码证据。另将本任务20261025-image-size恢复快照无损gzip归档，完整解压逐字节SHA复核与原state.sha256一致后删除冗余未压缩副本；备份没有丢弃。state.tar.gz约953MB，原快照2,211,706,880字节/SHA9b8a3ba9…，恢复说明及双摘要写在原备份目录state-compression.json/RECOVERY.md。不恢复旧业务状态、不动其他任务备份。
+- Run49失败证据、同Run tgz及未停服恢复元数据归档在model-schema-release/run49-disk-blocked；仅移除未启用暂存候选。重新固定当前配置/身份/恢复记录与锁观测，空间恢复约3.2GB后启动Flow50，源码与测试选择不变。不是盲重试，也未绕备份/锁/600秒限制。Flow50结果另记。
+
+### 2026-10-25 15:58 Runtime发布与尺寸生产证据
+
+- Flow5264702/50 SUCCESS，约513秒；539注册、537通过、2skip、0失败，精确源码c4688cf7、同Run制品SHA `2f88c6f25b2717885410e3b3ac84a73f65b6124167c88fb58c2a55335aa0333e`。固定app启用Runtime1.3.6/PID3627888；16配置/7身份未改、9恢复记录保留，674同Run文件核对通过。初次在线检查分别观测到旧PID快照、未收到首个ACK；等待实际新鲜心跳后15:52:48三个Agent均connected/registered/ready及新ACK，通过在线核验。不是将systemd启动视作通道健康。
+- 任务526旧失败turn经真实取消API以expectedStateVersion1/lastDeltaSeq0返回CANCELLED/version2，未改DB或重放recovery。第一次点击因测试驱动误许可request级而非turn级cancel被拦截；确认未出浏览器后精确许可正常turn取消，再页面“核对停止结果”恢复。该拦截不算产品缺陷。
+- 在同任务正常续议，request `mmd-typed-request_7744b832f3a7c37551edb0a002ed47ea618ae2cd` / action `act_c2777b666181dd16f8d593689c6509bacd7c2d85`，真实parameters.size=800x600、sourceRefIds=[]；child `89be005ffb9a38a91be812d0409b3d7af90e4b9cb663548f04171ce8e3c7fb4f` 已出图。下载自真实浏览器blob：800×600、300401字节、SHA `24f9b750f73da9c4f5deb6c735534e1e7cf97f2110b45a9ed93ec66f53207d88`。PC目视白底居中紫色五角星、无文字，消息缩略图放大预览通过。证据size-generate-proof.json、size-generation-inflight.json、runtime136-task526-generate-preview-pc.png。
+- 测试浏览器执行过网络离线/恢复命令，未直接证明完整断线持续时间；不计Runtime在途离线恢复通过，不替代共享服务故障注入。识图续议、改图、移动验收继续中。
+
+
+### 2026-10-25 16:14 空取消历史阻塞续聊修复
+
+- 任务526成功生成800×600后，同会话请求识图在浏览器本地被“成果上下文尚未完整读取”挡住，没有POST。刷新、重进与reload均可重现。只读目录hasMore=false，旧请求CANCELLED/全部turn取消/lastDeltaSeq0/finalMessageId null/steps空，成功新请求与EXECUTE结果同时存在；证据image-size-fix/cancelled-catalog-before.json。
+- 已证实根因：Web将每个CHAT历史条目都要求READY，即使取消前从未产生任何输出；readOne还会残留failedReads。不是图片Provider失败，不通过删除数据或新任务绕过。
+- 修复Web1.16.49候选075c0c28a7cf7410d915dc15ca5eb5ff50ace01d：仅对权威且空输出取消免除typed-outcome等待，同步清除该请求旧读取失败；UNKNOWN、部分输出、有final、有EXECUTE及缺失字段仍受保护。原型规格先行同步，交互原型原reply-stop已有停止后续聊能力，不新增UI。复用原关键测试7/7轻量检查通过；正式Flow4403172/317已启动，尚未据此认定上线。
+- 规避/长期方案：按服务端完整请求目录区分“无成果终态”与“有成果待读/未知执行”，复用原状态机与现有测试夹具，不为每个格式增加分支或新校验框架。真实多轮验收必须包含取消历史与成功成果共存，而不是只验证全新会话。
+
+
+### 2026-10-25 16:24 Web发布、识图与改图生产结果
+
+- Web1.16.49 / 075c0c28a7cf7410d915dc15ca5eb5ff50ace01d / tree752e9bccdf3e2bda5506f28424e6e214e8010518 已合develop，经Flow4403172/317 SUCCESS（约190秒）；3341注册、3339通过、2pending、0失败。同Run制品SHA d39e46a89d0c7b8c4d7ced85a3dab2d199c30fc6f2f2b4432300581dd50e7ce2；安装记录、线上HTML与资源字节一致。临时Flow配置已CAS恢复，不改其他任务配置。
+- 原任务526不删历史、不新建任务：真实识图POST通过，request c43864d4…返回READY/ANSWER“实心紫色五角星，位于白色画布中央”。Runtime准备回执carrier=LOCAL_IMAGE，source SHA24f9b750…与实际生成图一致，不以文字回复单独冒充识图证据。
+- 正常续议修改紫星为绿星：request4a8c2a41… / action e0246b98…，parameters.size=800x600，sourceRefIds指向原图，child b63de0a7…已COMPLETE/RESULT_COMMITTED。实际PNG800×600、366984字节、SHA afb002bf13768896328f9c7a2eab6e08472b6414010bc675671becad792badfe；目视绿色五角星居中、白背景、无文字，PC与390×844手机放大预览通过。继续核验改图后再次识图与手机正式验收；尚不宣称整项完成。
+
+
+### 2026-10-25 16:30 最新收口：主流程已通过，故障注入不冒报
+
+- 任务526完成“800×600纯生图→原图识别→紫星改绿色且保留800×600→新版再次识图→PC/390×844预览→手机选择新版→确认验收→返回事项列表”。新版再次识图request ae3118ca…实际准备材料包含绿色图SHA afb002bf…与旧紫图；模型正确识别最新为绿色居中，不是靠文字回复推断资料接入。
+- 手机验收正常一次finalizations、一次delivery-review-operations，无驱动拦截/重复写；只读结果task.status=completed、taskVersion=4，currentDelivery.state=ACCEPTED，已选唯一RESULT摘要afb002bf…与实际800×600绿色PNG相同。已完成议事隐藏验收按钮并显示仅供查看成果；返回列表保留任务且显示已完成。截图、摘要和读回见position-only-integration-20261025/image-size-management-followup.json。
+- 本轮无在途Flow。API1.17.5/304、Web1.16.49/317、Runtime1.3.6/50均已安装及在线核验，两图片技能1.2.0已发布并经正常UPGRADE READY。四仓position-skills已有develop集成；未合multi-region-tenancy。共享工作区未reset/pull，无新增worktree或子Agent；自有测试浏览器已退出。
+- **唯一仍未完成的专项验收：生产在途动作遇Runtime/后端临时断连的故障注入恢复。** 目前统一Runtime承载三Agent，未核实仅影响吴用的隔离入口；本次不擅自停共享服务制造事故。不将API定向回归、安装自动恢复或浏览器离线尝试冒充该项。后续需隔离测试实例或明确共享服务停机影响窗口，验证同execution恢复且Provider不重复调用、既有授权撤销仍拒绝；不自动重放旧UNKNOWN/DEAD。PDF依用户指示排除。
+
+#### 本轮回溯补充（已证实事实）
+
+| 现象 | 根因 | 解决 | 规避及长期落点 |
+|---|---|---|---|
+| 发布新版技能提示需要管理员 | 把HTTP业务管理入口的ROLE_ADMIN要求当成唯一发布方式，遗漏原root维护harness | 核实后沿用原发布服务/harness和锁/CAS/事务；未给账号提权、未改权益表 | 区分业务身份与部署运维身份，先复用runbook已授权入口，不把缺某类登录权限直接当系统缺陷 |
+| 心跳在线但升级停在PREPARING/ACTIVATING | 管理WS匹配依赖执行目录AVAILABLE，形成恢复依赖循环 | API管理连接改依赖认证注册、durable healthy及精确身份/fence，执行目录准入保留；原升级单恢复，另一技能不重启完成升级 | 管理面与执行面分离，不能用业务能力目录判断恢复通道；目录最初失效触发未直接证实，不补造因果 |
+| 可选size合法却在模型前失败 | Provider严格schema适配仅接受全字段required且不支持pattern | Runtime可选字段nullable投影、返回后按原manifest规范化校验；实际800×600生成和修改通过 | 用已发布真实manifest覆盖规划→执行全链；Provider语法适配不能变成业务字段强制必填，不按格式修改主流程 |
+| 有图后续聊被旧取消回合拦住 | 每条CHAT历史都要求READY成果，且旧failedReads残留 | Web仅免除权威无输出取消的成果待读，保留未知/部分结果/执行保护；同任务识图与改图通过 | 终态不等于有成果；现有状态机明确空取消边界，回归覆盖取消历史与当前成果并存，不清数据绕过 |
+| Runtime安装被空间检查拦住 | 实际快照空间不足，而非模型/权限问题 | 停服前失败并保留旧线上；清本任务重复解包，无损压缩已核验备份后同源码重发 | 保留恢复快照、制品摘要与真实失败记录；发布前按实际候选/备份需求确认空间，不删除必要保护 |

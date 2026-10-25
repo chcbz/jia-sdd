@@ -158,3 +158,14 @@ Runtime的presence回执已在线正常消费，但仍有其他协议拒绝待�
 - 原生模型schema投影目前是保守子集：封闭对象、全部属性required；不支持可选/开放对象/`$ref`等时明确`ACTION_MODEL_SCHEMA_UNSUPPORTED`，不能静默删参数、填默认值或宣称完整Draft2020-12支持。image-edit的空封闭参数对象已实际执行。
 - 当前验收：上传、形状/颜色/位置识别、蓝三角改黄、归档及真实下载通过；黑色像素字体Q7Z5两次识别为0725，**全文字识别验收失败，总体PARTIAL**。生成图放大且有轻微纹理，不承诺像素级无损修改。
 - 运行排障/配置/发布入口见[现行runbook](../juyiting-runbook.md)；原合同和逐项结果见[特性验收](../../specs/juyiting-skill-execution/acceptance.md)。临时执行器不作为长期发布入口；原始制品、失败回执、输入/输出摘要继续保留，不能清理成“全部成功”。
+
+
+### 图片技能与空取消历史的现行边界（2026-10-25局部核验）
+
+源码范围：API e7e6f7e3、Web075c0c28、Runtime c4688cf7；仅覆盖技能管理、模型schema适配与媒体续聊，不重标本章其余旧基线。
+
+- 技能管理SM-C1使用已认证Native WebSocket；执行HTTP pull是另一条链。管理恢复以当前唯一session/身份/fence及durable健康为准，不依赖待恢复的执行能力目录AVAILABLE；真正执行仍检查技能权益、绑定及目录准入。
+- image-generate/image-edit 1.2.0可选size；精确尺寸在图片runner做等比缩放与透明留边，保留Provider原成果，恢复不重复调用Provider。没有要求时可省略，不按文件格式扩充议事主流程。
+- 模型严格schema是原manifest的适配投影：可选参数可用nullable表达省略，只有原本不允许null的可选字段才把模型null还原为省略；原允许null保留null。Provider投影可省略不兼容pattern，但返回值须按原manifest完整校验后形成正式摘要，不取消未知执行语义/权限/完整性保护。
+- 服务端目录确认CANCELLED、所有非空turns均取消且lastDeltaSeq=0/finalMessageId=null/steps=[]、无已有READY成果的历史回合，不是未读取成果，不得冻结后续识图/改图。未知、部分输出、final消息或执行步骤不适用。不删历史、不自动重发。实现与关键回归见Web useHallTypedDeliberation.js及juyiting-media-delivery-basis.test.js。
+- 线上任务526已验证800×600生图、识图、改图、再次识图、PC/手机预览及选择新版验收，文件摘要与ACCEPTED正式交付一致。**在途Runtime/后端故障注入恢复未验**，不与主流程通过混淆。完整证据及异常回溯见既有BRANCH-RELEASE-REVIEW-20261024 handoff末节与position-only-integration-20261025/image-size-management-followup.json。

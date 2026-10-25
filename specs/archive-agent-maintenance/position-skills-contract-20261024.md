@@ -228,8 +228,8 @@ Flow5260799 与 4403172 的现行分支 guard 不允许本候选；未修改流�
 ### Native 技能在线判定（2026-10-25 回归修正）
 
 - 当前 Runtime 的技能执行走已认证 HTTP pull；技能管理仍走已认证 WS durable manager，不在 `readyCommandTypes` 声明旧 `SKILL_INSTALL`。在线判断不得把“没有旧 WS 安装适配器”解释为 Agent 离线。
-- Native 在线事实必须同时满足：当前已注册且持久状态健康的连接、精确 tenant/client/owner/agent、唯一 AVAILABLE 技能目录与当前 installation/host/runtimeInstance/sessionGeneration fence。目录在线只证明通道，不能替代单技能 READY、安装权益、任务授权或摘要核验。
-- 风险与失败范围：跨身份、旧连接、错 host/代次、重复连接或目录不可用仍拒绝此次准入；不猜测权限、不重放历史任务。旧 WS `dispatchManagedSkill` 仍要求真正声明 `SKILL_INSTALL`，不得因 native 在线而下发旧命令。
+- Native 管理在线事实必须同时满足：当前已注册且持久状态健康的唯一连接、精确 tenant/client/owner/agent 与当前 installation/host/runtimeInstance/sessionGeneration fence。技能执行另外要求 AVAILABLE 目录及单技能 READY、安装权益、任务授权和摘要核验；管理通道不依赖被它维护的执行目录（2026-10-25后续管理活性修正）。
+- 风险与失败范围：跨身份、旧连接、错 host/代次、重复连接仍拒绝管理准入；目录不可用只拒绝业务执行，不能阻塞修复目录的管理命令；不猜测权限、不重放历史任务。旧 WS `dispatchManagedSkill` 仍要求真正声明 `SKILL_INSTALL`，不得因 native 在线而下发旧命令。
 - 实现入口：API `AgentWebSocketHandler.isManagedSkillSessionReady`；复用 `AgentWebSocketRawCommandDispatchTest.skillDispatchRequiresRealAdapterReadinessAndExactCurrentTransportFence` 验证 native 在线、旧命令未启用、错 fence、目录挂起和旧适配器兼容。生产任务523已复现：原图实际附载、ACTION_REQUEST持久化后被旧在线判断报 `SKILL_AGENT_OFFLINE`；修复后的正式Flow/业务结果另见本次handoff，本文不预报通过。
 
 ### 历史本地命令不能阻塞当前任务（2026-10-25）
@@ -261,6 +261,22 @@ Flow5260799 与 4403172 的现行分支 guard 不允许本候选；未修改流�
 
 `SkillManagementService`生成SM-C1 `{protocolVersion,requestId,messageType,messageId,data}`，其中`data.schemaVersion=2`。现行发送端却只解析旧根级`schemaVersion/commandType/orderId`，导致合法INSTALL被拒并留在PREPARING/RETRY。Native执行走HTTP pull不代表管理命令也走HTTP；管理仍通过现有WS durable manager处理。
 
-修复限定在`AgentWebSocketHandler.dispatchManagedSkill`：公共Command由既有SkillManagementCodec验证，核对租户/client/Agent/runtimeInstallation及owner，按当前注册连接、同fence和Native目录就绪选择唯一session，发送前再次确认，原字节原ID发送、不二次包装；身份/fence/幂等不放松，旧命令仍保留原适配器边界。旧已落库管理命令由原恢复器按同wire重送，不新建订单/安装，不复活旧业务UNKNOWN。必要回归扩既有`skillDispatchRequiresRealAdapterReadinessAndExactCurrentTransportFence`：Native管理真实wire发送、精确字节、错owner/host不发送；源码/Flow/真实安装证据分开。
+修复限定在`AgentWebSocketHandler.dispatchManagedSkill`：公共Command由既有SkillManagementCodec验证，核对租户/client/Agent/runtimeInstallation及owner，按当前注册连接、同fence和durable管理状态选择唯一session（1.17.5起不依赖执行目录就绪），发送前再次确认，原字节原ID发送、不二次包装；身份/fence/幂等不放松，旧命令仍保留原适配器边界。旧已落库管理命令由原恢复器按同wire重送，不新建订单/安装，不复活旧业务UNKNOWN。必要回归扩既有`skillDispatchRequiresRealAdapterReadinessAndExactCurrentTransportFence`：Native管理真实wire发送、精确字节、错owner/host不发送；源码/Flow/真实安装证据分开。
 
-实际版本：API1.17.4/ebdc87415b917e9a9eb24a45334b1effbb9d41a8，Flow5260799/303，管理原安装单恢复SUCCEEDED/runtimeSynced=true。Runtime1.3.5/1212369已部署；图片技能1.2.0仍未发布，当前吴用两图片技能为1.0.0；精确尺寸生产验收待管理员发布后进行。此管理恢复不能替代议事在途动作临时离线恢复验收。
+实际版本：API1.17.4/ebdc87415b917e9a9eb24a45334b1effbb9d41a8，Flow5260799/303，管理原安装单恢复SUCCEEDED/runtimeSynced=true。Runtime1.3.5/1212369已部署；2026-10-25 15:18复核：图片技能1.2.0已通过原root维护服务发布，吴用两项正常UPGRADE均SUCCEEDED/READY，普通账号未提权；精确尺寸生产验收仍待完成。此管理恢复不能替代议事在途动作临时离线恢复验收。
+
+### 2026-10-25 管理通道与执行目录分离
+
+管理PREPARE/ACTIVATE/READ本身用于安装和修复技能目录，不能以执行目录AVAILABLE为发送前提，否则目录更新/缺失会阻塞恢复。管理通道就绪仅认当前已认证注册、durableStateHealthy、唯一活连接及installation/host/runtimeInstance/sessionGeneration精确fence，仍核对租户/client/owner/Agent和原命令摘要。过期/重复连接、错身份、持久状态损坏仍不发送；任务执行继续按独立能力目录及权益授权准入，目录不可用不允许业务执行。
+实现入口AgentWebSocketHandler.matchesNativeSkill；复用现有传输测试验证缺失/暂停目录仍可发送合法管理wire、执行目录仍DISCONNECTED、错host/owner及关闭连接拒绝，不新增非关键测试套件。发布后必须回读原升级单终态与目录READY，不能把单测通过当生产恢复。
+
+### 2026-10-25 可选技能参数的模型适配（精确尺寸实测发现）
+
+生产任务526证明技能manifest合法不代表可直接作为Provider strict输出schema：1.2.0可选size含pattern，旧modelParameterSchema拒绝optional/pattern，导致模型调用前ACTION_MODEL_SCHEMA_UNSUPPORTED。本修复仅在现有议事模型适配边界：模型schema将可选属性表示为必填nullable；对原manifest不允许null的可选字段，模型返回null表示省略；原本允许null的属性保留null，原必填字段不省略。不增加默认值，不改变已发布manifest/技能包。Provider端不携带pattern以避免正则方言差异；输出仍以原manifest完整校验pattern、类型、未知字段，并在规范化后计算正式结果/摘要、交给后端。错误尺寸仍仅拒绝本动作，不进入Provider生图，不放松ACL、source选择或执行授权。
+
+实现：Runtime `juyiting-action-outcome.mjs` 的模型schema投影和参数规范化；复用 `juyiting-action-model-schema.test.mjs` 原方法，用实际已发布image-generate manifest覆盖800x600、未指定尺寸、非法尺寸/未知字段拒绝。原open schema/未知语义仍不猜测。测试通过不等于精确尺寸生产验收，结果见handoff。
+
+
+### 取消历史回合与未决成果的边界（2026-10-25，Web候选075c0c28）
+
+取消是回合终态，不等于成果READY。服务端请求目录明确CANCELLED且非空turns全部CANCELLED、各finalMessageId=null、lastDeltaSeq=0、steps=[]，并且没有已读READY成果时，该回合不参与媒体续议的unresolved判定，也不因其typed-outcome未产生而保留failedReads。仍保留历史消息。未知/在途、部分输出、有最终消息、有执行步骤或字段不完整不适用；不猜测执行完成、不重放、不解除身份/权限/成果摘要保护。实现入口useHallTypedDeliberation.js，回归复用juyiting-media-delivery-basis.test.js；原型reply-stop已支持停止后续聊，规格同步。
