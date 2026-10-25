@@ -21,7 +21,7 @@ pinned_revisions:
   api_commit: b9dede8bf88e66d6716033e9631d8aba7d43bd78
   web_commit: 925ff589c059af1e3de65ba02b6bee9553824ad2
   client_commit: 60ed1881cb6c5d2c22a547af61126d09a471137b
-  root_base_commit: 2003b0acf21407809c3c524d271a07dddf7b5888
+  root_base_commit: d2d8e02102ae28c894d2b28ac94c9419ae7271a4
 source_observation:
   evidence: verification-20261024/source-inputs.json
   component_remote_evidence: verification-20261024/component-remotes.json
@@ -31,7 +31,7 @@ source_observation:
   frozen_develop_client: cbc1050825a40378313f283e9f25dc46d44c1ea4
   production_verified: false
   release_evidence: false
-verification:
+historical_verification_20261024:
   api: diagnostic_113_pass_zero_fail_zero_skip
   api_layering: passed_diagnostic
   web: diagnostic_100_pass_no_new_lint_diagnostics
@@ -50,11 +50,11 @@ acceptance:
   evidence: acceptance-position-skills-20261024.md
   historical_84_cases_reclassified: false
 release:
-  status: not_started
+  status: partial_web_only_disk_blocked
   production_operations_authorized_by_this_document: false
-  production_changes: false
-  flow_run: null
-  build_origin: null
+  production_changes: true
+  flow_run: "Web313 SUCCESS; API297/Runtime42 build SUCCESS, installation FAIL"
+  build_origin: Alibaba_Cloud_Flow
   artifact_sha256: null
 implementation_handoff:
   status: candidate_pushed_acceptance_incomplete
@@ -66,7 +66,13 @@ current_integration_20261025:
   component_develop: merged_position_only_no_multi_region
   api_flow: '296 SUCCESS; 3305 tests, 0 failures, 164 skipped; real native archive passed'
   runtime_flow: '41 SUCCESS; 479 passed, 0 failures, 2 unrelated environment skips'
-  web_flow: '312 passed functional source; 1.16.45 versioned source awaits release Run'
+  web_flow: '313 SUCCESS; 1.16.45 installed and served bytes verified'
   local_script: ordinary_node_subprocess_user_authorized_no_os_sandbox
-  production: not_deployed_not_enabled
+  production: web_deployed_api_runtime_capacity_blocked_position_not_enabled
   evidence: ../../docs/implementation/handoffs/BRANCH-RELEASE-REVIEW-20261024.md
+verification:
+  api: '296 SUCCESS: 3305 tests, 0 failures, 164 skips; native archive passed'
+  runtime: '41 SUCCESS: 479 pass, 0 failures, 2 unrelated environment skips'
+  web: '313 SUCCESS: 3338 pass, 2 pending; deployed 1.16.45'
+  final_business_acceptance: pending_api_runtime_installation
+  current_evidence: ../../docs/implementation/handoffs/branch-release-review-20261024/position-only-integration-20261025/partial-release-disk-blocker.json

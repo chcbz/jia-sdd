@@ -232,3 +232,14 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 - Web仅将包版本从1.16.44升为1.16.45，源码925ff58；原功能树Web312通过，最终新版本正式发布仍需同Run测试/构建，不冒用312为新版本制品。
 - 已再次fetch核对基线，API/Web/Client分别正常快进push到远端develop：b9dede8/925ff58/60ed188；未force push，未移动共享脏工作区。根协调仓仍在独立worktree收口。未纳入多区域。
 - 当前仍未生产安装/DDL/开关启用。后续同Run版本化发布与在线核验分别落盘，不能将develop合入或测试成功当上线。
+
+### 2026-10-25 08:34 四仓已合develop；Web已上线，API/Runtime磁盘容量受阻
+
+- 四仓远端develop：Root58988984、API b9dede8bf88e66d6716033e9631d8aba7d43bd78、Web925ff589c059af1e3de65ba02b6bee9553824ad2、Client60ed1881cb6c5d2c22a547af61126d09a471137b。仅职位技能，未合多区域。根后续记录提交另计。
+- Web313 SUCCESS（约144秒）：1.16.45，3338PASS/2pending/0FAIL；同Run制品SHA `2cfb589a4591e03b0d67fd8c23b4fcfeb7bb63746c3c1d7e875abe1c4aa51ba9`，生产安装记录online_verified。独立核对同Run文件摘要、服务HTML及JS/CSS一致。首次本机Python证书库路径缺失，指定系统CA后验证通过，未禁用TLS校验。开始API响应超时导致归属UNKNOWN，未重复启动/取消；只读观察313，并以实际源码/制品/安装字节独立核验，不将归属推断写为确定。
+- API297（约324秒）测试/构建SUCCESS，安装FAIL：`insufficient same-filesystem capacity before unpacking candidate`，发生在旧JAR替换之前。生产仍旧ff819208/原PID2868975，readiness UP、安装摘要匹配。不能把Run失败说成已上线1.17.1。
+- Runtime42（约272秒）测试/构建SUCCESS，安装FAIL：`full stopped snapshot would not fit`，发生在stop之前；现行仍1.3.1/ec9ac757/PID2911669，三Agent registered/connected/ready。1.3.2未安装，不声称“不用沙箱”已在生产生效。
+- 实际磁盘曾只余139MiB；在原发布锁下核对当前程序/PID后，仅清掉本任务未启用暂存目录、失败API下载副本和已被313替代的312诊断下载；保留Run/源码/摘要/日志。不清理历史备份、业务/身份/会话数据或其他任务目录。清理后约0.7–0.8GiB可用；实际Runtime停写快照需2,181,009,408字节，尚未计Runtime候选及API候选/备份。容量是真实不足，不新增任意门槛，不改成无备份安装。
+- 全部Run终态且小于600秒，三套临时Flow配置已CAS恢复。未生产DDL、未启用position开关、未自动授予角色/审核包。统一PC/移动端/图片回归尚未进行：API/Runtime未装，不能在混合版本上冒充最终验收。自建只读浏览器已关闭。
+- 证据：本目录 `branch-release-review-20261024/position-only-integration-20261025/` 下 release-runs-summary、partial-release-disk-blocker、web-installation-verification、owned-scratch-cleanup。原始Flow含环境/下载信息的日志仅留私有 `/var/tmp/cyf-position-only-20261025/`。
+- 下一步：明确可清理历史制品范围或扩容，先满足真实备份/暂存空间，再以固定已合入源码安排新的同Run版本发布；不盲重跑、不本机构建部署、不绕锁/删备份。当前任务完成的是代码和合入，不是整套上线/启用/业务验收。
