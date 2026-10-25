@@ -223,3 +223,17 @@ Flow5260799 与 4403172 的现行分支 guard 不允许本候选；未修改流�
 因磁盘空间不足终止安装，生产Runtime仍1.3.1，普通进程新语义尚未生效。
 不取消备份/空间保护；position开关、DDL、角色/包授权及最终统一业务验收尚未完成。
 准确Run/摘要/现行版本见上述handoff和partial-release-disk-blocker.json，不将功能目标视为上线事实。
+
+
+### Native 技能在线判定（2026-10-25 回归修正）
+
+- 当前 Runtime 的技能管理走已认证 HTTP pull，不在 `readyCommandTypes` 声明旧 `SKILL_INSTALL`。在线判断不得把“没有旧 WS 安装适配器”解释为 Agent 离线。
+- Native 在线事实必须同时满足：当前已注册且持久状态健康的连接、精确 tenant/client/owner/agent、唯一 AVAILABLE 技能目录与当前 installation/host/runtimeInstance/sessionGeneration fence。目录在线只证明通道，不能替代单技能 READY、安装权益、任务授权或摘要核验。
+- 风险与失败范围：跨身份、旧连接、错 host/代次、重复连接或目录不可用仍拒绝此次准入；不猜测权限、不重放历史任务。旧 WS `dispatchManagedSkill` 仍要求真正声明 `SKILL_INSTALL`，不得因 native 在线而下发旧命令。
+- 实现入口：API `AgentWebSocketHandler.isManagedSkillSessionReady`；复用 `AgentWebSocketRawCommandDispatchTest.skillDispatchRequiresRealAdapterReadinessAndExactCurrentTransportFence` 验证 native 在线、旧命令未启用、错 fence、目录挂起和旧适配器兼容。生产任务523已复现：原图实际附载、ACTION_REQUEST持久化后被旧在线判断报 `SKILL_AGENT_OFFLINE`；修复后的正式Flow/业务结果另见本次handoff，本文不预报通过。
+
+### 历史本地命令不能阻塞当前任务（2026-10-25）
+
+- 已实测旧技能执行记录缺少 `taskSkillBinding`，包括已完成、有回执的历史记录；旧记录不能按当前执行合同重新准入，更不能补造绑定。Runtime扫描历史记录时的命令级 `SKILL_COMMAND_INVALID` 只隔离对应execution，保留全部原始命令、效果与回执，继续当前合法命令。
+- 本轮不清理数据、不把未知旧任务标记完成、不自动恢复或重放。最终轮询仍报告原错误、executionErrors和真实processed数量。共享私有目录、文件身份/权限、会话/锁归属和完整性错误仍中止，避免跨身份处理。
+- 实现 `skill-conversation.mjs` 的 `pendingCommands/poll`，复用既有历史UNKNOWN不饿死后续任务回归加入旧无绑定记录分支；不新增非关键测试套件。候选Runtime1.3.4/ed2855e，正式验证/安装状态见handoff。

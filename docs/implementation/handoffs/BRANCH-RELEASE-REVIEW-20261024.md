@@ -243,3 +243,70 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 - 全部Run终态且小于600秒，三套临时Flow配置已CAS恢复。未生产DDL、未启用position开关、未自动授予角色/审核包。统一PC/移动端/图片回归尚未进行：API/Runtime未装，不能在混合版本上冒充最终验收。自建只读浏览器已关闭。
 - 证据：本目录 `branch-release-review-20261024/position-only-integration-20261025/` 下 release-runs-summary、partial-release-disk-blocker、web-installation-verification、owned-scratch-cleanup。原始Flow含环境/下载信息的日志仅留私有 `/var/tmp/cyf-position-only-20261025/`。
 - 下一步：明确可清理历史制品范围或扩容，先满足真实备份/暂存空间，再以固定已合入源码安排新的同Run版本发布；不盲重跑、不本机构建部署、不绕锁/删备份。当前任务完成的是代码和合入，不是整套上线/启用/业务验收。
+
+
+### 2026-10-25 本任务工作区清理
+
+- 按用户要求删除 `position-only-20261025`、`branch-release-20261024` 两组共 8 个 worktree，以及同名两处 `/var/tmp/cyf-*` 临时目录；保留 Git 分支和提交，不影响其他任务工作区。
+- 未提交合并内容及必要发布控制面证据已保存至私有目录 `/home/isp/state/cyf-task-archives/worktree-cleanup-20261025/`（含恢复归档及 `cleanup.json`）；未将原始凭据/签名地址日志放入仓库。
+- 本次释放约 847 MiB；未删除生产备份、运行状态和依赖链接的外部目标。只做清理，未再次发布，API/Runtime 上线阻塞不因此视为解除。
+- 后续默认复用工作区、最少量创建并及时收口，已补充根 `AGENTS.md`。
+
+
+### 2026-10-25 09:22 发布续行与真实图片回归（未全部验收）
+
+- 经用户明确同意仅删除20261023-performance旧备份，保留最近恢复点；释放空间后启动Runtime43/API298，无新worktree，无多区域合入。
+- Runtime43 SUCCESS（终态观测518秒），1.3.2/60ed188已安装；同Run674文件摘要核对，三Agent fresh ACK/connected/registered/ready，配置身份未变，8份恢复记录保持。481测试/479通过/2跳过/0失败。
+- API298测试构建成功（3305/0失败/0错误/164跳过），1.17.1/b9dede8已安装并启动，实际JAR摘要匹配，readiness UP，实体目录8条检查通过。但安装器之后的F06 schema runner失败，Flow终态FAIL（观测479秒），不能记绿灯。只读诊断确认列、索引、collation相符，两张旧表共缺5个CHECK；未自动增加约束或修改数据，需核对历史迁移意图后修复发布契约。
+- Web继续使用已验证313/1.16.45，未重复发布。API及Runtime临时Flow配置均CAS恢复。
+- 浏览器ziyue/吴用，任务523：PC选择资料预览800×600、创建事项、点将、首轮识图成功；第二轮自然语言引用原图改色失败。真实工具输出为snapshot/bin/codex-code-mode-host缺失；系统原始Codex发行目录实际有该伴随程序（约74MiB），当前Runtime快照只复制主程序和codex-resources，遗漏同级bin助手。此为已确认工具启动根因；模型所述资料未附载仍需独立核对，不将其全部归因同一问题。
+- 移动端390×844已检查失败页面；后续生图、多轮改图、最终验收尚未完成，未伪报通过。原PDF排除继续有效。浏览器测试防误写曾拦截recommend/点将请求，补精确许可后以原点将标识续行，不把测试工具拦截列为产品故障。
+- 下一步限于上述阻塞：完整复制并追踪Codex配套可执行文件（兼容旧版无助手，不引入版本门槛），复用既有快照回归；核实F06缺失约束的历史依据，修正发布后置检查/必要迁移，不盲目重装或加回非必要限制。然后同Run版本发布并重验任务523的图片链。
+- 汇总与截图见`position-only-integration-20261025/release-verification-20261025.json`；私有恢复证据保存在`/home/isp/state/cyf-task-archives/position-only-release-20261025/`。
+
+### 2026-10-25 09:46 接续：Runtime配套程序与F06结构兼容
+
+- 单Owner，无新增worktree。接续时发现上轮已推Runtime c949cd4并启动Run44：481例/1失败/2跳过，失败为旧TOCTOU fixture的codex-link被误认成配套程序；未安装。修正主程序自身别名识别，并将既有fixture启动链接改为launcher-link（原替换攻击断言保留），本机两项定向PASS。最新develop c6e975686dbb41f846cbdefc263802af03239785/tree12f3537340343869a1d24ee970f783da1f65c05c，1.3.3。
+- Runtime45 SUCCESS，479PASS/2skip/0FAIL，674个同Run文件均核对；制品SHA be878bbdd6532c5349adad995d26d6c3954d348de336f0713973fac3f471e50f。已安装固定app，PID3462663，09:44三Agent fresh ACK/connected/registered/ready，16份配置/7份身份及8份历史恢复记录未变。启动后的第一轮健康快照尚为旧PID，未将其误报成功，等待真实新PID健康后才写核验。业务回归仍待续行，不以通道健康替代图片成功。云端配置已CAS恢复。
+- F06缺失5个标量CHECK；两表当前0行，源码服务已规范版本/时间、自算SHA并对持久状态、审计、幂等回放校验；无法确认哪次历史操作移除了CHECK，不编造迁移原因。已在既有发布规范补充精确兼容：允许这5个重复约束缺失，存在则表达式/ENFORCED仍须正确；owner/唯一键/索引/列和supersession跨字段约束仍必需。无DDL/DML，无自动加回约束。
+- 发布helper仅patch compare_table；保留主机现有历史绑定路径。Root develop 3eeb2137037db60ce5684a14b00654e282720de1；通过临时Git index基于远端提交精确三文件变更，未覆盖共享脏工作区或合入多区域。API本地validation-policy追加同口径，但该文件原有未跟踪内容未整体提交；远端权威条目在docs/aliyun-flow-gate-policy.md。
+- F06既有主类36项PASS；第一次全文件41项运行另有5个已退役本地发布fixture导入失败（ApiLocalReadonlyInspectTest缺失），没有声称41全过或因此重建该退役路径。生产SHOW CREATE/I_S只读对照两表equivalent，未变数据。helper更新持有coordinator→release→schema文件锁并原子替换，备份/home/isp/baks/cyf-api-f06-compat-20261025，SHA719d344d…→7c2fbba6…；原Run298保持FAIL，不篡改历史结果。
+- API299按同一个b9dede8候选重新同Run测试/构建/部署，当前在途，有590秒受控watcher；尚不宣称发布/统一验收完成。过程证据私有/var/tmp/cyf-position-only-20261025，后续脱敏结果仍归档既有position-only-integration-20261025目录。PDF仍不验。
+
+### 2026-10-25 09:56 API已绿灯；浏览器定位原前端发布漏旗标
+
+- API299 SUCCESS，Run观测486秒；3305例/0失败/0错误/164跳过，F06 pass，两表existing-equivalent，无DDL。实际JAR fd1175e6…与299安装记录一致，readiness UP，实体路径8项PASS。两条已完成流水线配置已CAS恢复。
+- ziyue重新浏览器登录，吴用在线；对任务523以自然语言继续原图改色，再次得到“materializedRefs为空”的回复。实际请求0359c9bc-5e3f-4ec7-a8aa-c34dd3b67a59的Runtime归档证明：走旧CHAT/CHAT_FAST，facts没有typedDeliberation和materialsInput，只有availableRefs；不是把模型解释当根因。
+- 根因闭环：Web313构建命令仅npm run build，未携带曾在20261021发布配置中显式开启的MULTIMEDIA_DELIBERATION_V2_UI/TYPED_DELIBERATION_UI/FOLLOWUP_EXECUTE_V3_UI三旗标；仓库production默认又是undefined，旧测试竟要求它们关闭。点将首轮可单独走typed入口，因此首轮识图成功不能证明续聊入口正确。JuyiHall.handleSendHallMessage的开关为false时直接回落旧/stream，解释了后续资料与动作能力未附载。与Runtime助手漏复制是两个独立缺陷。
+- 最小持久修复：将已经发布的三旗标写入.env.production，复用既有production-build-flags测试改为验证已发布默认值；不新增功能/新套件、不改变原型样式。Web升1.16.46，develop321f358f0d8289292c90374d7cce21a3423a27c3，精确四文件提交；共享脏工作区未覆盖，无新worktree。Web314在途，完成后须刷新实际静态资源并证明续聊重新进入typed链路，再测图片，不提前报业务通过。
+
+### 2026-10-25 10:11 Web314核验与Native技能在线误判修复
+
+- Web314 SUCCESS，1.16.46/321f358，3338PASS/2pending/0FAIL，生产HTML及同Run资源摘要一致，配置已CAS恢复。已用ziyue/吴用在原任务523继续，未重新上传图片掩盖引用问题。请求 mmd-typed-request_5f7ed937df2825ce3f7e2354f9c3ec0f1118a4de 走 interactions/discussion；原图6357字节/SHA a80176157363cc3233eee10e3a89851cf743f70cbdbf3952d66ef534dc7b8d97 已实际附载并有inspectionInputReceipt。REVISION_REQUEST自动建立delivery-revision_aae9e3d4363f204afbd770a40590ab987a854df6，子轮生成合法ACTION_REQUEST。
+- 执行仍受阻：action act_b6f07a33ae02081bd7eb8976b90e53dff2169817 在outbox重试，精确日志显示SkillManagementService.admit→owned报SKILL_AGENT_OFFLINE；不是材料缺失，也不是旧ACTION_SELECTION_INVALID历史请求。根因是isManagedSkillSessionReady只接受SKILL_INSTALL旧WS适配器，当前Runtime已经通过HTTP pull管理技能且明确不再声明该旧命令。
+- 最小共享适配修复：保留旧适配器分支，Native通过当前持久健康注册连接及精确fence、AVAILABLE唯一技能目录判断在线；后续单技能/权益/任务授权不变；旧WS下发仍不能因native在线而启用。复用原测试补同用例分支，未新增非关键测试套件。规格已补management-contract。API develop996659b4c5ae023d5c1ac75735aea7319b844169，Flow300已启动，版本候选1.17.2；不将API299成功冒充新代码验收。
+- 单Owner、临时Git index提交两文件，无新worktree、无覆盖共享脏工作区、无多区域合入。当前未有新PNG交付，多轮改图/生图/最终验收继续待验证。
+
+
+### 2026-10-25 10:37 发布续行：历史记录轮询隔离
+
+- API300 SUCCESS，1.17.2/996659b已安装；同Run JAR摘要6c8550f462c5b0497b85ea49384f133b0de31005017356993b41e7a984bc4afb，readiness UP、F06通过。300继承selector漏掉本次修改的既有测试方法，未将3305项说成包含该回归；发现时已经安装，未中断部署。已在同一源码补跑CI-only301 SUCCESS，3306项/0失败/0错误/164跳过，精确方法skillDispatchRequiresRealAdapterReadinessAndExactCurrentTransportFence通过，无再次部署。301制品下载在JAR部分超时，前部XML/summary/receipt完整提取并绑定301与源码；不声称完整下载摘要通过。
+- API上线后，ziyue/吴用对任务523自然发起一次新改图要求；新execution pwe_ed33636e3cf90fd21c71ba4f8795fb381c995de32fdd02650e52d8326667 已准入READY，但Runtime每轮扫描旧command缺taskSkillBinding即中断，processed=0。已通过当前Java DTO重建该新命令并用已安装parser验证通过，定位为历史记录阻塞，不是新命令格式错误。
+- Runtime1.3.4/ed2855ea041dd7fb9475f2cd6c179446ada5f2b1已合入develop；pendingCommands按execution隔离命令级SKILL_COMMAND_INVALID，poll继续合法记录后仍报告原错误/processed；目录、主体、权限、完整性共享错误继续中止。复用既有不饿死后续任务回归，未新增非关键套件；无补造绑定、删除历史或重放旧副作用。
+- Flow5264702 Run46 SUCCESS，观测420秒；479PASS/2skip/0FAIL，固定app安装完成。制品SHA8224fe3c86449094b9e77c95a93d2cf03eb530b8b5f58756ba535db42b4b5cb6，恢复点/home/isp/baks/cyf-agent-runtime-v1/20261025-history-isolation，生产配置已CAS恢复。新PID3485697；刚启动的health仍是旧PID，未误报通道验收，继续等真实新健康与业务结果。
+- 尚未拿到修改后的PNG；多轮改图、生图、PC/移动端最终验收未完成。另观察旧action在API重启期间被ACTION_REQUEST_CHANGED永久拒绝，需继续核对暂时通道不可用与业务拒绝分类，未擅自恢复/重放旧action。PDF仍排除。
+
+
+### 2026-10-25 10:48 第一张图片已交付；发现历史CHAT续聊阻塞
+
+- Runtime新PID3485697的三Agent已取得fresh ACK并connected/registered/ready；674份同Run文件、16配置/7身份/8历史恢复记录核对通过。当前合法任务从READY自动进入WAITING_PROVIDER并完成，未重新POST或重放旧任务；旧命令仍报告SKILL_COMMAND_INVALID但不再饿死合法任务。
+- 首张改图PNG已实际取得：929000字节/SHA45328efdb2a4872aec1b468c78bb928e18dbaecece1e6bb0e1dd482ffa8a700a，Runtime输入回执确认原图SHA a8017615…已DELIVERED。实图红三角/黑方块/黄圆；PC1440×1000及移动390×844预览正常。但尺寸1448×1086，不满足明确要求800×600，不报完整验收通过。
+- 浏览器继续识图前，已明确选择本轮红色图片成果，发送仍无POST并提示“成果上下文尚未完整读取”；目录读取旧普通CHAT adc2b621…的typed-outcome为404后整批退出。两处根因：BountyExecutionOutputs未按单条隔离无typed成果的普通CHAT；useHallTypedDeliberation虽忽略404错误，submit仍把同一旧记录计为unresolved。
+- 最小修复Web1.16.47/ecf003b7d68f252495321cf4263600e2e28abba1已push develop，Flow315在途。原型规格先补“旧CHAT与当前成果并存”约定，无新增布局/按钮；只排除已认证同会话且无typed投影的404记录，不补造成果/权限、不恢复旧执行。已有typed成果失效、5xx、真正未完成、身份变化与摘要检查仍保留。复用既有媒体续聊和混合验收测试插入普通历史CHAT，不增加非关键套件。源码已静态检查；正式结果尚未回报。
+
+
+### 2026-10-25 10:55 Web315上线与真实续聊回归
+
+- Flow315 SUCCESS，180秒；3340注册/3338PASS/2pending/0FAIL。Web1.16.47/ecf003b，tree d985c0eecaf820a4f4a6db6b1f59d6c6e738d863；制品SHA241fee3d025d5e897364a906cfd32872657629fb066a70ec61a4ae74de1dade8，实际HTML及资源字节已核对，云端配置CAS恢复。
+- 浏览器无缓存刷新、ziyue原任务523/吴用，重新进入议事，旧普通CHAT仍保留，成果列表成功展示初始文字和已生成PNG，原404不再阻塞列表。用户侧明确选择红三角图片后自然发送识图请求e058588…，模型正确回答红三角/黑方块/黄圆；没有重新上传原图或手工伪造材料。
+- 已自然发送第二轮编辑7f17341…：同一成果仅将右侧黄圆改绿，保留红三角/黑方块，已受理。结果、生图、最终验收仍待继续；未将已上线与部分回归当成全量验收。第一次生成尺寸不符仍记录，未扩大为新增图片后处理功能。

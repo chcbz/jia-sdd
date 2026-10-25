@@ -251,3 +251,8 @@ Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前
 实验和精简证据见 `docs/implementation/evidence/backend-flow-5m-20261020/gradle-*`、`early-heavy-*`；原始日志/制品仍在原私有目录。当前无新增可复现缩时结论；216/228秒等历史快样本不是长期保证，也不是完整版本发布<=300秒的证明。
 
 最终原profile+计时候选 **e0e87d84...** 已通过Run209：CI **272秒（4分32）**、Gradle164.751秒，独立下载同Run制品核验302份XML，2728项/0失败/0错误/122跳过及32个指定fresh任务不变，JAR仍`a71821be...`。主build taskGraphReady为自身init后10.356秒、JVM uptime15.501秒；它们不是整轮CI/Gradle命令耗时，进程CPU也不含测试/数据库。全部453条任务计时保存在summary，补足API日志开头缺失；主/嵌套阶段标识已实测。16:28:15+08只读readback配置一致、无活动Run、原push/三分支及无部署保持。此Run是最终诊断配置验收，不宣称新增缩时；旧9671c967基线仍保留可恢复，完整发布五分钟目标未完成。
+
+
+### 已发布议事开关的生产默认值（2026-10-25）
+
+Web1.16.46 / develop321f358f0d8289292c90374d7cce21a3423a27c3将既有多媒体议事、typed议事和follow-up执行的三个VITE开关固定在`.env.production`为true。它们此前已通过发布命令启用，不能在新版本构建时因遗漏命令行环境变量而回落旧`/chat/stream`。生产构建不再依赖某次临时Flow配置携带这些已发布默认值；显式候选覆盖仍保留，不自动开启职位技能/多区域或任何其他功能。复用`tests/production-build-flags.test.js`验证默认值。浏览器续聊验收需确认实际进入typed请求且资料/可用动作进入冻结上下文，首轮点将识图和HTTP200都不足以证明续聊链路。
