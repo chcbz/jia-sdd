@@ -227,7 +227,7 @@ Flow5260799 与 4403172 的现行分支 guard 不允许本候选；未修改流�
 
 ### Native 技能在线判定（2026-10-25 回归修正）
 
-- 当前 Runtime 的技能管理走已认证 HTTP pull，不在 `readyCommandTypes` 声明旧 `SKILL_INSTALL`。在线判断不得把“没有旧 WS 安装适配器”解释为 Agent 离线。
+- 当前 Runtime 的技能执行走已认证 HTTP pull；技能管理仍走已认证 WS durable manager，不在 `readyCommandTypes` 声明旧 `SKILL_INSTALL`。在线判断不得把“没有旧 WS 安装适配器”解释为 Agent 离线。
 - Native 在线事实必须同时满足：当前已注册且持久状态健康的连接、精确 tenant/client/owner/agent、唯一 AVAILABLE 技能目录与当前 installation/host/runtimeInstance/sessionGeneration fence。目录在线只证明通道，不能替代单技能 READY、安装权益、任务授权或摘要核验。
 - 风险与失败范围：跨身份、旧连接、错 host/代次、重复连接或目录不可用仍拒绝此次准入；不猜测权限、不重放历史任务。旧 WS `dispatchManagedSkill` 仍要求真正声明 `SKILL_INSTALL`，不得因 native 在线而下发旧命令。
 - 实现入口：API `AgentWebSocketHandler.isManagedSkillSessionReady`；复用 `AgentWebSocketRawCommandDispatchTest.skillDispatchRequiresRealAdapterReadinessAndExactCurrentTransportFence` 验证 native 在线、旧命令未启用、错 fence、目录挂起和旧适配器兼容。生产任务523已复现：原图实际附载、ACTION_REQUEST持久化后被旧在线判断报 `SKILL_AGENT_OFFLINE`；修复后的正式Flow/业务结果另见本次handoff，本文不预报通过。
@@ -244,3 +244,23 @@ Flow5260799 与 4403172 的现行分支 guard 不允许本候选；未修改流�
 - API `ChatActionExecutionService` 的预热和事务内准入均将 `TaskSkillPolicyService` 的 `RUNTIME_UNAVAILABLE` 交给原 outbox 重试；目录 `DISCONNECTED/FENCED` 与读取中发生的连接快照变化回滚后重读，不在旧fence上执行。重试仍经身份、任务授权、安装摘要及当前fence核验。
 - `TASK_GRANT_MISSING/STALE`、任务改派/结束、明确身份错误、安装摘要变化等确定业务失效仍拒绝；不将全部异常改成允许，不新增重试队列/时限/审批，不自动复活历史DEAD或重放有副作用记录。
 - 实现候选API `283349305aadd3f1a67e792d31f228e1e3531e69`；关键回归复用 `ChatActionDispatchReviewGuardTest`，验证离线抛可重试异常、同一action恢复后正常预热、授权撤销仍Rejected。Flow精确选择该类，并保留Native在线fence方法和原回归；测试/安装/生产恢复结论按handoff分别记录，规格不等于验收完成。
+
+
+### 2026-10-25 图片技能精确尺寸（获授权，实施中）
+
+范围：吴用安装/启用 image-generate，升级 image-edit；不改变议事主流程，不补授其他技能、不测试 PDF。源码基线 Runtime ed2855ea/API 28334930/Web 4e80e25，接口规范1.4。
+
+- 图片技能增加可选 `parameters.size`，格式 `宽x高`（例如 `800x600`），正整数像素。只有用户明确指定尺寸时填入；不从不可信资料/文件名推导执行参数，旧 `{}`保持原始输出行为。
+- 现有 Provider 未核实任意尺寸入参支持，不向其盲传未知参数。图片 runner 在取得并持久保存 Provider 原始 PNG 后，使用现有 Magick 等比缩放至画布内、居中透明留边，输出精确画布；不裁切或拉伸。非同宽高比可能有透明边，交付说明不得宣称全画布背景均被模型绘制。
+- 尺寸及转换标识绑定 effect request 摘要；旧无尺寸请求不增加摘要字段。原始 Provider 成功回执先保存，再做可重复的本地转换；转换失败报告图片输出错误，不把已成功的外部调用改 UNKNOWN 或重新调用。既有 UNKNOWN 不自动重放。输入原始摘要和 DELIVERED 回执不变，正式成果摘要对应实际转换后的 PNG。
+- 必要尺寸校验：语法/正整数及JS安全整数，避免负值、溢出或隐式转换改变请求；在调用 Provider 前失败，仅影响本动作。底层解码/分配失败保留真实错误，不新增业务尺寸上限。图像文件完整性、来源授权和 effect 幂等保持。
+- 实现入口：Runtime `image-input.mjs`、`skill-runners/image-provider.mjs`、两技能 manifest/SKILL。关键回归复用 `test/skill-runners.test.mjs`：旧空参数兼容、800×600真实PNG、同一effect恢复不重复Provider、错误尺寸不调用Provider。正式测试与技能包生成均在同Run Flow，不改写已发布1.0.0包。
+- 发布后必须用 ziyue/吴用验证纯生图、指定尺寸、生成图续聊识图/改图、PC/移动预览和验收；通道健康与在途断线恢复分开记。源码完成不代表生产通过。
+
+### 2026-10-25 技能管理传输补齐（已发布，真实安装通过）
+
+`SkillManagementService`生成SM-C1 `{protocolVersion,requestId,messageType,messageId,data}`，其中`data.schemaVersion=2`。现行发送端却只解析旧根级`schemaVersion/commandType/orderId`，导致合法INSTALL被拒并留在PREPARING/RETRY。Native执行走HTTP pull不代表管理命令也走HTTP；管理仍通过现有WS durable manager处理。
+
+修复限定在`AgentWebSocketHandler.dispatchManagedSkill`：公共Command由既有SkillManagementCodec验证，核对租户/client/Agent/runtimeInstallation及owner，按当前注册连接、同fence和Native目录就绪选择唯一session，发送前再次确认，原字节原ID发送、不二次包装；身份/fence/幂等不放松，旧命令仍保留原适配器边界。旧已落库管理命令由原恢复器按同wire重送，不新建订单/安装，不复活旧业务UNKNOWN。必要回归扩既有`skillDispatchRequiresRealAdapterReadinessAndExactCurrentTransportFence`：Native管理真实wire发送、精确字节、错owner/host不发送；源码/Flow/真实安装证据分开。
+
+实际版本：API1.17.4/ebdc87415b917e9a9eb24a45334b1effbb9d41a8，Flow5260799/303，管理原安装单恢复SUCCEEDED/runtimeSynced=true。Runtime1.3.5/1212369已部署；图片技能1.2.0仍未发布，当前吴用两图片技能为1.0.0；精确尺寸生产验收待管理员发布后进行。此管理恢复不能替代议事在途动作临时离线恢复验收。

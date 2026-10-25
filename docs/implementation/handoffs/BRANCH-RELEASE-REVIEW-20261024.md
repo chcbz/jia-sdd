@@ -371,3 +371,33 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 - 原型规格先更新；既有组件对空/歧义交付仍禁止伪验收，只在完成态不再显示误导的未来交付提示，加载与真实错误不隐藏。定向断言随原gallery用例执行，无新增非关键测试套件。
 - ziyue/任务523/吴用重新加载线上页面：当前已验收PNG仍为红三角/黑方块/绿圆，手机390×844与PC1440×1000可预览；当前交付和历史分开展示，完成只读说明保留，“本次交付范围尚不明确”已消失。截图`web316-mobile-accepted-final.png`、`web316-pc-accepted-final.png`，这是旧已验收成果的发布后回归，不冒充新生图或新的在途离线恢复执行。
 - 复盘已覆盖现象、根因、修复、规避、长期方案及为何测试与生产脱节；由于纯生图/精确尺寸/生产在途动作断线恢复仍未闭环，本文是阶段回溯，不宣称本次全部完成。技能安装/升级须走既有授权与安装入口，不直接写生产权益或伪造能力目录。
+
+
+### 2026-10-25 13:18 最新授权续办
+
+用户明确允许吴用安装/启用 image-generate 并升级图片技能支持精确尺寸。Owner仍为当前单Agent；不合多区域、不新增本机worktree、不改权益数据、不扩大议事流程。固定源码：根7200b0f1/API28334930/Web4e80e25/Runtime ed2855ea（13:18远端只读复核Runtime一致）。13:17维护账号API readback：吴用 image-edit1.0.0 READY、image-generate未安装且允许INSTALL；现行生成产品价0、权限空。只读核查完成，尚未执行安装/升级。精确尺寸合同见既有position-skills-contract末节。本轮候选尚未发布，生图/尺寸/在途断线业务验收仍未完成。
+
+### 2026-10-25 图片尺寸与技能安装续办（范围受限，不报全部完成）
+
+- Runtime 1.3.5 / `121236908df81c80ff12d0117fa8b00f08649e92` / tree `f607b8d661fc59f3af076b64cba2c0c559e4bd86` 已合develop并经Flow5264702/47部署（约381秒）；519注册、517PASS、2skip、0FAIL。同Run制品SHA `52abc7b262e05286309a1232fa61c073783362531346ee19315980464834c4ba`；674文件逐项核对、16配置/7身份未改、8历史恢复记录保持。13:31收到3Agent新鲜ACK，固定app/PID3561946一致；Flow临时配置CAS恢复。首次通道核验在启动观测尚未刷新时失败，随后新健康快照通过，未把启动成功替代通道健康。
+- 精确尺寸实现只在图片runner：可选size、等比缩放/透明留边、原Provider成功先持久化，恢复不重复调用。两技能源码1.2.0、engine1.1.2；Flow同Run产生技能ZIP，未覆写旧1.0.0。复用原broker测试验证800×600、透明边、持久effects恢复及非法参数无副作用。轻量本地诊断通过不是正式上线证明，正式证据为Run47。
+- **新版技能尚未发布**：现有JYT维护凭据实为吴用Owner，不具ROLE_ADMIN。第一次multipart metadata作为普通form字段被旧`HostingRentHttp.noQuery(getParameterMap)`误视查询而返回通用503；改为明确metadata文件part后到达权限检查，返回403 `SKILL_PUBLICATION_FORBIDDEN`（requestId 3fd04df7-9b0c-4023-9af5-2c2fba231354）。没有给账号提权、没有写权益/产品表、没有执行拟定的升级policy脚本。原包目录cyf-api仅r-x属另一个待管理员核对的发布配置条件，尚未证明本次403之后能发布；不把候选ZIP当线上技能。后续需授权管理员发布后经原报价/UPGRADE安装，不通过SQL伪造权益。
+- 在原Owner权限内对**已发布**image-generate1.0.0报价价0、权限空并提交INSTALL。原安装单 `sc_6170e036746e4985b0598393c3ce991a` / command `cmd_8de148ce78444acdae3f50b9eeb2860f` / installation `si_17a770c443684278b9de920c8557b862`；同一幂等键只创建一次，未重复购买/改派。随后发现PREPARING/RETRY `SKILL_WS_SEND_UNCERTAIN`：生产者已发SM-C1 data封装，WebSocket消费者仍只解析旧根级commandType/orderId，恢复器将拒绝泛化为发送不确定。
+- 修复按现行管理合同发送原始SM-C1字节，复用当前Native session/fence，保持owner/租户/Agent/安装绑定和发送前重查；执行HTTP pull与管理WS必须区分，纠正此前“管理也是HTTP pull”的不完整说明。原恢复器继续同wire，不人工重建安装、改写权益或重放旧业务UNKNOWN。API候选及正式结果见后续附录。
+- 本轮临时诊断复制源码和JAR依赖已清理，仅留必要日志、同Run制品、恢复备份和任务证据；未创建本机worktree或子Agent，未合多区域。PDF继续不验。
+
+
+### 2026-10-25 13:58 管理传输发布与真实生图续验
+
+- API1.17.4 `ebdc87415b917e9a9eb24a45334b1effbb9d41a8` / tree `312d5102ae1a696f118bb6568a52884539c59444` 已合develop并由Flow5260799/303部署（约465秒，SUCCESS）；3307注册、3143通过、164skip、0失败/错误，Native传输及暂时不可用定向类通过。JAR SHA `6b4cc43520f594ecc685462af1797c735ef3182a226d1c475d100ca495554a40`；安装摘要、schema、健康UP已核验，默认Flow配置CAS恢复。证据 `image-size-fix/management-transport/verification.json`、`5260799-restore.json`。
+- 原安装单 `sc_6170e036746e4985b0598393c3ce991a` 自动恢复SUCCEEDED、runtimeSynced=true、skillRevision=1、changeRevision=6；PREPARE与ACTIVATE均RESULT，无重复订单。13:53 ziyue任务525目录真实读取image-generate1.0.0/image-edit1.0.0 CALLABLE。
+- 真实生图通过原议事页面提交一次：request `mmd-typed-request_547fd8320ec0c8ce650008348fdfef2f4336ba62`，action `act_0c435165c99d50ce7c0044ac76e112280ef93c88`；sourceRefIds=[]、parameters={}；子请求 `0a7f4b25c65415e353ae3e53713d378bcea23b6f38c0abad4bbcbc5d9ebe7c6b` 已COMPLETE，图片1090573字节、1254×1254。PC目视为白底居中紫色五角星，无文字；本次未请求精确尺寸，不冒充尺寸验收。移动端确认验收结果见后续。
+- 测试驱动第一次验收被自己的写请求保护拦截（预期路径误写为artifact-outcomes/accept，实际UI使用finalizations），没有到达服务器；修正为精确one-shot finalizations后通过同一UI重试。不将诊断脚本限制认作业务缺陷。
+- 回溯：安装卡住源于SM-C1生产者/WS消费者升级不同步，原在线单测只证明session/fence，没有覆盖真实公共报文；已扩同一关键测试用真实wire验证原字节发送及身份拒绝。长期维持现有codec与durable manager，不新建协议/双轨框架；后续发布把真实安装单终态与任务能力目录作为安装链验收，不能以构建成功或通道在线替代。角色权限阻塞和业务缺陷分别列示，不通过直接改权益或伪造已发布包规避。
+
+### 2026-10-25 14:00 本轮准确收口
+
+- ziyue/吴用/任务525纯生图已通过：生成 → PC展示/预览入口 → 手机390×844展示 → 选择成果 → 确认验收。最终只读API status=completed、taskVersion=4；PNG SHA `9eb5f38d47dfc92d9d204fdda97582f8a93908613909e99833f8902c88b4b3ab`，1254×1254、1090573字节；不是800×600测试。
+- 实际UI验收包含finalizations和delivery-review-operations两次写入。诊断浏览器先后拦截了未授权的两条路径；逐条精确许可后使用“继续原验收”完成原操作，未重新生成。先前`generate-accepted-result.json`记录的是恢复前状态，不作为最终验收证据；最终为`generate-task-final.json`、`generate-image-proof.json`、`api303-pure-generate-mobile-complete.png`。曾命名`mobile-accepted`的截图实际上仍失败，不能凭文件名认定验收成功。
+- 尚未完成：①image-generate/image-edit1.2.0管理员发布、Owner正常升级及精确尺寸生产验证（现有账号403）；②议事在途动作临时离线恢复真实生产验证。原技能管理安装恢复、纯生图成功、之前523多轮识图/改图验收都不能替代上述两项。PDF按用户要求排除。
+- 下一步：有发布权限的管理员通过既有发布API发布同Run47两份不可变包，先核对发布目录写权限与正常升级报价路径，再由吴用Owner安装/升级；不直接写产品/权益，不自行给账号授ROLE_ADMIN。其后进行精确尺寸及在途动作恢复的同链验收，补最终回溯结论。本次仅阶段收口，不声明全部交付完成。
