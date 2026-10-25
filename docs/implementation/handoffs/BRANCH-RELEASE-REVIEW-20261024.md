@@ -469,3 +469,11 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 | 可选size合法却在模型前失败 | Provider严格schema适配仅接受全字段required且不支持pattern | Runtime可选字段nullable投影、返回后按原manifest规范化校验；实际800×600生成和修改通过 | 用已发布真实manifest覆盖规划→执行全链；Provider语法适配不能变成业务字段强制必填，不按格式修改主流程 |
 | 有图后续聊被旧取消回合拦住 | 每条CHAT历史都要求READY成果，且旧failedReads残留 | Web仅免除权威无输出取消的成果待读，保留未知/部分结果/执行保护；同任务识图与改图通过 | 终态不等于有成果；现有状态机明确空取消边界，回归覆盖取消历史与当前成果并存，不清数据绕过 |
 | Runtime安装被空间检查拦住 | 实际快照空间不足，而非模型/权限问题 | 停服前失败并保留旧线上；清本任务重复解包，无损压缩已核验备份后同源码重发 | 保留恢复快照、制品摘要与真实失败记录；发布前按实际候选/备份需求确认空间，不删除必要保护 |
+
+### 2026-10-25 17:40 续核：故障注入边界与临时目录清理
+
+- 本轮只读复核现用Runtime1.3.6/c4688cf7，unified服务PID3627888仍active，配置包含三个静态Agent。已检查实际app/runtime/agent-runtime.mjs：CLI只有validate/enroll/run；现有hosting控制socket提供capabilities/prepare/ensure/observe，管理托管subject，不是静态吴用的暂停/断连入口。不能把私有processor.pause()当成外部可调用运维命令，也不以re-enroll/改身份/关闭整个共享进程冒充单Agent隔离。
+- 生产在途断连验收仍未执行。下一步需要明确的共享Runtime短时中断窗口，先确认无其他在途工作且无并发发布，冻结三个Agent身份/健康及测试execution；只对本测试制造可恢复中断，原服务恢复后核对同execution/同Provider effect不重复、结果摘要与最终交付一致及三个Agent恢复。若无法确认其他工作归属则不动共享服务；不新增故障注入框架，不自动复活历史UNKNOWN/DEAD。此计划不是测试通过证据。
+- 已按用户更新收口本任务临时目录：原/var/tmp/cyf-position-only-20261025完整归档至/home/isp/baks/cyf-position-skills-evidence/20261025/position-only-evidence.tar.gz，1363文件、原始139239513字节；顺序解压逐文件SHA/大小与源文件一致后删除原临时目录。完整路径和SHA清单位于同目录manifest.json，archive-record.json及本仓position-only-integration-20261025/evidence-archive.json记录原路径到归档成员映射；旧证据引用按映射解析，不重写历史证明。归档权限私有，可能含内部日志，不公开原始包。
+- 初次归档验证使用随机访问gzip导致反复解压，主动停止本任务验证进程后改为单次顺序读取完成；没有重复生成制品、没有终止业务进程。保留所有失败Run日志、截图、源码候选及未提交资料，未删除生产状态或恢复备份。未创建新worktree，未清理归属未明确的其他worktree。
+- 本轮未改运行时代码、未重启服务、未触发新的Flow；主流程验收仍以此前任务526证据为准。需用户确认共享服务中断影响后才能继续最后一项生产故障注入。
