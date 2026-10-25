@@ -1014,6 +1014,23 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         authored.insert(client + 1, owner)
         self.assertEqual({col[1] for col in f06.parse_show_create(authored, first, self.collation)},
                          {value[0] for value in f06.EXPECTED_TABLES[first]['columns']})
+        # Existing schemas can omit redundant scalar checks, not the cross-field
+        # supersession invariant. Reuse this current-owner compatibility case.
+        legacy = [row for row in authored if not (row[0].startswith('  CONSTRAINT ')
+                  and 'chk_artifact_outcome_' in row[0]
+                  and 'chk_artifact_outcome_supersession' not in row[0])]
+        legacy[-2][0] = legacy[-2][0].rstrip(',')
+        self.assertEqual(len(f06.parse_show_create(legacy, first, self.collation)), 17)
+        missing_required = [row for row in legacy if 'chk_artifact_outcome_supersession' not in row[0]]
+        missing_required[-2][0] = missing_required[-2][0].rstrip(',')
+        with self.assertRaises(f06.SchemaError):
+            f06.parse_show_create(missing_required, first, self.collation)
+        second = f06.TABLE_ORDER[1]
+        decision = [row for row in synthetic_show_rows(second, self.collation)
+                    if 'CONSTRAINT `chk_artifact_outcome_decision_' not in row[0]]
+        decision[-2][0] = decision[-2][0].rstrip(',')
+        self.assertEqual(len(f06.parse_show_create(decision, second, self.collation)),
+                         len(f06.EXPECTED_TABLES[second]['columns']))
         wrong = copy.deepcopy(authored)
         wrong.remove(owner)
         wrong.insert(1, owner)

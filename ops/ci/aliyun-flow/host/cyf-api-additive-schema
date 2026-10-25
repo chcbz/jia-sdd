@@ -862,17 +862,29 @@ def compare_table(metadata, table):
     if sorted(actual_indexes, key=lambda value: value[0]) != expected_indexes:
         mismatches.append('indexes')
 
+    # These scalar checks duplicate the authoritative service's normalization,
+    # digest generation and exact replay/read validation. Existing schemas may
+    # omit them; present checks must still have their original semantics.
+    # Contract: docs/aliyun-flow-gate-policy.md (F06, 2026-10-25).
+    optional_checks = {
+        'chk_artifact_outcome_state', 'chk_artifact_outcome_versions',
+        'chk_artifact_outcome_digest', 'chk_artifact_outcome_decision_versions',
+        'chk_artifact_outcome_decision_digest',
+    }
+    required_checks = set(expected['checks']) - optional_checks
+    actual_checks = set(metadata['checks'][table])
     expected_constraints = {}
     for name in expected['unique_constraints']:
         expected_constraints[name] = ('PRIMARY KEY' if name == 'PRIMARY' else 'UNIQUE', 'YES')
-    for name in expected['checks']:
+    for name in required_checks | (actual_checks & set(expected['checks'])):
         expected_constraints[name] = ('CHECK', 'YES')
     if metadata['constraints'][table] != expected_constraints:
         mismatches.append('constraints')
-    if set(metadata['checks'][table]) != set(expected['checks']):
+    if not required_checks <= actual_checks or not actual_checks <= set(expected['checks']):
         mismatches.append('checks')
     else:
-        for name, clause in expected['checks'].items():
+        for name in actual_checks:
+            clause = expected['checks'][name]
             try:
                 if normalized_check(metadata['checks'][table][name]) != normalized_check(clause):
                     mismatches.append('check_clause:' + name)

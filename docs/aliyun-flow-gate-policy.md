@@ -27,3 +27,12 @@
 - `ops/ci/aliyun-flow/host/cyf-api-kit`（本次将现行生命周期脚本纳入版本管理）
 
 验证：`python3 -m unittest discover -s ops/ci/aliyun-flow/tests -p 'test_api*.py' -v`。这些是隔离临时目录中的控制面测试，不调用生产生命周期，不替代正式应用回归（前端 Flow、后端本地）。
+
+
+### F06 发布结构兼容（2026-10-25，API develop b9dede8bf88e66d6716033e9631d8aba7d43bd78）
+
+仅覆盖 `agent_task_artifact_outcome` / `agent_task_artifact_outcome_decision` 的发布后置结构检查，不改应用授权或自动迁移。
+- 保留 owner/client/tenant 列、精确唯一键和索引、列类型/空值/排序规则、`chk_artifact_outcome_supersession`。风险分别为跨主体访问、重复裁决/并发覆盖以及替代成果指向不一致；缺失或表达式漂移仅阻止本次 schema 验证，不改写已有结果。
+- `chk_artifact_outcome_state`、`chk_artifact_outcome_versions`、`chk_artifact_outcome_digest`、`chk_artifact_outcome_decision_versions`、`chk_artifact_outcome_decision_digest` 是服务层已实施规则的重复数据库表达；不再要求已有表必须补齐这五个 CHECK 才能发布。存在时仍核对原表达式/ENFORCED，未知 CHECK 或改义 CHECK 不放行，防止额外约束导致写入失败。新建表沿用固定 SQL；不因兼容读取就 ALTER/DROP 已有表，不改历史 SQL 摘要。
+- 完整性不是取消：`AgentTaskArtifactOutcomeServiceImpl.normalizeDecision/requireRef` 规范版本并生成 SHA-256；`now` 生成正时间；`requireOutcomeState/requireOutcomeVersion/requireOutcomeAudit/requireOutcomeShape` 拒绝损坏读取；`requireExactReplay` 校验主体、版本、摘要及幂等记录。保留 Mapper 的 owner 条件、唯一键、事务与 CAS。错误请求/损坏记录仍在当前操作范围内失败，不猜测补全或自动重放。
+- 回归入口：`ops/ci/aliyun-flow/tests/test_api_additive_schema.py` 既有结构保留用例，覆盖旧表缺重复 CHECK、必需替代关系 CHECK 缺失、存在但表达式漂移与 owner 索引漂移；应用既有 ArtifactOutcome 服务/事务回归不删除。本节不代表上线完成。生产只读盘点两表目前0行；无法证明缺失约束由哪次历史操作造成，不编造历史原因。
