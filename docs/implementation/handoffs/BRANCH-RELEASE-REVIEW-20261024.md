@@ -321,3 +321,53 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 - 未完成项：①新图生成能力配置与实测；②第一轮明确800×600要求未满足（1448×1086），未扩展后处理；③API重启时临时runtime不可用可被TaskSkillPolicyServiceImpl归入allowed=false、ChatActionExecutionService转永久Rejected的路径仍待修复/回归，旧action没有自动重放。没有因本轮主流程通过声称以上问题消失。
 - 根develop已收录固定Web/API gitlink、Runtime源码/Flow/摘要和完整阶段记录；本地management-contract尚不在远端基线，避免把共享未跟踪整稿合入，本次两条Native/历史隔离规则同步到远端既有specs/archive-agent-maintenance/position-skills-contract-20261024.md。未合多区域、未新建worktree、未覆盖共享脏工作区。
 - 私有浏览器证据保留/var/tmp/cyf-position-only-20261025/browser：round1-edit.png、round2-edit.png、pc-edited-image-preview.png、mobile-edited-image-preview.png、mobile-round2-acceptance-selection.png、mobile-task523-accepted.png、mobile-image-generation-capability-missing.png。测试账号密码/token未写入仓库。
+
+### 2026-10-25 发布问题回溯（收尾修复中，非全量完成声明）
+
+范围：position-skills集成后，ziyue/吴用的既有议事、资料、识图/改图与验收链；未合多区域，PDF按用户要求不验。结论基于本handoff对应源码、Flow日志、生产请求/回执及PNG，不以模型回复替代证据。
+
+| 用户现象/触发 | 根因及定位 | 解决与当前证据 | 规避/长期方案 |
+|---|---|---|---|
+| Runtime已启动但Codex配套动作失败 | 程序快照仅带主程序与resources，漏同发行包的`bin/codex-code-mode-host` | Runtime1.3.3补全发行包快照，Flow45通过；1.3.4继承 | 打包边界以实际运行依赖为准；同Run清单核验完整程序，不靠主二进制存在推断可执行。不是所有资料错误的共同根因 |
+| 首轮能识图，续聊提示没拿到资料 | Web正式构建未携带3个曾由临时发布命令开启的旗标，默认回到旧CHAT/stream；请求只有availableRefs，无materialsInput | Web1.16.46/Flow314将既有发布行为固化production默认；实测typed请求有原图SHA及DELIVERED输入回执 | 环境旗标与源码一同版本化；既有测试必须断言已发布默认。冒烟覆盖首轮+续轮，而非只验首轮 |
+| 吴用在线但动作报SKILL_AGENT_OFFLINE | API在线判断仍要求已退役SKILL_INSTALL WS适配器，当前管理是Native HTTP pull | API1.17.2/Flow300修复；同源码Flow301补精确fence定向方法 | 通道状态与执行授权分离，按现行传输验证连接，不拿旧命令列表替代在线；身份/fence/单技能权益保持 |
+| 合法新任务一直READY/processed=0 | Runtime遍历历史旧命令缺taskSkillBinding时整批parse抛错 | Runtime1.3.4/Flow46按execution隔离；同一新任务无需重发自动完成 | 历史完成事实不按当前合同重新执行；记录级失败只影响该条，共享身份/完整性错误仍阻断；不补造历史授权 |
+| 有成果但目录不显示，选择后无法继续识图 | 普通旧CHAT没有typed-outcome返回404；成果目录整批失败，续聊又当成未完成typed成果 | Web1.16.47/Flow315隔离已认证同会话无typed投影的普通历史；任务523两轮改图及手机验收完成 | 混合历史是实际产品输入，不仅测试纯新建数据；5xx、确有typed投影失效和未完成请求不能一概忽略 |
+| JAR已安装但发布检查失败 | F06把旧库缺5个重复标量CHECK视为硬失败；等价服务层保护未纳入比对 | 仅放宽已核实5项缺失，不执行DDL；API299后F06通过，298保持FAIL | 校验对应明确风险和合同，不把所有历史结构差异当业务不兼容；关键unique/owner/cross-field保护不删 |
+| 重启窗口新动作可能永久失败 | TaskSkillPolicy返回RUNTIME_UNAVAILABLE；ChatActionExecutionService将所有allowed=false统一转Rejected，relay落DEAD/ACTION_REQUEST_CHANGED | 本轮API28334930改为原outbox重试，并重读当前授权/fence；发布与回归结果见后续记录 | 暂时基础设施故障不等于业务失效；已确认撤权/改派仍永久拒绝；不自动重放旧DEAD。旧action具体时序因果尚需完整日志，不能仅凭代码路径断言每次失败原因 |
+| 要求800×600却交付1448×1086 | 当前image-edit manifest的parametersSchema为空；provider runner只传prompt/n/output_format，无结构化size，提示词无法保证精确尺寸 | 未修复，流程验收完成不等于尺寸要求通过 | 长期在现有图片技能契约声明可支持尺寸并映射adapter，明确供应商原生尺寸与精确输出处理；不改议事主流程、不偷偷缩放/裁剪、不新增泛化后处理框架 |
+| 无参考图纯生图一直澄清 | 吴用生产能力只有image-edit1.0.0、pdf-extract1.0.0；本机skills目录亦无image-generate | 任务525未通过纯生图验收；未假装编辑等于生成，未擅自授予/启用技能 | 通过既有技能安装/权益链配置确有授权的image-generate后再测；无能力就如实提示，不扩大权限 |
+
+#### 为什么测试通过、生产仍出问题
+
+1. 测试输入与真实发布环境不一致：旧测试明确要求production旗标关闭，测对了旧预期，却不是用户已接受的发布行为。
+2. 单层成功不能推出端到端成功：WS连通、包主程序存在、首轮识图通过，分别不证明Native技能可准入、配套程序完整、续聊材料被发送。
+3. 测试数据偏新且单一：历史普通CHAT与typed成果并存、旧执行命令与新队列并存未进入原关键样例。
+4. 生命周期覆盖不足：重启/连接更替的“暂时不可用”混进永久拒绝；应在既有关键用例中覆盖恢复，不另起庞大测试体系。
+5. 发布执行也有缺口：API300选择器漏本次修改的旧方法，3305项通过并不包含该方法。发现时已经安装，之后同源码301补跑通过；301仅报告提取完整，整包下载不完整，不伪称整包核验成功。本轮启动前显式检查选择器。
+
+#### 为什么多次修复未一次闭环
+
+链路有多个相互独立的缺陷，前一层失败遮住后一层；但这不免除Owner在首次宣布完成前验证真实完整链路的责任。之前验证层级和“上线/通道/业务/输出质量”边界不够清楚，导致把阶段进展误当闭环风险。既有执行记录已分层保留，不把历史FAIL改绿、不删除出错测试任务。
+
+后续只复用一条关键业务链：固定源码和生产配置 → 实际包与连接 → 任务授权/能力目录 → 真实原图引用 → 首轮识图/改图 → 选择上一成果继续识图/改图 → PC/移动预览 → 明确验收；分别记录请求、执行、输入/输出SHA和终态。附加一次受控暂时离线恢复，以既有幂等和锁证明不重复副作用。纯生图单独看能力是否具备，图片质量/尺寸单独看实际输出。不用增加零碎检查或非关键测试数量替代关键闭环。
+
+长期采用现有体系的职责修正：Web只组织真实引用和展示；API负责授权/幂等、持久动作与失败分类；Runtime隔离记录级失败并按可信技能契约调用适配器；技能声明参数和输出能力。无需新增统一校验框架、第二套队列、版本硬拒绝或另一个审批层。
+
+### 2026-10-25 12:05 暂时离线修复发布与剩余范围
+
+- API `283349305aadd3f1a67e792d31f228e1e3531e69` / tree `42bee5a12a025e1f8cc795119791065a3383fb0d` 已合入develop，1.17.3经Flow5260799/302发布成功，总耗时约507秒。注册3307例，0FAIL/0ERROR/164skip；本次精确验证`ChatActionDispatchReviewGuardTest`7例含离线恢复/撤权区分，另保留Native fence方法1例。同Run XML已提取，不以套件总数代替具体方法。
+- 实际JAR SHA `8d250df5f33365f05bed1963c66eccbecf266b6b783162741311a291c968c8f9`与安装记录和同Runmetadata一致；F06 pass/readiness UP；临时Flow配置CAS恢复。恢复点按私有verification.json中的实际安装回执保留，不对兼容路径作本轮迁移。Runtime PID3485697未替换，API重启后3个Agent均重新connected/registered/ready并收到fresh ACK。
+- 生产在线恢复与代码级动作分类均已验证；**没有在生产主动构造“已排队动作恰逢断线再恢复”的完整场景**，不把通道重连或单元模拟写成该业务场景通过。旧DEAD未复活，没有新Provider调用/重复扣费。
+- ziyue重新登录后读取任务523：COMPLETED/version6；当前ACCEPTED交付明确指向第二轮PNG `finalization_artifact_565a521d0ac783ef1fd43cef27efe86647bd21853387f3ba1b0efc607a8b3dbc`，SHA `a9f24b417418a36adb70af347e55996291ae2ba5db4ff24fc6f87feced4221b5`。PC/390×844手机当前交付预览实图红三角/黑方块/绿圆，原始尺寸1448×1086。浏览器证据`api302-pc-current-accepted-png.png`、`api302-mobile-current-accepted-png.png`。
+- 本轮测试操作误判：脚本无作用域选择“最后一个预览”，命中了折叠历史交付，误以为当前交付变旧。已主动更正，限定可见“当前正式交付”再点，接口和图片证明当前结果正确；不为测试脚本错误修改业务数据或展示逻辑。
+- 实际另有已完成页面仍显示“本次交付范围尚不明确”文案，限定为显示修复：先更新原型规格，再用`effectiveTaskCompleted`抑制未来交付/歧义提示，保留加载、真实错误和已完成只读说明。复用原空/歧义用例追加完成态断言，不加非关键套件。Web发布结论见后续附录。
+- 剩余非完成项仍为：①吴用未安装/启用image-generate，纯生图未验；②图片技能没有结构化尺寸，800×600不满足；③上述生产带在途动作的短暂离线回归尚未运行。不擅自改变技能权益或安装状态，不将这三项从清单抹除。
+
+
+### 2026-10-25 12:08 Web完成态文案收口
+
+- Web1.16.48 `4e80e25fe565c7bd8d1050ef75f3037d59c86743` / tree `b737bb169dd59248603d4a0e987c8e08b7b3fa6b` 已合入develop，Flow4403172/316 SUCCESS（约169秒）；3340注册、3338PASS、2pending、0FAIL。制品SHA `d5f22c6acd5099b03751a7f3155911363e1b3e5cf11603151b567320db4202e8`，安装/线上HTML及资源已核对，配置CAS恢复。
+- 原型规格先更新；既有组件对空/歧义交付仍禁止伪验收，只在完成态不再显示误导的未来交付提示，加载与真实错误不隐藏。定向断言随原gallery用例执行，无新增非关键测试套件。
+- ziyue/任务523/吴用重新加载线上页面：当前已验收PNG仍为红三角/黑方块/绿圆，手机390×844与PC1440×1000可预览；当前交付和历史分开展示，完成只读说明保留，“本次交付范围尚不明确”已消失。截图`web316-mobile-accepted-final.png`、`web316-pc-accepted-final.png`，这是旧已验收成果的发布后回归，不冒充新生图或新的在途离线恢复执行。
+- 复盘已覆盖现象、根因、修复、规避、长期方案及为何测试与生产脱节；由于纯生图/精确尺寸/生产在途动作断线恢复仍未闭环，本文是阶段回溯，不宣称本次全部完成。技能安装/升级须走既有授权与安装入口，不直接写生产权益或伪造能力目录。
