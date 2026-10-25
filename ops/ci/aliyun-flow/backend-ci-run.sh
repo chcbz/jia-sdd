@@ -100,7 +100,7 @@ if grep -q 'not found' "$CYF_EXPERIMENT/mysql-ldd.txt"; then echo 'MySQL runtime
 
 export CYF_FLOW_COMPILE_CACHE_OPT_IN=1
 export CYF_FLOW_SHORT_LIVED_TEST_JVM=1
-case "${CI_COMMIT_REF_NAME:-}" in develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003) ;; *) echo 'unexpected CI branch' >&2; exit 1 ;; esac
+case "${CI_COMMIT_REF_NAME:-}" in codex/architecture-convergence-api|develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003) ;; *) echo 'unexpected CI branch' >&2; exit 1 ;; esac
 test -n "${CI_COMMIT_SHA:-}"
 test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
 export CYF_FLOW_GRADLE_ACTIVE=1
@@ -267,7 +267,7 @@ def main():
     env = os.environ
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
     tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}']).decode().strip()
-    if (env.get('PIPELINE_ID') != '5260799' or env.get('CI_COMMIT_REF_NAME') not in ('develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003')
+    if (env.get('PIPELINE_ID') != '5260799' or env.get('CI_COMMIT_REF_NAME') not in ('develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003', 'codex/architecture-convergence-api')
             or commit != env.get('CI_COMMIT_SHA') or not re.fullmatch('[0-9a-f]{40,64}', commit)
             or not re.fullmatch('[1-9][0-9]*', env.get('BUILD_NUMBER', ''))):
         raise SystemExit('unexpected Flow source/run identity')

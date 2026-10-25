@@ -649,7 +649,7 @@ def flow_ci_context(args, command):
     commit = env.get("CI_COMMIT_SHA", "")
     run = env.get("BUILD_NUMBER", "")
     if (args.task_id != "FLOW-CI-5260799" or policy.get("schema_version") != 1 or
-            policy.get("pipeline") != "5260799" or policy.get("branches") != ['develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003'] or
+            policy.get("pipeline") != "5260799" or policy.get("branches") != ['develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003', 'codex/architecture-convergence-api'] or
             env.get("PIPELINE_ID") != "5260799" or env.get("CI_COMMIT_REF_NAME") not in policy["branches"] or
             env.get("CYF_FLOW_GRADLE_ACTIVE") != "1" or
             env.get("CYF_FLOW_COMPILE_CACHE_OPT_IN") != "1" or
