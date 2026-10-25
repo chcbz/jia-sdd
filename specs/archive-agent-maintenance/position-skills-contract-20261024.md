@@ -280,3 +280,8 @@ Flow5260799 与 4403172 的现行分支 guard 不允许本候选；未修改流�
 ### 取消历史回合与未决成果的边界（2026-10-25，Web候选075c0c28）
 
 取消是回合终态，不等于成果READY。服务端请求目录明确CANCELLED且非空turns全部CANCELLED、各finalMessageId=null、lastDeltaSeq=0、steps=[]，并且没有已读READY成果时，该回合不参与媒体续议的unresolved判定，也不因其typed-outcome未产生而保留failedReads。仍保留历史消息。未知/在途、部分输出、有最终消息、有执行步骤或字段不完整不适用；不猜测执行完成、不重放、不解除身份/权限/成果摘要保护。实现入口useHallTypedDeliberation.js，回归复用juyiting-media-delivery-basis.test.js；原型reply-stop已支持停止后续聊，规格同步。
+
+
+### 2026-10-25 在途连接恢复验收边界（既有合同验证，非新增框架）
+核对基线API e7e6f7e3 / Runtime c4688cf7 / Web075c0c28；任务529实际socket断连时Provider执行在途，重连产生新sessionGeneration。旧fence不得跨session继续提交：SkillConversationLane.checkLease报告SKILL_SESSION_CHANGED；SkillEffects在远端回报前已持久化SUCCEEDED/原始字节时，下一次原execution经resume复用成果并完成提交。失去session只影响旧尝试，不自动新建execution、不绕授权、不重放Provider；没有本地结果的START_RECORDED/UNKNOWN仍不允许推测重试。风险是重复付费/重复副作用、旧身份继续写；保护范围仅具体执行/session，不把管理通道与执行目录重新耦合。
+实现入口skill-conversation.mjs、skill-execution-store.mjs、后端PersonalWorkspaceExecutionServiceImpl的resume/effect/commit；既有关键回归与正式Flow仍保留。本轮生产验证同execution同effect最终COMPLETE、图片SHA与ACCEPTED一致、三Agent健康、9份历史recovery未变。这里只证明短时连接更替+持久成果恢复，不证明进程崩溃/后端重启/超租约长断网/供应商账单；详细证据在既有image-size-management-followup.json.inFlightDisconnectionRecovery。

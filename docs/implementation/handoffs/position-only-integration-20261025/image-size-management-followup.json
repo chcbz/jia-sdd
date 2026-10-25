@@ -589,8 +589,20 @@
   },
   "notVerified": [
     {
-      "item": "Actual in-flight Runtime/backend disconnection and recovery",
-      "reason": "No isolated one-agent fault entry verified; shared unified service includes three agents. No deliberate shared-service outage; browser network and management recovery do not replace this test."
+      "item": "Process crash/restart while provider result is not persisted",
+      "reason": "Outside the actual socket-disconnection scenario tested on task529; not claimed as verified."
+    },
+    {
+      "item": "Backend process restart",
+      "reason": "Outside the actual socket-disconnection scenario tested on task529; not claimed as verified."
+    },
+    {
+      "item": "Network partition lasting past execution lease",
+      "reason": "Outside the actual socket-disconnection scenario tested on task529; not claimed as verified."
+    },
+    {
+      "item": "Provider UNKNOWN/billing reconciliation",
+      "reason": "Outside the actual socket-disconnection scenario tested on task529; not claimed as verified."
     }
   ],
   "excluded": [
@@ -662,5 +674,150 @@
       "path": "/var/tmp/cyf-position-only-20261025/browser/web149-task526-second-inspect-mobile.png",
       "sha256": "8e4a3f9420cbed4f8f771820e11d7444a72069a9b1ace74af8dff9807118352d"
     }
-  ]
+  ],
+  "recoveryVerifiedAt": "2026-10-25T10:25:02.049967+00:00",
+  "inFlightDisconnectionRecovery": {
+    "checkedAt": "2026-10-25T10:25:02.049967+00:00",
+    "status": "PASS_SCOPED",
+    "authorization": "User explicitly allowed a short shared Runtime interruption after confirming no other active work. Single owner; no new worktree.",
+    "scope": "In-flight image skill + real Runtime/backend socket disconnection + reconnect + durable local effect result recovery + browser acceptance. Same Runtime PID; not process crash or backend restart.",
+    "baseline": {
+      "api": "e7e6f7e3b90bbe8f7d00abc85f5dcaec3bc33de3",
+      "web": "075c0c28a7cf7410d915dc15ca5eb5ff50ace01d",
+      "runtime": "c4688cf792a2a24668b601fab6e5cea624df7e0c",
+      "flow": "No new run/build/deployment"
+    },
+    "taskId": "529",
+    "conversationId": "1760458007509",
+    "executionId": "pwe_2f63c842afb94253eeca79a3e62b01b111fd603562e32f0628f57338f6bc",
+    "effectId": "generate",
+    "effectDigest": "b031089b2880b088d9d8740cff9eb4c0ad84e266ee9217f1ae630aae6cf1256b",
+    "injection": {
+      "startBeijing": "2026-10-25T18:16:51+08:00",
+      "resumeBeijing": "2026-10-25T18:17:03+08:00",
+      "method": "SIGSTOP exact main PID; pidfd_getfd + shutdown only verified owned 127.0.0.1 sockets to backend10018; SIGCONT in finally and independent 25s watchdog. No global firewall changes; no provider child killed.",
+      "pid": 3627888,
+      "runtimeSessionGenerations": {
+        "wuyong": [
+          103,
+          104
+        ],
+        "lujunyi": [
+          107,
+          108
+        ],
+        "linchong": [
+          108,
+          109
+        ]
+      },
+      "locks": [
+        "/run/lock/cyf-wuyong-versioned-release.lock",
+        "/tmp/cyf-api-flow-auto-approval-v2.lock",
+        "/tmp/cyf-release-api.lock"
+      ],
+      "otherActiveWorkOnAffectedRuntime": false,
+      "historyKept": "9 recovery records unchanged; old DISPATCHED/expired QUEUED not treated as live activity and never replayed"
+    },
+    "result": {
+      "taskState": "completed",
+      "taskVersion": "4",
+      "deliveryState": "ACCEPTED",
+      "executionState": "RESULT_COMMITTED",
+      "skillPhase": "COMPLETE",
+      "effectStatus": "SUCCEEDED",
+      "artifact": {
+        "sha256": "5b8f35fb324e025337262ac940b77d1560485c2b78e331b4cb0bae3db02f804f",
+        "byteLength": 287340,
+        "width": 800,
+        "height": 600
+      },
+      "pcPreview": true,
+      "mobilePreview": "390x844",
+      "mobileExplicitAcceptance": true,
+      "returnDetailCompleted": true,
+      "allThreeAgentsHealthy": true,
+      "historicalRecoveryUnchanged": true
+    },
+    "interpretation": "SKILL_SESSION_CHANGED was logged after real reconnect. Same execution and effect were recovered from persisted local SUCCEEDED bytes, then committed and accepted. No manual resubmission/database correction, no duplicate execution or additional effect observed. Provider requestId is null: this does not certify provider-side billing or request-attempt counts.",
+    "diagnosticAttempts": [
+      {
+        "result": "NO_INJECTION",
+        "reason": "Initial monitor incorrectly looked for STARTED; actual durable effect state START_RECORDED. Blue-circle baseline completed. Corrected only diagnostic script, no application change."
+      },
+      {
+        "result": "PAUSE_ONLY_NOT_DISCONNECT",
+        "reason": "Red-circle attempt paused main PID for12s; ss -K returned0 with no sockets. Kernel CONFIG_INET_DIAG_DESTROY unset. Original connections/session generation survived; explicitly not counted as disconnect PASS."
+      }
+    ],
+    "notCovered": [
+      "Process crash/restart while provider result is not persisted",
+      "Backend process restart",
+      "Network partition lasting past execution lease",
+      "Provider UNKNOWN/billing reconciliation"
+    ],
+    "evidenceRoot": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation",
+    "evidenceFiles": [
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/interruption.jsonl",
+        "sha256": "fde311e3efd659507f75b62e2c26e17e6ad40a5130fb1c2c90361808a1edf140"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/runtime-window.log",
+        "sha256": "3b27c3e62adbe7e41679d64d081267c0ccfed1292e31d3edfa869be9c560ebb9"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/final-observation.json",
+        "sha256": "0d0ba5159ac6fc36483401ddb279b7e05a850facb20a52e9713c253de087e64e"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/browser-final-readback.json",
+        "sha256": "0d1230ea93f7926c45aa4888a436da8004af09c153baa5192b491ec63f89acd0"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/green-effect-generate-24cacf5004bf.json",
+        "sha256": "0c53def4556988f8aae919e09c0d74b718600623f6b0009ac0d028bea6607ec4"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/green-result.json",
+        "sha256": "58a3c50b90ec8db94fc39497e60c1a15a49b20ad669fa9f120c1f472f12845b8"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/green-receipt.json",
+        "sha256": "35e7fdc2647eb52844fc1cbd5a13a09029a6a09260fae0bee677b7e62d377d37"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/green-circle-800x600.png",
+        "sha256": "5b8f35fb324e025337262ac940b77d1560485c2b78e331b4cb0bae3db02f804f"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/task529-green-large-pc.png",
+        "sha256": "3527a26e8dc0d3604447d96943aacbf414fd44ffd657fd93a337548161a7be8e"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/task529-green-large-mobile.png",
+        "sha256": "ea3f186a6cb102740338ea1f1d7f37ab78449930217b90ca42451f040f3edea3"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/task529-green-accept-selection-mobile.png",
+        "sha256": "0b229f5ab7fd9856ffadaf750a2b01562c994cef901d2208b422c3a9383c2125"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/task529-accepted-mobile.png",
+        "sha256": "72ef2dc6f567f81d14896348f60d3e90c041013dfc654521645dad32a5ce040f"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/task529-return-detail-pc.png",
+        "sha256": "b6ae75d93c7b5c2400364074851c16fad8d145b13a7c613011229823c7cac69b"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/interrupt.py",
+        "sha256": "dd702b0fd6951d59727732013223d2c8871378c3514a8737c0363c20d0d99122"
+      },
+      {
+        "path": "/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation/interrupt-unsupported-ss.py",
+        "sha256": "f21cc2ae192a0a487e5c71322fabd7961eedd0b0b7d00d080ef1a76021cd7f31"
+      }
+    ]
+  }
 }

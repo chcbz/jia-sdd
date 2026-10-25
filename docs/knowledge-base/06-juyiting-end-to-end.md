@@ -168,4 +168,8 @@ Runtime的presence回执已在线正常消费，但仍有其他协议拒绝待�
 - image-generate/image-edit 1.2.0可选size；精确尺寸在图片runner做等比缩放与透明留边，保留Provider原成果，恢复不重复调用Provider。没有要求时可省略，不按文件格式扩充议事主流程。
 - 模型严格schema是原manifest的适配投影：可选参数可用nullable表达省略，只有原本不允许null的可选字段才把模型null还原为省略；原允许null保留null。Provider投影可省略不兼容pattern，但返回值须按原manifest完整校验后形成正式摘要，不取消未知执行语义/权限/完整性保护。
 - 服务端目录确认CANCELLED、所有非空turns均取消且lastDeltaSeq=0/finalMessageId=null/steps=[]、无已有READY成果的历史回合，不是未读取成果，不得冻结后续识图/改图。未知、部分输出、final消息或执行步骤不适用。不删历史、不自动重发。实现与关键回归见Web useHallTypedDeliberation.js及juyiting-media-delivery-basis.test.js。
-- 线上任务526已验证800×600生图、识图、改图、再次识图、PC/手机预览及选择新版验收，文件摘要与ACCEPTED正式交付一致。**在途Runtime/后端故障注入恢复未验**，不与主流程通过混淆。完整证据及异常回溯见既有BRANCH-RELEASE-REVIEW-20261024 handoff末节与position-only-integration-20261025/image-size-management-followup.json。
+- 线上任务526已验证800×600生图、识图、改图、再次识图、PC/手机预览及选择新版验收，文件摘要与ACCEPTED正式交付一致。2026-10-25另用任务529验证了在途图片技能的Runtime/后端socket真实断开→三Agent重连→原execution/effect持久成果恢复→PC/手机预览→手机选择验收；同Runtime进程，不能推广为崩溃、后端重启或超租约长断网全部通过。完整证据及异常回溯见既有BRANCH-RELEASE-REVIEW-20261024 handoff末节与position-only-integration-20261025/image-size-management-followup.json。
+
+
+#### 在途连接换代的恢复边界（2026-10-25局部核验）
+同上述API/Web/Runtime源码，任务529实测：旧session收到SKILL_SESSION_CHANGED后，不以该诊断直接判最终失败；Provider成果已写入本地effect=SUCCEEDED时，原execution在新认证session经resume恢复，复用原字节、提交同一成果。以服务端RESULT_COMMITTED/COMPLETE与用户ACCEPTED摘要闭环，而非仅以重连/在线判成功。缺乏持久结果的START_RECORDED/UNKNOWN不允许推断Provider未执行并自动重新生成。生产实测未覆盖进程崩溃、后端重启、超租约网络分区，也未取得供应商requestId/账单证明。证据和精确测试边界见既有handoff的18:23收口节。

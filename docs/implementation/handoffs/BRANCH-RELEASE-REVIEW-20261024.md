@@ -477,3 +477,15 @@ API288/job542372637 FAIL，2731例/1失败/111跳过，约189秒；自然重交M
 - 已按用户更新收口本任务临时目录：原/var/tmp/cyf-position-only-20261025完整归档至/home/isp/baks/cyf-position-skills-evidence/20261025/position-only-evidence.tar.gz，1363文件、原始139239513字节；顺序解压逐文件SHA/大小与源文件一致后删除原临时目录。完整路径和SHA清单位于同目录manifest.json，archive-record.json及本仓position-only-integration-20261025/evidence-archive.json记录原路径到归档成员映射；旧证据引用按映射解析，不重写历史证明。归档权限私有，可能含内部日志，不公开原始包。
 - 初次归档验证使用随机访问gzip导致反复解压，主动停止本任务验证进程后改为单次顺序读取完成；没有重复生成制品、没有终止业务进程。保留所有失败Run日志、截图、源码候选及未提交资料，未删除生产状态或恢复备份。未创建新worktree，未清理归属未明确的其他worktree。
 - 本轮未改运行时代码、未重启服务、未触发新的Flow；主流程验收仍以此前任务526证据为准。需用户确认共享服务中断影响后才能继续最后一项生产故障注入。
+
+
+### 2026-10-25 18:23 授权共享断连验证收口（范围明确）
+
+- 用户明确允许确认空闲后短时中断共享Runtime。沿用API1.17.5/Flow304、Web1.16.49/317、Runtime1.3.6/50，不重新构建或发布；单Owner、无新增worktree。三条Flow无活动Run；持原Runtime/API发布互斥锁，只对本测试任务529运行期间中断统一Runtime的后端连接。旧2条过期QUEUED、3条历史DISPATCHED仍隔离保留，不把它们误报新在途任务；其他Runtime不受本次操作控制。
+- 真实注入：18:16:51在绿色圆形生图effect=START_RECORDED、phase=WAITING_PROVIDER时，短暂停顿精确PID3627888；用pidfd_getfd复制并核对该PID到127.0.0.1:10018的socket后shutdown，18:17:03由finally恢复，另有25秒独立兜底。未停止Provider子进程、未改全局防火墙/身份/数据库、未重启API。吴用sessionGeneration103→104，卢俊义107→108，林冲108→109；随后三者connected/registered/ready与心跳ACK均恢复。
+- 同execution pwe_2f63c842…、同generate effect/b031089b…经历SKILL_SESSION_CHANGED；本地effect已保存SUCCEEDED原始字节，下一轮用原执行恢复结果，最终RESULT_COMMITTED/COMPLETE。没有人工重发或改库、未观察到额外execution/effect。Provider未提供requestId，本次不宣称供应商侧调用次数或扣费对账通过。
+- 浏览器ziyue/吴用：恢复后绿色圆形800×600、287340字节、SHA5b8f35fb324e025337262ac940b77d1560485c2b78e331b4cb0bae3db02f804f。PC及390×844放大预览通过；手机明确选第三份绿色成果确认验收，task529 completed/version4、currentDelivery ACCEPTED，唯一RESULT摘要等于该PNG。返回事项详情显示已完成。9份历史recovery逐文件SHA未变。
+- 不隐去试验偏差：首张蓝圆因诊断脚本把START_RECORDED误写STARTED未注入；红圆只实现12秒暂停，ss -K虽返回0却未关闭socket，核实内核CONFIG_INET_DIAG_DESTROY未启用，因此不算断连通过。纠正诊断方式后才取得上述绿圆真实断连结果，未重复提交同一个Provider动作。
+- 结论：此前唯一未验项中的“在途执行遇到Runtime/后端连接断开，并以本地持久成果恢复提交”现已通过。**不等同于进程崩溃重启、后端进程重启、超租约长断网、Provider结果丢失/UNKNOWN或供应商账单验证。**这些边界仍不猜测成功、不自动重放。主流程原任务526证据仍独立保留。
+- 回溯与长期规则：连接换代不是业务永久失败；旧session不能继续写，新session须经原身份/授权/fence及resume恢复。优先复用落盘结果，不能凭“没收到回复”再次生成。SKILL_SESSION_CHANGED是恢复过程诊断，不应单独视为最终失败；最终以权威执行/成果/验收回读为准。没有为本次验证增加框架或修改应用代码。
+- 原始证据私有保存在/home/isp/baks/cyf-position-skills-evidence/20261025/outage-validation，摘要及覆盖边界回写既有image-size-management-followup.json。浏览器已关闭、专用profile清理；发布锁已释放、Runtime原PID仍active。本轮仅追加文档提交，历史失败与旧未验记录保持原时点含义。
