@@ -1,0 +1,40 @@
+{
+  "time": "2026-10-24T02:31:20.068797+08:00",
+  "scope": "documentation navigation, whitespace and candidate pin matching only; not tests or acceptance",
+  "checks": [
+    {
+      "command": [
+        "D:/software/Git/bin/bash.exe",
+        "./sddw",
+        "verify",
+        "archive-agent-maintenance"
+      ],
+      "exitCode": 0,
+      "stdout": "SDD template candidate pins matched (not tests/release acceptance): archive-agent-maintenance\napi=4520d81971bbe9b093a89f2ecba4964adb18d1c1\nweb=45a217baf80c28b0c33b4da1a85f491323d1c1e0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "ops/orchestration/sdd_docs.py",
+        "archive-agent-maintenance"
+      ],
+      "exitCode": 0,
+      "stdout": "{\n  \"scope\": \"current document entries and scalar navigation only; not YAML schema, historical snapshot links, source tests, candidate matching or release acceptance\",\n  \"features_checked\": 1,\n  \"markdown_files_checked\": 4,\n  \"local_targets_checked\": 18,\n  \"exceptions\": [],\n  \"errors\": [],\n  \"result\": \"DOCUMENT_NAVIGATION_PASS\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

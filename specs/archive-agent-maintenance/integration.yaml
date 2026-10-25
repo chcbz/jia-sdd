@@ -1,55 +1,72 @@
 feature_id: archive-agent-maintenance
-status: ready
+status: implementing
 owners:
-  api: unassigned
-  web: unassigned
-  client: unassigned
-  integration: unassigned
+  api: current_chat_owner
+  web: current_chat_owner
+  client: current_chat_owner
+  integration: current_chat_owner
 contract:
-  revision: D2
-  api_or_event_changes: archive_admin_native_v1_and_typed_execution_via_shared_adapters
+  revision: position-skills-20261024
+  api_or_event_changes: position_general_many_to_many_native_installation_archive_jobs
   compatibility: >-
-    Preserve legacy Shuihu identifiers, bytes, hashes, personal-owner isolation,
-    catalog response shape and existing command payloads. Add a multi-work reader,
-    explicit publication visibility and immutable historic-edition access.
-    New commands and platform skill provisioning do not alter paid market orders.
-    Preserve ItemRef/OVERVIEW-v1; separate management panel and authorized conversation card.
-    Reuse execution/transport/install/storage; preserve direct-Agent routing; do not mix Runtime protocols.
+    Current native session and Q/R contract only. Backend owns business ACL;
+    Runtime installs and executes. Books are immutable content data, not code.
+    No exclusive skill type, fake marketplace orders, or legacy OAuth/API-key fallback.
+current_design: position-skills-contract-20261024.md
+current_plan: implementation-plan-4h-20261023.md
+current_acceptance: acceptance-position-skills-20261024.md
+previous_design: design.md
+historical_manifest: integration-d2-baseline-20261023.yaml
 pinned_revisions:
-  api_commit: null
-  web_commit: null
-  client_commit: null
-  root_base_commit: null
+  api_commit: b9dede8bf88e66d6716033e9631d8aba7d43bd78
+  web_commit: 925ff589c059af1e3de65ba02b6bee9553824ad2
+  client_commit: 60ed1881cb6c5d2c22a547af61126d09a471137b
+  root_base_commit: 2003b0acf21407809c3c524d271a07dddf7b5888
 source_observation:
-  evidence: /home/isp/wsps/cyf/specs/archive-agent-maintenance/source-audit.json
-  remote_refs_fetched: false
+  evidence: verification-20261024/source-inputs.json
+  component_remote_evidence: verification-20261024/component-remotes.json
+  checked_at: '2026-10-24T02:29:32.235254+08:00'
+  frozen_develop_api: 041548f601385a3463fbba06b929991371d93d9c
+  frozen_develop_web: 638084d26ec9a193240566bf45b33602cef8e0e0
+  frozen_develop_client: cbc1050825a40378313f283e9f25dc46d44c1ea4
   production_verified: false
   release_evidence: false
 verification:
-  documentation: passed_static_self_check
-  api: not_run
-  web: not_run
-  client: not_run
-  integration: not_run
+  api: diagnostic_113_pass_zero_fail_zero_skip
+  api_layering: passed_diagnostic
+  web: diagnostic_100_pass_no_new_lint_diagnostics
+  client: diagnostic_161_pass_zero_fail_zero_skip
+  native_http_mysql: passed_diagnostic_with_explicit_auth_bind
+  signed_oauth_management_http: passed_diagnostic
+  real_component_visual: passed_read_only_mock_api_preview
+  full_runtime_websocket_browser_e2e: not_run
+  independent_review: not_run
+  formal_api_flow_5260799: blocked_candidate_branch_guard
+  formal_web_flow_4403172: blocked_candidate_branch_guard
+  production_build: not_run
 acceptance:
-  status: not_run
-  evidence: /home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md
+  status: incomplete
+  whole_feature_accepted: false
+  evidence: acceptance-position-skills-20261024.md
+  historical_84_cases_reclassified: false
 release:
   status: not_started
   production_operations_authorized_by_this_document: false
+  production_changes: false
   flow_run: null
   build_origin: null
   artifact_sha256: null
 implementation_handoff:
-  status: ready_for_M0_not_dispatched
-  entry: /home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md
-  design_baseline: D2
-  runtime_ledger_modified: false
+  status: candidate_pushed_acceptance_incomplete
+  entry: ../../docs/implementation/handoffs/ARCHIVE-POSITION-SKILLS-20261023.md
   production_activation_authorized: false
-  shared_adapter_mapping: required_in_M0
-  neighboring_feature: juyiting-multimedia-deliberation
-document_delivery:
-  target_branch: develop
-  root_remote_base: ccd6cbabe0c9f737ae61237c0d01c4df821e8a5c
-  root_remote_checked_on: '2026-09-28'
-  component_refs_refreshed_for_delivery: false
+  shared_adapter_mapping: position_native_runtime_installer_package_store
+
+current_integration_20261025:
+  component_develop: merged_position_only_no_multi_region
+  api_flow: '296 SUCCESS; 3305 tests, 0 failures, 164 skipped; real native archive passed'
+  runtime_flow: '41 SUCCESS; 479 passed, 0 failures, 2 unrelated environment skips'
+  web_flow: '312 passed functional source; 1.16.45 versioned source awaits release Run'
+  local_script: ordinary_node_subprocess_user_authorized_no_os_sandbox
+  production: not_deployed_not_enabled
+  evidence: ../../docs/implementation/handoffs/BRANCH-RELEASE-REVIEW-20261024.md

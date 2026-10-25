@@ -35,7 +35,7 @@
 | I24 | 提取图片HTTP runner | 复用编解码；无consent；binding与出口保留 | I22,I23 | 30 |
 | I25 | 封装image-generate/image-edit包 | 参数/资料/费用说明；不真实付费调用 | I04,I24 | 25 |
 | I26 | 源text-file接通native-model runner | 保留源HEAD实现；可带资料、无图片分支 | I22 | 30 |
-| I27 | local-script runner隔离 | argv不拼shell、无token/env泄漏、输入只读 | I22 | 30 |
+| I27 | local-script runner执行边界 | 2026-10-25改为普通Node子进程；argv不拼shell、最小环境、输入摘要/输出归属；不承诺OS沙箱，见design | I22 | 30 |
 | I28 | 数据/文件统一result commit及MIME策略 | 零文件真完成；文件hash验证，unknown MIME安全下载 | I07,I17,I23 | 30 |
 | I29 | 定向结果projector与COMPLETE投影 | 数据不造asset；文件幂等，登记失败不重跑 | I18,I28 | 30 |
 | I30 | ChatActionFinalService进度去特例 | 读真实childId/phase，不按技能猜 | I18,I29 | 25 |

@@ -344,7 +344,7 @@ async function executeSkill(command, ctx) {
 }
 ```
 
-local-script 用 argv 数组、shell=false；entrypoint 包内校验；输入只读、输出执行级目录；环境只传必要值，不继承 Provider token、其他角色 HOME 或数据库凭据。隔离复用现有 bwrap/受控工具环境；不具备所需隔离则不把“不可信脚本”标 READY。首期只安装维护方审核包。不能仅靠提示词承诺不联网。
+2026-10-25 用户授权更新（Runtime候选 `60ed1881cb6c5d2c22a547af61126d09a471137b`，仅 local-script）：用 argv 数组、shell=false 直接启动 Node；entrypoint 包内校验，输入使用真实路径，输出及 HOME/cwd 使用执行级私有目录；环境只传必要值，不继承 Provider token、宿主 HOME 或数据库凭据。不再依赖 bwrap/namespace，不承诺输入只读挂载、宿主文件/网络隔离。脚本拥有 Runtime 服务账号权限，故只允许已授权审核包。READY 仍实测解释器、输入读/输出写；身份、包/输入摘要、幂等、输出路径/结果验证保留。源码与云端/安装验收分别记录；其他 runner 的隔离不变。详见 `../archive-agent-maintenance/position-skills-contract-20261024.md` 最新授权节。
 
 Provider runner 在受控宿主 broker 内持有凭据；包脚本不能获得原始 token。broker 验证 binding 属于当前主体，网络目的地固定于部署配置，拒绝重定向到未批准目标。脚本请求外部副作用必须经 `ctx.effects.invoke`，不能自行放开网络。
 
