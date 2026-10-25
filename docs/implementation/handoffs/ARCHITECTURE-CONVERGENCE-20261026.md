@@ -44,3 +44,20 @@ Web唯一隔离目录 `/home/isp/wsps/worktrees/architecture-convergence-web`，
 
 API318真实MySQL撤权测试通过；原因确认为MyBatis一级缓存复用旧授权，修复只作用于该查询（flushCache=true/useCache=false），已写design。3275发现/3111通过/164旧条件跳过，Gradle成功但export旧分支名单导致Run失败；319按修正后固定配置重新验证。
 根仓policy和backend-ci-run.sh在开工前已有他人脏修改。根候选提交用独立临时index基于远端develop472a256c，仅加入本任务精确selector/分支增量及本任务规格；不把其余既有dirty提交、还原或归为本任务。实际Flow保留云端已有必要selector集合，完整固定配置摘要/真实Run作为测试执行依据，不声称根候选默认policy等于在途已固定输入。根工作区/当前branch不切换，不创建第二个worktree。
+
+## 01:30接续
+
+- API319成功，精确9be9864638，同Run制品审核中；API临时云端配置已恢复，未部署。
+- 根候选8f7d4bb3860730be1fe757f7473d5c53fd3d7a9d已push；共享主工作区dirty保留。
+- Runtime升版候选336d92c2ad97afd3c7ac0979873eb4e324fff574（1.3.10/engine1.1.4），仅版本元数据改变、依赖不变；59为升版前源码测试，新候选未正式打包。
+- 仍缺：可安装Runtime制品、混合版本实测、整体集成、明确生产发布授权、线上PC/移动/图片业务验收。09:00硬截止不变。
+
+## 01:40候选验证收口，等待发布授权
+
+- API319正式3111通过/164旧条件跳过；receipt、JAR、依赖及源码/Run闭包核对完成。
+- Web319正式3342通过/2旧pending，612个dist文件同Run清单核对完成。
+- Runtime60的6条失败为浅克隆缺失固定历史fixture；只补定向fetch，不改断言。Runtime61正式487/487通过，674个payload文件摘要/模式匹配。当前候选336d92c（1.3.10/engine1.1.4）。
+- API/Web/Runtime临时云端配置全部恢复readback，无在途任务Run，无生产部署。三个候选分支已push，develop未合入。
+- 下一动作：取得本次API/Web/Runtime生产发布与既定业务验收的明确授权后，固定混合版本/部署顺序、按既有Flow同Run合同完成发布；不得将当前CI-only制品直接拿到生产绕过发布适配器。Runtime复用既有安装适配器而非新增安装器；同Run程序/npm包与保留工具链来源分别核对。
+- 仍要执行旧新组合、ziyue/吴用的PC与移动、多轮识图/生图/改图；PDF不验。未取得授权前不进行服务重启/生产安装/状态注入。
+- 09:00硬截止不变，未交付整体废弃；不以当前正式测试成功宣称整体完成。

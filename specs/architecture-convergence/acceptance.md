@@ -124,3 +124,23 @@ validateLayering
 ### API318复验
 
 `9be98646383a6a3d55511d59faf9be0cd741303f`：385份JUnit报告，3275条发现、3111执行通过、164条旧环境条件跳过，0失败；新增真实MySQL撤权两条均通过。Gradle含validateLayering及fresh bootJar成功；Run因后置制品导出同一旧分支名单失败，故不能称Run成功或同Run制品已可交付。只补导出精确分支范围，319重新执行完整必要任务并导出，不复制318的JAR冒充319。
+
+### API319及版本准备（01:30进度）
+
+API319状态SUCCESS，精确候选9be98646383a6a3d55511d59faf9be0cd741303f；同Run制品正在下载核对。首次下载触发120秒读取超时，不是Flow失败；改为流式落盘与300秒下载超时，未重跑Flow。API/Web/Runtime三个临时流水线配置均已对照本任务候选摘要后恢复，并读回确认。
+
+Runtime为本次行为变更准备1.3.10，引擎1.1.4；只调整包版本和锁文件根版本，不改任何依赖。候选`336d92c2ad97afd3c7ac0979873eb4e324fff574`。Runtime59证明的是升版前cc7181c源码测试，不将它重标为新候选正式打包/安装证明；新候选可安装制品仍待准备。
+
+### API319同Run闭包及Runtime60归因
+
+API319制品SHA-256 `206043b4b4505fc0fb12282b9e10372ba7e567b817d2c921483653f6e80fbaa7`，223899895字节；JAR SHA-256 `5102cf0440dfe9f96118e9168149cfe106a5de5bb185768777fa19a542c27265`，251194408字节。原始receipt、sidecar、依赖provenance、源码及Run绑定逐项匹配。报告3275次执行发现、3111通过、164旧条件跳过、0失败；validateLayering与fresh bootJar均实际执行成功。新MySQL两条执行无skip。见api319-test-results-summary.json与api319-jar-audit.json。
+
+Runtime60在升版候选336d92c执行了487条，481通过、6失败；全部失败来自既有installer consumer测试引用历史Git fixture `5666fd2c`，云端浅克隆未包含该对象，尚未打包。保持原断言和应用代码不变，仅在原构建准备中定向fetch该固定commit、核对固定tree并确认候选HEAD未变；61复验中。复用此前Runtime58已使用的payload打包脚本，不新增安装器；保留同Run npm依赖与payload清单，以及Python要求摘要。不是完整全新工具链安装包，最终安装仍须核对并复用既有已验证Node/Python工具链且执行安装后validate。
+
+### Runtime61闭包（01:40）
+
+升版候选`336d92c2ad97afd3c7ac0979873eb4e324fff574`，tree `63c409f978771e19d0c3f249d28ddf57f1e45bda`；Flow5264702/61 SUCCESS，487条全部通过、0失败、0跳过。既有历史fixture定向补齐后6条恢复执行，无删测/弱化断言。制品SHA-256 `f623f9c427371c68d71d24b5de6f8cd0ac522ff56dc44c175d062ea62dd95a8a`，11865020字节；674个payload文件摘要及模式逐项符合同Run清单。见runtime61-package-audit.json、runtime61-release.json、runtime61-tests.log。
+
+三组件均只有候选测试/制品证明，尚未整体合入develop或发布。此Runtime包沿用已验证安装适配器的程序/引擎/npm更新合同，安装需验证当前工具链清单和Python requirements后复用，不是全新Node/Python工具链分发包。临时5264702配置已恢复并readback。API319约325秒、Runtime61约131秒（本任务控制面首见终态上界）；均未触发600秒上限。
+
+**剩余阻塞/未验**：明确本次生产发布授权仍缺；旧新Web/API/Runtime组合实测、统一安装与生产PC/移动/多轮图片业务验收尚未完成。未将历史账号/场景结果复用成本次通过；09:00前未达完整退出标准仍按整体废弃处理。
