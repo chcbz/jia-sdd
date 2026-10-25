@@ -237,3 +237,10 @@ Flow5260799 与 4403172 的现行分支 guard 不允许本候选；未修改流�
 - 已实测旧技能执行记录缺少 `taskSkillBinding`，包括已完成、有回执的历史记录；旧记录不能按当前执行合同重新准入，更不能补造绑定。Runtime扫描历史记录时的命令级 `SKILL_COMMAND_INVALID` 只隔离对应execution，保留全部原始命令、效果与回执，继续当前合法命令。
 - 本轮不清理数据、不把未知旧任务标记完成、不自动恢复或重放。最终轮询仍报告原错误、executionErrors和真实processed数量。共享私有目录、文件身份/权限、会话/锁归属和完整性错误仍中止，避免跨身份处理。
 - 实现 `skill-conversation.mjs` 的 `pendingCommands/poll`，复用既有历史UNKNOWN不饿死后续任务回归加入旧无绑定记录分支；不新增非关键测试套件。候选Runtime1.3.4/ed2855e，正式验证/安装状态见handoff。
+
+### 暂时通道故障与永久业务拒绝（2026-10-25）
+
+- 风险：已受理的 ACTION_REQUEST 在服务重启/连接重建窗口被误写 DEAD，使合法任务无法继续。Runtime在线事实不是业务授权；“暂时不能证明在线”不得等同任务改派或授权撤销。
+- API `ChatActionExecutionService` 的预热和事务内准入均将 `TaskSkillPolicyService` 的 `RUNTIME_UNAVAILABLE` 交给原 outbox 重试；目录 `DISCONNECTED/FENCED` 与读取中发生的连接快照变化回滚后重读，不在旧fence上执行。重试仍经身份、任务授权、安装摘要及当前fence核验。
+- `TASK_GRANT_MISSING/STALE`、任务改派/结束、明确身份错误、安装摘要变化等确定业务失效仍拒绝；不将全部异常改成允许，不新增重试队列/时限/审批，不自动复活历史DEAD或重放有副作用记录。
+- 实现候选API `283349305aadd3f1a67e792d31f228e1e3531e69`；关键回归复用 `ChatActionDispatchReviewGuardTest`，验证离线抛可重试异常、同一action恢复后正常预热、授权撤销仍Rejected。Flow精确选择该类，并保留Native在线fence方法和原回归；测试/安装/生产恢复结论按handoff分别记录，规格不等于验收完成。
