@@ -144,3 +144,11 @@ Runtime60在升版候选336d92c执行了487条，481通过、6失败；全部失
 三组件均只有候选测试/制品证明，尚未整体合入develop或发布。此Runtime包沿用已验证安装适配器的程序/引擎/npm更新合同，安装需验证当前工具链清单和Python requirements后复用，不是全新Node/Python工具链分发包。临时5264702配置已恢复并readback。API319约325秒、Runtime61约131秒（本任务控制面首见终态上界）；均未触发600秒上限。
 
 **剩余阻塞/未验**：明确本次生产发布授权仍缺；旧新Web/API/Runtime组合实测、统一安装与生产PC/移动/多轮图片业务验收尚未完成。未将历史账号/场景结果复用成本次通过；09:00前未达完整退出标准仍按整体废弃处理。
+
+### 本次生产发布及08:09验收状态
+
+用户07:28明确授权。API321/Web321/Runtime62均SUCCESS，同Run分别3111/3342/487通过；API164条件skip、Web2旧小程序pending如实保留。安装不等于验收。详见本目录`evidence/api321-jar-audit.json`、`web321-report-audit.json`、`runtime62-package-audit.json`、`runtime62-installation.json`及`release-online-artifact-audit.json`。
+
+任务530由ziyue真实浏览器上传图片、自动选中并指定吴用，当前停留准备会话，尚未完成识图/生图/改图/正式验收。API重启后通道健康reported-ready但原生业务HTTP401；精确证明与DB匹配，正在定位服务端通道绑定。三名Agent均无processing后按同一发布锁受控重连作诊断，不改业务事实。第二主体凭据未提供，跨账号生产读取未验。旧Web+新API仅验证到返回页可见，刷新触发重新登录，不把它标为完整组合通过。新Web+旧API曾加载首页，但尚无完整模型组合实测。
+
+此前“尚未授权/尚未发布”段落是各历史检查点状态；以上为最新状态。整体退出条件未满足。

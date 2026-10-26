@@ -61,3 +61,24 @@ API318真实MySQL撤权测试通过；原因确认为MyBatis一级缓存复用�
 - 下一动作：取得本次API/Web/Runtime生产发布与既定业务验收的明确授权后，固定混合版本/部署顺序、按既有Flow同Run合同完成发布；不得将当前CI-only制品直接拿到生产绕过发布适配器。Runtime复用既有安装适配器而非新增安装器；同Run程序/npm包与保留工具链来源分别核对。
 - 仍要执行旧新组合、ziyue/吴用的PC与移动、多轮识图/生图/改图；PDF不验。未取得授权前不进行服务重启/生产安装/状态注入。
 - 09:00硬截止不变，未交付整体废弃；不以当前正式测试成功宣称整体完成。
+
+## 07:28用户授权发布
+
+用户明确确认本次API/Web/Runtime经Flow发布与ziyue/吴用既定业务验收。远端四仓develop与01:40核对基线一致；Runtime现行1.3.9/6b11eaab仍在运行。09:00截止不变，剩约92分钟。先固定发布/恢复输入，按Runtime→API→Web逐组件核验混合版本；不绕过同Run测试制品/锁/备份/安装保护，不改业务状态。
+
+## 07:45发布推进与纠偏
+
+- Runtime62 SUCCESS，233秒，1.3.10/336d92c受控安装固定app，PID3992828；三Agent对旧API均connected/registered/ready，未改身份/业务状态。配置已恢复。备份`/home/isp/baks/cyf-agent-runtime-v1/20261026-architecture-convergence`。
+- API320测试/构建成功，安装器拒绝候选分支receipt：`receipt source is not a clean develop build`；旧PID3843419未替换。Web320尚在构建时由本任务受控取消，避免相同发布输入错误。没有放宽安装保护。
+- 三组件源已分别快进远端develop：API9be9864638、Webe43d8bc691（1.16.50，仅根package版本变动，无依赖升级）、Runtime336d92c2。两端临时配置triggerEvents为空，未因push触发重复构建。
+- API321/Web321按干净develop固定源码重新执行同Run测试/打包/授权安装，仍有600秒总监控。API发布版本1.17.8；Runtime62是独立发布而非API/Web完成证明。
+- ziyue实际浏览器登录成功，复用既有CDP helper的本任务副本，仅把已删除临时依赖路径指向现有ws。无创建第二工作树、无新浏览器框架；浏览器PID3991584属本任务。
+- 第二测试主体凭据未取得，已向用户报告跨账号互查前提；不冒称已覆盖。
+
+### 08:09生产验证阻塞（未宣称完成）
+- 本轮API5260799/321、Web4403172/321、Runtime5264702/62均SUCCESS，均在600秒内。API/Web默认CI配置已CAS核对后恢复/readback。
+- 本次同Run报告：API3275发现、3111通过、164旧条件skip；Web3342通过、2旧小程序pending；Runtime487通过/0skip。API JAR及Web入口/引用资产已核对线上摘要，证据`release-online-artifact-audit.json`。
+- 新任务530：ziyue真实上传blue-square.png并自动选中，选吴用、授予本任务执行后停留BOOTSTRAP RETRY/BOUNTY_RUNTIME_AWAITING。尚未发生本次图片识图/生图/改图，不得标业务通过。
+- API升级后Runtime健康文件显示connected/registered/ready，但workspace/conversation原生接口401 AGENT_RUNTIME_UNAUTHENTICATED。已仅比较HTTP证明的摘要、runtime ID、generation与DB匹配，未提交令牌/抓包。职位技能缺表错误在旧PID3843419已存在，暂不能当作新阻塞根因。
+- 确认本轮三名Agent无processing、workspace execution仅QUEUED/RESULT_COMMITTED后，在原Runtime发布锁下受控重连本轮部署的unified服务；只重连，不改程序/配置/业务状态。抓取首次注册以定位服务端授权binding失效。原始抓包私有600，公开仅脱敏结果。
+- 第二测试主体凭据仍缺；跨账号生产隔离未验。09:00硬截止和整体未达退出条件则废弃规则未改变。
