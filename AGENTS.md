@@ -64,7 +64,7 @@
 
 ## Runtime组件命名修订（2026-10-26）
 
-- **2026-10-26用户命名更新**：组件名改为 `codex-bridge`，新源码/安装候选内部目录由 `codex-ws-agent/` 改为 `codex-bridge/`。下述固定app根、身份/state、锁、备份及追溯边界不变；线上仍使用旧内部目录直到获授权候选安装核验完成，不能直接mv运行目录。当前任务见 `docs/implementation/handoffs/CODEX-BRIDGE-REPAIR-20261026.md`。
+- **2026-10-26用户命名更新**：组件名改为 `codex-bridge`，新源码/安装候选内部目录由 `codex-ws-agent/` 改为 `codex-bridge/`。下述固定app根、身份/state、锁、备份及追溯边界不变；2026-10-26已通过Flow5264702/65安装Runtime1.3.11（源码d97449c），现用内部目录为`app/codex-bridge/`，task530业务验收通过；不能直接mv运行目录。当前任务见 `docs/implementation/handoffs/CODEX-BRIDGE-REPAIR-20261026.md`。
 
 ## 生产 API 安装目录（2026-10-07）
 

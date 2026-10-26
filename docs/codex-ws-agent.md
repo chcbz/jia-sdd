@@ -1,6 +1,6 @@
 # codex-bridge（原 codex-ws-agent）接口文档与对接方案
 
-> **2026-10-26命名与修复**：源码和安装候选已改为 `isp-install/conf/codex-bridge/`；线上目录尚未迁移。当前任务合同、必要校验及验证状态见 `docs/implementation/handoffs/CODEX-BRIDGE-REPAIR-20261026.md`（仓库根相对路径）。以下旧路径/协议作为历史说明保留，不据此部署。
+> **2026-10-26命名与修复**：源码和安装候选已改为 `isp-install/conf/codex-bridge/`；2026-10-26线上已通过Flow5264702/65迁移至`app/codex-bridge/`（Runtime1.3.11 / d97449c），task530改图与验收通过。当前任务合同、必要校验及验证状态见 `docs/implementation/handoffs/CODEX-BRIDGE-REPAIR-20261026.md`（仓库根相对路径）。以下旧路径/协议作为历史说明保留，不据此部署。
 
 ## 一、架构概览
 
