@@ -62,6 +62,10 @@
 - 失败先归因；同根因、同输入连续失败两次停止盲重试。证据按 tree SHA、测试 selector 与 fixture 复用；状态转换、归因及证据复用走 `ops/orchestration/cyf_orchestrator.py`。
 - 完成、异常或需用户操作时主动通知，并给出下一步。性能与门禁细则见 `specs/api-performance-3s-slo/spec.md`、`docs/aliyun-flow-gate-policy.md`。
 
+## Runtime组件命名修订（2026-10-26）
+
+- **2026-10-26用户命名更新**：组件名改为 `codex-bridge`，新源码/安装候选内部目录由 `codex-ws-agent/` 改为 `codex-bridge/`。下述固定app根、身份/state、锁、备份及追溯边界不变；线上仍使用旧内部目录直到获授权候选安装核验完成，不能直接mv运行目录。当前任务见 `docs/implementation/handoffs/CODEX-BRIDGE-REPAIR-20261026.md`。
+
 ## 生产 API 安装目录（2026-10-07）
 
 - 最终部署 JAR 固定为 `/home/isp/hosts/cyf/api/cyf-api-kit.jar`；生产进程的 `-jar` 与 cwd 使用该实体目录。`/opt/cyf/service/api` 仅为兼容链接，不恢复第二套实体部署。
