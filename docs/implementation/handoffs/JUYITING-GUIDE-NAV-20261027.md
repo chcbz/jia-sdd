@@ -44,3 +44,17 @@
 ## 收口
 
 已保留远端精确源码、candidate.patch、报告/manifest、源码标识/摘要、日志和截图后，清理本任务唯一worktree/分支、共享依赖符号链接（不删共享依赖）、Chrome临时profile和已核验下载副本；cleanup.json readback通过。主Web旧HEAD/原有脏改、唯一原型预览、其他任务工作区及生产状态未动。开发与正式CI完成，部署等待另行授权，不把等待部署记成开发阻塞。
+
+## 获授权发布（2026-10-27）
+
+- 用户后续明确要求“部署”，发布范围固定Web1.16.63 / 00b1a6b367ded7764a416a065e49c409360fbfba / tree3031a68acc36f4cd610ddceef2da160ddb3fbd90，唯一Owner guide-nav-owner-20261027；不涉及API/Runtime。
+- 10:36 +08实时核对远端develop仍为固定候选，线上record仍1.16.62/350；主checkout及其他脏改不动。本次复用既有4403172临时授权配置，同Run完整测试构建部署，不直接发布352制品。
+- 原CI-only配置先保存、候选固定并readback，无活动Run才变更；570秒受控取消仅本任务Run，总≤600秒。安装器摘要核对、原index/record备份、原发布锁及可恢复安装不变；异常不手抄旧状态回退，走受控恢复。完成后按配置归属恢复原CI-only。证据/home/isp/state/juyiting-guide-nav-release-20261027/。
+
+## 发布完成与线上核验（2026-10-27）
+
+- **Flow4403172/353 SUCCESS**，10:39:43—10:45:01 +08，总**318秒**（Run创建至终态，低于600秒）；源码精确00b1a6b367ded7764a416a065e49c409360fbfba，版本1.16.63。完整release测试3463通过/0失败/2既有pending/0 skipped，Vite构建、JS扫描、同Run上传及部署作业均成功。启动初响应UNKNOWN仅因source未填，最终来源已核实并单独记录CONFIRMED，没有重复start。
+- 部署单71861980，1批/1台主机Success、client healthy。生产record为353/1.16.63/online_verified；同Run制品109576000字节，SHA-256 `29f99a0166df31da0093ddb0de143d702217c6100035ccea755ce4d2da7d2011`，不是352制品。archive source-commit/tree、manifest版本和**612项实际安装文件摘要**全部匹配；公网根入口、/juyiting及相关JS/CSS共9项响应200且摘要匹配，两端引导标记命中。
+- 已核对备份`/home/isp/baks/cyf-web-juyiting-guide-nav-release-20261027/`的原index摘要与原350/1.16.62 record一致；恢复仍须走受控流程，不直接复制状态覆盖新事实。保留安装制品`/home/isp/state/cyf-web-flow/downloads/353/package.tgz`和原备份，不按临时目录清理。
+- Run结束后按候选归属恢复原CI-only配置，update/readback APPLIED；10:47:35 +08再次实时核对canonical SHA d40133eacfd9616ae8737e2462c366ce11565235c5b3fb8fdec1f38bf9dd18cd，无deploy stage。未改生产安装器、未运行本机构建/直发、未触碰其他Run。
+- 安装执行、Run终态和公网资源已分别核实；**未执行线上认证后的手机/PC业务交互**，不将离线24状态或静态资源核验写成线上业务E2E通过。精简发布证据`docs/implementation/evidence/juyiting-guide-nav-release-20261027.json`，完整控制面/恢复/公网摘要在私有发布目录。部署作业日志API返回空内容，保留原响应，不声称已读完整安装日志；安装成功依据部署单、生产record与独立摘要核验。
