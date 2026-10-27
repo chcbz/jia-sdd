@@ -46,3 +46,7 @@
 - 备份`/home/isp/baks/cyf-web-juyiting-onboarding-release-20261027`的index/record与发布前基线精确匹配，原1.16.59/Run344归档和旧hashed文件保留。无需回退；后续恢复走授权版本化安装，不手工覆盖旧状态。
 - 验收边界：本次独立核验同Run制品、实际安装、公网资源；未登录执行真实办事/委派/付费/验收。匿名Chromium/CDP诊断未获得稳定引导/初始页面target，原始工具日志保留，不记作手机/PC线上交互通过，也不据此归因为应用或身份故障。同源码的离线两端指导回归仍是发布前证据。
 - 汇总`docs/implementation/evidence/juyiting-onboarding-release-20261027.json`；完整证据在发布私有目录的release-summary.json、verification.json、web349-meta.json、web-deploy.json、web-restore.json、run349/报告/manifest/源码标识。仅清理本任务Chrome临时profile，生产下载归档、备份与其他任务/预览均保留。本次无新worktree、无本机生产构建/部署；根仅提交本任务handoff增量与精简发布证据，不覆盖既有脏文档。
+
+### 随后的其他发布观察（2026-10-27 09:08—09:09 +08:00，只读）
+
+本次349已成功完成；最终readback发现其他发布已将线上更新为 **Web1.16.62 / Flow4403172/350 / 1fdae7355dc19dea90186251de11ad19e4402758**（线上record=online_verified，Flow SUCCESS）。经Git祖先关系与三引导文件精确diff核对，350继承bb99788，HallOnboarding/HallOverview/useHallOnboarding源码未变化；当前公网入口和引导JS/CSS共3项摘要与350安装manifest匹配。本任务未启动/重试/回退350，不把它归于本次349。09:09再次只读确认默认CI-only无部署stage、canonical SHA不变。当前线上为1.16.62而非1.16.61，本次优化仍包含在内；证据later-release-observation.json及根精简发布记录保留观察时间与归属。
