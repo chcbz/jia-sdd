@@ -28,3 +28,21 @@
 - `verification-final.json`汇总Run/源码/tree/测试/摘要/标记；run348/release.json与mochawesome.json、浏览器24状态截图和source-check.json保留。没有生产安装、线上健康或真实账号业务验收；上线须另行授权并固定候选。
 - 稳定知识已按源码范围回写现有runbook、新版原型规格及既有优化方案。根runbook/方案/台账与主Web原型已有其他任务修改，保留工作区，不整文件纳入本次提交；根收口仅提交本任务handoff与已核验Web gitlink。
 - 清理仅限本任务隔离worktree、node_modules符号链接、Chromium临时profile与制品下载；源码远端/完整补丁、报告、manifest、截图和原型修改前片段保留。既有18786预览、主checkout/其他任务目录、共享依赖与生产状态不动。具体完成readback见证据cleanup.json。
+
+## 用户授权部署（2026-10-27）
+
+- 用户在本聊天明确回复“部署”，授权仅Web1.16.61 / bb9978876a6fe1d8e5bc284e4b4737f654b9caa0 / tree75d9f8cceae61901c5fa38bd4e54e8176c24f8d6；不扩成API/Runtime或最新develop自动部署。
+- 发布前只读确认远端develop仍是候选，线上安装记录为Web1.16.59 / Run344 /1102350543846e59f2c31dfc36145155da4f7773；旧主checkout ca22ac2与原脏改不动，无需新worktree。实际helper摘要匹配既有版本化适配器，发布锁与控制器锁查询空闲；不抢占他人。
+- 现有适配器要求同Run制品，故沿用当前CI测试/构建再同Run部署，不把Run348制品伪装新Run输入；原348保留为开发验收。固定候选源/版本/完整tree，临时云端部署配置保存前值、readback后单次启动，570秒受控结束保护600秒总上限。结束后恢复归属匹配的原CI-only配置。
+- 保留同Run摘要、完整性校验、发布锁、assets先行/index最后、旧hashed文件与入口/record备份。恢复沿既有受控发布流程，不手工复制旧index/状态。安装、Run终态、公网资源与真实业务验收分别记录。
+- 发布证据根`/home/isp/state/juyiting-onboarding-release-20261027/`，唯一Owner不变；本次不改应用源码或主机安装器。
+
+### 发布完成（2026-10-27）
+
+- Web **1.16.61 / bb9978876a6fe1d8e5bc284e4b4737f654b9caa0 / tree75d9f8cceae61901c5fa38bd4e54e8176c24f8d6** 已发布；API/Runtime未操作。开发CI348为历史验证，正式部署为**Flow4403172/349 SUCCESS**。
+- 当次Run 08:52:17—08:56:01 +08:00，总**224秒**（CI约126秒、安装阶段97秒），满足600秒；3454通过/0失败/2既有pending/0 skipped，扫描、测试构建上传及部署均SUCCESS。初始UNKNOWN为来源未就绪，后续真实Run源码/制品/安装闭包核实，无重复启动或取消。
+- 部署单**71853086 Success**，单批单机Success/healthy。安装record=349/1.16.61/bb99788/online_verified。同Run归档109578775字节，SHA-256 **cb4a8a13305fe76f57706f876026312ff6b1ad5c93370528e25231c8db8c2545**；独立核对源码commit/tree、manifest/报告及**612项安装文件摘要**，公网首页/聚义厅路由/引导所在懒加载JS等**9项摘要匹配**。手机/PC与四步标题在已安装且公网匹配资源中命中。
+- 配置已按原候选归属受控恢复，readback **APPLIED**，默认CI-only canonical SHA `d40133eacfd9616ae8737e2462c366ce11565235c5b3fb8fdec1f38bf9dd18cd`，无develop自动部署。
+- 备份`/home/isp/baks/cyf-web-juyiting-onboarding-release-20261027`的index/record与发布前基线精确匹配，原1.16.59/Run344归档和旧hashed文件保留。无需回退；后续恢复走授权版本化安装，不手工覆盖旧状态。
+- 验收边界：本次独立核验同Run制品、实际安装、公网资源；未登录执行真实办事/委派/付费/验收。匿名Chromium/CDP诊断未获得稳定引导/初始页面target，原始工具日志保留，不记作手机/PC线上交互通过，也不据此归因为应用或身份故障。同源码的离线两端指导回归仍是发布前证据。
+- 汇总`docs/implementation/evidence/juyiting-onboarding-release-20261027.json`；完整证据在发布私有目录的release-summary.json、verification.json、web349-meta.json、web-deploy.json、web-restore.json、run349/报告/manifest/源码标识。仅清理本任务Chrome临时profile，生产下载归档、备份与其他任务/预览均保留。本次无新worktree、无本机生产构建/部署；根仅提交本任务handoff增量与精简发布证据，不覆盖既有脏文档。
