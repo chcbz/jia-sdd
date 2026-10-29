@@ -1,0 +1,205 @@
+# tenant 1 灰度分支合并检查
+
+核对日期：2026-10-28（Asia/Shanghai）。Owner：本聊天。范围：检查两个 `codex/minimal-tenant-gray-20261028` 分支能否合入 develop，并评估共享数据库、本地 tenant_id=1 验证对现有业务的影响。非目标：修改业务代码、合并、push、部署、生产数据操作。只读源码检查不新建 Reviewer/任务审批。接口依据：`/home/isp/wsps/cyf/api/docs/interface-standard.md` v1.4；职责依据 RB-1（API身份与完成事实、bridge执行隔离）；本轮不实施删除项。
+
+## 固定输入
+
+两轮 ls-remote 核对结果一致，fetch 不改变工作区。主工作区 API 和根仓存在大量其他任务修改，未覆盖；分析采用 Git 对象而非脏工作区。
+
+| 组件 | 本地 HEAD | 远端 develop | 检查分支 |
+|---|---|---|---|
+| API | 516267bf7b19bfc03581ae580704af9246ffb622 | 2ea0a3252fd7043dfe0084648f0817165d8d853a | 5f59833cecbda63165560f34aec86f32590a474b |
+| Runtime | 22b4511945d7ef7e6cfbda0f482f6c8910ce8306 | 22b4511945d7ef7e6cfbda0f482f6c8910ce8306 | bf124ca85d90f0880526716db95d0734e6de917f |
+
+API develop 独有6提交、分支独有10提交；Runtime双方各独有1提交。均非直接 fast-forward，但 `git merge-tree --write-tree` 成功，无文本冲突。合并候选 tree：
+- API：`98e18324d7b75c7d4330a6cb4f65f2178538a50d`
+- Runtime：`f55510e2ebf27c1e7a48e35ba446dd43e57eb193`
+
+没有创建合并提交，没有改分支指针。当前线上源码/配置未核验，不以 develop 或历史上线记录代替线上状态。
+
+## 结论
+
+Runtime 分支仅变更两个测试文件，未改运行时代码；可独立合入。API 暂不建议以“灰度隔离已安全完成”为由合入/启用，先修复下面 P1，再验证合并候选。合入本身不改变生产运行，不能把本结论理解成发布授权。
+
+### P1：共享数据库的 outbox 消费隔离只有单向
+
+以下行号均属于上述 API 合并候选 tree，不是当前脏 checkout：
+- `chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatDeliberationOutboxRelay.java:156-163`：固定租户模式 discoverInScope(tenant,client)，普通模式仍 discover(now,capacity)，随后直接 claim。
+- `chat/jia-chat-mapper/src/main/java/cn/jia/chat/deliberation/ChatDeliberationMapper.java:205-211`：普通发现查询只约束状态、时间，没有租户条件。
+- `ChatDeliberationOutboxService.claim` 从候选行获取 tenant/owner/client 加锁，不核对该行是否属于当前进程允许的租户。
+
+触发条件：普通业务进程与灰度进程共用数据库，tenant 1 产生 READY/RETRY/过期CLAIMED等聊天事件。普通进程可发现并竞争领取灰度事件，改动租约/次数/状态；未连接灰度Runtime的进程可能失败重试，内置角色分支还有模型执行入口。HTTP/JWT的固定租户准入不覆盖该后台轮询。`spring.task.scheduling.enabled=false` 也不关闭使用自建 scheduler 的 SmartLifecycle relay。
+
+该无租户查询在 develop 已存在，但引入 tenant 1 共库数据后才产生本次双环境竞争风险。分支没有闭合这一新增使用场景。修复应让普通进程只发现其允许的 legacy tenant（保留其合法多个 client），灰度只发现 tenant 1/cyf-local，并核对其他共享后台消费者。不能只修改灰度进程，更不能取消他人生产 worker。
+
+最小复核：提取合并候选的原 discover SQL，在内存 SQLite 放入 tenant 0 与 tenant 1 两条 READY 行，查询返回两者。此证据仅证明SQL谓词，**不是 MySQL/MyBatis/应用集成测试**；运行时插件配置与线上并行行为仍需正式验证。已有 R8 测试包含手动 claim + deliverClaim，不足以代替两个进程并行 discover 的回归。
+
+回归入口：ChatDeliberationMapper / OutboxRelay 的真实数据库双租户并行发现与领取；断言 tenant 0 worker 不领取/改写 tenant 1，反向亦然，灰度事件不占正常派发容量。
+
+### 功能范围：不是全业务灰度环境
+
+`starter/src/main/resources/application-minimal-grey.properties` 与 `MinimalGreyTenantRouteFilter.java:76-94` 只开放最小身份、Agent roster/persona、Runtime引导/会话/ACK和聊天表面。任务、个人工作区、技能/经济、正式成果、归档等大量入口被拒绝或相关开关关闭；不能用它验收这些功能，更不能仅为方便验证直接放开尚未完成隔离的路由。数据库应已有所需 schema；灰度启动明确禁止 schema-maintenance/启动DDL。
+
+### 非灰度业务也有公共代码变化（风险，未确认线上故障）
+
+- OAuth `AuthorizationServerConfig.java:120-131` 无论灰度开关均从持久化 client 映射取 tenant。原普通模式固定签 tenant 0 的行为改变；现有 client 的 tenant 为空/不匹配时可能 invalid_grant。必须核对正常客户端映射并回归登录、刷新、机器令牌，不能猜测线上数据有问题或已合规。
+- `/user/my` 的 `UserController.java:343-360` 无条件把完整 UserEntity 改为八字段 CurrentUserIdentityDTO；不是只对 tenant 1 生效。敏感字段收口合理，但要核对现有消费者的字段依赖；本轮未证明用户页面发生损坏。
+- 会话服务显式传 tenant、live-generation故障分类、Agent roster/persona/runtime查询等均影响正常租户调用链，不是纯 profile 配置。保留的 tenant-0 默认接口有助于兼容，但不等于全部业务回归通过。
+- develop 独有的最新原生技能/推荐提交需要在真正合并 tree 上验证，不能用灰度旧分支成功替代。
+
+## 验证证据与边界
+
+- 两仓分支与合并候选 `git diff --check` 均通过；merge-tree 无冲突。
+- Runtime 固定分支及合并 tree 各运行两个变更测试文件：各32通过、0失败。源码从 git archive 解出；临时目录已清理，无新worktree。复用现有 node_modules，只做本机轻量定向检查，未安装依赖/打包/触发网络服务。
+- 首次 Runtime 尝试因归档缺少 systemd 模板、临时目录缺 ajv 依赖失败；补全模板与现有依赖后通过，不将环境失败算代码回归。
+- 日志：`/home/isp/wsps/cyf/.evidence/minimal-tenant-gray-merge-check-20261028/` 下三个 runtime review 日志，`cyf-gray-runtime-review-merged-tests.log` 为最终合并候选结果。
+- 未执行本机 Gradle；本轮未取得该 API 合并 tree 的 Flow 重型回归/validateLayering证据，也未做真实灰度端到端或生产数据查询。不声称API编译/全业务无回归或线上隔离已通过。
+
+下一步：优先修复双向后台消费隔离，明确本地需要验证的功能范围；在精确合并候选上通过现有 Flow 完成 tenant 0 正常业务与 tenant 1 灰度的必要回归，单Run≤600秒，CI-only不部署。发布、生产配置/数据修改另按授权执行。定位/实现/验证/等待耗时未单独计量，不作缩时承诺。
+
+## 2026-10-29 授权续办（进行中）
+
+用户授权：重新核对，修复相关问题，在不影响生产流程的前提下合入 develop；不包含部署、生产配置或生产数据修改。本聊天继续为唯一Owner，沿用本handoff作为任务 `MINIMAL-TENANT-GRAY-MERGE-CHECK-20261028` 的交付记录。
+
+重新fetch后 API develop 已推进到 `d24268d3be`，Runtime develop 已推进到 `320b889`；两灰度分支仍为前述固定提交。主API工作区有其他任务大量未提交改动，其余工作树均属于其他任务，不能安全复用；仅新建一个必要API隔离工作树 `/home/isp/wsps/worktrees/tenant-gray-safe-integration-20261029`，分支 `codex/tenant-gray-safe-integration-20261029`。Runtime用Git对象和临时测试快照，不新增worktree。不覆盖、不清理其他任务内容。
+
+验收：默认生产配置语义与tenant 0关键流程保持；tenant 1不会被正常后台消费者抢领；灰度限制明确；固定候选定向回归与分层检查；无自动部署触发；合入前再次核对develop未变化。失败先归因，不盲重试，Flow单Run600秒。
+
+### 2026-10-29 修复候选与验证准备
+
+API合并候选 `2a95acc0ba8f01b0a0b424955561e46223b45abb` / tree `dab06f6ff2b96dc50069ee8da8794a27a2a022da` 已推独立候选分支，尚未合入develop。正常outbox发现增加legacy tenant谓词并保留多个client；tenant0 own-user完整返回和密码mask保留；仅已存在exact OAuth client的历史null/empty tenant保留旧legacy签发，显式foreign/缺失client/灰度缺mapping仍拒绝。新回归覆盖双worker READY/RETRY/AWAITING_ACK/过期CLAIMED、多个client和自定义legacy tenant，复用私有MySQL fixture，不连外部数据库。失败范围/风险/测试入口记于候选 `docs/minimal-tenant-grey.md`。
+
+实时Flow两条配置均triggerEvents空、无部署，API最近357已SUCCESS、无活动Run；保存原始配置到 `/home/isp/state/cyf-gray-safe-integration-20261029/`（私有目录）。本任务CI候选复用当前357工具/测试策略、保留已有覆盖和fresh bootJar/validateLayering，增加受影响测试、固定完整commit/tree。仅该临时工具bundle的分支白名单增加本候选分支（同步shell、orchestrator、artifact校验），不伪造develop身份、不改全局工具、不削弱源码/锁校验；job9分钟、shell500秒、本机只监控/到570秒取消本任务Run。操作前后readback、终态后按配置归属恢复前值，不操作他人Run。
+
+其他后台路径：AgentStatusTransitionWorker仍在绑定/身份校验明确限tenant0，灰度禁调度；旧ChatBountyExecutionRelay在最新develop不注册为Spring组件。未把这两条误认成已启用的全租户执行器。完整其它业务多租户化不属于最小灰度范围。
+
+### 2026-10-29 集成回归推进（截至 Flow360 启动）
+
+Runtime合并提交 `c3f973c2e5ca2990dd3e775b42f6bf02f7e0a060` 已非force推送远端develop；双亲为 `320b8890bae01f67aa85568d8712951d55666f60` 和 `bf124ca85d90f0880526716db95d0734e6de917f`，受测tree `964265a3d5df890a9647b6a4816b346d33b7e2db`，两个改动测试文件32通过0失败。生产payload无变化，未部署。最新远端只读复核仍指向该提交；日志 `runtime-tests.log` 位于上述私有证据目录。
+
+API Flow358（候选2a95acc0ba）203秒FAIL，首轮暴露旧测试仍mock未带tenant的DAO/service重载，以及native协议切换后旧WebSocket断言仍读取扁平字段。Flow359（78d1fe2ca2）204秒FAIL；普通聊天流、授权、用户资料、状态监控等前轮失败已消除，余下canonical报文层级/消息ID断言与task scope测试把owner当tenant的问题已逐项修正。不放宽生产协议，不跳过失败测试，不以旧测试通过代替当前证据。
+
+Flow360固定候选 `3800f13406`，只验证不部署；仍需取得终态、R8/H2与私有MySQL、validateLayering和fresh JAR证据后才决定API合入。开始API响应source commit为空时按UNKNOWN记录，但有唯一returnedRunId；未重复启动，以Run日志精确源码绑定复核。每轮原始配置/上下文/日志/诊断分别保存在 `run358-*` / `run359-*` 等文件，不覆盖历史失败证据。
+
+补充后台静态复核：ChatMessageMapper.findPendingMemoryConversations在SQL明确exact tenant0后分页，LongTermMemoryServiceImpl同步入口和snapshot再次限制tenant0，未发现该路径处理tenant1记忆数据。此为源码检查，不是线上行为验收。
+
+### 2026-10-29 最终完成：源码合入，不部署
+
+- Runtime远端develop：`c3f973c2e5ca2990dd3e775b42f6bf02f7e0a060`（32/32定向测试通过，无生产payload变动）。
+- API远端develop：`80739ebb0d25be5e713bd1c82209cfea089d3600`，tree `54521b4d1f5072e118eee0418086c35c783a7214`，包含原灰度分支、最新develop与本轮修复。合入前再次fetch确认develop仍为d24268d3be，祖先关系/工作树清洁/diff检查通过，非force推送成功。未改其他任务脏工作区。
+- API Flow **5260799/361 SUCCESS**：3478项测试执行记录、**3319通过、159跳过、0失败/错误**，422个JUnit suite记录。source set可重叠，不当作3478个独立用例。原策略回归保留，`validateLayering`、fresh `:starter:bootJar`成功；无部署步骤。最终run总时长监控上界313秒，小于600秒。
+- 新/重点证据：R8TenantPrivateChatTest 10/10（H2），TenantOutboxIsolationMySqlTest 2/2（私有MySQL），JuyitingWorkflowMySqlTest 36/36（包括tenant1记忆数据防改写），OAuth 6/6、固定tenant policy 3/3、own-user兼容1/1与真实mapper3/3、固定tenant启动4/4、route allowlist3/3、security context5/5。双worker测试是同JVM中的两个实际relay实例并发发现/领取，数据库/mapper/claim/settle真实，仅下游deliverClaim替身；不是独立部署双进程或线上E2E。
+- JAR SHA-256：`d6401fd45e5ba1168fefa65251f9a4686a19f86fe282bf3ec5b3f4ff7601acbe`；同Run receipt SHA-256：`a433bbe789822d17ca9bb8fddde0a4fdf456284228bdb4811da3dfbea4d0968b`。日志绑定精确commit/tree与clean_before/after，诊断压缩包展开后SHA校验一致。未下载/安装生产JAR。
+- Flow360的普通测试2469项记录零失败（82跳过），随后因MySQL测试调用缺新tenant参数编译失败；补齐参数并加隔离断言后在361完整通过。361使用`--continue`收集所有独立受影响任务反馈，不删除任何必要测试/锁/完整性保护。358/359/360失败均保留各自源码和诊断，不冒充成功。
+- 原API Flow配置已在361终态且无活动Run、配置仍由本任务持有时恢复，readback raw SHA `6104ca97c1e420c2cf6b9bd212653073eacbb8656ebf42baa82494ecd406947e` 与原备份一致；Runtime配置未修改。develop不自动部署，未部署、未重启、未修改生产配置/数据、未取消他人Run。
+- 完整证据：`/home/isp/state/cyf-gray-safe-integration-20261029/final-verification.json`、`api-run361-diagnostics.json`、`api-run361-log.json`、`api-restore.json`、`api-final-runs.json`、`runtime-tests.log`；阶段耗时不另作无依据估计。
+
+**使用边界仍有效**：仅合入源码不改变在线旧worker。要用生产共享数据库创建tenant1灰度数据，须另获授权先将普通生产消费者升级到隔离修复；未升级前使用独立测试库。local Redis、issuer、Runtime身份/state、文件根也须独立。minimal-grey仅覆盖身份/名单/注册会话/ACK/CHAT，不支持任务、技能执行、经济、个人工作区及正式成果业务的灰度验收；未执行真实灰度全链路或线上业务验收。本次“完成”指所授权的审查、修复、正式回归与develop集成，不指发布或全功能多租户化。
+
+收口readback：远端两develop再次确认仍为上述提交；本任务API工作树已在清洁状态删除，其余工作区未动。Flow列表的权威start/end补查确认361实际总耗时 **302秒**；358/359/360分别188/186/185秒（上文203/204/195等是本机控制轮询观察上界，不是Flow权威运行时长）。每次均小于600秒。
+
+### 2026-10-29 生产发布授权续办
+
+用户明确本次要求最新develop部署、核验生产不受影响，不验灰度。API由既有生产恢复Owner（线程01a17c5b-4d54-7ce3-9b02-4a552621dcac）执行80739ebb/1.17.12，Flow5260799/362；本线程不重复API安装/重启。对方确认不操作Runtime5264702，本线程负责c3f973c/1.3.21。两者固定源码与线上版本分开核验，历史“只合入不部署”不再描述当前授权。
+
+Runtime现行15483d5/1.3.20仍active，未安装新版本；本次只准备同Run测试/上传/安装候选，新增合并分支两项测试文件，保留原回归。复用既有受控安装器，保持固定目录、依赖摘要、身份/state、不在途任务、锁、备份及停止后锁归属保护；候选7项恢复隔离测试通过。证据 `/home/isp/state/cyf-gray-safe-integration-20261029/runtime-release/`。当前API仍由另一Owner核验362取消后的安装/健康状态；不冒充Flow成功。启动Runtime前核对磁盘/备份及生产条件，不并发干扰API故障恢复。
+
+Runtime首次Flow5264702/92：719项测试记录（712通过、7跳过、0失败），构建成功；安装阶段390秒子超时，Flow FAIL。切换后尚未启动新程序，原受控恢复逻辑恢复旧程序/发布记录并启动PID1572369，没有恢复旧state；10:15三Agent重新registered/ready，API新版未动。原始证据移存上述runtime-release/run92，备份保持 `/home/isp/baks/cyf-agent-runtime-v1/20261029-tenant-safe-develop/`。实际瓶颈是manifest43s、复制52s、暂存验证49s、停止70s、state备份89s和独立compare64s；并非测试失败或新Runtime启动失败。5264702配置已恢复。
+
+根据实测改造本任务安装器I/O（不是原样重试）：cp --archive --reflink=auto替代Python逐文件复制，保持字节/模式/链接/xattrs；state备份改为gzip -1流式输出并计算压缩制品SHA，仍保留tar独立compare、ACL/xattrs、锁归属和恢复。合成备份、损坏检测、失败传播及7项恢复测试通过；不本机执行生产复制/打包，不删校验。第二次仍同Run完整测试/打包/安装，390秒安装子超时和570秒受控取消保持，不拆Run重置时限。新备份目录后缀-io区分批次且保留首次备份。
+
+### 2026-10-29 新分工下继续交付（主机安装，不新增Flow）
+
+用户已明确继续完成剩余工作。Runtime93云端719项记录/712通过/7跳过/0失败、打包上传成功，仅旧Flow调用安装器390秒超时失败并恢复原1.3.20（PID1578207）；与92一样不记Flow成功。93证据保存runtime-release/run93，原5264702配置已恢复。不继续该耦合模式盲重试、不新开构建Run。
+
+按2026-10-29新授权，复用93精确制品，主机安装器改为显式固定local-release-input（完整commit/tree/版本/Run/真实build作业SUCCESS、来源证据SHA及制品SHA），不伪造PIPELINE/CI环境；其余锁/依赖/身份/备份/停止锁归属/恢复流程保留。本机不构建不打包应用；来源校验6项、恢复7项合成测试，实际安装结果单列。最新源码再次核对API80739ebb、Runtimec3f973c、Webfa8d7f1。
+
+API恢复Owner已证实推荐POST400为线上旧Web a6e2edc缺expectedTaskVersion且消费旧数组与新版API不兼容；并非无害GET。为完成用户“生产功能不受影响”的修复范围，本Owner同步发布已有配套Web develop fa8d7f1，复用Flow4403172/371成功测试/构建制品，不再付费构建。保留授权/版本校验，不在API猜补版本，不自动重放任务，不调用付费模型验收。API本体不重复安装。前端新请求形态/ASSIGN状态门控/既有事项显示在真实浏览器中核验，必要拦截有效推荐请求以免生产写入。
+
+### 2026-10-29 11:08 CST 发布收口（生产只读/通道验证完成）
+
+- 11:02附近最终远端只读核对三条develop仍为API `80739ebb0d25be5e713bd1c82209cfea089d3600`、Web `fa8d7f1793392918bd0d1531c6f029cbaff8daeb`、Runtime `c3f973c2e5ca2990dd3e775b42f6bf02f7e0a060`；本地其它Owner HEAD/脏改不作发布来源，也未覆盖。
+- API **1.17.12**：复用原Owner发布事实；11:08健康UP、原PID1561644/canonical cwd、实际JAR SHA `d6401fd45e5ba1168fefa65251f9a4686a19f86fe282bf3ec5b3f4ff7601acbe`再次匹配，本线程未重复安装/重启。362保持CANCELED，测试/构建与主机最终安装成功分别记录。
+- Web **1.16.72**：复用371 SUCCESS，主机安装器退出0、612文件验证，公网index及JuyiHall JS/CSS SHA与制品逐字节匹配。真实浏览器登录、overview、539进行中详情、533待验收详情与两份历史文件/一份成果展示通过，所观测HTTP响应无错误；两个非ASSIGN详情未触发recommend。配套版本修复旧Web缺expectedTaskVersion/旧响应消费问题；ASSIGN推荐契约依赖371固定源码回归，未调用付费模型，不宣称真实推荐E2E已验。原计划538改为UI实际打开的539/533，截图与证据按真实task533命名。
+- Runtime **1.3.21 / bridge1.1.12**：本机显式固定93来源，独立安装退出0，新PID1615257；11:04:38核验672 payload文件SHA/模式、归档SHA、source/tree、身份/config未变、新PID的新鲜heartbeat、三个Agent均registered/ready。原93整体FAIL和build545508398 SUCCESS均保留。release锁内将current.json从installed-channel-verification-pending更新verified-active，并引用线上证据SHA；业务验收字段限定生产通道/只读，不包括付费执行/灰度。
+- **实际影响如实保留**：10:43:45发起停止，10:44:59确认停止，10:57:39新进程启动，11:04:38确认三个Agent就绪。备份439.931秒、独立tar compare255.105秒，启动初始化也较慢；期间Agent通道不可用，不能称全程生产零影响。首次线上脚本因旧health PID而失败，随后实际新进程完成初始化再核验通过，未跳过新鲜度/PID检查。无任务重放、tenant数据修改或state回滚。已向用户说明窗口。
+- **Flow简化已核实**：10:46三条真实配置均只worker测试/构建/上传，无主机调用或等待。规则已写aliyun-pipeline skill及CYF项目文档，安装/验收在本机，不运行重型本地构建。本次新分工接续新增Flow Run **0**；不掩盖此前92/93失败。600秒上限仅适用于云端Run，不转嫁应用请求或主机安装。
+- 最终证据：私有根`/home/isp/state/cyf-gray-safe-integration-20261029/`下`production-final-verification.json`、`api-final-readback.json`、`flow-boundary-readback.json`、`web-release/public-resources.json`、`web-release/install.log`、`browser/verification.json`、`browser/production-existing-task-533.png`、`runtime-release/installation.json`、`runtime-release/runtime-online.json`及来源Run证据。浏览器自身已退出/profile已清；只清本任务重复提取的payload，原制品、release/tests证据、全部备份保留。
+
+收口结论：授权固定最新develop版本均已上线，当前生产健康/通道及上述只读功能通过；已处理跨组件兼容问题。不承诺全业务零回归、不验灰度、不制造付费任务。本任务无剩余在途安装或Flow；其它任务脏改和工作区不动。规则与根文档改动保留工作区，不混入其它Owner未提交内容。
+
+### 后续核对纠正：部署完成，但生产验收未完成（覆盖上一节收口结论）
+
+11:11后继续检查发现以下实质问题，不能以11:04单次通道通过宣称生产全部正常：
+
+1. API `root.log`明确`Table 'jia.agent_position_state' doesn't exist`，`GET /internal/agent/position-skills`持续HTTP500，解释Runtime的`POSITION_NATIVE_REJECTED`。本次安装前同错误已存在不等于功能正常。固定80739ebb源码的`agent/jia-agent-mapper/src/main/resources/db/agent-position-skills.sql`包含state/authority/operation三表受控DDL；仅已证实state缺失，其它两表存在性和完整schema仍需只读预检。脚本明确先隔离库验证、不能启动自动执行、不授予种子用户权限。未执行生产SQL。下一步须明确生产增表授权、核对三表schema、复用隔离MySQL证据、备份/恢复策略后执行已有最小DDL；不DROP/改写已有表数据，不自动授予权限，不需要为此重新构建应用。
+2. 11:14:51、11:15:21连续采样吴用connecting，11:15:51起后三次恢复registered/ready，未人为重启。此前错误地把后续断言失败概括成health过期，现以样本更正为通道状态变化；不放宽heartbeat/PID/ready检查。原因未完整定位，不能承诺通道持续稳定。
+3. `SKILL_COMMAND_INVALID`与`ACTION_DELIVERY_PARENT_INVALID`在旧Runtime10:20—10:43日志也存在。旧命令隔离历史见BRANCH-RELEASE-REVIEW-20261024，不能重放或猜补旧任务；同错误码既有不代表所有业务无风险。与本次新版本故障分开记录，岗位缺表为明确待解决项。
+
+已将Runtime当前记录从verified-active调整为installed-channel-verification-pending，补充productionVerificationStatus=INCOMPLETE及后续证据，不覆盖11:04历史成功事实，不回滚代码/状态。`production-final-verification.json`真实状态为DEPLOYED_PRODUCTION_ACCEPTANCE_INCOMPLETE；新增`position-schema-error-excerpts.log`、固定`position-schema-candidate.sql`、`runtime-release/health-followup-samples.json`和`known-alert-comparison.json`。根文档规则检查通过；其它Owner工作未覆盖。等待明确生产DDL授权前，不把剩余问题标为已修复。
+
+### 2026-10-29 用户明确授权补表：已完成，重连另项未解决
+
+用户对“核对生产结构、补齐缺失表、不删除/改写业务数据、不授予权限”明确答复“是”。11:25续办；通过既有本地MySQL socket只读核对，三表agent_position_state/agent_position_authority/agent_position_operation均不存在。固定80739ebb源码SQL与实际线上JAR内db资源逐字节一致，SHA256 `e098ae59a5841d3081fc405ed75e2a5bfdaf350566bc676fd3a3fed181f19dc4`。在任务独立数据库复现生产字符集，仅执行三条DDL并核对SHOW CREATE后清理该测试库，没有本机Gradle或应用构建。
+
+主机执行器持API release文件锁及MySQL命名锁，先保存缺表基线、源码/SQL/expected schema和恢复说明，再只创建缺失表。首个apply因release锁正被持有而退出（尚未执行DDL）；核对锁已释放后才续办，未抢锁/改权限。11:34:47全部创建并readback精确匹配，三表均0行；未插入seed、未GRANT、未UPDATE/DELETE/回填、未DROP生产表，未重启API/Runtime。增表DDL自动提交，恢复规则是保留已建表及新事实、核对后续建缺失项，不用DROP冒充回滚。备份证据`/home/isp/baks/cyf-position-schema-20261029/`；私有任务证据`/home/isp/state/cyf-gray-safe-integration-20261029/position-schema/`。
+
+真实浏览器完成既有测试账号登录，再携带实际认证只读GET `/agent/positions/v1`：HTTP200/E0、revision0、空岗位/技能/任命/安装列表。线上日志从11:34:48起未观察到新的internal position-skills HTTP500；SQL摘要计数后续23次查询新增错误0；最终三表仍0行。未创建任命/权限，未调用付费模型，未验灰度。本轮新增Flow Run=0。证据`verification.json`、`browser/position-response.json`、`apply.json`、`isolated-validation.json`。
+
+**剩余问题未标完成**：11:39:52—11:42:53七次health样本中四次吴用未ready，仍有重连。只读SHOW ENGINE INNODB STATUS取得11:39:37真实死锁：一事务持binding等runtime，另一事务持runtime等binding；API同时有AgentStatusMonitor刷新DeadlockLoserDataAccessException。与重连的因果关系尚未证明，不把锁序修复或重连稳定性冒充已验；需沿实际调用链固定源码、统一既有binding→identity→runtime锁序并补并发回归，再用Flow验证新候选，不能删锁/吞错/改业务数据绕过。相关AgentServiceImpl/测试已有其他Owner脏改，本轮未覆盖。已通知既有API Owner。总发布记录仍为DEPLOYED_PRODUCTION_ACCEPTANCE_INCOMPLETE，岗位缺表项单独标RESOLVED。
+
+### 2026-10-29 14:30后仅核对灰度适配范围（用户暂停死锁/重连排查）
+
+按用户最新要求不再推进死锁/重连处理，不做灰度环境验收，仅只读核对源码、合入和已有证据。远端API develop已为ffc5f52b7462c7bab23302f5a8481e7fbfc5640c、Runtime develop为33d78accc491ecb7db513ee2d49f3c0cec210634；原灰度分支及本任务集成提交均为各自develop祖先。当前API安装记录为Flow365/1.17.13/ab7b8b647e8b2a8980308b27c187bcc13cb3d269，实际JAR SHA与记录匹配且该源码包含80739ebb集成；Runtime安装记录已为95/1.3.22/33d78acc，同样包含c3f973c集成。以上为其他后续发布的只读核对，不归因本线程；API远端最新develop与安装源码不同，不宣称最新develop全部上线。
+
+minimal-grey profile、路由白名单、灰度文档和outbox隔离源码从80739ebb到新develop无变更。正常outbox discover调用findDueOutboxInTenant(legacyTenantId)，灰度按tenant+client发现；既有集成候选Flow361的R8TenantPrivateChat 10、真实MySQL隔离2、route3、startup4全部通过。后续develop修改身份/会话等公共链路，本轮不把旧测试冒充新tree完整回归，不新增Flow。
+
+结论限于原分支定义的最小灰度：身份/OAuth与固定tenant/client、Agent名单/身份绑定、Runtime注册/会话/ACK、最小CHAT及生产/灰度outbox消费隔离已实现并合入，安装版本包含。不是全业务灰度：任务/技能执行/个人工作区/经济/正式成果等在profile中禁用或不在白名单，不能用于验证整套聚义厅流程。本地独立issuer/Redis/Runtime身份-state/文件根及tenant-client数据准备未重新核验，按用户要求不验灰度；不把最小代码适配完成写成全功能隔离或本地环境可用已验。
+
+### 2026-10-29 14:57:56 +08:00 最新远端develop基线重核与全业务灰度缺口
+
+用户要求基于最新develop分析。本次逐仓执行git ls-remote origin refs/heads/develop成功：API `ffc5f52b7462c7bab23302f5a8481e7fbfc5640c`；Runtime/isp-install `33d78accc491ecb7db513ee2d49f3c0cec210634`；Web `3236adc8bbe08b9b436cbcef5cfa3dadd52e2bba`。读取固定Git对象，不切换分支、不覆盖工作树；API仍与上一轮分析基线一致。查询时点的远端最新不代表线上版本或正式回归已通过。
+
+固定API对象确认：AgentTaskCreationOperationServiceImpl:523拒绝非0租户；PersonalWorkspaceController:177直接构造Scope("0",...)，相关Service/DAO及FileSystemPersonalWorkspaceStorage:114也限制0；后者scopeKey已包含tenant/client/owner，不能误报为全部存储设计均无租户支持。AgentTaskFormalDeliveryServiceImpl:541限制0；SkillInstallCommandWriter:23仅允许0，安装恢复/结果/下载也存在0限制。EconomyLedgerMapper的EXACT_SCOPE及已查交易/账户读取包含tenant/client，但不能由此推断全部资金链路已支持灰度。不能机械替换所有"0"（owner保护、共享目录及历史兼容语义不同）。
+
+固定Web对象补查：.env.development的API/OAuth代理目标均为https://localhost:10018，OAuth client为jiafewnnv58ec2379c，并非灰度合同cyf-local。支持灰度须使用独立本地环境覆盖匹配API/OAuth/client，不修改生产默认配置；尚未穷尽SSE/WebSocket/下载/缓存链路，不能宣称前端已全适配。
+
+方案顺序：先可信scope及后台扫描/领取/消费隔离，再闭合无资金任务—现行原生执行—工作区—成果验收，最后独立处理资金及外部付费凭据/回调。原生协议与实际生效入口、所有唯一索引和后台入口仍待逐项审计，不恢复旧runner。Runtime独立目录/身份/state是部署隔离方案，不替代API业务授权与数据库隔离。本轮仅源码分析与记录，无应用改动、Flow运行、部署、写库或灰度验收；死锁/重连继续按用户要求排除在本任务之外。
+
+### 2026-10-29 继续完整业务适配：固定新基线与范围
+
+Owner仍为本线程。任务FULL-TENANT-GRAY-20261029；API实际远端develop为`f932d38ccd8701ac06d5167a07f420d4cf1e3c12`，tree`78ae168f19d027d50cc97ba008ef43cbd491c1f9`；Web为`1fdc94ac152e07091016fb9d3d898acf37551a6c`，Runtime为`b74612c610457651b5fa2a4abb59e01de3f73529`。f932为21:00显式回退d8f的提交；本轮不反向撤销该回退。线上另有Run381 activating，非本任务发布，不接管、不取消、不覆盖其状态。此前Run380上线为历史事实，不再当作当前线上必然版本。
+
+主API仍有其他Owner广泛未提交修改（覆盖本任务需改路径），故仅新增一个必要隔离worktree `/home/isp/wsps/worktrees/full-tenant-gray-api-20261029`，branch`codex/full-tenant-gray-20261029`，从最新f932开始。遵守根AGENTS、API接口规范v1.4、RB-1与Flow worker-only规则；不本机Gradle/生产构建、不新建流水线。未派发子Agent。
+
+执行顺序：先闭合可信业务scope和个人工作区CRUD（HTTP→Service→DAO→内容存储，支持同owner/client在0/1两个分区的隔离及独立幂等），再任务/当前原生执行/成果与后台消费，最后资金和外部服务凭据边界。只对完成实现与隔离回归的路由开白名单，不把全路径放开当适配完成。用户要求不验灰度环境，不排查死锁/重连、不操作其他连接；合成隔离回归仍保留，生产原路径回归与发布独立记录。
+
+最早验证入口复用`PersonalWorkspaceHttpPersistenceIntegrationTest`（真实DAO/事务/H2/文件存储，非生产数据库）及`FileSystemPersonalWorkspaceStorageTest`、`MinimalGreyTenantRouteFilterTest`；正式Java测试在Flow。源代码未修改前，本节仅固定范围和基线，不代表已支持全业务。
+
+### FULL-TENANT-GRAY-20261029 / workspace candidate (2026-10-29 21:48 +08)
+
+- Candidate branch `codex/full-tenant-gray-20261029`, commit `1631bfd58672069ee867b4163f3399ba511bad18`, tree `e6d45a9c4f344eb6e73a6263e9834c6a5f765e73`; pushed, **not merged/deployed**. Existing develop is still `f932d38ccd8701ac06d5167a07f420d4cf1e3c12` at last remote query.
+- Personal workspace file CRUD: controller extracts admitted JWT scope, services/DAO/storage no longer force tenant0; existing exact predicates/scope-hashed bytes/idempotency preserve client+owner boundaries. Runtime output version must match tenant/client of the write scope. Request tenant parameters never select scope.
+- Narrow file routes only. Executions, links, grants, financial/provider routes remain closed. Gray storage is opt-in (`CYF_LOCAL_WORKSPACE_ENABLED`, explicit positive `CYF_LOCAL_WORKSPACE_MAX_CONTENT_BYTES`), avoiding new mandatory config for existing minimal launchers. No production config changes/startup DDL.
+- Added synthetic tenant0/1 same-identity/same-idempotency HTTP→real DAO/H2→storage tests, reciprocal file denial before byte reads, legacy0 compatibility, malformed/conflicting claims, request override refusal, exact narrow route matrix, output metadata refusal. These are **authored tests, not PASS evidence** until Flow results. H2 is not MySQL proof.
+- `git diff --check` passed. Reused existing tests/acceptance source set; included filesystem test there. No local Gradle/Node build, no new runners.
+- Flow control: original config SHA `83846448b8e635b03d771ec1b6546d0d83ec7240e5f98cfcb2151b6ae57b645a` backed up. Initial source branch selection rejected; original readback unchanged. After keeping default source develop and explicitly adding candidate to `branchesFilter`, manual branch selection created **5260799/382** (21:47:52+08), selected branch confirmed, exact SHA guard in worker. One paid Run only; previous rejected configuration/start requests created no Run. Owner watcher stops only382 by total-budget reserve570s; cloud timeout10min. Flow only test/build/upload, never host install/wait. Restore shared configuration after terminal and verifying no foreign changes/active runs.
+- Evidence: `/home/isp/state/cyf-full-tenant-gray-20261029/` (`candidate.json`, `policy.json`, `start-2.json`, `watch.jsonl`, config snapshots/readbacks). Run382 is not an installed production version.
+- Read-only production record at21:41 shows other-owner Run381 `installed`, candidate SHA `1ca567f130528920d3317e6f6a16e2a06552a04c93530e91d85886308d4847dc`; this is metadata observation, not this task's production health acceptance. No services/DB/other connections touched.
+- Remaining work: task creation and current native execution scope (including background discovery), workspace links/grants/output completion, formal delivery, financial/external effect isolation, Web/Runtime configuration integration. Do not remove route gate mechanically or re-enable old execution protocols. Task creation currently reads Spring JWT inside service (`requireAuthenticatedScope`) and forces0; resolve framework-boundary correction with the native chain instead of broad search/replace.
+
+#### Workspace verification follow-up (2026-10-29 21:58 +08)
+
+- Run382 failed before Gradle because the bundled orchestrator's fixed branch allowlist did not include the real candidate branch. No tests ran and no publishable artifact exists. Corrected only this candidate's CI tool bundle to admit the exact real branch **and full commit**; pipeline ID, real Run ID, source-clean checks, policy/argv hashes, compile-cache rules and locks remain. Did not impersonate develop or change root/main worktree tooling. Bundled tool source/hash and policy saved with `candidate-v2.yaml`.
+- Run383 reached actual Java regressions. All newly added workspace tenant/controller/storage/write/route cases passed. One existing test failed: `PersonalWorkspaceExecutionServiceImplTest.configuredCapabilitiesExposeOnlyEnabledFormatsAndFailClosedWhenStorageIsUnavailable` expected7 input MIME types, but native source since `7e404b7b20` supports10. Contract basis: native design v3.1 core base TXT/MD/HTML/JSON support (§capability advertisement/basic file contract). Updated fixture and extension map with MD/HTML/JSON; expanded actual create/persist-input coverage from7 to10, kept configured DOCX output restriction and unavailable-storage rejection. No removed assertions or skipped test. Run383 remains FAIL; no installation.
+- Fix commit `d3aa82d0ea3daa2c3427242aff8fbba14a16497a` pushed only to candidate branch. Run384 started21:58:19+08, pinned to that source plus exact tool admission. This is a changed-input corrective run, not a blind rerun. Watcher and600s total limit remain; only worker tasks, no host calls. Tests/build/installation evidence still separate.
+- Static follow-up found99 grep matches for tenant0 scopes in Agent code (`remaining-tenant-zero.txt`); these are search candidates, **not99 confirmed vulnerabilities**. A concrete next path is `PersonalWorkspaceExecution{Controller,ServiceImpl,DaoImpl}` with literal0 owner/runtime admission plus task/bootstrap scope. `AgentTaskBountyBootstrapOutboxMapper.selectClaimableAvailableForUpdate` deliberately selects production0; adapt process-bound discovery and runtime/internal route auth before enabling tenant1 execution, not merely HTTP controllers.
+
+#### Workspace slice integrated, full-gray remains open (2026-10-29 22:05 +08)
+
+- API remote develop was rechecked at `f932d38ccd8701ac06d5167a07f420d4cf1e3c12`, then fast-forwarded (no force, no changes to dirty main worktree) to **`d3aa82d0ea3daa2c3427242aff8fbba14a16497a`**, tree **`6edf60a756773a4d5e2b859ef0ad7b044ff8b0cb`**. Includes workspace isolation candidate1631bfd586 and fixture correctiond3aa82d0ea. Push occurred while this task's triggers were disabled; no duplicate automatic Run was requested.
+- **Run384: 147 tests,0 failures,0 errors,0 skips; validateLayering PASS; fresh bootJar PASS.** Gradle54s. Diagnostic payload SHA verified against worker log summary; evidence `diagnostics-384.json`, `verification-384.json`, `log-384.json` at private evidence root. Source/fixture exact d3aa82d0ea. This is scoped regression evidence, not all application/business acceptance.
+- **Run384 terminal remains FAIL**: after successful tests/JAR, artifact producer's independent branch allowlist rejected the real candidate branch before packaging/upload (`unexpected Flow source/run identity`). This is not a Java regression failure or installed artifact. No upload receipt/JAR SHA/installation claimed. Do not change source identity to develop or fabricate a receipt. Remaining full-gray changes require a new final candidate anyway; avoid a paid build solely to regenerate this intermediate artifact. Next final delivery should use genuine integrated develop, or explicitly adapt ALL branch admissions (source filter, orchestrator AND artifact producer) with fixed SHA before starting a candidate branch run.
+- Original shared Flow config restored/read back at22:04:52+08, SHA `83846448b8e635b03d771ec1b6546d0d83ec7240e5f98cfcb2151b6ae57b645a`, after confirming own candidate unchanged and no active Run. Own382/383/384 all terminated before600s; no foreign Run canceled. Control-plane rejected requests did not create extra Runs. No ongoing watcher/installation or paid retry left running.
+- Production record re-read22:05:24+08: still other-owner **Run381 installed**, same SHA `1ca567f130528920d3317e6f6a16e2a06552a04c93530e91d85886308d4847dc`. This task did not deploy/restart/change production configuration or database. Latest develop above is **not deployed**; metadata comparison does not replace a new production smoke.
+- Full-gray task remains open: task/native execution+background workers, file links/grants, formal results, funding/external effects, Web/Runtime integrated delivery and final production verification. Current slice only closes source implementation/integration/scoped tests for private workspace files. Retain the single isolated worktree for continuing the same owner task because main API still contains overlapping unrelated changes; no second worktree needed. Do not mark the whole conversation closed.
