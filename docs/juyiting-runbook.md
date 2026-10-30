@@ -14,6 +14,10 @@ Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-vi
 - 数据域A（任务/资料/会话）与执行域B（Agent/绑定/Runtime）分别固定；本人A=B。实时执行、租约、聚合及回报共用task/grant-scoped authority，要求当前ACTIVE grant及完整冻结B/binding。历史冻结身份只用于历史读取，不授权实时执行；缺字段不通过本人fallback掩盖。私域Workspace和原本人团队Plan权限未扩大。
 - 正式Flow、安装制品摘要、双账号文本/PNG提交验收和本人恢复后实答已核验；这些是本功能范围证据，不等于平台零故障。运行端通道ready不证明typed/model就绪；本轮本人thread/start超时在精确空闲子进程恢复后复测通过，但超时/重连就绪根因仍未闭环。共享运行端已有其他历史未完成任务时，不重启整个unit、清队列或冒充成功；先定位原记录并按实际授权恢复。细节保留于特性handoff及release-20261022证据，不作为自动恢复策略。
 
+## 微信小程序文件下载（2026-10-30）
+
+成果下载在普通浏览器仍使用精确版本 Blob 下载；微信 web-view 走 `juyiting-file-download-v1` 有界桥接到原生下载页。仅传 transferId 作路由参数，鉴权令牌及文件内容不进入 URL；原生页校验协议/编码长度/字节数/TTL/重复标识，最多8 MiB，写入 `wx.env.USER_DATA_PATH` 后按系统能力打开/分享，任何失败均明确呈现。服务端鉴权读取和固定版本语义不变。平台销毁事件顺序及不同文件类型仍需开发者工具和真机验收；单元测试不能代替平台验收。
+
 ## 开发规范入口
 
 遵循 `AGENTS.md`：聚义厅低于 `2.0.0` 均为内测版本，不考虑旧版本兼容，以最新契约为准；Owner 自检，无独立 Reviewer。下列数据边界是当前实现契约，变更时同步更新实现、测试与文档；安全、数据操作授权和 Flow 验证不因内测而取消。
