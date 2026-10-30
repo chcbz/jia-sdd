@@ -256,3 +256,14 @@ Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前
 ### 已发布议事开关的生产默认值（2026-10-25）
 
 Web1.16.46 / develop321f358f0d8289292c90374d7cce21a3423a27c3将既有多媒体议事、typed议事和follow-up执行的三个VITE开关固定在`.env.production`为true。它们此前已通过发布命令启用，不能在新版本构建时因遗漏命令行环境变量而回落旧`/chat/stream`。生产构建不再依赖某次临时Flow配置携带这些已发布默认值；显式候选覆盖仍保留，不自动开启职位技能/多区域或任何其他功能。复用`tests/production-build-flags.test.js`验证默认值。浏览器续聊验收需确认实际进入typed请求且资料/可用动作进入冻结上下文，首轮点将识图和HTTP200都不足以证明续聊链路。
+
+
+## 已恢复的中断安装：复用原制品重试（2026-10-30）
+
+源码核对：`jia-sdd develop 2072aac3`，范围仅`cyf-api-flow-install`的主机重试边界；不是应用构建/灰度能力变更。Flow必要测试与制品成功后，主机安装因中断恢复到旧JAR，不要求再开付费Run。
+
+- 仅接受既有失败记录`status=failed`、`phase=activating_candidate_recovery`、`recovery=restored_healthy`（或`restored_healthy_after_stop_error`）；完整source/Run/receipt/candidate绑定、旧JAR摘要和真实健康仍由原安装器核验。测试失败、未知恢复、其他候选、启动失败不能用此入口绕过。
+- 已授权Owner在原coordinator→release→lifecycle锁序下核对现状，保存失败/恢复证据，创建状态根内root-owned、0600、单链接普通文件`retry-authorization.json`。仅有三个字段：`schema_version:1`、`failed_record_sha256:原record.json完整字节SHA-256`、`reason:本次明确恢复后重试原因`。这是异常安装的新执行决定，不新增正常发布审批或云端Run。
+- 原下载/安装入口仍使用相同不可变制品。安装器在原release锁中将失败记录原字节和一次性授权归档至`retry-history/<failed-record-sha256>/`；授权消费后才进入原prepared/backup/stop/install/health/commit流程。不删除失败记录、不将历史失败改成成功、不跳过锁/备份/摘要、不伪造CI身份。相同授权不可重复消费，异常中断须检查真实状态再决定恢复。
+- 定向回归入口：`ops/ci/aliyun-flow/tests/test_api_flow_restored_retry.py`（6例）及`test_api_flow_install_lock.py`（5例），均为本机轻量隔离fixture，不构建应用、不访问生产服务。
+- CYF本次安装器新增边界已备份并部署，具体helper前后SHA与记录见`/home/isp/state/cyf-full-tenant-gray-20261029/verify-release-20261030/retry-adapter-change.json`。首次安装TERM来源未归因，不把重试支持误写为已修复外部信号来源。
