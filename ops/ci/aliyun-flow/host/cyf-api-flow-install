@@ -776,6 +776,43 @@ if [[ "$RECORD_STATUS" != ABSENT ]]; then
   fi
 fi
 
+authorize_restored_retry() {
+  # Explicit host-side reauthorization only; immutable Flow identity is already verified.
+  # The failed transaction is retained verbatim, never deleted or relabeled successful.
+  python3 -I -B - "$PACKAGE_ROOT" "$RECORD_PATH" "$INSTALL_UID" <<'RETRY_PY'
+import hashlib, json, os, stat, sys
+from pathlib import Path
+root, record_path = map(Path, sys.argv[1:3]); uid = int(sys.argv[3])
+auth_path = root / 'retry-authorization.json'
+def private(path, directory=False):
+    s = path.lstat()
+    assert s.st_uid == uid and stat.S_IMODE(s.st_mode) == (0o700 if directory else 0o600)
+    assert stat.S_ISDIR(s.st_mode) if directory else stat.S_ISREG(s.st_mode) and s.st_nlink == 1
+    return path
+private(auth_path); private(record_path)
+raw = record_path.read_bytes(); digest = hashlib.sha256(raw).hexdigest()
+record = json.loads(raw); auth = json.loads(auth_path.read_bytes())
+assert set(auth) == {'schema_version', 'failed_record_sha256', 'reason'}
+assert auth['schema_version'] == 1 and auth['failed_record_sha256'] == digest
+assert isinstance(auth['reason'], str) and 0 < len(auth['reason']) <= 500
+assert record['status'] == 'failed' and record['phase'] == 'activating_candidate_recovery'
+assert record['recovery'] in ('restored_healthy', 'restored_healthy_after_stop_error')
+history = root / 'retry-history'
+history.mkdir(mode=0o700, exist_ok=True); private(history, True)
+attempt = history / digest
+attempt.mkdir(mode=0o700)  # Never silently consume the same failed-record authorization twice.
+with (attempt / 'failed-record.json').open('xb') as f:
+    os.fchmod(f.fileno(), 0o600); f.write(raw); f.flush(); os.fsync(f.fileno())
+assert record_path.read_bytes() == raw
+os.replace(auth_path, attempt / 'authorization.json')
+for directory in (attempt, history, root):
+    fd = os.open(str(directory), os.O_RDONLY | os.O_DIRECTORY)
+    try: os.fsync(fd)
+    finally: os.close(fd)
+print('CYF_API_FLOW_RETRY=EXPLICIT_RESTORED_AUTHORIZATION')
+RETRY_PY
+}
+
 canonical_sha() {
   if [[ -L "$TARGET_JAR" ]]; then printf 'UNSAFE\n'; return 0; fi
   if [[ ! -e "$TARGET_JAR" ]]; then printf 'MISSING\n'; return 0; fi
@@ -1249,7 +1286,10 @@ if (( RECORD_MATCH )); then
         restore_and_start failed_rollback_recovery
       fi
       [[ "$TARGET_STATE" == "$OLD_SHA" ]] || fail 'failed transaction found unexpected canonical bytes'
-      fail 'this exact release already failed; a fresh exact ticket, artifact, approval, and release decision are required'
+      [[ -f "$PACKAGE_ROOT/retry-authorization.json" ]] ||
+        fail 'this exact release already failed; explicit restored-retry authorization is required'
+      lifecycle_healthy || fail 'restored previous release is not healthy; retry refused'
+      authorize_restored_retry || fail 'restored-retry authorization is invalid or already consumed'
       ;;
   esac
 elif (( APPROVAL_CONSUMED )); then
