@@ -200,3 +200,5 @@ API应用安装与初次健康UP已成功，但F06后置schema runner仍将recei
 - CPU自然窗API18.5%/32.6%、Runtime20.1%/24.7%单核，旧29.3%/24.7%；负载未隔离、冷启动/宿主竞争存在，不声称CPU/GC/用户体验达标或因果百分比收益。证据`release/polling-observation.json`与两原始采样目录，当前Runtime记录只标CHANNEL_VERIFIED_PASSIVE_POLLING_OBSERVED_WITH_OPEN_FINDINGS。
 - **未完成项明确保留**：ChatDeliberationOutboxRelay500ms扫描尚未事件化；岗位/归档等非native/file链路继续按真实合同审视。当前API日志证实`/internal/archive/v1/jobs`重复404，不把该协调器视为成功/必要请求；需要功能可用性协商或禁用未开启链路，不能据一次404永久吞掉有效任务。历史TYPED_INSPECTION_ENGINE_STATE_BINDING_CONFLICT在旧Runtime已存在；新窗口另有SKILL_API_RESPONSE_UNCONFIRMED与一条decoder AGENT_MESSAGE_INVALID（290字节，有wire摘要），尚未完整归因。不改状态强行成功、不自动重放UNKNOWN，不把连接ready冒充业务无错。对应`runtime-install/warning-comparison.json`与API日志窗口。
 - 发布所需Flow/安装/通道/被动观察已完成，**整体轮询专项与真实业务无错验收未全部完成**。下一实现范围为议事relay及已证实archive无效发现；先沿现有生产者/恢复责任层核对，不全链重写。两干净任务worktree保留供该未完专项复用，未新增工作区；已结束的任务测试暂存目录收口，正式证据/制品/备份保留。
+
+根仓同步边界（2026-11-03 01:57 CST查询）：fetch得到origin/develop `d000cb4356f11cf3e48b7ac7782b53d9a2bacb60`，与本地既有文档提交链分叉；主工作区另有大量其他Owner未提交修改。本轮root工具修复8b01bbf0和发布文档77a668f2保留本地，不在脏共享目录强行merge/rebase/force push。两组件固定源码早已集成；该根仓同步未完成不改变本次已核验安装来源，后续须在保留他人修改的条件下协调集成。
