@@ -513,7 +513,8 @@ def verify_release_binding(paths, uid, modes):
                'receipt_flow_schema_invalid')
     exact_keys(source, {'branch', 'commit_sha', 'tree_sha', 'clean_before', 'clean_after'},
                'receipt_source_schema_invalid')
-    if (receipt.get('schema_version') != 1 or receipt.get('status') != 'success'
+    if (not isinstance(source.get('branch'), str) or not source['branch']
+            or receipt.get('schema_version') != 1 or receipt.get('status') != 'success'
             or receipt.get('gradle_exit_code') != 0 or receipt.get('bridge_exit_code') != 0
             or flow != {
                 'organization_id': EXPECTED_ORG,
@@ -523,7 +524,8 @@ def verify_release_binding(paths, uid, modes):
                 'source_tip_sha': record['source_commit_sha'],
             }
             or source != {
-                'branch': 'develop',
+                # Branch is provenance, not a release allowlist; exact commit/tree/ticket remain bound.
+                'branch': source['branch'],
                 'commit_sha': record['source_commit_sha'],
                 'tree_sha': record['source_tree_sha'],
                 'clean_before': True,

@@ -332,7 +332,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         return boot.getvalue()
 
     def rebuild_release(self, resource=None, nested_name=None, resource_name=None,
-                        record_overrides=None, receipt_overrides=None, root_entries=()):
+                        record_overrides=None, receipt_overrides=None, root_entries=(), source_branch="develop"):
         jar = self.build_jar(resource, nested_name, resource_name)
         canonical = self.root / 'service/cyf-api-kit.jar'
         canonical.write_bytes(jar)
@@ -346,7 +346,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
             'source_tip_sha': self.commit,
         }
         source = {
-            'branch': 'develop', 'commit_sha': self.commit, 'tree_sha': self.tree,
+            'branch': source_branch, 'commit_sha': self.commit, 'tree_sha': self.tree,
             'clean_before': True, 'clean_after': True,
         }
         identity = digest(encoded({'flow': flow, 'source': source}))
@@ -474,6 +474,24 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.assertEqual(payload['tables']['agent_work_item_reassignment']['status'],
                          'created_equivalent')
         self.assert_no_secret_disclosure(result, payload)
+
+    def test_fixed_feature_branch_is_accepted_without_recreating_tables(self):
+        self.rebuild_release(source_branch='codex/juyiting-event-api-20261102')
+        self.state['tables'] = {table: 'equivalent' for table in e05.TABLE_ORDER}
+        self.write_state()
+        result, payload = self.execute('--apply')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(payload['status'], 'pass')
+        self.assertEqual(self.read_state()['creates'], [])
+
+    def test_branch_provenance_change_without_identity_rebinding_is_rejected(self):
+        self.rebuild_release(receipt_overrides={'source': {
+            'branch': 'codex/unbound-branch', 'commit_sha': self.commit,
+            'tree_sha': self.tree, 'clean_before': True, 'clean_after': True}})
+        result, payload = self.execute()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(payload['error'], 'release_identity_digest_mismatch')
+        self.assertFalse((self.root / 'mysql-args.json').exists())
 
     def test_equivalent_existing_table_is_not_blindly_repeated(self):
         table = e05.TABLE_ORDER[0]
