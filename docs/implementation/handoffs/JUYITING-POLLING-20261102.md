@@ -136,3 +136,21 @@ Owner本聊天，复用API工作树，fetch后HEAD/origin/develop均为94ab8bf2a
 - 复查远端develop仍为94ab8bf2a6后，已正常快进push develop至604e8d15a6，未force、未覆盖共享主工作区。Runtime/Web本批无修改。规则/合同细节回写API docs/minimal-tenant-grey.md“任务SSE集中补偿候选”，候选指未上线；实现与本次正式验证以此记录为准。
 - 证据 `sse-compensation/api445-{diagnostics,verification,final-full-log}.json` 和控制面记录。没有部署/重启/生产数据库修改，没有声称线上CPU、GC或请求量已改善。现有两个工作树保留用于后续范围，不新增隔离目录；本批临时编辑脚本完成后删除。
 - 剩余workspace-file独立lane3秒命令发现尚未事件化；其他relay按实际启用范围与职责继续审视，心跳/续租/撤权等必要时间驱动不属于可机械删除项。本批只完成任务SSE集中补偿，不声称全系统零轮询。
+
+## 第四批前置修复：workspace-file发现饥饿（2026-11-02，继续授权）
+
+- Owner仍本聊天；复用API工作树`/home/isp/wsps/worktrees/juyiting-event-api-20261102`，fetch后HEAD/origin/develop同为604e8d15a65144183adf3839d0fa5569ad8a4f70 / tree2b4ac362e1c3c118140286556cbba148a94d19d8。Runtime工作树干净、基线4a89d63，本批暂不修改。接口规范使用该API commit的docs/interface-standard.md，RB-1/分层规则随外部Runtime范围显式继承；无新worktree、无部署授权。
+- 沿真实调用链发现：PersonalWorkspaceRuntimeFileController→runtimeQueuedCommands→listQueuedByTarget先取混合队列16条，再在service排除CONVERSATION。16条更老对话记录可持续挡住文件任务，单纯增加WS提示无效。当前先把PRIVATE/TASK/历史NULL文件通道筛选下推至SQL排序/LIMIT前；唯一生产调用方是该文件队列入口，原生队列用另一查询，不扩大修改范围。授权、TASK租约、事务/幂等不变，无wire变更，无新增DDL或CHECK。
+- 新增独占MySQL夹具WorkspaceFileQueueMySqlTest，复现旧SQL16条全CONVERSATION与修复后真实映射、排序/分页、完成后推进、未知mode/终态排除、精确tenant/client/owner/agent隔离；进入既有unfiltered mmdU1BootstrapOutbox切片。重型验证待固定候选后走5260799，≤600秒；未把测试编写当通过。
+- Runtime已核实：processor.start恢复持久inbox；resume独立drain；HTTP发现只是持久接收而非立即执行/领取，重复页不能立即无限重取。此修复**尚未停掉3秒轮询**。另外TASK租约失效仍可能在LIMIT后被业务层排除，需继续解决该真实依赖后再接事件通知；不把此次通道筛选称为全部文件队列饥饿已解决。下一阶段需独立文件通知协商、完整分页推进和无进展退让，不复用native1确认冒充文件lane支持。
+
+### 第四批前置候选验证中
+
+API候选189da86d622a37254f31fd5828bf96b7bc01bbbe / tree6111c9f86f453d6ba7b36ea90c7de64c28572ea7已push任务分支；Flow5260799/446于2026-11-02 23:21:59 CST单次启动。复用445原worker-only配置，逐字readback一致，无云端配置/root CI policy写入。静态diff检查通过；本机没有Gradle或生产包构建。控制器只监控自己的446，570秒请求受控取消预留600秒总限；正式测试、集成待终态及诊断核验，不安装。
+
+### 第四批前置修复正式验证与集成（2026-11-02 23:30 CST）
+
+- Flow5260799/446 **SUCCESS**，终态23:27:49 CST，启动请求至终态350.604秒，低于600秒。首次本机监控进程返回143后，仅恢复对同一446的只读查询/监控，未重触发、未取消其他Run；成功终态发生在恢复查询之前。没有主机安装或等待作业。
+- 固定源码189da86d622a37254f31fd5828bf96b7bc01bbbe / tree6111c9f86f453d6ba7b36ea90c7de64c28572ea7；终态API返回的源码、Flow制品来源与解码诊断一致，gzip/base64长度及解压内容SHA-256核验通过。405 suites，3436次测试执行、150跳过、0失败/0错误。新增WorkspaceFileQueueMySqlTest三项均无跳过通过，真实MySQL验证旧SQL16条全对话、修复后PRIVATE/TASK/NULL文件可见、完成后的页推进和精确分区；非线上耗时/请求量数据。原生CONVERSATION测试11项在两个既有slice分别通过，不将重复执行称为独立用例。没有宣称默认Flow未选择的PersonalWorkspaceExecutionServiceImplTest已运行。
+- 云端JAR SHA-256 `632964d857565b8f6724778ba877fcd05c9246ad65331eaaa20aac30d33116ab`；本批未下载归档、安装或修改生产数据库。重新fetch确认develop仍604e8d15a6，正常快进push至189da86d62；无force、未覆盖共享主API脏工作区。Runtime仍4a89d63，本批没有修改/升版或打包；Web不受影响。
+- 证据：`workspace-discovery/api446-{diagnostics,verification,final-full-log}.json`及控制记录。规则与调用边界回写API既有`docs/interface-catalog/native-work-notifications.md`前置修复节。本批仅解决**混合lane抢占LIMIT**；文件通知、独立协商、租约/不可派发候选的分页推进、执行中重复页退让仍待实施，3秒文件轮询保留，不宣称整体事件化完成或线上性能已改善。
