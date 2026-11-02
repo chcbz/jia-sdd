@@ -56,3 +56,11 @@ Owner：本聊天；2026-11-02用户要求全面排查Web/API/Runtime轮询，�
 - 补充lint边界：测试文件14诊断中基线已有9项，本轮新增5处多余空行风格提示；生产JS无错误。保留真实结果，不将云端scan SUCCESS宣称全仓无诊断，不为纯风格追加付费构建。
 - 17:47 CST只读远端核对develop与task branch均为362f2fc；本任务worktree干净且只有共享node_modules符号链接，保存证据后移除链接并删除本任务worktree，保留已推送commit。未动共享Web/API脏工作区、他人进程/工作树、生产安装及身份状态。
 - 稳定知识追加至docs/juyiting-runbook.md“前端后台观察生命周期”；该文档既有其他任务改动未整体提交，根gitlink保持不动。后端/Runtime方案等待后续讨论；前端已集成及正式验证，未部署、无生产性能改善百分比。
+
+## 用户授权部署（2026-11-02 18:32 CST）
+
+- 用户明确“部署”，只部署本轮Web1.16.95；复用Flow4403172/407固定362f2fc及原SHA-256制品，无新增构建/运维Run。安装前实时查询407仍SUCCESS，线上原Web406/1.16.94/98f7682。
+- 在现行deploy.lock下备份原612文件与record，tar compare成功。备份 `/home/isp/baks/cyf-web-flow/20261102-polling-web407`；归档SHA-256 `c84da377cfe02e1efb60d00a052f1cd45091a3663b063201a4502b3aea9ec47d`，RECOVERY.md保留恢复说明。固定来源复制至现行downloads/407/package.tgz并复核摘要；未本机源码构建。
+- 原受控 `/usr/local/sbin/cyf-web-flow-deploy` 安装exit0，record为407/362f2fc/online_verified。公网首页最初两次返回已知旧入口，第三次匹配新摘要；未绕过验证或重新构建。
+- 独立只读核验612个安装文件全部匹配；公网首页/入口资源/聚义厅/技能管理及市场路由共11项HTTP200、长度/SHA-256匹配，并核实相关JS从当前入口依赖图可达。证据 `/home/isp/state/cyf-diagnostics/juyiting-polling-20261102/deployment/deployment-verification.json` 与web-public-resources.json。
+- API/Runtime未修改或重启；没有数据库操作。该结果为安装与线上资源核验，不冒充登录业务全流程或生产请求量/CPU收益测试。已打开旧页面需刷新加载新版本。本节替代本任务此前“未部署”的当前状态，历史CI记录保持原貌。
