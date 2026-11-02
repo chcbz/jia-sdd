@@ -164,3 +164,23 @@ API192a590b2c / Flow5260799/447通过（约450秒，61项相关回归通过）�
 文件入队after-commit提示复用既有WS worker；显式lane与独立workspaceFileWorkNotifications:1协商，不能由native1推断。双lane共用每节点单30秒候选扫描，空订阅零SQL。Runtime空闲文件发现去掉3秒timer，启动/重连补读和旧API3秒兼容保留；重复满页观察现有processor drain而非立即轮询，真实持久16命令夹具验证不重复执行。迟到旧会话HTTP结果被丢弃，原在途owner guard不提前释放；UNKNOWN、ACK/心跳/租约恢复不改。
 
 不是全系统零轮询，也不是上线：全失效但仍QUEUED的候选会继续低频触发资格检查，多API漏提示仍有约30秒加处理延迟；前批显式性能索引尚未生产迁移，Runtime候选尚未Flow生产打包。当前固定证据与发布前提见主handoff第四批闭环，其他relay仍需按实际启用范围审视。
+
+## 上线后续范围复核（2026-11-03，固定API192a590b2c/Runtime125729f）
+
+此次已安装API447、Runtime120（1.3.36/bridge1.1.26），主机启动/通道和测量最终结果见主handoff；不以安装结束代替业务验收。生产显式性能索引已落地并验证实际混合lane访问计划。下面区分已优化与尚存工作，不把扫描统一称为必要：
+
+| 范围 | 当前机制与判定 |
+| --- | --- |
+| Bootstrap | 提交后合并唤醒，5秒集中遗漏补偿；已优化，不是零SQL |
+| 原生conversation、workspace-file | 独立能力协商、提交后WS提示、启动/重连补读，共享30秒候选补偿；新旧兼容3秒仅在未协商时保留 |
+| 任务SSE | 每实例5秒single-flight、完整scope去重批量metadata；无订阅不扫描，不共享授权/游标 |
+| Runtime历史结果 | 启动/重连完整发现，平时仅未完成ID；UNKNOWN到期恢复不依赖HTTP发现 |
+| ChatDeliberationOutboxRelay | **尚未优化**：无条件组件500ms fixed-delay discover，处理DISPATCH/CANCEL_REQUESTED/FINAL_PERSISTED/ACTION及revision/submission；不能停掉整个relay或只延长间隔冒充事件化 |
+| asset/execution、技能恢复、hosting-rent | 仍有现行5秒集中对账；分别涉及恢复/租约/资金，不因属于timer机械删除；仍需按积压/实际SQL判断优化收益 |
+| Runtime岗位技能、archive jobs | presence后30秒协调、各自single-flight；不在native/file能力确认范围，不以WS已连证明可去掉 |
+| Rabbit派发/command-outbox、archive.question | 本机配置未启用，不是现行热点；archive.question与archive jobs不是同一链路 |
+| 心跳、续租、到期取消/撤权、ACK重试 | 时间语义，不是空闲工作发现；现行行为保留 |
+
+启用证据 `release/remaining-polling-config.json` 为同Run JAR默认/prod与实际外置properties按优先级核对，不是actuator全量Environment；SQL实际运行另以自然观察确认。下一实际代码范围应为议事relay：在现有outbox事务写入/可投递状态变更提交后唤醒，释放delivery slot后继续drain，未来retry/ACK/lease到期用单次定时，跨实例/崩溃仍保留集中遗漏扫描。需沿outbox.enqueue/retry/claim/renew及真实所有producer核对，不照搬bootstrap而遗漏延期与持有lease状态；继续使用原fenced claim/业务幂等，不引入新内存权威队列或自动重放。该段是剩余实施边界，不是已实现承诺。
+
+补充01:53实测：新两窗口native发现4/5次、bootstrap12/12、共享补偿2/2、file3/3、未优化议事relay59/59；前值及比较限制见主handoff。API实际日志另证实archive jobs GET重复404，原“30秒协调”仅描述调用机制，不证明服务已启用或协调成功；其无效轮询列为实际剩余范围。协议拒收/状态绑定冲突未靠性能改造吞掉或自动重放，业务验收仍开放。

@@ -5,6 +5,16 @@ For map masking, prop depth, occluder assets, and future map expansion, use `doc
 Historical occlusion implementation sequencing is recorded in `docs/juyiting-occlusion-system-execution-plan.md`; current execution and model routing follow `AGENTS.md` and `docs/implementation/MODEL_ROUTING.yaml`.
 Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-visual-review-v0.md`; they do not add a separate Reviewer or release approval gate.
 
+## 工作发现与补偿（2026-11-03上线核对）
+
+API `192a590b2c8b690337818606a6180fca6f99a600` / Flow447、Runtime `125729f8291da2dc89048bc41850beb12c15a9ab` / Flow120（1.3.36、bridge1.1.26）已安装，三个Agent通道ready；这不是全量业务验收。详细证据和恢复见 `docs/implementation/handoffs/JUYITING-POLLING-20261102.md`。
+
+- native conversation和workspace-file分别协商通知能力，提交后WS只作提示，HTTP/DB仍为权威；启动/重连补读，漏提示/跨节点通过每节点共享30秒候选补偿恢复。已协商时不再常态3秒发现；历史QUEUED不合法候选仍可引发低频读，不自动重放UNKNOWN。
+- Bootstrap提交后合并唤醒+5秒补偿；任务SSE每实例5秒single-flight，完整scope去重批量读metadata，无订阅无扫描。保留独立授权/游标和失败恢复，不缓存事件正文充当权威。
+- 自然观察显示查询数量减少，但CPU未证明稳定改善。议事outbox仍500ms扫描，archive jobs实际返回404；这两项及协议/历史绑定异常仍待处置，不能宣称全部轮询清零或业务无错。全范围审视见`docs/implementation/handoffs/JUYITING-POLLING-AUDIT-20261102.md`。
+- 固定候选分支是来源信息，不使用旧develop名单拒绝真实Run制品；schema工具仍核对commit/tree/identity/receipt/JAR与安装状态。临时systemd安装承载不得在后置失败时清理其启动的生产JVM；后置恢复使用原锁核对已装字节，不重建或重复安装。
+
+
 ## 同平台Agent接外单（2026-10-22核对）
 
 本节覆盖API `94b4c8a5`（1.16.25/Flow223）、Web `44aa9c71`（1.16.37/Flow283）、Runtime `c11a078e`（1.2.3）的D3.1实现和本轮生产验证；下方其他模块保持各自原核对基线。合同与分层证据见 `specs/juyiting-external-commission-mvp/`。

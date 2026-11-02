@@ -173,3 +173,30 @@ Owner本聊天，复用两现有工作树，重新fetch核对基线API189da86d62
 - 两端共享文件hint fixture SHA-256 `af4469b313aed93a5254ae649734d1e1669078360fcf6419e13af42d129e36e3`。稳定合同回写API既有通知文档，Runtime接线/运维边界回写self-host指南2026-11-03候选节。无新增模块导入，沿原EXECUTION_PAYLOAD_FILES闭包。
 - **未部署、未重启、未执行生产DDL，也未重新测量线上版本/CPU/GC/HTTP量。** 前批显式目标索引生产迁移仍待获授权、固定真实快照和实际schema/plan核验；若授权发布，API可复用447固定制品，Runtime仍需既有Flow5264702固定候选测试/打包。不能用本机测试充当安装包证据，不因下载/安装重试重复构建。
 - 文件事件化源码范围已集成：协商成功后移除正常空闲3秒HTTP轮询，旧API兼容/网络错误重试、重连补读、本地恢复保留；native/file共享每WS节点30秒候选补偿。全失效但未终结的QUEUED候选仍可能每30秒提示/读多页，未宣称“零扫描”或解决历史队列生命周期；其他relay/position/archive等按实际启用与职责仍需后续核对。现有两干净工作树为未完的整体轮询专项复用，未新增工作树；本轮临时编辑脚本删除，不清他人证据/备份。
+
+## 2026-11-03 用户授权部署：固定来源与执行中记录
+
+- 本轮用户明确“部署并完成后续任务”。Owner仍本聊天；API固定447/192a590b2c/tree2aca1409，Runtime固定125729f/tree89b2e805，复用原两工作区，不覆盖主工作区其他Owner脏改。唯一新重型Run为Runtime5264702/120；API不重复构建，Web不重复部署。
+- Runtime120 SUCCESS，观察终态约318秒，worker仅测试/打包/上传；806 Node pass、10 skipped、0 fail，另Python15、browser artifact2通过。归档253006913字节，SHA256 `6a60080f252579b0a61bddd58e54e5d68d01a2cf8a86ed14f4d8133a616545e4`；689个payload成员/摘要/权限与来源核验通过。云端配置已按CAS恢复原值；不取消其他Run。跳过的真实sandbox能力由受控安装器在停旧服务前做原有主机probe，不声称云端完成这部分。
+- API447归档224068966字节，SHA256 `b78e4298f71f93733dbe7e5e81d007fc1c1fc697fa105124dccbb2fe042f2247`；同Run receipt/source/tree/3480项测试/61项相关回归及JAR SHA `3a4749fa...91491a`均一致。首次任务侧回归选择器误用Java嵌套类点号，核对真实报告后改为`$`，未改测试/重建或放松断言。
+- 安装前真实版本为API442、Runtime116/1.3.33。API沿现行`cyf-api-flow-deploy`锁/备份/恢复调用，Runtime复用现行固定app安装器，只替换本任务固定来源、前版本、备份与暂存路径，不修改身份/配置或回放历史。安装执行由本机systemd任务承载，不伪造Flow身份，也不把Flow600秒限制下传应用启动。
+- 00:32 CST生产`jia.agent_personal_workspace_execution`显式添加非唯一`idx_pwex_native_work`；数据库UUID/datadir均固定核对，目标表一致性逻辑快照及DDL落真实目录`/home/isp/baks/cyf-native-work-index-20261103/`（不是活跃datadir物理复制）。前后65行、旧索引保持；不改数据/主键/唯一键/CHECK。实际混合双lane EXPLAIN选择该索引range、覆盖7个key parts，估计7行；不是万级生产压测。恢复不得覆盖新的业务事实。
+- 证据统一`/home/isp/state/cyf-diagnostics/juyiting-polling-20261102/release/`，包括Flow120/config恢复、两制品验证、index-migration/production-index-plan、API安装与Runtime安装子目录。**本节写入时安装/启动仍在进行，尚不能宣称部署或业务验收完成。** API新PID2157405正在冷启动，Runtime候选正在真实host probe；最终状态须见后续补充。
+
+### 部署中发现的后置工具缺口与恢复（01:10 CST，尚在执行）
+
+API应用安装与初次健康UP已成功，但F06后置schema runner仍将receipt.source.branch写死为develop；447实际固定候选分支为codex/juyiting-event-api-20261102，故在任何SQL前报receipt_release_identity_mismatch。E05同样存在该限制，正在以**现行已安装工具字节**为基线仅移除分支名单，保留真实Run/完整commit/tree/clean/identity digest/制品/目录/权限/发布锁及schema核验；依赖的E05 runner摘要同步更新。root源码含其他Owner修改，另外只补同一局部差异，不把root脏工具整份部署。
+
+本次API安装承载用了临时systemd service默认KillMode，后置失败使service退出并连带终止其cgroup内已启动的JVM（2157405）；这是本任务发布执行配置错误，**不是应用代码回归或OOM**。现行健康守护已按原锁自动启动同一447 JAR，PID2163667/healthmon scope；没有重复构建/安装、改源码或取消恢复任务。不得将00:52初次UP冒充最终持续健康。以后API安装承载须明确保留被启应用生命周期（既有scope或受控RemainAfterExit/KillMode设置），不以默认临时service包裹派生生产JVM。本次额外停机如实保留。
+
+后续只在守护释放现行发布锁后安装定向修复并核验已装447的后置schema，不重启API、不重建制品，不覆盖原失败回执。专项证据`release/schema-branch-repair/`；root广泛83项helper检查中73项通过、10项旧LOCAL fixture导入退役类失败，与已知旧suite问题相同；精确现行工具候选独立94项回归正在进行，首轮暂存候选漏执行位导致PermissionError，已修候选mode后重跑，不能把该首轮称为通过。
+
+### 2026-11-03 01:53 CST 安装、核验与实际剩余项
+
+- **安装完成**：API447/192a590b2c（JAR 3a4749fadecdf42e684572c6a01ef07969c2b3fe0b337bc5a6edecde4911491a）与Runtime120/125729f（1.3.36、bridge1.1.26）。API恢复后PID2163667、canonical cwd/JAR及health UP核验；Runtime01:34:41启动PID2177405，01:46—01:47三个连续新鲜样本中3个Agent均connected/registered/ready，689个payload文件/模式及版本核验。配置/身份保持，备份和固定来源保留。未新增模型/付费业务验收任务。
+- Runtime停旧服务01:23:48，状态备份327秒、tar compare134秒，01:34:41启新服务；首次全ready观察在01:46。停机/冷启动耗时没有隐藏在Flow统计中。两个原有能力检查均耗约17分钟，实际未引入新门禁；不能称作低耗时检查。本机CPU竞争显著、available memory约4GiB，磁盘余5.2GiB。启动慢的进一步优化未在本次擅改能力/隔离合同。
+- API后置schema故障已于01:24:06完成定向恢复：F06 plan/apply及E05只读plan均existing_equivalent，无新增表/数据修改，无E05功能激活。三个主机helper按已安装字节修复并readback；原失败回执、停机事件保留，单独`versioned-release-447-reconciliation.json`关联恢复，不重跑安装。现行安装候选94项回归通过。root仅本任务差异提交`8b01bbf0`，未整份提交他人CHECK/目录修改；暂存版本对应73项F06/E05主类和21项E05 deploy通过。暂存广泛85项suite有6项旧LOCAL fixture的15秒安装超时（79通过），保留真实失败，不称全量通过；不再次盲跑。
+- 两个约一分钟自然窗口01:47:16—01:48:21、01:49:28—01:50:30：native发现SQL4/5次（旧00:31窗口46）；bootstrap12/12（旧71）；双lane集中补偿2/2；文件发现3/3（旧采样过滤器未含plain file SQL，前值未知）；未优化议事outbox59/59（旧71）。这是performance_schema digest计数，不是完整HTTP计数；Nginx不覆盖内网直连。符合事件发现+集中补偿，非全系统零扫描。
+- CPU自然窗API18.5%/32.6%、Runtime20.1%/24.7%单核，旧29.3%/24.7%；负载未隔离、冷启动/宿主竞争存在，不声称CPU/GC/用户体验达标或因果百分比收益。证据`release/polling-observation.json`与两原始采样目录，当前Runtime记录只标CHANNEL_VERIFIED_PASSIVE_POLLING_OBSERVED_WITH_OPEN_FINDINGS。
+- **未完成项明确保留**：ChatDeliberationOutboxRelay500ms扫描尚未事件化；岗位/归档等非native/file链路继续按真实合同审视。当前API日志证实`/internal/archive/v1/jobs`重复404，不把该协调器视为成功/必要请求；需要功能可用性协商或禁用未开启链路，不能据一次404永久吞掉有效任务。历史TYPED_INSPECTION_ENGINE_STATE_BINDING_CONFLICT在旧Runtime已存在；新窗口另有SKILL_API_RESPONSE_UNCONFIRMED与一条decoder AGENT_MESSAGE_INVALID（290字节，有wire摘要），尚未完整归因。不改状态强行成功、不自动重放UNKNOWN，不把连接ready冒充业务无错。对应`runtime-install/warning-comparison.json`与API日志窗口。
+- 发布所需Flow/安装/通道/被动观察已完成，**整体轮询专项与真实业务无错验收未全部完成**。下一实现范围为议事relay及已证实archive无效发现；先沿现有生产者/恢复责任层核对，不全链重写。两干净任务worktree保留供该未完专项复用，未新增工作区；已结束的任务测试暂存目录收口，正式证据/制品/备份保留。
