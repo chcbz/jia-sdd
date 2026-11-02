@@ -183,3 +183,22 @@ RB职责：API负责商品/权益、业务权限和完成事实；Runtime负责�
 - 识图、文档工作台、网页操作与验收、信息检索四包已通过发布接口正式发布，均1.0.0、免费、NONE、权限清单空；目录回读名称/版本/可安装匹配。包仍来源Runtime116，四份落盘对象摘要匹配且0444。没有自动给生产Agent安装四包，没有新增模型调用。
 - 主机包存储目录`/home/isp/state/cyf-skill-packages`应由实际API服务身份拥有写权限，以承接受岗位授权的发布。此次只将目录owner改为cyf-api，保留0750、原group/ACL及11个既有对象；不递归chown、不开放组/公共写，不改变内容寻址和只读对象契约。此前root只读目录导致503，修复后四包均200。
 - 最终证据：`/home/isp/state/cyf-reusable-skills-20261102/skill-position-release/production-final-verification.json`，细分证据同目录`publication-verification.json`、`position-appointment-private.json`及`check-removal/production-check-apply-private.json`。发布和正常启动验证有API不可用窗口；不把构建成功或单个health采样冒充无中断发布/全业务验收。
+
+## 安装展示与原生就绪语义修正（2026-11-02）
+
+本节针对安装提示误报与报价按钮阻断；源码修复及上线证据见既有handoff，不能以本规格视为已发布。
+
+- `INSTRUCTION` 包的 `manifestJson/manifestSha256` 均为空是现行合同，不是安装证据缺失。详情使用真实受管安装的 `verifiedNative()`，继续核对安装ID、包摘要、运行主机/会话及当前目录；不能通过伪造可执行manifest或订单消除提示。
+- Runtime 的 `NOT_EXECUTABLE` 对普通技能表示“不提供独立runner”。匹配已核验安装、启用策略和当前目录的普通技能可供原生模型使用，详情可以显示运行就绪；这不授予任务权限或工具调用权。受管列表原始 `admissionEnabled` 仍指独立可执行技能准入，不改DB值让页面变绿。Web明确展示“已启用（原生技能）/原生技能包已就位（由模型使用）”。
+- 后台读取不应反复禁用已经准备好的报价按钮。Web使用已收到的权威候选及版本发起请求；版本变化仍由服务端拒绝，响应继续核对固定意图，不能以轮询结束代替业务版本检查。
+- 退役runner不会重新开放。文本文件与资料分析按同一原生普通包合同发布1.1.0，保留原有能力目标，不在bridge增加技能名分支。旧图片包替换为现有1.3.1原生包。无升级政策时不得自行授予付费升级权益；使用明确免费报价的正常卸载/重新安装路径，历史成果和在途执行事实不改写。
+- 回归入口：ChatActionCapabilityServiceTest（原生安装、无会话、精确安装ID及停用）、SkillManagementTransactionTest（真实安装/APPLIED与原生准入）、Web skill-market-ui-lifecycle.test.js（轮询中报价、原生状态、不自动购买）、Runtime reusable-skill-packages.test.mjs（不同Agent同包安装及绑定隔离）。
+
+### 原生包安装与执行环境（2026-11-02 实际安装复核）
+
+- 技能安装不会自动配置模型、载体或Provider密钥。`INSTRUCTION/NOT_EXECUTABLE`只说明包已被运行端发现且不提供独立runner；真实原生执行仍以认证会话的`nativeExecution`实测声明及每任务`availableActions`为准。技能包不能承担RB-03环境开通，也不能把安装成功伪造成全部工具可用。
+- 自托管Agent在现行Runtime1.3.33中须配置既有`inputCarriers`（独立rootDir/stateRoot、匹配引擎/Provider/model及载体合同）；Runtime启动实测网络/沙箱/工具链后更新注册。无该配置的Agent可以安装普通包，但不会获得原生文件执行操作。不同Agent允许有不同能力，不机械复制身份/可写Home。
+- 每技能私有配置通过`skillExecutionConfigFile`按真实scope、安装ID绑定；免费安装不等于运行服务免费。新安装ID不能自动继承另一主体的密钥，需Owner管理配置；秘密不放技能ZIP或Web，不能省略现有授权及网络范围。
+- 启动通道ready不等于异步工具测量完成。不得在测量尚未完成时宣称文件执行已验收；已有冻结请求不因后续注册变化自动重放，后续用户动作取得新上下文。林冲事项577实证：无配置/测量未完成时actions为空，实测完成后的新请求含通用原生操作及4个已安装包操作。
+
+2026-11-02验收补充：API442/ef702265与Web406/98f7682已上线；林冲四包完成真实UI安装，事项577文本输出通过，吴用事项578生图和基于上传成果改图均RESULT_COMMITTED、正式下载摘要/尺寸及目视通过。Runtime仍116/32416ed5，仅补林冲隔离配置后重启并独立测量，三Agent新鲜ready。此结论不覆盖普通快速聊天文件执行、其他未执行技能或历史任务恢复。证据 `/home/isp/state/cyf-skill-install-repair-20261102/production-final-verification.json`。

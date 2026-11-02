@@ -183,3 +183,33 @@ Flow439 SUCCESS，约392秒，候选8ad42be781；本Owner正在核验同Run制�
 - 总证据：/home/isp/state/cyf-reusable-skills-20261102/skill-position-release/production-final-verification.json。细分api-verified/installer-result、position-authority-bootstrap-private、position-appointment-private、publication-verification、package-store-permission前后值及check-removal/production-check-apply-private同目录。规格、API CHECK规则和juyiting-runbook已回写。共享root其他Owner改动未覆盖/批量提交；后续分支名单helper修复须基于现在摘要，不用14:46旧快照覆盖CHECK修复。
 
 收尾补充：任务worktree已确认干净并安全移除，任务分支/源码/必要证据保留。远端develop后续已推进90901b55（独立改动），本次生产仍固定受测8ad42be781，不自动追发。API收尾曾一次5秒health查询超时，随后HTTP200/UP约1.916秒；只记录观测，不扩大为性能已达标。最终证据已补组件采样时间，历史告警不在本次闭环范围。共享root既有脏改动保持未覆盖。
+
+### 2026-11-02 技能安装/就绪缺口重新打开（本线程单Owner）
+用户截图报告林冲技能管理无法安装，同时要求解决安装证据INVALID及DEPENDENCY_MISSING。本轮目标为现行技能安装→可发现→执行闭环；不恢复旧协议、不重放旧任务、不伪造安装/订单事实。职责RB-01展示/交互、RB-02安装权威、RB-03运行探测、RB-06包声明；仅修改实际缺陷责任层。
+生产API仍439/8ad42be781；fetch于16:29确认远端API aa6ecf935343caed76f6d0c657f9847025de4600、Web339f3be8af09e09ba46e0b29a8e68d8fc30d8576。主工作区两仓均大量共享脏改动，为避免冲突仅创建本轮两个最小worktree `/home/isp/wsps/worktrees/skill-install-repair-{api,web}-20261102`，分支均codex/skill-install-repair-20261102；未构建/部署/改库。
+证据根 `/home/isp/state/cyf-skill-install-repair-20261102`；浏览器登录真实chcbz并定位林冲弹窗。只读DB确认吴用1.3.1图片两个entitlement关联的order不存在，而非已证明Provider失败；林冲图片1.2.0有真实安装但DEPENDENCY_MISSING。文档工作台报价按钮受轮询loading反复禁用，继续抓实际可点击时请求/异常，不先断言唯一根因。
+
+本轮根因确认（16:55）：林冲文档工作台已通过真实UI获取0SILVER报价并确认安装，SM-C1返回SUCCEEDED，Runtime报告INSTRUCTION/NOT_EXECUTABLE。详情仍INVALID，明确为ChatActionCapabilityService误用verified()（要求manifest）而不是verifiedNative()；不是安装记录坏，也不是订单缺失。前述图片新版本没有order是受管授权/升级模型允许的事实，不能拿旧订单链修复；本轮不补造订单、不改DB成功标记。
+管理admissionEnabled的既有语义是独立可执行技能准入，原生INSTRUCTION在confirmCatalog有意保持false，不能为页面绿灯改业务值。修复归属Web：已核验INSTRUCTION目录报告、desiredEnabled合取后显示“已启用（原生技能）”，保留原始NOT_EXECUTABLE及不可独立执行事实；API仅修详情/能力投影的native核验，实际任务授权不变。报价禁用去除background loading条件，保留已知目录/候选/版本/授权、真实POST版本校验及幂等。
+旧text-file1.0.1和林冲image-generate1.2.0确为退役执行器；方案是发布text-file1.1.0普通技能包、图片按现有1.3.1升级，不恢复native-model/provider-operation执行器。新增text包及同包两Agent隔离安装回归，Runtime业务代码不改，不需为了安装技能重启Runtime。
+
+本轮固定候选：API ef702265c2aee075ab077f8e94b9963a4ef58ed9/tree d9ac51fa9fafd3b408a47fda25b30d5b92d16085（基于aa6ec，3文件）；Web56c8f840a22dbcaf68d533c9935a88307cc75120/tree e0ae6073a5dbc7f18ccfa9fdcee73220c2c6fd9b，1.16.93（合入其他Owner4ea31不覆盖）；text-file包源码0128f7e78ef6a4a99630b64225462f1fd0fe0675，包1.1.0，Runtime业务代码零修改。
+轻量反馈Web15项通过、普通技能两Agent安装/绑定5项通过；它们不是正式Flow。API442 SUCCESS约188秒，已恢复配置，正在下载核验后独立安装。本轮生产基线已自然推进为其他Owner完成的API441、Web403，不再把439/401当最新。Web405 FAIL待归因，原配置已恢复；Runtime117在identity阶段FAIL，原因复用模板只更新commit未同步tree，固定正确tree后118重试，不删除身份保护、不本机打包。失败Run保留。部署均保留锁与备份，不重启Runtime。
+
+17:20接续：API442正式183/0fail/0error/0skip（四关键suite75项）；制品/源码/tree/JAR已核验，主机独立安装进行中，PID1992559冷启动，存在真实API不可用窗口，未重启Runtime。宿主unit `cyf-skill-install-repair-api442.service` KillMode=process/RemainAfterExit=yes；不要当临时进程清理。
+Web405唯一失败为上游顶部验收旧断言，不重复改已由原Owner修复的文件。已FF到包含本次修复的98f7682/1.16.94，复用其406 SUCCESS（3675pass、2原有pending、0fail）及原Owner已完成的主机安装/公网摘要证据，本线程不重复安装或开Web Run。其证据`/home/isp/state/cyf-discussion-retest-20261101/image-toolbar/release-r2/`，待本线程技能UI实测。
+Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装。盘点同目录全部当前候选，另确认资料分析也声明退役native-model；为使现行目录不继续提供必失败安装，补analysis1.1.0普通包，源码9ac44c2，119只做相关包安装/绑定测试与打包，不重建Runtime/Python/浏览器，不对已验证text包重复构建。
+
+18:10接续（本轮技能安装修复）：API442已安装ef702265，183项全通过，JAR/Run绑定与health UP；Web实际复用406/98f7682/1.16.94（3675pass、2pending），未重复部署。text-file1.1.0来自118、analysis1.1.0来自119，逐字节与固定源码及包SHA匹配后，通过已授权岗位HTTP发布为当前免费候选，未直接写商品/安装数据库。林冲真实UI完成文档工作台、文本文件、资料分析安装，以及旧图片1.2.0正常卸载→0SILVER安装1.3.1；移动端截图与所有SUCCEEDED/运行目录readback保存于`/home/isp/state/cyf-skill-install-repair-20261102`。吴用现有两图片技能及林冲四包的installationVerified=true；这是包与目录事实，不是整个执行引擎验收。
+
+实际执行重新发现第四个缺口：林冲profile无inputCarriers，因而没有TypedInspectionProfileRuntime/nativeExecution声明。新事项577虽显示4项可调用，但冻结typedDeliberation.availableActions=[]，模型明确无法生成文件；没有伪造文件成功。普通密议另一次请求82c0343b-7df6-4fd3-b1eb-a6b987c56edc为FAST_CHAT_TOOL_POLICY_VIOLATION，保留原失败且不自动重放。林冲原生执行配置候选复用同主机相同引擎/Provider/model的已测载体合同，目录隔离为林冲自有路径，启动仍须独立实测；图片私有配置按林冲真实安装ID与owner scope独立绑定，不共享可写Home或泄露密钥。仅配置修复，不改程序、不新开Flow。
+
+配置变更持既有Runtime release锁，保存配置前值/摘要、校验候选、准确unified unit及PID；前置第一次检查因544/547历史QUEUED更新被拒绝，未写配置。只读确认两项创建于历史日期、现行轮询仍报旧绑定错误，保留其状态、不取消或重放；新skill执行及新Chat在途均无。随后应用候选并受控重启unified（会短暂影响三个Agent通道），不把此前“Runtime未重启”描述延伸到此操作之后。新PID/测量/新事项验收待后续证据，不提前标完整闭环。配置证据`runtime-config/{plan.json,apply-result-private.json,old-queued-poll-private.log}`。
+
+### 2026-11-02 18:53 +08 技能安装与实际执行收口
+- 已上线API442/ef702265及Web406/98f7682（复用原Owner发布）；183项API回归、3675项Web通过/2pending。text-file1.1.0/analysis1.1.0来自118/119已核验制品并正式发布，不重标117/405失败。林冲4包真实UI安装SUCCEEDED，吴用3个现有包及林冲4包能力投影均installationVerified/RUNTIME_READY，未直接写成功标记。
+- 林冲隔离执行配置已生效，新Runtime PID2011406；异步工具测量完成后的新事项577实际选择text-file1.1.0，以NATIVE_SKILL_SCRIPT_V1执行并RESULT_COMMITTED/COMPLETE，正式下载skill-check.txt内容精确50字节、SHA e8d84e61a5a85284aa9e4258255f7d01ba5cdc406abfee09261a810f9fb841c0。
+- 吴用事项578真实选择image-generate1.3.1输出256×256白底蓝方块，再通过真实UI上传该成果，选择image-edit1.3.1输出256×256白底红方块。两次均RESULT_COMMITTED/COMPLETE，正式下载摘要/长度通过、目视通过；各保留一个Provider请求启动标记，不重复提交。生图SHA cd0f2ac68a0bb0b25e93cef846d3824dca57b96d07a2982a18fa0ebc0b4b8234；改图SHA 2bc76319b5c9dd419981a07357a079bf5ac0d6f851fde00d1d242321c8633cb3。未自动验收/归档事项。
+- 新鲜API本机health UP（公网actuator403为真实受限响应），Runtime三个Agent ready。Runtime主程序仍116/32416ed5/1.3.33，未为配置/验收新开Flow；持原release锁追加current.json后续验收与配置附注，保留原安装/源码/摘要事实及原记录备份。API安装及Runtime配置重启均存在真实通道不可用窗口。
+- 范围边界：安装/原生正式事项文本、生图、改图通过，不夸整站或所有技能执行已验收。普通快速聊天探测FAST_CHAT_TOOL_POLICY_VIOLATION保留，未证明其可文件执行；历史QUEUED未重放。初始冻结actions为空与产物注册前轮询404保留，不抹掉失败过程。
+- 总证据 `/home/isp/state/cyf-skill-install-repair-20261102/production-final-verification.json`；执行/下载/截图同目录。最终改图执行pwe_4347c0972fe0347e519205c61be326a20cc46e7ae833cf1b4407c4c5d59c。生产API宿主unit cyf-skill-install-repair-api442.service不是临时清理目标。
