@@ -101,3 +101,40 @@
 ## 部署补充（2026-11-02 18:32 CST）
 
 用户后续授权部署，Web1.16.95 / 362f2fc / Flow407已安装并验证612个本机文件及11项公网入口/相关资源摘要；详见JUYITING-POLLING-20261102部署节。本补充替代上文“未部署”的当前状态，不改变历史审计频率或意味着API/Runtime方案已实施；生产请求量改善尚未实测。
+
+## 事件/阻塞等待复核（2026-11-02 19:07 CST，仅方案）
+
+本轮fetch成功，固定API origin/develop ef702265c2aee075ab077f8e94b9963a4ef58ed9、Runtime origin/develop 9ac44c2fdeb390202497d4bff6e7de36078cc3c1；不将其当线上版本。定向快照位于证据目录event-design/；未修改API/Runtime源码、配置、服务或执行新构建。
+
+结论：高频轮询不是业务必需；应以事件驱动与无工作阻塞等待为正常路径，而非只延长轮询间隔。阻塞队列解决等待，不自动解决事务提交与消息投递一致性、跨进程通知和恢复。
+
+- 现有AgentTaskEventBroker已经使用ArrayBlockingQueue作为线程池任务队列，但明确是process-local/lossy hint，无订阅或队列满允许丢弃；AfterCommitPublisher投递异常只计数/日志。ReplayService订阅hint之外每订阅另设periodic catch-up。这是现有5秒数据库补读的具体原因，不能只删timer，也不应把“已有队列”当可靠事件覆盖。
+- AgentOutboxRelayScheduler在Rabbit gate/readiness通过后仍定时discover/claim/publish/settle；AgentCommandRabbitConsumer已有RabbitListener/manual ACK但条件启用。仅接Rabbit consumer不能消除数据库→消息的outbox扫描；实际线上启用范围/多实例拓扑本次未核验。
+- Runtime原生conversation与workspace各有独立3秒定时发现；WS OPEN并不代表这两lane有推送通知。可在既有认证通道扩展定向工作可用通知，保留原HTTP权威领取与独立lane执行，不把原生执行塞回旧WS runner。注册通知与补读要有无丢失握手/游标，重连和启动恢复未完成事实。
+- 拟议正常路径：同事务写业务事实/工作项→可靠通知或after-commit加速→所属消费者按ID/分区领取→执行/原键ACK；无工作阻塞。内存只存小型ID/版本/到期索引，不缓存技能包/全部历史；队列满须合并dirty标记或可靠补读，不能静默丢失。Node侧异步事件等待，不阻塞事件循环。
+- ACK超时/租约过期/重试改按最早到期项调度，到期重新核对数据库版本/锁；启动重建索引，提前插入必须唤醒，跨实例变化要有通知覆盖。时间驱动不能只依赖业务事件；活跃续租/心跳保留必要周期通信。
+- 若要求连周期性补扫都没有，须可靠衔接DB提交与通知：例如持久outbox由binlog/CDC捕获并送可靠MQ，消费者确认/幂等，断线重放。只在afterCommit直接发MQ仍有提交后进程崩溃窗口；仅publisher confirm不能原子化DB+MQ双写。CDC不是本轮默认新增组件，需结合已有基础设施成本讨论。
+- 暂定建议是先明确是否接受一个低频的集中异常补偿扫描：接受时复用现有持久表+提交后唤醒+有界等待+到期调度，删除每worker/每Agent/每订阅常态高频空查；不接受时再选择可重放的可靠变更传递。两者均不应把“事件+原有固定轮询全保留”当最终优化。
+- 必要验收：提交后通知前崩溃、通知重复/积压/丢失、ACK丢失、重连握手竞态、队列满、租约/撤销/身份切换、多实例路由、重启恢复。空闲业务发现请求/SQL应归零（若保留集中补偿则单独计数），不以断开正常业务或取消续租达成。性能数字须实测，未实施。
+
+## 长期架构与CAP复审（2026-11-02，讨论稿、未实施）
+
+修正前述表述：事件驱动+持久工作项/outbox+幂等消费+恢复对账可以是长期方案；轮询publisher和事务日志订阅是outbox的两类实现，不应将CDC或绝对零轮询设为成熟度门槛。需消除的是每组件/每Agent/每订阅常态高频重复发现，不是删除所有时间驱动与恢复活动。阻塞队列仅为进程内调度，不能成为已受理任务的唯一存储。
+
+建议职责：业务事务原子保存事实及对应工作项/outbox；提交后信号加速已归属relay，可靠投递通过既有MQ（实际启用/拓扑待核实），或同进程从持久工作表领取；Runtime复用认证WS工作通知与原权威领取合同，持久接收确认与执行结果分离；完成结果在API同事务提交事实及事件，Web按游标补读。多实例通知路由、满队列、丢ACK、重启恢复均需闭合，不能假设进程内信号可跨实例。复用现有持久表和状态机，不为模式名称另造一套账本。
+
+CAP按操作讨论：C是线性一致性而非ACID字母C，A不是返回任意HTTP错误也算成功，网络分区时不能同时承诺两侧协调操作的强一致及全部可用。DB+MQ提交间崩溃窗口首先是双写原子性问题，outbox不消除CAP；Polling与CDC主要改变传播延迟/负载/运维成本，不自动切换CP/AP。不将整个CYF简单贴CP或AP标签。
+
+建议业务取舍：任务归属/授权/扣费/权威完成事实优先安全，无法确认权威时不批准新的冲突写入；任务受理可在DB权威可用而MQ不可用时同事务持久保存并明确待派发，不声称已执行；展示在既有会话权限边界内允许过期状态并标明断连/版本，不用展示副本作业务授权。取消已受理不等于离线Runtime已停止，撤权生效时点与离线执行能力必须明定。活跃执行仅在既有有效授权/租约合同内继续；外部不可逆副作用无法靠消息ACK/租约自动实现exactly-once，未知结果不得盲目重放。fencing仅对验证令牌的受控资源有效。
+
+可靠性目标：至少一次投递+业务幂等+每任务版本/顺序约束，消费者持久接手后才确认，旧执行者结果由权威存储拒绝。中断恢复依赖原任务键，不创建新业务请求。保留按到期时间调度、启动/重连恢复及按持久不一致候选的分区对账；对账不是自动重跑模型/扣费。低频补偿是可持续选择但须有明确延迟目标、索引/范围、错误归属和积压观测，不能称“低频”即认为成本小。
+
+部署前仍须核实：MySQL复制/故障切换和读取路径、Rabbit实际开启范围/队列类型/确认模式/跨故障域布置、Runtime持久inbox与幂等覆盖、外部调用幂等能力、断连下租约/取消语义。Rabbit quorum队列需要多数派才工作，不因使用MQ或单机多进程就声称高可用/整个应用CP。CDC应由既有infra能力或relay负载/传播延迟实测驱动，不为消灭少量扫描默认新增。
+
+一手参考（只用于模式论证，不作为项目上线证据）：Gilbert/Lynch《Perspectives on the CAP Theorem》；Microsoft Azure Architecture Center《Implement the Transactional Outbox pattern》；Chris Richardson《Transactional outbox》（Polling publisher/Transaction log tailing）；RabbitMQ《Reliability Guide》《Quorum Queues》；Kubernetes《Controllers》；Debezium《Outbox Event Router》；Martin Kleppmann《How to do distributed locking》。本轮仅更新方案讨论，不修改后端/Runtime或发布。
+
+## 代码与实测复核后的第一批落地（2026-11-02）
+
+以同日`JUYITING-POLLING-20261102.md`的源码/验证记录为准。现场Rabbit派发和archive.question未启用，不将它们当作此次线上热点；已启用bootstrap采用提交后提示+单次合并定时调度+5秒遗漏恢复，不引入新MQ或内存权威队列。API2723bdc375经Flow5260799/443验证后合入develop。Runtime1230924已合入develop：历史目录启动/重连完整发现，平时只复核未完成ID；58项轻量回归通过。65条本地文件夹具的20轮打开次数6380→480，仅为扫描策略证据，不代表线上CPU改善。
+
+两者均未部署。Runtime的3秒HTTP发现、WS提示/重连补领/多实例路由、SSE和其他relay仍属后续范围；不能用第一批的局部事件化宣称全链无轮询。未知效果和绑定冲突没有被性能改造改成重放或成功。

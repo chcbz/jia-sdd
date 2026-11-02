@@ -64,3 +64,29 @@ Owner：本聊天；2026-11-02用户要求全面排查Web/API/Runtime轮询，�
 - 原受控 `/usr/local/sbin/cyf-web-flow-deploy` 安装exit0，record为407/362f2fc/online_verified。公网首页最初两次返回已知旧入口，第三次匹配新摘要；未绕过验证或重新构建。
 - 独立只读核验612个安装文件全部匹配；公网首页/入口资源/聚义厅/技能管理及市场路由共11项HTTP200、长度/SHA-256匹配，并核实相关JS从当前入口依赖图可达。证据 `/home/isp/state/cyf-diagnostics/juyiting-polling-20261102/deployment/deployment-verification.json` 与web-public-resources.json。
 - API/Runtime未修改或重启；没有数据库操作。该结果为安装与线上资源核验，不冒充登录业务全流程或生产请求量/CPU收益测试。已打开旧页面需刷新加载新版本。本节替代本任务此前“未部署”的当前状态，历史CI记录保持原貌。
+
+## 后端/Runtime实施开始（2026-11-02，用户授权先复核再实施）
+
+- Owner仍本聊天。API固定ef702265c2aee075ab077f8e94b9963a4ef58ed9/tree d9ac51fa9fafd3b408a47fda25b30d5b92d16085，Runtime固定9ac44c2fdeb390202497d4bff6e7de36078cc3c1；fetch成功。API生产record442来源同上述API；Runtime安装package1.3.33，不将源码9ac44c当线上。
+- 共享API旧分支大量脏修改，Runtime主工作区属另一任务且有未提交specs；最少隔离为/home/isp/wsps/worktrees/juyiting-event-api-20261102和/home/isp/wsps/worktrees/juyiting-event-runtime-20261102。显式遵守本项目AGENTS、RB-1、分层职责及固定运行目录；接口规范使用API上述commit的docs/interface-standard.md。无子Agent，无部署/迁移/启用Rabbit授权扩张。
+- 现场修正：外置/生产默认合并读取agent.rabbit-dispatch.enabled=false、archive.question.enabled=false，chat.bounty-bootstrap.enabled=true。因此不把未启用模块列为线上热点，不为本次优化启用Rabbit。自然60.8秒采样API单核CPU15.05%、Runtime47.09%，公网日志21条但无命令发现端点，不能当Runtime空闲或请求数为0；SQL性能schema查询1045未取得数据，不绕过认证。5分钟Runtime日志87条native poll partial，3306次SKILL_COMMAND_INVALID、174次绑定冲突（是日志出现次数，不是任务数）。证据implementation-review/。
+- 第一批闭环限于已启用bootstrap：提交后事件唤醒、合并单次调度、已知重试到期唤醒、保留集中恢复查找与原领取/fence/失败语义。恢复间隔候选5秒复用现有执行协调5秒发现量级，只影响漏通知补偿、不改变业务deadline/租约；须测试说明最大额外发现延迟。Runtime先把每轮全部历史扫描收敛为启动/重连扫描加未完成ID索引，持久命令/结果仍权威，不缓存技能包。
+- 本轮不会先删Runtime3秒HTTP发现：新WS通知、重连握手、跨实例路由和本地UNKNOWN恢复覆盖仍待实现；SSE共享补偿和其余relay也不冒充完成。最早验证：bootstrap调度/提交与回滚/过期生命周期回归，Runtime历史/未完成/权限与重连定向轻量测试；Java正式构建回归走Flow。
+
+### 第一批源码与验证进展（2026-11-02 20:46 CST）
+
+- API候选 `2723bdc37576eed2cb490c6b240638d1159d8445` / tree `0d0099ed2ce23f9c9ae63a69b99c18b762ea5aa2`，已推任务分支；未合develop。新增bootstrap事务提交后进程内通知，relay单次定时器合并通知、领取后继续排空，空队列5秒恢复扫描；原事务、作用域领取、CAS/fence、租约及重复永久失败停止规则不变。通知不携带授权或任务正文，不作为领取凭证。数据库瞬时故障按原1秒起指数退避的准确到期时间调度，不被5秒补偿周期拖后。回滚不通知；通知失败不把已提交写入报成失败。
+- API定向回归新增提交/回滚/无事务/通知失败4项、通知风暴/在途尾沿/未来重试/旧生命周期等调度回归及两个生产者注册断言；本机仅diff检查，未运行Gradle。正式Flow5260799/443正在执行，沿用原无部署云端配置（配置摘要2cb56d7b90a37b1ef1c6d03044ec281784b59ef663c217f7dab40dfbfd7b0f14），既有mmdU1BootstrapOutbox与mmdControlledImageBridge选择器已覆盖新增测试。无改配置/删回归/启用Rabbit。Run参数指定任务分支，不使用未测试develop或重复构建。
+- Flow启动单次成功返回443；初次监视器把早期API未提供commit误判为不匹配，退出的是本机监视器，不是Run。只读核实同一443后恢复只监视，不重复start。服务返回sources只有branch/repo，无commint；不能用该接口宣称完整SHA已核实，须最终制品确认。独立监视器保留600秒总预算（含取消传输裕量），不等待主机验收、不取消他人Run。证据 `implementation-review/api-ci-*` / `api443-*`。
+- Runtime候选 `1230924` 已在原9ac44c上自检并快进push develop；Runtime1.3.34 / bridge1.1.24，未打生产包、未安装。平时只维护未完成executionId集合，每次仍核验磁盘command/attempt/receipt；第一次及认证重连全量发现。新执行在store成功绑定后加入索引，终态下次检查移出；不缓存技能包/正文、不改业务授权或UNKNOWN外部效果处置。源代码核对本目录仅SkillConversationLane创建SkillExecutionStore；外部历史写入不冒充实时任务入口。
+- Runtime本机轻量回归：conversation44 + store12 = final56通过，agent-client native poller2通过，共58项；无跳过/失败。覆盖空API页恢复、UNKNOWN退避、持久记录身份冲突、失效历史只发现时报告、认证启动/重连重扫。脚本语法与两组件git diff --check通过。不是云端打包、线上业务验收或全量Runtime测试。
+- 文件夹具测量（非生产数据）：65条历史（53完成/6失败/6未完成），20轮全扫打开文件6380次、4782.998ms；索引后480次、84.564ms，仅保存6个ID。耗时含缓存/验证预热差异，不推导线上CPU收益；文件打开次数由真实fs.openSync计数。夹具使用临时目录并清理，不读取/复制生产业务正文。证据 `implementation-review/history-scan-benchmark.{mjs,json}` 与runtime-*-tests.log。
+- 剩余范围：Runtime3秒HTTP命令发现仍保留，尚未实施WS工作提示、重连补领与多实例通知路由；SSE共享补偿及其他relay未改。不能称后端/runtime整体去轮询完成。日志中的现存有效执行绑定冲突仍按原错误处理，不由本次性能改造伪造绑定或重放。
+
+### 第一批正式验证与集成（2026-11-02 20:54 CST）
+
+- Flow5260799/443 SUCCESS，启动请求至终态更新410.608秒，未触发取消。Gradle327.151秒，日志BUILD SUCCESSFUL；398个suite汇总3348次测试执行、150跳过、0失败/0错误（存在同类在不同sourceSet重复执行，不称3348个独立用例）。云端必要测试/validateLayering/bootJar/上传完成，无主机安装动作。
+- 从最终日志提取CYF_DIAGNOSTIC_CHUNK并校验完整base64长度及解压数据SHA-256，得到398份报告、编译诊断0。新增Publisher4项、relay12项均无跳过/失败；grant43项、outbox12项及其嵌套16项通过。证据 `implementation-review/api443-diagnostics.json`、`api443-verification.json`；API当前候选已fetch核对后快进push develop，仍为2723bdc375。
+- CYF_API_ARTIFACT日志固定Run443、commit2723bdc37576eed2cb490c6b240638d1159d8445、tree0d0099ed2ce23f9c9ae63a69b99c18b762ea5aa2；云端报告JAR SHA-256为2a3f9f7345efc3dc077e145ad5f9c281f22bccb5a5ebf0181f22a7bd0c6fa7b5。控制API未返回commint的问题不猜填，来源核验使用云端构建输出和摘要校验后的测试诊断。
+- 额外制品下载在180秒传输超时后保留179211660字节为`api443-artifact.partial`，不能用于安装、不冒充完整制品摘要核验。此次不部署，测试证据已从云端完整诊断取得，不为下载失败重复构建；如后续授权部署，复用443不可变对象续传并核验归档/完整摘要后安装。
+- Runtime完整源码 `1230924707b678fed3857f68266e3de53228e203` / tree `4c8dc6a43824ea6863e97fc4ae149a3e3928b664`。两组件源码已集成，线上仍旧API442与Runtime1.3.33；本轮没有重启服务或变更数据库。整体事件化仍未完成，现有任务工作区保留用于尚未接入的WS/恢复链路，不复制新阶段工作树。
