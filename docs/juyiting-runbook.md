@@ -229,6 +229,7 @@ cd web && npm run dev -- --host 0.0.0.0
 覆盖API源码 `2fb221ae15797c819b0fcb674880730bca1cf166` 的I11a，已合入/push develop、**未发布**；当前旧action-v3实现不是最终技能执行协议。
 
 - `InstalledSkillDescriptorLookup`/`InstalledSkillDescriptorService`只读真实安装证据：精确Owner/canonical Agent、ACTIVE entitlement/order、SUCCEEDED installation及相同activation epoch、批准权限和包摘要、成功result receipt与安装/host binding。普通说明包明确NOT_EXECUTABLE；结果消息ID不等于安装command ID。包准备仍在事务外；缓存仅不可变内容，权限每目录统一末尾复读，不按技能重复读取全量entitlement。
+- **2026-11-02原生安装核验更新（API ef702265/Web98f7682）**：INSTRUCTION包没有可执行manifest是正常合同，用`verifiedNative()`核对安装事实；受管安装允许没有传统order，不补造订单。`NOT_EXECUTABLE`表示不提供独立runner，管理页显示“已启用（原生技能）”。需再核对宿主原生执行配置/实测注册及任务availableActions，不能只看安装或heartbeat就断言能生成文件。林冲原缺inputCarriers；补齐独立目录及匹配载体配置后仍等待异步工具测量，使用新请求验证，不重放冻结旧请求。Provider私有配置按scope和真实安装ID管理，安装/卸载不自动复制他人密钥。正式包text-file/analysis1.1.0来源Flow118/119，目录已发布；详情和实际验收见REUSABLE-SKILLS-20261102 handoff。
 - `ChatActionCapabilityService.inspectInstalledSkills`只投影安装/Runtime观察：匹配当前scope/fence与manifest/runner/摘要、工具和Provider绑定要求，join后复核live目录；断线、主体歧义、缺依赖、目录切换不能保持旧运行就绪。metadata仅白名单描述/schema/输入/输出/costInfo，没有执行路径或内部主体配置。
 - `RUNTIME_READY` **不是任务可调用/执行授权**，也不会因此新增availableActions。任务ACL、目录HTTP和EXECUTE_SKILL baseline/接纳仍待I11b/I16/I18；费用信息不参与本核对，购买/退款链保持。当前receipt按installation读取尚待受控索引/schema接线；未证明生产目录读取性能，不开放未完成的HTTP路由。
 - 定向171 tests与layering PASS，包含真实H2安装/回执SQL；不是MySQL catalog/在线识图证据。历史失败、固定输入与最终证明见 `/home/isp/wsps/cyf/specs/juyiting-skill-execution/evidence/implementation-20261013/i11a-proof.json`。完整上传→识别→修改→下载仍NOT_RUN，无新配置、生产DDL、Web或本批API/Runtime发布。
