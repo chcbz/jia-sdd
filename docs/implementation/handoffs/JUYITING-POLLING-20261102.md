@@ -115,3 +115,24 @@ Owner：本聊天；2026-11-02用户要求全面排查Web/API/Runtime轮询，�
 - 两组件重新fetch确认远端develop仍分别为本批基线后，均已**正常快进push develop**，无force、不覆盖共享主工作区的未提交内容。API94ab8bf2a6、Runtime4a89d63为本批集成版本，**不代表线上版本**。没有重启服务、安装包或生产DDL；此前线上API442/Runtime1.3.33是历史观察，本次未重新核验线上版本。
 - 证据 `native-notifications/api444-{diagnostics,verification,final-full-log}.json`、`runtime-verification.json`及相应测试日志。下一步授权发布时须先核验生产索引/固定真实目录快照，受控执行显式索引迁移，再消费444不可变API制品；Runtime仍需既有Flow制品验证/打包流程，不能拿本机源码测试冒充发布包。旧API/Runtime兼容策略允许分步安装；跨节点漏提示仍可能30秒加处理等待。
 - 本批范围已集成；workspace-file每3秒发现、SSE每订阅补读及其他relay仍待后续，不宣布整体去轮询完成。当前两个工作树用于连续专项，未新增临时worktree；根gitlink因共享主组件工作区存在其他未提交改动未机械切换，准确源码以上述固定SHA为准。
+
+## 第三批：任务SSE集中补偿（2026-11-02，继续授权）
+
+Owner本聊天，复用API工作树，fetch后HEAD/origin/develop均为94ab8bf2a69bf7c099406afc74a3a80cf7c62fbf。统一接口基线同该commit的docs/interface-standard.md；RB-1及分层规则：持久层负责批量SQL分区，ReplayService只做调度；Controller原有授权不复制、不变Web/Runtime合同。workspace-file核实仍有真实HTTP命令入口，本批不删除或改其执行语义。重型验证复用API5260799，单Run≤600秒，不部署。
+
+目标：每订阅5秒定时/高水位查询→每实例单5秒定时、订阅完整scope去重并按tenant批量查持久版本；只有版本不同/未完成唤醒才调用原独立回放。订阅首读、事件hint、游标/缺页/保留期/背压、关闭/取消及业务授权不变；不共享事件正文、授权结果或游标，不新增长期高水位缓存。无订阅零timer/SQL。最早反馈为定向静态及已有Replay/DAO回归；真实批量SQL与隔离/索引访问在独占MySQL夹具验证。此段为计划，不是完成证据。
+
+### 第三批候选与验证入口
+
+- API候选604e8d15a65144183adf3839d0fa5569ad8a4f70 / tree2b4ac362e1c3c118140286556cbba148a94d19d8已push本任务分支；Flow5260799/445已单次启动验证，沿用444原云端配置并readback对比，无共享Flow/root policy写入。无部署动作。控制监控仅对应本Run，570秒受控取消预留600秒总上限。
+- 批量接口采用完整scope和同tenant查询；回放依旧各自从权威数据库重建，不共享客户端游标。新后台查询复用现有task-meta作用域唯一索引，无生产DDL。单flight批量扫描使用原有catch-up线程池，不在timer线程读DB。
+- 静态检查通过；服务级新回归包含6同scope订阅/20补偿轮次仅20次批量查询、独立tenant/缺失高水位、批量失败回原处理、慢扫描不叠加及最后取消中断。已有完整Replay生命周期/游标/背压测试与DAO测试加入既有unfiltered mmdU1BootstrapOutbox slice，避免修改其他Owner的共享CI配置；独占MySQL测试覆盖真实SQL和现有索引。正式结果待445，不将编写测试当通过。
+- workspace-file实际入口仍为PersonalWorkspaceRuntimeFileController→runtimeQueuedCommands→listQueuedByTarget/queuedCommand，排除CONVERSATION但仍生产WORKSPACE_FILE_EXECUTE；本批未删其能力或3秒发现。它需后续独立完整通知/本地恢复闭环，不能因为原生lane已切换就直接关闭。
+
+### 第三批正式验证与集成（2026-11-02 23:05 CST）
+
+- Flow5260799/445 SUCCESS，启动请求至终态311.609秒（终态23:01:52 CST），无取消、无主机安装/等待。固定commit604e8d15a65144183adf3839d0fa5569ad8a4f70 / tree2b4ac362e1c3c118140286556cbba148a94d19d8，来源同时由最终Flow日志和SHA校验后的诊断核对。404 suites，3433次测试执行、150跳过、0失败/0错误；必要validateLayering/fresh bootJar/上传成功。JAR云端SHA-256 d7e3f2ce563632a04b0de258d2af349d627a8958ff1d9b1e77742030a6139c9a；未下载归档或验证本机安装文件，不冒充上线。
+- 受影响集中回归74项全部通过且无跳过：AgentTaskEventReplayServiceImplTest67、AgentTaskEventReplayDaoTest6、AgentTaskEventHeadMySqlTest1。6同scope连接/20补偿轮次仅20次批量metadata调用是受控service夹具实测，不是线上SQL流量；原实现每连接独立补查的120次是由代码路径推导的同场景对比。真实独占MySQL另证实批量映射、tenant/client/owner/task大小写/重音/尾空格隔离，以及1000历史任务下复用uk_agent_task_meta_scope且不走全表扫描，无需生产DDL。
+- 复查远端develop仍为94ab8bf2a6后，已正常快进push develop至604e8d15a6，未force、未覆盖共享主工作区。Runtime/Web本批无修改。规则/合同细节回写API docs/minimal-tenant-grey.md“任务SSE集中补偿候选”，候选指未上线；实现与本次正式验证以此记录为准。
+- 证据 `sse-compensation/api445-{diagnostics,verification,final-full-log}.json` 和控制面记录。没有部署/重启/生产数据库修改，没有声称线上CPU、GC或请求量已改善。现有两个工作树保留用于后续范围，不新增隔离目录；本批临时编辑脚本完成后删除。
+- 剩余workspace-file独立lane3秒命令发现尚未事件化；其他relay按实际启用范围与职责继续审视，心跳/续租/撤权等必要时间驱动不属于可机械删除项。本批只完成任务SSE集中补偿，不声称全系统零轮询。
