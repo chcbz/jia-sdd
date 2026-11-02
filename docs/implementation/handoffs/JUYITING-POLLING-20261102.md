@@ -90,3 +90,28 @@ Owner：本聊天；2026-11-02用户要求全面排查Web/API/Runtime轮询，�
 - CYF_API_ARTIFACT日志固定Run443、commit2723bdc37576eed2cb490c6b240638d1159d8445、tree0d0099ed2ce23f9c9ae63a69b99c18b762ea5aa2；云端报告JAR SHA-256为2a3f9f7345efc3dc077e145ad5f9c281f22bccb5a5ebf0181f22a7bd0c6fa7b5。控制API未返回commint的问题不猜填，来源核验使用云端构建输出和摘要校验后的测试诊断。
 - 额外制品下载在180秒传输超时后保留179211660字节为`api443-artifact.partial`，不能用于安装、不冒充完整制品摘要核验。此次不部署，测试证据已从云端完整诊断取得，不为下载失败重复构建；如后续授权部署，复用443不可变对象续传并核验归档/完整摘要后安装。
 - Runtime完整源码 `1230924707b678fed3857f68266e3de53228e203` / tree `4c8dc6a43824ea6863e97fc4ae149a3e3928b664`。两组件源码已集成，线上仍旧API442与Runtime1.3.33；本轮没有重启服务或变更数据库。整体事件化仍未完成，现有任务工作区保留用于尚未接入的WS/恢复链路，不复制新阶段工作树。
+
+## 第二批：原生CONVERSATION工作通知（2026-11-02，继续授权）
+
+- Owner本聊天；复用原两工作区，基线API2723bdc375、Runtime1230924，fetch后origin/develop一致。RB-02保持API授权/状态机，RB-03只调整执行发现/本地恢复；Web、workspace-file旧lane及SSE不在本批修改范围。跨边界统一接口使用API2723bdc375的docs/interface-standard.md，通知沿既有WS信封。
+- 正常路径：原生执行入队事务提交后提示本机WS会话；Runtime收到提示后通过原HTTP发现/领取。通知无命令正文、无授权、无持久接手ACK。注册回执确认通知版本后才停3秒发现；旧服务端仍原周期兼容。先确认订阅再启动补读，在途提示置dirty并在尾沿补读；断连、换身份、旧调度器隔离。
+- 丢通知/提交后崩溃/跨API节点：每WS节点一个集中补偿周期，查询配置tenant/client和当前订阅目标中的QUEUED原生工作，仅通知本节点当前有效会话；不引入Rabbit/Redis/CDC。候选周期30秒沿现有Runtime心跳量级，跨节点/漏通知可能额外等待约30秒+处理，并非零延迟或高可用保证。空目标不查DB，无工作不发客户端HTTP提示。
+- 本地UNKNOWN/上传/提交恢复独立于发现HTTP：按既有重试到期调度，只处理持久未完成记录；无通知也不能让执行卡死。租约/心跳不删。测试重点：注册竞态、在途唤醒、丢通知补偿、旧会话/跨环境不通知、空队列静默、已知UNKNOWN到期、分页排空、新旧混合。尚未实施/验证/部署，不把此段当完成证据。
+
+### 第二批实现/验证进展（2026-11-02 21:41 CST）
+
+- API候选 `94ab8bf2a69bf7c099406afc74a3a80cf7c62fbf` / tree `b34bef3cabe3d4850db8c76980eac0fb1989fbc3` 已push本任务分支，Flow5260799/444正在验证；未合入develop、未安装。复用443原云端worker-only配置，无配置写入；控制脚本只监控本次Run，570秒发取消预留600秒总上限传输余量。
+- 已实现after-commit提示、注册协商、本节点订阅/当前持久会话栅栏检查、单30秒补偿查询；Runtime拆开HTTP发现与本地UNKNOWN恢复、在途合并/尾沿补读、旧API3秒兼容。共享wire fixture位于API `chat/jia-chat-service/src/mmdRegressionTest/resources/contracts/native-work-hint-v1.json` 与Runtime `conf/cyf-agent-runtime-v1/test/fixtures/`；合同详见API `docs/interface-catalog/native-work-notifications.md`。
+- 复查发现补偿SQL原无目标队列索引，新增**显式运维安装**非唯一covering index脚本 `db/agent-personal-workspace-native-work-index-v1.sql`，不加CHECK、不自动启动DDL、不因缺性能索引拒绝启动。独占MySQL夹具增加10,000历史行EXPLAIN前后核验，正式结果待444；线上索引/规模性能尚未验证，未执行生产迁移，部署前需固定目录真实快照与授权。
+- Runtime轻量定向：lane/scheduler52项通过，agent-client poller2项通过，adapter/共享wire/安装清单12项通过。首次扩大runtime-host诊断发现新模块未加入`EXECUTION_PAYLOAD_FILES`，导致9个清单/导入关联失败；修正后重跑全部9个失败项+新增3个wire/协商项共12通过（不是全量最终重跑）。中间fixture误传object而非JSON文本已修复；原失败日志保留，不抹除或当通过。
+- Runtime候选升为1.3.35/bridge1.1.25，未打生产包/未安装；证据路径 `native-notifications/`。workspace-file、SSE及其他relay仍不在本批完成范围。阶段记录不等于正式Java测试通过或发布成功。
+
+### 第二批正式验证与源码集成（2026-11-02 21:50 CST）
+
+- Flow5260799/444 **SUCCESS**；实际Run起始至终态更新370秒（21:39:43—21:45:53 CST），启动请求至终态370.672秒，符合600秒上限。必要测试/validateLayering/fresh bootJar/上传完成，无部署作业、主机调用或等待。401个suite，3359次测试执行、150跳过、0失败/0错误（不称独立用例数）；正式诊断gzip解码长度与SHA-256已核验。
+- 新增 `NativeConversationWorkDiscoveryMySqlTest`2项、`NativeConversationWorkDiscoveryTest`4项、`ChatBountyBootstrapRelayRecoveryTest$NativeWorkNotifications`4项均无跳过通过；实际生产者`SkillExecutionServiceTest`58项、WS目标/共享wire测试所在class4项、既有bootstrap relay12项均通过。10,000历史行MySQL EXPLAIN断言证实该合成分布由全表扫描转为`idx_pwex_native_work`访问；没有将此推导为线上延迟/CPU收益，未测生产多订阅规模。
+- API固定源码保持 `94ab8bf2a69bf7c099406afc74a3a80cf7c62fbf` / tree `b34bef3cabe3d4850db8c76980eac0fb1989fbc3`，最终Flow来源与日志/诊断一致，JAR云端SHA-256 `3bd3c04cbcd7f0b2bcee4710b8e83564240479c0850da4fd57c483af8dde01e1`。本轮未下载归档、未验证本地安装文件，不因已知云端hash声称已安装。
+- Runtime固定源码 `4a89d638ac4beac52843204ad5ebb446428b3949` / tree `46336ffbda82623f51e6ea265eafe3682ab50f4d`，Runtime1.3.35 / bridge1.1.25。最终选择的本机定向回归合计66项通过（52 lane/scheduler、2 poller、12 adapter/fixture/payload）；未做最终全量Runtime重跑/云端生产打包。两端共享wire fixture SHA-256均为 `61b43808b06ccd13215ede01aa81fd4e5b4ded30d78a89f3f0f782ddcc1ff30a`。
+- 两组件重新fetch确认远端develop仍分别为本批基线后，均已**正常快进push develop**，无force、不覆盖共享主工作区的未提交内容。API94ab8bf2a6、Runtime4a89d63为本批集成版本，**不代表线上版本**。没有重启服务、安装包或生产DDL；此前线上API442/Runtime1.3.33是历史观察，本次未重新核验线上版本。
+- 证据 `native-notifications/api444-{diagnostics,verification,final-full-log}.json`、`runtime-verification.json`及相应测试日志。下一步授权发布时须先核验生产索引/固定真实目录快照，受控执行显式索引迁移，再消费444不可变API制品；Runtime仍需既有Flow制品验证/打包流程，不能拿本机源码测试冒充发布包。旧API/Runtime兼容策略允许分步安装；跨节点漏提示仍可能30秒加处理等待。
+- 本批范围已集成；workspace-file每3秒发现、SSE每订阅补读及其他relay仍待后续，不宣布整体去轮询完成。当前两个工作树用于连续专项，未新增临时worktree；根gitlink因共享主组件工作区存在其他未提交改动未机械切换，准确源码以上述固定SHA为准。
