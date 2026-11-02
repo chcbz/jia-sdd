@@ -156,3 +156,11 @@ API604e8d15a6 / Flow5260799/445：每连接5秒timer/高水位读取收口为每
 API189da86d62 / Flow5260799/446通过。进一步核实文件HTTP发现查询先LIMIT16再排除CONVERSATION，旧对话页可挡住后面的文件任务；已把PRIVATE/TASK/历史NULL模式选择移至SQL排序/LIMIT前。真实独占MySQL三项新增回归通过，复现旧页并验证新页、完成推进、顺序上限与字节精确分区。无新增DDL、HTTP合同或Runtime改动，事务/授权/租约仍原责任层。
 
 这只是事件化前置正确性修复，不是文件lane通知完成：3秒发现仍在；失效TASK租约/不可派发记录的LIMIT后过滤、持久接收后仍QUEUED的重复满页需要继续处理，不能直接“满页立即重取”造成忙循环，也不能把native1协商冒充文件lane支持。processor启动/重连的持久inbox恢复独立存在，不属于可删除轮询。固定源码、正式证据和未部署边界见主handoff第四批。
+
+## workspace-file事件闭环（2026-11-03，源码已集成、未部署）
+
+API192a590b2c / Flow5260799/447通过（约450秒，61项相关回归通过）；Runtime125729f（1.3.36/bridge1.1.26）86项定向本机回归通过。文件GET内部keyset继续越过失效租约/不可派发候选，原有业务层负责授权，SQL不复制租约规则；有界页和最多16条响应，不改状态或wire。
+
+文件入队after-commit提示复用既有WS worker；显式lane与独立workspaceFileWorkNotifications:1协商，不能由native1推断。双lane共用每节点单30秒候选扫描，空订阅零SQL。Runtime空闲文件发现去掉3秒timer，启动/重连补读和旧API3秒兼容保留；重复满页观察现有processor drain而非立即轮询，真实持久16命令夹具验证不重复执行。迟到旧会话HTTP结果被丢弃，原在途owner guard不提前释放；UNKNOWN、ACK/心跳/租约恢复不改。
+
+不是全系统零轮询，也不是上线：全失效但仍QUEUED的候选会继续低频触发资格检查，多API漏提示仍有约30秒加处理延迟；前批显式性能索引尚未生产迁移，Runtime候选尚未Flow生产打包。当前固定证据与发布前提见主handoff第四批闭环，其他relay仍需按实际启用范围审视。

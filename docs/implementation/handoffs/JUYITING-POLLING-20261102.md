@@ -154,3 +154,22 @@ API候选189da86d622a37254f31fd5828bf96b7bc01bbbe / tree6111c9f86f453d6ba7b36ea9
 - 固定源码189da86d622a37254f31fd5828bf96b7bc01bbbe / tree6111c9f86f453d6ba7b36ea90c7de64c28572ea7；终态API返回的源码、Flow制品来源与解码诊断一致，gzip/base64长度及解压内容SHA-256核验通过。405 suites，3436次测试执行、150跳过、0失败/0错误。新增WorkspaceFileQueueMySqlTest三项均无跳过通过，真实MySQL验证旧SQL16条全对话、修复后PRIVATE/TASK/NULL文件可见、完成后的页推进和精确分区；非线上耗时/请求量数据。原生CONVERSATION测试11项在两个既有slice分别通过，不将重复执行称为独立用例。没有宣称默认Flow未选择的PersonalWorkspaceExecutionServiceImplTest已运行。
 - 云端JAR SHA-256 `632964d857565b8f6724778ba877fcd05c9246ad65331eaaa20aac30d33116ab`；本批未下载归档、安装或修改生产数据库。重新fetch确认develop仍604e8d15a6，正常快进push至189da86d62；无force、未覆盖共享主API脏工作区。Runtime仍4a89d63，本批没有修改/升版或打包；Web不受影响。
 - 证据：`workspace-discovery/api446-{diagnostics,verification,final-full-log}.json`及控制记录。规则与调用边界回写API既有`docs/interface-catalog/native-work-notifications.md`前置修复节。本批仅解决**混合lane抢占LIMIT**；文件通知、独立协商、租约/不可派发候选的分页推进、执行中重复页退让仍待实施，3秒文件轮询保留，不宣称整体事件化完成或线上性能已改善。
+
+## 第四批事件闭环：workspace-file（2026-11-02，继续授权）
+
+Owner本聊天，复用两现有工作树，重新fetch核对基线API189da86d622a37254f31fd5828bf96b7bc01bbbe、Runtime4a89d638ac4beac52843204ad5ebb446428b3949。统一接口固定为该API commit的docs/interface-standard.md，RB-1和根AGENTS分层/Flow/固定目录规则显式用于外部Runtime；未新建worktree，不改Web，不部署。目标为失效租约等候选挡页、重复满页及独立通知协商；非目标是重放UNKNOWN、修改租约/业务授权、清理历史队列或新增MQ。
+
+实现候选：文件GET内部按created_at+binary execution_id逐页检查既有业务资格，响应仍最多16条且不改wire。文件入队提交后提示，复用原单worker/30秒集中SQL扫描，target增加lane，不新增独立扫描timer；文件能力单独offer/ACK workspaceFileWorkNotifications:1，与native1互不推断。Runtime启动/重连补读，提示尾沿合并；通过现有processor drain完成唤醒下一页，重复满页不忙循环，不修改持久执行/ACK/UNKNOWN恢复。复用现有调度模块无新增安装依赖，候选Runtime1.3.36/bridge1.1.26。
+
+边界：集中补偿只识别候选，不复制TASK授权，因此非空但全失效的队列仍可能每30秒提示一次；单次HTTP可以遍历多个有界页，不人为丢弃候选或新增等待上限。没有新DDL；前批idx_pwex_native_work显式迁移尚未生产执行。最早本机定向Node/static反馈已取得，真实Java/SQL待固定候选Flow验证，不将源码实现当发布。
+
+### 第四批事件闭环验证与源码集成（2026-11-03 00:15 CST）
+
+- 本轮跨过午夜，以下时间为**2026-11-03**。API源码 `192a590b2c8b690337818606a6180fca6f99a600` / tree `2aca1409d0612ec69d8c7faf3539ac28541fbda9`；Flow5260799/447 SUCCESS，00:02:42单次启动、00:10:11终态，启动请求至终态449.598秒。沿用原worker-only云端配置且readback一致，无配置修改、部署、主机调用或等待。自有监控独立进程结束，未触发超时/取消，不接管其他Run。
+- Flow最终来源、制品及SHA校验解码诊断一致；406 suites，3480次测试执行、150跳过、0失败/0错误。相关61项无跳过通过：文件service38、文件真实MySQL4、通知真实MySQL3、通知service5、共享notifier5、真实WS/fence6。实际注册回执测试证明conversation开关关闭时文件通知仍可独立协商，再注册不再声明文件能力会移除订阅；共享SQL在10,000条合成历史中双lane复用idx_pwex_native_work且不走全表扫描。业务层回归越过16条真实失效租约候选和16条不支持输出候选，后续有效文件仍可发现，不改状态/授权。均为受控夹具，不是生产数据/性能验收。
+- 云端JAR SHA-256 `3a4749fadecdf42e684572c6a01ef07969c2b3fe0b337bc5a6edecde4911491a`；未下载完整归档或安装。证据 `workspace-events/api447-{diagnostics,verification,final-full-log}.json`。首次重型验证通过，无盲重试。重新fetch确认develop仍189da86d62后正常快进push至192a590b2c，无force、未改共享主API工作区。
+- Runtime最终源码 `125729f8291da2dc89048bc41850beb12c15a9ab` / tree `89b2e8051f54549a9930af1b491e45109b7a6269`（1.3.36 / bridge1.1.26）。复查补上停止/替换后的在途HTTP响应处置：旧响应在解码前释放body，逐项接收前再看调度器当前归属；不允许旧查询向新会话继续接收命令，不释放旧在途owner guard。没有回滚已持久接收的命令或改UNKNOWN恢复。对应独立补丁125729f已包含在最终候选。
+- Runtime最终轻量定向**86项通过**：24项文件发现/实际持久inbox/去重/在途/会话及原native poller，10项adapter协商/共享wire/安装payload闭包，52项调度器和原生lane恢复。实际持久夹具16条文件命令只执行各一次；重复满页不增长pending、不立即循环，drain完成后再发现；属于本机合成I/O验证，非线上吞吐。不是Runtime全量suite/云端生产打包，尚无本候选可安装Runtime制品。固定日志/汇总见 `runtime-verification.json` 和三个 `*-final*.log`（最终poller为`runtime-poller-final-session-fence.log`）。重新fetch确认develop仍4a89d63后正常快进push至125729f。
+- 两端共享文件hint fixture SHA-256 `af4469b313aed93a5254ae649734d1e1669078360fcf6419e13af42d129e36e3`。稳定合同回写API既有通知文档，Runtime接线/运维边界回写self-host指南2026-11-03候选节。无新增模块导入，沿原EXECUTION_PAYLOAD_FILES闭包。
+- **未部署、未重启、未执行生产DDL，也未重新测量线上版本/CPU/GC/HTTP量。** 前批显式目标索引生产迁移仍待获授权、固定真实快照和实际schema/plan核验；若授权发布，API可复用447固定制品，Runtime仍需既有Flow5264702固定候选测试/打包。不能用本机测试充当安装包证据，不因下载/安装重试重复构建。
+- 文件事件化源码范围已集成：协商成功后移除正常空闲3秒HTTP轮询，旧API兼容/网络错误重试、重连补读、本地恢复保留；native/file共享每WS节点30秒候选补偿。全失效但未终结的QUEUED候选仍可能每30秒提示/读多页，未宣称“零扫描”或解决历史队列生命周期；其他relay/position/archive等按实际启用与职责仍需后续核对。现有两干净工作树为未完的整体轮询专项复用，未新增工作树；本轮临时编辑脚本删除，不清他人证据/备份。
