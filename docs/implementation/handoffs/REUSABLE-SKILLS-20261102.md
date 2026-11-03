@@ -254,3 +254,21 @@ Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装�
 
 当前六项：图片识别、图片生成、图片编辑、文档处理、信息检索、网页操作；覆盖此前7项目录结论。已同步精简metadata清单和既有包契约说明。新增Flow=0、部署/重启=0、Provider调用=0；观察到的API469/e2e33bc67ccfd25033748726a997aed81e873cce为其他Owner发布，不归为本任务构建或测试。本轮仅目录和卸载验收，无全部技能执行重验。
 证据根`/home/isp/state/cyf-skill-routing-20261103/retire-analysis`：verification.json、retirement-receipts-private.json、change-analysis.json、installations-before/after.json及browser/metadata-ui-verification.json。目标已闭环，无需再开Run或重复变更。
+
+### 2026-11-03 用户授权物理清理历史技能凭据及标题修复
+用户明确要求数据库底层历史安装/授权也物理删除，覆盖此前保留历史凭据的决定。限chcbz的吴用/林冲，当前有效安装保留，任务成果/资金账目不删；不提供依赖已删旧安装的恢复。单Owner，RB-02责任在API数据及展示投影，不改Web/bridge。API共享工作区目标有他人脏改，唯一隔离worktree `/home/isp/wsps/worktrees/skill-history-titles-api-20261103`，基线e2e33bc67ccfd25033748726a997aed81e873cce，候选ba9451df968b3f084128b72f34f69394099b4a63/tree d06eebecae81f5d8cb0ab91d8145fb7bd6d15f19。
+
+物理清理已事务提交：旧安装/授权/权益/投递绑定各15、历史变更42、命令57、请求70、回执56+2、过期报价18、空管理状态4。当前5份安装及其他账号数据保持逐行不变。删除前备份及恢复SQL均仅私有证据目录，22条历史任务引用只读保留、不重放、不改成果。首次恢复SQL序列化二进制失败发生在删除前；次次被旧immutable receipt触发器拒绝并整笔回滚。定位后仅为精确主键及本连接临时放行两条DELETE触发器，事务提交后已恢复原始SQL并readback；未关闭全库外键/权限/触发器。没有建立长期清理后门或应用自动清理。
+
+标题根因：ChatActionCapabilityService对无旧manifest的原生技能回退skillKey；管理页使用商品名称，所以两处不一致。候选通过已有InstalledSkillDescriptorLookup提供独立显示标题查询，用商品名称覆盖显示标题，不改变不可变manifest、授权、readiness及快照相等比较；批量SQL不引入逐技能查询，包含已退役但仍安装的商品。接口wire不变，无需前端/Runtime联动。定向回归：真实H2 mapper、InstalledSkillDescriptorService、ChatActionCapabilityService、AgentProfileCapabilitiesService，保留validateLayering/fresh bootJar，云端验证/发布待记录，不把源码当上线。
+证据根 `/home/isp/state/cyf-skill-history-purge-20261103`；物理删除`applied.json`，保护恢复`trigger-restoration.json`，私有备份和定向脚本同目录；源码发布位于release。
+
+线上物理清理读回：真实chcbz登录，吴用/林冲管理列表均严格6项，无三个退役技能；操作记录剩3/2条，分别是当前有效安装必须保留的完成凭据，不是旧安装历史。林冲真实管理UI六项截图已保存。标题部署前profile接口仍输出英文skillKey，作为问题基线。
+
+标题Flow470 FAIL约115秒，仅新增Chat测试漏import java.util.Map导致compileTestJava失败，生产未安装失败包；补导入固定3a5a8650a0b3348b3ce70ca036072fc868f99db5/tree876d7c60e7ad3923e4984064e9b64c4628a36bff，原必要selector不变，Flow471 SUCCESS约147秒。两次原配置均按CAS/readback恢复，不重标470成功；471制品下载与安装核验接续，不把云端成功当上线。
+
+最终收口：471成功制品SHA f14f438ea8483b265bc18e5a70ae8348d9c18da2033923bf139b078ab0129b1f、JAR eab3d16ad49f53c25c16e932b667ab880307d04f62973481431d937657688511；113tests/0fail/error/skip（4目标suite47项）、分层/fresh JAR均通过。候选3a5a8650a0已非强制FF远端develop并readback，云端原配置恢复APPLIED。主机复用471制品独立安装，23:37:26安装器exit0，record installed/471、PID2964836、HEALTH UP，实际JAR摘要MATCH。宿主unit `cyf-skill-titles-api471.service`保持active/exited，承载当前JVM，不是临时清理目标。没有Web/Runtime发布或重启，没有Provider调用。
+
+API重启确有不可用窗口，旧登录token随后不能读取；正常OAuth重新登录后，吴用/林冲真实管理GET均6项，无退役历史空项。profile GET五项中文标题正确且installationVerified/RUNTIME_READY；林冲真实详情UI显示“文档处理”“图片生成”，保留截图`browser/linchong-chinese-installed-titles.png`。部署后只读确认旧安装ID在安装/授权/权益/绑定/回执均不存在，两条触发器精确恢复，当前安装未损坏。当前安装的3/2条必需完成凭据保留，不宣称操作列表为零；也不宣称重跑了所有技能模型执行。
+
+最终证据 `/home/isp/state/cyf-skill-history-purge-20261103/final-verification.json`，接口、数据库、备份、CI及安装证据同目录。当前请求的历史凭据物理清理与中文标题修复已完成；本任务隔离worktree/本地候选分支收口清理，远端源码及必要证据保留，不触碰生产unit或其他任务目录。

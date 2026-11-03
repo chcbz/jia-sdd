@@ -239,3 +239,11 @@ analysis原包仅包含通用方法指导，无专用脚本或工具。一般归
 
 本轮没有新构建、部署、重启或Provider调用；操作前等待其他Owner的API469安装完成并健康UP，观察源码为`e2e33bc67ccfd25033748726a997aed81e873cce`，不是本任务发布证据。本轮是目录/卸载验收，不声称重新执行全部六项技能。
 证据：`/home/isp/state/cyf-skill-routing-20261103/retire-analysis/verification.json`及同目录`browser/metadata-ui-verification.json`、`browser/six-skill-catalog.png`。精简文案权威清单：`skill-discovery-metadata-20261103.json`。
+
+## 2026-11-03 用户更新：物理清理历史安装及统一显示标题
+
+用户明确授权删除数据库底层历史安装和授权凭据，覆盖此前仅卸载、保留凭据的决定。本次限定chcbz的吴用/林冲：已删除非当前安装及对应授权、权益、投递绑定、旧变更/命令/回执/幂等请求和过期报价，保留当前5份安装及其必需凭据。原任务快照与成果、资金账目不改；旧安装凭据被删除后不再支持基于它们的恢复执行。一次性受控清理不等于新增自动清理机制或全库删除。证据 `/home/isp/state/cyf-skill-history-purge-20261103/applied.json`；当前目录已无text-file/pdf-extract/analysis历史空项。
+
+展示名称由API统一取商品元数据，不使用内部skillKey或旧manifest标题代替当前中文标题。显示名称独立于包内容/摘要、授权、运行就绪和执行快照比较；改商品文案不要求重装技能，也不改变执行能力。详情wire继续使用原title字段，Web不硬编码六个技能的翻译，Runtime/bridge不参与翻译。实现/受测/上线以同任务handoff后续证据为准。
+
+上述标题修复已于2026-11-03上线：API commit `3a5a8650a0b3348b3ce70ca036072fc868f99db5`，Flow5260799/471，113测试全通过。真实吴用/林冲profile五项安装标题中文、安装核验及运行就绪通过；真实林冲UI核对通过。证据同目录`final-verification.json`，不等同于重新执行六项技能。
