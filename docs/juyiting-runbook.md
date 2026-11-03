@@ -13,7 +13,7 @@ Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-vi
 - Bootstrap提交后合并唤醒+5秒补偿；任务SSE每实例5秒single-flight，完整scope去重批量读metadata，无订阅无扫描。保留独立授权/游标和失败恢复，不缓存事件正文充当权威。
 - 议事outbox由全部实际生产者提交后提示、持久重试/ACK/lease到期及槽位释放驱动一个合并timer，5秒集中补偿；保留4槽位、数据库fencing、ACK和续租。未来deadline以扫描起始时刻查询，停机/旧生命周期不能复活调度器。
 - API认证注册回执`archiveJobDiscovery:0|1`来自归档Controller同一启用配置；Runtime只停止禁用归档发现，岗位接口不误关。缺字段兼容旧API，旧注册异步尾续不得沿用新会话。UNKNOWN/传输/未确认HTTP/恢复环境错误复用command-local退避，不迁移旧binding、不设业务deadline或自动重放。
-- 自然约一分钟窗议事发现从91降至14/13，另新增到期MIN14/13；岗位继续读取，08:26启新Runtime至08:40当前日志未见归档404。CPU未证明稳定改善，不称全部轮询清零。历史恢复POST404/协议帧拒收仍存在；旧工具清单20项与当前1682项不同已实证，环境错误诊断/退避不等于任务完成。全范围审视及限制见`docs/implementation/handoffs/JUYITING-POLLING-AUDIT-20261102.md`。
+- 自然约一分钟窗议事发现从91降至14/13，另新增到期MIN14/13；岗位继续读取，08:26启新Runtime至08:40当前日志未见归档404。CPU未证明稳定改善，不称全部轮询清零。09:11按用户授权备份并删除旧任务544/547及其专属执行状态，不再为两者做恢复兼容。09:40新事项582首轮执行、下载校验及用户验收completed通过；581在原生工具就绪后补充回复并完成。通道ready不代表异步原生工具已就绪，冷启动窗口及单条启动协议帧拒收仍未修复，不能据新执行成功声称所有异常消失。全范围审视及限制见`docs/implementation/handoffs/JUYITING-POLLING-AUDIT-20261102.md`。
 - 固定候选分支是来源信息，不使用旧develop名单拒绝真实Run制品；schema工具仍核对commit/tree/identity/receipt/JAR与安装状态。临时systemd安装承载不得在后置失败时清理其启动的生产JVM；后置恢复使用原锁核对已装字节，不重建或重复安装。
 
 

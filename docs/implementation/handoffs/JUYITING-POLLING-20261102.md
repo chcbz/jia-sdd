@@ -235,3 +235,17 @@ API应用安装与初次健康UP已成功，但F06后置schema runner仍将recei
 - 历史544/547恢复环境差异已实证：旧binding工具文件20个，当前启动测量1682个，新增1662个（包含浏览器/文档依赖）；原20项摘要/目录inode未变，旧/现modelCatalog均无配置。不得重写binding去假装环境未变。实际错误已为`NATIVE_EXECUTION_RECOVERY_ENVIRONMENT_CHANGED`，观察间隔出现16/28/59秒及更长；另任务先遇未确认响应后遇环境错误，不同code不能拼成单一退避时钟，也不把实际362秒间隔称新的硬deadline。
 - **仍有历史业务异常，不称全部解决**：恢复POST `/internal/agent/tasks/{taskId}/runs/{runId}/conversation/resume` 在08:30—08:34再次404，Runtime出现`SKILL_API_RESPONSE_UNCONFIRMED`；未明确原因/终态，不自动重放。08:30:36再次拒收290字节帧，decoderCode `AGENT_MESSAGE_INVALID`、SHA82939303a3634f1dccec977b217c15cc1ca64ded40cc51cf84fef7fd113d932e；日志外层标签INVALID_JSON不能证明JSON语法错误（投影字段校验也走此分支）。另有旧ACTION_SELECTION_INVALID，保留事实。当前可确认的是减少无效发现/错误密集重试，不是历史业务完成；后续需定向查恢复404的请求绑定及拒收帧的脱敏结构，不能降低授权/隔离校验或推断报文内容。
 - 最终状态记录为CHANNEL_VERIFIED_PASSIVE_POLLING_OBSERVED_WITH_OPEN_HISTORICAL_FINDINGS。当前云端制品、主机安装、通道核验和自然观察分层记录；不新增Flow、不重跑安装、不修改业务状态。组件develop已集成；根仓仍保持此前分叉与他人脏改，不强推/重置。仅本任务文档局部收口，稳定知识回写runbook，原审计表保留历史基线而不是宣称零轮询。
+
+## 2026-11-03 09:12 新任务优先、旧异常任务定向清理（执行中）
+
+用户明确“保证新任务没问题就可以，旧任务不用兼容，可以直接删除”。本轮不再开发旧任务恢复兼容，先限定此前明确的544/547；不按创建日期清空其他用户/事项，不将新任务成功与旧任务状态修补混淆。Owner仍本聊天，生产固定API450/Runtime122，源码不改、不重新构建。新验收使用本任务独立浏览器和既有真实测试账号，拟创建唯一文本文件验收事项，校验新建→承办→原生执行→正式成果下载→刷新回读，不能只报Agent ready。
+
+09:11受控清理成功：固定MySQL UUID/datadir，现行Runtime release锁，核对无实际执行中模型/processing，停止精确unified服务并按原安装器校验writer锁归属。事务内锁两task root和精确依赖行，确认无资金/Provider成本事实；330行关联数据按外键顺序删除，不关闭FK、不伪造成功/取消状态。保留真实目录逻辑SQL快照及SHA，4个专属Runtime执行/绑定目录按rename移出活跃目录并逐项摘要核对；未删除公共文件库字节、身份或其他任务状态。备份`/home/isp/baks/cyf-old-tasks-20261103-544-547/`，SQL SHA9e842b816818b4a487dc3481c7eb7c48583aa53ebf1acf7a3507a2453a150928；恢复不得自动重放或覆盖新事实。09:11:18启新PID2383369，程序仍Runtime1.3.37/122，非重新部署。证据`/home/isp/state/cyf-diagnostics/juyiting-polling-20261102/new-task-verification/`。本节记录时通道尚在启动，新业务验收未完成。
+
+### 09:40 新任务实测、验收与限制
+
+- 实测过程中没有改应用代码/配置或重新构建；API仍450/eb8df08946，Runtime仍122/a3238b1，清理后的新PID2383369三个Agent连续新鲜ready。544/547的任务根与执行行均为0；清理后日志未再提及这两条execution。其他历史事项未在本轮按日期批量删除，公共资料库字节未清理。
+- 新事项**581（林冲）**首次在原生工具异步探测完成前进入议事，冻结availableActions=[]，产生澄清而非文件；保留这次真实失败。源码确认通道ready只代表连接/注册，native能力探测独立异步发布，不能把三次通道ready当全部工具就绪。后续明确用户回复时冻结5项EXECUTE_NATIVE（含text-file），执行pwe_3a905c1cbe9d3536d8798a8b60ab9007b762fbe02abb83e6a0ab82af9544达到RESULT_COMMITTED。polling-check.txt精确24字节`CYF_NEW_TASK_20261103_OK`，SHA4b217be9232a5409af72f0b9621d96f08804a156b8b96aa5569063fecf972d30。真实UI选择此成果→确认验收，任务completed；不是伪造状态或自动重放原请求。
+- 工具能力发布后另建全新事项**582（吴用）**验证从第一轮直接执行：仅一个初始context，冻结4项可执行操作，无补发/旧状态恢复；pwe_4622f209a80326c836cbe138d7229fed07feae0fe6413c7364a98c1f4769达到RESULT_COMMITTED。new-task-check.txt精确19字节`CYF_FRESH_WUYONG_OK`，SHA972bf403810b8c4d5b574d689fbf2c1294ff6f8a49731caf706ac4b7f3fc4cbf；正式鉴权下载前后两次一致。真实UI“验收此版→确认验收”后task_version4/reward_status=completed，重新加载页面仍已完成。仅验收本任务自行创建的无奖励测试事项，不操作他人验收/资金。
+- 验收边界：当前就绪后的新建→承办→原生执行→正式下载→用户验收完成链路已通过；没有增加旧任务兼容，没有证明重启初始化窗口可立即文件执行，也没有修复“技能列表可调用而原生探测未完”的提示/状态区分。林冲09:14又有单条290字节AGENT_MESSAGE_INVALID（SHA548acda5f255a54800832c8ff7583cda87cae044b284adf5016ec4828273e7d6），未归因，不称仅属于已删除旧任务；两条新执行成功不等于所有协议异常消失。
+- 证据`new-task-verification/final-verification.json`、两份正式下载verification、frozen context、数据库只读终态和browser截图；Runtime当前记录在原锁下追加本次清理/重启和后续业务验收证据，不改原安装来源。主机备份及SQL逻辑快照保留；不自动恢复已获授权删除的旧任务。只关闭本任务独立浏览器，不操作其他聊天的服务或证据。
