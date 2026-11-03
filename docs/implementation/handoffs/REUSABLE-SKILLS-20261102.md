@@ -224,7 +224,19 @@ Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装�
 
 总证据 `/home/isp/state/cyf-skill-routing-20261103/production-final-verification.json`，正式CI及安装证据在release，9项请求/回执在metadata-receipts-private.json，界面在browser/metadata-ui-verification.json。当前是市场及承办推荐发现文案更新；已安装固定SKILL.md未改，不将此次文案更新宣称为新执行能力或模型选技能准确率的实测提升。补充建议：优先在已有文档技能补DOCX指导；音视频转写/字幕为独立缺口；PPT制作可考虑复用已有python-pptx工具但须实际验收。无必要新增摘要/翻译/新闻等与现有包重复的技能。
 
-### 2026-11-03 20:49 +08 精简文案第二版
+### 2026-11-03 19:49 +08 精简文案第二版
 本轮按用户确认的7项短文案更新：图片识别、图片生成、图片编辑、文档处理、资料分析、信息检索、网页操作。复用生产既有PUT product-metadata及真实chcbz/吴用岗位权限，7项HTTP200 UPDATED，GET与林冲技能管理UI逐项匹配；只读前后比对仅name/description/version/update_time发生变化，另两商品不变。无构建/重启/模型调用，未改包或安装。证据 `/home/isp/state/cyf-skill-routing-20261103/concise-v2/verification.json`；同目录保留请求回执、GET、UI和截图。
 
 边界与剩余：本轮完成7项商品文案，目标描述合计207字符；实际目录仍9项，旧text-file/pdf-extract仍发布。未发现已有岗位授权下架入口；recommendationSkills在产品不见时会回退skillKey，单纯隐藏商品不足以完成推荐去重。后续若实现目录合并，应在API既有商品生命周期处理旧项停止新增发现并保留真实旧安装管理，不把text-file旧安装别名冒充完整document-workbench。不得把此项报告为已合并，也不改bridge按技能名分流。此轮仅修改发现元数据，已安装SKILL.md未更新。
+
+### 2026-11-03 目录收敛实施接续
+用户“继续完成”授权完成剩余目录收敛。单Owner，API基线远端develop `4ff35d7b87b344b3721f1d35575e7f18d5b08ee2`，主工作区有他人脏改，使用唯一隔离worktree `/home/isp/wsps/worktrees/skill-catalog-consolidation-api-20261103`。已重读根AGENTS、RB-1、统一接口规范及Flow现行规则。职责RB-02：复用既有RETIRED状态补岗位授权下架；新目录/推荐不含退休产品，旧安装管理和历史保留且不冒充文档安装。无Web/Runtime执行变更、不迁移安装/不重放任务。定向回归覆盖publication controller/service、真实H2 marketplace mapper、management推荐及旧安装管理、岗位权限事务；正式测试/构建在Flow，独立主机安装后岗位HTTP操作与只读证据比对。最早轻量反馈diff/static，非正式构建证据。证据目录 `/home/isp/state/cyf-skill-routing-20261103/consolidation`。
+
+目录收敛云端验证：Run462基于4946183a3c FAIL（约167秒），仅新增真实MySQL用例最后一条误用PREPARE-only下载接口，在安装完成后收到SKILL_DOWNLOAD_FORBIDDEN；前面的下架/推荐/管理/快照断言均已通过。未改下载准入，将该断言改为已安装descriptor+不可变包读取，并显式断言旧下载接口仍拒绝。修正767d631e1edfd4e0c59acabdff68cc523fceeef5/tree9be1edc4dcddc491ac797ae0a83e5225c83fb82c，Run463 SUCCESS约198秒；原共享Flow配置已CAS恢复readback。尚待制品与生产独立安装验收，不把CI成功当下架完成。
+
+### 2026-11-03 20:17 +08 目录收敛生产收口
+候选767d631e1edfd4e0c59acabdff68cc523fceeef5/tree9be1edc4dcddc491ac797ae0a83e5225c83fb82c已非强制FF远端develop并readback；Flow5260799/463 SUCCESS约198秒、154tests/0fail/0error/0skip（8关键suite88项），共享配置已CAS恢复。463制品SHA6eb68cdeded54897ac00242143c3475b044af32eb39f78d71931e48feeaaedc1/JAR ea8f254d26c360b77536eb632e31a4ef6c4c5944837a6750edad099af43d1a57核验后由主机独立安装，20:13:45安装器exit0，record installed/463，PID2837403、HEALTH UP、摘要MATCH。宿主unit `cyf-skill-consolidation-api463.service`承载生产JVM，不是清理目标；真实API重启窗口已告知。无本机构建、无Web/Runtime部署，无手工DDL。
+
+真实chcbz以吴用岗位授权PUT product-retirement，text-file及pdf-extract均HTTP200 RETIRED。新市场GET严格7项，吴用/林冲管理GET均7个安装候选；保留旧安装行及查看/停用/卸载，不自动迁移安装。真实林冲技能管理UI7标题/短描述逐项PASS，PC/手机截图已保存。部署前/下架前/下架后只读快照比对：固定版本、安装、授权、权益、状态、订单全不变；仅2商品status/version/update_time变化。新鲜Runtime PID2786989三Agent ready，未重启Runtime。没有调用付费推荐模型或Provider。
+
+总证据 `/home/isp/state/cyf-skill-routing-20261103/consolidation/production-final-verification.json`；retirement回执、catalog-after、management-wuyong/linchong、只读hash和UI同目录。Run462保持FAIL并保留错误归因，未用失败制品发布。本轮新目录/推荐去重目标已闭环；管理页可包含真实旧安装/历史行，不能声称删除全部历史技能或已更新已安装SKILL.md。
