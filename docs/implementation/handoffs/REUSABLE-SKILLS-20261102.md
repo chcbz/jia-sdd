@@ -213,3 +213,13 @@ Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装�
 - 新鲜API本机health UP（公网actuator403为真实受限响应），Runtime三个Agent ready。Runtime主程序仍116/32416ed5/1.3.33，未为配置/验收新开Flow；持原release锁追加current.json后续验收与配置附注，保留原安装/源码/摘要事实及原记录备份。API安装及Runtime配置重启均存在真实通道不可用窗口。
 - 范围边界：安装/原生正式事项文本、生图、改图通过，不夸整站或所有技能执行已验收。普通快速聊天探测FAST_CHAT_TOOL_POLICY_VIOLATION保留，未证明其可文件执行；历史QUEUED未重放。初始冻结actions为空与产物注册前轮询404保留，不抹掉失败过程。
 - 总证据 `/home/isp/state/cyf-skill-install-repair-20261102/production-final-verification.json`；执行/下载/截图同目录。最终改图执行pwe_4347c0972fe0347e519205c61be326a20cc46e7ae833cf1b4407c4c5d59c。生产API宿主unit cyf-skill-install-repair-api442.service不是临时清理目标。
+
+### 2026-11-03 技能发现元数据整理
+用户要求先更新当前技能标题/描述，再判断补充技能；单Owner，RB-02维护业务商品发现文案，RB-06包经验不承担权限。只读生产确认9项，旧分析/文本描述仍泛化；市场文案确实进入AssigneeRecommendationService，已安装SKILL.md独立且不可就地改包。目标是受岗位授权的metadata-only更新，非目标为新执行器/重装技能/价格权益调整/新增未经验证技能。根证据 `/home/isp/state/cyf-skill-routing-20261103`。
+主API工作区大量他人脏改动，创建唯一隔离worktree `/home/isp/wsps/worktrees/skill-routing-metadata-api-20261103`，基线远端develop b5595c99cd07466489f24c1a51e1bcff50d88e35；Runtime远端f6d5c292仅只读未改。既有发布入口禁止变更商品标题描述，因此在同Controller/Service增加小型PUT，仅CAS更新两个文案字段及version/time，沿既有岗位鉴权事务，不绕库直接改生产。定向回归为publication controller/service、marketplace真实H2、recommendation及岗位权限既有测试；不默认改Web/bridge。当前是源码实现，尚未宣称线上文案已生效。
+
+2026-11-03本轮收口：API候选c58a41a45008ebeaf69b0560d625311b37765284/tree f02126f6c54c0f1a34b4884798ef90873794e332已非强制合入远端develop；Flow5260799/458 SUCCESS约208秒，110项/0fail/0error/0skip，6个责任层suite44项。配置已CAS恢复，源制品SHA dac72b2f18b848da10ede8ff103b70391cf83d504236763765e6ff0bf25fadd5、JAR3119f98879366ff377e151c7a035f0b388ef571c504e7b6dec7248288c64e2a9核验后主机独立安装，record installed/458、PID2732232、HEALTH UP；保留备份和锁，未重启Runtime。宿主unit cyf-skill-routing-api458.service承载生产JVM，不是临时清理目标。
+
+真实chcbz通过现有吴用技能管理岗位授权逐项PUT，9项均200/UPDATED；GET目录与真实林冲技能管理UI逐项标题/描述核对通过（PC/手机截图）。只读前后比对包版本、包摘要、价格、权限、发布状态均未变，商品version各增1；未重装/启停技能、未自动新增技能、模型/Provider调用0次。API重启存在实际不可用窗口，旧浏览器token后续401，正常OAuth重新登录后才执行文案更新；不声称零中断。
+
+总证据 `/home/isp/state/cyf-skill-routing-20261103/production-final-verification.json`，正式CI及安装证据在release，9项请求/回执在metadata-receipts-private.json，界面在browser/metadata-ui-verification.json。当前是市场及承办推荐发现文案更新；已安装固定SKILL.md未改，不将此次文案更新宣称为新执行能力或模型选技能准确率的实测提升。补充建议：优先在已有文档技能补DOCX指导；音视频转写/字幕为独立缺口；PPT制作可考虑复用已有python-pptx工具但须实际验收。无必要新增摘要/翻译/新闻等与现有包重复的技能。

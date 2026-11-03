@@ -202,3 +202,17 @@ RB职责：API负责商品/权益、业务权限和完成事实；Runtime负责�
 - 启动通道ready不等于异步工具测量完成。不得在测量尚未完成时宣称文件执行已验收；已有冻结请求不因后续注册变化自动重放，后续用户动作取得新上下文。林冲事项577实证：无配置/测量未完成时actions为空，实测完成后的新请求含通用原生操作及4个已安装包操作。
 
 2026-11-02验收补充：API442/ef702265与Web406/98f7682已上线；林冲四包完成真实UI安装，事项577文本输出通过，吴用事项578生图和基于上传成果改图均RESULT_COMMITTED、正式下载摘要/尺寸及目视通过。Runtime仍116/32416ed5，仅补林冲隔离配置后重启并独立测量，三Agent新鲜ready。此结论不覆盖普通快速聊天文件执行、其他未执行技能或历史任务恢复。证据 `/home/isp/state/cyf-skill-install-repair-20261102/production-final-verification.json`。
+
+## 2026-11-03 技能发现文案整理（已上线核验）
+
+现有生产9项技能的市场标题/描述由 `economy_skill_product` 持有；`SkillManagementService.recommendationSkills` → `AssigneeRecommendationService` 将这份文案提供给承办推荐模型。安装包内 `SKILL.md` 则供执行模型发现/使用，二者不是同一份存储。此次先更正商品发现文案，不改固定技能key、包字节/版本/摘要、安装ID、价格、权限及任务授权，不把商品文案更新冒充已安装SKILL.md更新。
+
+最小更新入口复用技能发布Controller/Service和技能管理岗位授权，`PUT /agent/skill-maintenance/product-metadata`；JSON为productId/name/description/expectedProductVersion（十进制字符串）/positionAuthority（现有五字段）。岗位鉴权事务内锁定当前平台商品并CAS更新，仅写name/description/version/update_time。不上传包、不修改immutable version，不触发安装/重启；名称不空且不超过255、描述不空且不超过4000，依据现有数据库字段与发现用途限制。旧版本/无权限/非平台商品拒绝；同一次写入丢回执后的相同内容重试返回RECORDED且不再增版。正式测试/上线状态见既有handoff。
+
+文案统一包含“用户目标、输入与产出、容易混淆的技能边界”；保持“识图”“信息检索”名称。标题映射：图片生成、图片编辑、文本与结构化文件、资料分析与对比、文档与表格处理、PDF正文提取、网页浏览与操作。完整候选保留 `skill-discovery-metadata-20261103.json`，是受管更新输入，不是新的运行框架。
+
+补充技能评估：现有9项已覆盖图片、常规文本/表格/PDF、资料分析、公开信息检索、网页操作，不另建重复的摘要/翻译/新闻/网页截图技能。候选缺口为DOCX处理指导、音视频转写/字幕（含用户此前B站字幕需求）、演示文稿；须先核实工具/来源访问/格式能力再补包，不能仅增加描述宣称具备。识图不替代批量OCR，资料分析不等于音频转写；本次不自动新增这些未经验收的能力。
+
+文案边界用于减少误选，不是互斥路由或额外准入。例如“搜集最新公告并整理成报告”可组合信息检索→资料分析与对比→文本与结构化文件；“读取Excel比较季度数据并输出PDF”可组合文档与表格处理→资料分析。模型仍按任务和实际可用工具编排，不在API/bridge新增按技能名或关键词分发的判断器。基于已安装版本的能力核验、任务授权继续独立生效。
+
+上线核对：API c58a41a450 / Flow458，110项全通过，9项岗位授权metadata更新均200且目录/真实UI回读一致；原包版本、价格、权限保持不变。证据 `/home/isp/state/cyf-skill-routing-20261103/production-final-verification.json`。此节只证明商品发现文案上线，不代表包内SKILL.md重发或新增格式能力。
