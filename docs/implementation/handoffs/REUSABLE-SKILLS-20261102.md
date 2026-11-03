@@ -246,3 +246,11 @@ Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装�
 ### 2026-11-03 用户授权卸载旧安装
 用户要求“旧安装也删除”。实时只读盘点两项退役技能：仅林冲text-file仍有活动安装，吴用pdf-extract/text-file此前已无活动安装。本线程先遇到其他Owner API467发布切换的502，未干预/重启/写库；等record installed及健康UP后，以真实chcbz经现有SM-C1 POST正常卸载林冲text-file。变更 `sc_a5d1729452d64abd986fe54c660bb1bf` 从ACTIVATING到SUCCEEDED/runtimeSynced=true；两Agent管理GET及全体旧技能状态只读复核active_installation_id/pending_change_id均空、desired_enabled=false。无新Flow/部署/Provider调用，不物理删除历史订单、安装记录和成果，不影响文档处理安装。
 证据 `/home/isp/state/cyf-skill-routing-20261103/uninstall-old/verification.json`，请求/回执、最终变更、管理readback及状态前后快照同目录。用户另询问资料分析边界：核对conf/skills/analysis仅SKILL.md，无专用脚本/工具；其读资料、比较、统计、保留依据及输出结论为泛化方法提示。建议取消独立技能：文件处理/统计归文档处理、外部核验归信息检索、一般归纳比较由模型完成。本次仅说明建议，未擅自下架/卸载analysis。
+
+### 2026-11-03 资料分析退役与六项目录收口
+用户“继续完成”授权取消独立资料分析。RB-02商品生命周期仍由API负责，卸载走SM-C1并由Runtime落实，不改bridge、不新增技能。先只读确认analysis唯一活动安装为林冲；等待另一Owner API469安装终态/health UP后，以既有chcbz/吴用技能管理岗位调用product-retirement，商品sp_se2_analysis变为RETIRED/version6。随后正常卸载，变更sc_ea4f1c39531c4ba9ba8e00338757a9c3终态SUCCEEDED/runtimeSynced=true；没有直接写数据库成功标记或手删目录。
+
+市场GET6项、吴用/林冲安装候选各6项；林冲analysis installed=null且停用。真实管理UI六项标题/描述逐项PASS并截图；只读前后10条管理状态比对，其他安装全部不变。此前text-file/pdf-extract已清除活动安装，三项历史记录、不可变包与成果仍保留。一般资料归纳由模型完成，文件处理归文档处理，外部来源核验归信息检索；不宣称模型失去分析能力。
+
+当前六项：图片识别、图片生成、图片编辑、文档处理、信息检索、网页操作；覆盖此前7项目录结论。已同步精简metadata清单和既有包契约说明。新增Flow=0、部署/重启=0、Provider调用=0；观察到的API469/e2e33bc67ccfd25033748726a997aed81e873cce为其他Owner发布，不归为本任务构建或测试。本轮仅目录和卸载验收，无全部技能执行重验。
+证据根`/home/isp/state/cyf-skill-routing-20261103/retire-analysis`：verification.json、retirement-receipts-private.json、change-analysis.json、installations-before/after.json及browser/metadata-ui-verification.json。目标已闭环，无需再开Run或重复变更。

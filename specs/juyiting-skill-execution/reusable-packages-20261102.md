@@ -1,5 +1,7 @@
 # 可复用原生技能包：盘点与安装契约
 
+当前目录（2026-11-03最终核对）：图片识别、图片生成、图片编辑、文档处理、信息检索、网页操作，共6项。此前7项/9项是历史阶段；资料分析、文本文件、PDF提取均已下架并清除活动安装，历史记录保留。详见末节。
+
 核对日期：2026-11-02。Owner：本会话。范围：已验证能力的经验提取与现有技能管理适配；不是自动“提取技能”平台开发。
 遵循 [RB-1](responsibility-boundaries.md) 和 `api/docs/interface-standard.md` v1.4。
 
@@ -228,3 +230,12 @@ API `767d631e1edfd4e0c59acabdff68cc523fceeef5` 已经Flow5260799/463验证并独
 文档处理复用已发布document-workbench的文本、表格及文本型PDF操作，不引入新执行器。旧商品退出新目录/承办推荐，已有安装仍管理可见、保留既有授权及固定包；不会把旧text-file/PDF安装伪装成document-workbench，也没有自动卸载或跨技能迁移。因而已有旧安装的Agent管理页可能超过7行，这是已安装/历史记录，不是新安装目录仍有重复项。已安装SKILL.md未变。
 
 责任仅在API商品生命周期、推荐投影及安装管理读模型；Web/Runtime程序未改、Runtime未重启。154项云端测试/0失败/0跳过，真实MySQL覆盖退出后的推荐/旧安装管理/不可变事实。线上校验岗位回执、目录、两Agent安装候选、真实UI和前后业务快照；未新增收费模型调用，不宣称实测模型推荐准确率提升。证据 `/home/isp/state/cyf-skill-routing-20261103/consolidation/production-final-verification.json`。
+
+## 2026-11-03 最终目录：取消独立资料分析
+
+用户继续授权后，通过既有岗位授权的商品下架接口将`sp_se2_analysis`置为RETIRED（商品version6），再经正常SM-C1卸载林冲唯一活动安装；变更`sc_ea4f1c39531c4ba9ba8e00338757a9c3`为SUCCEEDED、runtimeSynced=true。市场及吴用/林冲安装候选均为6项，真实林冲管理界面六项标题与精简描述匹配。管理页可以保留历史行，不以历史行数代替可安装目录数。
+
+analysis原包仅包含通用方法指导，无专用脚本或工具。一般归纳、比较和推理仍由模型完成；文档/表格读写整理归文档处理，外部来源搜索核验归信息检索，不新增替代技能、不改bridge。固定包与历史成果保留，不就地修改不可变包。前后只读比对确认仅目标活动安装变化，其他安装不变。
+
+本轮没有新构建、部署、重启或Provider调用；操作前等待其他Owner的API469安装完成并健康UP，观察源码为`e2e33bc67ccfd25033748726a997aed81e873cce`，不是本任务发布证据。本轮是目录/卸载验收，不声称重新执行全部六项技能。
+证据：`/home/isp/state/cyf-skill-routing-20261103/retire-analysis/verification.json`及同目录`browser/metadata-ui-verification.json`、`browser/six-skill-catalog.png`。精简文案权威清单：`skill-discovery-metadata-20261103.json`。
