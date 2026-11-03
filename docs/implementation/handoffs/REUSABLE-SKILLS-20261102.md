@@ -223,3 +223,8 @@ Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装�
 真实chcbz通过现有吴用技能管理岗位授权逐项PUT，9项均200/UPDATED；GET目录与真实林冲技能管理UI逐项标题/描述核对通过（PC/手机截图）。只读前后比对包版本、包摘要、价格、权限、发布状态均未变，商品version各增1；未重装/启停技能、未自动新增技能、模型/Provider调用0次。API重启存在实际不可用窗口，旧浏览器token后续401，正常OAuth重新登录后才执行文案更新；不声称零中断。
 
 总证据 `/home/isp/state/cyf-skill-routing-20261103/production-final-verification.json`，正式CI及安装证据在release，9项请求/回执在metadata-receipts-private.json，界面在browser/metadata-ui-verification.json。当前是市场及承办推荐发现文案更新；已安装固定SKILL.md未改，不将此次文案更新宣称为新执行能力或模型选技能准确率的实测提升。补充建议：优先在已有文档技能补DOCX指导；音视频转写/字幕为独立缺口；PPT制作可考虑复用已有python-pptx工具但须实际验收。无必要新增摘要/翻译/新闻等与现有包重复的技能。
+
+### 2026-11-03 20:49 +08 精简文案第二版
+本轮按用户确认的7项短文案更新：图片识别、图片生成、图片编辑、文档处理、资料分析、信息检索、网页操作。复用生产既有PUT product-metadata及真实chcbz/吴用岗位权限，7项HTTP200 UPDATED，GET与林冲技能管理UI逐项匹配；只读前后比对仅name/description/version/update_time发生变化，另两商品不变。无构建/重启/模型调用，未改包或安装。证据 `/home/isp/state/cyf-skill-routing-20261103/concise-v2/verification.json`；同目录保留请求回执、GET、UI和截图。
+
+边界与剩余：本轮完成7项商品文案，目标描述合计207字符；实际目录仍9项，旧text-file/pdf-extract仍发布。未发现已有岗位授权下架入口；recommendationSkills在产品不见时会回退skillKey，单纯隐藏商品不足以完成推荐去重。后续若实现目录合并，应在API既有商品生命周期处理旧项停止新增发现并保留真实旧安装管理，不把text-file旧安装别名冒充完整document-workbench。不得把此项报告为已合并，也不改bridge按技能名分流。此轮仅修改发现元数据，已安装SKILL.md未更新。
