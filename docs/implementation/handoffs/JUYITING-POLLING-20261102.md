@@ -202,3 +202,36 @@ API应用安装与初次健康UP已成功，但F06后置schema runner仍将recei
 - 发布所需Flow/安装/通道/被动观察已完成，**整体轮询专项与真实业务无错验收未全部完成**。下一实现范围为议事relay及已证实archive无效发现；先沿现有生产者/恢复责任层核对，不全链重写。两干净任务worktree保留供该未完专项复用，未新增工作区；已结束的任务测试暂存目录收口，正式证据/制品/备份保留。
 
 根仓同步边界（2026-11-03 01:57 CST查询）：fetch得到origin/develop `d000cb4356f11cf3e48b7ac7782b53d9a2bacb60`，与本地既有文档提交链分叉；主工作区另有大量其他Owner未提交修改。本轮root工具修复8b01bbf0和发布文档77a668f2保留本地，不在脏共享目录强行merge/rebase/force push。两组件固定源码早已集成；该根仓同步未完成不改变本次已核验安装来源，后续须在保留他人修改的条件下协调集成。
+
+## 2026-11-03 继续：统一处理后集中发布
+
+用户要求“统一处理完再部署验证”，不逐项发布。Owner本聊天，复用API/runtime现有干净工作树；07:00左右fetch两端develop仍分别192a590b2c8b690337818606a6180fca6f99a600、125729f8291da2dc89048bc41850beb12c15a9ab，与已安装候选一致。API统一接口固定该commit的docs/interface-standard.md；外部Runtime任务显式继承根AGENTS的分层、RB-1、600秒Flow、固定app目录规则。本批范围：议事outbox提交后/到期唤醒与集中补偿，按API真实启用能力停止archive/岗位无效发现，查明协议拒收和历史绑定/未知响应来源并修真实代码缺口。不自动重放历史UNKNOWN、不伪造终态、不删除租约/心跳。最早验证：轻量Runtime合成边界测试，Java/SQL回归沿原Flow固定候选；两端统一准备好后才部署。无新worktree或独立Reviewer。
+
+### 07:35 CST 统一候选、首轮回归及修正（尚未发布）
+
+- 已补议事outbox全部六类生产路径的提交后hint、RETRY/AWAITING_ACK到期hint，单个合并timer、5秒SQL补偿与现有4并发槽位；未来deadline以扫描起始时间取值，覆盖扫描期间到期。停机丢弃的排队任务归还槽位，旧生命周期不能重建线程池/续租timer。身份、事务、fencing、ACK/续租与未知结果不变。
+- 已证实archive jobs Controller条件为agent.position-skills.enabled，而positions Controller无此条件；API成功注册回执新增服务器权威archiveJobDiscovery:0|1，Runtime仅在关联认证ACK后使用，缺字段兼容旧API。重注册epoch隔离旧positions→archive异步尾续。共享完整fixture、服务启用/禁用/客户端不可覆盖/错误值/旧会话回归同步；不改Web。
+- Runtime command-local UNKNOWN/传输/未确认HTTP/恢复环境错误复用现有15秒至5分钟jitter调度；没有新业务截止、不覆盖历史native-binding、不删除旧任务、不重放已接受模型调用。仅对安全文件的内容差异使用NATIVE_EXECUTION_RECOVERY_ENVIRONMENT_CHANGED，结构/权限错误保留原错误；拒收HTTP body关闭，状态码单独脱敏报告。
+- API448 FAIL（约160秒，编译无错）：新调度夹具mock的boxed Long默认0，而真实SQL MIN空集应null，导致3项计时断言失败；已修夹具显式null，不改生产条件/不放宽断言。候选10db7ea933已push并单次启动449；原失败诊断与SHA保留。
+- Runtime121 FAIL（约286秒）：823项中810通过、10跳过、3失败，均为相邻原生恢复测试仍期待旧BINDING_CONFLICT错误；场景实际正确阻止了恢复。已针对目录inode/live-search/modelcatalog三处更新为新精确code，其他unsafe检查不变，轻量3项通过。首次云端配置CAS恢复成功；固定修正候选再跑原5264702，不覆盖他人Run。运行未成功前不安装。
+- 本机轻量skill-conversation46项通过，新增HTTP/status与native marker边界通过；archive相关4项通过含跨注册尾续。重型套件未本机执行。真实生产SQL只读EXPLAIN未来deadline选idx_chat_outbox_ready range，估计4行；当时SENT547/DEAD4/RETRY1，不宣称大规模性能。
+- 历史544/547的数据库QUEUED/协议5/ACTIVE grant与conversation代际均仍保留。只读比较两条native-binding记录的原20个工具文件摘要及input/scratch/drafts inode均未变；当前工具链后来扩入DOCX/XLSX/browser，不能把“缺modelCatalogSha256”直接断定为原因（当前profile未显式配置该字段）。07:20—07:30样本两任务均为绑定冲突，未再见未确认HTTP错误；历史404尚不能判定终态。单条290字节wire拒收无法从摘要还原，未复现，不把本批退避/诊断称历史业务修复。
+- 证据`/home/isp/state/cyf-diagnostics/juyiting-polling-20261102/unified-followup/`；后续仍整批通过后统一部署，不消费448/121失败包。
+
+07:43 CST：API449暴露不同根因：mmd切片未引入spring-test，新注册fixture误用了ReflectionTestUtils，编译失败；已改为该类既有JDK反射方式，无新增依赖/删测试，固定eb8df08946重跑450。448的调度夹具回归在449已通过。Runtime122 SUCCESS（观察227.364秒），固定a3238b1b0192339c031197c50e3e99a9a8e6641d/tree10be9bf927fab54926a9ef0305aef31cf9b9f19f，已CAS恢复云端原配置，正在下载同Run制品；尚未安装。两次API失败不同原因，非原输入盲重试；保留全部失败证据。API/runtime都完成后才进行本批受控安装。
+
+### 08:10 CST 统一云端通过，API已安装，Runtime执行中
+
+- API450 SUCCESS：固定eb8df08946cf7f150c9c86d20b8eb97fbea50fcd/tree061c96295917798c44d4d0383093d320b626611d，3491项执行、150跳过、0失败/错误；定向52项全过，分层/fresh JAR通过，Run约387秒。Runtime122固定a3238b1b0192339c031197c50e3e99a9a8e6641d，823项Node（813通过、10跳过）、Python15及browser artifact2通过，Run约219秒。两组件已正常push到develop，未force，未重复构建；Web本批不变。
+- API450已安装，08:02:51实际JAR SHA400656877140953ea364eb0ff51aed3e927d9b5f4231654775141e55d04934f4、PID2293881、canonical cwd及health UP一致；后置F06 existing_equivalent通过，E05未授权不执行。初次systemd承载将TimeoutStartSec=0实际解释为立即超时，安装动作前终止，447未变；修为infinity后同制品单次安装成功，保留原失败日志。承载KillMode=process/RemainAfterExit避免杀已启动JVM。
+- 08:03—08:04自然60秒窗：议事outbox发现12次（本批前91次），新增MIN deadline12次；其他按dispatch查询45次单列，不能混算。此时Runtime仍旧版本且安装探针竞争资源，不声称CPU因果收益；完整统一观察待Runtime完成。
+- Runtime受控安装08:02启动，固定122制品，候选目录/来源/689文件/锁/备份规则不变；先真实主机能力和启动声明探针，再停旧服务备份切换。当前仍在探针阶段，不能宣称Runtime已上线。
+
+### 08:44 CST 统一安装与观察收口（历史业务异常保留）
+
+- Runtime122 / 1.3.37（bridge1.1.27）08:26:26已启PID2306995；主机能力3项全过（510.965秒），真实启动声明全能力通过（426秒）。08:22:16停旧进程，状态备份143.907秒、独立tar compare约49秒，固定app切换；配置/身份未改。08:30:59、08:31:29、08:32:00三个连续新鲜样本3个Agent均connected/registered/ready，08:33逐一核对689 payload字节/权限与固定commit/tree通过。API450持续UP，canonical目录8项检查通过；没有新付费模型任务。
+- 来源：API归档SHA256 `46ab8c9eed224f5dd7b851d35f109dbd3bcd65721e1af3a17dc8e18350944d84`、JAR `400656877140953ea364eb0ff51aed3e927d9b5f4231654775141e55d04934f4`；Runtime归档 `4a79f140fb8347efd21d91d3d586884fb0eb19d41deb479314dba20de6b77fd3`。Runtime旧程序/状态备份`/home/isp/baks/cyf-agent-runtime-v1/20261103-polling-followup/`，不可用状态快照覆盖新业务事实。API备份路径与恢复绑定见`unified-followup/api-online.json`。
+- 08:33:42—08:34:46、08:34:47—08:35:49自然约一分钟窗：议事outbox发现14/13，新增deadline MIN14/13（本批前发现91且无MIN）；不能只报发现减少而隐藏新增查询。岗位读取6/3仍保留；08:26启新Runtime至08:40:30当前API日志无归档发现404（旧最后一条08:21:53）。Nginx不覆盖内网直连，不能把其计数0当全部HTTP0。API单核CPU16.3%/11.2%，Runtime22.9%/32.5%；自然负载不可比，不宣称CPU/GC/SLO达标。原始窗口、`unified-online-observation.json`及`passive-runtime-observation.json`为证据。
+- 历史544/547恢复环境差异已实证：旧binding工具文件20个，当前启动测量1682个，新增1662个（包含浏览器/文档依赖）；原20项摘要/目录inode未变，旧/现modelCatalog均无配置。不得重写binding去假装环境未变。实际错误已为`NATIVE_EXECUTION_RECOVERY_ENVIRONMENT_CHANGED`，观察间隔出现16/28/59秒及更长；另任务先遇未确认响应后遇环境错误，不同code不能拼成单一退避时钟，也不把实际362秒间隔称新的硬deadline。
+- **仍有历史业务异常，不称全部解决**：恢复POST `/internal/agent/tasks/{taskId}/runs/{runId}/conversation/resume` 在08:30—08:34再次404，Runtime出现`SKILL_API_RESPONSE_UNCONFIRMED`；未明确原因/终态，不自动重放。08:30:36再次拒收290字节帧，decoderCode `AGENT_MESSAGE_INVALID`、SHA82939303a3634f1dccec977b217c15cc1ca64ded40cc51cf84fef7fd113d932e；日志外层标签INVALID_JSON不能证明JSON语法错误（投影字段校验也走此分支）。另有旧ACTION_SELECTION_INVALID，保留事实。当前可确认的是减少无效发现/错误密集重试，不是历史业务完成；后续需定向查恢复404的请求绑定及拒收帧的脱敏结构，不能降低授权/隔离校验或推断报文内容。
+- 最终状态记录为CHANNEL_VERIFIED_PASSIVE_POLLING_OBSERVED_WITH_OPEN_HISTORICAL_FINDINGS。当前云端制品、主机安装、通道核验和自然观察分层记录；不新增Flow、不重跑安装、不修改业务状态。组件develop已集成；根仓仍保持此前分叉与他人脏改，不强推/重置。仅本任务文档局部收口，稳定知识回写runbook，原审计表保留历史基线而不是宣称零轮询。

@@ -7,11 +7,13 @@ Historical occlusion visual findings are recorded in `docs/juyiting-occlusion-vi
 
 ## 工作发现与补偿（2026-11-03上线核对）
 
-API `192a590b2c8b690337818606a6180fca6f99a600` / Flow447、Runtime `125729f8291da2dc89048bc41850beb12c15a9ab` / Flow120（1.3.36、bridge1.1.26）已安装，三个Agent通道ready；这不是全量业务验收。详细证据和恢复见 `docs/implementation/handoffs/JUYITING-POLLING-20261102.md`。
+2026-11-03 08:44核对：API `eb8df08946cf7f150c9c86d20b8eb97fbea50fcd` / Flow450、Runtime `a3238b1b0192339c031197c50e3e99a9a8e6641d` / Flow122（1.3.37、bridge1.1.27）已安装，实际字节/健康及三个Agent连续新鲜通道ready已核验；这不是全量业务验收。详细证据和恢复见 `docs/implementation/handoffs/JUYITING-POLLING-20261102.md`。
 
 - native conversation和workspace-file分别协商通知能力，提交后WS只作提示，HTTP/DB仍为权威；启动/重连补读，漏提示/跨节点通过每节点共享30秒候选补偿恢复。已协商时不再常态3秒发现；历史QUEUED不合法候选仍可引发低频读，不自动重放UNKNOWN。
 - Bootstrap提交后合并唤醒+5秒补偿；任务SSE每实例5秒single-flight，完整scope去重批量读metadata，无订阅无扫描。保留独立授权/游标和失败恢复，不缓存事件正文充当权威。
-- 自然观察显示查询数量减少，但CPU未证明稳定改善。议事outbox仍500ms扫描，archive jobs实际返回404；这两项及协议/历史绑定异常仍待处置，不能宣称全部轮询清零或业务无错。全范围审视见`docs/implementation/handoffs/JUYITING-POLLING-AUDIT-20261102.md`。
+- 议事outbox由全部实际生产者提交后提示、持久重试/ACK/lease到期及槽位释放驱动一个合并timer，5秒集中补偿；保留4槽位、数据库fencing、ACK和续租。未来deadline以扫描起始时刻查询，停机/旧生命周期不能复活调度器。
+- API认证注册回执`archiveJobDiscovery:0|1`来自归档Controller同一启用配置；Runtime只停止禁用归档发现，岗位接口不误关。缺字段兼容旧API，旧注册异步尾续不得沿用新会话。UNKNOWN/传输/未确认HTTP/恢复环境错误复用command-local退避，不迁移旧binding、不设业务deadline或自动重放。
+- 自然约一分钟窗议事发现从91降至14/13，另新增到期MIN14/13；岗位继续读取，08:26启新Runtime至08:40当前日志未见归档404。CPU未证明稳定改善，不称全部轮询清零。历史恢复POST404/协议帧拒收仍存在；旧工具清单20项与当前1682项不同已实证，环境错误诊断/退避不等于任务完成。全范围审视及限制见`docs/implementation/handoffs/JUYITING-POLLING-AUDIT-20261102.md`。
 - 固定候选分支是来源信息，不使用旧develop名单拒绝真实Run制品；schema工具仍核对commit/tree/identity/receipt/JAR与安装状态。临时systemd安装承载不得在后置失败时清理其启动的生产JVM；后置恢复使用原锁核对已装字节，不重建或重复安装。
 
 
