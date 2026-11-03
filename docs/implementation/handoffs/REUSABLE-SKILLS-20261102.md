@@ -242,3 +242,7 @@ Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装�
 总证据 `/home/isp/state/cyf-skill-routing-20261103/consolidation/production-final-verification.json`；retirement回执、catalog-after、management-wuyong/linchong、只读hash和UI同目录。Run462保持FAIL并保留错误归因，未用失败制品发布。本轮新目录/推荐去重目标已闭环；管理页可包含真实旧安装/历史行，不能声称删除全部历史技能或已更新已安装SKILL.md。
 
 20:19收尾：本任务隔离API worktree及已合入的本地候选分支已清理，浏览器正常退出并清理自有profile；远端候选和所有必要发布/测试证据保留。生产unit保持active/exited，未清理其JVM。
+
+### 2026-11-03 用户授权卸载旧安装
+用户要求“旧安装也删除”。实时只读盘点两项退役技能：仅林冲text-file仍有活动安装，吴用pdf-extract/text-file此前已无活动安装。本线程先遇到其他Owner API467发布切换的502，未干预/重启/写库；等record installed及健康UP后，以真实chcbz经现有SM-C1 POST正常卸载林冲text-file。变更 `sc_a5d1729452d64abd986fe54c660bb1bf` 从ACTIVATING到SUCCEEDED/runtimeSynced=true；两Agent管理GET及全体旧技能状态只读复核active_installation_id/pending_change_id均空、desired_enabled=false。无新Flow/部署/Provider调用，不物理删除历史订单、安装记录和成果，不影响文档处理安装。
+证据 `/home/isp/state/cyf-skill-routing-20261103/uninstall-old/verification.json`，请求/回执、最终变更、管理readback及状态前后快照同目录。用户另询问资料分析边界：核对conf/skills/analysis仅SKILL.md，无专用脚本/工具；其读资料、比较、统计、保留依据及输出结论为泛化方法提示。建议取消独立技能：文件处理/统计归文档处理、外部核验归信息检索、一般归纳比较由模型完成。本次仅说明建议，未擅自下架/卸载analysis。
