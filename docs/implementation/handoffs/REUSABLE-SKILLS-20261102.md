@@ -302,3 +302,16 @@ API 479正式证据核对145 tests/0fail/error/skip（9目标suite79项），分
 能力边界：无附件私有密议；附件密议不继承维护工具。发布/下架为正式云端服务/HTTP回归，不宣称已做生产模型发布/下架E2E；实际包发布使用正常HTTP入口。撤职/取消/错身份/冲突场景用定向正式测试，不在生产改他人任职验证。历史告警按用户要求不扩修，不能把本任务通过泛化为全部业务无异常。
 
 主证据`/home/isp/state/cyf-skill-management-chat-20261104/final-verification.json`；同目录`model-tool-evidence.json`、`online-api-readback.json`、`positions-installed.json`、`runtime-health-samples.json`及`browser/maintenance-final.{txt,png}`。必要证据/备份保留，只清理本任务浏览器profile及已合入隔离worktree，不碰他人脏工作区/Runtime未跟踪specs/生产unit。
+
+### 2026-11-04 岗位技能普通安装入口修复（已部署及定向验收）
+用户指出林冲普通技能管理中“技能管理”仍有安装按钮，要求岗位技能不能手动安装。责任RB-02：复用当前Owner岗位定义的POSITION分类与既有岗位安装链，统一普通管理/市场准入；Web仅展示allowedActions/deniedActions，不按名称分支，Runtime不改。典籍维护包保留在Runtime conf/skills/archive-maintenance-*，不在当前chcbz已发布商品目录；目录不是岗位清单，本次不擅自新增典籍岗位、发布或任命。
+API远端develop8da724fecd0949a3245b0f369cbdd3b75febe1c1，Web远端developf3e791099b8145407860d89a37f020f8fc0d2e49，主工作区均他人脏改，分别使用唯一隔离worktree position-skill-install-{api,web}-20261104。单Owner，无子Agent。范围为普通安装/升级/启停/卸载与重试不能绕过POSITION生命周期；GENERAL岗位附带技能仍沿既有保留规则，安装不授任职。保留已提交幂等事实、任职自动安装/撤职处理、查看与核对入口；不改DB schema/Runtime/旧历史。此处为开工基线；最终结果见下。
+
+
+本轮最终源码：API fe0c693939c3a29694ca43dc59fb6346337c3110/tree aebae95d933366c065ceea925e70851a0e1f919b，Web ba200f9f7d6b1a69db6113168b78e612f02dcf91/tree 82b0c4db9a34c27cfac789bcb3494401cc2c4b1d，均已非强制合入远端develop。本任务隔离worktree已删除，不切换/覆盖主工作区。API Flow481 SUCCESS，186测试0失败/错误/跳过、分层及fresh JAR通过；Web429 SUCCESS，119测试全部通过、Vite及扫描通过。API480因控制包压缩摘要错误未进入Gradle，Web428因任务打包分支断言错误失败，分别归因修正后运行481/429；失败不重标。两条Flow原配置均已CAS恢复，无额外构建。
+
+2026-11-04主机先Web429后API481独立安装成功。Web1.16.103公网index和JuyiHall JS/CSS与受测制品SHA一致；API record installed/481，新PID3299493，JAR d7431b41b2a0ae9d736d77a00496a0ebd79e38e97eba976a63640793e88bd03c、HEALTH UP。安装期间确有短暂502；新JVM由cyf-position-skill-api481.service承载，不清理此unit。固定目录轻量回归8项通过。无DDL、Runtime重启或模型调用。
+
+真实chcbz正常登录验收：林冲未安装岗位技能仅“详情”；吴用岗位技能仍已启用（原生技能），详情显示已核验安装/运行就绪，也仅“详情”；两者显示“岗位技能由任职管理，不提供手动安装”。普通未安装技能仍有安装按钮。使用最新agentVersion/skillRevision直接POST岗位技能报价得到403 POSITION_MANAGED_SKILL，未继续创建订单/购买。岗位及商品GET均200；典籍包未新增发布，目录仍不是岗位清单。原生INSTRUCTION的NOT_EXECUTABLE表示无独立执行入口，不应误报为安装或运行失败。自动任职生命周期本轮由PositionSkillTransactionTest覆盖，不改生产任职/重复模型验收。
+
+最终证据：/home/isp/state/cyf-position-skill-install-20261104/final-verification.json；release保留CI、制品摘要、安装及公网核验，browser保留真实页面与403证据。Owner作用域分类边界见management-contract.md末节；本轮未新增平台全局技能分类注册表。浏览器profile已关闭清理，保留必要证据及受控安装备份。
