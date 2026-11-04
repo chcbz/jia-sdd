@@ -315,3 +315,6 @@ API远端develop8da724fecd0949a3245b0f369cbdd3b75febe1c1，Web远端developf3e79
 真实chcbz正常登录验收：林冲未安装岗位技能仅“详情”；吴用岗位技能仍已启用（原生技能），详情显示已核验安装/运行就绪，也仅“详情”；两者显示“岗位技能由任职管理，不提供手动安装”。普通未安装技能仍有安装按钮。使用最新agentVersion/skillRevision直接POST岗位技能报价得到403 POSITION_MANAGED_SKILL，未继续创建订单/购买。岗位及商品GET均200；典籍包未新增发布，目录仍不是岗位清单。原生INSTRUCTION的NOT_EXECUTABLE表示无独立执行入口，不应误报为安装或运行失败。自动任职生命周期本轮由PositionSkillTransactionTest覆盖，不改生产任职/重复模型验收。
 
 最终证据：/home/isp/state/cyf-position-skill-install-20261104/final-verification.json；release保留CI、制品摘要、安装及公网核验，browser保留真实页面与403证据。Owner作用域分类边界见management-contract.md末节；本轮未新增平台全局技能分类注册表。浏览器profile已关闭清理，保留必要证据及受控安装备份。
+
+### 2026-11-04 技能/economy职责分离 v1（设计版）
+用户要求先划清技能职责，后续再统一考虑economy融合。已核对远端develop234d98febc3cc66ceade7f4709cee43d3172c9c1（tree9694b93442f7885b46011708c0348a3e595e0493）、混合Mapper、资金调用及经济开关耦合。方案见specs/juyiting-skill-execution/skill-economy-responsibility-separation.md：现21张economy_skill表按18张技能生命周期/3张交易拆责任；岗位3表、执行1表保持。复用agent/economy模块，交易窄接口、保持同库事务/锁序/幂等，不预建通用融合框架；首版保留历史物理表名，禁止只改名冒充分离。本次仅设计文档，不覆盖主API他人脏改，不启动Flow/安装/DDL。后续源码实施需按本版真实依赖迁移，不将设计完成视为已上线。
