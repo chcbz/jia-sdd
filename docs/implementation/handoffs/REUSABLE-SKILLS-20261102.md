@@ -318,3 +318,21 @@ API远端develop8da724fecd0949a3245b0f369cbdd3b75febe1c1，Web远端developf3e79
 
 ### 2026-11-04 技能/economy职责分离 v1（设计版）
 用户要求先划清技能职责，后续再统一考虑economy融合。已核对远端develop234d98febc3cc66ceade7f4709cee43d3172c9c1（tree9694b93442f7885b46011708c0348a3e595e0493）、混合Mapper、资金调用及经济开关耦合。方案见specs/juyiting-skill-execution/skill-economy-responsibility-separation.md：现21张economy_skill表按18张技能生命周期/3张交易拆责任；岗位3表、执行1表保持。复用agent/economy模块，交易窄接口、保持同库事务/锁序/幂等，不预建通用融合框架；首版保留历史物理表名，禁止只改名冒充分离。本次仅设计文档，不覆盖主API他人脏改，不启动Flow/安装/DDL。后续源码实施需按本版真实依赖迁移，不将设计完成视为已上线。
+
+2026-11-04实施启动：单Owner本线程，独立工作区/home/isp/wsps/worktrees/skill-economy-separation-api-20261104，branch codex/skill-economy-separation-20261104，base234d98febc3cc66ceade7f4709cee43d3172c9c1/tree9694b93442f7885b46011708c0348a3e595e0493。隔离原因是主API工作区存在重叠的他人未提交代码。固定接口规范api/docs/interface-standard.md当前v1.4，职责RB-1+根2026-10-30规则。本轮仅后端职责实现与测试，不改表名/生产库、不联动Web/Runtime、不扩展通用economy融合。重型验证复用Flow5260799，先完成同一候选后集中验证；本机仅静态检查。
+
+2026-11-04 11:15 +08：职责分离源码候选已推ba391c6ed9fe767a4b1dd2efa30cce70d2f288ee/tree7cddd0785c20a555577b71d9903171b07b16cb9b（API1.1.28-SNAPSHOT）。轻量检查diff--check通过，混合Mapper方法集合守恒、6个包SHA保持；不能代替编译。新增经济关闭下免费/收费回归及交易Mapper scope/CAS回归；原真实支付安装/退款/失败回滚及岗位测试继续保留。复用5260799准备worker-only集中回归，不部署、不写生产。CI控制与证据/home/isp/state/cyf-skill-economy-separation-20261104/release；测试终态待补。联合七表维护入口保留唯一协调，详见设计§7，不引入第二个schema initializer。
+
+正式回归接续：Flow486 FAIL（约137秒）暴露schema文本助手跨包漏迁移及旧目录合同测试未覆盖metadata/title查询；已把无业务语义的SQL拆句/归一化抽到common既有基础设施层，原算法不变，各schema initializer复用，不反向引用economy服务。目录精确scope及CAS断言保留。Flow487 FAIL（约179秒）生产代码与分层检查已通过，但安装测试夹具仍有旧hosting方法/类型；另新增覆盖的经济配置旧断言与此前已经提交的生产显式scope不一致。已修夹具、按当前prod仅tenant0/client精确开放且禁止test-issuance更新断言，不改生产配置。两轮原Flow配置均已CAS恢复，失败不重标成功；日志/诊断保留release/run486、run487。
+候选f68dded14f继续集中回归，补充典籍HTTP测试夹具的Trade API Bean及“岗位安装不调用交易”断言，并将archiveMaintenance测试源编译纳入正式输入。未执行真实典籍Runtime脚本/付费模型或部署。
+
+2026-11-04消费者核对补充：Flow488完成347tests/2fail/0error/0skip、无编译错误；仅H2/MySQL同一条旧available断言把经济client allow-list当技能可用范围，已改为技能可用但另一client目录为空且经济不准入。候选c70fe5df5d复验中。
+发现必须同步的Web真实依赖：旧技能集市predicate、router和UserProfile入口仍AND经济开关。本轮扩展仅这一处消费者语义适配，不改接口/Runtime。Web主工作区为他人codex/juyiting-ui-workflow且脏，使用唯一Web隔离worktree/home/isp/wsps/worktrees/skill-economy-separation-web-20261104；基线远端develop320d76f19c72b80d34c668be6f6b6e3bdb12363f，候选b9fd324（1.16.106）。先同步既有prototype-spec.md可用性状态，无样式/布局或新页面；保持原scope与身份清理、钱包经济开关。新增真实predicate/route与mounted主页身份切换回归。Flow4403172执行定向测试及fresh build，不部署。
+
+### 2026-11-04 11:43 +08 技能/economy职责分离 v1 实施收口（未部署）
+
+API Flow5260799/489 SUCCESS：c70fe5df5d317f440f08567b585786c0445faeb3/tree44a500abd1718db3bfbffc34e2aa05cf9f337fb0，1.1.28-SNAPSHOT，347tests/0fail/0error/0skip，validateLayering、典籍测试源编译和fresh bootJar通过。JAR SHA4e4c4f4f1c0615478df96c977e32af733551da9eb9eccd1c239e56fc2d23551e。Web Flow4403172/436 SUCCESS：b9fd324f59785e0a758bb98eb5be8c412d62232b/tree7dced76dae330c483f48f1dd044a178411f2dd7a，1.16.106，139passing，Vite和JS扫描成功。两端远端develop非强制FF及readback匹配，各Flow原配置已CAS恢复。
+
+本轮目标：18张生命周期表对应源码归agent、3张交易表归economy，交易API及凭据查询边界、同库事务/幂等/锁序、非交易经济开关脱钩、最小Web能力消费者适配，均已实现与正式验证。物理表名不变；联合七表维护资源保留单入口；无通用融合框架。稳定说明见API docs/skill/responsibility-separation.md和根设计§7-8。主API/Web他人脏工作区未覆盖；不强行更新主工作区HEAD或根gitlink。
+
+未部署、未写生产库、未重启、未改Runtime、未调用付费模型；完整典籍外部脚本场景未重放，不把编译宣称为其E2E。固定制品仍在云端，本轮未重复下载。证据/home/isp/state/cyf-skill-economy-separation-20261104/final-verification.json及release日志/校验诊断；失败486/487/488保持FAIL。下一步若要求上线，复用489/436固定制品按主机独立安装规则执行，不重复构建。

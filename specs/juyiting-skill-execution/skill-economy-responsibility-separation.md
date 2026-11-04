@@ -1,6 +1,6 @@
 # 技能与经济职责分离 v1
 
-日期：2026-11-04。状态：设计版；不是源码整改、DB迁移或发布完成证明。
+日期：2026-11-04。状态：源码实施、正式回归及两端develop集成完成；未部署、未改生产库。
 
 ## 1. 范围与基线
 
@@ -89,4 +89,19 @@
 4. 正式Flow验证：受影响core/mapper/schema/seed回归，SkillMarketplaceRealTransactionTest、SkillManagementTransactionTest、PositionSkillTransactionTest及相关HTTP/codec回归；真实数据库验证付款+安装意图原子回滚、幂等、失败结算、零金额与岗位无订单分支、岗位手动安装403、已安装技能列表及目录不丢失。保留validateLayering/fresh JAR；按实际改动补selectors，不机械全站重跑。
 5. 测试与源码精确匹配后集成；部署仍需绑定固定Run制品并按既有授权独立安装。没有DDL时不执行写库迁移；若后续要求物理更名，先单列实际迁移与恢复范围。
 
-本版验收分清三件事：职责设计已确定；源码分离需正式回归；上线需安装和业务证据。当前只完成第一件，未启动Flow、未部署、未写生产库。
+本版验收分清三件事：职责设计已确定；源码分离需正式回归；上线需安装和业务证据。设计冻结时只完成第一件；后续实施状态见§7与handoff。
+
+## 7. v1 实施细化（2026-11-04）
+
+API 候选 `ba391c6ed9fe767a4b1dd2efa30cce70d2f288ee`，tree `7cddd0785c20a555577b71d9903171b07b16cb9b`，版本1.1.28-SNAPSHOT。生命周期实体/Mapper/配置/种子/测试及六个包资源已迁入agent；报价/订单/回执及资金通过economy-api访问，非交易安装链去除经济开关依赖。正式测试与集成结果以handoff为准。
+
+维护资源有一处明确的联合职责：原七表 `economy-v0-skill-marketplace.sql` 含四张生命周期表与三张交易表，其相互引用及单次维护合同保留，整体随唯一schema-maintenance协调入口迁入agent。没有复制资源或在economy再注册一个initializer。交易表运行期写入仍只归economy交易实现；联合建表资源的位置不等于把交易业务搬回agent。其余旧配置键、物理表名及资源名保持，避免无必要部署配置变更。
+
+消费者核对补充：实际Web `isSkillMarketplaceCapability`、技能路由及个人主页入口仍将技能可用性与经济预览AND绑定。因此本版包含最小Web适配（按技能能力字段展示/导航，保留钱包经济开关、scope检查与身份切换清理），不是HTTP/WS字段变化，也不修改Runtime。原型规格同步的是PC/移动端可用性状态，不新增页面或布局。此前“无需Web改动”的预判以此实际依赖核对为准。
+
+## 8. 实施验收（2026-11-04）
+
+- API develop `c70fe5df5d317f440f08567b585786c0445faeb3` / tree `44a500abd1718db3bfbffc34e2aa05cf9f337fb0`，1.1.28-SNAPSHOT；Flow5260799/489 SUCCESS，347项、0失败/错误/跳过，分层检查、真实事务及fresh JAR通过。
+- Web develop `b9fd324f59785e0a758bb98eb5be8c412d62232b` / tree `7dced76dae330c483f48f1dd044a178411f2dd7a`，1.16.106；Flow4403172/436 SUCCESS，139项通过、Vite构建及代码扫描成功。
+- 两端均非强制快进并readback，原Flow配置CAS恢复。本轮没有生产部署/DDL/服务重启、Runtime变更或付费模型调用。完整典籍外部Runtime场景未重放，只编译该测试调用方；本轮岗位安装与资金事务由真实DB回归覆盖。
+- 证据：`/home/isp/state/cyf-skill-economy-separation-20261104/final-verification.json`。云端制品已生成/上传，本轮没有下载或安装；后续发布应复用上述固定Run，不为安装重建。
