@@ -336,3 +336,19 @@ API Flow5260799/489 SUCCESS：c70fe5df5d317f440f08567b585786c0445faeb3/tree44a50
 本轮目标：18张生命周期表对应源码归agent、3张交易表归economy，交易API及凭据查询边界、同库事务/幂等/锁序、非交易经济开关脱钩、最小Web能力消费者适配，均已实现与正式验证。物理表名不变；联合七表维护资源保留单入口；无通用融合框架。稳定说明见API docs/skill/responsibility-separation.md和根设计§7-8。主API/Web他人脏工作区未覆盖；不强行更新主工作区HEAD或根gitlink。
 
 未部署、未写生产库、未重启、未改Runtime、未调用付费模型；完整典籍外部脚本场景未重放，不把编译宣称为其E2E。固定制品仍在云端，本轮未重复下载。证据/home/isp/state/cyf-skill-economy-separation-20261104/final-verification.json及release日志/校验诊断；失败486/487/488保持FAIL。下一步若要求上线，复用489/436固定制品按主机独立安装规则执行，不重复构建。
+
+### 2026-11-04 技能物理表更名（用户确认，实施中）
+用户明确授权18张生命周期表更名agent_skill_*并部署，3张交易表保留economy_skill_*；不改Runtime/历史记录、不扩展融合框架。唯一Owner本线程，主API脏改不动；隔离worktree /home/isp/wsps/worktrees/skill-table-rename-api-20261104，branch codex/skill-table-rename-20261104，fetch后base c70fe5df5d317f440f08567b585786c0445faeb3。遵循RB-1/统一接口v1.4，Web复用436制品。生产只读目录确认MySQL8.0.21、18旧表全部存在、新表不存在；未见引用旧表名的触发器体/视图/存储程序，3项表级授权均与本次表无关。证据 /home/isp/state/cyf-skill-table-rename-20261104/inventory-private.json。当前尚未执行DDL/部署。剩余空间1.4GB，下载/暂存需避免重复包，保持安装备份。源码/SQL/维护catalog/真实测试同步；单条18表RENAME及反向脚本，启动不自动迁移。新增真实MySQL迁移/恢复、冲突原子性、行/外键/不可变触发器保留回归。
+
+12:14 +08接续：并发Owner已安装API491/1899、Web438/6f003（事项当前要求），随后将对应源码合入develop。已在本候选合入1899及新develop1c1f，并包含澄清空facts1792修复，避免覆盖已上线功能；Web最新develop0bee包含原技能开关修复与事项当前要求，需要新组合构建，不能复用436覆盖438。API候选df4b5e8bc6（1.1.30）、Web ba3b643（1.16.107）。API493 FAIL仅新增迁移fixture漏既有protocol4 receipt index，修fixture未改生产语义；Web439 FAIL为复用CI模板旧分支身份断言，未进入应用测试，已修固定分支，保留失败终态。494/440正在正式验证，各自watcher570秒保护；本线程持配置，原配置有CAS快照。生产没有执行DDL/安装。主机磁盘紧张，已缩减本任务Web工作区为稀疏checkout，不清他人目录/备份。停写更名脚本沿原协调器锁、安装器及forward-only保护调用；失败须先停新API并反向更名，之后才允许旧JAR恢复，保留新提交业务数据，不覆盖旧快照。
+
+### 2026-11-04 12:36 +08 技能物理表更名及职责分离上线收口
+本轮用户授权的18表更名及两端部署已完成。API Flow494 SUCCESS：df4b5e8bc68657e70b643dd071313291c48bd8b7/tree1d8bfaaae33ebcb5346ccabcd872de08eb5f739b，1.1.30-SNAPSHOT，454tests/0fail/error/skip，真实MySQL更名/反向恢复/冲突原子性、原安装/资金/岗位回归、分层检查、fresh JAR通过。远端develop集成28a076098c（合并同期澄清版本提交），tree与494精确相同；上线制品仍绑定原真实df4b/494，不伪称merge commit另跑过CI。Web Flow442 SUCCESS：421283b8838d9787f31ca4d152bdc14169edc892/tree328e20704b98bd982139380428e66fb649ea347e，1.16.108，329tests全部通过、Vite及JS扫描成功；已非强制推develop。两端原配置均CAS恢复，无本线程在途Run。
+
+并发处理更正：首次只读推进时写的Web438编号不作为实际线上证据；安装前固定record确认旧Web437/6f003、API491/1899。Web440 SUCCESS但最终未安装：之后另一线程将澄清前端修复合入develop，本轮合并后用442验证，不用440覆盖新修复。该澄清修复的“另一线程已上线”未单独核实；这里只认最终组合制品和本轮上线证据。API493/ Web439保留FAIL，原因分别为新fixture漏既有receipt索引、CI模板遗留旧branch断言；均已修复，没有删除回归或本机构建。
+
+主机独立安装：API494、Web442，不让Flow调用/等待主机。API JAR SHA7c2f972c56c18dadc3aa0afb92aa5fbc133cab279ed16ba4b0a4662c1893f579，PID3385647，record installed/HEALTH UP。停写后持协调/发布/DB锁备份21张相关表，执行制品内与源码相同的单条18表RENAME；18旧名消失、新名齐全，仅3张交易表保留economy_skill前缀，21表行数/内容摘要、外键和既有不可变触发器全部保持。没有复制/双写/兼容视图，没有新增CHECK。备份及反向SQL/恢复说明在/home/isp/baks/cyf-skill-table-rename-20261104/。安装确有API/通道不可用窗口；新JVM由cyf-skill-table-api494-install.service承载，不能清理该unit。第一次host单元因隔离Python找不到既有pymysql在执行生产动作前退出，调整任务调用方式后复用制品，未重建、未改安装器。
+
+Web公网index、JuyiHall JS/CSS、SkillMarketRoute及UserProfile JS/CSS共6资源SHA匹配442制品。真实chcbz登录后12个只读接口均200、目录7技能；吴用图片生成/编辑/识别及技能管理岗位安装保留，岗位安装INSTALLED/usable=true；吴用/林冲岗位技能都仅VIEW、普通未安装技能仍有INSTALL。真实页面中文标题/安装入口与状态正确，浏览器采样无HTTP错误。原生INSTRUCTION显示NOT_EXECUTABLE/“新调用未开放”只表示无独立执行入口，不是技能包安装失败。Runtime程序/state未修改、PID3262414未变，三个独立新鲜样本均3Agent registered/ready；不声称历史全部业务告警消失。
+
+最终证据/home/isp/state/cyf-skill-table-rename-20261104/final-verification.json；schema-online.json、before/after-private.json、release安装/制品/公网核验、browser真实页面/接口、runtime-health-{1,2,3}.json同目录。生产不新增技能安装、不调用收费模型，不重放生图/改图/网页工具E2E；这些链路保留现有包/Runtime及原验证，当前验收限定持久化迁移与管理链。将清理本任务两隔离worktree和浏览器profile，保留必要证据/备份，不动他人脏工作区或生产unit。
