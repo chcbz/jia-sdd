@@ -286,3 +286,13 @@ cd web && npm run dev -- --host 0.0.0.0
 - ≤720px采用名册→详情层级，返回保留筛选/滚动；同ID重新点选不取消选择。手机详情全宽无内缩卡片，正文16px、头像68px固定且复用缩略图；刷新显示真实读取HH:mm及只读说明。>720px独立分栏滚动；详情内容滚动与底部动作是同级区域，单密议朱红通栏，双动作点将主操作／密议中性次操作，保留原资格及busy控制。关闭为44px点击区的SVG叉号，选择器限定Agent浮层，不影响其他面板。没有全局换肤或派单算法改动。
 
 完整合同见 `specs/juyiting-agent-skill-display/design-d4.md`；当前发布、真实验证及边界见同目录`release-1.16.9.md`、`handoff.md`、`evidence/visual-fix-1.16.9/online/`；1.16.8记录保留原事实。组件早期合成数据截图不是线上证据；95跳过/2 pending与继承84删例按发布记录保留。两条Flow原CI-only配置均已恢复，develop不自动部署。其余模块仍沿原基线。
+
+
+### 任职 Agent 密议维护技能（核对：2026-11-04）
+
+覆盖API `8da724fecd0949a3245b0f369cbdd3b75febe1c1` / Flow479，Runtime `d4dd804724c49947b9169264defb40c852dc7b4c` / Flow136；两端已安装，独立包`skill-management@1.0.0`已发布并随“技能管理”岗位在吴用安装。
+
+- 使用入口：与已任职、已核验安装该技能的Agent进行**无附件私有密议**，明确要求查询、修改标题/描述、审核发布或下架目标技能。安装包不授予岗位；API每次检查当前任职及会话，不能借其他Owner/事项的执行授权维护平台目录。
+- API提供六项技能维护工具和权威回执；bridge通用运输目录/回调并加载已验证SKILL.md，不按技能名编排业务，不给模型用户JWT/Runtime token，也不因业务工具开放本机写入/任意网络。
+- 当前真实模型验收为读取→元数据修改→读回：商品修订2→3、包版本不变，请求COMPLETED且独立商品GET一致。发布/下架已有云端回归，但未做生产模型破坏性下架；附件密议不继承维护工具。不要把文字“已完成”或安装READY当作业务提交证据。
+- 证据与部署追溯：`docs/implementation/handoffs/REUSABLE-SKILLS-20261102.md`末节及`/home/isp/state/cyf-skill-management-chat-20261104/final-verification.json`。历史2026-11-02“未获得模型通道”仅为旧基线，现行范围以本节为准。

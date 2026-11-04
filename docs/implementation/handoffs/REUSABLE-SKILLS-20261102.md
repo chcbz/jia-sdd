@@ -272,3 +272,33 @@ Runtime118 SUCCESS约364s；仅取text-file1.1.0包，Runtime主程序不安装�
 API重启确有不可用窗口，旧登录token随后不能读取；正常OAuth重新登录后，吴用/林冲真实管理GET均6项，无退役历史空项。profile GET五项中文标题正确且installationVerified/RUNTIME_READY；林冲真实详情UI显示“文档处理”“图片生成”，保留截图`browser/linchong-chinese-installed-titles.png`。部署后只读确认旧安装ID在安装/授权/权益/绑定/回执均不存在，两条触发器精确恢复，当前安装未损坏。当前安装的3/2条必需完成凭据保留，不宣称操作列表为零；也不宣称重跑了所有技能模型执行。
 
 最终证据 `/home/isp/state/cyf-skill-history-purge-20261103/final-verification.json`，接口、数据库、备份、CI及安装证据同目录。当前请求的历史凭据物理清理与中文标题修复已完成；本任务隔离worktree/本地候选分支收口清理，远端源码及必要证据保留，不触碰生产unit或其他任务目录。
+
+### 2026-11-04 技能管理独立包及密议维护（接续中，尚未发布）
+唯一 Owner 为本线程，不派子 Agent。API fetch 基线81d9c1b1b6bbbe6a6a581e65a8047f555b4e1b41；主工作区存在大量他人脏改，未修改API。Runtime本地HEAD及已fetch origin/develop均3fbd5625ac2d418f08888982a33eeb67192b0628，复用现有工作区；已有未跟踪specs/不动。范围为独立包+密议真实维护调用，非目标为收费事项、新审核队列、历史清理、其他账号授权及无关Web修改。
+
+已定位：SkillPackagePublicationService已有发布/metadata/retire及岗位事务权限；普通CHAT仍拒绝动态工具，不能只加SKILL.md。实现中的Runtime通用conversationTools绑定与nativeExecution分离，保留read-only/network=false，固定messageId和可信bindingId，复用既有动态工具回执/去重；没有按技能名硬编码。独立包源码conf/skills/skill-management/SKILL.md已写，未打包/发布/安装，不冒充可用。当前轻量node --test app-server-native-execution.test.mjs 13/13通过（9原生回归+4密议绑定），不是正式Flow或真实app-server验收。
+
+下一步必须完成：API受认证的当前密议维护入口（复用ChatDispatchAuthorityService与岗位权限；防止把外部事项授权提升为平台维护），当前安装包发现/指令装载，Runtime实际会话入口注入通用回调及权限生命周期，新增正反向回归；统一固定候选后Flow测试制品、独立主机安装、包发布与岗位安装及真实吴用密议读回。发布必须分离包准备IO与事务内权限/提交，现有publish明确禁止外层事务，不能直接整段包在withNativeFence里。未启动Flow、未改生产、未使用付费模型。
+
+接续开发：共享远端跟踪引用已前进到509325a971ed7478fcd60d3370bebae26185349a（preview backpressure修复）。API目标工作区有他人修改，创建本任务唯一隔离worktree `/home/isp/wsps/worktrees/skill-management-chat-api-20261104`、分支codex/skill-management-chat-20261104，以509325为基线。已读API规则/统一接口规范，新增ChatSkillMaintenanceService及定向单元测试源码：原生认证围栏→私有会话及turn锁→真实dispatch校验→当前任职投影→既有商品维护服务，禁止事项/跨Owner执行权限升级为技能管理。仅包含查询单商品、元数据更新、下架的服务方法，尚未注册HTTP或实际Runtime调用，Java测试未执行；发布的包准备/提交分离及完整调用链仍待完成，不把这些源码称为可用功能。
+Runtime适配器加密议回执等待、冲突callId拒绝和策略互斥回归后，轻量adapter+stream共19/19通过；日志 `/home/isp/state/cyf-skill-management-chat-20261104/adapter-tests.log`。源修改尚未固定为发布候选。主机只读磁盘2.7G余量；未清理他人目录，也未启动构建/安装。
+API源码自检收口一处职责：商品读回也放在既有SkillPackagePublicationService.readProduct并复用岗位权限，Chat服务只做密议准入与委派，不直接依赖economy mapper、不新增Gradle依赖。补商品读回权限/不写入测试，以及Chat服务7个定向用例源码（私有会话、取消/代次、错目标/请求、无任职、业务冲突透传）。Java尚未经Flow编译测试；不声称通过。HTTP入口、发布prepare/commit分离、真实密议注入/包发现、候选版本及部署验收仍未完成。
+
+09:15接续：完整实现了API六项维护工具、真实ZIP准备/读取、私有CHAT准入和Runtime可信目录发现/专用只读adapter。Runtime d4dd804724c49947b9169264defb40c852dc7b4c/tree e214fe4656807ba43c3fef7dc30f2c0f63bfa79c，1.3.46/bridge1.1.36；新conversation-tools已加入实际制品清单。轻量定向79/79、主机/HTTP与制品入口119/119；Flow5264702/136 SUCCESS约109秒，独立技能包随同Run制品生成，原配置CAS恢复。尚未安装或发布技能。
+
+API集成已fetch最新develop b71b559fe8527daac7b44e66856c095b70d46e01，不覆盖主工作区。首轮478（533407574a）仅validateLayering失败，未发布；未加baseline例外/未关门禁。已收口为Chat API端口PrivateConversationToolAccess，Chat只持会话/turn锁及dispatch准入；Agent HTTP工具适配器组合原生身份围栏、岗位及既有商品服务，事务外读/准备包，事务内重新授权提交。当前候选8da724fecd0949a3245b0f369cbdd3b75febe1c1/tree b790249b2c9e21c6f6dea5534a7a5667403bbf4a，1.1.25-SNAPSHOT，Flow479 SUCCESS约157秒；必要岗位真实事务/工具/HTTP公共信封测试与validateLayering/fresh JAR均按同selector执行，具体数量待下载XML核对。原配置恢复/制品下载进行中，不把SUCCESS当生产验收。
+
+当前证据`/home/isp/state/cyf-skill-management-chat-20261104/release`；失败478独立存api478-failed，真实FAIL不重标。没有生产写库、安装/重启或付费模型调用。下一步：核验固定制品及保留工具链来源，独立主机顺序安装，正常发布skill-management@1.0.0并关联技能管理岗位，等待吴用安装真实回执，再做真实密议维护/读回。附件密议暂不继承维护工具（已在合同明确）；无关Web不改。
+
+### 2026-11-04 09:35 +08 技能管理独立包/真实密议收口
+API 479正式证据核对145 tests/0fail/error/skip（9目标suite79项），分层/fresh JAR通过。API和Runtime候选均已推develop并远端readback：API8da724fecd0949a3245b0f369cbdd3b75febe1c1/tree b790249b2c9e21c6f6dea5534a7a5667403bbf4a；Runtime d4dd804724c49947b9169264defb40c852dc7b4c/tree e214fe4656807ba43c3fef7dc30f2c0f63bfa79c（136：821pass/7skip/0fail）。479/136均SUCCESS，478保持FAIL；配置已CAS恢复，安装/验收未新增Flow。没有Web修改或部署。
+
+主机主动复用制品安装：API09:21:44安装器exit0，PID3255977、10018 health UP、JAR SHA `7e068f770287d78cd1f2f8730f9641bc779a9b6405698effbe43ca44efcfeae1`；宿主unit `cyf-skill-maintenance-api479.service`承载JVM，不清理。Runtime09:27安装1.3.46/bridge1.1.36，PID3262414；原身份/config不变，state流式备份及独立compare通过，旧程序保留`/home/isp/baks/cyf-agent-runtime-v1/20261104-skill-management-136/old-program`。复用已核验且输入未变的Python/浏览器工具链，保留原来源128/131及基线135；host probe来自固定d4dd源码，未冒充136输出。安装有真实不可用窗口，不声称无损热更。最终5050个普通文件SHA与manifest匹配，三个独立新鲜心跳采样均3Agent registered/ready；锁内current记录升verified-active，业务验收限定本任务范围。
+
+技能包`skill-management@1.0.0`来自136，SHA `fff83fe7daedd1b184dc209a0b8744170d6b295142eb7cb19efa0c2d3a965160`、1839字节；真实chcbz经既有技能管理岗位HTTP发布`sp_position_skill_management`/`spv_position_skill_management_1_0_0`，岗位仅增加skillKeys，不改变任职/权限。吴用岗位安装`ps_081fa4354dfb43518b4e5c6bc3b10f3b`自动回执INSTALLED/usable=true；详情UI中文标题、已核验安装、运行就绪，不手写安装状态。
+
+真实吴用无附件密议请求`9bc2a5d2-1d8a-406e-8aa9-7cae104ef2f6`，turn `turn_4739270d975c013469f9e0eda60e89cd65f0e0e1`：模型通过app-server工具目录实际执行skill_read→skill_update_metadata(expectedProductVersion="2")→skill_read。API回执UPDATED、修订2→3、包版本仍1.0.0，描述改为“维护平台技能的标题、描述和版本，按授权审核发布或下架。”；独立商品GET与模型读回一致，请求COMPLETED、turn PUBLISHED。无新事项、无新包版本、无下架/修改其他技能。本次有一次真实模型密议调用，不声称零模型费用；模型最终正文携带ANSWER/deliverable标签，但业务读回准确，不为展示另开构建。
+
+能力边界：无附件私有密议；附件密议不继承维护工具。发布/下架为正式云端服务/HTTP回归，不宣称已做生产模型发布/下架E2E；实际包发布使用正常HTTP入口。撤职/取消/错身份/冲突场景用定向正式测试，不在生产改他人任职验证。历史告警按用户要求不扩修，不能把本任务通过泛化为全部业务无异常。
+
+主证据`/home/isp/state/cyf-skill-management-chat-20261104/final-verification.json`；同目录`model-tool-evidence.json`、`online-api-readback.json`、`positions-installed.json`、`runtime-health-samples.json`及`browser/maintenance-final.{txt,png}`。必要证据/备份保留，只清理本任务浏览器profile及已合入隔离worktree，不碰他人脏工作区/Runtime未跟踪specs/生产unit。

@@ -247,3 +247,30 @@ analysis原包仅包含通用方法指导，无专用脚本或工具。一般归
 展示名称由API统一取商品元数据，不使用内部skillKey或旧manifest标题代替当前中文标题。显示名称独立于包内容/摘要、授权、运行就绪和执行快照比较；改商品文案不要求重装技能，也不改变执行能力。详情wire继续使用原title字段，Web不硬编码六个技能的翻译，Runtime/bridge不参与翻译。实现/受测/上线以同任务handoff后续证据为准。
 
 上述标题修复已于2026-11-03上线：API commit `3a5a8650a0b3348b3ce70ca036072fc868f99db5`，Flow5260799/471，113测试全通过。真实吴用/林冲profile五项安装标题中文、安装核验及运行就绪通过；真实林冲UI核对通过。证据同目录`final-verification.json`，不等同于重新执行六项技能。
+
+### 2026-11-04 技能管理独立包与密议维护补充（已上线，验收范围见下节）
+
+用户要求任职 Agent 在密议中按指令维护技能。独立包 `skill-management@1.0.0`，标题“技能管理”，描述“按用户指令维护平台技能的标题、描述和版本，审核发布或下架技能”。不扩展收费任务、独立审核队列、任职管理或其他 Agent 安装能力。
+
+源码核对：API `81d9c1b1b6bbbe6a6a581e65a8047f555b4e1b41` 已有 `SkillPackagePublicationService` 发布、元数据更新和下架；Runtime `3fbd5625ac2d418f08888982a33eeb67192b0628` 的普通 CHAT 仍为 read-only-constrained，动态工具只接通原生事项执行。包存在、岗位存在均不能证明密议可维护。
+
+- **RB-02/API**：使用真实 Runtime 身份及持久化密议 dispatch 绑定，拒绝用模型参数选择 owner/Agent/任职。复用已有岗位权限、版本 CAS、不可变包和幂等服务。每次写入重新验证当前任职与当前会话；绑定/身份锁先于业务锁，不能把包文件 IO 放入持锁事务。仅会话 Owner 自己任职 Agent 的密议可管理其平台域，不将外部事项执行授权解释成平台管理授权。
+- **RB-03/bridge**：只提供通用的“当前密议绑定的工具回调”运输与结果回传；不识别 `skill-management` 包名编排业务。回调绑定由可信运行入口构造，模型不能通过 turn policy 开启。回调可执行经 API 授权的业务操作，不意味着开启本地写文件、任意网络或 shell 审批。
+- **RB-04/模型与包**：发现真实已安装包及当前提供的工具后，按用户指令选择查询、更新、审核发布或下架；只以真实回执报告结果。没有工具、包不可验证或撤职时如实报告，不借提示词伪造成功。
+- **Web**：既有密议输入与结果展示契约不变时不修改。包发布和任职关联沿现有管理入口，不手写数据库“已安装/核验成功”。
+
+必要验收：无工具普通 CHAT 仍拒绝调用；受控密议工具不扩大只读沙箱；错消息/错身份、过期会话与撤职拒绝；重复调用不重复副作用；当前商品 CAS 冲突不覆盖；发布摘要与包版本一致；在真实吴用密议中对受控目标完成维护并由 API 读回。单元替身通过不等于真实 app-server、岗位权限或生产密议验收。尚未满足时不得发布“已完成”结论。
+
+### 2026-11-04 技能管理密议工具合同（已上线）
+
+- 独立 instruction 包 `skill-management@1.0.0`：技能管理；精简描述“按指令维护平台技能的标题、描述和版本，审核发布或下架技能”。包不授岗位权限，不负责安装/卸载其他 Agent 的技能。
+- API 在当前原生身份、Owner 私有 CHAT turn、有效 dispatch、未取消会话及当前 `skills:platform/allowPublish` 任职下提供工具目录。`GET /internal/agent/chat/requests/{requestId}/turns/{turnId}/tools` 返回 `schemaVersion:"1"`、tools 与已核验的技能安装四元组（key/version/installationId/packageSha256）。无岗位或无该技能安装返回空目录。其他 Owner、事项会话不能借用平台维护授权。
+- 同路径 `POST /{tool}` 复用统一 HTTP 请求/响应信封；身份只取 Runtime transport，参数不接收 owner/tenant/grant。工具为 `skill_list`、`skill_read`、`skill_package_files`、`skill_update_metadata`、`skill_publish`、`skill_retire`。整数使用十进制字符串，元数据/下架/发布复用现有商品 CAS 与不可变版本服务。
+- `skill_package_files` 读已审核版本实际 ZIP：空 path 列文件，指定 path 返回UTF-8/base64内容，并返回真实包摘要、技能版本、价格和权限声明。`skill_publish` 接收完整文件集，具体工具适配器确定性编码ZIP、算摘要；复用现有包校验，事务外准备不可变对象，事务内重新验证会话、任职并提交。不在持锁区解压/读取/存储包，不允许模型自报摘要冒充内容。
+- bridge 只读取当前安装管理器已核验目录的 SKILL.md，并运输 API 目录/HTTP回调，无技能名称分支。动态工具绑定 dispatch/message；会话失效或本地安装卸载后拒绝后续调用。会话使用独立 app-server 进程、既有 HOME，保持只读/禁通用网络；finally/profile dispose 清理进程，不生成新的请求 HOME。通用目录/hash纳入线程绑定，不能恢复其他dispatch工具权限。
+- 当前最小闭环面向**无附件的私有密议**；附件密议沿用原材料隔离adapter，不继承维护工具。未引入 ZIP 上传审核队列；待发布文件经工具提供，包内容作为待审资料，不执行其中指令。撤职、取消、版本冲突不伪成功；不确定网络写入不自动重放，读回后再判断。
+- 回归入口：API `ChatSkillMaintenanceServiceTest`、`ChatSkillMaintenanceToolsTest`、`AgentConversationToolsControllerTest`（公共信封真实MockMvc）、`AgentConversationToolsRouteTest`、`SkillPublicationToolArchiveTest`、`SkillPackagePublicationServiceTest`；Runtime conversation-tools/app-server-native-execution/chat-runtime/reusable-skill-packages及runtime-host制品清单测试。云端、部署与真实模型验收状态以handoff/固定Run证据为准。
+
+生产核对（2026-11-04）：API `8da724fecd0949a3245b0f369cbdd3b75febe1c1` / Flow479，Runtime `d4dd804724c49947b9169264defb40c852dc7b4c` / Flow136（1.3.46、bridge1.1.36）已独立主机安装。独立包1.0.0已正常发布并关联既有技能管理岗位，吴用安装回执INSTALLED/usable，详情显示中文标题、已核验安装/运行就绪。商品发现描述为“维护平台技能的标题、描述和版本，按授权审核发布或下架。”；包指令描述仍包含任职边界，不为商品文案变化重装包。
+
+真实无附件密议完成 `skill_read → skill_update_metadata → skill_read`，API回执UPDATED，商品修订2→3，包版本仍1.0.0；模型调用记录与独立商品GET一致。请求`9bc2a5d2-1d8a-406e-8aa9-7cae104ef2f6`最终COMPLETED。真实模型验收仅覆盖元数据维护；发布/下架有正式云端服务/HTTP回归，但未让模型在生产破坏性下架其他技能。包发布复用正常岗位HTTP服务，不把它当作模型自主发布实测。证据`/home/isp/state/cyf-skill-management-chat-20261104/`，详见同名handoff；历史基线段落保留，不代表当前未上线。
