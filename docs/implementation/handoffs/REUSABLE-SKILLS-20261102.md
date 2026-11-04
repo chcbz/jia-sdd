@@ -351,4 +351,4 @@ API Flow5260799/489 SUCCESS：c70fe5df5d317f440f08567b585786c0445faeb3/tree44a50
 
 Web公网index、JuyiHall JS/CSS、SkillMarketRoute及UserProfile JS/CSS共6资源SHA匹配442制品。真实chcbz登录后12个只读接口均200、目录7技能；吴用图片生成/编辑/识别及技能管理岗位安装保留，岗位安装INSTALLED/usable=true；吴用/林冲岗位技能都仅VIEW、普通未安装技能仍有INSTALL。真实页面中文标题/安装入口与状态正确，浏览器采样无HTTP错误。原生INSTRUCTION显示NOT_EXECUTABLE/“新调用未开放”只表示无独立执行入口，不是技能包安装失败。Runtime程序/state未修改、PID3262414未变，三个独立新鲜样本均3Agent registered/ready；不声称历史全部业务告警消失。
 
-最终证据/home/isp/state/cyf-skill-table-rename-20261104/final-verification.json；schema-online.json、before/after-private.json、release安装/制品/公网核验、browser真实页面/接口、runtime-health-{1,2,3}.json同目录。生产不新增技能安装、不调用收费模型，不重放生图/改图/网页工具E2E；这些链路保留现有包/Runtime及原验证，当前验收限定持久化迁移与管理链。将清理本任务两隔离worktree和浏览器profile，保留必要证据/备份，不动他人脏工作区或生产unit。
+最终证据/home/isp/state/cyf-skill-table-rename-20261104/final-verification.json；schema-online.json、before/after-private.json、release安装/制品/公网核验、browser真实页面/接口、runtime-health-{1,2,3}.json同目录。生产不新增技能安装、不调用收费模型，不重放生图/改图/网页工具E2E；这些链路保留现有包/Runtime及原验证，当前验收限定持久化迁移与管理链。本任务两隔离worktree、本地候选分支和浏览器profile已清理（cleanup.json），必要证据/备份保留，未动他人脏工作区或生产unit。
