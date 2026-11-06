@@ -90,3 +90,36 @@ API与Runtime已在远端develop无并发新提交条件下正常快进推送（
 后端入库turn创建到最后状态更新时间：607三轮40.009/13.010/27.049s；606两轮152.972/7.224s。这不是前端首字/完整可见时间，也不含606此前因启动未就绪造成的长等待，不作为端到端性能通过结论。
 
 下一步：先定位606 workspace的可稳定复现503与607上下文503责任分支；启动失败按现有生命周期做有因重试/显式恢复，不再靠重启、不新增轮询兜底表。后续源码修复与云端验证/部署另记，本轮不能标全部完成。
+
+### 继续修复：读取503根因已定位（2026-11-06）
+- 固定修复基线仍为已安装API7261c3b/Runtimecfe99ae，Owner沿用本任务。API主工作区有他人未提交修改，复用隔离工作区`/home/isp/wsps/worktrees/hall-three-fixes-api`；Runtime复用原工作区，不触碰其无关dirty。远端develop已前进至APIf24f4c1/Runtime dbb9e3d，包含其他计费改动，不把它们自动纳入本次部署。
+- workspace503：正式提交生产TASK_REVIEWING事件的actor是agent，C04/C05共享validator却要求所有任务转换均system。606/607的event_version12均命中。只修该合法事件actor表达；保留其他事件及结构/状态校验，不改生产事件。
+- context503：`followup/innodb-last-deadlock.txt`对应16:06:36实际死锁，事务9054986先持persona binding再等task root，9054988反向持task root再等binding。GET预览不产生执行授权，却进入写锁链。改为同一REPEATABLE_READ只读快照；真正提交/派发继续原有锁与权限检查，预览不调用写入准入。无新表、无通用重试。
+- 回归入口：正式交付producer→共享validator、Grant只读观察/原写准入、Preview真实Spring事务/绑定冲突与ACL。Runtime启动暂态失败恢复仍待落实。以上为已确认根因及实施范围，不是新版本已发布证明。
+
+### 修复候选与发布推进（2026-11-06 17:18 CST）
+- API发布候选7bb82c526e4ba4345ca8e88711067ed23dfcdbbc/tree7e6d03056902c4a36abd9ca0959d5a398e65224b，1.1.38-SNAPSHOT，Flow591：12套件168项全部通过（含生产者三事件→读取器、只读Spring事务、并发binding快照、原写入准入、分层与fresh JAR）。589是新增测试漏导入断言，590是测试把内部IllegalArgumentException误写成外层Workspace异常；已分别修正测试，未删断言/改业务错误语义，无同输入盲重试。旧577的109项属于推荐测试选择器，不能作为本次Preview/锁回归证据；本次以591的实际套件清单为准。
+- Runtime发布候选c1fc18174b256c90051874485c8c77967efad62a，1.3.65/bridge1.1.54，Flow166：848项，841通过、7云端环境跳过、0失败；主机原有3项宿主探针及实际启动声明另行通过。现已受控安装，PID1737375，三个通道ready，两套native declaration ready；本轮未再出现启动超时。能力测量完整纳入原启动gate；仅engine-open阶段APP_SERVER_RPC_TIMEOUT在清理完成后再试一次，清理失败/永久错误/执行期失败/已dispose不重试，无定时轮询、无任务重放逻辑。故障注入与真实顺利启动是不同证据，不声称生产中人为重现了超时。
+- API591安装中，前置浏览器只读复测606和607 workspace均503已存证，后置及多轮回归尚未完成。证据统一`/home/isp/state/cyf-diagnostics/hall-three-issues-20261106/followup/`；不修改原602/603。
+- 避免下次develop发布丢失修复，正在单独集成并行计费源码：API Grant构造器存在真实冲突，保留billing与只读taskRoots两个不同职责依赖，并适配实际测试调用；Runtime原工作区有他人dirty且develop改变其路径，故只为该冲突新增一个`hall-followup-runtime-integration`工作区。集成候选将独立验证，**不将并行计费改造自动部署到生产**，不把591/166的证据冒充集成后tree。
+
+### 后续修复已部署及业务回归（2026-11-06 17:46 CST）
+- API591受控安装exit0，线上1.1.38-SNAPSHOT/7bb82c526e4ba4345ca8e88711067ed23dfcdbbc，制品SHA256 `065a7d166d35a85071afe7c25fed992906121002a1de2858ab7badcd203c33df`，JAR `75e7886fd502b293c5173b0f3ba6a1e21c2b6df0e51b1df408fa98598b2886ee`。10018健康UP，canonical实体目录8项检查通过。F06两表existing_equivalent，无业务迁移。安装/健康证据`followup/deploy/api-*`。
+- Runtime166已安装1.3.65/bridge1.1.54，PID1737375，三个通道与两套native能力ready。宿主3项探针通过；旧程序/状态备份保留`/home/isp/baks/cyf-agent-runtime-v1/20261106-hall-followup-166`。本任务maintenance marker已按归属恢复，无状态快照回灌。API/Web/Runtime本轮部署源分别为591/469/166，不是后续集成候选。
+- 安装前606/607 workspace真实浏览器均503；安装后两者workspace/context四项均200/E0，分别112.6/52.5/513/65.6ms（单次请求样本，不是性能SLA）。诗歌回复期间四个有界并发读取也均200，131–203ms；没有增加生产轮询、重试表或逐帧校验。
+- 新服务器事项608/conversation1760458009364，通过正常UI明确选择在线吴用，连续两轮均PUBLISHED；第二轮准确回答20人、月预算300元、下个月上线，页面结束生成，无RECOVERY_REQUIRED。仅讨论，无购买或服务器安装动作。初始推荐包含离线扈三娘，未指派该Agent，不扩大本次修复范围。
+- 本任务诗歌事项607在Runtime重启后追加第四轮：同一native thread `01a1afe2-a068-73c0-af11-a321e86f5bea`，仍INCREMENTAL_SAME_THREAD、recentMessages=0；模型正确引用原诗“独把新茶当旧游”和此前自作诗“独煮新茶待故人”，没有索取原文，终态PUBLISHED。桌面/375px截图保留，移动document scrollWidth=375，无横溢出、无“正在回复”残留。
+- 本次浏览器观察的skill-capabilities四次均200、无cancelled；业务窗口没有404/409/503。另有一次SSE ERR_ABORTED和一次HTTP2_PROTOCOL_ERROR，后续流连接200、回复正常完成；传输错误单独保留，不宣传网络零异常、不将它们混算能力查询取消。原602/603未更改或重放，旧恢复文件最初丢失原因仍未还原，不宣称已恢复历史状态。
+- 诗歌第四轮**浏览器实际POST发出→DOM**：首段可见14.903s、完整正文可见16.127s、生成状态结束17.877s。单样本包含服务端/模型等待；不是Runtime内部耗时或统计SLA。服务器两轮DB turn创建→最后更新15.149/9.988s，诗歌第四轮16.921s；后者不能冒充前端端到端数据。
+- 本轮总报告`followup/deploy/regression-result.json`为`SCOPED_REGRESSION_PASS_WITH_TRANSPORT_OBSERVATION`；Runtime现行发布记录已在原release锁内更新businessAcceptance及证据读回，程序/身份/配置未再改变。
+
+### develop集成与规则接续（2026-11-06）
+- 已读现行根AGENTS的11-06本地构建规则；自此次接续不再启动付费Flow。此前API集成prepare因他人活动Run返回ACTIVE_RUN_NO_WRITE，无云端写入/新Run；保留原因，不抢占。已启动的Runtime167完成后仅CAS恢复原配置、保存结果。
+- Runtime并行计费源码合入候选d962e92ade0cb12d291de94d6cd6d896a7b52838/tree4e9ceb8b87ce9a8a95b0f7d887826b1d3a9f0f45，1.3.66/bridge1.1.55：167 SUCCESS，866测试859通过/7环境skip，正常快进推送develop。**未安装**，线上仍166。
+- API集成候选3d4bbb2e0e（完整SHA见`followup/integration-local/inputs.json`）保留f24f4c1并行计费与本轮读取修复，另验证真实billing构造调用。当前本地经既有orchestrator串行入口验证原168项及一个MySQL计费事务用例、validateLayering；在本任务独立mysqld/datadir/随机loopback端口运行，不使用生产数据库。已有Gradle锁忙时等待，不并发堆叠。仅集成验证，不打生产包、不安装计费候选；结果待补。
+
+### 本轮交付结论与剩余集成边界（2026-11-06 18:12 CST）
+- **本次部署和线上定向回归已完成**。最终只读健康再次UP，生产JAR摘要仍精确匹配591；Runtime PID仍1737375。证据`followup/deploy/final-health.json`。浏览器及本任务profile已关闭/清理，Runtime集成worktree已在推送及干净核对后删除；未修改其他工作区、进程、原602/603或生产会话状态。
+- **API develop集成尚未完成，不算上线故障未修复。** 第一次本地集成验证在project configuration阶段发现共享Gradle immutable transform cache内容不匹配，尚未进入测试；错误日志及归因保留`followup/integration-local/gradle.log`。未删除/修复共享缓存；第二次改用任务独立Gradle home，仅复制依赖缓存，固定相同源码，但既有串行锁由另一任务BETA-WEN-BILLING-20261105持有。等待期间本任务没有开始Gradle测试，不能标PASS。
+- 线上目标已验收，独立集成因外部构建锁暂缓。精确确认本任务PID1767341是WRITE*等待者后只停止该排队控制进程，未中断锁持有者或任何运行中的构建。第二次记录exit -15/NOT_STARTED（`attempt2/queue-deferred.json`、`result.json`），不是测试失败；两次自有MySQL都在finally停止、PID消失后删除临时datadir，日志/输入证据保留。无悬挂的本任务浏览器、MySQL或Gradle作业，无新增付费Run。
+- API候选完整commit/tree保留`followup/integration-local/inputs.json`，远端任务分支已保存；保留唯一干净API工作区`/home/isp/wsps/worktrees/hall-three-fixes-api`用于后续验证，不覆盖主仓dirty、不强推develop。Runtime集成d962e92已合入但未部署。后续动作仅待锁释放后完成API集成定向验证并正常快进合入；不因此重新安装已验收的591/166/469。
