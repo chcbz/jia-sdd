@@ -150,3 +150,10 @@ API与Runtime已在远端develop无并发新提交条件下正常快进推送（
 - 后续MVC补充运行`http2`实际执行21项，其中流策略9项通过、MVC12项均在fixture初始化因`RedisScript`类缺失失败，未进入MVC业务断言。根因是该原测试在默认test中依赖common-test，而临时精简slice仅继承implementation/runtimeOnly。未修改业务代码；临时slice改继承既有testImplementation/testRuntimeOnly，保持原测试类路径而非逐个补缺失类。失败XML保存在`http2/test-results`，已通过原fail/transition显式归因与恢复验证阶段。
 - 修正依赖的唯一后续验证为`cyf-hall-sse-http-20261106-r5`，runner复用`integration-local/verify-http.py`，新fixture/日志`attempt3/http3`。当前仍在串行锁等待，持锁者是另一任务1845635，本任务等待者1848560；没有运行第二套Gradle/MySQL，没有取消/抢占。unit独立于聊天保持等待及获锁后验证，**不会自动合入或部署**；`integration-local/continuation-state.json`记录实时状态。下一接续先读该unit和`http3/result.json`，不要重复启动。
 - 原121项主回归XML已逐一校验摘要并保存到`resume1/test-results`，summary引用已指向不可被后续Gradle覆盖的快照；未将后续失败XML混作原成功证据。API源码仍638896a且工作区干净，develop尚未推送，线上未改动。完整收口仍需MVC通过→正常合入→隔离不含并行计费的发布候选及本地来源安装适配→打包/安装/超过300秒空闲实测；未完成部分不能宣称已交付。
+
+### API develop集成完成（2026-11-06 21:20 CST）
+- 原持锁任务自然释放后，本任务r5获锁执行；`attempt3/http3/summary.json`最终21项通过：12项真实MVC SSE回归 + 9项流策略复跑，0失败/错误/跳过。主回归121项与新增MVC12项共133个独立用例，9项策略复跑不重复算独立用例；覆盖大历史replay/ready、热预览背压、真实MVC单次编码、游标、身份错误、取消释放与保活生命周期。源码未为补充测试做新修改。
+- 本次HTTP Gradle482.040秒，含排队/控制的墙钟1608.203秒；只有实际Gradle阶段低于600秒，不能宣传整轮或发布达标。日志/固定输入/不可变XML快照均在http3；早先配置/依赖失败保留原位置，不重标PASS。
+- 正常快进push API develop：f24f4c1→`638896a16cbf3f6df602a65f9a6c97b4ceb4889b`，远端readback一致、工作区干净；tree`50384c91391b7e5b3f71931996ec53ab7dcb8fd8`。证据`integration-local/integration-complete.json`。前文“等待/未合入”是之前阶段状态，以此为准。
+- 本任务验证units均已结束；保存失败unit状态后仅reset-failed本任务4个失败transient units，未控制他人服务或正在运行的作业。此前两个隔离MySQL均已停止并清理datadir。没有最终生产包，未登记虚假可回收产物；唯一工作区/编译缓存仍供未完成的发布步骤使用。
+- **整体交付尚未结束，新SSE保活未部署。** API develop集成包含并行计费基线，不能直接安装；后续在同一工作区固定已部署7bb82c5 + 本次SSE补丁的独立候选，按真实LOCAL来源适配当前安装器，保留原互斥/完整性/备份/恢复，不能恢复已退役准入或伪造Flow。再执行生产打包必需回归、受控安装及>300秒空闲对照。当前只完成源码集成和定向验证，不将其冒充发布完成。
