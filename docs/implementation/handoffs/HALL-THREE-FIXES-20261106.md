@@ -55,3 +55,38 @@ API与Runtime已在远端develop无并发新提交条件下正常快进推送（
 - 三端远端develop均为上表精确候选，正常快进、无force。只读回验`fix-ci/integration-readback.json`；云端结果汇总`fix-ci/verification-summary.json`。三条流水线临时配置均CAS恢复并readback成功。
 - 本任务Web/API隔离worktree自检干净后删除；源码分支和固定提交已推远端，证据保留上述诊断目录。Runtime复用工作区保留其他任务dirty内容。根中已有未跟踪推荐规格仅补本次规则，不将他人原稿整体纳入本任务提交。
 - 交付状态：源码修复/回归/合入/云端制品完成；主机安装/生产健康/真实模型场景复测均未执行。API/Web/Runtime本次制品下载时仍须校验来源Run、完整commit/tree和SHA-256，不能用SUCCESS替代安装完整性校验。
+
+## 发布授权与执行（2026-11-06 用户追加“部署并回归验证”）
+- 明确授权安装上表三端固定候选并做真实回归，复用Web469/API577/Runtime163，不另开Flow、不更换源码。
+- 现行基线只读确认：Web463/1.16.120/93c2a10、API564/e2cc323、Runtime155/1.3.60/5d7290c。记录快照在`/home/isp/state/cyf-diagnostics/hall-three-issues-20261106/deploy/*-previous-record.json`。
+- 固定制品下载后校验：Web SHA a45a351fa1b1ce323f79f3597df24e2fa87e2ddae25cde8b3a23d37e308f4895（109813541字节，612文件）；API SHA cd024a49c0c0a6767f502784892aab041e7c82b7210fc58b66b823ddc4ef5881（224098275字节，JAR c5338cb4eaed3f9a6adf7c3d33e9dd17164a47df16b61f7f0e8eb0ad5b32ccda）；Runtime SHA 4c917db573154e7e46c5bbb29cd99db1f9df22190caee4a6c7935fb75f2628ae（28257875字节）。API首次下载传输超时后仅续传已核对Range的固定归档，未重建。
+- Runtime复用既有受控host-after-flow安装器：当前Run payload与锁文件核验，Python/browser沿用已验证Run155且要求依赖输入/复制内容完全一致；原生宿主能力探针取固定cfe99ae源码。release锁、完整旧程序清单、停写后状态备份、writer锁归属及固定app原子切换保留。安装器输入/代码及阶段日志在`deploy/runtime-install/`；旧程序/状态备份目标`/home/isp/baks/cyf-agent-runtime-v1/20261106-hall-three-fixes-163`。不恢复业务旧快照、不自动重放602/603。
+- API/Web继续使用现行/usr/local/sbin版本化安装入口；API无schema变更，Web保留旧hash资源并index-last。最终安装/健康/业务回归结果后续追加，不能据此段判定发布已完成。
+
+### 实际安装与回归结论（2026-11-06 16:19 CST）
+
+**安装完成；回归为部分通过，有未闭合发现，不能宣称全部问题已解决。** 本节更新前文“未部署”阶段状态，不修改历史CI结果。
+
+- Web469安装exit0；612个本地文件和线上index/入口bundle字节核验通过，当前record为1.16.121/online_verified；备份`/home/isp/baks/cyf-hall-three-fixes-web-20261106-run469/`。证据`deploy/web-installed-verification.json`。
+- API577安装exit0；固定JAR摘要与同Run一致，进程PID1672951、10018健康UP；canonical path 8项通过。原F06 CREATE-only检查两表existing_equivalent，未新增业务DDL/DML。证据`deploy/api-installed-verification.json`。
+- Runtime163安装exit0；3项真实宿主工具探针通过（非付费模型），暂存与固定路径声明/完整性读回通过，保留停写状态备份与旧程序，固定app路径未变。初次PID1692491，后一次受控原版本重启PID1710463；最终三个Agent通道ready，两套native声明ready。没有改配置、恢复业务快照或重新构建。
+- 本任务暂停的健康监控marker核对dev/ino/SHA归属后由原工具恢复；两次遇monitor锁忙未绕锁，确认锁释放后成功。仅本任务Chromium及profile已关闭清理；其他进程/工作区未操作。
+
+#### 真实生产回归
+通过正常页面操作新建606（服务器需求讨论）和607（附件诗歌讨论），使用现有测试用户；全部5轮最终为PUBLISHED，页面显示完整回复且结束生成。
+
+1. `skill-capabilities`本轮5次均200，无cancelled；观察窗口没有404/409。590已完成事项历史可读，不请求其活跃interactions/context；599未指派阅读不请求workspace；切换606/607实际actor匹配。导航时长连接取消保留，不能混算能力查询取消。
+2. 607第一轮上传并读取真实TXT《秋夜》，第二轮移除composer附件后让模型另作诗，第三轮不重复原文比较两首。模型直接引用双方诗句，未索取原文。三轮唯一native thread `01a1afe2-a068-73c0-af11-a321e86f5bea`，3条turn_context；后两轮`INCREMENTAL_SAME_THREAD`且recentMessages=0。证据`deploy/native607.json`、`native607-history-summary.json`、`browser/poem607-turn{1,2,3}.json`与截图。此为一次真实样本，不保证所有随机生成都不会澄清。
+3. 606先问三个服务器需求问题，第二轮正确概括20人/内部文档/国内云/每月300元/下个月上线；未执行购买、安装或服务器命令。两轮均PUBLISHED，未进入RECOVERY_REQUIRED；**首次启动并不顺利，见下方超时发现**。
+4. 原602先只读显示“需要恢复核对”、不显示“正在回复”（早期截图）；后续权威状态已变为CANCELLED/USER_REQUESTED、updated_at=2026-11-06 15:44:41.433 CST，本任务浏览器未调用取消。最终页面正确显示“本轮回复已停止”；1440和375宽截图保留，移动无横溢出。本任务未手动重放、恢复、取消或删除原602/603，不将该状态变化归因于本次修复。
+
+#### 未闭合发现（不得掩盖）
+- **启动瞬态失败不会重新完成native测量**：初次启动吴用在15:45:15的engine-open阶段`APP_SERVER_RPC_TIMEOUT`（约30s），普通通道ready不代表native执行ready。源码固定cfe99ae的`agent-client.mjs:ensureTypedInspectionProfile`只在本次启动测量一次，失败后的promise保留，无重新测量入口。因此606 bootstrap停在`BOUNTY_RUNTIME_AWAITING`重试，尚未调用模型，而非本轮原RUNTIME_SESSION_REQUIRED故障。15:59在发布锁下确认无inflight，精确核对PID/writer锁，按既有安装器函数停启同版本一次；16:03:07吴用native ready。606随后由原持久请求准入，没有另发请求或手改DB。本次只恢复运行，**未实现启动失败长期修复**。证据`deploy/runtime-install/startup-timeout-restart.*`；此前备份和固定产物不变。
+- **读取503仍存在**：607的interactions/context一次返回BOUNTY_FOLLOWUP_V3_UNAVAILABLE，随后200；606 workspace在16:08:58及16:14:04两次返回TASK_WORKSPACE_UNAVAILABLE，稳定重读仍复现。不能说都是瞬态、不能宣称接口全部通过。后端日志只给snapshot_unavailable，没有细分异常；固定源码读模型校验与606/607只读表快照已保留，但**具体失败分支尚未确认**。未通过删除校验或改生产数据遮蔽。证据`deploy/browser/wire.jsonl`、`workspace606-607-readonly.json`；5轮聊天成功不等于workspace验收成功。
+- 原602的旧恢复文件最初缺失原因仍未还原；没有据此清旧状态。
+
+总报告`/home/isp/state/cyf-diagnostics/hall-three-issues-20261106/deploy/regression-result.json`为`PARTIAL_PASS_WITH_OPEN_FINDINGS`。Runtime记录区分verified-active通道与businessAcceptance PARTIAL。本机回归是实际生产业务证据，不冒充Flow重型回归。
+
+后端入库turn创建到最后状态更新时间：607三轮40.009/13.010/27.049s；606两轮152.972/7.224s。这不是前端首字/完整可见时间，也不含606此前因启动未就绪造成的长等待，不作为端到端性能通过结论。
+
+下一步：先定位606 workspace的可稳定复现503与607上下文503责任分支；启动失败按现有生命周期做有因重试/显式恢复，不再靠重启、不新增轮询兜底表。后续源码修复与云端验证/部署另记，本轮不能标全部完成。
