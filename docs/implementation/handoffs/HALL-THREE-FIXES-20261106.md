@@ -123,3 +123,11 @@ API与Runtime已在远端develop无并发新提交条件下正常快进推送（
 - **API develop集成尚未完成，不算上线故障未修复。** 第一次本地集成验证在project configuration阶段发现共享Gradle immutable transform cache内容不匹配，尚未进入测试；错误日志及归因保留`followup/integration-local/gradle.log`。未删除/修复共享缓存；第二次改用任务独立Gradle home，仅复制依赖缓存，固定相同源码，但既有串行锁由另一任务BETA-WEN-BILLING-20261105持有。等待期间本任务没有开始Gradle测试，不能标PASS。
 - 线上目标已验收，独立集成因外部构建锁暂缓。精确确认本任务PID1767341是WRITE*等待者后只停止该排队控制进程，未中断锁持有者或任何运行中的构建。第二次记录exit -15/NOT_STARTED（`attempt2/queue-deferred.json`、`result.json`），不是测试失败；两次自有MySQL都在finally停止、PID消失后删除临时datadir，日志/输入证据保留。无悬挂的本任务浏览器、MySQL或Gradle作业，无新增付费Run。
 - API候选完整commit/tree保留`followup/integration-local/inputs.json`，远端任务分支已保存；保留唯一干净API工作区`/home/isp/wsps/worktrees/hall-three-fixes-api`用于后续验证，不覆盖主仓dirty、不强推develop。Runtime集成d962e92已合入但未部署。后续动作仅待锁释放后完成API集成定向验证并正常快进合入；不因此重新安装已验收的591/166/469。
+
+### 继续收口：SSE传输异常已复现定位（2026-11-06 18:44 CST）
+- 只读同一测试会话607，分别直连127.0.0.1:10018和经公开域名HTTP/2代理订阅；两端返回200及相同11446字节历史/ready内容。没有发消息、调用模型、修改事项或更改代理配置。
+- 两端均没有SSE注释保活。公开代理在最后数据之后299969ms（约300秒）以NGHTTP2_INTERNAL_ERROR/rstCode2关闭；直连API在330秒观察结束时仍然打开，由探针自行关闭。与现行`location /chat`的`proxy_read_timeout 300`以及上一轮17:41:00、duration349.982s访问日志吻合。原异常是空闲SSE无保活引发的代理读超时，不是模型执行失败，也不是skill-capabilities取消。
+- 证据`followup/sse-probe/idle-comparison.json`、`root-cause.json`、`nginx-chat-location.txt`；固定线上API7bb82c5。这里只读验证和根因定位，尚未改源码或生产配置。
+- 最小修正应在API SSE传输层发送注释保活：不查数据库、不扫描任务、不执行模型、不推进游标、不作为业务消息；随源流结束/取消回收。现有Web解析器已忽略冒号注释，不需要增加前端轮询或改业务协议；不采用单纯增大代理超时的临时方案。
+- API集成继续复用唯一工作区及原3d4bbb2候选，固定本地验证输入。先等待现有Gradle锁释放，再启动本任务MySQL/验证，避免排队阶段运行无用数据库；无付费Flow、无他人进程控制。
+- 18:52 CST再次确认实际持锁者仍为另一任务PID1764749，测试进程仍存在；通过既有`conflict-alert`发送仅协调通知，没有改派/中断/操作对方产物。此次本任务只在`flock`前置等待，未启动Gradle或MySQL；结束等待前核对WRITE*与完整命令，仅停止本任务等待者PID1796054。`integration-local/recheck-lock-blocker.json`记录真实阻塞；`attempt3`未生成，不能宣称新验证已运行。原候选和干净工作区继续保留，SSE本轮仅定位、保活改动尚未实施。
