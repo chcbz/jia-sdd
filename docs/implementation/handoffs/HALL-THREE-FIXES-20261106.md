@@ -140,3 +140,13 @@ API与Runtime已在远端develop无并发新提交条件下正常快进推送（
 - 本次exec66106随后以143/SIGTERM结束，Gradle daemon记录client断开/Broken pipe；发起者未知，不推断其他任务违规。没有测试XML、没有PASS或生产包；`interrupted.json`保留实际退出码、源码、日志摘要。原本任务wrapper/Gradle/MySQL均已消失，未看到MySQL正常shutdown日志，datadir暂保留且无对应运行进程，见`mysql-cleanup.json`。当前另一任务1810651持锁，不抢占、不盲重试；通过原conflict-alert仅协调。
 - API候选保存在原任务分支；develop仍未合入，线上仍原已验收591/166/469。当前主机安装器仍有Flow-only/LOCAL_ADMISSION_RETIRED限制，本轮未改造；不得伪造Run发布新保活。后续须先收口受测集成，再固定不夹带未授权计费变更的发布候选、明确适配本地来源，经过原锁/备份/恢复路径安装并复测超过300秒空闲连接。不能把源码完成写成上线完成。
 - 已清理前次SSE探针遗留的空闲Node runner1785562，先核对完整脚本路径、无子进程及浏览器已关闭；未控制他人进程。保留本任务唯一worktree、编译/依赖缓存用于接续，避免下一次重复冷构建。
+
+### 本地集成验证已通过，真实MVC补充验证进行中（2026-11-06 20:45 CST）
+- 接续读取用户最新11-06规则：本地600秒为优化目标，不强杀；本轮没有最终包可登记清理。复用原638896a候选、原工作区和attempt3编译/依赖缓存，不复制第二套源码/缓存。上次SIGTERM发起者仍未知。本次用仅属于本任务的systemd transient unit承载既有验证脚本，仍经原Gradle串行入口；与交互工具生命周期分离，没有生产重启/定时重跑。
+- `attempt3/resume1/summary.json`：121项测试全部通过，0失败/错误/跳过，9项ChatStreamPolicyTest确实执行，validateLayering通过。精确commit/tree未变。与旧591的168项差异已逐suite核对：本轮仅集成不执行bootJar，故不包含66项随打包触发的制品/POI测试；合入基线新增9项grant测试、1项MySQL计费测试、本轮9项流策略测试，168−66+9+1+9=121。前文“原168+1”是未剥离打包图的计划口径，以实际121项及selector为准；不将集成通过当作生产打包通过。
+- 此次Gradle实际1927.938秒；准备/排队/验证墙钟1983.025秒，排队0.016秒。**验证已超过600秒目标；完整发布未执行、未实测**。初次未完成的编译在本轮补齐，15任务up-to-date、69执行；保留原中断耗时与后续HTTP排队/脚本失败记录，不将跨批累计省略为完整发布达标。隔离MySQL正常退出，已核对PID消失后只删除本任务两个已停止fixture的datadir，日志/源码/测试XML/缓存保留。
+- 为覆盖实际改动的Controller，再运行已有ChatConversationEventsHttpTest（真实MVC编码、replay/ready、热预览背压与取消），不是新增业务代码。初次补充init误应用到included plugin build，配置阶段找不到chat项目，尚未执行测试；按原工具记录归因，改findProject限制到实际chat根。两次状态恢复命令未进入Gradle（验证gate及transition默认owner参数问题），NOT_STARTED日志分别保存，不视为测试失败或PASS。正确显式Owner/gate后，修正fixture已在`cyf-hall-sse-http-20261106-r4`执行，证据`attempt3/http2`；期间交互sleep工具再次143，但该验证unit仍运行，不能据此推断原SIGTERM发起者。
+- 20:43只读线上API仍591/7bb82c5，health UP；结果`integration-local/production-readback-20261106.json`。新保活仍未部署，API develop合入等待MVC结果。主机安装器本地来源适配尚未实施，不能绕过现有锁/备份/恢复或恢复退役准入入口；后续发布候选仍须避免夹带并行计费变更。
+- 后续MVC补充运行`http2`实际执行21项，其中流策略9项通过、MVC12项均在fixture初始化因`RedisScript`类缺失失败，未进入MVC业务断言。根因是该原测试在默认test中依赖common-test，而临时精简slice仅继承implementation/runtimeOnly。未修改业务代码；临时slice改继承既有testImplementation/testRuntimeOnly，保持原测试类路径而非逐个补缺失类。失败XML保存在`http2/test-results`，已通过原fail/transition显式归因与恢复验证阶段。
+- 修正依赖的唯一后续验证为`cyf-hall-sse-http-20261106-r5`，runner复用`integration-local/verify-http.py`，新fixture/日志`attempt3/http3`。当前仍在串行锁等待，持锁者是另一任务1845635，本任务等待者1848560；没有运行第二套Gradle/MySQL，没有取消/抢占。unit独立于聊天保持等待及获锁后验证，**不会自动合入或部署**；`integration-local/continuation-state.json`记录实时状态。下一接续先读该unit和`http3/result.json`，不要重复启动。
+- 原121项主回归XML已逐一校验摘要并保存到`resume1/test-results`，summary引用已指向不可被后续Gradle覆盖的快照；未将后续失败XML混作原成功证据。API源码仍638896a且工作区干净，develop尚未推送，线上未改动。完整收口仍需MVC通过→正常合入→隔离不含并行计费的发布候选及本地来源安装适配→打包/安装/超过300秒空闲实测；未完成部分不能宣称已交付。
