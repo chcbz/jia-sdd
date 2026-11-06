@@ -131,3 +131,12 @@ API与Runtime已在远端develop无并发新提交条件下正常快进推送（
 - 最小修正应在API SSE传输层发送注释保活：不查数据库、不扫描任务、不执行模型、不推进游标、不作为业务消息；随源流结束/取消回收。现有Web解析器已忽略冒号注释，不需要增加前端轮询或改业务协议；不采用单纯增大代理超时的临时方案。
 - API集成继续复用唯一工作区及原3d4bbb2候选，固定本地验证输入。先等待现有Gradle锁释放，再启动本任务MySQL/验证，避免排队阶段运行无用数据库；无付费Flow、无他人进程控制。
 - 18:52 CST再次确认实际持锁者仍为另一任务PID1764749，测试进程仍存在；通过既有`conflict-alert`发送仅协调通知，没有改派/中断/操作对方产物。此次本任务只在`flock`前置等待，未启动Gradle或MySQL；结束等待前核对WRITE*与完整命令，仅停止本任务等待者PID1796054。`integration-local/recheck-lock-blocker.json`记录真实阻塞；`attempt3`未生成，不能宣称新验证已运行。原候选和干净工作区继续保留，SSE本轮仅定位、保活改动尚未实施。
+
+### SSE保活实现与本地验证中断（2026-11-06 19:24 CST）
+- 在原唯一API工作区完成最小传输层修正，commit `638896a16cbf3f6df602a65f9a6c97b4ceb4889b` / tree `50384c91391b7e5b3f71931996ec53ab7dcb8fd8`，仍为集成候选1.1.39-SNAPSHOT；包含并行计费基线，**不是可直接替换线上591的独立补丁发布候选**。修改仅ChatStreamPolicy、ChatController、既有测试及其sourceSet。未改Web、Runtime、Nginx或生产文件。
+- 每30秒发无data/id/event的SSE注释；只订阅一次业务source，merge prefetch=1，不提前拉完整replay；最多一个待发送注释，多余tick丢弃。业务完成/错误/下游取消均回收定时器，不访问数据库、不扫描任务、不触发模型、不推进游标。新增5项测试覆盖注释、完成、错误、取消、同步完成和背压，连同既有4项ChatStreamPolicyTest明确加入受测sourceSet及selector；尚未取得后端执行结果。
+- Web只从已上线commit f1234a0提取解析器及递归依赖到本任务证据目录，未使用当前其他任务的dirty Web代码。既有7项SSE测试及新增10000注释零消息/零游标/零错误检查，共8项通过。证据`followup/sse-probe/web-fixed-source/source.json`与`web-parser-test.log`，不是重新构建/部署Web。
+- 原构建锁自然释放后启动本地attempt3，固定上述commit/tree、隔离MySQL、独立Gradle home；只复制依赖modules-2，不复用测试结果或损坏的transform cache。通过既有orchestrator取得串行锁并开始编译；命令与摘要见`followup/integration-local/attempt3/inputs.json`。
+- 本次exec66106随后以143/SIGTERM结束，Gradle daemon记录client断开/Broken pipe；发起者未知，不推断其他任务违规。没有测试XML、没有PASS或生产包；`interrupted.json`保留实际退出码、源码、日志摘要。原本任务wrapper/Gradle/MySQL均已消失，未看到MySQL正常shutdown日志，datadir暂保留且无对应运行进程，见`mysql-cleanup.json`。当前另一任务1810651持锁，不抢占、不盲重试；通过原conflict-alert仅协调。
+- API候选保存在原任务分支；develop仍未合入，线上仍原已验收591/166/469。当前主机安装器仍有Flow-only/LOCAL_ADMISSION_RETIRED限制，本轮未改造；不得伪造Run发布新保活。后续须先收口受测集成，再固定不夹带未授权计费变更的发布候选、明确适配本地来源，经过原锁/备份/恢复路径安装并复测超过300秒空闲连接。不能把源码完成写成上线完成。
+- 已清理前次SSE探针遗留的空闲Node runner1785562，先核对完整脚本路径、无子进程及浏览器已关闭；未控制他人进程。保留本任务唯一worktree、编译/依赖缓存用于接续，避免下一次重复冷构建。
