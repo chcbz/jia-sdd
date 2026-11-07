@@ -28,7 +28,7 @@
 
 - 2026-11-07同批 `cyf-full-local-20261107-01` **435.314秒**完整发布；包含TLS解释器故障与恢复，非扣除失败后的净耗时。固定生产同源API `7bb82c526e4ba4345ca8e88711067ed23dfcdbbc`、Web `f1234a0a083b5f38c2677886e89d98fc95aed21c`，热缓存快速基线；API105项无失败/跳过，Web47通过/2pending；前端255个线上index/JS/CSS摘要匹配。Web内容与原生产一致、changedFiles=0，不是新业务版本差异发布性能证明。
 - 修正解释器后的通用控制器已做4项隔离回归；相同调用由当批真实恢复验证，未再次完整部署。结果不是冷启动、全量回归、任意后续提交必≤600秒的保证。
-- **2026-11-07持久化已完成并回读核验：** 构建JDK为`/home/isp/apps/dragonwell-21.0.11.0.11+10-GA`；已验证Gradle缓存为`/home/isp/state/cyf-local-build/gradle-home`。当前API、API回退和当前Web包的逐字节镜像位于`/home/isp/wsps/private-maintenance/cyf-local-archive-20261107-{api-current,api-rollback,web-current}/package/`；原历史安装记录未改写，仍绑定的内存盘原包继续保护。新批输出使用持久任务目录，不再依赖内存盘归档。
+- **2026-11-07持久化已完成并回读核验：** 构建JDK为`/home/isp/apps/dragonwell-21.0.11.0.11+10-GA`；已验证Gradle缓存为`/home/isp/state/cyf-local-build/gradle-home`。当前API、API回退和当前Web包的逐字节镜像位于`/home/isp/pkgs/cyf/cyf-local-archive-20261107-{api-current,api-rollback,web-current}/package/`；原历史安装记录未改写，仍绑定的内存盘原包继续保护。新批输出使用持久任务目录，不再依赖内存盘归档。
 - **受控保留已实际启用：** 已安装现有维护工具的artifact登记及API LOCAL schema4/Web LOCAL schema2适配，4个完成任务已登记到原台账；原每30分钟cron继续消费，不新增任务。最新两批/组件、完成24小时、当前及回退绑定、进程/锁/未知状态均保护。只允许显式任务根或其`api/web/runtime`组件子根登记，不泛扫历史目录。
 - 已清理明确过期/废弃的2个API备份、3个未发布构建中间JAR、2个Web历史载荷及1个孤儿stage，回收**1,591,824,384 allocated bytes（约1.48GiB）**；证据/日志和当前、必要回退保持。持久化同时占用磁盘，净余量约1GiB，仍低于自动清理5GiB触发值；实际cron入口退出3表示无合规候选但容量目标未达，不能强删数据库/Runtime/未知备份来凑8GiB。
 - 维护工具253项隔离回归通过；真实自动入口已执行，末尾改为轻量`df`，不再以递归`du`长持锁。安装摘要、登记及清理证据见`docs/implementation/evidence/local-release-closure-20261107/`。版本化收口记录见同目录`version-control.json`（以实际生成及远端回读为准）；共享技能未修改，不声称已全局同步。
@@ -294,3 +294,7 @@ Run187的manifest原只接受x.y.z，拒绝合法既有prerelease；已保存前
 ### 目录归位补记（2026-11-07）
 
 按用户要求，构建JDK已原子迁至`/home/isp/apps/dragonwell-21.0.11.0.11+10-GA`，540项文件/权限清单完整核验，旧工具链目录已移除；不保留旧路径软链接，不改生产Temurin或重启服务。缓存仍归state；API/Web压缩包是受控安装输入、恢复及来源追溯副本，不是服务运行目录，服务不从压缩包直接运行。当前包归档暂保持原位，未借目录整理删除或改写当前/回退绑定。历史持久化证据中的旧JDK路径保留为当时事实，后续命令使用新路径。迁移凭证：`docs/implementation/evidence/local-release-closure-20261107/jdk-layout-20261107.json`。
+
+### 主机目录职责归位（2026-11-07后续更新）
+
+安装包镜像现位于`/home/isp/pkgs/cyf`；本地构建任务/缓存归`/home/isp/state/cyf-local-build`；旧维护档案归`/home/isp/baks/private-maintenance`，不再使用wsps存放运维归档。工作树按所属项目的`.worktrees`归属；空`cyf-worktrees`已删除，旧共享worktrees的15个任务目录保留待各Owner逐项收口。精确迁移与保留边界见`ops/maintenance/HOST_DIRECTORY_LAYOUT.md`，不将历史安装记录字符串重写成新执行证据。

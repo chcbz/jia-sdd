@@ -90,7 +90,7 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
   --api-version VERSION \
   --jdk /home/isp/apps/dragonwell-21.0.11.0.11+10-GA \
   --cache-home /home/isp/state/cyf-local-build/gradle-home \
-  --output /home/isp/wsps/private-maintenance/cyf-NEW_BATCH --evidence-dir /ABS/NEW/EVIDENCE --install
+  --output /home/isp/state/cyf-local-build/tasks/cyf-NEW_BATCH --evidence-dir /ABS/NEW/EVIDENCE --install
 ```
 
 ### 持久化与完成后保留（2026-11-07落地）
@@ -100,7 +100,7 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 
 ```bash
 /usr/bin/python3 -I -B /usr/local/libexec/cyf/rebuildable_cache_cleanup.py mark-complete \
-  --task-root /home/isp/wsps/private-maintenance/cyf-NEW_BATCH/api \
+  --task-root /home/isp/state/cyf-local-build/tasks/cyf-NEW_BATCH/api \
   --artifact package/api.tgz --component api \
   --source-commit FULL_API_COMMIT --source-tree FULL_API_TREE \
   --payload-sha256 ACTUAL_APPLICATION_JAR_SHA256
@@ -110,3 +110,5 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 - 最近两批/组件、24h及当前/回退引用均保护，沿用原30分钟cron和锁；重新使用任务目录前先mark-active。详见`ops/maintenance/LOCAL_ARTIFACT_RETENTION.md`。根盘约1GiB仍偏紧，不能据此保证冷构建/新增回归或后续任意批次达600秒。
 
 构建JDK目录已于2026-11-07按用户要求统一到`/home/isp/apps/dragonwell-21.0.11.0.11+10-GA`；此为目录原子迁移，不重下载、不另存一份、不改生产JRE。API包包含应用JAR及来源/测试/依赖证明，Web包包含静态资源及逐文件manifest；均为原安装事务输入，不是常驻运行依赖。历史安装记录和当前/回退绑定包本次不改动。
+
+主机目录职责：构建任务及缓存归state、最终包归档归`/home/isp/pkgs/cyf`、历史维护备份归baks，源码/worktree归各项目。当前三个镜像已迁至pkgs，旧wsps/private-maintenance和空cyf-worktrees入口已移除；不通过搬动未完成工作树整理目录。见`ops/maintenance/HOST_DIRECTORY_LAYOUT.md`。

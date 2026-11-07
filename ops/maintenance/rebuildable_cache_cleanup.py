@@ -20,7 +20,8 @@ class Paths:
   self.lock=Path('/run/lock/cyf-host-cleanup.lock')
   self.mountinfo=Path('/proc/self/mountinfo')
   self.proc=Path('/proc')
-  self.task_bases=[Path(x) for x in ['/tmp','/var/tmp','/home/isp/wsps/worktrees','/home/isp/wsps/private-maintenance','/home/isp/wsps/cyf/.worktrees']]
+  # Packages/build state follow the host layout; old shared worktrees are legacy-only.
+  self.task_bases=[Path(x) for x in ['/tmp','/var/tmp','/home/isp/pkgs/cyf','/home/isp/state/cyf-local-build/tasks','/home/isp/wsps/cyf/.worktrees','/home/isp/wsps/worktrees']]
   self.runtime_backup_base=Path('/home/isp/baks/cyf-agent-runtime-v1')
   self.artifact_records={
    'api':Path('/home/isp/state/cyf-api-flow/record.json'),
