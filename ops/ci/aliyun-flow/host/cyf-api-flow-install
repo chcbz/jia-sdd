@@ -143,19 +143,6 @@ LOCK_DEVICE="$(stat -Lc '%d' /proc/$$/fd/8)"
 LOCK_INODE="$(stat -Lc '%i' /proc/$$/fd/8)"
 export CYF_RELEASE_LOCK_INHERITED_FD=8 CYF_RELEASE_LOCK_DEVICE="$LOCK_DEVICE" CYF_RELEASE_LOCK_INODE="$LOCK_INODE" CYF_RELEASE_LOCK_HELD=1
 
-# Historical Flow downloads are root:root 0775. Only a physical, single-link,
-# owner-controlled package below the 0700 incoming directory may be normalized.
-[[ -f "$INCOMING_PACKAGE" && ! -L "$INCOMING_PACKAGE" ]] || fail 'incoming package is missing or unsafe'
-[[ "$(stat -Lc '%u:%h' "$INCOMING_PACKAGE")" == "${INSTALL_UID}:1" ]] || fail 'incoming package must be owner-controlled and single-link'
-PACKAGE_BYTES="$(stat -Lc '%s' "$INCOMING_PACKAGE")"
-[[ "$PACKAGE_BYTES" =~ ^[0-9]+$ ]] || fail 'incoming package metadata is unreadable'
-chmod 0600 "$INCOMING_PACKAGE"
-[[ "$(stat -Lc '%u:%a:%h' "$INCOMING_PACKAGE")" == "${INSTALL_UID}:600:1" ]] || fail 'incoming package normalization failed'
-
-[[ -f "$APPROVAL_PATH" && ! -L "$APPROVAL_PATH" ]] || fail 'approval is missing or unsafe'
-[[ "$(stat -Lc '%u:%a:%h' "$APPROVAL_PATH")" == "${INSTALL_UID}:600:1" ]] || fail 'approval must be owner-controlled 0600 single-link'
-[[ ! -e "$RECORD_PATH" || ( -f "$RECORD_PATH" && ! -L "$RECORD_PATH" && "$(stat -Lc '%u:%a:%h' "$RECORD_PATH")" == "${INSTALL_UID}:600:1" ) ]] || fail 'record path is unsafe'
-
 # V3 is an explicit LOCAL source projection in the ORIGINAL transaction below.
 # The validator is the fixed coordinator, not a second installer. Production
 # never accepts an environment-selected validator or caller's Python import path.
@@ -183,7 +170,10 @@ try:
     with os.fdopen(os.dup(fd), "rb") as stream:
         code = stream.read()
     after = os.fstat(fd)
-    if before != after or after != os.lstat(str(validator_path)):
+    def signature(info):
+        return (info.st_dev, info.st_ino, info.st_uid, info.st_gid, info.st_nlink,
+                info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+    if signature(before) != signature(after) or signature(after) != signature(os.lstat(str(validator_path))):
         raise SystemExit("changed transaction validator")
     validator = {"__name__": "_cyf_transaction_validator", "__file__": str(validator_path)}
     exec(compile(code, str(validator_path), "exec"), validator)
@@ -213,6 +203,36 @@ exec(compile(sys.stdin.read(), "<cyf-original-install-transaction>", "exec"))
 ' "$TRANSACTION_VALIDATOR" "$@"
 }
 
+# A schema-4 root descriptor names the genuine immutable LOCAL package. Keep
+# the original five-member extraction/transaction below; no extra disk copy and
+# no numeric Flow identity. Historical schema-3 admission remains retired.
+LOCAL_SOURCE_PACKAGE="$(transaction_python "$APPROVAL_PATH" <<'NATIVE_PACKAGE'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+if path.exists() or path.is_symlink():
+    validator['native_private'](path)
+    value = validator['local_json'](path.read_bytes())
+    if type(value) is dict and value.get('schema_version') == 4:
+        print(validator['native_package'](value))
+NATIVE_PACKAGE
+)" || fail 'LOCAL package descriptor validation failed'
+if [[ -n "$LOCAL_SOURCE_PACKAGE" ]]; then INCOMING_PACKAGE="$LOCAL_SOURCE_PACKAGE"; fi
+
+# Historical Flow downloads are root:root 0775. Only a physical, single-link,
+# owner-controlled package below the 0700 incoming directory may be normalized.
+[[ -f "$INCOMING_PACKAGE" && ! -L "$INCOMING_PACKAGE" ]] || fail 'incoming package is missing or unsafe'
+[[ "$(stat -Lc '%u:%h' "$INCOMING_PACKAGE")" == "${INSTALL_UID}:1" ]] || fail 'incoming package must be owner-controlled and single-link'
+PACKAGE_BYTES="$(stat -Lc '%s' "$INCOMING_PACKAGE")"
+[[ "$PACKAGE_BYTES" =~ ^[0-9]+$ ]] || fail 'incoming package metadata is unreadable'
+chmod 0600 "$INCOMING_PACKAGE"
+[[ "$(stat -Lc '%u:%a:%h' "$INCOMING_PACKAGE")" == "${INSTALL_UID}:600:1" ]] || fail 'incoming package normalization failed'
+
+[[ -f "$APPROVAL_PATH" && ! -L "$APPROVAL_PATH" ]] || fail 'approval is missing or unsafe'
+[[ "$(stat -Lc '%u:%a:%h' "$APPROVAL_PATH")" == "${INSTALL_UID}:600:1" ]] || fail 'approval must be owner-controlled 0600 single-link'
+[[ ! -e "$RECORD_PATH" || ( -f "$RECORD_PATH" && ! -L "$RECORD_PATH" && "$(stat -Lc '%u:%a:%h' "$RECORD_PATH")" == "${INSTALL_UID}:600:1" ) ]] || fail 'record path is unsafe'
+
+
 read_record() {
   transaction_python "$RECORD_PATH" "$INSTALL_UID" "$BACKUP_ROOT" <<'PY'
 import json, os, re, stat, sys
@@ -231,6 +251,10 @@ try:
     value = validator['local_json'](path.read_bytes())
 except (OSError, UnicodeDecodeError, ValueError):
     raise SystemExit('invalid record JSON')
+if value.get('schema_version') == 4:
+    for field in validator['native_record_fields'](value, backup_root):
+        print(field)
+    raise SystemExit(0)
 if value.get('schema_version') == 3:
     try:
         validator['local_install_record'](value, backup_root)
@@ -393,7 +417,7 @@ cleanup() { rm -rf -- "$WORK"; }
 trap cleanup EXIT
 
 diagnostic_mark unpack_validate.begin
-mapfile -t APPROVAL_CONTEXT < <(transaction_python "$INCOMING_PACKAGE" "$WORK" "$APPROVAL_PATH" "$EXPECTED_ORGANIZATION" "$EXPECTED_PIPELINE" "$EXPECTED_JOB" "$INSTALL_UID" <<'PY'
+mapfile -t APPROVAL_CONTEXT < <(transaction_python "$INCOMING_PACKAGE" "$WORK" "$APPROVAL_PATH" "$EXPECTED_ORGANIZATION" "$EXPECTED_PIPELINE" "$EXPECTED_JOB" "$INSTALL_UID" "$TARGET_JAR" <<'PY'
 import hashlib, json, os, re, stat, sys, tarfile, zipfile
 from pathlib import Path
 
@@ -499,44 +523,25 @@ except (OSError, UnicodeDecodeError, ValueError):
 if not all(isinstance(value, dict) for value in (receipt, metadata, sidecar, provenance, approval)):
     raise SystemExit('package or approval JSON shape is invalid')
 
-if approval.get('schema_version') == 3:
-    try:
-        validator['local_approval'](approval)
-        release = approval['release']
-        inputs = validator['local_read_install_inputs'](release['decision']['path'],
-                                                        release['decision']['sha256'])
-        validator['local_need'](inputs['release'] == release, 'RECOVERY_BINDING_MISMATCH')
-        validator['local_authority_matches'](inputs['decision'], inputs['authority'],
-                                             ('apiInstall', 'apiStopStart', 'schemaApply'))
-        validator['local_need'](not report_seen, 'PACKAGE_INVALID')
-        validator['local_need'](digest(package) == release['package']['sha256']
-            and package.stat().st_size == release['package']['size'], 'PACKAGE_INVALID')
-        for name in expected:
-            ref = release['payloads'][name]
-            validator['local_need'](digest(root / name) == ref['sha256']
-                and (root / name).stat().st_size == ref['size'], 'PACKAGE_INVALID')
-        helper_root = Path(os.environ['CYF_API_FLOW_INSTALL_TEST_ROOT']) / 'bin' if (
-            os.environ.get('CYF_RELEASE_OFFLINE_TEST') == 'YES') else Path('/usr/local/sbin')
-        for name in ('cyf-api-kit', 'cyf-api-flow-install'):
-            actual = Path(validator_path) .parent / name if (
-                os.environ.get('CYF_RELEASE_OFFLINE_TEST') == 'YES' and name == 'cyf-api-flow-install') else helper_root / name
-            info = os.lstat(str(actual))
-            validator['local_need'](stat.S_ISREG(info.st_mode) and info.st_uid == expected_uid
-                and info.st_nlink == 1 and not info.st_mode & 0o022, 'HELPER_CATALOG_MISMATCH')
-            ref = inputs['helperCatalog']['helpers'][name]
-            validator['local_need'](info.st_size == ref['size'] and digest(actual) == ref['sha256'],
-                                    'HELPER_CATALOG_MISMATCH')
-        inputs['reader'].recheck()
-    except validator['LocalRejected'] as exc:
-        raise SystemExit(exc.code)
-    print('1' if approval['consumed'] else '0')
-    print(approval['binding_sha256'])
-    print(release['source']['identity']['commit'])
-    print(release['source']['identity']['tree'])
-    print('')
-    print(release['payloads']['receipt.json']['sha256'])
-    print(release['payloads']['application.jar']['sha256'])
+if approval.get('schema_version') == 4:
+    a = validator['native_validate_payloads'](approval, root)
+    target = Path(sys.argv[8])
+    actual = digest(target) if target.is_file() and not target.is_symlink() else 'MISSING'
+    if actual != a['expected_previous_sha256']:
+        record_path = approval_path.parent / 'record.json'
+        validator['native_private'](record_path)
+        record = validator['local_json'](record_path.read_bytes())
+        validator['native_record'](record, approval_path.parent / 'backups')
+        validator['native_need'](record['binding_sha256'] == validator['native_binding'](a)
+            and actual in ('MISSING', a['jar_sha256']), 'LOCAL canonical precondition changed')
+    for field in ('1' if a['consumed'] else '0', validator['native_binding'](a),
+                  a['source']['commit'], a['source']['tree'], a['source']['buildId'],
+                  a['receipt_sha256'], a['jar_sha256']):
+        print(field)
     raise SystemExit(0)
+
+if approval.get('schema_version') == 3:
+    raise SystemExit('LOCAL_ADMISSION_RETIRED: legacy local install approvals are not accepted')
 
 approval_open = {
     'schema_version', 'ticket_sha256', 'source_commit_sha', 'source_tree_sha',
@@ -713,7 +718,20 @@ payload = {
     'previous_sha256': previous, 'backup': backup, 'candidate_stop_rc': stop_rc,
     'timestamp': timestamp,
 }
-if run_id == '':
+if run_id and not run_id.isdigit():
+    approval = validator['native_read_approval'](path.parent / 'approval.json')
+    validator['native_need'](approval['source']['buildId'] == run_id
+        and approval['source']['commit'] == commit and approval['source']['tree'] == tree
+        and validator['native_binding'](approval) == ticket
+        and approval['receipt_sha256'] == receipt and approval['jar_sha256'] == candidate,
+        'LOCAL recovery binding mismatch')
+    payload = dict(schema_version=4, source_kind='LOCAL', source=approval['source'], package=approval['package'],
+        binding_sha256=ticket, expected_previous_sha256=approval['expected_previous_sha256'],
+        receipt_sha256=receipt, candidate_sha256=candidate, previous_sha256=previous,
+        status=status, phase=phase, recovery=recovery, backup=backup,
+        candidate_stop_rc=stop_rc, timestamp=timestamp)
+    validator['native_record'](payload, path.parent / 'backups')
+elif run_id == '':
     try:
         approval_path = path.parent / 'approval.json'
         approval = validator['local_approval'](validator['local_json'](approval_path.read_bytes()))
@@ -939,7 +957,17 @@ closed_keys = open_keys | {'consumed_at'}
 expected = {'schema_version': 2, 'ticket_sha256': ticket, 'source_commit_sha': commit,
             'source_tree_sha': tree, 'run_id': run_id, 'receipt_sha256': receipt,
             'jar_sha256': jar}
-if run_id == '':
+if run_id and not run_id.isdigit():
+    validator['native_approval'](approval)
+    validator['native_need'](approval['source']['buildId'] == run_id
+        and approval['source']['commit'] == commit and approval['source']['tree'] == tree
+        and validator['native_binding'](approval) == ticket
+        and approval['receipt_sha256'] == receipt and approval['jar_sha256'] == jar,
+        'LOCAL consumed descriptor binding changed')
+    open_keys = validator['NATIVE_APPROVAL_KEYS']
+    closed_keys = open_keys | {'consumed_at'}
+    expected = {key: value for key, value in approval.items() if key not in ('consumed', 'consumed_at')}
+elif run_id == '':
     try:
         validator['local_approval'](approval)
         release = approval['release']

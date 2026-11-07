@@ -1,3 +1,7 @@
+> **2026-11-06 现行规则：** 用户告知云效额度用完，CYF 默认改为本地测试、构建、打包和受控部署；不自动启动 Flow。正式证据绑定真实本地构建批次、完整 commit/tree、必要测试与制品 SHA-256，不伪造 Run/CI 身份。保留发布授权、身份/ACL、锁、备份、可恢复安装与线上验收；develop 不自动部署。Gradle 仍先读构建文件并经现有编排器串行执行。下文冲突的 Flow-only/禁止本地构建说明仅作历史，完整规则见根 `AGENTS.md`“本地构建与部署（2026-11-06 用户最新决定）”。2026-11-07已完成Web/API原安装器LOCAL适配与同批实测；默认快速路径见本文末节，长期策略见 docs/aliyun-flow-cicd-strategy.md 的2026-11-07节。
+
+> 下方旧Flow-only说明保留作历史；当前入口见本文末节。
+
 # 当前交付入口（2026-10-17）
 
 前后端正式测试、构建、制品与版本部署统一走云效 Flow：前端 `4403172`，后端 `5260799`。本地工具用于控制面和定向诊断，不替代正式 Flow 验收，不执行本地生产打包/部署。develop 不自动部署；发布绑定固定源码、同 Run 制品和在线核验。规范见根 `AGENTS.md` 与 `docs/aliyun-flow-cicd-strategy.md`；本次仅改文档，不变更工具或云端配置。
@@ -65,3 +69,42 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 - 本地producer/admission的argv白名单允许 `--build-cache`，但不放宽所需测试/分层/bootJar任务的fresh日志要求，`FROM-CACHE`/`UP-TO-DATE`仍拒绝。`invocation.cacheHit=false`指整个验证未被EVIDENCE_HIT跳过，不表示JavaCompile未命中；实际命中以逐任务日志为准。
 - 2026-10-09用户授权收尾已同步安装 `/usr/local/libexec/cyf-api-local/admit-api-local.py`；回读SHA `49ff62e470beadf5c5c570b007d1d30a6dd18b1f32df217274d89121ff77728b`，新flag可用且cached required tasks仍拒绝。原值备份 `/home/isp/baks/cyf-backend-cache-closeout-20261009/admit-api-local.py.before`。安装使用既有coordinator→release→lifecycle锁和原子替换，应用PID/start/JAR/health未变，无应用发布或DDL。
 - 工具更新不改写历史批次的helper catalog/authority/receipt。下一次发布按当前固定工具重新生成对应批次的helper catalog；若恢复旧的精确批次且其catalog绑定旧工具，按同锁顺序先验证/恢复原helper（before SHA `a5d4f89693e02903001f148c5fdac1613d2756c26d334fd78702df054a16c32b`），不得绕过工具摘要或把旧回执重标新批次。
+
+## 本地快速构建与受控发布（2026-11-07）
+
+- API 构建入口 `local_build.py` 委托现有 orchestrator、跨任务锁和 Gradle；Web 构建入口 `local_web_build.py` 执行 npm ci、定向基线、原源码 Vite 配置与完整 public 打包。两个 builder **不安装**；新输出必须在干净源码和生产目录之外。
+- 完整同批入口 `local_release.py --install`：显式固定任务、两端完整 commit、版本、工具链、缓存、全新输出与包外 evidence-dir。串行 Web/API 构建，再由已安装的原 helper 执行 LOCAL 受控事务，核对前代摘要、备份、健康、签名、安全边界和全部线上入口/JS/CSS 摘要。没有伪造 Flow Run，未恢复旧准入。
+- 同批 600 秒从入口开始，包含准备、锁等待、测试、打包、安装和收尾；构建单元 `RuntimeMaxSec` 使用**剩余共同预算**，超时停止本批自有构建后定位，不原样盲重试。生产安装/JVM 必须在限时构建 cgroup **之外**，不能以到点为由强杀已切换的生产进程；原安装恢复保护保留，超时如实记未达标。
+- API 热缓存仅复用已验证工具/依赖及 JavaCompile 产物；测试、validateLayering、fresh bootJar 均当批新执行。构建采用 Dragonwell21、C1 与 workers2/内部 parallel，不改生产 Temurin/JVM 参数，不带 `CYF_API_STARTUP_DIAGNOSTICS`。公共 artifact/POI 与认证/运行类路径/启动基线共105项，不是全功能回归。`--plan-only` 可查完整输入/实际命令而不构建。
+- Web 保留生产 Vite 配置，public 原样流式打包而非复制两份；gzip1 和归档后释放自有 dist 控制峰值，逐文件验证完整包。基线47通过、2 pending，不能说全量测试通过。两端改业务仍须通过 `--api-regression-arg` / `--web-regression-test` 加入实际受影响回归；已知失败候选不能仅凭快速基线发布。
+- API 正式 LOCAL producer/receipt 与 Web LOCAL v2 manifest 绑定来源、工具、测试报告和逐文件摘要；原 API/Web helper 已适配 LOCAL，保留旧 Flow 来源兼容、锁、原件备份与恢复。安装路径仍是固定实体目录。原始失败、取消和历史诊断均保留，不重标成功。
+- 实测与可复用命令见 `docs/implementation/handoffs/LOCAL-BUILD-TIMING-20261106.md`；包外证据在 `docs/implementation/evidence/local-release-fast-20261106/`。热缓存实测不是冷构建或未来每次的时间保证。`/dev/shm` 输出是临时内存盘，不是持久归档；当前/回退绑定制品不能为腾空间直接删除。
+
+完整入口参数（用真实任务/新批次替换占位符，`--install` 有实际生产副作用）：
+
+```bash
+/root/.local/bin/python3.11 -u /home/isp/wsps/cyf/ops/orchestration/local_release.py \
+  --task-id TASK --batch-id NEW_BATCH \
+  --api-source /ABS/CLEAN/API --web-source /ABS/CLEAN/WEB \
+  --expected-api-commit FULL_API_COMMIT --expected-web-commit FULL_WEB_COMMIT \
+  --api-version VERSION \
+  --jdk /opt/cyf/toolchains/dragonwell-21.0.11.0.11+10-GA \
+  --cache-home /home/isp/state/cyf-local-build/gradle-home \
+  --output /home/isp/wsps/private-maintenance/cyf-NEW_BATCH --evidence-dir /ABS/NEW/EVIDENCE --install
+```
+
+### 持久化与完成后保留（2026-11-07落地）
+
+- 上述JDK和缓存已从临时路径迁入持久目录并核验；当前API/回退/Web包另有持久、摘要一致的镜像，历史安装record未改写。不要清理仍绑定的内存盘原件。干净源码须重新准备，历史计时worktree已删除。
+- 完整批次结束并保存包外证据后，由Owner显式登记，不能仅凭构建成功推断任务结束；统一输出的组件子目录已受控支持：
+
+```bash
+/usr/bin/python3 -I -B /usr/local/libexec/cyf/rebuildable_cache_cleanup.py mark-complete \
+  --task-root /home/isp/wsps/private-maintenance/cyf-NEW_BATCH/api \
+  --artifact package/api.tgz --component api \
+  --source-commit FULL_API_COMMIT --source-tree FULL_API_TREE \
+  --payload-sha256 ACTUAL_APPLICATION_JAR_SHA256
+# Web：使用同批 /web、package/web.tgz、component web及真实Web commit/tree，不传API payload参数。
+```
+
+- 最近两批/组件、24h及当前/回退引用均保护，沿用原30分钟cron和锁；重新使用任务目录前先mark-active。详见`ops/maintenance/LOCAL_ARTIFACT_RETENTION.md`。根盘约1GiB仍偏紧，不能据此保证冷构建/新增回归或后续任意批次达600秒。
