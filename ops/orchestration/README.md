@@ -92,7 +92,7 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
   --api-source /ABS/CLEAN/API --web-source /ABS/CLEAN/WEB \
   --expected-api-commit FULL_API_COMMIT --expected-web-commit FULL_WEB_COMMIT \
   --api-version VERSION \
-  --jdk /opt/cyf/toolchains/dragonwell-21.0.11.0.11+10-GA \
+  --jdk /home/isp/apps/dragonwell-21.0.11.0.11+10-GA \
   --cache-home /home/isp/state/cyf-local-build/gradle-home \
   --output /home/isp/wsps/private-maintenance/cyf-NEW_BATCH --evidence-dir /ABS/NEW/EVIDENCE --install
 ```
@@ -112,3 +112,5 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 ```
 
 - 最近两批/组件、24h及当前/回退引用均保护，沿用原30分钟cron和锁；重新使用任务目录前先mark-active。详见`ops/maintenance/LOCAL_ARTIFACT_RETENTION.md`。根盘约1GiB仍偏紧，不能据此保证冷构建/新增回归或后续任意批次达600秒。
+
+构建JDK目录已于2026-11-07按用户要求统一到`/home/isp/apps/dragonwell-21.0.11.0.11+10-GA`；此为目录原子迁移，不重下载、不另存一份、不改生产JRE。API包包含应用JAR及来源/测试/依赖证明，Web包包含静态资源及逐文件manifest；均为原安装事务输入，不是常驻运行依赖。历史安装记录和当前/回退绑定包本次不改动。
