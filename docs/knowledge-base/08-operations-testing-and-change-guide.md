@@ -35,3 +35,14 @@
 - Runtime版本化安装只替换制品及其systemd路径，实际配置使用`/home/isp/conf/cyf-agent-runtime-v1`；静态HOME位于`/home/isp/state/cyf-agent-runtime-v1/unified/agents/{角色}/codex-home`。本轮未修改Provider密钥、身份、HOME、资料ACL或费用策略。构建Python须使用已验证3.11工具链；系统python3.6无法安装固定Pillow10.4，不能为过构建而放宽锁定依赖。
 - 先区分安装SUCCEEDED、目录CALLABLE、action接纳、Provider等待、RESULT_COMMITTED、可下载及内容正确六个事实。目录不可用先查认证回执、代际类型、权益和绑定，不重复购买；Provider在途不重复发新动作；下载必须比对manifest的output SHA/byteLength，不能误用result manifest的SHA。
 - 已发生的失败与证据见[验收](../../specs/juyiting-skill-execution/acceptance.md)及其原字节副本索引；OCR仍失败，正式发布不等于全部验收。临时脚本清理保留可恢复备份及摘要清单，不删除原始回执或正式`ops/`工具。
+
+
+## 议事 SSE 空闲连接诊断（2026-11-07 核验）
+
+覆盖 API `69d7d1d537d332fbfe468c58dfcdc9a699640258`（develop 对应修复 `638896a`），仅传输层，不改变业务完成事实、最终回复落库或鉴权职责。
+
+- `/chat/conversation/events` 的长连接由 `ChatStreamPolicy.keepAlive` 每30秒发送一次 `:keep-alive` 注释；不查数据库、不发业务事件、不推进消息游标。业务源只有一个订阅，背压时丢弃多余保活，取消/结束时释放定时器。
+- Nginx `/chat` 的300秒空闲读取超时保持不变。诊断必须对比直连API与公网HTTP/2并观察超过300秒；不能只凭单元测试、HTTP200或短时连接认定修复。
+- Web既有解析器忽略SSE注释，页面不应出现“keep-alive”消息。业务首帧耗时观测只统计业务源，保活不能掩盖模型/任务等待。
+- 发布后的测试登录须验证有效性。旧测试令牌若返回401，应通过正常登录重新获取；保留失败样本，不以绕过鉴权进行探测。
+- 精确源码、安装与公网实测证据见 `docs/implementation/handoffs/HALL-THREE-FIXES-20261106.md`。历史异常事项不因传输修复而自动重放或恢复。

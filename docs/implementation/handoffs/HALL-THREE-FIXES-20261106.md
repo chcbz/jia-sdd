@@ -157,3 +157,18 @@ API与Runtime已在远端develop无并发新提交条件下正常快进推送（
 - 正常快进push API develop：f24f4c1→`638896a16cbf3f6df602a65f9a6c97b4ceb4889b`，远端readback一致、工作区干净；tree`50384c91391b7e5b3f71931996ec53ab7dcb8fd8`。证据`integration-local/integration-complete.json`。前文“等待/未合入”是之前阶段状态，以此为准。
 - 本任务验证units均已结束；保存失败unit状态后仅reset-failed本任务4个失败transient units，未控制他人服务或正在运行的作业。此前两个隔离MySQL均已停止并清理datadir。没有最终生产包，未登记虚假可回收产物；唯一工作区/编译缓存仍供未完成的发布步骤使用。
 - **整体交付尚未结束，新SSE保活未部署。** API develop集成包含并行计费基线，不能直接安装；后续在同一工作区固定已部署7bb82c5 + 本次SSE补丁的独立候选，按真实LOCAL来源适配当前安装器，保留原互斥/完整性/备份/恢复，不能恢复已退役准入或伪造Flow。再执行生产打包必需回归、受控安装及>300秒空闲对照。当前只完成源码集成和定向验证，不将其冒充发布完成。
+
+### SSE 隔离候选已发布并完成线上定向回归（2026-11-07）
+
+- 接续核实：线上已被本地发布工具任务合法重装为 LOCAL `cyf-full-local-20261107-01-api`，源码仍 `7bb82c526e4ba4345ca8e88711067ed23dfcdbbc`，JAR `b0de1e722b31041e8eac08ea35e7c40ae9e1051f559d4ef67ea43beb4439cfcc`。原安装器已具备真实 LOCAL 支持，直接复用；未恢复退役准入、未启动Flow、未覆盖工具Owner修改。
+- 复用唯一工作区，从实际生产基线只摘取SSE四文件补丁并升版。发布 **API1.1.39-SNAPSHOT**，commit `69d7d1d537d332fbfe468c58dfcdc9a699640258`，tree `a139a8d87dec7af43a0e02c2ce939c7d3d8eb9d9`；已推送并回读 `codex/hall-sse-release-20261107`。develop仍保留已验证的等价SSE补丁638896a；本次没有将其中的并行计费基线带上线。
+- 固定候选本地新执行126项测试（105项发布基线 + 9项流策略 + 12项真实MVC），0失败/错误/跳过；validateLayering、依赖来源摘要、fresh bootJar通过，Gradle127.604秒。不是复用其他tree的测试结果，也不将昨日133项与本轮重复累加。
+- 原builder打包阶段真实失败 `EVIDENCE_INVALID`：额外 `--init-script` 已实际执行，但export evidence未列入其input record。保留失败结果，核对脚本与原fixture字节完全一致，在同批证据中补充真实输入记录，由原producer重新完整校验/打包36.890秒；无重编、无跳过校验、无伪造成功。生产包为 `/home/isp/state/cyf-local-build/tasks/cyf-hall-sse-20261107/package/api.tgz`，真实producer回执见下方证据。通用builder没有被本任务顺手重构；其附加init证据自动收集缺口仍需使用者注意，不能声称工具已修复。
+- 10:18:13受控安装成功，原发布锁/前代摘要/备份/恢复均保留。实际JAR SHA **`355f27323084b2a60a8e1e45dea56b58bb123c803f8b517143c48fc86cb0059d`**；PID2288473，固定实体JAR、端口归属、用户身份、ARTIFACT_ATTESTATION=MATCH、HEALTH=UP。前代备份实际字节等于部署前JAR；未改生产JVM/诊断参数、数据库、Web或Runtime。
+- 首次探针使用重启前测试令牌，直连/公网均401；保留原样本，停止本任务探针后走正常登录，不绕鉴权。重新登录后 **10:19:42.859—10:25:12.878**，直连API与公网HTTP/2同时持续330秒，两者均200、窗口终点仍打开，各收到10个 `:keep-alive` 注释（首次约30.184s、最后300.183s）。初始6帧历史/ready之后没有新业务帧、ID或游标变化；随后由探针主动关闭，两端close约330.02s。相比原公网299969ms断线，原根因已在真实代理链路验证消除；Nginx300秒配置未改。定时器取消释放由本轮策略/MVC回归覆盖，不把线上连接关闭冒充内部定时器指标。
+- 607/608测试事项两轮并发只读：能力、workspace、context及事项详情共16次请求全部200/E0，无404/409/503。实际Web进入607议事：原诗与历史回复可见、没有keep-alive文本、没有“正在回复”。本轮没有调用模型发新任务；此前同native thread记忆/服务器咨询业务回归保留原证据，不冒充今天新执行。原602/603未修改/删除/重放，不能把其历史数据缺失宣称自动修复。
+- **耗时未达600秒目标。** 可证实的候选准备（reflog 10:11:16，秒精度）到最后健康/验收回执10:26:28.926，共 **912.926秒**；显式批次计时开始到同一终点857.093秒。包含补证据、重登录、330秒空闲观测及所有阶段间隔；更早只读环境调查未计时，完整工作墙钟只会更长，不能宣传达标。回执脚本首次用系统Python3.6缺fromisoformat失败，改3.11后仅补回执，未重装；该间隔也计入。不是将127.604秒Gradle或跨批相加当完整发布成绩。
+- 证据根：`/home/isp/state/cyf-diagnostics/hall-three-issues-20261106/followup/release-20261107/`，主回执`release-result.json`，包外固定输入/日志/XML/receipt在`build-evidence/`，公网实测`browser/idle-result.json`，在线读取`browser/read-smoke.json`，前端截图/观察`browser/poem-readback.png`、`browser/ui-smoke.json`；安装/前代摘要与失败样本均保留。
+- 包外证据已保存，最终持久包通过原`mark-complete`登记，仍受当前/回退、24h、最近两批保护，没有删除当前包/生产备份。自有浏览器/profile、已结束build unit和`/dev/shm`中间构建、唯一干净worktree已收口，远端候选保留；共享缓存、他人工作区/进程不动。稳定传输诊断知识补入既有运维指南，仅暂存本任务新增段，保留该文件其他Owner的未提交改动。
+
+本任务本轮剩余的SSE发布及定向验收已完成；不等同于全项目所有性能目标、任意旧异常任务恢复或通用本地构建工具缺口已全部解决。
