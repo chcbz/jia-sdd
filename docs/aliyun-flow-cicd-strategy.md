@@ -314,3 +314,7 @@ Web1.16.46 / develop321f358f0d8289292c90374d7cce21a3423a27c3将既有多媒体�
 ### 主机目录职责归位（2026-11-07后续更新）
 
 安装包镜像现位于`/home/isp/pkgs/cyf`；本地构建任务/缓存归`/home/isp/state/cyf-local-build`；旧维护档案归`/home/isp/baks/private-maintenance`，不再使用wsps存放运维归档。工作树按所属项目的`.worktrees`归属；空`cyf-worktrees`已删除，旧共享worktrees的15个任务目录保留待各Owner逐项收口。精确迁移与保留边界见`ops/maintenance/HOST_DIRECTORY_LAYOUT.md`，不将历史安装记录字符串重写成新执行证据。
+
+### develop实际复验（2026-11-07）
+
+本策略四个提交已精准合入远端develop，控制面03fa5938；组件固定各自远端develop（API638896a、Webc1e478f）。使用apps下JDK、state下任务/缓存，归档落pkgs；两端构建批次269.094秒，测试和fresh JAR未复用旧证据。生产只读检查确认MICRO/WEN列不兼容，因此未安装/重启/迁移；不能把构建通过写成发布通过。首轮稀疏输入遗漏的失败记录保留，补齐文件后重新验证；完整明细与资金切换前置见`docs/implementation/handoffs/DEVELOP-LOCAL-RELEASE-20261107.md`。

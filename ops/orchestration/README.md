@@ -116,3 +116,9 @@ python3 -B -m unittest discover -s ops/orchestration/tests -p 'test_preflight.py
 构建JDK目录已于2026-11-07按用户要求统一到`/home/isp/apps/dragonwell-21.0.11.0.11+10-GA`；此为目录原子迁移，不重下载、不另存一份、不改生产JRE。API包包含应用JAR及来源/测试/依赖证明，Web包包含静态资源及逐文件manifest；均为原安装事务输入，不是常驻运行依赖。历史安装记录和当前/回退绑定包本次不改动。
 
 主机目录职责：构建任务及缓存归state、最终包归档归`/home/isp/pkgs/cyf`、历史维护备份归baks，源码/worktree归各项目。当前三个镜像已迁至pkgs，旧wsps/private-maintenance和空cyf-worktrees入口已移除；不通过搬动未完成工作树整理目录。见`ops/maintenance/HOST_DIRECTORY_LAYOUT.md`。
+
+### 干净源码准备与develop复验（2026-11-07）
+
+工作区脏时按所属组件的`.worktrees`隔离固定远端develop，不重用根gitlink的过期SHA。若采用稀疏Web源码，必须保留所有生产src/public/static、根配置及所选测试的完整依赖闭包，尤其`tests/interface-*.test.mjs`、`tests/fixtures/interface-standard/`和`tests/helpers/`；缺测试文件必须修正准备过程，不能移除断言。
+
+本轮API638896a/Webc1e478f使用develop控制面03fa5938，Web53.900s/API213.060s，构建批次269.094s；API107通过，Web50通过/2pending。仅构建验证：生产仍为MICRO列，develop访问WEN列，未进行资金迁移或安装，不把此时间作为完整发布达标。详见`docs/implementation/handoffs/DEVELOP-LOCAL-RELEASE-20261107.md`。
