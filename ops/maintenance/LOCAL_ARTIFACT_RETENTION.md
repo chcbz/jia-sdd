@@ -41,3 +41,7 @@ Web/Runtime 使用对应 component，不需 API payload 参数；可同时用既
 源码基线：根 `136e0682c6436f7ad3122dfd9a5fffee7698c82e`；本次实际修改以 handoff 的文件 SHA-256 为准，不把未提交维护工具冒充该 commit 内的字节。主机安装/回读、自动任务是否实际消费及下一次真实发布600秒结果分别记在 `docs/implementation/handoffs/LOCAL-BUILD-RETENTION-10M-20261106.md`。旧本地准入仍已退役，见同目录 `ADMISSION_RETENTION.md`，本功能不恢复它。
 
 2026-11-07补记：现行API schema4 LOCAL由原coordinator原生校验器确认，Web schema2 LOCAL由原Web helper及私有备份descriptor确认；保留旧Flow支持，未知schema仍fail-closed。安装文件摘要、注册与真实入口记录已保存。上述“源码基线”是历史起点，不代表本轮工具字节已存在于该旧commit。
+
+## 2026-11-07目录归位更新
+
+完成包显式基目录增加`/home/isp/pkgs/cyf`、`/home/isp/state/cyf-local-build/tasks`，移除`/home/isp/wsps/private-maintenance`；现有共享worktrees仅作历史兼容，不作为新工作树默认根。三个镜像的登记路径已随原子迁移更新，完成时间/摘要/身份不变。baks/private-maintenance是历史维护档案，不纳入最终包扫描。此为目录整理，不改变24h/最近两批/当前回退/进程/锁保护。详见`HOST_DIRECTORY_LAYOUT.md`。

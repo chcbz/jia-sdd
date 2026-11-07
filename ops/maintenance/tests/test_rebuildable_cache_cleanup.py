@@ -24,6 +24,20 @@ class Tests(unittest.TestCase):
   for n in ('a.js','b.js'):(task/'web/node_modules'/n).write_text('dependency')
   return task
  def complete(self,task):m.mark_complete(self.p,task,['web/node_modules'])
+ def test_host_layout_has_explicit_package_and_build_bases_not_private_maintenance(self):
+  bases=m.Paths().task_bases
+  self.assertIn(Path('/home/isp/pkgs/cyf'),bases)
+  self.assertIn(Path('/home/isp/state/cyf-local-build/tasks'),bases)
+  self.assertIn(Path('/home/isp/wsps/cyf/.worktrees'),bases)
+  self.assertNotIn(Path('/home/isp/wsps/private-maintenance'),bases)
+  self.assertNotIn(Path('/home/isp/baks/private-maintenance'),bases)
+ def test_explicit_package_and_build_component_roots_remain_bounded(self):
+  for name in ('pkgs','build-tasks'):
+   base=self.base/name;base.mkdir();self.p.task_bases.append(base)
+   task=base/'cyf-new-batch/api';task.mkdir(parents=True)
+   self.assertEqual(m.task_root(self.p,task),task)
+   nested=task/'nested';nested.mkdir()
+   with self.assertRaises(m.Unsafe):m.task_root(self.p,nested)
  def test_old_global_cache_eligible(self):p=self.file();self.assertEqual([r['path'] for r in self.rows()],[str(p)])
  def test_recent_ctime_protects_even_if_mtime_old(self):p=self.file();os.utime(str(p),(0,0));self.assertFalse(m.collect(self.p,m.proc.snapshot(self.p.proc),time.time())[0])
  def test_keep_dangling_symlink_protects(self):self.file();(self.p.cache/'.keep').symlink_to('missing');self.assertFalse(self.rows())
