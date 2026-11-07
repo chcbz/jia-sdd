@@ -386,9 +386,30 @@ class LocalPackageTest(unittest.TestCase):
 
     def test_argv_disallows_exclusions_credentials_and_fake_flow(self):
         original = copy.deepcopy(self.f.ev['invocation']['argv'])
-        for args in (['-x', 'test'], ['-PCYF_FLOW_GRADLE_ACTIVE=1'], ['-Dpassword=synthetic'], ['--offline']):
+        for args in (['-x', 'test'], ['-PCYF_FLOW_GRADLE_ACTIVE=1'], ['-Dpassword=synthetic'], ['--refresh-dependencies']):
             self.f.ev['invocation']['argv'] = original + args
             self.rejected(self.run_fixture, 'EVIDENCE_INVALID')
+
+    def test_parallel_headers_require_one_fresh_root_completion(self):
+        task = ':starter:bootJar'
+        completion = 'CYF_TASK_TIMING ' + json.dumps(dict(task=task, rootBuild=True,
+            skipped=False, failed=False, skipMessage=None)) + '\n'
+        headers = '> Task ' + task + '\n> Task ' + task + '\n'
+        m.task_executed(headers + completion, task)
+        for log in (headers, headers + completion + completion,
+                    headers + completion.replace('"failed": false', '"failed": true'),
+                    headers + '> Task ' + task + ' FROM-CACHE\n' + completion):
+            with self.assertRaises(m.Rejected): m.task_executed(log, task)
+
+    def test_fixed_fast_build_options_do_not_allow_arbitrary_jvm_arguments(self):
+        argv = ['./gradlew', '--parallel', '--offline', '--max-workers=2',
+            '--project-cache-dir', '/private/cache',
+            '-Dorg.gradle.jvmargs=-Xmx768m -XX:MaxMetaspaceSize=384m -XX:ActiveProcessorCount=2 -XX:TieredStopAtLevel=1',
+            '--console=plain', '-I', '/safe/local-release-metadata.init.gradle', ':starter:bootJar']
+        m.validate_argv(argv, {':starter:bootJar'}, [{'path': '/safe/local-release-metadata.init.gradle'}])
+        for extra in ('--exclude-task', '-x', '-Dorg.gradle.jvmargs=-javaagent:/unsafe'):
+            with self.assertRaises(m.Rejected):
+                m.validate_argv(argv + [extra], {':starter:bootJar'}, [{'path': '/safe/local-release-metadata.init.gradle'}])
 
     def test_actual_test_filter_argv_is_preserved_not_executed(self):
         argv = self.f.ev['invocation']['argv']

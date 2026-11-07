@@ -1,3 +1,42 @@
+> **2026-11-06 现行规则：** 用户告知云效额度用完，CYF 默认改为本地测试、构建、打包和受控部署；不自动启动 Flow。正式证据绑定真实本地构建批次、完整 commit/tree、必要测试与制品 SHA-256，不伪造 Run/CI 身份。保留发布授权、身份/ACL、锁、备份、可恢复安装与线上验收；develop 不自动部署。Gradle 仍先读构建文件并经现有编排器串行执行。下文冲突的 Flow-only/禁止本地构建说明仅作历史，完整规则见根 `AGENTS.md`“本地构建与部署（2026-11-06 用户最新决定）”。2026-11-07已完成API/Web原安装器LOCAL来源适配与同批完整发布实测；当前默认快速路径、适用范围和持久化/清理状态见下节。
+
+## 本地快速构建发布长期策略（2026-11-07）
+
+本节登记为 **CYF Web/API 后续本地发布的默认快速路径**，不是本轮计时专用命令；下方冲突的历史 Flow-only、未适配及未实测描述不代表当前状态。不扩展为 Runtime 已经达标，不恢复付费 Flow 自动触发。
+
+### 默认入口和优化配置
+
+| 范围 | 长期采用的方式 | 不得误读为 |
+| --- | --- | --- |
+| 统一执行 | `ops/orchestration/local_release.py --install`；固定任务、版本、两端commit/tree、工具链、干净源码、新输出、包外证据 | 自动部署develop或任意脏工作区 |
+| 后端工具链 | 已验证Dragonwell21用于构建；短生命周期构建/测试JVM使用C1；Gradle内部parallel、workers2，仍经原orchestrator/共享锁 | 修改生产Temurin/JVM或无限并发 |
+| 后端缓存 | 持久、已验证的依赖与JavaCompile缓存；缓存齐备时显式offline；测试/validateLayering/fresh bootJar均当批执行 | 复用旧测试结果或旧最终JAR冒充新构建 |
+| 后端测试 | 105项发布基线，源码切片只编译该基线；业务改动用`--api-regression-arg`加入受影响回归 | 只用`--tests`就能避免全部测试编译；快速绿可覆盖已知业务失败 |
+| 前端构建 | npm ci、47项通过/2pending的发布基线、原源码Vite配置；`--web-regression-test`补业务回归 | 已完成全量前端回归或业务回归自动选取 |
+| 前端打包 | public原样流式归档，避免dist重复复制；gzip level1；归档后释放自有生成dist；全部文件size/SHA校验 | 漏打public、只校验主页或删生产资源 |
+| 主机调度 | 两端重型构建串行；只在单次Gradle内部有限并行 | 前后端高内存构建同时争抢主机资源 |
+| 安装与重试 | 复用已适配LOCAL的原事务helper；锁、前代摘要、备份、恢复、健康、在线资源校验；精确同包可恢复不重编 | 绕过TLS、锁、授权或用失败测试包发布 |
+| 工具预检 | Web helper用其原定系统Python `/usr/bin/python3 -I -B`；安装前验证同解释器TLS信任链 | 使用控制器Python替代，或关闭证书验证 |
+
+### 计时与停止规则
+
+完整同批目标600秒，准备、锁等待、测试、构建、打包、安装、健康/必要smoke及收尾都计入。构建的task-owned systemd unit采用**剩余共同预算**，到点停止本批构建，保留日志并优化，不原样盲等/重跑。失败和修复间隔不扣除，不跨批拼接成绩。
+
+生产安装/启动必须在限时构建cgroup之外；不能为凑时间强杀生产JVM，原恢复保护保持。无法在预算内完成就记未达标，不因目标放过必要回归。冷缓存、依赖变更和新增业务回归须重新实测；offline缺依赖应先定位并受控补齐，不反复盲跑。
+
+### 已验证范围及持久化/清理状态
+
+- 2026-11-07同批 `cyf-full-local-20261107-01` **435.314秒**完整发布；包含TLS解释器故障与恢复，非扣除失败后的净耗时。固定生产同源API `7bb82c526e4ba4345ca8e88711067ed23dfcdbbc`、Web `f1234a0a083b5f38c2677886e89d98fc95aed21c`，热缓存快速基线；API105项无失败/跳过，Web47通过/2pending；前端255个线上index/JS/CSS摘要匹配。Web内容与原生产一致、changedFiles=0，不是新业务版本差异发布性能证明。
+- 修正解释器后的通用控制器已做4项隔离回归；相同调用由当批真实恢复验证，未再次完整部署。结果不是冷启动、全量回归、任意后续提交必≤600秒的保证。
+- **2026-11-07持久化已完成并回读核验：** 构建JDK为`/opt/cyf/toolchains/dragonwell-21.0.11.0.11+10-GA`；已验证Gradle缓存为`/home/isp/state/cyf-local-build/gradle-home`。当前API、API回退和当前Web包的逐字节镜像位于`/home/isp/wsps/private-maintenance/cyf-local-archive-20261107-{api-current,api-rollback,web-current}/package/`；原历史安装记录未改写，仍绑定的内存盘原包继续保护。新批输出使用持久任务目录，不再依赖内存盘归档。
+- **受控保留已实际启用：** 已安装现有维护工具的artifact登记及API LOCAL schema4/Web LOCAL schema2适配，4个完成任务已登记到原台账；原每30分钟cron继续消费，不新增任务。最新两批/组件、完成24小时、当前及回退绑定、进程/锁/未知状态均保护。只允许显式任务根或其`api/web/runtime`组件子根登记，不泛扫历史目录。
+- 已清理明确过期/废弃的2个API备份、3个未发布构建中间JAR、2个Web历史载荷及1个孤儿stage，回收**1,591,824,384 allocated bytes（约1.48GiB）**；证据/日志和当前、必要回退保持。持久化同时占用磁盘，净余量约1GiB，仍低于自动清理5GiB触发值；实际cron入口退出3表示无合规候选但容量目标未达，不能强删数据库/Runtime/未知备份来凑8GiB。
+- 维护工具253项隔离回归通过；真实自动入口已执行，末尾改为轻量`df`，不再以递归`du`长持锁。安装摘要、登记及清理证据见`docs/implementation/evidence/local-release-closure-20261107/`。版本化收口记录见同目录`version-control.json`（以实际生成及远端回读为准）；共享技能未修改，不声称已全局同步。
+
+操作参数见 `ops/orchestration/README.md`“本地快速构建与受控发布”；原临时源码worktree已收口，下一批必须选用/准备真实干净源码路径，不照抄历史已删路径。完整计时、失败及工具/制品摘要见 `docs/implementation/handoffs/LOCAL-BUILD-TIMING-20261106.md` 与 `docs/implementation/evidence/local-release-fast-20261106/full-01/release.json`。
+
+> 以下为历史策略，冲突时以上方2026-11-07规则为准。
+
 # CYF 构建、测试与部署策略：前后端统一云效 Flow
 
 更新：2026-10-17，按用户授权将 **CYF 项目内** 前后端正式测试、构建、制品与部署统一到云效 Flow，取代2026-10-08的后端本地交付默认规则。不修改全局、其他项目或共享技能；下方历史记录不是当前执行指令。本次仅更新文档，不修改云端配置、不构建、不部署、不重启。

@@ -1189,9 +1189,10 @@ class ApiLocalReadonlyInspectTest(unittest.TestCase):
         with patch('sys.argv', ['cyf-api-flow-deploy', '--local-install']), \
              contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as error:
             deploy.main()
-        self.assertEqual(error.exception.code, 1)
+        self.assertEqual(error.exception.code, 'LOCAL_ADMISSION_RETIRED')
 
 
+@unittest.skip('Historical schema3 publication is retired; native LOCAL schema4 is covered by test_native_local_api')
 class ApiLocalSchemaRecoverySourceTest(unittest.TestCase):
     """Original installed shell fixture + mocked bounded schema children only.
 
