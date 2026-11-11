@@ -1213,3 +1213,13 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 用户随后明确授权忽略该主机警告。采用临时、目标专用known_hosts接受此前观察的同一ECDSA指纹，登录仍StrictHostKeyChecking=yes，若指纹再次变化则停止；没有删除/改写全局信任记录。附件私钥仅复制到0700临时目录的0600文件，连接结束随目录删除，不写入源码/证据。
 - SSH已实际成功：主机li159-118、用户isp(uid1002)，Runtime进程PID4185。只读配置定位李逵profile `likui`，canonicalAgentId `jyt-jiafewnnv58ec2379c-likui`，installationId `rti_dd441f1ea25d6f6c8dff50463906abf1`，manifest tenant0/client jiafewnnv58ec2379c；hostId selfhost-li159-118-935f9597。manifest/profile位于 `/home/isp/conf/cyf-agent-runtime-v1/likui/`，私有HOME为 `/home/isp/state/cyf-agent-runtime-v1/unified/agents/likui/codex-home`。只读取明确允许的配置元数据，未读取会话/凭证正文。
 - 该主机标准app/runtime与app/codex-bridge的package.json不存在，实际进程源码路径/版本和API侧绑定/会话状态仍需核实，不能直接套用本机安装路径或声称业务在线；原指纹故障已由用户授权接受解决。证据self-host-likui-observation-20261111.jsonl。未远程写配置、部署、扣款、停止进程、解除关系或清理数据。
+
+### 2026-11-11 李逵 Runtime 已按用户单独授权升级
+- 用户明确要求“直接升级李逵服务器上的runtime版本”。本轮选择当前已生产验证的Runtime **1.3.71 / bridge1.1.59**（源码01914a4f8b1777e0e7496548d240cb46d138efde/tree712d8615d91f4e9baa885aa17a701112c3ded9d1），**没有部署尚未发布验收的租费候选1.3.96**，也没有部署API/Web、扣费或解除关系。
+- 目标isp@chcbz.net / li159-118，李逵既有installation rti_dd441f1ea25d6f6c8dff50463906abf1及配置不变。旧Runtime1.2.1/bridge1.0.1从releases/1.2.1切到固定app，PID4185→306359；旧程序归档至/home/isp/baks/cyf-agent-runtime-v1/20261111-likui-runtime1371/program，停写完整配置/状态快照private-state.tgz同目录。现有会话、技能、凭证和公共仓库未清理；旧current链接在验证后移除。
+- 复用本机已验证程序制品，按原7501项manifest逐项核对文件摘要、模式、内部链接与完整文件集后重新封装（不在生产目录编译）。归档SHA256 2b8e52a14b258fd004481d86eb7e908cead66f8bf1975483d27d9db5f7ccae8a。远端现有配置预检通过；补齐系统依赖bubblewrap，未更改内核参数/应用配置。
+- 本次核验：systemd active、真实app/node执行路径、旧进程退出，当前health同PID且connected/registered/ready均true、channelState=ready、lastFailure=null；没有调用付费模型，不能将在线验收等同真实事项或租费全链验收。
+- 原封装脚本未处理已登记的内部依赖symlink而失败，归因后按原manifest核对链接及其边界重试；首次远端展开被umask缩小目录权限而预检失败（旧服务未停），归因后显式保留源权限展开到新candidate-2并通过。失败证据保留，未盲重试/放宽摘要；未启用的失败暂存已删除，备份保留。
+- 证据：/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/likui-runtime-upgrade-2/remote-acceptance.json；远端/home/isp/state/cyf-runtime-upgrades/likui-20261111-runtime1371/acceptance.json。远端安装切换11.165秒，构建/展开各尝试失败分别保留，不冒充首次成功。
+- 升级前另完成资金责任层续费planId绑定（API0c583d6c77298e866d67d0157cc1d7c3aa470259）：防止跨部署套餐续费，不增加SQL或层层校验；同套餐版本变价继续允许。首批测试误用钱包字段导致编译失败，修正后20项真实H2事务回归及validateLayering通过。原runner误沿用“至少30项”汇总门槛使外层FAIL保留，逐项报告摘要及目标用例核对见renewal-plan-api-2/report-audit.json，无重复构建。本API改动未发布。
+- 本轮升级不解决自部署收费/远程生命周期控制、存量30天过渡、数据库与ES生产迁移等主任务缺口；不能将本次升级标为整套租费功能上线。
