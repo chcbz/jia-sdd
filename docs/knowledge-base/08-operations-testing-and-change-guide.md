@@ -50,3 +50,14 @@ Flow卸载高内存测试/构建/打包并执行授权部署；本机可做轻�
 - Web既有解析器忽略SSE注释，页面不应出现“keep-alive”消息。业务首帧耗时观测只统计业务源，保活不能掩盖模型/任务等待。
 - 发布后的测试登录须验证有效性。旧测试令牌若返回401，应通过正常登录重新获取；保留失败样本，不以绕过鉴权进行探测。
 - 精确源码、安装与公网实测证据见 `docs/implementation/handoffs/HALL-THREE-FIXES-20261106.md`。历史异常事项不因传输修复而自动重放或恢复。
+
+
+## 统一调度与租费上线操作边界（2026-11-11 核验）
+
+覆盖API `c7c0f2d78d4de51d4caed81cfe2caa1a6835b565`、独立SQL资源`87ccfef032662f15c5c60a820403b8edb2f65c66`、Runtime `7985667d1d73d3843d9f86dbc94f410a8ca520bd`。本节是已核对的配置/运维知识，不是完整业务验收；当前状态见[调度验收](../../specs/task-scheduling/acceptance.md)。
+
+- `cyf.task.scheduling.enabled`与显式node-id、GENERAL/CONTROL容量、batch及lease/retry/recovery参数共同启用统一worker。node-id同一节点各消费者共用、重启稳定；租约心跳不是业务强制deadline。正常多OAuth客户端进程不要为了后台业务增加全局fixed-tenant.client-id；该字段会同时收窄原认证准入。明确维护CLI仍使用其固定tenant/client。
+- 结构升级不由启动器自动执行。按固定SQL、实际停写快照、逐表回读执行；含不兼容结构的安装用原native forward-only恢复语义，不自动恢复旧JAR并运行于新结构。失败与新修复/验收另记，不改历史回执。
+- Runtime清理需要独立运维公共基线和`CYF_RUNTIME_KNOWLEDGE_CONFIG_FILE`；后者指向Agent可变HOME之外、实际服务用户拥有的0600配置。没有该路由则不以假提取器确认清理。知识提取成本归平台，实际会话清理/Provider收费不能仅凭配置加载与在线心跳宣称通过。
+- API mTLS文件必须按**实际API服务身份**检查可读；维护命令以root可读不等于生产用户可读。共享父目录只授予确切服务用户必要穿越，密钥只读，不为此开放全局目录或写权限。保存前后ACL/摘要与配置证据。
+- 监控pause/resume可能因其现有互斥返回deferred；先核对实际进程/安装record，再于锁释放后沿原入口恢复。监控恢复失败不等于制品安装失败，不据此重复构建/安装或回滚资金事实。
