@@ -197,7 +197,7 @@ STARTED先落平台账再调用模型；RESPONDED使用原价快照和原attempt
 - 定向证据：Runtime2488e71同源232项通过（含静态接入并发重放、重启、真实私有清理及同实例重邀；模型/原生注册明确fixture）。Java↔实际UDS↔Runtime的adopt/停止/证据/清理与安装锁回归已在固定API b49120979d通过62项及validateLayering（356.945秒），证据adoption-api-1；Runtime输入e54aa6c已核对581个Git blob及依赖摘要。远程宿主控制传输、实际存量租约迁移和生产上线仍未完成，不能单独打开收费开关。
 
 
-### 远程宿主控制传输（2026-11-11，Runtime候选已验证、API未接线）
+### 远程宿主控制传输（2026-11-11，双端候选，生产未配置）
 
 远程自行部署复用同一HostingControl和journal，仅增加运维配置的双向TLS入口；不是新增收费引擎、SSH业务调用或依赖Agent会话的控制入口。私有UDS继续使用原身份/权限合同；TLS在宿主进程持有，单Agent停止后仍可做证据确认及私有清理。应用消息保持protocolVersion=1及原scope/关系/代际，不让请求选择路径、地址或凭证。
 
@@ -205,4 +205,10 @@ Runtime hosting配置可选`remote`，完整字段为`listenHost`（IP字面量�
 
 两个传输共用16384字节请求帧上限。TLS配置/监听失败关闭已打开的UDS，不遗留半启动控制入口；正常关闭连同未完成TLS握手连接一起回收。本机临时证书的定向测试覆盖停止后继续控制、同journal重放、双向身份拒绝和凭证隔离；详见acceptance和Runtime `conf/cyf-agent-runtime-v1/HOSTING-CONTROL.md`。
 
-API仍待实现可信宿主路由和TLS客户端，不能据Runtime端通过宣布远程闭环。路由只来自运维端点配置及已授权的库存报价/安装hostId；重新邀请时运行投影会清空旧host字段，必须沿用已持久化报价/安装关联，不能误回落本机或让用户传URL。现有计价、账本、关系和调度职责不变；实际生产证书、端口与李逵验收均未执行。
+API候选新增`HostingControlChannel`，复用Spring `SslBundles`读取客户端密钥与可信CA，不自行解析/存储另一份凭证。`agent.hosting-rent.control.local-host-id`明确原本地Runtime hostId；`remotes`按真实hostId索引`address/port/ssl-bundle/tenant-id/client-id/owner-jiacn`，`owner-jiacn="*"`仅是运维配置通配。TLS地址和端口只来自配置，不接受请求URL；客户端强制校验服务器DNS/IP SAN与TLS1.2以上，远程返回hostId必须匹配选中端点。控制请求和原协议解码共用，不改变账本或生命周期状态机。
+
+路由优先使用已授权candidate.hostId；首次prepare用已持久化quote.inventoryHostId。没有这两种来源的库存/current/免费重整，单次按tenant/client/canonical Agent读取运行投影；已有投影缺hostId或host未配置时不回落本机。只有尚无运行投影的新托管主体走明确的本地host。这样重新邀请后投影暂时清空host字段也不会把远程实例误发本机；候选/报价已携带host时不额外查库，没有扫描或路由轮询。
+
+已有静态实例的免费重整探测沿原已登记host发capabilities；它只需要该宿主管理现有实例，不要求提供新建模板。`template:null`返回的`available:false`继续表示不可新建，不再误拒绝已存在实例的管理。新建托管探测仍要求available=true，wire不增加兼容字段，后续关系/安装证明不放松。调度和业务服务使用同一个provider，remote不是第二套收费或重试逻辑。
+
+本地只读核对hostId为`cyf-unified-065bb566a2d82210`，仍为UDS；李逵为`selfhost-li159-118-935f9597`，运行PID306359且尚无hostingControlPath。此为2026-11-11本轮观察，不代表已部署候选。最终安装须明确配置local-host-id及对应远程TLS端点，不能沿旧空配置发布后声称可用。双端固定源码测试结果见acceptance；生产证书/端口和实际李逵验收均未执行。

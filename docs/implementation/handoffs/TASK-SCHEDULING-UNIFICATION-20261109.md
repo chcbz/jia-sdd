@@ -1255,3 +1255,16 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 下一动作：API共享adapter的可信host路由和TLS客户端。现UnixManagedHostingProvisioner.exchange约355行只走UDS；可沿Spring已有SSL配置或JDK上下文接入，禁止请求传endpoint。必须解决attachReleasedBinding会清空runtimeHostId的路由点：初次重邀prepare使用持久化quote.inventoryHostId，后续candidate.hostId，不能退回本机。probeCapabilities目前无Agent参数且static template=null会返回不可新建，不能以此拒绝已有静态实例的正常重整。原账本/调度共用，接着自部署50文、存量两种模式30天过渡/首次调度、legacy规范ID重邀身份责任层，再生产迁移/制品/实际验收。
 - 当前磁盘约650MB可用，继续使用普通磁盘，不能为腾空间删未知包/日志/备份或用tmpfs。Runtime安装仍是李逵1.3.71，不把候选1.3.98当已部署。
 - 文档检查`./sddw check-docs task-scheduling`本轮FAIL，原因是三个无关已退役路径重新出现：agent-client-skill-refresh/delivery-status.md、agent-workspace-capability-refresh/delivery-status.md、oauth-public-client-hardening/delivery-status.md；原始输出保留tls-doc-check.log。不删除他人文件、不把文档检查说成通过；本任务git diff --check通过。
+
+
+### 2026-11-11 16:39 API可信路由/mTLS已实现，tls-api-4仍在途
+
+- 前轮是明确progress：Runtime双端传输候选通过。本轮API提交d5a445b4→c2f717dac4→897e5095800f7fc294b0858f04b2767a4954d654（tree0f6e6875110780d84ba03e3eff39f9a29d0dc7ea）；Runtime仅fixture提交8e556e9→bd73fe4。未生产配置/部署/扣费/清理。API工作区干净，Runtime原无关dirty保留。
+- `HostingControlRemoteProperties`注册operator localHostId及hostId→endpoint(address/port/SSL bundle/scope)；`HostingControlChannel`只承担可信路由与mTLS，SSLContext按Spring当前bundle实例复用。候选host优先，首次prepare用quote.host，其他从已登记runtime单次按scope查询；缺host拒绝，不对已存在投影回落本机，避免新关系清空投影字段后错路由。只有无投影的新托管主体可走明确本地host。candidate/quote已带host不多查库，未增加扫描/Redis或第二计费引擎。
+- 现existing probe(四参数)沿真实Agent主机发原capabilities，允许static template=null返回available=false（仍可管理既有实例）；新建三参数探测仍要求true。应用免费重整使用四参数；消息合同未变，API业务授权和账本原样。UDS和mTLS回复均核对选中host，端点不从HTTP请求接收。
+- tls-api-1在Gradle前因ledger仍b491209而拒绝，FAIL保留；同Owner正常transition固定新候选。tls-api-2生产源码编译通过、测试fixture未导入Map导致编译失败（280.546秒）；修复java.util.Map，同原工具记录归因并authorize-remediation（工具累计旧wallet失败导致计数2，非同根因盲重试）。tls-api-3：99项/97通过/2失败，486.248秒、layering通过；实际Java TLS静态探测/adopt/current/停止/证据/私有清理和负向身份均通过，H2重整5/应用28/凭证14/Runtime服务23通过。report-audit.json另存真实失败明细，不改原FAIL。
+- 两个失败：旧UDS fixture精确字段集合不接受remoteAddress:null（已改为只在TLS返回）；静态清理第1次调用false，原因尚不能证明。现在实际exchange直接抛异常/输出非CLEANED结果，Runtime fixture只记method/outcome/errorCode/elapsedMs，无正文/凭证；保留原1000ms测试值，没有猜测提高生产超时或改为跳过。后续根据实测处理。
+- **当前正在跑tls-api-4，exec session94645**，driver `/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/tls-api-driver-4.py`，日志tls-api-4/gradle.log；固定API897e509580、Runtime bd73fe4的tls-runtime-source-4；29项adapter/channel及layering。16:38实际PID1648007存活、处于agent compileJava，独立600秒内。先poll同一session，不因观察过期另启或重标结果。源码不得在此批仍编译时修改；runtime-input-audit.json已核对582Git blobs、Node与依赖tree。上批43894/81555均已终态，审计session62501已结束。
+- 控制配置只读核对记录在tls-api-3/local-host-route-observation.json与likui-host-route-observation.json：本地host=cyf-unified-065bb566a2d82210、UDS control.sock/gid1000；李逵host=selfhost-li159-118-935f9597、active/running/PID306359、未配置hostingControlPath。无证书/端口写入。最终部署必须设置新的local-host-id，不能把旧配置原样部署后宣称收费可用。
+- 后续真实缺口：自部署50文套餐和Web确认（现AgentController local仍走免费AgentPersonaProvisioningService，Web hostingRentContract硬编码mode=server）；费用模式必须由可信部署事实决定，不能仅凭用户mode给托管主机50文价。AgentRuntimeEntity没有部署模式字段，不能从远程/本地传输自动推断托管类型；应在既有运维主机配置/原租约责任层明确，并复用同一账本/调度。还需存量双模式30天过渡和首次调度、legacy规范ID重邀（provisionOpaqueIdentity目前拒绝非agt_，原live_agent_id唯一键迁移已允许历史身份保留）、生产DDL/ES/最终fresh制品与完整真实验收。
+- 当前普通磁盘约470MB余量。构建并未使用tmpfs；不清其他任务或未知包/备份。最后文档检查仍为已知3条无关退役路径复现，详见tls-doc-check.log，不将其说成通过。
