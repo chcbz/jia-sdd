@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" tests="6" skipped="0" failures="1" errors="0" timestamp="2026-09-30T12:11:26.517Z" hostname="iZwz9j3ip2unzhwij0bs30Z" time="5.508">
+  <properties/>
+  <testcase name="actualMysqlInitializingBeanMakesCoreDeliberationFinalizationAndArchiveReadyBeforeRunners()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="3.792"/>
+  <testcase name="actualRawLegacyFixtureIsRejectedReadOnlyWithOriginalFenceUnchanged()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.076"/>
+  <testcase name="realOldEnforcedSameNamedChecksAreRejectedReadOnlyWithoutAutomaticRepair()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.049"/>
+  <testcase name="actualRepairedExistingMysqlDefinitionsPassReadOnlyValidation()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.021"/>
+  <testcase name="actualJavaInitializedDdlRejectsAllThreeProvenImpossibleNullStates()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.324">
+    <failure message="org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: &lt;org.springframework.dao.DataIntegrityViolationException&gt; but was: &lt;org.springframework.jdbc.UncategorizedSQLException&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: &lt;org.springframework.dao.DataIntegrityViolationException&gt; but was: &lt;org.springframework.jdbc.UncategorizedSQLException&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:68)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3223)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest.mysqlCheckDenies(FinalizationActualMySqlLifecycleTest.java:121)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest.actualJavaInitializedDdlRejectsAllThreeProvenImpossibleNullStates(FinalizationActualMySqlLifecycleTest.java:126)
+Caused by: org.springframework.jdbc.UncategorizedSQLException: StatementCallback; uncategorized SQLException for SQL [INSERT INTO agent_selected_output_finalization(operation_id,tenant_id,client_id,owner_jiacn,task_id,immutable_digest,source_facts_digest,expected_task_version,expected_assignment_revision,conversation_id,conversation_generation,target_agent_id,grant_id,grant_version,run_id,summary,lease_token,lease_work_item_version,delivery_id,manifest_artifact_id,phase,version,created_at,updated_at) VALUES('op-1','0','client-1','owner-1','task-1',REPEAT('a',64),REPEAT('b',64),7,7,'100',3,'agent-1','grant-1',2,'run-1','chosen','fixture-only-lease',NULL,'delivery-1','manifest-1','LEASED',0,1,1)]; SQL state [HY000]; error code [3819]; Check constraint 'chk_asof_lease' is violated.
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1549)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:462)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest.lambda$mysqlCheckDenies$8(FinalizationActualMySqlLifecycleTest.java:121)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:54)
+	... 4 more
+Caused by: java.sql.SQLException: Check constraint 'chk_asof_lease' is violated.
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeInternal(StatementImpl.java:837)
+	at com.mysql.cj.jdbc.StatementImpl.execute(StatementImpl.java:685)
+	at org.springframework.jdbc.core.JdbcTemplate$1ExecuteStatementCallback.doInStatement(JdbcTemplate.java:453)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 7 more
+</failure>
+  </testcase>
+  <testcase name="actualInitializerLocksAreReleasedAndFixtureIdentityRemainsExact()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.113"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

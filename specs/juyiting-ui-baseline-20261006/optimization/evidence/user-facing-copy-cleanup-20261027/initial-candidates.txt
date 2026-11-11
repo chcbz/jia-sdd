@@ -1,0 +1,607 @@
+src/components/CommandObservability.vue:6:        <p>仅供内部只读排查。命令投递或回执不等同于 Agent 任务已经完成。</p>
+src/composables/useEconomyReadOnlyPreview.js:80:      capabilityError.value = next.available || next.reason === 'PREVIEW_DISABLED' ? '' : '经济预览协议不可用。'
+src/composables/useHttp.js:190:            status: httpResponse.status, requestId: rumRequestId,
+src/composables/useHttp.js:294:      responseMetadata.requestId = rumRequestId
+src/composables/useHttp.js:299:          throw protocolError('PROTOCOL_EXPECTED_BINARY', { status: httpResponse.status, requestId: rumRequestId })
+src/composables/useHttp.js:306:          status: httpResponse.status, requestId: rumRequestId,
+src/composables/useHttp.js:322:        requestId: rumRequestId,
+src/composables/useHttp.js:342:        requestId: rumRequestId,
+src/components/workspace/PersonalWorkspace.vue:113:        <div class="modal-heading"><div><p class="section-kicker">第二层 · 交付台</p><h2 id="workspace-generation-title">{{ showDeliveryProgress ? '交付进度' : '直接生成交付件' }}</h2><p>{{ showDeliveryProgress ? '服务端回执与查询结果在此处显示。' : '只保留一条清晰流程：选 Agent、定类型、写需求。' }}</p></div><button type="button" class="quiet-action" @click="backToBox">返回箱面</button></div>
+src/components/workspace/PersonalWorkspace.vue:114:        <section v-if="showDeliveryProgress" class="execution-status delivery-receipt" aria-live="polite"><p class="receipt-title">本次交付回执</p><template v-if="execution.receipt.value"><dl class="file-details"><div><dt>执行状态</dt><dd>{{ executionStateText(execution.receipt.value.state) }}</dd></div><div><dt>目标 Agent</dt><dd>{{ execution.selectedExecutionAgent.value?.name || execution.receipt.value.targetAgentId }}</dd></div><div><dt>执行编号</dt><dd>{{ execution.receipt.value.executionId }}</dd></div></dl><p v-if="execution.receipt.value.state === 'QUEUED'" class="workspace-note">服务端已接受请求，正在等待结果；尚未确认任何运行阶段或交付完成。</p></template><p v-else class="workspace-note">{{ execution.executionState.value === 'creating' ? '正在提交原请求；尚未收到服务端执行回执。' : '原请求结果待确认；只查询原请求，不会再次提交。' }}</p><div class="actions"><button type="button" @click="refreshExecution">刷新进度</button><button type="button" :disabled="execution.execution.value?.state !== 'QUEUED'" @click="revokeExecutionInputs">撤销尚未开始的输入授权</button><button
+src/components/workspace/PersonalWorkspace.vue:196:    <p v-if="workspace.writeNotice.value" class="workspace-note workspace-page-message" role="status">{{ workspace.writeNotice.value }} <template v-if="workspace.detailRetryFileId.value"><button type="button" :disabled="workspace.actionState.value === 'loading-detail'" @click="retrySavedDetail">重读详情</button></template></p>
+src/components/workspace/PersonalWorkspace.vue:279:const executionStateText = value => ({ QUEUED: '已接受，等待结果', OUTPUT_COMMITTED: '交付已归档', FAILED: '交付失败', INPUTS_REVOKED: '输入已撤销', UNKNOWN: '提交结果待确认' })[value] || '状态待确认'
+src/composables/useFormalTaskExecution.js:87:    if (value && value.executionId === intent?.executionId && ['INPUTS_REVOKED', 'OUTPUT_COMMITTED', 'FAILED'].includes(value.state)) clearRevokeIntent()
+src/composables/useFormalTaskExecution.js:112:    if (value.state === 'OUTPUT_COMMITTED') return 'TASK runtime 已提交输出；正式交付是否 submitted/accepted 仍须以 formal-deliveries 回执为准。'
+src/composables/useFormalTaskExecution.js:164:      scopeError.value = '执行回执未精确回显本任务、TASK 模式、工作项、会话、目标、PDF 或输入版本；未显示为成功，请仅恢复查询。'
+src/components/WxMpManager.vue:5:        <p class="eyebrow">WECHAT OFFICIAL ACCOUNT</p>
+src/composables/usePersonalWorkspaceExecution.js:43:const PRIVATE_STATES = new Set(['QUEUED', 'INPUTS_REVOKED', 'OUTPUT_COMMITTED', 'FAILED'])
+src/composables/usePersonalWorkspaceExecution.js:45:const CONVERSATION_STATES = new Set([...PRIVATE_STATES, 'RESULT_COMMITTED'])
+src/composables/usePersonalWorkspaceExecution.js:48:const TERMINAL_EXECUTION_STATES = new Set(['INPUTS_REVOKED', 'OUTPUT_COMMITTED', 'RESULT_COMMITTED', 'FAILED'])
+src/composables/usePersonalWorkspaceExecution.js:187:    if (value.state === 'OUTPUT_COMMITTED') { stopPolling(); completionNotice.value = '交付件已归档到工作空间。请刷新文件列表领取成果；文件可用性以本次服务端回执和下载结果为准。' } else if (value.state === 'INPUTS_REVOKED') { stopPolling(); completionNotice.value = '输入授权已撤销，后续读取和提交将被拒绝；不代表已取消外部调用或免除费用。' } else if (value.state === 'FAILED') { stopPolling(); completionNotice.value = ''; error.value = value.failureMessage } else completionNotice.value = ''
+src/composables/usePersonalWorkspaceExecution.js:259:      if (!confirmIntent({ idempotencyKey }, value?.executionId)) throw new Error('执行回执无法安全关联到原请求，未将其显示为已确认。')
+src/composables/usePersonalWorkspaceExecution.js:285:      if (value?.executionId !== executionId) throw new Error('执行恢复回执与请求编号不一致。')
+src/composables/useOutputs.js:66:  if (value.publicationState === 'WORKSPACE_COMMITTED') {
+src/composables/juyiting/hallTypedDeliberation.js:57:const acceptedFields = ['schemaVersion', 'intent', 'requestId', 'userMessageId', 'turnIds', 'state', 'stateVersion', 'eventCursor', 'statusUrl', 'typedOutcomeUrl', 'replay', 'pendingQuestionId']
+src/composables/juyiting/hallTypedDeliberation.js:59:  if (!exactKeys(value, acceptedFields) || value.schemaVersion !== body?.schemaVersion || value.intent !== body?.intent || !typedId(value.requestId) ||
+src/composables/juyiting/hallTypedDeliberation.js:62:    value.statusUrl !== `/chat/requests/${value.requestId}` || value.typedOutcomeUrl !== `/chat/conversations/${conversationId}/requests/${value.requestId}/typed-outcome` ||
+src/composables/juyiting/hallTypedDeliberation.js:84:const projectionFields = ['schemaVersion', 'route', 'conversationId', 'conversationGeneration', 'requestId', 'requestRevision', 'turnId', 'state', 'outcome', 'inspection', 'actionProgress', 'submissionProgress', 'reviewProgress']
+src/composables/juyiting/hallTypedDeliberation.js:126:      exactKeys(p.parent, ['requestId', 'stepId']) && typedId(p.parent.requestId) && typedId(p.parent.stepId)))
+src/composables/juyiting/hallTypedDeliberation.js:171:  if (route !== 'CHAT' || !((outcome?.kind === 'ANSWER' && outcome.deliverable === true) || (outcome?.kind === 'SUBMISSION_REQUEST' && outcome.deliverable === false)) || !exactKeys(p, submissionFields) ||
+src/composables/juyiting/hallTypedDeliberation.js:188:const childStates = ['RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED', 'PARTIAL', 'UNKNOWN', 'RECOVERY_REQUIRED', 'FINAL_PERSISTED', 'PUBLISHED', 'RESULT_COMMITTED', 'OUTPUT_COMMITTED']
+src/composables/juyiting/hallTypedDeliberation.js:191:  if (value.route !== 'CHAT' || !exactKeys(p, reviewFields) || p.sourceRequestId !== value.requestId || !typedLong(p.stateVersion, { allowZero: true })) return false
+src/composables/juyiting/hallTypedDeliberation.js:196:  return p.state === 'COMMITTED' && typedId(p.childRequestId) && p.childRequestId !== value.requestId &&
+src/composables/juyiting/hallTypedDeliberation.js:206:  if (['COMPLETED', 'FAILED', 'CANCELLED', 'RESULT_COMMITTED', 'OUTPUT_COMMITTED'].includes(before.childState) && before.childState !== after.childState) return false
+src/composables/juyiting/hallTypedDeliberation.js:209:export const actionOutcomeProjection = (value, context = {}, route = 'CHAT') => {
+src/composables/juyiting/hallTypedDeliberation.js:210:  if (!exactKeys(value, projectionFields) || value.schemaVersion !== 6 || value.route !== route || !['CHAT', 'INSPECT'].includes(route) ||
+src/composables/juyiting/hallTypedDeliberation.js:211:    !typedId(value.conversationId) || !typedLong(value.conversationGeneration) || !typedId(value.requestId) || !typedLong(value.requestRevision) || !typedId(value.turnId) || !['PENDING', 'READY', 'FAILED', 'CANCELLED'].includes(value.state)) return null
+src/composables/juyiting/hallTypedDeliberation.js:212:  for (const key of ['conversationId', 'conversationGeneration', 'requestId', 'requestRevision', 'turnId']) if (context[key] && value[key] !== context[key]) return null
+src/composables/juyiting/hallTypedDeliberation.js:217:    ([4, 5].includes(value.outcome.outcomeContractVersion) && route !== 'CHAT') || (!validProgress(value.actionProgress, value.outcome) || !validSubmission(value.submissionProgress, value.outcome, route) || !validReview(value.reviewProgress, value))) return null
+src/composables/juyiting/hallTypedDeliberation.js:218:  if (value.outcome.deliverable === true && (route !== 'CHAT' || value.outcome.messageSource.turnId !== value.turnId)) return null
+src/composables/juyiting/hallTypedDeliberation.js:221:export const typedOutcomeProjection = (value, context = {}) => actionOutcomeProjection(value, context, 'CHAT')
+src/composables/juyiting/hallTypedDeliberation.js:223:export const outcomeCardKey = value => `${value.requestId}\u0000${value.turnId}\u0000${value.outcome?.outcomeId || ''}`
+src/composables/juyiting/hallTypedDeliberation.js:229:  return progress?.state === 'QUEUED' || (progress?.state === 'COMMITTED' &&
+src/composables/juyiting/hallTypedDeliberation.js:235:  if (progress?.state !== 'COMMITTED') return ''
+src/components/juyiting/BountyTextSelectionArchive.vue:45:const uuid = () => { const value = globalThis.crypto?.randomUUID?.(); if (!value) throw new Error('当前环境不能生成安全幂等键。'); return `conversation-text-archive-${value}` }
+src/components/juyiting/BountyTextSelectionArchive.vue:105:    const receiptUnknown = () => Object.assign(new Error('保存回执无法确认冻结文字选区。'), { archiveOutcomeUnknown: true })
+src/composables/juyiting/useHallArtifactTransfer.js:173:      if (!responseMatchesPublish(result, body, chosen.size)) throw new Error('服务回执与本次成果不匹配，未确认保存。')
+src/components/juyiting/BountyExecutionTermination.vue:6:        <div v-for="candidate in candidates" :key="candidate.requestId" class="termination-action">
+src/components/juyiting/BountyExecutionTermination.vue:7:          <button type="button" :disabled="status.busy || status.state === 'recovery_error' || status.receipt?.requestId === candidate.requestId" @click="askConfirmation(candidate, $event)">放弃本轮未交付结果</button>
+src/components/juyiting/BountyExecutionTermination.vue:11:        <small>正在核对原请求 {{ status.intent.requestId }}，不会创建新的生成任务。</small>
+src/components/juyiting/BountyExecutionTermination.vue:41:  controller: { type: Object, default: null }, requestIds: { type: Array, default: null }, excludedRequestIds: { type: Array, default: () => [] } })
+src/components/juyiting/BountyExecutionTermination.vue:47:const accepts = requestId => props.requestIds ? props.requestIds.includes(requestId) : !props.excludedRequestIds.includes(requestId)
+src/components/juyiting/BountyExecutionTermination.vue:48:const relevantStatus = computed(() => status.value.intent ? accepts(status.value.intent.requestId) : !props.requestIds && Boolean(status.value.message))
+src/components/juyiting/BountyExecutionTermination.vue:49:const candidates = computed(() => props.requests.filter(request => accepts(request.requestId) && abandonmentCommand(request, props.conversationId)))
+src/components/juyiting/BountyExecutionTermination.vue:61:  confirmation.value = candidate.requestId
+src/components/juyiting/BountyExecutionTermination.vue:68:  const request = candidates.value.find(candidate => candidate.requestId === confirmation.value)
+src/components/juyiting/BountyDiscussionPanel.vue:64:      <template #turn-actions="{ requestIds }">
+src/components/juyiting/BountyDiscussionPanel.vue:66:          v-if="requestIds.length"
+src/components/juyiting/BountyDiscussionPanel.vue:70:          :request-ids="requestIds"
+src/composables/juyiting/useArchiveReader.js:189:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:191:    if (!isCurrentIdentity(requestIdentity) || signal?.aborted) return null
+src/composables/juyiting/useArchiveReader.js:203:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:204:    if (!isCurrentIdentity(requestIdentity) || signal?.aborted) return Promise.resolve(null)
+src/composables/juyiting/useArchiveReader.js:207:      if (!isCurrentIdentity(requestIdentity) || signal?.aborted) return null
+src/composables/juyiting/useArchiveReader.js:222:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:223:    if (!editionId || !isCurrentIdentity(requestIdentity) || signal?.aborted) return null
+src/composables/juyiting/useArchiveReader.js:229:    if (!isCurrentIdentity(requestIdentity) || signal?.aborted) return null
+src/composables/juyiting/useArchiveReader.js:271:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:272:    if (!edition.value?.editionId || !isCurrentIdentity(requestIdentity) || signal?.aborted) return []
+src/composables/juyiting/useArchiveReader.js:274:    if (isCurrentIdentity(requestIdentity) && !signal?.aborted) bookmarks.value = rows
+src/composables/juyiting/useArchiveReader.js:340:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:343:    const requestKey = `${requestIdentity}:${requestEditionId}:${requestManifest}:${block.blockId}:${locationKey(targetLocation)}`
+src/composables/juyiting/useArchiveReader.js:366:        if (!isCurrentIdentity(requestIdentity) || !isCurrentEdition() || generation !== loadGeneration || controller.signal.aborted) return null
+src/composables/juyiting/useArchiveReader.js:378:          if (!isCurrentIdentity(requestIdentity) || !isCurrentEdition() || generation !== loadGeneration || controller.signal.aborted) return
+src/composables/juyiting/useArchiveReader.js:381:          if (!isCurrentIdentity(requestIdentity) || !isCurrentEdition() || generation !== loadGeneration || error?.name === 'AbortError') return
+src/composables/juyiting/useArchiveReader.js:386:        if (!isCurrentIdentity(requestIdentity) || generation !== loadGeneration || error?.name === 'AbortError') return null
+src/composables/juyiting/useArchiveReader.js:391:        if (isCurrentIdentity(requestIdentity) && generation === loadGeneration) chapterLoading.value = false
+src/composables/juyiting/useArchiveReader.js:420:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:444:      const result = await replayIdentityMutation(requestIdentity, send)
+src/composables/juyiting/useArchiveReader.js:445:      if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:454:      if (!isCurrentIdentity(requestIdentity) || error?.name === 'AbortError') return null
+src/composables/juyiting/useArchiveReader.js:472:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:479:    if (isCurrentIdentity(requestIdentity)) saveState.value = 'saved'
+src/composables/juyiting/useArchiveReader.js:532:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:533:    if (!isCurrentIdentity(requestIdentity)) return Promise.resolve(null)
+src/composables/juyiting/useArchiveReader.js:549:    const promise = replayIdentityMutation(requestIdentity, () => api.put(
+src/composables/juyiting/useArchiveReader.js:554:      if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:562:      if (!isCurrentIdentity(requestIdentity) || error?.name === 'AbortError') return null
+src/composables/juyiting/useArchiveReader.js:567:      if (!isCurrentIdentity(requestIdentity)) return
+src/composables/juyiting/useArchiveReader.js:578:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:579:    if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:588:      const result = await replayIdentityMutation(requestIdentity, () => api.delete(
+src/composables/juyiting/useArchiveReader.js:595:      if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:603:      if (!isCurrentIdentity(requestIdentity) || error?.name === 'AbortError') return null
+src/composables/juyiting/useArchiveReader.js:660:  const sendNoteOperation = async (operation, requestIdentity) => {
+src/composables/juyiting/useArchiveReader.js:661:    const result = await replayIdentityMutation(requestIdentity, () => api.put(
+src/composables/juyiting/useArchiveReader.js:666:    if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:679:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:680:    if (!isCurrentIdentity(requestIdentity)) return Promise.resolve(null)
+src/composables/juyiting/useArchiveReader.js:687:        if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:693:      const note = await sendNoteOperation(operation, requestIdentity)
+src/composables/juyiting/useArchiveReader.js:694:      if (!note || !isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:697:      if (!outcome || !isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:704:      if (!isCurrentIdentity(requestIdentity) || error?.name === 'AbortError') return null
+src/composables/juyiting/useArchiveReader.js:721:      if (!isCurrentIdentity(requestIdentity)) return
+src/composables/juyiting/useArchiveReader.js:730:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:731:    if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:736:      if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:743:      const note = await sendNoteOperation(operation, requestIdentity)
+src/composables/juyiting/useArchiveReader.js:744:      if (!note || !isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:752:      if (!isCurrentIdentity(requestIdentity) || error?.name === 'AbortError') return null
+src/composables/juyiting/useArchiveReader.js:769:      if (isCurrentIdentity(requestIdentity)) notePending.value = false
+src/composables/juyiting/useArchiveReader.js:776:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:777:    if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:787:      const result = await replayIdentityMutation(requestIdentity, () => api.delete(
+src/composables/juyiting/useArchiveReader.js:794:      if (!isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useArchiveReader.js:803:      if (!isCurrentIdentity(requestIdentity) || error?.name === 'AbortError') return null
+src/composables/juyiting/useArchiveReader.js:810:      if (isCurrentIdentity(requestIdentity)) notePending.value = false
+src/composables/juyiting/useArchiveReader.js:910:      throw new Error('案卷问答快照响应无效')
+src/composables/juyiting/useArchiveReader.js:921:      throw new Error('案卷问答状态快照无效')
+src/composables/juyiting/useArchiveReader.js:1352:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:1353:    const isActive = () => isCurrentIdentity(requestIdentity) && generation === initializeGeneration && !controller.signal.aborted
+src/composables/juyiting/useArchiveReader.js:1447:    const requestIdentity = identityGeneration
+src/composables/juyiting/useArchiveReader.js:1456:      if (selection !== bookSelectionGeneration || !isCurrentIdentity(requestIdentity)) return null
+src/composables/juyiting/useHallVoiceConversation.js:279:    body.append('requestId', safeRequestId(browser.crypto))
+src/composables/juyiting/useHallVoiceConversation.js:521:        body: JSON.stringify({ requestId: safeRequestId(browser.crypto), text, voice: 'juyiting-default', format: 'wav' }),
+src/composables/juyiting/bountyOutputRecovery.js:16:      value.requestId === ids[0] && value.stepId === ids[1] && value.outputId === ids[2] &&
+src/components/juyiting/TaskWorkspacePanel.vue:116:          <li v-for="request in workspace.openRequests" :key="request.requestId" class="task-work-card">
+src/components/juyiting/TaskWorkspacePanel.vue:246:  snapshot_ready: '快照已核对',
+src/components/juyiting/TaskWorkspacePanel.vue:255:  loading: '正在读取任务协作快照。',
+src/components/juyiting/TaskWorkspacePanel.vue:256:  snapshot_ready: '已核对当前任务快照，正在等待实时连接；提交操作时仍由服务端核验权限与工作项版本。',
+src/components/juyiting/TaskWorkspacePanel.vue:260:  resyncing: '正在重新校准协作快照。',
+src/composables/juyiting/useHallPointAndStartCostConsent.js:45:    if (!receipt || firstIssue && receipt.state !== 'ISSUED') throw new Error('费用同意回执不匹配、越级或版本回退；保留原键核对')
+src/components/juyiting/HostingRentPanel.vue:19:      <p>原始回执：{{ receipt.status }} / {{ receipt.transactionId || receipt.requestId }}；金额 {{ money(receipt.amountMicro) }}；时间 {{ timestamp(receipt.occurredAt) }}</p>
+src/components/juyiting/HostingRentPanel.vue:35:        <p v-if="lookup.reprovision">免费重整：{{ lookup.reprovision.status }} / {{ lookup.reprovision.requestId }} / v{{ lookup.reprovision.version }}；就绪 {{ timestamp(lookup.reprovision.serviceReadyAt) }}</p>
+src/components/juyiting/HostingRentPanel.vue:41:      <p>仅使用此前保存的原请求、报价和幂等键核对结果；不发起替代付款。即使原报价过期也只重放原请求。</p>
+src/components/juyiting/HostingRentPanel.vue:88:const receiptTitle = computed(() => receipt.value?.operation === 'REPROVISION' ? '免费重整已接受（非就绪回执）' :
+src/composables/juyiting/useHallOrdinaryCancellation.js:78:          throw new Error('取消回执不匹配')
+src/components/juyiting/BountyPanel.vue:696:  CONFIRMED: '发送回执已收到',
+src/components/juyiting/BountyPanel.vue:707:  CONFIRMED: '已收到发送回执，正在核对议事状态，无需重复提交。',
+src/composables/juyiting/hallBountyBootstrap.js:38:  if (!reference || !view || view.requestId !== reference.initialRequestId ||
+src/composables/juyiting/hallBountyBootstrap.js:43:      (generic ? view.steps.length !== 0 || view.turns.length !== 1 || view.turns[0]?.route !== 'CHAT' : view.steps.length !== 1)) return null
+src/composables/juyiting/hallBountyBootstrap.js:56:        turn.requestId !== view.requestId || turn.requestRevision !== view.requestRevision ||
+src/composables/juyiting/hallBountyBootstrap.js:64:  return { requestId: view.requestId, requestRevision: view.requestRevision, conversationId: view.conversationId,
+src/composables/juyiting/hallBountyBootstrap.js:75:  if (current.requestId !== next.requestId || current.requestRevision !== next.requestRevision ||
+src/composables/juyiting/hallBountyBootstrap.js:82:    if (!turn || ['requestId', 'requestRevision', 'conversationId', 'conversationGeneration', 'targetAgentId', 'route'].some(key => old[key] !== turn[key]) ||
+src/components/juyiting/HallMaterialPicker.vue:220:  if (!data?.file?.fileId || !validMaterialVersion(data.version?.version) || data.file.fileId !== data.version.fileId || data.operation?.state !== 'COMMITTED') return false
+src/components/juyiting/HallMaterialPicker.vue:264:      // Only the authoritative COMMITTED receipt can add a fixed version.
+src/composables/juyiting/taskWorkspaceReducer.js:7:const EVENT_TYPES = new Set(['TASK_CREATED', 'TASK_ASSIGNED', 'TASK_STARTED', 'TASK_BLOCKED', 'TASK_ARCHIVED', 'TEAM_PROPOSED', 'TASK_REVIEWING', 'TASK_COMPLETED', 'TASK_FAILED', 'TASK_CANCELLED', 'MEMBER_INVITED', 'MEMBER_ACCEPTED', 'MEMBER_REJECTED', 'MEMBER_BLOCKED', 'MEMBER_WORKING', 'MEMBER_DONE', 'MEMBER_FAILED', 'MEMBER_LEFT', 'WORK_ITEM_CREATED', 'WORK_ITEM_READY', 'WORK_ITEM_CLAIMED', 'WORK_ITEM_STARTED', 'WORK_ITEM_SUBMITTED', 'WORK_ITEM_COMPLETED', 'WORK_ITEM_REQUEUED', 'WORK_ITEM_BLOCKED', 'WORK_ITEM_FAILED', 'WORK_ITEM_CANCELLED', 'WORK_ITEM_LEASE_RENEWED', 'WORK_ITEM_LEASE_RELEASED', 'PROGRESS_REPORTED', 'HELP_REQUESTED', 'REVIEW_REQUESTED', 'REQUEST_CREATED', 'REQUEST_ACKNOWLEDGED', 'REQUEST_RESOLVED', 'REQUEST_REJECTED', 'REQUEST_CANCELLED', 'THREAD_CREATED', 'MESSAGE_POSTED', 'ARTIFACT_PUBLISHED', 'COMMAND_DELIVERY_FAILED', 'HISTORICAL_BASELINE_IMPORTED'])
+src/composables/juyiting/taskWorkspaceReducer.js:8:const ID_KEYS = new Set(['taskId', 'agentId', 'memberId', 'workItemId', 'assigneeAgentId', 'requestId', 'targetId', 'artifactId', 'threadId', 'conversationId', 'messageId', 'senderAgentId', 'noteId'])
+src/composables/juyiting/taskWorkspaceReducer.js:20:const REQUEST_STATUS = { HELP_REQUESTED: 'open', REVIEW_REQUESTED: 'open', REQUEST_CREATED: 'open', REQUEST_ACKNOWLEDGED: 'acknowledged', REQUEST_RESOLVED: 'resolved', REQUEST_REJECTED: 'rejected', REQUEST_CANCELLED: 'cancelled' }
+src/composables/juyiting/taskWorkspaceReducer.js:40:  if (!uniqueBy(snapshot.members, item => item.agentId) || !uniqueBy(snapshot.workItems, item => item.workItemId) || !uniqueBy(snapshot.openRequests, item => item.requestId) || !uniqueBy(snapshot.recentArtifacts, item => `${item.artifactId}\u0000${item.artifactVersion}`)) return null
+src/composables/juyiting/taskWorkspaceReducer.js:72:  return validDto(value, ['requestId', 'workItemId', 'requesterAgentId', 'targetType', 'targetId', 'requestType', 'status', 'priority', 'title', 'description', 'dueAt', 'acknowledgedAt', 'version'], ['workItemId', 'dueAt', 'acknowledgedAt'], ['priority'], [], ['version']) && validId(value.requestId) && validId(value.requesterAgentId) && validId(value.targetId) && ['agent', 'role'].includes(value.targetType) && (value.targetType !== 'role' || ROLES.has(value.targetId)) && ['help', 'clarification', 'dependency', 'review', 'resource', 'reassignment', 'approval'].includes(value.requestType) && REQUEST_SNAPSHOT_STATUSES.has(value.status) && validText(value.title, 255) && typeof value.description === 'string' && intRange(value.priority) && nullableJavaLong(value.dueAt) && nullableJavaLong(value.acknowledgedAt) && (value.workItemId == null || validId(value.workItemId))
+src/composables/juyiting/taskWorkspaceReducer.js:137:  if (['REQUEST_ACKNOWLEDGED', 'REQUEST_RESOLVED', 'REQUEST_REJECTED', 'REQUEST_CANCELLED'].includes(event.eventType)) {
+src/composables/juyiting/taskWorkspaceReducer.js:138:    const index = workspace.openRequests.findIndex(item => item.requestId === event.aggregateId)
+src/composables/juyiting/taskWorkspaceReducer.js:141:    if (event.eventType === 'REQUEST_ACKNOWLEDGED') {
+src/composables/juyiting/taskWorkspaceReducer.js:182:function validRequestPayload (type, aggregateId, payload) { return required(payload, { requestId: aggregateId, requestType: true, targetType: true, targetId: true, toStatus: REQUEST_STATUS[type], resultVersion: true }) && ['help', 'clarification', 'dependency', 'review', 'resource', 'reassignment', 'approval'].includes(payload.requestType) && (payload.targetType === 'agent' || payload.targetType === 'role' && ['coordinator', 'worker', 'reviewer', 'observer'].includes(payload.targetId)) && !(type === 'HELP_REQUESTED' && payload.requestType !== 'help') && !(type === 'REVIEW_REQUESTED' && payload.requestType !== 'review') && !(type === 'REQUEST_CREATED' && ['help', 'review'].includes(payload.requestType)) }
+src/components/juyiting/WorkItemBoard.vue:6:        <p>状态、承办与依赖均以当前协作快照为准；系统负责依赖解锁。</p>
+src/components/juyiting/WorkItemBoard.vue:39:                    {{ dependency.title }}<template v-if="dependency.status">（{{ dependency.status }}）</template><template v-else>（当前快照未包含）</template>
+src/components/juyiting/WorkItemBoard.vue:44:                <p v-if="item.missingDependencyIds.length" class="work-item-board-warning">有 {{ item.missingDependencyIds.length }} 项依赖未在当前快照中提供。</p>
+src/composables/juyiting/useHallDeliveryReview.js:59:    operation.value = { state: receipt.state, busy: true, intent: next, receipt, message: receipt.state === 'COMMITTED' ? '已确认验收。' : receipt.state === 'REJECTED' ? '原验收未通过，请重新核对事项。' : '原验收正在处理，可查询状态。' }
+src/composables/juyiting/useHallDeliveryReview.js:60:    if (receipt.state === 'COMMITTED') { dialogOpen.value = false; frozenContext.value = null }
+src/composables/juyiting/useHallDeliveryReview.js:105:    if (!intent || !receipt || !['COMMITTED', 'REJECTED'].includes(receipt.state) || operation.value.busy) return false
+src/composables/juyiting/useHallDeliveryReview.js:108:    if (receipt.state === 'COMMITTED' && (next.taskState !== 'COMPLETED' || next.currentDelivery?.deliveryId !== receipt.deliveryId || next.currentDelivery?.state !== 'ACCEPTED')) return false
+src/composables/juyiting/useHallDeliveryReview.js:135:    return !(op.state === 'COMMITTED' && receipt?.state === 'COMMITTED' && next?.taskId === op.intent.taskId &&
+src/composables/juyiting/useHallPointAndStartControlledBridge.js:24:  const acceptIssue = (intent, value, first = false) => { const receipt = providerConsentReceipt(value, intent, intent.providerConsent.receipt); if (!receipt || (first && receipt.state !== 'ISSUED')) throw new Error('费用同意回执不匹配；保留原键核对'); return { ...intent, providerConsent: { ...intent.providerConsent, receipt } } }
+src/composables/juyiting/useHallPointAndStartControlledBridge.js:25:  const acceptBridge = (intent, value, first = false) => { const receipt = controlledImagePointAndStartReceipt(value, intent, intent.controlledImageBridge.receipt); if (!receipt || first && receipt.providerConsent.state !== 'BOUND') throw new Error('受控点将回执不匹配、越级或版本回退；保留原键核对'); return { ...intent, providerConsent: { ...intent.providerConsent, receipt: receipt.providerConsent }, controlledImageBridge: { ...intent.controlledImageBridge, receipt } } }
+src/composables/juyiting/useArchiveMaintenance.js:77:      pending.value = null; notice.value = kind === 'job' ? (path.endsWith('/publish') ? '草稿发布已提交；最终状态以服务端结果与版本读回为准。' : '维护任务已创建，等待 Runtime 执行；尚不代表已发布。') : '服务端已受理，技能实际状态以有效安装回执为准。'
+src/composables/juyiting/useHallConversation.js:39:const HALL_REQUEST_READBACK_DEBOUNCE_MS = 250
+src/composables/juyiting/useHallConversation.js:108:    isActiveRequest: id => activeRequest.value?.requestId === id,
+src/composables/juyiting/useHallConversation.js:111:    debounceMs: HALL_REQUEST_READBACK_DEBOUNCE_MS
+src/composables/juyiting/useHallConversation.js:121:    return identity && request?.requestId && request.conversationId && request.conversationGeneration && request.requestRevision
+src/composables/juyiting/useHallConversation.js:122:      ? `juyiting:reply-stop:v1:${encodeURIComponent(JSON.stringify([identity, request.conversationId, request.conversationGeneration, request.requestId, request.requestRevision]))}` : ''
+src/composables/juyiting/useHallConversation.js:181:  const v2Supported = capability => capability?.schemaVersion === '2' && capability.requestId === true &&
+src/composables/juyiting/useHallConversation.js:220:        if (!v2) throw new Error('服务端不支持当前议事协议，请更新服务后重试')
+src/composables/juyiting/useHallConversation.js:266:    const job = cancellationJobs.get(activeRequest.value?.requestId) || savedCancellation()
+src/composables/juyiting/useHallConversation.js:395:    if (!activeRequest.value?.requestId) return
+src/composables/juyiting/useHallConversation.js:412:    if (activeRequest.value?.requestId && event.requestId && event.requestId !== activeRequest.value.requestId) {
+src/composables/juyiting/useHallConversation.js:414:      return event.conversationId === conversationId.value && restoredRequestIds.has(event.requestId) &&
+src/composables/juyiting/useHallConversation.js:418:    if (session && event.requestId === session.requestId) {
+src/composables/juyiting/useHallConversation.js:432:      if (session && event.requestId === session.requestId &&
+src/composables/juyiting/useHallConversation.js:436:        scheduleAuthoritativeRequestReadback(session.requestId, { immediate: true })
+src/composables/juyiting/useHallConversation.js:443:    const requestId = typeof event?.requestId === 'string' ? event.requestId : ''
+src/composables/juyiting/useHallConversation.js:445:    if (!requestId || requestId !== activeRequest.value?.requestId || !turnId) return false
+src/composables/juyiting/useHallConversation.js:481:    if (disposed || event?.conversationId !== conversationId.value || !typedId(event?.requestId)) return false
+src/composables/juyiting/useHallConversation.js:483:    if (event.requestId === activeRequest.value?.requestId) scheduleAuthoritativeRequestReadback(event.requestId, { immediate: true })
+src/composables/juyiting/useHallConversation.js:488:    if (event?.type === 'delivery_submission_completed' && event.conversationId === conversationId.value && typedId(event.requestId)) {
+src/composables/juyiting/useHallConversation.js:497:    if (event?.type === 'agent_message_delta' && activeRequest.value?.requestId &&
+src/composables/juyiting/useHallConversation.js:498:        event.requestId && event.requestId !== activeRequest.value.requestId) return true
+src/composables/juyiting/useHallConversation.js:504:    if (['part.ready', 'agent_message', 'resync_required'].includes(event?.type) && event.requestId && event.conversationId === conversationId.value) void refreshHallProjections(event)
+src/composables/juyiting/useHallConversation.js:505:    const typedRequestId = event?.type === 'agent_message' && event?.typedOutcome ? event.requestId :
+src/composables/juyiting/useHallConversation.js:506:      event?.type === 'typed_question_answered' ? (event.requestId || event.replyRequestId) : ''
+src/composables/juyiting/useHallConversation.js:508:      onTypedOutcome?.({ ...event, requestId: typedRequestId })
+src/composables/juyiting/useHallConversation.js:522:      manageTurnBusy: Boolean(activeRequest.value?.requestId)
+src/composables/juyiting/useHallConversation.js:541:    const bootstrapEvent = adoptedBootstrap && event.requestId === adoptedBootstrap.initialRequestId &&
+src/composables/juyiting/useHallConversation.js:542:      activeRequest.value?.requestId === adoptedBootstrap.initialRequestId && event.conversationId === adoptedBootstrap.conversationId &&
+src/composables/juyiting/useHallConversation.js:544:    // Restored executions have no bootstrap receipt or CHAT turn checkpoint.
+src/composables/juyiting/useHallConversation.js:546:    const executionEvent = event.requestId === activeRequest.value?.requestId && event.conversationId === conversationId.value &&
+src/composables/juyiting/useHallConversation.js:551:      scheduleAuthoritativeRequestReadback(event.requestId, { immediate: true })
+src/composables/juyiting/useHallConversation.js:554:    if (needsReadback && result.type === 'delta') scheduleAuthoritativeRequestReadback(event.requestId)
+src/composables/juyiting/useHallConversation.js:555:    if ((!activeSendSession?.roundCloseout || activeSendSession.requestId !== event.requestId) && needsReadback && event.type === 'agent_message' && ['final', 'duplicate'].includes(result.type)) {
+src/composables/juyiting/useHallConversation.js:556:      scheduleAuthoritativeRequestReadback(event.requestId, { immediate: true })
+src/composables/juyiting/useHallConversation.js:624:      const requestId = activeRequest.value?.requestId
+src/composables/juyiting/useHallConversation.js:625:      const current = () => guardCurrent(guard) && conversationId.value === id && activeRequest.value?.requestId === requestId
+src/composables/juyiting/useHallConversation.js:631:        if (recoverTransport && requestId && await recoverUnknownRequest(requestId, guard) && current()) {
+src/composables/juyiting/useHallConversation.js:640:          if (current()) { projectionsRead = true; await refreshHallProjections({ type: 'resync_required', conversationId: id, requestId }) }
+src/composables/juyiting/useHallConversation.js:642:        if (!projectionsRead && projectionsDirty && current()) await refreshHallProjections({ type: 'resync_required', conversationId: id, requestId })
+src/composables/juyiting/useHallConversation.js:713:        conversationId: id, requestId: response.headers.get('X-Request-Id'),
+src/composables/juyiting/useHallConversation.js:916:    const restoreRequest = expectedScope?.type === 'bounty' && !activeRequest.value?.requestId
+src/composables/juyiting/useHallConversation.js:955:          if (!isCurrentContentLoad() || activeRequest.value?.requestId) return false
+src/composables/juyiting/useHallConversation.js:959:            if (seen.has(entry.request.requestId)) throw new Error('原回话索引重复，请重试。')
+src/composables/juyiting/useHallConversation.js:960:            seen.add(entry.request.requestId)
+src/composables/juyiting/useHallConversation.js:968:        for (const entry of entries) restoredRequestIds.add(entry.request.requestId)
+src/composables/juyiting/useHallConversation.js:970:        if (latest && !applyRequestView(latest, latest.requestId)) throw new Error('原回话状态暂不可核实，请重试。')
+src/composables/juyiting/useHallConversation.js:1012:          if (activeRequest.value?.requestId) syncDurablePresentation()
+src/composables/juyiting/useHallConversation.js:1250:    const requestId = activeRequest.value?.requestId
+src/composables/juyiting/useHallConversation.js:1251:    if (requestId) await recoverUnknownRequest(requestId, guard)
+src/composables/juyiting/useHallConversation.js:1252:    if (!guardCurrent(guard) || activeRequest.value?.requestId !== requestId) return false
+src/composables/juyiting/useHallConversation.js:1271:      if (activeRequest.value?.requestId) await recoverUnknownRequest(activeRequest.value.requestId, guard)
+src/composables/juyiting/useHallConversation.js:1331:      const durableEvent = Boolean(event.requestId || event.turnId || event.agentDelivery ||
+src/composables/juyiting/useHallConversation.js:1341:      if (event.agentDelivery || event.type === 'chat_request_replay' || (event.requestId && !['agent_message_delta', 'agent_message', 'resync_required'].includes(event.type))) {
+src/composables/juyiting/useHallConversation.js:1344:        const actuallyDelivered = event.agentDelivery?.delivered === true || deliveryState === 'DISPATCHED'
+src/composables/juyiting/useHallConversation.js:1348:            onDelivery?.({ agentId: event.agentDelivery.agentId || event.agentId || '', requestId: event.requestId || '', turnId: event.turnId || event.agentDelivery.turnId || '' })
+src/composables/juyiting/useHallConversation.js:1358:        if (event.agentDelivery?.accepted === true && event.requestId) {
+src/composables/juyiting/useHallConversation.js:1359:          scheduleAuthoritativeRequestReadback(event.requestId, { immediate: true })
+src/composables/juyiting/useHallConversation.js:1369:          isStreaming: isStreaming.value, turnStates, manageTurnBusy: Boolean(activeRequest.value?.requestId) }
+src/composables/juyiting/useHallConversation.js:1375:          if ((!activeSendSession?.roundCloseout || activeSendSession.requestId !== event.requestId) && needsReadback) scheduleAuthoritativeRequestReadback(event.requestId, { immediate: true })
+src/composables/juyiting/useHallConversation.js:1388:      manageTurnBusy: Boolean(activeRequest.value?.requestId)
+src/composables/juyiting/useHallConversation.js:1421:    if (!currentSendSession(session) || !view || Array.isArray(view) || view.requestId !== session.requestId ||
+src/composables/juyiting/useHallConversation.js:1433:          turn.requestId !== view.requestId || turn.requestRevision !== view.requestRevision ||
+src/composables/juyiting/useHallConversation.js:1500:      activeRequest.value?.requestId === session.requestId && conversationId.value === view.conversationId && !activeSendToken
+src/composables/juyiting/useHallConversation.js:1539:      log.warn('聚义厅协议确认失败', error)
+src/composables/juyiting/useHallConversation.js:1540:      deliberationStatus.value = '当前议事协议不可用，消息未发送，请稍后重试'
+src/composables/juyiting/useHallConversation.js:1550:    const requestId = sendToken.requestId
+src/composables/juyiting/useHallConversation.js:1553:    const request = { requestId, requestRevision, observations: [] }
+src/composables/juyiting/useHallConversation.js:1557:      token: sendToken, requestId, requestRevision, guard: sendGuard, replyGeneration,
+src/composables/juyiting/useHallConversation.js:1604:        requestId, requestRevision, interactionHint,
+src/composables/juyiting/useHallConversation.js:1632:        headers: { 'Idempotency-Key': requestId },
+src/composables/juyiting/useHallConversation.js:1647:          if (session.roundCloseout && !conversationReplay && event && typeof event === 'object' && event.requestId &&
+src/composables/juyiting/useHallConversation.js:1648:              (event.requestId !== session.requestId || !bindSendEvent(session, event))) return
+src/composables/juyiting/useHallConversation.js:1662:          if (session.roundCloseout && (!session.terminalReadbackHint || !requestReadback.hasInFlight(requestId))) {
+src/composables/juyiting/useHallConversation.js:1663:            scheduleAuthoritativeRequestReadback(requestId, { immediate: true })
+src/composables/juyiting/useHallConversation.js:1686:      await recoverUnknownRequest(requestId, sendGuard)
+src/composables/juyiting/useHallConversation.js:1728:    const sendToken = Object.freeze({ requestId: createStableRequestId(), generation: lifecycleGeneration })
+src/composables/juyiting/useHallConversation.js:1741:        if (!activeRequest.value?.requestId && !isAwaitingReply.value && !isStreaming.value && deliberationStatus.value === '正在提交，等待受理') {
+src/composables/juyiting/useHallConversation.js:1748:  const applyRequestView = (requestView, requestId, { authoritative = false } = {}) => {
+src/composables/juyiting/useHallConversation.js:1749:    const session = activeSendSession?.roundCloseout && activeSendSession.requestId === requestId ? activeSendSession : null
+src/composables/juyiting/useHallConversation.js:1751:    if (!requestView || typeof requestView !== 'object' || requestView.requestId !== requestId) return false
+src/composables/juyiting/useHallConversation.js:1760:      if (typeof turn?.turnId !== 'string' || !turn.turnId || (turn.requestId && turn.requestId !== requestId)) return false
+src/composables/juyiting/useHallConversation.js:1769:      const normalizedTurn = { ...turn, requestId, requestRevision: turnRevision, conversationId: turnConversationId,
+src/composables/juyiting/useHallConversation.js:1779:    activeRequest.value = { ...(activeRequest.value || {}), ...requestView, requestId,
+src/composables/juyiting/useHallConversation.js:1803:    const fields = ['schemaVersion', 'intent', 'requestId', 'userMessageId', 'turnIds', 'state', 'stateVersion', 'eventCursor', 'statusUrl', 'typedOutcomeUrl', 'replay', 'pendingQuestionId']
+src/composables/juyiting/useHallConversation.js:1806:        !['DISCUSSION', 'CLARIFICATION_REPLY'].includes(receipt.intent) || !typedId(receipt.requestId) ||
+src/composables/juyiting/useHallConversation.js:1810:        receipt.statusUrl !== `/chat/requests/${receipt.requestId}` ||
+src/composables/juyiting/useHallConversation.js:1811:        receipt.typedOutcomeUrl !== `/chat/conversations/${context.conversationId}/requests/${receipt.requestId}/typed-outcome` ||
+src/composables/juyiting/useHallConversation.js:1820:  const typedTurnStates = new Set(['RECEIVED', 'QUEUED', 'DISPATCHED', 'STREAMING', 'FINAL_PERSISTED', 'PUBLISHED', 'UNKNOWN', 'RECOVERY_REQUIRED', 'FAILED', 'CANCELLED'])
+src/composables/juyiting/useHallConversation.js:1825:    if (!value || Array.isArray(value) || typeof value !== 'object' || value.requestId !== receipt.requestId ||
+src/composables/juyiting/useHallConversation.js:1833:        turn.requestId !== value.requestId || canonicalWireString(turn.requestRevision) !== requestRevision ||
+src/composables/juyiting/useHallConversation.js:1844:    if (currentRequest?.requestId !== requestView.requestId) return true
+src/composables/juyiting/useHallConversation.js:1862:    const requestId = acceptedReceipt?.requestId || ''
+src/composables/juyiting/useHallConversation.js:1868:    if (disposed || !acceptedReceipt || !requestId || !discussionMatches()) return false
+src/composables/juyiting/useHallConversation.js:1872:      const response = await chatApi.get(`/requests/${encodeURIComponent(requestId)}`, {}, {
+src/composables/juyiting/useHallConversation.js:1879:      if (!applyRequestView(requestView, requestId) || !current()) return false
+src/composables/juyiting/useHallConversation.js:1886:      return current() && activeRequest.value?.requestId === requestId
+src/composables/juyiting/useHallConversation.js:1898:      activeRequest.value?.requestId === reference.initialRequestId && conversationId.value === reference.conversationId
+src/composables/juyiting/useHallConversation.js:1900:        (activeRequest.value?.requestId && activeRequest.value.requestId !== reference.initialRequestId))) return false
+src/composables/juyiting/useHallConversation.js:1901:    const job = { guard: captureGuard(), requestBefore: activeRequest.value?.requestId || '' }
+src/composables/juyiting/useHallConversation.js:1909:      if (!current() || (activeRequest.value?.requestId || '') !== job.requestBefore) return false
+src/composables/juyiting/useHallConversation.js:1938:        adoptionCurrent: () => current() && activeRequest.value?.requestId === reference.initialRequestId
+src/composables/juyiting/useHallConversation.js:1941:      if (!loaded && activeRequest.value?.requestId === reference.initialRequestId) {
+src/composables/juyiting/useHallConversation.js:1945:      return loaded && activeRequest.value?.requestId === reference.initialRequestId
+src/composables/juyiting/useHallConversation.js:1958:  const readUnknownRequestOnce = async (requestId, guard) => {
+src/composables/juyiting/useHallConversation.js:1960:    const sameBinding = value => value && expected && ['requestId', 'requestRevision', 'conversationId', 'conversationGeneration']
+src/composables/juyiting/useHallConversation.js:1964:      const response = await chatApi.get(`/requests/${encodeURIComponent(requestId)}`, {}, { autoLoading: false, signal: lifecycleController.signal })
+src/composables/juyiting/useHallConversation.js:1966:      if (activeRequest.value?.requestId !== requestId || !sameBinding(activeRequest.value)) return false
+src/composables/juyiting/useHallConversation.js:1975:      if (adoptedBootstrap?.initialRequestId === requestId) {
+src/composables/juyiting/useHallConversation.js:1980:      if (!applyRequestView(requestView, requestId, { authoritative: true })) return false
+src/composables/juyiting/useHallConversation.js:1982:      if (!guardCurrent(guard) || activeRequest.value?.requestId !== requestId) return false
+src/composables/juyiting/useHallConversation.js:1994:  const recoverUnknownRequest = (requestId, guard = captureGuard()) => requestReadback.readNow(requestId, guard)
+src/composables/juyiting/useHallConversation.js:1995:  const scheduleAuthoritativeRequestReadback = (requestId, options) => requestReadback.schedule(requestId, options)
+src/composables/juyiting/useHallConversation.js:2010:        if (activeRequest.value?.requestId) await recoverUnknownRequest(activeRequest.value.requestId, guard)
+src/composables/juyiting/useHallConversation.js:2034:        view.requestId !== expectedRequestId || view.turnId !== expectedTurnId) return null
+src/composables/juyiting/useHallConversation.js:2054:    const pendingJob = cancellationJobs.get(request?.requestId) || savedCancellation()
+src/composables/juyiting/useHallConversation.js:2056:    if (!request?.requestId || !selectedTarget) return false
+src/composables/juyiting/useHallConversation.js:2057:    const requestId = request.requestId
+src/composables/juyiting/useHallConversation.js:2060:    const current = () => guardCurrent(guard) && activeRequest.value?.requestId === requestId && conversationId.value === originalConversationId
+src/composables/juyiting/useHallConversation.js:2064:    cancellationJobs.set(requestId, job)
+src/composables/juyiting/useHallConversation.js:2072:      const recovered = await recoverUnknownRequest(requestId, guard)
+src/composables/juyiting/useHallConversation.js:2111:        const view = authoritativeTurnView(apiData(response), requestId, turn.turnId)
+src/composables/juyiting/useHallConversation.js:2135:        response = await chatApi.post(`/requests/${requestId}/cancel?allPending=true`, { allPending: true }, { autoLoading: false, signal: lifecycleController.signal })
+src/composables/juyiting/useHallConversation.js:2137:        if (!applyRequestView(apiData(response), requestId)) {
+src/composables/juyiting/useHallConversation.js:2151:      if (status === 409 || error?.code === 'CHAT_REQUEST_CONFLICT') return await reconcile()
+src/composables/juyiting/useHallConversation.js:2160:      if (!job.unknown && cancellationJobs.get(requestId) === job) cancellationJobs.delete(requestId)
+src/components/juyiting/BountyExecutionOutputs.vue:100:      deliveryRelation: result.reference.deliveryRelation, requestId: result.requestId, stepId: result.stepId })
+src/components/juyiting/BountyExecutionOutputs.vue:124:const validRootRequest = () => props.enabled && catalogRequests.value.length > 0 && catalogRequests.value.every(request => exactOutputId(request?.requestId) && request.conversationId === props.conversationId)
+src/components/juyiting/BountyExecutionOutputs.vue:135:const fetchRequest = async (requestId, controller) => {
+src/components/juyiting/BountyExecutionOutputs.vue:136:  const response = await api.get(`/requests/${encodeURIComponent(requestId)}`, {}, { autoLoading: false, needAuth: true, signal: controller.signal })
+src/components/juyiting/BountyExecutionOutputs.vue:138:  if (value?.requestId !== requestId || value?.conversationId !== props.conversationId) throw new Error('议事请求范围不匹配')
+src/components/juyiting/BountyExecutionOutputs.vue:145:    const ids = [...new Set(catalogRequests.value.map(request => request.requestId))]
+src/components/juyiting/BountyExecutionOutputs.vue:153:        if (turn.route !== 'CHAT' || !['FINAL_PERSISTED', 'PUBLISHED'].includes(turn.state)) continue
+src/components/juyiting/BountyExecutionOutputs.vue:156:          response = await api.get(`/conversations/${encodeURIComponent(props.conversationId)}/requests/${encodeURIComponent(request.requestId)}/typed-outcome`, {},
+src/components/juyiting/BountyExecutionOutputs.vue:159:          // Authenticated catalog CHAT can predate typed outcomes; it is not a deliverable.
+src/components/juyiting/BountyExecutionOutputs.vue:160:          if ((cause?.status ?? cause?.response?.status) === 404 && !props.typedOutcomes.some(item => item.requestId === request.requestId)) continue
+src/components/juyiting/BountyExecutionOutputs.vue:175:        const response = await api.get(`/requests/${encodeURIComponent(step.requestId)}/steps/${encodeURIComponent(step.stepId)}/outputs`, {}, { autoLoading: false, needAuth: true, signal: controller.signal })
+src/components/juyiting/BountyExecutionOutputs.vue:177:        const normalized = outputCatalogItems(data, step.requestId, step.stepId)
+src/components/juyiting/BountyExecutionOutputs.vue:223:watch(() => `${props.enabled}\u0000${props.identityKey}\u0000${props.conversationId}\u0000${props.taskId}\u0000${catalogRequests.value.map(request => request.requestId).join('\u0001')}`, () => {
+src/components/juyiting/BountyExecutionOutputs.vue:232:watch(() => JSON.stringify(catalogRequests.value.map(request => [request.requestId, request.state, request.stateVersion,
+src/composables/juyiting/hallDeliberationState.js:4:const TERMINAL_REQUEST_STATES = new Set(['COMPLETED', 'PARTIAL', 'FAILED', 'CANCELLED', 'OUTPUT_COMMITTED', 'RESULT_COMMITTED'])
+src/composables/juyiting/hallDeliberationState.js:6:  RECEIVED: '已受理', QUEUED: '排队中', DISPATCHED: '正在理解', UNDERSTANDING: '正在理解',
+src/composables/juyiting/hallDeliberationState.js:7:  INSPECT: '只读检查中', STREAMING: '生成中', GENERATING: '生成中', FALLBACK: '安全回退处理中',
+src/composables/juyiting/hallDeliberationState.js:10:  CANCELLED: '已取消', FINAL_PERSISTED: '已完成', PUBLISHED: '已完成', OUTPUT_COMMITTED: '本轮成果已就绪', RESULT_COMMITTED: '本轮结果已登记'
+src/composables/juyiting/hallDeliberationState.js:53:  const requestId = stringField(event.requestId) || stringField(request?.requestId)
+src/composables/juyiting/hallDeliberationState.js:62:  const relevant = Boolean(requestId || turnId || delivery ||
+src/composables/juyiting/hallDeliberationState.js:69:    assignString(patch, 'requestId', requestId)
+src/composables/juyiting/hallDeliberationState.js:93:    request: requestId ? {
+src/composables/juyiting/hallDeliberationState.js:95:      requestId,
+src/composables/juyiting/hallDeliberationState.js:118:  return Boolean(request?.requestId) && !isTerminalRequestState(request.state)
+src/composables/juyiting/hallDeliberationState.js:122:  if (!request?.requestId) return null
+src/composables/juyiting/hallDeliberationState.js:141:  const observedRoute = route.startsWith('CHAT') ? 'CHAT' : route.startsWith('INSPECT') ? 'INSPECT' : ''
+src/composables/juyiting/useHallArtifactOutcomes.js:36:  if (!value) throw new Error('当前环境不能生成安全的幂等键，未发送裁决。')
+src/composables/juyiting/useHallArtifactOutcomes.js:149:    if (typeof idempotencyKey !== 'string' || !/^[A-Za-z0-9._~:/+-]{8,100}$/.test(idempotencyKey)) { submitState.value = 'error'; submitMessage.value = '生成的幂等键无效，未发送裁决。'; return null }
+src/composables/juyiting/useHallArtifactOutcomes.js:158:      if (!acceptedRow(result, capturedTask) || result.artifactId !== acceptedRef.artifactId || result.artifactVersion !== acceptedRef.artifactVersion || result.outcomeVersion !== acceptedRef.expectedOutcomeVersion + 1 || result.decisionId !== idempotencyKey) throw new Error('服务回执与本次精确裁决不匹配，未确认裁决。')
+src/composables/juyiting/useExternalServicePolicy.js:9:const validIntent = (value, scope, agentId) => keys(value, ['scope', 'agentId', 'key', 'requestId', 'body']) &&
+src/composables/juyiting/useExternalServicePolicy.js:10:  value.scope === scope && value.agentId === agentId && exactPointAndStartId(value.key) && exactPointAndStartId(value.requestId) &&
+src/composables/juyiting/useExternalServicePolicy.js:73:    ...(original ? { headers: { 'Idempotency-Key': original.key, 'X-Request-Id': original.requestId } } : {}) })
+src/composables/juyiting/useExternalServicePolicy.js:92:      throw new Error('原开关回执未核对；请继续查询原操作')
+src/composables/juyiting/useExternalServicePolicy.js:119:    const record = { scope: identityScope(), agentId: getAgent().agentId, key: createKey(), requestId: createKey(),
+src/composables/juyiting/hallRequirementCreateIntent.js:48:    value.requirementRevision !== '1' || value.state !== 'COMMITTED' || !object(value.task) || value.task.id !== value.taskId) return null
+src/composables/juyiting/hallRequirementCreateIntent.js:100:    value.requirementRevision !== '1' || value.state !== 'COMMITTED' || !object(value.task) || value.task.id !== value.taskId) return null
+src/composables/juyiting/useHallSelectedOutputReview.js:55:      if (receipt?.state === 'COMMITTED') open.value = false
+src/composables/juyiting/useHallTypedDeliberation.js:9:const recordPurpose = record => record?.purpose === 'INSPECT' ? 'INSPECT' : 'CHAT'
+src/composables/juyiting/useHallTypedDeliberation.js:40:    return Array.isArray(value) ? value.filter(record => record && typeof record === 'object' && typedId(record.key) && record.body && (record.purpose === undefined || ['CHAT', 'INSPECT'].includes(record.purpose))) : []
+src/composables/juyiting/useHallTypedDeliberation.js:59:/** Typed natural CHAT UI adapter. It owns only the frozen discussion/read wire; no model, grant, or legacy stream fallback. */
+src/composables/juyiting/useHallTypedDeliberation.js:83:    !projections.value.some(value => value.requestId === entry.request.requestId && value.state === 'READY')
+src/composables/juyiting/useHallTypedDeliberation.js:92:  const path = (context, requestId = '', purpose = 'CHAT') => `/conversations/${encodeURIComponent(context.conversationId)}/requests/${encodeURIComponent(requestId)}/${purpose === 'INSPECT' ? 'inspection-outcome' : 'typed-outcome'}`
+src/composables/juyiting/useHallTypedDeliberation.js:93:  const sorted = values => [...values].sort((a, b) => a.requestId.localeCompare(b.requestId))
+src/composables/juyiting/useHallTypedDeliberation.js:95:  const sameFinalBinding = (one, two) => one?.requestId === two?.requestId && one?.turnId === two?.turnId &&
+src/composables/juyiting/useHallTypedDeliberation.js:107:    const previous = projections.value.find(item => item.requestId === projection.requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:125:    const next = projections.value.filter(item => item.requestId !== projection.requestId).concat(projection)
+src/composables/juyiting/useHallTypedDeliberation.js:132:  const readOne = async (requestId, captured = capture(), requestedPurpose = '', visited = new Set()) => {
+src/composables/juyiting/useHallTypedDeliberation.js:133:    if (!typedId(requestId) || !current(captured) || visited.has(requestId)) return null
+src/composables/juyiting/useHallTypedDeliberation.js:134:    if ((getCatalogEntries?.() || []).some(entry => entry?.request?.requestId === requestId && emptyCancellation(entry))) {
+src/composables/juyiting/useHallTypedDeliberation.js:135:      failedReads.delete(requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:138:    visited.add(requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:139:    const record = readRecords(storage, captured.scope, captured.context).find(item => item.receipt?.requestId === requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:142:      const raw = unwrap(await chatApi.get(path(captured.context, requestId, purpose), {}, { autoLoading: false, needAuth: true }))
+src/composables/juyiting/useHallTypedDeliberation.js:145:        ? inspectionOutcomeProjection(raw, { conversationId: captured.context.conversationId, conversationGeneration: captured.context.conversationGeneration, taskId: captured.context.taskId, requestId })
+src/composables/juyiting/useHallTypedDeliberation.js:146:        : typedOutcomeProjection(raw, { conversationId: captured.context.conversationId, conversationGeneration: captured.context.conversationGeneration, taskId: captured.context.taskId, requestId })
+src/composables/juyiting/useHallTypedDeliberation.js:148:        failedReads.add(requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:152:      failedReads.delete(requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:153:      ordinaryChatRequests.delete(requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:154:      const child = projection.reviewProgress?.state === 'COMMITTED' ? projection.reviewProgress.childRequestId : null
+src/composables/juyiting/useHallTypedDeliberation.js:155:      if (child && child !== requestId) await readOne(child, captured, 'CHAT', visited)
+src/composables/juyiting/useHallTypedDeliberation.js:158:      // 404 means this catalog request is ordinary durable CHAT; it is not a typed UI failure.
+src/composables/juyiting/useHallTypedDeliberation.js:161:          failedReads.delete(requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:162:          if (purpose === 'CHAT' && !projections.value.some(item => item.requestId === requestId) && !record?.receipt) ordinaryChatRequests.add(requestId)
+src/composables/juyiting/useHallTypedDeliberation.js:164:        else { failedReads.add(requestId); error.value = '暂时无法读取答复，请刷新状态。' }
+src/composables/juyiting/useHallTypedDeliberation.js:181:        .map(entry => entry.request.requestId).filter(typedId)
+src/composables/juyiting/useHallTypedDeliberation.js:183:        !(entry?.request?.steps?.some(step => step.kind === 'EXECUTE') && !entry?.request?.turns?.some(turn => turn.route === 'CHAT')))
+src/composables/juyiting/useHallTypedDeliberation.js:184:        .map(entry => entry?.request?.requestId).filter(typedId)
+src/composables/juyiting/useHallTypedDeliberation.js:186:        .map(record => record.receipt?.requestId).filter(typedId)
+src/composables/juyiting/useHallTypedDeliberation.js:188:      await Promise.all([...new Set(catalogChatIds)].map(requestId => readOne(requestId, captured, 'CHAT', visited))
+src/composables/juyiting/useHallTypedDeliberation.js:189:        .concat(inspectionRequestIds.map(requestId => readOne(requestId, captured, 'INSPECT', visited))))
+src/composables/juyiting/useHallTypedDeliberation.js:205:      expectedPendingQuestionStateVersion: clarification.stateVersion, question: clarification.question, purpose: projection.purpose || 'CHAT' })
+src/composables/juyiting/useHallTypedDeliberation.js:221:    const purpose = inspection ? 'INSPECT' : 'CHAT'
+src/composables/juyiting/useHallTypedDeliberation.js:228:    const unresolved = catalog.some(entry => !emptyCancellation(entry) && !ordinaryChatRequests.has(entry?.request?.requestId) && !entry?.request?.turns?.some(turn => turn.route === 'INSPECT') &&
+src/composables/juyiting/useHallTypedDeliberation.js:229:      !(entry?.request?.steps?.some(step => step.kind === 'EXECUTE') && !entry?.request?.turns?.some(turn => turn.route === 'CHAT')) &&
+src/composables/juyiting/useHallTypedDeliberation.js:230:      !projections.value.some(value => value.requestId === entry?.request?.requestId && ['READY', 'FAILED', 'CANCELLED'].includes(value.state)))
+src/composables/juyiting/useHallTypedDeliberation.js:231:    if (!pending && purpose === 'CHAT') {
+src/composables/juyiting/useHallTypedDeliberation.js:241:    if (!deliveryParent && !pending && purpose === 'CHAT' && !unresolved && !catalog.some(entry => entry?.request?.steps?.some(step => step.kind === 'EXECUTE'))) {
+src/composables/juyiting/useHallTypedDeliberation.js:242:      const finals = projections.value.filter(value => value.schemaVersion === 6 && value.state === 'READY' && value.route === 'CHAT' &&
+src/composables/juyiting/useHallTypedDeliberation.js:267:    if (purpose !== 'CHAT' || record?.body?.schemaVersion !== 3 || !body || !typedId(record?.key) || !sameContext(record.context, context) || !current(captured)) return false
+src/composables/juyiting/useHallTypedDeliberation.js:271:      if (!receipt) throw new Error('议事受理回执不匹配')
+src/composables/juyiting/useHallTypedDeliberation.js:275:      await readOne(receipt.requestId, captured, purpose)
+src/composables/juyiting/useHallTypedDeliberation.js:291:    await Promise.all(records.filter(record => typedId(record.receipt?.requestId)).map(record => readOne(record.receipt.requestId, captured, recordPurpose(record))))
+src/composables/juyiting/useHallTypedDeliberation.js:308:    const ready = new Set(projections.value.filter(item => item.purpose === 'INSPECT' && item.state === 'READY').map(item => item.requestId))
+src/composables/juyiting/useHallTypedDeliberation.js:309:    return readRecords(storage, scope.value, getContext?.() || {}).some(record => recordPurpose(record) === 'INSPECT' && record.status === 'ACCEPTED' && !ready.has(record.receipt?.requestId))
+src/composables/juyiting/bountyRequestCatalog.js:9:const immutableRequest = request => [request.requestId, request.conversationId, request.conversationGeneration, request.userMessageId].join('\u0000')
+src/composables/juyiting/bountyRequestCatalog.js:10:const STEP_KINDS = new Set(['CHAT', 'INSPECT', 'EXECUTE'])
+src/composables/juyiting/bountyRequestCatalog.js:19:const validTurn = (turn, request) => keys(turn, ['turnId', 'requestId', 'requestRevision', 'conversationId', 'conversationGeneration',
+src/composables/juyiting/bountyRequestCatalog.js:21:  exactOutputId(turn.turnId) && turn.requestId === request.requestId && turn.requestRevision === request.requestRevision &&
+src/composables/juyiting/bountyRequestCatalog.js:30:export const catalogRequest = (value, scope) => keys(value, ['requestId', 'requestRevision', 'conversationId', 'conversationGeneration', 'userMessageId', 'state', 'stateVersion', 'turns', 'steps']) &&
+src/composables/juyiting/bountyRequestCatalog.js:31:  exactOutputId(value.requestId) && long(value.requestRevision) && value.conversationId === scope.conversationId &&
+src/composables/juyiting/bountyRequestCatalog.js:46:      seen.has(entry.request?.requestId) || !catalogRequest(entry.request, value.scope)) return null
+src/composables/juyiting/bountyRequestCatalog.js:47:    previous = BigInt(entry.ordinal); seen.add(entry.request.requestId)
+src/composables/juyiting/bountyRequestCatalog.js:79:  const old = new Map(previous.map(entry => [entry.request.requestId, entry])); const merged = new Map(old)
+src/composables/juyiting/bountyRequestCatalog.js:81:    const prior = old.get(next.request.requestId)
+src/composables/juyiting/bountyRequestCatalog.js:82:    if (!prior) { merged.set(next.request.requestId, clone(next)); continue }
+src/composables/juyiting/bountyRequestCatalog.js:90:    merged.set(next.request.requestId, { ordinal: next.ordinal, request: { ...clone(prior.request), ...clone(next.request), turns, steps } })
+src/composables/juyiting/bountyRequestCatalog.js:96:  .map(step => Object.freeze({ ...clone(step), requestId: entry.request.requestId, requestRevision: entry.request.requestRevision,
+src/composables/juyiting/useHallBountyRequestCatalog.js:36:          if (!nextMerged) throw new Error('悬赏成果索引回执冲突')
+src/composables/juyiting/useHallBountyFinalization.js:17:const selectionFields = ['requestId', 'stepId', 'outputId', 'sha256', 'title', 'purpose']
+src/composables/juyiting/useHallBountyFinalization.js:18:const textSelectionFields = ['requestId', 'messageSource', 'sha256', 'title', 'purpose']
+src/composables/juyiting/useHallBountyFinalization.js:26:  ID(item.requestId) && HASH(item.sha256) && text(item.title, 255) && text(item.purpose, 255)
+src/composables/juyiting/useHallBountyFinalization.js:29:  ? JSON.stringify(['COMPLETED_MESSAGE', item.requestId, item.messageSource.turnId, item.messageSource.messageId])
+src/composables/juyiting/useHallBountyFinalization.js:30:  : JSON.stringify([item.requestId, item.stepId, item.outputId])
+src/composables/juyiting/useHallBountyFinalization.js:43:  if (!value) throw new Error('当前环境无法生成安全验收幂等键，未发送请求。')
+src/components/juyiting/ChatPanel.vue:135:          :key="`${output.requestId}:${output.messageSource.turnId}:${output.messageSource.messageId}`"
+src/components/juyiting/ChatPanel.vue:255:            <p v-if="selectedMaterialDirectory.writeNotice.value" role="status">{{ selectedMaterialDirectory.writeNotice.value }}</p>
+src/components/juyiting/ChatPanel.vue:290:        <p v-if="selectedMaterialDirectory.writeNotice.value" role="status">{{ selectedMaterialDirectory.writeNotice.value }}</p>
+src/composables/juyiting/useHallSkillCapabilities.js:19:      if (!value) throw new Error('技能目录回执格式不可信')
+src/composables/juyiting/hallSelectedOutputs.js:5:  const common = { requestId: item.requestId, sha256: item.sha256,
+src/composables/juyiting/hallSelectedOutputs.js:16:    if (item.unavailableReason || item.contentHash !== selected.sha256 || source?.requestId !== selected.requestId) return false
+src/composables/juyiting/hallBountyFollowupIntent.js:16:const continuation = value => value === null || (exactKeys(value, ['requestId', 'stepId']) && followupId(value.requestId) && followupId(value.stepId))
+src/composables/juyiting/hallMediaDeliveryBasis.js:10:    if (value.state !== 'READY' || value.route !== 'CHAT' || value.outcome?.taskId !== context.taskId ||
+src/composables/juyiting/hallMediaDeliveryBasis.js:18:      const request = snapshots.find(item => item.requestId === value.requestId)
+src/composables/juyiting/hallConversationMessages.js:50:    requestId: typedId(metadata.requestId),
+src/composables/juyiting/hallConversationMessages.js:185:      existing.requestId = typedId(event.requestId) || existing.requestId
+src/composables/juyiting/hallConversationMessages.js:196:    existing.requestId = typedId(event.requestId) || existing.requestId
+src/composables/juyiting/hallConversationMessages.js:209:    streamingMessage.requestId = typedId(event.requestId) || streamingMessage.requestId
+src/composables/juyiting/hallConversationMessages.js:228:    requestId: typedId(event.requestId),
+src/composables/juyiting/hallConversationMessages.js:268:    requestId: typedId(event.requestId),
+src/composables/juyiting/hallConversationMessages.js:280:  message.requestId = typedId(event.requestId) || message.requestId
+src/composables/juyiting/hostingRentContract.js:35:  return reprovision == null || (text(reprovision.requestId) && positive(reprovision.version) &&
+src/composables/juyiting/hostingRentContract.js:65:  if (op.kind === 'REPROVISION') return text(receipt.requestId) && receipt.operation === 'REPROVISION' && receipt.status === 'ACCEPTED' &&
+src/composables/juyiting/hostingRentContract.js:81:  for (const [key, id] of [['intent', 'intentId'], ['reprovision', 'requestId']]) {
+src/composables/juyiting/bountyOutputCatalog.js:15:  Object.keys(ref).length === 4 && Object.keys(ref).every(key => ['requestId', 'stepId', 'outputId', 'sha256'].includes(key)) &&
+src/composables/juyiting/bountyOutputCatalog.js:16:  [ref.requestId, ref.stepId, ref.outputId].every(exactOutputId) && typeof ref.sha256 === 'string' && HASH.test(ref.sha256)
+src/composables/juyiting/bountyOutputCatalog.js:30:    !['OUTPUT_COMMITTED', 'RESULT_COMMITTED', 'COMPLETED', 'FAILED', 'CANCELLED', 'ABANDONED'].includes(step.executionState))
+src/composables/juyiting/bountyOutputCatalog.js:33:  if (!exactOutputId(request?.requestId) || request?.conversationId !== conversationId) return []
+src/composables/juyiting/bountyOutputCatalog.js:36:  ).map(step => ({ requestId: request.requestId, stepId: step.stepId }))
+src/composables/juyiting/bountyOutputCatalog.js:39:export function outputCatalogItems (items, requestId, stepId) {
+src/composables/juyiting/bountyOutputCatalog.js:40:  if (!exactOutputId(requestId) || !exactOutputId(stepId) || !Array.isArray(items) || items.length > 128) return []
+src/composables/juyiting/bountyOutputCatalog.js:41:  const prefix = `/chat/requests/${encodeURIComponent(requestId)}/steps/${encodeURIComponent(stepId)}/outputs/`
+src/composables/juyiting/bountyOutputCatalog.js:49:    if (item.replaces != null && (!replacementValid(item.replaces) || item.replaces.requestId === requestId)) return false
+src/composables/juyiting/bountyOutputCatalog.js:57:  }).map(item => Object.freeze({ ...item, requestId, stepId,
+src/composables/juyiting/bountyOutputCatalog.js:65:  if (item?.messageSource) return JSON.stringify(['COMPLETED_MESSAGE', item.requestId, item.messageSource.turnId,
+src/composables/juyiting/bountyOutputCatalog.js:67:  return JSON.stringify([item?.requestId, item?.stepId, item?.outputId])
+src/composables/juyiting/bountyOutputCatalog.js:100:    if (![item?.requestId, item?.stepId, item?.outputId].every(exactOutputId) || (typeof item?.sha256 !== 'string' || !HASH.test(item.sha256)) || keys.has(outputItemKey(item))) throw new Error('本次交付来源无效。')
+src/composables/juyiting/bountyOutputCatalog.js:105:    if (![edit?.requestId, edit?.stepId, edit?.outputId].every(exactOutputId) || (typeof edit?.sha256 !== 'string' || !HASH.test(edit.sha256)) || !replacementValid(edit?.replaces)) throw new Error('改稿未关联明确的原成果。')
+src/composables/juyiting/bountyOutputCatalog.js:128:  const roots = new Set(originals.map(item => JSON.stringify([item.requestId, item.stepId])))
+src/composables/juyiting/bountyOutputCatalog.js:142:/** Only a persisted, explicitly marked CHAT final can seed a text deliverable.
+src/composables/juyiting/bountyOutputCatalog.js:147:    conversationGeneration: request.conversationGeneration, requestId: request.requestId,
+src/composables/juyiting/bountyOutputCatalog.js:149:  if (!value) throw new Error('文字成果来源回执不匹配。')
+src/composables/juyiting/bountyOutputCatalog.js:152:  if (request.state !== 'COMPLETED' || turn.route !== 'CHAT' || !['FINAL_PERSISTED', 'PUBLISHED'].includes(turn.state) ||
+src/composables/juyiting/bountyOutputCatalog.js:154:    turn.requestId !== request.requestId || turn.requestRevision !== request.requestRevision ||
+src/composables/juyiting/bountyOutputCatalog.js:157:    ![request.requestId, source.turnId, source.snapshotId].every(exactOutputId)) throw new Error('文字成果与原消息快照不一致。')
+src/composables/juyiting/bountyOutputCatalog.js:160:  return Object.freeze({ requestId: request.requestId, outcomeId: value.outcome.outcomeId,
+src/composables/juyiting/bountyOutputCatalog.js:213:    conversationGeneration: request.conversationGeneration, requestId: request.requestId,
+src/composables/juyiting/bountyOutputCatalog.js:215:  if (!value) throw new Error('媒体交付来源回执不匹配。')
+src/composables/juyiting/bountyOutputCatalog.js:219:  if (request.state !== 'COMPLETED' || turn.route !== 'CHAT' || !['FINAL_PERSISTED', 'PUBLISHED'].includes(turn.state) ||
+src/composables/juyiting/bountyOutputCatalog.js:221:    turn.requestId !== request.requestId || turn.requestRevision !== request.requestRevision ||
+src/composables/juyiting/bountyOutputCatalog.js:223:    !exactOutputId(taskId) || outcome.taskId !== taskId) throw new Error('媒体交付与原动作快照不一致。')
+src/composables/juyiting/bountyOutputCatalog.js:229:    deliveryRelation: outcome.deliveryRelation ? Object.freeze({ ...outcome.deliveryRelation }) : null, requestId: progress.childRequestId, stepId: null }
+src/composables/juyiting/bountyOutputCatalog.js:232:  const children = snapshots.filter(child => child.requestId === progress.childRequestId)
+src/composables/juyiting/bountyOutputCatalog.js:235:  if (child.state !== ([4, 5].includes(value.outcome.outcomeContractVersion) ? 'RESULT_COMMITTED' : 'OUTPUT_COMMITTED') || child.requestRevision !== '1' || child.stateVersion !== progress.childStateVersion ||
+src/composables/juyiting/bountyOutputCatalog.js:237:    steps.length !== 1 || steps[0].kind !== 'EXECUTE' || steps[0].state !== ([4, 5].includes(value.outcome.outcomeContractVersion) ? 'RESULT_COMMITTED' : 'OUTPUT_COMMITTED') ||
+src/composables/juyiting/bountyOutputCatalog.js:238:    steps[0].executionState !== ([4, 5].includes(value.outcome.outcomeContractVersion) ? 'RESULT_COMMITTED' : 'OUTPUT_COMMITTED') || steps[0].taskId !== taskId ||
+src/composables/juyiting/bountyOutputCatalog.js:260:      ![action.requestId, action.stepId].every(exactOutputId)) throw new Error('媒体交付意图不明确。')
+src/composables/juyiting/bountyOutputCatalog.js:261:    const batch = catalog.filter(item => !item.messageSource && item.requestId === action.requestId && item.stepId === action.stepId)
+src/composables/juyiting/bountyOutputCatalog.js:262:    if (!batch.length || batch.some(item => (item.replaces != null && (!replacementValid(item.replaces) || item.replaces.requestId === action.requestId)) || !exactOutputId(item.outputId) || !HASH.test(item.sha256) || assigned.has(outputItemKey(item)))) throw new Error('本次媒体清单尚未明确。')
+src/components/juyiting/HallDraftEditor.vue:62:      <section v-if="caseTab === 'progress'" class="case-body"><p>{{ displayedRef?.sourceType === 'TASK' ? '正式任务已创建，尚未指派或启动执行。进展、成果和返工继续使用原正式入口。' : executionSummary(currentExecution) }}</p><button v-if="currentExecution?.state === 'OUTPUT_COMMITTED'" type="button" :disabled="busy" @click="openResults(currentExecution)">查看成果</button><button v-if="displayedRef?.sourceType === 'TASK'" type="button" :disabled="busy" @click="openFormalTask">打开正式事项</button><template v-else><p v-for="item in drafts.caseView.value?.executions || []" :key="`${item.revisionNo}:${item.execution.executionId}`">第 {{ item.revisionNo }} 次执行 · {{ executionText(item.execution.state) }}</p><details class="technical-details"><summary>技术明细</summary><p>来源类型：{{ displayedRef?.sourceType }}；来源 ID：{{ displayedRef?.sourceId }}</p><p v-if="currentExecution">执行 ID：{{ currentExecution.executionId }}</p></details></template></section>
+src/components/juyiting/HallDraftEditor.vue:64:      <section v-else class="case-body"><p v-if="!drafts.executionResults.value">成果来自固定执行版本；尚未读取时不称已完成。</p><button v-if="currentExecution?.state === 'OUTPUT_COMMITTED' && !drafts.executionResults.value" type="button" class="primary" :disabled="busy" @click="openResults(currentExecution)">查看成果</button><template v-else-if="drafts.executionResults.value"><p v-if="drafts.executionResults.value.items.length">成果来自执行 {{ drafts.executionResults.value.executionId }}。</p><p v-else>该执行尚无可用成果。</p><article v-for="item in drafts.executionResults.value.items" :key="item.outputId" class="hall-result-item"><strong>{{ item.filename }}</strong><small>v{{ item.fileVersion }} · {{ item.mime }} · {{ item.availability === 'AVAILABLE' ? '可用' : '当前不可用' }}</small><div v-if="item.availability === 'AVAILABLE'" class="result-actions"><button type="button" :disabled="busy" @click="previewResult(item)">预览</button><button type="button" :disabled="busy" @click="downloadResult(item)">下载</button><button v-if="canCreateRevision" type="button" :disabled="busy" @click="startRevision(item)">提出修改</button></div></article><section v-if="resultPreviewItem" class="case-result-preview" aria-label="成果固定版本预览"><div class="preview-meta"><strong>{{ resultPreviewItem.filename }}</strong><label v-if="resultVersions.length">版本 <select v-model="resultPreviewVersion" @change="previewResultVersion"><option v-for="version in resultVersions" :key="version.version" :value="version.version">v{{ version.version }} · {{ version.originalFilename }}</option></select></label></div><template v-if="workspace.hasMoreVersions.value"><button type="button" :disabled="workspace.versionsState.value === 'loading'" @click="workspace.loadMoreVersions">{{ workspace.versionsState.value === 'loading' ? '正在读取历史版本…' : '读取更早版本' }}</button></template><p v-if="workspace.versionsError.value" role="alert">{{ workspace.versionsError.value }}</p><template v-if="workspace.preview.value?.kind === 'parts'"><div class="result-actions"><button type="button" :disabled="workspace.preview.value.selectedIndex === 0" @click="workspace.selectPreviewPart(workspace.preview.value.selectedIndex - 1)">上一页</button><span>第 {{ workspace.preview.value.selectedIndex + 1 }} / {{ workspace.preview.value.parts.length }} 页</span><button type="button" :disabled="workspace.preview.value.selectedIndex >= workspace.preview.value.parts.length - 1" @click="workspace.selectPreviewPart(workspace.preview.value.selectedIndex + 1)">下一页</button></div><PdfDocumentPreview v-if="selectedPreviewPart?.kind === 'pdf'" :blob="selectedPreviewPart.blob" /><pre v-else-if="selectedPreviewPart?.kind === 'text'" class="draft-preview">{{ selectedPreviewPart.text }}</pre><img v-else-if="selectedPreviewPart?.kind === 'image'" class="draft-preview-image" :src="selectedPreviewPart.url" alt="成果固定版本预览" /></template><PdfDocumentPreview v-else-if="workspace.preview.value?.kind === 'pdf'" :blob="workspace.preview.value.blob" /><p v-else-if="workspace.preview.value?.kind === 'text'" class="draft-preview">{{ workspace.preview.value.text }}</p><img v-else-if="workspace.preview.value?.kind === 'image'" class="draft-preview-image" :src="workspace.preview.value.url" alt="成果固定版本预览" /><p v-else class="draft-preview">{{ workspace.preview.value?.message || '预览暂不可用，可下载固定版本。' }}</p><p v-if="workspace.preview.value?.message && ['parts', 'text', 'audio', 'image', 'pdf'].includes(workspace.preview.value.kind)" class="draft-hint" role="status">{{ workspace.preview.value.message }}</p></section></template><p v-if="drafts.resultsError.value" class="draft-error" role="alert">{{ drafts.resultsError.value }}</p></section>
+src/components/juyiting/HallDraftEditor.vue:123:const markableResult = computed(() => { const results = drafts.executionResults.value; const latest = [...(drafts.caseView.value?.executions || [])].sort((a, b) => b.revisionNo - a.revisionNo)[0]?.execution || currentExecution.value; return results && results.state === 'OUTPUT_COMMITTED' && results.manifestId && results.items.length && results.items.every(item => item.availability === 'AVAILABLE') && results.executionId === latest?.executionId ? { executionId: results.executionId, manifestId: results.manifestId } : null })
+src/components/juyiting/HallDraftEditor.vue:175:const executionText = state => ({ QUEUED: '等待执行', OUTPUT_COMMITTED: '已有已归档输出', INPUTS_REVOKED: '输入授权已撤销', FAILED: '执行未完成' })[state] || '状态待核对'
+src/components/juyiting/HallDraftEditor.vue:176:const executionSummary = execution => execution?.state === 'OUTPUT_COMMITTED' ? '执行已有已归档输出；可查看已登记的固定版本成果。' : execution ? '已受理，尚未取得成果。' : '私人交办回执未包含执行信息；请核对原交办。'
+src/composables/juyiting/hallDiscussionTurns.js:29:    const parents = owners.get(row.requestId)
+src/composables/juyiting/miniProgramOrientation.js:7:export const WECHAT_MINI_PROGRAM_SDK_URL = 'https://res.wx.qq.com/open/js/jweixin-1.6.0.js'
+src/composables/juyiting/miniProgramOrientation.js:59:        script.src = WECHAT_MINI_PROGRAM_SDK_URL
+src/composables/juyiting/useHostingRent.js:87:      throw new Error('迎新安顿金回执不完整，未继续付款。')
+src/composables/juyiting/useHostingRent.js:107:        (operation.kind === 'REPROVISION' && next.reprovision?.requestId !== receipt.requestId)) throw new Error('请求已确认；最新租约尚未同步。')
+src/composables/juyiting/useHostingRent.js:111:    if (!newAcceptedLease && !lookupNotOlder(next, previous)) throw new Error('忽略延迟的旧租约快照，请重查。')
+src/composables/juyiting/useHostingRent.js:140:    if (saved.accepted && (!validOperation(saved.accepted.operation, code) || !matchingHostingReceipt(saved.accepted.receipt, saved.accepted.operation))) throw new Error('原回执恢复记录不完整，已停止新付款。')
+src/composables/juyiting/useHostingRent.js:203:    if (!matchingHostingReceipt(result, operation)) throw new Error('回执与原请求不匹配；结果未知，请只核对原请求。')
+src/composables/juyiting/useHallConversationArchive.js:41:  if (!uuid) throw new Error('当前环境不能生成安全的幂等键，未发送保存请求。')
+src/composables/juyiting/useHallConversationArchive.js:71:  if (error?.status === 409) return ['error', '保存幂等键或归档状态发生冲突，未自动重试。请刷新确认。']
+src/composables/juyiting/useHallConversationArchive.js:137:      if (!receipt) throw new Error('保存状态回执格式无效，尚不能确认已保存。')
+src/composables/juyiting/useHallConversationArchive.js:154:        put(key, { ...current, state: 'error', message: error.message || '未生成幂等键，未发送保存请求。', busy: false, operationId: '' })
+src/composables/juyiting/useHallConversationArchive.js:159:      put(key, { ...current, state: 'error', message: '生成的幂等键无效，未发送保存请求。', busy: false, operationId: '' })
+src/composables/juyiting/useHallConversationArchive.js:165:    // Record the intent before the POST: a lost ACK or page refresh must not create a second file.
+src/composables/juyiting/useHallConversationArchive.js:171:      if (!receipt) throw new Error('保存回执格式无效，尚不能确认已保存。')
+src/composables/juyiting/useHallConversationArchive.js:184:    // A known operation may be left PROCESSING after the ACK/worker was lost. First
+src/components/juyiting/HallOverview.vue:130:    EDITING: '尚未交办', SUBMITTED: '已交办', QUEUED: '等待执行', OUTPUT_COMMITTED: '成果可查看',
+src/components/juyiting/HallOverview.vue:155:const nextLabel = item => item.ref.sourceType === 'TASK' && item.phase === 'UNKNOWN' ? '核对事项' : item.ref.sourceType === 'TASK' ? '查看进展' : item.review ? '查看待验收交付' : item.ref.sourceType === 'DRAFT' ? '继续填写' : item.status.code === 'OUTPUT_COMMITTED' ? '查看成果' : ['FAILED','UNKNOWN','failed'].includes(item.status.code) ? '处理异常' : '查看进展'
+src/components/juyiting/HallOverview.vue:158:  VIEWED_RESULT_NOT_TRACKED: '成果查看记录尚未纳入，已查看的成果仍可能列在这里。',
+src/composables/juyiting/useHallDrafts.js:54:  ['QUEUED', 'INPUTS_REVOKED', 'OUTPUT_COMMITTED', 'FAILED'].includes(value.state)
+src/composables/juyiting/useHallDrafts.js:73:  ['QUEUED', 'INPUTS_REVOKED', 'OUTPUT_COMMITTED', 'FAILED'].includes(value.state) &&
+src/composables/juyiting/useHallDrafts.js:76:  (value.state === 'OUTPUT_COMMITTED'
+src/composables/juyiting/useHallDrafts.js:215:    if (!validDraft(value)) throw new Error('草稿回执无效，尚不能显示为已保存。')
+src/composables/juyiting/useHallDrafts.js:310:      if (!result || result.draftId !== snapshot.draftId || result.state !== 'DISCARDED') throw new Error('放弃草稿回执无效，尚不能确认放弃。')
+src/composables/juyiting/useHallDrafts.js:339:    if (!validReceipt(value, kind)) throw new Error('交办回执无效，尚不能显示为已受理。')
+src/composables/juyiting/useHallDrafts.js:422:      if (task?.id !== ref.sourceId || typeof task.status !== 'string') throw new Error('正式事项尚未核对，未用交办回执代替事项详情。')
+src/composables/juyiting/useHallDrafts.js:442:      if (!validResults(value) || value.executionId !== executionId) throw new Error('成果回执无效，未展示可能不完整的成果。')
+src/composables/juyiting/useHallDrafts.js:463:      if (!validCase(value) || value.caseId !== caseId) throw new Error('事项进展回执无效，未展示可能不完整的进展。')
+src/components/personal-workspace/TaskMaterialLinks.vue:18:    <p v-if="links.writeNotice.value" class="task-material-note" role="status">{{ links.writeNotice.value }}</p>
+src/components/personal-workspace/TaskMaterialLinks.vue:133:      <p class="task-material-note">创建 TASK 执行不等于 Agent 或 Provider 已运行；PDF 是否成为正式 submitted/accepted 交付，仍须以正式交付回执为准。</p>
+src/components/personal-workspace/TaskMaterialLinks.vue:139:      <p class="task-material-note">正式待验收、已验收或要求修改只以正式交付接口回执为准；文件关联本身不表示已执行、已交付或已验收。</p>
+src/components/personal-workspace/TaskMaterialLinks.vue:197:  if (outputLinks.value.length) return `已读取 ${outputLinks.value.length} 条 OUTPUT 关联；它们是执行流程记录的成果引用，正式交付状态仍需以正式交付回执确认。`
+src/composables/juyiting/useHallBackendSceneState.js:98:      snapshotError.value = error?.message || '聚义厅场景快照暂无法读取'
+src/composables/juyiting/useHallPointAndStart.js:47:    if (!projection) throw new Error('原点将投影不匹配或版本回退；未再次办理')
+src/composables/juyiting/useHallPointAndStart.js:65:      !['assigned', 'running', 'reviewing', 'completed'].includes(task.status)) throw new Error('点将已确认，当前榜文快照尚未核对；未补发首轮')
+src/composables/juyiting/useHallPointAndStart.js:89:    if (!projection) throw new Error('点将回执未能匹配；保留原键核对，不重新点将')
+src/components/world/JuyiHall.vue:325:      <button v-if="deliveryReview.operation.value.receipt && ['COMMITTED', 'REJECTED'].includes(deliveryReview.operation.value.state)" type="button" :disabled="deliveryReview.operation.value.busy" @click="deliveryReview.settleOriginal">重新核对并结束原操作</button>
+src/components/world/JuyiHall.vue:437:            <article v-for="item in terminalTextItems" :key="`${item.requestId}:${item.outcomeId}`">
+src/components/world/JuyiHall.vue:2177:    if (catalogError.value || rosterError.value || mapError.value) throw new Error('名册投影刷新待完成')
+src/components/world/JuyiHall.vue:2361:  onTypedOutcome: event => { if (event?.requestId) void typedDeliberation?.readOne?.(event.requestId) }
+src/components/world/JuyiHall.vue:2657:      const requestId = entry.request?.requestId
+src/components/world/JuyiHall.vue:2658:      if (!requestId) continue
+src/components/world/JuyiHall.vue:2659:      const response = await chatApi.get(`/requests/${encodeURIComponent(requestId)}`, {}, { autoLoading: false, signal: controller.signal })
+src/components/world/JuyiHall.vue:2661:      if (request?.requestId !== requestId || request.conversationId !== scope.conversationId) throw new Error('历史议事来源不匹配')
+src/components/world/JuyiHall.vue:2663:        if (turn.route !== 'CHAT' || !['FINAL_PERSISTED', 'PUBLISHED'].includes(turn.state)) continue
+src/components/world/JuyiHall.vue:2664:        const outcome = await chatApi.get(`/conversations/${encodeURIComponent(scope.conversationId)}/requests/${encodeURIComponent(requestId)}/typed-outcome`, {},
+src/components/world/JuyiHall.vue:2838:  if (!receipt || receipt.taskId !== reviewTaskId.value || receipt.state !== 'COMMITTED' || receipt.decision !== 'ACCEPT' || receipt.taskState !== 'COMPLETED') return
+src/composables/juyiting/hallDeliveryReviewIntent.js:17:    return exact(source, ['kind', 'requestId', 'messageSource']) && reviewId(source.requestId) &&
+src/composables/juyiting/hallDeliveryReviewIntent.js:21:  if (source.kind === 'CONVERSATION_OUTPUT') return exact(source, ['kind', 'requestId', 'stepId', 'outputId']) && [source.requestId, source.stepId, source.outputId].every(reviewId)
+src/composables/juyiting/hallDeliveryReviewIntent.js:48:    !(pending.kind === 'REVIEW' ? oneOf(pending.state, ['PROCESSING', 'COMMITTED', 'REJECTED']) : pending.kind === 'SUBMISSION' && oneOf(pending.state, ['PENDING', 'COMPLETED', 'FAILED'])) ||
+src/composables/juyiting/hallDeliveryReviewIntent.js:94:const receiptFields = ['schemaVersion', 'operationId', 'taskId', 'deliveryId', 'decision', 'state', 'stateVersion', 'taskState', 'taskVersion', 'deliveryState', 'deliveryVersion', 'requestId', 'sourceRequestId', 'conversationId', 'errorCode', 'retryable']
+src/composables/juyiting/hallDeliveryReviewIntent.js:97:    raw.decision !== 'ACCEPT' || !oneOf(raw.state, ['PROCESSING', 'COMMITTED', 'REJECTED']) || !reviewVersion(raw.stateVersion) || raw.stateVersion === '0' ||
+src/composables/juyiting/hallDeliveryReviewIntent.js:100:    !oneOf(raw.deliveryState, ['SUBMITTED', 'ACCEPTED', 'CHANGES_REQUESTED']) || raw.requestId !== null || raw.sourceRequestId !== null || raw.conversationId !== null ||
+src/composables/juyiting/hallDeliveryReviewIntent.js:102:    (raw.state === 'COMMITTED' && (raw.taskState !== 'COMPLETED' || raw.deliveryState !== 'ACCEPTED' || raw.retryable ||
+src/composables/juyiting/hallSkillResults.js:3:const fields = ['schemaVersion', 'conversationId', 'conversationGeneration', 'taskId', 'requestId', 'stepId', 'executionId', 'executionStateVersion', 'state', 'phase', 'resultSha256', 'data', 'outputs']
+src/composables/juyiting/hallSkillResults.js:18:    results.push(Object.freeze({ ...context, executionId: progress.executionId, requestId: progress.childRequestId,
+src/composables/juyiting/hallSkillResults.js:27:    ['conversationId', 'conversationGeneration', 'taskId', 'requestId', 'executionId'].some(key => value[key] !== expected[key]) ||
+src/composables/juyiting/hallSkillResults.js:33:  const outputs = outputCatalogItems(value.outputs, value.requestId, value.stepId)
+src/composables/juyiting/hallSkillResults.js:36:  const complete = value.phase === 'COMPLETE' && value.state === 'RESULT_COMMITTED'
+src/composables/juyiting/hallSkillResults.js:43:  if (!after || ['conversationId', 'conversationGeneration', 'taskId', 'requestId', 'stepId', 'executionId'].some(key => before[key] !== after[key]) ||
+src/components/economy/SkillManagement.vue:198:                <p v-if="change(row)?.status === 'WAITING_AGENT'" class="skill-note">{{ change(row).action === 'UNINSTALL' ? '已停止新调用，等待Agent连接后继续原卸载操作；无需重复提交。' : '原操作已接纳，等待Agent连接后继续；无需再次安装或购买。' }}</p>
+src/components/economy/SkillManagement.vue:279:const progressSteps = row => change(row)?.action === 'UNINSTALL' ? ['停止新调用', '移除技能入口', '核对卸载结果'] : ['后台接纳', '下载与校验', '安全切换', '回执与运行核验']
+src/composables/juyiting/useHallExecutionAbandonment.js:17:const validIntent = intent => keys(intent, ['conversationId', 'requestId', 'idempotencyKey', 'body']) &&
+src/composables/juyiting/useHallExecutionAbandonment.js:18:  id(intent.conversationId) && id(intent.requestId) && key(intent.idempotencyKey) && validBody(intent.body)
+src/composables/juyiting/useHallExecutionAbandonment.js:19:const receiptFields = ['operationId', 'conversationId', 'requestId', 'stepId', 'executionId', 'state', 'requestStateVersion',
+src/composables/juyiting/useHallExecutionAbandonment.js:22:  if (!id(conversationId) || request?.conversationId !== conversationId || !id(request?.requestId) ||
+src/composables/juyiting/useHallExecutionAbandonment.js:32:  receipt.conversationId === intent.conversationId && receipt.requestId === intent.requestId &&
+src/composables/juyiting/useHallExecutionAbandonment.js:74:      const response = await api.execute({ method, url: `/conversations/${encodeURIComponent(snapshot.intent.conversationId)}/requests/${encodeURIComponent(snapshot.intent.requestId)}/abandon-execution`,
+src/composables/juyiting/useHallExecutionAbandonment.js:79:      if (!validAbandonmentReceipt(receipt, snapshot.intent) || (status.value.receipt && receiptFields.some(field => status.value.receipt[field] !== receipt[field]))) throw new Error('原放弃操作回执不匹配')
+src/composables/juyiting/useHallExecutionAbandonment.js:90:            : '尚不能确认原操作结果；请查询或继续原操作，原幂等键已保留。' }
+src/composables/juyiting/useHallExecutionAbandonment.js:100:    if (status.value.receipt?.requestId === request?.requestId) return status.value.receipt
+src/composables/juyiting/useHallExecutionAbandonment.js:104:      const intent = freeze({ conversationId: conversation.value, requestId: request.requestId, idempotencyKey: idempotencyKeyFactory(), body })
+src/composables/juyiting/hallPointAndStartProviderConsent.js:2:const ACKNOWLEDGEMENT = 'UNPRICED_EXTERNAL_ACCOUNT_ONE_IMAGE_REQUEST_ATTEMPT'
+src/composables/juyiting/hallPointAndStartProviderConsent.js:45:    acknowledgement !== ACKNOWLEDGEMENT) return null
+src/composables/juyiting/hallPointAndStartProviderConsent.js:99:export const providerConsentAcknowledgement = ACKNOWLEDGEMENT
+src/composables/juyiting/useHallAgentProfileCapabilities.js:45:  SKILL_INSTALLATION_RECEIPT_MISSING: '安装回执尚未核验',
+src/components/chat/Chat.vue:274:    const parser = createHallSseParser({ conversationId: id, requestId: response.headers.get('X-Request-Id'),
+src/composables/juyiting/useHallTaskActions.js:201:        snapshot.assignedAgentId !== receipt.agentId))) throw new Error('领令已确认，榜文快照尚未同步')
+src/composables/juyiting/useHallTaskActions.js:284:        if (!matchingReceipt(receipt, operation)) throw new Error('领令回执不匹配；请核对原领令，不要重新取价')
+src/composables/juyiting/useHallTaskActions.js:379:        throw new Error('撤榜回执不匹配；请核对原撤榜，不要重复扣款')
+src/composables/juyiting/useHallTaskActions.js:384:          throw new Error('榜文快照尚未同步')
+src/composables/juyiting/useHallRequirementCreate.js:28:    if (read.state === 'PRESENT') state.value = { status: read.record.receipt ? 'COMMITTED' : 'UNKNOWN', intent: read.record, error: null }
+src/composables/juyiting/useHallRequirementCreate.js:41:    if (!receipt) throw new Error('需求保存回执与原需求或精确资料不一致；请核对原操作，未另行创建。')
+src/composables/juyiting/useHallRequirementCreate.js:44:    state.value = { status: 'COMMITTED', intent: confirmed, error: null }
+src/composables/juyiting/useHallRequirementCreate.js:71:        state.value = { status: retained.receipt ? 'COMMITTED' : 'UNKNOWN', intent: retained,
+src/composables/juyiting/useHallBountyFollowup.js:17:  const fields = ['schemaVersion', 'requestId', 'stepId', 'executionIntentId', 'ownerPayloadSha256', 'instructionSha256',
+src/composables/juyiting/useHallBountyFollowup.js:20:  if (!exactKeys(value, fields) || value.schemaVersion !== 3 || !followupId(value.requestId) || !followupId(value.stepId) ||
+src/composables/juyiting/useHallBountyFollowup.js:39:    'operationGrantVersion', 'taskId', 'conversationId', 'conversationGeneration', 'requestId', 'stepId', 'executionIntentId',
+src/composables/juyiting/useHallBountyFollowup.js:45:    value.targetAgentId !== record.targetAgentId || !followupLong(value.conversationGeneration) || !followupId(value.requestId) ||
+src/composables/juyiting/useHallBountyFollowup.js:53:  if (value.conversationGeneration !== record.intent.expectedConversationGeneration || value.requestId !== record.preview.requestId ||
+src/composables/juyiting/useHallBountyFollowup.js:62:  const fields = ['schemaVersion', 'requestId', 'userMessageId', 'stepId', 'executionIntentId', 'consentId', 'operationGrantId',
+src/composables/juyiting/useHallBountyFollowup.js:64:  if (!exactKeys(value, fields) || value.schemaVersion !== 3 || value.requestId !== record.preview.requestId ||
+src/composables/juyiting/useHallBountyFollowup.js:138:    if (!preview) throw new Error('服务端预览回执不匹配；未签发同意')
+src/composables/juyiting/useHallBountyFollowup.js:157:    if (!issued) throw new Error('费用同意回执不匹配；保留原键只读核对')
+src/composables/juyiting/useHallBountyFollowup.js:165:      if (!received) throw new Error('最终办理回执不匹配；保留原键只读核对')
+src/composables/juyiting/useHallBountyFollowup.js:180:    if (!receipt) throw new Error('原费用同意回执不匹配')
+src/composables/juyiting/useHallBountyFollowup.js:188:    if (!receipt) throw new Error('原最终办理回执不匹配')
+src/composables/juyiting/hallMultimediaDeliberationUi.js:34: * projection has no trusted CHAT schema marker, so CHAT stays on the existing
+src/composables/juyiting/hallMultimediaDeliberationUi.js:39:  if (!isMultimediaDeliberationUiEnabled(enabled) || capability?.v2 !== true || !exactRequestId(request?.requestId)) return null
+src/composables/juyiting/hallConversationSse.js:22:export const createHallSseParser = ({ conversationId, requestId, onEvent, onCursor, onCommitted, onInvalid }) => {
+src/composables/juyiting/hallConversationSse.js:41:        frame.event !== message.messageType || requestId !== undefined && message.requestId !== requestId) return invalid('invalid_envelope')
+src/composables/juyiting/useHallWorkItemPlan.js:124:      if (!matchingConfirmation(result, body, taskId)) throw new Error('服务确认回执与原计划不匹配')
+src/composables/usePersonalWorkspaceConversationLinks.js:54:  const writeNotice = ref('')
+src/composables/usePersonalWorkspaceConversationLinks.js:78:    writeNotice.value = ''
+src/composables/usePersonalWorkspaceConversationLinks.js:157:    actionState.value = 'saving'; error.value = ''; writeNotice.value = ''
+src/composables/usePersonalWorkspaceConversationLinks.js:168:            throw new Error('议事资料关联回执无效，请重试原操作核对。')
+src/composables/usePersonalWorkspaceConversationLinks.js:176:          writeNotice.value = data.state === 'ACTIVE' ? '原关联操作已提交。' : '原关联操作已提交，但当前关联已解除。'
+src/composables/usePersonalWorkspaceConversationLinks.js:195:    actionState.value = 'removing'; error.value = ''; writeNotice.value = ''
+src/composables/usePersonalWorkspaceConversationLinks.js:207:            throw new Error('解除议事资料关联回执无效，请重试原操作核对。')
+src/composables/usePersonalWorkspaceConversationLinks.js:215:          writeNotice.value = data.link.state === 'DETACHED' ? '原解除操作已提交。' : '原解除操作已提交，但当前资料已重新关联。'
+src/composables/usePersonalWorkspaceConversationLinks.js:238:  return { pendingWrites: writes.pending, retryWrite, writeNotice, links, nextCursor, listState, loading, actionState, error, currentConversationId, load, loadMore, attach, detach, etagFor, reset, dispose }
+src/composables/useSkillMarket.js:65:    if (!record || typeof record.skillKey !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(record.skillKey) || Object.keys(record).sort().join(',') !== ['schemaVersion', 'kind', 'agentId', 'skillKey', 'path', 'key', 'requestId', 'data', 'skillChangeId', 'accepted'].sort().join(',') || record.schemaVersion !== 1 || record.agentId !== agentId.value || !skillId(record.key) || !skillId(record.requestId) ||
+src/composables/useSkillMarket.js:209:      const raw = await agentApi.post(record.path, clone(data), { ...options(token), headers: { 'Idempotency-Key': record.key, 'X-Request-Id': record.requestId } })
+src/composables/useSkillMarket.js:255:        const record = prior || { schemaVersion: 1, kind: 'QUOTE', agentId: agentId.value, skillKey, path: '/skill-orders/quotes', key: createIdempotencyKey(), requestId: createIdempotencyKey(), data, skillChangeId: null, accepted: false }
+src/composables/useSkillMarket.js:280:      const raw = await agentApi.post(record.path, clone(record.data), { ...options(token, 202), headers: { 'Idempotency-Key': record.key, 'X-Request-Id': record.requestId } })
+src/composables/useSkillMarket.js:332:    return send({ schemaVersion: 1, kind: 'CREATE', agentId: agentId.value, skillKey, path: `${basePath()}/skill-changes`, key: createIdempotencyKey(), requestId: createIdempotencyKey(), data, skillChangeId: null, accepted: false })
+src/composables/useSkillMarket.js:357:      key: createIdempotencyKey(), requestId: createIdempotencyKey(), data: { expectedChangeRevision: change.changeRevision }, skillChangeId: change.skillChangeId, accepted: false })
+src/composables/usePersonalWorkspaceTaskLinks.js:54:  const writeNotice = ref('')
+src/composables/usePersonalWorkspaceTaskLinks.js:78:    writeNotice.value = ''
+src/composables/usePersonalWorkspaceTaskLinks.js:209:    actionState.value = 'saving'; error.value = ''; writeNotice.value = ''
+src/composables/usePersonalWorkspaceTaskLinks.js:220:            throw new Error('任务资料关联回执无效，请重试原操作核对。')
+src/composables/usePersonalWorkspaceTaskLinks.js:228:          writeNotice.value = data.state === 'ACTIVE' ? '原关联操作已提交。' : '原关联操作已提交，但当前关联已解除。'
+src/composables/usePersonalWorkspaceTaskLinks.js:247:    actionState.value = 'removing'; error.value = ''; writeNotice.value = ''
+src/composables/usePersonalWorkspaceTaskLinks.js:259:            throw new Error('解除任务资料关联回执无效，请重试原操作核对。')
+src/composables/usePersonalWorkspaceTaskLinks.js:267:          writeNotice.value = data.link.state === 'DETACHED' ? '原解除操作已提交。' : '原解除操作已提交，但当前资料已重新关联。'
+src/composables/usePersonalWorkspaceTaskLinks.js:290:  return { pendingWrites: writes.pending, retryWrite, writeNotice, links, nextCursor, listState, loading, actionState, error, currentTaskId, load, loadMore, loadAll, attach, detach, etagFor, reset, dispose }
+src/composables/usePersonalWorkspaceWriteIntent.js:31:        entry.state = 'COMMITTED'
+src/composables/usePersonalWorkspaceWriteIntent.js:38:        if (entry.state !== 'COMMITTED') {
+src/composables/usePersonalWorkspace.js:104:  const writeNotice = ref('')
+src/composables/usePersonalWorkspace.js:157:    writeNotice.value = ''
+src/composables/usePersonalWorkspace.js:241:    writeNotice.value = ''
+src/composables/usePersonalWorkspace.js:250:    actionState.value = 'loading-detail'; error.value = ''; detail.value = null; writeNotice.value = ''; detailRetryFileId.value = null; resetVersions(); revokePreview()
+src/composables/usePersonalWorkspace.js:297:    writeNotice.value = `${label}已保存。`
+src/composables/usePersonalWorkspace.js:302:    else { writeNotice.value = `${label}已保存，但详情读取失败；请重读详情，不要重复提交。`; actionState.value = 'ready' }
+src/composables/usePersonalWorkspace.js:310:    writeNotice.value = '文件已保存，正在重新读取详情。'
+src/composables/usePersonalWorkspace.js:313:    if (result) { detailRetryFileId.value = null; writeNotice.value = '已保存，详情已重新读取。' }
+src/composables/usePersonalWorkspace.js:314:    else writeNotice.value = '文件已保存，但详情读取失败；请重读详情，不要重复提交。'
+src/composables/usePersonalWorkspace.js:349:          if (!data?.operation || data.operation.state !== 'COMMITTED' || !validFileView(data.file) || !validVersion(data.version) || data.version.fileId !== data.file.fileId) throw new Error('上传回执无效，尚不能确认保存。')
+src/composables/usePersonalWorkspace.js:379:          if (!data?.operation || data.operation.state !== 'COMMITTED' || !validFileView(data.file) || !validVersion(data.version) || data.file.fileId !== file.fileId || data.version.fileId !== file.fileId || BigInt(data.version.version) !== BigInt(file.latestVersion) + 1n) throw new Error('版本追加回执无效，尚不能确认保存。')
+src/composables/usePersonalWorkspace.js:408:            if (!validFileView(data) || data.fileId !== file.fileId) throw new Error('文件操作回执无效，尚不能确认保存。')
+src/composables/usePersonalWorkspace.js:420:            writeNotice.value = '原操作已提交，已读取当前文件状态。'
+src/composables/usePersonalWorkspace.js:576:      if (!data || !ID(data.operationId) || !TEXT(data.state, 32)) throw new Error('操作回执返回无效。')
+src/composables/usePersonalWorkspace.js:597:    pendingWrites: writes.pending, retryWrite, confirmationStale, writeNotice, detailRetryFileId, retryDetail, versionItems, hasMoreVersions, versionsState, versionsError, versionsNextCursor, versionsLoaded, loadVersions, loadMoreVersions, closeDetail,
+src/composables/useFormalTaskExecutionScope.js:69:    else if (!subjectMatches) authorizationReason = '请在本榜文中明确选择已指派好汉并等待该榜文协作工作台快照；不会切换或推定承办人。'
+src/composables/useFormalTaskExecutionScope.js:73:    else if (!workspaceMatches) authorizationReason = '协作工作台快照不属于当前榜文或已指派好汉，不能授权正式执行。'
+src/composables/useRequestRum.js:31:  requestId,
+src/composables/useRequestRum.js:39:  const payload = createRequestTimingPayload({ route, url, requestId, durationMs, status, errorClass })
+src/composables/useRequestRum.js:58:export function createRequestTimingPayload ({ route, url, requestId, durationMs, status, errorClass } = {}) {
+src/composables/useRequestRum.js:60:  const normalizedRequestId = normalizeRequestId(requestId)
+src/composables/useRequestRum.js:65:    requestId: normalizedRequestId,
+src/composables/useRequestRum.js:87:  const requestId = typeof value === 'string' ? value.trim() : ''
+src/composables/useRequestRum.js:88:  return REQUEST_ID_PATTERN.test(requestId) ? requestId : null

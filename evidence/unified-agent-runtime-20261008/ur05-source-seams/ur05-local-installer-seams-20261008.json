@@ -1,0 +1,1157 @@
+{
+  "task": "UR05",
+  "role": "SOLE_READONLY_SUPPORT_NOT_REVIEWER",
+  "date": "2026-10-08",
+  "status": "READONLY_REPORT_COMPLETE_IMPLEMENTATION_ACCEPTANCE_NOT_RUN",
+  "root_head_context_only": "cd2c6ef361f6cccee9a83b2a678dac7d19f9320a",
+  "source_binding": "actual file SHA snapshots; modified/untracked bytes not HEAD commitment",
+  "worktree_status_preserved": [
+    " M ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+    " M ops/ci/aliyun-flow/host/cyf-api-flow-install",
+    " M ops/ci/aliyun-flow/host/cyf-api-kit",
+    "?? ops/orchestration/cyf_orchestrator.py"
+  ],
+  "findings": [
+    {
+      "id": "F01",
+      "title": "项目规则与源码归属",
+      "finding": "后端本地串行正式验证/固定干净源码/同批不可变制品，前端Flow；无自动部署/生产目录编译。根HEAD仅上下文；三host源文件modified、orchestrator untracked，本报告绑定实际文件SHA，不覆盖他人文件。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/AGENTS.md",
+          "start": 34,
+          "end": 34,
+          "sha256": "bfaa0f2eedae4d07f5c221a49ccd3d4de15120aa503fb7e9b0a54a14e4e81f36"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/AGENTS.md",
+          "start": 38,
+          "end": 38,
+          "sha256": "bfaa0f2eedae4d07f5c221a49ccd3d4de15120aa503fb7e9b0a54a14e4e81f36"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/AGENTS.md",
+          "start": 39,
+          "end": 39,
+          "sha256": "bfaa0f2eedae4d07f5c221a49ccd3d4de15120aa503fb7e9b0a54a14e4e81f36"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F02",
+      "title": "受信输入/下载边界",
+      "finding": "deploy root-only五参数pipeline/run/commit/version/artifact_sha256，固定API pipeline、正整数Run、40hex commit，root-controlled prepared downloads/<run>/package.tgz。它不是下载API调用器；本次有界source搜索未定位上游真实artifact download调用，UNKNOWN。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 1097,
+          "end": 1132,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F03",
+      "title": "包/源/JAR与version绑定",
+      "finding": "协调mutex内数字Run stale guard；外部包SHA→copy/fsync/replace incoming→再核SHA。精确五payload，receipt真实Flow org/pipeline/job/run、clean develop/commit/tree/success gates、实际JAR hash/size，root approval绑定source/run/receipt/JAR/consumed；versioned release外部version/commit/tree/package/JAR/receipt。没有证明外部version等于JAR实际应用版本。buildId不能伪装run_id或沿用Run数值排序。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 1134,
+          "end": 1166,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 1168,
+          "end": 1255,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 1261,
+          "end": 1279,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F04",
+      "title": "root ownership",
+      "finding": "install零参数固定state/incoming/approval/record/canonical/lifecycle及生产root脚本路径。private offline模式隔离，生产fault禁用。state/incoming/backups root:root0700，lifecycle物理单链接不可非root写，canonical祖先物理root不可非root写，目录root:root0755，JAR root:isp0640单链接，approval/record root0600。这是源码要求不是本次线上权限验收。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 23,
+          "end": 38,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 40,
+          "end": 108,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 129,
+          "end": 140,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F05",
+      "title": "锁顺序与持有方",
+      "finding": "coordinator父持auto-approval-v2 mutex/noninheritable；installer持release FD8排他flock、inode proof，lifecycle核device/inode/held及实际fdinfo排他FLOCK，独立调用自己取FD8，再lifecycle FD9。installer退出后coordinator仍持协调mutex，重取同release并复核installed，F06后E05；不是FD8无缝覆盖所有schema阶段。local必须共享相同锁及顺序，禁止独立本地锁绕开/反向持锁调用。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 1134,
+          "end": 1139,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 110,
+          "end": 127,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+          "start": 339,
+          "end": 416,
+          "sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 475,
+          "end": 496,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 1053,
+          "end": 1093,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F06",
+      "title": "payload与容量",
+      "finding": "unpack前闭合archive和实际candidate+rollback字节，区分FS，不新增任意资源/包/等待限额。same-FS canonical旁WORK仅清自己目录；五payload禁duplicate/traversal/link/nonregular；receipt/metadata/sidecar/provenance/Boot JAR结构/hash验证，candidate root:isp0640复hash。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 203,
+          "end": 294,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 297,
+          "end": 506,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F07",
+      "title": "backup与原子切换",
+      "finding": "durable prepared先backup和生命周期，backup核旧hash/temp copy fsync/hardlink publish/dirfsync/remove temp，正常结束root0600单链接，已有backup必须完全匹配。activating落盘先stop+精确STOPPED proof，核candidate与old hash，再same-FS os.replace canonical/dirfsync；record root0600 temp/fsync/replace/dirfsync。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 515,
+          "end": 574,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 602,
+          "end": 625,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 627,
+          "end": 721,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 1038,
+          "end": 1079,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F08",
+      "title": "恢复源码与未知",
+      "finding": "hash/health→durable active_pending→consume approval→installed。exact installed重入须consumed/hash/health；foreign unfinished拒绝；rolling_back只能rollback；active_pending exact健康可finalize；activating candidate/absent rollback-only。rollback intent先持久再stop/detach/restore；stop未证不start旧版，旧start/status失败durable保留；exact failed不自动重发、consumed无record拒绝。当前全crash-point测试覆盖未证明，已安装实现不同SHA，线上恢复UNKNOWN。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 724,
+          "end": 905,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 913,
+          "end": 1035,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F09",
+      "title": "backup路径未证",
+      "finding": "源码/var/lib/cyf-api-flow/backups，项目指引/home/isp/baks；未读实际directory/link/record/backup，physical mapping UNKNOWN。冻结local时须明确布局和durable路径校验，不猜symlink/迁移。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 21,
+          "end": 25,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+          "start": 23,
+          "end": 30,
+          "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/AGENTS.md",
+          "start": 56,
+          "end": 56,
+          "sha256": "bfaa0f2eedae4d07f5c221a49ccd3d4de15120aa503fb7e9b0a54a14e4e81f36"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F10",
+      "title": "health/business接缝",
+      "finding": "kit只start现有canonical JAR、无git pull/Gradle；PID/startticks/argv、listener归属、runtime user、JAR/runtime record与localhost200 JSON UP及稳定复验。spawn sanitized env/降权cyf-api/cwd canonical/关闭FD5–9。UP不证明身份授权/Runtime/动态撤销/在途安全/真实业务；仍待具体维护和业务授权。未执行kit/HTTP或读配置秘密。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+          "start": 23,
+          "end": 51,
+          "sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+          "start": 578,
+          "end": 616,
+          "sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+          "start": 694,
+          "end": 737,
+          "sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+          "start": 829,
+          "end": 878,
+          "sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+          "start": 892,
+          "end": 930,
+          "sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F11",
+      "title": "schema也严格Flow",
+      "finding": "两runner严格installed schema2/numeric run、receipt.flow固定org/pipeline/job/source、clean develop、record/receipt/JAR/provenance/source绑定，只认Boot nested mapper固定SQL/resource/hash/table catalog。local producer+entry之外必须适配真实local verifier和wrapper context/admission，不能fake Flow或跳过；此处不重复UR06 DAO调查。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+          "start": 34,
+          "end": 56,
+          "sha256": "f7d72fd9ea1dbc38ddca8caf7df4f38b635bcf5a0a82becdc3d6ec16709f18a8"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+          "start": 424,
+          "end": 506,
+          "sha256": "f7d72fd9ea1dbc38ddca8caf7df4f38b635bcf5a0a82becdc3d6ec16709f18a8"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+          "start": 34,
+          "end": 51,
+          "sha256": "b4ec40a0da7f5620da167038c4f3a419d28396f64862ceeaac75d03bd26a70a9"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+          "start": 366,
+          "end": 461,
+          "sha256": "b4ec40a0da7f5620da167038c4f3a419d28396f64862ceeaac75d03bd26a70a9"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F12",
+      "title": "schema锁/一次性/partial恢复",
+      "finding": "wrapper重取release复验installed，runner root0600 filelock→MySQL named GET_LOCK(-1)，不取lifecycle。durable attempt/running，partial/interrupted不盲重试同Run；E05无exact admission可not_admitted返回0，绝非schema/feature完成。秘密不入installer/lifecycle/JVM仅runner。DDL autocommit保留partial，JAR回滚不撤表。local schema resume/admission未实现UNKNOWN待授权。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 391,
+          "end": 436,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+          "start": 989,
+          "end": 1093,
+          "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+          "start": 894,
+          "end": 908,
+          "sha256": "f7d72fd9ea1dbc38ddca8caf7df4f38b635bcf5a0a82becdc3d6ec16709f18a8"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+          "start": 1061,
+          "end": 1088,
+          "sha256": "f7d72fd9ea1dbc38ddca8caf7df4f38b635bcf5a0a82becdc3d6ec16709f18a8"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+          "start": 1234,
+          "end": 1264,
+          "sha256": "f7d72fd9ea1dbc38ddca8caf7df4f38b635bcf5a0a82becdc3d6ec16709f18a8"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+          "start": 847,
+          "end": 860,
+          "sha256": "b4ec40a0da7f5620da167038c4f3a419d28396f64862ceeaac75d03bd26a70a9"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+          "start": 1014,
+          "end": 1041,
+          "sha256": "b4ec40a0da7f5620da167038c4f3a419d28396f64862ceeaac75d03bd26a70a9"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+          "start": 1187,
+          "end": 1218,
+          "sha256": "b4ec40a0da7f5620da167038c4f3a419d28396f64862ceeaac75d03bd26a70a9"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F13",
+      "title": "历史completion不可直接作local恢复",
+      "finding": "complete-installed-schema固定历史API_BINDING Run49/source/receipt/JAR且需opsFlow；coordination→release，exact installed证明、fixed runners/双plan/F06后E05、partial保留/no lifecycle/no feature。不是已证通用local recovery，不能历史binding冒充新build。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/auto/complete-installed-schema.py",
+          "start": 27,
+          "end": 43,
+          "sha256": "713df4d87bf410b7e1257f47553eb5866e8a901a6471e612d720a0ae21850a93"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/auto/complete-installed-schema.py",
+          "start": 375,
+          "end": 441,
+          "sha256": "713df4d87bf410b7e1257f47553eb5866e8a901a6471e612d720a0ae21850a93"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/auto/complete-installed-schema.py",
+          "start": 670,
+          "end": 735,
+          "sha256": "713df4d87bf410b7e1257f47553eb5866e8a901a6471e612d720a0ae21850a93"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F14",
+      "title": "真实local packager缺失",
+      "finding": "package-api.py固定Flow env/BUILD_NUMBER/build目录/preclean/post git diff，真实flow+source receipt/metadata/sidecar、mail runtime实际在bootJar及固定OpenCV provenance验证。不能假Flow env调用当local producer。需真正clean pre/post、同批logs/tests/validateLayering/JAR/provenance/应用version；干净checkout本身不证明外来JAR同批。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/auto/package-api.py",
+          "start": 30,
+          "end": 105,
+          "sha256": "165887c1e50d6db286359e7c6de9a04098440634ff542267ba84edf5bc21d84a"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F15",
+      "title": "orchestrator不是安装器",
+      "finding": "owner/gate/tree与actual cwd HEAD/tree/status严clean，Gradle lock前后两次核；短evidence lock/cache accepted能skip，artifact只是调用者给的引用非bytes/hash。local producer区分cached tests与实际本批bootJar/logs并绑定实际digest；本次不执行orchestrator或查active任务/锁。",
+      "references": [
+        {
+          "path": "/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py",
+          "start": 19,
+          "end": 28,
+          "sha256": "704b98df2e7f72f4ce3f5c6f548800d09f149d2235310fb562a20cea75ee4d6e"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py",
+          "start": 548,
+          "end": 575,
+          "sha256": "704b98df2e7f72f4ce3f5c6f548800d09f149d2235310fb562a20cea75ee4d6e"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py",
+          "start": 626,
+          "end": 710,
+          "sha256": "704b98df2e7f72f4ce3f5c6f548800d09f149d2235310fb562a20cea75ee4d6e"
+        },
+        {
+          "path": "/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py",
+          "start": 855,
+          "end": 855,
+          "sha256": "704b98df2e7f72f4ce3f5c6f548800d09f149d2235310fb562a20cea75ee4d6e"
+        }
+      ],
+      "evidence_level": "SOURCE_ONLY"
+    },
+    {
+      "id": "F16",
+      "title": "已安装只核接口/hash",
+      "finding": "五份installed对应脚本root:root0755物理单链接，source/installed全部SHA不同；public接口deploy五参数/install零参数+canonical/kit start-restart-stop-status+canonical与锁。仅静态metadata/hash/public constants核对，未读installed恢复实现/执行脚本，不外推线上等价、不覆盖。",
+      "references": [
+        {
+          "path": "/usr/local/sbin/cyf-api-flow-deploy",
+          "start": 21,
+          "end": 34,
+          "sha256": "f4f07ce3330eca1b843ba720615e415d1f0addc5258d45795f03636c4e015b72"
+        },
+        {
+          "path": "/usr/local/sbin/cyf-api-flow-deploy",
+          "start": 1153,
+          "end": 1153,
+          "sha256": "f4f07ce3330eca1b843ba720615e415d1f0addc5258d45795f03636c4e015b72"
+        },
+        {
+          "path": "/usr/local/sbin/cyf-api-flow-install",
+          "start": 23,
+          "end": 38,
+          "sha256": "180f43cf0381c55dedd52a367d78f73f9713703b3794bd058432b22f992aed46"
+        },
+        {
+          "path": "/usr/local/sbin/cyf-api-kit",
+          "start": 25,
+          "end": 47,
+          "sha256": "9685c35b8bff293f474d5f1684312ecff4f88d0cd6f87450ae6b433a992356c2"
+        }
+      ],
+      "evidence_level": "INSTALLED_INTERFACE_ONLY"
+    }
+  ],
+  "installed_comparison": [
+    {
+      "source": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+      "source_sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7",
+      "installed": "/usr/local/sbin/cyf-api-flow-deploy",
+      "installed_sha256": "f4f07ce3330eca1b843ba720615e415d1f0addc5258d45795f03636c4e015b72",
+      "equal": false,
+      "metadata": {
+        "uid": 0,
+        "gid": 0,
+        "mode": "0o755",
+        "nlink": 1,
+        "physical_regular": true
+      },
+      "implementation_equivalence": "UNKNOWN_NOT_INSPECTED"
+    },
+    {
+      "source": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+      "source_sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb",
+      "installed": "/usr/local/sbin/cyf-api-flow-install",
+      "installed_sha256": "180f43cf0381c55dedd52a367d78f73f9713703b3794bd058432b22f992aed46",
+      "equal": false,
+      "metadata": {
+        "uid": 0,
+        "gid": 0,
+        "mode": "0o755",
+        "nlink": 1,
+        "physical_regular": true
+      },
+      "implementation_equivalence": "UNKNOWN_NOT_INSPECTED"
+    },
+    {
+      "source": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+      "source_sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b",
+      "installed": "/usr/local/sbin/cyf-api-kit",
+      "installed_sha256": "9685c35b8bff293f474d5f1684312ecff4f88d0cd6f87450ae6b433a992356c2",
+      "equal": false,
+      "metadata": {
+        "uid": 0,
+        "gid": 0,
+        "mode": "0o755",
+        "nlink": 1,
+        "physical_regular": true
+      },
+      "implementation_equivalence": "UNKNOWN_NOT_INSPECTED"
+    },
+    {
+      "source": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+      "source_sha256": "f7d72fd9ea1dbc38ddca8caf7df4f38b635bcf5a0a82becdc3d6ec16709f18a8",
+      "installed": "/usr/local/sbin/cyf-api-additive-schema",
+      "installed_sha256": "7b028f665d466f52ae0237d71f5fe2574c79e6072fe3826d7dd746fdd8e4aa19",
+      "equal": false,
+      "metadata": {
+        "uid": 0,
+        "gid": 0,
+        "mode": "0o755",
+        "nlink": 1,
+        "physical_regular": true
+      },
+      "implementation_equivalence": "UNKNOWN_NOT_INSPECTED"
+    },
+    {
+      "source": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+      "source_sha256": "b4ec40a0da7f5620da167038c4f3a419d28396f64862ceeaac75d03bd26a70a9",
+      "installed": "/usr/local/sbin/cyf-api-e05-additive-schema",
+      "installed_sha256": "d6ef15041ce84f4f7d1ecd65c8af3fa56c7bad198703afeea965150db787532f",
+      "equal": false,
+      "metadata": {
+        "uid": 0,
+        "gid": 0,
+        "mode": "0o755",
+        "nlink": 1,
+        "physical_regular": true
+      },
+      "implementation_equivalence": "UNKNOWN_NOT_INSPECTED"
+    }
+  ],
+  "existing_tests_to_synchronize": [
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_gate_policy.py",
+      "selector": "ApiGatePolicyTest",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_gate_policy.py",
+        "start": 27,
+        "end": 167,
+        "sha256": "99c44fce272d05ed38486255a081cd48c84e16f33904ece04f0a71464497a9e2"
+      },
+      "synchronize": "actual容量/不同FS/篡改/source/traversal/无任意limits，补local receipt负例",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_flow_install_lock.py",
+      "selector": "ApiFlowInstallLockTest",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_flow_install_lock.py",
+        "start": 14,
+        "end": 104,
+        "sha256": "0e5f0d502d92a2a7e4ac41370417bb60c8ea1e62076eafc640a19ee2e0df879e"
+      },
+      "synchronize": "contention等待不变record/package；local-真实Flow同锁及FD继承",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_canonical_path.py",
+      "selector": "CanonicalApiPathTests",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_canonical_path.py",
+        "start": 6,
+        "end": 28,
+        "sha256": "a2da89b806245fabc1e1609a376dad57301081924a16f985b5f2d2eb7c3239c7"
+      },
+      "synchronize": "canonical/root祖先/禁旧opt/FD5–9；补local入口",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_flow_deploy.py",
+      "selector": "ApiFlowDeployF06Test",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_flow_deploy.py",
+        "start": 155,
+        "end": 313,
+        "sha256": "a488842f460a70e22f0b959f5994b35dad0ccc741caceeb67ff32fe659db243e"
+      },
+      "synchronize": "F06一次/installed绑定/partial-interrupt不retry/child-only秘密；local context同步",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_e05_flow_deploy.py",
+      "selector": "ApiFlowDeployE05Test",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_e05_flow_deploy.py",
+        "start": 209,
+        "end": 470,
+        "sha256": "2088a2c482db6d2f701f4fe98c1e500ce6d2b2370829a3a054c05e9ad3f886ba"
+      },
+      "synchronize": "durable admission-before-lock/partial/notadmitted/秘密/F06先E05；buildId不fakeRun",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_additive_schema.py",
+      "selector": "ApiAdditiveSchemaTest",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_additive_schema.py",
+        "start": 453,
+        "end": 941,
+        "sha256": "73a7614e4c02886403506b96ec1dd84931d19f5f33bcb949655837672aae8715"
+      },
+      "synchronize": "固定SQL/两表/metadata/grants/locks/partial/binding；local source receipt JAR mismatch",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_e05_additive_schema.py",
+      "selector": "ApiE05AdditiveSchemaTest",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_e05_additive_schema.py",
+        "start": 406,
+        "end": 840,
+        "sha256": "6740303da48065ea0d7ee9de2a6ef59a85269623c4c1f1c2a16210cfdb2bfaf3"
+      },
+      "synchronize": "E05 exact resource/DDL等价/metadata/locks/partial/binding；local来源",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_complete_installed_schema.py",
+      "selector": "CompleteInstalledSchemaTest",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_complete_installed_schema.py",
+        "start": 285,
+        "end": 504,
+        "sha256": "449f60be4fdd0aae0486aef0ba3e70a4c5a9b9c177cacbbfd739bac1df0ac2ff"
+      },
+      "synchronize": "historical artifact/fixed runner/双plan/partial/one-shot/no lifecycle；不冒充local恢复",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_versioned_deploy_adapters.py",
+      "selector": "VersionedAdapterTest (API)",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_versioned_deploy_adapters.py",
+        "start": 73,
+        "end": 157,
+        "sha256": "67eec6fd8f041b5ce937c4bac5778176078e8b062893593e401432ca16fca420"
+      },
+      "synchronize": "显式version+包SHA/失败非verified；local version-buildId-commit-tree-JAR-receipt-package负例，不改web",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_startup_diagnostics.py",
+      "selector": "StartupDiagnosticsShellTest + StartupDiagnosticsInstallerTest",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_startup_diagnostics.py",
+        "start": 13,
+        "end": 107,
+        "sha256": "1dbed77e5e0ef57d881f4f4d138f1aeaf126e533a295a8356aa9069b7961fd17"
+      },
+      "synchronize": "fixed诊断/错误不被掩盖/阶段/allowlist，common事务保留",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_develop_auto_release.py",
+      "selector": "AutoReleaseTest (bootJar only)",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_develop_auto_release.py",
+        "start": 85,
+        "end": 124,
+        "sha256": "ccf51b53a171ba8b9a2aebededa8192509fd7bea81c86ad838c1a19c6202bd70"
+      },
+      "synchronize": "实际bootJar mail runtime而非test classpath，local producer保留",
+      "status": "NOT_RUN",
+      "layer": "STATIC_OR_PRIVATE_OFFLINE_FIXTURE_NOT_REAL_INSTALL_MYSQL"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/orchestration/tests/test_cyf_orchestrator.py",
+      "selector": "OrchestratorTest",
+      "reference": {
+        "path": "/home/isp/wsps/cyf/ops/orchestration/tests/test_cyf_orchestrator.py",
+        "start": 120,
+        "end": 299,
+        "sha256": "44667ca9892754ff367402e426f6c83ae8e00189c7cbbd50ae0091106ba5003c"
+      },
+      "synchronize": "source clean/exact key/selector/fixture/cache/child identity；artifact引用或cachehit不能当本批JAR证明",
+      "status": "NOT_RUN",
+      "layer": "PRIVATE_OFFLINE_FIXTURE_NOT_BUILD"
+    }
+  ],
+  "file_snapshots": [
+    {
+      "path": "/home/isp/wsps/cyf/AGENTS.md",
+      "sha256": "bfaa0f2eedae4d07f5c221a49ccd3d4de15120aa503fb7e9b0a54a14e4e81f36",
+      "line_count": 57,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o775",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy",
+      "sha256": "ea0ab49b7ef90c2b7e9cc31d64e772f764396cfa50ac0f29e1a8c24a784f2ac7",
+      "line_count": 1284,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install",
+      "sha256": "d5ba79b7d9bd8dd1c28d57f8d57d8d27cb5107d624b902cc56cfa99e6bc47ffb",
+      "line_count": 1079,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit",
+      "sha256": "2b241e42b7c3e2b3a725e32f78ad70823f33b3b2e99980a744f440ba8322357b",
+      "line_count": 956,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+      "sha256": "f7d72fd9ea1dbc38ddca8caf7df4f38b635bcf5a0a82becdc3d6ec16709f18a8",
+      "line_count": 1265,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+      "sha256": "b4ec40a0da7f5620da167038c4f3a419d28396f64862ceeaac75d03bd26a70a9",
+      "line_count": 1218,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/auto/complete-installed-schema.py",
+      "sha256": "713df4d87bf410b7e1257f47553eb5866e8a901a6471e612d720a0ae21850a93",
+      "line_count": 765,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/auto/package-api.py",
+      "sha256": "165887c1e50d6db286359e7c6de9a04098440634ff542267ba84edf5bc21d84a",
+      "line_count": 111,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py",
+      "sha256": "704b98df2e7f72f4ce3f5c6f548800d09f149d2235310fb562a20cea75ee4d6e",
+      "line_count": 887,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/usr/local/sbin/cyf-api-flow-deploy",
+      "sha256": "f4f07ce3330eca1b843ba720615e415d1f0addc5258d45795f03636c4e015b72",
+      "line_count": 1310,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/usr/local/sbin/cyf-api-flow-install",
+      "sha256": "180f43cf0381c55dedd52a367d78f73f9713703b3794bd058432b22f992aed46",
+      "line_count": 1134,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/usr/local/sbin/cyf-api-kit",
+      "sha256": "9685c35b8bff293f474d5f1684312ecff4f88d0cd6f87450ae6b433a992356c2",
+      "line_count": 957,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/usr/local/sbin/cyf-api-additive-schema",
+      "sha256": "7b028f665d466f52ae0237d71f5fe2574c79e6072fe3826d7dd746fdd8e4aa19",
+      "line_count": 1210,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/usr/local/sbin/cyf-api-e05-additive-schema",
+      "sha256": "d6ef15041ce84f4f7d1ecd65c8af3fa56c7bad198703afeea965150db787532f",
+      "line_count": 1240,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_gate_policy.py",
+      "sha256": "99c44fce272d05ed38486255a081cd48c84e16f33904ece04f0a71464497a9e2",
+      "line_count": 175,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_flow_install_lock.py",
+      "sha256": "0e5f0d502d92a2a7e4ac41370417bb60c8ea1e62076eafc640a19ee2e0df879e",
+      "line_count": 108,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_canonical_path.py",
+      "sha256": "a2da89b806245fabc1e1609a376dad57301081924a16f985b5f2d2eb7c3239c7",
+      "line_count": 28,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_flow_deploy.py",
+      "sha256": "a488842f460a70e22f0b959f5994b35dad0ccc741caceeb67ff32fe659db243e",
+      "line_count": 314,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_e05_flow_deploy.py",
+      "sha256": "2088a2c482db6d2f701f4fe98c1e500ce6d2b2370829a3a054c05e9ad3f886ba",
+      "line_count": 477,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_additive_schema.py",
+      "sha256": "73a7614e4c02886403506b96ec1dd84931d19f5f33bcb949655837672aae8715",
+      "line_count": 941,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_e05_additive_schema.py",
+      "sha256": "6740303da48065ea0d7ee9de2a6ef59a85269623c4c1f1c2a16210cfdb2bfaf3",
+      "line_count": 844,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_complete_installed_schema.py",
+      "sha256": "449f60be4fdd0aae0486aef0ba3e70a4c5a9b9c177cacbbfd739bac1df0ac2ff",
+      "line_count": 512,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_versioned_deploy_adapters.py",
+      "sha256": "67eec6fd8f041b5ce937c4bac5778176078e8b062893593e401432ca16fca420",
+      "line_count": 160,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_startup_diagnostics.py",
+      "sha256": "1dbed77e5e0ef57d881f4f4d138f1aeaf126e533a295a8356aa9069b7961fd17",
+      "line_count": 113,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_develop_auto_release.py",
+      "sha256": "ccf51b53a171ba8b9a2aebededa8192509fd7bea81c86ad838c1a19c6202bd70",
+      "line_count": 279,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/orchestration/tests/test_cyf_orchestrator.py",
+      "sha256": "44667ca9892754ff367402e426f6c83ae8e00189c7cbbd50ae0091106ba5003c",
+      "line_count": 395,
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "nlink": 1,
+      "physical_regular": true
+    }
+  ],
+  "operations": {
+    "actual_tests": 0,
+    "gradle": false,
+    "build": false,
+    "install": false,
+    "mysql": false,
+    "http": false,
+    "flow": false,
+    "service": false,
+    "credential_config_body_read": false,
+    "live_process_lock_query": false,
+    "repo_rootdoc_write": false,
+    "deployment_claimed": false
+  },
+  "recommended_source_paths": [
+    {
+      "id": "P01",
+      "paths": [
+        "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-local-deploy"
+      ],
+      "status": "PROPOSED_NEW_SOURCE_ONLY_NOT_FROZEN",
+      "change": "最小新增显式root local入口，消费local release manifest+包路径+独立expected packageSHA；无pipeline/run伪值，不下载/编译/pull，不含默认服务动作。最终CLI待主控冻结，当前不存在可执行local入口。",
+      "basis": [
+        "F02",
+        "F03",
+        "F04",
+        "F05"
+      ]
+    },
+    {
+      "id": "P02",
+      "paths": [
+        "/home/isp/wsps/cyf/ops/ci/aliyun-flow/auto/package-api-local.py"
+      ],
+      "status": "PROPOSED_NEW_SOURCE_ONLY_NOT_FROZEN",
+      "change": "最小新增真实本地同批producer，绑定fixed clean source/version/actual build logs/test evidence/validateLayering/bootJar/provenance，保留mail/OpenCV完整性；可保留五payload，不假Flow env。",
+      "basis": [
+        "F14",
+        "F15"
+      ]
+    },
+    {
+      "id": "P03",
+      "paths": [
+        "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install"
+      ],
+      "status": "NECESSARY_EXISTING_SOURCE_ADAPTATION",
+      "change": "复用唯一durable transaction engine，以最新精确local admission/receipt/record身份代替numericRun作为local恢复身份；不caller env降级、不local→fakeFlow重写、不复制第二状态机。root/locks/backup/fsync/stop/hash及全部recovery条件保持。若主控另冻结common core提炼可用cyf-api-artifact-install，但非最低必要新增路径。不保留产品旧契约兼容双轨；历史真实Flow诊断入口范围由主控明确。",
+      "basis": [
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08"
+      ]
+    },
+    {
+      "id": "P04",
+      "paths": [
+        "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-additive-schema",
+        "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+        "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-deploy"
+      ],
+      "status": "NECESSARY_EXISTING_SOURCE_SEAMS_FOR_SCHEMA_COMPLETE_LOCAL_RELEASE",
+      "change": "两runner需要真实local installed/receipt/source/JAR verifier；wrapper既有context/admission/attempt可供local入口复用，重锁复验、F06先E05、child-only秘密、固定SQL/resource/grants/metadata/partial保留。没有E05 admission不称完成。此接线不是自动DDL/feature授权；若冻结范围仅artifact安装，schema必须明确NOT_RUN，不能声称完整业务发布。",
+      "basis": [
+        "F11",
+        "F12",
+        "F13"
+      ]
+    },
+    {
+      "id": "P05",
+      "paths": [
+        "/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-kit"
+      ],
+      "status": "REUSE_NO_PRODUCTION_LOGIC_CHANGE_PROVEN_NECESSARY",
+      "change": "最低方案复用可信canonical lifecycle；未证明必须修改生产逻辑。保留身份/锁/FD/健康回归，source-installed差异先保存归属，不复制source整文件覆盖installed。",
+      "basis": [
+        "F05",
+        "F10",
+        "F16"
+      ]
+    },
+    {
+      "id": "P06",
+      "paths": [
+        "/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py"
+      ],
+      "status": "REUSE_EXISTING_CONTROL_PLANE",
+      "change": "串行build/source/gate/evidence可复用；producer绑定实际本批bytes与logs，区别cached test与fresh build。没有证明须改orchestrator生产逻辑，不绕现有owner/exact-tree约束。",
+      "basis": [
+        "F15"
+      ]
+    }
+  ],
+  "proposed_local_input_contract": {
+    "status": "PROPOSED_NOT_IMPLEMENTED_NOT_DEPLOY_AUTHORIZATION",
+    "producer_kind": "local-build-v1 (suggested discriminant, not existing wire)",
+    "public_bindings": [
+      "release version derived from actual same-build application metadata, not external label alone",
+      "actual local buildId, opaque; never flow.run_id or fabricated FlowRun",
+      "40 lowercase hex source commit/tree + actual pre/post clean proof",
+      "test selector/fixture digest/results-report digests + validateLayering result evidence",
+      "same batch build logs SHA256 and actual bootJar production evidence",
+      "application.jar SHA256 and byte size",
+      "dependency.provenance.json SHA256 and byte size",
+      "receipt SHA256",
+      "external package SHA256 and byte size"
+    ],
+    "package_members": [
+      "application.jar",
+      "application.metadata.json",
+      "application.sidecar.json",
+      "dependency.provenance.json",
+      "receipt.json"
+    ],
+    "required_rules": [
+      "Root admission independently binds expected version/buildId/commit/tree/receipt/JAR/provenance/package/consumed state; JSON self-assertions/checksums do not authenticate a build or authorize production.",
+      "PackageSHA outside its own archive/receipt avoids circular hashing; internal metadata/sidecar bind identical receipt/source/JAR, external trusted admission pins archive bytes.",
+      "Root0700 stage, noalias physical regular ingress, stable opened/copied bytes, root0600 singlelink private snapshot, package/hash recheck before lifecycle; no producer-writable path fed directly to runtime.",
+      "Share current coordination/release FD8/lifecycle FD9 order; root owns durable state, JVM never owns locks. No independent local lock bypass.",
+      "No numeric or lexical buildId stale order. Explicit root decision binds expected currently-installed JAR under shared lock; another build cannot adopt unfinished transaction.",
+      "Backup layout must reconcile /home/isp/baks with historical record/backups constraints, not a guessed symlink or silent record migration.",
+      "Fixed clean worktree build via orchestrator, never /home/isp/hosts/cyf/api. Only immutable canonical /home/isp/hosts/cyf/api/cyf-api-kit.jar install; do not restore pullbuildrestart.",
+      "Existing actual dependency integrity/mail runtime/provenance preserved; no invented resource/package/time hardlimits.",
+      "Schema/feature admission, production maintenance/inflight checks and business verification remain explicit separate authorization; partial DDL retained, JAR rollback is not DB rollback.",
+      "No credentials/config bodies in manifest/package/build evidence or public logs; use existing private runner secret channel, retain identity/ACL/env boundary."
+    ]
+  },
+  "proposed_new_tests": [
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_local_deploy.py",
+      "status": "PROPOSED_NOT_RUN",
+      "cases": [
+        "genuine local root admission, no fake flow/run fields",
+        "tamper version/buildId/commit/tree/receipt/provenance/JAR/package/digest/size/build evidence -> fail before lifecycle/schema",
+        "unsafe owner/mode/symlink/hardlink/path replacement/producer writable ingress -> failclosed",
+        "local/retained genuineFlow shared-lock contention, foreign unfinished release cannot adopt",
+        "install/schema/business distinct status; no failed verified, no secret inheritance/output"
+      ]
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_local_package.py",
+      "status": "PROPOSED_NOT_RUN",
+      "cases": [
+        "clean exact same-build source/version/log/results/JAR/provenance -> exact fivepayload bytes",
+        "dirty source/staleJAR/wrongversion/fakeFlowenv/failedvalidateLayering/missingmail/provenance -> no package",
+        "cached tests alone cannot claim fresh bootJar produced"
+      ]
+    },
+    {
+      "path": "/home/isp/wsps/cyf/ops/ci/aliyun-flow/tests/test_api_artifact_install_recovery.py",
+      "status": "PROPOSED_NOT_RUN",
+      "cases": [
+        "private fake lifecycle for low-cost fault injection only, not true readiness proof",
+        "fault prepared/backup/activating/stopproof/replace+dirfsync/active_pending/approvalconsume/installed record",
+        "activating rollback-only; commitpending exact healthy mayfinalize; differentbuild/consumed without record failclosed",
+        "rollbackintent/detach/restore/fsync/oldstart/status interrupted -> durable canonical old-or-absent; stopunverified never startold",
+        "partial schema cannot be reverted by JAR restore; explicit recovery not blind retry"
+      ]
+    }
+  ],
+  "unknowns": [
+    "Actual upstream Flow artifact download API caller not located; inspected deploy consumes prepared run-scoped package only.",
+    "Five source-installed hashes differ; installed implementation/recovery/why drift UNKNOWN, interfaces/metadata only.",
+    "Actual canonical JAR/version/live process/release-lock holder/currenttransaction/schema state/backups NOT_READ. Report lock custody is source design, not current runtime holder.",
+    "/var/lib/cyf-api-flow/backups vs /home/isp/baks physical mapping/recovery layout UNKNOWN.",
+    "Local producer/admission/receipt/record/CLI exact scope not frozen or implemented; new source paths are proposals without existing line/SHA.",
+    "Full crash-point coverage not proven in located tests; tests NOT_RUN; actual installed recovery UNKNOWN.",
+    "Historical fixed schema completion cannot be claimed generic new local build recovery.",
+    "Dynamic identity/revocation/inflight maintenance/business proofs still pending explicit authorization; actuator UP insufficient.",
+    "UR03 H2 elsewhere does not prove MySQL/installer/fullGoal/E05/enroll or production; UR06 seams not repeated."
+  ],
+  "outputs": [
+    "/var/tmp/ur05-local-installer-seams-20261008.md",
+    "/var/tmp/ur05-local-installer-seams-20261008.json"
+  ],
+  "static_self_check": {
+    "quoted_line_ranges_valid": true,
+    "at_finalization_files_changed_since_snapshot": [],
+    "snapshot_meaning": "reported SHA and lines refer to captured bytes; later concurrent owner changes never overwritten",
+    "actual_test_count": 0,
+    "actual_test_status": "NOT_RUN"
+  }
+}

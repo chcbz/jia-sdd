@@ -1,0 +1,71 @@
+{
+  "format": "cyf-runtime-local-evidence-v1",
+  "status": "VERIFIED_WITH_EXACT_INPUT_REUSE",
+  "source": {
+    "commit": "fb9aafbd4c334efe7633f147d5b986de084f45df",
+    "tree": "9cd28d72987b671c3be942563b4b9260d306bdca"
+  },
+  "tests": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/isp/wsps/worktrees/runtime-footprint-20261109/tests/test_runtime_python_freeze.py",
+        "-v"
+      ],
+      "log": "/home/isp/state/cyf-local-build/tasks/runtime-footprint-20261109/release/tests-0.log",
+      "sha256": "77aa50359c520c95bc8f59e2cf3cb7012fcf5bcbcde9dbf35e28d92eb966004c",
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/isp/wsps/worktrees/runtime-footprint-20261109/tests/test_runtime_python_artifact.py",
+        "-v"
+      ],
+      "log": "/home/isp/state/cyf-local-build/tasks/runtime-footprint-20261109/release/tests-1.log",
+      "sha256": "25bade778fac4cbd48be36c6f76121fcc5907913e12d9ebd3a9528babd7466b4",
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "ops/maintenance/tests",
+        "-p",
+        "test_runtime*py",
+        "-v"
+      ],
+      "log": "/home/isp/state/cyf-local-build/tasks/runtime-footprint-20261109/release/tests-2.log",
+      "sha256": "6d2b0c0ddcd20efac108c99b3d7500ecd8dd3ef3a8db21adc2ae11c6b6459bd2",
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/root/.local/bin/python3.11",
+        "-B",
+        "/home/isp/state/cyf-local-build/tasks/runtime-footprint-20261109/release/install/test-install-integration.py"
+      ],
+      "log": "/home/isp/state/cyf-local-build/tasks/runtime-footprint-20261109/release/tests-3.log",
+      "sha256": "50c1a0dc7724404e93247e5188c6e17c88d86276186ca089fb32f61bfd8fb7f6",
+      "exitCode": 0
+    }
+  ],
+  "baselineEvidence": {
+    "path": "/home/isp/state/cyf-local-build/tasks/cyf-native-readiness-20261108/runtime/build-evidence.json",
+    "sha256": "5e64086954ff1274c5caa0790f0d022688a1c68cb9e99b90e9ea39c44322dad6"
+  },
+  "changedFiles": [
+    "conf/cyf-agent-runtime-v1/lib/freeze-python.py",
+    "conf/cyf-agent-runtime-v1/lib/python-artifact.py",
+    "conf/cyf-agent-runtime-v1/package.json",
+    "tests/test_runtime_python_artifact.py",
+    "tests/test_runtime_python_freeze.py"
+  ],
+  "reuseBasis": "Only Python freeze/extraction adapters, their tests and Runtime version changed. Runtime/bridge execution source, node lock, Python/browser inputs unchanged; installed target probes independently repeated. Python payload remains byte-identical; only aliases deduplicated before manifest."
+}

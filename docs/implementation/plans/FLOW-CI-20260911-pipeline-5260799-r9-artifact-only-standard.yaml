@@ -1,0 +1,182 @@
+name: cyf-api-kit-ci
+sources:
+  repo_0:
+    type: gitee
+    name: jia_24b6
+    endpoint: https://gitee.com/chcbz/jia.git
+    branch: develop
+    triggerEvents: []
+    branchesFilter: develop
+    certificate:
+      type: serviceConnection
+      serviceConnection: vyz9pea3uni64twx
+stages:
+  cloud_ci:
+    name: Pinned backend artifact verification - NO DEPLOY
+    jobs:
+      api_ci:
+        name: Targeted tests, bootJar, and exact release artifact
+        runsOn: public/cn-beijing
+        timeoutMinutes: 60
+        steps:
+          cold_build:
+            name: Execute ticket-bound tests and bootJar
+            step: JavaBuild
+            with:
+              jdkVersion: "21"
+              mavenVersion: "3.5.2"
+              run: |-
+                set -eu
+                python3 - <<'PYCLOUD'
+                import base64
+                import hashlib
+                import json
+                import os
+                import pathlib
+                import re
+                import shutil
+                import subprocess
+                import zlib
+
+                TICKET_ZLIB_B64 = 'eNrNV9tuGzcQfc9XBHrOSiSXVwN9aJMWaBukQJKiQItC4GUo05Z2F1zKrh343zu7ulmunTpOgvZFq50dkoczZw6HH549fz6Bv8CvS2qbycnzD2hAk78M+DKZxWV7Obts83nfWQ8z26XJi41HBg+pK/POltP7XIfXql2Xbl1mP7z+5bfq5Y/Vd9++/Pn7N6+qt7x6++ubWQRJuax9HThhUThtgXriHKtrE4gNjIGrCfGcU00CNZQFyjWLUQchtWKzLYbpWY/Yd7jWzTy3bfmPMO1glLZdfhzH4NFP0PvmxSYJXcrQz+04ghEmK2IqSt8Tc8LNCaW/j1NPYvqrrDMcUhXSAvpxENGCGqW9YANMJSOxCoLUhEbPI3VOMmA0yig1Z7p2QogaguWRcMo422NPDQao36+AFpsXF/j+x/YdLdPZItuwhMvtoNFYVU1bBQurfTq25r5Yf14y7v3Y7tumb5fwTbe06c6Q1KRS9T5jfm9/eDiUs7brZz7N7DJdrZtq9PPtMowzTTdoj5focnsGvlTe+lOoQsr/utBX5vMRoNtgTny7wqCenCVbbf7iI8NJGTJ/tKfB0t82+WaKo6aD+7THOs+pXE3fQdOnki7glS32ncUApWvI7+/MdoGhDLbAa3sFOTWLI0SY0lwgnzjk+E82T7af/tz5IC/7kpMbhWW+zsuBoaeldP3JbLZKObe5n/pluw7TAo2HpiDG1ZZV20dlpvWUVi410+vU7ZefbL7OL7PtOshzDBs+SsLq6U8tE3JYyjtmtVc0OiF9tLUFQ7x0nBKjlQkgQYXIlK6xODyFQHjAgogyKO4tpeSw2pm9sPOVPWszzsvo3t7DEpM1WicO+Q1NqEbC9av2HKoLepiib9fZw7xkgAHiMMKAtcTbSKU1HGsSq1MxIjzx2orgjAiaGK7UYZJRUty6GbZ+2KewRBoZtVSag2eudpGDBiqlxi1KQqKPThnhTTAxMGpdzQIRgsZIlPV6k7ibvQ4NPD+IS5sXyI5rOyYxjWeCwOmCkgAyIqtVRAoLZvwO6KRLHSxTAzt3Joky5iB020rcL3FHW+5Rlnt15X5VeVBTHlCUL6UnH1WT/5GWPE5J/qEjT1aRhzXkAQXZ6geyoqRofZljIMcquxrIhBhm22GzZXI7gI8uxUmx/Xl/m22Pi8dTdzHMMo9piQ6jJn1iFPc1k/p+DeGe3qA+6g3OUzPWnL+K04FjW5ZOS8KQbLYzaVoU28Hpi3Q6kx7ZtbLzC8j9poGkG/MoeIcid9k2fuwTA1zAst2J+WSIeSo7UURNtsTyWlgfYjQo2pJzVTNWy5q6OqLweBes343+WmfMVqQub+lsdLV3GLNAJGqfYM6j9mFDFSQqqVIuADWi1jwKxo30BjssYjUGUKPuipoe+uauvQt1kQrACM2fenc9G0iCtj1pn35sTL7uGbkn6FBXh2xvlP9+Zds3mRtKL7CqBmesogUUNCCTUkx+PHF2vksIC9zD9hT9PMocz/U5oW0vG5zILpBWw/AVHjfzNmM9ICftIEZHfqs2jBvd7A/ufMX0oEzA/fMcojxeGQ5F9cV7gS2mAcptlfxw6Pt2173hcDyAxFzNUHSOYE+7q9sN4wElSomntVKc+KCUJtJGrYiwyDcuCXAIRgluwIeaOKmZYphgZQl1LGpuyK7VvHnxKfAGPZxnbCEKPIhMoMzhoUOCcMGj+AVTI5eM9hqVETSNNZG1ocCkkkJbSTCEBH+ClyZwKh+L7E5XgVfWaqNS/en9wIaIaUYJklpxioHztR6CqIV2tmbKS00p/npJONggnfIRHDNywMa0fyKwj12fDuAcDYxoF4wjVihCgwpUIb8s3kG9CJhFphlwYrBSo+O101ISPG+kCDKAFntwm6NzYPuzm2d/AwRowHE='
+                TICKET_SHA256 = 'cd1d03c9a0fe44a46678a4deebb4bca5c84fa39c680cfddde78dcb03dde6e030'
+                ORG = '5fb7d76ee6f9d07f148529c7'
+                PIPELINE = '5260799'
+
+
+                def need(condition, message):
+                    if not condition:
+                        raise RuntimeError(message)
+
+
+                def git(*args):
+                    return subprocess.check_output(['git'] + list(args)).decode().strip()
+
+
+                def digest(path):
+                    h = hashlib.sha256()
+                    with pathlib.Path(path).open('rb') as handle:
+                        for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+                            h.update(chunk)
+                    return h.hexdigest()
+
+
+                platform_cwd = pathlib.Path.cwd().resolve()
+                need(os.environ.get('PIPELINE_ID') == PIPELINE, 'Unexpected platform pipeline')
+                run_id = os.environ.get('BUILD_NUMBER', '')
+                need(re.fullmatch('[1-9][0-9]*', run_id) is not None, 'Missing platform run number')
+                tip = git('rev-parse', 'HEAD')
+                need(os.environ.get('CI_COMMIT_SHA') == tip, 'Platform source SHA differs from checkout')
+                need(os.environ.get('CI_COMMIT_REF_NAME') == 'develop', 'Unexpected platform source branch')
+                need(git('rev-parse', '--is-shallow-repository') == 'false', 'Full source history required')
+
+                ticket_bytes = zlib.decompress(base64.b64decode(TICKET_ZLIB_B64))
+                need(hashlib.sha256(ticket_bytes).hexdigest() == TICKET_SHA256, 'Ticket transport mismatch')
+                ticket = json.loads(ticket_bytes.decode('utf-8'))
+                need(ticket['flow']['organization_id'] == ORG and ticket['flow']['pipeline_id'] == PIPELINE, 'Ticket Flow mismatch')
+                api = pathlib.Path(ticket['execution']['cwd'])
+                tools = pathlib.Path(ticket['execution']['tool_root'])
+                receipt_path = pathlib.Path(ticket['execution']['receipt_path'])
+                run_root = receipt_path.parent
+                need(not api.exists() and not tools.exists() and not run_root.exists(), 'Fresh paths required')
+
+                for record in ticket['tools']['files']:
+                    relative = pathlib.Path(record['path'])
+                    need(not relative.is_absolute() and '..' not in relative.parts, 'Unsafe tool path')
+                    source = platform_cwd / relative
+                    destination = tools / relative
+                    need(source.is_file() and not source.is_symlink(), 'Versioned tool source missing')
+                    need(digest(source) == record['sha256'], 'Versioned tool source hash mismatch')
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(str(source), str(destination))
+                    destination.chmod(0o555 if relative.suffix == '.sh' else 0o444)
+
+                ticket_path = pathlib.Path('/tmp/cyf-flow-tickets') / (ticket['nonce'] + '.json')
+                ticket_path.parent.mkdir(parents=True, exist_ok=True)
+                with ticket_path.open('xb') as handle:
+                    handle.write(ticket_bytes)
+                ticket_path.chmod(0o444)
+
+                api.parent.mkdir(parents=True, exist_ok=True)
+                subprocess.check_call(['git', 'clone', '--no-hardlinks', '--no-checkout', str(platform_cwd), str(api)])
+                git('-C', str(api), 'remote', 'set-url', 'origin', ticket['source']['repo_url'])
+                git('-C', str(api), 'update-ref', 'refs/remotes/origin/develop', tip)
+                git('-C', str(api), 'checkout', '--detach', ticket['source']['commit_sha'])
+                need(git('-C', str(api), 'rev-parse', 'HEAD^{tree}') == ticket['source']['tree_sha'], 'Pinned tree differs')
+
+                os.environ['CYF_FLOW_ORGANIZATION_ID'] = ORG
+                os.environ['CYF_FLOW_PIPELINE_ID'] = PIPELINE
+                os.environ['CYF_FLOW_RUN_ID'] = run_id
+                os.environ['CYF_FLOW_JOB_ID'] = 'cloud_ci.api_ci'
+                os.environ['CYF_FLOW_SOURCE_TIP_SHA'] = tip
+                print('FLOW_CI_CONTEXT ' + json.dumps({'pipeline': PIPELINE, 'run': run_id, 'logical_job': 'cloud_ci.api_ci', 'source_tip': tip, 'built_commit': ticket['source']['commit_sha'], 'ticket_sha256': TICKET_SHA256}), flush=True)
+                rc = subprocess.call([str(tools / 'ops/ci/aliyun-flow/run-cloud.sh'), str(ticket_path), TICKET_SHA256, str(api), str(receipt_path)])
+                receipt = None
+                inspect_rc = 70
+                if receipt_path.is_file() and not receipt_path.is_symlink():
+                    receipt = json.loads(receipt_path.read_text())
+                    source_status = receipt.get('source') if isinstance(receipt.get('source'), dict) else {}
+                    error = receipt.get('error')
+                    if not isinstance(error, str):
+                        error = None
+                    kinds = {}
+                    for record in receipt.get('files', []):
+                        kind = record.get('kind') if isinstance(record, dict) else None
+                        if isinstance(kind, str):
+                            kinds[kind] = kinds.get(kind, 0) + 1
+                    print('FLOW_CI_RECEIPT_SUMMARY ' + json.dumps({
+                        'status': receipt.get('status'), 'gradle_exit_code': receipt.get('gradle_exit_code'),
+                        'bridge_exit_code': receipt.get('bridge_exit_code'), 'error': error[:500] if error else None,
+                        'source_clean_before': source_status.get('clean_before'),
+                        'source_clean_after': source_status.get('clean_after'), 'file_kinds': kinds,
+                    }, sort_keys=True), flush=True)
+                    inspect_rc = subprocess.call(['python3', str(tools / 'ops/orchestration/cyf_orchestrator.py'), 'flow-remote', 'inspect', '--ticket', str(ticket_path), '--expected-ticket-sha256', TICKET_SHA256, '--receipt', str(receipt_path)])
+                print('FLOW_CI_RECORDED_RC=' + str(rc), flush=True)
+                if rc != 0:
+                    raise SystemExit(rc)
+                need(receipt is not None, 'Missing receipt after successful native runner')
+                if inspect_rc != 0:
+                    raise SystemExit(inspect_rc)
+                need(receipt['status'] == 'success' and receipt['gradle_exit_code'] == 0 and receipt['bridge_exit_code'] == 0, 'Receipt final gate failed')
+                export_root = platform_cwd / '_cyf_api_flow_export'
+                need(not export_root.exists(), 'Release export path must be fresh')
+                export_root.mkdir(mode=0o700)
+                records = {}
+                for record in receipt['files']:
+                    if record.get('kind') in ('application_jar', 'dependency_provenance'):
+                        need(record['kind'] not in records, 'Duplicate release file kind')
+                        records[record['kind']] = record
+                need(set(records) == {'application_jar', 'dependency_provenance'}, 'Release records are incomplete')
+                for kind, output_name in (('application_jar', 'application.jar'), ('dependency_provenance', 'dependency.provenance.json')):
+                    record = records[kind]
+                    relative = pathlib.Path(record['path'])
+                    need(not relative.is_absolute() and '..' not in relative.parts, 'Unsafe receipt release path')
+                    source = receipt_path.parent / relative
+                    need(source.is_file() and not source.is_symlink(), 'Receipt release file is unavailable')
+                    need(source.stat().st_size == record['size'] and digest(source) == record['sha256'], 'Receipt release file digest mismatch')
+                    shutil.copyfile(str(source), str(export_root / output_name))
+                    (export_root / output_name).chmod(0o444)
+                receipt_bytes = receipt_path.read_bytes()
+                receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
+                metadata = {'schema_version': 1, 'receipt_sha256': receipt_sha256, 'flow': receipt['flow'], 'source': receipt['source'], 'application_jar': records['application_jar'], 'dependency_provenance': records['dependency_provenance']}
+                sidecar = {'schema_version': 1, 'receipt_sha256': receipt_sha256, 'flow': receipt['flow'], 'sha256': records['application_jar']['sha256'], 'size': records['application_jar']['size']}
+                receipt_target = export_root / 'receipt.json'
+                receipt_target.write_bytes(receipt_bytes)
+                receipt_target.chmod(0o444)
+                for name, value in (('application.metadata.json', metadata), ('application.sidecar.json', sidecar)):
+                    target = export_root / name
+                    target.write_text(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + '\n', encoding='utf-8')
+                    target.chmod(0o444)
+                need({item.name for item in export_root.iterdir()} == {'application.jar', 'application.metadata.json', 'application.sidecar.json', 'dependency.provenance.json', 'receipt.json'}, 'Release export contains an unexpected member')
+                print('FLOW_CI_RELEASE_EXPORT_READY ' + json.dumps({'receipt_sha256': receipt_sha256, 'application_jar': records['application_jar'], 'flow': receipt['flow']}, sort_keys=True), flush=True)
+                print('FLOW_CI_TARGETED_COLD_GATE_PASS; release candidate package only, no DB/Rabbit action', flush=True)
+                PYCLOUD
+          upload_artifact:
+            name: Upload exact receipt-bound release package
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: cyf_api_flow_${PIPELINE_ID}
+              filePath:
+                - _cyf_api_flow_export/
+              includePathInArtifact: false

@@ -1,0 +1,329 @@
+diff --git a/src/components/juyiting/BountyExecutionOutputs.vue b/src/components/juyiting/BountyExecutionOutputs.vue
+index 861df89..856e576 100644
+--- a/src/components/juyiting/BountyExecutionOutputs.vue
++++ b/src/components/juyiting/BountyExecutionOutputs.vue
+@@ -76,8 +76,10 @@ const props = defineProps({
+   taskVersion: { type: [String, Number], default: '' }, taskId: { type: String, default: '' }
+ })
+ const api = createApi('/chat')
++const requestSnapshots = ref([])
+ const skillResults = useHallSkillResults({ api, getContext: () => ({ conversationId: props.conversationId,
+   conversationGeneration: props.conversationGeneration, taskId: props.taskId }), getOutcomes: () => props.typedOutcomes,
++  getRequests: () => requestSnapshots.value,
+   identityKey: () => props.identityKey, enabled: () => props.enabled && !!props.identityKey })
+ const resultItems = computed(() => skillResults.results.value.flatMap(result => result.outputs))
+ const allItems = computed(() => [...new Map([...items.value, ...resultItems.value].map(item => [outputItemKey(item), item])).values()])
+@@ -88,7 +90,6 @@ const allDeliveries = computed(() => {
+       deliveryRelation: result.reference.deliveryRelation, requestId: result.requestId, stepId: result.stepId })
+   return [...map.values()]
+ })
+-const requestSnapshots = ref([])
+ const catalogRequests = computed(() => Array.isArray(props.catalog) && props.catalog.length
+   ? props.catalog.map(entry => entry?.request).filter(Boolean)
+   : (props.request ? [props.request] : []))
+diff --git a/src/composables/juyiting/bountyOutputCatalog.js b/src/composables/juyiting/bountyOutputCatalog.js
+index fca67d1..861f787 100644
+--- a/src/composables/juyiting/bountyOutputCatalog.js
++++ b/src/composables/juyiting/bountyOutputCatalog.js
+@@ -1,5 +1,5 @@
+ import { isTerminalRequestState, isTerminalTurnState } from './hallDeliberationState.js'
+-import { typedOutcomeProjection } from './hallTypedDeliberation.js'
++import { typedLong, typedOutcomeProjection } from './hallTypedDeliberation.js'
+ 
+ /** Browser-safe projection of the owner-authorized conversation output catalog. */
+ const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/
+@@ -36,6 +36,19 @@ export function scopedExecutionSteps (request, conversationId) {
+   ).map(step => ({ requestId: request.requestId, stepId: step.stepId }))
+ }
+ 
++/** RequestView/StepView are persisted API projections, not model action prose.
++ * Step stateVersion belongs to the step, never the execution CAS version. */
++export function scopedExecutionReferences (request, context) {
++  if (!exactOutputId(context?.conversationId) || !exactOutputId(context?.taskId) ||
++    !typedLong(context?.conversationGeneration) || request?.conversationId !== context.conversationId ||
++    request.conversationGeneration !== context.conversationGeneration || !exactOutputId(request.requestId) ||
++    !typedLong(request.requestRevision)) return []
++  return (Array.isArray(request.steps) ? request.steps : []).filter(step =>
++    step?.kind === 'EXECUTE' && step.taskId === context.taskId && exactOutputId(step.stepId) && exactOutputId(step.executionId)
++  ).map(step => Object.freeze({ conversationId: context.conversationId, conversationGeneration: context.conversationGeneration,
++    taskId: context.taskId, requestId: request.requestId, stepId: step.stepId, executionId: step.executionId }))
++}
++
+ export function outputCatalogItems (items, requestId, stepId) {
+   if (!exactOutputId(requestId) || !exactOutputId(stepId) || !Array.isArray(items) || items.length > 128) return []
+   const prefix = `/chat/requests/${encodeURIComponent(requestId)}/steps/${encodeURIComponent(stepId)}/outputs/`
+diff --git a/src/composables/juyiting/useHallSkillResults.js b/src/composables/juyiting/useHallSkillResults.js
+index 7906b0a..bb2906f 100644
+--- a/src/composables/juyiting/useHallSkillResults.js
++++ b/src/composables/juyiting/useHallSkillResults.js
+@@ -1,17 +1,18 @@
+ import { ref, watch } from 'vue'
+ import { skillResultAdvances, skillResultProjection, skillResultReferences } from './hallSkillResults.js'
+ /** Read-only execution polling, fenced by full identity and conversation generation. */
+-export const useHallSkillResults = ({ api, getContext, getOutcomes, identityKey, enabled }) => {
++export const useHallSkillResults = ({ api, getContext, getOutcomes, getRequests = () => [], identityKey, enabled }) => {
+   const results = ref([]); const error = ref(''); const loading = ref(false)
+   let epoch = 0; let disposed = false; let controller = null; let timer = null
+   const scopeFingerprint = () => JSON.stringify([identityKey(), enabled(), getContext()])
+-  const fingerprint = () => JSON.stringify([scopeFingerprint(), getOutcomes()])
++  const fingerprint = () => JSON.stringify([scopeFingerprint(), getOutcomes(), getRequests()])
+   let previousScope = null
+   const reset = (clear = true) => { epoch++; controller?.abort(); controller = null; clearTimeout(timer); timer = null; if (clear) results.value = []; error.value = ''; loading.value = false }
+   const refresh = async () => {
+     if (disposed || controller || !enabled()) return
++    clearTimeout(timer); timer = null
+     const generation = epoch; const key = fingerprint(); const context = { ...getContext() }
+-    const references = skillResultReferences(getOutcomes(), context)
++    const references = skillResultReferences(getOutcomes(), context, getRequests())
+     if (!references.length) return
+     const own = new AbortController(); controller = own; loading.value = true
+     const current = () => !disposed && generation === epoch && key === fingerprint() && !own.signal.aborted
+@@ -29,10 +30,10 @@ export const useHallSkillResults = ({ api, getContext, getOutcomes, identityKey,
+         } catch (cause) {
+           if (!current()) return
+           if ((cause?.response?.status ?? cause?.status) !== 404) throw cause
+-          // The exact child is not yet visible; never replace it with a history item.
++          // Missing/invisible is not evidence of a queue or completion; never scan history.
+           const previous = results.value.find(item => item.executionId === reference.executionId)
+           if (previous) { next.push(previous); continue }
+-          next.push(Object.freeze({ executionId: reference.executionId, phase: 'QUEUED', complete: false, data: null, outputs: [], reference }))
++          next.push(Object.freeze({ executionId: reference.executionId, phase: 'UNKNOWN', complete: false, data: null, outputs: [], reference }))
+         }
+       }
+       if (current()) { results.value = next; error.value = '' }
+@@ -45,6 +46,16 @@ export const useHallSkillResults = ({ api, getContext, getOutcomes, identityKey,
+       }
+     }
+   }
+-  const stop = watch(fingerprint, () => { const scope = scopeFingerprint(); reset(scope !== previousScope); previousScope = scope; if (enabled()) void refresh() }, { immediate: true, flush: 'sync' })
++  // Request/outcome projections may fill in within one security scope. Keep only
++  // still-bound results, cancel obsolete reads, and never let their replies land.
++  // Identity, task, conversation or generation changes clear all state instead.
++  const stop = watch(fingerprint, () => {
++    const scope = scopeFingerprint(); reset(scope !== previousScope); previousScope = scope
++    const references = skillResultReferences(getOutcomes(), getContext(), getRequests())
++    results.value = results.value.filter(result => references.some(reference =>
++      reference.executionId === result.executionId && reference.requestId === result.reference.requestId &&
++      (reference.stepId == null || reference.stepId === (result.stepId ?? result.reference.stepId))))
++    if (enabled()) void refresh()
++  }, { immediate: true, flush: 'sync' })
+   return { results, error, loading, refresh, dispose: () => { disposed = true; reset(); stop() } }
+ }
+diff --git a/tests/juyiting-bounty-output-gallery.test.js b/tests/juyiting-bounty-output-gallery.test.js
+index 329854d..bcd2e4a 100644
+--- a/tests/juyiting-bounty-output-gallery.test.js
++++ b/tests/juyiting-bounty-output-gallery.test.js
+@@ -700,3 +700,94 @@ describe('bounty output gallery live owner scope', () => {
+   })
+ 
+ })
++
++describe('RB-01/D01 real gallery native execution consumer', () => {
++  const nativeRequest = () => ({ requestId: 'native', requestRevision: '1', conversationId: '1', conversationGeneration: '1',
++    state: 'RESULT_COMMITTED', stateVersion: '8', turns: [], steps: [{ stepId: 'native-step', stepNumber: '1', taskId: 'task',
++      assignmentRevision: '1', targetAgentId: 'agent', kind: 'EXECUTE', state: 'RESULT_COMMITTED', stateVersion: '8',
++      executionIntentId: 'intent', executionId: 'native-execution', executionState: 'RESULT_COMMITTED' }] })
++  const props = () => ({ enabled: true, identityKey: 'owner:auth', conversationId: '1', conversationGeneration: '1',
++    taskId: 'task', request: nativeRequest(), typedOutcomes: [] })
++  const component = api => new Function('Vue', 'deps', script)(Vue, { revisionProgressPending, useHallSkillResults, skillResultDataText,
++    createApi: () => api, exactOutputId, outputCatalogItems, outputItemKey, previewKind, scopedExecutionSteps,
++    currentOutputDelivery, completedTextItem, completedExecutionDelivery, outputRequestPending })
++  it('loads data-only results from persisted steps with no ACTION_REQUEST and recovers after remount', async () => {
++    const calls = []
++    const api = { get: async path => {
++      calls.push(path)
++      if (path === '/requests/native') return nativeRequest()
++      if (path === '/requests/native/steps/native-step/outputs') return []
++      if (path === '/conversations/1/executions/native-execution/result') return { schemaVersion: 2,
++        conversationId: '1', conversationGeneration: '1', taskId: 'task', requestId: 'native', stepId: 'native-step',
++        executionId: 'native-execution', executionStateVersion: '3', state: 'RESULT_COMMITTED', phase: 'COMPLETE',
++        resultSha256: 'a'.repeat(64), data: { text: '原生直接执行的真实已提交投影' }, outputs: [] }
++      throw new Error(`unexpected GET ${path}`)
++    } }
++    const Component = component(api)
++    for (let i = 0; i < 2; i++) {
++      const wrapper = mount(Component, { props: props() })
++      try {
++        await flushPromises()
++        expect(wrapper.text()).to.include('原生直接执行的真实已提交投影')
++        expect(wrapper.text()).to.include('已归档')
++        expect(wrapper.text()).not.to.include('来源或归档状态不匹配')
++        expect(wrapper.findAll('pre')).to.have.length(1)
++        expect(wrapper.findAll('button').some(button => /验收|重试执行/.test(button.text()))).to.equal(false)
++      } finally { wrapper.unmount() }
++    }
++    expect(calls.filter(path => path.endsWith('/result'))).to.have.length(2)
++    expect(calls.some(path => path.includes('typed-outcome'))).to.equal(false)
++  })
++  it('shows only exact committed native file references without inventing a delivery outcome', async () => {
++    const file = { outputId: 'native-file', contentMimeType: 'application/pdf', sha256: 'b'.repeat(64), byteLength: '20',
++      previewUrl: null, downloadUrl: '/chat/requests/native/steps/native-step/outputs/native-file?download=true', assetRef: null, replaces: null }
++    const api = { get: async path => {
++      if (path === '/requests/native') return nativeRequest()
++      if (path === '/requests/native/steps/native-step/outputs') return []
++      if (path.endsWith('/native-execution/result')) return { schemaVersion: 2, conversationId: '1', conversationGeneration: '1',
++        taskId: 'task', requestId: 'native', stepId: 'native-step', executionId: 'native-execution', executionStateVersion: '3',
++        state: 'RESULT_COMMITTED', phase: 'COMPLETE', resultSha256: 'a'.repeat(64), data: null, outputs: [file] }
++      throw new Error(`unexpected GET ${path}`)
++    } }
++    const wrapper = mount(component(api), { props: { ...props(), acceptance: true } })
++    try {
++      await flushPromises()
++      expect(wrapper.text()).to.include('application/pdf · 20 字节')
++      expect(wrapper.text()).not.to.include('本次交付范围尚不明确')
++      expect(wrapper.findAll('.bounty-output')).to.have.length(2)
++      expect(wrapper.findAll('pre')).to.have.length(0)
++    } finally { wrapper.unmount() }
++  })
++  it('never exposes ARCHIVING data and rejects a late native reply after owner change', async () => {
++    const pending = []; let archiving = true
++    const api = { get: async (path, _query, options) => {
++      if (path === '/requests/native') return nativeRequest()
++      if (path === '/requests/native/steps/native-step/outputs') return []
++      if (path.endsWith('/native-execution/result')) {
++        const value = { schemaVersion: 2, conversationId: '1', conversationGeneration: '1', taskId: 'task', requestId: 'native',
++          stepId: 'native-step', executionId: 'native-execution', executionStateVersion: '3', state: 'RESULT_COMMITTED',
++          phase: 'ARCHIVING', resultSha256: 'a'.repeat(64), data: null, outputs: [] }
++        if (archiving) return value
++        return new Promise(resolve => pending.push({ resolve: () => resolve({ ...value, phase: 'COMPLETE', data: '旧主体迟到结果' }), signal: options.signal }))
++      }
++      throw new Error(`unexpected GET ${path}`)
++    } }
++    const wrapper = mount(component(api), { props: props() })
++    try {
++      await flushPromises()
++      expect(wrapper.text()).to.include('正在归档（尚未完成）')
++      expect(wrapper.findAll('pre')).to.have.length(0)
++      archiving = false
++      await wrapper.find('.output-refresh').trigger('click'); await flushPromises()
++      expect(pending.length).to.equal(1)
++      await wrapper.setProps({ identityKey: 'owner:new-auth' }); await flushPromises()
++      expect(pending[0].signal.aborted).to.equal(true)
++      pending[0].resolve(); await flushPromises()
++      expect(wrapper.text()).not.to.include('旧主体迟到结果')
++    } finally {
++      wrapper.unmount()
++      for (const read of pending) read.resolve()
++      await flushPromises()
++    }
++  })
++})
+diff --git a/tests/juyiting-skill-results.test.js b/tests/juyiting-skill-results.test.js
+index d5947cd..424b255 100644
+--- a/tests/juyiting-skill-results.test.js
++++ b/tests/juyiting-skill-results.test.js
+@@ -39,7 +39,7 @@ describe('SE2 scoped directory and generic data-only result consumers', () => {
+     assert.equal(value.complete, true); assert.deepEqual(value.outputs, []); assert.deepEqual(value.data, result().data)
+     assert.match(skillResultDataText(value.data), /<script>/)
+     assert.equal(skillResultDataText('文本'), '文本')
+-    assert.equal(skillResultProjection({ ...result(), token: 'leak' }, expected()), null)
++    assert.equal(Object.hasOwn(skillResultProjection({ ...result(), diagnosticId: 'metadata' }, expected()), 'diagnosticId'), false)
+   })
+   it('does not declare complete before persisted projection or permit cross-scope result substitution', () => {
+     const pending = skillResultProjection({ ...result(), phase: 'ARCHIVING', data: null }, expected())
+@@ -76,3 +76,105 @@ describe('SE2 scoped directory and generic data-only result consumers', () => {
+     service.dispose(); scope.stop()
+   })
+ })
++
++// Existing ChatDeliberationService.RequestView / StepView fields only. There is
++// deliberately no ACTION_REQUEST, child, outcome ID or invented protocol marker.
++const nativeRequest = () => ({ requestId: 'native', requestRevision: '1', conversationId: '1', conversationGeneration: '1',
++  state: 'RESULT_COMMITTED', stateVersion: '9007199254740993', turns: [], steps: [{ stepId: 'native-step', stepNumber: '1',
++    taskId: 'task', assignmentRevision: '1', targetAgentId: 'agent', kind: 'EXECUTE', state: 'RESULT_COMMITTED',
++    stateVersion: '9007199254740993', executionIntentId: 'intent', executionId: 'native-execution', executionState: 'RESULT_COMMITTED' }] })
++const nativeResult = () => ({ ...result(), requestId: 'native', stepId: 'native-step', executionId: 'native-execution' })
++describe('RB-01/D01 native request-step result discovery', () => {
++  const cleanups = []
++  afterEach(() => { for (const cleanup of cleanups.splice(0)) cleanup() })
++  const mountResults = (api, options = {}) => {
++    const scope = effectScope(); let service
++    scope.run(() => { service = useHallSkillResults({ api, getContext: () => context, getOutcomes: () => [],
++      getRequests: () => [nativeRequest()], identityKey: () => 'owner:auth', enabled: () => true, ...options }) })
++    cleanups.push(() => { service.dispose(); scope.stop() })
++    return service
++  }
++  it('discovers a direct execution and recovers identical references after refresh without manufacturing an action', () => {
++    const request = nativeRequest()
++    const references = skillResultReferences([], context, [request])
++    assert.deepEqual(references, [{ ...context, requestId: 'native', stepId: 'native-step', executionId: 'native-execution' }])
++    assert.deepEqual(skillResultReferences([], context, [JSON.parse(JSON.stringify(request))]), references)
++    assert.equal(Object.hasOwn(references[0], 'executionStateVersion'), false)
++    assert.equal(Object.hasOwn(references[0], 'outcomeId'), false)
++    assert.equal(skillResultProjection(nativeResult(), references[0]).complete, true)
++  })
++  it('rejects wrong generation, task, step or request identity without parsing completion prose', () => {
++    const request = nativeRequest()
++    for (const patch of [{ conversationId: 'other' }, { conversationGeneration: '2' }, { requestId: '../other' }, { requestRevision: 1 }])
++      assert.deepEqual(skillResultReferences([], context, [{ ...request, ...patch }]), [])
++    for (const patch of [{ taskId: 'other' }, { stepId: '../other' }, { executionId: null }, { kind: 'CHAT' }])
++      assert.deepEqual(skillResultReferences([], context, [{ ...request, steps: [{ ...request.steps[0], ...patch }] }]), [])
++    assert.deepEqual(skillResultReferences([{ text: '已完成，最新文件 native-execution' }], context, []), [])
++    const [reference] = skillResultReferences([], context, [request])
++    assert.equal(skillResultProjection({ ...nativeResult(), stepId: 'other' }, reference), null)
++    assert.equal(skillResultProjection({ ...nativeResult(), schemaVersion: 3 }, reference), null)
++  })
++  it('joins matching history and request links once but never picks between conflicting bindings', () => {
++    const request = { ...nativeRequest(), requestId: 'child', steps: [{ ...nativeRequest().steps[0], executionId: 'pwe_test' }] }
++    const refs = skillResultReferences([outcome()], context, [request, request])
++    assert.equal(refs.length, 1); assert.equal(refs[0].stepId, 'native-step'); assert.equal(refs[0].outcomeId, 'outcome')
++    assert.deepEqual(skillResultReferences([outcome()], context, [{ ...request, requestId: 'other' }]), [])
++    const otherStep = { ...request, steps: [{ ...request.steps[0], stepId: 'other-step' }] }
++    assert.deepEqual(skillResultReferences([], context, [request, otherStep, request]), [])
++  })
++  it('reads native and submitted historical facts through GET only, with no action outcomes required for native', async () => {
++    const paths = []
++    const service = mountResults({ get: async path => { paths.push(path); return path.includes('native-execution') ? nativeResult() : result() } },
++      { getOutcomes: () => [outcome()] })
++    await drain()
++    assert.deepEqual(paths.sort(), ['/conversations/1/executions/native-execution/result', '/conversations/1/executions/pwe_test/result'])
++    assert.equal(service.error.value, ''); assert.equal(service.results.value.length, 2)
++    assert.ok(service.results.value.every(value => value.complete))
++  })
++  it('keeps ARCHIVING data private and displays only the authoritative COMPLETE snapshot', async () => {
++    let response = { ...nativeResult(), phase: 'ARCHIVING', data: null }
++    const service = mountResults({ get: async () => response })
++    await drain(); assert.equal(service.results.value[0].complete, false); assert.equal(service.results.value[0].data, null)
++    response = { ...nativeResult(), executionStateVersion: '5' }
++    await service.refresh(); assert.equal(service.results.value[0].complete, true)
++    response = { ...nativeResult(), executionStateVersion: '3' }
++    await service.refresh(); assert.equal(service.results.value[0].executionStateVersion, '5')
++  })
++  it('does not turn a missing read into QUEUED, success, or a write retry', async () => {
++    let available = false; let calls = 0
++    const service = mountResults({ get: async () => { calls++; if (!available) throw Object.assign(new Error('missing'), { status: 404 }); return nativeResult() } })
++    await drain(); assert.equal(service.results.value[0].phase, 'UNKNOWN'); assert.equal(service.results.value[0].complete, false)
++    available = true; await service.refresh(); assert.equal(service.results.value[0].complete, true); assert.equal(calls, 2)
++  })
++  it('retains a complete result during same-scope projection enrichment but removes unbound results immediately', async () => {
++    const requests = ref([nativeRequest()]); const reads = []
++    const service = mountResults({ get: (...args) => new Promise(resolve => reads.push({ args, resolve })) }, { getRequests: () => requests.value })
++    reads[0].resolve(nativeResult()); await drain()
++    requests.value = [{ ...nativeRequest(), stateVersion: '9007199254740994' }]
++    assert.equal(service.results.value[0].complete, true); assert.equal(reads.length, 2)
++    requests.value = []
++    assert.equal(reads[1].args[2].signal.aborted, true); assert.deepEqual(service.results.value, [])
++    reads[1].resolve(nativeResult()); await drain(); assert.deepEqual(service.results.value, [])
++  })
++  it('fences real identity, generation and task changes and cleans up pending reads on disposal', async () => {
++    const identity = ref('owner:a'); const currentContext = ref(context); const requests = ref([nativeRequest()]); const reads = []
++    const service = mountResults({ get: (...args) => new Promise(resolve => reads.push({ args, resolve })) },
++      { identityKey: () => identity.value, getContext: () => currentContext.value, getRequests: () => requests.value })
++    identity.value = 'owner:b'
++    assert.equal(reads[0].args[2].signal.aborted, true)
++    reads[0].resolve(nativeResult()); await drain(); assert.deepEqual(service.results.value, [])
++    reads[1].resolve(nativeResult()); await drain(); assert.equal(service.results.value[0].complete, true)
++    currentContext.value = { ...context, conversationGeneration: '2' }
++    assert.deepEqual(service.results.value, [])
++    requests.value = [{ ...nativeRequest(), conversationGeneration: '2' }]
++    assert.equal(reads.length, 3)
++    currentContext.value = { ...context, conversationGeneration: '2', taskId: 'other' }
++    assert.equal(reads[2].args[2].signal.aborted, true)
++    reads[2].resolve({ ...nativeResult(), conversationGeneration: '2' }); await drain(); assert.deepEqual(service.results.value, [])
++    requests.value = [{ ...requests.value[0], steps: [{ ...requests.value[0].steps[0], taskId: 'other' }] }]
++    assert.equal(reads.length, 4)
++    service.dispose(); assert.equal(reads[3].args[2].signal.aborted, true)
++    reads[3].resolve({ ...nativeResult(), conversationGeneration: '2', taskId: 'other' }); await drain()
++    assert.deepEqual(service.results.value, []); assert.equal(service.loading.value, false)
++  })
++})

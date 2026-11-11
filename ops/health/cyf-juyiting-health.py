@@ -2,6 +2,7 @@
 """Bounded, fail-closed Juyi Hall service health monitor (Python 3.6 stdlib)."""
 
 import argparse
+import base64
 import copy
 import datetime
 import errno
@@ -22,14 +23,14 @@ from urllib import request as urlrequest
 
 SCHEMA_VERSION = 1
 CONFIG_PATH = "/etc/cyf-juyiting-health.json"
-STATE_DIR = "/var/lib/cyf-juyiting-health"
+STATE_DIR = "/home/isp/state/cyf-juyiting-health"
 STATE_PATH = STATE_DIR + "/state.json"
 LOCK_PATH = STATE_DIR + "/monitor.lock"
 MAINTENANCE_PATH = STATE_DIR + "/maintenance"
 CANONICAL = "/usr/local/sbin/cyf-api-kit"
 SYSTEMD_RUN = "/usr/bin/systemd-run"
 RECOVERY_CARRIER = "/usr/local/libexec/cyf-juyiting-recovery-carrier.py"
-RECOVERY_CARRIER_SHA256 = "440e82ab992b88778b26542e176c8f7da14c62c66e6bad32b3dcb941e908c321"
+RECOVERY_CARRIER_SHA256 = "564bd88e5e0bab90d25704f76f3bb39ee5d11d45c7e707f119dd6b15ed5a4414"
 MAIL_PYTHON = "/usr/bin/python3"
 MAIL_HELPER = "/root/.local/bin/cyf-task-email"
 MAIL_HELPER_SHA256 = "ddc540f1d450880af5bb707751cf6cd68b6492e58cb702436b19580867d3ae99"
@@ -37,6 +38,7 @@ MAIL_ENV = "/root/.config/cyf-task-monitor/email.env"
 LOGGER = "/usr/bin/logger"
 WEB_URL = "https://kit.chaoyoufan.cn/juyiting"
 API_URL = "https://api.chaoyoufan.cn/agent/map"
+AGENT_HEALTH_PATH = "/home/isp/state/cyf-agent-runtime-v1/unified/host/runtime-health.json"
 USER_AGENT = "cyf-juyiting-health/1.0"
 EXPECTED_RUNTIME_IDENTITY = "cyf-api(987:1000)"
 FAILURE_THRESHOLD = 3
@@ -62,7 +64,7 @@ SUBJECT_RECOVERY_RESULT = "【监控】恢复%s（%d/%d）"
 SUBJECT_RECOVERY_EXHAUSTED = "【紧急】恢复失败（3/3）"
 SUBJECT_RECOVERY_EXHAUSTED_UNKNOWN = "【紧急】终态未知（3/3）"
 SUBJECT_NOTIFY_TEST = "【监控】人工通知测试"
-COMPONENTS = ("local_api", "web", "public_api", "mysql", "redis", "agent")
+COMPONENTS = ("local_api", "web", "public_api", "mysql", "redis", "agent", "elasticsearch")
 FIXED_ENV = {
     "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
     "HOME": "/root",
@@ -499,6 +501,42 @@ def validate_state(data):
     return data
 
 
+def assess_agent_snapshot(data, pid, now_ms):
+    # Observation only. Three expected heartbeat periods, not a request deadline.
+    try:
+        interval = data["heartbeatIntervalMs"]
+        observed = data["observedAt"]
+        if data.get("version") != 1 or data.get("pid") != pid or not _is_int(interval) or interval <= 0:
+            raise ValueError()
+        if not _is_int(observed) or observed > now_ms or now_ms - observed > 3 * interval:
+            return {"healthy": False, "classification": "agent_health_stale"}
+        agents = data["agents"]
+        if not isinstance(agents, list) or not agents:
+            raise ValueError()
+        for agent in agents:
+            if agent.get("channelState") == "isolated":
+                return {"healthy": False, "classification": "agent_channel_isolated"}
+            if agent.get("connected") is not True or agent.get("registered") is not True:
+                return {"healthy": False, "classification": "agent_channel_not_registered"}
+            if agent.get("ready") is not True:
+                return {"healthy": False, "classification": "agent_executor_not_ready"}
+            ack = agent.get("lastPresenceAckAt")
+            if not _is_int(ack) or ack > now_ms or now_ms - ack > 3 * interval:
+                return {"healthy": False, "classification": "agent_presence_ack_stale"}
+        return {"healthy": True, "classification": "agent_channels_ready"}
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return {"healthy": False, "classification": "agent_health_invalid"}
+
+
+def current_api_memory_failure(log_tail, pid):
+    # Ignore previous process failures after recovery. Only classify, never return log text.
+    if not _is_int(pid) or pid <= 0:
+        return False
+    return any(re.search(r" (?:ERROR|WARN)\s+" + str(pid) + r"\s+---", line)
+               and ("OutOfMemoryError" in line or "Metaspace" in line)
+               for line in log_tail.splitlines())
+
+
 class StateStore(object):
     def __init__(self, state_dir=STATE_DIR, expected_uid=0, validate_parents=True):
         self.state_dir = state_dir
@@ -784,7 +822,24 @@ class Effects(object):
             return {"healthy": False, "classification": "canonical_status_timeout",
                     "recovery_safe": False, "returncode": 124, "pid": None,
                     "elapsed_seconds": None}
-        return parse_canonical_status(result["returncode"], result["stdout"])
+        status = parse_canonical_status(result["returncode"], result["stdout"])
+        if status.get("healthy"):
+            try:
+                fd = os.open("/home/isp/hosts/cyf/api/logs/root.log", os.O_RDONLY | os.O_NOFOLLOW)
+                try:
+                    info = os.fstat(fd)
+                    if not stat.S_ISREG(info.st_mode):
+                        raise ValueError("not_regular")
+                    os.lseek(fd, max(0, info.st_size - 1024 * 1024), os.SEEK_SET)
+                    tail = os.read(fd, 1024 * 1024).decode("utf-8", "replace")
+                finally:
+                    os.close(fd)
+                if current_api_memory_failure(tail, status.get("pid")):
+                    status.update(healthy=False, classification="api_current_process_memory_failure", recovery_safe=False)
+            except (OSError, ValueError):
+                # Missing diagnostic evidence is visible, never an automatic restart authority.
+                status.update(healthy=False, classification="api_memory_observation_unavailable", recovery_safe=False)
+        return status
 
     def recovery_precondition(self, action, incident_id, attempt):
         try:
@@ -797,6 +852,16 @@ class Effects(object):
             if sha256_file(RECOVERY_CARRIER) != RECOVERY_CARRIER_SHA256:
                 return {"permitted": False,
                         "classification": "recovery_carrier_hash_mismatch"}
+            checked = self._run([MAIL_PYTHON, "-I", RECOVERY_CARRIER, "--check"], None)
+            if checked["returncode"] != 0:
+                match = re.fullmatch(
+                    r"CYF_HEALTHMON_CHECK_ERROR=(canonical_hash_mismatch|"
+                    r"canonical_identity_invalid|canonical_unavailable)\n?",
+                    checked.get("stderr", ""))
+                reason = match.group(1) if match else "canonical_preflight_failed"
+                return {"permitted": False, "classification": reason}
+            if checked.get("stdout", "").strip() != "CYF_HEALTHMON_CANONICAL=OK":
+                return {"permitted": False, "classification": "canonical_preflight_invalid"}
             return {"permitted": True,
                     "classification": "recovery_carrier_files_ready"}
         except (MonitorError, OSError) as exc:
@@ -1008,6 +1073,59 @@ class Effects(object):
         except Exception as exc:
             return {"healthy": False, "classification": "public_api_%s" % safe_label(type(exc).__name__)}
 
+    def _elasticsearch_json(self, path):
+        # Fixed local endpoint only: no environment proxies or credential redirects.
+        secret = "/etc/cyf-elasticsearch-health-auth.json"
+        expected = validate_regular(secret, expected_mode=0o600, maximum=8192)
+        fd = os.open(secret, os.O_RDONLY | os.O_NOFOLLOW)
+        try:
+            actual = os.fstat(fd)
+            if (actual.st_dev, actual.st_ino) != (expected.st_dev, expected.st_ino) \
+                    or actual.st_uid != 0 or actual.st_nlink != 1 \
+                    or stat.S_IMODE(actual.st_mode) != 0o600:
+                raise MonitorError("es_auth_identity_changed")
+            auth = read_json_fd(fd, 8192)
+        finally:
+            os.close(fd)
+        if not isinstance(auth, dict) or set(auth) != {"username", "password"} \
+                or not all(isinstance(v, str) and v for v in auth.values()):
+            raise MonitorError("es_auth_invalid")
+        token = base64.b64encode((auth["username"] + ":" + auth["password"]).encode()).decode("ascii")
+        req = urlrequest.Request("http://127.0.0.1:9200" + path,
+                                 headers={"Authorization": "Basic " + token,
+                                          "User-Agent": USER_AGENT})
+        opener = urlrequest.build_opener(urlrequest.ProxyHandler({}), NoRedirect())
+        with opener.open(req, timeout=8) as response:
+            if response.getcode() != 200:
+                raise MonitorError("es_http_invalid")
+            body = response.read(MAX_HTTP_BODY + 1)
+            if len(body) > MAX_HTTP_BODY:
+                raise MonitorError("es_body_too_large")
+            result = json.loads(body.decode("utf-8"))
+            if not isinstance(result, dict):
+                raise MonitorError("es_body_invalid")
+            return result
+
+    def elasticsearch(self):
+        try:
+            cluster = self._elasticsearch_json("/_cluster/health")
+            status = cluster.get("status")
+            if status not in ("green", "yellow") or cluster.get("timed_out") is not False:
+                return {"healthy": False, "classification": "es_cluster_unhealthy"}
+            # size=0 returns no business content; partial shard failures are failures.
+            result = self._elasticsearch_json("/chat_memory/_search?size=0&terminate_after=1")
+            shards = result.get("_shards", {})
+            healthy = (result.get("timed_out") is False
+                       and isinstance(shards.get("total"), int) and shards["total"] > 0
+                       and shards.get("failed") == 0
+                       and shards.get("successful") == shards["total"])
+            return {"healthy": healthy, "classification":
+                    ("es_search_ok_" + status) if healthy else "es_search_incomplete"}
+        except urlerror.HTTPError as exc:
+            return {"healthy": False, "classification": "es_http_%d" % exc.code}
+        except Exception as exc:
+            return {"healthy": False, "classification": "es_" + safe_label(type(exc).__name__)}
+
     def mysql(self):
         try:
             sock = socket.create_connection(("127.0.0.1", 3306), timeout=3)
@@ -1038,9 +1156,23 @@ class Effects(object):
 
     def agent(self):
         try:
-            result = self._run(["/usr/bin/systemctl", "is-active", "codex-ws-agent.service"], 5)
+            result = self._run(["/usr/bin/systemctl", "is-active", "cyf-agent-runtime-v1@unified.service"], 5)
             active = result["returncode"] == 0 and result["stdout"].strip() == "active"
-            return {"healthy": active, "classification": "agent_active" if active else "agent_inactive"}
+            if not active:
+                return {"healthy": False, "classification": "agent_inactive"}
+            result = self._run(["/usr/bin/systemctl", "show", "cyf-agent-runtime-v1@unified.service", "--property=MainPID", "--value"], 5)
+            pid = int(result["stdout"].strip())
+            path = AGENT_HEALTH_PATH
+            validate_regular(path, 0o600, 0, 256 * 1024, False)
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+            try:
+                info = os.fstat(fd)
+                if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or stat.S_IMODE(info.st_mode) != 0o600:
+                    raise ValueError("snapshot_metadata")
+                data = json.loads(os.read(fd, 256 * 1024 + 1).decode("utf-8"))
+            finally:
+                os.close(fd)
+            return assess_agent_snapshot(data, pid, int(time.time() * 1000))
         except Exception as exc:
             return {"healthy": False, "classification": "agent_%s" % safe_label(type(exc).__name__)}
 
@@ -1052,7 +1184,7 @@ class Effects(object):
                     if line.startswith("MemAvailable:"):
                         available = int(line.split()[1]) * 1024
                         break
-            disk = os.statvfs("/opt/cyf/service/api").f_bavail * os.statvfs("/opt/cyf/service/api").f_frsize
+            disk = os.statvfs("/home/isp/hosts/cyf/api").f_bavail * os.statvfs("/home/isp/hosts/cyf/api").f_frsize
             healthy = available is not None and available >= MIN_MEMORY_BYTES and disk >= MIN_DISK_BYTES
             return {"healthy": healthy,
                     "classification": "resources_ok" if healthy else "resources_below_canonical_minimum"}
@@ -1069,7 +1201,14 @@ class Effects(object):
             result = self._run([MAIL_PYTHON, "-I", MAIL_HELPER,
                                 sanitize_mail_subject(subject), sanitize_mail_body(body)],
                                30, mail=True)
-            return result["returncode"] == 0, "helper_accepted" if result["returncode"] == 0 else "helper_failed"
+            if result["returncode"] == 0:
+                return True, "helper_accepted"
+            # Preserve only the SMTP status, never the traceback, address or
+            # provider text. The former generic label concealed broken auth.
+            match = re.search(r"SMTPAuthenticationError: \(([0-9]{3}),", result.get("stderr", ""))
+            classification = "smtp_authentication_failed_%s" % match.group(1) if match else "helper_failed"
+            guard_log(classification)
+            return False, classification
         except Exception as exc:
             return False, "mail_%s" % safe_label(type(exc).__name__)
 
@@ -1117,6 +1256,7 @@ COMPONENT_NAMES_ZH = {
     "local_api": "本机 API",
     "web": "聚义厅网页",
     "public_api": "公网 API 鉴权边界",
+    "elasticsearch": "Elasticsearch案卷检索",
     "mysql": "MySQL",
     "redis": "Redis",
     "agent": "Agent 服务",
@@ -1482,6 +1622,8 @@ class Monitor(object):
             self.effects.redis, "redis")
         results["agent"], observed_at["agent"] = self._probe_with_time(
             self.effects.agent, "agent")
+        results["elasticsearch"], observed_at["elasticsearch"] = self._probe_with_time(
+            self.effects.elasticsearch, "elasticsearch")
         recovery_incident_id = state["incident"]["id"] if state["incident"] else "unconfirmed"
         for name in COMPONENTS:
             if results[name]["healthy"]:

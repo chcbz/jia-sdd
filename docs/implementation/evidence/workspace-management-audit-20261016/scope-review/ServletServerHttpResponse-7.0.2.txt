@@ -1,0 +1,184 @@
+Compiled from "ServletServerHttpResponse.java"
+public class org.springframework.http.server.ServletServerHttpResponse implements org.springframework.http.server.ServerHttpResponse {
+  private final jakarta.servlet.http.HttpServletResponse servletResponse;
+
+  private final org.springframework.http.HttpHeaders headers;
+
+  private boolean headersWritten;
+
+  private boolean bodyUsed;
+
+  private org.springframework.http.HttpHeaders readOnlyHeaders;
+
+  public org.springframework.http.server.ServletServerHttpResponse(jakarta.servlet.http.HttpServletResponse);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_0
+       6: putfield      #7                  // Field headersWritten:Z
+       9: aload_0
+      10: iconst_0
+      11: putfield      #13                 // Field bodyUsed:Z
+      14: aload_1
+      15: ldc           #16                 // String HttpServletResponse must not be null
+      17: invokestatic  #18                 // Method org/springframework/util/Assert.notNull:(Ljava/lang/Object;Ljava/lang/String;)V
+      20: aload_0
+      21: aload_1
+      22: putfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      25: aload_0
+      26: new           #28                 // class org/springframework/http/server/ServletServerHttpResponse$ServletResponseHttpHeaders
+      29: dup
+      30: aload_0
+      31: invokespecial #30                 // Method org/springframework/http/server/ServletServerHttpResponse$ServletResponseHttpHeaders."<init>":(Lorg/springframework/http/server/ServletServerHttpResponse;)V
+      34: putfield      #33                 // Field headers:Lorg/springframework/http/HttpHeaders;
+      37: return
+
+  public jakarta.servlet.http.HttpServletResponse getServletResponse();
+    Code:
+       0: aload_0
+       1: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+       4: areturn
+
+  public void setStatusCode(org.springframework.http.HttpStatusCode);
+    Code:
+       0: aload_1
+       1: ldc           #37                 // String HttpStatusCode must not be null
+       3: invokestatic  #18                 // Method org/springframework/util/Assert.notNull:(Ljava/lang/Object;Ljava/lang/String;)V
+       6: aload_0
+       7: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      10: aload_1
+      11: invokeinterface #39,  1           // InterfaceMethod org/springframework/http/HttpStatusCode.value:()I
+      16: invokeinterface #45,  2           // InterfaceMethod jakarta/servlet/http/HttpServletResponse.setStatus:(I)V
+      21: return
+
+  public org.springframework.http.HttpHeaders getHeaders();
+    Code:
+       0: aload_0
+       1: getfield      #51                 // Field readOnlyHeaders:Lorg/springframework/http/HttpHeaders;
+       4: ifnull        12
+       7: aload_0
+       8: getfield      #51                 // Field readOnlyHeaders:Lorg/springframework/http/HttpHeaders;
+      11: areturn
+      12: aload_0
+      13: getfield      #7                  // Field headersWritten:Z
+      16: ifeq          35
+      19: aload_0
+      20: aload_0
+      21: getfield      #33                 // Field headers:Lorg/springframework/http/HttpHeaders;
+      24: invokestatic  #54                 // Method org/springframework/http/HttpHeaders.readOnlyHttpHeaders:(Lorg/springframework/http/HttpHeaders;)Lorg/springframework/http/HttpHeaders;
+      27: putfield      #51                 // Field readOnlyHeaders:Lorg/springframework/http/HttpHeaders;
+      30: aload_0
+      31: getfield      #51                 // Field readOnlyHeaders:Lorg/springframework/http/HttpHeaders;
+      34: areturn
+      35: aload_0
+      36: getfield      #33                 // Field headers:Lorg/springframework/http/HttpHeaders;
+      39: areturn
+
+  public java.io.OutputStream getBody() throws java.io.IOException;
+    Code:
+       0: aload_0
+       1: iconst_1
+       2: putfield      #13                 // Field bodyUsed:Z
+       5: aload_0
+       6: invokevirtual #60                 // Method writeHeaders:()V
+       9: aload_0
+      10: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      13: invokeinterface #63,  1           // InterfaceMethod jakarta/servlet/http/HttpServletResponse.getOutputStream:()Ljakarta/servlet/ServletOutputStream;
+      18: areturn
+
+  public void flush() throws java.io.IOException;
+    Code:
+       0: aload_0
+       1: invokevirtual #60                 // Method writeHeaders:()V
+       4: aload_0
+       5: getfield      #13                 // Field bodyUsed:Z
+       8: ifeq          20
+      11: aload_0
+      12: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      15: invokeinterface #67,  1           // InterfaceMethod jakarta/servlet/http/HttpServletResponse.flushBuffer:()V
+      20: return
+
+  public void close();
+    Code:
+       0: aload_0
+       1: invokevirtual #60                 // Method writeHeaders:()V
+       4: return
+
+  private void writeHeaders();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field headersWritten:Z
+       4: ifne          127
+       7: aload_0
+       8: invokevirtual #70                 // Method getHeaders:()Lorg/springframework/http/HttpHeaders;
+      11: aload_0
+      12: invokedynamic #74,  0             // InvokeDynamic #0:accept:(Lorg/springframework/http/server/ServletServerHttpResponse;)Ljava/util/function/BiConsumer;
+      17: invokevirtual #78                 // Method org/springframework/http/HttpHeaders.forEach:(Ljava/util/function/BiConsumer;)V
+      20: aload_0
+      21: getfield      #33                 // Field headers:Lorg/springframework/http/HttpHeaders;
+      24: invokevirtual #82                 // Method org/springframework/http/HttpHeaders.getContentType:()Lorg/springframework/http/MediaType;
+      27: astore_1
+      28: aload_0
+      29: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      32: invokeinterface #86,  1           // InterfaceMethod jakarta/servlet/http/HttpServletResponse.getContentType:()Ljava/lang/String;
+      37: ifnonnull     57
+      40: aload_1
+      41: ifnull        57
+      44: aload_0
+      45: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      48: aload_1
+      49: invokevirtual #89                 // Method org/springframework/http/MediaType.toString:()Ljava/lang/String;
+      52: invokeinterface #94,  2           // InterfaceMethod jakarta/servlet/http/HttpServletResponse.setContentType:(Ljava/lang/String;)V
+      57: aload_0
+      58: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      61: invokeinterface #98,  1           // InterfaceMethod jakarta/servlet/http/HttpServletResponse.getCharacterEncoding:()Ljava/lang/String;
+      66: ifnonnull     96
+      69: aload_1
+      70: ifnull        96
+      73: aload_1
+      74: invokevirtual #101                // Method org/springframework/http/MediaType.getCharset:()Ljava/nio/charset/Charset;
+      77: ifnull        96
+      80: aload_0
+      81: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      84: aload_1
+      85: invokevirtual #101                // Method org/springframework/http/MediaType.getCharset:()Ljava/nio/charset/Charset;
+      88: invokevirtual #105                // Method java/nio/charset/Charset.name:()Ljava/lang/String;
+      91: invokeinterface #110,  2          // InterfaceMethod jakarta/servlet/http/HttpServletResponse.setCharacterEncoding:(Ljava/lang/String;)V
+      96: aload_0
+      97: invokevirtual #70                 // Method getHeaders:()Lorg/springframework/http/HttpHeaders;
+     100: invokevirtual #113                // Method org/springframework/http/HttpHeaders.getContentLength:()J
+     103: lstore_2
+     104: lload_2
+     105: ldc2_w        #117                // long -1l
+     108: lcmp
+     109: ifeq          122
+     112: aload_0
+     113: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+     116: lload_2
+     117: invokeinterface #119,  3          // InterfaceMethod jakarta/servlet/http/HttpServletResponse.setContentLengthLong:(J)V
+     122: aload_0
+     123: iconst_1
+     124: putfield      #7                  // Field headersWritten:Z
+     127: return
+
+  private void lambda$writeHeaders$0(java.lang.String, java.util.List);
+    Code:
+       0: aload_2
+       1: invokeinterface #123,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       6: astore_3
+       7: aload_3
+       8: invokeinterface #129,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      13: ifeq          42
+      16: aload_3
+      17: invokeinterface #135,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      22: checkcast     #139                // class java/lang/String
+      25: astore        4
+      27: aload_0
+      28: getfield      #24                 // Field servletResponse:Ljakarta/servlet/http/HttpServletResponse;
+      31: aload_1
+      32: aload         4
+      34: invokeinterface #141,  3          // InterfaceMethod jakarta/servlet/http/HttpServletResponse.addHeader:(Ljava/lang/String;Ljava/lang/String;)V
+      39: goto          7
+      42: return
+}

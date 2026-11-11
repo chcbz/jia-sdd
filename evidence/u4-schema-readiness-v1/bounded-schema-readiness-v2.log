@@ -1,0 +1,27 @@
+MMD-U4-SCHEMA-READINESS-20260930 bounded v2 diagnostic record
+recorded_at=2026-09-30T17:02:52+08:00
+candidate_commit=79165b93d7dc7c8ecff30376e0ed1622c26591ac
+candidate_tree=c073c6def079214beec0d150812b49a9eb3e48c4
+scope=bounded exact-source overlay diagnostic; not full build or MySQL evidence
+selector=:u4BoundedV2SchemaReadinessLifecycle
+task_graph=:u4BoundedV2Preflight,:u4BoundedV2CompileMain,:u4BoundedV2CompileLifecycleTest,:u4BoundedV2SchemaReadinessLifecycle
+gradle_jvm=-Xmx256m -XX:MaxMetaspaceSize=160m -XX:ActiveProcessorCount=2 -XX:+UseSerialGC
+test_worker_jvm=-Xmx128m -XX:MaxMetaspaceSize=96m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC
+tasks=4 executed
+junit.tests=5 junit.passed=2 junit.failures=3 junit.errors=0 junit.skipped=0
+build_outcome=FAILED due to JUnit lifecycle-contract failures
+owned_daemon_pid=1941312 owned_daemon_completed=true owned_daemon_oom=false
+overlay_proof=all five requested types loaded from evidence overlays
+
+testcases:
+- missingSourceColumnStillFailsBeforeArchiveDdl(): FAILED
+  org.opentest4j.AssertionFailedError: deliberation initialized before core chat schema |  ==> expected: <true> but was: <false>
+- realSpringLifecycleMakesSourcesReadyBeforeArchiveAndRunnerPhaseDoesNotRepeat(): FAILED
+  java.lang.IllegalStateException: deliberation initialized before core chat schema
+- partialFailureIsNotCachedAndRetryDoesNotRepeatCompletedCoreSchema(): PASSED
+- archiveIndexDriftStillFailsClosedAfterSourcesBecomeReady(): FAILED
+  org.opentest4j.AssertionFailedError: Expected java.lang.Exception to be thrown, but nothing was thrown.
+- legacyInitializingBeanReproducesFailureBeforeApplicationRunnersExecute(): PASSED
+
+provenance: counts/messages from JUnit XML; task/build/daemon completion from copied owned daemon log; class origins from JVM -Xlog:class+load output.
+No Gradle rerun was performed while producing this record.

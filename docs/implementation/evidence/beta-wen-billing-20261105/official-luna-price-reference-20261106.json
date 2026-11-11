@@ -1,0 +1,35 @@
+{
+  "observedAt": "2026-11-06T04:05:26.524307+00:00",
+  "status": "OFFICIAL_REFERENCE_VERIFIED_NOT_ACTUAL_CHANNEL_INVOICE",
+  "sources": [
+    "https://developers.openai.com/api/docs/pricing",
+    "https://developers.openai.com/api/docs/models/gpt-6-luna"
+  ],
+  "model": "gpt-6-luna",
+  "unit": "USD_PER_MILLION_TOKENS",
+  "mode": "STANDARD_SHORT_CONTEXT",
+  "rates": {
+    "INPUT": "0.10",
+    "OUTPUT": "0.50",
+    "CACHED_INPUT": "0.01",
+    "CACHE_WRITE_30M": "0.125",
+    "CACHE_WRITE_12H": "0.25"
+  },
+  "matchesUserProvidedUsdTable": true,
+  "applicability": {
+    "longContextThresholdInputTokens": 272000,
+    "strictlyGreaterThanThreshold": true,
+    "longContextInputAndCacheMultiplier": "2",
+    "longContextOutputMultiplier": "1.5",
+    "longContextAppliesTo": "whole request",
+    "regionalProcessingPremium": "10 percent where applicable",
+    "flexBatchRelativeToStandard": "0.5",
+    "fastRelativeToApplicableRates": "2"
+  },
+  "unchanged": [
+    "No CNY rate refresh or runtime FX config",
+    "No production prices/models changed",
+    "Actual channel mapping, pricing applicability and invoice remain to be bound"
+  ],
+  "implementationGap": "Current flat ModelTokenPrice/3-key route does not model context-band applicability; before registering a short-context price, add explicit applicability without hard-stopping model requests or guessing long-context charges."
+}

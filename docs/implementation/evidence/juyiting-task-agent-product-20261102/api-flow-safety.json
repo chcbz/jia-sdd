@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-11-02T07:48:39.453Z",
+  "sourceSummary": [
+    {
+      "type": "git"
+    }
+  ],
+  "safetyLines": [
+    "    branch: develop",
+    "    triggerEvents: []",
+    "    branchesFilter: .*",
+    "# Flow ends after upload. The host pulls the fixed-Run artifact and installs it separately; no production-host invocation or wait.",
+    "        timeoutMinutes: 10",
+    "            step: CustomEnvironmentBuild",
+    "                    source = dict(branch=env.get('CI_COMMIT_REF_NAME'), commit_sha=commit, tree_sha=tree, clean_before=True, clean_after=True)",
+    "          upload_artifact:",
+    "            step: ArtifactUpload",
+    "              uploadType: flowPublic"
+  ],
+  "hostDeployStep": false
+}

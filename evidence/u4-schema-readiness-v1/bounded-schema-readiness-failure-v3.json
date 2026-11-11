@@ -1,0 +1,195 @@
+{
+  "schema_version": 3,
+  "recorded_at": "2026-09-30T17:42:53+08:00",
+  "task_id": "MMD-U4-SCHEMA-READINESS-20260930",
+  "candidate": {
+    "commit": "399cb3c30002c728a2329a6347f1f4d15f2d3fcf",
+    "tree": "b6ad3746c235e91ae1cae15278636b66f1b253bf"
+  },
+  "verification_scope": "one fresh bounded-v3 exact-source lifecycle verification only",
+  "fixture_digest": "7d6e80a1a7d6af1ee2a2e5bbf85ac6d86494ef0a02af1e3ad516841e338bcae6",
+  "outcome": "inconclusive_test_worker_heap_oom",
+  "failure_category": "bounded_v3_test_worker_heap_oom",
+  "attribution": "Exact preflight and both overlay compilations passed. The owned Gradle daemon completed normally, but Gradle Test Executor 1 exhausted its configured 128m Java heap. JUnit XML is partial: one method passed, one was skipped, and three expected methods were not recorded. This is not a lifecycle assertion failure or candidate pass.",
+  "task_graph": {
+    "expected": [
+      ":u4BoundedV3Preflight",
+      ":u4BoundedV3CompileMain",
+      ":u4BoundedV3CompileLifecycleTest",
+      ":u4BoundedV3SchemaReadinessLifecycle"
+    ],
+    "actual": [
+      ":u4BoundedV3Preflight",
+      ":u4BoundedV3CompileMain",
+      ":u4BoundedV3CompileLifecycleTest",
+      ":u4BoundedV3SchemaReadinessLifecycle"
+    ],
+    "unexpected_tasks": []
+  },
+  "preflight": {
+    "passed": true,
+    "source_hashes_verified": true,
+    "classpath_content_verified": true,
+    "classpath_entries": 364,
+    "classpath_built_by_tasks": []
+  },
+  "compilation": {
+    "main_succeeded": true,
+    "main_class_files": 11,
+    "test_succeeded": true,
+    "test_class_files": 8
+  },
+  "junit_partial": {
+    "tests": 2,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 1,
+    "cases": [
+      {
+        "name": "missingSourceColumnStillFailsBeforeArchiveDdl()",
+        "status": "passed",
+        "time_seconds": "4.16"
+      },
+      {
+        "name": "realSpringLifecycleMakesSourcesReadyBeforeArchiveAndRunnerPhaseDoesNotRepeat()",
+        "status": "skipped",
+        "time_seconds": "68.336"
+      }
+    ],
+    "expected_method_count": 5,
+    "not_recorded": [
+      "legacyInitializingBeanReproducesFailureBeforeApplicationRunnersExecute()",
+      "partialFailureIsNotCachedAndRetryDoesNotRepeatCompletedCoreSchema()",
+      "archiveIndexDriftStillFailsClosedAfterSourcesBecomeReady()"
+    ]
+  },
+  "positive_observation": "missingSourceColumnStillFailsBeforeArchiveDdl passed and logged archive InitializingBean source validation, so the v3 fixture activation correction took effect.",
+  "oom": {
+    "owned_daemon_pid": 1957709,
+    "owned_daemon_completed": true,
+    "owned_daemon_oom": false,
+    "owned_test_worker_pid": 1959937,
+    "owned_test_worker_error": "java.lang.OutOfMemoryError: Java heap space",
+    "configured_test_heap": "128m",
+    "concurrent_global_oom": true,
+    "kernel_killed_pid": 1953344,
+    "kernel_killed_uid": 987,
+    "foreign_ownership_inferred": false,
+    "foreign_process_action": false
+  },
+  "evidence": {
+    "plan": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-plan-v3.json",
+      "sha256": "6077748d01f0c58be650c58a9052ab5ffa05106d97a20e151d4c7dc5109e81ee",
+      "size_bytes": 4182
+    },
+    "init_script": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v3.init.gradle",
+      "sha256": "a8985fd4a3f8f905264150f6d6210095109bcc8189347fdd229cda1d080d38fc",
+      "size_bytes": 13682
+    },
+    "source_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-source-manifest-v3.json",
+      "sha256": "a794e5b1b7a4f9fb287783f114f4190d09040c73ac09c9e4edb51e0a7c3de991",
+      "size_bytes": 2616
+    },
+    "classpath": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-v1.txt",
+      "sha256": "ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4",
+      "size_bytes": 51635
+    },
+    "classpath_content": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-content-v1.json",
+      "sha256": "e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b",
+      "size_bytes": 127011
+    },
+    "task_graph": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-task-graph-b6ad3746-v3.json",
+      "sha256": "a0667daef85d1ab39eab395f3827426d43db51c8d9c06ca8c8814c21c1197489",
+      "size_bytes": 369
+    },
+    "preflight": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/preflight.json",
+      "sha256": "905c49ddce0f7271e9dbe96980a96282a9bf14fac46d4cc36a9355f449bbc340",
+      "size_bytes": 372
+    },
+    "main_overlay_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/main-overlay-manifest.json",
+      "sha256": "30ea3136f8d751ef32e76fea2d422800ed9b73abb5d0b2c48bcf30e007c0b040",
+      "size_bytes": 2566
+    },
+    "test_overlay_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/test-overlay-manifest.json",
+      "sha256": "f1be7bb3c11ef1d449a05da8f1798adb3995479132c5e59856aa67092116eb81",
+      "size_bytes": 1987
+    },
+    "junit_xml": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/junit-xml/TEST-cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.xml",
+      "sha256": "4ad5467ab7c4ad8e85e61132738c7b01aa14c90b955935c8096873f51d9c2c1f",
+      "size_bytes": 19926
+    },
+    "class_load_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/class-load.log",
+      "sha256": "613be5f9fcee058f0f98b3cbd3e17aa704d18f2f66ca2b7a7e2d4a9df9025b28",
+      "size_bytes": 1521326
+    },
+    "overlay_load_proof": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/overlay-load-proof.json",
+      "sha256": "126f236f62c830efbdeff7fed439c04b3783aa6a2845a907cc2fcb4450be6658",
+      "size_bytes": 2441
+    },
+    "binary_results_generic": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/binary-results/results-generic.bin",
+      "sha256": "4f025e7456f7bf74707281267110e79a5c77225f4133950bb08ff37eb1ea52df",
+      "size_bytes": 2706
+    },
+    "binary_output_events": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3/binary-results/output-events.bin",
+      "sha256": "1e184b5f57012948dc2f2a1d75c7742e14d214b5a01df74b7004f419c65e0db7",
+      "size_bytes": 21784
+    },
+    "daemon_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-gradle-daemon-1957709-v3.log",
+      "sha256": "0084caf8d55ce5a44a46fdcb5c2394abe67e42f725f98eced0380887e635b70a",
+      "size_bytes": 27881
+    },
+    "test_worker_heap_oom_extract": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-v3-test-worker-heap-oom.txt",
+      "sha256": "5fb364cc9d5fdbfbfb5c24bfda2d99f811c9bee02f8bcbf5a91c9e4ad7425089",
+      "size_bytes": 2586
+    },
+    "kernel_oom_observation": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-v3-kernel-oom-observation.log",
+      "sha256": "8cdabb7f820c9c167fb570cd7a656e3a6128dba659b6afe46c19bde305addac7",
+      "size_bytes": 1247
+    },
+    "v2_failure": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v2.json",
+      "sha256": "12b18db74d1960cb75448016a909ed761691195bf9417dc37a6341e4841172b5",
+      "size_bytes": 9706
+    },
+    "orchestrator_artifact": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v3.log",
+      "present": false
+    },
+    "attribution_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v3-attribution.log",
+      "sha256": "04435f7de69cb517946984597d8455989d9238c4a5ddda579e6c2e0db06672ea",
+      "size_bytes": 1196
+    }
+  },
+  "actions": {
+    "source_changed_during_v3": false,
+    "build_gradle_changed": false,
+    "retry_performed": false,
+    "resource_limits_changed": false,
+    "push_or_deploy": false,
+    "foreign_process_action": false
+  },
+  "preserved_v2": {
+    "failure_sha256": "12b18db74d1960cb75448016a909ed761691195bf9417dc37a6341e4841172b5",
+    "unchanged": true
+  },
+  "next_action": "Release the API-main verification freeze and report this one-shot v3 as inconclusive. Do not retry or increase heap without a new explicit authorization and materially justified execution input."
+}

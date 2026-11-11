@@ -1,0 +1,31 @@
+{
+  "observedAt": "2026-11-06T06:08:36.406381+00:00",
+  "mode": "READ_ONLY_SOURCE_AUDIT",
+  "commit": "fa80c22fc7021f608a8ecb9120ceba65b2e617d1",
+  "files": [
+    {
+      "path": "conf/skills/native-image/scripts/image-http-codec.mjs",
+      "sha256": "95c759cec59e9723e471e7d1d82d532e19a15d4c51df6ef5ec1d0d06deadeb83"
+    },
+    {
+      "path": "conf/skills/native-image/scripts/image.mjs",
+      "sha256": "d16cc75ebabec44b98fb0d68b61968fa95816b72940376e41d614a11401386f2"
+    }
+  ],
+  "findings": [
+    {
+      "boundary": "image-http-codec.mjs responsePng",
+      "fact": "JSON response parsed then one b64 PNG validated; provider usage/model metadata is not retained."
+    },
+    {
+      "boundary": "image.mjs run",
+      "fact": "One output-bound request-started marker is persisted before fetch; marker is not a signed provider receipt and has no token counts."
+    },
+    {
+      "boundary": "native tool sandbox",
+      "fact": "Output files/stdout are tool execution evidence, not an independently authenticated provider billing source. Treating arbitrary sidecars as precise priced usage would cross the source authority boundary."
+    }
+  ],
+  "implemented": false,
+  "nextAction": "Retain tool-cost gap as unknown; establish provider/gateway receipt authority before normalization/precise posting. Do not add a provider-specific bridge orchestrator or use image count as invented token usage."
+}

@@ -1,0 +1,116 @@
+{
+  "taskId": "AGENT-ACK-CHECKPOINT-20261008",
+  "status": "implemented_verified_integrated_not_deployed",
+  "source": {
+    "repository": "/home/isp/wsps/worktrees/ack-high-water-checkpoint-20261008",
+    "baseCommit": "4e70c4f",
+    "commit": "5b71067f7bcbc7ca7f1076f5a9e10321b400785a",
+    "tree": "671ebbfc2f211f1113c29a61cd6d25da65990ac5",
+    "branch": "codex/ack-high-water-checkpoint-20261008",
+    "remoteDevelopCommit": "5b71067f7bcbc7ca7f1076f5a9e10321b400785a",
+    "developFastForwardVerified": true
+  },
+  "runtime": {
+    "node": "v20.20.2",
+    "ws": "8.21.1",
+    "yauzl": "3.4.0"
+  },
+  "checks": {
+    "syntax": "PASS",
+    "bashSyntax": "PASS",
+    "diffCheck": "PASS",
+    "checkpointMigrationTests": 57,
+    "disjointClientGroups": {
+      "core-tests.log": {
+        "tests": 57,
+        "pass": 57,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "skills-allowlist-tests.log": {
+        "tests": 92,
+        "pass": 91,
+        "fail": 0,
+        "skipped": 1,
+        "cancelled": 0
+      },
+      "other-client-tests.log": {
+        "tests": 648,
+        "pass": 638,
+        "fail": 0,
+        "skipped": 10,
+        "cancelled": 0
+      }
+    },
+    "aggregate": {
+      "tests": 797,
+      "pass": 786,
+      "fail": 0,
+      "skipped": 11,
+      "cancelled": 0
+    },
+    "fixtureDigest": "sha256:0b4d5782a7e1371e4e64cfe5fe4af4c21b8813fa4f5e6a7f8ac7789ca01fe976"
+  },
+  "selectors": {
+    "core": "node --test conf/codex-ws-agent/test/ack-checkpoint.test.mjs",
+    "skills": "node --test --test-name-pattern=<25 explicit positive name alternatives in known-failure-allowlist.json> conf/codex-ws-agent/test/skill-install-manager.test.mjs",
+    "remaining": "node --test <all other 36 conf/codex-ws-agent/test/*.test.mjs files; excludes only the separately run ack-checkpoint and skill-install-manager files>"
+  },
+  "knownBaselineFailure": {
+    "name": "profile validation rejects equal, nested, and symlink-aliased CODEX_HOME paths",
+    "baselineCommit": "4e70c4f",
+    "evidence": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/baseline-known-failures.log",
+    "reason": "Fixture lacks required typedInspectionProviderNetwork; earlier config error masks expected CODEX_HOME overlap assertion",
+    "explicitlySkipped": 1,
+    "otherExistingSkips": 10
+  },
+  "storageObservation": {
+    "fixtureOnly": true,
+    "allocatedSequences": 128,
+    "highWaterFiles": 2,
+    "highWaterLogicalBytes": 482,
+    "highWaterAllocatedBytes": 8192,
+    "independentCounterAllocatedBytes": 4096,
+    "productionSpaceReclaimed": false
+  },
+  "release": {
+    "version": null,
+    "flowRun": null,
+    "deployed": false,
+    "productionMigrationExecuted": false,
+    "productionDataDeleted": false,
+    "servicesRestarted": false,
+    "nextAction": "Arrange an explicit pinned-version Agent release and stopped-writer migration for exact target profiles with verified compressed backups; do not auto-deploy develop"
+  },
+  "evidence": {
+    "core-tests.log": {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/core-tests.log",
+      "sha256": "b14290faa1253bae4e2a7bb07e2a612188601b3f8626b9b21db5cfe57a1d12c9"
+    },
+    "skills-allowlist-tests.log": {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/skills-allowlist-tests.log",
+      "sha256": "66f50b7ecd3bebc3a38746a570f267d1cd2c12064f2911077878f2a3469451e2"
+    },
+    "other-client-tests.log": {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/other-client-tests.log",
+      "sha256": "a1812b67fcc44d828f9391b71fa4f51d04ba0c8db6f9861afa9057e9c9eefa4c"
+    },
+    "remote-readback.log": {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/remote-readback.log",
+      "sha256": "9d687659e44ae0a3b172f43a72be7214b0d2de8e463f1e9c55755f634f073880"
+    },
+    "static.log": {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/static.log",
+      "sha256": "a897925adaef9d794a6ab9edc6824bf29128ebbd851ff1da21229240d2462eef"
+    },
+    "known-failure-allowlist.json": {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/known-failure-allowlist.json",
+      "sha256": "6fae3fbc7286358c4dd83265cdf220b8f36f3517b87702c7b5af3bcf2aa224fa"
+    },
+    "baseline-known-failures.log": {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/AGENT-ACK-CHECKPOINT-20261008/baseline-known-failures.log",
+      "sha256": "cf579041e3d0228a2b739d40afc808808cfb1d53598c070174fa2f9c8738e36c"
+    }
+  }
+}

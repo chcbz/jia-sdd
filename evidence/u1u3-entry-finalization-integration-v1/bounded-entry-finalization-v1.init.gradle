@@ -1,0 +1,310 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import org.gradle.api.GradleException
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
+
+final String TASK_PREFIX = 'mmdEntryFinalV1'
+final File evidenceRoot = new File('/home/isp/wsps/cyf/evidence/u1u3-entry-finalization-integration-v1')
+final File runRoot = new File(evidenceRoot, 'bounded-db276cb9-v1')
+final File mainOverlay = new File(runRoot, 'main-overlay')
+final File testOverlay = new File(runRoot, 'test-overlay')
+final File junitXml = new File(runRoot, 'junit-xml')
+final File classLoadLog = new File(runRoot, 'class-load-%p.log')
+final File classpathFile = new File('/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-v1.txt')
+final File classpathContentFile = new File('/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-content-v1.json')
+final File sourceManifestFile = new File(evidenceRoot, 'bounded-sources-v1.json')
+final File lombokJar = new File('/root/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.42/8365263844ebb62398e0dc33057ba10ba472d3b8/lombok-1.18.42.jar')
+
+String sha256File(File file) {
+    MessageDigest digest = MessageDigest.getInstance('SHA-256')
+    file.withInputStream { stream ->
+        byte[] buffer = new byte[1024 * 1024]
+        int read
+        while ((read = stream.read(buffer)) != -1) digest.update(buffer, 0, read)
+    }
+    digest.digest().encodeHex().toString()
+}
+
+Map sha256Directory(File directory) {
+    MessageDigest digest = MessageDigest.getInstance('SHA-256')
+    List<File> files = []
+    directory.eachFileRecurse { file -> if (file.isFile()) files.add(file) }
+    files.sort { a, b ->
+        directory.toPath().relativize(a.toPath()).toString().replace(File.separatorChar, '/' as char) <=>
+                directory.toPath().relativize(b.toPath()).toString().replace(File.separatorChar, '/' as char)
+    }
+    long total = 0L
+    files.each { file ->
+        String relative = directory.toPath().relativize(file.toPath()).toString()
+                .replace(File.separatorChar, '/' as char)
+        String line = relative + '\u0000' + file.length() + '\u0000' + sha256File(file) + '\n'
+        digest.update(line.getBytes(StandardCharsets.UTF_8))
+        total += file.length()
+    }
+    [sha256: digest.digest().encodeHex().toString(), fileCount: files.size(), sizeBytes: total]
+}
+
+String gitValue(File cwd, String expression) {
+    Process process = new ProcessBuilder('git', '-C', cwd.absolutePath, 'rev-parse', expression)
+            .redirectErrorStream(true).start()
+    String output = process.inputStream.getText('UTF-8').trim()
+    int exit = process.waitFor()
+    if (exit != 0) throw new GradleException("git rev-parse failed for ${cwd}: ${output}")
+    output
+}
+
+void writeClassManifest(File directory, File destination) {
+    List<Map> rows = []
+    directory.eachFileRecurse { file ->
+        if (file.isFile() && file.name.endsWith('.class')) {
+            rows.add([
+                    path: directory.toPath().relativize(file.toPath()).toString()
+                            .replace(File.separatorChar, '/' as char),
+                    size_bytes: file.length(),
+                    sha256: sha256File(file)
+            ])
+        }
+    }
+    rows.sort { it.path }
+    destination.parentFile.mkdirs()
+    destination.text = JsonOutput.prettyPrint(JsonOutput.toJson([
+            class_count: rows.size(), classes: rows
+    ])) + '\n'
+}
+
+gradle.projectsEvaluated {
+    def root = gradle.rootProject
+    root.layout.buildDirectory.set(root.layout.dir(root.provider { new File(runRoot, 'gradle-build') }))
+
+    List<String> classpathPaths = classpathFile.readLines('UTF-8').findAll { !it.isBlank() }
+    def frozenClasspath = root.files(classpathPaths)
+    def mainCompileClasspath = root.files(classpathPaths + [lombokJar.absolutePath])
+    def mainSourcePaths = [
+            new File(root.rootDir, 'agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentSelectedOutputFinalizationException.java'),
+            new File(root.rootDir, 'agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentSelectedOutputFinalizationService.java'),
+            new File(root.rootDir, 'agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskDeliberationOperationReadService.java'),
+            new File(root.rootDir, 'agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskExecutionGrantService.java'),
+            new File(root.rootDir, 'agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskRequirementReadException.java'),
+            new File(root.rootDir, 'agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentTaskRequirementSnapshotService.java'),
+            new File(root.rootDir, 'agent/jia-agent-api/src/main/java/cn/jia/agent/service/SelectedOutputFinalizationDigest.java'),
+            new File(root.rootDir, 'agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentTaskAssignDTO.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentController.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskDeliberationOperationController.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskRequirementSnapshotController.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSelectedOutputFinalizationConfiguration.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/config/AgentSelectedOutputFinalizationSchemaInitializer.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentSelectedOutputFinalizationServiceImpl.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskDeliberationOperationReadServiceImpl.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskExecutionGrantServiceImpl.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskRequirementSnapshotServiceImpl.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/api/AgentTaskSelectedOutputFinalizationController.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatConversationArchiveSchemaInitializer.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatDeliberationSchemaInitializer.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSchemaInitializer.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSchemaReadiness.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatSelectedOutputFinalizationSchemaInitializer.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatSelectedOutputFinalizationService.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatSelectedOutputFinalizationStore.java')
+    ]
+    def selectedTestSources = [
+            new File(root.rootDir, 'agent/jia-agent-service/src/test/java/cn/jia/agent/api/AgentTaskExecutionGrantControllerTest.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentSelectedOutputFinalizationSchemaInitializerTest.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentSelectedOutputFinalizationServiceImplTest.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskBountyBootstrapOutboxServiceImplTest.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskExecutionGrantServiceImplTest.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentTaskRequirementSnapshotServiceImplTest.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/api/AgentTaskSelectedOutputFinalizationControllerTest.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatSelectedOutputFinalizationSchemaInitializerTest.java'),
+            new File(root.rootDir, 'chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/service/ChatSelectedOutputFinalizationServiceTest.java'),
+            new File(root.rootDir, 'agent/jia-agent-service/src/test/java/cn/jia/agent/config/AgentTaskExecutionGrantSchemaContractTest.java')
+    ]
+    def resources = [
+            new File(root.rootDir, 'agent/jia-agent-mapper/src/main/resources/db/agent-selected-output-finalization-v1.sql'),
+            new File(root.rootDir, 'chat/jia-chat-mapper/src/main/resources/db/chat-selected-output-finalization-v1.sql')
+    ]
+
+    def preflight = root.tasks.register("${TASK_PREFIX}Preflight") {
+        group = 'verification'
+        description = 'Validates exact U4 source, baseline and fixed classpath without project dependencies.'
+        outputs.upToDateWhen { false }
+        doLast { task ->
+            if (runRoot.exists()) throw new GradleException("Bounded output already exists: ${runRoot}")
+            if (sha256File(classpathFile) != 'ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4')
+                throw new GradleException('Bounded classpath path-list digest changed')
+            if (sha256File(classpathContentFile) != 'e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b')
+                throw new GradleException('Bounded classpath content manifest changed')
+            if (sha256File(sourceManifestFile) != '10ba6ab7c43affba582af6485caf6cc8ae37783acd1b3457b85673a1c9ceef8e')
+                throw new GradleException('Bounded source manifest changed')
+
+            Map sourceManifest = new JsonSlurper().parse(sourceManifestFile) as Map
+            sourceManifest.sources.each { row ->
+                File source = new File(row.path as String)
+                if (!source.isFile() || sha256File(source) != row.sha256)
+                    throw new GradleException("Source digest mismatch: ${source}")
+            }
+            if (!lombokJar.isFile() || sha256File(lombokJar) != sourceManifest.lombok.sha256)
+                throw new GradleException('Lombok processor digest mismatch')
+
+            Map content = new JsonSlurper().parse(classpathContentFile) as Map
+            if (classpathPaths.size() != 364 || content.entry_count != 364)
+                throw new GradleException('Bounded classpath must contain exactly 364 frozen entries')
+            content.entries.each { row ->
+                File entry = new File(row.path as String)
+                if (!entry.exists()) throw new GradleException("Missing classpath entry: ${entry}")
+                Map actual = entry.isDirectory()
+                        ? sha256Directory(entry)
+                        : [sha256: sha256File(entry), fileCount: 1, sizeBytes: entry.length()]
+                if (actual.sha256 != row.sha256 || actual.fileCount != row.file_count
+                        || actual.sizeBytes != row.size_bytes)
+                    throw new GradleException("Classpath content changed: ${entry}")
+            }
+
+            File baseline = new File('/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-output-asset-archive')
+            if (gitValue(baseline, 'HEAD') != '194ec91a596c28f9575a64aef47a5bf7b9fb6778'
+                    || gitValue(baseline, 'HEAD^{tree}') != '10d312e61057b1a83da1485238c2f3acf63e5361')
+                throw new GradleException('Exact 194ec baseline worktree changed')
+            if (gitValue(root.rootDir, 'HEAD') != '10f3042aa5f57d75a5029d13369063b5738dd881'
+                    || gitValue(root.rootDir, 'HEAD^{tree}') != 'db276cb97f11de8a8f5e563915b34525f1bf9d47')
+                throw new GradleException('Candidate worktree changed')
+
+            if (!frozenClasspath.buildDependencies.getDependencies(task).isEmpty()
+                    || !mainCompileClasspath.buildDependencies.getDependencies(task).isEmpty())
+                throw new GradleException('Frozen classpath unexpectedly carries builtBy dependencies')
+            runRoot.mkdirs()
+            new File(runRoot, 'preflight.json').text = JsonOutput.prettyPrint(JsonOutput.toJson([
+                    candidate_commit: gitValue(root.rootDir, 'HEAD'),
+                    candidate_tree: gitValue(root.rootDir, 'HEAD^{tree}'),
+                    baseline_commit: gitValue(baseline, 'HEAD'),
+                    baseline_tree: gitValue(baseline, 'HEAD^{tree}'),
+                    classpath_entries: classpathPaths.size(),
+                    classpath_built_by_tasks: [],
+                    main_source_count: 25,
+                    test_source_count: 10
+            ])) + '\n'
+        }
+    }
+
+    def compileMain = root.tasks.register("${TASK_PREFIX}CompileMain", JavaCompile) {
+        dependsOn(preflight)
+        source(root.files(mainSourcePaths))
+        classpath = mainCompileClasspath
+        destinationDirectory.set(root.layout.dir(root.provider { mainOverlay }))
+        sourceCompatibility = '21'
+        targetCompatibility = '21'
+        options.release.set(21)
+        options.encoding = 'UTF-8'
+        options.incremental = false
+        options.fork = false
+        options.annotationProcessorPath = root.files(lombokJar.absolutePath)
+        options.compilerArgs.add('-parameters')
+        outputs.cacheIf { false }
+        doLast {
+            resources.each { resource ->
+                File target = new File(mainOverlay, 'db/' + resource.name)
+                target.parentFile.mkdirs()
+                target.bytes = resource.bytes
+            }
+            writeClassManifest(mainOverlay, new File(runRoot, 'main-overlay-manifest.json'))
+        }
+    }
+
+    def compileTest = root.tasks.register("${TASK_PREFIX}CompileSelectedTests", JavaCompile) {
+        dependsOn(compileMain)
+        source(root.files(selectedTestSources))
+        classpath = root.files([mainOverlay.absolutePath] + classpathPaths)
+        destinationDirectory.set(root.layout.dir(root.provider { testOverlay }))
+        sourceCompatibility = '21'
+        targetCompatibility = '21'
+        options.release.set(21)
+        options.encoding = 'UTF-8'
+        options.incremental = false
+        options.fork = false
+        options.compilerArgs.addAll(['-parameters', '-proc:none'])
+        outputs.cacheIf { false }
+        doLast { writeClassManifest(testOverlay, new File(runRoot, 'test-overlay-manifest.json')) }
+    }
+
+    def lifecycleTest = root.tasks.register("${TASK_PREFIX}SelectedContracts", Test) {
+        dependsOn(compileTest)
+        testClassesDirs = root.files(testOverlay.absolutePath)
+        classpath = root.files([testOverlay.absolutePath, mainOverlay.absolutePath] + classpathPaths)
+        useJUnitPlatform()
+        scanForTestClasses = false
+        filter {
+            includeTestsMatching('cn.jia.chat.config.ChatSelectedContractsTest')
+            failOnNoMatchingTests = true
+        }
+        maxParallelForks = 1
+        forkEvery = 1
+        maxHeapSize = '128m'
+        jvmArgs '-XX:MaxMetaspaceSize=96m', '-XX:ActiveProcessorCount=1', '-XX:+UseSerialGC',
+                "-Xlog:class+load=info:file=${classLoadLog.absolutePath}:time,level,tags"
+        workingDir = runRoot
+        reports.html.outputLocation.set(root.layout.dir(root.provider { new File(runRoot, 'html-report') }))
+        reports.html.required.set(false)
+        reports.junitXml.outputLocation.set(root.layout.dir(root.provider { junitXml }))
+        reports.junitXml.required.set(true)
+        binaryResultsDirectory.set(root.layout.dir(root.provider { new File(runRoot, 'binary-results') }))
+        outputs.upToDateWhen { false }
+        testLogging { events 'passed', 'failed', 'skipped' }
+        doLast {
+            List<File> logs = runRoot.listFiles().findAll { it.name.startsWith('class-load-') && it.name.endsWith('.log') }
+            if (logs.isEmpty()) throw new GradleException('Missing JVM class-load proof')
+            String loaded = logs.collect { it.getText('UTF-8') }.join('\n')
+            Map<String, String> expected = [
+                    'cn.jia.agent.service.impl.AgentTaskExecutionGrantServiceImpl': mainOverlay.absolutePath,
+                    'cn.jia.agent.api.AgentController': mainOverlay.absolutePath,
+                    'cn.jia.agent.service.impl.AgentTaskRequirementSnapshotServiceImpl': mainOverlay.absolutePath,
+                    'cn.jia.agent.service.impl.AgentTaskDeliberationOperationReadServiceImpl': mainOverlay.absolutePath,
+                    'cn.jia.agent.service.impl.AgentSelectedOutputFinalizationServiceImpl': mainOverlay.absolutePath,
+                    'cn.jia.chat.service.ChatSelectedOutputFinalizationService': mainOverlay.absolutePath,
+                    'cn.jia.chat.api.AgentTaskSelectedOutputFinalizationController': mainOverlay.absolutePath,
+                    'cn.jia.agent.config.AgentSelectedOutputFinalizationSchemaInitializer': mainOverlay.absolutePath,
+                    'cn.jia.chat.config.ChatSelectedOutputFinalizationSchemaInitializer': mainOverlay.absolutePath,
+                    'cn.jia.agent.api.AgentTaskExecutionGrantControllerTest': testOverlay.absolutePath,
+                    'cn.jia.agent.config.AgentSelectedOutputFinalizationSchemaInitializerTest': testOverlay.absolutePath,
+                    'cn.jia.agent.service.impl.AgentSelectedOutputFinalizationServiceImplTest': testOverlay.absolutePath,
+                    'cn.jia.agent.service.impl.AgentTaskBountyBootstrapOutboxServiceImplTest': testOverlay.absolutePath,
+                    'cn.jia.agent.service.impl.AgentTaskExecutionGrantServiceImplTest': testOverlay.absolutePath,
+                    'cn.jia.agent.service.impl.AgentTaskRequirementSnapshotServiceImplTest': testOverlay.absolutePath,
+                    'cn.jia.chat.api.AgentTaskSelectedOutputFinalizationControllerTest': testOverlay.absolutePath,
+                    'cn.jia.chat.config.ChatSelectedOutputFinalizationSchemaInitializerTest': testOverlay.absolutePath,
+                    'cn.jia.chat.service.ChatSelectedOutputFinalizationServiceTest': testOverlay.absolutePath,
+                    'cn.jia.agent.config.AgentTaskExecutionGrantSchemaContractTest': testOverlay.absolutePath
+            ]
+            Map<String, List<String>> proof = [:]
+            expected.each { type, directory ->
+                List<String> matching = loaded.readLines().findAll {
+                    it.contains(" ${type} source:") && it.contains(directory)
+                }
+                if (matching.isEmpty()) throw new GradleException("Overlay type was not loaded from expected directory: ${type}")
+                proof[type] = matching
+            }
+            new File(runRoot, 'overlay-load-proof.json').text =
+                    JsonOutput.prettyPrint(JsonOutput.toJson(proof)) + '\n'
+        }
+    }
+
+    gradle.taskGraph.whenReady { graph ->
+        if (graph.hasTask(lifecycleTest.get())) {
+            Set<String> expected = [
+                    preflight.get().path,
+                    compileMain.get().path,
+                    compileTest.get().path,
+                    lifecycleTest.get().path
+            ] as Set
+            Set<String> actual = graph.allTasks.collect { it.path } as Set
+            if (actual != expected)
+                throw new GradleException("Unexpected bounded task graph; expected=${expected}, actual=${actual}")
+            runRoot.parentFile.mkdirs()
+            File graphEvidence = new File(evidenceRoot, 'bounded-task-graph-db276cb9-v1.json')
+            if (graphEvidence.exists())
+                throw new GradleException("Bounded task graph evidence already exists: ${graphEvidence}")
+            graphEvidence.text = JsonOutput.prettyPrint(
+                    JsonOutput.toJson([expected: expected.sort(), actual: actual.sort()])) + '\n'
+        }
+    }
+}

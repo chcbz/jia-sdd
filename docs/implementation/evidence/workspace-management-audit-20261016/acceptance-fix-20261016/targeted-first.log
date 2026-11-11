@@ -1,0 +1,73 @@
+
+
+  workspace immutable in-page write intent
+    ✔ joins double clicks and retries the frozen original request with the same key
+    ✔ retains processing and reconciliation, releases only definitive business rejection
+    ✔ does not retry a committed write when its follow-up read fails
+    ✔ identity cleanup drops queued writes before they can send
+    ✔ uses the summary snapshot revision, not stale detail, and expires a rejected confirmation
+    ✔ task: retries DELETE unchanged and displays current reattached state without repeating deletion
+    ✔ conversation: retries DELETE unchanged and displays current reattached state without repeating deletion
+
+  workspace retry error lifecycle
+    ✔ rename: clears the old error on same-key retry and leaves success without a stale alert
+    ✔ trash: clears the old error on same-key retry and leaves success without a stale alert
+    ✔ restore: clears the old error on same-key retry and leaves success without a stale alert
+    ✔ preserves an unrelated validation error that occurs while the retry is in flight
+    ✔ does not clear errors of another selected file when retrying an old target
+    ✔ does not clear a current error for a nonexistent retry
+    ✔ keeps a repeated transport failure visible and pending
+    ✔ ignores a late retry success after identity change and preserves the new identity error
+
+  ordinary cancellation scoped existing API
+    ✔ cancels open with only a canonical string version and preserves historical assignment
+    ✔ cancels planning with only a canonical string version and preserves historical assignment
+    ✔ cancels assigned with only a canonical string version and preserves historical assignment
+    ✔ suppresses duplicate clicks throughout POST and GET
+    ✔ confirms a lost POST response only by GET of the original cancelled task
+    ✔ leaves an unconfirmed lost response unknown; explicit check never repeats POST
+    ✔ leaves an unconfirmed lost response unknown; explicit check never repeats POST
+    ✔ leaves an unconfirmed lost response unknown; explicit check never repeats POST
+    ✔ leaves an unconfirmed lost response unknown; explicit check never repeats POST
+    ✔ keeps a validated receipt confirmed when the subsequent task GET is lost
+    ✔ does not claim projections refreshed when existing loader error flags reject the refresh callback
+    ✔ reports 403/CANCEL_FORBIDDEN accurately without success or a fallback mutation
+    ✔ reports 409/TASK_VERSION_CONFLICT accurately without success or a fallback mutation
+    ✔ reports 409/INITIAL_CANCEL_UNSUPPORTED accurately without success or a fallback mutation
+    ✔ reports 409/undefined accurately without success or a fallback mutation
+    ✔ ignores late POST results after identityScope changes
+    ✔ ignores late POST results after identityEpoch changes
+    ✔ ignores late POST results after sessionKey changes
+    ✔ ignores late POST results after selectedTask changes
+    ✔ ignores late POST results after dispose changes
+    ✔ A→B→A before the old POST settles is not stuck busy; checking cannot admit its late receipt
+    ✔ does not let an old POST overwrite a newer confirmed GET after A→B→A
+    ✔ never routes funded or unknown funding objects into ordinary cancellation
+    ✔ keeps the existing funding/cancel route and string version independent
+    ✔ accepts only canonical int64 string versions and preliminarily supported states
+    ✔ preserves exact request, receipt and readback for 0 → 1
+    ✔ reconciles lost POST with exact string increment for 0 → 1
+    ✔ preserves exact request, receipt and readback for 9 → 10
+    ✔ reconciles lost POST with exact string increment for 9 → 10
+    ✔ preserves exact request, receipt and readback for 9007199254740992 → 9007199254740993
+    ✔ reconciles lost POST with exact string increment for 9007199254740992 → 9007199254740993
+    ✔ preserves exact request, receipt and readback for 9223372036854775806 → 9223372036854775807
+    ✔ reconciles lost POST with exact string increment for 9223372036854775806 → 9223372036854775807
+    ✔ does not admit a cancellation that would overflow the server Long version
+    ✔ does not confirm malformed/non-advancing receipt 3 without valid readback
+    ✔ does not confirm malformed/non-advancing receipt "03" without valid readback
+    ✔ does not confirm malformed/non-advancing receipt "3.0" without valid readback
+    ✔ does not confirm malformed/non-advancing receipt "9223372036854775808" without valid readback
+    ✔ does not confirm malformed/non-advancing receipt "2" without valid readback
+    ✔ does not confirm malformed/non-advancing receipt null without valid readback
+    ✔ rejects rounded/equal large readback versions and only GETs when checking again
+    ✔ does not accept a numeric canonical GET after a lost response
+    ✔ decodes actual bare result.data and the existing business envelope without hiding failures
+
+  ordinary cancellation detail layout
+    ✔ separates the cancellation copy, button and following results action
+    ✔ keeps the secondary action full-width and allows narrow-screen wrapping
+
+
+  60 passing (108ms)
+

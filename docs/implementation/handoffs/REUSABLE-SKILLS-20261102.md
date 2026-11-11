@@ -352,3 +352,38 @@ API Flow5260799/489 SUCCESS：c70fe5df5d317f440f08567b585786c0445faeb3/tree44a50
 Web公网index、JuyiHall JS/CSS、SkillMarketRoute及UserProfile JS/CSS共6资源SHA匹配442制品。真实chcbz登录后12个只读接口均200、目录7技能；吴用图片生成/编辑/识别及技能管理岗位安装保留，岗位安装INSTALLED/usable=true；吴用/林冲岗位技能都仅VIEW、普通未安装技能仍有INSTALL。真实页面中文标题/安装入口与状态正确，浏览器采样无HTTP错误。原生INSTRUCTION显示NOT_EXECUTABLE/“新调用未开放”只表示无独立执行入口，不是技能包安装失败。Runtime程序/state未修改、PID3262414未变，三个独立新鲜样本均3Agent registered/ready；不声称历史全部业务告警消失。
 
 最终证据/home/isp/state/cyf-skill-table-rename-20261104/final-verification.json；schema-online.json、before/after-private.json、release安装/制品/公网核验、browser真实页面/接口、runtime-health-{1,2,3}.json同目录。生产不新增技能安装、不调用收费模型，不重放生图/改图/网页工具E2E；这些链路保留现有包/Runtime及原验证，当前验收限定持久化迁移与管理链。本任务两隔离worktree、本地候选分支和浏览器profile已清理（cleanup.json），必要证据/备份保留，未动他人脏工作区或生产unit。
+
+### 2026-11-08 跨Owner岗位技能分类修复（已合develop、验证通过，未发布）
+
+任务SKILL-TYPE-OWNER-20261108，唯一Owner本聊天。用户截图ziyue/卢俊义可看到典籍维护安装按钮，确认并要求修复“技能分类不应按Owner变化”。责任RB-02：共享商品分类统一提供目录/普通写准入；Owner岗位/任命/资源授权继续隔离。Web/Runtime既有契约不变，不改两端。不把用户“修复”解释为生产DDL/发布授权。
+
+2026-11-08只读查远端develop并fetch固定API base e229e5280628c826469a93c71901523adb46f75b；主API停在516267bf且大量他人脏改，现有error-advice worktree为另一任务，故本任务只建一个隔离worktree `/root/.codex/worktrees/skill-type-owner-fix/api` / `codex/skill-type-owner-fix`。根目录现有脏修改保留。源码候选d127969f67；完整commit/tree及选择器见`/home/isp/state/cyf-local-build/tasks/skill-type-owner-20261108/plan.json`，正式测试结果待补。
+
+实现：agent_skill_product新增skill_type默认GENERAL，共享POSITION key查询；普通新旧写入当前锁定商品分类、管理员不豁免。原Owner根锁只协调任职/授权，不提供类型。现有defineSkill在同一事务绑定商品，仅平台技能review/publish权限可提升分类；GENERAL不降级POSITION。新增受控迁移routine，先检查历史冲突/无效POSITION绑定，再补列回填；生产未执行，应用启动不自动迁移。已有岗位JSON及幂等回执不重写，不拷贝别人的岗位/权限。
+
+必要回归：真实MySQL跨Owner目录、普通/旧安装入口拒绝、报价后分类改变、权限不足原子回滚、GENERAL附带技能不受限、任职撤职继续工作；迁移原SQL幂等/冲突/隔离；现有定向HTTP、核心岗位策略、validateLayering及fresh JAR。使用现有local_build.py，构建/测试/打包累计上限600秒、普通磁盘源码/输出/cache/tmp；无Flow/模型调用、不安装重启生产。验证终态与确切耗时后续补。
+
+21:06 +08接续：首候选d127969测试/构建实际141.773s，分层/核心策略/HTTP已执行，但两个私有MySQL suite的Unix socket路径超过107字节，fixture启动失败，未形成有效业务验收；原FAIL、完整日志/报告/JAR摘要仍在原api/result.json，不发布该JAR。归因缩短本任务普通磁盘输出到`/home/isp/state/cyf-local-build/tasks/st-1108/api`，同一任务/batch保留143秒已用预算，后续单元RuntimeMaxSec457秒，不重置600秒。自检另收口岗位生命周期的旧type消费者，绑定按共享目录解析；删除旧Owner positionOnly分类器，原按类型非名称回归迁到岗位生命周期与真实共享分类测试。最终受测源码7824ac45e7（完整tree见新inputs），不把首候选测试当新候选验收。
+
+最终源码API1.1.44-SNAPSHOT，commit `7824ac45e7efebfea83ce72e1d7dab194e9ba096` / tree `0b5673805f78edcca10bf587edab4f49e123c2bc`，已非强制快进push远端develop并只读readback匹配；本地develop也仅在确认祖先关系后快进，主API/Web他人工作区未切换或覆盖。最终178项全部通过/0失败错误跳过：共享分类真实SQL44、迁移原SQL4、HTTP7、核心岗位策略18、既有发布安全/启动/依赖105。validateLayering与fresh最终JAR通过，JAR SHA256 `42bb79ac40a8f1334c1925a3403b4904ce2f757d80e815156851421efb37cd23`。
+
+最终构建294.583秒；含首轮真实失败的受限builder阶段累计436.356秒，两systemd单元runtime共439.591秒，均未重置预算；两次尝试首启至最终builder终态的597.668秒包络另含源码修正/协调，不冒充纯构建时间。完整开发/交付起点未仪表化，墙钟未知，不能用436.356秒冒充完整交付。没有打包压缩包/LOCAL安装descriptor，不把producer的publishable=false改成发布证明。无需为无压缩最终包任务添加mark-complete步骤；固定JAR、包外日志/XML/proof及失败证据保留，以便授权后按原工具评估复用。
+
+正式证据 `/home/isp/state/cyf-local-build/tasks/skill-type-owner-20261108/summary.json`，同目录tests.json、final-inputs/result/proof、XML和source.patch；原失败保留api/result.json，最终原始Gradle日志与输出在`/home/isp/state/cyf-local-build/tasks/st-1108/api`。根规格入口/管理合同已更新且check-docs通过。未运行外部服务器版PositionSkillTransactionTest全套，实际相关生命周期由44项SQL集合及18项核心策略覆盖；不宣称全站/真实ziyue浏览器或生产迁移验收。生产无DDL/DML、安装、重启或模型/Flow调用；后续须在发布授权下先受控迁移共享分类，再安装并验证ziyue真实页面和直接接口。修复合入不等于线上已生效。
+
+收尾已尝试受管archive_worktree，工具以“task primary checkout cannot be removed”拒绝；保留干净且已推送的本任务工作区，不手动绕过保护删除。没有清理其他任务源码/缓存/进程；必要证据均在包外。
+
+### 2026-11-08 部署授权后的只读预检（尚未切换）
+用户明确要求“部署”。核对生产record及真实JAR，当前API1.1.43-SNAPSHOT / 1275fa81bf7f1ca150391b43998c1152b11a2ce9 / SHA409778daa22e08e552ab989e8707e52290902ab7d6fadbac6510a4d0148750b8，PID3434440、HEALTH UP。该线上源码含另一任务已发布的SkillApiExceptionAdvice及注册/凭据消费者修复，不是7824ac45祖先；当前待发包不含这些修复，不能直接覆盖。远端develop只读查为7824ac45，不能据此推断它包含线上全部修改。需要保留两项修复，合并并重新定向验证/fresh JAR。已用测试构建436.356秒，剩余不足预期合并重验与打包；申请同任务累计上限1200秒（不重置已用时/失败）。根盘可用约386MiB，实际重建/打包前需按既有保留策略核对空间，不清他人文件或备份。只读预检证据deployment-preflight.json；未打包、未写生产库、未停服务/安装，不把原候选报告当合并后证据。
+
+2026-11-08 用户明确更正“重新部署就重新算时间”：本轮合并线上1275fa81与分类修复的候选888a1646624675df8e7b74c90dc4e11774d4b37f，按新授权重新给测试/构建/打包600秒；原436.356秒及失败证据保持，不重标。仅删除本任务已淘汰、未安装候选build/tmp输出，先外置保存旧XML/log/proof，不动当前/回退/他人目录。新授权见redeployment-authorization.json。
+
+### 2026-11-08 22:12 +08 共享岗位技能分类部署与真实账号验收完成
+按用户“部署”及“重新部署就重新算时间”授权，合并已上线异常适配修复1275fa81，最终API1.1.44-SNAPSHOT / commit888a1646624675df8e7b74c90dc4e11774d4b37f / tree7744874e68ce04ceb7fd8e801cd49c4de58f8b0a，已非强制快进push远端develop并readback。JAR SHA da7376ec4d222750e1df5ac1b1119c9f7d650137646608d94a02147047846db8；包SHA 5a3dad226ce468d3000102737f07c98d55562b49addc41b44e24581bbfe62beb。
+新授权轮首次遗漏fixture环境CYF_REVIEW_MYSQLD，79.829秒FAIL，原日志/XML保持；明确归因后使用已验证mysqld路径及短普通磁盘输出重试，不修改必要测试。最终212项全通过（原178+线上异常适配34），validateLayering、fresh JAR和原LOCAL producer打包通过；本轮测试/构建/打包合计359.547秒，其中成功打包41.332秒，低于重新授权600秒。原轮436.356秒保持历史，不重标或并入此次重置预算。完整原始日志/结果分别st-r1108/api及sr1108/api；失败build输出已先保存XML/proof/log后仅清本任务无用编译缓存。成功裸JAR在核对真实包内同源同摘要后删除冗余副本，未动当前/回退程序。
+现行native LOCAL协调器持coordinator锁；任务包装沿原模式取得release锁/命名schema锁、校验真实库UUID和datadir，停旧API后备份25张技能/岗位/交易表。备份/home/isp/baks/cyf-shared-skill-type-20261108/skill-position-tables.sql.gz，SHA d69fae8b0052f6015b4d3d3c9c9e534c4ed403ded759479472c8d2dc950306fe，gzip/建表清单校验及固定真实目录manifest齐全。迁移SQL与最终JAR内资源摘要一致；共享目录2商品POSITION、其余9商品GENERAL，仅2商品版本/更新时间按规格递增。其他24表DDL/行摘要不变，Owner JSON/岗位/权限/既有安装不变；不复制权限、不加CHECK、不在启动自动迁移，任务临时routine已移除。兼容回退评估：新增列/元数据不移除旧字段，旧显式SQL可继续运行，保留原native compatible程序恢复和真实JAR备份（旧程序仍有原bug，故非最终修复）。
+原LOCAL安装器实际PASS、record installed/not_required；PID3486760，实体/home/isp/hosts/cyf/api/cyf-api-kit.jar及cwd正确、HEALTH UP、运行文件摘要匹配。API独立承载单元cyf-shared-skill-type-install-20261108.service（RemainAfterExit=yes/KillMode=process）须保留，不清理此unit；Web/Runtime未发布。只读canonical path8项通过，状态/日志在本任务目录。
+真实ziyue网页登录后卢俊义skills接口200：典籍维护与技能管理均仅VIEW，INSTALL等拒绝码POSITION_MANAGED_SKILL；6项普通未安装技能仍保留INSTALL。两项岗位技能各直接调用报价与创建安装变更，共4次均403/POSITION_MANAGED_SKILL且requestId/no-store保持；跨Owner吴用读取仍403/AGENT_FORBIDDEN，证明另一项线上异常修复未被覆盖。拒绝探测前后11张关键表摘要相同，无报价/订单/变更/命令/安装/任职/授权写入，无收费模型调用。重启后验收浏览器旧token401，已通过正常登录重新认证，不绕过认证、不宣称旧会话持续可用。
+部署/备份/健康/业务独立证据deployment-summary.json、migration-{plan,install,before-private,after-private}.json、redeploy-build-summary.json、rejection-probes-private.json、probe-before/after-private.json、ziyue-readback-private.json。真实包外receipt/metadata/provenance已保存在release-evidence。既有mark-complete拒绝sr1108/api路径（combined root要求cyf-*前缀）；未绕过清理器/改新台账，当前绑定包原位保留并受现行record保护，限制见retention-registration.json。未为登记再复制224MB镜像挤占根盘。工作区已推送且干净，作为受保护primary checkout保留；不强删，不清他人工作区/缓存/备份。
+
+真实页面验收补充：ziyue的/skill-market选择卢俊义后，典籍维护及技能管理均显示“岗位技能由任职管理，不提供手动安装”+详情，无安装按钮；6项普通技能有安装按钮。DOM及截图保存在本任务browser/ziyue-skill-management.{json,png}，不是mock页面。验收后仅关闭本任务浏览器并删除其自有profile；生产承载unit保持运行。

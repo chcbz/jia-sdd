@@ -252,7 +252,7 @@ for raw in sys.stdin:
         if state.get('create_fail_on') == table:
             print('fixture create failure', file=sys.stderr, flush=True)
         else:
-            state['tables'][table] = ('check_drift' if state.get('create_drift_on') == table
+            state['tables'][table] = ('column_drift' if state.get('create_drift_on') == table
                                       else 'equivalent')
         save(state)
         continue
@@ -391,7 +391,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
             'source_commit_sha': self.commit, 'source_tree_sha': self.tree,
             'run_id': self.run_id, 'receipt_sha256': digest(receipt_bytes),
             'candidate_sha256': digest(jar), 'previous_sha256': 'c' * 64,
-            'backup': '/var/lib/cyf-api-flow/backups/fixture.jar',
+            'backup': '/home/isp/state/cyf-api-flow/backups/fixture.jar',
             'candidate_stop_rc': 0, 'timestamp': '20260913T000000Z',
         }
         if record_overrides:
@@ -422,6 +422,11 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
             self.assertNotIn('--database=attacker_database', args)
             self.assertFalse(any('password' in value.lower() for value in args))
         self.assertNotIn(self.secret, (self.root / 'fake-state.json').read_text())
+
+    def test_create_resource_has_no_business_checks(self):
+        self.assertNotIn(b'CHECK (', e05.E05_SQL_BYTES)
+        for table in e05.TABLE_ORDER:
+            self.assertEqual(e05.EXPECTED_TABLES[table]['checks'], {})
 
     def test_default_plan_is_read_only_and_binds_exact_nested_resource(self):
         result, payload = self.execute()
@@ -611,7 +616,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.assertEqual(self.read_state()['creates'], [table])
         self.assertEqual(self.read_state()['tables'][table], 'equivalent')
 
-    def test_show_is_independently_complete_closed_and_preserves_e05_arithmetic_contract(self):
+    def test_show_preserves_e05_columns_indexes_and_nullability(self):
         table = e05.TABLE_ORDER[0]
         columns = e05.parse_show_create(CURRENT_OWNER_E05_SHOW_ROWS, table, self.collation)
         self.assertEqual(len(columns), 26)
@@ -625,8 +630,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
             ('UNIQUE KEY `uk_', 'KEY `uk_'), ('`tenant_id`,`client_id`', '`task_id`,`client_id`'),
             ('ENGINE=InnoDB', 'ENGINE=MyISAM'), ('CHARSET=utf8mb4', 'CHARSET=utf8'),
             ('COLLATE=utf8mb4_0900_ai_ci', 'COLLATE=utf8mb4_bin'),
-            (' + 1', ' + 2'), (' >= 0', ' > 0'), (' < ', ' > '), (' <> ', ' = '),
-            (' and ', ' or '), ('(`id`)', '(`id`(1))'),
+            ('(`id`)', '(`id`(1))'),
             ('NOT NULL AUTO_INCREMENT', 'NOT NULL AUTO_INCREMENT INVISIBLE'),
             ('NOT NULL AUTO_INCREMENT', 'NOT NULL AUTO_INCREMENT ON UPDATE 1'),
         ]
@@ -649,7 +653,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         table = e05.TABLE_ORDER[0]
         self.state['show_rows'] = copy.deepcopy(CURRENT_OWNER_E05_SHOW_ROWS)
         self.state['expected'][table]['COLUMNS'] = []
-        for drift in ('index_drift', 'index_attributes_drift', 'constraint_drift', 'check_drift', 'collation_drift'):
+        for drift in ('index_drift', 'index_attributes_drift', 'constraint_drift', 'collation_drift'):
             with self.subTest(drift=drift):
                 self.state['tables'][table] = drift
                 self.write_state()
@@ -681,27 +685,6 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(payload['error'], 'metadata_privilege_query_failed')
         self.assertEqual(self.read_state()['creates'], [])
-
-    def test_malformed_identifier_quoting_is_not_silently_repaired(self):
-        with self.assertRaises(e05.SchemaError):
-            e05.normalized_check('`previous_`lease_until`` > 0')
-        self.assertNotEqual(e05.normalized_check("operator_subject = 'sub`value'"),
-                            e05.normalized_check("operator_subject = 'subvalue'"))
-
-    def test_every_check_constraint_semantic_drift_is_rejected(self):
-        table = e05.TABLE_ORDER[0]
-        for constraint in e05.EXPECTED_TABLES[table]['checks']:
-            with self.subTest(constraint=constraint):
-                self.state['tables'][table] = 'check_drift'
-                self.state['check_drift_hex_name'] = hx(constraint)
-                self.state['creates'] = []
-                self.write_state()
-                result, payload = self.execute()
-                self.assertNotEqual(result.returncode, 0)
-                self.assertEqual(payload['error'], 'existing_schema_drift')
-                self.assertIn('check_clause:' + constraint,
-                              payload['tables'][table]['mismatches'])
-                self.assertEqual(self.read_state()['creates'], [])
 
     def test_runner_file_lock_waits_without_backend_or_schema_mutation(self):
         lock_path = self.root / 'e05-runner.lock'
@@ -756,7 +739,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
                           ' REPLACE ', ' GRANT ', ' TRUNCATE '):
             self.assertNotIn(forbidden, ' ' + statement.upper() + ' ')
         self.assertEqual(digest(e05.E05_SQL_BYTES),
-                         'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842')
+                         '3c287315e1d6126c652b219e6b4f14ebf02546ee7458c5d6abc3bf46e46b048c')
 
     def test_create_backend_failure_is_reported_preserved_and_retryable(self):
         table = e05.TABLE_ORDER[0]
@@ -790,7 +773,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
         self.assertEqual(payload['error'], 'created_table_not_equivalent')
         self.assertEqual(payload['failed_table'], table)
         state = self.read_state()
-        self.assertEqual(state['tables'][table], 'check_drift')
+        self.assertEqual(state['tables'][table], 'column_drift')
         self.assertEqual(state['creates'], [table])
         self.assertNotIn('DROP TABLE', RUNNER.read_text().upper())
 
@@ -882,7 +865,7 @@ class ApiE05AdditiveSchemaTest(unittest.TestCase):
 
     def test_preservation_e05_fixed_create_bytes_and_owner_extension_are_both_required(self):
         self.assertEqual(e05.RESOURCE_SHA256,
-                         'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842')
+                         '3c287315e1d6126c652b219e6b4f14ebf02546ee7458c5d6abc3bf46e46b048c')
         self.assertEqual(digest(e05.E05_SQL_BYTES), e05.RESOURCE_SHA256)
         self.assertIn(b"owner_jiacn                  VARCHAR(50) NOT NULL COMMENT 'Authenticated task owner'", e05.E05_SQL_BYTES)
         spec = e05.EXPECTED_TABLES[e05.TABLE_ORDER[0]]

@@ -1,0 +1,296 @@
+TAP version 13
+# Subtest: high-water retention stays at two files as committed ACKs accumulate
+ok 1 - high-water retention stays at two files as committed ACKs accumulate
+  ---
+  duration_ms: 38377.284007
+  ...
+# {"allocatedSequences":128,"highWaterFiles":2,"highWaterLogicalBytes":482,"highWaterAllocatedBytes":8192,"counterAllocatedBytes":4096}
+# Subtest: enqueue recovers exact certified transaction after before intent
+ok 2 - enqueue recovers exact certified transaction after before intent
+  ---
+  duration_ms: 220.751457
+  ...
+# Subtest: enqueue recovers exact certified transaction after after intent
+ok 3 - enqueue recovers exact certified transaction after after intent
+  ---
+  duration_ms: 283.342197
+  ...
+# Subtest: enqueue recovers exact certified transaction after before checkpoint
+ok 4 - enqueue recovers exact certified transaction after before checkpoint
+  ---
+  duration_ms: 199.236873
+  ...
+# Subtest: enqueue recovers exact certified transaction after after checkpoint
+ok 5 - enqueue recovers exact certified transaction after after checkpoint
+  ---
+  duration_ms: 319.445899
+  ...
+# Subtest: enqueue recovers exact certified transaction after before ack
+ok 6 - enqueue recovers exact certified transaction after before ack
+  ---
+  duration_ms: 191.679797
+  ...
+# Subtest: enqueue recovers exact certified transaction after after ack
+ok 7 - enqueue recovers exact certified transaction after after ack
+  ---
+  duration_ms: 371.614626
+  ...
+# Subtest: enqueue recovers exact certified transaction after before counter
+ok 8 - enqueue recovers exact certified transaction after before counter
+  ---
+  duration_ms: 252.926198
+  ...
+# Subtest: enqueue recovers exact certified transaction after after counter
+ok 9 - enqueue recovers exact certified transaction after after counter
+  ---
+  duration_ms: 203.203613
+  ...
+# Subtest: enqueue recovers exact certified transaction after before cleanup
+ok 10 - enqueue recovers exact certified transaction after before cleanup
+  ---
+  duration_ms: 188.409299
+  ...
+# Subtest: enqueue recovers exact certified transaction after after cleanup
+ok 11 - enqueue recovers exact certified transaction after after cleanup
+  ---
+  duration_ms: 191.601588
+  ...
+# Subtest: bootstrap recovers before intent without resetting existing state
+ok 12 - bootstrap recovers before intent without resetting existing state
+  ---
+  duration_ms: 133.256606
+  ...
+# Subtest: bootstrap recovers after intent without resetting existing state
+ok 13 - bootstrap recovers after intent without resetting existing state
+  ---
+  duration_ms: 113.662321
+  ...
+# Subtest: bootstrap recovers before checkpoint without resetting existing state
+ok 14 - bootstrap recovers before checkpoint without resetting existing state
+  ---
+  duration_ms: 138.196383
+  ...
+# Subtest: bootstrap recovers after checkpoint without resetting existing state
+ok 15 - bootstrap recovers after checkpoint without resetting existing state
+  ---
+  duration_ms: 250.135281
+  ...
+# Subtest: bootstrap recovers before counter without resetting existing state
+ok 16 - bootstrap recovers before counter without resetting existing state
+  ---
+  duration_ms: 138.594052
+  ...
+# Subtest: bootstrap recovers after counter without resetting existing state
+ok 17 - bootstrap recovers after counter without resetting existing state
+  ---
+  duration_ms: 119.690079
+  ...
+# Subtest: bootstrap recovers before initialized without resetting existing state
+ok 18 - bootstrap recovers before initialized without resetting existing state
+  ---
+  duration_ms: 145.342048
+  ...
+# Subtest: bootstrap recovers after initialized without resetting existing state
+ok 19 - bootstrap recovers after initialized without resetting existing state
+  ---
+  duration_ms: 118.181558
+  ...
+# Subtest: file fsync failure during intent does not lose a certified ACK
+ok 20 - file fsync failure during intent does not lose a certified ACK
+  ---
+  duration_ms: 128.952658
+  ...
+# Subtest: file fsync failure during checkpoint does not lose a certified ACK
+ok 21 - file fsync failure during checkpoint does not lose a certified ACK
+  ---
+  duration_ms: 141.77173
+  ...
+# Subtest: file fsync failure during ack does not lose a certified ACK
+ok 22 - file fsync failure during ack does not lose a certified ACK
+  ---
+  duration_ms: 126.033942
+  ...
+# Subtest: file fsync failure during counter does not lose a certified ACK
+ok 23 - file fsync failure during counter does not lose a certified ACK
+  ---
+  duration_ms: 148.980151
+  ...
+# Subtest: committed leftover and restored intents never resurrect an already dequeued ACK
+ok 24 - committed leftover and restored intents never resurrect an already dequeued ACK
+  ---
+  duration_ms: 226.77905
+  ...
+# Subtest: corrupt missing-checkpoint fails closed without a fallback checkpoint
+ok 25 - corrupt missing-checkpoint fails closed without a fallback checkpoint
+  ---
+  duration_ms: 147.391693
+  ...
+# Subtest: corrupt checksum fails closed without a fallback checkpoint
+ok 26 - corrupt checksum fails closed without a fallback checkpoint
+  ---
+  duration_ms: 228.820264
+  ...
+# Subtest: corrupt identity fails closed without a fallback checkpoint
+ok 27 - corrupt identity fails closed without a fallback checkpoint
+  ---
+  duration_ms: 161.043423
+  ...
+# Subtest: corrupt counter-rollback fails closed without a fallback checkpoint
+ok 28 - corrupt counter-rollback fails closed without a fallback checkpoint
+  ---
+  duration_ms: 132.79101
+  ...
+# Subtest: corrupt checkpoint-rollback fails closed without a fallback checkpoint
+ok 29 - corrupt checkpoint-rollback fails closed without a fallback checkpoint
+  ---
+  duration_ms: 145.509976
+  ...
+# Subtest: corrupt epoch fails closed without a fallback checkpoint
+ok 30 - corrupt epoch fails closed without a fallback checkpoint
+  ---
+  duration_ms: 134.74599
+  ...
+# Subtest: initialized observer detects a coordinated local rollback within its lifetime
+ok 31 - initialized observer detects a coordinated local rollback within its lifetime
+  ---
+  duration_ms: 164.36543
+  ...
+# Subtest: corrupt journal payload is quarantined before ACK reconstruction
+ok 32 - corrupt journal payload is quarantined before ACK reconstruction
+  ---
+  duration_ms: 139.51882
+  ...
+# Subtest: certified intent cannot overwrite a different pending payload
+ok 33 - certified intent cannot overwrite a different pending payload
+  ---
+  duration_ms: 156.048785
+  ...
+# Subtest: two initialized instances allocate FIFO after recovering a shared unfinished intent
+ok 34 - two initialized instances allocate FIFO after recovering a shared unfinished intent
+  ---
+  duration_ms: 299.040609
+  ...
+# Subtest: independent child processes allocate unique FIFO sequences under the existing lock
+ok 35 - independent child processes allocate unique FIFO sequences under the existing lock
+  ---
+  duration_ms: 1833.440217
+  ...
+# Subtest: a real abrupt child exit leaves the lock owned and requires explicit offline reconciliation
+ok 36 - a real abrupt child exit leaves the lock owned and requires explicit offline reconciliation
+  ---
+  duration_ms: 808.815982
+  ...
+# Subtest: legacy format requires explicit migration and runtime never deletes old evidence
+ok 37 - legacy format requires explicit migration and runtime never deletes old evidence
+  ---
+  duration_ms: 34.551986
+  ...
+# Subtest: offline migration creates a compressed verified backup and preserves pending FIFO
+ok 38 - offline migration creates a compressed verified backup and preserves pending FIFO
+  ---
+  duration_ms: 235.213419
+  ...
+# Subtest: offline migration resumes after interruption at backup-verified
+ok 39 - offline migration resumes after interruption at backup-verified
+  ---
+  duration_ms: 271.754363
+  ...
+# Subtest: offline migration resumes after interruption at checkpoint
+ok 40 - offline migration resumes after interruption at checkpoint
+  ---
+  duration_ms: 375.168618
+  ...
+# Subtest: offline migration resumes after interruption at counter
+ok 41 - offline migration resumes after interruption at counter
+  ---
+  duration_ms: 424.643001
+  ...
+# Subtest: offline migration resumes after interruption at initialized
+ok 42 - offline migration resumes after interruption at initialized
+  ---
+  duration_ms: 181.815763
+  ...
+# Subtest: offline migration resumes after interruption at legacy-marker-removed
+ok 43 - offline migration resumes after interruption at legacy-marker-removed
+  ---
+  duration_ms: 263.487225
+  ...
+# Subtest: offline migration resumes after interruption at legacy-cleanup-synced
+ok 44 - offline migration resumes after interruption at legacy-cleanup-synced
+  ---
+  duration_ms: 166.46965
+  ...
+# Subtest: migration refuses rollback, unknown identity and future pending records before deleting evidence
+ok 45 - migration refuses rollback, unknown identity and future pending records before deleting evidence
+  ---
+  duration_ms: 87.844604
+  ...
+# Subtest: migration resumes an already published matching backup before its intent was written
+ok 46 - migration resumes an already published matching backup before its intent was written
+  ---
+  duration_ms: 89.005296
+  ...
+# Subtest: migration rejects a corrupt compressed backup without deleting remaining source
+ok 47 - migration rejects a corrupt compressed backup without deleting remaining source
+  ---
+  duration_ms: 63.424828
+  ...
+# Subtest: migration backup must be outside the profile root
+ok 48 - migration backup must be outside the profile root
+  ---
+  duration_ms: 3.734879
+  ...
+# Subtest: directory fsync failure after intent publication has a recoverable prefix
+ok 49 - directory fsync failure after intent publication has a recoverable prefix
+  ---
+  duration_ms: 253.815765
+  ...
+# Subtest: directory fsync failure after checkpoint publication has a recoverable prefix
+ok 50 - directory fsync failure after checkpoint publication has a recoverable prefix
+  ---
+  duration_ms: 280.337909
+  ...
+# Subtest: directory fsync failure after ack publication has a recoverable prefix
+ok 51 - directory fsync failure after ack publication has a recoverable prefix
+  ---
+  duration_ms: 157.330887
+  ...
+# Subtest: directory fsync failure after counter publication has a recoverable prefix
+ok 52 - directory fsync failure after counter publication has a recoverable prefix
+  ---
+  duration_ms: 135.531644
+  ...
+# Subtest: unknown high-water evidence cannot bootstrap or disappear during migration
+ok 53 - unknown high-water evidence cannot bootstrap or disappear during migration
+  ---
+  duration_ms: 45.476751
+  ...
+# Subtest: empty and sparse legacy evidence migrate without changing the maximum
+ok 54 - empty and sparse legacy evidence migrate without changing the maximum
+  ---
+  duration_ms: 240.13735
+  ...
+# Subtest: durable quarantine blocks recovery of a valid unfinished intent
+ok 55 - durable quarantine blocks recovery of a valid unfinished intent
+  ---
+  duration_ms: 78.058103
+  ...
+# Subtest: old committed intent conflicts with a newer high-water instead of replaying its ACK
+ok 56 - old committed intent conflicts with a newer high-water instead of replaying its ACK
+  ---
+  duration_ms: 189.49023
+  ...
+# Subtest: migration rejects symlink aliases for the backup and legacy marker sources
+ok 57 - migration rejects symlink aliases for the backup and legacy marker sources
+  ---
+  duration_ms: 20.98235
+  ...
+1..57
+# tests 57
+# suites 0
+# pass 57
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50874.836688

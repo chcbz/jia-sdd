@@ -1,0 +1,44 @@
+{
+  "name": "cyf-api-kit-ci",
+  "sources": {
+    "cyf_api": {
+      "type": "gitee",
+      "name": "CYF API develop",
+      "endpoint": "https://gitee.com/chcbz/jia.git",
+      "branch": "develop",
+      "branchesFilter": "^develop$",
+      "cloneDepth": 0,
+      "certificate": {
+        "type": "serviceConnection",
+        "serviceConnection": "149709"
+      }
+    }
+  },
+  "defaultWorkspace": "cyf_api",
+  "stages": {
+    "cloud_ci": {
+      "name": "Cloud CI — no deployment",
+      "jobs": {
+        "api_ci": {
+          "name": "API cold CI (review pending)",
+          "runsOn": {
+            "group": "public/cn-beijing",
+            "container": "build-steps-public-registry.cn-beijing.cr.aliyuncs.com/build-steps/alinux3:latest",
+            "instanceType": "LARGE_4C8G"
+          },
+          "timeoutMinutes": 60,
+          "steps": {
+            "api_build": {
+              "step": "JavaBuild",
+              "name": "Review required — disabled",
+              "with": {
+                "jdkVersion": "21",
+                "run": "set -eu\nprintf '%s\\n' 'FLOW_CI_REVIEW_REQUIRED: no build/deploy executed'\nexit 73\n"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

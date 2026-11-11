@@ -41,3 +41,26 @@
 - 取消前24条事件全部保留，仅增加18条状态事件；重放前后11组SQL投影逐字节相同，包括退出时钟、版本、事件及bootstrap。native执行历史、Provider消费授权和资金投影与取消前相同。已退出Agent访问workspace404是撤销权限，owner任务详情仍200，不是数据被删除。
 - 本轮未新增前端按钮、不重复前端发布、未启停共享Runtime、不验证卢俊义、未做公孙胜除名/重新入伙、未新增租金或付款。下一步可继续原公孙胜除名/入伙流程；新租金不得自动确认。
 - 时间：源码Owner约01:09开始，生产验收02:29完成，约80分钟（初估45–90分钟）。实现/fixture修复/验证/发布准备有交叠，不编造更细分净耗时；实际Gradle各批时长保留各日志。
+
+## 2026-10-11 事项详情取消区布局局部跟进（本聊天 Owner）
+- 范围：仅 `web/src/components/juyiting/BountyPanel.vue` 取消区样式及定向布局回归；不改变取消条件、确认框、身份隔离、幂等或接口，不构建/部署生产。
+- 工作区 `/home/isp/wsps/cyf/web`，branch `develop`，开始时组件 clean；base commit `621b87a1b977e5c8fd0ef9cd22b068d7d0622b42` / tree `7fd5366e083af414738cd7c06dd323a13556601e`。2026-10-11 本轮 `git ls-remote origin refs/heads/develop` 同 SHA；线上未查询，不假定与源码一致。根仓其他未提交改动保持不动。
+- 验收：取消按钮等宽、保留次级描边；说明/按钮之间及取消区/成果入口之间有明确间距，窄屏长文案可换行；原取消行为不变。
+- 最早定向诊断：现有 Mocha 入口定向运行 ordinary-cancellation 及组件行为回归；新增局部样式结构断言。仅本机低成本诊断，不替代精确候选 Flow4403172 正式验证。
+- 本地实现已提交到 Web develop：`954980812ab1aa37bf05064f81acdd9edfc82db5` / tree `639a6871bfd8096af86ba3d0b5170be7c1ab8f30`。取消区上下16px留白/顶部细分隔、内部12px间距；按钮100%宽度、border-box、44px最小高度、可换行，保留焦点与禁用样式。无模板/脚本行为改动。
+- Owner自检：`git diff --check` 通过；ordinary-cancellation + component-behavior 定向本地诊断 **132 passing**（22s），见 `docs/implementation/evidence/cancel-layout-20261011/targeted.log`。随后仅展开按钮CSS格式并提交，最终固定commit取消专项结果见同目录 `final-targeted.log`。未做真实浏览器视觉验收；样式断言不等于浏览器截图验收。
+- 尚未push、正式Flow验证或部署；未改版本号、未操作线上任务/服务。后续发布须按版本化流程绑定该源码及同批Flow制品，本次不能报告线上已修复。
+- 2026-10-11 21:48 +08:00：用户追加“都推送到develop并发布”后，取消布局与独立需求页合并发布Web1.14.9，commit `a3bceafb53b4bea2545ad3065af058c48400605e`，Flow203 SUCCESS、2923pass/2pending/0fail、deploy70903004 healthy；364安装文件/11公网关键资源哈希一致，取消区编译样式检查通过。未做真实生产取消。完整本批证据见 `docs/implementation/evidence/requirement-page-20261011/release-r2/release-summary.json`。
+
+## 2026-10-11 已取消事项历史成果按钮样式跟进（本聊天唯一 Owner）
+- 目标：两个重新读取按钮统一描边、44px触控高度、12px间距、窄屏纵向等宽及键盘焦点；非目标：读取/验收/取消逻辑、协作工作台导航或生产操作。
+- 源码：`/home/isp/wsps/cyf/web` develop，clean base `a3bceafb53b4bea2545ad3065af058c48400605e` / tree `669d93bf781ac55aee60acfb01bff375c9601c69`；本轮2026-10-11 ls-remote同SHA。线上沿用21:48核验的1.14.9历史基线，本轮未重新核验。
+- 最早验证：现有juyiting-flow-ui测试增加实际按钮组编译/点击及CSS定向断言；不运行本地生产构建。本轮尚无新的发布请求，不将本机检查当Flow或上线证据。
+- 本地develop提交 `d8b703b9fae877daf224e159850f0f7c97ccf174` / tree `cc7a7a68459f318bd5d157ea89d10e370ec1dcf4`。两个重新读取按钮归入独立操作组；宽屏可并排换行，≤600px纵向等宽；读取handler与只读终态分支未改。
+- 定向本机诊断：flow-ui **17 passing**、component-behavior **108 passing**；diff --check通过。日志位于 `docs/implementation/evidence/terminal-history-layout-20261011/`。未做浏览器视觉/生产点击验收，未启动Flow、未push、未发布。本次定位/实现/验证净耗时未分别计量。
+
+## 2026-10-11 成果页协作工作台入口收口（本聊天唯一Owner）
+- 用户确认：仅移除正式成果与验收页的协作工作台按钮，保留返回/标题、普通事项入口和工作台本体；不下线协作功能，不发布。
+- 工作区 `/home/isp/wsps/cyf/web` develop，clean base `d8b703b9fae877daf224e159850f0f7c97ccf174` / tree `cc7a7a68459f318bd5d157ea89d10e370ec1dcf4`；本轮远端查询develop仍为 `a3bceafb53b4bea2545ad3065af058c48400605e`。线上沿用上一批1.14.9历史核验，未重新查询。
+- 实现/验收：入口增加!formalTaskRef条件，所有状态成果页均隐藏；补实际模板挂载测试覆盖六种状态、返回普通事项后入口恢复及原开关/上下文条件。最早验证为现有flow-ui本机定向诊断，非Flow正式证据。
+- 本地develop提交 `36c447ceb3f067618df37b934cb813e819aa88b3`；flow-ui **18 passing**，diff --check通过；证据 `docs/implementation/evidence/terminal-history-layout-20261011/workspace-entry-targeted.log`。未push、未Flow验证/发布、未进行浏览器视觉验收。定位/实现/验证净耗时未分别计量。

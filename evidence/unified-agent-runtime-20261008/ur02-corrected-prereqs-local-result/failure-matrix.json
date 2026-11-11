@@ -1,0 +1,61 @@
+{
+  "at": "2026-10-08T22:23:25.335788+08:00",
+  "commit": "9966f4a6817ef322e82bdcc1379cb5810e943ba8",
+  "tree": "0091449092568c3486cb7a2cf0b96a33270dfcc9",
+  "session": 96963,
+  "exitCode": 1,
+  "reports": [
+    {
+      "source": "/var/tmp/cyf-ur02-prereqs-corrected-20261008T221719/build/jia/agent__jia-agent-service/test-results/test/TEST-cn.jia.agent.api.AgentRuntimeV1ControllerTest.xml",
+      "sha256": "68bba567b305d27190c7665c4e459445c7af529f079d5d223d3f87797aa06195",
+      "suite": "cn.jia.agent.api.AgentRuntimeV1ControllerTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failedMethods": []
+    },
+    {
+      "source": "/var/tmp/cyf-ur02-prereqs-corrected-20261008T221719/build/jia/agent__jia-agent-service/test-results/test/TEST-cn.jia.agent.config.AgentSchemaInitializerTest.xml",
+      "sha256": "2427ac56daae8eb9ec2cf82cf45c70bc37915f5d1d29aa3ea46da91bf58dec2c",
+      "suite": "cn.jia.agent.config.AgentSchemaInitializerTest",
+      "tests": 48,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "failedMethods": [
+        {
+          "method": "hostedProfileInitializerAndFullBaselineDeclareSameFourChecks()",
+          "type": "org.opentest4j.AssertionFailedError",
+          "message": "org.opentest4j.AssertionFailedError: expected: <[chk_hosted_generation, chk_hosted_repair, chk_hosted_single_tenant, chk_hosted_state]> but was: <[]>"
+        },
+        {
+          "method": "initializerAndSchemaResourceKeepIdentityTablesInParity()",
+          "type": "org.opentest4j.AssertionFailedError",
+          "message": "org.opentest4j.AssertionFailedError: agent_identity_registry ==> expected: <create table if not exists agent_identity_registry (id bigint not null auto_increment comment 'primary key', canonical_agent_id varchar(100) not null comment 'adr-001 canonical agentid | immutable after insert | never reused even after delete', canonical_type varchar(32) not null comment 'opaque/legacy_canonical/system | immutable after insert', lifecycle_status varchar(20) not null default 'provisioned' comment 'provisioned/active/suspended/retired | retired is terminal and cannot be reverted', client_id varchar(50) default null comment 'immutable owner-scope client after insert | null only for system identity', owner_jiacn varchar(50) default null comment 'immutable owner-scope jiacn after insert | null only for system identity', tenant_id varchar(50) default '0' comment 'single tenant id for non-system identities | null only for system', binding_id bigint default null comment 'audited source binding id | immutable after insert | not an ownership substitute', provisioned_at bigint default null comment 'provisioned time', activated_at bigint default null comment 'first activation time', suspended_at bigint default null comment 'latest suspension time', retired_at bigint default null comment 'retirement time | retired is terminal and cannot be reverted', audit_reason varchar(1000) not null comment 'auditable creation/migration reason | immutable after insert', create_time bigint default null comment 'create time', update_time bigint default null comment 'update time', primary key (id), unique key uk_identity_registry_agent (canonical_agent_id), unique key uk_identity_registry_binding (binding_id), unique key uk_identity_registry_alias_target (id, canonical_agent_id, client_id, owner_jiacn, tenant_id), key idx_identity_registry_scope_status (tenant_id, client_id, owner_jiacn, lifecycle_status), constraint chk_identity_registry_type check (canonical_type in ('opaque', 'legacy_canonical', 'system')), constraint chk_identity_registry_lifecycle check (lifecycle_status in ('provisioned', 'active', 'suspended', 'retired')), constraint chk_identity_registry_canonical check ((canonical_type = 'opaque' and canonical_agent_id regexp '^agt_[0-9a-f]{32}$') or (canonical_type = 'legacy_canonical' and canonical_agent_id <> 'builtin-songjiang' and canonical_agent_id not regexp '^agt_[0-9a-f]{32}$') or (canonical_type = 'system' and canonical_agent_id = 'builtin-songjiang')), constraint chk_identity_registry_scope check ((canonical_type = 'system' and client_id is null and owner_jiacn is null and tenant_id is null) or (canonical_type <> 'system' and client_id is not null and trim(client_id) <> '' and owner_jiacn is not null and trim(owner_jiacn) <> '' and tenant_id = '0')), constraint chk_identity_registry_retired check ((lifecycle_status = 'retired' and retired_at is not null) or (lifecycle_status <> 'retired' and retired_at is null))) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_bin comment='durable canonical agent identity registry | collation binary enforces exact case matching'> but was: <create table if not exists agent_identity_registry (id bigint not null auto_increment comment 'primary key', canonical_agent_id varchar(100) not null comment 'adr-001 canonical agentid | immutable after insert | never reused even after delete', canonical_type varchar(32) not null comment 'opaque/legacy_canonical/system | immutable after insert', lifecycle_status varchar(20) not null default 'provisioned' comment 'provisioned/active/suspended/retired | retired is terminal and cannot be reverted', client_id varchar(50) default null comment 'immutable owner-scope client after insert | null only for system identity', owner_jiacn varchar(50) default null comment 'immutable owner-scope jiacn after insert | null only for system identity', tenant_id varchar(50) default '0' comment 'single tenant scope; 0 for every identity including system rows', binding_id bigint default null comment 'audited source binding id | immutable after insert | not an ownership substitute', provisioned_at bigint default null comment 'provisioned time', activated_at bigint default null comment 'first activation time', suspended_at bigint default null comment 'latest suspension time', retired_at bigint default null comment 'retirement time | retired is terminal and cannot be reverted', audit_reason varchar(1000) not null comment 'auditable creation/migration reason | immutable after insert', create_time bigint default null comment 'create time', update_time bigint default null comment 'update time', primary key (id), unique key uk_identity_registry_agent (canonical_agent_id), unique key uk_identity_registry_binding (binding_id), unique key uk_identity_registry_alias_target (id, canonical_agent_id, client_id, owner_jiacn, tenant_id), key idx_identity_registry_scope_status (tenant_id, client_id, owner_jiacn, lifecycle_status), constraint chk_identity_registry_type check (canonical_type in ('opaque', 'legacy_canonical', 'system')), constraint chk_identity_registry_lifecycle check (lifecycle_status in ('provisioned', 'active', 'suspended', 'retired')), constraint chk_identity_registry_canonical check ((canonical_type = 'opaque' and canonical_agent_id regexp '^agt_[0-9a-f]{32}$') or (canonical_type = 'legacy_canonical' and canonical_agent_id <> 'builtin-songjiang' and canonical_agent_id not regexp '^agt_[0-9a-f]{32}$') or (canonical_type = 'system' and canonical_agent_id = 'builtin-songjiang')), constraint chk_identity_registry_scope check ((canonical_type = 'system' and client_id is null and owner_jiacn is null and tenant_id = '0') or (canonical_type <> 'system' and client_id is not null and trim(client_id) <> '' and owner_jiacn is not null and trim(owner_jiacn) <> '' and tenant_id = '0')), constraint chk_identity_registry_retired check ((lifecycle_status = 'retired' and retired_at is not null) or (lifecycle_status <> 'retired' and retired_at is null))) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_bin comment='durable canonical agent identity registry | collation binary enforces exact case matching'>"
+        }
+      ]
+    }
+  ],
+  "totalTests": 56,
+  "totalPass": 54,
+  "totalFailures": 2,
+  "errors": 0,
+  "skipped": 0,
+  "compileUr06EnrollMysqlJava": "PASS",
+  "validateLayering": "NOT_RUN after test failure",
+  "sourceCleanAfter": true,
+  "findings": [
+    {
+      "method": "hostedProfileInitializerAndFullBaselineDeclareSameFourChecks",
+      "cause": "test tableDefinition stops on first semicolon including quoted COMMENT: api_key_id contains row ID; never plaintext so CHECKs truncated. Original complete baseline has all4CHECK. Must fix SQL statement extraction, not remove constraints/oracle."
+    },
+    {
+      "method": "initializerAndSchemaResourceKeepIdentityTablesInParity",
+      "cause": "real identity source parity mismatch: baseline system identity tenant_id IS NULL/comment versus initializer system tenant_id=0/comment. Owner must inspect latest strict validator/migration contract before changing canonicalDDL; not blindly revert latest contract or ignore semicolon/comment."
+    }
+  ],
+  "runtimeMySQL": "NOT_RUN",
+  "actualArtifact": "NOT_RUN",
+  "productionTouched": false
+}

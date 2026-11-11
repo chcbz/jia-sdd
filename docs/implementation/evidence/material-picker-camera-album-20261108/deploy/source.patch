@@ -1,0 +1,193 @@
+diff --git a/package-lock.json b/package-lock.json
+index a69db1c..cafbf7b 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "cyf-web-kit",
+-  "version": "1.16.126",
++  "version": "1.16.127",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "cyf-web-kit",
+-      "version": "1.16.126",
++      "version": "1.16.127",
+       "dependencies": {
+         "@varlet/ui": "^3.10.9",
+         "@vueuse/core": "^13.5.0",
+diff --git a/package.json b/package.json
+index cfe073c..a1a9c03 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "cyf-web-kit",
+-  "version": "1.16.126",
++  "version": "1.16.127",
+   "type": "module",
+   "description": "A Vue.js project",
+   "author": "chc <c@e2tt.com>",
+diff --git a/src/components/juyiting/HallMaterialPicker.vue b/src/components/juyiting/HallMaterialPicker.vue
+index 10f01be..dd78290 100644
+--- a/src/components/juyiting/HallMaterialPicker.vue
++++ b/src/components/juyiting/HallMaterialPicker.vue
+@@ -130,6 +130,62 @@
+                 @change="uploadQuickMaterials"
+               />
+             </label>
++            <label
++              class="quick-material-upload hall-tool"
++              title="拍照"
++            >
++              <svg
++                class="hall-control-icon"
++                width="20"
++                height="20"
++                viewBox="0 0 24 24"
++                fill="none"
++                stroke="currentColor"
++                stroke-width="1.8"
++                stroke-linecap="round"
++                stroke-linejoin="round"
++                aria-hidden="true"
++                focusable="false"
++              >
++                <path d="M4 7h4l2-3h4l2 3h4v13H4Z" /><circle cx="12" cy="13" r="4" />
++              </svg>
++              <input
++                type="file"
++                accept="image/*"
++                capture="environment"
++                aria-label="拍照"
++                :disabled="uploading || uploadUnresolved"
++                @change="uploadQuickMaterials"
++              />
++            </label>
++            <label
++              class="quick-material-upload hall-tool"
++              title="相册"
++            >
++              <svg
++                class="hall-control-icon"
++                width="20"
++                height="20"
++                viewBox="0 0 24 24"
++                fill="none"
++                stroke="currentColor"
++                stroke-width="1.8"
++                stroke-linecap="round"
++                stroke-linejoin="round"
++                aria-hidden="true"
++                focusable="false"
++              >
++                <path d="M4 3h16v18H4ZM4 17l5-6 4 4 3-3 4 5M8 7h.01" />
++              </svg>
++              <input
++                type="file"
++                accept="image/*"
++                multiple
++                aria-label="从相册选择"
++                :disabled="uploading || uploadUnresolved"
++                @change="uploadQuickMaterials"
++              />
++            </label>
+           </div>
+           <p v-if="uploading || uploadMessage" class="quick-material-upload-status" :role="uploading ? 'status' : 'alert'">{{ uploading ? '正在上传资料…' : (uploadMessage || '上传结果尚未确认，请核对原上传。') }}</p>
+           <button v-if="uploadUnresolved" type="button" :disabled="uploading" @click="retryQuickUpload">核对原上传</button>
+@@ -293,6 +349,7 @@ const importImages = files => {
+ const uploadQuickMaterials = event => {
+   const input = event.target, files = [...(input.files || [])]
+   if (!files.length) return
++  if (uploading.value || uploadUnresolved.value) { input.value = ''; return }
+   if (files.length + (directUpload.value ? selectedMaterials.value.length : draftMaterials.value.length) > 32) { uploadMessage.value = '最多选择32份资料，请减少本次文件数量。'; input.value = ''; return }
+   return runPickerUpload(async current => {
+     for (const file of files) {
+@@ -488,9 +545,9 @@ onBeforeUnmount(() => { pickerGeneration += 1; mobileQuery?.removeEventListener?
+ .quick-material-empty { margin: auto !important; color: var(--material-muted); }
+ .quick-material-picker footer { position:relative; display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--material-line); background: var(--material-paper); }
+ .quick-material-selection { position:absolute; bottom:100%; left:12px; right:12px; padding:8px 12px; border:1px solid var(--material-line); border-radius:8px 8px 0 0; background:var(--material-paper); min-width:0; box-shadow:0 -6px 20px #242e2b15; }
+-.quick-material-selection-row { display:flex; align-items:center; gap:12px; margin-right:auto; min-width:0; }
+-.quick-material-picker .quick-material-count { border:0; background:transparent; padding:6px 0; font-size:13px; color:var(--material-muted); }
+-.quick-material-upload { position:relative; display:inline-flex; align-items:center; justify-content:center; height:36px; box-sizing:border-box; flex:none; padding:0 12px; border:1px solid var(--material-line); border-radius:7px; background:var(--material-ground); font-size:13px; cursor:pointer; overflow:hidden; }
++.quick-material-selection-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-right:auto; min-width:0; }
++.quick-material-picker .quick-material-count { white-space:nowrap; border:0; background:transparent; padding:6px 0; font-size:13px; color:var(--material-muted); }
++.quick-material-upload { position:relative; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; min-height:44px; box-sizing:border-box; flex:none; padding:0; border:0; border-radius:7px; background:transparent; color:var(--material-muted); font-size:13px; cursor:pointer; overflow:hidden; }
+ .quick-material-upload input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+ .quick-material-upload:focus-within { outline:2px solid var(--material-brand); outline-offset:2px; }
+ .quick-material-upload:has(input:disabled) { opacity:.55; cursor:wait; }
+@@ -540,7 +597,6 @@ onBeforeUnmount(() => { pickerGeneration += 1; mobileQuery?.removeEventListener?
+   .quick-material-picker button:not(.quick-material-files button):not(.quick-material-footer-actions button) { min-height: 40px; }
+   .quick-material-selection-row, .quick-material-footer-actions { width:100%; }
+   .quick-material-footer-actions button { flex:1; min-width:0; }
+-  .quick-material-upload { height:40px; }
+   .quick-material-standalone .quick-material-preview { display: flex; }
+ }
+ </style>
+diff --git a/tests/juyiting-hall-overview-component.test.js b/tests/juyiting-hall-overview-component.test.js
+index 7a3b1e6..b8cf555 100644
+--- a/tests/juyiting-hall-overview-component.test.js
++++ b/tests/juyiting-hall-overview-component.test.js
+@@ -667,6 +667,61 @@ describe('page parity fixes: home draft and picker uploads', () => {
+     Object.defineProperty(input.element, 'files', { configurable: true, value: names.map(name => new File(['hello'], name, { type: 'text/plain' })) })
+     await input.trigger('change'); await settle()
+   }
++  it('offers unrestricted files, single rear-camera capture and multi-image album selection', async () => {
++    const wrapper = mount(loadMaterialPicker(uploadWorkspace()), { props: { ...props, modelValue: [] }, global: { stubs: { teleport: true } } })
++    try {
++      await wrapper.get('.quick-material-open').trigger('click'); await settle()
++      const inputs = wrapper.findAll('input[type=file]')
++      expect(inputs.map(input => ({ label: input.attributes('aria-label'), accept: input.attributes('accept'), capture: input.attributes('capture'), multiple: input.element.multiple })))
++        .to.deep.equal([
++          { label: '上传资料', accept: undefined, capture: undefined, multiple: true },
++          { label: '拍照', accept: 'image/*', capture: 'environment', multiple: false },
++          { label: '从相册选择', accept: 'image/*', capture: undefined, multiple: true }
++        ])
++      await wrapper.get('input[aria-label="拍照"]').trigger('change'); await settle()
++      expect(wrapper.get('.quick-material-count').text()).to.include('已选 0')
++      expect(wrapper.emitted('update:modelValue')).to.equal(undefined)
++    } finally { wrapper.unmount() }
++  })
++  for (const source of ['拍照', '从相册选择']) {
++    it(`${source} shares receipt staging and only emits fixed materials on completion`, async () => {
++      const workspace = uploadWorkspace(), received = []
++      workspace.upload = async file => { received.push(file); return { operation: { state: 'COMMITTED' }, file: { fileId: file.name, displayName: file.name }, version: { fileId: file.name, version: '2', contentMimeType: file.type } } }
++      const wrapper = mount(loadMaterialPicker(workspace), { props: { ...props, modelValue: [] }, global: { stubs: { teleport: true } } })
++      try {
++        await wrapper.get('.quick-material-open').trigger('click'); await settle()
++        const input = wrapper.get(`input[aria-label="${source}"]`)
++        const files = (source === '拍照' ? ['camera.jpg'] : ['album-a.jpg', 'album-b.png']).map(name => new File(['photo'], name, { type: name.endsWith('.png') ? 'image/png' : 'image/jpeg' }))
++        Object.defineProperty(input.element, 'files', { configurable: true, value: files })
++        await input.trigger('change'); await settle()
++        expect(received).to.deep.equal(files)
++        expect(wrapper.get('.quick-material-count').text()).to.include(`已选 ${files.length}`)
++        expect(input.element.value).to.equal('')
++        expect(wrapper.emitted('update:modelValue')).to.equal(undefined)
++        await wrapper.get('.quick-material-confirm').trigger('click')
++        expect(wrapper.emitted('update:modelValue')[0][0]).to.deep.equal(files.map(file => ({ fileId: file.name, version: '2', displayName: file.name, contentMimeType: file.type })))
++      } finally { wrapper.unmount() }
++    })
++  }
++  it('locks all three sources during upload and unresolved writes, retaining original-operation recovery', async () => {
++    const workspace = uploadWorkspace(); let finish
++    workspace.upload = () => new Promise(resolve => { finish = resolve })
++    const wrapper = mount(loadMaterialPicker(workspace), { props: { ...props, modelValue: [] }, global: { stubs: { teleport: true } } })
++    try {
++      await wrapper.get('.quick-material-open').trigger('click'); await settle()
++      const input = wrapper.get('input[aria-label="拍照"]')
++      Object.defineProperty(input.element, 'files', { configurable: true, value: [new File(['photo'], 'camera.jpg', { type: 'image/jpeg' })] })
++      const change = input.trigger('change'); await Vue.nextTick()
++      expect(wrapper.findAll('input[type=file]').every(input => input.element.disabled)).to.equal(true)
++      workspace.pendingWrites.value = [{ target: 'CREATE' }]
++      finish(null); await change; await settle()
++      expect(wrapper.findAll('input[type=file]').every(input => input.element.disabled)).to.equal(true)
++      expect(wrapper.text()).to.include('核对原上传')
++      expect(wrapper.get('.quick-material-count').text()).to.include('已选 0')
++      workspace.pendingWrites.value = []; await settle()
++      expect(wrapper.findAll('input[type=file]').every(input => !input.element.disabled)).to.equal(true)
++    } finally { wrapper.unmount() }
++  })
+   it('uploads multiple files, auto-selects receipt versions and permits attachment-only creation', async () => {
+     const wrapper = mount(load({ execute: async () => response() }, uploadWorkspace()), { props, global: { stubs: { teleport: true } } })
+     try {

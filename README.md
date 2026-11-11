@@ -25,6 +25,8 @@ git submodule update --init --recursive
 
 ## Documentation
 
+Start with [Agent rules](AGENTS.md) → [documentation router](docs/README.md) → [current feature contracts](specs/INDEX.md). For Juyi Hall testing, use the [global regression suite](specs/juyiting-unified-experience/global-regression.md); definitions and historical execution results are separate.
+
 - [SDD workflow](docs/sdd-workflow.md)
 - [Current-state knowledge base](docs/knowledge-base/README.md)
 

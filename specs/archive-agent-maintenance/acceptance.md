@@ -1,5 +1,30 @@
 # 验收与证据矩阵（D2）
 
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 当前验收合同（2026-11-07）
+
+**本专题：典籍任职、资料整理与受控内容维护。**
+
+### 必须验证的业务结果
+任意合法好汉/技能组合、越权拒绝、版本并发/幂等、草稿与发布分离、真实读回；工具完成不等于用户验收。
+
+### 不回归边界
+任职、技能安装、任务准入各自独立；不按好汉显示名或技能名硬编码通用Runtime，不向Agent暴露数据库凭据。
+
+### 证据如何判定
+- 绑定实际commit/tree、测试selector/fixture和输入；真实返回/数据库事实/页面行为只证明各自层，mock不冒充跨层验收。
+- 必要身份/ACL、幂等、事务、锁及完整性保护按责任层覆盖；不在每个消费者复制同一防御矩阵。
+- 性能使用真实同一请求/场景：请求数、查询数、读取字节、首字与完成时间分别记录；超标记录待优化，不用快速失败计成功。
+- 以当前规则本地执行必要测试/构建并保存日志/制品摘要；本页历史Flow记录只证明当时输入，不要求重新付费Run。
+- 源码接受、测试、安装、健康、业务验收分别写结果；不把历史PASS迁移到新tree，不补填未实测指标。
+
+责任与DFX：[统一开发约束](../architecture-convergence/development-principles.md)。
+
+**入口与阅读边界：** 文档状态、入口及阅读边界以[需求](spec.md)现行规格为准。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
+
 **以下全部为待执行验收条件，不是测试通过报告。** 本轮仅交付设计与静态文档检查；未调用应用、未运行 Gradle/Vite、未做生产内容维护。
 
 机器可读矩阵：[acceptance-cases.json](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance-cases.json)。功能要求见 [spec.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/spec.md)，合同见 [design.md](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)。
@@ -7,7 +32,7 @@
 ## 1. 测试层级
 
 - API unit/contract：schema、DTO、鉴权、native filter、工具上下文、内容校验、CAS/幂等。
-- 隔离 MySQL：真实 FK/CHECK、撤任与发布竞态、原子激活、唯一约束、迁移断点；不以 mock 事务代替。
+- 隔离 MySQL：真实外键/唯一/非空及业务责任层规则（不新增/依赖CHECK）、撤任与发布竞态、原子激活、唯一约束、迁移断点；不以 mock 事务代替。
 - Client Node：命令协议、安装证明、固定 origin/资源范围、持久 inbox/断点/重放、凭据不进模型。
 - Web unit + browser：reader 兼容、真实 HTTP 边界、身份清理、权限 UI、故障状态、移动布局。
 - 集成 fixture：明确授权小型文本，至少一个非 120 回/无序言样本，旧水浒摘要不变。
@@ -142,7 +167,7 @@
 
 1. **设计交付**：五件套、源码审计、用例覆盖/结构通过；不意味着下面各层通过。
 2. **源码与集成**：所有相关用例有 exact source/tree、selector、fixture digest、原始结果；不足项明确列出，integration pins 可复现。
-3. **技术发布**：与源码绑定的制品 SHA-256、发布顺序、schema/client/API/Web 版本、实际健康；遵守有效 Flow 或用户本地例外，不互相冒充。
+3. **技术发布**：与源码绑定的制品 SHA-256、发布顺序、schema/client/API/Web 版本、实际健康；遵守当前默认本地固定源码与受控发布规则，真实批次/日志/摘要可追溯，不冒充Flow。
 4. **实际业务验收**：真实任职/安装事实、原始来源摘要、校验 candidate、publication、读回以及用户可操作路径齐备。模型一句“完成”/HTTP202/ACK/文件生成都不等于此层。
 
 ## 4. 证据最小字段

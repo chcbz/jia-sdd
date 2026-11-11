@@ -24,13 +24,13 @@ Only these read-only observations exist:
 4. Read-only TCP checks: MySQL handshake on 127.0.0.1:3306; Redis unauthenticated
    `PING` on 127.0.0.1:6379 where `+PONG`, `-NOAUTH`, or `-NOPERM` proves reachability
    only.
-5. `/usr/bin/systemctl is-active codex-ws-agent.service`: alert-only.
+5. `/usr/bin/systemctl is-active cyf-agent-runtime-v1@unified.service`: alert-only.
 6. Bounded MemAvailable and API-filesystem availability observations: warning-only,
    never recovery admission blockers under this availability policy.
 
 Only these mutations exist:
 
-- Atomic monitor state/maintenance updates below `/var/lib/cyf-juyiting-health`.
+- Atomic monitor state/maintenance updates below `/home/isp/state/cyf-juyiting-health`.
 - Exact API recovery command `/usr/local/sbin/cyf-api-kit start` for trusted STOPPED,
   or `restart` for the fully trusted LISTENING/NOT_READY branch after 25 minutes.
   Recovery alone receives the exact fixed environment additions
@@ -206,3 +206,16 @@ normal ticks are not sent to syslog.
 | installer staging/activation trust | `test_installer_trust_and_activation_contract` |
 | maintenance directory durability | `test_pause_resume_marker_and_directory_fsync` |
 | fixed config/command/security and no real side effects | `ConfigSecurityTests`, `StaticContractTests`, injected `FakeEffects` tests |
+
+## 2026-10-20 ES dependency extension
+
+Add `elasticsearch` to the existing component set, probe timestamps, incident streaks and sanitized Chinese notifications. Only fixed `http://127.0.0.1:9200/_cluster/health` and `/chat_memory/_search?size=0&terminate_after=1` authenticated GETs are permitted. Use no proxy or redirects; do not return document content. Fixed root-only 0600 `/etc/cyf-elasticsearch-health-auth.json` is an explicit exception to the earlier no-credential-file-read rule, not a configurable URL or shell hook. No ES lifecycle, index writes/deletes, embedding calls or new API recovery triggers are added.
+
+A non-timeout green/yellow cluster and complete successful search shards are required. Yellow remains visible as `es_search_ok_yellow`; red, missing index, bad credentials, transport/parse errors and partial search fail. Existing deployed schema-v1 six-component state requires an explicit locked, backed-up addition of the seventh streak and unobserved snapshot field before first validation; preserve all incident/recovery/outbox fields. This is host monitor maintenance, not an application build or application release.
+
+### 2026-10-21 已安装核验补充：可用性而非进程存活
+Agent snapshot只做观察，当前MainPID、0600可信文件、连接/注册/ready、三心跳周期内有效回执缺一不可。Agent异常仅告警，不自动重启。API当前PID近期OOM观察覆盖“health还UP但运行线程已异常”的窗口，仅告警、不得授权恢复；旧PID错误忽略。保留既有state schema与恢复决策，不改变业务deadline。
+
+恢复carrier保留只读`--check`；monitor必须在预留恢复次数前检查canonical信任链。摘要过期、身份不可信、预检不可用均拒绝恢复且不消耗次数；不自动接受新hash。2026-10-21核验现行canonical SHA256为`878e2f91f2a557f2c10ca954c438b090cc370d90e99da851053e0190bc04be56`，本轮未修改该实体；后续升级需要重新审阅和固定。
+
+2026-10-26局部核验：用户授权开启API OOM自动dump，保留192MiB Metaspace上限。Flow5264702/74安装仅新增dump参数的canonical，SHA为`1ea29310b2bbce2a4755869286886d529f55d85a5b6e3ae862562a3d0e39a081`；76同步carrier和monitor固定摘要，carrier `--check`通过，无重启、无监控状态/计数变更。上文2026-10-21摘要保留作历史基线，不代表当前值。当前carrier SHA为`00dd5d68e76b329e87ef1e678ac567f6108a1065622a598885e21e68090a61b4`，monitor SHA为`4136857418ab1fe8b2b8c552241306b02d1dadd6dd8e0fa24ddca717fb64978a`；仍禁止自动信任当前任意字节。证据`/home/isp/state/cyf-skill-management-recovery-20261026/uninstall/release/oom-dump/`，实际OOM生成dump及完整故障恢复未演练。

@@ -1,0 +1,38 @@
+✔ CHAT cannot be upgraded by turn policy or tool catalog (12.78379ms)
+✔ native adapter fixes neutral cwd and named execution permissions and accepts tool progress without stdout leakage (2.210121ms)
+✔ native tool call is execution-bound, deduplicated and completed before the turn resolves (2.081017ms)
+✔ tool requests arriving before turn acceptance are buffered then bound to the accepted turn (1.312426ms)
+✔ unregistered tools and ordinary permission requests remain denied in native mode (2.442348ms)
+✔ a recoverable draft rejection is returned to the model without terminating the authorized turn (3.381074ms)
+✔ a new tool call cannot cross the completed-turn freeze boundary (1.220861ms)
+✔ execution checkpoint callback failures reject the turn instead of escaping the stdout event handler (0.697519ms)
+✔ native turn network follows its trusted execution binding, never model turn policy (1.491975ms)
+✔ conversation callbacks do not grant native filesystem permissions or network (1.589614ms)
+✔ conversation callbacks receive trusted message binding and deduplicate calls (9.391627ms)
+✔ conversation callbacks deny unadvertised tools and shell approval (2.03602ms)
+✔ revoking a conversation binding prevents its next tool callback (1.024053ms)
+✔ conversation completion waits for the authoritative tool receipt (0.980125ms)
+✔ conversation duplicate call ids cannot silently change their arguments (14.991107ms)
+✔ conversation binding requires one trusted message and cannot combine execution policies (0.766899ms)
+✔ a fresh adapter resumes the thread but uses only the new turn callback binding (1.304811ms)
+✔ file-reading CHAT fixes one permission profile on start/resume/turn without execution tools (2.611438ms)
+﹣ actual configured CLI initializes without a version/schema contract (1.327665ms) # SKIP
+✔ app-server stdin EPIPE rejects pending RPCs without crashing Runtime or claiming success (8.627647ms)
+✔ app-server late pipe failure after normal close stays idempotent (0.749837ms)
+{"event":"app-server-initialize-timing","atMs":1793926958778,"pid":null,"native":false,"timings":[{"phase":"sandbox-info","completed":true,"durationMs":0.33226600000000417},{"phase":"initialize","completed":true,"durationMs":0.4621819999999843},{"phase":"executable-readback","completed":true,"durationMs":0.15062699999998586},{"phase":"account/read","completed":true,"durationMs":2.3930579999999964},{"phase":"model/list","completed":true,"durationMs":0.1695890000000304},{"phase":"config/read","completed":true,"durationMs":0.16851700000000847},{"phase":"mcpServerStatus/list","completed":true,"durationMs":0.1788270000000125}]}
+{"event":"app-server-initialize-timing","atMs":1793926958779,"pid":null,"native":false,"timings":[{"phase":"sandbox-info","completed":true,"durationMs":0.08753999999998996},{"phase":"initialize","completed":true,"durationMs":0.23228199999999788},{"phase":"executable-readback","completed":false,"durationMs":0.10166599999996606}]}
+✔ owned local probe can await completion without a deadline and still rejects on process loss (25.476465ms)
+✔ sandbox initialize response precedes one executable check; business readbacks wait for verification (6.732801ms)
+✔ failed sandbox executable readback cannot admit account/config/tool discovery (0.989978ms)
+✔ usage evidence preserves separate snapshots without inventing billing or copying unrelated content (1.535416ms)
+✔ matching turn retains only latest usage snapshot on completed, never sums duplicate notifications (7.310792ms)
+✔ matching turn retains only latest usage snapshot on failed, never sums duplicate notifications (2.206965ms)
+✔ matching turn retains only latest usage snapshot on interrupted, never sums duplicate notifications (1.537357ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 1457.059277

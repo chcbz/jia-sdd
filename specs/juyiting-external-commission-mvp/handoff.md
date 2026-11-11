@@ -212,3 +212,54 @@ D2文档自检：本地链接/代码围栏/JSON示例/尾空白和46项用例连
 - 11:08收口：Web最终1.16.40/5ec7e2096f838136ae71b6d4a66e148756aad54d/tree4c180814a8b2a31d963da9e46eb94a569b93f8f9，Flow287正式3236 passing/2 pending，部署71577223 Success/healthy。同Run归档SHA6d43006dbc3f7c90047343d6fc98b161b03873fd223c83d503451f639b63d637，公共index/entry及JuyiHall资源8项摘要匹配。API224正式2935 tests/0失败/0错误/122跳过。两端CI-only恢复readback已确认。
 - 真实线上三闭环：504已有二稿submitted后历史首稿单独验收、506外单图片+文字两项验收、508外单生成图片且尚无正式交付直接卡片验收；均COMPLETED/ACCEPTED，精确内容hash及来源已核对。504/508刷新回读完成；506刷新首页已完成。预览无下载，清单默认不选/卡片预选、完成后无验收入口，手机390×844与桌面已检查。故障分支证据来自自动回归，不称全部线上注入。
 - 持久证据evidence/implementation/selected-output-acceptance-20261022；稳定规则回写既有feature-guide新增定向节，不覆盖其其他脏修改。原始浏览器只留授权测试目录。实际初版编码22分钟，但最终两处线上集成修正及全验收超过1小时目标，已向用户说明。未触碰用户真实任务及共享Runtime进程；原稳定性待办独立保留。
+
+## 常用图片输入适配（2026-10-22，实施中）
+- Owner：当前单 Agent；不调度子 Agent。目标：修复 JPEG 被 materials 能力过滤，统一静态图片解码和原始/派生证明、明确不支持提示。非目标：改动用户原事项505/507、取消活动任务、绕过权限或制品规则。
+- 已 fetch 核对：API develop 6dc75fc632ad697bbe29c60a8a257c637ba937d6；Web 5ec7e2096f838136ae71b6d4a66e148756aad54d；Runtime c11a078e0fc365c09706d569e0c668bcdb230d9f，与上轮已验证发布基线相符。新 worktree：/var/tmp/cyf-common-image-api-20261022、/var/tmp/cyf-common-image-runtime-20261022，均 codex/common-image-input，不覆盖原工作区。
+- 已读根及Runtime AGENTS、工具索引；接口规范固定 /home/isp/wsps/cyf/api/docs/interface-standard.md @27e4b0aead0586f03bccc215eda019429d5d5f52。
+- 最早诊断：固定 WASM 解码库、合成静态格式/损坏/多帧夹具，核验原hash与派生hash；再覆盖 materials/编辑授权。正式API验证与发布仍走5260799；Runtime未安装/激活。尚无本轮发布证据。
+
+- 续核（2026-10-22 13:28 CST）：源码集成完成：API `29bd0b302a2fef33b4a573c2b16d90e61354f0c9`、Web `b984ddfc2d04054455df67a47ab5a8a54161be9e`、Runtime `0e96676d80e1c10917376a99ce2322ce7951c968` 均已推送develop。API Flow5260799/225与Web4403172/288为SUCCESS，仅CI，未部署。Web发布前还需冻结新版本；不得冒用CI-only为已发布。
+- 静态PNG/JPEG/WebP/GIF/BMP/TIFF/HEIC/HEIF/AVIF共9种真实模型carrier语义验证全PASS，正常profile加载同份evidence重新measure得到contractReady=true；模型gpt-6-luna、CLI0.161.0。测试使用合成色块和可追溯HEVC fixture，隔离目录，无生产任务/注册/实时配置写入。HEIF并非支持所有编码；动图、多页明确拒绝并要求选帧/页；损坏/格式不符明确报错。
+- 原字节/hash保留，非PNG统一派生PNG并绑定来源；修复解码器日期元数据导致重试派生hash不稳定。API不再静默丢弃不支持图片，上传/MIME alias、预览和四个当前技能manifest同步；旧controlled-image-v3/native-bounty非此次扩展范围。
+- 本地诊断：Runtime integration-final 273pass/1skip/0fail，codec-last18pass，host/payload104pass（早于最终少量包装/version变更，不冒充最终整tree验收）；Web31pass。正式API测试数量尚未取同Run完整摘要，不填估算。日志位于/var/tmp/cyf-image-codec-probe-20261022。
+- Runtime1.2.4制品准备于/home/isp/apps/cyf-agent-runtime-v1/releases/1.2.4，制品闭包与实际服务环境配置validate通过；外置release-record/manifest已写，manifest SHA256 2b112fe911470c1b343e33cb0a54a988ecba740b42aa7e5bbbe8343ac2cee483。未切current、未重启、未改live profile、未升级线上安装技能registry；生产仍1.2.3/PID186282。
+- 只读阻塞复核：林冲turn_7b510827ffc8e7523e1897ca260a1f39a0566984仍DISPATCHED；吴用事项497/pwe_8c1dd5c5b302e8495a2deb255b3038c131fb8d8ad4705fd8f8bdf9bae517仍QUEUED、provider_started为空。不能据旧记录断言正在计算，也不能擅自取消/重跑来取得重启窗口。共享实例切换须协调；根盘可用约747MiB，备份前需核实容量，不能删除他人文件。
+- 持久证据：evidence/implementation/common-image-input-20261022（9例真实turn、carrier evidence/readiness、只读在途与prepared摘要）；完整控制面/var/tmp/cyf-common-image-flow-20261022。下一步：协调共享Runtime维护窗口→准备实际技能registry更新和能力配置→冻结前后端版本及同Run Flow制品→按恢复规范统一切换→专用新事项验收。原505/507/497未修改。当前结论是编码/CI完成，不是生产修复完成。
+
+## 去除文件存储格式白名单（2026-10-22，用户明确授权，实施中）
+- Owner：当前单 Agent。范围：个人工作空间上传/追加/原字节存储不按 MIME 或扩展名白名单拒收；前端不拦截未知格式；移除存储配置项。保留身份/ACL、幂等、文件大小、路径/完整性检查及预览安全边界；不放宽 Agent/技能真实执行能力，不修改原事项。
+- 远端定向核对：API develop 29bd0b302a2fef33b4a573c2b16d90e61354f0c9/tree f9be198f9812b966796d20f3b4de5853af731f2b；Web develop 7c7a00897bd87418932cb7c757bce2741fd2ad7c/tree b5b613e87dbf94cc8f1373bd17cfa3d8bfc45487。独立worktree /var/tmp/cyf-unrestricted-{api,web}-20261022，branch codex/unrestricted-file-upload-20261022。接口规范1.2保持不变。
+- 当前生产已部署 API1.16.27/Flow226、Web1.16.41/Flow290、Runtime1.2.4。JPEG新事项511读取蓝色成功；跨账号AVIF在存储配置白名单处400，不能宣称九格式端到端验收完成。生产配置仍有7种MIME，图片仅PNG/JPEG；不是用户要求保留限制。
+- 最早验证：存储任意合法MIME roundtrip、无类型回退octet-stream、无扩展/不匹配扩展可上传、恶意路径拒绝、预览不执行HTML/SVG、ACL/大小/hash回归。正式前后端Flow及版本发布，证据 /var/tmp/cyf-unrestricted-release-20261022；不使用本机构建生产制品。
+
+- 上线收口：API `1d05101d267bc0e0cf50678fb6d80cb967136d34` / tree `ca05f21f1d6f7cbf42f3ae0b85182045c739f376`，版本1.16.28，Flow5260799/228 SUCCESS，部署71607631 Success/healthy；Web `ddda0d34647074b973d6b95e869c8fb6ad4434b1` / tree `d484a4c64222678a5471847ed9df9545fcdecf0a`，版本1.16.42，Flow4403172/291 SUCCESS，部署71607153 Success/healthy。
+- 正式后端2828项/0失败/0错误/122跳过，5个本次workspace回归类确实入选；ChatMaterialsImageContractTest 3项也已选入。前端3250项/3248通过/2pending/0失败。后端同Run制品75712d6d8fdd08e0950c1bc88dd9a1cfc72455118e62b25db1ccfa26001ff701，JAR0bb2752967dcd7d03a15f5649ee22975cd3baee906d325c728d6333983de80b0；前端制品f830d832812e089bce88e2031be88c38b25fc739a93e70f2eafa2cbef24e1875，公网入口与Hall资源匹配。
+- 生产7条storage.allowed-mime-types配置已在新代码verified后备份并移除，读回确认；仅移除已废弃属性、不额外重启。备份/home/isp/baks/cyf-unrestricted-upload-1.16.28-20261022。保留max-content-bytes、执行能力列表、ACL/hash/路径/防嗅探和强制附件下载。无新增通配白名单或兼容分支。
+- ziyue账号真实9种图片+6种任意/无扩展/不匹配扩展格式上传及原字节hash回读15/15通过；HTML/SVG等不启用预览。生产浏览器主账号.custom上传成功、accept为空、正确提示无法预览。持久证据evidence/implementation/unrestricted-file-upload-20261022，原始/私密控制面/var/tmp/cyf-unrestricted-release-20261022。
+- 端到端边界：新跨账号测试512创建请求30秒传输超时，随后GET原幂等键确认仅创建一次，再明确点将一次；AVIF301字节/hash进入合法grant，但bootstrap持续RETRY/BOUNTY_RUNTIME_AWAITING，尚未收到Agent答复。三条WS通道在线不代表typed runtime可受理，未重启Runtime/取消/重跑事项/写DB绕过。下一条动作只读核查TypedDeliberationSessionRegistry声明与currentBinding；不能宣称跨账号Agent读图全链通过。用户原505/507/497未修改。
+- Flow默认已收回CI-only：API保留已验证新增workspace与ChatMaterials selectors；Web恢复进入前保存的PDF线程CI-only配置。部署与正式测试证据精确匹配本轮SHA，不沿用旧Run。Runtime仍1.2.4，既有image-edit技能1.0.0没有绕权益升级。
+
+## 2026-10-22 19:40 +08 跨账号图片闭环续查（单Owner external-main）
+- 已重读10-22资源分工规则和工具索引，接口规范 api/docs/interface-standard.md @27e4b0aead0586f03bccc215eda019429d5d5f52。范围仅本聊天测试512及通用资料读取契约；非目标：用户原事项、技能权益/安装升级、DB绕过、重放既存执行。
+- 19:30–19:39实时远端：API develop7841057b057c012cfa203fb658c1043500be055e、Web669bdc9d6439d1bd7eb71df5ed401202a648f419、Runtime6c2cadc6d2e30c711cf682be0e70eef6d1a34c89。生产API JAR244f2b6e208bf9794cb5da2ce506903b40acc24aa8483dece30e293c154f5e03与PDF发布记录一致；Runtime1.2.5/PID699562/current及新鲜三通道ACK匹配。主API/Web工作区HEAD是旧脏基线，不直接开发。
+- 512已自然ADMITTED（24次），conversation1760458006788，未重复点将。但真实回答1892522为CLARIFY：“AVIF只能换PNG/JPEG”。实际冻结materialsInput包含AVIF、Runtime archive有真实材料receipt及完成的模型turn；并非上传丢失或权限失败。可用image-edit1.0.0技能仅PNG/JPEG，模型把编辑技能输入限制错误用于原生读图；通用FAST_CHAT_INSTRUCTIONS又仅称使用Context Envelope，未明确包含同turn原生媒体。需要明确读取与执行边界，不给模型灌入颜色、不修改历史回执。
+- 独立Runtime worktree /var/tmp/cyf-material-read-runtime-20261022，branch codex/material-read-contract-20261022，base6c2cadc/tree ca8d24a0919c86bff076ce3803ca3410444c4561。最早验证：既有materials-chat定向测试覆盖材料实际传入、编辑MIME不限制阅读、无媒体不捏造；真实隔离同材料/旧技能合同对照，再走正式版本与专用512续问/验收。原始只读证据 /var/tmp/cyf-unrestricted-release-20261022/continuation。
+- 19:57发布预检遇统一发布锁占用，非阻塞取锁失败即退出，尚未停止服务/修改unit。只读确认PDF Owner正在执行吴用技能购买安装（FUNDS_HELD）；本任务不抢锁、不打断安装。Runtime1.2.6已准备且实际配置validate通过，源码7dd120f5d3a61559ebf4347aa63b638f7e6a4153/treea1ad4c9980b962865f2fe50f70e48171549d30df；115项定向回归全通过，512精确报文+AVIF字节隔离真实模型回答红色。后续须待原安装稳定再核对恢复点与切换，不将准备完成当线上修复。
+- 本轮续查交接：Runtime1.2.6已commit/push develop并准备不可变制品；实际配置闭包validate通过。真实隔离模型保留512同一来源/hash/旧编辑技能合同，回答“图片的主要颜色是红色。”；未向生产发送模型结果/未伪造验收。115定向回归通过。持久证据 evidence/implementation/material-read-contract-20261022。
+- 共享维护仍待协调：首次取锁失败未写入activation intent；后续发现另一Owner的PDF安装成功回执pending，已写对方handoff通知但未获确认，未重启699562/未改unit/current/未写生产DB或512。新制品prepared≠active。准备备份空间时只删除本聊天两份历史Flow下载缓存（摘要留证），不删除活动制品、备份或其他Owner证据。
+- 下一步需明确共享维护窗口，再复核安装/在途/UNKNOWN与pending结果；复用continuation/activate.py但须按当时实际状态更新基线并审查，不机械重跑。停写完整备份后切1.2.6、核验身份与三通道、更新current；最后正常续问512并在真实页面验收所选文字成果。仍未完成线上业务验收，不称“流程跑通”。
+
+### 2026-10-22 21:28 用户继续授权后复核并推进
+- 已重读规则/索引/Runtime AGENTS；唯一Owner external-main，无子Agent。仍使用已推远端候选7dd120f5/treea1ad4c99及已验证不可变Runtime1.2.6，不重复编译或覆盖其他Owner源码。当前699562/1.2.5；远端develop仍7dd120f5。
+- PDF Owner20:23实操已结束，无正在写入的聊天pending/processing；安装本地成功但回执pending、后端INSTALLING仍未解决。统一发布锁当前无占用。用户在得知共享维护阻塞后再次要求继续，本轮采用保留回执/UNKNOWN的温和维护，非重做安装或修改原事项。21:28只读基线及待回执字节hash存continuation/preflight-2127.json、pdf-pending-before.json；当前根盘927MiB可用，既有完整停写备份约668MiB，记录实际空间而非设新门槛。
+- 本轮目标先沿原恢复机制完整停写备份、切换Runtime1.2.6，核对回执/身份/通道，再对本聊天512续问并验收。PDF原514与用户原事项不写入；不能把新Runtime上线等同其PDF链路修复。
+- 21:39维护失败：完整状态已增长至约2.4GiB，gzip备份达到905MiB耗尽根盘，未修改unit/未切新版本。删除本次独有的不完整state.tar.gz释放空间，21:40已启动原1.2.5/PID825655，之后三通道新鲜健康回读留old-runtime-restored.json。保留原失败日志及恢复记录，不将原备份当成功。首次恢复启动受满盘影响失败，释放空间后成功，未删其他数据/备份。
+- 空间整改采用同范围完整tar备份+单线程低内存xz压缩；代表性292309256字节引擎只读压缩实测87000516字节，原状态全量仍保留，不跳过HOME/授权/WAL。r2独立备份/激活记录和再次核验，旧失败证据不覆盖；恢复依据当前实际PID及稳定在途，非盲重试同gzip输入。
+- 22:38全量在线只读xz体积测量完成791983248字节（tar因活态SQLite变动返回1，仅测量，不作一致备份）；实时可用1327312896字节后重新核验在途/身份/制品/锁，r3正常停写。PDF原安装回执已自然acknowledged、DB SUCCEEDED，未手工改状态或重做安装。
+- 23:10完整停写state.tar.xz已归档、tar全量读取及SHA256校验成功，备份路径/home/isp/baks/cyf-material-read-runtime-1.2.6-20261022-r3；原unit已保留。温和维护切至Runtime1.2.6/PID856671。服务已启动，尚待新PID的三通道心跳核验；初次健康读取仍旧PID，不能冒称健康完成。原失败及r3执行记录均留continuation/，当前尚未512业务验收。
+- 23:22新PID856671/Runtime1.2.6三通道新鲜ACK全部ready，身份/配置hash与两个既存RESULT_UNKNOWN逐项核验未变，current已原子更新。初始化经历约11分钟，期间旧健康文件不视为新服务健康。完整备份SHA256 22121df9175695db95c27f27ff5559c8a08bf4ab32ba1e9224bcd56d3e7631a1。
+- 23:24以ziyue在512原议事点击回答此问，仅续问一次，请求6a5fcedaa869b124d718cf852f7c6f78bcef714f/turn_393471a8d4825945c6289aa04b1362c92e143876。原AVIF301字节/hash2847403c…f3e6b5a在本次LOCAL_IMAGE receipt中匹配；23:28真实ANSWER“图片的主要颜色是红色。”、deliverable=true，message1895141，随后自动提交文字成果。
+- 23:39使用卡片“验收此版”选中真实文字成果，原验收操作review_a4a33b3ac9f9779abc03cb688caf24f50dd70ff2f17a75262bd069cbd676f5be COMMITTED，任务512 COMPLETED/version4、交付ACCEPTED/version1。首次POST因测试guard未放行delivery-review-operations而在网络前阻断（非产品错误）；GET原intent404后，通过界面“继续原验收”发送同一持久化intent，未创建新key/重复交付。23:40刷新首页、重新打开详情仍已完成/其他用户吴用在线。
+- 持久证据material-read-contract-20261022已补生产answer/carrier/验收receipt/context/task、激活/备份/健康、刷新截图；release-record更新active-channel-and-task512-business-verified，feature-guide回写读取/技能能力边界。原始响应与guard记录保留本聊天browser/material-read-512-live，不接管PDF514或原用户事项。
+- 结论：本任务AVIF跨账号读取→文字成果→用户验收闭环通过，不等同任意格式均可执行或去水印完成。根盘仍仅约273MiB可用，属于容量风险；未删他人文件、历史备份或活动制品，后续清理/扩容须另行协调。

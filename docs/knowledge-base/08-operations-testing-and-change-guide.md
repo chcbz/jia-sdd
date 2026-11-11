@@ -1,3 +1,5 @@
+> **2026-11-06 现行规则：** 用户告知云效额度用完，CYF 默认改为本地测试、构建、打包和受控部署；不自动启动 Flow。正式证据绑定真实本地构建批次、完整 commit/tree、必要测试与制品 SHA-256，不伪造 Run/CI 身份。保留发布授权、身份/ACL、锁、备份、可恢复安装与线上验收；develop 不自动部署。Gradle 仍先读构建文件并经现有编排器串行执行。下文冲突的 Flow-only/禁止本地构建说明仅作历史，完整规则见根 `AGENTS.md`“本地构建与部署（2026-11-06 用户最新决定）”。本次仅改规则，未改工具/云端配置或实际构建部署；旧 Flow-only 安装器须明确适配本地来源并验证后才能使用。
+
 # 运维、测试与变更指南
 
 ## 运行配置线索
@@ -6,15 +8,17 @@
 
 前端 Vite dev server 默认 8080 并使用本地 TLS 文件；Flow 生产构建输出 `web/dist/`。构建/测试/部署策略见 [`docs/aliyun-flow-cicd-strategy.md`](../aliyun-flow-cicd-strategy.md)，部署运行细节见 [`docs/DEPLOYMENT.md`](../DEPLOYMENT.md)。
 
-## 验证选择
+## 验证选择（2026-10-22资源分工更新）
+
+Flow卸载高内存测试/构建/打包并执行授权部署；本机可做轻量检查、查询、协调和上线核验。按实际负载而非工具名称划分。本机不生产打包，Run本轮执行完即结束，不挂外部配对/ready文件/验收等待；详细策略见根AGENTS及上述部署策略。本次仅改规则，未修改工具或云端配置。
 
 | 改动范围 | 最小验证 | 补充验证 |
 | --- | --- | --- |
 | 根仓知识/规格 | Markdown 链接、路径、git status | 审阅子模块 SHA 是否正确 |
-| Web 一般改动 | Flow Web CI-only：`npm ci`、相关测试、Vite build | 对应 Mocha/组件测试摘要与制品 SHA |
-| 聚义厅 UI/逻辑 | Flow Web CI-only + 相关 `web/tests/` | 地图、遮挡、scene/SSE、public beta smoke 脚本 |
-| 后端领域改动 | 本地 orchestrator：固定 commit/tree 的目标 Gradle 模块 test | `validateLayering`、`bootJar`、本地 build ID/日志与制品摘要，必要时隔离集成/数据库验证 |
-| 身份、ACL、迁移、事务 | 前端 Flow / 后端本地专项测试及数据恢复计划 | Owner 自检，保留隔离 fixture、原子性及授权；不另设 Reviewer，生产动作按实际授权 |
+| Web 一般改动 | 轻量定向检查可本机；重型测试和Vite生产构建走Flow4403172 | 对应 Mocha/组件测试摘要与制品 SHA |
+| 聚义厅 UI/逻辑 | 相关 `web/tests/` 按实际负载分层；重型回归走Flow | 地图、遮挡、scene/SSE、public beta smoke 脚本 |
+| 后端领域改动 | 固定commit/tree经orchestrator：重型模块测试走Flow5260799，低开销诊断可本机 | Flow中的`validateLayering`、fresh `bootJar`、真实Run/日志与制品摘要；相关隔离集成/数据库验证 |
+| 身份、ACL、迁移、事务 | 专项测试按负载分工，重型执行走Flow；保留数据恢复计划 | Owner 自检，保留隔离 fixture、原子性及授权；不另设 Reviewer，生产动作按实际授权 |
 
 ## 变更落点速查
 
@@ -31,7 +35,7 @@
 
 覆盖API6116a104、Web421f628c、Runtime6a9d8d3的2026-10-15实际发布，不是新部署。整体链路见[聚义厅SDD](06-juyiting-end-to-end.md#image-skill-contract)。
 
-- 正式工具继续使用[编排索引](../../ops/orchestration/README.md)：Web绑定Flow4403172的同Run制品，API绑定固定干净源码的本地build/log/JAR SHA；原安装器保留锁、身份、备份、制品校验、健康与业务核验。不得把本轮临时`install-after-prepare`/`finish-tested-cutover`脚本当长期部署接口或恢复已弃用的源码直发方式。
+- 以下工具/制品绑定记录仅描述2026-10-15历史发布，不作为现行执行规则；新任务使用上述2026-10-22资源分工。历史正式工具使用[编排索引](../../ops/orchestration/README.md)：Web绑定Flow4403172的同Run制品，API绑定固定干净源码的本地build/log/JAR SHA；原安装器保留锁、身份、备份、制品校验、健康与业务核验。不得把本轮临时`install-after-prepare`/`finish-tested-cutover`脚本当长期部署接口或恢复已弃用的源码直发方式。
 - Runtime版本化安装只替换制品及其systemd路径，实际配置使用`/home/isp/conf/cyf-agent-runtime-v1`；静态HOME位于`/home/isp/state/cyf-agent-runtime-v1/unified/agents/{角色}/codex-home`。本轮未修改Provider密钥、身份、HOME、资料ACL或费用策略。构建Python须使用已验证3.11工具链；系统python3.6无法安装固定Pillow10.4，不能为过构建而放宽锁定依赖。
 - 先区分安装SUCCEEDED、目录CALLABLE、action接纳、Provider等待、RESULT_COMMITTED、可下载及内容正确六个事实。目录不可用先查认证回执、代际类型、权益和绑定，不重复购买；Provider在途不重复发新动作；下载必须比对manifest的output SHA/byteLength，不能误用result manifest的SHA。
 - 已发生的失败与证据见[验收](../../specs/juyiting-skill-execution/acceptance.md)及其原字节副本索引；OCR仍失败，正式发布不等于全部验收。临时脚本清理保留可恢复备份及摘要清单，不删除原始回执或正式`ops/`工具。

@@ -1,0 +1,45 @@
+✔ native owner collects actual drafts and suspends engine before returning durable result (2926.325167ms)
+✖ lost terminal is reconciled from the original turn and proposal without another model turn (60.671947ms)
+✔ unknown turn acceptance is never treated as permission to create a new turn (830.168014ms)
+✔ expired authority aborts native startup and still suspends its execution-owned adapter (15.046361ms)
+✔ authority revocation cancels pending profile startup, before any model turn exists (12.934027ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6956.420486
+
+✖ failing tests:
+
+test at ../chcbz/isp-install/conf/codex-bridge/test/native-execution.test.mjs:40:1
+✖ lost terminal is reconciled from the original turn and proposal without another model turn (60.671947ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /connection lost/. Input:
+  
+  'Error: SKILL_RESULT_UNKNOWN'
+  
+      at async TestContext.<anonymous> (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/test/native-execution.test.mjs:42:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: SKILL_RESULT_UNKNOWN
+        at runNativeExecution (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/native-execution.mjs:66:35)
+        at async waitForActual (node:assert:646:5)
+        ... 3 lines matching cause stack trace ...
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+      [cause]: Error: connection lost
+          at Object.runTurn (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/test/native-execution.test.mjs:25:57)
+          at async runNativeExecution (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/native-execution.mjs:49:20)
+          at async waitForActual (node:assert:646:5)
+          at async strict.rejects (node:assert:769:25)
+          at async TestContext.<anonymous> (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/test/native-execution.test.mjs:42:3)
+          at async Test.run (node:internal/test_runner/test:1409:7)
+          at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+    },
+    expected: /connection lost/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

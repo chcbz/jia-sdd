@@ -1,0 +1,36 @@
+{
+  "verifiedAt": "2026-11-07T01:57:47.687931+00:00",
+  "query": "SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME,COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='jia' AND TABLE_NAME IN ('economy_account','economy_journal','economy_posting','economy_escrow') AND (COLUMN_NAME LIKE '%wen%' OR COLUMN_NAME LIKE '%micro%') ORDER BY TABLE_NAME,COLUMN_NAME",
+  "rows": [
+    [
+      "jia",
+      "economy_account",
+      "balance_micro",
+      "bigint"
+    ],
+    [
+      "jia",
+      "economy_escrow",
+      "captured_micro",
+      "bigint"
+    ],
+    [
+      "jia",
+      "economy_escrow",
+      "gross_micro",
+      "bigint"
+    ],
+    [
+      "jia",
+      "economy_escrow",
+      "refunded_micro",
+      "bigint"
+    ]
+  ],
+  "status": "BLOCKED_SCHEMA_MISMATCH",
+  "expectedDevelopApi": "638896a16cbf3f6df602a65f9a6c97b4ceb4889b",
+  "requiredFieldExample": "economy_account.balance_wen",
+  "observedFieldExample": "economy_account.balance_micro",
+  "mutations": 0,
+  "reason": "Develop changes monetary units and SQL columns; no backed-up WEN cutover verified. Do not install candidate over MICRO production schema."
+}

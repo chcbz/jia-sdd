@@ -1,0 +1,87 @@
+{
+  "status": "BUILT",
+  "publishable": false,
+  "scope": "selected release baseline; NOT full suite, installer or deployment",
+  "stages": [
+    {
+      "name": "dependencies",
+      "argv": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "seconds": 12.434,
+      "exitCode": 0
+    },
+    {
+      "name": "tests",
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "./node_modules/mocha/bin/mocha.js",
+        "--no-config",
+        "--require",
+        "./tests/setup.js",
+        "--timeout",
+        "10000",
+        "--exit",
+        "--reporter",
+        "mochawesome",
+        "--reporter-options",
+        "reportDir=/home/isp/state/cyf-local-build/tasks/cyf-develop-release-20261107-02/web/test-reports,reportFilename=mochawesome.json,consoleReporter=dot",
+        "tests/app-title.test.js",
+        "tests/home-login-redirect.test.js",
+        "tests/identity-scope.test.js",
+        "tests/interface-wire.test.js",
+        "tests/production-build-flags.test.js",
+        "tests/public-entry-navigation.test.js",
+        "tests/public-pwa-beta-entry.test.js",
+        "tests/pwa-shell-freshness.test.js",
+        "tests/wen-amount.test.js"
+      ],
+      "seconds": 4.216,
+      "exitCode": 0
+    },
+    {
+      "name": "build",
+      "argv": [
+        "node",
+        "/home/isp/wsps/cyf/.worktrees/develop-release-20261107/ops/orchestration/local-web-build.mjs",
+        "/home/isp/wsps/cyf/web/.worktrees/develop-release-20261107",
+        "/home/isp/state/cyf-local-build/tasks/cyf-develop-release-20261107-02/web/dist"
+      ],
+      "seconds": 23.501,
+      "exitCode": 0
+    },
+    {
+      "name": "package",
+      "seconds": 9.267
+    },
+    {
+      "name": "package-integrity",
+      "seconds": 1.669
+    }
+  ],
+  "startedAt": "2026-11-07T01:58:39.122665+00:00",
+  "source": {
+    "commit": "c1e478f633845a448833a3973e732a12a75874aa",
+    "tree": "ea03d165f0dfc9fe065c06e4837f84e558b360ff"
+  },
+  "lockSha256": "c9c7edd9c41ff19e0ca6306101fd7d9ade19113074b23da0be4dea90454cd5a9",
+  "tools": {
+    "/home/isp/wsps/cyf/.worktrees/develop-release-20261107/ops/orchestration/local_web_build.py": "b5221f59d62d97009c3a1e00d69cd899fd5751815376321a88b2b938eb56c3eb",
+    "/home/isp/wsps/cyf/.worktrees/develop-release-20261107/ops/orchestration/local-web-build.mjs": "1a886628824696c642099917c62ce9eec44f6a5093f860bf3ed79b4573ea7de5"
+  },
+  "sparseCheckout": "All production src/public/static and root config present; prototypes and unselected tests omitted; interface-wire mjs suites and fixtures present",
+  "nodeVersion": "v24.22.1",
+  "nodeBinarySha256": "e32e2d16081cf644f88392934288086e7662529d0d43277c34f7aad2207cfafb",
+  "queueSeconds": 0.0,
+  "wallSeconds": 53.806,
+  "artifact": {
+    "path": "/home/isp/state/cyf-local-build/tasks/cyf-develop-release-20261107-02/web/package/web.tgz",
+    "sha256": "5d971174dfe5f7c97062f1651b66c7faa2c18048cd80bddfa76eb410e5e9215b"
+  },
+  "sourceUnchanged": true
+}

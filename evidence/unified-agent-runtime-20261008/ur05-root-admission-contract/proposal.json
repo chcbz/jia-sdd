@@ -1,0 +1,172 @@
+{
+  "format": "ur05-root-admission-proposal-v1",
+  "date": "2026-10-08",
+  "status": "SUBMITTED_FOR_FIELD_FREEZE_NOT_IMPLEMENTED",
+  "worktree": "/home/isp/wsps/worktrees/ur05-local-backend-package-20261008",
+  "branch": "codex/ur05-local-backend-package-20261008",
+  "baseline": {
+    "commit": "ba88d4ed7c635ad4c916d6a9eb2aec97933d6ae3",
+    "tree": "36c1e64447f0b24cf9a43b90e6207c5162e4bc66",
+    "clean": true
+  },
+  "ownedNewPaths": [
+    "ops/ci/aliyun-flow/auto/admit-api-local.py",
+    "ops/ci/aliyun-flow/tests/test_api_local_admission.py",
+    "ops/ci/aliyun-flow/host/cyf-api-local-admit"
+  ],
+  "sourceEdits": 0,
+  "testsRun": 0,
+  "types": {
+    "Identity": {
+      "version": "public token",
+      "buildId": "opaque public token; not numeric FlowRun ordering",
+      "commit": "lowercase hex40",
+      "tree": "lowercase hex40"
+    },
+    "File": {
+      "path": "absolute canonical physical path",
+      "sha256": "lowercase hex64",
+      "size": "positive int, not bool"
+    },
+    "Digest": {
+      "sha256": "lowercase hex64",
+      "size": "positive int, not bool"
+    },
+    "Snapshot": {
+      "role": "build-evidence|invocation-log|bootjar-proof|input|test-report|opencv-jar",
+      "originalPath": "original absolute path in unmodified producer evidence; never executed or trusted as filesystem locator",
+      "file": "File under protected proof root"
+    },
+    "ReportSummary": {
+      "sha256": "hex64 of actual XML bytes",
+      "size": "positive int, not bool",
+      "tests": "nonnegative int, not bool",
+      "failures": "int 0, not bool",
+      "errors": "int 0, not bool",
+      "skipped": "nonnegative int <= tests, not bool"
+    },
+    "RequiredTest": {
+      "task": "exact Gradle task token",
+      "selector": "public token",
+      "fixtureSha256": "hex64",
+      "reports": "nonempty ReportSummary[]; sum(tests-skipped)>0"
+    }
+  },
+  "trustedRootRecord": {
+    "format": "cyf-api-local-trusted-record-v1",
+    "scope": "artifact-admission-only",
+    "batchId": "public token",
+    "identity": "Identity",
+    "package": "Digest",
+    "payloads": "exact map of all five member names to Digest",
+    "buildEvidence": "File under protected proof root",
+    "snapshots": "nonempty Snapshot[]; exact evidence reference closure, unique originalPath, no extras",
+    "installPrecondition": {
+      "canonicalJarSha256": "hex64; independently observed; future installer rechecks under existing release lock"
+    }
+  },
+  "batchAuthority": {
+    "format": "cyf-api-local-batch-authority-v1",
+    "authorityId": "cyf-local-release-controller-v1",
+    "scope": "artifact-admission-only",
+    "batchId": "same token",
+    "identity": "same Identity",
+    "trustedRecordSha256": "hex64 of actual independent trusted record bytes",
+    "verificationRecord": "File under independent authority root"
+  },
+  "verificationRecord": {
+    "format": "cyf-api-local-controller-verification-v1",
+    "authorityId": "cyf-local-release-controller-v1",
+    "batchId": "same token",
+    "identity": "same Identity",
+    "buildEvidenceSha256": "hex64",
+    "package": "same Digest",
+    "payloads": "same five-member Digest map",
+    "invocationLogSha256": "hex64",
+    "bootJarProofSha256": "hex64",
+    "requiredTests": "nonempty RequiredTest[]; exact controller-selected scope; includes :starter:publicArtifactVerifierTest and :starter:poiProductionRuntimeClasspathTest",
+    "observations": {
+      "sourceCleanBefore": true,
+      "sourceCleanAfter": true,
+      "gradleExitCode": 0,
+      "freshBootJar": true,
+      "validateLayering": true,
+      "publicArtifactVerifier": true
+    }
+  },
+  "cli": {
+    "python": "/usr/bin/python3 -I -B <protected-helper> --opt-in --trusted-root ROOT --authority-root AUTHORITY_ROOT --trusted-record RECORD --trusted-record-sha256 SHA --batch-authority AUTHORITY --batch-authority-sha256 SHA --package INGRESS --output NEW_DIRECTORY",
+    "wrapper": "/usr/local/sbin/cyf-api-local-admit --opt-in --trusted-record RECORD --trusted-record-sha256 SHA --batch-authority AUTHORITY --batch-authority-sha256 SHA --package INGRESS --output NEW_DIRECTORY",
+    "wrapperRoots": {
+      "trustedRoot": "/var/lib/cyf-api-local-admission",
+      "authorityRoot": "/var/lib/cyf-api-local-authority"
+    },
+    "wrapperHelper": "/usr/local/libexec/cyf-api-local/admit-api-local.py",
+    "noSideEffectDescribe": "--describe only; no environment code loading, build, download, service or installer commands"
+  },
+  "admittedOutput": {
+    "format": "cyf-api-local-admitted-input-v1",
+    "status": "admitted",
+    "source": {
+      "kind": "local-build-v1",
+      "identity": "Identity"
+    },
+    "authority": {
+      "authorityId": "cyf-local-release-controller-v1",
+      "batchId": "token",
+      "batchAuthority": "File snapshot",
+      "trustedRecord": "File snapshot",
+      "verificationRecord": "File snapshot"
+    },
+    "package": "File snapshot at NEW_DIRECTORY/package.tgz",
+    "payloads": "exact five-member map of File snapshots at NEW_DIRECTORY/payload/<member>",
+    "evidence": {
+      "buildEvidence": "File snapshot",
+      "snapshots": "nonempty Snapshot[]; output file refs under admitted private evidence directory, originalPath and raw evidence bytes unchanged"
+    },
+    "installPrecondition": {
+      "canonicalJarSha256": "same hex64"
+    },
+    "scope": "artifact-admission-only",
+    "productionAuthorized": false
+  },
+  "successStdout": {
+    "format": "cyf-api-local-admission-result-v1",
+    "status": "admitted",
+    "admission": "File reference to admission.json; external digest avoids self-reference",
+    "productionAuthorized": false
+  },
+  "failureStdout": {
+    "format": "cyf-api-local-admission-result-v1",
+    "status": "rejected",
+    "code": "safeCode only"
+  },
+  "safeCodes": [
+    "INPUT_INVALID",
+    "ROOT_REQUIRED",
+    "PATH_UNSAFE",
+    "AUTHORITY_INVALID",
+    "IDENTITY_MISMATCH",
+    "DIGEST_MISMATCH",
+    "EVIDENCE_INVALID",
+    "PACKAGE_INVALID",
+    "JAR_INVALID",
+    "MAIL_RUNTIME_INVALID",
+    "PROVENANCE_INVALID",
+    "OUTPUT_EXISTS",
+    "IO_FAILURE"
+  ],
+  "trustBoundary": "Root-protected independent controller authority authenticates a batch decision. Producer JSON/log/hash checks prove consistency only, never authenticate execution or authorize production.",
+  "notRun": [
+    "actual build",
+    "actual package",
+    "actual admission",
+    "installer",
+    "schema",
+    "recovery",
+    "maintenance",
+    "cutover",
+    "production"
+  ],
+  "installedHelperEquivalence": "UNKNOWN"
+}

@@ -1,0 +1,236 @@
+{
+  "candidate_commit": "f93febe983afe3619e1b5057937d9db330adece0",
+  "candidate_tree": "8289c1a364df862427715e31cb71e3d318e593de",
+  "database": "mmd_final_8289c1a3_20260930_184353",
+  "scope": "current-thread isolated MySQL actual finalization DDL/constraints/locks only; NOT Java initializer lifecycle/module build/Provider/acceptance",
+  "cases": [
+    {
+      "name": "agent_claiming",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "agent_leased",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "agent_null_lease_version_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_asof_lease' is violated."
+    },
+    {
+      "name": "agent_negative_lease_version_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_asof_lease' is violated."
+    },
+    {
+      "name": "agent_submitted_cleared_token",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "agent_submitted_credential_retention_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_asof_lease' is violated."
+    },
+    {
+      "name": "agent_unsafe_version_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_asof_versions' is violated."
+    },
+    {
+      "name": "agent_scope_unique_delivery",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 1062 (23000) at line 2: Duplicate entry '0-client-1-owner-1-delivery-1' for key 'agent_selected_output_finalization.uk_asof_delivery'"
+    },
+    {
+      "name": "agent_owner_isolation",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "agent_case_binary_scope",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "chat_promoting",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "chat_submitted",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "chat_null_delivery_state_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_csof_progress' is violated."
+    },
+    {
+      "name": "chat_accepting_changes_requested",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "chat_completed",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "chat_completed_null_delivery_state_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_csof_progress' is violated."
+    },
+    {
+      "name": "chat_completed_before_acceptance_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_csof_progress' is violated."
+    },
+    {
+      "name": "chat_task_completed_pending_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_csof_terminal' is violated."
+    },
+    {
+      "name": "chat_duplicate_original_key_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 1062 (23000) at line 2: Duplicate entry '0-owner-1-client-1-task-1-key-0001' for key 'chat_selected_output_finalization.uk_csof_request'"
+    },
+    {
+      "name": "chat_owner_isolation",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "chat_bad_original_key_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_csof_key' is violated."
+    },
+    {
+      "name": "chat_precision_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_csof_versions' is violated."
+    },
+    {
+      "name": "item_exact_source_unique",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 1062 (23000) at line 2: Duplicate entry '0-owner-1-client-1-op-1-req-1-step-1-out-1' for key 'chat_selected_output_finalization_item.uk_csofi_source'"
+    },
+    {
+      "name": "item_max_order",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "item_out_of_range_order_rejected",
+      "expected": "reject",
+      "passed": true,
+      "exit": 1,
+      "stderr": "ERROR 3819 (HY000) at line 2: Check constraint 'chk_csofi_order' is violated."
+    },
+    {
+      "name": "item_owner_isolation",
+      "expected": "accept",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    }
+  ],
+  "failures": [],
+  "mysql_identity": [
+    "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock",
+    "/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/data/",
+    "8.0.21",
+    "0",
+    "1"
+  ],
+  "ddl_sha256": {
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-entry-finalization-integration-v1/agent/jia-agent-mapper/src/main/resources/db/agent-selected-output-finalization-v1.sql": "4e1ab0212364e339289973dfc3f44b02e1d217740a2c923621dc206018dd8c4e",
+    "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-entry-finalization-integration-v1/chat/jia-chat-mapper/src/main/resources/db/chat-selected-output-finalization-v1.sql": "0a7c93a85b6e89408448da53b3d2c2659c9907c1a0f6388b9f3645c837c962a1"
+  },
+  "ddl_repeat_passed": true,
+  "table_metadata": "agent_selected_output_finalization\tInnoDB\tutf8mb4_0900_bin\nchat_selected_output_finalization\tInnoDB\tutf8mb4_0900_bin\nchat_selected_output_finalization_item\tInnoDB\tutf8mb4_0900_bin",
+  "index_metadata": "agent_selected_output_finalization\tidx_asof_task\t1\t1\ttenant_id\tSQL_NULL\nagent_selected_output_finalization\tidx_asof_task\t1\t2\tclient_id\tSQL_NULL\nagent_selected_output_finalization\tidx_asof_task\t1\t3\towner_jiacn\tSQL_NULL\nagent_selected_output_finalization\tidx_asof_task\t1\t4\ttask_id\tSQL_NULL\nagent_selected_output_finalization\tidx_asof_task\t1\t5\tphase\tSQL_NULL\nagent_selected_output_finalization\tPRIMARY\t0\t1\ttenant_id\tSQL_NULL\nagent_selected_output_finalization\tPRIMARY\t0\t2\tclient_id\tSQL_NULL\nagent_selected_output_finalization\tPRIMARY\t0\t3\towner_jiacn\tSQL_NULL\nagent_selected_output_finalization\tPRIMARY\t0\t4\toperation_id\tSQL_NULL\nagent_selected_output_finalization\tuk_asof_delivery\t0\t1\ttenant_id\tSQL_NULL\nagent_selected_output_finalization\tuk_asof_delivery\t0\t2\tclient_id\tSQL_NULL\nagent_selected_output_finalization\tuk_asof_delivery\t0\t3\towner_jiacn\tSQL_NULL\nagent_selected_output_finalization\tuk_asof_delivery\t0\t4\tdelivery_id\tSQL_NULL\nchat_selected_output_finalization\tidx_csof_task\t1\t1\ttenant_id\tSQL_NULL\nchat_selected_output_finalization\tidx_csof_task\t1\t2\towner_jiacn\tSQL_NULL\nchat_selected_output_finalization\tidx_csof_task\t1\t3\tclient_id\tSQL_NULL\nchat_selected_output_finalization\tidx_csof_task\t1\t4\ttask_id\tSQL_NULL\nchat_selected_output_finalization\tidx_csof_task\t1\t5\tupdated_at\tSQL_NULL\nchat_selected_output_finalization\tPRIMARY\t0\t1\ttenant_id\tSQL_NULL\nchat_selected_output_finalization\tPRIMARY\t0\t2\towner_jiacn\tSQL_NULL\nchat_selected_output_finalization\tPRIMARY\t0\t3\tclient_id\tSQL_NULL\nchat_selected_output_finalization\tPRIMARY\t0\t4\toperation_id\tSQL_NULL\nchat_selected_output_finalization\tuk_csof_request\t0\t1\ttenant_id\tSQL_NULL\nchat_selected_output_finalization\tuk_csof_request\t0\t2\towner_jiacn\tSQL_NULL\nchat_selected_output_finalization\tuk_csof_request\t0\t3\tclient_id\tSQL_NULL\nchat_selected_output_finalization\tuk_csof_request\t0\t4\ttask_id\tSQL_NULL\nchat_selected_output_finalization\tuk_csof_request\t0\t5\tidempotency_key\tSQL_NULL\nchat_selected_output_finalization_item\tPRIMARY\t0\t1\ttenant_id\tSQL_NULL\nchat_selected_output_finalization_item\tPRIMARY\t0\t2\towner_jiacn\tSQL_NULL\nchat_selected_output_finalization_item\tPRIMARY\t0\t3\tclient_id\tSQL_NULL\nchat_selected_output_finalization_item\tPRIMARY\t0\t4\toperation_id\tSQL_NULL\nchat_selected_output_finalization_item\tPRIMARY\t0\t5\titem_order\tSQL_NULL\nchat_selected_output_finalization_item\tuk_csofi_source\t0\t1\ttenant_id\tSQL_NULL\nchat_selected_output_finalization_item\tuk_csofi_source\t0\t2\towner_jiacn\tSQL_NULL\nchat_selected_output_finalization_item\tuk_csofi_source\t0\t3\tclient_id\tSQL_NULL\nchat_selected_output_finalization_item\tuk_csofi_source\t0\t4\toperation_id\tSQL_NULL\nchat_selected_output_finalization_item\tuk_csofi_source\t0\t5\trequest_id\tSQL_NULL\nchat_selected_output_finalization_item\tuk_csofi_source\t0\t6\tstep_id\tSQL_NULL\nchat_selected_output_finalization_item\tuk_csofi_source\t0\t7\toutput_id\tSQL_NULL",
+  "enforced_checks": "agent_selected_output_finalization\tchk_asof_digest\tYES\nagent_selected_output_finalization\tchk_asof_lease\tYES\nagent_selected_output_finalization\tchk_asof_phase\tYES\nagent_selected_output_finalization\tchk_asof_versions\tYES\nchat_selected_output_finalization\tchk_csof_delivery_state\tYES\nchat_selected_output_finalization\tchk_csof_key\tYES\nchat_selected_output_finalization\tchk_csof_outcome\tYES\nchat_selected_output_finalization\tchk_csof_progress\tYES\nchat_selected_output_finalization\tchk_csof_stage\tYES\nchat_selected_output_finalization\tchk_csof_state\tYES\nchat_selected_output_finalization\tchk_csof_terminal\tYES\nchat_selected_output_finalization\tchk_csof_versions\tYES\nchat_selected_output_finalization_item\tchk_csofi_hash\tYES\nchat_selected_output_finalization_item\tchk_csofi_order\tYES",
+  "lock_semantics": [
+    {
+      "name": "mmd:mmd_final_8289c1a3_20260930_184353:agent",
+      "holder_connection": 267,
+      "waiter_connection": 268,
+      "observed_state": "User lock",
+      "wait_parameter": -1,
+      "nonowner_release": 0,
+      "holder_release": 1,
+      "waiter_acquired": 1,
+      "waiter_release": 1,
+      "free_after": 1
+    },
+    {
+      "name": "mmd:mmd_final_8289c1a3_20260930_184353:chat",
+      "holder_connection": 267,
+      "waiter_connection": 268,
+      "observed_state": "User lock",
+      "wait_parameter": -1,
+      "nonowner_release": 0,
+      "holder_release": 1,
+      "waiter_acquired": 1,
+      "waiter_release": 1,
+      "free_after": 1
+    }
+  ],
+  "pass": true,
+  "passed_cases": 26,
+  "total_cases": 26,
+  "database_retained_no_foreign_schema_write": true
+}

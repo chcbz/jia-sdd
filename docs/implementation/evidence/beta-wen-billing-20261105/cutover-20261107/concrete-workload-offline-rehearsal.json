@@ -1,0 +1,107 @@
+{
+  "at": "2026-11-07T12:23:38.563912+00:00",
+  "scope": "OFFLINE_REAL_EXISTING_QUOTE_CALCULATOR_WITH_SYNTHETIC_NEW_WORKLOAD_ADAPTER",
+  "apiCommit": "a6eee0d2680a98b6b4d84d796571156c5cb68be7",
+  "apiTree": "bf9433cbb774df0bcee64b2e07996a16b98d88b5",
+  "apiJarSha256": "882db8acee7f48bd5cbe96d7f779c4fef29cdfd4948cbb7d831d3f1b117ba8f5",
+  "coreJarMember": "BOOT-INF/lib/jia-economy-core-1.1.2-SNAPSHOT.jar",
+  "coreJarSha256": "4a96fbfffa745451a7bad44cf497a116ec853de78dfb3781cd46a75e1652a172",
+  "runnerSha256": "a1b9b355cb45cb7595464d435fe99acb3f5034bc63fc92eb531d23759c0562e8",
+  "javaProbeSha256": "598748d19396a10504cfaa9210aa37b3f150e6edcb1dacc1338c7e2afa7ee472",
+  "fixtureSha256": "5f0cf9d36c285c7d54e7579bf0637edce4cd04e1c948bc17e535fcbea7d4e213",
+  "command": [
+    "/home/isp/apps/jdk21/bin/java",
+    "--class-path",
+    "/home/isp/state/cyf-local-build/tasks/cyf-beta-wen-cutover-20261107/estimation-rehearsal/economy-core.jar",
+    "/home/isp/state/cyf-local-build/tasks/cyf-beta-wen-cutover-20261107/estimation-rehearsal/QuoteProbe.java"
+  ],
+  "javaVersion": "java version \"21.0.8\" 2025-07-15 LTS\nJava(TM) SE Runtime Environment Oracle GraalVM 21.0.8+12.1 (build 21.0.8+12-LTS-jvmci-23.1-b72)\nJava HotSpot(TM) 64-Bit Server VM Oracle GraalVM 21.0.8+12.1 (build 21.0.8+12-LTS-jvmci-23.1-b72, mixed mode, sharing)\n",
+  "paidModelCalls": 0,
+  "productionWrites": false,
+  "actualRecommendationModelExercised": false,
+  "calibratedParameters": false,
+  "observedTaskCostComparison": false,
+  "modelRepeatabilityMeasured": false,
+  "cases": [
+    {
+      "id": "short_text",
+      "label": "单轮短文本",
+      "inputTokens": 1500,
+      "outputTokens": 1000,
+      "status": "QUOTED",
+      "estimatedYuan": "0.004347135000",
+      "quoteWen": 1,
+      "productionQuote": false,
+      "toolPriceSynthetic": false
+    },
+    {
+      "id": "report",
+      "label": "资料分析、撰写、检查",
+      "inputTokens": 25500,
+      "outputTokens": 5500,
+      "status": "QUOTED",
+      "estimatedYuan": "0.035445870000",
+      "quoteWen": 4,
+      "productionQuote": false,
+      "toolPriceSynthetic": false
+    },
+    {
+      "id": "code",
+      "label": "代码分析、修改、读测试结果",
+      "inputTokens": 52000,
+      "outputTokens": 8000,
+      "status": "QUOTED",
+      "estimatedYuan": "0.061528680000",
+      "quoteWen": 7,
+      "productionQuote": false,
+      "toolPriceSynthetic": false
+    },
+    {
+      "id": "images_missing",
+      "label": "两张图片：真实工具价未登记",
+      "inputTokens": 3700,
+      "outputTokens": 1000,
+      "status": "MISSING_TOOL_PRICE",
+      "estimatedYuan": null,
+      "quoteWen": null,
+      "productionQuote": false,
+      "toolPriceSynthetic": false
+    },
+    {
+      "id": "images_synthetic",
+      "label": "两张图片：仅用合成0.2元/张检查加法",
+      "inputTokens": 3700,
+      "outputTokens": 1000,
+      "status": "QUOTED",
+      "estimatedYuan": "0.405818473000",
+      "quoteWen": 41,
+      "productionQuote": false,
+      "toolPriceSynthetic": true
+    },
+    {
+      "id": "report_larger_output",
+      "label": "报告输出预算翻倍的敏感性样例",
+      "inputTokens": 31500,
+      "outputTokens": 11000,
+      "status": "QUOTED",
+      "estimatedYuan": "0.057850335000",
+      "quoteWen": 6,
+      "productionQuote": false,
+      "toolPriceSynthetic": false
+    },
+    {
+      "id": "report_extra_revision",
+      "label": "报告增加一轮修改的敏感性样例",
+      "inputTokens": 37500,
+      "outputTokens": 8500,
+      "status": "QUOTED",
+      "estimatedYuan": "0.053503200000",
+      "quoteWen": 6,
+      "productionQuote": false,
+      "toolPriceSynthetic": false
+    }
+  ],
+  "boundaryChecksPassed": 3,
+  "result": "OFFLINE_CALCULATION_PASS_NOT_ESTIMATION_ACCURACY_PASS",
+  "wallSeconds": 3.955
+}

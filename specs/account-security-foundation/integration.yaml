@@ -1,0 +1,38 @@
+feature_id: account-security-foundation
+status: implementing
+owners:
+  api: critical_worker
+  web: balanced_worker
+contract:
+  api_or_event_changes: >-
+    Add account_state/auth_epoch, uid/token_kind JWT account validation, Bearer-user-only
+    POST /user/me/sessions/revoke-all, login/refresh/API-key gates, context and CORS hardening.
+  compatibility: >-
+    Legacy user JWTs without auth_epoch remain valid only after byte-exact unique jiacn resolution to ACTIVE/epoch zero;
+    only explicit machine tokens and a strict legacy machine shape bypass user lookup. Additive columns remain on code rollback.
+  migration: pending_implementation_and_production_review
+  acl_risk: p0
+pinned_revisions:
+  api_commit: null
+  web_commit: null
+  root_base_commit: null
+verification:
+  architect: accepted_2026-08-24
+  independent_security_review: pending
+  api: pending
+  migration: pending
+  web: pending
+  integration: pending
+  production_oauth_client: pending
+acceptance:
+  status: pending
+  evidence: pending
+
+delivery_reconciliation:
+  as_of: "2026-09-06T09:21:00.295553+08:00"
+  scope: historical_evidence_not_runtime_owner_ledger
+  status_document: delivery-status.md
+  archive: "未归档"
+  source_snapshot: "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+  original_pins_preserved: true
+  root_gitlinks_updated: false

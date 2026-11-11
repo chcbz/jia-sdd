@@ -1,0 +1,31 @@
+{
+  "queriedAt": "2026-10-16T11:40:18.607Z",
+  "pipeline": "5260799",
+  "name": "cyf-api-kit-ci",
+  "configSha256": "a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a",
+  "structuralLines": [
+    "name: cyf-api-kit-ci",
+    "    name: cyf-api-kit-ci",
+    "    branch: develop",
+    "    triggerEvents:",
+    "    name: Backend develop CI",
+    "        name: Changed-scope tests and bootJar",
+    "        runsOn: public/cn-beijing",
+    "        timeoutMinutes: 60",
+    "            name: Changed-scope tests, layering, and bootJar",
+    "            step: JavaBuild",
+    "                export CYF_FLOW_GRADLE_ACTIVE=1",
+    "                export CYF_FLOW_BUILD_ROOT=\"$PWD/_cyf_flow_build\"",
+    "                test ! -e \"$CYF_FLOW_BUILD_ROOT\"",
+    "                mkdir -p \"$CYF_FLOW_BUILD_ROOT\"",
+    "                cat > \"$CYF_FLOW_BUILD_ROOT/owner-fixture-diagnostics.gradle\" <<'OWNERDIAGNOSTICS'",
+    "                  --init-script ops/ci/aliyun-flow/cold-init.gradle \\",
+    "                  --init-script \"$CYF_FLOW_BUILD_ROOT/owner-fixture-diagnostics.gradle\" \\",
+    "                  :starter:bootJar > \"$CYF_FLOW_BUILD_ROOT/gradle-output.log\" 2>&1",
+    "                cat \"$CYF_FLOW_BUILD_ROOT/gradle-output.log\"",
+    "                root = Path(os.environ['CYF_FLOW_BUILD_ROOT'])",
+    "                root = Path(os.environ['CYF_FLOW_BUILD_ROOT'])",
+    "            name: Upload same-run release artifact",
+    "            step: ArtifactUpload"
+  ]
+}

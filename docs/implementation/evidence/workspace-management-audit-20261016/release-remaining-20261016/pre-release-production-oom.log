@@ -1,0 +1,141 @@
+-- Logs begin at Tue 2026-10-13 21:33:05 CST, end at Fri 2026-10-16 19:37:10 CST. --
+Oct 16 19:03:59 iZwz9j3ip2unzhwij0bs30Z kernel: C2 CompilerThre invoked oom-killer: gfp_mask=0x100dca(GFP_HIGHUSER_MOVABLE|__GFP_ZERO), order=0, oom_score_adj=0
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel: CPU: 0 PID: 1164486 Comm: C2 CompilerThre Tainted: G           OE     5.10.134-19.1.al8.x86_64 #1
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel: Hardware name: Alibaba Cloud Alibaba Cloud ECS, BIOS 449e491 04/01/2014
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel: Call Trace:
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel:  dump_stack+0x63/0xa0
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel:  dump_global_header+0x4a/0x130
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel:  oom_kill_process+0x10f/0x220
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel:  out_of_memory+0x10a/0x410
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel:  __alloc_pages_may_oom+0x107/0x190
+Oct 16 19:04:00 iZwz9j3ip2unzhwij0bs30Z kernel:  __alloc_pages_slowpath+0x513/0x930
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  __alloc_pages_nodemask+0x3a9/0x3e0
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  alloc_pages_vma+0x80/0x270
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  do_anonymous_page+0xd7/0x4c0
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  __handle_mm_fault+0x511/0x5f0
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  handle_mm_fault+0xf7/0x2e0
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  do_user_addr_fault+0x185/0x3e0
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  ? sched_clock+0x5/0x10
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  exc_page_fault+0x68/0x130
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  ? asm_exc_page_fault+0x8/0x30
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel:  asm_exc_page_fault+0x1e/0x30
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: RIP: 0033:0x7f06c7254f5e
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Code: e8 57 b7 fb ff 4c 8b 9d 58 ff ff ff 48 8d 05 79 31 d9 00 c6 43 5f 00 80 63 68 f0 48 83 c4 20 48 89 03 48 c7 43 60 00 00 00 00 <4c> 89 5b 70 48 c7 83 b8 00 00 00 00 00 00 00 48 c7 43 78 00 00 00
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: RSP: 002b:00007f06c4fd1f70 EFLAGS: 00010202
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: RAX: 00007f06c7fe80c0 RBX: 00007f06aebc4f90 RCX: 0000000000000002
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: RDX: 0000000000000000 RSI: 00007f06103b3fe0 RDI: 00007f061c660530
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: RBP: 00007f06c4fd2020 R08: 0000000000000000 R09: 000000000000003a
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: R10: 0000000000000000 R11: 00007f064f030930 R12: 00007f06c4fd26e8
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: R13: 0000000000000000 R14: 0000000000000001 R15: 0000000000000190
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Mem-Info:
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: active_anon:138001 inactive_anon:638409 isolated_anon:0
+                                                 active_file:18318 inactive_file:19259 isolated_file:0
+                                                 unevictable:0 dirty:36 writeback:13
+                                                 slab_reclaimable:78773 slab_unreclaimable:20904
+                                                 mapped:29386 shmem:222911 pagetables:5098 bounce:0
+                                                 free:21398 free_pcp:69 free_cma:0
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 active_anon:552004kB inactive_anon:2553636kB active_file:73272kB inactive_file:77036kB unevictable:0kB isolated(anon):0kB isolated(file):0kB mapped:117544kB dirty:144kB writeback:52kB shmem:891644kB shmem_thp: 0kB shmem_pmdmapped: 0kB anon_thp: 104448kB writeback_tmp:0kB kernel_stack:12144kB pagetables:20392kB all_unreclaimable? no
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 DMA free:14848kB min:272kB low:340kB high:408kB reserved_highatomic:0KB active_anon:0kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0kB present:15992kB managed:15360kB mlocked:0kB bounce:0kB free_pcp:0kB local_pcp:0kB free_cma:0kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: lowmem_reserve[]: 0 2774 3677 3677 3677
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 DMA32 free:54356kB min:50784kB low:63480kB high:76176kB reserved_highatomic:0KB active_anon:378888kB inactive_anon:2029188kB active_file:33668kB inactive_file:33812kB unevictable:0kB writepending:104kB present:3129144kB managed:2867000kB mlocked:0kB bounce:0kB free_pcp:260kB local_pcp:260kB free_cma:0kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: lowmem_reserve[]: 0 0 902 902 902
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 Normal free:16388kB min:16524kB low:20652kB high:24780kB reserved_highatomic:0KB active_anon:173404kB inactive_anon:524532kB active_file:39604kB inactive_file:42924kB unevictable:0kB writepending:192kB present:1048576kB managed:931120kB mlocked:0kB bounce:0kB free_pcp:16kB local_pcp:12kB free_cma:0kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: lowmem_reserve[]: 0 0 0 0 0
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 DMA: 0*4kB 0*8kB 0*16kB 0*32kB 0*64kB 0*128kB 0*256kB 1*512kB (M) 0*1024kB 1*2048kB (M) 3*4096kB (M) = 14848kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 DMA32: 2053*4kB (UME) 1523*8kB (UME) 1257*16kB (UME) 417*32kB (UME) 10*64kB (UM) 0*128kB 0*256kB 0*512kB 0*1024kB 0*2048kB 0*4096kB = 54492kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 Normal: 752*4kB (UME) 459*8kB (UME) 329*16kB (UME) 78*32kB (UME) 35*64kB (UME) 2*128kB (M) 0*256kB 0*512kB 0*1024kB 0*2048kB 0*4096kB = 16936kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=1048576kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: 260640 total pagecache pages
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: 144 pages in swap cache
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Swap cache stats: add 119789072, delete 119791150, find 20740164/61164457
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Free swap  = 1079040kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Total swap = 2097148kB
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: 1048428 pages RAM
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: 0 pages HighMem/MovableOnly
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: 95058 pages reserved
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: 0 pages cma reserved
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: 0 pages hwpoisoned
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: Tasks state (memory values in pages):
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    537]     0   537    28473      446   225280     5780             0 systemd-journal
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    590]     0   590     4569       31    53248      212         -1000 auditd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    613]     0   613     8022        0    81920      490         -1000 systemd-udevd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    625]    81   625     2345      168    53248      326          -900 dbus-daemon
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    627]     0   627    87966       15   188416     8518             0 firewalld
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    628]     0   628     4698      129    65536      346             0 systemd-logind
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    631]     0   631   121145        0   118784     1158             0 CmsGoAgent.linu
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    632]    70   632     2098       23    53248      112             0 avahi-daemon
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    633]     0   633   178256        0   106496      586             0 updater
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    635]    70   635     2098        0    53248      101             0 avahi-daemon
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    652]     0   652   186493      661   221184     2982             0 hbrclient
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    654]     0   654    20001      142    57344       88             0 irqbalance
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    658]   998   658    22312      193    81920      231             0 chronyd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    691]     0   691   288590      460   241664     4562             0 exe
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [    724]   192   724     1855        0    53248      127             0 systemd-network
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1050]   999  1050   380901        7   163840     1450             0 polkitd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1081]     0  1081   118745      153   163840     3464             0 tuned
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1082]     0  1082    55685       90    69632      136             0 mysqld_safe
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1109]     0  1109   172511      351    86016     1395             0 aliyun-service.
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1135]     0  1135   330594      747   233472     2781             0 runner
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1139]     0  1139     9100      173    86016      909             0 AliYunDunUpdate
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1166]     0  1166    87333      133   331776      692             0 rsyslogd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1174]     0  1174    55747      143    65536      212             0 crond
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1178]     0  1178      952       70    45056       72             0 atd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1182]     0  1182     3428       46    69632      240         -1000 sshd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1288]     0  1288    55215        0    61440       30             0 agetty
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   1289]     0  1289     2906        3    65536      237             0 login
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2005]     0  2005    28272      730   294912     2173             0 AliYunDun
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2056]     0  2056    11602        1    86016      281             0 master
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2062]    89  2062    11621        0    90112      285             0 qmgr
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2735]     0  2735    59705     1365   516096    15637             0 AliYunDunMonito
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2909]     0  2909     5093      419    77824        0             0 systemd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2914]     0  2914    26686      198    98304      521             0 (sd-pam)
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2920]     0  2920     2194      218    49152        0             0 dbus-daemon
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   2923]     0  2923    55616      143    86016        0             0 bash
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   3380]     0  3380    56811      275    77824        0             0 top
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   3614]     0  3614   191368     1788   442368        0             0 node
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   3625]     0  3625   288170    39335  1953792        0             0 codex
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   6535]     0  6535    64242      524    65536        0             0 redis-server
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   6541]     0  6541     2391      756    53248        0             0 nginx
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   6651]     0  6651      951       45    49152        0             0 epmd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   7747]     0  7747   730974    19172   376832        0             0 beam.smp
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   7814]     0  7814      605       64    45056        0             0 erl_child_setup
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   7869]     0  7869      950       29    45056        0             0 inet_gethost
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [   7870]     0  7870      970       35    45056        0             0 inet_gethost
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [  14169]     0 14169   274237      255   176128        0             0 xdg-document-po
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [  14172]     0 14172   112166      175   106496        0             0 xdg-permission-
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [  14178]     0 14178      609       18    45056        0             0 fusermount
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [  14192]   172 14192    38812        0    65536      160             0 rtkit-daemon
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [  14223]     0 14223    77109      204   102400        0             0 at-spi-bus-laun
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [  14285]     0 14285   113706        0   118784      352             0 upowerd
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [ 398043]  1001 398043   539895     1552  1728512   161904             0 mysqld
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [ 483160]  1000 483160     2455     1202    53248        0             0 nginx
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [ 708509]     0 708509  2950939      771  1576960    15911             0 node
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [ 709527]     0 709527   103409      456   643072     5160             0 codex
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [ 709908]     0 709908   102359      289   638976     4917             0 codex
+Oct 16 19:04:01 iZwz9j3ip2unzhwij0bs30Z kernel: [ 710071]     0 710071   104380      236   692224     5785             0 codex
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [ 710325]     0 710325      884        0    45056       42             0 bwrap
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [ 710326]     0 710326      884        0    45056       55             0 bwrap
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [ 710327]     0 710327   106341     1312   692224     5558             0 codex
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [ 710400]     0 710400     1239      128    45056      119             0 slirp4netns
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [ 998072]     0 998072     3918      143    69632      315             0 sshd
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [ 998128]     0 998128     4058      199    69632      288             0 sshd
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1086931]     0 1086931     3918      223    73728      315             0 sshd
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1086947]     0 1086947     3918      202    73728      279             0 sshd
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1090849]   987 1090849   603501   196120  2011136        0             0 java
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1143646]    89 1143646    11608      409    94208      260             0 pickup
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1160194]     0 1160194     3918      491    65536      310             0 sshd
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1160209]     0 1160209     3918      345    65536      268             0 sshd
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1160211]     0 1160211    55616      783    69632        0             0 bash
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1160244]     0 1160244   191369     2214   450560        0             0 node
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1160259]     0 1160259   108824     6065   675840        0             0 codex
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1163777]     0 1163777    58811     2228    94208        0             0 python3
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1163841]     0 1163841    60600     3922   106496        0             0 python3
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1163870]     0 1163870   725064    23887   491520        0             0 java
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1163914]     0 1163914   836949   153923  1732608        0             0 java
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1164469]     0 1164469   807549    30739   548864        0             0 java
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1164626]     0 1164626   304228    82408   962560        0             0 mysqld
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: [1164725]     0 1164725    70715     2964    53248        0             0 exe
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-0.slice/session-8.scope,task=java,pid=1090849,uid=987
+Oct 16 19:04:02 iZwz9j3ip2unzhwij0bs30Z kernel: Out of memory: Killed process 1090849 (java) total-vm:2414004kB, anon-rss:784480kB, file-rss:0kB, shmem-rss:0kB, UID:987 pgtables:1964kB oom_score_adj:0

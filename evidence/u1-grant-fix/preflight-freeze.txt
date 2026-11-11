@@ -1,0 +1,10 @@
+task=MMD-U1-AGENT-GRANT
+base_commit=03b992f40102b3e811822d71cece94b55470f699
+base_tree=52d452dc172042b17cac1da257ef97628dac0079
+owned_source=agent/**
+api_catalog=POST /agent/tasks/{taskId}/assign (legacy-compatible; v2 JWT/idempotent grant path); POST /agent/tasks/{taskId}/execution-authorizations/{grantId}/revoke; internal service assignAndGrant/revoke/admit/resolveAndAdmit
+event_catalog=no new execution/provider event; assignment delegates existing versioned assignment event only
+lock_order=owner-scoped task root -> canonical target agent identity -> input files in UTF-8 fileId/version/purpose order -> selected task-file links -> exact immutable versions; grant row re-lock before admission; grant supersede/insert remains within task-root transaction
+transaction_boundary=PROPAGATION_REQUIRED owner-scoped task-root transaction encloses assign+input snapshot+supersede+grant insert, revoke CAS, and admission revalidation
+sensitive_payload_allowlist=operations INSPECT_INPUTS,GENERATE_IMAGE,EDIT_IMAGE,GENERATE_AUDIO,EDIT_AUDIO; purposes INPUT,REFERENCE; persisted/returned input summary excludes storage URI/tokens/commands/provider request; client authority-looking cost/tool/authorized fields rejected
+acceptance_coverage=Jackson3 main+test compile; same-named non-unique uk_atxg_active_task rejected; JWT-derived scope; legacy compatibility; idempotency conflict; exact input snapshot/no storage URI; client authority rejection; free admission and paid fail-closed; supersede/revoke block stale admission

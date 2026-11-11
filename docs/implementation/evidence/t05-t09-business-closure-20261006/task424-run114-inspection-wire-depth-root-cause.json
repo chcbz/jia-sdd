@@ -1,0 +1,40 @@
+{
+  "at": "2026-10-06T12:41:00.614007+00:00",
+  "request": "action-inspect_dae0e37778d00470519fb09aa759f450be971008",
+  "dispatchId": "dispatch_fcd3593e6a6ce095f4fdcf47c330aaef6c26d3a8",
+  "source": "Exact persisted outbox payload read in READ ONLY transaction; never persisted full payload/token values",
+  "productionCode": "sendEvent calls JsonUtil.toSafeJson -> SensitiveDataSanitizer defaults maxDepth8; hostedWire duplicates context at root and payload",
+  "evidenceType": "real persisted structure evaluated with exact production depth rule; not intercepted network frame",
+  "outerNestedEqualBefore": true,
+  "outerNestedEqualAfterDepthRule": false,
+  "structuralDifferences": [
+    {
+      "path": "contextSnapshot/facts/typedInspection/discussionFacts/availableActions/0/inputMediaTypes",
+      "outerType": "list",
+      "nestedType": "NoneType"
+    },
+    {
+      "path": "contextSnapshot/facts/typedInspection/discussionFacts/availableActions/1/inputMediaTypes",
+      "outerType": "list",
+      "nestedType": "NoneType"
+    },
+    {
+      "path": "contextSnapshot/facts/typedInspection/discussionFacts/availableActions/2/inputMediaTypes",
+      "outerType": "list",
+      "nestedType": "NoneType"
+    },
+    {
+      "path": "contextSnapshot/facts/typedInspection/manifest/sources/0/selector",
+      "outerType": "dict",
+      "nestedType": "NoneType"
+    },
+    {
+      "path": "contextSnapshot/facts/typedInspection/manifest/sources/1/selector",
+      "outerType": "dict",
+      "nestedType": "NoneType"
+    }
+  ],
+  "clientObserved": "ENVELOPE_FIELD_CONFLICT contextSnapshot repeated for exact scoped Agent after new INSPECT dispatch",
+  "rootCause": "Log sanitizer nulls nested authenticated transport maps at different depths; also risks signed context hash corruption",
+  "retryPolicy": "Do not submit new request; current original child remains dispatched. Fix exact transport serialization and cloud regression before any new business write."
+}

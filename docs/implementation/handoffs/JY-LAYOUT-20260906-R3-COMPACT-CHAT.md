@@ -1,0 +1,7 @@
+# Runtime compact-chat correction — 2026-09-06
+
+Exact3c644af/tree055215 runtime evidence missing-only-CWcdrj proves the220px visualViewport overlay itself now fits, but its fixed chat chrome still overflows: panel height220/client218/scroll306 and composer-visible assertion fails. Layout/inner viewport stays844x390, visual220 and live var220px. This is real component geometry, not the prior argv parser/session interruption. Source review alone did not prove sufficient interior flex shrink.
+
+Bounded Owner correction in existing /home/isp/wsps/cyf/.worktrees/jy-layout-keyboard-20260906 from3c644af: only live short-height chat presentation and focused selected-agent contract. Make chat interiors compact when available live height is short (explicit reactive class supported by legacy hosts, not only physical CSS media queries). Preserve close/send/input controls and conversation context; remove redundant description chrome/reduce padding enough that actual composer fits220. Restore normal chrome when visual height390/portrait returns. No core chat logic, reader, other panels, map/canvas or native host changes.
+
+Verifier retains352PASS previous source-scope evidence; final source new build is still required. Runtime recheck limited to keyboard220→390, fullchat normal mode, and WeChat-UA pending gates; prior reader/map/panel proofs may be reused only as unchanged scoped dependencies, not asserted as a new-tree full matrix run. No blind weakening of220 or screenshot bypass. Independent keyboarddelta review mandatory before promotion.

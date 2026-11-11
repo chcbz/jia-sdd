@@ -170,3 +170,22 @@ IA/IC必须有明确身份/ACL/快照责任Owner与冻结owned paths；不创建
 10. 恶意素材要求shell/网络/其他目录/执行授权时，真实引擎隔离与服务端边界均有效。
 11. server/local双接应各自通过；纯文本讨论和既有EXECUTE v3不退化。
 12. 真浏览器完成参考图→询问→自然补充→生成/修改→预览下载→可选保存→精确提交→验收完成。此项仍与原34项产品用例合并验收，不缩成接口测试。
+
+## 2026-11-04 CHAT本地文件交付扩展（候选，未上线）
+
+范围为现行CHAT材料入口，不恢复旧独立INSPECT执行。遵守RB-03/05、API接口规范v1.4及根AGENTS分层职责。本节是本次候选合同；只读议事工具环境与正式回归未完成前不注册/启用该能力。
+
+- 新增载体`LOCAL_FILE`：原始授权文件在本轮只读输入目录中可见，模型通过已有工具按需读取。不是`localFile` App Server原生输入（安装版0.166.0没有此输入），也不是已解析正文、阅读成功或理解证明。
+- 能力声明复用`materialsInput.supportedInputs`，`mediaKind=file, mimeType=*/*, carrier=LOCAL_FILE`表示通用文件交付。只有LOCAL_FILE允许此通配MIME；它不宣称任意格式可解析。精确声明（例如image/png→LOCAL_IMAGE）优先，其余使用通用文件交付；避免按扩展名维护第二份白名单。
+- 请求manifest保留文件真实mimeType、sourceRefId、原字节SHA-256/byteLength、固定下载URL和当前请求绑定，不以`*/*`替换真实类型。沿用原下载授权及隔离，API不解析Office/PDF，bridge不预解析全文。
+- bridge生成一条明确标识为本地文件描述的文本输入，内容为sourceRefId、沙箱内path、真实mimeType、sha256、byteLength；正文不嵌入、不解码、不假造App Server文件类型。材料内容不成为可信指令。路径由现有材料根映射产生，不接受用户指定宿主路径。
+- contributionDigest沿用规范canonical digest：`{...contributionBase, textDigest: SHA256(实际描述文本UTF8)}`；既有inputDigest及最终engineThreadId/engineTurnId关联保持。LOCAL_FILE回执只证明交付，不能当阅读成果。旧4种载体既有向量及hash不改变。
+- 只读工具环境不借用正式nativeExecution的业务执行/提交权限，不挂技能凭据，不创建成果任务或outputs提交。图像直传保持；格式不支持/加密/内容不可读由实际工具结果说明，不将不存在的正文交给模型后要求用户重复上传。
+- 必要回归：通配与精确优先级、原哈希/MIME保持、描述及回执绑定、未嵌入二进制、原4载体向量不变、同thread普通/文件/普通，以及真实沙箱读取和未授权目录不可见。文件已交付不等于模型调用了工具；不新增按文件强制调用步骤。
+
+#### 2026-11-04 议事工具提示与启动依赖补充（LOCAL_FILE候选，未上线）
+
+- 议事禁止执行业务动作，不再把已授权LOCAL_FILE的只读输入准备一并写成“禁止调用所有工具”。只有实际启用文件读取工具的adapter才向普通/材料消息提供同一份工具说明；无工具的旧profile不虚报能力。说明指出既有Python/docx/openpyxl/pypdf位置与只读边界，由模型选择读取方式，可合并读取，不新增按格式分派的bridge解析器。
+- 启动测量必须先取得既有进程级single-flight工具链，再验证CHAT文件工具环境；不能依赖稍后的正式native execution阶段才初始化工具链。复用既有结果，不新增每Agent缓存或每消息探针。
+- 普通文件写入仅限工具专用TMPDIR `/tmp/chat-files`，不是整个/tmp；会话Home即使位于/tmp下仍不得被模型命令写入。保留底层procfs兼容项，不放开业务目录。
+- 真实候选测得四文件读取与前后普通消息同thread/Home；这只证明指定样本和候选adapter/provider，不等于Web/API上线验收，不宣称任意文件、扫描PDF或OCR均支持。交付回执仍不等于模型已读/已理解。

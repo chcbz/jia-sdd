@@ -1,13 +1,32 @@
 # OAuth public client hardening
 
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 现行规格（2026-11-07）
+
+**本专题：OAuth公共客户端与回调边界。**
+
+### 责任与业务流程
+OAuth认证适配器执行协议/状态绑定；业务入口使用认证结果。
+
+发起授权→合法回调校验→换取认证结果→建立本站会话→授权读取业务。
+
+### 明确边界
+第三方回调保持提供方协议，不能机械套本站JWT/Q-R信封；合法重定向、状态绑定与凭据保护不因优化删除。
+
+通用开发/验证约束：[统一开发约束](../architecture-convergence/development-principles.md)。业务字段、状态、错误及测试细节仍由本专题下文和详设维护。
+
+### 验收落点
+合法/错误state和重定向、重复/过期回调、公共客户端无私钥假设、令牌不出现在日志、UTF-8解码不污染身份。
+
+**状态：** 已闭环（released；OAuth 公共客户端加固已生产发布）。最终规格以本文为准；发布/验收证据见 [integration.yaml](integration.yaml)。过程文档已删除。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
+
+> 文档收口（2026-10-23）：保留OAuth独立安全合同和原发布证据，不扩大到全部账号/公测安全完成。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
 <!-- SDD delivery reconciliation 2026-09-06 -->
-## 2026-09-06 全量状态核对
-
-按原 SDD 中独立审查与 2026-08-24 发布记录归档；不扩大为所有账号安全/公共公测需求已完成。
-
-完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-08。原文合同及历史验收材料保留，不把发布例外标成 PASS。
-<!-- END SDD delivery reconciliation -->
-
 ## Problem
 
 The browser OAuth2 authorization-code flow uses the callback `state` value as a navigation path without validating a locally bound transaction. PKCE verifier material is stored in localStorage and logged, callback failures silently return home, authenticated request retries can continue without a token, and the OAuth resource module exposes `GET /resource` with a null body and no exact JWT-only security boundary.

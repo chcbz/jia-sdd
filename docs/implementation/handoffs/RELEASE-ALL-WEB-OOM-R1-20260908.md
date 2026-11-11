@@ -1,0 +1,9 @@
+# Web exact release build R1 OOM attribution
+
+Exact source dcfbc93814e1d5287ab779cb1b5ab1a2d06999c9/tree436883f4066c0bff94469112294aefd4d12f2770 remains clean and independently source-delta accepted; origin/develop updated by normal push.
+
+Actual single build RC137 after1187 transformed modules. Owner shared kernel global_oom killedNode2614000 anonRSS546936KiB. Main verified receiptSHA7bb2985ff7bbee9822137de1d5ac734e99ffb3f576112a61623285c416970a26 and attributionSHA6ddc88fbe0acf8fc574ed180e7a4ce4323ba1ecee4b5da3bfae3934287f7ab48 under/tmp/cyf-release-all-web-build-dcfbc938.OsqFnH. Free207958016B before cleanup; notENOSPC. Incomplete303file dist was removed by exact owner; no deployment. Donor loan ended unchanged. Precise highest-memory internal phase not measured; do not falsely attribute exclusively to Terser.
+
+Bounded remediation (not unchanged retry): same source/flags/accepted transform and Terser compression semantics, NEW own build directory; Node heap384MiB instead of512, Terser maxWorkers1 (installed Vite dist/node/index.d.ts2595 and implementation dep-Dm0c1Wj2.js9765/9775 explicitly support), CSS preprocessor maxWorkers1 and reportCompressedSizefalse. Do not change production console/privacy policy, disable source maps, preserve Vue/JSX/YAML/autoimport plugins and all app behavior. Existing static assets generated once, no new npm install/donor writes. Retain exact failed evidence; record whether second bounded build actually succeeds. No Gradle parallelism. Actual second failure stops for a new root-cause matrix; no third blind run or foreign process kills. Resource thresholds remain waived; this changes work memory demand rather than waiting for arbitrary free-memory targets.
+
+Main must renew explicit read-only donor loan for this second invocation with original owner, before execution. User already authorizes final source publication; no old browser harness or full-suite rerun gate.

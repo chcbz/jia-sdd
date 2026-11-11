@@ -1,0 +1,537 @@
+{
+  "observations": [
+    {
+      "name": "unmodified-chain-duplicate-request-id-rejected",
+      "kind": "defect-reproduced",
+      "actual": {
+        "url": "/agent/personal-workspace/files?state=ACTIVE",
+        "requestId": "60ee90bf-d8b9-4a48-b2ed-4833bc96668d",
+        "responseRequestId": "60ee90bf-d8b9-4a48-b2ed-4833bc96668d, 60ee90bf-d8b9-4a48-b2ed-4833bc96668d",
+        "status": 200,
+        "body": "{\"code\":\"E0\",\"data\":{\"items\":[{\"fileId\":\"pws_2a5f5ab70a1d463a8f64a07d46eb36f9\",\"sourceKind\":\"UPLOAD\",\"originKind\":\"USER_UPLOAD\",\"displayName\":\"audit same-concurrent-key\",\"mediaFamily\":\"TEXT\",\"state\":\"ACTIVE\",\"metadataRevision\":\"1\",\"latestVersion\":\"1\",\"createdAt\":1792134665385,\"capabilities\":{\"upload\":\"AVAILABLE\",\"read\":\"AVAILABLE\",\"edit\":\"UNVERIFIED\",\"preview\":\"AVAILABLE\",\"download\":\"AVAILABLE\"}},{\"fileId\":\"pws_f00e2f97df254e4d8a1fb801d04def6a\",\"sourceKind\":\"UPLOAD\",\"originKind\":\"USER_UPLOAD\",\"displayName\":\"audit lock-race\",\"mediaFamily\":\"TEXT\",\"state\":\"ACTIVE\",\"metadataRevision\":\"2\",\"latestVersion\":\"1\",\"createdAt\":1792134665165,\"capabilities\":{\"upload\":\"AVAILABLE\",\"read\":\"AVAILABLE\",\"edit\":\"UNVERIFIED\",\"preview\":\"AVAILABLE\",\"download\":\"AVAILABLE\"}},{\"fileId\":\"pws_ff6c864ada7f4a9b997e29125c405896\",\"sourceKind\":\"UPLOAD\",\"originKind\":\"USER_UPLOAD\",\"displayName\":\"audit concurrent\",\"mediaFamily\":\"TEXT\",\"state\":\"ACTIVE\",\"metadataRevision\":\"1\",\"latestVersion\":\"2\",\"createdAt\":1792134665044,\"capabilities\":{\"upload\":\"AVAILABLE\",\"read\":\"AVAILABLE\",\"edit\":\"UNVERIFIED\",\"preview\":\"AVAILABLE\",\"download\":\"AVAILABLE\"}},{\"fileId\":\"pws_b2ebe3670c824d42927dbdb2b30d9dd5\",\"sourceKind\":\"UPLOAD\",\"originKind\":\"USER_UPLOAD\",\"displayName\":\"audit usage-race\",\"mediaFamily\":\"TEXT\",\"state\":\"ACTIVE\",\"metadataRevision\":\"2\",\"latestVersion\":\"1\",\"createdAt\":1792134664899,\"capabilities\":{\"upload\":\"AVAILABLE\",\"read\":\"AVAILABLE\",\"edit\":\"UNVERIFIED\",\"preview\":\"AVAILABLE\",\"download\":\"AVAILABLE\"}},{\"fileId\":\"pws_0443d268553d43ef8bf1f105a52d8834\",\"sourceKind\":\"UPLOAD\",\"originKind\":\"USER_UPLOAD\",\"displayName\":\"audit second\",\"mediaFamily\":\"TEXT\",\"state\":\"ACTIVE\",\"metadataRevision\":\"3\",\"latestVersion\":\"1\",\"createdAt\":1792134659877,\"capabilities\":{\"upload\":\"AVAILABLE\",\"read\":\"AVAILABLE\",\"edit\":\"UNVERIFIED\",\"preview\":\"AVAILABLE\",\"download\":\"AVAILABLE\"}},{\"fileId\":\"pws_5e653229d6ba460bae28bc3401db38ba\",\"sourceKind\":\"UPLOAD\",\"originKind\":\"USER_UPLOAD\",\"displayName\":\"audit audit-first\",\"mediaFamily\":\"TEXT\",\"state\":\"ACTIVE\",\"metadataRevision\":\"103\",\"latestVersion\":\"102\",\"createdAt\":1792134653887,\"capabilities\":{\"upload\":\"AVAILABLE\",\"read\":\"AVAILABLE\",\"edit\":\"UNVERIFIED\",\"preview\":\"AVAILABLE\",\"download\":\"AVAILABLE\"}}],\"nextCursor\":null,\"hasMore\":false},\"msg\":\"ok\",\"protocolVersion\":1,\"requestId\":\"60ee90bf-d8b9-4a48-b2ed-4833bc96668d\"}"
+      }
+    },
+    {
+      "name": "click-preview-draft-desktop",
+      "kind": "normal",
+      "actual": {
+        "width": 1440,
+        "height": 900,
+        "version": "1"
+      }
+    },
+    {
+      "name": "click-preview-draft-mobile",
+      "kind": "normal",
+      "actual": {
+        "width": 390,
+        "height": 844,
+        "version": "1"
+      }
+    },
+    {
+      "name": "click-preview-draft-landscape",
+      "kind": "normal",
+      "actual": {
+        "width": 844,
+        "height": 390,
+        "version": "1"
+      }
+    },
+    {
+      "name": "real-browser-download-sha256",
+      "kind": "normal",
+      "actual": {
+        "sha256": "fc124c1ae69e29d988c1866d9b0fdf6ac7a3d2a18d81ba211e355c6a038d49eb",
+        "filename": "audit.txt"
+      }
+    },
+    {
+      "name": "ui-upload-rename-append-trash-restore",
+      "kind": "normal",
+      "actual": {
+        "fileId": "pws_e974d1a35eb746bba668c2a81c938816",
+        "latestVersion": "2",
+        "preview": "ui-second-version",
+        "transport": "direct loopback, no nginx compression"
+      }
+    },
+    {
+      "name": "history-select-keeps-old-preview-disables-download-draft",
+      "kind": "defect-reproduced",
+      "actual": {
+        "selected": "101",
+        "displayed": "version-102",
+        "historyOptions": 100,
+        "v1Missing": true
+      }
+    },
+    {
+      "name": "identity-switch-clears-dom-and-state",
+      "kind": "normal",
+      "actual": true
+    }
+  ],
+  "requests": [
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "60ee90bf-d8b9-4a48-b2ed-4833bc96668d",
+        "60ee90bf-d8b9-4a48-b2ed-4833bc96668d"
+      ],
+      "diagnosticHeaderDedup": false
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "c338bdd9-2702-4620-955c-29e798acdb48",
+        "c338bdd9-2702-4620-955c-29e798acdb48"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "c633df7c-fc9e-454a-84fb-14d07d8e53c8",
+        "c633df7c-fc9e-454a-84fb-14d07d8e53c8"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "10f8e4c4-28f6-4b76-bac4-705c677dc7df",
+        "10f8e4c4-28f6-4b76-bac4-705c677dc7df"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "2015b7fe-827c-4077-811d-ab1a1b66b44d"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "c367b688-26cb-4173-936d-03f3ffe0e5c8",
+        "c367b688-26cb-4173-936d-03f3ffe0e5c8"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "927b4ae4-6bd6-481a-9cc7-edb0358b8325",
+        "927b4ae4-6bd6-481a-9cc7-edb0358b8325"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "f331fe17-aca3-4210-9e3c-29396fd9b26a",
+        "f331fe17-aca3-4210-9e3c-29396fd9b26a"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "f77e67c7-4026-40fa-9a84-7ca8ce02811b"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "5c6e6768-73dc-4022-91d3-ff402e2e1e7b",
+        "5c6e6768-73dc-4022-91d3-ff402e2e1e7b"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "43325da1-83fa-49f5-9bb5-7866ee49ed8b",
+        "43325da1-83fa-49f5-9bb5-7866ee49ed8b"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "f4a54f8b-65c1-45bd-a868-36ea77beec75",
+        "f4a54f8b-65c1-45bd-a868-36ea77beec75"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "4970eb2d-fcef-4bec-a30b-7488ad8e8784"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "85486595-5aad-4106-87ad-3f186e03c7e0",
+        "85486595-5aad-4106-87ad-3f186e03c7e0"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "0f2114b4-38e2-4e12-bff4-fb3f95ad9fbc",
+        "0f2114b4-38e2-4e12-bff4-fb3f95ad9fbc"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "3e3c0a84-9c60-4621-81db-2ec2450608de",
+        "3e3c0a84-9c60-4621-81db-2ec2450608de"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "ed63f974-b98b-4af7-afa7-2ac2bf7499e3"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_0443d268553d43ef8bf1f105a52d8834/versions/1/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "5e950993-5891-48ea-b3d2-39c4730dc10f"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "d9ec8fd9-1f30-4b66-908f-b1f9e63ce0cc",
+        "d9ec8fd9-1f30-4b66-908f-b1f9e63ce0cc"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files",
+      "method": "POST",
+      "status": 201,
+      "upstreamRequestIds": [
+        "013a416c-ae94-4f58-9319-ea57990659ab",
+        "013a416c-ae94-4f58-9319-ea57990659ab"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "1d1d235b-3610-4ec2-9000-6d44af52e21d",
+        "1d1d235b-3610-4ec2-9000-6d44af52e21d"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "f179e945-2f5f-4852-90fc-658aaa54cda2",
+        "f179e945-2f5f-4852-90fc-658aaa54cda2"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "bad619be-6770-44b7-bce0-6be7df3f5839",
+        "bad619be-6770-44b7-bce0-6be7df3f5839"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/versions/1/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "ca29ce1c-7841-4a58-8685-e6df7b4f54bd",
+        "ca29ce1c-7841-4a58-8685-e6df7b4f54bd"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/versions/1/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "24336b3e-b265-46a0-a018-e36fe357eb5a"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816",
+      "method": "PATCH",
+      "status": 200,
+      "upstreamRequestIds": [
+        "1bca95f7-5a8c-4faa-a59a-6debf60a73fd",
+        "1bca95f7-5a8c-4faa-a59a-6debf60a73fd"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/versions",
+      "method": "POST",
+      "status": 201,
+      "upstreamRequestIds": [
+        "2fd0e7da-3745-464d-8339-1240d426b9eb",
+        "2fd0e7da-3745-464d-8339-1240d426b9eb"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "173ccdb0-9304-4e70-bbf5-4a1d37d6bce0",
+        "173ccdb0-9304-4e70-bbf5-4a1d37d6bce0"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "f1252ee4-bea5-4480-a496-b3bf9211206e",
+        "f1252ee4-bea5-4480-a496-b3bf9211206e"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/usage",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "027879f2-82ae-4107-b76f-75ed2de1dbee",
+        "027879f2-82ae-4107-b76f-75ed2de1dbee"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/trash",
+      "method": "POST",
+      "status": 200,
+      "upstreamRequestIds": [
+        "d557db79-7707-4f5c-a3fb-f0b548696b16",
+        "d557db79-7707-4f5c-a3fb-f0b548696b16"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "bc216f2c-c95e-4bda-a969-e8e864c80673",
+        "bc216f2c-c95e-4bda-a969-e8e864c80673"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=TRASHED",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "82c12841-2961-4727-844d-139cfc071909",
+        "82c12841-2961-4727-844d-139cfc071909"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "94aad479-88ed-453f-b00b-d1a036e5b163",
+        "94aad479-88ed-453f-b00b-d1a036e5b163"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/versions/2/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "999df04d-e297-4b3e-9993-0e87f23cd24e",
+        "999df04d-e297-4b3e-9993-0e87f23cd24e"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/versions/2/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "c438295c-8f9d-4743-8a38-6de586f7ea6d"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/restore",
+      "method": "POST",
+      "status": 200,
+      "upstreamRequestIds": [
+        "019a6194-e747-4e7c-b038-4f959973f753",
+        "019a6194-e747-4e7c-b038-4f959973f753"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=TRASHED",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "14f559eb-ad22-4484-a768-1de397e46aca",
+        "14f559eb-ad22-4484-a768-1de397e46aca"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "39a6fb4d-736e-4324-8d34-acb3a844f5b6",
+        "39a6fb4d-736e-4324-8d34-acb3a844f5b6"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "61ce1cfb-2a32-4ab0-ab2f-499f2c680d09",
+        "61ce1cfb-2a32-4ab0-ab2f-499f2c680d09"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/versions/2/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "b054d8bb-3e62-4484-8b51-88467d8c27bb",
+        "b054d8bb-3e62-4484-8b51-88467d8c27bb"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_e974d1a35eb746bba668c2a81c938816/versions/2/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "d4bad70e-6cee-49b8-b421-c0f8ce32f385"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files?state=ACTIVE",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "58e939dd-0547-439d-adbf-f3a5d6f40315",
+        "58e939dd-0547-439d-adbf-f3a5d6f40315"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_5e653229d6ba460bae28bc3401db38ba",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "8b6722b5-1255-46c9-a96e-4dfe57e24dd3",
+        "8b6722b5-1255-46c9-a96e-4dfe57e24dd3"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_5e653229d6ba460bae28bc3401db38ba/versions/102/preview?view=parts",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "d0850886-bcf0-4b99-be6b-25f641fffe34",
+        "d0850886-bcf0-4b99-be6b-25f641fffe34"
+      ],
+      "diagnosticHeaderDedup": true
+    },
+    {
+      "path": "/agent/personal-workspace/files/pws_5e653229d6ba460bae28bc3401db38ba/versions/102/preview/parts/content",
+      "method": "GET",
+      "status": 200,
+      "upstreamRequestIds": [
+        "819584a7-f395-489a-8f99-34303c2d4cbf"
+      ],
+      "diagnosticHeaderDedup": true
+    }
+  ],
+  "runtimeErrors": [],
+  "boundaries": [
+    "ORIGINAL CHAIN REJECTED duplicate request-id; subsequent UI uses test-proxy identical-header dedup ONLY",
+    "real file HTTP/MySQL chain",
+    "synthetic auth and component mount",
+    "roster/execution capabilities/history are auxiliary stubs",
+    "mobile viewport emulation, not physical phone",
+    "no production OAuth or Flow"
+  ]
+}

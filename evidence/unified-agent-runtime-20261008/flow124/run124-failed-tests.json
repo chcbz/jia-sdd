@@ -1,0 +1,99 @@
+[
+  {
+    "suite": "cn.jia.chat.handler.AgentWebSocketCommandRecoveryTest",
+    "counts": {
+      "tests": 6,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failures": [
+      {
+        "class": "cn.jia.chat.handler.AgentWebSocketCommandRecoveryTest",
+        "test": "ackHiddenScopeConflictIsRejectedWithoutDurableCallOrExistenceLeak()",
+        "type": "org.opentest4j.AssertionFailedError",
+        "message": "org.opentest4j.AssertionFailedError: expected: <true> but was: <false>",
+        "projectFrames": [
+          "at cn.jia.chat.handler.AgentWebSocketCommandRecoveryTest.ackHiddenScopeConflictIsRejectedWithoutDurableCallOrExistenceLeak(AgentWebSocketCommandRecoveryTest.java:209)"
+        ]
+      }
+    ]
+  },
+  {
+    "suite": "cn.jia.chat.handler.AgentWebSocketHandlerTest",
+    "counts": {
+      "tests": 46,
+      "failures": 5,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failures": [
+      {
+        "class": "cn.jia.chat.handler.AgentWebSocketHandlerTest",
+        "test": "legacyTaskAssignmentConfirmationUsesTrustedScopeForEveryMatchingSession()",
+        "type": "org.mockito.exceptions.verification.WantedButNotInvoked",
+        "message": "org.mockito.exceptions.verification.WantedButNotInvoked: \nWanted but not invoked:\nwebSocketSession.sendMessage(\n    <Capturing argument: TextMessage>\n);\n-> at cn.jia.chat.handler.AgentWebSocketHandlerTest.legacyTaskAssignmentConfirmationUsesTrustedScopeForEveryMatchingSession(AgentWebSocketHandlerTest.java:355)\nActually, there were zero interactions with this mock.\n",
+        "projectFrames": [
+          "at cn.jia.chat.handler.AgentWebSocketHandlerTest.legacyTaskAssignmentConfirmationUsesTrustedScopeForEveryMatchingSession(AgentWebSocketHandlerTest.java:355)"
+        ]
+      },
+      {
+        "class": "cn.jia.chat.handler.AgentWebSocketHandlerTest",
+        "test": "supportsSpecChatTypeAliases()",
+        "type": "org.opentest4j.AssertionFailedError",
+        "message": "org.opentest4j.AssertionFailedError: expected: <true> but was: <false>",
+        "projectFrames": [
+          "at cn.jia.chat.handler.AgentWebSocketHandlerTest.supportsSpecChatTypeAliases(AgentWebSocketHandlerTest.java:497)"
+        ]
+      },
+      {
+        "class": "cn.jia.chat.handler.AgentWebSocketHandlerTest",
+        "test": "extractsConversationTypeFromPayload()",
+        "type": "org.opentest4j.AssertionFailedError",
+        "message": "org.opentest4j.AssertionFailedError: expected: <true> but was: <false>",
+        "projectFrames": [
+          "at cn.jia.chat.handler.AgentWebSocketHandlerTest.extractsConversationTypeFromPayload(AgentWebSocketHandlerTest.java:539)"
+        ]
+      },
+      {
+        "class": "cn.jia.chat.handler.AgentWebSocketHandlerTest",
+        "test": "rejectsRegistrationRuntimeConflictWithAuthenticatedSession()",
+        "type": "org.mockito.exceptions.misusing.UnnecessaryStubbingException",
+        "message": "org.mockito.exceptions.misusing.UnnecessaryStubbingException: \nUnnecessary stubbings detected.\nClean & maintainable test code requires zero unnecessary code.\nFollowing stubbings are unnecessary (click to navigate to relevant line of code):\n  1. -> at cn.jia.chat.handler.AgentWebSocketHandlerTest.rejectsRegistrationRuntimeConflictWithAuthenticatedSession(AgentWebSocketHandlerTest.java:1744)\nPlease remove unnecessary stubbings or use 'lenient' strictness. More info: javadoc for UnnecessaryStubbingException class.",
+        "projectFrames": []
+      },
+      {
+        "class": "cn.jia.chat.handler.AgentWebSocketHandlerTest",
+        "test": "durableAgentCallbacksUseAuthenticatedRuntimeIdentityInsteadOfPayloadNames()",
+        "type": "org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent",
+        "message": "org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent: \nArgument(s) are different! Wanted:\nchatDeliberationService.persistFinal(\n    \"0\",\n    \"juyiting\",\n    \"jia_client\",\n    \"1001\",\n    1L,\n    \"agent-001\",\n    \"req-1\",\n    \"turn-1\",\n    \"dispatch-1\",\n    \"snapshot-1\",\n    \"sha256:ctx\",\n    \"final\",\n    <Capturing argument: ServerResolvedAgentSender>\n);\n-> at cn.jia.chat.service.ChatDeliberationService.persistFinal(ChatDeliberationService.java:487)\nActual invocations have different arguments:\nchatDeliberationService.acceptDelta(\n    \"0\",\n    \"juyiting\",\n    \"jia_client\",\n    \"1001\",\n    1L,\n    \"agent-001\",\n    \"req-1\",\n    \"turn-1\",\n    \"dispatch-1\",\n    \"snapshot-1\",\n    \"sha256:ctx\",\n    1L,\n    \"delta\",\n    ServerResolvedAgentSender[type=agent, displayName=Wu Yong, jiacn=juyiting, clientId=jia_client, agentId=agent-001]\n);\n-> at cn.jia.chat.handler.AgentWebSocketHandler.lambda$publishAgentMessageDelta$41(AgentWebSocketHandler.java:1363)\nchatDeliberationService.persistFinal(\n    \"0\",\n    \"juyiting\",\n    \"jia_client\",\n    \"1001\",\n    1L,\n    \"agent-001\",\n    \"req-1\",\n    \"turn-1\",\n    \"dispatch-1\",\n    \"snapshot-1\",\n    \"sha256:ctx\",\n    \"final\",\n    null,\n    null,\n    null,\n    ServerResolvedAgentSender[type=agent, displayName=Wu Yong, jiacn=juyiting, clientId=jia_client, agentId=agent-001]\n);\n-> at cn.jia.chat.handler.AgentWebSocketHandler.lambda$saveAgentMessage$36(AgentWebSocketHandler.java:1239)\n",
+        "projectFrames": [
+          "at cn.jia.chat.service.ChatDeliberationService.persistFinal(ChatDeliberationService.java:487)",
+          "at cn.jia.chat.handler.AgentWebSocketHandlerTest.durableAgentCallbacksUseAuthenticatedRuntimeIdentityInsteadOfPayloadNames(AgentWebSocketHandlerTest.java:1137)"
+        ]
+      }
+    ]
+  },
+  {
+    "suite": "cn.jia.chat.handler.AgentWebSocketUnifiedReadinessTest",
+    "counts": {
+      "tests": 19,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failures": [
+      {
+        "class": "cn.jia.chat.handler.AgentWebSocketUnifiedReadinessTest",
+        "test": "staleFencedBusinessCallbackNeverMutatesEvenIfChannelWasSelected()",
+        "type": "java.lang.NullPointerException",
+        "message": "java.lang.NullPointerException: Cannot invoke \"java.util.function.Supplier.get()\" because the return value of \"org.mockito.invocation.InvocationOnMock.getArgument(int)\" is null",
+        "projectFrames": [
+          "at cn.jia.chat.handler.UnifiedRuntimeTestSupport.lambda$stub$0(UnifiedRuntimeTestSupport.java:20)",
+          "at cn.jia.agent.security.AgentRuntimeAuthenticationService.withFence(AgentRuntimeAuthenticationService.java:227)",
+          "at cn.jia.chat.handler.AgentWebSocketUnifiedReadinessTest.staleFencedBusinessCallbackNeverMutatesEvenIfChannelWasSelected(AgentWebSocketUnifiedReadinessTest.java:150)"
+        ]
+      }
+    ]
+  }
+]

@@ -81,3 +81,62 @@
 - 没有新的浏览器/SSH/服务进程，无生产业务写操作。开发、制品、发布、真实验收状态分开。
 
 - Runtime807b86d已ff合入并push isp-install develop（00:26:36回读远端一致），未发布；Main接收全部写集后已关闭Curie，无遗留后台开发承诺。
+
+### 2026-10-12 00:43：授权清理与统一发布范围
+- 用户“允许”后，仅清理五个已verified旧API批次的展开application.jar冗余副本（共1269252268字节）；保留逐字核对的原始package.tgz、所有测试/安装证据以及当前1.14.7/上一版1.14.6全部回滚所需文件。旧admitted展开目录不再完整，不声称可以直接复用安装。原coordinator→release锁内检查活动FD后执行，回执在本批cleanup-completed.json。清理脚本两次前置错误均未删除文件（历史安装终态为verified、锁路径校正），保留实际脚本和前后证据。
+- API4345f5e4/1.14.8原admission通过，217项SQL/initializer资源字节与当前线上一致。18项现时只读身份/inflight投影、F06/E05现时catalog equivalent；仅将text/plain加入execution MIME配置，原值保存/home/isp/baks/likui-textfile-20261012/application.properties。尚未因此重启，未新增DDL。
+- 用户追加“最新不是1.14.9吗？并且最近还有页面优化，统一进行发布”：实核1.14.9是Web线上a3bceaf/Flow203，API线上仍1.14.7。统一批次不混淆组件版本：Web1.14.10/ad5a687（包含本地未发布d8b703b取消事项刷新样式和36c447c正式成果页隐藏工作区入口），API1.14.8/4345f5e4，李逵Runtime1.0.3/807b86d。不发布其他组件或扩展功能。
+- Web固定候选复用Flow4403172，同Run原全量测试/构建/制品/部署，发布后恢复原CI-only配置。证据本批web-release/。API复用已有242项测试精确制品，不重复构建。
+- 远端李逵原installer已在全新release完成完整npm/隔离Python依赖、stage/final闭包验证；仅制品准备成功，尚未激活。固定Node22.22.2、Python3.11.13，pip来源显式https://pypi.org/simple/（远端沿用其原固定来源，不冒称本机全局源在远端生效）。
+
+### 2026-10-12 00:54：API/Runtime已发布，Web全量重验中
+- API第一次安装因Main原子配置写入被umask077截去group read而启动失败（root:isp0600，cyf-api主组isp），不是产品源码/制品测试失败。原installer按forward-only保留本批候选，不回退旧JAR；Main在原锁内修为root:isp0640，实际runuser cyf-api test -r通过，配置字节及已准入绑定未变。随后原--local-install同binding forward repair成功，未旁路手启或伪回执。首次失败日志和修复回执保留。
+- API1.14.8/4345f5e4：JAR9a76c427…c246，PID2528918/canonical cwd；loopback实际health.status.code=UP。F06两表/E05一表全existing_equivalent、exit0，未执行新增DDL。canonical目录只读回归8项通过。证据api-online-verification.json、install-forward-repair.stdout.json。
+- 李逵Runtime1.0.3/807b86d已按原独立制品切换，PID3071281/active/enabled/NRestarts0；只开nativeConversationTextFileEnabled，原installation身份沿用，不重enroll；旧codex-ws-agent inactive/disabled/PID0。备份与制品完整catalog在远端/home/isp/baks/likui-textfile-20261012，业务尚未验收。
+- Web Flow204/ad5a687：2924pass/2pending/1fail，旧feature-flag源码断言未同步!formalTaskRef；原新UI测试覆盖该逻辑。Main仅修正旧断言一行，定向22pass，提交235048e6820afd24f21c6ca78b4b4c30901508b7/tree1ff98d709c69b06a7f0cc18c6c6bb824f7958a96并push；不删测试/跳测。版本仍未发布的1.14.10，Flow205单次新固定候选全量重验/部署。失败Run204留证、不覆盖。
+
+### 2026-10-12 01:06：统一发布完成，449真实验收失败（未修复）
+- Web1.14.10/235048e6，Flow4403172 Run205 SUCCESS：2925pass/2pending/0fail，364安装文件及11公网资源与制品匹配；原CI-only配置恢复APPLIED。最近取消历史刷新按钮样式和正式成果隐藏工作区入口均已纳入并在390px真浏览器核验。
+- API1.14.8/4345f5e4及远端李逵Runtime1.0.3/807b86d均已上线，最终记录为本批unified-release-result.json；原unified-release-intent.json保留Run204历史输入，不再当最终上线证据。
+- 唯一新事项449创建201，唯一点将500/ASSIGNMENT_OPERATION_INTEGRITY_ERROR；只读证实ACTIVE grant已成功写入GENERATE_TEXT_FILE，GET449仍assigned、startedAt=null。未重复点将、未生成或验收文件。
+- 根因一：AgentTaskDeliberationOperationReadServiceImpl.java:45-46白名单漏GENERATE_TEXT_FILE，339行拒绝grant回读。根因二：实际chk_pwex_output_mime缺text/plain，outbox创建执行INSERT被真实MySQL约束拒绝。两者均是本轮开发漏同步，非Nginx/网络故障；尚未修改源码或数据库修复。
+- 已纠正详设“不做DDL”的错误假设；下一步仅补这两个契约、真实MySQL及grant回读测试。新约束迁移需单独核对生产授权及输入，不套用本次无新增DDL的原authority。新后端制品发布后续验449，Web/Runtime未变不重复发布；448/446不动。
+- 当前没有后台修复Agent或持续验收承诺。完整失败证据task449-grant-and-mime-readback.tsv、browser/task449-final-readback.json；详设保留具体修复点。
+
+### 2026-10-12 08:15：两处修复已构建通过；先处理主机OOM现网恢复
+- 用户“好，继续”后，Main接续同任务，范围为文本生成grant回读白名单及唯一text/plain CHECK迁移、后端发布、原449验收；不发布未变Web/Runtime，不新建/点将。API工作树仍/home/isp/wsps/cyf-worktrees/likui-textfile-api-20261011，远端核对起点4345f5e4。
+- 固定候选8477796f5c01650c2b3e1b6e6a7cd7744c494e6c/tree6f481923afe838b4a02aa56e481b51bb1ce5eca6，计划API1.14.9。补operation白名单、旧建表/加列SQL当前契约、新v1_17原子CHECK替换、initializer精确旧/新MIME集合与ENFORCED核验及幂等。保留未知/重复grant拒绝和所有既有MIME，不删约束绕过。
+- 新增真实MySQL空库/现有CHECK升级/文本CONVERSATION插入/HTML拒绝/图片数据保留/事务回滚/重复启动测试。首批新增fixture误用隐式动作hash域，修成生产显式DELIBERATE；第二批真实MySQL暴露CHECK_CLAUSE含反斜杠转义引号，已据实际HEX回读仅规范化该表示并补单测。失败批证据保留，不放宽验证。最终原Gradle构建08:13:35成功，所有所选测试、分层、依赖与fresh bootJar通过，精确统计由producer读取。
+- 批次/var/tmp/cyf-likui-textfix-api-20261012-2vrlsa7l。原表结构只读dump与MIME计数已留证，无生产DDL执行。新约束只在授权候选启动时迁移，不套用原“无DDL”authority。
+- 08:07:01系统全局OOM杀生产mysqld2001（mysqld_safe已自动恢复）；08:08:30再杀API2528918。浏览器发现502后核对内核日志属实，用户已主动告知；这发生在本地回归期间、新版部署之前，不能写成新候选上线失败。完整内核日志本批host-oom-kernel.log。
+- 已关闭本任务浏览器；真实MySQL测试全部成功后提前正常shutdown本任务测试DB，释放其临时数据；旧已完成本任务/dev/shm构建先保存日志/JSON/XML后释放，持久admitted JAR/原包仍在。没有停止其他聊天进程。
+- 本轮原锁下仅清理本任务已verified1.14.8的两份相同传输包；随后同binding原installer恢复现网报RECOVERY_BINDING_MISMATCH，确认原installer恢复仍需要incoming副本，已在原锁内从完整admitted包精确恢复incoming并重走原installer。这一清理分类错误已留证，不再删除当前incoming。原生产JAR与配置未改、未手启旁路。恢复尚需健康核验；新版发布尚未执行。
+
+### 2026-10-12 08:25：现网恢复，279项通过，新版已准入但首次切换前空间拦截
+- 已通过原canonical lifecycle `/usr/local/sbin/cyf-api-kit start`（coordinator→release→lifecycle锁）恢复未变1.14.8，PID2673853、健康UP；原installer对“installed但离线”的同binding只查健康，不负责重启，所以改用现有标准lifecycle start，不是源码部署/手写java旁路。新代码尚未激活。
+- 新候选279项测试全部通过(0失败/0错误/0跳过)，包含4项真实MySQL及27项点将回读相关测试；原producer包SHAf67206d32011d4272e2402a424e14b16261a098ce17ef8f7a20c914d9c965cf3，JAR7ef632fd922f3474e9e7097e071e3d4fcac8826d0583f4fc6906b0818f73173c。API develop已push8477796f5c。producer首次拒绝新输出目录0755，改0700后同精确构建证据打包成功，不重跑Gradle。
+- 原admission通过，新授权/schema-plan显式记录唯一text/plain CHECK迁移，4个schema资源变化逐字限定，其他schema资源不变。新decision `/var/lib/cyf-api-flow/local-inputs/likui-textfix-1.14.9-20261012/install-decision.json` SHA c8151ec6cb3a10b81864f8f5abaffed30fbe3770f974d5069b1094fcb7854391；binding970f7ea89addb0563fdd45e0d7951c3ef16a2de72f723b9113b5e976587a2079。
+- 首次新install在原应用停止之前因实际rollback JAR所需空间不足被拦截；record现为新版本prepared/pre_cutover，线上仍旧JAR/PID健康，不伪报新版已上线。
+- 仅清理本任务已结束工作树的16MiB Gradle生成元数据(先获取原Gradle锁，全球依赖/compile缓存不动)、关闭本任务浏览器释放profile；旧本任务OOM终止进程对应7.6MiB日志无活动FD，gzip后逐字验证原SHA并保留映射。原包、安装记录及当前/上一版回滚JAR全部保留。新producer运输副本在admission精确持久复制后删除，admitted归档仍完整。当前incoming保持不动。
+- 实际释放输入发生变化后已接续同decision原installer r2，不重复构建；完成后必须确认新版本/JAR/schema/实际业务。未手工修改449或schema行数据。
+
+### 2026-10-12 08:40：API1.14.9发布成功；449文件已生成，第三处跨层遗漏修复中
+- 同decision原installer r2 verified/exit0；API1.14.9/8477796/JAR7ef632fd…173c，PID2678879、canonical cwd、healthUP，目录回归8项通过。真实数据库CHECK已接受text/plain。Web/Runtime未变、不重复发布。
+- 原449/原幂等key回读200：ACTIVE grant含GENERATE_TEXT_FILE，bootstrap ADMITTED/attempt1。同conversation1760458005713的唯一执行pwe_b96f4…aee已OUTPUT_COMMITTED，provider lease version1，唯一资产ast_2aa22…5937。
+- 真Chromium点击“下载”得到41字节UTF-8，恰好三行“确认议题/通知参会人/检查设备”；下载SHA de2df941fcae44561d2df2d539bd94481bf241045ee57aadddcbfea9433d3b7a与数据库资产SHA/长度一致。实际文件名part_2aa22fe1b5c8753fef2074a97c885937.txt，不是请求的output.txt，未掩盖该差异。原task仍assigned；没有正式验收。
+- typed-outcome GET503/TYPED_DELIBERATION_PERSISTENCE_ERROR，message=Action progress child lineage is inconsistent。已定位ChatTextFileActionExecutionService使用text-file-request域，ChatActionFinalService却统一按action-execute域推导childID；不是实际文件执行失败或网关故障。
+- 最小修复抽取文本执行器requestId(event)由准入和进度读取共用；保留所有scope/父子关系/状态校验及原图片/INSPECT计算。补真实准入写入→进度reader的RUNNING/OUTPUT_COMMITTED/FAILED/CANCELLED和越权/未投影完成拒绝测试。无DDL、无新接口、无新事项/点将。
+- 第一轮新增测试误引用CanonicalContextJson包路径导致编译失败，已修正到本service包、提交cd1e6d6；非生产故障。新候选API1.14.10在/var/tmp/cyf-likui-progress-api-20261012-lrxcyfv2构建中；不把源码修复当已上线。
+- 本轮构建不启动MySQL fixture；schema代码不变，后续严格对照已上线1.14.9的SQL/initializer字节。自己的浏览器r3已关闭，旧成功构建/dev/shm先完整保存JSON/XML/log再释放；正式包/当前生产JAR及回滚未变。
+
+### 2026-10-12 09:00：1.14.10发布并完成原449正式验收
+- 最终API cd1e6d6ebe/tree241a547d、1.14.10，已ff合入并push develop，远端回读一致。206项实际测试0失败/0错误/0跳过，最小修复保留权限/事务/幂等/原图片与INSPECT回归、validateLayering、依赖/公开制品/POI和fresh JAR；本轮不运行独立MySQL fixture、未再次触发OOM。
+- Batch `/var/tmp/cyf-likui-progress-api-20261012-lrxcyfv2`，包SHA44f45e20fb69b8e81ea99cca80ad601c899907416ac4d123cc061e4fea9ccd5c，JAR5bc239aeda3af9abfc8f4033d59d3c513219b26ec8f948aea58a48fce44b4085。包持久保留在admitted；producer运输副本准入后精确去重，原路径不再存在。
+- 控制面输入纠错：尝试/dev/shm作为producer输出被PATH_UNSAFE正确拒绝，改回标准受保护批次目录，复用同一成功构建证据；prepare误传wrapper摘要而非admission.json、授权证据封装缺authorization键均在安装前拒绝，分别修正精确输入，原失败证据保留。没有重复编译、放宽原helper、伪造用户新授权或绕过拒绝。
+- 再按原授权、原锁去除两个本任务完成后的冗余副本：1.14.8展开JAR、已被新版本替代的1.14.7旧回滚JAR，共507736711字节。先逐字核对完整归档内容；1.14.9完整admission/incoming/canonical及1.14.8物理回滚均保留。旧1.14.8展开admission不再完整，历史重放须从归档精确恢复，未宣称旧路径仍可用。详情completed-expanded-cleanup-result.json。
+- 新decision `/var/lib/cyf-api-flow/local-inputs/likui-progress-1.14.10-20261012-r3/install-decision.json` SHA5f70b4f4bb4f1511555e7a155690a535eadbd9618f04bdd21c5e7ce43e4c67fd。binding2e010233b823574fead55312710b657f731b7e8b7bc09855f485688166c85e6f，原inspect及install均exit0，summary verified，record installed/installed。218项SQL/initializer字节未变，原F06/E05 existing_equivalent；健康UP、canonical PID2690144、目录回归8项通过。
+- Web未重发；当前host record仍1.14.10/235048e6/Flow205，专属Chromium实际加载42项JS响应SHA/长度与该制品记录相符。李逵Runtime1.0.3/807b86d沿用本轮之前的真实安装回执；本切片未SSH重启或重新enroll。
+- 原449进度GET已200，actionProgress=COMPLETED，childRequestId正确。正式成果页文本预览正确；真实下载output_1.txt为41字节UTF-8三行，SHA de2df941fcae44561d2df2d539bd94481bf241045ee57aadddcbfea9433d3b7a与持久资产及最终选中成果一致。下载名非原要求output.txt，已明确告知并留差异，不扩大本次到前端命名修复。
+- 专属浏览器唯一获准业务写入为POST449/finalizations一次、返回200；operation fin_67e467edc68da51b0dc12226b3c70f8159b53857aababa6617537e174188abce，state completed/stage TASK_COMPLETED/delivery accepted/taskVersion4。只读DB显示唯一execution OUTPUT_COMMITTED、provider-start标记/leaseVersion1、唯一asset和唯一本次finalization；不是从聊天文字手造文件。
+- 真刷新后最近事项/事项详情已完成，历史成果仍可查看，验收按钮不再允许重复提交。测试guard阻止两次recommend POST（未执行），是只读验证边界而非产品失败；未新建/重复点将、未触碰448/446或其他角色。业务完整回执business-acceptance-final.json，边界为无附件UTF8文本正常流程，并非任意文件格式/编辑/所有技能通过。
+- 自己的浏览器已关闭、profile清理；成功构建/dev/shm在完整保存并核对JSON/XML/log后释放，正式admitted包/JAR、回滚和全量证据保留。没有后台子Agent或持续巡检承诺。磁盘剩余约276MiB，是后续发布需考虑的真实主机容量，不是本次业务失败。

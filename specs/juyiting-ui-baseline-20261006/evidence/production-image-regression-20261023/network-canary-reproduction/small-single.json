@@ -1,0 +1,164 @@
+{
+  "observedAt": "2026-10-23T07:38:51.561Z",
+  "implementation": "installed Runtime1.2.6",
+  "noProviderRequests": true,
+  "result": "PASS",
+  "attestation": {
+    "schemaVersion": 1,
+    "measured": true,
+    "policy": {
+      "schemaVersion": 1,
+      "providerOrigin": "https://provider.example.invalid",
+      "providerAuthority": "provider.example.invalid:443",
+      "transport": "fixed-connect-proxy-v1",
+      "connectTimeoutMs": "15000",
+      "namespace": "private-slirp4netns-v1",
+      "slirpMountIsolation": "unshare-mount-recursive-private-v1",
+      "slirpTarget": "exact-owner-netns-path-v1",
+      "directEgress": "nft-default-drop-readback-v1",
+      "hostLoopback": "proxy-port-only",
+      "dns": "proxy-side-only"
+    },
+    "hostCanaryReachableControl": true,
+    "forbiddenConnectRejected": true,
+    "otherHostPortBlocked": true,
+    "sandboxCanaryBlocked": true,
+    "nftDefaultDropReadback": true,
+    "nftRulesDigest": "sha256:672f574f7ab6b3efc409d645be74905cbe9f57e930c9129709daf8395f11e0cc",
+    "directInternetProbeBlocked": true,
+    "directInternetBlocked": true
+  },
+  "events": [
+    {
+      "ms": 5,
+      "event": "bind-start",
+      "childPid": 1356596
+    },
+    {
+      "ms": 26,
+      "event": "bind-ok",
+      "holderPid": 1356598
+    },
+    {
+      "ms": 46,
+      "event": "proxy-start",
+      "proxyPort": 37213,
+      "canaryPort": 44701
+    },
+    {
+      "ms": 55,
+      "event": "command-start",
+      "bin": "/usr/bin/nsenter",
+      "kind": "namespace-control"
+    },
+    {
+      "ms": 102,
+      "event": "command-close",
+      "bin": "/usr/bin/nsenter",
+      "code": 0,
+      "signal": null
+    },
+    {
+      "ms": 109,
+      "event": "command-start",
+      "bin": "/usr/bin/nsenter",
+      "kind": "namespace-control"
+    },
+    {
+      "ms": 115,
+      "event": "command-stdout",
+      "bin": "/usr/bin/nsenter",
+      "text": "table inet cyf_typed_inspection {\n\tchain input {\n\t\ttype filter hook input priority filter; policy drop;\n\t\tct state established,related accept\n\t\tiifname "
+    },
+    {
+      "ms": 116,
+      "event": "command-stdout",
+      "bin": "/usr/bin/nsenter",
+      "text": "\"lo\" accept\n\t}\n\n\tchain output {\n\t\ttype filter hook output priority filter; policy drop;\n\t\tct state established,related accept\n\t\toifname \"lo\" accept\n\t\tip daddr 10.0.2.2 tcp dport 37213 accept\n\t}\n}\n"
+    },
+    {
+      "ms": 116,
+      "event": "command-close",
+      "bin": "/usr/bin/nsenter",
+      "code": 0,
+      "signal": null
+    },
+    {
+      "ms": 123,
+      "event": "command-start",
+      "bin": "/usr/bin/unshare",
+      "kind": "namespace-control"
+    },
+    {
+      "ms": 133,
+      "event": "command-stderr",
+      "bin": "/usr/bin/unshare",
+      "text": "sent tapfd=6 for tap0\n"
+    },
+    {
+      "ms": 133,
+      "event": "command-stdout",
+      "bin": "/usr/bin/unshare",
+      "text": "WARNING: Support for seccomp is experimental\n"
+    },
+    {
+      "ms": 134,
+      "event": "command-stderr",
+      "bin": "/usr/bin/unshare",
+      "text": "received tapfd=6\n"
+    },
+    {
+      "ms": 144,
+      "event": "command-start",
+      "bin": "/usr/bin/nsenter",
+      "kind": "python-probe"
+    },
+    {
+      "ms": 180,
+      "event": "proxy-tcp",
+      "remote": "127.0.0.1"
+    },
+    {
+      "ms": 181,
+      "event": "proxy-connect",
+      "authority": "forbidden.invalid:443"
+    },
+    {
+      "ms": 182,
+      "event": "proxy-socket-finish"
+    },
+    {
+      "ms": 182,
+      "event": "proxy-socket-close"
+    },
+    {
+      "ms": 30212,
+      "event": "command-stdout",
+      "bin": "/usr/bin/nsenter",
+      "text": "connected HTTP/1.1 403 Forbidden blocked blocked\n"
+    },
+    {
+      "ms": 30218,
+      "event": "command-close",
+      "bin": "/usr/bin/nsenter",
+      "code": 0,
+      "signal": null
+    },
+    {
+      "ms": 30224,
+      "event": "attach-pass"
+    },
+    {
+      "ms": 30225,
+      "event": "event-loop",
+      "maxMs": 296.484863,
+      "meanMs": 20.397531651115617
+    },
+    {
+      "ms": 30227,
+      "event": "holder-exit",
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+# JVC-OAI-OPS R2 root-cause matrix
+
+Date: 2026-09-03
+R1 commit/tree: `89c09078958efc2815de2c1e01f6e23cad5aa77d` / `744e1aaf1ad182bad13b209768956aa894f4f932`
+R2 commit/tree: `70aae8edd63c844a627c61d50c507222e370efef` / `fa2907a8ef884c6aea6b651fcf27aa0e7050090e`
+Status at matrix creation: `blocked_root_cause`
+Production state: unchanged; voice flags remain off; no OpenAI key is installed or authorized.
+
+## Failure history
+
+| Round | Review result | Root cause class | Consequence |
+| --- | --- | --- | --- |
+| R1 | REJECT `P0/P1/P2 = 1/5/1` | The packet trusted documented operator procedure where root-operated invariants needed executable enforcement. Bootstrap provenance, environment closure, activation transactionality, account identity and Nginx context were incomplete. | R2 had to replace the one-step promotion model with explicit stage/activate controls and add fail-closed host checks. |
+| R2 | REJECT `P0/P1/P2 = 0/5/3` | R2 closed the broad R1 boundaries but modeled several adversarial states too narrowly: numeric identity aliases, Spring's default config search, repeated release generations, all-vhost routing, snapshot/activation locking and byte-exact receipts. Its evidence did not prove the intended complete fixture matrix. | No R3 retry is permitted unless it is bound to this matrix, the exact R2 tree, a new critical owner, fresh independent review and fresh immutable verification evidence. |
+
+## R3 remediation matrix
+
+| ID | R2 defect and root cause | Required R3 invariant | Mandatory adversarial proof | Stop condition |
+| --- | --- | --- | --- | --- |
+| M1 | **Duplicate numeric UID/GID alias not rejected.** Name-based checks can validate `cyfapi` while a second passwd/group name resolves to the same numeric identity, widening who can read credentials or mutate runtime state. | Resolve the complete passwd/group databases and require exactly one account name for the expected UID and exactly one group name for the expected GID. Require the service user's primary GID and every ownership check to match those unique numeric IDs. Fail closed on duplicate aliases, malformed records or lookup disagreement. | Fixtures for duplicate UID, duplicate GID, both duplicates, wrong primary GID, supplementary-group alias, malformed passwd/group data and the unique valid case. | Any path that accepts a duplicate numeric alias is P1 and blocks promotion. |
+| M2 | **Writable WorkingDirectory permits Spring external-config injection.** `/var/lib/cyf-api` is service-writable, while Spring Boot searches working-directory `application*.{properties,yaml,yml}` and `config/` locations by default. | Use a root-owned, non-writable working directory and replace default search locations with an explicit, root-owned configuration allowlist. The unit and activation preflight must reject writable ancestors/files, symlinks, unexpected config files, and environment/CLI mechanisms that expand Spring config discovery. Mutable application data must live in separately enumerated state paths, not the working directory. | Place hostile `application-prod.yml`, `application.yml`, `config/application.yml`, symlinked config and writable-parent fixtures in every formerly searched location; prove they are rejected or unreachable. Prove only the exact approved classpath/root-owned config inputs reach the JVM. | If the service can load configuration from a `cyfapi`-writable path, promotion stops. |
+| M3 | **The release journal is not generation-safe across `A→B→A→B`, and a finalize crash can leave ambiguous pending/completed state.** A reusable release name or overwritten singleton journal allows stale state to authorize a later operation. | Give every stage/activation a unique transaction/generation ID and immutable generation record. Model explicit monotonic phases (`staged`, `activating`, `activated`, `finalizing`, `finalized`, `rolled_back`/`failed`) with same-filesystem temp-write + fsync + atomic rename for every transition. Bind records to release digest, previous/current symlink targets, JDK/JAR/config receipts and transaction ID. Recovery/finalize must be idempotent and derive one unambiguous action from durable state plus exact live symlink state; a release label may recur but a transaction ID may never be reused. | Execute `A→B→A→B`; replay stage/activate/finalize; reuse an old transaction ID; mutate a release under the same label; and inject process death before/after each journal rename, current-link swap and finalize boundary. Each restart must either finish the exact transaction or fail closed without misclassifying pending as completed. | Any ambiguous recovery, stale-record reuse, non-monotonic phase transition or cross-filesystem finalization is P1 and blocks promotion. |
+| M4 | **Nginx proof covers the intended context but not every loaded vhost.** Another host/default/regex/generic proxy location may still route the voice endpoints to the API. | Parse normalized `nginx -T` output as one configuration graph, including all loaded `http/server/location/include` contexts. For each exact voice path, prove the only externally routable allow is the approved TLS server name and exact location policy; every other server/default/listener must have an effective exact deny before generic/regex proxy routing. Reject dynamic/unresolved routing constructs that the verifier cannot prove safe. | Fixtures for default_server, alternate `server_name`, wildcard/regex names, duplicate listeners, generic `/api/` proxy, regex locations, nested includes, misleading comments/strings, variable `proxy_pass`, location precedence and an omitted deny. Include the one valid multi-vhost graph. | Unknown or competing routing for either voice endpoint fails closed; textual presence checks are insufficient. |
+| M5 | **Preflight snapshot and activation do not share one continuously held production lock.** Host state can change after validation and before symlink/unit/Nginx activation. | The root entry point must acquire one non-reentrant production lock before the first security-sensitive read and retain the same open lock descriptor through preflight, stage verification, activation, health decision, journal finalize or rollback. Helpers may not release/reacquire it. Bind the validated snapshot digest to the activation transaction and revalidate only under the same lock. | Race fixtures attempt to change passwd/group data, JDK/JAR/config receipts, release links, systemd unit and Nginx config between each phase; a concurrent activation and an unlocked helper invocation must fail. Prove lock ownership by descriptor/inode, not pathname alone. | Any validation-to-use window outside the held lock is P1 and blocks promotion. |
+| M6 | **JDK receipt capture uses command substitution and is not byte-exact.** Shell substitution strips trailing newlines and cannot safely represent arbitrary bytes, so a different receipt can compare equal. | Generate receipts into root-owned regular files and compare/hash files directly (`cmp` plus SHA-256/size as appropriate); never route trusted receipt bytes through shell variables or command substitution. Reject non-regular files, symlinks, owner/mode drift, truncation and post-check replacement. | Receipts differing only by trailing newline count, missing final newline, embedded whitespace, oversized content, symlink/FIFO/device input and replacement during verification. | Any normalized rather than byte-exact comparison blocks promotion. |
+| M7 | **Evidence is not complete or durably bound to the claimed `41/41` self-test result.** The packet lacks fixtures for the above attacks and does not publish one exact-tree immutable manifest proving every expected case ran. | Define a deterministic named test inventory and make the runner fail on missing, duplicate or skipped cases. R3 must execute the full inventory (at least the reviewed `41/41`; if cases are added, the denominator must increase), store stdout/stderr and per-case results in a new immutable evidence directory, and write `SHA256SUMS` bound to exact commit/tree and fixture digest. Never overwrite R1/R2 evidence. | Deliberately remove, duplicate, skip and fail one test; alter a result after manifesting; run against the wrong tree; and attempt evidence-directory reuse. All must fail the evidence gate. | A summary count without the named inventory, exact tree, fixture digest and immutable manifest is non-evidence and blocks review/acceptance. |
+
+## Authorized implementation boundary
+
+A matrix-bound R3 may modify only:
+
+```text
+ops/juyiting-voice-production/**
+```
+
+The implementation owner must not modify API/Web product code, the runtime ledger, unrelated orchestration code, deployment scripts outside this directory, or production host state. The owner is not authorized to install/read an OpenAI key, enable voice flags, run `apply`, deploy, reload/restart systemd or Nginx, or operate another thread's process/evidence directory.
+
+## Required gate order
+
+1. `authorize-remediation` binds a fresh `critical_worker` to this matrix, exact R2 commit and exact R2 tree.
+2. R3 implementation commits a clean candidate and reports exact commit/tree plus changed paths.
+3. A fresh read-only `adversarial_reviewer` reviews `R2..R3` and the full resulting packet. It must report `P0/P1/P2 = 0/0/0` before execution verification.
+4. A fresh `gpt_test_runner` executes the deterministic full self-test once, without host apply, and seals a new immutable evidence directory and SHA-256 manifest.
+5. Only after review and verification acceptance may the task be promoted. Production activation remains a separate explicit gate requiring the dedicated-user/root-owned-host migration and a key supplied through a secure channel.
+
+## Retry and safety policy
+
+- Attribute every failure before any retry. A second consecutive failure returns the task to `blocked_root_cause` with a new matrix.
+- R1/R2 evidence and commits remain immutable.
+- This matrix authorizes source remediation and offline/self-contained validation only; it does not authorize any production operation.

@@ -1,0 +1,42 @@
+const { chromium } = require('/tmp/banyishu-ctyun-browser/node_modules/playwright-core');
+const fs = require('fs');
+(async()=>{
+ const browser=await chromium.launch({executablePath:'/usr/bin/chromium-browser',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+ const checks=[];
+ for(const width of [390,1440]){
+  const page=await browser.newPage({viewport:{width,height:900}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://127.0.0.1:18786/index.html#help');
+  await page.locator('#hc-search').waitFor();
+  await page.screenshot({path:__dirname+`/help-${width}.png`,fullPage:true});
+  await page.locator('#hc-search').fill('机器人');
+  if(await page.locator('#hc-results .hc-row').count()!==1) throw Error('synonym search');
+  await page.locator('#hc-results .hc-row').click();
+  await page.getByRole('heading',{name:'怎样了解好汉能做什么？'}).waitFor();
+  await page.locator('[data-help-action="back"]').click();
+  if(await page.locator('#hc-search').inputValue()!=='机器人')throw Error('search not preserved');
+  await page.locator('#hc-search').fill('xyzxyz');
+  await page.getByRole('heading',{name:'还没有找到相关帮助'}).waitFor();
+  await page.locator('#hc-search').fill('');
+  await page.locator('[data-help-action="tour"]').click();
+  for(let i=0;i<4;i++) await page.locator('[data-help-action="next"]').click();
+  await page.locator('#hc-search').waitFor();
+  await page.locator('.hc-footer [data-help-action="feedback"]').click();
+  await page.locator('#hc-feedback').fill('原型反馈：查找成果');
+  await page.locator('[data-help-action="fail"]').click();
+  if(await page.locator('#hc-feedback').inputValue()!=='原型反馈：查找成果') throw Error('draft lost');
+  await page.locator('[data-help-action="submit"]').click();
+  if(!(await page.locator('.hc-note').textContent()).includes('内容未发送'))throw Error('fake feedback');
+  await page.locator('[data-help-action="back"]').click();
+  await page.locator('[data-help-action="article"][data-id="start"]').click();
+  await page.locator('[data-help-action="navigate"]').click();
+  if(!page.url().endsWith('#home'))throw Error('navigation');
+  await page.goto('http://127.0.0.1:18786/index.html#mine');
+  const entry=page.locator('.hc-mine-entry');
+  const mineEntry=await entry.count(); if(!mineEntry) throw Error('missing mine help'); await entry.click();await page.locator('#hc-search').waitFor();
+  checks.push({width,errors,passed:true,mineEntry});
+  await page.close();
+ }
+ fs.writeFileSync(__dirname+'/checks.json',JSON.stringify({checks,scope:'Offline prototype only; not production verification'},null,2));
+ await browser.close();console.log(JSON.stringify(checks));
+})().catch(e=>{console.error(e);process.exit(1)});

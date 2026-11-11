@@ -1,0 +1,70 @@
+
+
+  ........................!!!.......!...
+
+  34 passing (103ms)
+  4 failing
+
+  1) personal workspace task link adapter
+       confirms a 201 by authenticated readback when cross-origin ETag is not exposed, without repeating the POST:
+
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    'POST',
+-   'GET'
+  ]
+      + expected - actual
+
+       [
+         "POST"
+      +  "GET"
+       ]
+      
+      at Context.<anonymous> (tests/personal-workspace-task-links.test.js:56:12)
+
+  2) personal workspace task link adapter
+       confirms a detach through a read-only GET when the browser cannot see its ETag:
+
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    'DELETE',
+-   'GET'
+  ]
+      + expected - actual
+
+       [
+         "DELETE"
+      +  "GET"
+       ]
+      
+      at Context.<anonymous> (tests/personal-workspace-task-links.test.js:72:12)
+
+  3) personal workspace task link adapter
+       does not accept a 201 with no ETag when readback does not confirm that exact version:
+     AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ {
++   createdAt: 1,
++   fileId: 'file_b',
++   relationId: 'rel_a',
++   relationRevision: '1',
++   role: 'INPUT',
++   state: 'ACTIVE',
++   taskId: 'task_a',
++   version: '1'
++ }
+- null
+      at Context.<anonymous> (tests/personal-workspace-task-links.test.js:85:12)
+
+  4) personal workspace conversation link adapter
+       lists exact conversation links, writes explicit pinned versions, and sends a conditional idempotent detach:
+     TypeError: Cannot read properties of null (reading 'relationId')
+      at Context.<anonymous> (tests/personal-workspace-conversation-links.test.js:36:27)
+
+
+

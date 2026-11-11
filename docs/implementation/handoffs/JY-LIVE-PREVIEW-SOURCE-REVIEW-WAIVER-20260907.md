@@ -1,0 +1,24 @@
+# LIVE resource waiver and authoritative source remediation — 2026-09-07
+
+## Explicit user waiver (task-scoped)
+
+Source controller `01a004d0-16ac-7482-9112-054f42b59ad8` relayed the user's latest instruction: “暂时无法增加资源，取消资源门禁，然后继续”. Main applies it **only to JY-LIVE-PREVIEW**: fixed MemAvailable/disk admission thresholds (including the former 1GiB wait) are removed; observations are telemetry, not a scheduling block. Source controller's 00:32 observation was MemAvailable675236KiB/disk2462965760bytes; it is not a new failure and not a prerequisite.
+
+Do not alter global orchestrator, voice/API release or recovery thresholds, production services, credentials, identity/ownership/locks, filesystem writeability or evidence trust checks. Preserve serial execution, bounded heap/timeouts/watchdogs, actual native exit/log capture, failure attribution and independent review/release acceptance. Do not kill/preempt other tasks. If a LIVE-only verification wrapper still enforces fixed resource thresholds, prepare a new exact wrapper that makes only those resource observations nonblocking; preserve the other controls and share its hash/argv/selector plan before the test GO. No future transition back to waiting_resources merely for those fixed thresholds.
+
+## Actual unique source verdict
+
+Main obtained the complete final response from the already designated fresh reviewer Godel `01a07767-e787-7903-a07d-a597f883c012`, not an inference from idle/blank read_thread messages.
+
+Candidate `d8fbd0701df1d209eaf5fc500eea3430152fea00` / tree `e342c7f0d8cc11a5bad6552549b12e41fc2d5178`: **SOURCE_REJECT, P0=0, P1=3, P2=1**. No Node/tests/build/browser/production execution by Reviewer. No whole-feature or release verdict.
+
+1. **P1 draw-wrapper leak after failed retained-engine reentry.** `src/components/juyiting/HallStage.vue:817-828`; `src/game/JuyitingGame.js:246-250,381-429,721-727,877-903`. Immediate preview watcher can install draw wrapper before mount on retained `_me`; failed mount resets `_previewDraw` without restoring `game.draw`. Retry stacks wrappers and landscape can remain throttled. Fix: restore the owned wrapper before resetting preview state on every failed-mount cleanup; cover retained-engine failure/retry/reentry.
+2. **P1 async physical orientation drops explicit target / releases preview input too early.** `src/components/world/JuyiHall.vue:38-44,802-815,858-874`; `src/components/juyiting/HallStage.vue:430-445,812-828`. Target watcher refuses consumption while still preview; later mode change does not retrigger it. Current transition unlocks/admit simulation before Teleport and stable geometry. Fix: one generation-fenced post-Teleport transition; keep preview lock through nonzero viewport commit, restore camera/consume pending explicit agent-task-hotspot target, then release only the preview lock. Preserve other locks and late-generation isolation.
+3. **P1 below-preset landscape zoom not preserved.** `src/game/camera/cameraController.ts:225-240`; supported behavior evidence in `tests/game/camera/camera-controller.test.ts:288-326`. clearPreviewContain saves preservedMinimum but applies normalBounds that clamps e.g.0.84 to1.05 after preset resize. Fix: restore with saved-minimum bounds and exact preview roundtrip regression.
+4. **P2 inert Stage overlay covers operative preview retry.** `src/components/juyiting/HallLiveMapPreview.vue:20-34,139-165`; `src/components/juyiting/HallStage.vue:76-89,1105-1135`. Stage z8 overlay remains above preview z1, with inert/pointer-disabled retry. Fix: suppress Stage-owned status overlays in read-only preview, leaving status/retry to the preview owner.
+
+## Next exact owner / execution boundary
+
+Return implementation ownership to original Terra `01a07470-7977-7b72-a7c5-9f0b4c336336`, profile balanced_worker, the same independent worktree `.worktrees/juyiting-live-map-preview-20260906`, on d8fb/e342. No new Writer/Reviewer. Only the four findings and corresponding regressions, within previously handed-off P1 paths and P2 contract §7; no unrelated funds/R9/voice/ACL/SCREEN behavior changes or entire-file overwrite.
+
+Implementation GO is effective immediately after claim; source controller delivers it to the same exact Terra and reports actual acknowledgment, not inferred execution. Reviewer remains read-only; retain its verdict for bounded re-review of the new candidate. Next verify step is a small explicit selector batch on a new clean SHA/tree, with preserved heap/timeout/serial/receipt controls and task-specific resource waiver. Main awaits its exact command/selector/wrapper/owner receipt before issuing that execution GO; this is a source/verification handoff, **not resource waiting**. Final nine selectors, build, real Canvas/browser/WeChat evidence and independent integrated/release gates remain pending; old3329 27PASS is not final evidence.

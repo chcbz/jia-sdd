@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-08T23:47:27.931521+08:00",
+  "batch": "ur04-cfg-m4-local-20261008T233138",
+  "session": 92814,
+  "state": "LIVE_CONFIRMED_FIXTURE_PROTOCOL_DEADLOCK_NOT_TERMINAL_RESULT",
+  "acceptedC1C4": "PASS",
+  "sixFormats": "PASS",
+  "consumer": "RUNNING_BUT_NOT_REACHED_REAL_JAVA_SERVER_MYSQL",
+  "observedOwnedProcesses": {
+    "orchestrator": 771614,
+    "gradleLauncher": 771645,
+    "daemon": 771687,
+    "testWorker": 772138,
+    "prepareNode": 772202
+  },
+  "testWorkerStack": {
+    "path": "/home/isp/wsps/cyf/evidence/unified-agent-runtime-20261008/ur04-prepare-eof-deadlock/owned-test-worker-thread-print.txt",
+    "sha256": "ccf42b80c6ec2ac36b62c83b2fe72786e0133ea62d63dc3a914b882624d85051",
+    "proves": "actual worker ProcessImpl.waitFor -> UR04 Child.exitZero -> Lane.<init> after NODE_PREPARED exchange"
+  },
+  "ownedNodeStdio": {
+    "0": "pipe:[11480845]",
+    "1": "pipe:[11480846]",
+    "2": "pipe:[11480847]"
+  },
+  "nodePrivateRoot": "/tmp/junit-4233137391852776517/ur04-10082408539989303039",
+  "nodePreparedAllThreeAgentFoldersAndHostJson": true,
+  "cause": "Java waitFor without closing own Child stdin; Node readline asyncIterator remains live after PREPARE returns. All prepare folders exist, actual worker past receipt blocks waitFor. Both UR04 and UR06 source share defect. Not CPU elapsed/Provider/network/Python/SQL evidence.",
+  "readOnlyDiagnostics": "jcmd Thread.print on exact own test worker; proc ancestry/cwd/stdin FD; no process control/production touched",
+  "manualProcessCleanup": "NOT_AUTHORIZED_YET_REQUESTED_USER_ONLY_THIS_EXCLUSIVE_TEST_BATCH",
+  "sourceRemediation": "OriginalTuring only2existingJava Child.exitZero helpers close own input once after expected complete receipt before waitFor; preserve nonzero exit/failure cleanup and alloriginal6+7 assertions; nodeadline/forcedzero/processkill in source",
+  "finalReceipt": "NOT_FINALIZED",
+  "targetCleanup": "PENDING_AWAITED_CONSUMER",
+  "productionTouched": false
+}

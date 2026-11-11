@@ -1,0 +1,95 @@
+{
+  "recordedAt": "2026-09-13T21:33:00.327221+08:00",
+  "task": "NATIVE-LEGACY-CANONICAL-CLIENT-20260913",
+  "state": "source_verified_not_installed",
+  "source": {
+    "worktree": "/home/isp/wsps/chcbz/.worktrees/native-legacy-canonical-20260913",
+    "commit": "a0ad68e36c0f5fe97689d8e3424b5f96e4d1921e",
+    "tree": "4ecbbeed03ad326382db940ad58ffc7477efc700",
+    "parent": "4ebaaffad9986dc058fb3048d952a96ad66a0b37",
+    "remoteBranch": "codex/native-legacy-canonical-20260913",
+    "remoteReadbackMatches": true
+  },
+  "release": {
+    "version": "1.1.0-m4.20260913.1",
+    "manifestSha256": "390b74545ab820149e3fcc669d18f3894dc680dd727f82f0c7d79bcc0a0c721e",
+    "sourceManifestFiles": 15,
+    "installed": false
+  },
+  "rootCause": {
+    "category": "legacy_canonical_runtime_incompatibility",
+    "evidence": "/var/tmp/cyf-native-release-ready-20260913/canonical-identity-binding-read.txt",
+    "evidenceSha256": "3686553dcea4ec283ebef775a631e8cb09bc33b61676e5f2c23966228659ba61",
+    "meaning": "Existing active direct LEGACY_CANONICAL IDs accepted by WS registration are rejected by opaque-only runtime receipt/lease prefix gates. No alias/opaque mapping exists; no unbind/recreate is authorized."
+  },
+  "change": "Client validates bounded wire shape and exact configured Agent/request/runtime/scope; server persisted canonical authority remains mandatory. No six-field protocol change. API counterpart must land before install/activation.",
+  "verification": {
+    "initialHarnessFailure": "Missing local yauzl; no tests ran. Resolved by lockfile npm ci --offline --ignore-scripts, no production dependencies modified.",
+    "regressionBeforeFix": {
+      "tests": 34,
+      "passed": 29,
+      "failed": 5,
+      "meaning": "Legacy happy paths rejected by original opaque-only gates"
+    },
+    "exactCandidateSuite": {
+      "tests": 102,
+      "passed": 102,
+      "failed": 0,
+      "includes": [
+        "request/receipt correlation",
+        "legacy and opaque F01 dispatch",
+        "legacy E05 lease/start/heartbeat",
+        "cross-agent/client/tenant rejection",
+        "revocation and invalidation",
+        "file-backed terminal ACK reconnect/replay without duplicate execution",
+        "installer/manifest/config regressions"
+      ]
+    },
+    "scope": "Offline Node service/processor fixtures and fake HTTP; no real Agent task or production ACK"
+  },
+  "evidence": [
+    {
+      "path": "/var/tmp/cyf-native-legacy-main-20260913/regression-before.log",
+      "sha256": "e79667820314e9fec7524ba9059367326f1695cbe8bae9aef3dddf60c416998b"
+    },
+    {
+      "path": "/var/tmp/cyf-native-legacy-main-20260913/regression-before-with-deps.log",
+      "sha256": "9d2c839fb11a7e8e4d2fe02df66e2ddaba4ff8e2f4e5e8ac1b3e4135bdc03ef2"
+    },
+    {
+      "path": "/var/tmp/cyf-native-legacy-main-20260913/compatibility-after.log",
+      "sha256": "145ee0aa589a409d459c5ffa43ade32d10799bbcbd2ea183859001cdd2997831"
+    },
+    {
+      "path": "/var/tmp/cyf-native-legacy-main-20260913/installer-config-after.log",
+      "sha256": "4b9cf6cd955ce2b9cf618cc5469fb998afb93554fb16062bacdb491b589266d4"
+    },
+    {
+      "path": "/var/tmp/cyf-native-legacy-main-20260913/durable-ack-after.log",
+      "sha256": "115fac537e1cad92a0a106941c730969d0d736daca00a142bac833c2f1ba5af7"
+    },
+    {
+      "path": "/var/tmp/cyf-native-legacy-main-20260913/exact-candidate-suite.log",
+      "sha256": "48ac154ac41cdf32af2bf5940df5367c5e65572d786e54968bf0530e3bd0ec7d"
+    }
+  ],
+  "productionEffects": {
+    "install": false,
+    "restart": false,
+    "profileWrite": false,
+    "unbind": false,
+    "APIStartStop": false,
+    "paidCalls": false
+  },
+  "nextAction": "API owner Knuth completes persisted LEGACY_CANONICAL authority fix and cloud selectors; narrow identity review once on combined candidate, standard Flow develop deployment then versioned native controlled activation and real ACK.",
+  "mailBoundary": {
+    "checkedAt": "2026-09-13T21:37:23.270116+08:00",
+    "tcpTlsGreeting": "connected/TLSv1.3/220; no AUTH or send performed",
+    "existingSharedHelperFailures": "Legacy notifier pendingNotifications latest entries retain SMTPAuthenticationError 526 Authentication failure[0]; exact provider reason unknown",
+    "existingTask": "OPS-ALERT-MAIL-AUTH526-20260909 waiting_user",
+    "flowRun51Notice": "3 attempts/accepted false; counts unchanged",
+    "noCredentialChange": true,
+    "noRetry": true,
+    "nextAction": "Mailbox administrator resolves configured SMTP authorization or provider policy; in-app updates remain primary until changed-input verification."
+  }
+}

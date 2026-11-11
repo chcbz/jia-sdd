@@ -1,0 +1,38 @@
+BOUNDED SCHEMA READINESS DIAGNOSTIC INCIDENT RECORD
+Date: 2026-09-30 Asia/Shanghai
+Task: MMD-U4-SCHEMA-READINESS-20260930
+Candidate: 79165b93d7dc7c8ecff30376e0ed1622c26591ac
+Tree: c073c6def079214beec0d150812b49a9eb3e48c4
+Fixture: f19ee34f1baebccadbb6ef157ccf35f9d2e9401037f65b7a32aebe476972724e
+Scope: exact-source bounded diagnostic; not full build, MySQL, release, or deployment evidence.
+
+Invocation:
+JAVA_TOOL_OPTIONS='-XX:ActiveProcessorCount=2 -XX:+UseSerialGC' python3 /home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py gradle --cwd /home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api --tree-sha c073c6def079214beec0d150812b49a9eb3e48c4 --selector 'u4BoundedSchemaReadinessLifecycle --tests cn.jia.chat.config.ChatSchemaReadinessLifecycleTest' --fixture-digest f19ee34f1baebccadbb6ef157ccf35f9d2e9401037f65b7a32aebe476972724e --artifact /home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v1.log MMD-U4-SCHEMA-READINESS-20260930 -- ./gradlew --offline --no-daemon --max-workers=1 -PrepoUsername=unused -PrepoPassword=unused '-Dorg.gradle.jvmargs=-Xmx256m -XX:MaxMetaspaceSize=160m -XX:ActiveProcessorCount=2 -XX:+UseSerialGC' -I /home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v1.init.gradle u4BoundedSchemaReadinessLifecycle
+
+Observed exact task graph:
+:u4BoundedPreflight
+:u4BoundedCompileMain
+:u4BoundedCompileLifecycleTest
+:u4BoundedSchemaReadinessLifecycle
+
+Completed:
+- exact candidate/baseline/source/classpath-content preflight passed
+- frozen classpath builtBy dependency set was empty
+- four main source units compiled to evidence-only overlay (11 emitted class files)
+- one lifecycle test source compiled to evidence-only overlay (8 emitted class files)
+
+Failure:
+Execution failed for task ':u4BoundedSchemaReadinessLifecycle'.
+Cannot query the value of property 'outputLocation' because it has no value available.
+The failure occurred before test worker/JUnit launch. No class-load log or overlay runtime-load proof was produced.
+
+JUnit:
+executed=false
+xml_files=0
+passed=0
+failed=0
+skipped=0
+
+Gradle daemon PID 1927964 completed normally and was not killed by OOM.
+A concurrent global OOM event killed a different Java PID/UID; no ownership is inferred and it is not attributed as this failure's cause.
+No retry was performed.

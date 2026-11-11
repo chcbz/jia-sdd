@@ -1,0 +1,89 @@
+{
+  "reason": "Old funded write orchestration is removed, not emulated. Lower-level economy posting/escrow tests and new task billing MySQL regression retained.",
+  "retiredFiles": [
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/funding/FundedBountyQuoteClaimRealTransactionTest.java",
+      "tests": [
+        "productionSpringConstructorCreatesRealQuoteClaimBean",
+        "recommendationPersistsAcrossConnectionsAndRemainsNonnullable",
+        "nullStaleAndForeignRuntimeBindingCannotQuoteOrClaimAndLeaveNoRows",
+        "refundedTaskKeepsOwnedImmutableQuoteReplayButRejectsNewQuote",
+        "explicitClaimCommitsOnceWithImmutableReceiptAndNoWakeupBeforeOuterCommit",
+        "failureAfterRealReceiptUpdateRollsBackClaimQuoteAssignmentAndEveryEventThenSameKeyRetries",
+        "twoExplicitAgentsRacingTheSameRootProduceOneClaimAndNoLosingRows",
+        "completedClaimPersistsReceiptAndReplaysIdempotently",
+        "mergedQuoteAndClaimDigestsRetainW04MalformedSurrogateRejection"
+      ]
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/funding/FundedBountyQuoteClaimServiceTest.java",
+      "tests": [
+        "quoteIdempotencyReplayReturnsOriginalImmutableExpiryAndDifferentHashConflicts",
+        "quoteInsertIntegrityFailureWithoutCollisionKeepsPublicConflictAndRetainsCause",
+        "completedClaimIdempotencyReplayReturnsOriginalReceiptAfterTaskChanged",
+        "expiredQuoteCannotClaimAndCreatesNoOperationOrAssignment",
+        "quoteAgentMismatchFailsClosedWithoutRevealingCounterparty",
+        "insufficientWorstCaseBudgetCannotClaim",
+        "rollbackAfterDurableCaptureFailureCannotCommitPartialClaim",
+        "durableInviteCaptureOccursInsideTransactionBeforeCommit",
+        "parallelClaimsHaveAtMostOneWinner"
+      ]
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/funding/FundedBountyQuoteRequestDigestTest.java",
+      "tests": [
+        "quoteDigestBindsExplicitAgentModelContextAndMinimumPayout",
+        "claimDigestBindsAllowQueueAndExactTaskVersion"
+      ]
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/funding/FundedBountyRequestDigestTest.java",
+      "tests": [
+        "equalSemanticBodiesHaveEqualDigestAndEveryFundedFieldIsBound",
+        "malformedSurrogatesAreRejectedInsteadOfCollidingThroughUtf8Replacement"
+      ]
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/funding/FundedBountyServiceRealTransactionTest.java",
+      "tests": [
+        "createAndCancelUseRealPostingTaskAndEventCollaboratorsWithStableReplay",
+        "insufficientBalanceRollsBackRealTaskItemsAccountsJournalFundingAndEvents",
+        "failureAfterRealEventAppendRollsBackTaskPostingEventVersionAndAfterCommit",
+        "lateCancelFailureRollsBackActualRefundJournalAndEventThenRetryCommitsOnce",
+        "parallelSameKeyCreatesOneActualReserveAndEventAndDifferentBodyConflicts",
+        "actualCreateHeldBeforeCommitRacesLegacyPrecheckAndRootReservationThenLockedGuardRejects"
+      ]
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/funding/FundedBountyServiceReplayTest.java",
+      "tests": [
+        "refundedCancellationReplayReturnsPersistedReceiptEvenIfTaskVersionLaterChanges",
+        "refundedCancellationWithDifferentBodyHashIsIdempotencyConflict"
+      ]
+    },
+    {
+      "path": "agent/jia-agent-service/src/test/java/cn/jia/agent/service/funding/FundedBountySettlementRealTransactionTest.java",
+      "tests": [
+        "realSplitCaptureConservesAndStaysInvisibleUntilOuterCommitWithImmutableReplayAndReadback",
+        "zeroComputePostsOnlyFeeAndExplicitAgentWithNoRefundOrZeroLines",
+        "failureAfterRealReceiptAndEventRollsBackEveryCaptureAndSameKeyCanRetry",
+        "outerRollbackDropsSuccessfulInnerCaptureReceiptAndDeferredCallbacks",
+        "invalidAmountsVersionsScopeOwnerAndChangedBodyWriteNothing",
+        "actorScopedCompletionKeyCannotBeReusedForAnotherTaskAndItsCapturesRollback",
+        "insufficientEscrowOrMismatchedAcceptedAgentCannotCapture",
+        "sharedSkillCaptureAndRefundConserveReplayAndRollBackUsingRealPosting",
+        "sharedCaptureTemplatesStillRejectWrongCounterpartyAndImbalancedLinesBeforeAnyJournal",
+        "feeAccountOverflowAfterComputePostingRollsBackTheFirstCaptureToo",
+        "parallelSameKeyCompletionsReturnOneReceiptAndOneConservedSettlement",
+        "completionRacingCancelCannotRefundAnAcceptedClaimOrDoubleSpend",
+        "prestartHeldReadAndFullCancelRetainW04SemanticsAndLegacyGuards",
+        "successfulReceiptNumbersRemainNonnullable"
+      ]
+    }
+  ],
+  "migratedSharedTests": [
+    "sharedSkillCaptureAndRefundConserveReplayAndRollBackUsingRealPosting",
+    "sharedCaptureTemplatesStillRejectWrongCounterpartyAndImbalancedLinesBeforeAnyJournal"
+  ],
+  "replacement": "FundedBountyHistoryReadTest: fixed historical rows, real SQL and root transaction, no retired write fixtures"
+}

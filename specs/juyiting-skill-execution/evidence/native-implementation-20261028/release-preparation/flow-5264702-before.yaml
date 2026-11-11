@@ -1,0 +1,32 @@
+name: cyf-ops-manual
+sources: {}
+stages:
+  startup_diagnostics:
+    name: Startup diagnostics tooling
+    jobs:
+      verify_tooling:
+        name: Verify startup diagnostics
+        component: VMDeploy
+        with:
+          downloadArtifact: false
+          executeUser: root
+          useEncodeBase64: false
+          machineGroup: yjctjhskhk1ti9t4
+          batchNumber: 1
+          batchWaitTime: 0
+          run: |
+            set -eu
+            umask 077
+            /usr/bin/python3 -I -S - <<'CYF_VERIFIED_OPS_COMMAND'
+            import hashlib, os, stat, subprocess
+            assert os.environ.get('PIPELINE_ID') == '5264702', 'wrong Flow pipeline'
+            path = '/var/lib/cyf-api-flow/startup-diagnostic-command-bundles/d806aea7dc3337961a9284139563a4900afd56bd8e110a4493811dd50bbabf5a.sh'
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+            with os.fdopen(fd, 'rb') as source:
+                info = os.fstat(source.fileno())
+                assert stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1 and stat.S_IMODE(info.st_mode) == 0o600, 'unsafe fixed command'
+                script = source.read()
+            assert hashlib.sha256(script).hexdigest() == 'd806aea7dc3337961a9284139563a4900afd56bd8e110a4493811dd50bbabf5a', 'fixed command digest mismatch'
+            print('CYF_OPS_COMMAND_SHA256=d806aea7dc3337961a9284139563a4900afd56bd8e110a4493811dd50bbabf5a', flush=True)
+            subprocess.run(['/bin/bash'], input=script, check=True)
+            CYF_VERIFIED_OPS_COMMAND

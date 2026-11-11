@@ -1,0 +1,70 @@
+
+
+  !......!!!.............................!................
+  ..!!!........!
+
+  61 passing (3s)
+  9 failing
+
+  1) workspace immutable in-page write intent
+       joins double clicks and retries the frozen original request with the same key:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /重试原操作/. Input:
+
+'Error: 该目标有结果尚未确认的操作，请先重试，不要修改内容后重复提交。'
+
+      at async Context.<anonymous> (tests/personal-workspace-write-intent.test.js:26:5)
+
+  2) workspace retry error lifecycle
+       rename: clears the old error on same-key retry and leaves success without a stale alert:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /已提交/. Input:
+
+''
+
+      at Context.<anonymous> (tests/personal-workspace-write-intent.test.js:122:49)
+
+  3) workspace retry error lifecycle
+       trash: clears the old error on same-key retry and leaves success without a stale alert:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /已提交/. Input:
+
+''
+
+      at Context.<anonymous> (tests/personal-workspace-write-intent.test.js:122:49)
+
+  4) workspace retry error lifecycle
+       restore: clears the old error on same-key retry and leaves success without a stale alert:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /已提交/. Input:
+
+''
+
+      at Context.<anonymous> (tests/personal-workspace-write-intent.test.js:122:49)
+
+  5) personal workspace task link adapter
+       rejects a write acknowledgement for a different version even without an ETag:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /重试原操作/. Input:
+
+'暂时无法确认是否添加资料，请查询结果，勿重复添加。'
+
+      at Context.<anonymous> (tests/personal-workspace-task-links.test.js:87:12)
+
+  6) hosting rent actual quote/lease UI
+       renders actual server terms/wallet/separate token fees, with no charge until the confirm click:
+     AssertionError: expected '林冲 · 山寨安顿关闭（未确认报价不付款）每位好汉独立租约，按期预付、仅手…' to include '2 固定天（172800 秒）'
+      at Context.<anonymous> (tests/hosting-rent-ui.test.js:65:31)
+
+  7) hosting rent actual quote/lease UI
+       cancel click never sends a bind; readback failure displays confirmed not failed payment:
+     AssertionError: expected '林冲 · 山寨安顿关闭（未确认报价不付款）每位好汉独立租约，按期预付、仅手…' to include '原租金预留已确认'
+      at Context.<anonymous> (tests/hosting-rent-ui.test.js:98:32)
+
+  8) hosting rent actual quote/lease UI
+       keeps manual paid renewal and free reprovision separate and shows immutable non-ready acceptance:
+     AssertionError: expected '林冲 · 山寨安顿关闭（未确认报价不付款）每位好汉独立租约，按期预付、仅手…' to include '免费重整已接受（非就绪回执）'
+      at Context.<anonymous> (tests/hosting-rent-ui.test.js:123:31)
+
+  9) economy readonly preview UI behavior
+       mounts the actual component and shows installation evidence even with observedAt:
+     AssertionError: expected '经济预览仅查看当前已授权的数据：不会扣款、下单、创建订单、安装或启用托管。…' to include 'i-1 · read@1 · 已验证安装（ACK）'
+      at Context.<anonymous> (tests/economy-readonly-preview-ui.test.js:180:31)
+
+
+

@@ -26,8 +26,8 @@ import zipfile
 
 PRODUCTION_PATH = Path('/usr/local/sbin/cyf-api-additive-schema')
 CANONICAL_JAR = Path('/home/isp/hosts/cyf/api/cyf-api-kit.jar')
-PACKAGE = Path('/var/lib/cyf-api-flow/incoming/package.tgz')
-RECORD = Path('/var/lib/cyf-api-flow/record.json')
+PACKAGE = Path('/home/isp/state/cyf-api-flow/incoming/package.tgz')
+RECORD = Path('/home/isp/state/cyf-api-flow/record.json')
 MYSQL = Path('/usr/bin/mysql')
 MYSQL_SOCKET = '/home/isp/apps/mysql/mysql.sock'
 MYSQL_SCHEMA = 'jia'
@@ -44,7 +44,7 @@ EXPECTED_PACKAGE_MEMBERS = frozenset((
 ))
 NESTED_MAPPER_JAR = 'BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar'
 RESOURCE_PATH = 'db/agent-task-artifact-outcome-f06.sql'
-RESOURCE_SHA256 = 'ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75'
+RESOURCE_SHA256 = '80df95b430e6d6e806c8f5b2bf487b63115a23d9692ac1bafd51f9d81e13fb53'
 TABLE_ORDER = (
     'agent_task_artifact_outcome',
     'agent_task_artifact_outcome_decision',
@@ -53,8 +53,8 @@ SHA256_RE = re.compile(r'^[0-9a-f]{64}$')
 GIT_RE = re.compile(r'^[0-9a-f]{40}$')
 RUN_RE = re.compile(r'^[1-9][0-9]*$')
 
-# This byte-exact allowlist is the API39 resource.  It is not a generic DDL parser.
-F06_SQL_BYTES = b"-- M4-F06 bounded additive migration candidate.\n-- DDL only: no backfill, no automatic acceptance, and no mutation of existing artifacts.\n-- Deployment requires an explicit migration action before the internal outcome service is activated.\n\nCREATE TABLE IF NOT EXISTS agent_task_artifact_outcome (\n    id                              BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',\n    task_id                         VARCHAR(100) NOT NULL COMMENT 'Task ID copied for exact scope fencing',\n    artifact_id                     VARCHAR(100) NOT NULL COMMENT 'Stable logical artifact ID',\n    artifact_version                INT NOT NULL COMMENT 'Exact immutable artifact version',\n    outcome_state                   VARCHAR(20) NOT NULL COMMENT 'accepted/superseded',\n    superseded_by_artifact_id       VARCHAR(100) DEFAULT NULL COMMENT 'Accepted replacement artifact ID',\n    superseded_by_artifact_version  INT DEFAULT NULL COMMENT 'Accepted replacement artifact version',\n    decision_id                     VARCHAR(100) NOT NULL COMMENT 'Caller supplied scoped idempotency identity',\n    decision_digest                 CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',\n    decided_by_agent_id             VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',\n    decided_at                      BIGINT NOT NULL COMMENT 'Decision time',\n    version                         BIGINT NOT NULL COMMENT 'Outcome optimistic lock version; implicit draft is zero',\n    tenant_id                       VARCHAR(50) NOT NULL COMMENT 'Single tenant scope; always 0',\n    client_id                       VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',\n    owner_jiacn                     VARCHAR(50) NOT NULL COMMENT 'Authenticated user owner scope',\n    create_time                     BIGINT DEFAULT NULL COMMENT 'Create time',\n    update_time                     BIGINT DEFAULT NULL COMMENT 'Last modified time',\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_artifact_outcome_version\n        (tenant_id, client_id, owner_jiacn, artifact_id, artifact_version),\n    KEY idx_artifact_outcome_task_state\n        (tenant_id, client_id, owner_jiacn, task_id, outcome_state, decided_at, id),\n    KEY idx_artifact_outcome_decision\n        (tenant_id, client_id, owner_jiacn, task_id, decision_id, id),\n    KEY idx_artifact_outcome_superseded_by\n        (tenant_id, client_id, owner_jiacn, task_id,\n         superseded_by_artifact_id, superseded_by_artifact_version),\n    CONSTRAINT chk_artifact_outcome_state\n        CHECK (outcome_state IN ('accepted', 'superseded')),\n    CONSTRAINT chk_artifact_outcome_versions\n        CHECK (artifact_version >= 1 AND version >= 1 AND decided_at > 0),\n    CONSTRAINT chk_artifact_outcome_digest\n        CHECK (CHAR_LENGTH(decision_digest) = 64),\n    CONSTRAINT chk_artifact_outcome_supersession\n        CHECK (\n            (outcome_state = 'accepted'\n             AND superseded_by_artifact_id IS NULL\n             AND superseded_by_artifact_version IS NULL)\n            OR\n            (outcome_state = 'superseded'\n             AND superseded_by_artifact_id IS NOT NULL\n             AND superseded_by_artifact_version >= 1\n             AND (artifact_id <> superseded_by_artifact_id\n                  OR artifact_version <> superseded_by_artifact_version))\n        )\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Scoped current accepted/superseded state for immutable task artifact versions';\n\nCREATE TABLE IF NOT EXISTS agent_task_artifact_outcome_decision (\n    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',\n    task_id                     VARCHAR(100) NOT NULL COMMENT 'Task ID for scoped idempotency',\n    decision_id                 VARCHAR(100) NOT NULL COMMENT 'Stable caller supplied decision identity',\n    decision_digest             CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',\n    accepted_artifact_id        VARCHAR(100) NOT NULL COMMENT 'Artifact accepted by this decision',\n    accepted_artifact_version   INT NOT NULL COMMENT 'Exact immutable artifact version accepted',\n    accepted_outcome_version    BIGINT NOT NULL COMMENT 'Accepted outcome version returned on replay',\n    decided_by_agent_id         VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',\n    decided_at                  BIGINT NOT NULL COMMENT 'Original committed decision time',\n    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Single tenant scope; always 0',\n    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',\n    owner_jiacn                 VARCHAR(50) NOT NULL COMMENT 'Authenticated user owner scope',\n    create_time                 BIGINT DEFAULT NULL COMMENT 'Create time',\n    update_time                 BIGINT DEFAULT NULL COMMENT 'Last modified time',\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_artifact_outcome_decision\n        (tenant_id, client_id, owner_jiacn, task_id, decision_id),\n    KEY idx_artifact_outcome_decision_accepted\n        (tenant_id, client_id, owner_jiacn, task_id,\n         accepted_artifact_id, accepted_artifact_version),\n    CONSTRAINT chk_artifact_outcome_decision_versions\n        CHECK (accepted_artifact_version >= 1\n               AND accepted_outcome_version >= 1\n               AND decided_at > 0),\n    CONSTRAINT chk_artifact_outcome_decision_digest\n        CHECK (CHAR_LENGTH(decision_digest) = 64)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Immutable scoped F06 decision identities and exact replay results';\n"
+# Byte-exact CHECK-free API resource; not a generic DDL parser.
+F06_SQL_BYTES = b"-- M4-F06 bounded additive migration candidate.\n-- DDL only: no backfill, no automatic acceptance, and no mutation of existing artifacts.\n-- Deployment requires an explicit migration action before the internal outcome service is activated.\n\nCREATE TABLE IF NOT EXISTS agent_task_artifact_outcome (\n    id                              BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',\n    task_id                         VARCHAR(100) NOT NULL COMMENT 'Task ID copied for exact scope fencing',\n    artifact_id                     VARCHAR(100) NOT NULL COMMENT 'Stable logical artifact ID',\n    artifact_version                INT NOT NULL COMMENT 'Exact immutable artifact version',\n    outcome_state                   VARCHAR(20) NOT NULL COMMENT 'accepted/superseded',\n    superseded_by_artifact_id       VARCHAR(100) DEFAULT NULL COMMENT 'Accepted replacement artifact ID',\n    superseded_by_artifact_version  INT DEFAULT NULL COMMENT 'Accepted replacement artifact version',\n    decision_id                     VARCHAR(100) NOT NULL COMMENT 'Caller supplied scoped idempotency identity',\n    decision_digest                 CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',\n    decided_by_agent_id             VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',\n    decided_at                      BIGINT NOT NULL COMMENT 'Decision time',\n    version                         BIGINT NOT NULL COMMENT 'Outcome optimistic lock version; implicit draft is zero',\n    tenant_id                       VARCHAR(50) NOT NULL COMMENT 'Single tenant scope; always 0',\n    client_id                       VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',\n    owner_jiacn                     VARCHAR(50) NOT NULL COMMENT 'Authenticated user owner scope',\n    create_time                     BIGINT DEFAULT NULL COMMENT 'Create time',\n    update_time                     BIGINT DEFAULT NULL COMMENT 'Last modified time',\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_artifact_outcome_version\n        (tenant_id, client_id, owner_jiacn, artifact_id, artifact_version),\n    KEY idx_artifact_outcome_task_state\n        (tenant_id, client_id, owner_jiacn, task_id, outcome_state, decided_at, id),\n    KEY idx_artifact_outcome_decision\n        (tenant_id, client_id, owner_jiacn, task_id, decision_id, id),\n    KEY idx_artifact_outcome_superseded_by\n        (tenant_id, client_id, owner_jiacn, task_id,\n         superseded_by_artifact_id, superseded_by_artifact_version)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Scoped current accepted/superseded state for immutable task artifact versions';\n\nCREATE TABLE IF NOT EXISTS agent_task_artifact_outcome_decision (\n    id                          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',\n    task_id                     VARCHAR(100) NOT NULL COMMENT 'Task ID for scoped idempotency',\n    decision_id                 VARCHAR(100) NOT NULL COMMENT 'Stable caller supplied decision identity',\n    decision_digest             CHAR(64) NOT NULL COMMENT 'Canonical SHA-256 of exact decision input',\n    accepted_artifact_id        VARCHAR(100) NOT NULL COMMENT 'Artifact accepted by this decision',\n    accepted_artifact_version   INT NOT NULL COMMENT 'Exact immutable artifact version accepted',\n    accepted_outcome_version    BIGINT NOT NULL COMMENT 'Accepted outcome version returned on replay',\n    decided_by_agent_id         VARCHAR(100) NOT NULL COMMENT 'Authorized coordinator/reviewer agent ID',\n    decided_at                  BIGINT NOT NULL COMMENT 'Original committed decision time',\n    tenant_id                   VARCHAR(50) NOT NULL COMMENT 'Single tenant scope; always 0',\n    client_id                   VARCHAR(50) NOT NULL COMMENT 'OAuth/API client scope',\n    owner_jiacn                 VARCHAR(50) NOT NULL COMMENT 'Authenticated user owner scope',\n    create_time                 BIGINT DEFAULT NULL COMMENT 'Create time',\n    update_time                 BIGINT DEFAULT NULL COMMENT 'Last modified time',\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_artifact_outcome_decision\n        (tenant_id, client_id, owner_jiacn, task_id, decision_id),\n    KEY idx_artifact_outcome_decision_accepted\n        (tenant_id, client_id, owner_jiacn, task_id,\n         accepted_artifact_id, accepted_artifact_version)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Immutable scoped F06 decision identities and exact replay results';\n"
 
 
 class SchemaError(Exception):
@@ -112,23 +112,7 @@ EXPECTED_TABLES = {
                   ('tenant_id', 'client_id', 'task_id', 'superseded_by_artifact_id',
                    'superseded_by_artifact_version')),
         ),
-        'checks': {
-            'chk_artifact_outcome_state': "outcome_state IN ('accepted', 'superseded')",
-            'chk_artifact_outcome_versions':
-                'artifact_version >= 1 AND version >= 1 AND decided_at > 0',
-            'chk_artifact_outcome_digest': 'CHAR_LENGTH(decision_digest) = 64',
-            'chk_artifact_outcome_supersession': """
-                (outcome_state = 'accepted'
-                 AND superseded_by_artifact_id IS NULL
-                 AND superseded_by_artifact_version IS NULL)
-                OR
-                (outcome_state = 'superseded'
-                 AND superseded_by_artifact_id IS NOT NULL
-                 AND superseded_by_artifact_version >= 1
-                 AND (artifact_id <> superseded_by_artifact_id
-                      OR artifact_version <> superseded_by_artifact_version))
-            """,
-        },
+        'checks': {},
         'unique_constraints': ('PRIMARY', 'uk_artifact_outcome_version'),
     },
     'agent_task_artifact_outcome_decision': {
@@ -155,11 +139,7 @@ EXPECTED_TABLES = {
                   ('tenant_id', 'client_id', 'task_id', 'accepted_artifact_id',
                    'accepted_artifact_version')),
         ),
-        'checks': {
-            'chk_artifact_outcome_decision_versions':
-                'accepted_artifact_version >= 1 AND accepted_outcome_version >= 1 AND decided_at > 0',
-            'chk_artifact_outcome_decision_digest': 'CHAR_LENGTH(decision_digest) = 64',
-        },
+        'checks': {},
         'unique_constraints': ('PRIMARY', 'uk_artifact_outcome_decision'),
     },
 }
@@ -613,124 +593,6 @@ def split_exact_statements(resource):
     return statements
 
 
-# Only the observed MySQL utf8mb4 introducer is decoration. Backticks are
-# identifier delimiters, never removed from string contents. The 8.0.21 DD
-# escaped-delimiter form is accepted only for simple ASCII word literals;
-# interior/backslash escapes and other charsets fail closed, not unescaped.
-TOKEN_RE = re.compile(
-    r"\s*(_utf8mb4\\'[A-Za-z0-9_]+\\'|(?:_utf8mb4)?'(?:''|[^'\\])*'|"
-    r"`[A-Za-z_][A-Za-z0-9_]*`|>=|<>|>|=|\(|\)|,|[A-Za-z_][A-Za-z0-9_]*|[0-9]+)",
-    re.IGNORECASE)
-
-
-def check_tokens(text):
-    values = []
-    position = 0
-    while position < len(text):
-        match = TOKEN_RE.match(text, position)
-        if not match:
-            if text[position:].strip():
-                raise SchemaError('check_clause_unparseable')
-            break
-        token = match.group(1)
-        if token.lower().startswith(("_utf8mb4'", "_utf8mb4\\'")):
-            token = token[8:]
-            if token.startswith("\\'"):
-                token = "'" + token[2:-2] + "'"
-        elif token.startswith('`'):
-            token = token[1:-1]
-        values.append(token)
-        position = match.end()
-    return values
-
-
-class CheckParser(object):
-    def __init__(self, text):
-        self.tokens = check_tokens(text)
-        self.at = 0
-
-    def peek(self):
-        return self.tokens[self.at] if self.at < len(self.tokens) else None
-
-    def take(self, value=None):
-        token = self.peek()
-        if token is None or (value is not None and token.upper() != value):
-            raise SchemaError('check_clause_unparseable')
-        self.at += 1
-        return token
-
-    def parse(self):
-        value = self.parse_or()
-        if self.peek() is not None:
-            raise SchemaError('check_clause_unparseable')
-        return value
-
-    def parse_or(self):
-        values = [self.parse_and()]
-        while self.peek() is not None and self.peek().upper() == 'OR':
-            self.take('OR')
-            values.append(self.parse_and())
-        return values[0] if len(values) == 1 else ('or', tuple(values))
-
-    def parse_and(self):
-        values = [self.parse_predicate()]
-        while self.peek() is not None and self.peek().upper() == 'AND':
-            self.take('AND')
-            values.append(self.parse_predicate())
-        return values[0] if len(values) == 1 else ('and', tuple(values))
-
-    def parse_predicate(self):
-        if self.peek() == '(':
-            self.take('(')
-            value = self.parse_or()
-            self.take(')')
-            return value
-        left = self.parse_value()
-        token = self.peek()
-        if token is None:
-            raise SchemaError('check_clause_unparseable')
-        upper = token.upper()
-        if upper == 'IN':
-            self.take('IN')
-            self.take('(')
-            values = [self.parse_value()]
-            while self.peek() == ',':
-                self.take(',')
-                values.append(self.parse_value())
-            self.take(')')
-            return ('in', left, tuple(values))
-        if upper == 'IS':
-            self.take('IS')
-            negated = False
-            if self.peek() is not None and self.peek().upper() == 'NOT':
-                self.take('NOT')
-                negated = True
-            self.take('NULL')
-            return ('is_not_null' if negated else 'is_null', left)
-        if token in ('>=', '<>', '>', '='):
-            self.take()
-            return (token, left, self.parse_value())
-        raise SchemaError('check_clause_unparseable')
-
-    def parse_value(self):
-        token = self.take()
-        if token.startswith("'"):
-            return ('string', token[1:-1].replace("''", "'"))
-        if token.isdigit():
-            return ('number', int(token))
-        name = token.lower()
-        if self.peek() == '(':
-            self.take('(')
-            argument = self.parse_value()
-            self.take(')')
-            return ('function', name, argument)
-        return ('identifier', name)
-
-
-def normalized_check(text):
-    return CheckParser(text).parse()
-
-
 def parse_metadata(rows):
     result = {
         'schema_charset': None,
@@ -864,22 +726,15 @@ def compare_table(metadata, table):
     if sorted(actual_indexes, key=lambda value: value[0]) != expected_indexes:
         mismatches.append('indexes')
 
-    expected_constraints = {}
-    for name in expected['unique_constraints']:
-        expected_constraints[name] = ('PRIMARY KEY' if name == 'PRIMARY' else 'UNIQUE', 'YES')
-    for name in expected['checks']:
-        expected_constraints[name] = ('CHECK', 'YES')
-    if metadata['constraints'][table] != expected_constraints:
+    # Business CHECKs are retired. Inspect metadata without enforcing their semantics.
+    expected_constraints = {
+        name: ('PRIMARY KEY' if name == 'PRIMARY' else 'UNIQUE', 'YES')
+        for name in expected['unique_constraints']
+    }
+    actual_constraints = {name: value for name, value in metadata['constraints'][table].items()
+                          if value[0] != 'CHECK'}
+    if actual_constraints != expected_constraints:
         mismatches.append('constraints')
-    if set(metadata['checks'][table]) != set(expected['checks']):
-        mismatches.append('checks')
-    else:
-        for name, clause in expected['checks'].items():
-            try:
-                if normalized_check(metadata['checks'][table][name]) != normalized_check(clause):
-                    mismatches.append('check_clause:' + name)
-            except SchemaError:
-                mismatches.append('check_clause:' + name)
     return ('equivalent', sorted(set(mismatches))) if not mismatches else ('drift', sorted(set(mismatches)))
 
 

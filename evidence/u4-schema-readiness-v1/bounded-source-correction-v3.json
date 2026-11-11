@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-30T17:24:00+08:00",
+  "task_id": "MMD-U4-SCHEMA-READINESS-20260930",
+  "v2_failure_evidence": {
+    "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v2.json",
+    "sha256": "12b18db74d1960cb75448016a909ed761691195bf9417dc37a6341e4841172b5",
+    "junit": "5 tests, 2 passed, 3 failed, 0 errors, 0 skipped"
+  },
+  "diagnosis": {
+    "classification": "real candidate test-source lifecycle fixture failure; not Gradle harness/OOM",
+    "cause": "The real Spring fixture registered ChatConversationArchiveSchemaInitializer but did not activate its @ConditionalOnProperty contract. Configuration processing excluded the archive InitializingBean, so readiness was never invoked before ApplicationRunner ordering and archive drift validation never ran.",
+    "supporting_observations": [
+      "Both ordering failures reached ChatDeliberationSchemaInitializer.run during SpringApplication.callRunners with coreReady=false.",
+      "archiveIndexDriftStillFailsClosedAfterSourcesBecomeReady observed no exception, consistent with the archive initializer not running.",
+      "The test default properties previously set only spring.main.banner-mode.",
+      "The archive initializer is conditional on chat.conversation-archive.enabled=true."
+    ]
+  },
+  "correction": {
+    "scope": "one owned lifecycle test source only",
+    "file": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatSchemaReadinessLifecycleTest.java",
+    "change": "Add chat.conversation-archive.enabled=true to SpringApplication default properties.",
+    "assertions_changed": false,
+    "production_main_changed": false,
+    "build_gradle_changed": false,
+    "expected_effect": "The conditional archive InitializingBean participates in actual context refresh, calls ChatSchemaReadiness before source validation/DDL, and leaves subsequent core/deliberation ApplicationRunner calls as no-op schema migrations."
+  },
+  "candidate": {
+    "parent_commit": "79165b93d7dc7c8ecff30376e0ed1622c26591ac",
+    "commit": "399cb3c30002c728a2329a6347f1f4d15f2d3fcf",
+    "tree": "b6ad3746c235e91ae1cae15278636b66f1b253bf",
+    "file_blob": "f7868ebbf35be283140fc93c77ca7ec90274521a",
+    "file_sha256": "aa4837291591afe5428178e26d9d2123784922294b6e39290076493cd661b739"
+  },
+  "static_checks": {
+    "git_diff_check": "passed before commit",
+    "changed_files": [
+      "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatSchemaReadinessLifecycleTest.java"
+    ],
+    "worktree_tracked_status": "",
+    "gradle_rerun": false
+  },
+  "next_verification": "Use a fresh v3 source manifest/init/output namespace because the materially changed test source/tree must not reuse the v2 source hash. Reuse only the unchanged fixed 194ec dependency classpath/content hashes and the bounded four-task no-builtBy graph. Do not claim full build or MySQL."
+}

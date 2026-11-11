@@ -1,0 +1,45 @@
+{
+  "status": "FAIL",
+  "pipeline": "5260799",
+  "run": "549",
+  "source": {
+    "commit": "8a1b1627b98b049fc5ce014bfa87bcb182c2f4cc",
+    "tree": "c109adfa55e7fcc23bdf63a5cf6c94f9b3c35fb4"
+  },
+  "diagnosticSha256": "5bc715915d934a8a5b7ce861911396814851b59a8a13dfc9a8ca38b6c15e44b6",
+  "counts": {
+    "tests": 858,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 1
+  },
+  "failedSuites": [
+    {
+      "path": "jia/agent__jia-agent-service/test-results/test/TEST-cn.jia.agent.service.impl.TaskExecutionCancellationMySqlTest.xml",
+      "name": "cn.jia.agent.service.impl.TaskExecutionCancellationMySqlTest",
+      "counts": {
+        "tests": 7,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failures": [
+        {
+          "class": "cn.jia.agent.service.impl.TaskExecutionCancellationMySqlTest",
+          "test": "exactCaseOwnerClientAndTaskDoNotSelectOtherExecution()",
+          "type": "java.lang.IllegalArgumentException",
+          "message": "java.lang.IllegalArgumentException: taskId",
+          "projectFrames": [
+            "at cn.jia.agent.dao.impl.PersonalWorkspaceExecutionDaoImpl.id(PersonalWorkspaceExecutionDaoImpl.java:197)",
+            "at cn.jia.agent.dao.impl.PersonalWorkspaceExecutionDaoImpl.lockUnfinishedTaskExecutions(PersonalWorkspaceExecutionDaoImpl.java:33)",
+            "at cn.jia.agent.service.impl.TaskExecutionCancellationServiceImpl.cancelTaskExecutions(TaskExecutionCancellationServiceImpl.java:36)",
+            "at cn.jia.agent.service.impl.TaskExecutionCancellationMySqlTest.lambda$exactCaseOwnerClientAndTaskDoNotSelectOtherExecution$3(TaskExecutionCancellationMySqlTest.java:148)",
+            "at cn.jia.agent.service.impl.TaskExecutionCancellationMySqlTest.exactCaseOwnerClientAndTaskDoNotSelectOtherExecution(TaskExecutionCancellationMySqlTest.java:148)"
+          ]
+        }
+      ]
+    }
+  ],
+  "cause": "Fixture expected a no-op for trailing-space task id, while existing DAO rejects malformed ids. Corrected test to expect IllegalArgumentException, preserving validation.",
+  "restore": "APPLIED"
+}

@@ -1,0 +1,27 @@
+'use strict';
+const fs=require('fs'),cp=require('child_process'),crypto=require('crypto'),y=require('/home/isp/wsps/cyf/web/node_modules/js-yaml');
+const dir=__dirname,commit='a47d2ac684e11cea1d307741091cb123afd2ac75',tree='a2e5f1d48df073958cb306e1624bffa4dcbc85ee',version='1.16.2',sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+if(cp.execFileSync('git',['-C','/home/isp/wsps/cyf/web','rev-parse','HEAD'],{encoding:'utf8'}).trim()!==commit)throw Error('SOURCE_NOT_FIXED');
+const c=y.load(fs.readFileSync(dir+'/4403172-before.yaml','utf8'));if(Object.keys(c.stages).join(',')!=='cloud_ci')throw Error('UNEXPECTED_BASELINE');
+const s=c.sources.repo_0;s.branch='develop';s.triggerEvents=[];s.branchesFilter='^develop$';
+let run=c.stages.cloud_ci.jobs.web_ci.steps.test_and_build.with.run;
+run=run.replace(/^case .*unexpected CI branch.*$/m,'test "${CI_COMMIT_REF_NAME:-}" = develop');
+run=run.replace('test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"',`test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"\ntest "$CI_COMMIT_SHA" = "${commit}"\ntest "$(git rev-parse HEAD^{tree})" = "${tree}"\ngit diff --quiet HEAD --`);
+run=run.replace(/^if\(typeof packageVersion[^\n]+$/m,`if(packageVersion!==${JSON.stringify(version)})throw Error('Wrong fixed release version');`);
+run=run.replace("!['develop','codex/mmd-unified-materials-web-20261003'].includes(m.branch)","m.branch!=='develop'");
+const helper=fs.readFileSync('/usr/local/sbin/cyf-web-flow-deploy'),helperSHA=sha(helper);if(helperSHA!=='fba8d49564946f381a02b7aee0bdfaeab48091be7ca5eb871f7dc4ac2eeeff6b')throw Error('INSTALLED_HELPER_DRIFT');
+// Preserve installed, hash-pinned release adapter; pending root path migration is outside this release.
+const sourceHelper=fs.readFileSync('/home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-web-flow-deploy','utf8');
+if(sourceHelper.replace("ROOT = Path('/home/isp/state/cyf-web-flow')","ROOT = Path('/var/lib/cyf-web-flow')")!==helper.toString('utf8'))throw Error('UNREVIEWED_HELPER_DRIFT');
+run=run.replace(/^const expectedHelperSha='[a-f0-9]+';$/m,`const expectedHelperSha='${helperSHA}';`);
+if(!/^const helper=Buffer.from\('[A-Za-z0-9+/=]+','base64'\);$/m.test(run))throw Error('HELPER_LITERAL_NOT_FOUND');
+run=run.replace(/^const helper=Buffer.from\('[A-Za-z0-9+/=]+','base64'\);$/m,`const helper=Buffer.from('${helper.toString('base64')}','base64');`);
+// The historical unused upgrade payload is not executed; preserve its frozen integrity check unchanged.
+if(!run.includes('npm run test')||!run.includes('VITE_JUYITING_MULTIMEDIA_DELIBERATION_V2_UI=true VITE_JUYITING_TYPED_DELIBERATION_UI=true VITE_JUYITING_FOLLOWUP_EXECUTE_V3_UI=true npm run build'))throw Error('FORMAL_SELECTORS_CHANGED');
+c.stages.cloud_ci.jobs.web_ci.steps.test_and_build.with.run=run;
+const backup='/home/isp/baks/cyf-web-1.16.2-20261016';
+const deploy=`set -eu\numask 077\ntest "$PIPELINE_ID" = 4403172\ntest "$CI_COMMIT_SHA" = '${commit}'\nprintf '%s\\n' '${helperSHA}  /usr/local/sbin/cyf-web-flow-deploy' | sha256sum -c -\ntest ! -e '${backup}'\nmkdir -m 700 '${backup}'\ncp -p /home/isp/hosts/cyf/web/kit/index.html '${backup}/index.html'\nif test -f /var/lib/cyf-web-flow/record.json; then cp -p /var/lib/cyf-web-flow/record.json '${backup}/record.json'; fi\nsha256sum '${backup}/index.html' > '${backup}/index.sha256'\npackage="/var/lib/cyf-web-flow/downloads/$BUILD_NUMBER/package.tgz"\nartifact_sha=$(sha256sum "$package" | cut -d ' ' -f 1)\n/usr/local/sbin/cyf-web-flow-deploy "$PIPELINE_ID" "$BUILD_NUMBER" "$CI_COMMIT_SHA" '${version}' "$artifact_sha"\n`;
+c.stages.deploy={name:'Explicit fixed-version frontend release',jobs:{deploy_web:{name:'Install verified same-run dist '+version,component:'VMDeploy',with:{artifact:'$[stages.cloud_ci.web_ci.upload_artifact.artifacts.cyf_web_flow_4403172]',downloadArtifact:true,artifactDownloadPath:'/var/lib/cyf-web-flow/downloads/${BUILD_NUMBER}/package.tgz',executeUser:'root',run:deploy,useEncodeBase64:false,machineGroup:'yjctjhskhk1ti9t4',batchNumber:1,batchWaitTime:0}}}};
+const candidate=y.dump(c,{lineWidth:-1});fs.writeFileSync(dir+'/web-candidate.yaml',candidate,{mode:0o600});fs.writeFileSync(dir+'/run.sh',run,{mode:0o600});fs.writeFileSync(dir+'/deploy.sh',deploy,{mode:0o600});
+fs.writeFileSync(dir+'/allowlist.json',JSON.stringify({organizations:['5fb7d76ee6f9d07f148529c7'],pipelines:[{org:'5fb7d76ee6f9d07f148529c7',pipeline:'4403172'}]}),{mode:0o600});
+fs.writeFileSync(dir+'/candidate-proof.json',JSON.stringify({commit,tree,version,sha256:sha(Buffer.from(candidate)),installedHelperSHA256:helperSHA,pipeline:'4403172',deploy:true,sourceAutoTrigger:false,preserved:'all original full tests/code scan/build flags/artifact integrity; no backend Flow',restore:'4403172-before.yaml'},null,2),{mode:0o600});console.log(JSON.stringify({commit,tree,version,candidateSHA256:sha(Buffer.from(candidate))}));

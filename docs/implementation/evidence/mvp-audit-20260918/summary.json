@@ -1,0 +1,131 @@
+{
+  "date": "2026-09-18",
+  "kind": "authenticated_readonly_product_audit",
+  "status": "completed_with_explicit_limits",
+  "site": "https://kit.chaoyoufan.cn",
+  "account": "user-provided test account; password/token/cookies not retained",
+  "browser": "headless Chromium; desktop and touch-enabled 390x844 portrait emulation; not physical-device validation",
+  "release_reference": {
+    "web_commit": "737506e7af06bb4ea4ec2386dc507ec745297481",
+    "api_commit": "e15f7020bf77153912aafce15fc11c67b2f06e11",
+    "online_sw_marker": "cyf-pwa-v20260918-hall-account-avatar-only-r2",
+    "binding_limit": "release record plus observed SW marker, not independent full artifact deployment verification"
+  },
+  "side_effect_boundary": {
+    "authentication": true,
+    "business_creation": false,
+    "agent_dispatch": false,
+    "provider_call": false,
+    "purchase_or_charge": false,
+    "production_configuration_or_schema_change": false,
+    "read_post_allowlist": [
+      "/agent/roster",
+      "/agent/tasks/search",
+      "/agent/tasks/status-counts",
+      "/agent/tasks/{visibleTaskId}/recommend",
+      "/chat/conversation/list"
+    ]
+  },
+  "observations": [
+    {
+      "id": "O01",
+      "fact": "Login succeeded; hall navigation rendered in desktop and touch-enabled portrait modes."
+    },
+    {
+      "id": "O02",
+      "fact": "This account showed 4 roster Agents online; 3 had no recorded abilities. Map and roster counts differ intentionally; not classified as a bug."
+    },
+    {
+      "id": "O03",
+      "fact": "Real task creation form exposed title, description and comma-separated abilities; form was not submitted."
+    },
+    {
+      "id": "O04",
+      "fact": "Visible task counts: open 0, assigned 0, running 0, completed 0, failed 1, archived 1. Account sample only, not platform usage statistics."
+    },
+    {
+      "id": "O05",
+      "fact": "Both inspected historical tasks showed no collectible deliverables and no formal-delivery batches; existing read endpoints returned 200."
+    },
+    {
+      "id": "O06",
+      "fact": "Task detail displayed team recommendation as preview, missing authoritative team constraints, and task planning unavailable in this environment."
+    },
+    {
+      "id": "O07",
+      "fact": "An archived task with no ability requirement produced equal 86-percent recommendations for four Agents, including those with no abilities; server returned 200 with score explanation. Not a measured task-success probability."
+    },
+    {
+      "id": "O08",
+      "fact": "Existing private Agent conversation loaded real persisted history after enabling the verified read-only conversation-list RPC; no new chat was sent."
+    },
+    {
+      "id": "O09",
+      "fact": "Recruit catalog showed 108 role entries, many with generic English ability labels; no bind/reprovision/unbind action performed."
+    },
+    {
+      "id": "O10",
+      "fact": "Content demo traversed four local steps and showed a sample deliverable checklist; handoff to hall did not visibly prefill real task creation fields."
+    },
+    {
+      "id": "O11",
+      "fact": "Profile was accessible, nickname displayed mojibake, ordinary account saw no permission for internal operations panel."
+    },
+    {
+      "id": "O12",
+      "fact": "No economy-preview entry observed in profile; navigating /economy-preview returned to /profile in this session. Cause not independently established; historical deployment is not proof of present availability."
+    },
+    {
+      "id": "S01",
+      "fact": "Pinned API includes formal-delivery submit/decision/read services; pinned Web includes acceptance and request-changes controls. Do not reclassify all R2 as missing."
+    },
+    {
+      "id": "S02",
+      "fact": "Pinned AgentWebSocketHandler defers artifact.publish, work.progress, work.heartbeat and non-legacy work.result; this does not prove every alternative execution/upload route is absent."
+    }
+  ],
+  "harness_corrections": [
+    "Initial DOM action selected a hidden login widget; corrected to visible password form. Not reported as an authentication defect.",
+    "Initial viewport-only emulation lacked touch/coarse-pointer settings; corrected before assessing portrait UX. Not reported as a mobile defect.",
+    "Initial safety allowlist blocked recommend and conversation/list; source verified read semantics, then both were retested with HTTP 200. Initial empty chat and 80-percent fallback are not counted as production failures.",
+    "Prerendered demo DOM could match hidden controls; retested visible live controls and completed four-step demo."
+  ],
+  "not_tested": [
+    "new task creation",
+    "real Agent acknowledgment/execution",
+    "new streamed response",
+    "real artifact generation/upload/download",
+    "formal submit/accept/rework mutation",
+    "cross-account negative test",
+    "new-user binding/provisioning",
+    "Provider cost",
+    "physical mobile browser"
+  ],
+  "cleanup": {
+    "own_browser_closed": true,
+    "private_browser_profile_removed": true,
+    "credentials_or_auth_material_in_evidence": false
+  },
+  "files": {
+    "03-hall-portrait.png": {
+      "sha256": "ee8599985e8a1f92d078f3aa8c069fdfca48339d5ca7475db999d788c78919e4",
+      "bytes": 225355
+    },
+    "04-bounty-create.png": {
+      "sha256": "395738362f14e5b32fc6387f6862abee9b0633114da1654aa91371e2fa786f34",
+      "bytes": 91917
+    },
+    "05-roster.png": {
+      "sha256": "402fe719a44f3f8b7523de69c0a3e41f02e2a7f4f43cd5c6490fa4813d56f60d",
+      "bytes": 105561
+    },
+    "06-demo-output.png": {
+      "sha256": "b346d57dab3ea9bb1bf7e59cd8be41efd6899e04e59c9a0787aba6b6d69d3d5d",
+      "bytes": 78826
+    },
+    "network-redacted.json": {
+      "sha256": "ed89111ccb531a237fb3044064baac5a5f3770458ac170b4d845e8fed2189faa",
+      "bytes": 3983
+    }
+  }
+}

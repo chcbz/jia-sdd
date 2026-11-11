@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" tests="5" skipped="0" failures="2" errors="0" timestamp="2026-09-30T11:48:52.359Z" hostname="iZwz9j3ip2unzhwij0bs30Z" time="3.513">
+  <properties/>
+  <testcase name="actualMysqlInitializingBeanMakesCoreDeliberationFinalizationAndArchiveReadyBeforeRunners()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.915">
+    <failure message="org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'cn.jia.chat.config.ChatSelectedOutputFinalizationSchemaInitializer': Incompatible chat_conversation column target_agent_ids collation; expected=utf8mb4_0900_bin, actual=utf8mb4_0900_ai_ci" type="org.springframework.beans.factory.BeanCreationException">org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'cn.jia.chat.config.ChatSelectedOutputFinalizationSchemaInitializer': Incompatible chat_conversation column target_agent_ids collation; expected=utf8mb4_0900_bin, actual=utf8mb4_0900_ai_ci
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1815)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:603)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:196)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1225)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1191)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1121)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:994)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:621)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest.actualMysqlInitializingBeanMakesCoreDeliberationFinalizationAndArchiveReadyBeforeRunners(FinalizationActualMySqlLifecycleTest.java:69)
+Caused by: java.lang.IllegalStateException: Incompatible chat_conversation column target_agent_ids collation; expected=utf8mb4_0900_bin, actual=utf8mb4_0900_ai_ci
+	at cn.jia.chat.config.ChatSchemaInitializer.validateConversationColumn(ChatSchemaInitializer.java:114)
+	at cn.jia.chat.config.ChatSchemaInitializer.lambda$validateConversationFenceColumns$0(ChatSchemaInitializer.java:90)
+	at java.base/java.util.LinkedHashMap.forEach(LinkedHashMap.java:986)
+	at cn.jia.chat.config.ChatSchemaInitializer.validateConversationFenceColumns(ChatSchemaInitializer.java:90)
+	at cn.jia.chat.config.ChatSchemaInitializer.initializeSchema(ChatSchemaInitializer.java:51)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest$CountingCore.initializeSchema(FinalizationActualMySqlLifecycleTest.java:45)
+	at cn.jia.core.diagnostics.StartupTiming.lambda$run$0(StartupTiming.java:29)
+	at cn.jia.core.diagnostics.StartupTiming.call(StartupTiming.java:34)
+	at cn.jia.core.diagnostics.StartupTiming.run(StartupTiming.java:29)
+	at cn.jia.chat.config.ChatSchemaInitializer.ensureInitialized(ChatSchemaInitializer.java:35)
+	at cn.jia.chat.config.ChatSchemaReadiness.ensureInitialized(ChatSchemaReadiness.java:24)
+	at cn.jia.chat.config.ChatSelectedOutputFinalizationSchemaInitializer.afterPropertiesSet(ChatSelectedOutputFinalizationSchemaInitializer.java:76)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1862)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1811)
+	... 12 more
+</failure>
+  </testcase>
+  <testcase name="realOldEnforcedSameNamedChecksAreRejectedReadOnlyWithoutAutomaticRepair()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.167"/>
+  <testcase name="actualRepairedExistingMysqlDefinitionsPassReadOnlyValidation()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.062"/>
+  <testcase name="actualJavaInitializedDdlRejectsAllThreeProvenImpossibleNullStates()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.361">
+    <failure message="org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: &lt;org.springframework.dao.DataIntegrityViolationException&gt; but was: &lt;org.springframework.jdbc.BadSqlGrammarException&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: &lt;org.springframework.dao.DataIntegrityViolationException&gt; but was: &lt;org.springframework.jdbc.BadSqlGrammarException&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:68)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3223)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest.mysqlCheckDenies(FinalizationActualMySqlLifecycleTest.java:108)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest.actualJavaInitializedDdlRejectsAllThreeProvenImpossibleNullStates(FinalizationActualMySqlLifecycleTest.java:113)
+Caused by: org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [INSERT INTO agent_selected_output_finalization(operation_id,tenant_id,client_id,owner_jiacn,task_id,immutable_digest,source_facts_digest,expected_task_version,expected_assignment_revision,conversation_id,conversation_generation,target_agent_id,grant_id,grant_version,run_id,summary,lease_token,lease_work_item_version,delivery_id,manifest_artifact_id,phase,version,created_at,updated_at) VALUES('op-1','0','client-1','owner-1','task-1',REPEAT('a',64),REPEAT('b',64),7,7,'100',3,'agent-1','grant-1',2,'run-1','chosen','fixture-only-lease',NULL,'delivery-1','manifest-1','LEASED',0,1,1)]
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:112)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1548)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:428)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:462)
+	at cn.jia.chat.config.FinalizationActualMySqlLifecycleTest.lambda$mysqlCheckDenies$7(FinalizationActualMySqlLifecycleTest.java:108)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:54)
+	... 4 more
+Caused by: java.sql.SQLSyntaxErrorException: Table 'mmd_javamysql_169aab6f_20260930_193039.agent_selected_output_finalization' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:112)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.StatementImpl.executeInternal(StatementImpl.java:837)
+	at com.mysql.cj.jdbc.StatementImpl.execute(StatementImpl.java:685)
+	at org.springframework.jdbc.core.JdbcTemplate$1ExecuteStatementCallback.doInStatement(JdbcTemplate.java:453)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:413)
+	... 7 more
+</failure>
+  </testcase>
+  <testcase name="actualInitializerLocksAreReleasedAndFixtureIdentityRemainsExact()" classname="cn.jia.chat.config.FinalizationActualMySqlLifecycleTest" time="0.133"/>
+  <system-out><![CDATA[19:48:55.028 [Test worker] WARN org.springframework.context.support.GenericApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'cn.jia.chat.config.ChatSelectedOutputFinalizationSchemaInitializer': Incompatible chat_conversation column target_agent_ids collation; expected=utf8mb4_0900_bin, actual=utf8mb4_0900_ai_ci
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,114 @@
+{
+  "verifiedAt": "2026-10-06T12:59:41.303Z",
+  "authorizedBy": "user 同意 on 2026-10-06",
+  "status": "develop automatic deployment disabled; version release execution not performed",
+  "pipelines": [
+    {
+      "pipeline": "5260799",
+      "name": "cyf-api-release",
+      "configSha256": "a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a",
+      "configCanonicalSha256": "aac42945ae2687cd000bab1860ffc72c26a6a67ab3328558759ba0b2ba7d00a4",
+      "hasDeploymentStage": false,
+      "developPushVerificationOnly": true,
+      "changeByThisTask": "None: live backend config was already verification-only",
+      "testsBuildAndArtifactPreserved": true,
+      "stages": [
+        "cloud_ci"
+      ],
+      "activeRuns": [],
+      "runRecordsScanned": 115,
+      "allRunPagesScanned": true,
+      "latestRun": {
+        "id": 115,
+        "status": "SUCCESS"
+      }
+    },
+    {
+      "pipeline": "4403172",
+      "name": "cyf-web-release",
+      "configSha256": "2fcc386fdad9a083a863e63d5a6dee01270394d8798d1046a0203fd1f3e36561",
+      "configCanonicalSha256": "de337850840622c3a7de80f36ccf3a99683d214dce2861e75605f49ee0c6407b",
+      "hasDeploymentStage": false,
+      "developPushVerificationOnly": true,
+      "changeByThisTask": "Removed deployment stage only",
+      "testsBuildAndArtifactPreserved": true,
+      "stages": [
+        "cloud_ci"
+      ],
+      "activeRuns": [],
+      "runRecordsScanned": 172,
+      "allRunPagesScanned": true,
+      "latestRun": {
+        "id": 172,
+        "status": "SUCCESS"
+      }
+    }
+  ],
+  "timers": [
+    {
+      "unit": "cyf-flow-backend-nightly.timer",
+      "NextElapseUSecRealtime": "",
+      "ActiveState": "inactive",
+      "UnitFileState": "disabled"
+    },
+    {
+      "unit": "cyf-flow-frontend-major-nightly.timer",
+      "NextElapseUSecRealtime": "",
+      "ActiveState": "inactive",
+      "UnitFileState": "disabled"
+    }
+  ],
+  "frontendUpdate": {
+    "version": "1.1.0",
+    "at": "2026-10-06T12:55:58.628Z",
+    "operation": "update",
+    "org": "5fb7d76ee6f9d07f148529c7",
+    "pipeline": "4403172",
+    "candidateSha256": "de337850840622c3a7de80f36ccf3a99683d214dce2861e75605f49ee0c6407b",
+    "requestStartedAt": "2026-10-06T12:55:56.891Z",
+    "before": {
+      "name": "cyf-web-release",
+      "configSha256": "23743de5835db6bc98864ebd792c26cfd5d7e0ed169902508dd750e51cc420aa",
+      "canonicalConfigSha256": "ccc757bf466b9cc8d7e63e9f425d096e99ef1e0f6129943f9e11aa56c8a9b4c1",
+      "configBytes": 58504,
+      "sourceCount": 1,
+      "sourceKinds": [
+        "giteeGit"
+      ]
+    },
+    "state": "APPLIED",
+    "ambiguousResponse": false,
+    "readback": {
+      "name": "cyf-web-release",
+      "configSha256": "2fcc386fdad9a083a863e63d5a6dee01270394d8798d1046a0203fd1f3e36561",
+      "canonicalConfigSha256": "de337850840622c3a7de80f36ccf3a99683d214dce2861e75605f49ee0c6407b",
+      "configBytes": 57842,
+      "sourceCount": 1,
+      "sourceKinds": [
+        "giteeGit"
+      ]
+    }
+  },
+  "privateBackupDirectory": "/var/lib/cyf-versioned-policy-switch/20261006T124914Z",
+  "localChecks": {
+    "targetedStaticTests": 7,
+    "result": "passed",
+    "yamlParse": "passed",
+    "cloudCiStagePreserved": "AST comparison against each live before config passed"
+  },
+  "actionsNotTaken": [
+    "No StartPipelineRun",
+    "No Run cancellation",
+    "No app restart, install, build or production data operation",
+    "No backend cloud config write"
+  ],
+  "corrections": [
+    "Initial audit conflated backend historical Run deployment with current YAML. The backend config already had no deploy stage at the unchanged original hash; it was preserved.",
+    "Initial timer file backup failed due to Python 3.6 subprocess API incompatibility before the shell proceeded to disable timers. Pre-state is preserved in preceding live audit; unchanged unit definitions and post-state were captured separately."
+  ],
+  "remainingBeforeFirstVersionRelease": [
+    "Prepare an explicit version/full-commit release candidate on the existing pipeline; default configs now verify only.",
+    "Installed legacy adapters still contain midnight intent rules. Migrate those rules and verify the versioned path before attempting deployment; do not fabricate nightly intents.",
+    "No cloud test/build/deployment was started by this configuration task; changed configuration is readback-verified, not an end-to-end release result."
+  ]
+}

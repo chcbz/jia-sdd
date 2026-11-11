@@ -1,0 +1,87 @@
+COMMAND ['/usr/bin/python3', '-B', '/home/isp/wsps/chcbz/isp-install/tests/test_runtime_python_freeze.py', '-v']
+test_worker_entry_accepts_verified_distribution_python_alias (__main__.FlowBuildEntryTest) ... ok
+test_worker_entry_reuses_installer_launcher_rules_and_freezes_new_stage (__main__.FlowBuildEntryTest) ... ok
+test_preserves_installed_packages_and_excludes_base_packages_and_bytecode (__main__.FreezeTest) ... ok
+test_real_interpreter_stays_self_contained_after_directory_move (__main__.FreezeTest) ... skipped 'explicit diagnostic interpreter required'
+test_refuses_modifying_non_active_or_base_interpreter (__main__.FreezeTest) ... ok
+test_upstream_writable_modes_are_normalized_without_following_links (__main__.FreezeTest) ... ok
+test_debug_output_not_inside_stage_and_never_overwritten (__main__.SlimPythonTest) ... ok
+test_external_hardlink_is_rejected_without_mutation (__main__.SlimPythonTest) ... ok
+test_external_symlink_and_installed_paths_rejected (__main__.SlimPythonTest) ... ok
+test_identical_aliases_share_inode_and_different_bytes_or_modes_do_not (__main__.SlimPythonTest) ... ok
+test_real_elf_strip_symbols_saved_outside_stage_and_execution_still_works (__main__.SlimPythonTest) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.217s
+
+OK (skipped=1)
+COMMAND ['/usr/bin/python3', '-B', '-m', 'unittest', 'discover', '-s', 'ops/maintenance/tests', '-p', 'test_runtime_backup_scope.py', '-v']
+test_backup_cannot_live_inside_source (test_runtime_backup_scope.ScopeTests) ... ok
+test_changed_source_preserves_original_and_stops (test_runtime_backup_scope.ScopeTests) ... ok
+test_never_infer_unknown_sqlite_is_disposable (test_runtime_backup_scope.ScopeTests) ... ok
+test_omit_only_known_ephemeral_probe_subdirectories (test_runtime_backup_scope.ScopeTests) ... ok
+test_omit_schema_confirmed_diagnostics_and_companions (test_runtime_backup_scope.ScopeTests) ... ok
+test_preserves_auth_state_ack_sessions_requests_conversations_and_tmp (test_runtime_backup_scope.ScopeTests) ... ok
+test_real_uncompressed_archive_roundtrip_excludes_only_diagnostics (test_runtime_backup_scope.ScopeTests) ... ok
+test_roots_must_not_overlap_or_alias (test_runtime_backup_scope.ScopeTests) ... ok
+test_same_name_outside_codex_home_is_retained (test_runtime_backup_scope.ScopeTests) ... ok
+test_socket_fails_closed (test_runtime_backup_scope.ScopeTests) ... ok
+test_symlinks_not_followed_and_diagnostic_symlink_not_omitted (test_runtime_backup_scope.ScopeTests) ... ok
+test_active_service_refused_without_backup (test_runtime_backup_scope.StateEntryTests) ... ERROR
+test_busy_lock_not_bypassed (test_runtime_backup_scope.StateEntryTests) ... ok
+test_existing_backup_never_overwritten (test_runtime_backup_scope.StateEntryTests) ... ERROR
+test_new_selected_backup_when_stopped_and_unused (test_runtime_backup_scope.StateEntryTests) ... ERROR
+test_state_open_by_any_process_refused (test_runtime_backup_scope.StateEntryTests) ... ERROR
+
+======================================================================
+ERROR: test_active_service_refused_without_backup (test_runtime_backup_scope.StateEntryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_backup_scope.py", line 170, in test_active_service_refused_without_backup
+    self.entry.run_state(self.paths,'backup-state',self.batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 699, in run_state
+    directory(paths, batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 52, in directory
+    if p.stat().st_dev != paths.root_device or safe.mounted(paths, p):
+AttributeError: 'types.SimpleNamespace' object has no attribute 'root_device'
+
+======================================================================
+ERROR: test_existing_backup_never_overwritten (test_runtime_backup_scope.StateEntryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_backup_scope.py", line 182, in test_existing_backup_never_overwritten
+    self.entry.run_state(self.paths,'backup-state',self.batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 699, in run_state
+    directory(paths, batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 52, in directory
+    if p.stat().st_dev != paths.root_device or safe.mounted(paths, p):
+AttributeError: 'types.SimpleNamespace' object has no attribute 'root_device'
+
+======================================================================
+ERROR: test_new_selected_backup_when_stopped_and_unused (test_runtime_backup_scope.StateEntryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_backup_scope.py", line 193, in test_new_selected_backup_when_stopped_and_unused
+    result=self.entry.run_state(self.paths,'backup-state',self.batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 699, in run_state
+    directory(paths, batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 52, in directory
+    if p.stat().st_dev != paths.root_device or safe.mounted(paths, p):
+AttributeError: 'types.SimpleNamespace' object has no attribute 'root_device'
+
+======================================================================
+ERROR: test_state_open_by_any_process_refused (test_runtime_backup_scope.StateEntryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_backup_scope.py", line 176, in test_state_open_by_any_process_refused
+    self.entry.run_state(self.paths,'backup-state',self.batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 699, in run_state
+    directory(paths, batch)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 52, in directory
+    if p.stat().st_dev != paths.root_device or safe.mounted(paths, p):
+AttributeError: 'types.SimpleNamespace' object has no attribute 'root_device'
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.329s
+
+FAILED (errors=4)

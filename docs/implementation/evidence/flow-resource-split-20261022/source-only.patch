@@ -1,0 +1,63 @@
+--- before/templates/frontend-develop-release.yaml
++++ after/templates/frontend-develop-release.yaml
+@@ -14,7 +14,7 @@
+ defaultWorkspace: repo_0
+ stages:
+   cloud_ci:
+-    name: Frontend develop CI
++    name: Frontend resource-offloaded CI
+     jobs:
+       web_ci:
+         name: Locked install, full tests, and Vite build
+@@ -28,6 +28,9 @@
+               image: build-steps-public-registry.cn-beijing.cr.aliyuncs.com/build-steps/alinux3:latest
+               run: |-
+                 set -eu
++                # Heavy execution only; external readiness and online acceptance stay on the control host.
++                phase() { printf 'CYF_FLOW_PHASE %s wall=%s monotonic=' "$1" "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime; }
++                phase runtime.begin
+                 test "${CI_COMMIT_REF_NAME:-}" = develop
+                 test -n "${CI_COMMIT_SHA:-}"
+                 test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
+@@ -79,11 +82,18 @@
+                 tar -xJf "$node_archive" -C "$node_root"
+                 export PATH="$node_root/node-v24.22.1-linux-x64/bin:$PATH"
+                 test "$(node --version)" = v24.22.1
++                phase runtime.end
++                phase install.begin
+                 npm ci --include=dev --registry=https://registry.npmmirror.com --replace-registry-host=npmjs --fetch-retries=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=30000 --fetch-timeout=120000 --no-audit --no-fund
+                 test -x node_modules/.bin/vite
+                 test -f node_modules/vite/bin/vite.js
++                phase install.end
++                phase test.begin
+                 npm run test
++                phase test.end
++                phase build.begin
+                 npm run build
++                phase build.end
+                 test -d dist
+                 test -f mochawesome-report/mochawesome.html
+                 test -f mochawesome-report/mochawesome.json
+@@ -114,6 +124,7 @@
+                 console.log('CYF_WEB_ARTIFACT '+JSON.stringify({pipeline:m.pipeline_id,run:m.run_id,commit:m.commit,files:files.length}));
+ 
+                 CYF_MANIFEST
++                phase export.end
+           upload_artifact:
+             name: Upload same-run site and test report
+             step: ArtifactUpload
+--- before/templates/backend-develop-release.yaml
++++ after/templates/backend-develop-release.yaml
+@@ -11,9 +11,11 @@
+       - push
+     branchesFilter: ^(develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003)$
+ defaultWorkspace: repo_0
++# Heavy tests/build/package only; no external readiness or acceptance wait.
++# This default never deploys. Explicit releases require a prepared same-Run deployment candidate.
+ stages:
+   cloud_ci:
+-    name: Backend develop CI
++    name: Backend resource-offloaded CI
+     jobs:
+       api_ci:
+         name: Changed-scope tests and bootJar

@@ -1,0 +1,49 @@
+{
+  "activated_at": "2026-09-14T04:12:17.532Z",
+  "behavior": {
+    "backend": "without an exact scheduler intent, the Flow deploy job records DEFERRED and does not install; the 00:00 controller starts one exact-run release only for a pending develop commit",
+    "frontend": "patch and small releases install immediately; major releases require an exact 00:30 controller intent; missing/unknown package version stays on the immediate path"
+  },
+  "host_helpers": {
+    "api_deploy_sha256": "b4542e70769c9e4e9f82ef448f8e314f9dc1ed473e46207280d9d7e6d8408ccc",
+    "control_sha256": "bec6376518d65ebf7cca35ffd9e32f7900ff2d6d2e0f0a8a23e6c698f959adee",
+    "scheduler_sha256": "1cf8b6acf82644b7688e9711caa97067582f9e4358c84748988e5a69fe7d2ec0",
+    "web_deploy_sha256": "c4f446828968ae329e976daeb4014c7be945d6c335b7bb930fbb390632802541"
+  },
+  "not_triggered": [
+    "5260799 release run",
+    "4403172 release run"
+  ],
+  "pipeline_updates": [
+    {
+      "install_run": "8",
+      "install_run_status": "SUCCESS",
+      "name": "cyf-ops-manual",
+      "operation": "temporary installer candidate then restored",
+      "pipeline": "5264702",
+      "restored_canonical_config_sha256": "1fc8acb3e9dd8718da40eec866394b016a0b5b09b1b9335a01ce8b668f4eca12"
+    },
+    {
+      "canonical_config_sha256": "fb5d6d53ca05e17f90ed24104d3782f714f8045b91f8c9af2afa3a0fb431153b",
+      "name": "cyf-web-release",
+      "operation": "UpdatePipeline",
+      "pipeline": "4403172",
+      "purpose": "include package_version in same-run release manifest"
+    }
+  ],
+  "policy": "docs/aliyun-flow-release-scheduling.md",
+  "schema_version": 1,
+  "timers": [
+    {
+      "calendar": "*-*-* 00:00:00 Asia/Shanghai",
+      "enabled": true,
+      "unit": "cyf-flow-backend-nightly.timer"
+    },
+    {
+      "calendar": "*-*-* 00:30:00 Asia/Shanghai",
+      "enabled": true,
+      "unit": "cyf-flow-frontend-major-nightly.timer"
+    }
+  ],
+  "timezone": "Asia/Shanghai"
+}

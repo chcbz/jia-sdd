@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-10-25T23:03:10.889749+08:00",
+  "readOnlyDiagnostic": true,
+  "agent": "linchong",
+  "change": {
+    "change_id": "sc_2c77c1869ba246e3bf386804b81b4c7c",
+    "skill_key": "image-generate",
+    "created_at": 1792936236031,
+    "updated_at": 1792936236031,
+    "state": {
+      "status": "PREPARING",
+      "reasonCode": null,
+      "runtimeSynced": false,
+      "retryAllowed": false,
+      "price": {
+        "amountMinor": "0",
+        "currency": "SILVER"
+      },
+      "fundingStatus": "NONE"
+    }
+  },
+  "delivery": [
+    {
+      "command_id": "cmd_52328bc99cf34dc08c5244f130cd1d7c",
+      "command_type": "SKILL_INSTALL",
+      "status": "SENT",
+      "attempt_count": 1,
+      "last_error": "SKILL_WS_SENT"
+    },
+    {
+      "command_id": "cmd_bf6a8c7409994f5f96d932cafc72c0f8",
+      "command_type": "SKILL_RECONCILE",
+      "status": "SENT",
+      "attempt_count": 1,
+      "last_error": "SKILL_WS_SENT"
+    }
+  ],
+  "profileFlags": {
+    "wuyong": {
+      "skillInstallEnabled": true,
+      "fieldPresent": true
+    },
+    "linchong": {
+      "skillInstallEnabled": null,
+      "fieldPresent": false
+    },
+    "lujunyi": {
+      "skillInstallEnabled": null,
+      "fieldPresent": false
+    }
+  },
+  "runtime": "1.3.6 / c4688cf792a2a24668b601fab6e5cea624df7e0c",
+  "api": "1.17.6 / 347dff304123a031a6d0f5e27d2cb3df58555eaf",
+  "firstRuntimeRejection": "2026-10-25T21:50:38+08:00 SKILL_INSTALL_DISABLED",
+  "cause": "Lin Chong profile omits skillInstallEnabled; identity-bound manager requires explicit true. Command reaches transport but is rejected before durable ACK/result, so API remains PREPARING without reason.",
+  "previousRegressionGap": "Real install tested Wu Yong only, not per-Agent profile differences.",
+  "mutations": "None: no retry, install, charge, restart or configuration write.",
+  "repairRequired": [
+    "Make intended installation availability consistent between per-Agent Runtime configuration and API/UI capabilities",
+    "Return a clear durable rejection/status instead of leaving PREPARING with no reason",
+    "Verify Lin Chong original operation safely, plus per-Agent regression; do not create another purchase."
+  ]
+}

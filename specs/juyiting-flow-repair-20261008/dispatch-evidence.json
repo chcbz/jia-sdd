@@ -1,0 +1,62 @@
+{
+  "recorded_at": "2026-10-08T02:32:55.352885+08:00",
+  "scope": "actual dispatch receipts, not completed development or model performance evidence",
+  "agents": [
+    {
+      "task": "JYT-FLOW-BE-20261008",
+      "agent_id": "01a117a1-139e-76e1-85ab-3d3e19701fa0",
+      "role": "critical_worker",
+      "configured_model": "gpt-6.1-sol",
+      "status": "dispatch_accepted_no_completion_or_ack_yet"
+    },
+    {
+      "task": "JYT-FLOW-WEB-20261008",
+      "agent_id": "01a117a1-8624-7ee0-a8a5-69000ba8f74d",
+      "role": "balanced_worker",
+      "configured_model": "gpt-6.1-luna",
+      "status": "errored",
+      "error": {
+        "code": "model_not_found",
+        "message": "unknown provider for model gpt-6.1-luna",
+        "type": "invalid_request_error"
+      }
+    },
+    {
+      "task": "JYT-FLOW-MIXED-20261008",
+      "agent_id": "01a117a1-e361-7db3-8efb-eb9e32154e61",
+      "role": "explorer",
+      "configured_model": "gpt-6.1-luna",
+      "status": "errored",
+      "error": {
+        "code": "model_not_found",
+        "message": "unknown provider for model gpt-6.1-luna",
+        "type": "invalid_request_error"
+      }
+    }
+  ],
+  "fallback_or_retry": false,
+  "corrections": [
+    {
+      "at": "2026-10-08T02:37:46.644074+08:00",
+      "source": "user_explicit_model_id_correction",
+      "old": "gpt-6.1-luna",
+      "new": "gpt-6-luna",
+      "old_failed_agents_closed": true,
+      "support_spawn_capacity_error": "agent thread limit reached; resolved by closing only own failed agents",
+      "new_dispatches": [
+        {
+          "task": "JYT-FLOW-WEB-20261008",
+          "agent_id": "01a117a6-708d-79e0-a5b4-0fff794aed09",
+          "model": "gpt-6-luna",
+          "status": "dispatch_accepted_execution_ack_pending"
+        },
+        {
+          "task": "JYT-FLOW-MIXED-20261008",
+          "agent_id": "01a117a7-b0d1-7831-993d-aee1f5626bb4",
+          "model": "gpt-6-luna",
+          "status": "dispatch_accepted_execution_ack_pending"
+        }
+      ]
+    }
+  ]
+}

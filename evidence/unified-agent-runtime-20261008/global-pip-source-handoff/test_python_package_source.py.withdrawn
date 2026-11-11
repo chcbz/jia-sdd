@@ -1,0 +1,85 @@
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+MODULE = Path(__file__).resolve().parents[1] / 'python_package_source.py'
+spec = importlib.util.spec_from_file_location('python_package_source', str(MODULE))
+source = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(source)
+
+
+class PythonPackageSourceTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.config = Path(self.tmp.name).resolve() / 'source.env'
+        self.config.write_text("# local project\nexport PIP_INDEX_URL='https://mirror.example/simple/'\n"
+                               'export CYF_CLEAN_INSTALL_PIP_INDEX_URL="$PIP_INDEX_URL"\n')
+
+    def test_clean_install_explicit_mapping_and_evidence(self):
+        value = source.prepare_environment('clean-install', self.config)
+        self.assertEqual({'CYF_CLEAN_INSTALL_PIP_INDEX_URL': 'https://mirror.example/simple/'}, value['environment'])
+        self.assertEqual(str(self.config), value['provenance']['configPath'])
+        self.assertEqual(64, len(value['provenance']['configSha256']))
+        self.assertFalse(value['installationExecuted'])
+        self.assertFalse(value['liveBatchTouched'])
+
+    def test_pip_mapping_does_not_inherit_or_mutate_environment(self):
+        before = dict(os.environ)
+        value = source.prepare_environment('pip', self.config)
+        self.assertEqual({'PIP_INDEX_URL': 'https://mirror.example/simple/'}, value['environment'])
+        self.assertEqual(before, dict(os.environ))
+
+    def test_fixed_digest_matches_then_rejects_changed_configuration(self):
+        digest = source.prepare_environment('pip', self.config)['provenance']['configSha256']
+        source.prepare_environment('pip', self.config, digest)
+        self.config.write_text(self.config.read_text().replace('mirror.example', 'other.example'))
+        with self.assertRaises(ValueError):
+            source.prepare_environment('pip', self.config, digest)
+
+    def test_no_shell_execution_extra_index_or_wrong_alias(self):
+        for replacement in ['export X=$(touch /tmp/do-not-run)\n',
+                            'export PIP_EXTRA_INDEX_URL=https://extra.example/simple/\n',
+                            'export CYF_CLEAN_INSTALL_PIP_INDEX_URL=https://other.example/simple/\n']:
+            self.config.write_text("export PIP_INDEX_URL='https://mirror.example/simple/'\n" + replacement)
+            with self.assertRaises(ValueError):
+                source.prepare_environment('clean-install', self.config)
+
+    def test_credentials_non_tls_and_url_control_rejected(self):
+        for url in ['http://mirror.example/simple/', 'https://user:private@mirror.example/simple/',
+                    'https://mirror.example/simple/?token=private', 'https://mirror.example/simple/#x',
+                    'https://mirror.example/a b']:
+            self.config.write_text('export PIP_INDEX_URL=' + repr(url) + '\n'
+                                   'export CYF_CLEAN_INSTALL_PIP_INDEX_URL="$PIP_INDEX_URL"\n')
+            with self.assertRaises(ValueError):
+                source.prepare_environment('pip', self.config)
+
+    def test_symlink_or_relative_configuration_rejected(self):
+        alias = self.config.with_name('alias.env')
+        alias.symlink_to(self.config)
+        for path in [alias, Path('relative.env')]:
+            with self.assertRaises(ValueError):
+                source.prepare_environment('pip', path)
+
+    def test_cli_emits_only_explicit_whitelist_and_source_proof(self):
+        result = subprocess.check_output([sys.executable, '-I', '-B', str(MODULE), '--kind', 'clean-install',
+                                          '--config', str(self.config)])
+        self.assertEqual(source.prepare_environment('clean-install', self.config), json.loads(result))
+
+    def test_cli_safe_failure_never_echoes_configuration_secrets(self):
+        self.config.write_text('export PIP_INDEX_URL=https://user:private-secret@mirror.example/simple/\n'
+                               'export CYF_CLEAN_INSTALL_PIP_INDEX_URL="$PIP_INDEX_URL"\n')
+        result = subprocess.run([sys.executable, '-I', '-B', str(MODULE), '--kind', 'pip', '--config', str(self.config)],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(1, result.returncode)
+        self.assertNotIn(b'private-secret', result.stdout + result.stderr)
+        self.assertEqual(b'', result.stderr)
+
+
+if __name__ == '__main__':
+    unittest.main()

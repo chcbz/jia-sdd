@@ -1,0 +1,79 @@
+
+
+  MMD finalization immutable owner acceptance
+    ✔ rejects missing, unsafe, padded and noncanonical task versions without coercion
+    ✔ requires exact frozen source set, scope, versions and actual accepted/completed facts
+    ✔ persists and reads back the immutable intent before its first POST
+    ✔ does not infer completion from a bare stage/delivery label
+    ✔ does not submit concurrently on a second click
+    ✔ lost acknowledgement/remount keeps the original key/body; a status check never writes
+    ✔ only an explicit resume after 404 replays the original immutable POST
+    ✔ known operation reads by ID and resumes pending only with the original write
+    ✔ does not replay a POST when status reconciliation fails with 401
+    ✔ does not replay a POST when status reconciliation fails with 403
+    ✔ does not replay a POST when status reconciliation fails with 409
+    ✔ does not replay a POST when status reconciliation fails with 500
+    ✔ nonretryable domain failure is not automatically submitted again
+    ✔ retryable phase failure can resume the original operation without generation
+    ✔ identity switching aborts and fences a late completion while preserving each owner recovery key
+    ✔ rejects receipt version rollback and conflicting same-version facts
+    ✔ rejects a higher-version receipt that regresses a confirmed domain stage or completion
+    ✔ never opens a new operation with unavailable storage
+    ✔ never opens a new operation with readback mismatch storage
+    ✔ never opens a new operation with corrupt recovered intent storage
+    ✔ never opens a new operation with recovery read error storage
+    ✔ confirmed server completion stays confirmed when later recovery persistence fails
+    ✔ does not accept hidden permission fields or duplicate source selections
+
+  bounty output gallery live owner scope
+    ✔ keeps reading the current request after its first output and isolates same outputId previews per step (87ms)
+    ✔ reuses the original edit intent after an unknown response and restores the follow-up catalog after remount (39ms)
+    ✔ refuses mismatched output bytes and download MIME with a visible error
+    ✔ uses the canonical task version separately from assignment revision when finalizing
+    ✔ retains the pending archive intent on projection refresh and ignores its late receipt after identity switch
+    ✔ does not show a stale finalization receipt after the owner changes
+    ✔ downloads verified passive media with its extension and unknown formats as opaque files
+    ✔ waits for a real persisted asset then sends only the current archive contract, never a hash or outputRef
+    ✔ restores a lost save ACK across remount and reconciles a known operation by GET without another file (75ms)
+    ✔ restores the locked original acceptance after remount and only explicitly replays after a read-only 404 (40ms)
+    ✔ refuses unknown/noncanonical task="" assignment="3" versions before acceptance
+    ✔ refuses unknown/noncanonical task="01" assignment="3" versions before acceptance
+    ✔ refuses unknown/noncanonical task="9007199254740992" assignment="3" versions before acceptance
+    ✔ refuses unknown/noncanonical task="9" assignment="" versions before acceptance
+    ✔ refuses unknown/noncanonical task="9" assignment="01" versions before acceptance
+
+  scoped bounty output catalog
+    ✔ requires owner-scoped request conversation and a bound execution step
+    ✔ accepts only byte-backed owner-auth URLs with exact step/output IDs
+    ✔ isolates preview keys for outputs reused across steps and colon-bearing ids
+    ✔ never previews active content as media
+    ✔ shares the passive attachment MIME policy and gives downloads usable extensions
+    ✔ accepts only an exact persisted optional assetRef, keeping legacy unprojected media readable
+
+  JYT-MMD-W2 conversation archive operations
+    ✔ posts only the persisted asset reference, then shows saved only after a validated status receipt
+    ✔ does not issue duplicate save operations and reuses the original idempotency key for an explicitly retried unknown response
+    ✔ reuses the pre-recorded idempotency key after a lost POST acknowledgement and reload
+    ✔ recovers a known operation by status only and never trusts an old identity or an unverified saved label
+    ✔ replays the original save intent only after a known operation is still pending
+    ✔ keeps the status-query action read-only when an archived operation remains pending
+    ✔ never turns malformed or partial receipts into a local saved result
+    ✔ aborts and clears pending archive state when the owner identity changes
+    ✔ distinguishes read-only status checks from an explicit original-save retry in the UI (62ms)
+    ✔ renders save only for ready persisted assets and leaves existing media controls intact (43ms)
+
+  scoped bounty media belongs to the conversation transcript
+    ✔ renders owner-scoped execution results inside the shared chat scroll region and not above the transcript
+[Vue warn]: Failed to resolve component: BountyTextSelectionArchive
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <Anonymous ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Property "isTaskDiscussion" was accessed during render but is not defined on instance. 
+  at <Anonymous ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+    ✔ mounts the real transcript section with inline results after the last message
+    ✔ compiles both Vue templates and scripts with the optional slot (84ms)
+
+
+  57 passing (679ms)
+

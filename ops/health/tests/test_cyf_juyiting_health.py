@@ -124,6 +124,9 @@ class FakeEffects(object):
         self.events.append("public_api")
         return dict(self.public_api_result)
 
+    def elasticsearch(self):
+        return getattr(self, "es_result", {"healthy": True, "classification": "es_search_ok_green"})
+
     def mysql(self):
         self.events.append("mysql")
         return dict(self.mysql_result)
@@ -1419,6 +1422,8 @@ class StaticContractTests(unittest.TestCase):
                 mock.patch.object(health, "validate_regular"), \
                 mock.patch.object(health, "sha256_file",
                                   return_value=health.RECOVERY_CARRIER_SHA256), \
+                mock.patch.object(effects, "_run", return_value={
+                    "returncode": 0, "stdout": "CYF_HEALTHMON_CANONICAL=OK\n"}), \
                 mock.patch.object(effects, "_run_recovery_carrier",
                                   return_value={
                                       "returncode": 1, "carrier_returncode": 1,

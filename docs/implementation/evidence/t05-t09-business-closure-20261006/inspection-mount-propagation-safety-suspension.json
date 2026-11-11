@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-06T10:27:07.582672+00:00",
+  "beforeScopeSha256": "a344f20b147f795f8cd7d1269f13ad10fd6205fa7016632792da1f8e5e9a906f",
+  "candidateScopeSha256": "02520e6952cd9482723e3b27a03557154eda1b2e5540dd225584a06e28776e89",
+  "readbackExact": true,
+  "scopeCount": 1,
+  "action": "Temporarily remove only newly authorized INSPECT; CHAT exact scope retained while fixing sandbox mount propagation",
+  "rootCauseHypothesis": "slirp0.4 sandbox only MS_PRIVATE parent mount, not recursive; nested shared mount detach may propagate to host during pivot_root cleanup",
+  "evidence": "isolated measurement completed, then host cgroup mounts missing again; never invoke old unwrapped slirp path again",
+  "authorization": "explicit host mount recovery/only shared service restart; no other service control"
+}

@@ -1,0 +1,197 @@
+{
+  "schema_version": 2,
+  "recorded_at": "2026-09-30T17:02:52+08:00",
+  "task_id": "MMD-U4-SCHEMA-READINESS-20260930",
+  "candidate": {
+    "commit": "79165b93d7dc7c8ecff30376e0ed1622c26591ac",
+    "tree": "c073c6def079214beec0d150812b49a9eb3e48c4"
+  },
+  "verification_scope": "bounded exact-source lifecycle diagnostic only",
+  "fixture_digest": "626ecd76f7e247ce311de3d176a8f4a875846ea541fbcdb7f13c6dbf534a4aea",
+  "outcome": "junit_contract_failure",
+  "failure_category": "bounded_lifecycle_contract_junit_failures",
+  "attribution": "The corrected v2 harness compiled the exact four changed main sources and one lifecycle test, launched the real Spring lifecycle test worker, and executed all five test methods. Three assertions failed against the candidate behavior. This is a real candidate source/lifecycle contract failure in the bounded mock-schema diagnostic, not an output-location harness error, compilation failure, daemon disappearance, owned OOM, MySQL result, or full-build result.",
+  "task_graph": {
+    "expected": [
+      ":u4BoundedV2Preflight",
+      ":u4BoundedV2CompileMain",
+      ":u4BoundedV2CompileLifecycleTest",
+      ":u4BoundedV2SchemaReadinessLifecycle"
+    ],
+    "actual": [
+      ":u4BoundedV2Preflight",
+      ":u4BoundedV2CompileMain",
+      ":u4BoundedV2CompileLifecycleTest",
+      ":u4BoundedV2SchemaReadinessLifecycle"
+    ],
+    "unexpected_tasks": []
+  },
+  "preflight": {
+    "source_hashes_verified": true,
+    "classpath_content_verified": true,
+    "classpath_entries": 364,
+    "classpath_built_by_tasks": [],
+    "main_source_units": 4,
+    "test_source_units": 1
+  },
+  "compilation": {
+    "main_succeeded": true,
+    "main_class_files": 11,
+    "test_succeeded": true,
+    "test_class_files": 8
+  },
+  "junit": {
+    "worker_started": true,
+    "tests_executed": true,
+    "tests": 5,
+    "passed": 2,
+    "failed": 3,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": "5.462",
+    "testcases": [
+      {
+        "name": "missingSourceColumnStillFailsBeforeArchiveDdl()",
+        "status": "failed",
+        "time_seconds": "4.752",
+        "exception_type": "org.opentest4j.AssertionFailedError",
+        "message": "org.opentest4j.AssertionFailedError: deliberation initialized before core chat schema\n ==> expected: <true> but was: <false>",
+        "candidate_stack_lines": [
+          "at cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.missingSourceColumnStillFailsBeforeArchiveDdl(ChatSchemaReadinessLifecycleTest.java:130)"
+        ]
+      },
+      {
+        "name": "realSpringLifecycleMakesSourcesReadyBeforeArchiveAndRunnerPhaseDoesNotRepeat()",
+        "status": "failed",
+        "time_seconds": "0.304",
+        "exception_type": "java.lang.IllegalStateException",
+        "message": "java.lang.IllegalStateException: deliberation initialized before core chat schema",
+        "candidate_stack_lines": [
+          "at cn.jia.chat.config.ChatSchemaReadinessLifecycleTest$RecordingDeliberationSchemaInitializer.initializeSchema(ChatSchemaReadinessLifecycleTest.java:270)",
+          "at cn.jia.chat.config.ChatDeliberationSchemaInitializer.ensureInitialized(ChatDeliberationSchemaInitializer.java:60)",
+          "at cn.jia.chat.config.ChatDeliberationSchemaInitializer.run(ChatDeliberationSchemaInitializer.java:55)",
+          "at cn.jia.chat.config.ChatSchemaReadinessLifecycleTest$RecordingDeliberationSchemaInitializer.run(ChatSchemaReadinessLifecycleTest.java:264)",
+          "at cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.runApplication(ChatSchemaReadinessLifecycleTest.java:175)",
+          "at cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.realSpringLifecycleMakesSourcesReadyBeforeArchiveAndRunnerPhaseDoesNotRepeat(ChatSchemaReadinessLifecycleTest.java:86)"
+        ]
+      },
+      {
+        "name": "partialFailureIsNotCachedAndRetryDoesNotRepeatCompletedCoreSchema()",
+        "status": "passed",
+        "time_seconds": "0.02"
+      },
+      {
+        "name": "archiveIndexDriftStillFailsClosedAfterSourcesBecomeReady()",
+        "status": "failed",
+        "time_seconds": "0.187",
+        "exception_type": "org.opentest4j.AssertionFailedError",
+        "message": "org.opentest4j.AssertionFailedError: Expected java.lang.Exception to be thrown, but nothing was thrown.",
+        "candidate_stack_lines": [
+          "at cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.archiveIndexDriftStillFailsClosedAfterSourcesBecomeReady(ChatSchemaReadinessLifecycleTest.java:142)"
+        ]
+      },
+      {
+        "name": "legacyInitializingBeanReproducesFailureBeforeApplicationRunnersExecute()",
+        "status": "passed",
+        "time_seconds": "0.154"
+      }
+    ]
+  },
+  "observed_contract_failures": [
+    "Deliberation initialization was observed before core chat schema readiness in the real Spring ApplicationRunner phase.",
+    "The missing-source-column negative reached the same ordering violation before the expected archive source-schema assertion.",
+    "The archive index-drift negative did not throw after sources were made ready."
+  ],
+  "passing_contracts": [
+    "A failed/partial readiness attempt was not cached, and retry did not repeat the completed core schema.",
+    "The legacy InitializingBean ordering failure was reproduced before ApplicationRunners executed."
+  ],
+  "overlay_runtime_load_proof": {
+    "produced": true,
+    "all_expected_types_loaded": true,
+    "type_count": 5
+  },
+  "oom": {
+    "owned_daemon_pid": 1941312,
+    "owned_daemon_killed": false,
+    "owned_daemon_completed": true,
+    "root_cause_of_this_failure": false,
+    "foreign_process_ownership_inferred": false
+  },
+  "evidence": {
+    "plan": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-plan-v2.json",
+      "sha256": "4ce4dba8a9f5b5adf69f4970292938f3226654510e12ff8c6888c7108645a26b"
+    },
+    "init_script": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v2.init.gradle",
+      "sha256": "4719d19f4a7d848ccd3b5bb3c9ea30a816b73851d2620cbde7dae8a2a1b3a289"
+    },
+    "source_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-source-manifest-v1.json",
+      "sha256": "95e8edab8af5e700d109c5d22eda32e4fd63c7bb69530a8534cac507e5356754"
+    },
+    "classpath": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-v1.txt",
+      "sha256": "ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4"
+    },
+    "classpath_content": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-content-v1.json",
+      "sha256": "e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b"
+    },
+    "task_graph": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-task-graph-c073c6-v2.json",
+      "sha256": "0dec86d2a63a13f30f98973cefd4e2a550116b7ac2f60d353d7e377ad970cd48"
+    },
+    "preflight": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-c073c6-v2/preflight.json",
+      "sha256": "472c553476db13acd9c2e787a3a232e30908724c9f342ba70b5749f19f499d25"
+    },
+    "main_overlay_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-c073c6-v2/main-overlay-manifest.json",
+      "sha256": "30ea3136f8d751ef32e76fea2d422800ed9b73abb5d0b2c48bcf30e007c0b040"
+    },
+    "test_overlay_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-c073c6-v2/test-overlay-manifest.json",
+      "sha256": "490371c652d551ce586e526237aa96f321aa5f29badb06de18d7d52d34fc1be7"
+    },
+    "junit_xml": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-c073c6-v2/junit-xml/TEST-cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.xml",
+      "sha256": "5c55809803c3409d259de13a477713d0b4d7527f4f00cc6e8dc1ff743177affd"
+    },
+    "class_load_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-c073c6-v2/class-load.log",
+      "sha256": "95fa198c9f727d180845a1741c84e23e9d44f80b7a5cc4aa2f36ab50530612ca"
+    },
+    "overlay_load_proof": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-c073c6-v2/overlay-load-proof.json",
+      "sha256": "990f7eb991ad168228cce65d4d4bf41e1f927d5699e960457228a6d822a0eeb9"
+    },
+    "daemon_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-gradle-daemon-1941312-v2.log",
+      "sha256": "5c503239b90a84d916eec227970dcb592eaaadd61d4aadea38342567f0a2f3fc"
+    },
+    "diagnostic_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v2.log",
+      "sha256": "651f68ea4b9c8b5f9f97208086564161bfc7111fc8affc76add631dbdddac52d"
+    },
+    "v1_failure": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v1.json",
+      "sha256": "07e8427d8b50a8633e6970c01de816d2a07189c89bfb1c2b00f813a35e7ea6a3"
+    },
+    "output_location_attribution": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-outputlocation-attribution-v2.txt",
+      "sha256": "7b1ae12469211bb1602000f2b0d82bcddb9aa9cf28466043c8c9d9bee4f9835c"
+    }
+  },
+  "actions": {
+    "source_changed_during_v2": false,
+    "build_gradle_changed": false,
+    "baseline_changed": false,
+    "original_classes_changed": false,
+    "retry_performed_after_v2": false,
+    "push_or_deploy": false,
+    "foreign_process_action": false
+  },
+  "next_action": "Attribute the real bounded lifecycle contract failure, release the completed v2 verification freeze, inspect only owned readiness sources/tests, and prepare the smallest materially changed source correction before any new test run."
+}

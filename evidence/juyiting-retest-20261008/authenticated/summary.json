@@ -1,0 +1,103 @@
+{
+  "status": "FAIL_NEW_PLAINTEXT_FLOW_BOOTSTRAP_BLOCKED",
+  "observedDate": "2026-10-08",
+  "timezone": "Asia/Shanghai",
+  "method": "Owned Chromium 133, normal account login and native UI clicks, mobile viewport 390x844, real production; no mocks or direct API business writes",
+  "actor": "chcbz (profile UI verified)",
+  "newTaskId": "429",
+  "createdAt": "2026-10-08T01:13:31.423000+08:00",
+  "pointedAt": "2026-10-08T01:14:52.192000+08:00",
+  "lastBootstrapObservedAt": "2026-10-08T01:28:31.853000+08:00",
+  "elapsedPointToLastReadSeconds": 819.661,
+  "newTaskStatus": "assigned",
+  "newTaskVersion": "1",
+  "bootstrap": {
+    "schemaVersion": 1,
+    "taskId": "429",
+    "targetAgentId": "agt_510b7fea20564b52bc70b3a08d2c6c4f",
+    "requirementRevision": "1",
+    "assignmentRevision": "1",
+    "taskVersion": "1",
+    "grantId": "grant_7c3d7a7976804439bafa15e5452c946b",
+    "grantVersion": "1",
+    "grantState": "ACTIVE",
+    "permittedOperations": [
+      "DELIBERATE",
+      "INSPECT_INPUTS"
+    ],
+    "inputs": [],
+    "bootstrapId": "bootstrap_ad39d140552a21272bec1a17cf541a1d",
+    "bootstrapState": "PENDING",
+    "stateVersion": "0",
+    "initialOperation": "DELIBERATE",
+    "conversationId": null,
+    "initialRequestId": null,
+    "currentAssignment": true
+  },
+  "networkCounts": {
+    "createPOST": 1,
+    "pointPOST": 1,
+    "finalizationPOST": 0,
+    "chatStreamPOST": 0,
+    "interactionPOST": 0,
+    "bootstrapGETCapturedResponses": 207
+  },
+  "results": [
+    {
+      "id": "NEW01",
+      "status": "REPRODUCED",
+      "finding": "Creation/assignment accepted; bootstrap stays PENDING, no conversationId/initialRequestId; existing relay startup failure and stop in same live API PID logs"
+    },
+    {
+      "id": "SF01",
+      "status": "NOT_RETESTED_ORIGINAL_PATH",
+      "finding": "Automatic post-assignment discussion never opened. Manual task-detail discussion return reaches detail, but that is not the original auto-entry path."
+    },
+    {
+      "id": "SF02",
+      "status": "REPRODUCED_ASSIGNMENT_ONLY",
+      "finding": "New task assigned to Gongsun Sheng but homepage still open/unassigned until full reload; acceptance refresh subcase blocked"
+    },
+    {
+      "id": "SF03",
+      "status": "REPRODUCED",
+      "finding": "98-character submitted draft remains after COMMITTED creation; cleared only after full reload"
+    },
+    {
+      "id": "SF04",
+      "status": "REPRODUCED_EXISTING_COMPLETED_RECORD",
+      "finding": "Current GET task426 completed/version4; reopened results enable Confirm acceptance/Continue modification. Composer/attachments/voice remain enabled. No repeat acceptance or send attempted."
+    },
+    {
+      "id": "SF05",
+      "status": "REPRODUCED_EXISTING_MESSAGE",
+      "finding": "Task426 same USER bubble visibly repeats request twice; not proof of duplicate backend execution"
+    },
+    {
+      "id": "R01",
+      "status": "REPRODUCED_EXISTING_MIXED_PROJECTION",
+      "finding": "Task424 chat still shows image and text, results says delivery scope unclear and has no accept button; no new image/edit/acceptance run"
+    },
+    {
+      "id": "new-delivery-acceptance",
+      "status": "BLOCKED_UPSTREAM",
+      "finding": "Not reached; do not substitute old completed task for new business pass"
+    }
+  ],
+  "notRun": [
+    "new Agent response/delivery/acceptance",
+    "new mixed-image generation/edit/acceptance",
+    "attachment-only and natural clarification",
+    "real microphone/audio",
+    "cross-account isolation",
+    "real-device keyboard",
+    "fault injection"
+  ],
+  "boundaries": [
+    "No code/config/deploy/service restart/direct DB write",
+    "No task cleanup/archive/cancel; 429 remains assigned/pending",
+    "Only one new task; old 424/426 read-only viewing",
+    "Fresh browser credentials used only for normal login; no credentials persisted in scripts/reports",
+    "Owned browser closed and temporary profile cleanup requested by driver; no other browser/service touched"
+  ]
+}

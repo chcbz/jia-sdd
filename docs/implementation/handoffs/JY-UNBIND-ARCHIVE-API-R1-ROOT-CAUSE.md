@@ -1,0 +1,7 @@
+# API R1 invocation correction
+
+Exact source b1a0db81797e6f01b09ebf8725cda93a331bf5b9/treebe61ceebb603590f9e9140a0c2d1f89559197876 remains clean. Single actual attempt2026-09-08T15:34:41–43 rc2 at argparse, BEFORE Gradle/JVM/task execution, zero XML. Evidence /var/tmp/cyf-jy-roster-archive-20260908/api-r1-result.json and api-r1-gradle.log (main directly read). Both Writer and main independently recorded the SAME failure in runtime ledger; two attribution entries are preserved as audit, NOT two executions. Threshold STOP respected and separately authorized here.
+
+Root cause verified against ops/orchestration/cyf_orchestrator.py argparse.REMAINDER: gradle subcommand flags MUST appear BEFORE positional task_id; anything after task_id is consumed by childcommand. Remedy ONLY reorder wrapper argv to `gradle --cwd WORKTREE --tree-sha TREE --selector SELECTOR --fixture-digest N/A --artifact NEW_RESULT TASK_ID -- ./gradlew ...`. No source/environment/testselector/timeout/resource changes. Source remains same because only failed wrapper changed and no runtime evidence exists to reuse. Existing10min/offline/no-daemon/maxworkers1/Xmx384M unchanged; one newapi-r2 exactlogged invocation, no production actions. Main owns future failure/transition recording to avoid duplicateledger attribution; writer uses orchestrator for Gradle only.
+
+Main independent bounded verification-plan ACCEPT; authorize one corrected attempt. If runtime fails, capture concrete nativecause and stop before any new retry. Source independentreview still separate and pending.

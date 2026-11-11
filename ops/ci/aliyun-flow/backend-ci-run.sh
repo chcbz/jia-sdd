@@ -1,9 +1,15 @@
 set -eu
-# JavaBuild's platform JDK is only a bootstrap, never the tested toolchain.
+# The worker image provides the host libraries; its default JDK is not the tested toolchain.
 # The verified Dragonwell 21 archive below always replaces JAVA_HOME/PATH.
 for tool in python3 git curl tar sha256sum ldd; do command -v "$tool" >/dev/null; done
 export CYF_EXPERIMENT="$(mktemp -d /tmp/cyf-backend-flow-ci.XXXXXX)"
-printf 'CYF_FLOW_PHASE runtime.begin wall=%s monotonic=' "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime
+# Numeric preparation evidence survives truncated Flow console logs. No new gate.
+cyf_phase() {
+  phase_uptime="$(cut -d' ' -f1 /proc/uptime)"
+  printf 'CYF_FLOW_PHASE %s wall=%s monotonic=%s\n' "$1" "$(date -u +%FT%TZ)" "$phase_uptime"
+  printf '%s\t%s\n' "$1" "$phase_uptime" >> "$CYF_EXPERIMENT/preparation-phases.tsv"
+}
+cyf_phase runtime.begin
 python3 - <<'CYFTOOLS'
 import io,base64,gzip,hashlib,json,os,pathlib
 raw=base64.b64decode('@CYF_TOOL_BUNDLE_BASE64@',validate=True)
@@ -15,13 +21,17 @@ for name,text in json.loads(gzip.decompress(raw).decode()).items():
  p.write_text(text)
  p.chmod(0o600)
 CYFTOOLS
+cyf_phase jdk.begin
 python3 "$CYF_EXPERIMENT/prepare-backend-jdk.py" --cache "$HOME/.cache/cyf-backend-jdk-archives" --destination "$CYF_EXPERIMENT/jdk" > "$CYF_EXPERIMENT/jdk-result.txt"
 cat "$CYF_EXPERIMENT/jdk-result.txt"
 export JAVA_HOME="$(tail -1 "$CYF_EXPERIMENT/jdk-result.txt")"
 export PATH="$JAVA_HOME/bin:$PATH"
 java -version
-printf 'CYF_FLOW_PHASE runtime.end wall=%s monotonic=' "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime
+cyf_phase jdk.end
+# PPT raster previews were removed; no font-rendering packages are installed.
+cyf_phase runtime.end
 
+cyf_phase mysql.begin
 export CYF_REVIEW_MYSQL_ARCHIVE_SHA=e6503f2ca665dbd4524a0109fa15969453f02b69c20f42d3fe8ba0d0b0ca1a1f
 mysql_cache="$HOME/.cache/cyf-backend-mysql-archives"
 mkdir -p "$mysql_cache"
@@ -97,10 +107,43 @@ cat "$CYF_EXPERIMENT/mysql-ldd.txt"
 if grep -q 'not found' "$CYF_EXPERIMENT/mysql-ldd.txt"; then echo 'MySQL runtime dependency missing' >&2; exit 1; fi
 
 "$CYF_REVIEW_MYSQLD" --no-defaults --version
+cyf_phase mysql.end
+
+# SM-C1 bridge test dependency, fixed to the reviewed Runtime commit/tree.
+# No deployment or persistent service; update the pin explicitly with its contract tests.
+cyf_phase sm_node.begin
+node_cache="$HOME/.cache/cyf-sm-node-archives"
+mkdir -p "$node_cache"
+node_archive="$node_cache/node-v20.20.2-df770b2a6f130ed8627c9782c988fda9669fa23898329a61a871e32f965e007d.tar.xz"
+if [ ! -e "$node_archive" ]; then
+  node_partial="$(mktemp "$node_cache/.download.XXXXXX")"
+  curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' 'https://nodejs.org/dist/v20.20.2/node-v20.20.2-linux-x64.tar.xz' -o "$node_partial"
+  printf '%s  %s\n' df770b2a6f130ed8627c9782c988fda9669fa23898329a61a871e32f965e007d "$node_partial" | sha256sum -c -
+  mv "$node_partial" "$node_archive"
+fi
+printf '%s  %s\n' df770b2a6f130ed8627c9782c988fda9669fa23898329a61a871e32f965e007d "$node_archive" | sha256sum -c -
+mkdir "$CYF_EXPERIMENT/sm-node"
+tar -xJf "$node_archive" -C "$CYF_EXPERIMENT/sm-node" --strip-components=1
+export CYF_SM_NODE_BIN="$CYF_EXPERIMENT/sm-node/bin/node"
+export PATH="$CYF_EXPERIMENT/sm-node/bin:$PATH"
+"$CYF_SM_NODE_BIN" --version
+sm_runtime="$CYF_EXPERIMENT/sm-runtime"
+git init -q "$sm_runtime"
+git -C "$sm_runtime" remote add origin 'https://gitee.com/chcbz/isp-install'
+git -C "$sm_runtime" fetch --depth=1 origin c3f973c2e5ca2990dd3e775b42f6bf02f7e0a060
+git -C "$sm_runtime" checkout -q --detach c3f973c2e5ca2990dd3e775b42f6bf02f7e0a060
+test "$(git -C "$sm_runtime" rev-parse HEAD)" = 'c3f973c2e5ca2990dd3e775b42f6bf02f7e0a060'
+test "$(git -C "$sm_runtime" rev-parse 'HEAD^{tree}')" = '964265a3d5df890a9647b6a4816b346d33b7e2db'
+test -z "$(git -C "$sm_runtime" status --porcelain)"
+(cd "$sm_runtime/conf/codex-bridge" && npm ci --ignore-scripts --no-audit --no-fund)
+export CYF_SM_NODE_PEER="$sm_runtime/conf/codex-bridge/test/fixtures/skill-management-node-peer.mjs"
+"$CYF_SM_NODE_BIN" --check "$CYF_SM_NODE_PEER"
+printf 'CYF_SM_RUNTIME_INPUT commit=%s tree=%s\n' 'c3f973c2e5ca2990dd3e775b42f6bf02f7e0a060' '964265a3d5df890a9647b6a4816b346d33b7e2db'
+sha256sum "$CYF_SM_NODE_BIN" "$CYF_SM_NODE_PEER" "$sm_runtime/conf/codex-bridge/package-lock.json"
+cyf_phase sm_node.end
 
 export CYF_FLOW_COMPILE_CACHE_OPT_IN=1
 export CYF_FLOW_SHORT_LIVED_TEST_JVM=1
-case "${CI_COMMIT_REF_NAME:-}" in develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003) ;; *) echo 'unexpected CI branch' >&2; exit 1 ;; esac
 test -n "${CI_COMMIT_SHA:-}"
 test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
 export CYF_FLOW_GRADLE_ACTIVE=1
@@ -143,7 +186,7 @@ gradle.taskGraph.afterTask { task, state ->
 
 OWNERDIAGNOSTICS
 set +e
-printf 'CYF_FLOW_PHASE gradle.begin wall=%s monotonic=' "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime
+cyf_phase gradle.begin
 python3 - > "$CYF_FLOW_BUILD_ROOT/gradle-output.log" 2>&1 <<'CYFGRADLE'
 import hashlib,json,os,pathlib,subprocess,sys
 root=pathlib.Path(os.environ['CYF_EXPERIMENT'])
@@ -161,7 +204,7 @@ sys.exit(subprocess.run([sys.executable,str(root/'ops/orchestration/cyf_orchestr
     'FLOW-CI-5260799','--']+argv,check=False).returncode)
 CYFGRADLE
 gradle_rc=$?
-printf 'CYF_FLOW_PHASE gradle.end wall=%s monotonic=' "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime
+cyf_phase gradle.end
 set -e
 cat "$CYF_FLOW_BUILD_ROOT/gradle-output.log"
 python3 - <<'PYDIAGNOSTICS'
@@ -267,7 +310,7 @@ def main():
     env = os.environ
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
     tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}']).decode().strip()
-    if (env.get('PIPELINE_ID') != '5260799' or env.get('CI_COMMIT_REF_NAME') not in ('develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003')
+    if (env.get('PIPELINE_ID') != '5260799'
             or commit != env.get('CI_COMMIT_SHA') or not re.fullmatch('[0-9a-f]{40,64}', commit)
             or not re.fullmatch('[1-9][0-9]*', env.get('BUILD_NUMBER', ''))):
         raise SystemExit('unexpected Flow source/run identity')
@@ -346,6 +389,25 @@ summary['gradlePhases']=[json.loads(line.split(' ',1)[1]) for line in gradle_lin
     if line.startswith('CYF_GRADLE_PHASE ')]
 summary['taskTimings']=[json.loads(line.split(' ',1)[1]) for line in gradle_lines
     if line.startswith('CYF_TASK_TIMING ')]
+# Preparation observations are value-free, optional diagnostics, not acceptance gates.
+try:
+    preparation = Path(os.environ['CYF_EXPERIMENT'])
+    allowed = {name + '.' + edge for name in ('runtime', 'jdk', 'mysql', 'gradle')
+               for edge in ('begin', 'end')}
+    events = []
+    for line in (preparation/'preparation-phases.tsv').read_text().splitlines():
+        name, value = line.split('\t')
+        if name in allowed:
+            events.append(dict(phase=name, monotonicSeconds=float(value)))
+    summary['flowPreparationPhases'] = events
+    jdk = [json.loads(line.split(' ', 1)[1])
+           for line in (preparation/'jdk-result.txt').read_text().splitlines()
+           if line.startswith('CYF_JDK_TIMING ')]
+    if len(jdk) == 1:
+        summary['jdkBootstrap'] = {key: jdk[0][key] for key in
+            ('archive_sha256', 'cache_hit', 'archive_seconds', 'total_seconds', 'version')}
+except (OSError, KeyError, ValueError):
+    summary['preparationObservationStatus'] = 'UNAVAILABLE'
 (dest / 'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('CYF_API_TEST_SUMMARY '+json.dumps(dict(counts=counts,suites=len(records))))
 # Bounded, value-free cache inventory. Observation failure does not fail a build.
@@ -377,4 +439,4 @@ summary['cacheInventory']=result
 (dest/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('CYF_CACHE_INVENTORY '+json.dumps(result,sort_keys=True))
 PYTESTREPORT
-printf 'CYF_FLOW_PHASE package.end wall=%s monotonic=' "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime
+cyf_phase package.end

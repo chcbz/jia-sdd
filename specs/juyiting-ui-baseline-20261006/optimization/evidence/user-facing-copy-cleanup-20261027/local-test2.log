@@ -1,0 +1,76 @@
+
+
+  ...................................................!..!.
+  .......!...................!.................!..........
+  .......!.......................................!........
+  ..!......
+
+  169 passing (9s)
+  8 failing
+
+  1) workspace write recovery presentation
+       labels retry as a write retry, disables in-flight retry and discloses page lifetime:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /提交结果尚未确认/. Input:
+
+'重命名：结果尚未确认，请查询结果，不要重复提交。继续核对请先核对这次操作，再刷新或关闭页面；刷新后将无法在此继续恢复。'
+
+      at Context.<anonymous> (tests/personal-workspace-write-recovery.test.js:19:14)
+      at process.processImmediate (node:internal/timers:574:21)
+
+  2) W06 workspace bounty material links
+       renders a server-returned OUTPUT link as an execution-managed reference without inventing formal delivery:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /正式交付状态仍需以正式交付回执确认/. Input:
+
+'资料与成果资料关联只固定当前文件版本，不会启动 Agent 执行或改变悬赏交付状态。刷新选择资料（可选）成果引用资料 file_a · v2当前关联在工作空间查看成果关联由执行流程管理明确开始正式办理资料可选。只会为当前事项、已确认议事和明确承办 Agent 创建 PDF 办理请求；绝不回退为私人交办。承办 Agent：未确认；成果：正式 PDF；资料：0 份固定版本。正式执行条件尚未满足。尚未确认本正式任务的执行记录。查询进度读取本任务执行历史提交后请查看交付进度。执行和成果共 1 项成果；验收情况请查看交付状态。添加资料不会自动开始执行或完成验收。'
+
+      at Context.<anonymous> (tests/personal-workspace-task-material-links.test.js:133:12)
+      at process.processImmediate (node:internal/timers:574:21)
+
+  3) personal workspace execution receipt presentation
+       mounts the delivery receipt at submission location, shows terminal errors, and keeps file selection navigation working:
+     AssertionError [ERR_ASSERTION]: The input did not match the regular expression /只查询原请求，不会再次提交/. Input:
+
+'第二层 · 交付台交付进度查看本次交付进度。返回箱面交付进度提交结果待确认，请查询进度，勿重复提交。刷新进度撤销尚未开始的输入授权另起一项新交付（不重试当前）最近执行交付记录刷新记录交付失败林冲'
+
+      at Context.<anonymous> (tests/personal-workspace-execution-component.test.js:135:12)
+
+  4) E07 team recommendation preview client
+       states preview-only/manual boundaries and does not call assignment or dispatch endpoints:
+     AssertionError: expected '<template>\n  <section class="team-re…' to include '尚无服务端最终团队确认 API'
+      at Context.<anonymous> (tests/juyiting-team-recommendation.test.js:144:22)
+      at process.processImmediate (node:internal/timers:574:21)
+
+  5) Juyi Hall Codex durable deliberation web contract
+       keeps pre-admission status neutral and only renders observed runtime policy:
+
+      AssertionError: expected '排队中' to equal 'CHAT · 排队中'
+      + expected - actual
+
+      -排队中
+      +CHAT · 排队中
+      
+      at Context.<anonymous> (tests/juyiting-codex-fast-deliberation.test.js:233:54)
+
+  6) Juyi Hall Codex durable deliberation web contract
+       cancels an exact durable turn with a canonical state version and is terminal-idempotent:
+
+      AssertionError: expected '已取消' to equal 'CHAT · 已取消'
+      + expected - actual
+
+      -已取消
+      +CHAT · 已取消
+      
+      at Context.<anonymous> (tests/juyiting-codex-fast-deliberation.test.js:746:54)
+
+  7) hosting rent actual quote/lease UI
+       renders actual server terms/wallet/separate token fees, with no charge until the confirm click:
+     AssertionError: expected '林冲 · 山寨安顿关闭（未确认报价不付款）每位好汉独立租约，按期预付、仅手…' to include '9999999999999 ms'
+      at Context.<anonymous> (tests/hosting-rent-ui.test.js:69:31)
+
+  8) economy readonly preview UI behavior
+       mounts the actual component and shows installation evidence even with observedAt:
+     AssertionError: expected '经济预览仅查看当前已授权的数据：不会扣款、下单、创建订单、安装或启用托管。…' to include 'i-1 · read@1 · 已验证安装（ACK）'
+      at Context.<anonymous> (tests/economy-readonly-preview-ui.test.js:180:31)
+
+
+

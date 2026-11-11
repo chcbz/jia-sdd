@@ -1,0 +1,24 @@
+import groovy.json.JsonOutput
+import org.gradle.api.tasks.testing.Test
+// Normal source sets/dependencies/tasks remain intact. These are JVM runtime caps,
+// not resource admission gates or performance-deadline controls.
+gradle.projectsEvaluated {
+    gradle.rootProject.allprojects { project ->
+        project.tasks.withType(Test).configureEach {
+            maxParallelForks = 1
+            forkEvery = 1
+            maxHeapSize = '128m'
+            jvmArgs '-XX:MaxMetaspaceSize=96m', '-XX:ActiveProcessorCount=1', '-XX:+UseSerialGC'
+            testLogging { events 'passed', 'failed', 'skipped'; exceptionFormat 'full' }
+        }
+    }
+    gradle.taskGraph.whenReady { graph ->
+        File evidence = new File('/home/isp/wsps/cyf/evidence/u3-finalization-schema-check-truth-v1/normal-schema-task-graph-v2.json')
+        evidence.text = JsonOutput.prettyPrint(JsonOutput.toJson([
+            source_commit: 'b1e7b06817f041804f1e1d613ff4aa280641e904',
+            source_tree: 'ec0d645cd310517cf836218f285332a402c8228f',
+            scope: 'normal selected module regressions and actual dependent production-source compile; no frozen classpath or source overlay',
+            tasks: graph.allTasks.collect { it.path }
+        ])) + '\n'
+    }
+}

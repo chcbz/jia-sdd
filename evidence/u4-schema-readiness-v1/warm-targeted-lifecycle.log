@@ -1,0 +1,97 @@
+WARM TARGETED LIFECYCLE VERIFICATION INCIDENT RECORD
+This file was assembled after the run because cyf_orchestrator.py records --artifact as metadata but does not redirect subprocess output. It is not represented as raw complete Gradle console output.
+
+Task: MMD-U4-SCHEMA-READINESS-20260930
+Commit: 79165b93d7dc7c8ecff30376e0ed1622c26591ac
+Tree: c073c6def079214beec0d150812b49a9eb3e48c4
+CWD: /home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api
+Selector: :chat:jia-chat-service:chatDeliberation --tests cn.jia.chat.config.ChatSchemaReadinessLifecycleTest
+Fixture: 6eeed02a9f4b7c8f5c39b01af08b552be5c92da44982029f9238b88aa67e1514
+Started: 2026-09-30 15:44 Asia/Shanghai
+Stopped: 2026-09-30 15:47:26 Asia/Shanghai
+Outcome: global OOM killed owned single-use Gradle daemon PID 1893487 during :chat:jia-chat-mapper:compileJava, before the focused test task.
+JUnit executed: false
+JUnit XML produced by this run: 0
+Pass/fail/skip: 0/0/0
+Full chatDeliberation run: not started
+Retry: prohibited pending report/new authorization
+
+Invocation:
+JAVA_TOOL_OPTIONS='-XX:ActiveProcessorCount=2 -XX:+UseSerialGC' python3 /home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py gradle --cwd /home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api --tree-sha c073c6def079214beec0d150812b49a9eb3e48c4 --selector ':chat:jia-chat-service:chatDeliberation --tests cn.jia.chat.config.ChatSchemaReadinessLifecycleTest' --fixture-digest 6eeed02a9f4b7c8f5c39b01af08b552be5c92da44982029f9238b88aa67e1514 --artifact /home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/warm-targeted-lifecycle.log MMD-U4-SCHEMA-READINESS-20260930 -- ./gradlew --offline --no-daemon --max-workers=1 -PrepoUsername=unused -PrepoPassword=unused '-Dorg.gradle.jvmargs=-Xmx384m -XX:MaxMetaspaceSize=256m -XX:ActiveProcessorCount=2 -XX:+UseSerialGC' -I /home/isp/wsps/cyf/evidence/u3-output-asset-archive/bounded-test.gradle :chat:jia-chat-service:chatDeliberation --tests cn.jia.chat.config.ChatSchemaReadinessLifecycleTest
+
+Observed final build phase:
+> Task :chat:jia-chat-mapper:compileJava
+Gradle build daemon disappeared unexpectedly.
+Daemon PID: 1893487
+
+--- VERBATIM KERNEL OOM EVIDENCE ---
+Sep 30 15:47:25 iZwz9j3ip2unzhwij0bs30Z kernel: mysqld invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=-500
+Sep 30 15:47:25 iZwz9j3ip2unzhwij0bs30Z kernel:  oom_kill_process+0x10f/0x220
+Sep 30 15:47:25 iZwz9j3ip2unzhwij0bs30Z kernel:  __alloc_pages_may_oom+0x107/0x190
+Sep 30 15:47:25 iZwz9j3ip2unzhwij0bs30Z kernel: [  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+Sep 30 15:47:26 iZwz9j3ip2unzhwij0bs30Z kernel: [1893487]     0 1893487  9016266   157581  1761280        0             0 java
+Sep 30 15:47:26 iZwz9j3ip2unzhwij0bs30Z kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-0.slice/session-3847.scope,task=java,pid=1893487,uid=0
+Sep 30 15:47:26 iZwz9j3ip2unzhwij0bs30Z kernel: Out of memory: Killed process 1893487 (java) total-vm:36065064kB, anon-rss:604228kB, file-rss:26096kB, shmem-rss:0kB, UID:0 pgtables:1720kB oom_score_adj:0
+
+--- VERBATIM OWNED DAEMON LOG ---
+2026-09-30T15:44:29.328+0800 [DEBUG] [org.gradle.launcher.daemon.bootstrap.DaemonMain] Assuming the daemon was started with following jvm opts: [-XX:MaxMetaspaceSize=256m, -XX:ActiveProcessorCount=2, -XX:+UseSerialGC, -Xmx384m, -Dfile.encoding=UTF-8, -Duser.country, -Duser.language=en, -Duser.variant]
+2026-09-30T15:44:29.788+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface docker0
+2026-09-30T15:44:29.789+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-09-30T15:44:29.790+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /172.17.0.1
+2026-09-30T15:44:29.790+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface eth0
+2026-09-30T15:44:29.791+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-09-30T15:44:29.791+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /172.18.151.236
+2026-09-30T15:44:29.791+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface lo
+2026-09-30T15:44:29.791+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? true
+2026-09-30T15:44:29.792+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding loopback address /127.0.0.1
+2026-09-30T15:44:29.898+0800 [INFO] [org.gradle.launcher.daemon.server.Daemon] start() called on daemon - DefaultDaemonContext[uid=0faccfae-377e-4f6b-b7d5-11ba5663f9ce,javaHome=/home/isp/apps/jdk21,javaVersion=21,javaVendor=Oracle Corporation,daemonRegistryDir=/root/.gradle/daemon,pid=1893487,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=256m,-XX:ActiveProcessorCount=2,-XX:+UseSerialGC,-Xmx384m,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
+2026-09-30T15:44:29.956+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.TcpIncomingConnector] Listening on [2fb6fb1b-9087-430c-a1c2-521823bde482 port:37725, addresses:[localhost/127.0.0.1]].
+2026-09-30T15:44:29.960+0800 [DEBUG] [org.gradle.launcher.daemon.server.Daemon] Daemon starting at: Wed Sep 30 15:44:29 CST 2026, with address: [2fb6fb1b-9087-430c-a1c2-521823bde482 port:37725, addresses:[localhost/127.0.0.1]]
+2026-09-30T15:44:29.961+0800 [INFO] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Advertising the daemon address to the clients: [2fb6fb1b-9087-430c-a1c2-521823bde482 port:37725, addresses:[localhost/127.0.0.1]]
+2026-09-30T15:44:29.961+0800 [DEBUG] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Advertised daemon context: DefaultDaemonContext[uid=0faccfae-377e-4f6b-b7d5-11ba5663f9ce,javaHome=/home/isp/apps/jdk21,javaVersion=21,javaVendor=Oracle Corporation,daemonRegistryDir=/root/.gradle/daemon,pid=1893487,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=256m,-XX:ActiveProcessorCount=2,-XX:+UseSerialGC,-Xmx384m,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
+2026-09-30T15:44:29.962+0800 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Storing daemon address: [2fb6fb1b-9087-430c-a1c2-521823bde482 port:37725, addresses:[localhost/127.0.0.1]], context: DefaultDaemonContext[uid=0faccfae-377e-4f6b-b7d5-11ba5663f9ce,javaHome=/home/isp/apps/jdk21,javaVersion=21,javaVendor=Oracle Corporation,daemonRegistryDir=/root/.gradle/daemon,pid=1893487,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=256m,-XX:ActiveProcessorCount=2,-XX:+UseSerialGC,-Xmx384m,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
+2026-09-30T15:44:29.971+0800 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Waiting to acquire exclusive lock on daemon addresses registry.
+2026-09-30T15:44:29.987+0800 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Lock acquired on daemon addresses registry.
+2026-09-30T15:44:30.067+0800 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Releasing lock on daemon addresses registry.
+2026-09-30T15:44:30.068+0800 [LIFECYCLE] [org.gradle.launcher.daemon.server.Daemon] Daemon server started.
+2026-09-30T15:44:30.069+0800 [DEBUG] [org.gradle.launcher.daemon.bootstrap.DaemonStartupCommunication] Completed writing the daemon greeting. Closing streams...
+2026-09-30T15:44:30.111+0800 [DEBUG] [org.gradle.launcher.daemon.server.Daemon] stopOnExpiration() called on daemon
+2026-09-30T15:44:30.142+0800 [DEBUG] [org.gradle.launcher.daemon.server.Daemon] awaitExpiration() called on daemon
+2026-09-30T15:44:30.143+0800 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon is running. Sleeping until state changes.
+2026-09-30T15:44:30.209+0800 [DEBUG] [org.gradle.internal.remote.internal.inet.TcpIncomingConnector] Accepted connection from /127.0.0.1:52932 to /127.0.0.1:37725.
+2026-09-30T15:44:30.337+0800 [DEBUG] [org.gradle.launcher.daemon.server.SynchronizedDispatchConnection] thread 20: received class org.gradle.launcher.daemon.protocol.Build
+2026-09-30T15:44:30.338+0800 [DEBUG] [org.gradle.launcher.daemon.server.DefaultDaemonConnection] thread 20: Received non-IO message from client: Build{id=cb56a1ba-dba7-4a4a-84a2-e8f076d24452, currentDir=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api}
+2026-09-30T15:44:30.340+0800 [INFO] [org.gradle.launcher.daemon.server.DefaultIncomingConnectionHandler] Received command: Build{id=cb56a1ba-dba7-4a4a-84a2-e8f076d24452, currentDir=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api}.
+2026-09-30T15:44:30.341+0800 [DEBUG] [org.gradle.launcher.daemon.server.DefaultIncomingConnectionHandler] Starting executing command: Build{id=cb56a1ba-dba7-4a4a-84a2-e8f076d24452, currentDir=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api} with connection: socket connection from /127.0.0.1:37725 to /127.0.0.1:52932.
+2026-09-30T15:44:30.365+0800 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Command execution: started DaemonCommandExecution[command = Build{id=cb56a1ba-dba7-4a4a-84a2-e8f076d24452, currentDir=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api}, connection = DefaultDaemonConnection: socket connection from /127.0.0.1:37725 to /127.0.0.1:52932] after 0.007383333333333334 minutes of idle
+2026-09-30T15:44:30.366+0800 [INFO] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Marking the daemon as busy, address: [2fb6fb1b-9087-430c-a1c2-521823bde482 port:37725, addresses:[localhost/127.0.0.1]]
+2026-09-30T15:44:30.366+0800 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Marking busy by address: [2fb6fb1b-9087-430c-a1c2-521823bde482 port:37725, addresses:[localhost/127.0.0.1]]
+2026-09-30T15:44:30.367+0800 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Waiting to acquire exclusive lock on daemon addresses registry.
+2026-09-30T15:44:30.367+0800 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Lock acquired on daemon addresses registry.
+2026-09-30T15:44:30.369+0800 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Releasing lock on daemon addresses registry.
+2026-09-30T15:44:30.370+0800 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] resetting idle timer
+2026-09-30T15:44:30.383+0800 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon is running. Sleeping until state changes.
+2026-09-30T15:44:30.419+0800 [INFO] [org.gradle.launcher.daemon.server.exec.StartBuildOrRespondWithBusy] Daemon is about to start building Build{id=cb56a1ba-dba7-4a4a-84a2-e8f076d24452, currentDir=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api}. Dispatching build started information...
+2026-09-30T15:44:30.420+0800 [DEBUG] [org.gradle.launcher.daemon.server.SynchronizedDispatchConnection] thread 22: dispatching org.gradle.launcher.daemon.protocol.BuildStarted@28fa8b01
+2026-09-30T15:44:30.421+0800 [DEBUG] [org.gradle.launcher.daemon.server.exec.EstablishBuildEnvironment] Configuring env variables: [PATH, CODEX_REMOTE_PAYLOAD, HISTCONTROL, XDG_DATA_DIRS, HISTSIZE, GIT_PAGER, JAVA_HOME, BASH_FUNC_which%%, TERM, LANG, DBUS_SESSION_BUS_ADDRESS, XDG_SESSION_ID, JRE_HOME, GH_PAGER, MAIL, COLORTERM, CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS, JAVA_TOOL_OPTIONS, which_declare, LOGNAME, CODEX_THREAD_ID, NO_COLOR, PWD, S_COLORS, CODEX_MANAGED_BY_NPM, CODEX_CI, SHELL, LESSOPEN, NODE_HOME, PAGER, SSH_CLIENT, CODEX_HOME, USER, CODEX_PERMISSION_PROFILE, CLASS_PATH, SSH_AUTH_SOCK, SSH_CONNECTION, HOSTNAME, LC_ALL, CODEX_VERSION, LC_CTYPE, CODEX_SESSION_ID, XDG_RUNTIME_DIR, CODEX_MANAGED_PACKAGE_ROOT, SHLVL, HOME]
+2026-09-30T15:44:30.443+0800 [DEBUG] [org.gradle.launcher.daemon.server.exec.LogToClient] About to start relaying all logs to the client via the connection.
+2026-09-30T15:44:30.459+0800 [INFO] [org.gradle.launcher.daemon.server.exec.LogToClient] The client will now receive all logging from the daemon (pid: 1893487). The daemon log file: /root/.gradle/daemon/9.3.1/daemon-1893487.out.log
+2026-09-30T15:44:30.465+0800 [DEBUG] [org.gradle.launcher.daemon.server.exec.RequestStopIfSingleUsedDaemon] Requesting daemon stop after processing Build{id=cb56a1ba-dba7-4a4a-84a2-e8f076d24452, currentDir=/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api}
+2026-09-30T15:44:30.465+0800 [LIFECYCLE] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Daemon will be stopped at the end of the build 
+2026-09-30T15:44:30.465+0800 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Stop as soon as idle requested. The daemon is busy
+2026-09-30T15:44:30.467+0800 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon stop has been requested. Sleeping until state changes.
+2026-09-30T15:44:30.487+0800 [DEBUG] [org.gradle.launcher.daemon.server.exec.ExecuteBuild] The daemon has started executing the build.
+2026-09-30T15:44:30.487+0800 [DEBUG] [org.gradle.launcher.daemon.server.exec.ExecuteBuild] Executing build with daemon context: DefaultDaemonContext[uid=0faccfae-377e-4f6b-b7d5-11ba5663f9ce,javaHome=/home/isp/apps/jdk21,javaVersion=21,javaVendor=Oracle Corporation,daemonRegistryDir=/root/.gradle/daemon,pid=1893487,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=256m,-XX:ActiveProcessorCount=2,-XX:+UseSerialGC,-Xmx384m,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+warning: unknown enum constant JdbcType.UNDEFINED
+  reason: class file for org.apache.ibatis.type.JdbcType not found
+5 warnings
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.

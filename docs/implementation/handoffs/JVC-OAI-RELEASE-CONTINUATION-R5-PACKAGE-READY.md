@@ -1,0 +1,26 @@
+# Voice release: API package closed — 2026-09-06 (Asia/Shanghai)
+
+**NOT DEPLOYED; no production voice activation, runtime control, Nginx reload, DB or live credential operation.** Sole execution ledger: `TASKS.yaml#runtime_ledger_json`. R4 offline acceptances remain valid; this note adds the missing deployment-package bridge only.
+
+## Newly accepted API deployment package
+
+- Task `JVC-OAI-API-PACKAGE-R6`: accepted. Source/tool code unchanged; reuse original accepted API `34b67fed96061bf9c3132106ca219fc6f5f6ba05` / tree `fb42c46c1f63299a37b44d7e55c6a303ddf016f1` and original217605642-byte JAR SHA `fa808e633e985551e66168b1d70c488d8cf01361662f630e9f48ccab265038d5`. No Gradle or rebuild invocation.
+- Final tool commit `c40805e6d6e9294574beef656402cb0ebbaf4437`, tree `2225ea172ad6edc1af26bd1dc6beb8a8d75063bd`; HOST tool digest `de0582cd9c7ffbf8d677f715299863378203ec188f4f21270f49a545959e23aa`; HOST input digest `b60c7a77e132f4b6bc463d6b22673893d723725c463869854db58549ae82c2f3`. Both API and tool before/after clean identities matched.
+- Exact package root: `/home/isp/wsps/cyf/deliverables/releases/jvc-oai-host-adapt-r1`. JAR: `api/cyf-api-34b67fed96061bf9c3132106ca219fc6f5f6ba05-fb42c46c1f63299a37b44d7e55c6a303ddf016f1.jar`. Native14-field metadata is same JAR path plus `.json`, SHA `43af337f3a86baeb02f68df4522ec4cbb9e711dfce823d330074a6380a61abff`. Immutable0444/nlink1 files and SHA sidecars, private0700 directories, exclusive publication and fsync.
+- External provenance bridge: `cache-republication.json` at package root, SHA `5b1b94047f7e6ef8fd66124f9cc99a234638c6883b12301ee44b1c9d0c3c68ce`, with separate immutable SHA sidecar. Explicit `CACHE_REPUBLICATION`, `buildPerformed=false`, `deployment=NOT_PERFORMED`. Original build cache `4e635e021c3431279fb3e501fa0477e5b8d5c6dae2d31cd6b68dd3f4c4835ef4` and original sealed build log/metadata/source/JAR bound. Release tool digest means final packaging/release tooling, NOT original builder.
+- Unchanged native `verify-release.sh` executed ONCE, rc0, 48.971s; ended `2026-09-06T01:37:45.363806+00:00` (09:37:45 Asia/Shanghai). Original collector session4679 naturally rc0. No second invocation.
+- Frozen collector `/tmp/jvc-oai-api-package-r6.dqLF4Muu/collector.py`, SHA `b8fe6df040c4d696886b23d8c08e050fcfde0b9b2eff05a4960e785b1027718a`. Main independent source/safety review accepted before execution.
+- Evidence `/tmp/jvc-oai-api-package-r6.dqLF4Muu/execution/result.json`, SHA `05560a71eafa31d6cfb99a1ba3b7871a625bf85d756c55b90a199b1e078bbc46`; stdout SHA `1e6a7c08409cd64a07036d4c5324fa51606d86b8270dba6ecf2d16209482f9a2`; stderr empty. Full argv/natural rc/identities and log digests recorded.
+- Main independent artifact/provenance acceptance `/tmp/jvc-oai-main-package-closeout-sz7_x01l/acceptance.json`, SHA `79eee3533557b376360bf105ff7424ede87f342815125ea27c92a4d300f241f2`. Accepted package cache `3b27057ca7a837f7890ad5f17485de33b1c4b55ec3e83958b84167d5419da7c7`, actualR6 tree / selector `accepted-cache-republication + native verify-release.sh once (no build)` / fixture digest `231b83727605ae11dd48b187e1adbb3a70e76a140b9d5f4c2d8c588b227b5106`.
+
+## Boundaries and remaining gates
+
+Native verify/deploy scripts validate self-consistent artifact metadata, NOT this external provenance bridge. Every future production controller GO must independently pin/check the bridge and accepted original build cache. Package acceptance is not runtime or gateway capability proof.
+
+Fresh remote checks at closeout: API develop34b67fed and Web develop101ac4c6a2b49d04771dedef52af893c72f98c09 unchanged. Latest observed accepted Web archive remains2ffaf4b4 (full identity in R3); other screen/reader follow-up tasks are active, so recheck remote/ledger before eventual Web promotion. No source pushes or deployment were performed.
+
+API recovery ownership remains `OPS-API-RECOVERY-20260905-1932`, Peirce `01a07194-ec7d-72a3-b848-468578832164`, implementing. No handoff received; no health retry or foreign process/lock/evidence access. **Next action: original recovery main-controller reports owned START natural terminal/current healthy API baseline and explicitly hands off lifecycle ownership.** Then flags-OFF/local-consumer proof/exact installed-candidate identities/independent stage1 GO; stage2 scoped perimeter and real authenticated STT/TTS activation proof; enabled-Web LAST after fresh final guard, followed by public/voice/device checks. No existing Key needs to be supplied again at this stage.
+
+## Procedural provenance (not product failures)
+
+See `JVC-OAI-API-PACKAGE-R6-CONTRACT.md` for attributed preparation cache-schema/registration/capacity errors, unavailable Mini model route and Terra fallback, and main closeout observer correction. Actual publication and native verification each ran once successfully. The initial main reader already checked JAR/native metadata, then compared full stat including atime on first receipt read; corrected small-file-only closeout excluded atime, checked stable identities+all digests, and did not reread the large JAR or rerun the native verifier. No artifact-mutation claim is supported. Historical Web full-entry mutation UNKNOWN remains unchanged; this package acceptance is neither newtreeall nor production PASS.

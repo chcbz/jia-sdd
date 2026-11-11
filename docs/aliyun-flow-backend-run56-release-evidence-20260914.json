@@ -1,0 +1,83 @@
+{
+  "generatedAt": "2026-09-14T02:57:46.317831+00:00",
+  "pipeline": 5260799,
+  "pipelineName": "cyf-api-release",
+  "run": 56,
+  "status": "SUCCESS",
+  "source": {
+    "repo": "https://gitee.com/chcbz/jia.git",
+    "branch": "develop",
+    "commit": "9fdd2e6a3a8d6e4f53ab2d26be7af1122eeca3ce",
+    "tree": "fc048e58c97b7e68bda9b295b5f3e0d10f2f0cdb"
+  },
+  "ci": {
+    "job": 514949971,
+    "status": "SUCCESS"
+  },
+  "deploy": {
+    "job": 514949972,
+    "status": "SUCCESS",
+    "order": 69550293,
+    "statusDetail": "Success",
+    "batch": "1/1",
+    "hostGroupId": 28833,
+    "machineStatus": "Success",
+    "clientStatus": "healthy"
+  },
+  "artifact": {
+    "jarSha256": "da623f9da64cf266a11a2c8008a7283cc4b247079f6c46c7f3cc6172987cce5f",
+    "receiptSha256": "67d03f8041495618120891864dc301cab5f0c53a6a2af1c82df945870e20ae87",
+    "ticketSha256": "40673dac60b3734bc1ca04563b95c9e04e5f04b23056c3ad3d6f918d3231748d",
+    "installedSourceCommit": "9fdd2e6a3a8d6e4f53ab2d26be7af1122eeca3ce",
+    "installedSourceTree": "fc048e58c97b7e68bda9b295b5f3e0d10f2f0cdb"
+  },
+  "online": {
+    "pid": 4140495,
+    "healthHttp": 200,
+    "healthStatus": "UP",
+    "checkedAt": "2026-09-14T02:57:46.317831+00:00"
+  },
+  "startup": {
+    "springStartedSeconds": 384.906,
+    "processAtStartedSeconds": 400.034,
+    "applicationRunSeconds": 418.038,
+    "keyMeasuredSeconds": {
+      "config-classes.parse.self": 56.994,
+      "agentSchemaInitializer": 32.027,
+      "redisson.self": 17.973,
+      "archive.manifest-load": 15.815,
+      "archive.schema": 10.99
+    },
+    "chatClientAtStartup": false,
+    "memoryRepositoryAtStartup": false,
+    "previousRuns": {
+      "run53": {
+        "springStartedSeconds": 437.961,
+        "applicationRunSeconds": 488.013
+      },
+      "run54": {
+        "springStartedSeconds": 360.022,
+        "applicationRunSeconds": 388.129
+      },
+      "run55": {
+        "springStartedSeconds": 369.133,
+        "applicationRunSeconds": 391.866
+      }
+    },
+    "conclusion": [
+      "Run56 succeeded and deployed healthy; chatClient and memory repository beans were no longer created during startup.",
+      "Measured startup did not improve and was slower than Run54 (384.9s vs 360.0s) because remaining CPU-bound steps (config parse, agent schema, redisson, archive manifest/schema) varied with CPU-credit availability, not because of the lazy changes.",
+      "Remaining software levers with real size are config-classes.parse (~50-57s self) and agentSchemaInitializer (~27-34s self); these are CPU-heavy metadata/DDL paths that shrink with more CPU, and further safe software deferral is limited."
+    ]
+  },
+  "constraints": [
+    "No local Gradle build; Flow-only.",
+    "No new pipeline/Reviewer/gate.",
+    "Hardware spec handled by user."
+  ],
+  "evidencePaths": {
+    "timing": "/var/tmp/cyf-startup-assembly-20260913/run56-timing-summary.json",
+    "startupLog": "/var/log/cyf-api/startlog_20260914_104719.A8Vz1r.log",
+    "startupLogSha256": "df18b78d159d6ade460b26666f88dbbf7d5a052025ce04f65b04a9f41f4c6082"
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "at": "2026-10-16T20:44:46.064393+08:00",
+  "task": "WORKSPACE-MANAGEMENT-AUDIT-20261016",
+  "status": "ACCEPTANCE_EXECUTED_WITH_FINDINGS_NOT_FULL_PASS",
+  "source": {
+    "at": "2026-10-16T20:41:31.483944+08:00",
+    "health": {
+      "groups": [
+        "liveness",
+        "readiness"
+      ],
+      "apiVersion": "V3",
+      "status": {
+        "code": "UP",
+        "description": ""
+      },
+      "components": null
+    },
+    "apiJarSha256": "9d540108c607c22320544516c55df232f6a1be34ec8887e2d22cc6ea5a709ef4",
+    "apiIdentity": {
+      "buildId": "cyf-workspace-release-20261016",
+      "commit": "58b4b5f408257c6d5103d915e13c7927c1571e20",
+      "tree": "3e60bd5858735790b7886ef00a9a94614816fb75",
+      "version": "1.16.7"
+    },
+    "web": {
+      "run_id": "218",
+      "commit": "3a6b2ba7398459cc8e82e0360e201f451d946edc",
+      "release_version": "1.16.3",
+      "status": "online_verified",
+      "artifact_sha256": "43d1bd763582499e6745ba819608d93c5e31270bd60dcfa6497ca7ed8a0e5a31"
+    }
+  },
+  "passes": [
+    {
+      "id": "normal-login",
+      "status": "PASS",
+      "scope": "Existing JYT_TEST account; real OAuth/PKCE, new owned browser; no auth bypass"
+    },
+    {
+      "id": "exact-live-artifact",
+      "status": "PASS",
+      "scope": "Loaded JS hashes match Flow218 release manifest; API JAR unchanged and UP"
+    },
+    {
+      "id": "upload",
+      "status": "PASS",
+      "scope": "UI POST201; committed operation and own file readback"
+    },
+    {
+      "id": "search",
+      "status": "PASS",
+      "scope": "Desktop positive search and mobile positive/empty query"
+    },
+    {
+      "id": "preview",
+      "status": "PASS",
+      "scope": "Real text preview, fixed versions1/2/3"
+    },
+    {
+      "id": "download",
+      "status": "PASS",
+      "scope": "Actual browser downloaded v1/v2 bytes equal owned fixtures"
+    },
+    {
+      "id": "rename",
+      "status": "PASS",
+      "scope": "UI rename persisted"
+    },
+    {
+      "id": "append-and-history",
+      "status": "PASS",
+      "scope": "UI appends plus historical v1 selection after restore; no >50 pagination claim"
+    },
+    {
+      "id": "recycle-and-restore",
+      "status": "PASS",
+      "scope": "UI recycle, trash listing, explicit no permanent deletion notice, UI restore"
+    },
+    {
+      "id": "exact-usage",
+      "status": "PASS",
+      "scope": "UI 0/0/0 then task reference1/0/0; direct canonical API links to own task462; reference remains ACTIVE while file TRASHED; detach returns count0"
+    },
+    {
+      "id": "stale-confirmation",
+      "status": "PASS",
+      "scope": "Real external API rename on owned fixture; old UI confirm412; old confirmation dismissed and explicit usage reread; file remains ACTIVE"
+    },
+    {
+      "id": "same-key-original-write",
+      "status": "PASS",
+      "scope": "Owned-browser response-loss injection after real PATCH200; UI retry same key/If-Match/business data, per-request new requestId, metadataRevision unchanged despite edited input; old error presentation fails separately"
+    },
+    {
+      "id": "saved-detail-failed",
+      "status": "PASS",
+      "scope": "Real append201 followed by owned-browser injected GET response loss; UI says saved, re-read details, no write retry; reread succeeds"
+    },
+    {
+      "id": "responsive-controls",
+      "status": "PASS",
+      "scope": "Desktop/mobile/landscape confirmation screenshots; actual mobile search/open-preview controls; no physical-device claim"
+    },
+    {
+      "id": "response-correlation",
+      "status": "PASS",
+      "scope": "All captured own-file JSON raw fetch responses have matching single header/body requestId, including412"
+    }
+  ],
+  "findings": [
+    {
+      "id": "A01",
+      "severity": "medium",
+      "type": "functional UI state bug",
+      "status": "REPRODUCED",
+      "scope": "workspace release follow-up",
+      "summary": "Successful original-write retry leaves previous error visible next to success notice",
+      "proof": [
+        "same-key-retry.json",
+        "retry-recovered.png",
+        "trash-confirm-mobile.png"
+      ],
+      "source": [
+        "web/src/composables/usePersonalWorkspace.js:323-328",
+        "web/src/composables/usePersonalWorkspace.js:407-413"
+      ],
+      "cause": "retryWrite bypasses the normal mutate error reset; committed callback changes notice/state but does not clear the previous owned error",
+      "fixPlan": "Clear only the active original operation error at retry lifecycle boundaries under the same view/identity ownership; preserve failures and unrelated concurrent errors. Add success-after-unknown, repeated-failure, and view/identity-change tests. Audit analogous link adapters without claiming untested reproductions."
+    },
+    {
+      "id": "A02",
+      "severity": "medium",
+      "type": "existing cross-end contract bug discovered during fixture cleanup",
+      "status": "REPRODUCED",
+      "scope": "outside workspace code changes; no unapproved implementation expansion",
+      "summary": "UI cancellation of new unassigned/unfunded task462 returns400",
+      "proof": [
+        "task-cancel-response.json",
+        "task-cancel-failed.png",
+        "task-cancel-api-cleanup.json",
+        "task-cleanup-readback.json"
+      ],
+      "source": [
+        "web/src/composables/juyiting/useHallOrdinaryCancellation.js:3-9",
+        "web/src/composables/juyiting/useHallOrdinaryCancellation.js:77-81",
+        "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentTaskCancellationController.java:53-68"
+      ],
+      "cause": "Frontend converts version to Number and expects numeric receipt; backend requires decimal string input and returns string taskVersion. Original frontend file predates this workspace patch. Canonical string API request succeeded on same task.",
+      "fixPlan": "Use canonical nonnegative decimal string version and BigInt comparison in ordinary cancellation request/receipt/readback; update actual HTTP/browser tests including0 and large values; do not loosen backend or add dual wire compatibility."
+    }
+  ],
+  "productionNotRun": [
+    ">50 versions pagination; isolated prior verification only",
+    "Forced concurrent claim uniqueness race against production; prior real isolated MySQL tests only",
+    "Positive conversation reference/input grant creation or execution-state scenarios; no paid Agent/Provider calls",
+    "Second-account production isolation and task/conversation relation retry UI; earlier scoped test evidence not relabeled production"
+  ],
+  "diagnosticBoundaries": [
+    "Only owned-browser fetch response loss was injected, never production server faults",
+    "Stale confirmation used real concurrent canonical API edit, not fabricated412",
+    "Task linkage and unlink were real canonical API calls; counts/recycle/restore were UI clicks",
+    "Driver old read-query allowlist blocked roster/recommend and an automatic draft-save attempt; these Failed to fetch appearances are harness restrictions, not product bugs",
+    "Initial driver wait returned serialized DOM{} and overbroad whole-envelope retry equality were corrected; per-request requestId must change, business data must not",
+    "Original cancellation UI400 preserved; successful API cleanup does not make UI cancellation pass"
+  ],
+  "fixtureFinal": {
+    "fileId": "pws_f57bdf6475a440f18202a79189257b43",
+    "fileState": "ACTIVE",
+    "latestVersion": "3",
+    "taskId": "462",
+    "taskState": "cancelled",
+    "taskRelation": "DETACHED",
+    "executionOrProviderInvoked": false,
+    "deletePolicy": "No permanent delete; labeled fixture retained for follow-up",
+    "cleanupUiFailed": true,
+    "cleanupCanonicalApiSucceeded": true
+  },
+  "actualBrowserBundleChecks": 26,
+  "jsonCorrelationChecks": 36,
+  "businessWrites": 17,
+  "cleanup": {
+    "ownBrowserAndProfileRemoved": true,
+    "serviceOrOtherProcessTouched": false,
+    "newBuildOrDeployment": false,
+    "newKernelOomSince20261016T202000": false
+  },
+  "rawEvidence": "/var/tmp/cyf-workspace-online-acceptance-20261016"
+}

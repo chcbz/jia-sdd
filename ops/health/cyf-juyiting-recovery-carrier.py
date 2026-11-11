@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 CANONICAL = "/usr/local/sbin/cyf-api-kit"
-CANONICAL_SHA256 = "63a7ba180603d021666af77e9535b93bdbdcedf0ce799d0b5e09e7718e8d0bcd"
+CANONICAL_SHA256 = "03432bc13b93f58d847e48d032591ee8cf43e0392fbc8b1e247f6f5148eec975"
 MEMORY_CGROUP_ROOT = "/sys/fs/cgroup/memory"
 PROC_SELF_CGROUP = "/proc/self/cgroup"
 MAX_CANONICAL_BYTES = 1024 * 1024
@@ -151,6 +151,19 @@ def run(action, incident_id, attempt):
 
 def main(argv=None):
     values = list(sys.argv[1:] if argv is None else argv)
+    # A read-only preflight exposes stale trust pins before reserving an
+    # automatic recovery attempt. It never creates a scope or starts Java.
+    if values == ["--check"]:
+        try:
+            validate_canonical()
+        except CarrierError as exc:
+            sys.stderr.write("CYF_HEALTHMON_CHECK_ERROR=%s\n" % str(exc))
+            return 125
+        except OSError:
+            sys.stderr.write("CYF_HEALTHMON_CHECK_ERROR=canonical_unavailable\n")
+            return 125
+        emit("CYF_HEALTHMON_CANONICAL=OK")
+        return 0
     if len(values) != 3 or not values[2].isdigit():
         return 125
     try:

@@ -1,0 +1,53 @@
+
+
+  useHallData bounty status counts
+    ✔ keeps status counts based on the full task set after switching filters
+
+  useHallData operable roster
+    ✔ loads an unfiltered current-user operable roster separately from map and visible roster state
+    ✔ keeps an explicitly operable offline roster selection when the shared map refresh omits it
+    ✔ denies persona runtimes absent from catalog, preserves non-persona runtimes, and refreshes filtered and operable projections together
+    ✔ replaces a formerly operable selection with its fresh map object when a refresh revokes operation
+    ✔ surfaces an application-level unbind rejection instead of showing a success toast path
+    ✔ does not refresh after the HTTP boundary rejects an application error
+    ✔ reports an unbind no-op truthfully and refreshes every roster projection after DELETE
+
+  useHallData deferred Juyi Hall sources
+    ✔ loads map independently before optional roster, catalog, tasks, and counts
+    ✔ keeps a successful task list when independent status-count loading fails
+    ✔ records a failed roster independently without clearing the map source state
+
+  useHallData bounty title reload
+    ✔ keeps the persisted bounty title returned by task search after a refresh
+
+  Hall roster request wire types
+    ✔ sends bounded page integers, not int64 decimal strings
+
+  Hall assignment uses the same authoritative projection as the task view
+    ✔ never assigns a raw-open task with UNKNOWN or contradictory server phase
+
+  selected matter leaving the filtered page after acceptance
+    ✔ refreshes the original selected ID once although the completed task is outside the current filter
+    ✔ does not replace a different selected matter with a late exact read
+    ✔ rejects a stale root version and preserves the original matter with a visible read error
+    ✔ ignores an old-account read after identity changes
+
+  D3.1 assigned list rows versus authoritative detail
+    ✔ does not replace assignedTarget with a thin search row on refresh
+
+  useHallData actual assignee filter
+    ✔ sends exact Agent ID and keyword to page and full counts, never ability or client-side page filtering
+    ✔ keeps same-name IDs distinct and actual external assignees across phase changes, resets at identity boundary
+    ✔ ignores page/count responses from the previous assignee selection
+
+  shared Hall task presentation and authoritative phase counts
+    ✔ shows four primary stages and retains root terminal reasons without queue or question states
+    ✔ never creates acceptance capability from a raw label, missing batch, stale version, or pending operation
+    ✔ preserves count precision, validates totals, and never accepts raw-only or numeric wire counts
+    ✔ keeps the active task when it leaves the first page, and when refreshing the list fails
+    ✔ fences out-of-order filters, identity resets, counts and teardown without losing current account scope
+    ✔ rejects stale assignee recommendations after a newer selection, identity change, or unmount
+
+
+  28 passing (60ms)
+

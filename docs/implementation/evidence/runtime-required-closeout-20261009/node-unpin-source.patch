@@ -1,0 +1,333 @@
+diff --git a/conf/codex-ws-agent/package-lock.json b/conf/codex-ws-agent/package-lock.json
+index a2bb6ce..0c8d9c5 100644
+--- a/conf/codex-ws-agent/package-lock.json
++++ b/conf/codex-ws-agent/package-lock.json
+@@ -10,9 +10,6 @@
+       "dependencies": {
+         "ws": "^8.21.1",
+         "yauzl": "^3.4.0"
+-      },
+-      "engines": {
+-        "node": ">=20"
+       }
+     },
+     "node_modules/pend": {
+diff --git a/conf/codex-ws-agent/package.json b/conf/codex-ws-agent/package.json
+index 983b493..94cdf41 100644
+--- a/conf/codex-ws-agent/package.json
++++ b/conf/codex-ws-agent/package.json
+@@ -6,9 +6,6 @@
+   "scripts": {
+     "test": "node --test"
+   },
+-  "engines": {
+-    "node": ">=20"
+-  },
+   "dependencies": {
+     "ws": "^8.21.1",
+     "yauzl": "^3.4.0"
+diff --git a/conf/cyf-agent-runtime-v1/README.md b/conf/cyf-agent-runtime-v1/README.md
+index 89f510c..be1c221 100644
+--- a/conf/cyf-agent-runtime-v1/README.md
++++ b/conf/cyf-agent-runtime-v1/README.md
+@@ -8,7 +8,7 @@ retired; do not run the old service with the new ACK format.
+ ## Artifact and configuration
+ 
+ `install.sh --target ABSOLUTE_NEW_DIRECTORY` prepares a new artifact containing
+-`runtime/`, `codex-ws-agent/` and pinned `node/bin/node` (20.20.2), npm lock graph
++`runtime/`, `codex-ws-agent/` and supplied `node/bin/node`, npm lock graph
+ and release-local Python delivery tools. It neither enables services nor adopts,
+ rewrites, enrolls or deletes existing Agent state. Python still needs a compatible
+ target ABI/stdlib; mocked installer tests do not prove clean-target installation.
+@@ -24,9 +24,16 @@ unchanged; these six pins are not a full transitive dependency lock.
+ `python-docx==0.8.11` remains a permitted pure-Python source distribution; do
+ not add blanket binary-only installation, borrow host packages or install host
+ JPEG/compiler dependencies to bypass the private artifact checks. The existing
+-private `pip<22` bootstrap, Node pin and installer are unchanged. No compatibility
++private `pip<22` bootstrap and Python dependency selection are unchanged. No compatibility
+ PASS, interpreter upgrade or production activation is implied by this source fix.
+ 
++As of 2026-10-09, Node has no project version allowlist or minimum-version gate.
++The installer records the packaged interpreter version in `runtime/node-version.txt`
++and install/validation logs; the existing acceptance receipt also records actual
++Node version and binary SHA-256. Release records use these measured values.
++Real execution/import/dependency failures still fail the build; this does not
++claim arbitrary Node versions work or change third-party dependency requirements.
++
+ Configuration lives **outside** the artifact. A host config has exactly:
+ 
+ ```json
+@@ -216,7 +223,7 @@ upgrade. Other component mappings and full-profile order are preserved, with onl
+ the retired Agent component replaced. `codex-ws-agent`/`codex` are rejected before
+ any component installation, even in a mixed argument list. `shell/sh_list.txt`
+ lists only the current Runtime installer. Explicit instance, prepared canonical
+-parent and Node 20.20.2 prerequisites still apply; no identity is inferred.
++parent and executable Node prerequisites still apply; no identity is inferred.
+ 
+ The old launcher/installer stubs and API-key env/INI templates are deleted,
+ along with the dual-mode candidate checker, workspace migration pre-check and
+diff --git a/conf/cyf-agent-runtime-v1/install.sh b/conf/cyf-agent-runtime-v1/install.sh
+index d9f2e9f..f22c690 100755
+--- a/conf/cyf-agent-runtime-v1/install.sh
++++ b/conf/cyf-agent-runtime-v1/install.sh
+@@ -1,9 +1,9 @@
+ #!/bin/bash
+-# Single artifact: pinned Node, Runtime, mature engine, locked JS deps and Python tools.
++# Single artifact: supplied Node, Runtime, mature engine, locked JS deps and Python tools.
+ # No activation, state adoption, enrollment, service control or legacy .env copy.
+ set -euo pipefail
+ usage() {
+-    echo 'usage: install.sh --target ABSOLUTE_NEW_DIRECTORY [--node NODE20] [--npm NPM_CLI] [--python PYTHON3] [--engine-root ENGINE_SOURCE]' >&2
++    echo 'usage: install.sh --target ABSOLUTE_NEW_DIRECTORY [--node NODE] [--npm NPM_CLI] [--python PYTHON3] [--engine-root ENGINE_SOURCE]' >&2
+     exit 2
+ }
+ SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+@@ -34,13 +34,16 @@ NODE_BIN="$(resolve_bin "$NODE_BIN")"
+ NPM_CLI="$(resolve_bin "$NPM_CLI")"
+ PYTHON_BIN="$(resolve_bin "$PYTHON_BIN")"
+ [ -x "$NODE_BIN" ] && [ -f "$NPM_CLI" ] && [ -x "$PYTHON_BIN" ] || { echo 'Node/npm/Python toolchain unavailable' >&2; exit 1; }
+-[ "$("$NODE_BIN" -p 'process.versions.node')" = '20.20.2' ] || { echo 'Runtime requires pinned Node 20.20.2' >&2; exit 1; }
++NODE_VERSION="$("$NODE_BIN" -p 'process.versions.node')"
++printf 'Runtime Node version: %s\n' "$NODE_VERSION"
+ STAGE="$(mktemp -d "$PARENT/.cyf-agent-runtime.stage.XXXXXX")"
+ # STAGE is exclusively created above. Never delete a pre-existing target.
+ cleanup() { rm -rf -- "$STAGE"; }
+ trap cleanup EXIT
+ install -d -m 0755 "$STAGE/runtime/lib" "$STAGE/runtime/systemd" "$STAGE/node/bin"
+ install -m 0755 "$(readlink -f "$NODE_BIN")" "$STAGE/node/bin/node"
++# Record the actual packaged interpreter; no version allowlist or minimum gate.
++"$STAGE/node/bin/node" -p 'process.versions.node' > "$STAGE/runtime/node-version.txt"
+ for file in agent-runtime.mjs install.sh validate.sh; do
+     install -m 0755 "$SOURCE_DIR/$file" "$STAGE/runtime/$file"
+ done
+diff --git a/conf/cyf-agent-runtime-v1/package.json b/conf/cyf-agent-runtime-v1/package.json
+index ac55080..6fa9eac 100644
+--- a/conf/cyf-agent-runtime-v1/package.json
++++ b/conf/cyf-agent-runtime-v1/package.json
+@@ -4,7 +4,6 @@
+   "private": true,
+   "description": "Unified multi-Agent Runtime reusing codex-ws-agent",
+   "type": "module",
+-  "engines": { "node": "=20.20.2" },
+   "scripts": {
+     "test": "node --test",
+     "validate": "node agent-runtime.mjs validate"
+diff --git a/conf/cyf-agent-runtime-v1/test/clean-target-install.acceptance.mjs b/conf/cyf-agent-runtime-v1/test/clean-target-install.acceptance.mjs
+index e85ba63..47f5420 100644
+--- a/conf/cyf-agent-runtime-v1/test/clean-target-install.acceptance.mjs
++++ b/conf/cyf-agent-runtime-v1/test/clean-target-install.acceptance.mjs
+@@ -304,7 +304,7 @@ import { pathToFileURL } from 'node:url';
+ import { resolve } from 'node:path';
+ const root = process.argv[1]; const engine = resolve(root, 'codex-ws-agent/agent-client.mjs');
+ assert.equal(realpathSync(process.execPath), resolve(root, 'node/bin/node'));
+-assert.equal(process.versions.node, '20.20.2');
++assert.equal(readFileSync(resolve(root, 'runtime/node-version.txt'), 'utf8').trim(), process.versions.node);
+ const module = await import(pathToFileURL(engine));
+ assert.equal(typeof module.createRuntimeExecutionHost, 'function');
+ const require = createRequire(engine); const dependencies = {};
+@@ -355,7 +355,8 @@ async function toolFacts(input, receipt) {
+     if (sha256 !== supplied.sha256) throw fail('INPUT_TOOL_DIGEST_MISMATCH');
+     receipt.toolchain[key] = { path: supplied.path, realPath: path, sha256, origin: origin(supplied.origin) };
+   }
+-  if (await realpath(process.execPath) !== receipt.toolchain.node.realPath || process.versions.node !== '20.20.2') throw fail('HARNESS_MUST_USE_SUPPLIED_NODE_20_20_2');
++  if (await realpath(process.execPath) !== receipt.toolchain.node.realPath) throw fail('HARNESS_MUST_USE_SUPPLIED_NODE');
++  receipt.toolchain.node.version = process.versions.node;
+   if (basename(receipt.toolchain.npm.realPath) !== 'npm-cli.js') throw fail('INPUT_MUST_BE_REAL_NPM_CLI');
+   const npmPackage = join(dirname(dirname(receipt.toolchain.npm.realPath)), 'package.json');
+   const npm = JSON.parse(await readFile(npmPackage, 'utf8'));
+diff --git a/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs b/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs
+index b15ba52..338f41c 100644
+--- a/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs
++++ b/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs
+@@ -1,7 +1,7 @@
+ // Offline source-entry acceptance; no installed services, package install or Provider calls.
+ import assert from 'node:assert/strict';
+ import test from 'node:test';
+-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
++import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { resolve } from 'node:path';
+ import { spawnSync } from 'node:child_process';
+@@ -20,12 +20,12 @@ function fixture(t) {
+   // No actual common.sh or package/service helper can be invoked by these tests.
+   copyFileSync(resolve(repo, 'install.sh'), resolve(root, 'install.sh'));
+   copyFileSync(resolve(repo, 'shell/cyf_agent_runtime_v1_install.sh'), resolve(root, 'shell/cyf_agent_runtime_v1_install.sh'));
+-  copyFileSync(resolve(repo, 'conf/cyf-agent-runtime-v1/install.sh'), resolve(root, 'conf/cyf-agent-runtime-v1/install.sh'));
++  cpSync(resolve(repo, 'conf/cyf-agent-runtime-v1'), resolve(root, 'conf/cyf-agent-runtime-v1'), { recursive: true });
+   chmodSync(resolve(root, 'conf/cyf-agent-runtime-v1/install.sh'), 0o755);
+   writeFileSync(resolve(root, 'shell/common.sh'), 'check_root() { :; }\ndetect_os() { :; }\nshow_os_info() { :; }\n');
+   writeFileSync(resolve(root, 'shell/nginx_install.sh'), `#!/bin/bash\nprintf 'called\\n' > '${calls}'\nexit 0\n`);
+   const node = resolve(root, 'bin/node'); const npm = resolve(root, 'bin/npm'); const python = resolve(root, 'bin/python');
+-  writeFileSync(node, '#!/bin/bash\nprintf "99.0.0\\n"\n');
++  writeFileSync(node, '#!/bin/bash\nif [ "$1" = "-p" ]; then printf "99.0.0\\n"; else echo "fixture Node execution failure" >&2; exit 37; fi\n');
+   for (const path of [npm, python]) writeFileSync(path, '#!/bin/bash\nexit 37\n');
+   for (const path of [node, npm, python]) chmodSync(path, 0o755);
+   const env = { PATH: '/usr/bin:/bin', HOME: resolve(root, 'home'), LANG: 'C.UTF-8',
+@@ -62,12 +62,13 @@ test('legacy dispatcher names fail before any component call even in a mixed req
+   }
+ });
+ 
+-test('agent profile/canonical component/current alias reach the real pinned Runtime installer and propagate its rejection', t => {
++test('agent profile/canonical component/current alias reach the real Runtime installer without a version gate and propagate its rejection', t => {
+   const f = fixture(t);
+   for (const args of [['--profile', 'agent'], ['cyf-agent-runtime-v1'], ['runtime-v1']]) {
+     const result = f.run(args);
+     assert.equal(result.status, 1, `${result.stdout}\n${result.stderr}`);
+-    assert.match(result.stderr, /Runtime requires pinned Node 20\.20\.2/);
++    assert.match(result.stderr, /fixture Node execution failure/);
++    assert.match(result.stdout, /Runtime Node version: 99\.0\.0/);
+     assert.equal(existsSync(f.calls), false); assert.deepEqual(readdirSync(resolve(f.appRoot, 'cyf-agent-runtime-v1')), []);
+     assert.equal(`${result.stdout}${result.stderr}`.includes('obsolete-secret-must-not-be-used'), false);
+   }
+@@ -84,7 +85,7 @@ test('interactive Runtime rejection and unrelated component failure propagate wi
+   assert.equal(menu.stdout.includes('codex-ws-agent'), false);
+   const failed = f.run(['--select'], {}, `${selection[1]}\ny\n`);
+   assert.equal(failed.status, 1, `${failed.stdout}\n${failed.stderr}`);
+-  assert.match(failed.stderr, /Runtime requires pinned Node 20\.20\.2/);
++  assert.match(failed.stderr, /fixture Node execution failure/);
+   assert.equal(existsSync(f.calls), false);
+   assert.deepEqual(readdirSync(resolve(f.appRoot, 'cyf-agent-runtime-v1')), []);
+   writeFileSync(resolve(f.root, 'shell/nginx_install.sh'), '#!/bin/bash\nexit 17\n');
+@@ -125,3 +126,9 @@ test('no legacy unit source remains; current single-artifact units and installat
+     assert.equal(engine.includes(removed), false, removed);
+ 
+ });
++
++test('Runtime and execution-package metadata impose no project Node version gate', () => {
++  for (const path of ['conf/cyf-agent-runtime-v1/package.json', 'conf/codex-ws-agent/package.json'])
++    assert.equal(JSON.parse(text(path)).engines?.node, undefined, path);
++  assert.equal(JSON.parse(text('conf/codex-ws-agent/package-lock.json')).packages[''].engines?.node, undefined);
++});
+diff --git a/conf/cyf-agent-runtime-v1/test/runtime-host.test.mjs b/conf/cyf-agent-runtime-v1/test/runtime-host.test.mjs
+index e43d0b6..582e811 100644
+--- a/conf/cyf-agent-runtime-v1/test/runtime-host.test.mjs
++++ b/conf/cyf-agent-runtime-v1/test/runtime-host.test.mjs
+@@ -311,7 +311,7 @@ test('multi-Agent validate CLI reads config without engine effects; run fails cl
+   assert.deepEqual(await Promise.all(f.entries.map(entry => readdir(entry.stateRoot))), [[], [], []]);
+ });
+ 
+-test('installer refuses existing targets, wrong Node and unprepared parents before dependencies', async t => {
++test('installer refuses existing targets, unavailable Node and unprepared parents before dependencies', async t => {
+   const f = await fixture(t, { count: 1 });
+   const installer = resolve(repo, 'conf/cyf-agent-runtime-v1/install.sh');
+   const target = resolve(f.root, 'artifact'); await mkdir(target, { mode: 0o700 });
+@@ -319,21 +319,26 @@ test('installer refuses existing targets, wrong Node and unprepared parents befo
+   assert.throws(() => execFileSync('bash', [installer, '--target', target], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), cause => /target exists/.test(cause.stderr));
+   assert.equal(await readFile(resolve(target, 'foreign-marker'), 'utf8'), 'untouched');
+   assert.throws(() => execFileSync('bash', [installer, '--target', resolve(f.root, 'unprepared/artifact')], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), cause => /parent must exist/.test(cause.stderr));
+-  const wrongNode = resolve(f.root, 'wrong-node'); await writeFile(wrongNode, '#!/bin/sh\necho 22.0.0\n', { mode: 0o700 });
+-  assert.throws(() => execFileSync('bash', [installer, '--target', resolve(f.root, 'new-artifact'), '--node', wrongNode], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), cause => /pinned Node 20.20.2/.test(cause.stderr));
++  const wrongNode = resolve(f.root, 'missing-node');
++  assert.throws(() => execFileSync('bash', [installer, '--target', resolve(f.root, 'new-artifact'), '--node', wrongNode], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), cause => /Node\/npm\/Python toolchain unavailable/.test(cause.stderr));
+   assert.equal((await readdir(f.root)).some(name => name.startsWith('.cyf-agent-runtime.stage')), false);
+ });
+ 
+ test('dependency preparation failure never publishes or leaves its stage; does not invoke Python', async t => {
+   const f = await fixture(t, { count: 1 });
+   const installer = resolve(repo, 'conf/cyf-agent-runtime-v1/install.sh');
+-  const npm = resolve(f.root, 'fixture-npm.cjs'); await writeFile(npm, 'process.exit(31)\n', { mode: 0o700 });
++  const versionReadback = resolve(f.root, 'packaged-node-version.txt');
++  const npm = resolve(f.root, 'fixture-npm.cjs');
++  await writeFile(npm, `const fs = require('node:fs'); const path = require('node:path');
++    fs.copyFileSync(path.resolve(process.cwd(), '../runtime/node-version.txt'), ${JSON.stringify(versionReadback)});
++    process.exit(31);\n`, { mode: 0o700 });
+   const python = resolve(f.root, 'fixture-python'); const marker = resolve(f.root, 'python-was-called');
+   await writeFile(python, `#!/bin/sh\ntouch '${marker}'\nexit 32\n`, { mode: 0o700 });
+   const target = resolve(f.root, 'artifact');
+   assert.throws(() => execFileSync('bash', [installer, '--target', target, '--node', process.execPath, '--npm', npm, '--python', python], {
+     encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']
+-  }), cause => cause.status === 31);
++  }), cause => cause.status === 31 && cause.stdout.includes(`Runtime Node version: ${process.versions.node}`));
++  assert.equal((await readFile(versionReadback, 'utf8')).trim(), process.versions.node);
+   await assert.rejects(lstat(target), cause => cause.code === 'ENOENT');
+   await assert.rejects(lstat(marker), cause => cause.code === 'ENOENT');
+   assert.equal((await readdir(f.root)).some(name => name.startsWith('.cyf-agent-runtime.stage')), false);
+diff --git a/conf/cyf-agent-runtime-v1/validate.sh b/conf/cyf-agent-runtime-v1/validate.sh
+index f8b9079..669d200 100755
+--- a/conf/cyf-agent-runtime-v1/validate.sh
++++ b/conf/cyf-agent-runtime-v1/validate.sh
+@@ -16,7 +16,8 @@ done
+ [ -d "$PACKAGE_ROOT" ] && [ "$(readlink -f "$PACKAGE_ROOT")" = "$PACKAGE_ROOT" ] || { echo 'Runtime artifact root must be canonical' >&2; exit 1; }
+ NODE_BIN="$PACKAGE_ROOT/node/bin/node"
+ [ -x "$NODE_BIN" ] && [ ! -L "$NODE_BIN" ] || { echo 'Artifact-local Node is missing or unsafe' >&2; exit 1; }
+-[ "$("$NODE_BIN" -p 'process.versions.node')" = '20.20.2' ] || { echo 'Runtime requires pinned Node 20.20.2' >&2; exit 1; }
++NODE_VERSION="$("$NODE_BIN" -p 'process.versions.node')"
++printf 'Runtime Node version: %s\n' "$NODE_VERSION"
+ for file in agent-runtime.mjs install.sh validate.sh package.json runtime.env.example manifest.example.json \
+     lib/manifest.mjs lib/runtime-client.mjs lib/security.mjs lib/runtime-host.mjs lib/execution-adapter.mjs \
+     systemd/cyf-agent-runtime-v1@.service; do
+diff --git a/install.sh b/install.sh
+index 0b49dd6..b3cfa97 100644
+--- a/install.sh
++++ b/install.sh
+@@ -79,7 +79,7 @@ list_profiles() {
+     echo ""
+     
+     echo -e "${BLUE}agent${NC} - 统一多Agent Runtime 制品 (不启用服务/不迁移状态)"
+-    echo "  包含: cyf-agent-runtime-v1; 需显式 CYF_RUNTIME_V1_INSTANCE 和 Node 20.20.2"
++    echo "  包含: cyf-agent-runtime-v1; 需显式 CYF_RUNTIME_V1_INSTANCE 和可执行 Node（发布记录实际版本）"
+     echo ""
+ 
+     echo -e "${BLUE}full${NC} - 完整安装"
+diff --git a/shell/sh_list.txt b/shell/sh_list.txt
+index d6b1ee5..feb426f 100644
+--- a/shell/sh_list.txt
++++ b/shell/sh_list.txt
+@@ -21,7 +21,7 @@ maven_install.sh    ✅  Maven 3.9.6 (官方镜像)
+ node_install.sh     ✅  Node.js LTS (可选淘宝镜像)
+ python_install.sh   ✅  Python 3.12.13
+ git_install.sh      ✅  Git 2.53.0
+-cyf_agent_runtime_v1_install.sh ✅  统一多Agent Runtime 制品 (显式实例/Node 20.20.2；不启用服务或迁移状态)
++cyf_agent_runtime_v1_install.sh ✅  统一多Agent Runtime 制品 (显式实例/Node；记录实际版本；不启用服务或迁移状态)
+ 
+ #===============================================================
+ # 数据库 (全部支持多系统)
+diff --git a/skills/codex-ws-agent-install/SKILL.md b/skills/codex-ws-agent-install/SKILL.md
+index 2dc6212..3c3b26c 100644
+--- a/skills/codex-ws-agent-install/SKILL.md
++++ b/skills/codex-ws-agent-install/SKILL.md
+@@ -15,14 +15,14 @@ contract. Do not install or launch the retired engine CLI/service.
+ 
+ - Fix the authorized source commit and source/artifact evidence. This candidate is
+   not release approval; formal verification and versioned release belong to Main.
+-- Supply Node **20.20.2**, an npm CLI and compatible Python/stdlib/ABI. Do not upgrade
++- Supply an executable Node (no project version restriction), an npm CLI and compatible Python/stdlib/ABI. Do not upgrade
+   the host's generic Node as an implicit Agent installation step.
+ - Prepare a canonical artifact parent and choose a new explicit instance; existing
+   targets are rejected, never adopted. Set `CYF_RUNTIME_V1_INSTANCE`,
+   `CYF_RUNTIME_V1_NODE_BIN`, `CYF_RUNTIME_V1_NPM_CLI`, `CYF_RUNTIME_V1_PYTHON_BIN`
+   and `ISP_APPS` deliberately for the intended offline/disposable target.
+ - The direct entry stages one artifact: `runtime/`, execution library,
+-  pinned local Node, locked npm graph and Python delivery tools. It neither enrolls
++  supplied local Node (actual version recorded in `runtime/node-version.txt`), locked npm graph and Python delivery tools. It neither enrolls
+   identities nor copies old env/profiles, enables units, restarts services or
+   migrates state. Dispatcher profile `agent` selects this same artifact entry.
+ 
+diff --git a/skills/install-profile/SKILL.md b/skills/install-profile/SKILL.md
+index 215b3ca..730c071 100644
+--- a/skills/install-profile/SKILL.md
++++ b/skills/install-profile/SKILL.md
+@@ -20,7 +20,7 @@ Use this skill when the user wants a grouped install instead of a single tool sc
+ - `dev-env`: `jdk maven git node python`
+ - `db-server`: `mysql redis rabbitmq`
+ - `ci-cd`: `jdk maven git jenkins nexus`
+-- `agent`: `cyf-agent-runtime-v1` (single unified Runtime artifact; explicit instance and Node 20.20.2, no generic Node upgrade)
++- `agent`: `cyf-agent-runtime-v1` (single unified Runtime artifact; explicit instance and executable Node; record actual version, no generic Node upgrade)
+ - `full`: installs the full supported stack
+ 
+ ## Workflow
+@@ -35,12 +35,12 @@ Use this skill when the user wants a grouped install instead of a single tool sc
+ Use `./install.sh cyf-agent-runtime-v1` (alias `runtime-v1`),
+ `./install.sh --profile agent`, or `./shell/cyf_agent_runtime_v1_install.sh`.
+ Prepare a new canonical artifact target parent, set `CYF_RUNTIME_V1_INSTANCE`,
+-and supply pinned Node **20.20.2**, npm and compatible Python via the Runtime
++and supply an executable Node without a project version restriction, npm and compatible Python via the Runtime
+ installer variables. No existing target, old env/profile or credential is adopted.
+ 
+ See `conf/cyf-agent-runtime-v1/README.md` and
+ `skills/codex-ws-agent-install/SKILL.md` for explicit sealed multi-Agent config and
+-per-subject private roots. Execution is the artifact-local pinned Node plus
++per-subject private roots. Execution is the artifact-local Node (actual version in `runtime/node-version.txt`) plus
+ `runtime/agent-runtime.mjs run --config HOST_JSON`, not an old launcher alias.
+ Installation credentials remain private; derived execution sessions stay in memory
+ and never appear in URL/log/checkpoint. Enrollment, state migration, activation,

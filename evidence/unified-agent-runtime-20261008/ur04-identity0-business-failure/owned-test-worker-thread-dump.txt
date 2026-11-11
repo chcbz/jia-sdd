@@ -1,0 +1,402 @@
+818982:
+2026-10-09 01:12:50
+Full thread dump Java HotSpot(TM) 64-Bit Server VM (21.0.8+12-LTS-jvmci-23.1-b72 mixed mode, sharing):
+
+Threads class SMR info:
+_java_thread_list=0x00007f88e400e5e0, length=20, elements={
+0x00007f896c051120, 0x00007f896c0efe80, 0x00007f896c0f13e0, 0x00007f896c0f2ca0,
+0x00007f896c0f42d0, 0x00007f896c0f5860, 0x00007f896c0f73f0, 0x00007f896c0f8aa0,
+0x00007f896c1163f0, 0x00007f896c1728f0, 0x00007f896c3e8e60, 0x00007f896c3b3c50,
+0x00007f896c403730, 0x00007f896c7fc200, 0x00007f896c817360, 0x00007f896c842540,
+0x00007f896c83cee0, 0x00007f896c844bd0, 0x00007f896c845410, 0x00007f88e400d5a0
+}
+
+"Test worker" #1 [818984] prio=5 os_prio=0 cpu=2194.80ms elapsed=880.16s tid=0x00007f896c051120 nid=818984 waiting on condition  [0x00007f89722b4000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
+	- parking to wait for  <0x00000000e2b4d3c0> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:269)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(java.base@21.0.8/AbstractQueuedSynchronizer.java:1763)
+	at java.util.concurrent.LinkedBlockingQueue.poll(java.base@21.0.8/LinkedBlockingQueue.java:460)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child.receipt(Ur04E05HttpDbAcceptanceTest.java:500)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child.exchange(Ur04E05HttpDbAcceptanceTest.java:494)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Lane.nodeSnapshot(Ur04E05HttpDbAcceptanceTest.java:365)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Lane.waitNode(Ur04E05HttpDbAcceptanceTest.java:368)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest.lambda$e05UnknownStartedNeverRerunsAndSiblingRemainsReady$18(Ur04E05HttpDbAcceptanceTest.java:156)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$$Lambda/0x00007f88fc231768.run(Unknown Source)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest.safe(Ur04E05HttpDbAcceptanceTest.java:182)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest.e05UnknownStartedNeverRerunsAndSiblingRemainsReady(Ur04E05HttpDbAcceptanceTest.java:154)
+	at java.lang.invoke.LambdaForm$DMH/0x00007f88fc185800.invokeVirtual(java.base@21.0.8/LambdaForm$DMH)
+	at java.lang.invoke.LambdaForm$MH/0x00007f88fc0e0800.invoke(java.base@21.0.8/LambdaForm$MH)
+	at java.lang.invoke.Invokers$Holder.invokeExact_MT(java.base@21.0.8/Invokers$Holder)
+	at jdk.internal.reflect.DirectMethodHandleAccessor.invokeImpl(java.base@21.0.8/DirectMethodHandleAccessor.java:153)
+	at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(java.base@21.0.8/DirectMethodHandleAccessor.java:103)
+	at java.lang.reflect.Method.invoke(java.base@21.0.8/Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:701)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:502)
+	at org.junit.jupiter.engine.support.MethodReflectionUtils.invoke(MethodReflectionUtils.java:45)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:61)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:124)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:163)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:148)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor$$Lambda/0x00007f88fc13dd78.apply(Unknown Source)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:123)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall$$Lambda/0x00007f88fc181530.apply(Unknown Source)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:105)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$$Lambda/0x00007f88fc181be8.apply(Unknown Source)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:99)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:66)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:47)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:39)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:104)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:98)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invokeVoid(InterceptingExecutableInvoker.java:71)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$0(TestMethodTestDescriptor.java:219)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor$$Lambda/0x00007f88fc1810e8.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:74)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:215)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:157)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:70)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$2(NodeTestTask.java:176)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16dee8.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:74)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$1(NodeTestTask.java:166)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16dcd0.invoke(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$0(NodeTestTask.java:164)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16d8c8.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:74)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:163)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:116)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService$$Lambda/0x00007f88fc16e9b0.accept(Unknown Source)
+	at java.util.ArrayList.forEach(java.base@21.0.8/ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:42)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$2(NodeTestTask.java:180)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16dee8.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:74)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$1(NodeTestTask.java:166)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16dcd0.invoke(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$0(NodeTestTask.java:164)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16d8c8.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:74)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:163)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:116)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService$$Lambda/0x00007f88fc16e9b0.accept(Unknown Source)
+	at java.util.ArrayList.forEach(java.base@21.0.8/ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:42)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$2(NodeTestTask.java:180)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16dee8.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:74)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$1(NodeTestTask.java:166)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16dcd0.invoke(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$0(NodeTestTask.java:164)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda/0x00007f88fc16d8c8.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:74)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:163)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:116)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:36)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:52)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.executeEngine(EngineExecutionOrchestrator.java:246)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.failOrExecuteEngine(EngineExecutionOrchestrator.java:218)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:179)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:108)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:66)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator$$Lambda/0x00007f88fc14ab68.accept(Unknown Source)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:157)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:65)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:125)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:93)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:48)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$0(InterceptingLauncher.java:41)
+	at org.junit.platform.launcher.core.InterceptingLauncher$$Lambda/0x00007f88fc0f0c38.proceed(Unknown Source)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:40)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:48)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestDefinitionProcessor$CollectThenExecuteTestDefinitionConsumer.processAllTestClasses(JUnitPlatformTestDefinitionProcessor.java:172)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestDefinitionProcessor$CollectThenExecuteTestDefinitionConsumer.access$000(JUnitPlatformTestDefinitionProcessor.java:121)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestDefinitionProcessor.stop(JUnitPlatformTestDefinitionProcessor.java:114)
+	at org.gradle.api.internal.tasks.testing.SuiteTestDefinitionProcessor.stop(SuiteTestDefinitionProcessor.java:64)
+	at java.lang.invoke.LambdaForm$DMH/0x00007f88fc0e0000.invokeInterface(java.base@21.0.8/LambdaForm$DMH)
+	at java.lang.invoke.LambdaForm$MH/0x00007f88fc0e0800.invoke(java.base@21.0.8/LambdaForm$MH)
+	at java.lang.invoke.Invokers$Holder.invokeExact_MT(java.base@21.0.8/Invokers$Holder)
+	at jdk.internal.reflect.DirectMethodHandleAccessor.invokeImpl(java.base@21.0.8/DirectMethodHandleAccessor.java:153)
+	at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(java.base@21.0.8/DirectMethodHandleAccessor.java:103)
+	at java.lang.reflect.Method.invoke(java.base@21.0.8/Method.java:580)
+	at org.gradle.internal.dispatch.MethodInvocation.invokeOn(MethodInvocation.java:77)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:28)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:19)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:88)
+	at jdk.proxy1.$Proxy4.stop(jdk.proxy1/Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:195)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:126)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+
+"Reference Handler" #9 [818996] daemon prio=10 os_prio=-5 cpu=1.63ms elapsed=880.02s tid=0x00007f896c0efe80 nid=818996 waiting on condition  [0x00007f8970975000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ref.Reference.waitForReferencePendingList(java.base@21.0.8/Native Method)
+	at java.lang.ref.Reference.processPendingReferences(java.base@21.0.8/Reference.java:246)
+	at java.lang.ref.Reference$ReferenceHandler.run(java.base@21.0.8/Reference.java:208)
+
+"Finalizer" #10 [818997] daemon prio=8 os_prio=-3 cpu=0.16ms elapsed=880.01s tid=0x00007f896c0f13e0 nid=818997 in Object.wait()  [0x00007f8970874000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@21.0.8/Native Method)
+	- waiting on <0x00000000e0920378> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.Object.wait(java.base@21.0.8/Object.java:366)
+	at java.lang.Object.wait(java.base@21.0.8/Object.java:339)
+	at java.lang.ref.NativeReferenceQueue.await(java.base@21.0.8/NativeReferenceQueue.java:48)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:158)
+	at java.lang.ref.NativeReferenceQueue.remove(java.base@21.0.8/NativeReferenceQueue.java:89)
+	- locked <0x00000000e0920378> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.ref.Finalizer$FinalizerThread.run(java.base@21.0.8/Finalizer.java:173)
+
+"Signal Dispatcher" #11 [818998] daemon prio=9 os_prio=-4 cpu=0.43ms elapsed=880.01s tid=0x00007f896c0f2ca0 nid=818998 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Service Thread" #12 [818999] daemon prio=9 os_prio=0 cpu=1.71ms elapsed=880.01s tid=0x00007f896c0f42d0 nid=818999 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Monitor Deflation Thread" #13 [819000] daemon prio=9 os_prio=0 cpu=62.77ms elapsed=880.01s tid=0x00007f896c0f5860 nid=819000 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"JVMCI-native CompilerThread0" #14 [819001] daemon prio=9 os_prio=-4 cpu=3644.65ms elapsed=880.01s tid=0x00007f896c0f73f0 nid=819001 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+"C1 CompilerThread0" #15 [819002] daemon prio=9 os_prio=-4 cpu=976.66ms elapsed=880.01s tid=0x00007f896c0f8aa0 nid=819002 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+"Common-Cleaner" #16 [819003] daemon prio=8 os_prio=-3 cpu=2.68ms elapsed=879.96s tid=0x00007f896c1163f0 nid=819003 waiting on condition  [0x00007f896bf2e000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
+	- parking to wait for  <0x00000000e09205b0> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:269)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1852)
+	at java.lang.ref.ReferenceQueue.await(java.base@21.0.8/ReferenceQueue.java:71)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:143)
+	at java.lang.ref.ReferenceQueue.remove(java.base@21.0.8/ReferenceQueue.java:218)
+	at jdk.internal.ref.CleanerImpl.run(java.base@21.0.8/CleanerImpl.java:140)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+	at jdk.internal.misc.InnocuousThread.run(java.base@21.0.8/InnocuousThread.java:186)
+
+"Notification Thread" #17 [819004] daemon prio=9 os_prio=0 cpu=0.07ms elapsed=879.94s tid=0x00007f896c1728f0 nid=819004 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"/127.0.0.1:59462 to /127.0.0.1:37137 workers" #20 [819014] prio=5 os_prio=0 cpu=3.75ms elapsed=878.20s tid=0x00007f896c3e8e60 nid=819014 waiting on condition  [0x00007f8950dfc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
+	- parking to wait for  <0x00000000e17f1200> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(java.base@21.0.8/LockSupport.java:371)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@21.0.8/AbstractQueuedSynchronizer.java:519)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@21.0.8/ForkJoinPool.java:3778)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@21.0.8/ForkJoinPool.java:3723)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1712)
+	at org.gradle.internal.remote.internal.hub.queue.EndPointQueue.take(EndPointQueue.java:49)
+	at org.gradle.internal.remote.internal.hub.MessageHub$Handler.run(MessageHub.java:403)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+
+"/127.0.0.1:59462 to /127.0.0.1:37137 workers Thread 2" #21 [819017] prio=5 os_prio=0 cpu=30.85ms elapsed=878.16s tid=0x00007f896c3b3c50 nid=819017 waiting on condition  [0x00007f8950cfb000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
+	- parking to wait for  <0x00000000e17f7678> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(java.base@21.0.8/LockSupport.java:371)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@21.0.8/AbstractQueuedSynchronizer.java:519)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@21.0.8/ForkJoinPool.java:3778)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@21.0.8/ForkJoinPool.java:3723)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1712)
+	at org.gradle.internal.remote.internal.hub.queue.EndPointQueue.take(EndPointQueue.java:49)
+	at org.gradle.internal.remote.internal.hub.MessageHub$ConnectionDispatch.run(MessageHub.java:322)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+
+"/127.0.0.1:59462 to /127.0.0.1:37137 workers Thread 3" #22 [819018] prio=5 os_prio=0 cpu=13.45ms elapsed=878.16s tid=0x00007f896c403730 nid=819018 runnable  [0x00007f8950bfa000]
+   java.lang.Thread.State: RUNNABLE
+	at sun.nio.ch.EPoll.wait(java.base@21.0.8/Native Method)
+	at sun.nio.ch.EPollSelectorImpl.doSelect(java.base@21.0.8/EPollSelectorImpl.java:121)
+	at sun.nio.ch.SelectorImpl.lockAndDoSelect(java.base@21.0.8/SelectorImpl.java:130)
+	- locked <0x00000000e17f18b0> (a sun.nio.ch.Util$2)
+	- locked <0x00000000e17f16c8> (a sun.nio.ch.EPollSelectorImpl)
+	at sun.nio.ch.SelectorImpl.select(java.base@21.0.8/SelectorImpl.java:147)
+	at org.gradle.internal.remote.internal.inet.SocketConnection$SocketInputStream.read(SocketConnection.java:187)
+	at com.esotericsoftware.kryo.io.Input.fill(Input.java:146)
+	at com.esotericsoftware.kryo.io.Input.require(Input.java:178)
+	at com.esotericsoftware.kryo.io.Input.readByte(Input.java:295)
+	at org.gradle.internal.serialize.kryo.KryoBackedDecoder.readByte(KryoBackedDecoder.java:88)
+	at org.gradle.internal.remote.internal.hub.InterHubMessageSerializer$MessageReader.read(InterHubMessageSerializer.java:64)
+	at org.gradle.internal.remote.internal.hub.InterHubMessageSerializer$MessageReader.read(InterHubMessageSerializer.java:52)
+	at org.gradle.internal.remote.internal.inet.SocketConnection.receive(SocketConnection.java:83)
+	at org.gradle.internal.remote.internal.hub.MessageHub$ConnectionReceive.run(MessageHub.java:270)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+
+"process reaper (pid 824814)" #23 [819024] daemon prio=10 os_prio=-5 cpu=23.00ms elapsed=876.59s tid=0x00007f896c7fc200 nid=819024 runnable  [0x00007f8971a42000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ProcessHandleImpl.waitForProcessExit0(java.base@21.0.8/Native Method)
+	at java.lang.ProcessHandleImpl$1.run(java.base@21.0.8/ProcessHandleImpl.java:163)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+	at jdk.internal.misc.InnocuousThread.run(java.base@21.0.8/InnocuousThread.java:186)
+
+"process reaper (pid 824909)" #28 [819183] daemon prio=10 os_prio=-5 cpu=2.13ms elapsed=857.09s tid=0x00007f896c817360 nid=819183 runnable  [0x00007f897006c000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ProcessHandleImpl.waitForProcessExit0(java.base@21.0.8/Native Method)
+	at java.lang.ProcessHandleImpl$1.run(java.base@21.0.8/ProcessHandleImpl.java:163)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+	at jdk.internal.misc.InnocuousThread.run(java.base@21.0.8/InnocuousThread.java:186)
+
+"ur04-private-pipe" #57 [824815] daemon prio=5 os_prio=0 cpu=2.92ms elapsed=370.92s tid=0x00007f896c842540 nid=824815 runnable  [0x00007f8950af8000]
+   java.lang.Thread.State: RUNNABLE
+	at java.io.FileInputStream.readBytes(java.base@21.0.8/Native Method)
+	at java.io.FileInputStream.read(java.base@21.0.8/FileInputStream.java:287)
+	at java.io.BufferedInputStream.read1(java.base@21.0.8/BufferedInputStream.java:345)
+	at java.io.BufferedInputStream.implRead(java.base@21.0.8/BufferedInputStream.java:420)
+	at java.io.BufferedInputStream.read(java.base@21.0.8/BufferedInputStream.java:405)
+	- locked <0x00000000e2b39838> (a java.lang.ProcessImpl$ProcessPipeInputStream)
+	at sun.nio.cs.StreamDecoder.readBytes(java.base@21.0.8/StreamDecoder.java:350)
+	at sun.nio.cs.StreamDecoder.implRead(java.base@21.0.8/StreamDecoder.java:393)
+	at sun.nio.cs.StreamDecoder.lockedRead(java.base@21.0.8/StreamDecoder.java:217)
+	at sun.nio.cs.StreamDecoder.read(java.base@21.0.8/StreamDecoder.java:171)
+	at java.io.InputStreamReader.read(java.base@21.0.8/InputStreamReader.java:188)
+	at java.io.BufferedReader.fill(java.base@21.0.8/BufferedReader.java:160)
+	at java.io.BufferedReader.implReadLine(java.base@21.0.8/BufferedReader.java:370)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:347)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:436)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child.lambda$new$1(Ur04E05HttpDbAcceptanceTest.java:482)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child$$Lambda/0x00007f88fc20cf68.run(Unknown Source)
+	at java.util.concurrent.Executors$RunnableAdapter.call(java.base@21.0.8/Executors.java:572)
+	at java.util.concurrent.FutureTask.run(java.base@21.0.8/FutureTask.java:317)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+
+"ur04-private-pipe" #58 [824816] daemon prio=5 os_prio=0 cpu=0.16ms elapsed=370.92s tid=0x00007f896c83cee0 nid=824816 runnable  [0x00007f89509f8000]
+   java.lang.Thread.State: RUNNABLE
+	at java.io.FileInputStream.readBytes(java.base@21.0.8/Native Method)
+	at java.io.FileInputStream.read(java.base@21.0.8/FileInputStream.java:287)
+	at java.io.BufferedInputStream.read1(java.base@21.0.8/BufferedInputStream.java:345)
+	at java.io.BufferedInputStream.implRead(java.base@21.0.8/BufferedInputStream.java:420)
+	at java.io.BufferedInputStream.read(java.base@21.0.8/BufferedInputStream.java:405)
+	- locked <0x00000000e2b3b8e0> (a java.lang.ProcessImpl$ProcessPipeInputStream)
+	at sun.nio.cs.StreamDecoder.readBytes(java.base@21.0.8/StreamDecoder.java:350)
+	at sun.nio.cs.StreamDecoder.implRead(java.base@21.0.8/StreamDecoder.java:393)
+	at sun.nio.cs.StreamDecoder.lockedRead(java.base@21.0.8/StreamDecoder.java:217)
+	at sun.nio.cs.StreamDecoder.read(java.base@21.0.8/StreamDecoder.java:171)
+	at java.io.InputStreamReader.read(java.base@21.0.8/InputStreamReader.java:188)
+	at java.io.BufferedReader.fill(java.base@21.0.8/BufferedReader.java:160)
+	at java.io.BufferedReader.implReadLine(java.base@21.0.8/BufferedReader.java:370)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:347)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:436)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child.lambda$new$2(Ur04E05HttpDbAcceptanceTest.java:487)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child$$Lambda/0x00007f88fc20d180.run(Unknown Source)
+	at java.util.concurrent.Executors$RunnableAdapter.call(java.base@21.0.8/Executors.java:572)
+	at java.util.concurrent.FutureTask.run(java.base@21.0.8/FutureTask.java:317)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+
+"ur04-private-pipe" #59 [824910] daemon prio=5 os_prio=0 cpu=66.16ms elapsed=358.63s tid=0x00007f896c844bd0 nid=824910 runnable  [0x00007f89508f6000]
+   java.lang.Thread.State: RUNNABLE
+	at java.io.FileInputStream.readBytes(java.base@21.0.8/Native Method)
+	at java.io.FileInputStream.read(java.base@21.0.8/FileInputStream.java:287)
+	at java.io.BufferedInputStream.read1(java.base@21.0.8/BufferedInputStream.java:345)
+	at java.io.BufferedInputStream.implRead(java.base@21.0.8/BufferedInputStream.java:420)
+	at java.io.BufferedInputStream.read(java.base@21.0.8/BufferedInputStream.java:405)
+	- locked <0x00000000e2b490f8> (a java.lang.ProcessImpl$ProcessPipeInputStream)
+	at sun.nio.cs.StreamDecoder.readBytes(java.base@21.0.8/StreamDecoder.java:350)
+	at sun.nio.cs.StreamDecoder.implRead(java.base@21.0.8/StreamDecoder.java:393)
+	at sun.nio.cs.StreamDecoder.lockedRead(java.base@21.0.8/StreamDecoder.java:217)
+	at sun.nio.cs.StreamDecoder.read(java.base@21.0.8/StreamDecoder.java:171)
+	at java.io.InputStreamReader.read(java.base@21.0.8/InputStreamReader.java:188)
+	at java.io.BufferedReader.fill(java.base@21.0.8/BufferedReader.java:160)
+	at java.io.BufferedReader.implReadLine(java.base@21.0.8/BufferedReader.java:370)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:347)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:436)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child.lambda$new$1(Ur04E05HttpDbAcceptanceTest.java:482)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child$$Lambda/0x00007f88fc20cf68.run(Unknown Source)
+	at java.util.concurrent.Executors$RunnableAdapter.call(java.base@21.0.8/Executors.java:572)
+	at java.util.concurrent.FutureTask.run(java.base@21.0.8/FutureTask.java:317)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+
+"ur04-private-pipe" #60 [824911] daemon prio=5 os_prio=0 cpu=0.14ms elapsed=358.63s tid=0x00007f896c845410 nid=824911 runnable  [0x00007f89507f6000]
+   java.lang.Thread.State: RUNNABLE
+	at java.io.FileInputStream.readBytes(java.base@21.0.8/Native Method)
+	at java.io.FileInputStream.read(java.base@21.0.8/FileInputStream.java:287)
+	at java.io.BufferedInputStream.read1(java.base@21.0.8/BufferedInputStream.java:345)
+	at java.io.BufferedInputStream.implRead(java.base@21.0.8/BufferedInputStream.java:420)
+	at java.io.BufferedInputStream.read(java.base@21.0.8/BufferedInputStream.java:405)
+	- locked <0x00000000e2b4b1a0> (a java.lang.ProcessImpl$ProcessPipeInputStream)
+	at sun.nio.cs.StreamDecoder.readBytes(java.base@21.0.8/StreamDecoder.java:350)
+	at sun.nio.cs.StreamDecoder.implRead(java.base@21.0.8/StreamDecoder.java:393)
+	at sun.nio.cs.StreamDecoder.lockedRead(java.base@21.0.8/StreamDecoder.java:217)
+	at sun.nio.cs.StreamDecoder.read(java.base@21.0.8/StreamDecoder.java:171)
+	at java.io.InputStreamReader.read(java.base@21.0.8/InputStreamReader.java:188)
+	at java.io.BufferedReader.fill(java.base@21.0.8/BufferedReader.java:160)
+	at java.io.BufferedReader.implReadLine(java.base@21.0.8/BufferedReader.java:370)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:347)
+	at java.io.BufferedReader.readLine(java.base@21.0.8/BufferedReader.java:436)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child.lambda$new$2(Ur04E05HttpDbAcceptanceTest.java:487)
+	at cn.jia.agent.acceptance.ur04.Ur04E05HttpDbAcceptanceTest$Child$$Lambda/0x00007f88fc20d180.run(Unknown Source)
+	at java.util.concurrent.Executors$RunnableAdapter.call(java.base@21.0.8/Executors.java:572)
+	at java.util.concurrent.FutureTask.run(java.base@21.0.8/FutureTask.java:317)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
+
+"Attach Listener" #61 [836833] daemon prio=9 os_prio=-4 cpu=0.30ms elapsed=0.11s tid=0x00007f88e400d5a0 nid=836833 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"GC Thread#1" os_prio=-4 cpu=27.12ms elapsed=879.61s tid=0x00007f88e8006340 nid=819005 runnable  
+
+"VM Thread" os_prio=-4 cpu=27.79ms elapsed=880.02s tid=0x00007f896c0e6ea0 nid=818995 runnable  
+
+"VM Periodic Task Thread" os_prio=-5 cpu=345.23ms elapsed=880.03s tid=0x00007f896c0d3cc0 nid=818994 waiting on condition  
+
+"G1 Service" os_prio=-4 cpu=19.45ms elapsed=880.15s tid=0x00007f896c0c3a40 nid=818991 runnable  
+
+"G1 Refine#0" os_prio=-4 cpu=626.52ms elapsed=880.15s tid=0x00007f896c0c2a90 nid=818990 runnable  
+
+"G1 Conc#0" os_prio=-4 cpu=0.03ms elapsed=880.15s tid=0x00007f896c082fa0 nid=818989 runnable  
+
+"G1 Main Marker" os_prio=-4 cpu=0.06ms elapsed=880.16s tid=0x00007f896c082000 nid=818987 runnable  
+
+"GC Thread#0" os_prio=-4 cpu=34.06ms elapsed=880.16s tid=0x00007f896c07ca40 nid=818985 runnable  
+
+JNI global refs: 29, weak refs: 0
+

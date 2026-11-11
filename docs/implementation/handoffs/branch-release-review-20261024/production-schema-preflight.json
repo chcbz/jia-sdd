@@ -1,0 +1,94 @@
+{
+  "queriedAt": "2026-10-24T23:11:57.239424",
+  "source": "Read-only SQL against configured production datasource of running API PID 2868975; no DDL or data mutation",
+  "databaseVersion": "8.0.21",
+  "tables": {
+    "agent_command_delivery": {
+      "exists": true,
+      "rowCount": 2
+    },
+    "agent_outbox_event": {
+      "exists": true,
+      "rowCount": 2
+    },
+    "agent_consumer_inbox": {
+      "exists": true,
+      "rowCount": 0
+    },
+    "core_tenant": {
+      "exists": false
+    },
+    "core_tenant_control": {
+      "exists": false
+    },
+    "core_tenant_membership": {
+      "exists": false
+    },
+    "oauth_client_tenant_grant": {
+      "exists": false
+    },
+    "oauth_client_tenant_domain_grant": {
+      "exists": false
+    },
+    "core_tenant_module_control": {
+      "exists": false
+    },
+    "core_deployment_registration": {
+      "exists": false
+    }
+  },
+  "transportMissingCommonColumns": {
+    "agent_command_delivery": [
+      "protocol_version",
+      "data_domain_id",
+      "execution_pool_id",
+      "admission_epoch",
+      "producer_deployment_id",
+      "module_id",
+      "migration_epoch"
+    ],
+    "agent_consumer_inbox": [
+      "protocol_version",
+      "data_domain_id",
+      "execution_pool_id",
+      "admission_epoch",
+      "producer_deployment_id",
+      "module_id",
+      "migration_epoch"
+    ],
+    "agent_outbox_event": [
+      "protocol_version",
+      "data_domain_id",
+      "execution_pool_id",
+      "admission_epoch",
+      "producer_deployment_id",
+      "module_id",
+      "migration_epoch"
+    ]
+  },
+  "workflowColumnReadback": {
+    "chat_conversation": {
+      "tenant_id": true,
+      "data_scope_mode": false,
+      "data_domain_id": false
+    },
+    "task_plan": {
+      "tenant_id": true,
+      "data_scope_mode": false,
+      "data_domain_id": false
+    }
+  },
+  "readinessCheck": {
+    "at": "2026-10-24T23:20:19.729048+08:00",
+    "endpoint": "loopback:10018/actuator/health/readiness",
+    "response": {
+      "apiVersion": "V3",
+      "status": {
+        "code": "UP",
+        "description": ""
+      },
+      "components": null
+    },
+    "doesNotProveBusinessAcceptance": true
+  }
+}

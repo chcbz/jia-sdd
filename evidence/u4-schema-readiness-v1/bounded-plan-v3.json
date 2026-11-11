@@ -1,0 +1,89 @@
+{
+  "schema_version": 3,
+  "date": "2026-09-30",
+  "task_id": "MMD-U4-SCHEMA-READINESS-20260930",
+  "scope": "one fresh bounded-v3 exact-source lifecycle verification; not normal build, MySQL, release, or deployment evidence",
+  "candidate": {
+    "commit": "399cb3c30002c728a2329a6347f1f4d15f2d3fcf",
+    "tree": "b6ad3746c235e91ae1cae15278636b66f1b253bf",
+    "parent_commit": "79165b93d7dc7c8ecff30376e0ed1622c26591ac"
+  },
+  "correction": {
+    "file": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatSchemaReadinessLifecycleTest.java",
+    "change": "enable chat.conversation-archive.enabled in real Spring lifecycle fixture",
+    "assertions_changed": false,
+    "production_main_changed": false
+  },
+  "frozen_inputs": {
+    "source_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-source-manifest-v3.json",
+      "sha256": "a794e5b1b7a4f9fb287783f114f4190d09040c73ac09c9e4edb51e0a7c3de991",
+      "main_sources": 4,
+      "test_sources": 1
+    },
+    "classpath": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-v1.txt",
+      "sha256": "ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4",
+      "entries": 364,
+      "built_by_tasks": []
+    },
+    "classpath_content": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-content-v1.json",
+      "sha256": "e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b"
+    },
+    "init_script": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v3.init.gradle",
+      "sha256": "a8985fd4a3f8f905264150f6d6210095109bcc8189347fdd229cda1d080d38fc"
+    },
+    "baseline": {
+      "commit": "194ec91a596c28f9575a64aef47a5bf7b9fb6778",
+      "tree": "10d312e61057b1a83da1485238c2f3acf63e5361"
+    }
+  },
+  "task_graph": [
+    ":u4BoundedV3Preflight",
+    ":u4BoundedV3CompileMain",
+    ":u4BoundedV3CompileLifecycleTest",
+    ":u4BoundedV3SchemaReadinessLifecycle"
+  ],
+  "selector": ":u4BoundedV3SchemaReadinessLifecycle",
+  "fixture_digest": "7d6e80a1a7d6af1ee2a2e5bbf85ac6d86494ef0a02af1e3ad516841e338bcae6",
+  "fixture_digest_basis": {
+    "candidate_commit": "399cb3c30002c728a2329a6347f1f4d15f2d3fcf",
+    "candidate_tree": "b6ad3746c235e91ae1cae15278636b66f1b253bf",
+    "selector": ":u4BoundedV3SchemaReadinessLifecycle",
+    "source_manifest_sha256": "a794e5b1b7a4f9fb287783f114f4190d09040c73ac09c9e4edb51e0a7c3de991",
+    "init_sha256": "a8985fd4a3f8f905264150f6d6210095109bcc8189347fdd229cda1d080d38fc",
+    "classpath_sha256": "ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4",
+    "classpath_content_sha256": "e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b",
+    "tasks": [
+      ":u4BoundedV3Preflight",
+      ":u4BoundedV3CompileMain",
+      ":u4BoundedV3CompileLifecycleTest",
+      ":u4BoundedV3SchemaReadinessLifecycle"
+    ],
+    "gradle_jvm": "-Xmx256m -XX:MaxMetaspaceSize=160m -XX:ActiveProcessorCount=2 -XX:+UseSerialGC",
+    "test_jvm": "-Xmx128m -XX:MaxMetaspaceSize=96m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC"
+  },
+  "output_namespace": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-b6ad3746-v3",
+  "gradle_jvm": "-Xmx256m -XX:MaxMetaspaceSize=160m -XX:ActiveProcessorCount=2 -XX:+UseSerialGC",
+  "test_jvm": "-Xmx128m -XX:MaxMetaspaceSize=96m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC",
+  "preserved_history": {
+    "v2_failure": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v2.json",
+      "sha256": "12b18db74d1960cb75448016a909ed761691195bf9417dc37a6341e4841172b5",
+      "junit": "5/2/3/0 pass/fail/error/skip"
+    },
+    "v2_xml": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-c073c6-v2/junit-xml/TEST-cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.xml",
+      "sha256": "5c55809803c3409d259de13a477713d0b4d7527f4f00cc6e8dc1ff743177affd"
+    }
+  },
+  "prohibitions": [
+    "no source/build.gradle edits",
+    "no v1/v2 overwrite",
+    "no regular compileJava graph",
+    "no foreign process action",
+    "no push/deploy/provider/production DB"
+  ]
+}

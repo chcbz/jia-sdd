@@ -1,0 +1,236 @@
+diff --git a/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentAssigneeRecommendationModel.java b/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentAssigneeRecommendationModel.java
+new file mode 100644
+index 0000000000..8de68ab2a8
+--- /dev/null
++++ b/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentAssigneeRecommendationModel.java
+@@ -0,0 +1,6 @@
++package cn.jia.agent.service;
++
++/** Read-only, single-shot model port. Does not execute or assign tasks. */
++public interface AgentAssigneeRecommendationModel {
++    String judge(String inputJson);
++}
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendation.java b/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AssigneeRecommendation.java
+similarity index 96%
+rename from chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendation.java
+rename to agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AssigneeRecommendation.java
+index 8f7ab1653c..af027e83ec 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendation.java
++++ b/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AssigneeRecommendation.java
+@@ -1,4 +1,4 @@
+-package cn.jia.chat.service.recommendation;
++package cn.jia.agent.entity;
+ 
+ import java.util.List;
+ 
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/api/AssigneeRecommendationController.java b/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AssigneeRecommendationController.java
+similarity index 86%
+rename from chat/jia-chat-service/src/main/java/cn/jia/chat/api/AssigneeRecommendationController.java
+rename to agent/jia-agent-service/src/main/java/cn/jia/agent/api/AssigneeRecommendationController.java
+index 2a80639fcb..e47a712cea 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/api/AssigneeRecommendationController.java
++++ b/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AssigneeRecommendationController.java
+@@ -1,10 +1,9 @@
+-package cn.jia.chat.api;
++package cn.jia.agent.api;
+ 
+ import cn.jia.agent.hosting.HostingRentHttp;
+ import cn.jia.agent.hosting.HostingRentApplicationException;
+ import cn.jia.agent.service.impl.AgentServiceImpl;
+-import cn.jia.chat.service.TenantScopeResolver;
+-import cn.jia.chat.service.recommendation.AssigneeRecommendationService;
++import cn.jia.agent.service.recommendation.AssigneeRecommendationService;
+ import cn.jia.core.context.EsContextHolder;
+ import cn.jia.core.entity.JsonRequest;
+ import cn.jia.core.entity.JsonResult;
+@@ -12,7 +11,7 @@ import org.springframework.http.ResponseEntity;
+ import org.springframework.security.core.Authentication;
+ import org.springframework.web.bind.annotation.*;
+ import java.util.Objects;
+-import static cn.jia.chat.service.recommendation.AssigneeRecommendation.*;
++import static cn.jia.agent.entity.AssigneeRecommendation.*;
+ 
+ /** Replaces (does not coexist with) AgentController's rule-scored recommendation endpoint. */
+ @RestController
+@@ -20,16 +19,15 @@ import static cn.jia.chat.service.recommendation.AssigneeRecommendation.*;
+ public final class AssigneeRecommendationController {
+     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(AssigneeRecommendationController.class);
+     private final AssigneeRecommendationService recommendations;
+-    private final TenantScopeResolver tenants;
+-    public AssigneeRecommendationController(AssigneeRecommendationService recommendations, TenantScopeResolver tenants) {
+-        this.recommendations = recommendations; this.tenants = tenants;
++    public AssigneeRecommendationController(AssigneeRecommendationService recommendations) {
++        this.recommendations = recommendations;
+     }
+     @PostMapping("/{taskId}/recommend")
+     public ResponseEntity<JsonResult<Result>> recommend(@PathVariable String taskId,
+             @RequestBody JsonRequest<Request> request, Authentication authentication) {
+         var actor = HostingRentHttp.actor(authentication);
+         var context = EsContextHolder.getContext();
+-        if (context == null || !Objects.equals(tenants.resolve(authentication), actor.tenantId())
++        if (context == null
+                 || !Objects.equals(context.getTenantId(), actor.tenantId())
+                 || !Objects.equals(context.getClientId(), actor.clientId())
+                 || !Objects.equals(context.getJiacn(), actor.ownerJiacn())) throw new Failure(404, "RECOMMENDATION_NOT_FOUND");
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendationService.java b/agent/jia-agent-service/src/main/java/cn/jia/agent/service/recommendation/AssigneeRecommendationService.java
+similarity index 96%
+rename from chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendationService.java
+rename to agent/jia-agent-service/src/main/java/cn/jia/agent/service/recommendation/AssigneeRecommendationService.java
+index cec4ef9e3f..f9016e3459 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendationService.java
++++ b/agent/jia-agent-service/src/main/java/cn/jia/agent/service/recommendation/AssigneeRecommendationService.java
+@@ -1,8 +1,9 @@
+-package cn.jia.chat.service.recommendation;
++package cn.jia.agent.service.recommendation;
+ 
+ import cn.jia.agent.entity.AgentTaskDTO;
+ import cn.jia.agent.hosting.HostingRentHttp;
+ import cn.jia.agent.service.AgentService;
++import cn.jia.agent.service.AgentAssigneeRecommendationModel;
+ import cn.jia.agent.skill.SkillManagementService;
+ import com.fasterxml.jackson.databind.JsonNode;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+@@ -10,7 +11,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
+ import org.springframework.stereotype.Service;
+ import java.time.Instant;
+ import java.util.*;
+-import static cn.jia.chat.service.recommendation.AssigneeRecommendation.*;
++import static cn.jia.agent.entity.AssigneeRecommendation.*;
+ 
+ /** API-owned observations + model advice. No assignment, billing, installation or transaction. */
+ @Service
+@@ -18,8 +19,8 @@ public final class AssigneeRecommendationService {
+     private static final ObjectMapper JSON = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
+     private final AgentService agents;
+     private final SkillManagementService skills;
+-    private final AssigneeRecommendationModel model;
+-    public AssigneeRecommendationService(AgentService agents, SkillManagementService skills, AssigneeRecommendationModel model) {
++    private final AgentAssigneeRecommendationModel model;
++    public AssigneeRecommendationService(AgentService agents, SkillManagementService skills, AgentAssigneeRecommendationModel model) {
+         this.agents = agents; this.skills = skills; this.model = model;
+     }
+     public Result recommend(HostingRentHttp.Actor actor, String taskId, Request request) {
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/api/AssigneeRecommendationControllerTest.java b/agent/jia-agent-service/src/test/java/cn/jia/agent/api/AssigneeRecommendationControllerTest.java
+similarity index 93%
+rename from chat/jia-chat-service/src/test/java/cn/jia/chat/api/AssigneeRecommendationControllerTest.java
+rename to agent/jia-agent-service/src/test/java/cn/jia/agent/api/AssigneeRecommendationControllerTest.java
+index d520470e8e..8db53dbb11 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/api/AssigneeRecommendationControllerTest.java
++++ b/agent/jia-agent-service/src/test/java/cn/jia/agent/api/AssigneeRecommendationControllerTest.java
+@@ -1,7 +1,6 @@
+-package cn.jia.chat.api;
++package cn.jia.agent.api;
+ 
+-import cn.jia.chat.service.TenantScopeResolver;
+-import cn.jia.chat.service.recommendation.AssigneeRecommendationService;
++import cn.jia.agent.service.recommendation.AssigneeRecommendationService;
+ import cn.jia.core.config.ApiEnvelopeAdvice;
+ import cn.jia.core.context.*;
+ import cn.jia.core.filter.RequestIdFilter;
+@@ -13,7 +12,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
+ import org.springframework.test.web.servlet.MockMvc;
+ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+ import java.util.List;
+-import static cn.jia.chat.service.recommendation.AssigneeRecommendation.*;
++import static cn.jia.agent.entity.AssigneeRecommendation.*;
+ import static org.mockito.Mockito.*;
+ import static org.mockito.ArgumentMatchers.*;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+@@ -28,7 +27,7 @@ class AssigneeRecommendationControllerTest {
+         login = new JwtAuthenticationToken(Jwt.withTokenValue("test").header("alg", "none")
+                 .claim("sub", "user").claim("jiacn", "owner").claim("client_id", "client").build());
+         var context = new EsContext(); context.setTenantId("0"); context.setClientId("client"); context.setJiacn("owner"); EsContextHolder.setContext(context);
+-        mvc = MockMvcBuilders.standaloneSetup(new AssigneeRecommendationController(service, TenantScopeResolver.legacySingleTenant()))
++        mvc = MockMvcBuilders.standaloneSetup(new AssigneeRecommendationController(service))
+                 .setMessageConverters(new JacksonJsonHttpMessageConverter()).setControllerAdvice(new ApiEnvelopeAdvice())
+                 .addFilters(new RequestIdFilter()).build();
+         when(service.recommend(any(), eq("task"), any())).thenReturn(new Result("task", "7", 1000, "NO_MATCH", "没有匹配证据", List.of(), List.of(), true));
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/service/recommendation/AssigneeRecommendationServiceTest.java b/agent/jia-agent-service/src/test/java/cn/jia/agent/service/recommendation/AssigneeRecommendationServiceTest.java
+similarity index 93%
+rename from chat/jia-chat-service/src/test/java/cn/jia/chat/service/recommendation/AssigneeRecommendationServiceTest.java
+rename to agent/jia-agent-service/src/test/java/cn/jia/agent/service/recommendation/AssigneeRecommendationServiceTest.java
+index 66113a677f..d744ca47dc 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/service/recommendation/AssigneeRecommendationServiceTest.java
++++ b/agent/jia-agent-service/src/test/java/cn/jia/agent/service/recommendation/AssigneeRecommendationServiceTest.java
+@@ -1,15 +1,16 @@
+-package cn.jia.chat.service.recommendation;
++package cn.jia.agent.service.recommendation;
+ 
+ import cn.jia.agent.entity.AgentTaskAssigneeCandidateDTO;
+ import cn.jia.agent.entity.AgentTaskTargetSummaryDTO;
+ import cn.jia.agent.entity.AgentTaskDTO;
+ import cn.jia.agent.hosting.HostingRentHttp;
+ import cn.jia.agent.service.AgentService;
++import cn.jia.agent.service.AgentAssigneeRecommendationModel;
+ import cn.jia.agent.skill.SkillManagementService;
+ import org.junit.jupiter.api.Test;
+ import java.util.List;
+ import java.util.Map;
+-import static cn.jia.chat.service.recommendation.AssigneeRecommendation.*;
++import static cn.jia.agent.entity.AssigneeRecommendation.*;
+ import static org.junit.jupiter.api.Assertions.*;
+ import static org.mockito.Mockito.*;
+ import static org.mockito.ArgumentMatchers.*;
+@@ -53,7 +54,7 @@ class AssigneeRecommendationServiceTest {
+         assertThrows(Failure.class, () -> AssigneeRecommendationService.decode("task", "7", 1, List.of(candidate()), noMatch.replace("NO_MATCH", "NEEDS_CLARIFICATION")));
+     }
+     @Test void noCandidatesMakesNoModelOrSkillCallAndVersionMismatchDoesNotInvokeModel() {
+-        var agents = mock(AgentService.class); var skills = mock(SkillManagementService.class); var model = mock(AssigneeRecommendationModel.class);
++        var agents = mock(AgentService.class); var skills = mock(SkillManagementService.class); var model = mock(AgentAssigneeRecommendationModel.class);
+         var service = new AssigneeRecommendationService(agents, skills, model);
+         when(agents.getTask("task")).thenReturn(task("7")); when(agents.listTaskAssigneeCandidates("task")).thenReturn(List.of());
+         assertEquals("NO_CANDIDATES", service.recommend(ACTOR, "task", new Request("7")).state());
+@@ -61,7 +62,7 @@ class AssigneeRecommendationServiceTest {
+         verifyNoInteractions(skills, model);
+     }
+     @Test void usesSingleCallNoAssignmentAndChecksTaskAgainAfterInference() {
+-        var agents = mock(AgentService.class); var skills = mock(SkillManagementService.class); var model = mock(AssigneeRecommendationModel.class);
++        var agents = mock(AgentService.class); var skills = mock(SkillManagementService.class); var model = mock(AgentAssigneeRecommendationModel.class);
+         var service = new AssigneeRecommendationService(agents, skills, model);
+         var a = new AgentTaskAssigneeCandidateDTO(new AgentTaskTargetSummaryDTO("a", "Agent", null, true, "online"), List.of("写作"));
+         when(agents.getTask("task")).thenReturn(task("7")); when(agents.listTaskAssigneeCandidates("task")).thenReturn(List.of(a));
+@@ -72,7 +73,7 @@ class AssigneeRecommendationServiceTest {
+         assertEquals(409, assertThrows(Failure.class, () -> service.recommend(ACTOR, "task", new Request("7"))).status());
+     }
+     @Test void externalCandidateNeverReadsPrivateSkillsAndProviderFailureDoesNotRetry() {
+-        var agents = mock(AgentService.class); var skills = mock(SkillManagementService.class); var model = mock(AssigneeRecommendationModel.class);
++        var agents = mock(AgentService.class); var skills = mock(SkillManagementService.class); var model = mock(AgentAssigneeRecommendationModel.class);
+         var a = new AgentTaskAssigneeCandidateDTO(new AgentTaskTargetSummaryDTO("external", "Agent", "公开提供方", false, "online"), List.of());
+         when(agents.getTask("task")).thenReturn(task("7")); when(agents.listTaskAssigneeCandidates("task")).thenReturn(List.of(a));
+         when(model.judge(anyString())).thenThrow(new RuntimeException("private upstream details"));
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModel.java b/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModel.java
+index da25021a8a..7445733707 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModel.java
++++ b/chat/jia-chat-service/src/main/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModel.java
+@@ -8,11 +8,11 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
+ import org.springframework.context.annotation.Lazy;
+ import org.springframework.stereotype.Component;
+ import java.util.List;
+-import static cn.jia.chat.service.recommendation.AssigneeRecommendation.*;
++import static cn.jia.agent.entity.AssigneeRecommendation.*;
+ 
+ /** Single-shot inference using the existing provider/transport. No ChatClient, advisors or tools. */
+ @Component
+-public final class AssigneeRecommendationModel {
++public final class AssigneeRecommendationModel implements cn.jia.agent.service.AgentAssigneeRecommendationModel {
+     private final ChatModel model;
+     public AssigneeRecommendationModel(@Lazy ChatModel model) { this.model = model; }
+     private static final String INSTRUCTIONS = """
+@@ -30,6 +30,7 @@ public final class AssigneeRecommendationModel {
+         READY必须至少推荐一人，每人必须有事实依据；其他state的recommendations为空，NEEDS_CLARIFICATION必须有questions。
+         reason是你的判断，证据只能引用输入中的id；不要把缺口说成具备的能力。可以少推荐，不必凑数。
+         """;
++    @Override
+     public String judge(String inputJson) {
+         // A global model with implicit tool defaults is not safe for this read-only purpose.
+         if (model.getOptions() instanceof ToolCallingChatOptions defaults
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModelTest.java b/chat/jia-chat-service/src/test/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModelTest.java
+index 681d4365ce..735844af19 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModelTest.java
++++ b/chat/jia-chat-service/src/test/java/cn/jia/chat/service/recommendation/AssigneeRecommendationModelTest.java
+@@ -1,4 +1,5 @@
+ package cn.jia.chat.service.recommendation;
++import cn.jia.agent.entity.AssigneeRecommendation;
+ 
+ import org.junit.jupiter.api.Test;
+ import org.mockito.ArgumentCaptor;

@@ -1,0 +1,234 @@
+{
+  "requestedAt": "2026-10-06T10:20:04.356077+00:00",
+  "authorization": "User explicitly authorized host /sys/fs/cgroup mount restoration and only codex-ws-agent restart; no other process control or reboot",
+  "state": "RESTORED_MOUNT_ONLY_NO_SERVICE_STARTED",
+  "mountNamespace": "mnt:[4026531840]",
+  "mountInfoBefore": "22 97 0:21 / /sys rw,nosuid,nodev,noexec,relatime shared:2 - sysfs sysfs rw\n23 97 0:22 / /proc rw,nosuid,nodev,noexec,relatime shared:25 - proc proc rw\n24 97 0:5 / /dev rw,nosuid shared:21 - devtmpfs devtmpfs rw,size=1890676k,nr_inodes=472669,mode=755\n28 97 0:25 / /run rw,nosuid,nodev shared:24 - tmpfs tmpfs rw,mode=755\n97 1 253:1 / / rw,relatime shared:1 - ext4 /dev/vda1 rw\n396 28 0:46 / /run/user/0 rw,nosuid,nodev,relatime shared:204 - tmpfs tmpfs rw,size=381344k,mode=700\n424 396 0:48 / /run/user/0/doc rw,nosuid,nodev,relatime shared:220 - fuse.portal portal rw,user_id=0,group_id=0\n21 97 0:26 / /usr/local/aegis/cgroup rw,relatime shared:3 - tmpfs tmpfs rw,size=51200k\n",
+  "kernelCgroupsBefore": "#subsys_name\thierarchy\tnum_cgroups\tenabled\ncpuset\t10\t2\t1\ncpu\t3\t97\t1\ncpuacct\t3\t97\t1\nblkio\t11\t88\t1\nmemory\t4\t135\t1\ndevices\t8\t89\t1\nfreezer\t6\t2\t1\nnet_cls\t5\t2\t1\nperf_event\t12\t2\t1\nnet_prio\t5\t2\t1\nhugetlb\t9\t2\t1\npids\t7\t114\t1\nioasids\t0\t1\t1\nrdma\t2\t2\t1\n",
+  "pid1CgroupsBefore": "12:perf_event:/\n11:blkio:/\n10:cpuset:/\n9:hugetlb:/\n8:devices:/\n7:pids:/\n6:freezer:/\n5:net_cls,net_prio:/\n4:memory:/\n3:cpu,cpuacct:/\n2:rdma:/\n1:name=systemd:/init.scope\n",
+  "protectedProcessesBefore": {
+    "1635406": {
+      "pid": 1635406,
+      "starttime": "3284738634",
+      "cgroup": "12:perf_event:/\n11:blkio:/user.slice\n10:cpuset:/\n9:hugetlb:/\n8:devices:/user.slice\n7:pids:/user.slice/user-0.slice/session-c549.scope\n6:freezer:/\n5:net_cls,net_prio:/\n4:memory:/user.slice/user-0.slice/session-c549.scope\n3:cpu,cpuacct:/user.slice\n2:rdma:/\n1:name=systemd:/user.slice/user-0.slice/session-c549.scope\n"
+    },
+    "1145032": {
+      "pid": 1145032,
+      "starttime": "3278233173",
+      "cgroup": "12:perf_event:/\n11:blkio:/system.slice/system-codex\\x2dws\\x2dagent.slice\n10:cpuset:/\n9:hugetlb:/\n8:devices:/system.slice/system-codex\\x2dws\\x2dagent.slice\n7:pids:/system.slice/system-codex\\x2dws\\x2dagent.slice/codex-ws-agent@wuyong-local.service\n6:freezer:/\n5:net_cls,net_prio:/\n4:memory:/system.slice/system-codex\\x2dws\\x2dagent.slice/codex-ws-agent@wuyong-local.service\n3:cpu,cpuacct:/system.slice/system-codex\\x2dws\\x2dagent.slice\n2:rdma:/\n1:name=systemd:/system.slice/system-codex\\x2dws\\x2dagent.slice/codex-ws-agent@wuyong-local.service\n"
+    }
+  },
+  "actions": [
+    {
+      "at": "2026-10-06T10:20:04.367247+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "tmpfs",
+        "-o",
+        "nosuid,nodev,noexec,mode=755",
+        "tmpfs",
+        "/sys/fs/cgroup"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.373588+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,blkio",
+        "cgroup",
+        "/sys/fs/cgroup/blkio"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.380640+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,cpu,cpuacct",
+        "cgroup",
+        "/sys/fs/cgroup/cpu,cpuacct"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.386788+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,cpuset",
+        "cgroup",
+        "/sys/fs/cgroup/cpuset"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.399849+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,devices",
+        "cgroup",
+        "/sys/fs/cgroup/devices"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.406025+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,freezer",
+        "cgroup",
+        "/sys/fs/cgroup/freezer"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.412012+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,hugetlb",
+        "cgroup",
+        "/sys/fs/cgroup/hugetlb"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.417781+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,memory",
+        "cgroup",
+        "/sys/fs/cgroup/memory"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.423652+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,net_cls,net_prio",
+        "cgroup",
+        "/sys/fs/cgroup/net_cls,net_prio"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.430552+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,perf_event",
+        "cgroup",
+        "/sys/fs/cgroup/perf_event"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.436900+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,pids",
+        "cgroup",
+        "/sys/fs/cgroup/pids"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.444121+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,rdma",
+        "cgroup",
+        "/sys/fs/cgroup/rdma"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.450180+00:00",
+      "argv": [
+        "mount",
+        "-t",
+        "cgroup",
+        "-o",
+        "nosuid,nodev,noexec,name=systemd,xattr",
+        "cgroup",
+        "/sys/fs/cgroup/systemd"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-06T10:20:04.458893+00:00",
+      "argv": [
+        "mount",
+        "-o",
+        "remount,ro,nosuid,nodev,noexec",
+        "/sys/fs/cgroup"
+      ],
+      "exit": 0,
+      "stderr": ""
+    }
+  ],
+  "scope": "mount topology only; no controller parameter writes, process movement, data DML, reboot, daemon reexec or other service restart",
+  "rollback": "On pre-start failure, unmount only newly added child mounts in reverse order then own tmpfs; never force/lazy unmount. Once runtime starts retain shared mount restoration.",
+  "completedAt": "2026-10-06T10:20:04.461764+00:00",
+  "mountInfoAfter": "22 97 0:21 / /sys rw,nosuid,nodev,noexec,relatime shared:2 - sysfs sysfs rw\n23 97 0:22 / /proc rw,nosuid,nodev,noexec,relatime shared:25 - proc proc rw\n24 97 0:5 / /dev rw,nosuid shared:21 - devtmpfs devtmpfs rw,size=1890676k,nr_inodes=472669,mode=755\n28 97 0:25 / /run rw,nosuid,nodev shared:24 - tmpfs tmpfs rw,mode=755\n97 1 253:1 / / rw,relatime shared:1 - ext4 /dev/vda1 rw\n396 28 0:46 / /run/user/0 rw,nosuid,nodev,relatime shared:204 - tmpfs tmpfs rw,size=381344k,mode=700\n424 396 0:48 / /run/user/0/doc rw,nosuid,nodev,relatime shared:220 - fuse.portal portal rw,user_id=0,group_id=0\n21 97 0:26 / /usr/local/aegis/cgroup rw,relatime shared:3 - tmpfs tmpfs rw,size=51200k\n48 22 0:28 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime shared:15 - tmpfs tmpfs ro,mode=755\n70 48 0:29 / /sys/fs/cgroup/blkio rw,nosuid,nodev,noexec,relatime shared:28 - cgroup cgroup rw,blkio\n94 48 0:30 / /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:40 - cgroup cgroup rw,cpu,cpuacct\n122 48 0:31 / /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:50 - cgroup cgroup rw,cpuset\n144 48 0:32 / /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:65 - cgroup cgroup rw,devices\n165 48 0:33 / /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:75 - cgroup cgroup rw,freezer\n191 48 0:34 / /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:86 - cgroup cgroup rw,hugetlb\n215 48 0:35 / /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:101 - cgroup cgroup rw,memory\n242 48 0:36 / /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:111 - cgroup cgroup rw,net_cls,net_prio\n261 48 0:37 / /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:128 - cgroup cgroup rw,perf_event\n285 48 0:38 / /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:138 - cgroup cgroup rw,pids\n318 48 0:39 / /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:149 - cgroup cgroup rw,rdma\n342 48 0:27 / /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:171 - cgroup cgroup rw,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd\n",
+  "protectedProcessesAfter": {
+    "1635406": {
+      "pid": 1635406,
+      "starttime": "3284738634",
+      "cgroup": "12:perf_event:/\n11:blkio:/user.slice\n10:cpuset:/\n9:hugetlb:/\n8:devices:/user.slice\n7:pids:/user.slice/user-0.slice/session-c549.scope\n6:freezer:/\n5:net_cls,net_prio:/\n4:memory:/user.slice/user-0.slice/session-c549.scope\n3:cpu,cpuacct:/user.slice\n2:rdma:/\n1:name=systemd:/user.slice/user-0.slice/session-c549.scope\n"
+    },
+    "1145032": {
+      "pid": 1145032,
+      "starttime": "3278233173",
+      "cgroup": "12:perf_event:/\n11:blkio:/system.slice/system-codex\\x2dws\\x2dagent.slice\n10:cpuset:/\n9:hugetlb:/\n8:devices:/system.slice/system-codex\\x2dws\\x2dagent.slice\n7:pids:/system.slice/system-codex\\x2dws\\x2dagent.slice/codex-ws-agent@wuyong-local.service\n6:freezer:/\n5:net_cls,net_prio:/\n4:memory:/system.slice/system-codex\\x2dws\\x2dagent.slice/codex-ws-agent@wuyong-local.service\n3:cpu,cpuacct:/system.slice/system-codex\\x2dws\\x2dagent.slice\n2:rdma:/\n1:name=systemd:/system.slice/system-codex\\x2dws\\x2dagent.slice/codex-ws-agent@wuyong-local.service\n"
+    }
+  },
+  "protectedProcessIdentityAndMembershipUnchanged": true,
+  "originalKernelNamedHierarchyVisible": true
+}

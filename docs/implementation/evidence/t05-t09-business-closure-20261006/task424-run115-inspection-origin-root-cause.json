@@ -1,0 +1,22 @@
+{
+  "verifiedAt": "2026-10-06T13:10:22.901052+00:00",
+  "taskId": "424",
+  "requestId": "action-inspect_dae0e37778d00470519fb09aa759f450be971008",
+  "dispatchId": "dispatch_fcd3593e6a6ce095f4fdcf47c330aaef6c26d3a8",
+  "currentApiRun": 115,
+  "evidence": "Actual API access log at2026-10-06 21:01:36+08:00: original input GET /internal/agent/chat/.../inspection/inputs/source_18d28203336dfb293766fe7d5cb4269f22f6d95a/content returns444; client atsame turn reports TYPED_INSPECTION_RUNTIME_ERROR fetch failed. Exact nginx config has no /internal location and final location/ returns444.",
+  "nginxConfigSha256": "642446c7966092fd1d6d978369e1c40a006b6dae38bbeaeac2668f1f81021b3b",
+  "noAuthReadOnlyComparison": {
+    "publicExactInputGet": "UND_ERR_SOCKET",
+    "loopbackExactInputGet": 401,
+    "credentialsUsed": false,
+    "meaning": "Public transport closed; loopback reaches authenticated native API. 401 is not authorized content success."
+  },
+  "rootCause": "Scoped INSPECT apiOrigin incorrectly points to public frontend-facing proxy, whose internal AgentRuntime subtree is intentionally not exposed. Existing native runtime API origin is http://127.0.0.1:10018. Scope parser currently forbids HTTP including this exact same-host origin.",
+  "fix": "Permit only literal http://127.0.0.1:10018 in scoped API origin; keep HTTPS provider-only, exact identity and carrier/hash gates. Change one scoped origin after authorization. Do not expose /internal via public nginx or bypass authentication.",
+  "observedProtocolProgress": "Original turn stateVersion1->3 from auto-redispatch afterAPI115; latestcontextSnapshot conflict absent in postactivation errors; content fetch now reached. Child remains uncompleted.",
+  "candidateCommit": "b4e3a1674f8f61f28634d1cbd1a65cdbd67d3601",
+  "candidateTree": "dfe48149be4142ebe09fc15d3528efbad44b058c",
+  "runtimeMutation": "NONE_FOR_THIS_NEW_FIX; originalclient1727606 retained; no nginx edit/reload",
+  "retryPolicy": "No new business request, task or assignment; originalchild remains in place."
+}

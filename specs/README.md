@@ -1,27 +1,26 @@
-# SDD Specifications
+# CYF规格入口
 
-## 先区分意图、实现与历史
+导航核对：2026-11-10。维护35个现行责任专题，另有4个退役专题和1个历史来源目录；文档有效范围以责任合同及证据为准，不代表全部功能已实现或上线。
 
-- 想了解系统如何工作：先读 [架构与模块知识入口](../docs/knowledge-base/README.md)，不是逐个遍历历史 SDD。
-- 想了解准备做什么：读对应 feature 的 spec/design；冻结提案不等于最终实现，须查目录导航和版本证据。
-- 已完成范围的稳定知识按 [收口流程](../docs/sdd-workflow.md#feature-documentation-closeout)进入架构/模块/runbook；原合同和验收留原路径取证，不继续作为当前执行步骤。
-- [INDEX.md](INDEX.md)中的日期段落是历史投影，不能当作实时状态台账；Owner/gate 仍以唯一运行台账为准。
+Agent统一从[文档总入口](../docs/README.md)按任务分流；业务回归见[聚义厅全局119项](juyiting-unified-experience/global-regression.md)。原日期验收和冻结合同保持来源，不以本次导航核对刷新实现状态。
 
+## 从这里开始
 
-<!-- SDD delivery reconciliation 2026-09-06 -->
-## 2026-09-06 全量索引
+1. [现行责任与退役索引](INDEX.md)：找到唯一责任专题，不并行维护第二套同义规格。
+2. [统一开发约束](architecture-convergence/development-principles.md)：性能、事实归属、必要校验、兼容边界、DFX与验证口径。
+3. 专题 `spec.md` → `design.md` → 实际受影响的 `tasks.md` / `acceptance.md`；专项合同以主spec明确指向为准，不默认读全部历史。术语一名一义、冲突优先级见[规格维护规则](AGENTS.md)。
+4. [当前实现知识](../docs/knowledge-base/README.md)与固定源码用于确认实现；原handoff/receipt用于确认测试、安装及业务验收，不能互相替代。
 
-完整需求见 [INDEX.md](INDEX.md)，跨全部运行/原始规划任务的证据矩阵见 `docs/implementation/SDD_STATUS_20260906.md`。每个 feature 的 delivery-status.md 区分已交付、源码接受、剩余验收。冻结合同只新增补充材料，不能为更新状态破坏 SHA 绑定。归档是历史登记，当前执行只在唯一运行台账。
-<!-- END SDD delivery reconciliation -->
+## 文档角色
 
-This directory is the cross-repository source of truth for feature intent, design, execution, and acceptance.
+| 文档 | 负责什么 | 不能当什么 |
+| --- | --- | --- |
+| spec/design | 当前目标、责任、流程、协议与数据细则 | 全部实现/上线证明 |
+| tasks/acceptance | 实际改动范围、可观察验收及历史结果 | 自动重开所有旧待办、历史发布授权 |
+| integration.yaml | 对应批次的精确候选关联 | 当前checkout/线上版本的自动跟踪器 |
+| schema/fixture/冻结bundle | 具体版本协议及测试输入 | 可以静默覆盖的“旧文档” |
+| 报告/日志/receipt/历史会话 | 当时输入与事实 | 今日实施步骤或新的用户授权 |
 
-Create one directory per cross-cutting feature from `_template/`. Keep implementation in the `api/` and `web/` submodules; record the tested submodule revisions in the coordinating root-repository commit.
+默认本地固定源码验证/构建；按真实授权安装。单Owner自检，契约变化才联动实际消费者。文档维护要求见[本目录规则](AGENTS.md)，操作流程见[SDD工作流](../docs/sdd-workflow.md)。
 
-## Suggested lifecycle
-
-1. Write `spec.md` before implementation.
-2. Record cross-service and UI decisions in `design.md`.
-3. Split the work by repository in `tasks.md`.
-4. Validate the agreed behavior in `acceptance.md`.
-5. Commit the relevant submodule pointers together with the specification update.
+`./sddw check-docs`仅检查文档导航。不要为通过检查运行pin重写历史SHA；不要以批量改日期冒充全仓源码和业务复验。

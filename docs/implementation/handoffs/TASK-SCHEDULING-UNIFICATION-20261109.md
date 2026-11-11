@@ -1205,3 +1205,11 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 默认60000ms库存窗口下组合全链通过，清理后冷库存30019.752ms、后续2893.541ms。未延长生产窗口；先前120秒诊断批仍单独保留。固定fixture使用实际admitRelationship/manager/engine，账户目录/executor注册/知识Provider仍明确合成，不声明真实线上WS或付费模型验收。
 - 只回收已明确Shutdown complete且无精确datadir存活进程的c6/mysql/data 172847453bytes，三份fixture日志复制到closure-api-6并保存SHA；记录owned-fixture-cleanup.json。未删源码/制品/备份/他人缓存，没有在途本任务测试进程。
 - 当前完整目标仍未达成：自部署须经可信远程安装/库存/准备/就绪/收尾关联接入现有租约闭环（当前只有托管UDS，local bind仍免费）；存量切换必须建立真实原安装/关系关联；不能靠50文配置、假READY、插租约或临时放宽授权交付。其后才是fresh固定包、生产mapping/DDL、受控安装和真实业务验收。两小时目标14:55未被改成缩减范围的交付承诺，已向用户明确剩余时间无法承诺完整上线；不提前发布不完整收费候选。
+
+### 2026-11-11 自行部署验证目标（用户指定）
+- 用户指定使用 `isp@chcbz.net` 中的李逵做自行部署开发验证；共用租费/续费/调度/收尾业务逻辑，仅适配安装及控制通道，不另造收费流程。
+- 14:34首次只读SSH核对在主机认证阶段失败：本机known_hosts中chcbz.net的ECDSA记录与远端不一致；当前解析173.230.149.118，远端报告指纹 `SHA256:MlERdPRQc4D4HOPjZ731qmk118bLWCI2353BMAQvDJI`。远程命令未执行，李逵实例/绑定/版本/在线状态尚未核实。
+- 未删除known_hosts或关闭StrictHostKeyChecking，未改余额/关系/会话或远端配置。需用户通过可信控制台确认该主机指纹，或提供正确目标；不将本次失败当业务回归失败，不盲重试。
+- 用户随后明确授权忽略该主机警告。采用临时、目标专用known_hosts接受此前观察的同一ECDSA指纹，登录仍StrictHostKeyChecking=yes，若指纹再次变化则停止；没有删除/改写全局信任记录。附件私钥仅复制到0700临时目录的0600文件，连接结束随目录删除，不写入源码/证据。
+- SSH已实际成功：主机li159-118、用户isp(uid1002)，Runtime进程PID4185。只读配置定位李逵profile `likui`，canonicalAgentId `jyt-jiafewnnv58ec2379c-likui`，installationId `rti_dd441f1ea25d6f6c8dff50463906abf1`，manifest tenant0/client jiafewnnv58ec2379c；hostId selfhost-li159-118-935f9597。manifest/profile位于 `/home/isp/conf/cyf-agent-runtime-v1/likui/`，私有HOME为 `/home/isp/state/cyf-agent-runtime-v1/unified/agents/likui/codex-home`。只读取明确允许的配置元数据，未读取会话/凭证正文。
+- 该主机标准app/runtime与app/codex-bridge的package.json不存在，实际进程源码路径/版本和API侧绑定/会话状态仍需核实，不能直接套用本机安装路径或声称业务在线；原指纹故障已由用户授权接受解决。证据self-host-likui-observation-20261111.jsonl。未远程写配置、部署、扣款、停止进程、解除关系或清理数据。

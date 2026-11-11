@@ -1,0 +1,72 @@
+
+
+  MMD finalization immutable owner acceptance
+    ✔ rejects missing, unsafe, padded and noncanonical task versions without coercion
+    ✔ requires exact frozen source set, scope, versions and actual accepted/completed facts
+    ✔ persists and reads back the immutable intent before its first POST
+    ✔ does not infer completion from a bare stage/delivery label
+    ✔ does not submit concurrently on a second click
+    ✔ lost acknowledgement/remount keeps the original key/body; a status check never writes
+    ✔ only an explicit resume after 404 replays the original immutable POST
+    ✔ known operation reads by ID and resumes pending only with the original write
+    ✔ does not replay a POST when status reconciliation fails with 401
+    ✔ does not replay a POST when status reconciliation fails with 403
+    ✔ does not replay a POST when status reconciliation fails with 409
+    ✔ does not replay a POST when status reconciliation fails with 500
+    ✔ nonretryable domain failure is not automatically submitted again
+    ✔ retryable phase failure can resume the original operation without generation
+    ✔ identity switching aborts and fences a late completion while preserving each owner recovery key
+    ✔ rejects receipt version rollback and conflicting same-version facts
+    ✔ rejects a higher-version receipt that regresses a confirmed domain stage or completion
+    ✔ never opens a new operation with unavailable storage
+    ✔ never opens a new operation with readback mismatch storage
+    ✔ never opens a new operation with corrupt recovered intent storage
+    ✔ never opens a new operation with recovery read error storage
+    ✔ confirmed server completion stays confirmed when later recovery persistence fails
+    ✔ does not accept hidden permission fields or duplicate source selections
+
+  MMD completed-message finalization wire and recovery
+    ✔ submits text-only without invented output IDs and freezes nested refs
+    ✔ submits ordered mixed media/text without invented output IDs and freezes nested refs
+    ✔ compares every actual message ref and preserves order rather than accepting a newer text receipt
+    ✔ rejects numeric/zero/padded/overflow message IDs and incomplete/hybrid source authority before requesting
+    ✔ rejects duplicate actual text message even with a changed snapshot, digest or title
+    ✔ text acknowledgement loss/remount reads only, then explicitly replays the original mixed key and nested refs
+    ✔ changed nested message refs in a server receipt leave original text intent unresolved
+    ✔ owner switching fences a late text receipt and restores only that owner original refs
+    ✔ does not recover corrupted or fabricated stored message refs into a new operation
+
+  real API text receipt nullable DTO source slots
+    ✔ recognizes completed pure text and mixed receipts without changing frozen request sources
+    ✔ keeps original unknown intent and resolves completion via GET only
+    ✔ rejects invented IDs, partial null slots, extra fields, changed digests and reordered selection
+
+  validated finalization completion refresh boundary
+    ✔ forwards the exact scoped completion to the page without mutating the selected task (44ms)
+    ✔ wires the actual bounty page to refresh server tasks, not to a local completion mutation
+    ✔ compiles the affected templates and scripts (351ms)
+
+  Juyi Hall conversation material references
+    ✔ shows task-scoped fixed versions from the real task directory without turning them into chat text
+    ✔ keeps legacy execution support but limits the embedded entrance to file browsing
+
+  1.13.2 Babao-box workspace entry
+    ✔ renders only canonical private output references and never promotes them to formal acceptance
+    ✔ accepts only a published task artifact with an authoritative formal state and preserves no secrets
+    ✔ uses the server taskId without a selected task and refuses a conflicting or missing published taskId
+    ✔ shows TASK publication lag as syncing rather than a pseudo-delivery
+    ✔ drops malformed or secret-bearing conversation items and clears a stale request after a conversation switch
+    ✔ offers version-pinned workspace references inline while retaining the Babao entry
+
+  Juyi Hall simple composer more menu
+    ✔ allows attachment-only bounty input, but not empty, private, public or locked sends (59ms)
+    ✔ groups the textarea, plus, voice target and send inside one input frame
+    ✔ starts closed and opens materials without changing or submitting the draft
+    ✔ closes on Escape or outside click and restores focus
+    ✔ closes the menu when the real identity/conversation context changes
+    ✔ keeps recording controls reachable after closing the menu
+    ✔ wires existing material and workspace operations below chat rather than in its toolbar
+
+
+  53 passing (662ms)
+

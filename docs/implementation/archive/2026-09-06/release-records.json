@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "archive_authority": "user: 行，做一次归档，然后对SDD文档做一次全量更新。",
+  "kind": "historical_archive_not_runtime_ledger",
+  "records": [
+    {
+      "archive_id": "AR-20260906-01",
+      "title": "消息可靠传输历史发布记录",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "source_accepted_release_record_archived",
+      "source_task_ids": [
+        "D06",
+        "D08",
+        "D09",
+        "M3-IR",
+        "M3-RG"
+      ],
+      "evidence_scope": "只归档 accepted 源码及 M3-RG API 上线记录；API health 不证明 Rabbit 已激活、生产端到端或全部 DLQ/redrive 场景通过。D09 仅 R8-2，R8-3/4 不得据此开放。",
+      "residual_obligations": "保留生产 Rabbit 激活/端到端验证缺口；不关闭 M4/M5。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    },
+    {
+      "archive_id": "AR-20260906-02",
+      "title": "API/Web 发布与历史 502 恢复",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "released_record_archived_with_exceptions",
+      "source_task_ids": [
+        "FINAL-RELEASE-PREP-R1",
+        "PWA-INTEGRATION-API-RC",
+        "PROD-API-RECOVERY-502"
+      ],
+      "evidence_scope": "实际发布记录已 done；旧离线 fault-injection/R39 因用户发布优先决策被替代，不标记为测试通过。",
+      "residual_obligations": "OPS-API-RECOVERY-20260905-1932 为后续独立恢复任务，不能跟随旧事故关闭。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    },
+    {
+      "archive_id": "AR-20260906-03",
+      "title": "API 恢复与监控激活",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "released_record_archived",
+      "source_task_ids": [
+        "OPS-API-RECOVERY-HEALTHMON",
+        "OPS-JUYITING-HEALTHMON",
+        "OPS-JUYITING-HEALTHMON-ACTIVATION"
+      ],
+      "evidence_scope": "原恢复自然结束、监控源码 accepted、安装/cron tick 激活 done。",
+      "residual_obligations": "监控继续运行；真实收件箱投递未确认，归档不代表邮件已送达。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    },
+    {
+      "archive_id": "AR-20260906-04",
+      "title": "聚义厅屏幕与阅读旧修复发布",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "released_record_archived_followups_open",
+      "source_task_ids": [
+        "JY-BUG-SCREEN-20260905",
+        "JY-BUG-READER-20260905",
+        "JY-BUG-RELEASE-20260905"
+      ],
+      "evidence_scope": "Web 101ac4c6a2b49d04771dedef52af893c72f98c09 已推送/发布，57 screen +55 reader、build、独立源码审查有记录；没有真实设备循环 PASS。",
+      "residual_obligations": "JY-FOLLOWUP-SCREEN-20260906、JY-FOLLOWUP-READER-20260906、JY-FOLLOWUP-VERIFY-20260906 保持活动。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    },
+    {
+      "archive_id": "AR-20260906-05",
+      "title": "案卷阁 H06 原始发布里程碑",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "released_record_archived_followups_open",
+      "source_task_ids": [
+        "H06"
+      ],
+      "evidence_scope": "只归档 H06 实际 API 发布记录，原重型离线 importer 门禁未完成，由用户风险接受替代。",
+      "residual_obligations": "CORS 补丁已上线且预检通过；authenticated adapter、进度/书签/手札实际闭环、设备交互未全部验收，整个案卷阁不归档。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    },
+    {
+      "archive_id": "AR-20260906-06",
+      "title": "Agent 客户端技能自动刷新",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "released_feature_archive",
+      "source_task_ids": [],
+      "evidence_scope": "specs/agent-client-skill-refresh/spec.md 记录 API108、Client97、独立 Review 与 2026-08-23 部署。",
+      "residual_obligations": "不包括技能市场购买/安装/资金结算；旧交付不是本次实时重验。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    },
+    {
+      "archive_id": "AR-20260906-07",
+      "title": "Agent 工作目录能力自动刷新",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "released_feature_archive",
+      "source_task_ids": [],
+      "evidence_scope": "specs/agent-workspace-capability-refresh/spec.md 记录 Client119、独立 Review 与 2026-08-23 三 Profile 发布 smoke。",
+      "residual_obligations": "能力标签不是 ACL 或已购买/已安装技能证明；无新增运行操作。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    },
+    {
+      "archive_id": "AR-20260906-08",
+      "title": "OAuth 公共客户端加固",
+      "archived_at": "2026-09-06T09:21:00.295553+08:00",
+      "archive_status": "released_feature_archive",
+      "source_task_ids": [],
+      "evidence_scope": "specs/oauth-public-client-hardening/spec.md 及 integration.yaml 记录独立 ACCEPT、2026-08-24 部署与 artifact/revision。",
+      "residual_obligations": "只关闭该 OAuth 契约；账号生命周期、全局撤销、托管密钥与整体验证不随之关闭。",
+      "snapshot": "docs/implementation/archive/2026-09-06/execution-snapshot.json"
+    }
+  ]
+}

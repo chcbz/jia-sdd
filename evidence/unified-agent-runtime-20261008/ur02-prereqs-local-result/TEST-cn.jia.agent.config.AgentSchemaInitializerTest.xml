@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.config.AgentSchemaInitializerTest" tests="48" skipped="0" failures="13" errors="0" timestamp="2026-10-08T13:55:43.726Z" hostname="iZwz9j3ip2unzhwij0bs30Z" time="4.441">
+  <properties/>
+  <testcase name="missingOrWrongBackfillPrimaryKeyFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.736"/>
+  <testcase name="hostedProfileStrictCatalogRejectsExtraOrChangedCheckExpressions()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.742"/>
+  <testcase name="hostedProfileStrictCatalogAcceptsExactlyFourChecksOnRepeat()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.066"/>
+  <testcase name="initializerAndMigrationKeepIdentityTriggerDefinitionsInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.547">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.initializerAndMigrationKeepIdentityTriggerDefinitionsInParity(AgentSchemaInitializerTest.java:896)
+</failure>
+  </testcase>
+  <testcase name="hostedProfileInitializerAndFullBaselineDeclareSameFourChecks()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.18">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.hostedProfileInitializerAndFullBaselineDeclareSameFourChecks(AgentSchemaInitializerTest.java:49)
+</failure>
+  </testcase>
+  <testcase name="taskEventStorageEngineValidationAcceptsOnlyInnoDb()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.002"/>
+  <testcase name="identityTriggerOnWrongTableFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.114"/>
+  <testcase name="incompatibleActiveAliasIndexFailsStartup()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.017"/>
+  <testcase name="requiredSceneIndexWithWrongUniquenessFailsStartup()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.017"/>
+  <testcase name="initializerAndSqlResourcesKeepCollaborationTableStructureInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.21">
+    <failure message="org.opentest4j.AssertionFailedError: agent_task_artifact initializer ==&gt; expected: &lt;TableStructure[columns={id=bigint not null auto_increment comment 'primary key', artifact_id=varchar(100) not null comment 'stable logical artifact id', task_id=varchar(100) not null comment 'task id', owner_jiacn=varchar(50) not null comment 'authenticated task owner', work_item_id=varchar(100) default null comment 'related work item id', producer_agent_id=varchar(100) not null comment 'adr-001 canonical producer agentid', artifact_type=varchar(30) not null comment 'summary/document/patch/commit/test_report/analysis/dataset/link', title=varchar(255) not null comment 'artifact title', content=mediumtext comment 'inline artifact content', storage_uri=varchar(1000) default null comment 'external large object location', content_hash=varchar(128) default null comment 'content integrity hash', artifact_version=int not null default 1 comment 'logical artifact version', visibility=varchar(20) not null default 'task_members' comment 'task_members/reviewer/private', metadata_json=text comment 'artifact metadata json', created_at=bigint not null comment 'artifact publication time', tenant_id=varchar(50) not null comment 'owner jiacn scope', client_id=varchar(50) not null comment 'oauth/api client scope', create_time=bigint default null comment 'create time', update_time=bigint default null comment 'update time'}, indexes={primary=unique|id, uk_artifact_version=unique|tenant_id,client_id,owner_jiacn,artifact_id,artifact_version, idx_artifact_task_created=nonunique|tenant_id,client_id,owner_jiacn,task_id,created_at, idx_artifact_work_item=nonunique|tenant_id,client_id,owner_jiacn,work_item_id,artifact_type,created_at, idx_artifact_producer=nonunique|tenant_id,client_id,owner_jiacn,producer_agent_id,created_at, idx_artifact_hash=nonunique|tenant_id,client_id,owner_jiacn,content_hash}]&gt; but was: &lt;TableStructure[columns={id=bigint not null auto_increment comment 'primary key', artifact_id=varchar(100) not null comment 'stable logical artifact id', task_id=varchar(100) not null comment 'task id', owner_jiacn=varchar(50) not null comment 'authenticated task owner', work_item_id=varchar(100) default null comment 'related work item id', producer_agent_id=varchar(100) not null comment 'adr-001 canonical producer agentid', artifact_type=varchar(30) not null comment 'summary/document/patch/commit/test_report/analysis/dataset/link', title=varchar(255) not null comment 'artifact title', content=mediumtext comment 'inline artifact content', storage_uri=varchar(1000) default null comment 'external large object location', content_hash=varchar(128) default null comment 'content integrity hash', artifact_version=int not null default 1 comment 'logical artifact version', visibility=varchar(20) not null default 'task_members' comment 'task_members/reviewer/private', metadata_json=text comment 'artifact metadata json', created_at=bigint not null comment 'artifact publication time', tenant_id=varchar(50) not null comment 'owner jiacn scope', client_id=varchar(50) not null comment 'oauth/api client scope', create_time=bigint default null comment 'create time', update_time=bigint default null comment 'update time'}, indexes={primary=unique|id, uk_artifact_version=unique|tenant_id,client_id,artifact_id,artifact_version, idx_artifact_task_created=nonunique|tenant_id,client_id,task_id,created_at, idx_artifact_work_item=nonunique|tenant_id,client_id,work_item_id,artifact_type,created_at, idx_artifact_producer=nonunique|tenant_id,client_id,producer_agent_id,created_at, idx_artifact_hash=nonunique|tenant_id,client_id,content_hash}]&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: agent_task_artifact initializer ==&gt; expected: &lt;TableStructure[columns={id=bigint not null auto_increment comment 'primary key', artifact_id=varchar(100) not null comment 'stable logical artifact id', task_id=varchar(100) not null comment 'task id', owner_jiacn=varchar(50) not null comment 'authenticated task owner', work_item_id=varchar(100) default null comment 'related work item id', producer_agent_id=varchar(100) not null comment 'adr-001 canonical producer agentid', artifact_type=varchar(30) not null comment 'summary/document/patch/commit/test_report/analysis/dataset/link', title=varchar(255) not null comment 'artifact title', content=mediumtext comment 'inline artifact content', storage_uri=varchar(1000) default null comment 'external large object location', content_hash=varchar(128) default null comment 'content integrity hash', artifact_version=int not null default 1 comment 'logical artifact version', visibility=varchar(20) not null default 'task_members' comment 'task_members/reviewer/private', metadata_json=text comment 'artifact metadata json', created_at=bigint not null comment 'artifact publication time', tenant_id=varchar(50) not null comment 'owner jiacn scope', client_id=varchar(50) not null comment 'oauth/api client scope', create_time=bigint default null comment 'create time', update_time=bigint default null comment 'update time'}, indexes={primary=unique|id, uk_artifact_version=unique|tenant_id,client_id,owner_jiacn,artifact_id,artifact_version, idx_artifact_task_created=nonunique|tenant_id,client_id,owner_jiacn,task_id,created_at, idx_artifact_work_item=nonunique|tenant_id,client_id,owner_jiacn,work_item_id,artifact_type,created_at, idx_artifact_producer=nonunique|tenant_id,client_id,owner_jiacn,producer_agent_id,created_at, idx_artifact_hash=nonunique|tenant_id,client_id,owner_jiacn,content_hash}]&gt; but was: &lt;TableStructure[columns={id=bigint not null auto_increment comment 'primary key', artifact_id=varchar(100) not null comment 'stable logical artifact id', task_id=varchar(100) not null comment 'task id', owner_jiacn=varchar(50) not null comment 'authenticated task owner', work_item_id=varchar(100) default null comment 'related work item id', producer_agent_id=varchar(100) not null comment 'adr-001 canonical producer agentid', artifact_type=varchar(30) not null comment 'summary/document/patch/commit/test_report/analysis/dataset/link', title=varchar(255) not null comment 'artifact title', content=mediumtext comment 'inline artifact content', storage_uri=varchar(1000) default null comment 'external large object location', content_hash=varchar(128) default null comment 'content integrity hash', artifact_version=int not null default 1 comment 'logical artifact version', visibility=varchar(20) not null default 'task_members' comment 'task_members/reviewer/private', metadata_json=text comment 'artifact metadata json', created_at=bigint not null comment 'artifact publication time', tenant_id=varchar(50) not null comment 'owner jiacn scope', client_id=varchar(50) not null comment 'oauth/api client scope', create_time=bigint default null comment 'create time', update_time=bigint default null comment 'update time'}, indexes={primary=unique|id, uk_artifact_version=unique|tenant_id,client_id,artifact_id,artifact_version, idx_artifact_task_created=nonunique|tenant_id,client_id,task_id,created_at, idx_artifact_work_item=nonunique|tenant_id,client_id,work_item_id,artifact_type,created_at, idx_artifact_producer=nonunique|tenant_id,client_id,producer_agent_id,created_at, idx_artifact_hash=nonunique|tenant_id,client_id,content_hash}]&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.initializerAndSqlResourcesKeepCollaborationTableStructureInParity(AgentSchemaInitializerTest.java:369)
+</failure>
+  </testcase>
+  <testcase name="h2DialectOmitsUnsupportedStoredKeywordFromGeneratedBindingColumns()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.135"/>
+  <testcase name="h2WithoutOptionalBaseAgentTablesStillInitializesAndValidatesSceneSchema()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.004"/>
+  <testcase name="weakenedIdentityCheckDefinitionFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.093"/>
+  <testcase name="taskEventUniqueIndexesMustBeExactlyScopedRequiredSet()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.023">
+    <failure message="java.lang.IllegalStateException: agent_task_event UNIQUE indexes must be exactly {uk_task_event_version=[tenant_id, client_id, owner_jiacn, task_id, event_version], PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, owner_jiacn, event_id]}; dangerous scoped-uniqueness drift found: {PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, event_id], uk_task_event_version=[tenant_id, client_id, task_id, event_version]}" type="java.lang.IllegalStateException">java.lang.IllegalStateException: agent_task_event UNIQUE indexes must be exactly {uk_task_event_version=[tenant_id, client_id, owner_jiacn, task_id, event_version], PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, owner_jiacn, event_id]}; dangerous scoped-uniqueness drift found: {PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, event_id], uk_task_event_version=[tenant_id, client_id, task_id, event_version]}
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventUniqueIndexes(AgentSchemaInitializer.java:2488)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventUniqueIndexesMustBeExactlyScopedRequiredSet(AgentSchemaInitializerTest.java:128)
+</failure>
+  </testcase>
+  <testcase name="weakenedIdentityTriggerDefinitionFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.015"/>
+  <testcase name="mysqlDialectRetainsStoredGeneratedBindingColumns()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.095">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.mysqlDialectRetainsStoredGeneratedBindingColumns(AgentSchemaInitializerTest.java:871)
+</failure>
+  </testcase>
+  <testcase name="initializerAndMigrationKeepBackfillAuditTriggerDefinitionsInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.054">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.initializerAndMigrationKeepBackfillAuditTriggerDefinitionsInParity(AgentSchemaInitializerTest.java:671)
+</failure>
+  </testcase>
+  <testcase name="b0IdentityTablesWithAiCiCollationFailClosedBeforeStartup()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.056"/>
+  <testcase name="runCreatesTaskNoteTableIfMissing()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.045">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.runCreatesTaskNoteTableIfMissing(AgentSchemaInitializerTest.java:298)
+</failure>
+  </testcase>
+  <testcase name="initializerHistoricalBaselineBootstrapIsDdlOnlyWithoutRoutinesOrPrivileges()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.044">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.initializerHistoricalBaselineBootstrapIsDdlOnlyWithoutRoutinesOrPrivileges(AgentSchemaInitializerTest.java:440)
+</failure>
+  </testcase>
+  <testcase name="requiredSceneIndexWithWrongOrderedColumnsFailsStartup()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.02"/>
+  <testcase name="incompatibleAliasForeignKeyRuleFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.012"/>
+  <testcase name="freshTaskEventCreatePerformsPostCreateExistenceValidation()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.002"/>
+  <testcase name="missingOrDriftedHistoricalEventAuditTriggerFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.003"/>
+  <testcase name="requiredSceneIndexWithPrefixComponentFailsStartup()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.011"/>
+  <testcase name="initializerAndSchemaResourceKeepIdentityTablesInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.089">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.initializerAndSchemaResourceKeepIdentityTablesInParity(AgentSchemaInitializerTest.java:532)
+</failure>
+  </testcase>
+  <testcase name="incompatibleArtifactVersionUniqueIndexFailsStartup()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.055"/>
+  <testcase name="concurrentIncompatibleCreateNoOpFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.003"/>
+  <testcase name="partialHistoricalEventAuditSchemaFailsBeforeCreateCanMaskIt()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.04"/>
+  <testcase name="initializerAndMigrationKeepHistoricalEventAuditTriggerDefinitionsInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.096">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.initializerAndMigrationKeepHistoricalEventAuditTriggerDefinitionsInParity(AgentSchemaInitializerTest.java:421)
+</failure>
+  </testcase>
+  <testcase name="initializerAndSchemaResourceKeepSceneTableStructureInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.169"/>
+  <testcase name="schemaDeclaresScopedSemanticSceneTablesWithoutRuntimeGeometryOrSecrets()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.005">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;true&gt; but was: &lt;false&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:69)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:41)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:35)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:195)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.schemaDeclaresScopedSemanticSceneTablesWithoutRuntimeGeometryOrSecrets(AgentSchemaInitializerTest.java:270)
+</failure>
+  </testcase>
+  <testcase name="missingBackfillIdAutoIncrementFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.04"/>
+  <testcase name="hostedProfileStrictCatalogRejectsEveryMissingCheckIncludingOldThreeSet()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.037"/>
+  <testcase name="taskEventUniqueValidationAllowsHarmlessOrdinaryIndexes()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.004">
+    <failure message="java.lang.IllegalStateException: agent_task_event UNIQUE indexes must be exactly {uk_task_event_version=[tenant_id, client_id, owner_jiacn, task_id, event_version], PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, owner_jiacn, event_id]}; dangerous scoped-uniqueness drift found: {PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, event_id], uk_task_event_version=[tenant_id, client_id, task_id, event_version]}" type="java.lang.IllegalStateException">java.lang.IllegalStateException: agent_task_event UNIQUE indexes must be exactly {uk_task_event_version=[tenant_id, client_id, owner_jiacn, task_id, event_version], PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, owner_jiacn, event_id]}; dangerous scoped-uniqueness drift found: {PRIMARY=[id], uk_task_event_id=[tenant_id, client_id, event_id], uk_task_event_version=[tenant_id, client_id, task_id, event_version]}
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventUniqueIndexes(AgentSchemaInitializer.java:2488)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventUniqueValidationAllowsHarmlessOrdinaryIndexes(AgentSchemaInitializerTest.java:162)
+</failure>
+  </testcase>
+  <testcase name="incompatibleGeneratedColumnFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.018"/>
+  <testcase name="sqlNormalizationPreservesParenthesisLogicAndNormalizesOnlyItsWhitespace()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.003"/>
+  <testcase name="incompatibleBackfillAuditColumnTypeLengthNullDefaultOrCollationFailsStartup()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.243"/>
+  <testcase name="incompatibleLegacyActivePersonaIndexFailsStartupUntilMigrationRuns()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.005"/>
+  <testcase name="initializerSchemaAndHistoricalBaselineAuditKeepTablesInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.065"/>
+  <testcase name="incompatibleBackfillManifestIndexFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.016"/>
+  <testcase name="h2DialectUsesNativeIndexCatalogAndStillRejectsIncompatibleRequiredIndex()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.006"/>
+  <testcase name="backfillAuditTriggerOnWrongTableFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.093"/>
+  <testcase name="parenthesisLogicCollisionInTriggerFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.008"/>
+  <testcase name="initializerAddsAllRequiredTaskMetaCollaborationColumns()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.043">
+    <failure message="java.lang.AssertionError: unknown task event column owner_jiacn" type="java.lang.AssertionError">java.lang.AssertionError: unknown task event column owner_jiacn
+	at cn.jia.agent.config.AgentSchemaInitializerTest.taskEventColumn(AgentSchemaInitializerTest.java:2139)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.lambda$configureTaskEventCatalog$59(AgentSchemaInitializerTest.java:1669)
+	at org.mockito.internal.stubbing.StubbedInvocationMatcher.answer(StubbedInvocationMatcher.java:42)
+	at org.mockito.internal.handler.MockHandlerImpl.handle(MockHandlerImpl.java:103)
+	at org.mockito.internal.handler.NullResultGuardian.handle(NullResultGuardian.java:29)
+	at org.mockito.internal.handler.InvocationNotifierHandler.handle(InvocationNotifierHandler.java:34)
+	at org.mockito.internal.creation.bytebuddy.access.MockMethodInterceptor.doIntercept(MockMethodInterceptor.java:84)
+	at org.mockito.internal.creation.bytebuddy.MockMethodAdvice.handle(MockMethodAdvice.java:136)
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:824)
+	at cn.jia.agent.config.AgentSchemaInitializer.inspectColumnDefinition(AgentSchemaInitializer.java:409)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateIdentityColumn(AgentSchemaInitializer.java:369)
+	at cn.jia.agent.config.AgentSchemaInitializer.validateTaskEventSchema(AgentSchemaInitializer.java:2402)
+	at cn.jia.agent.config.AgentSchemaInitializer.ensureTaskEventSchema(AgentSchemaInitializer.java:2357)
+	at cn.jia.agent.config.AgentSchemaInitializer.afterPropertiesSet(AgentSchemaInitializer.java:34)
+	at cn.jia.agent.config.AgentSchemaInitializerTest.initializerAddsAllRequiredTaskMetaCollaborationColumns(AgentSchemaInitializerTest.java:336)
+</failure>
+  </testcase>
+  <testcase name="postCreateMissingTaskEventTableFailsClosed()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.002"/>
+  <testcase name="initializerSchemaAndBackfillMigrationKeepAuditTablesInParity()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.046"/>
+  <testcase name="partialIdentityTableFailsClosedBeforeCreateCanMaskIt()" classname="cn.jia.agent.config.AgentSchemaInitializerTest" time="0.011"/>
+  <system-out><![CDATA[21:55:46.247 [Test worker] INFO cn.jia.agent.config.AgentSchemaInitializer -- Skipping Water Margin persona seeds because H2 does not provide the optional agent_persona table
+21:55:46.503 [Test worker] INFO cn.jia.agent.config.AgentSchemaInitializer -- Skipping Water Margin persona seeds because H2 does not provide the optional agent_persona table
+21:55:46.513 [Test worker] INFO cn.jia.agent.config.AgentSchemaInitializer -- Skipping Water Margin persona seeds because H2 does not provide the optional agent_persona table
+21:55:47.489 [Test worker] INFO cn.jia.agent.config.AgentSchemaInitializer -- Skipping Water Margin persona seeds because H2 does not provide the optional agent_persona table
+21:55:47.907 [Test worker] INFO cn.jia.agent.config.AgentSchemaInitializer -- Skipping Water Margin persona seeds because H2 does not provide the optional agent_persona table
+21:55:48.145 [Test worker] INFO cn.jia.agent.config.AgentSchemaInitializer -- Skipping Water Margin persona seeds because H2 does not provide the optional agent_persona table
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

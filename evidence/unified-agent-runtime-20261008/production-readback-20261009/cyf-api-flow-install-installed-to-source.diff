@@ -1,0 +1,120 @@
+--- /usr/local/sbin/cyf-api-flow-install
++++ /home/isp/wsps/cyf/ops/ci/aliyun-flow/host/cyf-api-flow-install
+@@ -75,20 +75,12 @@
+ fi
+ TARGET_DIR="$(dirname "$TARGET_JAR")"
+ 
+-for command in awk chmod chown date df flock grep mkdir mktemp python3 readlink rm sha256sum stat; do
++for command in awk chmod chown date df flock grep mkdir mktemp python3 rm sha256sum stat; do
+   command -v "$command" >/dev/null 2>&1 || fail "missing command: $command"
+ done
+ 
+ mkdir -p -m 0700 "$PACKAGE_ROOT" "$PACKAGE_ROOT/incoming" "$BACKUP_ROOT"
+-[[ ! -L "$PACKAGE_ROOT" && ! -L "$PACKAGE_ROOT/incoming" && ! -L "$TARGET_DIR" ]] || fail 'package or target directory is symlinked'
+-# Preserve the installed backup alias and durable logical record paths. No other
+-# symlink is admitted, including in offline fixtures.
+-validate_backup_alias() {
+-  if [[ -L "$BACKUP_ROOT" ]]; then
+-    [[ "$OFFLINE_TEST" == 0 && "$BACKUP_ROOT" == /var/lib/cyf-api-flow/backups        && "$(stat -c '%u:%g' "$BACKUP_ROOT")" == '0:0'        && "$(readlink -f "$BACKUP_ROOT")" == /home/isp/baks/flow-api        && -d /home/isp/baks/flow-api && ! -L /home/isp/baks/flow-api ]]        || fail 'backup alias is unsafe'
+-  fi
+-}
+-validate_backup_alias
++[[ ! -L "$PACKAGE_ROOT" && ! -L "$PACKAGE_ROOT/incoming" && ! -L "$BACKUP_ROOT" && ! -L "$TARGET_DIR" ]] || fail 'package or target directory is symlinked'
+ if [[ -e "$TARGET_JAR" || -L "$TARGET_JAR" ]]; then
+   [[ -f "$TARGET_JAR" && ! -L "$TARGET_JAR" && -s "$TARGET_JAR" && "$(stat -Lc '%h' "$TARGET_JAR")" == 1 ]] || fail 'canonical JAR is unsafe'
+ fi
+@@ -220,7 +212,6 @@
+ }
+ json_members = {'application.metadata.json', 'application.sidecar.json', 'dependency.provenance.json', 'receipt.json'}
+ seen = set()
+-report_seen = set()
+ total = 0
+ try:
+     info = package.stat()
+@@ -230,16 +221,6 @@
+         for member in archive:
+             name = member.name[2:] if member.name.startswith('./') else member.name
+             if name in ('', '.') and member.isdir():
+-                continue
+-            if name == 'test-results' or name.startswith('test-results/'):
+-                if (name in report_seen or name.startswith('/') or '\\' in name or '\x00' in name
+-                        or any(part in ('', '.', '..') for part in name.split('/'))
+-                        or not (member.isdir() or (member.isreg() and member.size >= 0
+-                            and (name == 'test-results/summary.json' or name.endswith('.xml'))))):
+-                    raise SystemExit('unsafe or duplicate test report member')
+-                report_seen.add(name)
+-                # CI reports stay in the original Flow artifact; never extract them
+-                # into the privileged application installation workspace.
+                 continue
+             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
+                     or any(part in ('', '.', '..') for part in name.split('/'))
+@@ -356,23 +337,12 @@
+         view = view[written:]
+ 
+ seen = set()
+-report_seen = set()
+ total = 0
+ try:
+     with tarfile.open(package, 'r|gz') as archive:
+         for member in archive:
+             name = member.name[2:] if member.name.startswith('./') else member.name
+             if name in ('', '.') and member.isdir():
+-                continue
+-            if name == 'test-results' or name.startswith('test-results/'):
+-                if (name in report_seen or name.startswith('/') or '\\' in name or '\x00' in name
+-                        or any(part in ('', '.', '..') for part in name.split('/'))
+-                        or not (member.isdir() or (member.isreg() and member.size >= 0
+-                            and (name == 'test-results/summary.json' or name.endswith('.xml'))))):
+-                    raise SystemExit('unsafe or duplicate test report member')
+-                report_seen.add(name)
+-                # CI reports stay in the original Flow artifact; never extract them
+-                # into the privileged application installation workspace.
+                 continue
+             if (not name or name.startswith('/') or '\\' in name or '\x00' in name
+                     or any(part in ('', '.', '..') for part in name.split('/'))
+@@ -942,13 +912,6 @@
+ 
+ restore_and_start() {
+   local phase="$1" stop_verified=0 recovery
+-  # Explicit forward-only release: preserve the candidate and diagnostics, never
+-  # detach it or start an older schema-incompatible JAR after cutover failure.
+-  if [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 ]]; then
+-    write_record failed "$phase" forward_only_candidate_retained "$STOP_RC" \
+-      || recoverable_fail 'forward-only failure record was interrupted; candidate retained'
+-    fail 'forward-only release failed; candidate retained for forward repair; no old JAR restart'
+-  fi
+   # The rollback decision is durable before stop, detach, or restore. Recovery dispatch
+   # treats this intent as monotonic and can never resume candidate promotion.
+   if ! write_record rolling_back "$phase" rollback_intent "$STOP_RC"; then
+@@ -984,21 +947,6 @@
+   if (( STOP_RC == 0 )); then recovery=restored_healthy; else recovery=restored_healthy_after_stop_error; fi
+   write_record failed "$phase" "$recovery" "$STOP_RC" || recoverable_fail 'rollback completion record was interrupted'
+   exit 1
+-}
+-
+-resume_forward_candidate() {
+-  # Explicit retry of the same failed forward-only candidate after a measured fix.
+-  # Never adopt a different ticket, restore backup bytes, or start the old JAR.
+-  [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_MATCH" == 1 \
+-     && "$RECORD_STATUS" == failed && "$RECORD_RECOVERY" == forward_only_candidate_retained \
+-     && "$TARGET_STATE" == "$JAR_SHA" ]] || return 1
+-  write_record activating forward_repair candidate_retained "$STOP_RC" \
+-    || recoverable_fail 'forward repair record interrupted; candidate retained'
+-  if ! "$LIFECYCLE" start; then
+-    restore_and_start forward_repair_start_failed
+-  fi
+-  lifecycle_healthy || restore_and_start forward_repair_status_failed
+-  finalize_candidate
+ }
+ 
+ commit_candidate() {
+@@ -1072,9 +1020,6 @@
+       [[ "$TARGET_STATE" == "$OLD_SHA" ]] || fail 'prepared transaction found unexpected canonical bytes'
+       ;;
+     failed)
+-      if [[ "${CYF_API_FLOW_FORWARD_ONLY:-0}" == 1 && "$RECORD_RECOVERY" == forward_only_candidate_retained && "$TARGET_STATE" == "$JAR_SHA" ]]; then
+-        resume_forward_candidate
+-      fi
+       if [[ "$TARGET_STATE" == MISSING || "$TARGET_STATE" == "$JAR_SHA" ]]; then
+         restore_and_start failed_rollback_recovery
+       fi

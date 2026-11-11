@@ -1,5 +1,27 @@
 # 典籍阁 Agent 任职与内容维护：总体方案与详细设计
 
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 现行设计边界（2026-11-07）
+
+**本专题：典籍任职、资料整理与受控内容维护。**
+
+### 最小责任链
+API管理任职/版本/发布权限和事实；模型按技能编排；工具实现内容协议；bridge只执行隔离。
+
+明确任务与任职授权→模型调用获准通用内容工具→草稿/版本→受控发布→读取发布事实。
+
+### 实施约束
+任职、技能安装、任务准入各自独立；不按好汉显示名或技能名硬编码通用Runtime，不向Agent暴露数据库凭据。
+
+通用开发/验证约束：[统一开发约束](../architecture-convergence/development-principles.md)。
+
+只在本专题实际改变协议或数据语义时同步生产者/消费者/必要迁移；接口不变的内部修复不默认修改Web、API、Runtime全链。表/索引修改须说明其查询或一致性职责，不新建CHECK/触发器代替业务规则。
+
+**入口与阅读边界：** 文档状态、入口及阅读边界以[需求](spec.md)现行规格为准。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
+
 **版本：D2；日期：2026-09-28；状态：ready / 可交接实施，从 M0 基线映射开始。下文是目标合同，不是已实现能力；未派发、未测试、未部署。**
 
 > D2 已吸收兼容性复核：不扩旧 ItemRef、不建第二套调度/文件系统、保留直达吴用、区分 Runtime 协议、隔离私人来源与公开发布。实施入口见[Agent 交接](/home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md)，共享边界见 §18；D1 风险记录保留在[影响评估](/home/isp/wsps/cyf/specs/archive-agent-maintenance/impact-assessment.md)。
@@ -30,7 +52,7 @@
 | 位置 | 当前观察 | 本功能的必要改动 |
 | --- | --- | --- |
 | `ArchiveManifestLoader` | 固定水浒书名、work/edition、哈希、120 回等 | 保留旧种子校验器；新增通用 manifest 校验器，不修改种子摘要来冒充新书 |
-| `archive-schema.sql` / `ArchiveSchemaCatalog` | DB CHECK 固定 120 回，序回区间到 120；启动精确比对 schema | 有版本的迁移 + 双 schema 兼容阶段；修改 SQL 和 Java 预期两处 |
+| `archive-schema.sql` / `ArchiveSchemaCatalog` | 历史审计：DB CHECK固定120回、旧启动精确比对schema | 当前不新增/依赖CHECK；业务规则由服务层落实，同步DDL/catalog/启动器，不自动恢复旧CHECK；已有生产约束仅授权迁移 |
 | `ArchiveBootstrap` / importer | 启动导入且可能重新激活种子版本 | 种子只在空书目初始化；重启不能覆盖已发布的新 active 指针 |
 | `ArchiveReaderServiceImpl` | 单书 catalog；READY 与固定摘要/计数绑定；只允许当前 active | 新书架/单书目录；按发布记录读取历史版本；不把 READY 等同公开 |
 | `JdbcArchivePersonalDataStore` | `lockActiveEdition` SQL 写死 shuihuzhuan | 统一“可读已发布版本”解析，保留 owner 隔离、锚点和 CAS |
@@ -212,7 +234,7 @@ archive-maintainer/
        非终态 → SUSPENDED_AUTH / FAILED / CANCELLED
 ```
 
-- Agent 离线通常表现为 QUEUED + `waitReason=AGENT_OFFLINE`；没有任职则 WAITING_ASSIGNEE，不自动挑一个有类似名字的 Agent。
+- Agent 离线表现为 QUEUED + `waitReason=AGENT_OFFLINE`；没有任职则 WAITING_ASSIGNEE，不自动挑一个有类似名字的 Agent。
 - `AWAITING_PUBLISH` 表示草稿交付完成，**不等于上架完成**。
 - `FAILED` 记录阶段、根因、可否重试；修复/新输入后显式 resume 创建新 attempt，不改旧失败事实。
 - `SUSPENDED_AUTH` 必须由有权管理者重新授权恢复/移交；给旧任务换一个任职 ID 直接继续是不允许的。
@@ -566,15 +588,15 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 
 ### 13.1 兼容目标
 
-单租户严格沿用 tenant=0 及 owner/client 隔离，不增加旧 tenant=owner 兼容分支。下述 schema 桥接仅限典籍内容结构。
+单租户严格沿用环境业务租户（当前为 tenant=0）及 owner/client 隔离，不增加旧 tenant=owner 兼容分支；环境租户口径见[环境租户规格](../full-tenant-gray/spec.md)，此处不另定义租户规则。下述 schema 桥接仅限典籍内容结构。
 
 旧水浒 work/edition/block/paragraph ID、正文、摘要、个人数据不变；旧 `/catalog` 返回 shape 不变；新书使用新入口。已有选文问题的 edition/anchor 不重解释。只读权限、个人 owner 隔离、map/roster 分流和显式 task 目标保持。
 
 ### 13.2 分阶段迁移
 
 1. **观察/冻结**：核对实际组件/source/client SHA、DB schema 版本和样本数据；当前文档 HEAD 不能直接作为发布基线。
-2. **桥接版本**：先部署能识别旧/新 schema 的启动校验器；通用业务入口关闭，旧数据继续读取。修复种子 bootstrap 为“存在则验证，不夺回 active”。若未先桥接，旧程序可能因精确 CHECK 比对而重启失败。
-3. **扩展迁移**：添加管理/草稿/发布旁表，登记旧书库关联与旧版 publication，放宽章回/序言 CHECK。DDL 不假设跨语句事务原子；记录每步 schema 版本/校验摘要，可从实际状态恢复。
+2. **桥接版本**：按实际切换依赖准备不新增/依赖CHECK的候选，同步DDL/catalog/启动器和责任层回归；种子bootstrap存在时不夺回active。历史旧程序精确比对CHECK的风险须在迁移前核实，不为兼容恢复已退役约束。
+3. **扩展迁移**：添加管理/草稿/发布旁表，登记旧书库关联与旧版 publication，业务层落实章回/序言规则；若目标库仍存在旧CHECK，按授权迁移删除，不启动清库。DDL 不假设跨语句事务原子；记录每步 schema 版本/校验摘要，可从实际状态恢复。
 4. **原数据保护验证**：迁移前后固定段落/正文/私人数据样本的 ID/摘要和数量一致；不重算旧 manifest。使用 fixture 全量验证与生产授权的最小只读核验，不复制私人正文进日志。
 5. **服务/客户端能力**：部署 native allowlist、平台安装、执行命令支持；未升级客户端清晰不可执行，不误报技能就绪。
 6. **前端**：启用多书 reader 和管理功能可见性；旧客户端仍可读旧默认入口。
@@ -585,12 +607,12 @@ PUT 章节的概念请求：`{blockType, blockKey, ordinal, title, paragraphs:[{
 
 ## 14. 可观测性、费用与运维
 
-- trace 链：conversation intent → job → run → command → source/draft/validation → edition/publication；必要时关联平台安装。日志只记 ID/阶段/摘要/错误码，不记 token 或全文。
+- trace 链：conversation intent → job → run → command → source/draft/validation → edition/publication；存在平台安装记录时关联其安装身份。日志只记 ID/阶段/摘要/错误码，不记 token 或全文。
 - 指标：待输入/待技能/离线等待数、实际来源处理耗时、每章导入耗时、校验耗时、发布事务耗时、失败根因、重放次数、权限拒绝、active CAS 冲突。性能目标与成功率/可用性分开。
 - 超时只作为明确传输配置/实际故障信息；后台作业不因前端连接断开或剩余 SLO 预算不足取消。
 - 第一版不收费安装、不设岗位工资、不创建 funded bounty。模型执行仍可能有既有模型成本；开始真实运行前核对已有额度/调用授权，超出范围需用户明确授权，不能用安装免费推导推理免费。
 - 普通内容上架不需要每本重建/部署应用；只需受控内容发布事务。技能/协议/程序更新仍按组件正常发布。
-- 开发验证遵循项目当前政策：正式路径 Flow；用户授权的本地例外有效期间可本地测试/构建/发布，必须标 `build_origin=local_user_authorized` 并保留 exact SHA/tree、测试与制品 SHA-256，Gradle 经 orchestrator 串行。云效恢复后按用户指示恢复，不伪造 Run。
+- 开发验证遵循项目当前政策：默认本地固定干净源码、独立输出测试/构建/打包，按实际授权受控安装；使用现有适配器真实LOCAL来源，保留exact SHA/tree、测试与制品SHA-256，Gradle经orchestrator串行。不自动恢复Flow，不伪造Run。
 - 不新增独立 Reviewer，不增未知固定资源/耗时硬门槛；部署互斥、实际健康、进程归属、可恢复安装保留。
 
 ## 15. 交付包与验收重点

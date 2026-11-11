@@ -1,0 +1,183 @@
+{
+  "task": "FLOW-RESOURCE-SPLIT-20261022",
+  "auditDate": "2026-10-22",
+  "scope": "Read-only duration audit; no cloud write, start, cancel or deployment",
+  "liveReadbacks": [
+    {
+      "queriedAt": "2026-10-22T12:10:32.530Z",
+      "pipeline": "4403172",
+      "configuration": {
+        "name": "cyf-web-kit",
+        "configSha256": "db114b595d48ed3a61ede096c9e599565dece019c0c1859eec9a49fafc5b634e",
+        "canonicalConfigSha256": "baa047f7626f14747cad1687c0411bb127aae1fe80918e26d7beb31119bce379",
+        "configBytes": 7691,
+        "sourceCount": 1,
+        "sourceKinds": [
+          "giteeGit"
+        ]
+      },
+      "recentRuns": [
+        {
+          "id": 295,
+          "status": "SUCCESS"
+        },
+        {
+          "id": 294,
+          "status": "SUCCESS"
+        },
+        {
+          "id": 293,
+          "status": "CANCELED"
+        },
+        {
+          "id": 292,
+          "status": "FAIL"
+        },
+        {
+          "id": 291,
+          "status": "SUCCESS"
+        }
+      ],
+      "hasMore": true
+    },
+    {
+      "queriedAt": "2026-10-22T12:10:33.560Z",
+      "pipeline": "5260799",
+      "configuration": {
+        "name": "cyf-api-kit-ci",
+        "configSha256": "ddb996d1188ab24a06e3465210212303a24fe8300944fdf8fffa346a3fa1852d",
+        "canonicalConfigSha256": "b7e6cbec46029fa3a115407075a725f2b04eeb15ec30f4d6c291fd89add2b2e0",
+        "configBytes": 52283,
+        "sourceCount": 1,
+        "sourceKinds": [
+          "git"
+        ]
+      },
+      "recentRuns": [
+        {
+          "id": 234,
+          "status": "SUCCESS"
+        },
+        {
+          "id": 233,
+          "status": "SUCCESS"
+        },
+        {
+          "id": 232,
+          "status": "FAIL"
+        },
+        {
+          "id": 231,
+          "status": "FAIL"
+        },
+        {
+          "id": 230,
+          "status": "FAIL"
+        }
+      ],
+      "hasMore": true
+    }
+  ],
+  "web": {
+    "run": 294,
+    "totalSeconds": 177,
+    "checkoutSeconds": 93,
+    "parallelScanCheckoutSeconds": 30,
+    "testSeconds": 40.101,
+    "viteSeconds": 10.74,
+    "cacheRestoreSeconds": 4,
+    "artifactUploadStepSeconds": 5,
+    "cacheSaveSeconds": 6,
+    "note": "Step boundaries second-resolution; runtime/install detail missing from retained API log. Parallel scan duration144 seconds; its checkout overlaps build job, not additive."
+  },
+  "api": {
+    "run": 234,
+    "totalSeconds": 337,
+    "workerAndSetupBeforeCheckoutStepSeconds": 26,
+    "checkoutStepSeconds": 11,
+    "cacheRestoreSeconds": 15,
+    "buildStepSeconds": 248,
+    "gradleSeconds": 151.364,
+    "buildStepNonGradleResidualSeconds": 96.636,
+    "artifactUploadStepSeconds": 10,
+    "cacheSaveSeconds": 24,
+    "compileCacheHits": 103,
+    "longestTasks": [
+      {
+        "task": ":agent:jia-agent-service:test",
+        "rootBuild": true,
+        "startedSeconds": 15.320283494,
+        "seconds": 55.838314279,
+        "skipped": false,
+        "skipMessage": null,
+        "failed": false
+      },
+      {
+        "task": ":chat:jia-chat-service:mmdU3Finalization",
+        "rootBuild": true,
+        "startedSeconds": 63.84578436,
+        "seconds": 49.138152377,
+        "skipped": false,
+        "skipMessage": null,
+        "failed": false
+      },
+      {
+        "task": ":chat:jia-chat-service:test",
+        "rootBuild": true,
+        "startedSeconds": 22.138222105,
+        "seconds": 25.897853532,
+        "skipped": false,
+        "skipMessage": null,
+        "failed": false
+      },
+      {
+        "task": ":agent:jia-agent-service:mmdU1Grant",
+        "rootBuild": true,
+        "startedSeconds": 71.25138773,
+        "seconds": 24.119041733,
+        "skipped": false,
+        "skipMessage": null,
+        "failed": false
+      },
+      {
+        "task": ":starter:bootJar",
+        "rootBuild": true,
+        "startedSeconds": 57.82810684,
+        "seconds": 16.851469537,
+        "skipped": false,
+        "skipMessage": null,
+        "failed": false
+      },
+      {
+        "task": ":agent:jia-agent-service:mmdControlledImageBridge",
+        "rootBuild": true,
+        "startedSeconds": 128.446825906,
+        "seconds": 8.789278842,
+        "skipped": false,
+        "skipMessage": null,
+        "failed": false
+      }
+    ],
+    "note": "Residual is subtraction, not measured font/JDK/MySQL time. Parallel task durations must not be added as critical path."
+  },
+  "recommendations": [
+    {
+      "priority": 1,
+      "target": "Frontend source checkout",
+      "action": "Verify Flow checkout depth support and test/history dependency on pinned source before shallow-clone experiment",
+      "status": "Not applied; platform field not verified; no guaranteed savings"
+    },
+    {
+      "priority": 2,
+      "target": "Backend pre-Gradle preparation",
+      "action": "Persist JDK/font/MySQL phase timings into existing same-run summary, then choose one-variable optimization",
+      "status": "Not yet instrumented"
+    },
+    {
+      "priority": 3,
+      "target": "Avoid repeating rejected cache/JVM experiments",
+      "action": "Retain compile-only cache and original tests; prior Runs202-208 did not establish repeatable net savings",
+      "status": "History reviewed"
+    }
+  ]
+}

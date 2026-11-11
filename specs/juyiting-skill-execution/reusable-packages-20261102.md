@@ -1,3 +1,5 @@
+> **现行适用范围（2026-11-07）：** 本文是[所属专题](spec.md)的细则，不独立定义发布/角色/DFX规则；共用[统一开发约束](../architecture-convergence/development-principles.md)。旧日期候选/测试/安装仅代表当时范围，未核实部分不改成今日完成。业务协议/冻结输入不因文档整理改写。
+
 # 可复用原生技能包：盘点与安装契约
 
 当前目录（2026-11-03最终核对）：图片识别、图片生成、图片编辑、文档处理、信息检索、网页操作，共6项。此前7项/9项是历史阶段；资料分析、文本文件、PDF提取均已下架并清除活动安装，历史记录保留。详见末节。
@@ -53,7 +55,7 @@ RB职责：API负责商品/权益、业务权限和完成事实；Runtime负责�
 
 ## 4. 聚义厅安装适配（复用，不另建接口）
 
-1. 固定源码后，Flow worker测试/打包/上传不可变技能制品即结束；主机拉取并核对来源Run与SHA。不得把本机测试fixture ZIP当正式制品。
+1. 固定干净源码后，本地执行必要测试并打包不可变技能制品，记录真实构建批次/工具链/源码及SHA；受控安装核对同批来源。临时fixture ZIP仍不能冒充正式制品。
 2. 通过现有`POST /agent/skill-maintenance/product-versions`发布，multipart含metadata和package；使用真实ROLE_ADMIN身份，不直接写库、不复用旧root发布harness绕过入口。
 3. metadata依现有接口提供productId/productVersionId/name/description/skillKey/skillVersion/priceMicro/deploymentRestriction/approvedPermissionsManifest/packageSha256/manifestSha256/expectedProductVersion。新商品revision=0，升级读取真实revision；价格、权限与部署范围不得凭技能文本授权。正式商品ID及发布值在实际发布前核对，本文不伪造已注册记录。
 4. 聚义厅沿用技能目录、quote/order及`POST /agent/{agentId}/skill-changes`。不同Agent安装同一个商品版本，各自产生安装归属/ID/修订；不复制别人权益或借用安装记录。

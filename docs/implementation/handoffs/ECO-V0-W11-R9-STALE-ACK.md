@@ -1,0 +1,14 @@
+# W11 R9 bounded stale-completion closure — 2026-09-06
+
+Independent Sol R8 verdict on f8008be25a64742312460e064d770387d742f17f / ad26de12495216ffc88559bd53808e9420fee9ab: W12 SOURCE ACCEPT (no runtime proof); W11 REJECT. One attributed failure after prior authorization. Source/test findings:
+
+1. `sendFundedCreate` correctly cleans frozen A namespace but returns true after A->B switch; real JuyiHall wrapper then calls markTaskCreated and acknowledgement(true), clearing B's draft/form. Stale rejected A request also still plays error/toast in B context.
+2. New mounted public-contract tests query recovery panel without clicking `.new-task-button`, although actual component gates the form behind initially-false showCreateForm. Their delayed-A test explicitly expects the erroneous true result and bypasses Hall wrapper effects.
+
+Bounded correction: return non-success for stale completion, suppress stale catch feedback, preserve namespace cleanup; exercise actual parent acknowledgement/scene feedback plus mounted panel with its real create-form opening action. Cover delayed success/failure in both ordinary funded create and explicit recovery with B draft/selection/journal intact, no stale toast/sounds/markTaskCreated. Preserve unchanged W12, R02 and already closed W11 storage/receipt logic.
+
+Sole Terra Curie reuses its now-idle, independently reviewed `.worktrees/eco-v0-web-closure-r8` and adds a new commit **without reset/rebase/amend**. Prior f8008 commit/tree remains immutable and evidence-addressable; original c0fc and b799 worktrees remain untouched. This specifically avoids copying another full Web asset tree on the constrained disk. Reviewer has finished and released, so there is no concurrent source author or live-review worktree mutation.
+
+Owned source: `src/composables/juyiting/useHallTaskActions.js`; minimal actual-wrapper wiring under `src/components/world/JuyiHall.vue` only if necessary for a real test seam, plus focused tests. Do not introduce a framework, copy/reimplement the parent handler as if it were production proof, or broadly refactor Hall. Report a concrete small seam proposal if full actual-SFC mounting is impractical. No W12/lease/dependency/price/API changes.
+
+After a clean committed patch, a separately admitted **focused runtime check may precede final independent delta review** so deterministic hidden-DOM/setup failures are found immediately. Writer does not currently have execution GO: W09 still owns the heavy window and host MemAvailable was451MiB at15:11. No parallel Node/Vite/Gradle or dependency install now. Once resource window and exact pins are admitted, dependency reuse must enforce the read-only donor contract (`JVC-OAI-ECO-READONLY-DEPENDENCY-LOAN.md`) with bwrap and ECO-owned facade/cache/TMPDIR. Source completion or a syntax check is not runtime acceptance.

@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-30",
+  "failures": [
+    {
+      "attempt": "initial four-group run",
+      "result": "45 pass, 2 fail",
+      "cause": "Two existing SFC harnesses supplied useHallConversationArchive through a wrapper and did not supply the new useHallBountyFinalization import.",
+      "remediation": "Add the actual finalization composable and version parser to those harness dependencies; do not relax receipt validation.",
+      "changed_input": true
+    },
+    {
+      "attempt": "five-group run after terminal stage regression assertion",
+      "result": "56 pass, 1 fail",
+      "cause": "Existing preview assertion exhausted 50 setImmediate rounds before the second asynchronous native SHA-256 digest and Vue image insertion completed; actual DOM contained only the first preview at assertion.",
+      "remediation": "Wait for actual image insertion using MutationObserver, leaving the native digest and blob verification intact; no additional production timeout or larger arbitrary waiting loop.",
+      "changed_input": true
+    }
+  ],
+  "not_release_or_browser_evidence": true
+}

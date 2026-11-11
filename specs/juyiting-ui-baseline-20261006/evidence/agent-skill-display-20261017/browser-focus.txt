@@ -1,0 +1,27 @@
+if(process.env.PROTOTYPE_FOCUS==='agent-skill-display'){
+ for(const w of [1440,390,320]){
+  await viewport(w);await load('ready','agents');
+  const ids=await ev(`Object.fromEntries([...document.querySelectorAll('.agent-row')].map(e=>[e.querySelector('strong').textContent.trim(),e.dataset.agent]))`);
+  assert(ids['吴用']!==undefined&&ids['林冲']!==undefined,JSON.stringify(ids));
+  await click('[data-action="choose-agent"][data-agent="'+ids['吴用']+'"]');
+  assert(await ev('!!document.querySelector(".skill-ready")'));
+  assert.equal(await ev('document.querySelector(".agent-profile-section[aria-label=本领] .ability-tags").textContent.includes("离线演示")'),false);
+  await geometry(w+'-agent-ready');await snap(w+'-agent-ready');
+  await click('[data-action=refresh-agent-profile]');assert(!await ev('!!document.querySelector(".skill-ready")'));assert(await ev('agentProfileRead.loading'));await delay(750);assert(await ev('document.querySelector(".agent-profile-refresh").textContent.includes("刚刚读取")'));
+  await click('[data-action=refresh-agent-profile]');await click('[data-action="choose-agent"][data-agent="'+ids['林冲']+'"]');await delay(750);assert(await ev('document.querySelector(".detail-card").textContent.includes("暂无已登记技能")'));assert(!await ev('agentProfileRead.refreshed'));await snap(w+'-agent-empty');
+  for(const [mode,text] of [['unavailable','运行状态待核验'],['unverified','安装未核验'],['error','技能读取失败'],['failed','技能与本领读取失败'],['noauth','仅拥有者可查看技能']]){
+   await ev(`history.replaceState(null,'','?agentSkillState=${mode}#agents');renderAgents()`);
+   assert(await ev(`document.querySelector('.detail-card').textContent.includes(${JSON.stringify(text)})`));
+   assert(!await ev('!!document.querySelector(".skill-ready")'));
+   if(mode==='noauth')assert(await ev('document.querySelector("[data-action=refresh-agent-profile]").disabled'));
+   if(mode==='failed'){await click('[data-action=refresh-agent-profile]');await delay(750);assert(!await ev('document.querySelector(".agent-profile-refresh").textContent.includes("刚刚读取")'));assert(await ev('document.querySelector("[aria-label=本领]").textContent.includes("上次记录")'));}
+   await geometry(w+'-agent-'+mode);
+  }
+  await ev("history.replaceState(null,'','#agents')");await click('[data-action="choose-agent"][data-agent="'+ids['吴用']+'"]');
+  await click('[data-action=private-chat]');assert.equal(await ev('page'),'private');assert.equal(await ev('conversation().agent.name'),'吴用');await go('agents');
+  await ev('state.task={id:"agent-review-task",title:"原入口回归",description:"离线回归",files:[]};state.agent=null;renderAgents()');assert(await ev('!!document.querySelector("[data-action=assign]")'));await click('[data-action=assign]');assert.equal(await ev('state.agent.name'),'吴用');assert.equal(await ev('page'),'chat');
+  mark('Agent display 7 states, refresh race, private chat and original assignment '+w);
+ }
+ for(const p of ['home','tasks','workspace','mine']){await go(p);await geometry('unchanged-'+p);}
+ mark('existing primary pages still render');
+} else

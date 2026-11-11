@@ -1,0 +1,22 @@
+root actual runtime Node; synthetic CA/provider; staged diagnostic; command fixture timeout=90000ms RPC=120000ms
+uid=0(root) gid=0(root) 组=0(root)
+v24.22.1
+e32e2d16081cf644f88392934288086e7662529d0d43277c34f7aad2207cfafb  /home/isp/apps/cyf-agent-runtime-v1/app/node/bin/node
+probe uid=0; Node executable=/home/isp/apps/cyf-agent-runtime-v1/app/node/bin/node; separate production toolchain attestation required
+stage=node-default elapsedMs=8052 exit=0 stdout="node-ok\n" stderr="" providerRequests=0 tlsProbes=0
+stage=module-default elapsedMs=5126 exit=0 stdout="module-ok\n" stderr="" providerRequests=0 tlsProbes=0
+stage=module-long elapsedMs=2930 exit=0 stdout="module-ok\n" stderr="" providerRequests=0 tlsProbes=0
+module-default-completed=true; no inference about timeout cause without elapsed/result evidence
+stage=proxy-tls elapsedMs=2976 exit=0 stdout="200 fixture-tls-ok\n" stderr="" providerRequests=0 tlsProbes=1
+stage=generate elapsedMs=3960 exit=0 stdout="{\"path\":\"/outputs/generate.png\",\"contentMimeType\":\"image/png\",\"sha256\":\"c3087446afe87c5da27035fd77db71f3d9911966b3cd33a452f80d731fbf8159\",\"byteLength\":\"68\"}\n" stderr="" providerRequests=1 tlsProbes=1
+stage=edit elapsedMs=4092 exit=0 stdout="{\"path\":\"/outputs/edit.png\",\"contentMimeType\":\"image/png\",\"sha256\":\"c3087446afe87c5da27035fd77db71f3d9911966b3cd33a452f80d731fbf8159\",\"byteLength\":\"68\"}\n" stderr="" providerRequests=2 tlsProbes=1
+real app-server command/exec + restricted CONNECT + fixture TLS + generate/edit PNG snapshot: PASS; synthetic provider; model turn/stage/API commit: NOT RUN
+✔ real app-server runs native-image against synthetic HTTPS via restricted CONNECT and snapshots drafts (219101.153635ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 222001.455923

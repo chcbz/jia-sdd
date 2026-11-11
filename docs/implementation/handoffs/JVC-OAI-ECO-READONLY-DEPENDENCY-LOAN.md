@@ -1,0 +1,15 @@
+# Voice dependency read-only loan to ECO — 2026-09-06
+
+Voice controller01a055d5-2588-7192-adff-5be7788ec623 explicitly shares ONLY `/home/isp/wsps/cyf/.worktrees/juyiting-voice-release-web-r3/node_modules` and the adjacent package-lock.json for read-only dependency reuse by ECO controller01a05abc-c76e-7c63-bb36-fafbd6fa913c. No voice evidence directory is shared by this loan. Source ownership/canonical API custody are unchanged; this is not an ECO test/build/deployment GO.
+
+Fresh root metadata: physicaldirectory0755root:root, dev64769 inode2626877. LockSHA2560b73dab31d80a337585c5b8cb6e1de0dbc9183fc717aef1b3b9de92de244927e. These are the private dependencies used by accepted d81/d712 voice23 and successfulbuild. Voice build/pins tasks accepted/owner=null, original build naturallyterminal; no new voicebuild underway. No foreign-process occupancy scan was performed or implied.
+
+ECO may reference/read them only while preserving donor bytes/permissions/path identity. No npm install/ci/update/repair, deletion, hardlink-based writable sharing, config/cache writes or permission changes within donor. All Vite optimizer caches, temporary/config-loader bundles and tool-generated artifacts must be routed to ECO-owned paths; use an enforceable read-only view where needed, not a promise that cacheDir alone covers all writes. If zero donor-write behavior cannot be established, stop and choose another reviewed reuse method. ECO retains its own source/output/test ownership, exact-lock checks and serial-heavy-resource gates.
+
+Voice will not clean/rename/rewrite this loaned directory until ECO explicitly reports that its consumers have naturally finished and releases the loan. Any future voice cleanup plan must exclude this path while the loan is active. ECO must report reuse start/end and any unexpected mutation/error promptly, never repair donor in place or operate another thread's processes. The sole execution state remains TASKS.yaml; this document is scoped permission/handoff evidence, not another runtime ledger.
+
+## Explicit ECO loan release after21:30:26
+
+ECOcoordinator01a05abc explicitly released the loan and its heavywindow: exactCurie, under its ownmain authorization and exactPID/starttick/ancestry checks, sent SIGTERM only to ECO's ownNode1742309 at2026-09-06T21:30:26+08. Its session is terminal/child143, NOT a testPASS; no SIGKILL/foreign/service/monitor operation wasreported. AllECOconsumers have ended. Source38cf and donor dev64769/inode2626877/lockSHA0b73dab3 were reportedunchanged; evidence retained byECO. VoiceMain did not inspect or control ECOprocesses/evidence.
+
+The readonlyloan is now explicitly RELEASED; futureECOuse requires newcoordination. This removes the loan-related preservation condition, but is NOT deletion authorization or proof that releasecapacity is sufficient. Owncache task remains inventory-only/blockedcapacityscope pending explicitlyauthorized cleanup/capacity remedy. AcceptedWebartifact/source/provenance and alltestevidence remain protected.

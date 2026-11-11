@@ -1,0 +1,79 @@
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
+final File evidenceRoot = new File('/home/isp/wsps/cyf/evidence/u3-finalization-schema-check-truth-v1')
+final File runRoot = new File(evidenceRoot, 'java-mysql-v2')
+final File planFile = new File(evidenceRoot, 'java-mysql-plan-v2.json')
+String sha256File(File file) { MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString() }
+gradle.projectsEvaluated {
+    def root = gradle.rootProject
+    def chat = root.project(':chat:jia-chat-service')
+    Map plan = new JsonSlurper().parse(planFile) as Map
+    def actualSourceSet = chat.sourceSets.chatDeliberation
+    File fixtureSource = new File(plan.test_source as String)
+    def compile = root.tasks.register('mmdActualMysqlV2Compile',JavaCompile) {
+        setSource(root.files(fixtureSource))
+        classpath = actualSourceSet.compileClasspath
+        destinationDirectory.set(new File(runRoot,'classes'))
+        options.encoding='UTF-8'
+        sourceCompatibility='25';targetCompatibility='25'
+        options.compilerArgs += ['-proc:none']
+        doFirst {
+            if (sha256File(fixtureSource)!=plan.test_source_sha256) throw new GradleException('Actual JDBC fixture source changed')
+            plan.seed_ddl.each { row ->
+                if(sha256File(new File(row.source as String))!=row.source_sha256 || sha256File(new File(row.seed_path as String))!=row.seed_sha256)
+                    throw new GradleException('Exact actual seed DDL binding changed')
+            }
+        }
+    }
+    root.tasks.register('mmdActualMysqlV2Lifecycle',Test) {
+        dependsOn(compile)
+        testClassesDirs=root.files(new File(runRoot,'classes'))
+        classpath=root.files(new File(runRoot,'classes'))+actualSourceSet.runtimeClasspath
+        useJUnitPlatform()
+        filter { includeTestsMatching('cn.jia.chat.config.FinalizationActualMySqlLifecycleTest') }
+        maxParallelForks=1;forkEvery=1;maxHeapSize='128m'
+        jvmArgs '-XX:MaxMetaspaceSize=96m','-XX:ActiveProcessorCount=1','-XX:+UseSerialGC',
+                '-Xlog:class+load=info:file='+new File(runRoot,'class-load.log').absolutePath+':uptime,level,tags'
+        systemProperty 'mmd.fixture.jdbcPrefix',plan.jdbc_prefix
+        systemProperty 'mmd.fixture.database',plan.database
+        systemProperty 'mmd.fixture.oldDatabase',plan.old_readonly_schema
+        systemProperty 'mmd.fixture.repairedDatabase',plan.repaired_readonly_schema
+        plan.seed_ddl.each { row -> systemProperty 'mmd.fixture.seed.'+row.table,row.seed_path }
+        workingDir=runRoot
+        reports.junitXml.outputLocation.set(new File(runRoot,'junit-xml'))
+        reports.html.outputLocation.set(new File(runRoot,'html'))
+        binaryResultsDirectory.set(new File(runRoot,'binary'))
+        testLogging { events 'passed','failed','skipped';exceptionFormat 'full' }
+        doFirst {
+            Map proxy=new JsonSlurper().parse(new File(evidenceRoot,'mysql-proxy-current-owner-v1.json')) as Map
+            if(proxy.owner_thread!='01a0dde8-fd03-7ee0-be21-293ca13bb336' || proxy.address!='127.0.0.1'
+                    || proxy.upstream_socket!='/var/tmp/cyf-jyt-mmd-mysql-20260929-thread01a0dde8/mysql.sock')
+                throw new GradleException('Actual JDBC fixture is not exact own private server')
+            if(sha256File(new File(evidenceRoot,'mysql-proxy-current-owner-v1.json'))!=plan.proxy_manifest_sha256)
+                throw new GradleException('Proxy identity binding changed')
+        }
+        doLast {
+            String loaded=new File(runRoot,'class-load.log').getText('UTF-8')
+            Map proof=[:]
+            ['cn.jia.agent.config.AgentSelectedOutputFinalizationSchemaInitializer','cn.jia.chat.config.ChatSelectedOutputFinalizationSchemaInitializer',
+             'cn.jia.chat.config.ChatConversationArchiveSchemaInitializer','cn.jia.chat.config.ChatSchemaReadiness',
+             'cn.jia.chat.config.ChatSchemaInitializer','cn.jia.chat.config.ChatDeliberationSchemaInitializer'].each { name ->
+                def lines=loaded.readLines().findAll { it.contains(' '+name+' source: ') }
+                if(lines.isEmpty() || !lines.every { it.contains(root.rootDir.absolutePath) })
+                    throw new GradleException('Actual candidate class-load identity failed: '+name)
+                proof[name]=lines
+            }
+            new File(runRoot,'actual-class-load-proof.json').text=JsonOutput.prettyPrint(JsonOutput.toJson([
+                candidate_commit:plan.candidate_commit,candidate_tree:plan.candidate_tree,classes:proof,
+                no_mock_database:true,scope:plan.verification_scope]))+'\n'
+        }
+    }
+    gradle.taskGraph.whenReady { graph ->
+        new File(evidenceRoot,'actual-java-mysql-task-graph-v2.json').text=JsonOutput.prettyPrint(JsonOutput.toJson([
+            candidate_commit:plan.candidate_commit,candidate_tree:plan.candidate_tree,tasks:graph.allTasks.collect { it.path },
+            scope:plan.verification_scope]))+'\n'
+    }
+}

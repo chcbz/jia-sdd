@@ -10,10 +10,10 @@ BASE=$(dirname -- "$SELF")
 MONITOR=/usr/local/libexec/cyf-juyiting-health.py
 CARRIER=/usr/local/libexec/cyf-juyiting-recovery-carrier.py
 CONFIG=/etc/cyf-juyiting-health.json
-STATE_DIR=/var/lib/cyf-juyiting-health
+STATE_DIR=/home/isp/state/cyf-juyiting-health
 CRON=/etc/cron.d/cyf-juyiting-health
-CANDIDATE_MONITOR_SHA=74e93f804cd12b5bae37f416d332485df0d698ea9bc8088e4b5f0b307e4cff45
-CANDIDATE_CARRIER_SHA=440e82ab992b88778b26542e176c8f7da14c62c66e6bad32b3dcb941e908c321
+CANDIDATE_MONITOR_SHA=922fc752ff5120355449973870bb2d24917e16f5a01054bfdd8389f9b138f310
+CANDIDATE_CARRIER_SHA=564bd88e5e0bab90d25704f76f3bb39ee5d11d45c7e707f119dd6b15ed5a4414
 
 fail() { echo "ERROR: $*" >&2; exit 2; }
 

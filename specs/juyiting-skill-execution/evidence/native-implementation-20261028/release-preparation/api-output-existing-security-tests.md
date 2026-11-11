@@ -1,0 +1,12 @@
+# API 输出既有安全测试定向核对（2026-10-28）
+
+仅源码核对，未执行；以下为 JUnit 完整类/方法选择器，不承诺当前候选能编译通过。`v1131Acceptance` 在 `api/agent/jia-agent-service/build.gradle` 显式包含 validator、renderer、storage F02、deliverable controller；使用该既有 Test 任务的 `--tests` 可选择这些类/方法，仍须按项目 Gradle 串行入口在获授权的 Flow 上运行。`nativeSkillResultRegression` 只包含并筛选 MySQL native ack 专项，不覆盖下面这些测试。普通 `test` 的历史编译债务与运行环境待 Owner 核验。
+
+- `cn.jia.agent.service.impl.PersonalWorkspaceOutputFormatValidatorTest.nativeTextFormatsCheckUtf8EnvelopeWithoutParsingContents`：plain/Markdown/HTML/JSON 文本 envelope，有效 UTF-8、拒绝 NUL 等；不代表 HTML 净化或 JSON 语法验证。
+- `cn.jia.agent.service.impl.PersonalWorkspacePreviewRendererTest.previewsAudioAndModernRasterAsExactNonTransformedBytes`：其中明确断言带 script 的 HTML 在该 renderer 为 UNSUPPORTED；这是 workspace renderer，不是 ChatBountyMediaController 测试。
+- `cn.jia.agent.api.AgentTaskDeliverableControllerTest.contentDownloadUsesTaskOwnerScopeAndReturnsExactSafeBytes`：owner scope、准确字节、附件、nosniff、no-store；为 deliverable 路径，fixture 是 octet-stream，非对话媒体 HTML 测试。
+- `cn.jia.agent.service.impl.AgentTaskArtifactStorageF02Test.fileStoreRejectsUnboundedMimePathAndSymlinkTampering`、`.aclAndStaleVersionRejectBeforeAnyFilesystemWrite`、`.declaredDigestAndLengthMismatchRejectBeforeFilesystemWrite`、`.contentReadRejectsNonMemberBeforeStorageAccess`：分别覆盖存储边界、ACL/版本、提交声明摘要长度及非成员读取。均为底层存储/服务，不代替对话媒体路径。
+- `cn.jia.agent.api.AgentTaskArtifactControllerTest.exactVersionDownloadReturnsExactBytesAndSafePrivateAttachmentHeaders`、`.tenantAndClientMismatchDownloadsAreBothScopedAndNonomerating`、`.inconsistentDownloadMetadataOrBytesFails503WithoutPartialContent`：独立 artifact controller 的附件/范围/异常 metadata 测试；该类在普通 `src/test`，未列入上述隔离 acceptance source set，执行 selector 前需 Owner 核实编译入口。最后一个 fixture 同时使用错误摘要和非法 MIME，不能单独声称证明各字段独立覆盖。
+- `cn.jia.chat.api.ChatSkillResultControllerTest.bothHistoricalAndNativeResultsKeepSchemaTwoDiscoveryAndExplicitExecuteLink`、`.missingRelationCannotFallBackToLatestResultAndIncompleteChainCannotExposeCompleteResult`、`.archivingDoesNotExposeOfficialOutputsOrRunProjection`：结果关联和完成状态回归；其中 media controller 是 mock，不覆盖实际下载或 HTML。该类在 chat 普通 `src/test`，不属于 `nativeSkillResultRegression`。
+
+**最小实际缺口**：在已检索 API 测试源码中未发现直接调用 `ChatBountyMediaController` 的测试；不宜以其他 controller/renderer 测试冒充覆盖。建议 Owner 在该真实路径补一个聚焦三种 MIME 的参数化输出/下载用例，确认无 preview、附件/nosniff/原 MIME，并在现有 fixture 可复用的前提下覆盖对话绑定拒绝和内容完整性失败；GET/HEAD/Range 仅在需要覆盖受影响行为时沿既有条件扩展，不另复制整套其他存储层防御。另为新增 task-artifact HTML 允许列表补一条配置化存储/发布正例，保留未授权 MIME 负例，复用 F02 fixture。最终 selector 的 source set、编译和 600 秒需正式 Flow 实际确认。

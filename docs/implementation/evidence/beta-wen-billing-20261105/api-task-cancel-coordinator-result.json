@@ -1,0 +1,49 @@
+{
+  "status": "FAIL",
+  "pipeline": "5260799",
+  "run": "552",
+  "source": {
+    "commit": "aec3d195c45c38b934ac669e129c53c3851fcc31",
+    "tree": "333002b9d003c3063a60e80d62540bf828568ccb"
+  },
+  "suites": 77,
+  "counts": {
+    "tests": 910,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 1
+  },
+  "failures": [
+    {
+      "path": "jia/agent__jia-agent-service/test-results/test/TEST-cn.jia.agent.service.impl.AgentTaskStateServiceImplTest.xml",
+      "name": "cn.jia.agent.service.impl.AgentTaskStateServiceImplTest",
+      "counts": {
+        "tests": 35,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failures": [
+        {
+          "class": "cn.jia.agent.service.impl.AgentTaskStateServiceImplTest",
+          "test": "failedTaskMayCancelButAcceptedTaskCannotReleaseItsFinalSettlement()",
+          "type": "cn.jia.agent.exception.AgentTaskStateException",
+          "message": "cn.jia.agent.exception.AgentTaskStateException: State changed concurrently; refresh and retry",
+          "projectFrames": [
+            "at cn.jia.agent.service.impl.AgentTaskStateServiceImpl.conflict(AgentTaskStateServiceImpl.java:614)",
+            "at cn.jia.agent.service.impl.AgentTaskStateServiceImpl.requireSingleCasUpdate(AgentTaskStateServiceImpl.java:420)",
+            "at cn.jia.agent.service.impl.AgentTaskStateServiceImpl.lambda$transitionTask$0(AgentTaskStateServiceImpl.java:151)",
+            "at cn.jia.agent.service.impl.AgentTaskStateServiceImplTest.lambda$setUp$0(AgentTaskStateServiceImplTest.java:86)",
+            "at cn.jia.agent.service.AgentTaskMutationTransaction$MockitoMock$BbpZbDXd.executeWithLockedTaskRootInOwnerScope(Unknown Source)",
+            "at cn.jia.agent.service.impl.AgentTaskStateServiceImpl.withLockedTaskRoot(AgentTaskStateServiceImpl.java:101)",
+            "at cn.jia.agent.service.impl.AgentTaskStateServiceImpl.transitionTask(AgentTaskStateServiceImpl.java:133)",
+            "at cn.jia.agent.service.impl.AgentTaskStateServiceImplTest.failedTaskMayCancelButAcceptedTaskCannotReleaseItsFinalSettlement(AgentTaskStateServiceImplTest.java:158)"
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnosticFileSha256": "9f040febdeb97542398747483316b29908c6e073c29546d31c75266a80d74fb7",
+  "summaries": [],
+  "boundary": "No deployment. Wallet/coordinator integration uses a discussion mock; separate TaskDiscussionCancellationMySqlTest verifies real Chat SQL and transaction behavior."
+}

@@ -1,322 +1,38 @@
-# 聚义厅功能说明与持续优化指南
+# 聚义厅功能与实现阅读地图
 
-> 目标：把聚义厅当前功能、前后端边界、关键数据流和后续优化入口沉淀下来，避免后续迭代时重新摸索页面结构。
+核对：2026-11-10。本文帮助定位业务责任，不另定义协议、当前线上版本或所有页面实现。完整合同见[specs索引](../specs/INDEX.md)，开发/排障见[Runbook](juyiting-runbook.md)。
 
-## 开发规范入口
+## 用户主链
 
-统一遵循 `AGENTS.md` 和 `docs/juyiting-runbook.md`。聚义厅低于 `2.0.0` 均为内测版本，不考虑旧版本兼容，以最新版本为准；本指南记录当前功能与数据流，不单独设旧版本兼容或发布门槛。
+需求保存 → 推荐/手选 → 显式确认承办 → 正式议事与多轮修改 → 真实成果 → 选择明确版本验收，或合法取消。草稿保存、推荐、确认、执行、成果提交、验收是不同事实；以责任专题状态机和当前实现为准。
 
-## 1. 功能定位
+普通密议面向明确好汉/会话，不默认创建正式事项；与事项议事的输入、历史、资料scope和费用授权分开。新需求与返工也不能靠相同文本或旧终态自动合并。
 
-聚义厅是面向 Agent 协作的可视化调度页面，核心体验是：
+## 业务与实现定位
 
-- 在地图舞台上观察当前可参与协作的好汉 Agent。
-- 在好汉名册中按状态查看和选择 Agent。
-- 在悬赏榜中筛选任务、查看任务详情，并指派给合适 Agent。
-- 在厅内传令中围绕当前 Agent 和任务发起会话，并接收实时回话。
-
-页面入口位于：
-
-- `web/src/components/world/JuyiHall.vue`
-
-聚义厅相关前端组件位于：
-
-- `web/src/components/juyiting/`
-- `web/src/composables/juyiting/`
-- `web/src/constants/juyiting.js`
-
-聚义厅相关后端模块位于：
-
-- `api/agent/`
-
-## 2. 当前页面结构
-
-### 2.1 JuyiHall.vue
-
-`JuyiHall.vue` 是聚义厅的页面编排层，负责：
-
-- 挂载地图舞台 `HallStage`。
-- 管理当前选中的 `selectedAgent` 和 `selectedTask`。
-- 根据 `activePanel` 打开好汉名册、悬赏榜、厅内传令三个浮层。
-- 组装状态展示、任务展示、指派任务、传令草稿等页面级逻辑。
-- 调用 `useHallData` 取得 Agent 和任务数据。
-- 调用 `useHallConversation` 处理会话、流式消息和轮询。
-- 调用 `useHallScene` 生成场景 Agent 数据，并由 melonJS 的 `HallScene`/`HallAgent` 处理地图人物渲染和巡逻移动。
-
-### 2.2 HallStage.vue
-
-`HallStage.vue` 是地图舞台组件，负责：
-
-- 渲染聚义厅地图和房间热点。
-- 渲染地图上的 `AgentToken`。
-- 支持地图拖拽和平移复位。
-- 展示地图上超出可见数量的提示入口。
-- 触发打开名册、悬赏榜、传令面板等事件。
-
-注意：地图舞台只消费 `visibleAgents`，不直接管理名册筛选。
-
-### 2.3 AgentPanel.vue
-
-`AgentPanel.vue` 是好汉名册浮层，负责：
-
-- 展示名册 Agent 列表。
-- 按状态触发名册筛选。
-- 展示选中 Agent 的能力、状态、当前任务等详情。
-- 发出 `select-agent` 和 `set-agent-filter` 事件。
-
-名册状态切换只影响名册列表，不应改变地图上的人物。
-
-### 2.4 BountyPanel.vue
-
-`BountyPanel.vue` 是悬赏榜浮层，负责：
-
-- 展示任务列表。
-- 支持任务状态、能力、关键字筛选。
-- 展示任务详情弹层。
-- 展示推荐 Agent。
-- 对推荐 Agent 发出明确的 `assign-task`、`brief-selected-task` 和 `select-agent` 事件。
-
-任务指派的目标 Agent 由事件参数显式传入，不依赖隐藏的当前选中状态。
-
-### 2.5 ChatPanel.vue
-
-`ChatPanel.vue` 是厅内传令浮层，负责：
-
-- 展示会话消息。
-- 展示当前目标上下文。
-- 提供命令模板入口。
-- 支持提及指定 Agent。
-- 发出 `send-message`、`mention-agent`、`apply-template` 等事件。
-
-## 3. 数据与接口边界
-
-### 3.1 前端数据分层
-
-`useHallData` 中当前有两组 Agent 数据：
-
-- `mapAgents`：地图专用人物列表。
-- `agents`：好汉名册、推荐 Agent、能力选项等列表业务使用。
-
-关键派生数据：
-
-- `visibleAgents = mapAgents.slice(0, 12)`：地图最多直接展示 12 位。
-- `hiddenAgentCount = mapAgents.length - visibleAgents.length`：地图隐藏人数提示。
-- `filteredAgents = agents`：名册数据已由后端独立接口筛选，前端不再二次按地图数据过滤。
-- `recommendedAgents`：从名册数据中筛选在线 Agent 并按任务能力匹配度排序。
-
-### 3.2 后端接口
-
-聚义厅使用的主要后端接口如下：
-
-| 场景 | 方法 | 路径 | 说明 |
-| --- | --- | --- | --- |
-| 地图人物 | `GET` | `/agent/map` | 返回地图可见运行时 Agent，当前排除离线 Agent |
-| 好汉名册 | `POST` | `/agent/roster` | 独立名册查询，支持 `status`、`ability`、分页 |
-| Agent 详情 | `GET` | `/agent/{agentId}` | 获取单个 Agent 运行时详情 |
-| Agent 状态更新 | `PUT` | `/agent/{agentId}/status` | Agent 运行时状态更新，会影响地图状态事件 |
-| 悬赏搜索 | `POST` | `/agent/tasks/search` | 查询悬赏任务 |
-| 指派悬赏 | `POST` | `/agent/tasks/{taskId}/assign` | 将任务指派给指定 Agent |
-| 回报悬赏 | `POST` | `/agent/tasks/{taskId}/report` | 回报任务状态，并同步 Agent 运行状态 |
-| 会话发送 | `POST` | `/chat/stream` | 发送聚义厅会话消息 |
-| 会话事件 | `GET` | `/chat/conversation/events` | 接收会话实时事件流 |
-
-### 3.3 重要隔离规则
-
-名册状态切换不影响地图人物。
-
-实现约束：
-
-- 名册筛选必须调用 `/agent/roster`。
-- 地图人物必须调用 `/agent/map`。
-- 聚义厅前端不应再调用 `/agent/active`。
-- `/agent/{agentId}/status` 仍然是 Agent 运行态更新接口，不能用于名册筛选。
-
-这个规则已有契约测试覆盖：
-
-- `web/tests/juyiting-collaboration-flow.test.js`
-
-相关断言包括：
-
-- `useHallData` 不包含 `'/active'`。
-- `useHallData` 包含 `agentApi.get('/map'`。
-- `useHallData` 包含 `agentApi.search('/roster'`。
-- `visibleAgents` 来自 `mapAgents`。
-- 名册面板通过 `setAgentFilter` 更新名册。
-
-## 4. 关键用户流程
-
-### 4.1 进入聚义厅
-
-1. `JuyiHall.vue` mounted。
-2. 调用 `refreshHall()`。
-3. 并行加载：
-   - `loadAgents()`：内部并行加载地图人物和名册人物。
-   - `loadTasks()`：加载悬赏任务。
-4. `HallStage.vue` 挂载 melonJS 场景后同步 `sceneAgents` 与 `sceneHotspots`。
-5. melonJS 的 `HallAgent` 根据 `patrolRoute` 在地图上巡逻移动。
-6. 启动随机台词气泡：
-   - `startDialogueBubbles()`。
-
-### 4.2 切换好汉名册状态
-
-1. 用户在 `AgentPanel.vue` 点击状态筛选。
-2. 组件发出 `set-agent-filter`。
-3. `JuyiHall.vue` 调用 `setAgentFilter(status)`。
-4. `useHallData` 更新 `agentFilter`，调用 `loadRosterAgents()`。
-5. 前端请求 `/agent/roster`。
-6. 只更新 `agents`。
-7. `mapAgents` 和 `visibleAgents` 不变，地图人物不受影响。
-
-### 4.3 选择 Agent
-
-1. 用户点击地图上的 `AgentToken`，或点击名册里的 Agent 行。
-2. `JuyiHall.vue` 调用 `selectAgent(agent)`。
-3. 更新 `selectedAgent`。
-4. 选中 Agent 卡片和传令上下文随之更新。
-
-### 4.4 指派悬赏
-
-1. 用户打开悬赏榜。
-2. 选择任务，弹出任务详情。
-3. 在推荐 Agent 行点击指派。
-4. `BountyPanel.vue` 发出 `assign-task`，参数包含 `selectedTask` 和目标 `agent`。
-5. `JuyiHall.vue` 调用 `assignTask(task, agent)`。
-6. 前端请求 `/agent/tasks/{taskId}/assign`，请求体包含 `agentId`。
-7. 成功后本地更新任务和目标 Agent 的状态展示。
-
-### 4.5 厅内传令
-
-1. 用户打开传令面板。
-2. 输入消息或套用命令模板。
-3. `useHallConversation` 调用 `/chat/stream`。
-4. 消息 metadata 携带聚义厅上下文：
-   - `scene: 'juyiting'`
-   - `selectedAgentId`
-   - `mentionAgentIds`
-   - `selectedTaskId`
-5. 前端通过 `/chat/conversation/events` 接收 Agent 回话事件。
-6. 在事件中处理增量消息、完成消息和投递状态。
-
-## 5. 状态模型
-
-### 5.1 Agent 状态
-
-当前前端识别的 Agent 状态：
-
-| 状态 | 含义 | 前端展示类别 |
+| 领域 | 责任合同 | 找实现时关注 |
 | --- | --- | --- |
-| `online` | 在线候命 | `is-idle` |
-| `busy` | 忙碌/执行中 | `is-busy` |
-| `offline` | 离线 | `is-offline` |
-| `error` | 异常 | `is-error` |
+| 地图、首页、返回与横竖屏 | [UI基准](../specs/juyiting-ui-baseline-20261006/spec.md)、[整体体验](../specs/juyiting-unified-experience/spec.md) | Web页面编排/面板与当前路由；地图不复制业务状态 |
+| 需求与承办推荐 | [推荐合同](../specs/juyiting-assignee-recommendation/spec.md) | 需求版本、真实候选、手选与显式确认；推荐不等于授权执行 |
+| 对话、多轮及恢复 | [议事](../specs/juyiting-multimedia-deliberation/spec.md)、[会话](../specs/juyiting-conversation-sessions/spec.md) | 消息页级投影、完整最终回复、流仅预览、身份/话头切换与迟到响应隔离 |
+| 原生执行和技能 | [技能主spec](../specs/juyiting-skill-execution/spec.md) | selected授权、模型/工具/bridge职责、真实工具回执及正式成果 |
+| 资料与交付 | [资料合同](../specs/juyiting-creative-delivery-mvp/spec.md) | 固定不可变版本、引用范围、预览与存储能力分开、历史成果仍可认证读取 |
+| 钱包与费用 | [WEN专项合同](../specs/agent-economy-marketplace/beta-wen-billing.md) | 原子预占/释放/结算与幂等；人民币用量回执另记，不从UI推断账本 |
+| 好汉/岗位/托管 | [技能管理](../specs/juyiting-skill-execution/management-contract.md)、[经济专题](../specs/agent-economy-marketplace/spec.md) | 安装、授权、默认模型、就绪分别是实际事实；新移除/交接合同不默认已实现 |
+| 典籍与阅读 | [维护](../specs/archive-agent-maintenance/spec.md)、[阅读器](../specs/archive-pavilion-reader-mvp/spec.md) | 查询和写发布分验；章数、引首、版本与阅读进度按真实书籍数据 |
+| 帮助、反馈与我的 | [UI现行规格](../specs/juyiting-ui-baseline-20261006/optimization/spec.md) | 帮助分类/搜索/业务跳转；原反馈身份隔离与未知结果不自动重发 |
+| 语音/公共协作 | [语音](../specs/juyiting-voice-conversation/spec.md)、[Realtime](../specs/juyiting-voice-realtime/spec.md)、[协作](../specs/juyiting-task-collaboration/spec.md) | 实际开关、合同落地和真机/多账号证据；目标设计不是当前能力 |
 
-后端常量位于：
+## 从文档进入代码
 
-- `api/agent/jia-agent-core/src/main/java/cn/jia/agent/common/AgentConstants.java`
+前端从[Web规则](../web/AGENTS.md)和[前端知识](knowledge-base/05-frontend-architecture.md)定位，后端从[API规则](../api/AGENTS.md)和[后端架构](knowledge-base/03-backend-architecture.md)定位。组件重组、Controller路由和源码路径以本次固定checkout核实，不将旧指南的组件名/接口清单直接当现行事实。
 
-### 5.2 任务状态
+界面先改[唯一原型](../web/prototypes/juyiting/specs/prototype-spec.md)，再落产品、对照回归。契约未变的责任层内部修复不机械改三端；契约变化才同步实际生产者和消费者。
 
-当前前端识别的任务状态：
+## 测试及有效性
 
-| 状态 | 含义 | 前端展示类别 |
-| --- | --- | --- |
-| `open` | 待接取 | `task-state-open` |
-| `assigned` | 已指派 | `task-state-assigned` |
-| `running` | 进行中 | `task-state-running` |
-| `completed` | 已完成 | `task-state-done` |
-| `failed` | 失败 | `task-state-failed` |
+所有长期业务用例统一归[全局回归](../specs/juyiting-unified-experience/global-regression.md)，不在本页复制旧页面按钮清单。现行规则由根AGENTS/责任合同维护；旧UI快照、SILVER、无条件不兼容、Flow-only及早期客户端说明仅作历史，不恢复为默认行为。文档查阅不授权收费、发布、写典籍、改岗位或清理主机。
 
-## 6. 代码索引
+## 历史来源
 
-### 6.1 前端
-
-| 文件 | 职责 |
-| --- | --- |
-| `web/src/components/world/JuyiHall.vue` | 页面编排、选中态、任务指派、传令模板 |
-| `web/src/components/juyiting/HallStage.vue` | 地图舞台、房间热点、地图拖拽、AgentToken 列表 |
-| `web/src/components/juyiting/AgentPanel.vue` | 好汉名册与 Agent 详情 |
-| `web/src/components/juyiting/BountyPanel.vue` | 悬赏列表、任务详情、推荐 Agent 和指派入口 |
-| `web/src/components/juyiting/ChatPanel.vue` | 厅内传令消息面板 |
-| `web/src/components/juyiting/AgentToken.vue` | 地图人物头像令牌 |
-| `web/src/components/juyiting/SelectedAgentCard.vue` | 当前选中 Agent 快捷卡片 |
-| `web/src/composables/juyiting/useHallData.js` | 地图/名册/任务数据加载与派生状态 |
-| `web/src/composables/juyiting/useHallConversation.js` | 聚义厅会话、事件流、轮询和消息归一化 |
-| `web/src/composables/juyiting/useHallScene.js` | 场景 Agent、热点、反馈状态与巡逻路线生成 |
-| `web/src/game/scenes/HallScene.js` | melonJS 聚义厅舞台、地图层、热点和 Agent 同步 |
-| `web/src/game/entities/HallAgent.js` | melonJS 地图人物实体、动画和巡逻移动 |
-| `web/src/composables/juyiting/useWaterMarginRoles.js` | 水浒人物画像和角色映射 |
-| `web/src/constants/juyiting.js` | 状态筛选项和角色台词 |
-
-### 6.2 后端
-
-| 文件 | 职责 |
-| --- | --- |
-| `api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/AgentController.java` | Agent REST API |
-| `api/agent/jia-agent-api/src/main/java/cn/jia/agent/service/AgentService.java` | Agent 服务接口 |
-| `api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentServiceImpl.java` | Agent 业务实现 |
-| `api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/AgentRuntimeDao.java` | Agent 运行态 DAO 接口 |
-| `api/agent/jia-agent-mapper/src/main/java/cn/jia/agent/dao/impl/AgentRuntimeDaoImpl.java` | Agent 运行态查询实现 |
-| `api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentRosterSearchDTO.java` | 名册查询请求 DTO |
-| `api/agent/jia-agent-core/src/main/java/cn/jia/agent/entity/AgentRuntimeDTO.java` | 前端使用的 Agent 运行态 DTO |
-
-### 6.3 测试
-
-| 文件 | 关注点 |
-| --- | --- |
-| `web/tests/juyiting-collaboration-flow.test.js` | 聚义厅协作流程与数据隔离契约 |
-| `web/tests/juyiting-component-behavior.test.js` | 子组件交互行为 |
-| `web/tests/juyiting-selected-agent-card.test.js` | 选中 Agent 卡片行为 |
-| `api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java` | Agent 服务行为 |
-
-## 7. 后续优化建议
-
-> 以下为历史优化候选，不是开发门禁或已确认的当前缺陷；选取任务前核对最新实现与实际证据。
-
-### 7.1 短期优化
-
-- 修复页面中历史编码乱码文案，优先处理 `JuyiHall.vue`、`HallStage.vue`、`BountyPanel.vue`、`ChatPanel.vue`。
-- 给 `/agent/roster` 增加能力筛选入口，并在 `AgentPanel` 上提供能力筛选控件。
-- 增加名册加载中、空状态、错误状态。
-- 指派任务成功后重新拉取 `/agent/map` 和 `/agent/roster`，减少本地乐观更新造成的状态偏差。
-- 将 `pageSize: 100` 提取为常量，避免散落在 composable 内。
-
-### 7.2 中期优化
-
-- 给地图人物提供更明确的位置分区，例如候命区、执行区、异常区。
-- 将 `statusText`、`taskStatusText`、面板标题等文案迁移到 i18n。
-- 把任务推荐逻辑从纯前端匹配升级为后端评分接口，便于纳入历史完成率、失败率、平均耗时。
-- 为聚义厅会话增加“会话上下文摘要”，让用户能看到当前发令绑定了哪个 Agent 和哪项任务。
-- 补充端到端测试，覆盖“名册切状态，地图人物不变”的真实 DOM 行为。
-
-### 7.3 长期优化
-
-- 将聚义厅升级为多 Agent 协作工作台，支持一个任务分派多个 Agent。
-- 增加 Agent 事件时间线，展示上线、离线、接令、回报、异常等状态变更。
-- 增加任务编排视图，支持任务依赖、阶段、子任务和回滚。
-- 引入实时状态订阅，让 `/agent/map` 和 `/agent/roster` 的更新从手动刷新改为事件驱动。
-- 建立聚义厅可观测指标，如在线人数、任务吞吐、平均响应时长、失败率。
-
-## 8. 变更与验证
-
-- 地图/名册独立、任务显式目标及会话上下文是当前契约，详见 runbook；契约变更同步更新实现、测试与文档，不为旧版本保留实现。
-- 按实际影响选择或补充测试，不要求每次修改固定测试文件。数据边界可参考 `web/tests/juyiting-collaboration-flow.test.js`，Agent 服务可参考 `api/agent/jia-agent-service/src/test/java/cn/jia/agent/service/impl/AgentServiceImplTest.java`。
-- 正式测试、生产构建与发布走 Flow：前端 `4403172`，后端 `5260799`，绑定精确 commit 与同 Run 制品；CI-only 仅按需诊断。develop 不自动部署，后续按明确版本发布；本地诊断与授权边界统一遵循 `AGENTS.md`，本指南不提供本机生产构建或直接 Gradle 发布命令。
-- 轻量定位当前接口调用：
-
-```bash
-rg -n "agent/map|agent/roster|agent/active|assign-task" web/src web/tests
-```
-
-### 自家接应接入说明（2026-10-12 23:38发布核对）
-
-API `0fe830d1ea` / Web `aad2ae9` 已以1.14.11上线，isp-install `a39c085`已推develop。旧安装文书统一为Runtime真实scope、非秘密handoff显式登记/查询及程序/配置/状态目录说明。首次接入仍须本人授权登记和目标机enroll；已有Runtime升级/迁移保留身份、完整HOME和会话索引，不重新注册。ACTIVE不等于在线，页面不自动升级目标机。操作见该仓 `docs/cyf-agent-runtime-v1-self-host.md`（迁移第9节）；正式测试、发布及未执行新用户生产登记E2E的边界见CYF runbook对应小节。
-
-### 成果选择与验收（2026-10-22 定向核验）
-
-覆盖 Web `5ec7e2096f838136ae71b6d4a66e148756aad54d`（1.16.40）及 API `6dc75fc632ad697bbe29c60a8a257c637ba937d6`（1.16.26）的议事成果验收，不重标其他章节基线。
-
-- 议事右上清单勾选图标打开全部持久化成果清单，默认不选；每稿“验收此版”打开同一清单并只预选该稿。历史稿可以验收，不限最后一稿，支持多选。预览不显示下载按钮。
-- 打开、选择、返回不提交。明确确认才复用既有 selected-output finalization 和 delivery-review：来源及hash固定，提交回执与当前交付精确匹配后验收，不调用模型、不重新生成。已提交集合一致则复用，不一致时在原任务锁和版本检查下用既有 changes_requested 流程替换；不增加表或状态机。
-- 已完成事项只读；刷新只核对原操作，不自动验收。未知/失败保留原幂等键和选中集合，显式继续，不默认改验其他稿。本人与其他用户Agent使用同一链路，保留平台身份、任务ACL及授权代际校验。
-- 历史目录必须传实际 entries 数组；文字成果按已持久化、明确deliverable的CHAT完成来源读取，不把任意聊天文字当成果。
-- 源码、Flow正式测试和线上核验分开记录：API224、Web287；真实专用任务504历史文字稿、506外单图文多选、508生成图片未提交直接验收均通过。详见 `specs/juyiting-external-commission-mvp/evidence/implementation/selected-output-acceptance-20261022/`；不代表运行端历史稳定性问题已经修复。
+本页已按2026-11-10现行责任入口收敛；旧实施记录、状态和被取代规则保留在[原文快照](implementation/archive/2026-11-10-documentation/docs__juyiting-feature-guide.md)，按原位置解释相对引用，不作为今天执行指令。文档更新不等于全量源码/线上复验。

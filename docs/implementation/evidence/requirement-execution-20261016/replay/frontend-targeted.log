@@ -1,0 +1,1024 @@
+
+
+  JYT-UX-W03 Hall draft submission and recovery adapter
+    ✔ accepts server-declared plain-text input capability without exposing it as an output format (105ms)
+    ✔ persists a validated DRAFT-v1 create receipt with exact fixed inputs
+    ✔ quotes If-Match, keeps local input on a 412, and asks the user to reload
+    ✔ preserves the W02 discard action and sends its exact revision/key
+    ✔ persists only a scope-isolated non-sensitive submit intent, locks the acknowledged draft, and blocks a second POST
+    ✔ uses the original key only for unknown submit reconciliation and never crosses account scope
+    ✔ keeps the unknown original key locked through a rejected reconciliation and reuses it after reauthorization
+    ✔ hides the prior owner on logout while retaining the isolated unknown key for reauthorization
+    ✔ refuses persistence and submission without a stable owner/client scope
+    ✔ accepts the frozen TASK_ACTION receipt shape without mixing it into a private case
+    ✔ releases deterministic submit failures for correction while retaining only uncertain failures
+    ✔ reads only the frozen private-execution results path and preserves fixed output versions
+    ✔ shows an empty result set only for a nonterminal execution and rejects malformed committed output
+    ✔ uses the API cursor limit of 300 rather than an arbitrary ID limit
+
+  JYT-UX-W05 frozen TASK_CREATE receipt boundaries
+    ✔ accepts nullable optional DRAFT-v1 fields in saved drafts and recoverable summaries
+    ✔ accepts TASK_CREATE without execution, keeps exact string taskVersion, and never submits twice
+    ✔ locks invalid task receipts and never confuses private, TASK_ACTION and TASK_CREATE shapes
+    ✔ retains POST503 intent through real identity cleanup and GET401/403, then reads the same task key
+    ✔ rechecks the shared scope intent before another retained pane can post
+    ✔ does not let a late reconciliation of an acknowledged task erase another pane's newer unknown intent
+    ✔ allows explicit correction after original POST422 but not after a refused formal detail read
+
+  JYT-UX-W05 field-level DRAFT-v1 limits
+    ✔ rejects 201-character titles locally before create or CAS replacement and keeps the saved draft
+    ✔ loads and saves legitimate 16001–20000-character instructions with exact CAS and Unicode code-point title limits
+    ✔ serializes unselected agent and MIME as null, not invalid optional exact empty strings
+
+  JYT-UX-W03 HallDraftEditor boundary
+    ✔ receives the stable owner/client scope from the production Hall path rather than an epoch
+    ✔ mounts the production component with its empty default draft and exposes the first save action (64ms)
+    ✔ mounts fixed private results, hides unavailable actions, and creates a revision from the exact output reference (51ms)
+
+  JYT-UX-W05 real editor source restoration
+    ✔ restores the exact saved draft revision through GET without creating a replacement (149ms)
+    ✔ restores formal draft editing without presenting a private-submission confirmation (192ms)
+    ✔ opens PRIVATE_CASE progress without fabricating a submission receipt or resubmitting (81ms)
+    ✔ keeps LEGACY_EXECUTION read-only and reads its real execution endpoint (93ms)
+    ✔ does not turn an inaccessible draft into a fresh editable form (165ms)
+    ✔ rejects a different draft ID returned for an exact overview reference (73ms)
+    ✔ creates a formal draft without agent/format/material inputs and opens the exact real formal task after one POST (95ms)
+    ✔ preserves oversized restored formal text and saves it without truncation, but requires correction before confirmation (82ms)
+    ✔ keeps incompatible formal agent/format/fixed inputs until explicit removal and withdraws saved-snapshot authorization on edit (117ms)
+    ✔ never erases immutable formal source/conversation metadata or creates a replacement draft to bypass it (162ms)
+    ✔ retains full private CREATE editing, selected target and fixed inputs instead of imposing formal limits (97ms)
+    ✔ renders only capability-backed human-readable formats, preserving unsupported old MIME without replacing it (92ms)
+    ✔ submits an empty private format as server-supported text and shows the actual default on confirmation (112ms)
+    ✔ uses the first service-supported format only when text is unavailable (111ms)
+    ✔ keeps a restored supported non-text format instead of silently replacing it with the default (58ms)
+    ✔ keeps long saved private text and format visible when capabilities are unavailable, without allowing submission (68ms)
+
+  W04 saved-source exit boundary
+    ✔ keeps fixed file source and edited text on failed save, then acknowledges only the saved snapshot (54ms)
+
+  JYT-UX-W02 visible draft-step regressions
+    ✔ requires an explicitly selected visible agent, exposes confirm save, and keeps authorization disabled after a failed save (62ms)
+    ✔ keeps material selection count and actions in a bounded footer while the long list owns scrolling (77ms)
+    ✔ allows cancelling a selected fixed v1 after workspace latest advances to v2, and never offers newer result versions (69ms)
+
+  JYT-UX-W05 independent Hall read model
+    ✔ uses a query-free overview and retains unknown counts and exact source refs
+    ✔ retains partial/failed sources without hiding the other source or pretending empty
+    ✔ continues only the requested source with its opaque cursor (not the ID length limit)
+    ✔ retries a failed page with the same cursor while showing retained data as unconfirmed
+    ✔ clears all summaries after 401 without issuing any mutation
+    ✔ clears all summaries after 403 without issuing any mutation
+    ✔ fences late account A results and never displays them for account B
+    ✔ does not fetch without a stable scope and clears data on lifecycle identity cleanup
+    ✔ rejects cross-partition source types and mismatched evidence without losing valid partitions
+    ✔ loads a canonical formal task by ref instead of using an overview summary as a task
+    ✔ reports a read error, not a successful empty overview, on 503 or invalid envelope
+    ✔ preserves compatible private mark and formal review evidence without conflating action types
+    ✔ loads archive by independent applicable source and retains an explicit draft archive error instead of empty success
+
+  JYT-UX-W05 mounted overview and message projection
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ renders cancelled/failed/blocked formal statuses accurately without reinterpreting private execution failures (145ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ shows only needsAction in messages, explains partial sources, and emits exact read refs (52ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ prioritizes a real draft entry in overview without submitting or waiting for the map (65ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ refreshes the existing server overview source when the owner advances its refresh key (55ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ clears only the exact quick-request edit generation acknowledged as committed (115ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-a',
+    version: '2',
+    displayName: '活动底稿',
+    contentMimeType: 'image/jpeg'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-a',
+    version: '2',
+    displayName: '活动底稿',
+    contentMimeType: 'image/jpeg'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-a',
+    version: '2',
+    displayName: '活动底稿',
+    contentMimeType: 'image/jpeg'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-a',
+    version: '2',
+    displayName: '活动底稿',
+    contentMimeType: 'image/jpeg'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-a',
+    version: '2',
+    displayName: '活动底稿',
+    contentMimeType: 'image/jpeg'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-a',
+    version: '2',
+    displayName: '活动底稿',
+    contentMimeType: 'image/jpeg'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-b"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-b"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+    ✔ uses a real fixed-version picker, preserves confirmed selection on cancel, and clears it on identity change (91ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-pdf',
+    version: '3',
+    displayName: '执行说明',
+    contentMimeType: 'application/pdf'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-pdf',
+    version: '3',
+    displayName: '执行说明',
+    contentMimeType: 'application/pdf'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ selects non-image fixed versions through the same neutral material entry (69ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-0',
+    version: '2',
+    displayName: 'bird.png',
+    contentMimeType: 'image/png'
+  },
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [
+  {
+    fileId: 'file-1',
+    version: '2',
+    displayName: 'brief.pdf',
+    contentMimeType: 'application/pdf'
+  },
+  {
+    fileId: 'file-2',
+    version: '2',
+    displayName: 'song.mp3',
+    contentMimeType: 'audio/mpeg'
+  },
+  {
+    fileId: 'file-3',
+    version: '2',
+    displayName: 'notes.txt',
+    contentMimeType: 'text/plain'
+  }
+] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ mixes image/document/audio/text using the real workspace adapter, previews, downloads and removes without writes (222ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ only opens formal tasks after a canonical read and hides actions missing permission (49ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=false identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=false identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-b"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-b"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-b" identityEpoch=2  ... > 
+  at <VTUROOT>
+    ✔ does not query before production identity readiness and never shows prior-account titles while reloading (55ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallMaterialPicker modelValue= [] onUpdate:modelValue=fn identity-scope="tenant\u0000client\u0000owner-a"  ... > 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ offers archive only for private/task sources and reads them without inventing a global count (49ms)
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+[Vue warn]: Failed to resolve component: var-icon
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <HallOverview enabled=true identityScope="tenant\u0000client\u0000owner-a" identityEpoch=1  ... > 
+  at <VTUROOT>
+    ✔ routes review evidence to the exact canonical formal task and delivery without an acceptance or private mark call (41ms)
+
+  Juyi Hall one-sentence matter adapter
+    ✔ creates TASK_CREATE with a bounded title, preserves the request, and never creates an execution
+    ✔ links each selected fixed version after TASK creation and reports partial success without recreating the task
+    ✔ rejects empty and over-limit requests before any network request
+    ✔ reconciles the exact unknown submit instead of creating or submitting a duplicate
+    ✔ clears quick text and does not expose another owner scope recovery state
+
+  personal workspace execution adapter
+    ✔ recovers an exact known execution by read-only GET without requiring a paginated history row
+    ✔ does not adopt an unrelated or old-identity exact recovery response
+    ✔ uses the real roster, submits explicit pinned file versions, polls it, and asks the user to refresh only after completion
+    ✔ allows multiple distinct pinned materials for a cross-format delivery without fabricating a result
+    ✔ keeps a configured PPT output separate from seven supported source material formats
+    ✔ stops polling and renders the server-controlled terminal failure without fabricating a delivery
+    ✔ sends the current grant revision when requesting revocation and never reports a local revoke as success
+
+  personal workspace execution receipt and recovery
+    ✔ programmatically accepts only one rapid submission and keeps the accepted queued receipt
+    ✔ reconciles an ambiguous post through its original key without a duplicate post, and keeps 404 honest
+    ✔ reloads server-owned history, adopts the most recent queued execution, and distinguishes empty from failure
+    ✔ clears a terminal receipt only when the user explicitly starts a new request
+    ✔ keeps a persisted 404-unknown original intent through terminal history and blocks a duplicate request
+    ✔ does not let history selection replace a create request that is still unresolved
+    ✔ does not let a terminal execution for another id erase an unknown original key
+    ✔ does not let a delayed recover adoption override a newer history selection
+    ✔ does not show a stale polling error after history selection changes
+    ✔ fences an older history selection response behind a newer selection
+    ✔ drops a late history callback after identity scope changes
+
+  personal workspace execution receipt presentation
+    ✔ renders authorized audio with controls and no autoplay in embedded workspace
+    ✔ renders authorized audio with controls and no autoplay in full workspace
+    ✔ mounts the delivery receipt at submission location, shows terminal errors, and keeps file selection navigation working
+    ✔ prototype embeds light file rows, replaces the active layer and returns to the fixed source file
+    ✔ prototype keeps cursor continuation honest and management is a third logical layer with inline recycle confirmation
+
+  personal workspace browser adapter
+    ✔ sends a multipart owner-scoped upload with an idempotency key and then reads its exact detail
+    ✔ accepts legacy rows without originKind so a web rollout does not hide pre-migration files
+    ✔ rejects an untrusted workspace origin enum rather than rendering a fabricated source
+    ✔ drops a late list response after the authenticated identity epoch changes
+    ✔ renders a server-confirmed image preview only when the preview part preserves the image MIME type
+    ✔ keeps the old single content text preview for PDF compatibility
+
+  1.13.1 workspace PDF preview parts
+    ✔ navigates server-declared PAGED_TEXT pages without treating a PNG fixture as a PDF contract
+
+  1.13.1 workspace multi-part previews
+    ✔ navigates declared PPT page parts
+    ✔ revokes URLs created before a later preview part fails
+
+  1.13.1 workspace Excel preview parts
+    ✔ reads each declared text/plain sheet without falling back to raw XLSX bytes
+
+
+  110 passing (4s)
+

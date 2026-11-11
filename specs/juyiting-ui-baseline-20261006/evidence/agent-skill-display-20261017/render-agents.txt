@@ -1,0 +1,38 @@
+// Offline display fixtures only: never infer a real installation from a role name or ability.
+let agentProfileRead={id:null,loading:false,refreshed:false,generation:0};
+function agentSkillExample(name){
+ const requested=new URLSearchParams(location.search).get('agentSkillState');
+ if(['ready','unavailable','unverified','empty','error','failed','noauth'].includes(requested))return requested;
+ return name.includes('吴用')?'ready':name.includes('林冲')?'empty':name.includes('李逵')?'unavailable':name.includes('公孙胜')?'error':'unverified';
+}
+function renderAgents(){
+ const panel=$('.agent-panel');if(!panel)return;
+ const rows=$$('.agent-row',panel);
+ $$('.status-filter button',panel).forEach((b,i)=>{b.dataset.action='complete-agent-filter';b.dataset.filter=String(i);b.classList.toggle('active',String(state.agentFilter||0)===String(i));b.setAttribute('aria-pressed',String(String(state.agentFilter||0)===String(i)));});
+ rows.forEach((row,i)=>{row.dataset.action='choose-agent';row.dataset.agent=String(i);const labels=['','候命','办事','出征','失联'];row.hidden=!!Number(state.agentFilter)&&!($('em',row)?.textContent||'').includes(labels[Number(state.agentFilter)]);row.style.display=row.hidden?'none':'';row.setAttribute('aria-pressed',state.selectedAgent?.id===String(i));});
+ const detail=$('.detail-card',panel);if(!detail)return;
+ detail.classList.add('mmd','mmd-agent-detail');
+ const selected=state.selectedAgent,row=selected?$('.agent-row[data-agent="'+selected.id+'"]',panel):null;
+ if(!selected||!row){detail.innerHTML='<div class="all-empty"><h3>点一位厅中好汉</h3><p>查看技能、本领与动静。</p></div>';return;}
+ if(agentProfileRead.id!==selected.id)agentProfileRead={id:selected.id,loading:false,refreshed:false,generation:agentProfileRead.generation+1};
+ const mode=agentSkillExample(selected.name),loading=agentProfileRead.loading;
+ const source=$('small',row)?.textContent?.trim()||'';
+ const recorded=source&&!source.includes('未录本领')?source.split(/\s*[/／、]\s*/).filter(Boolean):[];
+ const abilities=recorded.length?recorded.map(a=>`<span>${esc(a)}</span>`).join(''):'<small>未录本领</small>';
+ const count=loading||['error','failed','noauth'].includes(mode)?'':`已核验安装 ${['empty','unverified'].includes(mode)?0:1} 项`;
+ let skills='';
+ if(loading)skills='<p class="agent-skill-empty" role="status">正在核对技能…</p>';
+ else if(mode==='empty')skills='<p class="agent-skill-empty">暂无已登记技能</p>';
+ else if(mode==='noauth')skills='<p class="agent-skill-empty">仅拥有者可查看技能</p>';
+ else if(mode==='error'||mode==='failed')skills=`<p class="agent-skill-error" role="status">${mode==='error'?'技能读取失败，可重试':'技能与本领读取失败，请重试'}</p>`;
+ else skills=`<div class="agent-skill-item"><div class="agent-skill-heading"><strong>图片修改</strong><small>1.0.0</small></div><div class="agent-skill-badges"><span>${mode==='unverified'?'安装未核验':'已核验安装'}</span><span class="${mode==='ready'?'skill-ready':'skill-unavailable'}">${mode==='ready'?'运行就绪':mode==='unverified'?'暂不可用':'运行状态待核验'}</span></div>${mode==='unverified'?'<p>安装证据未通过核验</p>':mode==='unavailable'?'<p>未取得可信的运行状态，请稍后刷新。</p>':''}</div>`;
+ const time=loading?'读取中':mode==='failed'?'本次读取失败':mode==='noauth'?'未读取私有目录':mode==='error'?'本领已读取 · 技能未读到':agentProfileRead.refreshed?'刚刚读取 · 示例':'最近读取 14:30 · 示例';
+ detail.innerHTML=`<div class="detail-head">${$('.mini-avatar',row)?.outerHTML||'<span class="all-persona-avatar">将</span>'}<div><strong>${esc(selected.name)}</strong><small>技能与本领 · 离线示例，非当前线上事实</small></div></div><section class="agent-profile-section" aria-label="技能"><div class="agent-skill-heading"><h3>技能</h3><small>${count}</small></div>${skills}<p class="agent-profile-note">运行就绪不代表当前任务已获执行授权。</p></section><section class="agent-profile-section" aria-label="本领"><div class="agent-skill-heading"><h3>本领</h3><small>${loading||['failed','noauth'].includes(mode)?'上次记录':'最近读取记录'}</small></div><div class="ability-tags">${abilities}</div><p class="agent-profile-note">本领记录，不等同于已安装技能。</p></section><div class="agent-profile-refresh">${button(loading?'正在刷新…':'刷新技能与本领','refresh-agent-profile',loading||mode==='noauth'?'disabled':'')}<small role="status">${time}</small></div><p class="agent-profile-note">只刷新当前好汉详情；读取最新记录，不触发重新扫描。</p><div class="agent-detail-actions">${button('与这位好汉密议','private-chat')}${state.task&&!state.agent&&!state.task.complete&&!state.task.cancelled?button('点将并议事','assign','class="point-and-deliberate"'):''}</div>`;
+ scoped(detail,'data-v-b5581454');
+}
+function refreshAgentProfile(){
+ if(agentProfileRead.loading||!state.selectedAgent||agentSkillExample(state.selectedAgent.name)==='noauth')return;
+ const id=state.selectedAgent.id,generation=++agentProfileRead.generation;
+ agentProfileRead.loading=true;agentProfileRead.refreshed=false;renderAgents();
+ setTimeout(()=>{if(page!=='agents'||state.selectedAgent?.id!==id||agentProfileRead.generation!==generation)return;agentProfileRead.loading=false;agentProfileRead.refreshed=!['error','failed','noauth'].includes(agentSkillExample(state.selectedAgent.name));renderAgents();},650);
+}

@@ -1,0 +1,5004 @@
+<template>
+  <div ref="hallRootRef" class="juyi-page" tabindex="-1" :style="hallViewportStyle" :class="{ 'is-immersive-map': isImmersiveMap, 'is-panel-open': isPanelSessionActive, 'is-virtual-landscape': isVirtualLandscape, 'has-workbench-dock': showWorkbenchDock && (Boolean(activePanel) || !renderedPanel), 'is-keyboard-active': hallKeyboardActive, [`experience-${experienceMode}`]: true, [`home-${homeMode}`]: true }">
+    <aside v-show="isOverviewHome" class="hall-workbench-sidebar" :inert="voiceInteractionLocked || isPanelSessionActive && !workbenchPrimaryPanelSet.has(renderedPanel) ? '' : null" aria-label="工作台侧栏">
+      <button class="workbench-brand" type="button" @click="openWorkbenchPage('overview')"><span class="workbench-seal">聚</span><span>聚义厅<small>一起，把事情办成。</small></span></button>
+      <p class="workbench-nav-caption">我的工作空间</p>
+      <nav class="workbench-side-nav" aria-label="工作台主导航">
+        <button v-for="tab in workbenchPrimaryTabs" :key="tab.panel" type="button" :data-workbench-tab="tab.panel" :aria-current="workbenchCurrentPage === tab.panel ? 'page' : null" @click="openWorkbenchPage(tab.panel)"><var-icon :name="tab.icon" /><span>{{ tab.label }}</span></button>
+      </nav>
+      <div class="workbench-sidebar-bottom">
+        <button class="workbench-map-entry" type="button" @click="openWorkbenchMap"><var-icon name="map-marker-outline" /><span>厅中实景<small>去梁山走一走</small></span><var-icon name="chevron-right" /></button>
+        <nav class="workbench-side-nav workbench-side-utility" aria-label="工作台辅助导航">
+          <button type="button" @click="emit('open-onboarding', $event.currentTarget)"><var-icon name="help-circle-outline" /><span>使用帮助</span></button>
+        </nav>
+        <button class="workbench-sidebar-account" type="button" :disabled="accountEntryDisabled" aria-label="个人中心" @click="openProfile"><img v-if="accountAvatar" :src="accountAvatar" alt="" /><var-icon v-else name="account-circle-outline" aria-hidden="true" /><span>{{ accountDisplayName }}<small>个人中心</small></span><var-icon name="chevron-right" aria-hidden="true" /></button>
+      </div>
+    </aside>
+    <header v-show="!isImmersiveMap" class="hall-app-header" :inert="isPanelSessionActive && !workbenchPrimaryPanelSet.has(renderedPanel) || voiceInteractionLocked ? '' : null" :aria-hidden="isPanelSessionActive && !workbenchPrimaryPanelSet.has(renderedPanel) ? 'true' : null">
+      <nav v-if="isOverviewHome" class="workbench-breadcrumb" aria-label="当前位置"><button type="button" @click="openWorkbenchPage('overview')">我的工作空间</button><var-icon name="chevron-right" aria-hidden="true" /><strong>{{ workbenchCurrentLabel }}</strong></nav>
+      <button v-else class="hall-brand" type="button" @click="setHomeMode('overview')"><span class="hall-seal">聚</span><span>聚义厅<small>梁山好汉 · 共成其事</small></span></button>
+      <nav class="hall-main-nav" aria-label="聚义厅主导航">
+        <button v-for="tab in workbenchMobileTabs" :key="tab.panel" type="button" :aria-current="workbenchCurrentPage === tab.panel ? 'page' : null" @click="openWorkbenchPage(tab.panel)">{{ tab.label }}</button>
+      </nav>
+      <div class="hall-header-tools">
+        <button type="button" @click="openPanel('agents', { root: isOverviewHome })">好汉</button>
+        <button class="workbench-message-action" type="button" aria-label="查看消息" @click="openPanel('messages', { root: isOverviewHome })"><var-icon v-if="isOverviewHome" name="bell-outline" aria-hidden="true" /><span v-else>消息</span></button>
+        <button class="workbench-create-action" type="button" @click="openDefaultRequirementCreate()"><var-icon v-if="isOverviewHome" name="plus" aria-hidden="true" /><span>{{ isOverviewHome ? '提出需求' : '＋ 提出需求' }}</span></button>
+        <button class="workbench-account-action" type="button" :disabled="accountEntryDisabled" aria-label="个人中心" @click="openProfile"><var-icon v-if="isOverviewHome" name="account-circle-outline" aria-hidden="true" /><span>账户</span></button>
+        <button class="workbench-mobile-more" type="button" aria-label="全部入口" :aria-expanded="workbenchMenuOpen" @click="workbenchMenuOpen = !workbenchMenuOpen"><var-icon name="menu" /></button>
+      </div>
+      <nav v-if="workbenchMenuOpen && isOverviewHome" class="workbench-more-menu" aria-label="全部入口">
+        <button v-for="tab in workbenchPrimaryTabs" :key="tab.panel" type="button" @click="openWorkbenchPage(tab.panel, $event)"><var-icon :name="tab.icon" aria-hidden="true" /><span>{{ tab.label }}</span></button>
+        <button type="button" @click="openWorkbenchMap"><var-icon name="map-marker-outline" aria-hidden="true" /><span>厅中实景</span></button>
+        <button type="button" :disabled="accountEntryDisabled" @click="workbenchMenuOpen = false; openProfile()"><var-icon name="account-circle-outline" aria-hidden="true" /><span>个人中心</span></button>
+        <button type="button" @click="workbenchMenuOpen = false; emit('open-onboarding', $event.currentTarget)"><var-icon name="help-circle-outline" aria-hidden="true" /><span>使用帮助</span></button>
+      </nav>
+    </header>
+    <div v-show="!isImmersiveMap" class="hall-mode-toolbar" :inert="isPanelSessionActive || voiceInteractionLocked ? '' : null" :aria-hidden="isPanelSessionActive ? 'true' : null">
+      <div class="hall-mode-switch" aria-label="聚义厅视图"><button type="button" :aria-pressed="homeMode === 'map'" @click="setHomeMode('map')">厅中实景</button><button type="button" :aria-pressed="homeMode === 'overview'" @click="setHomeMode('overview')">办事概览</button></div>
+      <span class="hall-mode-hint">地图入口与办事入口，通向同一件事</span>
+      <div class="hall-scene-tools">
+        <button type="button" @click="openPanel('library')">典籍阁</button>
+        <button v-if="homeMode === 'map' && experienceMode === 'landscape-map'" type="button" aria-label="缩小地图" @click="hallStageRef?.zoom(-0.12)">−</button>
+        <button v-if="homeMode === 'map' && experienceMode === 'landscape-map'" type="button" aria-label="放大地图" @click="hallStageRef?.zoom(0.12)">+</button>
+        <button v-if="homeMode === 'map' && experienceMode === 'landscape-map'" type="button" @click="hallStageRef?.resetCamera()">全景</button>
+        <button class="hall-sound-action" type="button" :aria-pressed="soundEnabled" @click="toggleHallSound">{{ soundEnabled ? '关闭声音' : '开启声音' }}</button>
+        <button class="hall-help-action" type="button" @click="emit('open-onboarding', $event.currentTarget)">怎么开始？</button>
+      </div>
+    </div>
+    <nav v-show="showWorkbenchDock && (Boolean(activePanel) || !renderedPanel)" class="workbench-mobile-nav" aria-label="移动端导航" :inert="voiceInteractionLocked || isPanelSessionActive && !workbenchPrimaryPanelSet.has(renderedPanel) ? '' : null">
+      <button v-for="tab in workbenchMobileTabs" :key="tab.panel" type="button" :data-workbench-tab="tab.panel" :aria-label="tab.label" :aria-current="workbenchCurrentPage === tab.panel ? 'page' : null" @click="openWorkbenchPage(tab.panel)"><var-icon :name="tab.icon" /><span>{{ tab.label }}</span></button>
+    </nav>
+    <HallPortraitHome
+      ref="portraitHomeRef"
+      unified-shell
+      v-show="!experienceReady || experienceMode === 'portrait-command' || isOverviewHome"
+      :home-mode="homeMode"
+      :compact="isLowHeightPanel"
+      :live-preview-enabled="true"
+      :account-avatar="accountAvatar"
+      :account-display-name="accountDisplayName"
+      :account-entry-disabled="accountEntryDisabled"
+      :live-preview-state="previewPresentationState"
+      :live-preview-error="previewSceneError"
+      :live-preview-map-width="previewSceneBounds.width"
+      :live-preview-map-height="previewSceneBounds.height"
+      :agents="agents"
+      :map-agents="mapAgents"
+      :operable-agents="operableRosterAgents"
+      :orientation-hint="orientationHint"
+      :orientation-request-pending="orientationRequestPending"
+      :selected-agent="selectedAgent"
+      :selected-task="selectedTask"
+      :can-start-agent-conversation="canStartAgentConversation"
+      :task-detail-open="portraitTaskDetailOpen"
+      :status-class="statusClass"
+      :task-state-class="taskStateClass"
+      :task-status-text="taskStatusText"
+      :tasks="tasks"
+      :inert="isPanelSessionActive || voiceInteractionLocked ? '' : null"
+      :aria-hidden="isPanelSessionActive || voiceInteractionLocked ? 'true' : null"
+      @set-home-mode="setHomeMode"
+      @quick-action="handlePortraitQuickAction"
+      @open-profile="openProfile"
+      @open-workspace="openBabaoBox"
+      @open-onboarding="emit('open-onboarding', $event)"
+      @request-landscape="requestPortraitLandscape"
+      @cancel-orientation="requestPortrait"
+      @retry-live-preview="retryLivePreview"
+      @live-preview-visibility-change="handlePreviewVisibility"
+      @select-agent="handlePortraitAgentSelect"
+      @start-agent-conversation="handleStartAgentConversation"
+      @open-task="handlePortraitTaskOpen"
+      @close-task-detail="closePortraitTaskDetail"
+      @open-task-board="handlePortraitTaskBoard"
+      @discuss-task="handlePortraitTaskDiscussion"
+    >
+      <template #overview>
+        <HallOverview
+          :refresh-key="hallReadRevision"
+          :enabled="Boolean(hallIdentityScope)"
+          :identity-scope="hallIdentityScope"
+          :identity-epoch="apiStore.authorizationGeneration"
+          :agents="operableRosterAgents"
+          :quick-pending="requirementCreateBusy"
+          :quick-message="requirementCreateState.error || ''"
+          @quick-request="handleQuickRequest"
+          @set-home-mode="setHomeMode"
+          @open-board="openPanel('tasks')"
+          @open-workspace="openBabaoBox"
+          @open-agents="openPanel('agents')"
+          @start-chat="startContextConversation"
+          @start-draft="openDefaultRequirementCreate()"
+          @open-item="openOverviewItem"
+          @open-task="openOverviewTask"
+        />
+      </template>
+    </HallPortraitHome>
+
+    <div ref="landscapeTargetRef" v-show="experienceMode === 'landscape-map' && !isOverviewHome" class="hall-live-landscape-target"></div>
+    <Teleport :to="stageTarget" :disabled="!stageTarget">
+    <HallStage
+      v-if="stageMounted"
+      ref="hallStageRef"
+      :unified-shell="!isImmersiveMap"
+      v-show="experienceReady"
+      :read-only-preview="experienceMode === 'portrait-command' || isOverviewHome"
+      :account-avatar="accountAvatar"
+      :account-display-name="accountDisplayName"
+      :account-entry-disabled="accountEntryDisabled"
+      :preview-visible="stageDrawVisible"
+      :agent-bubbles="agentBubbles"
+      :agent-key="agentKey"
+      :agent-style="sceneAgentStyle"
+      :hidden-agent-count="hiddenAgentCount"
+      :experience-mode="experienceMode"
+      :home-mode="homeMode"
+      :interaction-locked="isPanelSessionActive || voiceInteractionLocked"
+      :is-mobile-coarse="isMobileCoarse"
+      :inert="isPanelSessionActive ? '' : null"
+      :aria-hidden="isPanelSessionActive ? 'true' : null"
+      :landscape-entry-target="landscapeEntryTarget"
+      :map-resume-snapshot="mapResumeSnapshot"
+      :orientation-hint="orientationHint"
+      :orientation-request-pending="orientationRequestPending"
+      :portrait-name="portraitName"
+      :portrait-short-name="portraitShortName"
+      :portrait-style="portraitStyle"
+      :role-class="roleClass"
+      :simulation-enabled="simulationEnabled"
+      :scene-agents="sceneAgents"
+      :scene-hotspots="sceneHotspots"
+      :selected-agent="selectedAgent"
+      :sound-enabled="soundEnabled"
+      :status-class="statusClass"
+      :status-text="statusText"
+      :tasks="tasks"
+      :virtual-landscape="isVirtualLandscape"
+      :tasks-total="tasks.length"
+      :visible-agents="visibleAgents"
+      @landscape-target-consumed="handleLandscapeTargetConsumed"
+      @map-snapshot="handleMapSnapshot"
+      @map-snapshot-clear="clearMapResumeSnapshot"
+      @open-profile="openProfile"
+      @open-workspace="openBabaoBox"
+      @new-conversation="handleNewHallConversation"
+      @open-panel="handleStagePanelOpen"
+      @set-home-mode="setHomeMode"
+      @request-landscape="requestLandscape"
+      @request-portrait="requestPortrait"
+      @open-onboarding="emit('open-onboarding', $event)"
+      @select-agent="selectAgent"
+      @simulation-phase-events="handleSimulationPhaseEvents"
+      @simulation-ready="handleSimulationReady"
+      @simulation-reset="resetSimulationLifecycle"
+      @scene-mode-change="handleSceneModeChange"
+      @scene-state-change="handlePreviewSceneState"
+      @scene-error="handlePreviewSceneError"
+      @scene-bounds-change="handlePreviewSceneBounds"
+      @toggle-sound="toggleHallSound"
+    >
+
+      <HallVoiceHud v-if="effectiveSceneMode === 'landscape' && !activePanel" :voice="hallVoice" @apply="applyVoiceTranscript" />
+
+      <div v-if="selectedAgent" class="quick-bar">
+        <transition name="agent-card">
+          <SelectedAgentCard
+            :ability-text="abilityText"
+            :agent="selectedAgent"
+            :locked="voiceInteractionLocked"
+            :portrait-name="portraitName"
+            :portrait-style="portraitStyle"
+            :status-text="statusText"
+            @close-card="closeSelectedAgentCard"
+            @open-agents="openPanel('agents')"
+          />
+        </transition>
+      </div>
+    </HallStage>
+    </Teleport>
+
+    <footer v-if="homeMode === 'map' && !isImmersiveMap" class="hall-map-actions" :inert="isPanelSessionActive || voiceInteractionLocked ? '' : null" :aria-hidden="isPanelSessionActive ? 'true' : null">
+      <button class="hall-primary" type="button" @click="openDefaultRequirementCreate()">＋ 提出需求</button>
+      <button type="button" :aria-label="conversationEntryLabel" @click="startContextConversation">{{ conversationEntryLabel }}</button>
+      <span>不必先懂所有功能，就能开始办事</span>
+      <button class="hall-continue" type="button" @click="setHomeMode('overview')">接着上次办 →</button>
+    </footer>
+
+    <HallVoiceHud
+      v-if="experienceMode === 'portrait-command' && voiceInteractionLocked && !activePanel"
+      :voice="hallVoice"
+      @apply="applyVoiceTranscript"
+    />
+
+    <transition name="panel" @after-leave="handlePanelAfterLeave">
+      <div v-if="activePanel" :key="panelSessionGeneration" class="panel-overlay" :class="{ 'is-full-window': panelLayout === 'full-window', 'is-agent-overlay': renderedPanel === 'agents', 'is-low-height': isLowHeightPanel, 'is-chat-overlay': renderedPanel === 'chat', 'is-compact-chat-overlay': renderedPanel === 'chat' && isCompactChat, 'theme-workbench': isOverviewHome, 'is-workbench-panel': isOverviewHome && workbenchPrimaryPanelSet.has(renderedPanel), 'is-workbench-page': isOverviewHome && workbenchPrimaryPanelSet.has(renderedPanel) }" :data-panel-generation="panelSessionGeneration" @pointerdown.self="isOverviewHome && workbenchPrimaryPanelSet.has(renderedPanel) ? null : closePanel()">
+        <section
+          ref="panelRef"
+          class="floating-panel"
+          :class="[`panel-${renderedPanel}`, `layout-${panelLayout}`]"
+          :role="isOverviewHome && workbenchPrimaryPanelSet.has(renderedPanel) ? 'region' : 'dialog'"
+          :aria-modal="isOverviewHome && workbenchPrimaryPanelSet.has(renderedPanel) ? null : 'true'"
+          :aria-labelledby="isOverviewHome && workbenchPrimaryPanelSet.has(renderedPanel) ? null : panelTitleId"
+          :aria-label="isOverviewHome && workbenchPrimaryPanelSet.has(renderedPanel) ? workbenchCurrentLabel : null"
+          tabindex="-1"
+          @wheel.stop
+          @pointerdown.stop
+          @pointermove.stop
+          @pointerup.stop
+          @pointercancel.stop
+          @keydown="handlePanelKeydown"
+          @keyup.stop
+          @input.stop
+          @click.stop
+        >
+          <div v-if="!navigationPresentation.isPrimarySurface || navigationPresentation.showPrimaryChildHeader" class="panel-title">
+            <button
+              v-if="navigationPresentation.showHallClose && !(renderedPanel === 'agents' && agentPanelRef?.canGoBack)"
+              class="panel-close"
+              type="button"
+              aria-label="关闭面板"
+              :title="renderedPanel === 'agents' ? '关闭面板' : undefined"
+              :disabled="voiceInteractionLocked"
+              @click="closePanel"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
+            </button>
+            <button
+              v-if="navigationPresentation.showHallReturn || (renderedPanel === 'agents' && agentPanelRef?.canGoBack)"
+              class="panel-return"
+              type="button"
+              :aria-label="renderedPanel === 'agents' && agentPanelRef?.canGoBack ? '返回名册' : navigationPresentation.showRootReturn ? '返回聚义厅' : '返回上一层'"
+              :disabled="voiceInteractionLocked"
+              @click="handleHallReturn"
+            >{{ renderedPanel === 'agents' && agentPanelRef?.canGoBack ? '← 名册' : '← 返回' }}</button>
+            <span :id="panelTitleId">{{ activePanelTitle }}</span>
+            <button
+              v-if="taskWorkspaceEnabled && renderedPanel === 'tasks' && !formalTaskRef && taskWorkspaceSubject"
+              class="panel-workspace-link"
+              type="button"
+              @click="openTaskWorkspace"
+            >
+              协作工作台
+            </button>
+          </div>
+
+          <AgentPanel
+            ref="agentPanelRef"
+            :active="renderedPanel === 'agents' && activePanel === 'agents'"
+            :identity-key="hallIdentityScope + ':' + apiStore.authorizationGeneration"
+            :panel-session-key="agentPanelSessionKey"
+            :profile-capabilities="agentProfile.projection.value"
+            :profile-capabilities-loading="agentProfile.loading.value"
+            :profile-capabilities-error="agentProfile.error.value"
+            :profile-reason-text="agentProfileReasonText"
+            v-if="panelFrames.includes('agents')"
+            v-show="renderedPanel === 'agents'"
+            :inert="renderedPanel !== 'agents' ? '' : null"
+            :aria-hidden="renderedPanel !== 'agents' ? 'true' : null"
+            :ability-text="abilityText"
+            :agents="agents"
+            :filtered-agents="filteredAgents"
+            :map-agents="mapAgents"
+            :portrait-name="portraitName"
+            :portrait-style="portraitStyle"
+            :selected-agent="selectedAgent"
+            :status-class="statusClass"
+            :status-filters="statusFilters"
+            :status-text="statusText"
+            :agent-filter="agentFilter"
+            :loading="rosterLoading"
+            :error-message="rosterError"
+            :has-pending-task="Boolean(pendingPointAndDeliberateTask)"
+            :point-and-start-busy="pointAndStartBusy"
+            :can-point-and-deliberate="canPointAndDeliberateAgent"
+            :can-start-conversation="canStartAgentConversation"
+            @refresh-profile-capabilities="agentProfile.refresh"
+            @set-agent-filter="setAgentFilter"
+            @select-agent="handleRosterSelectAgent"
+            @point-and-deliberate="handlePointAndDeliberateAgent"
+            @start-conversation="handleStartAgentConversation"
+            @open-catalog="openPanel('catalog')"
+          />
+
+          <section v-if="leaveState !== 'idle'" class="panel-save-warning" role="alert">
+            <p>{{ leaveState === 'saving' ? '正在保存草稿，请稍候…' : '草稿尚未保存，仍留在原处。请重试、继续编辑，或明确放弃未保存的修改。' }}</p>
+            <button type="button" :disabled="leaveState === 'saving'" @click="retryPanelLeave">重试保存并继续</button>
+            <button type="button" @click="cancelPanelLeave">留在当前页</button>
+            <button type="button" :disabled="leaveState === 'saving'" @click="discardPanelChangesAndLeave">放弃未保存修改并继续</button>
+          </section>
+
+    <section v-if="deliveryReview.recoveryNeeded.value && reviewTaskId" class="hall-review-recovery" role="status" aria-label="原验收操作">
+      <p>{{ deliveryReview.operation.value.message }}</p>
+      <button v-if="deliveryReview.operation.value.intent" type="button" :disabled="deliveryReview.operation.value.busy" @click="deliveryReview.checkOriginal">查询原验收</button>
+      <button v-if="deliveryReview.operation.value.state === 'UNKNOWN' || deliveryReview.operation.value.state === 'PROCESSING'" type="button" :disabled="deliveryReview.operation.value.busy" @click="deliveryReview.resumeOriginal">继续原验收</button>
+      <button v-if="deliveryReview.operation.value.receipt && ['COMMITTED', 'REJECTED'].includes(deliveryReview.operation.value.state)" type="button" :disabled="deliveryReview.operation.value.busy" @click="deliveryReview.settleOriginal">重新核对并结束原操作</button>
+    </section>
+          <BountyPanel
+            v-if="panelFrames.includes('tasks')"
+            v-show="renderedPanel === 'tasks' && !formalTaskRef"
+            ref="bountyPanelRef"
+            v-model:task-ability-filter="taskAbilityFilter"
+            v-model:task-keyword="taskKeyword"
+            embedded-hall
+            :detail-allowed="canOpenPanelDetail"
+            :resources-active="renderedPanel === 'tasks' && !formalTaskRef"
+            :resource-review-context="deliveryReview.context.value"
+            :inert="renderedPanel !== 'tasks' || formalTaskRef ? '' : null"
+            :aria-hidden="renderedPanel !== 'tasks' || formalTaskRef ? 'true' : null"
+            :ability-text="abilityText"
+            :can-assign="canAssign"
+            :funded-preview-enabled="economyPreviewEnabled"
+            :work-item-plan-enabled="workItemPlanEnabled"
+            :authorization-generation="apiStore.authorizationGeneration"
+            :identity-scope="hallIdentityScope"
+            :formal-task-execution-context="formalTaskExecutionContext"
+            :funded-quote-preview="fundedQuotePreview"
+            :cancellation-state="cancellationState"
+            :cancellation-busy="cancellationBusy"
+            :funded-claim-state="fundedClaimState"
+            :funded-create-recovery="fundedCreateRecovery"
+            :requirement-create-state="requirementCreateState"
+            :requirement-create-busy="requirementCreateBusy"
+            :point-and-start-state="pointAndStartPresentationState"
+            :point-and-start-busy="pointAndStartBusy"
+            :format-time="formatTime"
+            :portrait-name="portraitName"
+            :portrait-style="portraitStyle"
+            :recommended-agents="recommendedAgents"
+            :recommendation-state="recommendationState"
+            @refresh-recommendation="loadTaskRecommendations(selectedTask, { refresh: true })"
+            :selected-agent="selectedAgent"
+            :operable-agents="operableRosterAgents"
+            :selected-task="selectedTask"
+            :task-ability-options="taskAbilityOptions"
+            :task-state-class="taskStateClass"
+            :task-status-count="taskStatusCount"
+            :task-status-filter="taskStatusFilter"
+            :task-status-filters="taskStatusFilters"
+            :task-status-text="taskStatusText"
+            :tasks="tasks"
+            :loading="tasksLoading"
+            :has-more="tasksHasMore"
+            @load-more-tasks="loadMoreTasks"
+            :error-message="tasksError"
+            :counts-loading="taskCountsLoading"
+            :counts-error-message="taskCountsError"
+            @mark-changed="hallReadRevision += 1"
+            @confirm-funded-quote="settleFundedQuote(true)"
+            @cancel-funded-quote="settleFundedQuote(false)"
+            @refresh-funded-claim="refreshFundedClaim"
+            @recruit-agent="beginHostedPointFlow"
+            @auto-assign-task="autoAssignTask"
+            @assign-task="assignTask"
+            @archive-task="archiveTask"
+            @brief-selected-task="briefSelectedTask"
+            @check-requirement-create="checkRequirementCreate"
+            @resume-requirement-create="resumeRequirementCreate"
+            @open-formal-results="openFormalResults"
+            @review-delivery="openDeliveryReview"
+            @resume-funded-create="resumeFundedCreate"
+            @check-point-and-start="checkPointAndStartOriginal"
+            @resume-point-and-start="resumePointAndStartOriginal"
+            @cancel-funded-create-recovery="showToast('原资金榜请求仍会保留；请在准备好后明确恢复。')"
+            @cancel-task="cancelTask"
+            @cancel-funding="cancelFunding"
+            @load-settlement="loadSettlement"
+            @open-workspace="openBabaoBox"
+            @formal-execution-created="hallReadRevision += 1"
+            @formal-execution-recovered="hallReadRevision += 1"
+            @discuss-task="discussTask"
+            @load-tasks="loadTasks"
+            @select-agent="selectAgent"
+            @select-task="selectTask"
+            @set-status-filter="setTaskStatusFilter"
+          />
+
+          <section
+            v-if="renderedPanel === 'tasks' && formalTaskRef?.status === 'cancelled' && hallIdentityScope"
+            class="terminal-task-history"
+            aria-label="事项历史成果"
+          >
+            <p role="status">{{ taskStatusText(formalTaskRef.status) }}；仅查看历史成果，不再继续办理或验收。</p>
+            <p v-if="terminalHistory.loading.value" role="status">正在读取历史成果…</p>
+            <p v-else role="status">{{ terminalHistory.message.value }}</p>
+            <div class="terminal-history-actions" role="group" aria-label="重新读取历史成果">
+              <button type="button" @click="refreshTerminalHistory">重新读取历史成果</button>
+              <button type="button" @click="terminalConversationHistory.refresh">重新读取议事文字成果</button>
+            </div>
+            <article v-for="item in terminalHistory.items.value" :key="`${item.artifactId}:${item.artifactVersion}`">
+              <strong>{{ item.title }}</strong>
+              <button type="button" @click="downloadTerminalOutput(item)">下载历史成果</button>
+              <OutputPreview
+                :item="item"
+                :load="terminalHistory.preview"
+                :context-key="terminalHistory.cacheKey.value"
+              />
+            </article>
+            <button v-if="terminalHistory.nextCursor.value" type="button" @click="terminalHistory.loadMore">读取更多历史成果</button>
+            <p v-if="terminalHistoryDownloadError" role="alert">{{ terminalHistoryDownloadError }}</p>
+            <p v-if="terminalConversationHistory.error.value || terminalConversationHistory.catalog.error.value || terminalTextError" role="alert">
+              {{ terminalConversationHistory.error.value || terminalConversationHistory.catalog.error.value || terminalTextError }}
+            </p>
+            <article v-for="item in terminalTextItems" :key="`${item.requestId}:${item.outcomeId}`">
+              <strong>历史文字成果</strong>
+              <pre v-text="item.text"></pre>
+            </article>
+          </section>
+          <BountyAcceptancePanel
+            v-else-if="renderedPanel === 'tasks' && formalTaskRef && hallIdentityScope"
+            :key="formalTaskRef.id"
+            :task-id="formalTaskRef.id"
+            :identity-key="`${apiStore.authorizationGeneration}\u0000${hallIdentityScope}`"
+            :task-version="formalTaskRef.taskVersion ?? formalTaskRef.version"
+            :task-completed="formalTaskRef.status === 'completed'"
+            :conversation-id="chatMode === 'bounty' && conversationTask?.id === formalTaskRef.id ? conversationId : ''"
+            :review-context="deliveryReview.context.value" :review-loading="deliveryReview.loading.value"
+            :review-busy="deliveryReview.operation.value.busy" :review-error="deliveryReview.error.value"
+            @review-delivery="openDeliveryReview()" @refresh-review="deliveryReview.refresh"
+            @preview-output="previewReviewOutput"
+            @continue-modification="continueBountyModification(formalTaskRef, $event)"
+          >
+            <template #preview><OutputPreview v-if="reviewPreviewItem" :item="reviewPreviewItem" :load="reviewOutputs.preview" :context-key="reviewOutputs.cacheKey.value" /></template>
+          </BountyAcceptancePanel>
+
+          <template v-if="taskWorkspaceEnabled && renderedPanel === 'workspace' && taskWorkspaceSubject">
+            <TaskWorkspacePanel
+              :actor-agent-id="taskWorkspaceSubject.actorAgentId"
+              :connection-state="taskWorkspaceConnectionState"
+              :error="taskWorkspaceError"
+              :workspace="taskWorkspaceSnapshot"
+              @retry="retryTaskWorkspace"
+            />
+            <ArtifactTransferPanel
+              :subject="taskWorkspaceSubject"
+              :workspace="taskWorkspaceSnapshot"
+              :identity-epoch="apiStore.authorizationGeneration"
+            />
+            <ArtifactOutcomePanel
+              :subject="taskWorkspaceSubject"
+              :workspace="taskWorkspaceSnapshot"
+              :identity-epoch="apiStore.authorizationGeneration"
+            />
+          </template>
+
+          <HallMinePage
+            v-if="panelFrames.includes('mine')"
+            v-show="renderedPanel === 'mine'"
+            :inert="renderedPanel !== 'mine' ? '' : null"
+            :aria-hidden="renderedPanel !== 'mine' ? 'true' : null"
+            :account-entry-disabled="accountEntryDisabled"
+            @open="openPanel($event, { root: true })"
+            @map="openWorkbenchMap"
+            @profile="openProfile"
+            @help="emit('open-onboarding', $event)"
+          />
+
+          <HallOverview
+            v-if="panelFrames.includes('messages')"
+            v-show="renderedPanel === 'messages'"
+            :refresh-key="hallReadRevision"
+            :inert="renderedPanel !== 'messages' ? '' : null"
+            :aria-hidden="renderedPanel !== 'messages' ? 'true' : null"
+            messages-only
+            :enabled="Boolean(hallIdentityScope)"
+            :identity-scope="hallIdentityScope"
+            :identity-epoch="apiStore.authorizationGeneration"
+            @open-item="openOverviewItem"
+            @open-task="openOverviewTask"
+          />
+
+          <HallDraftEditor
+            v-if="panelFrames.includes('item') && overviewItemRef"
+            v-show="renderedPanel === 'item'"
+            :key="`${overviewItemRef.sourceType}:${overviewItemRef.sourceId}`"
+            ref="itemDraftRef"
+            :inert="renderedPanel !== 'item' ? '' : null"
+            :aria-hidden="renderedPanel !== 'item' ? 'true' : null"
+            :initial-ref="overviewItemRef"
+            :agents="operableRosterAgents"
+            :identity-scope="hallIdentityScope"
+            :identity-epoch="apiStore.authorizationGeneration"
+            @open-task="openOverviewTask"
+            @changed="hallReadRevision += 1"
+            @close="returnPanel() || closePanel()"
+          />
+
+          <HallDraftEditor
+            v-if="panelFrames.includes('formalDraft')"
+            v-show="renderedPanel === 'formalDraft'"
+            ref="formalDraftRef"
+            :key="formalDraftGeneration"
+            :initial-context="formalDraftContext"
+            :inert="renderedPanel !== 'formalDraft' ? '' : null"
+            :aria-hidden="renderedPanel !== 'formalDraft' ? 'true' : null"
+            initial-kind="TASK_CREATE"
+            :identity-scope="hallIdentityScope"
+            :identity-epoch="apiStore.authorizationGeneration"
+            @open-task="openPendingTaskDetail"
+            @close="returnPanel() || closePanel()"
+          />
+
+          <HallDraftEditor
+            v-if="panelFrames.includes('draft')"
+            v-show="renderedPanel === 'draft'"
+            :key="privateDraftGeneration"
+            ref="privateDraftRef"
+            :inert="renderedPanel !== 'draft' ? '' : null"
+            :aria-hidden="renderedPanel !== 'draft' ? 'true' : null"
+            :initial-context="draftContext"
+            :agents="operableRosterAgents"
+            :identity-scope="hallIdentityScope"
+            :identity-epoch="apiStore.authorizationGeneration"
+            @changed="hallReadRevision += 1"
+            @close="returnPanel() || closePanel()"
+          />
+
+          <PersonalWorkspace
+            v-if="panelFrames.includes('treasure')"
+            v-show="renderedPanel === 'treasure'"
+            ref="treasurePanelRef"
+            :compact="isLowHeightPanel"
+            :inert="renderedPanel !== 'treasure' ? '' : null"
+            :aria-hidden="renderedPanel !== 'treasure' ? 'true' : null"
+            :detail-allowed="true"
+            embedded
+            @start-draft="openReferencedRequirement"
+          />
+
+          <PersonaCatalogPanel
+            v-if="panelFrames.includes('catalog')"
+            v-show="renderedPanel === 'catalog'"
+            :inert="renderedPanel !== 'catalog' ? '' : null"
+            :aria-hidden="renderedPanel !== 'catalog' ? 'true' : null"
+            :personas="personaCatalog"
+            :portrait-name="portraitName"
+            :portrait-style="portraitStyle"
+            :setup-result="personaSetupResult"
+            :identity-scope="hallIdentityScope"
+            :identity-epoch="apiStore.authorizationGeneration"
+            :runtime-role="personaSetupResult?.agent?.personaCode || personaSetupResult?.agent?.role || personaSetupResult?.mode || ''"
+            :hosted-point-flow="Boolean(hostedPointFlow)"
+            :unbind-busy="personaUnbindBusy"
+            :loading="catalogLoading"
+            :error-message="catalogError"
+            @bind-persona="handleBindPersona"
+            @clear-setup-result="personaSetupResult = null"
+            @hosting-changed="refreshHall({ silent: true })"
+            @hosting-confirmed="waitForHostedPointAgent"
+            @request-unbind-persona="handleUnbindPersona"
+          />
+
+          <PublicDiscussionPanel
+            v-if="panelFrames.includes('chat') && chatMode === 'public'"
+            v-show="renderedPanel === 'chat'"
+            :inert="renderedPanel !== 'chat' ? '' : null"
+            :aria-hidden="renderedPanel !== 'chat' ? 'true' : null"
+            :draft="draft"
+            :active-request="activeRequest"
+            :active-turns="activeTurns"
+            :capability-state="capabilityState"
+            :deliberation-v2-enabled="multimediaDeliberationUiEnabled"
+            :voice="hallVoice"
+            @update:draft="setDraft"
+            @voice-apply="applyVoiceTranscript"
+            :agents="chatMentionAgents"
+            :event-stream-recovering="eventStreamRecovering"
+            :is-awaiting-reply="isAwaitingReply"
+            :is-streaming="isStreaming"
+            :messages="messages"
+            :mention-label="portraitShortName"
+            :pending-agent-name="pendingAgentName"
+            :selected-agent="conversationAgent"
+            :selected-task="conversationTask"
+            :sender-text="senderText"
+            :connection-status="chatConnectionStatus"
+            :conversation-busy="isConversationBusy"
+            :deliberation-status="deliberationStatus"
+            :durable-cancel-target="durableCancelTarget"
+            :reply-cancellation-state="replyCancellationState"
+            :conversation-history="conversationHistory"
+            :conversation-history-deleting-id="conversationHistoryDeletingId"
+            :conversation-history-error="conversationHistoryError"
+            :conversation-history-has-more="conversationHistoryHasMore"
+            :conversation-history-loading="conversationHistoryLoading"
+            :conversation-id="conversationId"
+            :identity-epoch="apiStore.authorizationGeneration"
+            :conversation-load-error="conversationLoadError"
+            :target-text="chatTargetText"
+            :scope-hint="chatContext.conversationScopeKey"
+            @cancel-deliberation="cancelDeliberation"
+            @clear-target="handleClearChatTarget"
+            @delete-conversation="deleteHallConversation"
+            @load-history="loadHallConversationHistory({ force: true })"
+            @load-more-history="loadMoreHallConversationHistory"
+            @load-messages="retryHallConversation"
+            @mention-agent="handleMentionAgent"
+            @new-conversation="handleNewHallConversation"
+            @open-workspace="openBabaoBox"
+            @retry-conversation="retryHallConversation"
+            @select-conversation="selectHallConversation"
+            @send-message="handleSendHallMessage"
+          />
+
+          <BountyDiscussionPanel
+            v-if="panelFrames.includes('chat') && chatMode === 'bounty'"
+            v-show="renderedPanel === 'chat'"
+            :inert="renderedPanel !== 'chat' ? '' : null"
+            :aria-hidden="renderedPanel !== 'chat' ? 'true' : null"
+            :active-request="activeRequest"
+            :request-catalog="bountyRequestCatalog.entries"
+            :active-turns="activeTurns"
+            :capability-state="capabilityState"
+            :deliberation-v2-enabled="multimediaDeliberationUiEnabled"
+            :review-context="deliveryReview.context.value"
+            :review-busy="deliveryReview.operation.value.busy || deliveryReview.loading.value"
+            @review-delivery="openDeliveryReview()"
+            :typed-outcomes="typedDeliberation.cards.value"
+            :delivery-choices="typedDeliberation.deliveryChoices.value"
+            :selected-delivery-id="typedDeliberation.selectedDeliveryId.value"
+            @choose-delivery="typedDeliberation.chooseDelivery"
+            :conversation-generation="typedConversationGeneration()"
+            :typed-pending-question="typedDeliberation.selectedPending.value"
+            :typed-enabled="typedDeliberationEnabled"
+            :skill-directory="taskSkillDirectory.projection.value" :skill-directory-error="taskSkillDirectory.error.value" :skill-directory-loading="taskSkillDirectory.loading.value"
+            @skill-directory-refresh="taskSkillDirectory.refresh"
+            :typed-recovery-available="typedDeliberation.recoveryAvailable.value"
+            :typed-inspection-status="typedDeliberation.inspectionStatus.value"
+            :draft="draft"
+            :voice="hallVoice"
+            @update:draft="setDraft"
+            @voice-apply="applyVoiceTranscript"
+            :agents="chatMentionAgents"
+            :event-stream-recovering="eventStreamRecovering"
+            :is-awaiting-reply="isAwaitingReply"
+            :is-streaming="isStreaming"
+            :messages="messages"
+            :mention-label="portraitShortName"
+            :pending-agent-name="pendingAgentName"
+            :selected-agent="conversationAgent"
+            :selected-task="conversationTask"
+            :sender-text="senderText"
+            :connection-status="chatConnectionStatus"
+            :conversation-busy="isConversationBusy"
+            :deliberation-status="deliberationStatus"
+            :durable-cancel-target="durableCancelTarget"
+            :reply-cancellation-state="replyCancellationState"
+            :conversation-history="conversationHistory"
+            :conversation-history-deleting-id="conversationHistoryDeletingId"
+            :conversation-history-error="conversationHistoryError"
+            :conversation-history-has-more="conversationHistoryHasMore"
+            :conversation-history-loading="conversationHistoryLoading"
+            :conversation-id="conversationId"
+            :identity-epoch="apiStore.authorizationGeneration"
+            :identity-scope="hallIdentityScope"
+            :conversation-load-error="conversationLoadError"
+            :target-text="chatTargetText"
+            :scope-hint="chatContext.conversationScopeKey"
+            @execution-settled="refreshExecutionRequest"
+            @cancel-deliberation="cancelDeliberation"
+            @clear-target="handleClearChatTarget"
+            @delete-conversation="deleteHallConversation"
+            @typed-reply="handleTypedReply"
+            @typed-resume="handleTypedResume"
+            @load-history="loadHallConversationHistory({ force: true })"
+            @load-more-history="loadMoreHallConversationHistory"
+            @load-messages="retryHallConversation"
+            @mention-agent="handleMentionAgent"
+            @new-conversation="handleNewHallConversation"
+            @open-workspace="openBabaoBox"
+            @retry-conversation="retryHallConversation"
+            @select-conversation="selectHallConversation"
+            @send-message="handleSendHallMessage"
+          />
+
+          <PrivateDiscussionPanel
+            v-if="panelFrames.includes('chat') && chatMode === 'private'"
+            v-show="renderedPanel === 'chat'"
+            :inert="renderedPanel !== 'chat' ? '' : null"
+            :aria-hidden="renderedPanel !== 'chat' ? 'true' : null"
+            :draft="draft"
+            :voice="hallVoice"
+            @update:draft="setDraft"
+            @voice-apply="applyVoiceTranscript"
+            :agents="chatMentionAgents"
+            :event-stream-recovering="eventStreamRecovering"
+            :is-awaiting-reply="isAwaitingReply"
+            :is-streaming="isStreaming"
+            :messages="messages"
+            :mention-label="portraitShortName"
+            :pending-agent-name="pendingAgentName"
+            :selected-agent="conversationAgent"
+            :selected-task="conversationTask"
+            :sender-text="senderText"
+            :connection-status="chatConnectionStatus"
+            :conversation-busy="isConversationBusy"
+            :deliberation-status="deliberationStatus"
+            :durable-cancel-target="durableCancelTarget"
+            :reply-cancellation-state="replyCancellationState"
+            :conversation-history="conversationHistory"
+            :conversation-history-deleting-id="conversationHistoryDeletingId"
+            :conversation-history-error="conversationHistoryError"
+            :conversation-history-has-more="conversationHistoryHasMore"
+            :conversation-history-loading="conversationHistoryLoading"
+            :conversation-id="conversationId"
+            :identity-epoch="apiStore.authorizationGeneration"
+            :conversation-load-error="conversationLoadError"
+            :target-text="chatTargetText"
+            :scope-hint="chatContext.conversationScopeKey"
+            @cancel-deliberation="cancelDeliberation"
+            @clear-target="handleClearChatTarget"
+            @delete-conversation="deleteHallConversation"
+            @load-history="loadHallConversationHistory({ force: true })"
+            @load-more-history="loadMoreHallConversationHistory"
+            @load-messages="retryHallConversation"
+            @mention-agent="handleMentionAgent"
+            @new-conversation="handleNewHallConversation"
+            @open-workspace="openBabaoBox"
+            @retry-conversation="retryHallConversation"
+            @select-conversation="selectHallConversation"
+            @send-message="handleSendHallMessage"
+          />
+
+          <LibraryPanel
+            v-if="panelFrames.includes('library')"
+            v-show="renderedPanel === 'library'"
+            ref="libraryPanelRef"
+            v-model:keyword="libraryKeyword"
+            v-model:source-type="librarySourceType"
+            :inert="renderedPanel !== 'library' ? '' : null"
+            :aria-hidden="renderedPanel !== 'library' ? 'true' : null"
+            :error-message="libraryErrorMessage"
+            :format-time="formatTime"
+            :has-searched="libraryHasSearched"
+            :loading="libraryLoading"
+            :results="libraryResults"
+            :detail-allowed="canOpenPanelDetail"
+            embedded
+            :active="renderedPanel === 'library'"
+            :virtual-landscape="isVirtualLandscape"
+            @start-draft="openReferencedRequirement"
+            @cite-library="citeLibraryItem"
+            @search-library="searchLibrary"
+          />
+        </section>
+      </div>
+    </transition>
+
+    <HallDeliveryReviewDialog
+      :open="deliveryReview.dialogOpen.value" :context="deliveryReview.frozenContext.value"
+      :frozen-batch="deliveryReview.frozenContext.value?.currentDelivery || null"
+      :pending="deliveryReview.operation.value.busy" :error="deliveryReview.error.value || (deliveryReview.operation.value.intent ? deliveryReview.operation.value.message : reviewPreviewError)"
+      @confirm="confirmDeliveryReview" @back="deliveryReview.close" @preview="previewReviewOutput"
+    ><template #preview><OutputPreview v-if="reviewPreviewItem" :item="reviewPreviewItem" :load="reviewOutputs.preview" :context-key="reviewOutputs.cacheKey.value" /></template></HallDeliveryReviewDialog>
+
+    <transition name="toast">
+      <div v-if="toast" class="toast" role="status" aria-live="polite">{{ toast }}</div>
+    </transition>
+  </div>
+</template>
+
+<script setup>
+import { Dialog } from '@varlet/ui'
+import { useHallBountyAcceptance } from '@/composables/juyiting/useHallBountyAcceptance'
+import { completedTextItem } from '@/composables/juyiting/bountyOutputCatalog'
+import { useOutputs } from '@/composables/useOutputs'
+import { saveOutputBlob } from '@/utils/outputDownload'
+import OutputPreview from '@/components/outputs/OutputPreview.vue'
+import { isTerminalMatter } from '@/composables/juyiting/useHallOrdinaryCancellation'
+import HallOverview from '@/components/juyiting/HallOverview.vue'
+import HallMinePage from '@/components/juyiting/HallMinePage.vue'
+import HallDraftEditor from '@/components/juyiting/HallDraftEditor.vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { useGlobalStore } from '@/stores/global'
+import { useApiStore } from '@/stores/api'
+import { agentApi, chatApi } from '@/composables/useHttp'
+import { useHallChatContext, bountyInteractionTargetId } from '@/composables/juyiting/useHallChatContext'
+import { useHallBackendSceneState } from '@/composables/juyiting/useHallBackendSceneState'
+import { useHallCommandQueue } from '@/composables/juyiting/useHallCommandQueue'
+import { useHallConversation } from '@/composables/juyiting/useHallConversation'
+import { isMultimediaDeliberationUiEnabled } from '@/composables/juyiting/hallMultimediaDeliberationUi'
+import { useHallVoiceConversation } from '@/composables/juyiting/useHallVoiceConversation'
+import { confirmHallLeave, hasMeaningfulHallLeaveWork } from '@/composables/juyiting/hallAccountNavigation'
+import { createHallVoiceReplyCorrelation } from '@/composables/juyiting/hallVoiceReplyCorrelation'
+import { useHallData } from '@/composables/juyiting/useHallData'
+import { useHallLibrary } from '@/composables/juyiting/useHallLibrary'
+import { resolveLiveMapPreviewActivation } from '@/composables/juyiting/liveMapPreviewPolicy'
+import { useHallExperienceMode } from '@/composables/juyiting/useHallExperienceMode'
+import { useHallHomeMode } from '@/composables/juyiting/useHallHomeMode'
+import { capturePanelReturnTarget, focusHallPanel, isCurrentPanelGeneration, isSafePanelFocusTarget, resolveHallNavigationPresentation, resolvePanelReturnTarget, restorePanelFocus, trapPanelFocus, useHallPanels } from '@/composables/juyiting/useHallPanels'
+import { useHallScene } from '@/composables/juyiting/useHallScene'
+import { useHallSceneState } from '@/composables/juyiting/useHallSceneState'
+import { useHallSceneDebugBridge } from '@/composables/juyiting/useHallSceneDebugBridge'
+import { useHallSound } from '@/composables/juyiting/useHallSound'
+import { useHallTaskActions } from '@/composables/juyiting/useHallTaskActions'
+import { useHallRequirementCreate } from '@/composables/juyiting/useHallRequirementCreate'
+import { useHallPointAndStart } from '@/composables/juyiting/useHallPointAndStart'
+import { useHallBountyAssignmentContext } from '@/composables/juyiting/useHallBountyAssignmentContext'
+import { createPointAndStartIntentStore } from '@/composables/juyiting/hallPointAndStartIntent'
+import { pointAndStartRecoveryLane } from '@/composables/juyiting/hallPointAndStartRecoveryLane'
+import { useHallBountyRequestCatalog } from '@/composables/juyiting/useHallBountyRequestCatalog'
+import { useHallTypedDeliberation } from '@/composables/juyiting/useHallTypedDeliberation'
+import { useHallAgentProfileCapabilities, agentProfileReasonText } from '@/composables/juyiting/useHallAgentProfileCapabilities'
+import { useHallSkillCapabilities } from '@/composables/juyiting/useHallSkillCapabilities'
+import { typedLong } from '@/composables/juyiting/hallTypedDeliberation'
+import { pointAndStartIntentReadLane } from '@/composables/juyiting/hallNativeBountyCapability'
+import { useHallDrafts } from '@/composables/juyiting/useHallDrafts'
+import { useTaskWorkspace } from '@/composables/juyiting/useTaskWorkspace'
+import { createDisabledTaskWorkspaceBinding, isTaskWorkspaceBuildEnabled } from '@/composables/juyiting/taskWorkspaceFeature'
+import { useTaskWorkspaceView } from '@/composables/juyiting/useTaskWorkspaceView'
+import { useTaskWorkspaceBinding } from '@/composables/juyiting/useTaskWorkspaceBinding'
+import { useFormalTaskExecutionScope } from '@/composables/useFormalTaskExecutionScope'
+import TaskWorkspacePanel from '@/components/juyiting/TaskWorkspacePanel.vue'
+import ArtifactTransferPanel from '@/components/juyiting/ArtifactTransferPanel.vue'
+import ArtifactOutcomePanel from '@/components/juyiting/ArtifactOutcomePanel.vue'
+import { portraitName, portraitRole, portraitShortName, portraitStyle, roleClass } from '@/composables/juyiting/useWaterMarginRoles'
+import AgentPanel from '@/components/juyiting/AgentPanel.vue'
+import BountyDiscussionPanel from '@/components/juyiting/BountyDiscussionPanel.vue'
+import BountyAcceptancePanel from '@/components/juyiting/BountyAcceptancePanel.vue'
+import HallDeliveryReviewDialog from '@/components/juyiting/HallDeliveryReviewDialog.vue'
+import { useHallDeliveryReview } from '@/composables/juyiting/useHallDeliveryReview.js'
+import { projectHallTask } from '@/composables/juyiting/hallTaskPresentation'
+import BountyPanel from '@/components/juyiting/BountyPanel.vue'
+import HallPortraitHome from '@/components/juyiting/HallPortraitHome.vue'
+import HallStage from '@/components/juyiting/HallStage.vue'
+import HallVoiceHud from '@/components/juyiting/HallVoiceHud.vue'
+import LibraryPanel from '@/components/juyiting/LibraryPanel.vue'
+import PersonaCatalogPanel from '@/components/juyiting/PersonaCatalogPanel.vue'
+import PrivateDiscussionPanel from '@/components/juyiting/PrivateDiscussionPanel.vue'
+import PublicDiscussionPanel from '@/components/juyiting/PublicDiscussionPanel.vue'
+import SelectedAgentCard from '@/components/juyiting/SelectedAgentCard.vue'
+import PersonalWorkspace from '@/components/workspace/PersonalWorkspace.vue'
+import {
+  roleDialogues,
+  statusFilters,
+  taskStatusFilters
+} from '@/constants/juyiting'
+import { log } from '@/utils/logger'
+import { isEconomyPreviewBuildEnabled } from '@/utils/silverAmount'
+import { isEconomyPreviewCapability, loadEconomyPreviewCapability } from '@/utils/economyPreviewCapability'
+import { resolveAccountDisplayName } from '@/utils/displayName'
+import { createHydratedIdentityScope, hasHydratedIdentity } from '@/utils/identityScope'
+import { juyitingGame } from '@/game/index.js'
+
+const emit = defineEmits(['open-onboarding'])
+const props = defineProps({ onboardingVisible: { type: Boolean, default: false } })
+
+const globalStore = useGlobalStore()
+const apiStore = useApiStore()
+const router = useRouter()
+const accountAvatar = computed(() => String(globalStore.user?.avatar || '').trim())
+const accountDisplayName = computed(() => {
+  const user = globalStore.user || {}
+  return resolveAccountDisplayName(user, String(user.displayName || '')) || '个人中心'
+})
+const hallIdentityScope = computed(() => createHydratedIdentityScope(globalStore.user, apiStore.oauthClientId))
+
+// Existing unresolved draft writes are protected by the shared recovery store; new requirements never use TASK_CREATE + per-file links.
+const hallDraftRecovery = useHallDrafts({
+  identityScope: hallIdentityScope,
+  identityEpoch: () => apiStore.authorizationGeneration
+})
+
+const selectedAgent = ref(null)
+const selectedTask = ref(null)
+const economyPreviewEnabled = ref(false)
+const workItemPlanEnabled = import.meta.env.VITE_JUYITING_WORK_ITEM_PLAN_ENABLED === 'true'
+const multimediaDeliberationUiEnabled = isMultimediaDeliberationUiEnabled(import.meta.env.VITE_JUYITING_MULTIMEDIA_DELIBERATION_V2_UI)
+// Typed discussion is the single ordinary request entry for multimedia tasks.
+const typedDeliberationBuildEnabled = import.meta.env.VITE_JUYITING_TYPED_DELIBERATION_UI === 'true'
+const economyPreviewCapability = ref(null)
+const economyPreviewChecked = ref(false)
+const economyPreviewBuildEnabled = isEconomyPreviewBuildEnabled(import.meta.env.VITE_ECONOMY_PREVIEW_ENABLED)
+const portraitTaskDetailOpen = ref(false)
+// Map-only runtime state survives HallStage destroy/remount; business selection stays above it.
+const mapResumeSnapshot = ref(null)
+const landscapeEntryTarget = ref(null)
+let landscapeEntryTargetGeneration = 0
+// Stable FE2 entrypoint: taskWorkspace.workspace, connectionState, error, subject, retry, and reload.
+const taskWorkspaceEnabled = isTaskWorkspaceBuildEnabled(import.meta.env.VITE_JUYITING_TASK_WORKSPACE_ENABLED)
+const taskWorkspace = taskWorkspaceEnabled ? useTaskWorkspace() : null
+const taskWorkspaceBinding = taskWorkspaceEnabled
+  ? useTaskWorkspaceBinding({ selectedTask, selectedAgent, taskWorkspace })
+  : createDisabledTaskWorkspaceBinding(selectedAgent)
+const {
+  subject: taskWorkspaceSubject,
+  workspace: taskWorkspaceSnapshot,
+  connectionState: taskWorkspaceConnectionState,
+  error: taskWorkspaceError,
+  retry: retryTaskWorkspace
+} = useTaskWorkspaceView(taskWorkspace)
+const personaSetupResult = ref(null)
+// CTA-originated recruitment keeps the exact task snapshot until a roster read proves
+// the newly hosted agent is actually selectable. It is never an assignment authority.
+const hostedPointFlow = ref(null)
+let hostedPointWaitTimer = null
+const toast = ref('')
+const panelWhitelist = new Set(['agents', 'catalog', 'tasks', 'workspace', 'treasure', 'chat', 'library', 'messages', 'mine', 'item', 'formalDraft', 'draft'])
+const activePanel = ref('')
+const renderedPanel = ref('')
+const panelSessionGeneration = ref(0)
+const panelClosingGeneration = ref(0)
+const panelReturnPanel = ref('')
+// Source panes stay mounted only for this navigation session; hidden panes are inert.
+const panelFrames = ref([])
+const privateDraftRef = ref(null)
+const itemDraftRef = ref(null)
+const formalDraftRef = ref(null)
+const formalDraftContext = ref(null)
+const formalDraftGeneration = ref(0)
+const draftContext = ref(null)
+const privateDraftGeneration = ref(0)
+const formalTaskRef = ref(null)
+const leaveState = ref('idle')
+let pendingPanelLeave = null
+let bypassPanelSave = false
+const activeDraftEditor = () => ({ draft: privateDraftRef.value, item: itemDraftRef.value, formalDraft: formalDraftRef.value })[renderedPanel.value]
+const cancelPanelLeave = () => {
+  pendingPanelLeave = null
+  leaveState.value = 'idle'
+}
+const retryPanelLeave = async () => {
+  if (!pendingPanelLeave || leaveState.value === 'saving') return false
+  const pending = pendingPanelLeave
+  const generation = panelSessionGeneration.value
+  leaveState.value = 'saving'
+  let saved = false
+  try { saved = await activeDraftEditor()?.saveBeforeLeave() } catch { /* Keep the original form and source on failure. */ }
+  if (pendingPanelLeave !== pending || generation !== panelSessionGeneration.value || panelDisposed) return false
+  if (!saved) { leaveState.value = 'error'; return false }
+  cancelPanelLeave()
+  bypassPanelSave = true
+  try { pending() } finally { bypassPanelSave = false }
+  return true
+}
+const discardPanelChangesAndLeave = () => {
+  if (!pendingPanelLeave || leaveState.value === 'saving') return false
+  const pending = pendingPanelLeave
+  activeDraftEditor()?.discardLocalChanges?.()
+  cancelPanelLeave()
+  bypassPanelSave = true
+  try { pending() } finally { bypassPanelSave = false }
+  return true
+}
+const guardPanelLeave = action => {
+  if (bypassPanelSave) return false
+  if (pendingPanelLeave) return true
+  const editor = activeDraftEditor()
+  if (!editor?.needsSave && !editor?.busy) return false
+  pendingPanelLeave = action
+  void retryPanelLeave()
+  return true
+}
+const overviewItemRef = ref(null)
+const taskReviewRef = ref(null)
+const hallReadRevision = ref(0)
+const agentPanelRef = ref(null)
+const agentPanelSessionKey = ref(0)
+watch(() => panelFrames.value.includes('agents'), (present, previous) => { if (present && !previous) agentPanelSessionKey.value++ }, { flush: 'sync' })
+const bountyPanelRef = ref(null)
+const panelLocations = new Map()
+const treasurePanelRef = ref(null)
+const libraryPanelRef = ref(null)
+// Retained file/reading detail also consumes a logical layer while its source is hidden.
+const panelDepth = computed(() => panelFrames.value.length
+  + Number(panelFrames.value.includes('agents') && Boolean(agentPanelRef.value?.canGoBack))
+  + Number(panelFrames.value.includes('tasks') && Boolean(bountyPanelRef.value?.canGoBack))
+  + Number(panelFrames.value.includes('treasure') && Boolean(treasurePanelRef.value?.canGoBack))
+  + Number(panelFrames.value.includes('library') && Boolean(libraryPanelRef.value?.canGoBack)))
+const canOpenPanelDetail = computed(() => panelDepth.value < 3)
+const panelChildCanReturn = computed(() => {
+  if (activeDraftEditor()) return Boolean(activeDraftEditor().canGoBack)
+  if (renderedPanel.value === 'agents') return Boolean(agentPanelRef.value?.canGoBack)
+  if (renderedPanel.value === 'tasks') return Boolean(formalTaskRef.value || bountyPanelRef.value?.canGoBack)
+  if (renderedPanel.value === 'treasure') return Boolean(treasurePanelRef.value?.canGoBack)
+  if (renderedPanel.value === 'library') return Boolean(libraryPanelRef.value?.canGoBack)
+  return false
+})
+const isPanelSessionActive = computed(() => Boolean(renderedPanel.value))
+const hallRefreshing = ref(false)
+const experienceReady = ref(false)
+const agentBubbles = ref({})
+const outgoingMetadata = ref({})
+const effectiveSceneMode = ref('portrait')
+const voiceFeatureEnabled = import.meta.env.VITE_JUYITING_VOICE_ENABLED === 'true'
+let hallVoice = null
+const spokenVoiceReplyIds = new Set()
+const voiceReplyCorrelation = createHallVoiceReplyCorrelation({
+  spokenMessageIds: spokenVoiceReplyIds,
+  onReply: message => hallVoice?.completeReply(message)
+})
+const { homeMode, isOverviewHome, setHomeMode } = useHallHomeMode()
+const workbenchPrimaryTabs = Object.freeze([
+  { panel: 'overview', label: '办事', icon: 'home-outline' },
+  { panel: 'tasks', label: '事项', icon: 'format-list-checkbox' },
+  { panel: 'treasure', label: '资料', icon: 'file-document-outline' },
+  { panel: 'mine', label: '我的', icon: 'account-circle-outline' }
+])
+const workbenchMobileTabs = workbenchPrimaryTabs
+const workbenchPrimaryPanelSet = new Set(workbenchPrimaryTabs.map(tab => tab.panel))
+const workbenchMenuOpen = ref(false)
+const workbenchCurrentPage = computed(() => isOverviewHome.value ? (activePanel.value && workbenchPrimaryPanelSet.has(renderedPanel.value) ? renderedPanel.value : 'overview') : '')
+const workbenchCurrentLabel = computed(() => workbenchPrimaryTabs.find(tab => tab.panel === workbenchCurrentPage.value)?.label || '办事')
+watch(homeMode, () => { workbenchMenuOpen.value = false })
+watch(activePanel, panel => {
+  workbenchMenuOpen.value = false
+  if (panel !== 'catalog') cancelHostedPointWait()
+})
+
+const {
+  experienceMode,
+  isMobileCoarse,
+  isVirtualLandscape,
+  isKeyboardActive: hallKeyboardActive = ref(false),
+  orientationHint,
+  orientationRequestPending,
+  hallViewportHeight,
+  requestLandscape,
+  requestPortrait
+} = useHallExperienceMode()
+// Landscape keeps the existing full-canvas Stage HUD; the business shell belongs
+// to portrait/overview. Use owned presentation mode, not keyboard-shrunk height.
+const isImmersiveMap = computed(() => experienceMode.value === 'landscape-map' && homeMode.value === 'map')
+const resolvedHallViewportHeight = computed(() => Number(hallViewportHeight?.value ?? hallViewportHeight) || 0)
+const hallViewportStyle = computed(() => {
+  const height = resolvedHallViewportHeight.value
+  return height > 0 ? { '--hall-visual-height': `${height}px` } : {}
+})
+// This follows the live visual viewport, including a keyboard-only shrink.
+const isCompactChat = computed(() => resolvedHallViewportHeight.value > 0 && resolvedHallViewportHeight.value <= 320)
+const isLowHeightPanel = computed(() => resolvedHallViewportHeight.value > 0 && resolvedHallViewportHeight.value <= 500)
+const { panelLayout } = useHallPanels({ experienceMode, isMobileCoarse, viewportHeight: resolvedHallViewportHeight, renderedPanel })
+const navigationPresentation = computed(() => resolveHallNavigationPresentation({
+  isMobileCoarse: isMobileCoarse.value,
+  experienceMode: experienceMode.value,
+  isOverviewHome: isOverviewHome.value,
+  renderedPanel: renderedPanel.value,
+  panelReturnPanel: panelReturnPanel.value,
+  formalTaskRef: formalTaskRef.value,
+  draftCanGoBack: Boolean(activeDraftEditor()?.canGoBack),
+  bountyCanGoBack: Boolean(bountyPanelRef.value?.canGoBack),
+  treasureCanGoBack: Boolean(treasurePanelRef.value?.canGoBack),
+  libraryCanGoBack: Boolean(libraryPanelRef.value?.canGoBack),
+  portraitTaskDetailOpen: portraitTaskDetailOpen.value,
+  isKeyboardActive: hallKeyboardActive.value,
+  externalRootModalOpen: props.onboardingVisible
+}))
+const showWorkbenchDock = computed(() => navigationPresentation.value.showWorkbenchDock)
+const hallRootRef = ref(null)
+const portraitHomeRef = ref(null)
+const landscapeTargetRef = ref(null)
+const hallStageRef = ref(null)
+const portraitPreviewVisible = ref(false)
+const documentPreviewVisible = ref(typeof document === 'undefined' || !document.hidden)
+// Only the active full-page panel overlay is known to cover the preview.
+// Voice/loading interaction locks remain independent from draw visibility.
+const previewFullyCovered = computed(() => isOverviewHome.value || (activePanel.value === 'chat' && renderedPanel.value === 'chat'))
+// Portrait observation gates only first mount. Draw policy is mode-independent:
+// an active landscape ignores a stale offscreen portrait observer, but document
+// hidden and the known full chat overlay still suppress draw in either mode.
+const previewVisible = computed(() => portraitPreviewVisible.value && documentPreviewVisible.value && !previewFullyCovered.value)
+const previewSceneState = ref('loading')
+const previewDrawActivation = computed(() => resolveLiveMapPreviewActivation({
+  documentHidden: !documentPreviewVisible.value,
+  landscapeActive: experienceMode.value === 'landscape-map',
+  overlayCovered: previewFullyCovered.value,
+  portraitOffscreen: !portraitPreviewVisible.value,
+  ready: previewSceneState.value === 'ready'
+}))
+const stageDrawVisible = computed(() => previewDrawActivation.value.shouldRender)
+const previewSceneError = ref('')
+const previewSceneBounds = ref({ width: 0, height: 0 })
+// The Stage is created only after a real landscape entry or observed portrait visibility,
+// then remains the sole scene owner until the Hall route unmounts.
+const stageHasMounted = ref(false)
+const stageTarget = computed(() => (experienceMode.value === 'portrait-command' || isOverviewHome.value)
+  ? portraitHomeRef.value?.livePreviewTarget || null
+  : landscapeTargetRef.value)
+const stageMounted = computed(() => stageHasMounted.value)
+const previewPresentationState = computed(() => (
+  previewSceneState.value === 'ready' ? previewDrawActivation.value.state : previewSceneState.value
+))
+const permitStageMount = () => {
+  if (!isOverviewHome.value && stageTarget.value && experienceReady.value && (experienceMode.value === 'landscape-map' || previewVisible.value)) {
+    stageHasMounted.value = true
+  }
+}
+const handlePreviewVisibility = visible => {
+  portraitPreviewVisible.value = Boolean(visible)
+  permitStageMount()
+}
+// `v-show` does not reliably produce a fresh IntersectionObserver record in
+// embedded WebViews. Returning from the overview is an explicit confirmation
+// that the portrait map is visible, so restore its draw gate immediately.
+watch(homeMode, mode => {
+  if (mode !== 'map') return
+  portraitPreviewVisible.value = true
+  permitStageMount()
+})
+const handleDocumentVisibility = () => {
+  documentPreviewVisible.value = typeof document === 'undefined' || !document.hidden
+}
+const handlePreviewSceneState = state => {
+  previewSceneState.value = state || 'loading'
+  if (state !== 'error') previewSceneError.value = ''
+}
+const handlePreviewSceneError = error => {
+  previewSceneState.value = 'error'
+  previewSceneError.value = error?.message || String(error || '')
+}
+const handlePreviewSceneBounds = bounds => {
+  previewSceneBounds.value = bounds || { width: 0, height: 0 }
+}
+const retryLivePreview = () => {
+  // A paused presentation retains a ready scene; do not turn it back into loading.
+  if (previewPresentationState.value !== 'paused') {
+    previewSceneState.value = 'loading'
+    previewSceneError.value = ''
+  }
+  void hallStageRef.value?.retryScene?.()
+}
+watch([experienceReady, experienceMode, previewVisible, stageTarget], permitStageMount, { immediate: true })
+
+const panelRef = ref(null)
+const panelTitleId = 'juyiting-floating-panel-title'
+let panelSessionOrigin = null
+let panelChatLoadTimer = null
+let panelDisposed = false
+let bubbleTimer = null
+let bubbleInitialTimer = null
+let bubbleClearTimer = null
+const simulationEnabled = import.meta.env.VITE_JUYITING_SIMULATION_ENABLED === 'true'
+const hallCommandQueue = useHallCommandQueue()
+let hallBackendSceneState = null
+const hallSceneState = useHallSceneState({
+  commandQueue: hallCommandQueue,
+  reportPhase: report => hallBackendSceneState?.reportPhase(report)
+})
+let backendSceneStarted = false
+
+const {
+  playAgentSelect,
+  playError,
+  playPanelOpen,
+  playRefresh,
+  playSend,
+  playSuccess,
+  playTap,
+  setSoundEnabled,
+  setSoundSuppressed,
+  soundEnabled
+} = useHallSound()
+
+const activePanelTitle = computed(() => {
+  const childTitle = (renderedPanel.value === 'agents' && agentPanelRef.value?.windowTitle) || activeDraftEditor()?.windowTitle || (renderedPanel.value === 'treasure' && treasurePanelRef.value?.windowTitle)
+  if (childTitle) return childTitle
+  if (renderedPanel.value === 'draft') return '提出需求'
+  if (renderedPanel.value === 'tasks' && formalTaskRef.value) return '正式成果与验收'
+  if (renderedPanel.value === 'formalDraft') return '提出需求'
+  if (renderedPanel.value === 'messages') return '消息'
+  if (renderedPanel.value === 'item') return overviewItemRef.value?.sourceType === 'DRAFT' ? '继续草稿' : '事项进展'
+  if (renderedPanel.value === 'agents') return '点将册'
+  if (renderedPanel.value === 'catalog') return '招贤令'
+  if (renderedPanel.value === 'tasks') return isOverviewHome.value ? '我的事项' : '悬赏榜'
+  if (renderedPanel.value === 'workspace') return '协作工作台'
+  if (renderedPanel.value === 'treasure') return '百宝箱'
+  if (renderedPanel.value === 'chat') return '厅内议事'
+  if (renderedPanel.value === 'library') return '典籍阁'
+  return ''
+})
+
+const normalizeStatus = (status = '') => status.toLowerCase()
+
+const statusClass = (status = '') => {
+  const value = normalizeStatus(status)
+  if (value === 'busy') return 'is-busy'
+  if (value === 'error') return 'is-error'
+  if (value === 'offline') return 'is-offline'
+  return 'is-idle'
+}
+
+const statusText = (status = '') => {
+  const value = normalizeStatus(status)
+  if (value === 'busy') return '办事'
+  if (value === 'offline') return '出征'
+  if (value === 'error') return '失联'
+  return '候命'
+}
+
+// Use the filter metadata as the single lifecycle presentation contract. `detailAllowed`
+// only controlled panel nesting; file reads still go through PersonalWorkspace's scoped API.
+const taskStatusText = task => projectHallTask({ task }).label
+const taskStateClass = task => projectHallTask({ task }).className
+
+const abilityText = (agent) => {
+  const abilities = agent.abilities || []
+  return abilities.length ? abilities.slice(0, 3).join(' / ') : '未录本领'
+}
+
+
+
+const {
+  dispose: disposeHallData,
+  applySceneEvent,
+  applySceneSnapshot,
+  agentFilter,
+  agents,
+  bindPersona,
+  canAssign,
+  catalogError,
+  catalogLoading,
+  filteredAgents,
+  hiddenAgentCount,
+  loadAgents,
+  loadPersonaCatalog,
+  loadRosterAgents,
+  loadTasks,
+  loadMoreTasks,
+  loadTaskRecommendations,
+  mapAgents,
+  mapError,
+  operableRosterAgents,
+  personaCatalog,
+  recommendedAgents,
+  recommendationState,
+  rosterError,
+  rosterLoading,
+  setAgentFilter,
+  setTaskStatusFilter,
+  taskAbilityFilter,
+  taskAbilityOptions,
+  taskKeyword,
+  taskCountsError,
+  taskCountsLoading,
+  tasks,
+  tasksError,
+  tasksLoading,
+  tasksHasMore,
+  taskStatusCount,
+  taskStatusFilter,
+  unbindPersona,
+  visibleAgents
+} = useHallData({
+  agentApi,
+  identityScope: hallIdentityScope,
+  authorizationGeneration: () => apiStore.authorizationGeneration,
+  log,
+  normalizeStatus,
+  selectedAgent,
+  selectedTask,
+  sceneState: hallSceneState
+})
+
+hallBackendSceneState = useHallBackendSceneState({
+  agentApi,
+  onSnapshot: applySceneSnapshot,
+  onEvent: applySceneEvent
+})
+
+const hallSceneDebugBridge = useHallSceneDebugBridge({
+  backend: hallBackendSceneState,
+  commandQueue: hallCommandQueue,
+  game: juyitingGame
+})
+
+const {
+  chatContext,
+  conversationAgent,
+  conversationTask,
+  refreshConversationTask,
+  chatMentionAgentIds,
+  chatMentionAgents,
+  chatMode,
+  chatTargetText,
+  enterBountyDiscussion,
+  enterPrivateConversation,
+  resetToPublic,
+  setMentionAgent
+} = useHallChatContext({
+  agents,
+  mapAgents,
+  portraitShortName,
+  selectedAgent,
+  selectedTask
+})
+
+const startBackendSceneState = async () => {
+  if (backendSceneStarted) return
+  backendSceneStarted = true
+  try {
+    await hallBackendSceneState.start()
+  } catch (error) {
+    backendSceneStarted = false
+    log.warn('Juyiting backend scene state degraded:', error)
+  }
+}
+
+const handleSimulationReady = async ({ movementRuntime, simulation } = {}) => {
+  if (!simulationEnabled || !movementRuntime || !simulation?.enqueue) return
+  hallSceneState.setMapRuntime(movementRuntime)
+  hallCommandQueue.setSimulation(simulation)
+  hallSceneDebugBridge.republish()
+  await startBackendSceneState()
+}
+
+const resetSimulationLifecycle = () => {
+  backendSceneStarted = false
+  hallBackendSceneState?.stop()
+  hallCommandQueue.setSimulation(null)
+  hallSceneState.reset()
+}
+
+const handleSimulationPhaseEvents = events => {
+  if (!simulationEnabled) return
+  void hallSceneState.forwardPhaseEvents(events).catch(error => {
+    log.warn('Juyiting phase forwarding failed:', error)
+  })
+}
+
+const ensureEconomyPreviewCapability = async () => {
+  if (!economyPreviewBuildEnabled || economyPreviewChecked.value) return economyPreviewEnabled.value
+  economyPreviewChecked.value = true
+  try {
+    economyPreviewCapability.value = await loadEconomyPreviewCapability()
+    economyPreviewEnabled.value = isEconomyPreviewCapability(economyPreviewCapability.value)
+  } catch (error) {
+    economyPreviewCapability.value = null
+    economyPreviewEnabled.value = false
+    log.warn('economy preview capability is unavailable:', error)
+  }
+  return economyPreviewEnabled.value
+}
+
+const loadPanelData = async (panel) => {
+  if (panel === 'agents') return Promise.all([loadRosterAgents(), loadPersonaCatalog()])
+  if (panel === 'catalog') return loadPersonaCatalog()
+  if (panel === 'tasks') return loadTasks()
+  return null
+}
+
+const refreshHall = async ({ silent = false } = {}) => {
+  if (hallRefreshing.value) return
+  hallRefreshing.value = true
+  if (!silent) playRefresh()
+  try {
+    // The portrait entry exposes current-user operable agents immediately, so its
+    // initial refresh must keep the map, roster, and catalog projections in sync.
+    // Scene snapshot startup remains independent of those reads.
+    await loadAgents()
+    if (simulationEnabled && hallCommandQueue.ready.value && !backendSceneStarted) {
+      await startBackendSceneState()
+    }
+    await loadPanelData(activePanel.value)
+    if (!silent) showToast(mapError.value ? '厅中点将暂无法读取' : '厅中动静已点验')
+  } finally {
+    hallRefreshing.value = false
+  }
+}
+
+const formatTime = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(Number(timestamp))
+  if (Number.isNaN(date.getTime())) return ''
+  return `${date.getMonth() + 1}-${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+const agentKey = (agent) => agent?.agentId || agent?.name || agent?.personaName || ''
+
+const {
+  markAgentSpeaking,
+  markDiscussionStarted,
+  markLibraryCitation,
+  markLibrarySearching,
+  markRecommendedAgents,
+  markTaskArchived,
+  markTaskAssigned,
+  markTaskAutoAssigned,
+  markTaskCreated,
+  resetSceneFeedback,
+  sceneAgents,
+  sceneAgentStyle,
+  sceneHotspots,
+  syncAfterPersonaChanged
+} = useHallScene({
+  mapAgents,
+  normalizeStatus,
+  selectedAgent,
+  selectedTask,
+  simulationEnabled
+})
+
+const selectTask = async (task) => {
+  const returningToList = !task && Boolean(selectedTask.value) && activePanel.value === 'tasks'
+  selectedTask.value = task
+  if (task) {
+    await loadTaskRecommendations(task)
+    markRecommendedAgents(recommendedAgents.value)
+  } else if (returningToList) {
+    // Overview opens an exact detail without loading the underlying list.
+    // On back, query the existing filters rather than exposing an uninitialized list.
+    await loadTasks()
+  }
+  playTap()
+}
+
+const selectAgent = (agent) => {
+  if (selectedAgent.value?.agentId && selectedAgent.value.agentId === agent?.agentId) {
+    taskWorkspaceBinding.clearExplicitActor()
+    taskWorkspaceBinding.selectExplicitActor(null)
+    playTap()
+    return null
+  }
+  taskWorkspaceBinding.selectExplicitActor(agent)
+  playAgentSelect()
+  return agent || null
+}
+
+const handleRosterSelectAgent = agent => {
+  if (selectedAgent.value?.agentId === agent?.agentId) return selectedAgent.value
+  return selectAgent(agent)
+}
+
+const exactHostedAgentId = value => typeof value === 'string' && value.trim() === value && value.length > 0 ? value : ''
+const taskSnapshot = task => Object.freeze({ ...task })
+const cancelHostedPointWait = ({ clear = true } = {}) => {
+  if (hostedPointWaitTimer !== null) window.clearTimeout(hostedPointWaitTimer)
+  hostedPointWaitTimer = null
+  if (clear) hostedPointFlow.value = null
+}
+const isCurrentHostedPointFlow = context => (
+  !panelDisposed &&
+  hostedPointFlow.value === context &&
+  context.identityScope === hallIdentityScope.value &&
+  context.authorizationGeneration === apiStore.authorizationGeneration
+)
+const isHostedPointAgentOnline = (agent, context) => (
+  agent?.agentId === context.agentId &&
+  agent.boundToMe === true &&
+  agent.canOperate === true &&
+  !agent.systemAgent &&
+  normalizeStatus(agent.status) === 'online'
+)
+const returnToHostedPointTask = async (context, agent) => {
+  if (!isCurrentHostedPointFlow(context)) return false
+  // This is only a selection. Assignment remains the user's explicit button click.
+  selectedAgent.value = agent
+  taskWorkspaceBinding.selectExplicitActor(agent)
+  selectedTask.value = context.task
+  cancelHostedPointWait()
+  if (!openPanel('tasks', { silent: true, restore: true })) return false
+  await nextTick()
+  bountyPanelRef.value?.openTask(context.task)
+  showToast(`${portraitShortName(agent)} 已在线；请在原榜文中明确点将`)
+  return true
+}
+const pollHostedPointRoster = async context => {
+  if (!isCurrentHostedPointFlow(context)) return
+  await loadAgents()
+  if (!isCurrentHostedPointFlow(context)) return
+  const agent = operableRosterAgents.value.find(item => isHostedPointAgentOnline(item, context))
+  if (agent) {
+    await returnToHostedPointTask(context, agent)
+    return
+  }
+  // There is deliberately no total wait deadline: only scope changes, unmount, or
+  // leaving the recruitment flow cancels this readback loop.
+  hostedPointWaitTimer = window.setTimeout(() => {
+    hostedPointWaitTimer = null
+    void pollHostedPointRoster(context)
+  }, 2000)
+}
+const beginHostedPointFlow = task => {
+  if (!task?.id || normalizeStatus(task.status) !== 'open') return false
+  const context = Object.freeze({
+    taskId: task.id,
+    taskVersion: task.taskVersion ?? task.version ?? null,
+    task: taskSnapshot(task),
+    identityScope: hallIdentityScope.value,
+    authorizationGeneration: apiStore.authorizationGeneration,
+    personaCode: '',
+    agentId: ''
+  })
+  cancelHostedPointWait()
+  hostedPointFlow.value = context
+  if (!openPanel('catalog')) {
+    cancelHostedPointWait()
+    return false
+  }
+  return true
+}
+const waitForHostedPointAgent = receipt => {
+  const current = hostedPointFlow.value
+  const agentId = exactHostedAgentId(receipt?.agentId)
+  if (!current || !agentId || !isCurrentHostedPointFlow(current)) return false
+  const context = Object.freeze({ ...current, personaCode: String(receipt?.personaCode || ''), agentId })
+  cancelHostedPointWait({ clear: false })
+  hostedPointFlow.value = context
+  showToast('山寨安顿已确认；正在等待点将册显示该好汉在线')
+  void pollHostedPointRoster(context)
+  return true
+}
+
+const cancelPanelChatLoad = () => {
+  if (panelChatLoadTimer !== null) window.clearTimeout(panelChatLoadTimer)
+  panelChatLoadTimer = null
+}
+
+const captureWorkbenchReturnTarget = panel => {
+  // Menus unmount on navigation, so prefer a persistent visible root tab.
+  const root = hallRootRef.value
+  const tab = [...(root?.querySelectorAll?.(`[data-workbench-tab="${panel}"]`) || [])]
+    .find(isSafePanelFocusTarget)
+  const headerMessage = panel === 'messages'
+    ? root?.querySelector?.('.hall-header-tools [aria-label="查看消息"]') : null
+  const menu = root?.querySelector?.('.workbench-mobile-more')
+  const origin = tab || (isSafePanelFocusTarget(headerMessage) && headerMessage)
+    || (isSafePanelFocusTarget(menu) && menu) || document.activeElement
+  panelSessionOrigin = Object.freeze({
+    ...capturePanelReturnTarget(origin, panel), captureGeneration: panelSessionGeneration.value
+  })
+}
+
+const openPanel = (panel, options = {}) => {
+  if (panelDisposed || voiceInteractionLocked.value || !panelWhitelist.has(panel)) return false
+  if (panel !== activePanel.value && guardPanelLeave(() => openPanel(panel, options))) return false
+  const openingFromClosed = !activePanel.value
+  const replaceAgentSelection = options.consumeAgentSelection === true && panel === 'chat' && activePanel.value === 'agents'
+  const frames = replaceAgentSelection ? panelFrames.value.slice(0, -1) : panelFrames.value
+  const depth = panelDepth.value - (replaceAgentSelection ? 1 + Number(Boolean(agentPanelRef.value?.canGoBack)) : 0)
+  const existingIndex = frames.indexOf(panel)
+  if (!options.root && !openingFromClosed && panel !== activePanel.value && existingIndex < 0 && depth >= 3) {
+    showToast('请先返回上一层，再打开新的办理入口')
+    return false
+  }
+  if (!openingFromClosed && panel !== activePanel.value && !options.root) {
+    panelLocations.set(activePanel.value, { focus: document.activeElement, scrollTop: panelRef.value?.scrollTop || 0 })
+  }
+  if (options.root) {
+    formalTaskRef.value = null
+    panelLocations.clear()
+    if (!openingFromClosed && isOverviewHome.value) captureWorkbenchReturnTarget(panel)
+  }
+  if (replaceAgentSelection) panelLocations.delete('agents')
+  panelFrames.value = openingFromClosed || options.root ? [panel]
+    : existingIndex >= 0 ? frames.slice(0, existingIndex + 1) : [...frames, panel]
+  panelReturnPanel.value = panelFrames.value.at(-2) || ''
+  if (openingFromClosed) {
+    formalTaskRef.value = null
+    panelReturnPanel.value = ''
+    if (!renderedPanel.value) {
+      panelSessionOrigin = Object.freeze({
+        ...capturePanelReturnTarget(options.returnFocusTarget || document.activeElement, panel),
+        captureGeneration: panelSessionGeneration.value + 1
+      })
+    }
+    panelSessionGeneration.value += 1
+    panelClosingGeneration.value = 0
+  }
+  if (panel !== 'chat') {
+    cancelPanelChatLoad()
+  }
+  if (panel === 'chat' && options.mode === 'public') {
+    resetToPublic({ clearSelection: true })
+  }
+  renderedPanel.value = panel
+  activePanel.value = panel
+  if (!options.restore) void loadPanelData(panel)
+  if (panel === 'tasks') void ensureEconomyPreviewCapability()
+  const generation = panelSessionGeneration.value
+  nextTick(() => {
+    if (!panelDisposed && activePanel.value === panel && panelSessionGeneration.value === generation) {
+      const location = options.restore ? panelLocations.get(panel) : null
+      if (location && panelRef.value) panelRef.value.scrollTop = location.scrollTop
+      if (location && isSafePanelFocusTarget(location.focus)) restorePanelFocus(location.focus)
+      else if (isOverviewHome.value && workbenchPrimaryPanelSet.has(panel) && panelFrames.value.length === 1) {
+        // Root workbench pages focus their region, not the first input. This
+        // keeps opening “事项” from summoning the mobile software keyboard.
+        panelRef.value?.focus?.({ preventScroll: true })
+      } else focusHallPanel(panelRef.value)
+    }
+  })
+  if (!options.silent) playPanelOpen()
+  if (panel === 'chat' && !options.restore) {
+    cancelPanelChatLoad()
+    panelChatLoadTimer = window.setTimeout(() => {
+      panelChatLoadTimer = null
+      if (!panelDisposed && activePanel.value === 'chat' && panelSessionGeneration.value === generation) loadHallMessages()
+    }, 0)
+  }
+  return true
+}
+
+const openWorkbenchMap = () => {
+  workbenchMenuOpen.value = false
+  if (activePanel.value && guardPanelLeave(openWorkbenchMap)) return false
+  if (activePanel.value && !closePanel()) return false
+  setHomeMode('map')
+  return true
+}
+
+const openWorkbenchPage = (panel, event) => {
+  // iOS tap/click may not focus a button: use the event target, not just activeElement.
+  const openedFromMenu = workbenchMenuOpen.value && (
+    event?.currentTarget?.closest?.('.workbench-more-menu') || document.activeElement?.closest?.('.workbench-more-menu')
+  )
+  const menuTrigger = openedFromMenu ? hallRootRef.value?.querySelector?.('.workbench-mobile-more') : null
+  workbenchMenuOpen.value = false
+  if (panel === 'overview') {
+    if (activePanel.value) {
+      if (guardPanelLeave(() => openWorkbenchPage('overview'))) return false
+      captureWorkbenchReturnTarget('overview')
+      if (!closePanel()) return false
+    }
+    setHomeMode('overview')
+    return true
+  }
+  if (!workbenchPrimaryPanelSet.has(panel) || voiceInteractionLocked.value) return false
+  if (activePanel.value === panel && renderedPanel.value === panel) return true
+  setHomeMode('overview')
+  return openPanel(panel, { root: true, ...(panel === 'chat' ? { mode: 'public' } : {}),
+    ...(isSafePanelFocusTarget(menuTrigger) ? { returnFocusTarget: menuTrigger } : {}) })
+}
+
+const handleStagePanelOpen = (panel) => {
+  if (panel === 'chat') {
+    openPanel('chat', { mode: 'public', resetContext: true })
+    return
+  }
+  openPanel(panel)
+}
+
+const conversationEntryLabel = computed(() => {
+  const agent = selectedAgent.value
+  return agent ? `与${portraitShortName(agent)}密议` : '先聊一聊'
+})
+
+const startContextConversation = () => {
+  if (selectedAgent.value) return handleStartAgentConversation(selectedAgent.value)
+  handleStagePanelOpen('chat')
+  return true
+}
+
+const hasExactLandscapeId = value => typeof value === 'string' && value.length > 0
+
+const setLandscapeEntryTarget = target => {
+  const nextGeneration = ++landscapeEntryTargetGeneration
+  if (target === null) {
+    landscapeEntryTarget.value = null
+    return nextGeneration
+  }
+  const isAgent = target?.kind === 'agent' && hasExactLandscapeId(target.agentId)
+  const isHotspot = target?.kind === 'hotspot' && hasExactLandscapeId(target.hotspotId)
+  const isTask = target?.kind === 'task' && hasExactLandscapeId(target.taskId) && hasExactLandscapeId(target.agentId)
+  landscapeEntryTarget.value = (isAgent || isHotspot || isTask)
+    ? { generation: nextGeneration, target: { ...target } }
+    : null
+  return nextGeneration
+}
+
+const handleMapSnapshot = snapshot => {
+  mapResumeSnapshot.value = snapshot?.cameraSnapshot ? { ...snapshot } : null
+}
+
+const clearMapResumeSnapshot = mapGeneration => {
+  if (mapResumeSnapshot.value?.mapGeneration === mapGeneration) mapResumeSnapshot.value = null
+}
+
+const handleLandscapeTargetConsumed = generation => {
+  if (landscapeEntryTarget.value?.generation === generation) setLandscapeEntryTarget(null)
+}
+
+const portraitHotspotTargets = Object.freeze({
+  agents: 'agentRoster',
+  tasks: 'bountyBoard',
+  discussion: 'mainSeat',
+  catalog: 'personaCatalog',
+  library: 'libraryShelf'
+})
+
+const stagePortraitHotspotTarget = action => {
+  const hotspotId = portraitHotspotTargets[action]
+  if (!hasExactLandscapeId(hotspotId) || !sceneHotspots.value.some(hotspot => hotspot?.id === hotspotId)) {
+    setLandscapeEntryTarget(null)
+    return false
+  }
+  setLandscapeEntryTarget({ kind: 'hotspot', hotspotId })
+  return true
+}
+
+const handlePortraitAgentSelect = agent => {
+  if (voiceInteractionLocked.value) return false
+  const selected = selectAgent(agent)
+  if (!selected) {
+    setLandscapeEntryTarget(null)
+    return true
+  }
+  if (hasExactLandscapeId(selected.agentId) && mapAgents.value.some(item => item?.agentId === selected.agentId)) {
+    setLandscapeEntryTarget({ kind: 'agent', agentId: selected.agentId })
+    return true
+  }
+  setLandscapeEntryTarget(null)
+  return false
+}
+
+const requestPortraitLandscape = () => {
+  if (voiceInteractionLocked.value) return false
+  const selected = selectedAgent.value
+  const task = selectedTask.value
+  const assignedIds = Array.isArray(task?.assignedAgentIds) ? task.assignedAgentIds : []
+  const assigneeIds = Array.isArray(task?.assignees) ? task.assignees.map(item => item?.agentId) : []
+  if (hasExactLandscapeId(task?.id) && hasExactLandscapeId(selected?.agentId) &&
+    (assignedIds.includes(selected.agentId) || assigneeIds.includes(selected.agentId)) &&
+    mapAgents.value.some(agent => agent?.agentId === selected.agentId)) {
+    setLandscapeEntryTarget({ kind: 'task', taskId: task.id, agentId: selected.agentId })
+  } else if (hasExactLandscapeId(selected?.agentId) && mapAgents.value.some(agent => agent?.agentId === selected.agentId)) {
+    setLandscapeEntryTarget({ kind: 'agent', agentId: selected.agentId })
+  } else if (!landscapeEntryTarget.value) {
+    setLandscapeEntryTarget(null)
+  }
+  return requestLandscape()
+}
+
+const handlePortraitQuickAction = (action) => {
+  if (voiceInteractionLocked.value) return false
+  if (action !== 'treasure') stagePortraitHotspotTarget(action)
+  if (action === 'treasure') {
+    openBabaoBox()
+    return
+  }
+  if (action === 'onboarding') {
+    emit('open-onboarding')
+    return
+  }
+  if (action === 'discussion') {
+    startContextConversation()
+    return
+  }
+  if (['agents', 'tasks', 'catalog', 'library', 'treasure', 'messages'].includes(action)) openPanel(action)
+}
+
+const closePortraitTaskDetail = () => {
+  if (voiceInteractionLocked.value) return false
+  portraitTaskDetailOpen.value = false
+  return true
+}
+
+const handlePortraitTaskOpen = task => {
+  if (voiceInteractionLocked.value || !task?.id) return false
+  const selection = selectTask(task)
+  const selected = selectedAgent.value
+  const assignedIds = Array.isArray(task.assignedAgentIds) ? task.assignedAgentIds : []
+  const assigneeIds = Array.isArray(task.assignees) ? task.assignees.map(item => item?.agentId) : []
+  if (hasExactLandscapeId(selected?.agentId) && (assignedIds.includes(selected.agentId) || assigneeIds.includes(selected.agentId)) && mapAgents.value.some(agent => agent?.agentId === selected.agentId)) {
+    setLandscapeEntryTarget({ kind: 'task', taskId: task.id, agentId: selected.agentId })
+  } else {
+    setLandscapeEntryTarget(null)
+  }
+  portraitTaskDetailOpen.value = true
+  return selection
+}
+
+const handlePortraitTaskBoard = () => {
+  if (voiceInteractionLocked.value) return false
+  closePortraitTaskDetail()
+  openPanel('tasks')
+}
+
+const handlePortraitTaskDiscussion = task => {
+  if (voiceInteractionLocked.value || !task?.id) return false
+  closePortraitTaskDetail()
+  discussTask(task)
+  return true
+}
+
+watch(experienceMode, mode => {
+  if (mode !== 'portrait-command') closePortraitTaskDetail()
+})
+
+const openBabaoBox = () => {
+  if (voiceInteractionLocked.value) return false
+  return openPanel('treasure')
+}
+
+const openOverviewItem = ref => {
+  if (guardPanelLeave(() => openOverviewItem(ref))) return false
+  if (!ref || !['DRAFT', 'PRIVATE_CASE', 'LEGACY_EXECUTION'].includes(ref.sourceType)) return false
+  if (!openPanel('item', { restore: true })) return false
+  overviewItemRef.value = { ...ref }
+  return true
+}
+
+const handleQuickRequest = async (request, settle = () => {}) => {
+  if (typeof request?.request !== 'string' || (!request.request.trim() && !request.materials?.length)) return false
+  const identity = hallIdentityScope.value
+  const epoch = apiStore.authorizationGeneration
+  const created = await createTask({ title: [...request.request.trim()].slice(0, 36).join('') || '资料处理', description: request.request, attachments: request.materials ?? [] })
+  if (identity !== hallIdentityScope.value || epoch !== apiStore.authorizationGeneration) return false
+  settle(created === true)
+  if (!created) {
+    if (requirementCreateState.value.intent) openPanel('tasks', { root: true })
+    return false
+  }
+  hallReadRevision.value += 1
+  // onCommitted already opens the saved task and its recommendations.
+  return true
+}
+
+const openOverviewTask = async (task, review = null, options = {}) => {
+  if (guardPanelLeave(() => openOverviewTask(task, review, options))) return false
+  if (!task?.id || !openPanel('tasks', { ...options, restore: true })) return false
+  taskReviewRef.value = review ? { ...review, taskId: task.id } : null
+  selectedTask.value = task
+  await nextTick()
+  bountyPanelRef.value?.openTask(task)
+  // Overview review hints are metadata, not a separate destination or acceptance authority.
+  formalTaskRef.value = null
+  return true
+}
+
+const openPendingTaskDetail = task => openOverviewTask(task, null, { root: true })
+
+// Creation owns a separate page in every layout; the task board only manages existing matters.
+const openDefaultRequirementCreate = () => {
+  return openPanel('formalDraft', { restore: true })
+}
+const openReferencedRequirement = (context = {}) => {
+  if (guardPanelLeave(() => openReferencedRequirement(context))) return false
+  if (!openPanel('formalDraft', { restore: true })) return false
+  // Source provenance is readable text/origin, not private-execution source authority.
+  formalDraftContext.value = {
+    originRef: context.originRef || 'juyiting',
+    instruction: context.instruction || '',
+    inputs: (context.inputs || []).map(({ fileId, version }) => ({ fileId, version }))
+  }
+  formalDraftGeneration.value += 1
+  return true
+}
+const openPrivateDraft = (context = {}) => {
+  if (guardPanelLeave(() => openPrivateDraft(context))) return false
+  if (!openPanel('draft', { restore: true })) return false
+  const agent = operableRosterAgents.value.find(agent => agent.agentId === selectedAgent.value?.agentId)
+  draftContext.value = { ...context, targetAgentId: context.targetAgentId || agent?.agentId || '' }
+  privateDraftGeneration.value += 1
+  return true
+}
+const openFormalResults = task => {
+  if (!task?.id) return false
+  formalTaskRef.value = task
+  taskReviewRef.value = null
+  return true
+}
+// Return only to the scoped existing discussion; never point, create, or send on navigation.
+const continueBountyModification = async (task, source) => {
+  if (!task?.id || (isTerminalMatter(task) && String(task.status).toLowerCase() !== 'completed') || (source && source.taskId !== task.id) || !openPanel('chat')) return false
+  const identity = `${apiStore.authorizationGeneration}\u0000${hallIdentityScope.value}`
+  const sameDiscussion = chatMode.value === 'bounty' && conversationTask.value?.id === task.id
+  if (sameDiscussion && conversationId.value && (!source?.conversationId || conversationId.value === source.conversationId)) return true
+  if (isConversationBusy.value) { showToast('议事仍在处理中，请稍后返回原会话。'); return false }
+  if (!sameDiscussion) enterBountyDiscussion(task)
+  const current = () => identity === `${apiStore.authorizationGeneration}\u0000${hallIdentityScope.value}` && conversationTask.value?.id === task.id && chatMode.value === 'bounty'
+  await loadHallConversationHistory({ force: true })
+  if (!current()) return false
+  if (source?.conversationId) {
+    while (current() && !conversationHistory.value.some(row => row.id === source.conversationId) && conversationHistoryHasMore.value && !conversationHistoryError.value) {
+      const count = conversationHistory.value.length
+      await loadMoreHallConversationHistory()
+      if (conversationHistory.value.length === count) break
+    }
+    if (!current()) return false
+    const restored = await selectHallConversation(source.conversationId)
+    if (!restored) showToast('原议事暂不可读取，请重试；未创建新会话或重新执行。')
+    return restored
+  }
+  if (conversationHistory.value.length === 1 && !conversationHistoryHasMore.value) return selectHallConversation(conversationHistory.value[0].id)
+  showToast('请从话头记录返回原议事；未猜选最新会话。')
+  return false
+}
+const openTaskWorkspace = () => {
+  if (!taskWorkspaceEnabled || !taskWorkspaceSubject.value?.taskId || !taskWorkspaceSubject.value?.actorAgentId) return
+  openPanel('workspace')
+}
+
+const returnPanel = () => {
+  if (panelDisposed || voiceInteractionLocked.value) return false
+  // Back inside a draft/selection/preview is navigation, not leaving the draft.
+  if (activeDraftEditor()?.canGoBack) return activeDraftEditor().goBack()
+  if (guardPanelLeave(() => returnPanel() || closePanel())) return true
+  if (renderedPanel.value === 'tasks' && formalTaskRef.value) { formalTaskRef.value = null; return true }
+  if (panelChildCanReturn.value) {
+    const child = renderedPanel.value === 'agents' ? agentPanelRef.value : renderedPanel.value === 'tasks' ? bountyPanelRef.value
+      : renderedPanel.value === 'treasure' ? treasurePanelRef.value : libraryPanelRef.value
+    return child.back()
+  }
+  if (!panelReturnPanel.value) return false
+  return openPanel(panelReturnPanel.value, { silent: true, restore: true })
+}
+
+const closePanel = () => {
+  if (panelDisposed || voiceInteractionLocked.value || !activePanel.value) return false
+  if (guardPanelLeave(closePanel)) return false
+  cancelPanelChatLoad()
+  panelClosingGeneration.value = panelSessionGeneration.value
+  activePanel.value = ''
+  playTap()
+  return true
+}
+
+const handleHallReturn = () => {
+  if (renderedPanel.value === 'agents' && agentPanelRef.value?.canGoBack) return returnPanel()
+  if (navigationPresentation.value.showRootReturn) return closePanel()
+  return returnPanel()
+}
+
+const handlePanelKeydown = (event) => {
+  event.stopPropagation()
+  if (event.key === 'Escape' && !event.isComposing && event.keyCode !== 229) {
+    event.preventDefault()
+    if (!returnPanel()) closePanel()
+    return
+  }
+  if (!(isOverviewHome.value && workbenchPrimaryPanelSet.has(renderedPanel.value))) {
+    trapPanelFocus(event, panelRef.value)
+  }
+}
+
+const handlePanelAfterLeave = async (element) => {
+  const leavingGeneration = Number(element?.dataset?.panelGeneration)
+  if (!isCurrentPanelGeneration({
+    leavingGeneration,
+    closingGeneration: panelClosingGeneration.value,
+    sessionGeneration: panelSessionGeneration.value,
+    activePanel: activePanel.value,
+    disposed: panelDisposed
+  })) return
+  cancelPanelChatLoad()
+  renderedPanel.value = ''
+  panelFrames.value = []
+  panelLocations.clear()
+  await nextTick()
+  if (!isCurrentPanelGeneration({
+    leavingGeneration,
+    closingGeneration: panelClosingGeneration.value,
+    sessionGeneration: panelSessionGeneration.value,
+    activePanel: activePanel.value,
+    disposed: panelDisposed
+  }) || renderedPanel.value) return
+  const returnTarget = resolvePanelReturnTarget({ origin: panelSessionOrigin, root: hallRootRef.value })
+  restorePanelFocus(returnTarget)
+  panelClosingGeneration.value = 0
+  panelReturnPanel.value = ''
+  panelSessionOrigin = null
+}
+
+watch([() => apiStore.authorizationGeneration, hallIdentityScope], () => {
+  cancelHostedPointWait()
+  cancelPanelChatLoad()
+  panelSessionGeneration.value += 1
+  panelClosingGeneration.value = 0
+  activePanel.value = ''
+  renderedPanel.value = ''
+  panelFrames.value = []
+  panelReturnPanel.value = ''
+  panelLocations.clear()
+  cancelPanelLeave()
+  draftContext.value = null
+  formalDraftContext.value = null
+  formalTaskRef.value = null
+  overviewItemRef.value = null
+  taskReviewRef.value = null
+  panelSessionOrigin = null
+  resetToPublic({ clearSelection: true })
+}, { flush: 'sync' })
+
+const closeSelectedAgentCard = () => {
+  selectedAgent.value = null
+  playTap()
+}
+
+const briefSelectedTask = (task = selectedTask.value, agent = selectedAgent.value) => {
+  if (isTerminalMatter(task)) return false
+  if (!task || (agent && !canStartAgentConversation(agent))) return false
+  if (!openPanel('chat')) return false
+  selectedTask.value = task
+  if (agent) {
+    enterPrivateConversation(agent, { task })
+  } else {
+    enterBountyDiscussion(task)
+  }
+  showToast('已进入议事')
+}
+
+const discussTask = (task, explicitAgent) => {
+  if (isTerminalMatter(task)) return false
+  const assignedIds = [...new Set((Array.isArray(task?.assignedAgentIds) ? task.assignedAgentIds : [task?.assignedAgentId]).filter(Boolean))]
+  const actorAgentId = typeof explicitAgent?.agentId === 'string' ? explicitAgent.agentId : ''
+  const actor = assignedIds.length === 1 && assignedIds[0] === actorAgentId
+    ? operableRosterAgents.value.find(agent => agent.agentId === actorAgentId) || null
+    : null
+  if (!task?.id || !actor || !openPanel('chat')) return false
+  enterBountyDiscussion(task)
+  // Clicking the task-scoped button is the user's explicit actor selection. Keep
+  // assignment itself non-authorizing, then bind only this exact task/actor pair.
+  taskWorkspaceBinding.selectExplicitActor(actor)
+  markDiscussionStarted(task, chatContext.value?.participantAgentIds || [])
+  return true
+}
+
+const toggleHallSound = () => {
+  const nextEnabled = !soundEnabled.value
+  setSoundEnabled(nextEnabled)
+  if (nextEnabled) {
+    playTap()
+    showToast('厅中声响已开')
+    return
+  }
+  showToast('厅中声响已歇')
+}
+
+const showToast = (message) => {
+  toast.value = message
+  setTimeout(() => {
+    if (toast.value === message) toast.value = ''
+  }, 2200)
+}
+
+const fundedQuotePreview = ref(null)
+let fundedQuoteResolver = null
+const settleFundedQuote = (confirmed) => {
+  const resolve = fundedQuoteResolver
+  fundedQuoteResolver = null
+  fundedQuotePreview.value = null
+  resolve?.(confirmed === true)
+}
+const confirmFundedQuote = preview => new Promise(resolve => {
+  if (!economyPreviewEnabled.value || panelDisposed || renderedPanel.value !== 'tasks' || selectedTask.value?.id !== preview.quote.taskId) {
+    resolve(false)
+    return
+  }
+  settleFundedQuote(false)
+  fundedQuotePreview.value = preview
+  fundedQuoteResolver = resolve
+})
+// Closing/switching the task panel or changing a displayed selection cancels
+// only the preview. No hidden selection is ever used as the claim target.
+watch([() => selectedTask.value?.id, () => selectedTask.value?.taskVersion ?? selectedTask.value?.version,
+  () => selectedAgent.value?.agentId, () => renderedPanel.value, () => economyPreviewEnabled.value], () => settleFundedQuote(false), { flush: 'sync' })
+onUnmounted(() => settleFundedQuote(false))
+
+const {
+  fundedClaimState,
+  fundedCreateRecovery,
+  refreshFundedClaim,
+  resumeFundedCreate: runResumeFundedCreate,
+  archiveTask: runArchiveTask,
+  autoAssignTask: runAutoAssignTask,
+  assignTask: runAssignTask,
+  cancelTask,
+  cancellationState,
+  cancellationBusy,
+  cancelFunding: runCancelFunding,
+  createTask: runCreateTask,
+  loadSettlement: runLoadSettlement
+} = useHallTaskActions({
+  agentApi,
+  confirmFundedQuote,
+  identityScope: hallIdentityScope,
+  identityEpoch: () => apiStore.authorizationGeneration,
+  actionSessionKey: () => `${panelSessionGeneration.value}:${renderedPanel.value}`,
+  onOrdinaryCancelled: async (_task, fence) => {
+    if (!fence.isCurrent()) return
+    await loadAgents()
+    if (!fence.isCurrent()) return
+    if (catalogError.value || rosterError.value || mapError.value) throw new Error('名册投影刷新待完成')
+    hallReadRevision.value += 1
+    syncAfterPersonaChanged()
+  },
+  fundedActorScopeKey: computed(() => economyPreviewCapability.value?.principalScopeSha256 || ''),
+  resolveFundedAgent: agent => agents.value.find(item => item.agentId === agent.agentId),
+  canAssign,
+  log,
+  playError,
+  playSuccess,
+  selectedAgent,
+  selectedTask,
+  showToast,
+  tasks
+})
+
+const requirementCreateStorage = (() => {
+  try { return typeof window !== 'undefined' ? window.localStorage : null } catch { return null }
+})()
+const {
+  state: requirementCreateState,
+  busy: requirementCreateBusy,
+  create: runRequirementCreate,
+  checkOriginal: checkRequirementCreate,
+  resumeOriginal: resumeRequirementCreate,
+  readOriginal: readRequirementCreateOriginal,
+  dispose: disposeRequirementCreate
+} = useHallRequirementCreate({
+  agentApi,
+  actorScopeKey: hallIdentityScope,
+  identityEpoch: () => apiStore.authorizationGeneration,
+  storage: requirementCreateStorage,
+  schemaVersion: 2,
+  onCommitted: (receipt, fence) => {
+    if (!fence.isCurrent()) return false
+    tasks.value = [receipt.task, ...tasks.value.filter(task => task.id !== receipt.taskId)]
+    selectedTask.value = receipt.task
+    markTaskCreated(receipt.task)
+    playSuccess()
+    showToast('需求已保存为待点将事项；确认承办后才开始办理。')
+    void openPendingTaskDetail(receipt.task)
+    return true
+  }
+})
+const createTask = async (payload, acknowledge = () => {}) => {
+  // Preserve the funded lane, but never let it replace a pending ordinary
+  // creation operation, or reinterpret selected materials as funding authority.
+  let created = false
+  try {
+    const pendingDraft = hallDraftRecovery.unresolvedIntent.value
+    if (pendingDraft?.kind === 'TASK_CREATE') {
+      showToast('原事项创建仍待核对，请先打开原草稿；未创建另一份事项。')
+      openOverviewItem({ sourceType: 'DRAFT', sourceId: pendingDraft.draftId })
+      return false
+    }
+    if (payload?.grossBountyAmountMicro) {
+      const original = readRequirementCreateOriginal()
+      if (original.state !== 'ABSENT' || payload.attachments?.length || payload.inputRefs?.length) {
+        showToast('请先核对原张榜；资金榜不提交普通榜资料。')
+      } else {
+        created = await runCreateTask(payload)
+        if (created) markTaskCreated(selectedTask.value)
+      }
+    } else if (fundedCreateRecovery.value) {
+      showToast('请先核对原资金榜；当前编辑稿未提交。')
+    } else {
+      created = await runRequirementCreate(payload)
+      if (!created && requirementCreateState.value.error) showToast(requirementCreateState.value.error)
+    }
+  } finally { acknowledge(created) }
+  return created
+}
+const resumeFundedCreate = async () => {
+  const created = await runResumeFundedCreate()
+  if (created) markTaskCreated(selectedTask.value)
+  return created
+}
+
+const autoAssignTask = async (task) => {
+  if (task?.funding?.mode === 'FUNDED_SINGLE_AGENT') return false
+  await runAutoAssignTask(task)
+  const currentTask = selectedTask.value || task
+  const assignedIds = currentTask?.assignedAgentIds || (currentTask?.assignedAgentId ? [currentTask.assignedAgentId] : [])
+  const assignedAgents = assignedIds
+    .map(agentId => mapAgents.value.find(agent => agent.agentId === agentId) || agents.value.find(agent => agent.agentId === agentId) || agentId)
+    .filter(Boolean)
+  markTaskAutoAssigned(currentTask, assignedAgents)
+}
+
+const archiveTask = async (task) => {
+  await runArchiveTask(task)
+  if (selectedTask.value?.status === 'archived') {
+    markTaskArchived(selectedTask.value)
+  }
+}
+
+const cancelFunding = async (task) => {
+  const cancelled = await runCancelFunding(task)
+  if (cancelled) await loadTasks()
+  return cancelled
+}
+
+const loadSettlement = async (task) => runLoadSettlement(task)
+
+let notifyBountyRequestCatalog = () => {}
+
+const {
+  activeRequest,
+  activeTurns,
+  adoptBountyBootstrap,
+  adoptTypedDiscussionReceipt,
+  capabilityState,
+  cancelHallReplyTurn,
+  cancelDeliberation,
+  durableCancelTarget,
+  replyCancellationState,
+  chatConnectionStatus,
+  deliberationStatus,
+  conversationHistory,
+  conversationHistoryDeletingId,
+  conversationHistoryError,
+  conversationHistoryHasMore,
+  conversationHistoryLoading,
+  conversationId,
+  conversationLoadError,
+  draft,
+  deleteHallConversation,
+  eventStreamRecovering,
+  insertAgentMention,
+  isAwaitingReply,
+  isConversationBusy,
+  isSubmitting,
+  isStreaming,
+  loadHallConversationHistory,
+  loadHallMessages,
+  loadMoreHallConversationHistory,
+  mentionAgent,
+  messages,
+  newHallConversation,
+  pendingAgentName,
+  replyEventSequence,
+  retryHallConversation: reloadHallConversation,
+  refreshExecutionRequest,
+  refreshHallProjections,
+  sendHallMessage,
+  senderText,
+  selectHallConversation,
+  disposeHallConversation,
+  draftRevision,
+  setDraft,
+  stopHallEventStream,
+  stopHallReplyPolling,
+  stopHallReplyStreaming
+} = useHallConversation({
+  identityScope: hallIdentityScope,
+  apiStore,
+  chatContext,
+  chatMode,
+  chatApi,
+  globalStore,
+  log,
+  openPanel,
+  outgoingMetadata,
+  portraitShortName,
+  selectedAgent,
+  selectedTask,
+  showToast,
+  onFinalReply: payload => {
+    voiceReplyCorrelation.observe(payload)
+  },
+  onDelivery: ({ agentId }) => {
+    if (agentId) markAgentSpeaking(agentId, '收到传令', 'system')
+  },
+  onRequestCatalogHint: event => notifyBountyRequestCatalog(event),
+  onTypedOutcome: event => { if (event?.requestId) void typedDeliberation?.readOne?.(event.requestId) }
+})
+
+const followupContextGeneration = ref(0)
+const typedDeliberationEnabled = computed(() => typedDeliberationBuildEnabled && multimediaDeliberationUiEnabled && chatMode.value === 'bounty')
+let typedDeliberation = null
+const bountyAssignmentContext = useHallBountyAssignmentContext({
+  chatApi, identityScope: hallIdentityScope, authorizationGeneration: () => apiStore.authorizationGeneration,
+  getContext: () => ({ conversationId: conversationId.value, taskId: conversationTask.value?.id || '',
+    targetAgentId: bountyInteractionTargetId(chatContext.value), taskVersion: conversationTask.value?.taskVersion || '' }),
+  enabled: () => typedDeliberationEnabled.value
+})
+const bountyRequestCatalog = useHallBountyRequestCatalog({
+  chatApi, identityScope: hallIdentityScope, authorizationGeneration: () => apiStore.authorizationGeneration,
+  getContext: () => ({ conversationId: conversationId.value, taskId: conversationTask.value?.id || '',
+    targetAgentId: bountyInteractionTargetId(chatContext.value), assignmentRevision: typedAssignmentRevision(),
+    conversationGeneration: typedConversationGeneration() }),
+  getContextGeneration: () => followupContextGeneration.value, enabled: () => multimediaDeliberationUiEnabled && chatMode.value === 'bounty'
+})
+notifyBountyRequestCatalog = async () => {
+  if (!typedDeliberationEnabled.value) return true
+  return refreshFollowupContext()
+}
+const invalidateFollowupContext = () => { followupContextGeneration.value++; typedDeliberation?.invalidate?.() }
+// Only the authenticated binding owns these values. A newly adopted request or
+// a catalog reset is a projection update, not a new conversation generation.
+const typedAssignmentRevision = () => bountyAssignmentContext.projection.value?.assignmentRevision || ''
+const typedConversationGeneration = () => bountyAssignmentContext.projection.value?.conversationGeneration || ''
+const typedDeliberationContext = () => ({ conversationId: conversationId.value, taskId: conversationTask.value?.id || '',
+  targetAgentId: bountyInteractionTargetId(chatContext.value), assignmentRevision: typedAssignmentRevision(),
+  conversationGeneration: typedConversationGeneration() })
+const typedDeliberationStorage = (() => { try { return typeof window !== 'undefined' ? window.sessionStorage : null } catch { return null } })()
+typedDeliberation = useHallTypedDeliberation({
+  chatApi, actorScopeKey: hallIdentityScope, authorizationGeneration: () => apiStore.authorizationGeneration,
+  getContext: typedDeliberationContext, getContextGeneration: () => followupContextGeneration.value,
+  getCatalogEntries: () => bountyRequestCatalog.entries.value, prepareCatalog: () => bountyRequestCatalog.refresh(), storage: typedDeliberationStorage,
+  enabled: () => typedDeliberationEnabled.value,
+  onAccepted: async ({ receipt, purpose, context, isCurrent }) => {
+    if (!isCurrent?.()) return false
+    if (purpose === 'INSPECT') { bountyRequestCatalog.hint(); showToast('Agent 正在处理资料。'); return true }
+    const adopted = await adoptTypedDiscussionReceipt({ receipt, context, isCurrent })
+    if (!isCurrent?.()) return false
+    bountyRequestCatalog.hint()
+    showToast(adopted
+      ? (receipt.intent === 'CLARIFICATION_REPLY' ? '已发送补充。' : '已发送。')
+      : '消息已提交，正在确认处理状态。')
+    return adopted
+  }
+})
+
+// Every user-visible task/target/auth context change fences in-flight original
+// projection reads. The one canonical task replacement performed by a verified
+// admission is marked below, so its own reactive write cannot cancel adoption.
+const pointAndStartContextGeneration = ref(0)
+let admittedPointAndStartTaskFingerprint = null
+let admittedPointAndStartActorReset = null
+const pointAndStartTaskFingerprint = task => [task?.id, task?.taskVersion, task?.requirementRevision, task?.revision]
+  .map(value => value == null ? '' : String(value)).join('\u0000')
+const preserveAdmittedPointAndStartContext = task => { admittedPointAndStartTaskFingerprint = pointAndStartTaskFingerprint(task) }
+const pointAndStartStorage = (() => {
+  try { return typeof window !== 'undefined' ? window.localStorage : null } catch { return null }
+})()
+const pointAndStartIntentState = (taskId) => createPointAndStartIntentStore({
+  storage: pointAndStartStorage,
+  scope: hallIdentityScope.value,
+  taskId
+}).read()
+const clearPointAndStartCapability = () => { pointAndStartContextGeneration.value++; stopPointAndStartObservation() }
+const attachAdmittedPointAndStart = async ({ task, targetAgentId, reference, isCurrent }) => {
+  if (!isCurrent?.() || panelDisposed || task?.id !== reference?.taskId || targetAgentId !== reference?.targetAgentId) return false
+  // Admission receives only the canonical TaskDTO. Never synthesize assignment
+  // fields from a grant receipt or choose a different roster target.
+  const target = operableRosterAgents.value.find(agent => agent?.agentId === targetAgentId)
+  if (!target) return false
+  tasks.value = tasks.value.map(item => item?.id === task.id ? task : item)
+  preserveAdmittedPointAndStartContext(task)
+  hallReadRevision.value += 1
+  selectedTask.value = task
+  if (!openPanel('chat', { consumeAgentSelection: true })) return false
+  // Bounty context clears the directory selection synchronously; this is not
+  // a user target change and must not invalidate its own admitted bootstrap.
+  admittedPointAndStartActorReset = selectedAgent.value?.agentId || null
+  try { enterBountyDiscussion(task) } finally { admittedPointAndStartActorReset = null }
+  await nextTick()
+  if (!isCurrent?.() || panelDisposed || selectedTask.value?.id !== task.id) return false
+  return adoptBountyBootstrap(reference)
+}
+const {
+  state: pointAndStartState,
+  busy: pointAndStartBusy,
+  start: startPointAndStart,
+  checkOriginal: checkPointAndStart,
+  resumeOriginal: resumePointAndStart,
+  observeOriginal: observePointAndStart,
+  stopObservation: stopPointAndStartObservation,
+  dispose: disposePointAndStart
+} = useHallPointAndStart({
+  agentApi,
+  actorScopeKey: hallIdentityScope,
+  storage: pointAndStartStorage,
+  getContextGeneration: () => pointAndStartContextGeneration.value,
+  canAssign: (task, agent) => {
+    const current = operableRosterAgents.value.find(item => item?.agentId === agent?.agentId)
+    return Boolean(current && canAssign(task, current))
+  },
+  onAssignmentConfirmed: ({ isCurrent }) => {
+    if (isCurrent?.() && !panelDisposed) hallReadRevision.value += 1
+  },
+  onAdmitted: attachAdmittedPointAndStart
+})
+// The directory starts an immediate context watch; initialize the assignment
+// state first so mounted private and bounty panels share the same safe fence.
+const agentProfile = useHallAgentProfileCapabilities({
+  api: agentApi,
+  getAgent: () => selectedAgent.value,
+  identityKey: () => hallIdentityScope.value ? `${hallIdentityScope.value}:${apiStore.authorizationGeneration}` : '',
+  enabled: () => renderedPanel.value === 'agents' && activePanel.value === 'agents' && Boolean(agentPanelRef.value?.profileVisible)
+})
+onUnmounted(() => agentProfile.dispose())
+
+const taskSkillDirectory = useHallSkillCapabilities({ api: agentApi, getContext: typedDeliberationContext,
+  identityKey: () => `${hallIdentityScope.value}\u0000${apiStore.authorizationGeneration}\u0000${followupContextGeneration.value}`,
+  enabled: () => typedDeliberationEnabled.value })
+
+const pointAndStartPresentationState = pointAndStartState
+const explainPointAndStartState = () => ({
+  UNKNOWN: '正在确认点将结果，请刷新状态。',
+  PREPARING: '正在准备会话。',
+  ADMITTED: '需求已发送，正在进入会话。',
+  HISTORICAL: '本次指派已结束，可查看历史记录。',
+  FAILED: '点将未完成，请刷新状态查看详情。'
+}[pointAndStartState.value.status] || '正在确认点将结果。')
+const checkPointAndStartOriginal = async (task) => {
+  if (!task?.id) return false
+  const result = await checkPointAndStart(task.id)
+  if (!result && pointAndStartState.value.intent?.taskId === task.id) showToast(explainPointAndStartState())
+  return result
+}
+const resumePointAndStartOriginal = async (task) => {
+  const intent = pointAndStartIntentState(task?.id)
+  if (intent.state !== 'PRESENT') return checkPointAndStartOriginal(task)
+  if (pointAndStartRecoveryLane(intent) === 'CONTROLLED' || intent.record?.schemaVersion !== 2) {
+    showToast('旧图片与费用操作仅可查看历史，不再重放执行。')
+    return checkPointAndStartOriginal(task)
+  }
+  return resumePointAndStart(task.id)
+}
+// Reuse the selected canonical task; private chat never changes this context.
+const pendingPointAndDeliberateTask = computed(() => {
+  const task = selectedTask.value
+  if (!task?.id || task.funding?.mode === 'FUNDED_SINGLE_AGENT') return null
+  if (String(task.status || '').toLowerCase() !== 'open') return null
+  if (task.assignedAgentId || task.assignedAgentIds?.length) return null
+  return task
+})
+const canPointAndDeliberateAgent = agent => Boolean(pendingPointAndDeliberateTask.value && agent?.agentId && canAssign(pendingPointAndDeliberateTask.value, agent))
+const handlePointAndDeliberateAgent = agent => {
+  if (!canPointAndDeliberateAgent(agent)) return false
+  return assignTask(pendingPointAndDeliberateTask.value, agent)
+}
+
+const assignTask = async (task, agent) => {
+  if (!task?.id) return false
+  // A durable v2 original always wins over every normal lane. This check happens
+  // before funded/multi/open eligibility so a changed current snapshot cannot
+  // turn an uncertain original write into a fresh legacy assignment.
+  const original = pointAndStartIntentState(task.id)
+  if (pointAndStartIntentReadLane(original) === 'UNAVAILABLE') {
+    showToast('无法读取原点将恢复记录；未另建点将。请恢复浏览器本地存储后核对原操作。')
+    return false
+  }
+  if (original.state === 'PRESENT' || original.state === 'CORRUPT') {
+    if (original.state === 'CORRUPT') showToast('原点将恢复记录损坏；为避免重复办理，未改走旧式点将。')
+    else await checkPointAndStartOriginal(task)
+    return false
+  }
+
+  const targetAgents = Array.isArray(agent) ? agent : [agent].filter(Boolean)
+  const hasExplicitAgentId = item => typeof item?.agentId === 'string' && Boolean(item.agentId.trim())
+  if (!targetAgents.length || targetAgents.some(item => !hasExplicitAgentId(item))) return false
+  if (task.funding?.mode === 'FUNDED_SINGLE_AGENT' && !economyPreviewEnabled.value) return false
+  if (task.funding?.mode !== 'FUNDED_SINGLE_AGENT' && targetAgents.some(item => !canAssign(task, item))) return false
+
+  const oneOrdinaryTarget = task.funding?.mode !== 'FUNDED_SINGLE_AGENT' && targetAgents.length === 1
+  if (oneOrdinaryTarget) {
+    const started = await startPointAndStart({ task, agent: targetAgents[0] })
+    if (!started) showToast(explainPointAndStartState())
+    if (pointAndStartState.value.status === 'PREPARING') observePointAndStart(task.id)
+    return started
+  }
+
+  taskWorkspaceBinding.clearExplicitActor()
+  const assignmentSucceeded = await runAssignTask(task, agent)
+  if (!assignmentSucceeded) return false
+  const canonicalTask = tasks.value.find(item => item.id === task.id) || task
+  if (task.funding?.mode !== 'FUNDED_SINGLE_AGENT' ||
+    (canonicalTask.status === 'assigned' && canonicalTask.assignedAgentId === targetAgents[0].agentId)) markTaskAssigned(canonicalTask, targetAgents)
+  return true
+}
+
+watch(() => [selectedTask.value?.id, selectedTask.value?.taskVersion, selectedTask.value?.requirementRevision, selectedTask.value?.revision], ([taskId, taskVersion, requirementRevision, revision]) => {
+  const fingerprint = [taskId, taskVersion, requirementRevision, revision].map(value => value == null ? '' : String(value)).join('\u0000')
+  const admittedProjection = admittedPointAndStartTaskFingerprint === fingerprint
+  admittedPointAndStartTaskFingerprint = null
+  if (admittedProjection) return
+  clearPointAndStartCapability()
+  // A selected snapshot refresh is not an explicit request to enter discussion.
+  if (taskId && pointAndStartIntentState(taskId).state === 'PRESENT') void checkPointAndStart(taskId, { attach: false })
+}, { flush: 'sync' })
+watch([() => apiStore.authorizationGeneration, hallIdentityScope], clearPointAndStartCapability, { flush: 'sync' })
+watch(() => selectedAgent.value?.agentId, (target, previous) => {
+  if (!target && previous && admittedPointAndStartActorReset === previous) return
+  clearPointAndStartCapability()
+}, { flush: 'sync' })
+const followupTaskFence = computed(() => [conversationTask.value?.id, conversationTask.value?.taskVersion,
+  conversationTask.value?.requirementRevision, conversationTask.value?.revision].map(value => value == null ? '' : String(value)).join('\u0000'))
+const refreshCurrentConversationTask = () => {
+  const fence = [hallIdentityScope.value, apiStore.authorizationGeneration, conversationId.value, conversationTask.value?.id, chatMode.value]
+  return refreshConversationTask({ agentApi, isCurrent: () => {
+    const now = [hallIdentityScope.value, apiStore.authorizationGeneration, conversationId.value, conversationTask.value?.id, chatMode.value]
+    return fence.every((value, index) => value === now[index])
+  } })
+}
+const retryHallConversation = async () => {
+  if (chatMode.value === 'bounty' && !await refreshCurrentConversationTask()) {
+    showToast('事项状态未能核对，请重试；草稿已保留。')
+    return false
+  }
+  return reloadHallConversation()
+}
+const refreshFollowupContext = async () => {
+  if (!typedDeliberationEnabled.value || !conversationId.value) return false
+  if (!await refreshCurrentConversationTask()) return false
+  const captured = followupContextGeneration.value
+  if (!await bountyAssignmentContext.refresh() || captured !== followupContextGeneration.value) return false
+  if (!await bountyRequestCatalog.refresh() || captured !== followupContextGeneration.value) return false
+  return await typedDeliberation.refresh() && await typedDeliberation.recover()
+}
+const resetFollowupContext = () => {
+  invalidateFollowupContext()
+  bountyRequestCatalog.reset()
+  void refreshHallProjections({ type: 'resync_required', conversationId: conversationId.value })
+}
+watch([followupTaskFence, () => apiStore.authorizationGeneration, hallIdentityScope, () => conversationId.value,
+  () => bountyInteractionTargetId(chatContext.value), () => chatMode.value], resetFollowupContext, { flush: 'sync' })
+// Initial binding publication is not a switch. A later authoritative generation
+// or assignment change fences old operations without resetting the binding itself.
+watch(() => bountyAssignmentContext.projection.value, (next, previous) => {
+  if (next && previous && (next.conversationGeneration !== previous.conversationGeneration ||
+    next.assignmentRevision !== previous.assignmentRevision)) resetFollowupContext()
+}, { flush: 'sync' })
+watch(() => activeRequest.value?.conversationGeneration, generation => {
+  const trusted = bountyAssignmentContext.projection.value?.conversationGeneration
+  if (trusted && typedLong(generation) && generation !== trusted) resetFollowupContext()
+}, { flush: 'sync' })
+
+const terminalHistory = useOutputs({
+  source: () => renderedPanel.value === 'tasks' && formalTaskRef.value?.status === 'cancelled' && hallIdentityScope.value
+    ? { type: 'task', id: formalTaskRef.value.id } : null,
+  identityFingerprint: () => `${hallIdentityScope.value}:${apiStore.authorizationGeneration}`,
+  pageSize: 100
+})
+// Reuse the existing owner/task-scoped catalog and validated text projection,
+// but render no acceptance, continuation, or execution component for terminal tasks.
+const terminalConversationHistory = useHallBountyAcceptance({
+  api: chatApi,
+  taskId: () => renderedPanel.value === 'tasks' && formalTaskRef.value?.status === 'cancelled' ? formalTaskRef.value.id : '',
+  taskCompleted: () => true,
+  stateVersion: () => formalTaskRef.value?.taskVersion ?? formalTaskRef.value?.version,
+  identityKey: () => hallIdentityScope.value ? `${hallIdentityScope.value}:${apiStore.authorizationGeneration}` : ''
+})
+const refreshTerminalHistory = () => {
+  void terminalConversationHistory.refresh()
+  return terminalHistory.refresh()
+}
+const terminalTextItems = ref([])
+const terminalTextError = ref('')
+watch([() => terminalHistory.cacheKey.value, () => terminalConversationHistory.scope.value,
+  () => terminalConversationHistory.catalog.entries.value], async (_value, _old, onCleanup) => {
+  terminalTextItems.value = []; terminalTextError.value = ''
+  const controller = new AbortController()
+  onCleanup(() => controller.abort())
+  const key = terminalHistory.cacheKey.value
+  const scope = terminalConversationHistory.scope.value
+  if (!key || !scope || formalTaskRef.value?.status !== 'cancelled') return
+  const taskId = formalTaskRef.value.id
+  try {
+    const items = []
+    for (const entry of terminalConversationHistory.catalog.entries.value) {
+      const requestId = entry.request?.requestId
+      if (!requestId) continue
+      const response = await chatApi.get(`/requests/${encodeURIComponent(requestId)}`, {}, { autoLoading: false, signal: controller.signal })
+      const request = response
+      if (request?.requestId !== requestId || request.conversationId !== scope.conversationId) throw new Error('历史议事来源不匹配')
+      for (const turn of request.turns || []) {
+        if (turn.route !== 'CHAT' || !['FINAL_PERSISTED', 'PUBLISHED'].includes(turn.state)) continue
+        const outcome = await chatApi.get(`/conversations/${encodeURIComponent(scope.conversationId)}/requests/${encodeURIComponent(requestId)}/typed-outcome`, {},
+          { autoLoading: false, signal: controller.signal })
+        const item = await completedTextItem(outcome?.data?.data ?? outcome?.data, request, turn, taskId)
+        if (item) items.push(item)
+      }
+    }
+    if (!controller.signal.aborted && key === terminalHistory.cacheKey.value) terminalTextItems.value = items
+  } catch (error) {
+    if (!controller.signal.aborted && key === terminalHistory.cacheKey.value) terminalTextError.value = error.message || '历史文字成果读取未成'
+  }
+}, { flush: 'sync' })
+
+const terminalHistoryDownloadError = ref('')
+watch(() => terminalHistory.cacheKey.value, () => { terminalHistoryDownloadError.value = '' })
+const downloadTerminalOutput = async item => {
+  const key = terminalHistory.cacheKey.value
+  terminalHistoryDownloadError.value = ''
+  try {
+    const result = await terminalHistory.download(item)
+    if (key !== terminalHistory.cacheKey.value || panelDisposed) return false
+    saveOutputBlob({ blob: result instanceof Blob ? result : result?.blob, item })
+    return true
+  } catch (error) {
+    if (key === terminalHistory.cacheKey.value && error?.name !== 'AbortError') terminalHistoryDownloadError.value = error.message || '历史成果下载未成，请重查。'
+    return false
+  }
+}
+
+const formalTaskExecutionContext = useFormalTaskExecutionScope({
+  selectedTask,
+  chatContext,
+  conversationId,
+  identityScope: hallIdentityScope,
+  taskWorkspaceEnabled,
+  taskWorkspaceSubject,
+  taskWorkspaceSnapshot,
+  taskWorkspaceConnectionState,
+  taskWorkspaceError
+})
+
+hallVoice = useHallVoiceConversation({
+  apiStore,
+  chatApi,
+  enabled: voiceFeatureEnabled,
+  getContext: () => {
+    const current = chatContext.value || {}
+    return {
+      conversationId: conversationId.value,
+      conversationScopeType: current.conversationScopeType,
+      conversationScopeKey: current.conversationScopeKey,
+      mode: current.mode,
+      targetAgentIds: current.targetAgentIds,
+      targetAgentId: current.targetAgentId,
+      participantAgentIds: current.participantAgentIds,
+      mentionAgentIds: chatMentionAgentIds.value,
+      selectedAgentId: current.selectedAgentId ?? null,
+      selectedTaskId: current.selectedTaskId ?? null,
+      taskId: current.taskId ?? null,
+      outgoingMetadata: outgoingMetadata.value,
+      targetLabel: chatTargetText.value
+    }
+  },
+  getDraft: () => draft.value,
+  getDraftRevision: () => draftRevision.value,
+  isReplyBusy: () => Boolean(isSubmitting?.value) || isStreaming.value || isAwaitingReply.value,
+  onCaptureStateChange: capturing => setSoundSuppressed?.(capturing),
+  onReplyTurnTerminal: ({ reason, turnId }) => {
+    const closedCurrentTurn = voiceReplyCorrelation.closeIfCurrent(turnId, reason)
+    if (closedCurrentTurn && reason === 'reply_timeout') cancelHallReplyTurn(reason)
+  },
+  onOpenReview: () => { if (!activePanel.value) openPanel('chat') },
+  onSendVoice: async ({ content, contextSnapshot, draftRevision: frozenDraftRevision, turnId }) => {
+    if (Boolean(isSubmitting?.value) || isStreaming.value || isAwaitingReply.value) return false
+    const correlationTurnId = voiceReplyCorrelation.start({
+      turnId,
+      baselineSequence: replyEventSequence.value,
+      messages: messages.value,
+      conversationIdBeforeSend: contextSnapshot.conversationId
+    })
+    if (correlationTurnId !== turnId) return false
+    playSend()
+    try {
+      const accepted = await sendHallMessage({
+        content,
+        contextSnapshot,
+        source: 'voice',
+        clearDraftRevision: frozenDraftRevision,
+        onConversationResolved: id => voiceReplyCorrelation.resolveConversation(id, correlationTurnId)
+      })
+      if (!accepted) voiceReplyCorrelation.closeIfCurrent(correlationTurnId, 'send_failed')
+      else if (conversationId.value) voiceReplyCorrelation.resolveConversation(conversationId.value, correlationTurnId)
+      return accepted
+    } catch (cause) {
+      voiceReplyCorrelation.closeIfCurrent(correlationTurnId, 'send_exception')
+      throw cause
+    }
+  },
+  showToast
+})
+const voiceInteractionLocked = computed(() => hallVoice.voiceInteractionLocked)
+// Task-level review ownership is independent of the currently browsed message/output.
+const reviewTaskId = computed(() => renderedPanel.value === 'chat' && chatMode.value === 'bounty'
+  ? conversationTask.value?.id || '' : renderedPanel.value === 'tasks' ? formalTaskRef.value?.id || selectedTask.value?.id || '' : '')
+const deliveryReview = useHallDeliveryReview({ api: agentApi, taskId: reviewTaskId,
+  identityScope: hallIdentityScope, authorizationGeneration: () => apiStore.authorizationGeneration,
+  enabled: () => multimediaDeliberationUiEnabled })
+const reviewPreviewItem = ref(null); const reviewPreviewError = ref('')
+const reviewOutputs = useOutputs({ source: () => reviewTaskId.value && (deliveryReview.dialogOpen.value || formalTaskRef.value)
+  ? { type: 'task', id: reviewTaskId.value } : null,
+  identityFingerprint: () => `${apiStore.authorizationGeneration}\u0000${hallIdentityScope.value}`, pageSize: 100 })
+const reviewInteractionLocked = () => Boolean(hallVoice?.voiceInteractionLocked || (chatMode.value === 'bounty' && conversationTask.value?.id === reviewTaskId.value && isConversationBusy.value))
+const openDeliveryReview = async task => {
+  if (reviewInteractionLocked()) return
+  if (task?.id) selectedTask.value = task
+  reviewPreviewItem.value = null; reviewPreviewError.value = ''
+  await deliveryReview.openConfirmation()
+}
+const confirmDeliveryReview = async () => {
+  if (reviewInteractionLocked()) return
+  await deliveryReview.confirmAcceptance()
+}
+let reviewPreviewGeneration = 0
+const previewReviewOutput = async item => {
+  const generation = ++reviewPreviewGeneration
+  const id = reviewTaskId.value; const identity = hallIdentityScope.value; const auth = apiStore.authorizationGeneration
+  reviewPreviewError.value = ''; reviewPreviewItem.value = null
+  const current = () => generation === reviewPreviewGeneration && id === reviewTaskId.value && identity === hallIdentityScope.value && auth === apiStore.authorizationGeneration
+  const findExact = () => reviewOutputs.items.value.find(output => output.artifactId === item.artifactId && String(output.artifactVersion) === item.artifactVersion && output.sha256 === item.contentHash)
+  if (!findExact()) {
+    try { await reviewOutputs.refresh() } catch {
+      if (current()) reviewPreviewError.value = '成果读取失败，请重试；不会换用其他版本。'
+      return
+    }
+  }
+  if (!current()) return
+  const exact = findExact()
+  if (!exact || !exact.canPreview) { reviewPreviewError.value = '此固定成果暂不可预览，请重新核对；不会换用其他版本。'; return }
+  reviewPreviewItem.value = exact
+}
+watch(() => [reviewTaskId.value, apiStore.authorizationGeneration, hallIdentityScope.value], () => { reviewPreviewGeneration++; reviewPreviewItem.value = null; reviewPreviewError.value = '' }, { flush: 'sync' })
+let lastReviewCompletion = ''
+watch(() => deliveryReview.operation.value.receipt, receipt => {
+  if (!receipt || receipt.taskId !== reviewTaskId.value || receipt.state !== 'COMMITTED' || receipt.decision !== 'ACCEPT' || receipt.taskState !== 'COMPLETED') return
+  const key = `${apiStore.authorizationGeneration}\u0000${hallIdentityScope.value}\u0000${receipt.operationId}`
+  if (key === lastReviewCompletion) return
+  lastReviewCompletion = key
+  hallReadRevision.value += 1
+  void loadTasks({ refreshTaskId: receipt.taskId, minimumTaskVersion: receipt.taskVersion })
+})
+watch(() => [conversationTask.value?.taskVersion, selectedTask.value?.taskVersion, formalTaskRef.value?.taskVersion,
+  typedDeliberation.cards.value.map(card => `${card.outcome?.outcomeId}:${card.state}:${card.submissionProgress?.state}:${card.submissionProgress?.dispatchVersion}:${card.submissionProgress?.operationStateVersion}:${card.reviewProgress?.state}:${card.reviewProgress?.stateVersion}`).join('|')].join('\u0000'), () => { if (reviewTaskId.value) void deliveryReview.refresh() })
+
+const accountEntryDisabled = computed(() => isPanelSessionActive.value || voiceInteractionLocked.value)
+const hallLeaveHasMeaningfulWork = computed(() => hasMeaningfulHallLeaveWork({
+  draft: draft.value,
+  isAwaitingReply: isAwaitingReply.value || Boolean(isSubmitting?.value),
+  isStreaming: isStreaming.value,
+  voiceInteractionLocked: voiceInteractionLocked.value,
+  voiceTurnActive: Boolean(hallVoice?.voiceTurnActive)
+}))
+const confirmLeavingHall = () => confirmHallLeave({ hasMeaningfulWork: hallLeaveHasMeaningfulWork.value })
+let approvedHallLeave = false
+let profileNavigationPending = false
+const openProfile = async () => {
+  if (profileNavigationPending || !confirmLeavingHall()) return false
+  profileNavigationPending = true
+  approvedHallLeave = true
+  try {
+    await router.push({ name: 'UserProfile' })
+    return true
+  } finally {
+    approvedHallLeave = false
+    profileNavigationPending = false
+  }
+}
+onBeforeRouteLeave(() => {
+  const editor = activeDraftEditor()
+  if (!editor) return approvedHallLeave || confirmLeavingHall()
+  const generation = panelSessionGeneration.value
+  return editor.saveBeforeLeave().then(saved => Boolean(saved && generation === panelSessionGeneration.value &&
+    (approvedHallLeave || confirmLeavingHall())))
+})
+
+const applyVoiceTranscript = mode => {
+  const next = hallVoice.applyTranscript(mode)
+  if (typeof next === 'string') { setDraft(next); hallVoice.discard() }
+}
+const handleSceneModeChange = mode => {
+  if (voiceInteractionLocked.value) return false
+  effectiveSceneMode.value = mode === 'landscape' ? 'landscape' : 'portrait'
+  return true
+}
+
+const {
+  citeLibraryItem: runCiteLibraryItem,
+  libraryErrorMessage,
+  libraryHasSearched,
+  libraryKeyword,
+  libraryLoading,
+  libraryResults,
+  librarySourceType,
+  searchLibrary: runSearchLibrary
+} = useHallLibrary({
+  openRequirement: openReferencedRequirement,
+  chatApi,
+  draft,
+  log,
+  openPanel,
+  outgoingMetadata,
+  setDraft,
+  playSuccess,
+  showToast
+})
+
+const searchLibrary = async () => {
+  markLibrarySearching('searching')
+  await runSearchLibrary()
+  markLibrarySearching(libraryErrorMessage.value ? 'error' : 'success')
+}
+
+const citeLibraryItem = (item) => {
+  if (runCiteLibraryItem(item)) markLibraryCitation(item)
+}
+
+const startDialogueBubbles = () => {
+  stopDialogueBubbles()
+  bubbleTimer = window.setInterval(showRandomAgentBubble, 5200)
+  bubbleInitialTimer = window.setTimeout(showRandomAgentBubble, 1800)
+}
+
+const stopDialogueBubbles = () => {
+  if (bubbleTimer) window.clearInterval(bubbleTimer)
+  if (bubbleInitialTimer) window.clearTimeout(bubbleInitialTimer)
+  if (bubbleClearTimer) window.clearTimeout(bubbleClearTimer)
+  bubbleTimer = null
+  bubbleInitialTimer = null
+  bubbleClearTimer = null
+}
+
+const showRandomAgentBubble = () => {
+  const pool = visibleAgents.value
+  if (!pool.length || activePanel.value) return
+  const agent = pool[Math.floor(Math.random() * pool.length)]
+  const role = portraitRole(agent)
+  const lines = roleDialogues[role.slug] || roleDialogues.default
+  const text = lines[Math.floor(Math.random() * lines.length)]
+  const key = agentKey(agent)
+  agentBubbles.value = { [key]: text }
+  markAgentSpeaking(agent, text, 'speech')
+  if (bubbleClearTimer) window.clearTimeout(bubbleClearTimer)
+  bubbleClearTimer = window.setTimeout(() => {
+    agentBubbles.value = {}
+  }, 3600)
+}
+
+
+const handleNewHallConversation = () => {
+  if (isConversationBusy.value) return false
+  voiceReplyCorrelation.close('new_conversation')
+  hallVoice?.cancel()
+  playPanelOpen()
+  newHallConversation()
+  resetSceneFeedback()
+  return true
+}
+
+const handleSendHallMessage = async (typedInput = {}) => {
+  voiceReplyCorrelation.close('manual_text_send')
+  hallVoice?.cancel()
+  playSend()
+  if (typedDeliberationEnabled.value) {
+    const sourceSelectors = Array.isArray(typedInput?.sourceSelectors) ? typedInput.sourceSelectors : []
+    if (conversationTask.value?.id) {
+      const fence = [hallIdentityScope.value, apiStore.authorizationGeneration, conversationTask.value.id,
+        conversationId.value, bountyInteractionTargetId(chatContext.value), draft.value]
+      const prepared = await refreshCurrentConversationTask() && await bountyAssignmentContext.refresh()
+      const current = [hallIdentityScope.value, apiStore.authorizationGeneration, conversationTask.value?.id,
+        conversationId.value, bountyInteractionTargetId(chatContext.value), draft.value]
+      if (fence.some((value, index) => value !== current[index])) return false
+      if (!prepared || !typedAssignmentRevision()) {
+        showToast(bountyAssignmentContext.error.value || '当前指派上下文尚未核对；未发送消息。')
+        return false
+      }
+    }
+    const accepted = await typedDeliberation.submit({ content: draft.value, sourceSelectors, materialScope: typedInput?.materialScope || 'TASK_DEFAULT' })
+    if (accepted) setDraft('')
+    else if (typedDeliberation.error.value) showToast(typedDeliberation.error.value)
+    return accepted
+  }
+  return sendHallMessage()
+}
+const handleTypedReply = projection => {
+  if (!typedDeliberationEnabled.value || !typedDeliberation.choosePending(projection)) return false
+  setDraft('')
+  showToast('请在输入框补充说明。')
+  return true
+}
+const handleTypedResume = async () => {
+  if (!typedDeliberationEnabled.value) return false
+  const resumed = await typedDeliberation.resumeUnknown()
+  if (!resumed && typedDeliberation.error.value) showToast(typedDeliberation.error.value)
+  return resumed
+}
+const handleMentionAgent = (agent) => {
+  if (!chatMentionAgents.value.some(item => item.agentId === agent?.agentId)) {
+    showToast('只可点名自家好汉')
+    return
+  }
+  playTap()
+  setMentionAgent(agent)
+  mentionAgent(agent)
+}
+
+const handleClearChatTarget = () => {
+  playTap()
+  setMentionAgent(null)
+  if (chatMode.value === 'public') {
+    selectedAgent.value = null
+  }
+}
+
+const exactAgentId = value => (
+  typeof value === 'string' && value.length > 0 && value.trim() === value
+    ? value
+    : ''
+)
+
+const resolvePermittedConversationAgent = candidate => {
+  const agentId = exactAgentId(candidate?.agentId)
+  if (!agentId) return null
+  return operableRosterAgents.value.find(agent => (
+    agent?.agentId === agentId &&
+    agent.boundToMe === true &&
+    agent.canOperate === true &&
+    !agent.systemAgent
+  )) || null
+}
+
+const handleStartAgentConversation = (candidate) => {
+  const agent = resolvePermittedConversationAgent(candidate)
+  if (!agent) {
+    showToast('只可与自家好汉密议')
+    return false
+  }
+  if (!openPanel('chat')) return false
+  taskWorkspaceBinding.selectExplicitActor(agent)
+  playAgentSelect()
+  enterPrivateConversation(agent)
+  markAgentSpeaking(agent, '入席密议', 'system')
+  showToast(`正与 ${portraitShortName(agent)} 密议`)
+  return true
+}
+
+const canStartAgentConversation = agent => Boolean(resolvePermittedConversationAgent(agent))
+
+const handleBindPersona = async (persona, mode = 'local') => {
+  if (mode !== 'local') {
+    showToast('山寨安顿请先打开服务端租约报价，不会直接免费开通。')
+    return false
+  }
+  try {
+    personaSetupResult.value = await bindPersona(persona, mode)
+    syncAfterPersonaChanged()
+    playSuccess()
+    showToast(`${portraitShortName(persona)} 自家接应文书已备`)
+  } catch (error) {
+    log.warn('bind persona failed:', error)
+    playError()
+    showToast(error.message || '请贤未成')
+  }
+}
+
+const personaUnbindBusy = ref(false)
+const handleUnbindPersona = async (persona) => {
+  if (personaUnbindBusy.value || !hallIdentityScope.value || !persona?.personaCode || persona.boundToMe !== true || persona.systemAgent) return false
+  const identity = hallIdentityScope.value
+  const epoch = apiStore.authorizationGeneration
+  const generation = panelSessionGeneration.value
+  const agentId = persona.agentId
+  const current = () => !panelDisposed && identity === hallIdentityScope.value && epoch === apiStore.authorizationGeneration &&
+    generation === panelSessionGeneration.value && renderedPanel.value === 'catalog'
+  personaUnbindBusy.value = true
+  try {
+    const action = await Dialog({
+      title: `确认将${portraitShortName(persona)}除名下山？`,
+      message: '除名会解除当前绑定。如有托管租约，重新入伙不会自动承接剩余租期，可能需要重新报价并收费；本操作不会退款或迁移租约。若只是接应故障，宜保留绑定，先在“重整接应 → 山寨安顿”核对租约并使用可用的免费重整（不续租、不延长到期日）。尚未核对租约时，不能认定没有租约或没有成本。',
+      confirmButtonText: '仍要除名',
+      cancelButtonText: '保留绑定，先核对',
+      confirmButtonTextType: 'danger'
+    })
+    if (action !== 'confirm' || !current()) return false
+    const latest = personaCatalog.value.find(item => item.personaCode === persona.personaCode)
+    if (!latest || latest.boundToMe !== true || latest.systemAgent || latest.agentId !== agentId) return false
+    const unbound = await unbindPersona(latest)
+    if (!current()) return false
+    if (!unbound) {
+      showToast('该好汉未在当前名册中，未执行除名')
+      return false
+    }
+    if (selectedAgent.value?.personaCode === persona.personaCode) selectedAgent.value = null
+    if (personaSetupResult.value?.agent?.personaCode === persona.personaCode) personaSetupResult.value = null
+    syncAfterPersonaChanged()
+    playSuccess()
+    showToast(`${portraitShortName(persona)} 已除名下山`)
+    return true
+  } catch (error) {
+    if (!current()) return false
+    log.warn('unbind persona failed:', error)
+    playError()
+    showToast(error.message || '除名未成')
+    return false
+  } finally {
+    personaUnbindBusy.value = false
+  }
+}
+
+onMounted(async () => {
+  globalStore.setTitle('聚义厅')
+  globalStore.setShowBack(false)
+  globalStore.setShowAppBar(false)
+  globalStore.setShowMore(false)
+  await nextTick()
+  experienceReady.value = true
+  document.addEventListener?.('visibilitychange', handleDocumentVisibility)
+  handleDocumentVisibility()
+  // token() initiates the one OAuth redirect when identity is absent. Do not mount
+  // the live hall workflow while that redirect is pending: its protected loaders
+  // would otherwise race the redirect and turn authentication into a fetch error.
+  const initializationGeneration = apiStore.authorizationGeneration
+  const initializationIsCurrent = () => !panelDisposed && initializationGeneration === apiStore.authorizationGeneration
+  if (!await apiStore.token() || !initializationIsCurrent()) return
+  // A valid restored bearer token can survive while only the unverified local ID
+  // cache remains. Hydrate the server profile before identity-scoped state opens.
+  if (!hasHydratedIdentity(globalStore.user)) {
+    try { await apiStore.getUserInfo() } catch (error) { log.warn('hall identity hydration failed:', error) }
+  }
+  if (!initializationIsCurrent()) return
+  permitStageMount()
+  await refreshHall({ silent: true })
+  startDialogueBubbles()
+})
+
+onUnmounted(() => {
+  disposeHallData?.()
+  cancelHostedPointWait()
+  document.removeEventListener?.('visibilitychange', handleDocumentVisibility)
+  panelDisposed = true
+  panelSessionGeneration.value += 1
+  panelClosingGeneration.value = 0
+  panelReturnPanel.value = ''
+  cancelPanelChatLoad()
+  const originalElement = panelSessionOrigin?.originalElement
+  if (isSafePanelFocusTarget(originalElement) && !hallRootRef.value?.contains(originalElement)) restorePanelFocus(originalElement)
+  panelSessionOrigin = null
+  activePanel.value = ''
+  renderedPanel.value = ''
+  taskWorkspaceBinding.dispose()
+  voiceReplyCorrelation.close('unmount')
+  reviewOutputs.dispose()
+  hallVoice?.dispose()
+  clearPointAndStartCapability()
+  disposeRequirementCreate()
+  disposePointAndStart()
+  typedDeliberation?.dispose?.()
+  taskSkillDirectory.dispose()
+  bountyAssignmentContext.dispose()
+  disposeHallConversation()
+  hallBackendSceneState?.dispose()
+  stopHallEventStream()
+  stopHallReplyStreaming()
+  stopHallReplyPolling()
+  stopDialogueBubbles()
+  resetSimulationLifecycle()
+  hallSceneDebugBridge.stop()
+  globalStore.setShowAppBar(true)
+})
+</script>
+
+<style scoped>
+.terminal-task-history { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: 12px; }
+.terminal-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+.terminal-history-actions button {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--hall-border-strong, #cbb998);
+  border-radius: 7px;
+  background: var(--hall-surface, #fffaf0);
+  color: var(--hall-text, #493a28);
+  font: inherit;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.terminal-history-actions button:hover {
+  background: var(--hall-surface-brand, #f6eee8);
+  border-color: var(--hall-brand, #923f30);
+}
+.terminal-history-actions button:focus-visible {
+  outline: 2px solid var(--hall-brand, #923f30);
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .terminal-history-actions { flex-direction: column; }
+  .terminal-history-actions button { width: 100%; }
+}
+.juyi-page {
+  --bottom-action-bar-height: 68px;
+  --hall-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --hall-dock-height: 62px;
+  --hall-dock-reserve: 0px;
+  --hall-content-bottom-inset: calc(var(--hall-safe-bottom) + var(--hall-dock-reserve));
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #211812;
+  color: #2f261c;
+}
+
+.hall-live-landscape-target {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.hall-live-landscape-target :deep(.hall-stage),
+:deep(.portrait-live-preview-target > .hall-stage) {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.hall-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: #211812;
+}
+
+.stage-header {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 240, 202, 0.22);
+  border-radius: 8px;
+  background: rgba(35, 24, 16, 0.72);
+  color: #fff4d4;
+  backdrop-filter: blur(8px);
+}
+
+.eyebrow {
+  font-size: 12px;
+  color: #d7b875;
+}
+
+h1 {
+  margin: 2px 0 0;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.stage-actions,
+.quick-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.icon-action,
+.quick-action,
+.panel-title button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border-radius: 8px;
+  background: #6d3f1f;
+  color: #fff8e8;
+}
+
+.icon-action {
+  width: 38px;
+  background: rgba(255, 244, 212, 0.16);
+  color: #fff4d4;
+}
+
+.hall-board {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 0;
+  cursor: grab;
+  touch-action: none;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 238, 180, 0.16), transparent 32%),
+    linear-gradient(135deg, #17231d, #1b271f 50%, #0e1411);
+}
+
+.hall-board.is-dragging {
+  cursor: grabbing;
+}
+
+.hall-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.58);
+}
+
+.map-world {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 162%;
+  height: 148%;
+  transform: translate3d(calc(-50% + var(--map-offset-x, 0px)), calc(-50% + var(--map-offset-y, 0px)), 0);
+  transform-origin: center;
+  transition: transform 0.28s ease;
+  background:
+    linear-gradient(90deg, rgba(99, 61, 31, 0.24) 1px, transparent 1px) 0 0 / 72px 72px,
+    linear-gradient(0deg, rgba(99, 61, 31, 0.22) 1px, transparent 1px) 0 0 / 72px 72px,
+    repeating-linear-gradient(90deg, rgba(169, 114, 58, 0.12) 0 18px, rgba(89, 54, 28, 0.12) 18px 36px),
+    radial-gradient(ellipse at 52% 54%, rgba(229, 177, 92, 0.34), transparent 28%),
+    linear-gradient(145deg, #8a6032 0%, #5b3923 38%, #6f4a2a 68%, #3a291f 100%);
+  will-change: transform;
+}
+
+.map-world::before,
+.map-world::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.map-world::before {
+  inset: 8% 10%;
+  border: 8px solid rgba(64, 35, 18, 0.62);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(64, 35, 18, 0.46) 2px, transparent 2px) 0 0 / 25% 100%,
+    linear-gradient(0deg, rgba(64, 35, 18, 0.44) 2px, transparent 2px) 0 0 / 100% 34%,
+    rgba(255, 238, 194, 0.08);
+}
+
+.map-world::after {
+  left: 15%;
+  right: 15%;
+  top: 46%;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(238, 190, 111, 0.48);
+  box-shadow:
+    0 -116px 0 rgba(238, 190, 111, 0.24),
+    0 116px 0 rgba(238, 190, 111, 0.2);
+}
+
+.map-region,
+.map-road {
+  position: absolute;
+  pointer-events: none;
+}
+
+.map-region {
+  z-index: 0;
+  opacity: 0.88;
+}
+
+.region-water {
+  left: 13%;
+  bottom: 14%;
+  width: 22%;
+  height: 22%;
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 239, 188, 0.18) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(135deg, rgba(87, 51, 27, 0.58), rgba(48, 31, 22, 0.5));
+}
+
+.region-forest {
+  right: 13%;
+  top: 14%;
+  width: 24%;
+  height: 24%;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 28% 36%, rgba(244, 200, 76, 0.24), transparent 16%),
+    linear-gradient(135deg, rgba(35, 72, 62, 0.64), rgba(28, 52, 44, 0.56));
+}
+
+.region-village {
+  left: 13%;
+  top: 14%;
+  width: 24%;
+  height: 24%;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 239, 188, 0.16) 0 10px, transparent 10px 20px),
+    linear-gradient(135deg, rgba(124, 31, 27, 0.46), rgba(92, 45, 99, 0.42));
+}
+
+.map-road {
+  z-index: 1;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(239, 195, 115, 0.56);
+  box-shadow: 0 0 0 5px rgba(83, 55, 29, 0.1);
+}
+
+.road-main {
+  left: 20%;
+  top: 50%;
+  width: 62%;
+  transform: rotate(-13deg);
+}
+
+.road-branch {
+  left: 45%;
+  top: 42%;
+  width: 32%;
+  transform: rotate(42deg);
+}
+
+.hall-room {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px;
+  border: 2px solid rgba(64, 35, 18, 0.68);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 244, 212, 0.14) 1px, transparent 1px) 0 0 / 20px 20px,
+    linear-gradient(145deg, rgba(255, 237, 190, 0.72), rgba(188, 132, 67, 0.64));
+  color: #3c2716;
+  text-align: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 250, 232, 0.22),
+    0 12px 26px rgba(0, 0, 0, 0.18);
+}
+
+button.hall-room {
+  cursor: pointer;
+}
+
+.hall-room:hover {
+  border-color: rgba(244, 200, 76, 0.84);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 250, 232, 0.3),
+    0 0 0 3px rgba(244, 200, 76, 0.18),
+    0 14px 28px rgba(0, 0, 0, 0.2);
+}
+
+.hall-room strong,
+.hall-room small {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hall-room strong {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.hall-room small {
+  color: rgba(60, 39, 22, 0.78);
+  font-size: 12px;
+}
+
+.room-main {
+  left: 37%;
+  top: 35%;
+  width: 26%;
+  height: 32%;
+  background:
+    radial-gradient(circle at 50% 52%, rgba(244, 200, 76, 0.28), transparent 44%),
+    linear-gradient(145deg, rgba(255, 239, 188, 0.82), rgba(192, 138, 70, 0.74));
+}
+
+.room-agents {
+  left: 14%;
+  top: 36%;
+  width: 19%;
+  height: 24%;
+}
+
+.room-tasks {
+  right: 14%;
+  top: 36%;
+  width: 19%;
+  height: 24%;
+}
+
+.room-back {
+  left: 40%;
+  bottom: 13%;
+  width: 20%;
+  height: 16%;
+  background:
+    linear-gradient(145deg, rgba(235, 218, 184, 0.74), rgba(112, 76, 47, 0.56));
+}
+
+.beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: #4a2716;
+}
+
+.beam-top {
+  top: 0;
+}
+
+.banner {
+  position: absolute;
+  top: 86px;
+  left: 50%;
+  width: 116px;
+  padding: 10px 0;
+  transform: translateX(-50%);
+  border-radius: 0 0 8px 8px;
+  background: #b93622;
+  color: #fff1c1;
+  text-align: center;
+  font-weight: 700;
+}
+
+.task-sprite {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 7px;
+  width: clamp(132px, 15vw, 176px);
+  min-height: 56px;
+  padding: 8px 10px;
+  transform: translate(-50%, -50%) rotate(var(--sprite-tilt, -4deg));
+  border: 1px solid rgba(87, 50, 24, 0.34);
+  border-radius: 8px 8px 16px 8px;
+  background:
+    linear-gradient(90deg, rgba(123, 71, 33, 0.12) 1px, transparent 1px) 12px 0 / 18px 100%,
+    linear-gradient(155deg, rgba(255, 248, 224, 0.96), rgba(225, 175, 89, 0.94));
+  color: #3f2815;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.26),
+    0 12px 24px rgba(0, 0, 0, 0.23);
+  animation-timing-function: cubic-bezier(0.45, 0.02, 0.3, 1);
+  animation-iteration-count: infinite;
+}
+
+.task-sprite::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  bottom: -6px;
+  width: 32px;
+  height: 28px;
+  border-radius: 58% 42% 48% 52%;
+  background: rgba(129, 35, 27, 0.16);
+  transform: rotate(-14deg);
+}
+
+.task-sprite-icon {
+  grid-row: 1 / 3;
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #7c1f1b;
+  color: #fff4d4;
+}
+
+.task-sprite-title,
+.task-sprite-status {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-sprite-title {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.task-sprite-status {
+  color: #7a5630;
+  font-size: 11px;
+}
+
+.task-sprite.is-running {
+  background:
+    linear-gradient(90deg, rgba(35, 72, 62, 0.12) 1px, transparent 1px) 12px 0 / 18px 100%,
+    linear-gradient(155deg, rgba(237, 250, 240, 0.96), rgba(139, 185, 147, 0.94));
+}
+
+.task-sprite.is-completed {
+  opacity: 0.76;
+}
+
+.task-sprite.is-failed .task-sprite-icon {
+  background: #b3261e;
+}
+
+.agent-name,
+.agent-status {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-status {
+  font-size: 12px;
+}
+
+.is-idle {
+  color: #2e7d32;
+}
+
+.is-busy {
+  color: #9a5b00;
+}
+
+.is-error {
+  color: #b3261e;
+}
+
+.is-offline {
+  color: #777;
+}
+
+.empty-hall,
+.empty-list {
+  color: #856d4a;
+  text-align: center;
+  padding: 18px;
+}
+
+.hall-overflow {
+  position: absolute;
+  right: 18px;
+  bottom: 118px;
+  z-index: 5;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 244, 212, 0.2);
+  border-radius: 999px;
+  background: rgba(35, 24, 16, 0.72);
+  color: #fff4d4;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+.quick-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  padding: 10px max(18px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 240, 202, 0.18);
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: rgba(35, 24, 16, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.dock-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #fff4d4;
+}
+
+.dock-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 244, 212, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 244, 212, 0.08);
+  color: #d7b875;
+  white-space: nowrap;
+}
+
+.dock-summary strong {
+  margin-right: 4px;
+  color: #fff8e8;
+  font-size: 18px;
+}
+
+.dock-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.quick-action {
+  flex: 0 0 auto;
+  min-width: 86px;
+  gap: 6px;
+  background: rgba(35, 72, 62, 0.92);
+}
+
+.quick-action.primary {
+  background: #b93622;
+  color: #fff8e8;
+}
+
+.scene-hotspot {
+  position: absolute;
+  z-index: 3;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 240, 202, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 250, 240, 0.9);
+  color: #4a3423;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.hotspot-agents {
+  left: 8%;
+  top: 58%;
+}
+
+.hotspot-tasks {
+  left: 50%;
+  bottom: 25%;
+  transform: translateX(-50%);
+}
+
+.panel-overlay {
+  position: absolute;
+  inset: 0;
+  top: 0;
+  bottom: auto;
+  height: min(100%, var(--hall-visual-height, 100%));
+  max-height: 100%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 20px 92px;
+  box-sizing: border-box;
+  background: transparent;
+  isolation: isolate;
+  contain: layout paint;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.panel-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(18, 13, 10, 0.42);
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.panel-overlay.is-chat-overlay {
+  top: 0;
+  bottom: auto;
+  height: min(100%, var(--hall-visual-height, 100%));
+  max-height: 100%;
+  padding: 0;
+}
+.panel-overlay.is-chat-overlay > .floating-panel {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+.panel-overlay.is-chat-overlay :deep(.discussion-panel) { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.panel-overlay.is-chat-overlay :deep(.chat-panel) { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.panel-overlay.is-chat-overlay :deep(.hall-messages) { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+
+
+/* A handling session is one active, near-full work window. Landscape does
+ * not degrade it into a right-side half drawer. */
+.panel-overlay.is-full-window {
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+}
+
+.panel-overlay.is-full-window .floating-panel.layout-full-window {
+  /* The overlay owns the only outer gutter; do not subtract it again here. */
+  width: min(1180px, 100%);
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 10px;
+}
+
+.panel-overlay.is-full-window.is-chat-overlay { padding: 0; }
+.panel-overlay.is-full-window.is-chat-overlay > .floating-panel.layout-full-window { width: 100%; max-width: none; border-radius: 0; }
+
+.panel-overlay.is-compact-chat-overlay .panel-title {
+  padding: 6px 10px;
+}
+
+.panel-overlay.is-compact-chat-overlay :deep(.discussion-brief) {
+  display: none;
+}
+
+.panel-overlay.is-compact-chat-overlay :deep(.hall-messages) {
+  padding: 4px 8px;
+}
+
+.floating-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(860px, 100%);
+  max-width: 100%;
+  min-height: 0;
+  max-height: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(71, 44, 23, 0.2);
+  border-radius: 8px;
+  background: #fffaf0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+  overflow: hidden;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+  contain: layout paint;
+  will-change: transform, opacity;
+  isolation: isolate;
+}
+
+.floating-panel.panel-treasure:not(.layout-full-window) {
+  width: min(1040px, calc(100% - 40px));
+}
+
+.floating-panel.layout-center-modal {
+  width: min(860px, calc(100% - 40px));
+  max-height: calc(100% - 48px);
+}
+
+
+
+.panel-title {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(71, 44, 23, 0.12);
+  background: #fffaf0;
+}
+
+.panel-title {
+  font-weight: 700;
+}
+
+.panel-title > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-title button {
+  padding: 0 12px;
+  background: #efe0c6;
+  color: #4a3423;
+}
+
+.panel-return {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.panel-close {
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 1200;
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(42, 31, 22, 0.92);
+  color: #fff;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
+
+.agent-card-enter-active,
+.agent-card-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.agent-card-enter-from,
+.agent-card-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.panel-enter-active,
+.panel-leave-active {
+  transition: none;
+}
+
+.panel-enter-active::before,
+.panel-leave-active::before {
+  transition: opacity 0.16s ease-out;
+  will-change: opacity;
+}
+
+.panel-enter-active .floating-panel,
+.panel-leave-active .floating-panel {
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+    opacity 0.14s ease-out;
+  will-change: transform, opacity;
+}
+
+.panel-enter-from::before,
+.panel-leave-to::before {
+  opacity: 0;
+}
+
+.panel-enter-from .floating-panel {
+  transform: translate3d(0, 10px, 0);
+}
+
+.panel-leave-to .floating-panel {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+}
+
+.juyi-page.is-panel-open :deep(.hall-board),
+.juyi-page.is-panel-open :deep(.map-world),
+.juyi-page.is-panel-open :deep(.agent-token),
+.juyi-page.is-panel-open :deep(.agent-token *) {
+  animation-play-state: paused !important;
+}
+
+.juyi-page.is-panel-open :deep(.map-world) {
+  transition: none;
+}
+
+.juyi-page.is-virtual-landscape {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  width: 100vh;
+  height: 100vw;
+  width: 100dvh;
+  height: 100dvw;
+  min-height: 0;
+  transform: rotate(90deg) translateY(-100%);
+  transform-origin: top left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-enter-active,
+  .panel-leave-active,
+  .panel-enter-active::before,
+  .panel-leave-active::before,
+  .panel-enter-active .floating-panel,
+  .panel-leave-active .floating-panel {
+    transition: none;
+  }
+}
+
+@keyframes agentWalkRoute {
+  0% {
+    left: var(--p0x);
+    top: var(--p0y);
+  }
+  12% {
+    left: var(--p1x);
+    top: var(--p1y);
+  }
+  25% {
+    left: var(--p2x);
+    top: var(--p2y);
+  }
+  38% {
+    left: var(--p3x);
+    top: var(--p3y);
+  }
+  52% {
+    left: var(--p4x);
+    top: var(--p4y);
+  }
+  66% {
+    left: var(--p5x);
+    top: var(--p5y);
+  }
+  82% {
+    left: var(--p6x);
+    top: var(--p6y);
+  }
+  94% {
+    left: var(--p7x);
+    top: var(--p7y);
+  }
+  100% {
+    left: var(--p0x);
+    top: var(--p0y);
+  }
+}
+
+@keyframes taskOrbitA {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--sprite-tilt, -4deg)) scale(0.98);
+  }
+  23% {
+    transform: translate(calc(-50% + var(--orbit-x)), calc(-50% - var(--orbit-y))) rotate(7deg) scale(1.02);
+  }
+  61% {
+    transform: translate(calc(-50% + var(--wander-x)), calc(-50% + var(--orbit-y))) rotate(-9deg) scale(0.96);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--sprite-tilt, -4deg)) scale(0.98);
+  }
+}
+
+@keyframes taskOrbitB {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--sprite-tilt, 4deg));
+  }
+  34% {
+    transform: translate(calc(-50% + var(--orbit-x-left)), calc(-50% + var(--wander-y))) rotate(-12deg);
+  }
+  72% {
+    transform: translate(calc(-50% + var(--orbit-x-mid)), calc(-50% + var(--orbit-y-high))) rotate(10deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--sprite-tilt, 4deg));
+  }
+}
+
+@keyframes taskOrbitC {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--sprite-tilt, 2deg)) scale(1);
+  }
+  19% {
+    transform: translate(calc(-50% + var(--wander-x)), calc(-50% + var(--orbit-y-up-soft))) rotate(11deg) scale(0.97);
+  }
+  48% {
+    transform: translate(calc(-50% + var(--orbit-x-left-soft)), calc(-50% + var(--orbit-y-down-soft))) rotate(-8deg) scale(1.03);
+  }
+  83% {
+    transform: translate(calc(-50% + var(--orbit-x-right-soft)), calc(-50% + var(--wander-y))) rotate(5deg) scale(0.99);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--sprite-tilt, 2deg)) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-sprite {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .juyi-page {
+    --bottom-action-bar-height: 108px;
+    background: #211812;
+  }
+
+  .stage-header {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .stage-actions {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    max-width: none;
+    gap: 6px;
+  }
+
+  .icon-action {
+    width: 34px;
+    min-height: 34px;
+  }
+
+  .banner {
+    top: 92px;
+  }
+
+  .scene-hotspot {
+    min-height: 32px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .hotspot-agents {
+    left: 5%;
+    top: 63%;
+  }
+
+  .quick-bar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 8px max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .dock-summary {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .dock-summary span {
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .dock-summary strong {
+    font-size: 16px;
+  }
+
+  .dock-actions {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .quick-action {
+    flex: 0 0 auto;
+    min-width: 78px;
+  }
+
+  .map-world {
+    width: 164%;
+    height: 146%;
+  }
+
+  .room-main {
+    left: 35%;
+    top: 36%;
+    width: 30%;
+    height: 31%;
+  }
+
+  .room-agents {
+    left: 15%;
+    top: 38%;
+    width: 18%;
+    height: 22%;
+  }
+
+  .room-tasks {
+    right: 15%;
+    top: 38%;
+    width: 18%;
+    height: 22%;
+  }
+
+  .room-back {
+    left: 39%;
+    bottom: 13%;
+    width: 22%;
+    height: 15%;
+  }
+
+  .hall-room {
+    padding: 7px;
+  }
+
+  .hall-room strong {
+    font-size: 13px;
+  }
+
+  .hall-room small {
+    font-size: 10px;
+  }
+
+  .panel-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .agent-card-enter-from,
+  .agent-card-leave-to {
+    transform: translateY(8px);
+  }
+
+  .floating-panel.layout-full-window {
+    width: calc(100% - 12px);
+    max-width: calc(100% - 12px);
+    height: calc(100% - 8px);
+    max-height: calc(100% - 8px);
+    border-radius: 8px;
+  }
+
+  .panel-title {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .panel-title button {
+    min-height: 34px;
+    padding: 0 9px;
+  }
+
+
+}
+/* Use logical visual height as well as pointer-independent full-window sizing.
+ * These rules also apply to a virtual landscape or keyboard-shortened viewport. */
+.panel-overlay.is-low-height .panel-title {
+  gap: 6px;
+  padding: 6px 10px;
+}
+.panel-overlay.is-low-height .panel-title button {
+  min-height: 34px;
+  padding: 0 9px;
+}
+.panel-overlay.is-full-window :deep(.hall-draft-editor) {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.floating-panel > :deep(.hall-overview),
+.floating-panel > :deep(.formal-delivery-list) {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.panel-save-warning {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  color: #7c1f1b;
+  background: #fff3d8;
+}
+.panel-save-warning p {
+  margin: 0 0 6px;
+}
+/* The accepted prototype supplies the page architecture; the live Stage remains intact. */
+.hall-app-header,.hall-mode-toolbar,.hall-map-actions { display:flex; align-items:center; gap:16px; flex:0 0 auto; padding:12px 24px; color:#f0dfbd; background:#302015; border-bottom:1px solid #62492c; }
+.hall-app-header { justify-content:space-between; }
+.hall-app-header button,.hall-mode-toolbar button,.hall-map-actions button { font:inherit; color:inherit; cursor:pointer; min-height:44px; padding:8px 14px; border:1px solid #765a36; border-radius:4px; background:transparent; white-space:nowrap; }
+.hall-app-header button:focus-visible,.hall-mode-toolbar button:focus-visible,.hall-map-actions button:focus-visible { outline:3px solid #e6bc69; outline-offset:2px; }
+.hall-app-header .hall-brand { display:flex; gap:12px; align-items:center; padding:0; border:0; font-size:22px; text-align:left; }
+.hall-brand small { display:block; font-size:12px; color:#c4a978; margin-top:4px; }
+.hall-seal { display:grid; place-items:center; background:#8f402c; border:1px solid #b6774d; width:44px; height:44px; }
+.hall-main-nav,.hall-header-tools,.hall-scene-tools { display:flex; align-items:center; gap:8px; }
+.hall-main-nav button { border-color:transparent; }
+.hall-main-nav button[aria-current=page] { border-bottom-color:#e4bf73; border-radius:0; }
+.hall-mode-toolbar { padding:6px 24px; gap:12px; background:#261a10; }
+.hall-mode-switch { display:flex; flex:0 0 auto; }
+.hall-mode-switch button { border-radius:0; }
+.hall-mode-switch button[aria-pressed=true] { background:#71512f; }
+.hall-mode-hint { flex:1; font-size:13px; color:#bea77c; }
+.hall-mode-toolbar .hall-scene-tools { margin-left:auto; gap:6px; }
+.hall-mode-toolbar button { min-height:36px; padding:6px 10px; font-size:14px; }
+.hall-map-actions { border-top:1px solid #62492c; border-bottom:0; padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+.hall-map-actions span { color:#c4a978; font-size:14px; }
+.hall-map-actions .hall-primary { background:#8f402c; border-color:#b4774e; color:#fff8eb; }
+.hall-map-actions .hall-continue { margin-left:auto; }
+.panel-overlay:not(.is-full-window) { padding:32px 24px; }
+.floating-panel.layout-center-modal,.floating-panel.panel-treasure:not(.layout-full-window) { width:min(1040px,100%); height:min(780px,100%); max-height:100%; }
+.panel-title { background:#f3e8d0; padding:14px 22px; min-height:64px; font-weight:500; }
+.panel-title > span { white-space:normal; font-size:20px; }
+.panel-title .panel-close { order:4; border:0; background:transparent; }
+.panel-title .panel-return { order:0; }
+.panel-title > span { order:1; }
+@media (max-width:1000px) {
+ .hall-mode-hint,.hall-sound-action,.hall-help-action,.hall-brand small { display:none; }
+ .hall-app-header,.hall-map-actions { padding:8px 12px; gap:8px; }
+ .hall-main-nav,.hall-header-tools { gap:2px; }
+ .hall-app-header button { padding:6px 10px; }
+ .hall-mode-toolbar { padding:5px 12px; }
+}
+@media (max-width:600px) {
+ .hall-app-header { flex-wrap:wrap; }
+ .hall-app-header .hall-brand { font-size:19px; }
+ .hall-seal { height:32px; width:32px; }
+ .hall-main-nav { order:3; width:100%; justify-content:space-between; }
+ .hall-main-nav button { flex:1; padding:6px; }
+ .hall-mode-toolbar { flex-wrap:wrap; gap:4px; }
+ .hall-mode-toolbar .hall-scene-tools { flex-wrap:wrap; }
+ .hall-mode-toolbar button { padding:6px; }
+ .hall-map-actions span { display:none; }
+ .hall-map-actions button { padding:8px; font-size:14px; }
+ .panel-overlay.is-full-window { padding:0; }
+ .panel-overlay.is-full-window .floating-panel { border-radius:0; }
+}
+@media (max-height:500px) and (min-width:601px) {
+ .hall-app-header { padding:4px 12px; }
+ .hall-app-header .hall-brand { font-size:18px; }
+ .hall-seal { width:30px; height:30px; }
+ .hall-app-header button { min-height:34px; padding:5px 10px; }
+ .hall-mode-toolbar { padding:3px 12px; }
+ .hall-mode-toolbar button { min-height:32px; padding:4px 8px; }
+ .hall-map-actions { padding:4px 12px; }
+ .hall-map-actions button { min-height:34px; padding:5px 10px; }
+ .hall-map-actions span { font-size:12px; }
+ .panel-title { min-height:44px; padding:6px 12px; }
+ .panel-title > span { font-size:17px; }
+}
+.floating-panel > :deep(.hall-draft-editor) { flex:1; min-height:0; overflow:auto; align-content:start; padding:24px 30px; box-sizing:border-box; overscroll-behavior:contain; }
+@media(max-width:600px) { .floating-panel > :deep(.hall-draft-editor) { padding:20px 16px; } }
+@media(max-height:500px) { .floating-panel > :deep(.hall-draft-editor) { padding:14px 20px; } }
+/* Lightweight workbench: keep all authoritative panels and the single live Stage. */
+.juyi-page.home-overview {
+  --hall-canvas: #f5f4f0;
+  --hall-surface: #fffefa;
+  --hall-surface-subtle: #f3f3ed;
+  --hall-surface-brand: #f6eee8;
+  --hall-text: #242e2b;
+  --hall-text-muted: #68716b;
+  --hall-border: #e3e5dc;
+  --hall-border-strong: #ccd2c5;
+  --hall-brand: #923f30;
+  --hall-brand-hover: #793326;
+  --hall-positive: #36643b;
+  --hall-warning: #87551c;
+  --hall-danger: #a13f35;
+  --hall-info: #21604d;
+  --hall-radius-sm: 7px;
+  --hall-radius-md: 10px;
+  --hall-radius-lg: 12px;
+  --hall-control-height: 44px;
+  --hall-page-gutter: 16px;
+  --hall-focus-ring: #923f3052;
+  --work-paper: var(--hall-surface);
+  --work-ground: var(--hall-canvas);
+  --work-line: var(--hall-border);
+  --work-ink: var(--hall-text);
+  --work-muted: var(--hall-text-muted);
+  --work-brand: var(--hall-brand);
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  grid-template-rows: 76px minmax(0, 1fr);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  background: var(--work-ground);
+  color: var(--work-ink);
+}
+.home-overview > .hall-workbench-sidebar {
+  grid-column: 1; grid-row: 1 / -1;
+  display: flex; flex-direction: column; min-height: 0; padding: 28px 15px 16px;
+  background: var(--work-paper); border-right: 1px solid var(--work-line); overflow-y: auto;
+}
+.home-overview .workbench-brand {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 0 5px;
+  min-height: 54px; text-align: left; border: 0; background: transparent;
+  color: var(--work-ink); font: 500 23px/1.2 "Noto Serif CJK SC", "Songti SC", STSong, serif;
+  cursor: pointer;
+}
+.home-overview .workbench-brand small, .home-overview .workbench-map-entry small {
+  display: block; margin-top: 4px; color: var(--work-muted); font: 400 11px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+}
+.home-overview .workbench-seal {
+  display: grid; place-items: center; width: 38px; height: 38px; flex: none;
+  border-radius: 8px; background: var(--work-brand); color: var(--work-paper); font-size: 21px;
+}
+.home-overview .workbench-nav-caption { margin: 30px 10px 10px; font-size: 11px; letter-spacing: .06em; color: var(--work-muted); }
+.home-overview .workbench-side-nav { display: flex; flex-direction: column; gap: 3px; }
+.home-overview .workbench-side-nav button, .home-overview .workbench-map-entry {
+  display: flex; align-items: center; justify-content: flex-start; gap: 12px; width: 100%;
+  min-height: 44px; padding: 9px 12px; border: 0; border-radius: 7px;
+  background: transparent; color: var(--work-muted); text-align: left; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500; line-height: 1.45;
+}
+.home-overview .workbench-side-nav button:hover, .home-overview .workbench-map-entry:hover { background: #f0f1ea; color: var(--work-ink); }
+.home-overview .workbench-side-nav button[aria-current="page"] { background: #f6eee8; color: var(--work-brand); }
+.home-overview .workbench-side-nav button .var-icon, .home-overview .workbench-map-entry .var-icon { flex: none; font-size: 19px; }
+.home-overview .workbench-sidebar-bottom { margin-top: auto; padding-top: 20px; }
+.home-overview .workbench-map-entry { min-height: 66px; margin-bottom: 14px; border: 1px solid var(--work-line); background: var(--work-ground); color: var(--work-ink); }
+.home-overview .workbench-map-entry span { flex: 1; }
+.home-overview .workbench-side-utility { border-top: 1px solid var(--work-line); padding-top: 12px; }
+.home-overview .workbench-sidebar-account { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 52px; margin-top: 14px; padding: 9px 5px; border: 0; border-top: 1px solid var(--work-line); background: transparent; text-align: left; color: var(--work-ink); font: inherit; cursor: pointer; }
+.home-overview .workbench-sidebar-account img, .home-overview .workbench-sidebar-account > .var-icon:first-child { flex: none; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; font-size: 29px; }
+.home-overview .workbench-sidebar-account span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.home-overview .workbench-sidebar-account small { display: block; color: var(--work-muted); font-size: 11px; }
+.home-overview .workbench-sidebar-account > .var-icon:last-child { font-size: 16px; }
+.home-overview > .hall-app-header {
+  grid-column: 2; grid-row: 1; min-width: 0; padding: 12px 36px;
+  background: var(--work-paper); color: var(--work-ink); border-bottom: 1px solid var(--work-line);
+}
+.home-overview .hall-app-header .hall-brand { font-size: 17px; color: var(--work-ink); }
+.home-overview .workbench-breadcrumb { display: flex; align-items: center; gap: 13px; min-width: 0; color: var(--work-muted); font-size: 13px; }
+.home-overview .workbench-breadcrumb button { min-height: 36px; padding: 0; border: 0; background: none; color: inherit; font: inherit; }
+.home-overview .workbench-breadcrumb strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--work-ink); font-weight: 500; }
+.home-overview .workbench-breadcrumb > .var-icon { font-size: 14px; }
+.home-overview .hall-app-header .hall-seal, .home-overview .hall-app-header .hall-brand small, .home-overview .hall-app-header .hall-main-nav, .home-overview > .hall-mode-toolbar { display: none; }
+.home-overview .hall-app-header button { min-height: 40px; padding: 8px 12px; border-radius: 7px; color: var(--work-muted); border-color: var(--work-line); }
+.home-overview .hall-app-header .workbench-create-action { background: var(--work-brand); color: var(--work-paper); border-color: var(--work-brand); }
+.home-overview .hall-app-header .workbench-message-action { display: inline-flex; align-items: center; justify-content: center; width: 40px; padding: 8px; font-size: 19px; }
+.home-overview .hall-app-header .workbench-account-action, .home-overview .hall-app-header .workbench-create-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.home-overview .workbench-more-menu button { display: flex; align-items: center; gap: 8px; }
+.home-overview .workbench-more-menu button .var-icon { flex: none; font-size: 19px; }
+.home-overview .hall-app-header .workbench-create-action:hover { background: #793326; }
+.home-overview .workbench-mobile-more, .home-overview .workbench-mobile-nav { display: none; }
+/* The absolute containing block is .juyi-page; percentage width also accounts for classic viewport scrollbars. */
+.home-overview .workbench-more-menu { position: absolute; top: 64px; right: 15px; z-index: 32; box-sizing: border-box; width: min(330px, calc(100% - 30px)); max-height: calc(100% - 64px - var(--hall-content-bottom-inset)); overflow-y: auto; overscroll-behavior: contain; padding: 12px; background: var(--work-paper); border: 1px solid var(--work-line); border-radius: 10px; box-shadow: 0 18px 38px #242e2b29; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.home-overview .workbench-more-menu button { white-space: normal; text-align: left; justify-content: flex-start; }
+.juyi-page.home-overview :deep(.portrait-work-summary) { width: min(1320px, 100%); }
+.juyi-page.home-overview :deep(.hall-overview:not(.is-messages)) { background: var(--work-ground); color: var(--work-ink); }
+.juyi-page.home-overview > :deep(.hall-portrait-home.is-unified-shell) {
+  grid-column: 2; grid-row: 2; min-height: 0; height: 100%; background: var(--work-ground); color: var(--work-ink);
+}
+.home-overview .panel-overlay.is-workbench-panel {
+  inset: 76px 0 0 216px; top: 76px; bottom: 0; height: auto; max-height: none;
+  padding: 16px 24px; background: var(--work-ground); z-index: 20;
+}
+.home-overview .panel-overlay.is-workbench-panel::before { background: transparent; }
+.home-overview .panel-overlay.is-workbench-panel > .floating-panel {
+  flex: 1; width: min(1320px, 100%); max-width: 1320px; height: 100%; max-height: 100%; min-height: 0;
+  border: 1px solid var(--work-line); border-radius: 12px; background: var(--work-paper); box-shadow: none;
+}
+
+/* Overview-owned overlays retain modal geometry, but use the same semantic
+   workbench palette as primary pages. Map overlays never match this scope. */
+.home-overview .panel-overlay.theme-workbench:not(.is-workbench-panel) > .floating-panel {
+  background: var(--work-paper); color: var(--work-ink); border-color: var(--work-line); box-shadow: 0 18px 38px #242e2b29;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel),
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages) { background: var(--work-paper); color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .status-filter button.active) { background: var(--hall-surface-brand); color: var(--work-brand); border: 1px solid var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .agent-row) { background: var(--hall-surface-subtle); color: var(--work-ink); border: 1px solid var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .agent-row.active) { background: var(--hall-surface-brand); border-color: var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .agent-row small),
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .detail-head small),
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .panel-data-state) { color: var(--work-muted); }
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .ability-tags span) { background: var(--hall-surface-brand); color: var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-summary),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .persona-card),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-state),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .access-prompt) { background: var(--work-paper); color: var(--work-ink); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .persona-card.is-mine),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-action.subtle) { background: var(--hall-surface-brand); color: var(--work-brand); border-color: var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-action.primary) { background: var(--work-brand); border-color: var(--work-brand); color: var(--work-paper); }
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .library-search),
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .result-card),
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .empty-list) { background: var(--hall-surface-subtle); color: var(--work-ink); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .library-search input),
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .library-search select) { background: var(--work-paper); color: var(--work-ink); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .library-tabs button.active),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .case-tabs button[aria-pressed=true]) { background: transparent; color: var(--work-brand); border-bottom-color: var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor input),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor textarea),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor select),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-preview) { background: var(--work-paper); color: var(--work-ink); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-note),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-chips span) { background: var(--hall-surface-brand); color: var(--work-brand); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-strip),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-actions),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .case-tabs),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .material-picker),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .material-picker article),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .confirmation-grid),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .confirmation-grid > div),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .case-receipt) { border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages) { padding: 24px; }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-intro),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-empty) { color: var(--work-muted); }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-main),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-item),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-source-error) { background: var(--work-paper); color: var(--work-ink); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench .panel-title { min-height: 56px; padding: 10px 20px; background: var(--work-paper); color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench .panel-title > span { font-size: 20px; }
+.home-overview .panel-overlay.theme-workbench .panel-title .panel-return { min-height: 44px; padding: 0 4px 0 0; border: 0; background: transparent; color: var(--work-brand); box-shadow: none; white-space: nowrap; }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-messages) { flex: 1 1 auto; min-height: 0; padding: 16px 20px; }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-chat-composer) { padding: 10px 20px 12px; }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.chat-panel) { height: 100%; }
+/* The workbench owns only top-level presentation: nested detail dialogs, map and
+   business authorization/state remain controlled by their original components. */
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.chat-panel),
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-messages),
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-chat-composer) { background: var(--work-paper); color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.discussion-brief) { background: var(--work-ground); color: var(--work-ink); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.discussion-brief .var-icon) { color: var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar) { border-color: var(--work-line); color: var(--work-muted); }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar .icon-button) { background: transparent; color: var(--work-ink); border: 0; }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar .icon-button:hover:not(:disabled)) { background: #f3f3ed; }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar .context-summary strong) { color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-messages .empty-list) { color: var(--work-muted); }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-message) { background: #f2f2eb; color: var(--work-ink); box-shadow: none; }
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-message.USER) { background: #eaf0e6; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel) { background: var(--work-paper); color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar) {
+  align-items: stretch; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--work-line); color: var(--work-muted);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-search) { gap: 10px; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-search input),
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-search select) {
+  height: var(--hall-control-height); padding-inline: 12px; border-color: var(--hall-border-strong); border-radius: var(--hall-radius-sm); background: var(--work-paper); color: var(--work-ink);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar > button) {
+  min-height: var(--hall-control-height); background: var(--hall-surface-subtle); color: var(--work-ink); border: 1px solid var(--work-line);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs) {
+  gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--work-line); scrollbar-width: none;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs button) {
+  flex: 0 0 auto; min-height: 44px; background: var(--hall-surface-subtle); color: var(--work-muted); border: 1px solid var(--work-line);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs::-webkit-scrollbar) { display: none; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs button.active) { background: var(--hall-surface-brand); color: var(--work-brand); border-color: #e3d8d0; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs small) { min-width: 20px; box-sizing: border-box; background: var(--work-paper); color: inherit; text-align: center; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-panel-body) { padding: 16px 20px 20px; background: var(--work-ground); }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-card) { margin-bottom: 10px; padding: 16px; border: 1px solid var(--work-line); border-radius: var(--hall-radius-md); background: var(--work-paper); box-shadow: 0 1px 2px rgba(36, 46, 43, .04); }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-card.selected) { background: var(--hall-surface-brand); border-color: #dfcbc1; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-card p),
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-meta) { color: var(--work-muted); }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .ability-tags span) { background: #eef3eb; color: #4b6650; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .empty-list) { border: 1px dashed var(--work-line); border-radius: var(--hall-radius-md); background: var(--work-paper); color: var(--work-muted); }
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .status-filter button:not(.active)) { background: #f3f3ed; color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .detail-card) { background: #fafbf6; border: 1px solid var(--work-line); color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .library-tabs button:not(.active)) { background: #f3f3ed; color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench :deep(.personal-workspace.is-hall-treasure) { background: var(--work-paper); color: var(--work-ink); }
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content button:not(.treasure-primary)) { color: var(--work-ink); border-color: var(--work-line); border-radius: 7px; }
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content input:not([type=file])) { background: var(--work-paper); border-color: #ccd2c5; color: var(--work-ink); }
+/* Keep the authoritative treasure workflow, but let its search form reflow
+   inside the narrower workbench panel instead of stacking two Chinese glyphs. */
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-search label) { flex: 1 1 auto; min-width: 0; width: auto; }
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-search button) { flex: 0 0 auto; min-width: 68px; white-space: nowrap; }
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content .treasure-primary) { background: var(--work-brand); border-color: var(--work-brand); color: var(--work-paper); border-radius: 7px; }
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content .treasure-tabs) { border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content .treasure-tabs button[aria-pressed="true"]) { color: var(--work-brand); border-color: var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content input:focus-visible),
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content button:focus-visible) { outline-color: var(--work-brand); }
+
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar),
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .panel-toolbar),
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel .library-toolbar),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-toolbar) { gap: 8px; }
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel button),
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel button),
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel button),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor button),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel button),
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content button) { min-height: var(--hall-control-height); border-radius: var(--hall-radius-sm); }
+.home-overview .panel-overlay.theme-workbench :deep(.library-panel button),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor button:not(.primary)),
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-action:not(.primary)),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages button) { background: var(--hall-surface-subtle); color: var(--work-ink); border-color: var(--work-line); }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .primary),
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages button.primary) { background: var(--work-brand); color: var(--work-paper); border-color: var(--work-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages button) { min-height: var(--hall-control-height); }
+.home-overview .panel-overlay.theme-workbench :deep(.overview-tabs),
+.home-overview .panel-overlay.theme-workbench :deep(.library-tabs) { min-height: var(--hall-control-height); border-bottom: 1px solid var(--hall-border); overflow-x: auto; }
+.home-overview .panel-overlay.theme-workbench :deep(.overview-tabs button[aria-pressed="true"]),
+.home-overview .panel-overlay.theme-workbench :deep(.library-tabs button.active) { color: var(--hall-brand); border-bottom: 2px solid var(--hall-brand); }
+.home-overview .panel-overlay.theme-workbench :deep(.task-status-tabs),
+.home-overview .panel-overlay.theme-workbench :deep(.status-filter) { overflow-x: auto; flex-wrap: nowrap; }
+@media (max-width: 760px) {
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel),
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel),
+  .home-overview .panel-overlay.theme-workbench :deep(.library-panel),
+  .home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel),
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor) { --hall-page-gutter: 16px; }
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages) { padding: 16px; }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar) { padding: 12px 16px; }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs) { padding: 10px 16px; }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-panel-body) { padding: 12px 16px 20px; }
+}
+
+.home-overview button:focus-visible, .home-overview .workbench-more-menu button:focus-visible { outline: 3px solid #923f3080; outline-offset: 3px; }
+@media (max-width: 1200px) {
+  .juyi-page.home-overview { grid-template-columns: 192px minmax(0, 1fr); }
+  .home-overview > .hall-workbench-sidebar { padding-right: 10px; padding-left: 10px; }
+  .home-overview .panel-overlay.is-workbench-panel { left: 192px; }
+  .home-overview > .hall-app-header { padding-right: 26px; padding-left: 26px; }
+}
+@media (max-width: 760px) {
+  .juyi-page.has-workbench-dock { --hall-dock-reserve: var(--hall-dock-height); }
+  .juyi-page.home-overview { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr); }
+  .home-overview > .hall-workbench-sidebar, .home-overview > .hall-app-header { display: none; }
+  .home-overview .hall-app-header .hall-header-tools { gap: 5px; }
+  .home-overview .hall-app-header .hall-header-tools > button:first-child, .home-overview .hall-app-header .workbench-create-action { display: none; }
+  .home-overview .workbench-breadcrumb button, .home-overview .workbench-breadcrumb > .var-icon { display: none; }
+  .home-overview .workbench-breadcrumb strong { font-size: 15px; }
+  .home-overview .hall-app-header .workbench-account-action { width: 40px; padding: 8px; font-size: 19px; }
+  .home-overview .hall-app-header .workbench-account-action span { display: none; }
+  .home-overview .hall-app-header .workbench-mobile-more { display: inline-flex; }
+  .juyi-page.home-overview > :deep(.hall-portrait-home.is-unified-shell) { grid-column: 1; grid-row: 1; padding-bottom: var(--hall-content-bottom-inset); }
+  .home-overview .workbench-mobile-nav {
+    position: absolute; z-index: 30; bottom: 0; left: 0; right: 0;
+    display: flex; align-items: stretch; box-sizing: border-box; height: calc(var(--hall-dock-height) + var(--hall-safe-bottom));
+    padding: 5px 12px max(5px, var(--hall-safe-bottom));
+    border-top: 1px solid var(--work-line); background: var(--work-paper);
+  }
+  .home-overview .workbench-mobile-nav button {
+    flex: 1 1 25%; min-width: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px;
+    border: 0; border-radius: 7px; padding: 5px; min-height: 50px; background: transparent;
+    color: var(--work-muted); font-size: 11px; cursor: pointer; white-space: nowrap;
+  }
+  .home-overview .workbench-mobile-nav button[aria-current="page"] { color: var(--work-brand); background: #f6eee8; }
+  .home-overview .workbench-mobile-nav .var-icon { font-size: 21px; }
+  .home-overview .panel-overlay.is-workbench-panel {
+    inset: 0 0 var(--hall-content-bottom-inset) 0; top: 0; bottom: var(--hall-content-bottom-inset);
+    height: auto; max-height: none; padding: 0;
+  }
+  .home-overview .panel-overlay.is-workbench-panel > .floating-panel { width: 100%; max-width: none; height: 100%; border: 0; border-radius: 0; }
+  .home-overview .panel-overlay.theme-workbench .panel-title { min-height: 44px; padding: 6px 16px; }
+  .home-overview .panel-overlay.theme-workbench .panel-title > span { font-size: 17px; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-chat-composer) { padding: 8px 16px 10px; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-messages) { padding: 10px 16px; }
+  .home-overview .panel-overlay.theme-workbench :deep(.treasure-intro) { flex-wrap: wrap; gap: 12px; }
+  .home-overview .panel-overlay.theme-workbench :deep(.treasure-intro > div) { flex: 1 1 190px; min-width: 0; }
+  .home-overview .panel-overlay.theme-workbench :deep(.treasure-search) { gap: 8px; }
+}
+
+/* Keyboard-visible layouts must never reserve space for the mobile dock; keep
+   the safe-area inset in --hall-content-bottom-inset. */
+.juyi-page.is-keyboard-active { --hall-dock-reserve: 0px; }
+
+@media (max-height: 560px) {
+  .juyi-page.home-overview { grid-template-rows: minmax(0, 1fr); }
+  .home-overview .workbench-more-menu { top: 58px; max-height: calc(100% - 58px - var(--hall-content-bottom-inset)); }
+  .home-overview .panel-overlay.is-workbench-panel { top: 0; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.discussion-brief) { display: none; }
+  .home-overview .panel-overlay.is-workbench-panel { padding-top: 0; padding-bottom: 0; }
+  .home-overview .panel-overlay.theme-workbench .panel-title { min-height: 40px; padding-top: 4px; padding-bottom: 4px; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-chat-composer) { padding-top: 6px; padding-bottom: 6px; }
+}
+
+/* At 200%-equivalent narrow reflow, keep each action reachable rather than
+   letting min-content widths shift the workbench outside the viewport. */
+@media (max-width: 240px) {
+  .juyi-page.home-overview { grid-template-columns: minmax(0, 1fr); }
+  .home-overview > .hall-app-header { box-sizing: border-box; width: 100%; min-width: 0; flex-wrap: nowrap; padding: 5px 8px; }
+  .home-overview .hall-app-header .hall-header-tools > button:not(.workbench-mobile-more) { display: none; }
+  .home-overview .hall-app-header .hall-brand { flex: 0 1 auto; min-width: 0; }
+  .home-overview .workbench-mobile-nav button:not(:last-child) span { display: none; }
+  .home-overview .workbench-mobile-nav button { padding: 3px; font-size: 10px; }
+  .home-overview .panel-overlay.theme-workbench .panel-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-chat-composer) { padding-top: 2px; padding-bottom: 2px; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.composer-textarea) { max-height: 56px; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar) { overflow-x: auto; overscroll-behavior-x: contain; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar .context-summary),
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar .toolbar-actions) { flex: 0 0 auto; }
+}
+@media (max-width: 180px) {
+  .home-overview .panel-overlay.theme-workbench .panel-title { min-height: 36px; padding: 0 8px; }
+  .home-overview .panel-overlay.theme-workbench .panel-title > span { display: none; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar) { padding: 2px 6px; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-messages) { padding: 4px 8px; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.composer-meta span:last-child) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+/* When the entire chat is taller than an extremely short viewport, scroll the
+   work window itself so the composer remains reachable above the fixed dock. */
+@media (max-height: 260px) and (max-width: 760px) {
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay > .floating-panel { overflow-y: auto; overscroll-behavior: contain; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.chat-panel) { flex: 0 0 auto; height: auto; min-height: min-content; }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-messages) { flex: 0 0 auto; min-height: 80px; max-height: 40vh; }
+}
+
+/* Final workbench-only presentation polish. These rules intentionally change
+   geometry and visual hierarchy only; business state and actions remain owned
+   by the existing Hall components. */
+.home-overview .panel-overlay.theme-workbench .panel-title .panel-return:focus-visible {
+  outline: 0;
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 var(--work-brand);
+}
+
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .panel-toolbar) {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--work-line);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .panel-toolbar > button) {
+  border: 1px solid var(--work-line);
+  background: var(--hall-surface-subtle);
+  color: var(--work-ink);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .detail-card) {
+  line-height: 1.65;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.agent-panel .detail-card:not(:has(.detail-head))) {
+  min-height: 0;
+  padding: 15px 16px;
+  overflow: visible;
+  color: var(--work-muted);
+}
+
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-summary) {
+  border-bottom: 1px solid var(--work-line);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-grid:empty) {
+  display: grid;
+  min-height: 260px;
+  margin: 12px 16px 16px;
+  padding: 28px;
+  place-items: center;
+  border: 1px dashed var(--work-line);
+  border-radius: var(--hall-radius-md);
+  background: var(--hall-surface-subtle);
+  overflow: visible;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-source-error) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin: 10px 0;
+  padding: 14px;
+  border: 1px solid #ead8d2;
+  border-radius: var(--hall-radius-sm);
+  line-height: 1.65;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-source-error button) {
+  min-width: 72px;
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar) {
+  padding: 9px 12px;
+}
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.toolbar-actions) {
+  scrollbar-width: none;
+}
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.toolbar-actions::-webkit-scrollbar) {
+  display: none;
+}
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.composer-textarea) {
+  border-color: var(--hall-border-strong);
+  background: var(--work-paper);
+  color: var(--work-ink);
+}
+.home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.composer-target-chip) {
+  border-color: var(--work-line);
+  background: var(--hall-surface-brand);
+  color: var(--work-brand);
+}
+.juyi-page.home-overview:has(.floating-panel.panel-chat) > .toast {
+  bottom: max(150px, calc(env(safe-area-inset-bottom) + 150px));
+  max-width: calc(100% - 32px);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-error) {
+  padding: 8px 10px;
+  border-left: 3px solid #c45d4c;
+  border-radius: 5px;
+  background: #fff4f1;
+  line-height: 1.55;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor button:disabled) {
+  border-color: #dfe1da;
+  background: #eceee8;
+  color: #929a94;
+  opacity: 1;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .primary:disabled) {
+  border-color: #dfe1da;
+  background: #e4e7e1;
+  color: #969d98;
+}
+
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-card) {
+  position: relative;
+  padding-right: 36px;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-card::after) {
+  content: '›';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  color: #9aa19b;
+  font-size: 24px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-card:hover) {
+  border-color: #c9cec4;
+  box-shadow: 0 5px 14px rgba(36, 46, 43, .07);
+  transform: translateY(-1px);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs) {
+  scroll-padding-inline: 16px 44px;
+  padding-right: 44px;
+  background: linear-gradient(90deg, var(--work-paper) 0, var(--work-paper) calc(100% - 28px), rgba(255,254,250,0) 100%);
+}
+
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-content select) {
+  border-color: var(--hall-border-strong);
+  border-radius: var(--hall-radius-sm);
+  background: var(--work-paper);
+  color: var(--work-ink);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-preview) {
+  min-height: 150px;
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid var(--work-line);
+  border-radius: var(--hall-radius-md);
+  background: #fafbf8;
+  color: var(--work-ink);
+}
+.home-overview .panel-overlay.theme-workbench :deep(.treasure-preview:empty::before) {
+  content: '预览内容将在这里显示';
+  display: grid;
+  min-height: 112px;
+  place-items: center;
+  color: var(--work-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .panel-toolbar) {
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .status-filter) {
+    width: 100%;
+    padding-bottom: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .status-filter::-webkit-scrollbar) { display: none; }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .panel-toolbar > button) { width: 100%; }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .panel-toolbar > span) { padding-inline: 2px; }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel-body) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    overflow: hidden;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .agent-list) {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .detail-card) {
+    order: 2;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) 44px;
+    gap: 8px;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-search) { display: contents; }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar > button) {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  /* Hide only the button label at phone widths. BountyActionIcon also renders a span. */
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar > button .toolbar-label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .panel-toolbar > button .bounty-action-icon) {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-status-tabs) {
+    padding-left: 16px;
+    padding-right: 42px;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.bounty-panel .task-panel-body) { padding-top: 10px; }
+
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.panel-toolbar) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: visible;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.context-summary) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    min-width: 0;
+    gap: 2px 6px;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.toolbar-actions) {
+    width: auto;
+    margin-left: auto;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.toolbar-actions .icon-button) {
+    min-width: 44px;
+    height: 44px;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.toolbar-actions .material-reference-entry),
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.toolbar-actions .workspace-entry) {
+    min-width: max-content;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.hall-chat-composer) {
+    gap: 6px;
+    padding-inline: 12px;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.composer-context) {
+    gap: 4px;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-chat-overlay :deep(.composer-meta) {
+    padding-right: 2px;
+  }
+
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-source-error) {
+    grid-template-columns: minmax(0, 1fr) 74px;
+    gap: 10px;
+    padding: 12px;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-overview.is-messages .overview-source-error button) {
+    width: 74px;
+    min-width: 74px;
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+
+  .home-overview .panel-overlay.theme-workbench :deep(.persona-catalog-panel .catalog-grid:empty) {
+    min-height: 220px;
+    margin: 12px;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.treasure-preview) {
+    min-height: 128px;
+    padding: 14px;
+  }
+}
+
+@media (max-height: 500px) and (min-width: 601px) {
+  .home-overview .panel-overlay:not(.is-full-window) { padding: 10px 12px; }
+  .home-overview .floating-panel.layout-center-modal,
+  .home-overview .floating-panel.panel-treasure:not(.layout-full-window) {
+    height: calc(100% - 20px);
+    max-height: calc(100% - 20px);
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel-body) {
+    display: grid;
+    grid-template-columns: minmax(0, 43fr) minmax(0, 57fr);
+    gap: 10px;
+    overflow: hidden;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .agent-list) {
+    order: initial;
+    max-height: none;
+    overflow: auto;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.agent-panel .detail-card) {
+    order: initial;
+    overflow: hidden;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor form) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor form > label),
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor form > p),
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor form > section),
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-actions) {
+    grid-column: 1 / -1;
+  }
+  .home-overview .panel-overlay.theme-workbench :deep(.hall-draft-editor .draft-actions) {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-inline: -4px;
+    padding: 10px 4px 4px;
+    background: linear-gradient(180deg, rgba(255,254,250,0), var(--work-paper) 24%);
+  }
+}
+
+
+.home-overview .panel-overlay.theme-workbench.is-agent-overlay .panel-title .panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  color: var(--hall-text-muted);
+}
+.home-overview .panel-overlay.theme-workbench.is-agent-overlay .panel-title .panel-close:hover:not(:disabled) {
+  background: var(--hall-surface-brand);
+  color: var(--hall-brand);
+}
+.home-overview .panel-overlay.theme-workbench.is-agent-overlay .panel-title .panel-close:focus-visible {
+  outline: 2px solid var(--hall-brand);
+  outline-offset: 2px;
+}
+@media (min-width: 721px) {
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel-body) {
+    display: grid;
+    grid-template-columns: minmax(0, 43fr) minmax(0, 57fr);
+    min-height: 0;
+    overflow: hidden;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel .detail-card) { overflow: hidden; }
+}
+@media (max-width: 720px) {
+  .juyi-page .panel-overlay.is-agent-overlay {
+    inset: 0;
+    width: 100%;
+    height: var(--hall-visual-height, 100dvh);
+    max-height: var(--hall-visual-height, 100dvh);
+    padding: 0;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .panel-overlay.is-agent-overlay > .floating-panel.panel-agents {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel-body) { display: flex; min-height: 0; overflow: hidden; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel .detail-card) { min-height: 0; padding: 0; overflow: hidden; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel.is-agent-detail .panel-toolbar) { display: none; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel .panel-toolbar > button) { width: 100%; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel .status-filter) { flex-wrap: wrap; gap: 6px; overflow: visible; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel .status-filter button) { min-height: 44px; padding: 8px 10px; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel.is-agent-detail .agent-panel-body) { padding: 0; gap: 0; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay :deep(.agent-panel.is-agent-detail .detail-card) { width: 100%; border: 0; border-radius: 0; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay .panel-title { padding: 4px 12px; }
+  .home-overview .panel-overlay.theme-workbench.is-agent-overlay .panel-title > span { display: block; }
+}
+</style>

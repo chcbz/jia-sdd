@@ -1,0 +1,24 @@
+# Web bridge R2 remediation matrix — 2026-09-05
+
+Independent reviewer01a07199-aea5-7242-ab75-9d5e383d0e9b REJECT P0/P1/P2=0/5/1 on6c7a68f89df17b885f0cafde6d0b49079cb3dc20/tree d46f176bdce1d96606c056996636e9f2feba63e5. Controller preserved prior tooling failure history and stopped at second consecutive failure before this authorization. No selector run. Conditional fake/owned-fixture safety admission for old tree is not new-tree or production approval.
+
+| Finding / exact source | Root cause | Bounded R2 correction and proof |
+| --- | --- | --- |
+| P1 Python injection; helper33–707, deploy128–157, rollback143–167 and tests | Nonisolated stdin Python imports CWD/site despite sanitized shell | Absolute /usr/bin/python3 -I -B in all six-path owned calls; actual validation tests hostile PYTHONPATH/HOME/CWD never execute injected modules. common.sh is HOST R3 dependency, not Web owned |
+| P1 health proxy/CA; entrypoints7–8 and common777–805 | HTTPS_PROXY/ALL_PROXY and CURL_CA_BUNDLE/SSL_CERT_FILE/SSL_CERT_DIR can attest a substitute endpoint | Sanitize all relevant upper/lower proxy and CA overrides at Web entrypoints before tools. Shared curl helper hardening belongs HOST R3; no cross-scope edit. Verify direct/default-system-CA environment contract |
+| P1 tool digest misses common.sh; helper16–21,60–70,400–505 | Guard pins four files but sources unpinned common dependency | Add common.sh direct dependency to adapter tool identity; test byte change invalidates guard, including merged HOST R3 version. No common source edit |
+| P1 unchecked recovery rename; deploy77–94, rollback101–119 | set+e silently ignores failed candidate removal/restore/rescue and leaves live unrecovered | Explicit result/state handling with stable FAILED_MANUAL_RECOVERY_REQUIRED evidence when recovery fails; no false automatic-restore claim. Compound fault injection for original failure plus each recovery move, assert exact remaining live/backup/rescue state |
+| P1 stale successful record; helper648–671 and deploy96,158–160/rollback121,168–170 | Immutable final record link visible before unlink/fsync failure triggers live rollback | Coordinate publication and recovery so post-link/finalize failures cannot leave successful record claiming different live state. Fault hooks at each sidecar/final-link/unlink/fsync stage; explicit truthful terminal behavior |
+| P2 incomplete proof/guard matrix and mutation race; tests180–227 | Missing API head/tree/JAR, releaseId/schema/digest facts and guard/sidecar variations; sleep0.05 race | Independent strict mismatch cases and deterministic handshake for actual in-flight archive mutation, not timed sleep. Include all compound/terminal faults above |
+
+## Scope and gates
+Original Writer Shannon5 (01a0717d-baa2-7f01-b519-61f5a99cf0c5), same isolated .worktrees/jvc-oai-web-deploy-adapt-r1, only original six paths. No common.sh edits, source API/Web changes, production, network or builds. Direct apply_patch (no nested heredoc source generators); static Bash/Python3.6 AST/JSON/pins/scope only until clean R2 and fresh independent review. Bash4.4.20 mapfile -d is compatible, do not change it gratuitously.
+
+HOST R3 must explicitly provide isolated common Python and direct/config-free curl with inherited proxy/CA overrides removed; final merged exact-tree tool digest includes those bytes. Preserve stable-open archive, unsafe-member denial, external activation proof consumer-only boundary, approvals and immutable bindings.
+
+Actual deploy input remains blocked on current Web baseline preservation: historical6d88/86d3 artifact cannot overwrite live7872 and origin1488. Other owner integration14ffc099 exists; main coordinates acceptance. Do not patch pins to an unaccepted candidate or manufacture activation proof. Fresh source acceptance and one owned-fixture all selector still required before runtime release guard.
+
+## Tooling stop addendum (21:59 CST)
+Two preparation failures, zero source edits: Writer looked up (1) this main-owned matrix, then (2) orchestrator relative to historical implementation worktree, where neither exists. Both failures attributed by main; second stopped at blocked_root_cause. Source remains clean6c7a/tree d46f.
+
+Bounded correction: use absolute control root `/home/isp/wsps/cyf/` for ALL documentation and controller operations; exact matrix `/home/isp/wsps/cyf/docs/implementation/handoffs/JVC-OAI-WEB-DEPLOY-ADAPT-R2-ROOT-CAUSE.md`, exact controller `/home/isp/wsps/cyf/ops/orchestration/cyf_orchestrator.py`. Implementation workdir ONLY `/home/isp/wsps/cyf/.worktrees/jvc-oai-web-deploy-adapt-r1`. Main verified matrix/controller present. First read absolute matrix then assert unchanged HEAD/tree/six-path source before editing. No runtime authorization expanded; original six findings and source/static gates unchanged. Do not use claim to clear history.

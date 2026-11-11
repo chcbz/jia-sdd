@@ -1,0 +1,29 @@
+{
+  "pidMode": {
+    "parentGid": 1000,
+    "childPid": 1724703,
+    "uidMap": "         0          0          1\n",
+    "gidMap": "      1000       1000          1\n",
+    "childUserNamespace": "user:[4026532346]",
+    "parentUserNamespace": "user:[4026531837]",
+    "ready": false,
+    "status": 1,
+    "stderr": "setns(CLONE_NEWNET): Operation not permitted\nchild failed(1)\n"
+  },
+  "exactNetnsPathMode": {
+    "parentGid": 1000,
+    "childPid": 1724931,
+    "uidMap": "         0          0          1\n",
+    "gidMap": "      1000       1000          1\n",
+    "childUserNamespace": "user:[4026532346]",
+    "parentUserNamespace": "user:[4026531837]",
+    "ready": true,
+    "status": -15,
+    "stderr": "sent tapfd=6 for tap0\nreceived tapfd=6\n"
+  },
+  "sameGid": 1000,
+  "ownFixtureOnly": true,
+  "networkPolicy": "own namespace nft default-drop before attach",
+  "conclusion": "PID-mode implicit userns setns succeeds then netns EPERM; exact netns path no implicit userns entry reaches READY",
+  "exactCleanup": "only owned diagnostic slirp1724936 SIGTERM after ready; no service process killed"
+}

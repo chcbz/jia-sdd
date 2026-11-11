@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>停止回复组件定向诊断 · 非生产</title><style>body{margin:0;background:#f5f0e8;font:16px system-ui}main{max-width:900px;margin:auto}h1{font-size:16px;padding:12px}button{font:inherit}</style><div id="app"></div><script type="module">
+import {createApp,reactive,h} from 'vue';import Composer from '/src/components/juyiting/HallChatComposer.vue';
+window.actions=[];const state=reactive({variant:'public',draft:'保留草稿及资料',target:{turnId:'wu-yong-turn'},pending:true,job:null});window.fixture=state;
+createApp({setup:()=>()=>h('main',[h('h1','吴用 · 停止回复组件诊断（离线）'),h(Composer,{discussionVariant:state.variant,draft:state.draft,agents:[],mentionLabel:a=>a.name,isAwaitingReply:state.pending,durableCancelTarget:state.target,replyCancellationState:state.job,onCancelDeliberation:v=>actions.push(['cancel',v]),onSendMessage:()=>actions.push(['send']),'onUpdate:draft':v=>state.draft=v})])}).mount('#app');window.ready=true;
+</script>

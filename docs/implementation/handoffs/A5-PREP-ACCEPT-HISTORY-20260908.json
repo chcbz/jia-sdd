@@ -1,0 +1,38 @@
+{
+  "task": "ALL-COMPLETED-API-BUILD-A5-PREP-20260908",
+  "before_acceptance": {
+    "owner": {
+      "agent": "01a07eb1-bc4c-7f41-9fa6-97f97a9880ee",
+      "profile": "sol_reviewer",
+      "mode": "reviewer"
+    },
+    "exact_sha_tree": {
+      "commit_sha": "b0fc142bd49ac525d5ea1052895fc3160601a512",
+      "tree_sha": "97ecc1a7da95f97cd3cf71d7b27691438e5ca232"
+    },
+    "current_gate": "review",
+    "blocker": {
+      "category": "contract_digest_not_propagated_to_executable",
+      "summary": "ActualR2REJECT0/1/0 secondprep failure. Previous two metadata findings closed; actual contract SHA4c4a remains old318b in submit and verifier, deterministic prebuild exit68. | authorized remediation: docs/implementation/handoffs/DELIVERY-RESUME-20260908.md",
+      "consecutive_failures": 0,
+      "attempts": [
+        {
+          "at": "2026-09-08T12:11:53+08:00",
+          "category": "a5_metadata_pin_provenance_mismatch",
+          "evidence": "Raman01a07eb1 exactpacket9088dec8: namespacepins92-96input, contract70-75/base, namespace116-121/base and30-35selfdigest",
+          "root_cause": "namespace input still oldA4 SHA94c6 instead of actualA5 d282; base provenance still A3 d41 rather than trueA4 parent5f792; namespace selfchecksum row stale.",
+          "remediation": "SamePascal metadata-only correction: actual input digest, acceptedA4 parentcommit/tree, remove impossible raw self-referential namespace hash claim and use external manifest binding; refresh dependent digests/packet. Reuse all actual functional/carrier ACCEPT; no new code/platform/test requirements."
+        },
+        {
+          "at": "2026-09-08T12:20:04+08:00",
+          "category": "contract_digest_not_propagated_to_executable",
+          "evidence": "Raman01a07eb1 exactpacketeb911: submit-a5-once.sh16/30-33 and verify-prep.py20/78-79",
+          "root_cause": "Changed contract hash propagated to namespace/SUMS but not executable expected-hash constants; isolated metadata check did not exercise actual verifier.",
+          "remediation": "STOP newprep cycle2, preservefunction/carrier/metadataaccepted. Main explicitly permits only updating two stale expected-contract constants to actual4c4a, rebuilding transitive file hashes and running exactexisting staticverifier/checksum path, not just custommetadata assertion. No functionality/newtests/Gradle/runtime. Publish newpacket only after actual verifierPASS."
+        }
+      ]
+    },
+    "next_action": "R3 only2expectedcontractconstants corrected4c4a +transitivedigests. Actual originalverify-prep STATIC_A5_PREP_PASS rc0/fullSUMS rc0 reported, packet/root/cyf-api-build-a5-prep-20260908/all-completed-api-build-a5-prep-3aa2bb38-r3.tar SHAbd15743903bc542d4bd82300effab410ff2ac2cb3a22b785afb15a33f1ba61c0 mainmatched. Raman only residualdigestpropagation; reuse all functional/carrier/resources/source/earliermetadataverification. No build/Gradle/runtime yet."
+  },
+  "verdict": "Raman actual ACCEPT0/0/0 R3 bd15743903bc542d4bd82300effab410ff2ac2cb3a22b785afb15a33f1ba61c0; sourceb0fc unchanged; other previous accepted findings reused"
+}

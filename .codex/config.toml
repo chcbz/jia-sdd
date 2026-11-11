@@ -1,90 +1,29 @@
+# CYF project-only roles, replanned 2026-10-23. No legacy dispatch aliases.
 [features]
 multi_agent = true
 
 [agents]
-# Capacity budget: three path-scoped source Writers, one read-only helper, and coordinator headroom.
-# Per-task ownership and resource coordination remain governed by MODEL_ROUTING.yaml.
+# Existing capacity, not a requirement to spawn: 3 writers + 1 source-read-only helper + coordinator.
 max_threads = 5
 max_depth = 1
 job_max_runtime_seconds = 3600
 
 [agents.architect]
-description = "Read-only architecture, state-machine, transaction, and migration designer for high-risk CYF work."
+description = "Read-only CYF architecture and contract design across Web, API and Runtime; state machines, identity, transactions and recovery."
 config_file = "agents/architect.toml"
-nickname_candidates = ["Archimedes", "Lagrange", "Noether"]
 
-[agents.critical_worker]
-description = "GPT-6.1 Sol High writer for P0 identity, ACL, concurrency, transaction, migration, and snapshot consistency."
-config_file = "agents/critical-worker.toml"
-nickname_candidates = ["Turing", "Shannon", "Knuth"]
+[agents.ux_designer]
+description = "CYF UX/UI design owner for task flows, information hierarchy, visual consistency, accessibility and the existing interactive prototype."
+config_file = "agents/ux-designer.toml"
 
-[agents.balanced_worker]
-description = "GPT-6 Luna Medium writer for contract-frozen Java, Vue, API, mapper, feature-flag, and integration tasks."
-config_file = "agents/balanced-worker.toml"
-nickname_candidates = ["Curie", "Faraday", "Hopper"]
-
-[agents.spark_worker]
-description = "GPT-6 Luna Medium writer for contract-frozen packetized Java/Vue implementation and focused tests."
-config_file = "agents/spark-worker.toml"
-nickname_candidates = ["McCarthy", "Dijkstra", "Kay"]
-
-[agents.routine_worker]
-description = "GPT-6 Luna Medium writer for bounded accessibility, DTO, fixture, test, documentation, and mechanical edits."
-config_file = "agents/routine-worker.toml"
-nickname_candidates = ["Pascal", "Euler", "Gauss"]
-
-[agents.adversarial_reviewer]
-description = "GPT-6.1 Sol High independent adversarial reviewer for security, transaction, concurrency, migration, and data-loss attacks."
-config_file = "agents/adversarial-reviewer.toml"
-nickname_candidates = ["Popper", "Hume", "Kant"]
-
-[agents.explorer]
-description = "Read-only repository explorer for dependency, call-chain, conflict, and integration analysis."
-config_file = "agents/explorer.toml"
-nickname_candidates = ["Darwin", "Linnaeus", "Vesalius"]
-
-[agents.fast_query]
-description = "GPT-6 Luna Medium read-only agent for narrow lookups, acceptance matrices, and evidence indexing."
-config_file = "agents/fast-query.toml"
-nickname_candidates = ["Euclid", "Kepler", "Bohr"]
+[agents.developer]
+description = "Single-owner CYF implementation across Vue Web, Java API and Agent Runtime, including high-risk correctness, focused tests and self-check."
+config_file = "agents/developer.toml"
 
 [agents.test_runner]
-description = "Compatibility verification alias routed to GPT-6 Luna Medium; OpenAI-only policy is active."
+description = "CYF verification-only specialist for focused tests, browser interactions, existing Flow controls and source-bound evidence; no product source edits."
 config_file = "agents/test-runner.toml"
-nickname_candidates = ["Feynman", "Tesla", "Galileo"]
 
-[agents.gpt_test_runner]
-description = "GPT-6 Luna Medium primary verification agent under the OpenAI-only policy."
-config_file = "agents/gpt-test-runner.toml"
-nickname_candidates = ["Ampere", "Ohm", "Volta"]
-
-[agents.release_guard]
-description = "Read-only final integration and production-release gatekeeper."
-config_file = "agents/release-guard.toml"
-nickname_candidates = ["Socrates", "Confucius", "Locke"]
-
-[agents.vision_reviewer]
-description = "Independent GPT multimodal visual-quality reviewer for Juyi Hall screenshots, occlusion semantics, and visual regressions."
-config_file = "agents/vision-reviewer.toml"
-nickname_candidates = ["ShenKuoVision", "GuKaizhi", "ZhangZeduan"]
-
-[agents.deepseek_pro_worker]
-description = "Compatibility writer alias routed to GPT-6.1 Sol High under the OpenAI-only policy."
-config_file = "agents/deepseek-pro-worker.toml"
-nickname_candidates = ["ZhangHeng", "ZuChongzhi", "Mozi"]
-
-[agents.deepseek_flash_worker]
-description = "Compatibility writer alias routed to GPT-6 Luna Medium under the OpenAI-only policy."
-config_file = "agents/deepseek-flash-worker.toml"
-nickname_candidates = ["Luban", "ShenKuo", "BiSheng"]
-
-[agents.sol_reviewer]
-description = "GPT-6.1 Sol High primary independent read-only reviewer under the OpenAI-only policy."
-config_file = "agents/sol-reviewer.toml"
-nickname_candidates = ["Leibniz", "Godel", "Raman"]
-
-[agents.deepseek_pro_reviewer]
-description = "Compatibility reviewer alias routed to GPT-6.1 Sol High under the OpenAI-only policy."
-config_file = "agents/deepseek-pro-reviewer.toml"
-nickname_candidates = ["HanFei", "WangYangming", "Sunzi"]
-
+[agents.explorer]
+description = "Read-only CYF code and evidence exploration: narrow facts, dependency/call-chain maps, consumer coverage and ownership conflicts."
+config_file = "agents/explorer.toml"

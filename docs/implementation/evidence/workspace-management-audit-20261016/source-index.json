@@ -1,0 +1,212 @@
+{
+  "web/src/composables/usePersonalWorkspace.js": {
+    "sha256": "3d0cf83699fd2e0ba48d00cb2c8c6117c5ea739d621259595a5c9c538e948372",
+    "matches": [
+      {
+        "line": 157,
+        "text": "  const refresh = async ({ q, mediaFamily, state = 'ACTIVE', cursor = null, append = false } = {}) => {"
+      },
+      {
+        "line": 191,
+        "text": "  const select = async fileId => {"
+      },
+      {
+        "line": 221,
+        "text": "  const upload = async (candidate, displayName = '') => {"
+      },
+      {
+        "line": 244,
+        "text": "  const appendVersion = async candidate => {"
+      },
+      {
+        "line": 245,
+        "text": "    const file = detail.value?.file"
+      },
+      {
+        "line": 269,
+        "text": "  const mutate = async (path, body, { method = 'POST' } = {}) => {"
+      },
+      {
+        "line": 270,
+        "text": "    const file = detail.value?.file"
+      },
+      {
+        "line": 289,
+        "text": "    const file = detail.value?.file"
+      },
+      {
+        "line": 294,
+        "text": "  const usage = async () => {"
+      },
+      {
+        "line": 295,
+        "text": "    const file = detail.value?.file"
+      },
+      {
+        "line": 300,
+        "text": "      if (!data || !DECIMAL(data.impactRevision) || !Array.isArray(data.taskReferences) || !Array.isArray(data.activeExecutions)) throw new Error('文件引用信息返回无效。')"
+      },
+      {
+        "line": 307,
+        "text": "  const trash = async (usageView) => {"
+      },
+      {
+        "line": 308,
+        "text": "    const file = detail.value?.file"
+      },
+      {
+        "line": 315,
+        "text": "    const file = detail.value?.file"
+      },
+      {
+        "line": 328,
+        "text": "  const download = async (version = detail.value?.latestVersion) => {"
+      },
+      {
+        "line": 329,
+        "text": "    const file = detail.value?.file"
+      },
+      {
+        "line": 346,
+        "text": "  const previewVersion = async (version = detail.value?.latestVersion) => {"
+      },
+      {
+        "line": 347,
+        "text": "    const file = detail.value?.file"
+      }
+    ]
+  },
+  "web/src/components/workspace/PersonalWorkspace.vue": {
+    "sha256": "721a4d2c7b3a9a36105cccdbb90b2b6551c7cf4fe29dfbbb60ef97a8e38ade77",
+    "matches": [
+      {
+        "line": 31,
+        "text": "          <div class=\"treasure-preview-tools treasure-version-tools\"><label><span class=\"treasure-version-label\">版本</span><select v-model.number=\"selectedVersion\" @change=\"preview(selectedVersion)\"><option v-for=\"version"
+      },
+      {
+        "line": 158,
+        "text": "        <section v-if=\"detailPane === 'summary'\" class=\"detail-pane\"><dl class=\"file-details\"><div><dt>最新版本</dt><dd>v{{ workspace.detail.value.file.latestVersion }}</dd></div><div><dt>状态</dt><dd>{{ workspace.detail.value"
+      },
+      {
+        "line": 212,
+        "text": "  const file = workspace.detail.value?.file"
+      },
+      {
+        "line": 264,
+        "text": "const byteText = size => Number.isFinite(size) ? size < 1024 ? `${size} B` : size < 1024 * 1024 ? `${Math.ceil(size / 1024)} KiB` : `${(size / (1024 * 1024)).toFixed(1)} MiB` : '大小未知'"
+      },
+      {
+        "line": 271,
+        "text": "const refresh = () => workspace.refresh(currentFilters())"
+      },
+      {
+        "line": 302,
+        "text": "const upload = async () => { const result = await workspace.upload(uploadFile.value, uploadDisplayName.value); if (result) { uploadFile.value = null; uploadDisplayName.value = ''; activeModal.value = 'library'; selectedI"
+      },
+      {
+        "line": 303,
+        "text": "const select = async fileId => { const detail = await workspace.select(fileId); if (detail) { selectedId.value = fileId; selectedVersion.value = detail.latestVersion.version; renameValue.value = detail.file.displayName; "
+      },
+      {
+        "line": 304,
+        "text": "const closeDetail = () => { selectedId.value = ''; versionFile.value = null; workspace.revokePreview(); workspace.detail.value = null }"
+      },
+      {
+        "line": 306,
+        "text": "const appendVersion = async () => { const result = await workspace.appendVersion(versionFile.value); if (result) { versionFile.value = null; selectedVersion.value = result.version.version; await refresh() } }"
+      },
+      {
+        "line": 309,
+        "text": "const download = async version => { const result = await workspace.download(version); if (result) savePersonalWorkspaceBlob(result) }"
+      },
+      {
+        "line": 310,
+        "text": "const trash = async () => { const usage = await workspace.usage(); if (!usage) return; const references = (usage.taskReferences?.length || 0) + (usage.activeExecutions?.length || 0); const message = references ? `该文件仍有 $"
+      },
+      {
+        "line": 344,
+        "text": "const trashReferenceCount = computed(() => (trashUsage.value?.taskReferences?.length || 0) + (trashUsage.value?.activeExecutions?.length || 0))"
+      },
+      {
+        "line": 345,
+        "text": "const changeTreasureTab = key => {"
+      },
+      {
+        "line": 365,
+        "text": "const prepareTrash = async () => { trashUsage.value = await workspace.usage() }"
+      },
+      {
+        "line": 366,
+        "text": "const confirmTrash = async () => {"
+      }
+    ]
+  },
+  "web/src/composables/usePersonalWorkspaceTaskLinks.js": {
+    "sha256": "68fe08a4cd5855579fde31668aa9119c099817443c326b3f9034b66be295c401",
+    "matches": []
+  },
+  "web/src/composables/usePersonalWorkspaceConversationLinks.js": {
+    "sha256": "e193ad9d85a2f99983f0cb0dcc5bd77f1b76d407411fccdf019fbe3c4e6ca7ee",
+    "matches": []
+  },
+  "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/PersonalWorkspaceServiceImpl.java": {
+    "sha256": "fcd85d5501623becc3d3d5ff2dabf4929443756fb50fc9ea353cb7846bc5593c",
+    "matches": [
+      {
+        "line": 84,
+        "text": "    @Override public List<PersonalWorkspaceViews.VersionView> versions(Scope scope,String fileId){ file(scope,fileId); return dao.listVersions(scope.tenantId(),scope.clientId(),scope.ownerJiacn(),fileId,100).stream().map"
+      },
+      {
+        "line": 256,
+        "text": "        return new PersonalWorkspaceViews.UsageView(f.getMetadataRevision(),references,activeExecutions);"
+      }
+    ]
+  },
+  "api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/PersonalWorkspaceWriteService.java": {
+    "sha256": "943aa265d8da3d54213e837bc71ba9d7689800c6642290b03a8b956914153a79",
+    "matches": [
+      {
+        "line": 142,
+        "text": "        String expected=\"\\\"\"+file.getFileId()+\":\"+file.getMetadataRevision()+\"\\\"\";"
+      }
+    ]
+  },
+  "api/agent/jia-agent-service/src/main/java/cn/jia/agent/api/PersonalWorkspaceWire.java": {
+    "sha256": "82ac80c4db35f7ebea11cb68ef399be8309af38535375621cd01a5b58cf57d73",
+    "matches": [
+      {
+        "line": 10,
+        "text": "    public static FileView from(PersonalWorkspaceViews.FileView v) { return v == null ? null : new FileView(v.fileId(), v.sourceKind(), v.originKind(), v.displayName(), v.mediaFamily(), v.state(), String.valueOf(v.metada"
+      },
+      {
+        "line": 15,
+        "text": "    public record FileDetailView(FileView file, VersionView latestVersion, List<VersionView> versions, List<Object> relations, List<Object> derivation) { }"
+      },
+      {
+        "line": 16,
+        "text": "    public static FileDetailView from(PersonalWorkspaceViews.FileDetailView v) { return v == null ? null : new FileDetailView(from(v.file()), from(v.latestVersion()), v.versions().stream().map(PersonalWorkspaceWire::from"
+      },
+      {
+        "line": 21,
+        "text": "    public record UsageView(String impactRevision, List<TaskReferenceView> taskReferences, List<Object> activeExecutions) { }"
+      },
+      {
+        "line": 22,
+        "text": "    public static UsageView from(PersonalWorkspaceViews.UsageView v) { return v == null ? null : new UsageView(String.valueOf(v.impactRevision()), v.taskReferences().stream().map(PersonalWorkspaceWire::from).toList(), v."
+      }
+    ]
+  },
+  "web/tests/juyiting-workspace-browser-smoke.mjs": {
+    "sha256": "ee98db355c81b0a8b65ab4db1ebb050d78b13529cb017a7bacfe1d51eaf95233",
+    "matches": [
+      {
+        "line": 47,
+        "text": "const file = { fileId: 'file-report', displayName: '项目资料', state: 'ACTIVE', latestVersion: 2, metadataRevision: 1, originKind: 'USER_UPLOAD', mediaFamily: 'DOCUMENT', createdAt: 1_700_000_000_000 }"
+      },
+      {
+        "line": 61,
+        "text": "const json = (res, status, body, headers = {}) => {"
+      }
+    ]
+  }
+}

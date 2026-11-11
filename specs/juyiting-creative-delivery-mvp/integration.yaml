@@ -1,0 +1,84 @@
+# 2026-10-23: document navigation only; historical source pins, results and release fields unchanged.
+feature_id: juyiting-creative-delivery-mvp
+status: draft
+planned_release: 1.13.0
+first_incremental_release: 1.10.0
+release_plan: docs/implementation/VERSION_PLAN_20260918.md
+release_slices:
+  - version: 1.10.0
+    scope: personal_file_library_without_agent_execution
+    work_packages: [C1-A, C4_workspace, C5_library]
+  - version: 1.11.0
+    scope: task_links_and_real_docx_conversation_delivery
+    work_packages: [C1-B, C1-C, C1-D, C6_docx, C4_conversation, C5_docx]
+  - version: 1.12.0
+    scope: image_generation_editing_and_pptx_generation_revision
+    work_packages: [C2, C3, C6_pptx, C4_preview, C5_image_pptx]
+  - version: 1.13.0
+    scope: xlsx_pdf_and_full_mvp_acceptance
+    work_packages: [C6_xlsx_pdf, C4_preview, C5_full]
+incremental_planning:
+  v1_10_plan: tasks.md
+  v1_10_acceptance: v1-10-acceptance-cases.json
+  v1_10_source_evidence: docs/implementation/evidence/v1-10-workspace-planning-20260918/source-inventory.json
+  estimate_kind: engineering_judgment_not_measured_agent_runtime
+  base_effort_person_hours: [64, 102]
+  risk_allowance_person_hours: [8, 16]
+  total_effort_person_hours: [72, 118]
+  two_lane_elapsed_workdays_assumption: [10, 16]
+  effective_hours_per_lane_per_day_assumption: 6
+  calendar_commitment: none
+  execution_status: not_started
+product_scope: user_confirmed_personal_workspace_and_agent_file_delivery
+workspace_scope:
+  ownership: personal_authenticated_owner_scope
+  upload_requires_bounty: false
+  task_links: optional_multiple_own_tasks_pinned_file_versions
+  generated_outputs: projection_of_existing_artifact_versions
+  agent_access: explicitly_authorized_execution_inputs_only
+  design: workspace-design.md
+file_scope:
+  proposed_primary_formats: [pptx, docx, xlsx, pdf]
+  uploaded_external_documents: included
+  capability_matrix: pending_runtime_verification
+interaction_scope:
+  primary: agent_conversation_generation_and_revision
+  delivery: read_only_preview_and_download
+  in_app_document_or_image_editor: out_of_scope
+contract:
+  state: candidate_v1_pending_storage_migration_execution_and_runtime_binding
+  c1_candidate: workspace-contract-v1.md
+  c1_design_cases: workspace-contract-cases.json
+  c1_source_evidence: docs/implementation/evidence/creative-workspace-c1-20260918/source-inventory.json
+  c1_business_rules: specified_in_candidate
+  c1_api_status: proposed_not_implemented
+  c1_runtime_binding: pending_initial_lease_producer_and_client_scope
+  c0_source_inventory: completed_runtime_execution_unverified
+  c0_report: docs/implementation/CREATIVE_DELIVERY_C0_INVENTORY_20260918.md
+  c0_evidence: docs/implementation/evidence/creative-delivery-c0-20260918/inventory.json
+  client_change_scope: pending_user_confirmation
+  reuse: existing_task_artifact_and_formal_delivery
+  provider_and_client_authorization: not_granted_by_this_design
+owners:
+  api: unassigned
+  web: unassigned
+  runtime: unassigned
+  exact_owner_source: docs/implementation/TASKS.yaml#runtime_ledger_json
+pinned_revisions:
+  api_commit: null
+  web_commit: null
+  runtime_commit: null
+verification:
+  c1_contract_validation: documentation_structure_only
+  personal_workspace_and_task_links: not_started
+  image_generation: not_started
+  image_editing: not_started
+  pptx_delivery: not_started
+  uploaded_pptx_revision: not_started
+  docx_read_revision_preview: not_started
+  xlsx_read_revision_preview: not_started
+  pdf_read_revision_preview: not_started
+  integration: documentation_only
+acceptance:
+  status: pending
+  evidence: acceptance.md

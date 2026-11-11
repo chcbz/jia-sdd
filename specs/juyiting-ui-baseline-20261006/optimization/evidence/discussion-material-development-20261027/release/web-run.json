@@ -1,0 +1,89 @@
+{
+  "createTime": 1793081427000,
+  "creatorAccountId": "202236842094144547",
+  "modifierAccountId": "202236842094144547",
+  "pipelineId": 4403172,
+  "pipelineRunId": 358,
+  "sources": [
+    {
+      "data": {
+        "branch": "develop",
+        "repo": "https://gitee.com/chcbz/cyf-web-kit.git"
+      },
+      "sign": "repo_0",
+      "type": "giteeGit"
+    }
+  ],
+  "stageGroup": [
+    [
+      "cloud_ci"
+    ],
+    [
+      "deploy"
+    ]
+  ],
+  "stages": [
+    {
+      "name": "Frontend resource-offloaded CI",
+      "stageInfo": {
+        "jobs": [
+          {
+            "actions": [
+              {
+                "disable": false,
+                "type": "LogPipelineJobRun"
+              },
+              {
+                "disable": false,
+                "type": "StopPipelineJobRun"
+              }
+            ],
+            "id": 543944396,
+            "name": "Locked install, full tests, and Vite build",
+            "params": "{\"sources\":\"[{\\\"data\\\":{\\\"isBranchMode\\\":false,\\\"repo\\\":\\\"https://gitee.com/chcbz/cyf-web-kit.git\\\",\\\"branch\\\":\\\"develop\\\",\\\"versionFilter\\\":\\\".*\\\",\\\"credentialType\\\":\\\"Gitee\\\",\\\"branchesFilter\\\":\\\"^develop$\\\",\\\"cloneDepthEnable\\\":true,\\\"triggerBranch\\\":\\\"^develop$\\\",\\\"cloneDepth\\\":1,\\\"connection\\\":149709,\\\"triggerFilePaths\\\":\\\".*\\\",\\\"versionFilterEnable\\\":false,\\\"previousCommitId\\\":\\\"69175b99f9b8a4c36194d2b4edf22a26e4e027f1\\\",\\\"branchesFilterEnable\\\":true},\\\"name\\\":\\\"repo_0\\\",\\\"sign\\\":\\\"repo_0\\\",\\\"type\\\":\\\"giteeGit\\\"}]\",\"caches\":\"[\\\"/root/.m2\\\",\\\"/root/.gradle/caches\\\",\\\"/root/.npm\\\",\\\"/root/.yarn\\\",\\\"/go/pkg/mod\\\",\\\"/root/.cache\\\"]\",\"EXECUTOR_NAME\":\"devops\",\"ENGINE_PIPELINE_PORTAL_URL\":\"https://flow.aliyun.com\",\"ENGINE_TASK_SIGN\":\"cloud_ci-web_ci\",\"EXECUTOR_ID\":\"67d63fdb36ec628799f13840\",\"PIPELINE_ID\":\"4403172\",\"ENGINE_PIPELINE_CONFIG_ID\":\"22431262\",\"BUILD_MESSAGE\":\"devops -POP API 触发\",\"timeoutMinutes\":60,\"ORGANIZATION_ID\":\"5fb7d76ee6f9d07f148529c7\",\"pmLocalMount\":false,\"TIMESTAMP\":\"1793081427402\",\"ENGINE_PIPELINE_CREATOR_ALIYUN_PK\":\"1506826563925287\",\"FLOW_SYSTEM_IDENTIFICATION_PARAM_TRIGGER_SOURCE\":\"POP_API\",\"triggerMode\":\"4\",\"ENGINE_PIPELINE_ID\":\"4403172\",\"runnerCacheMode\":\"local\",\"ENGINE_GLOBAL_PARAM_OPERATOR_ID\":\"67d63fdb36ec628799f13840\",\"clone_option\":\"all\",\"ENGINE_GLOBAL_PARAM_ORGANIZATION_ID\":\"5fb7d76ee6f9d07f148529c7\",\"BUILD_EXECUTOR\":\"devops\",\"steps\":[{\"RUN_USER\":\"root\",\"stepType\":\"custom-image-run\",\"USE_PRIVATE\":false,\"JSONEncoding\":true,\"name\":\"Alinux3 full frontend CI\",\"RUN_SHELL\":\"sh\",\"stepIdentifier\":\"cloud_ci-web_ci-test_and_build\",\"FROM\":\"build-steps-public-registry.cn-beijing.cr.aliyuncs.com/build-steps/alinux3:latest\",\"source\":\"repo_0\",\"command\":\"set -eu\\n# Heavy execution only; external readiness and online acceptance stay on the control host.\\nphase() { printf 'CYF_FLOW_PHASE %s wall=%s monotonic=' \\\"$1\\\" \\\"$(date -u +%FT%TZ)\\\"; cut -d' ' -f1 /proc/uptime; }\\nphase runtime.begin\\ntest \\\"${CI_COMMIT_REF_NAME:-}\\\" = develop\\ntest -n \\\"${CI_COMMIT_SHA:-}\\\"\\ntest \\\"$(git rev-parse HEAD)\\\" = \\\"$CI_COMMIT_SHA\\\"\\ntest \\\"$CI_COMMIT_SHA\\\" = 69175b99f9b8a4c36194d2b4edf22a26e4e027f1\\ntest \\\"$(git rev-parse HEAD^{tree})\\\" = 699a56f071d4e80b9535caef87f45fe846ebbd14\\ngit diff --quiet HEAD --\\n# Release tests use the current tree. Asset/all profiles verify historical provenance.\\ncase \\\"${CYF_TEST_PROFILE:-release}\\\" in\\n  release) ;;\\n  assets|all)\\n    if test \\\"$(git rev-parse --is-shallow-repository)\\\" = true; then\\n      git fetch --unshallow origin \\\"$CI_COMMIT_REF_NAME\\\"\\n    fi\\n    test \\\"$(git rev-parse HEAD)\\\" = \\\"$CI_COMMIT_SHA\\\"\\n    ;;\\n  *) echo 'Unsupported CYF_TEST_PROFILE' >&2; exit 1 ;;\\nesac\\nprintf 'CYF_SOURCE_CHECKOUT shallow=%s commit=%s tree=%s\\\\n' \\\"$(git rev-parse --is-shallow-repository)\\\" \\\"$(git rev-parse HEAD)\\\" \\\"$(git rev-parse HEAD^{tree})\\\"\\nmanager=\\nif test -x /usr/bin/dnf; then manager=/usr/bin/dnf; elif test -x /usr/bin/yum; then manager=/usr/bin/yum; fi\\ntest -n \\\"$manager\\\"\\n# The base image already provides most tools. Installing named packages\\n# unconditionally also upgrades them and pulls unrelated system dependencies.\\nmissing_packages=\\nfor package in ca-certificates curl tar xz git; do\\n  if ! rpm -q --quiet \\\"$package\\\"; then\\n    missing_packages=\\\"$missing_packages $package\\\"\\n  fi\\ndone\\nif test -n \\\"$missing_packages\\\"; then\\n  # Intentional splitting: names come only from the fixed list above.\\n  \\\"$manager\\\" -y --setopt=gpgcheck=1 --setopt=install_weak_deps=False install $missing_packages\\nfi\\nfor tool in curl tar xz git; do command -v \\\"$tool\\\" >/dev/null; done\\nnode_sha=6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6\\ncache_root=\\\"$HOME/.cache/cyf-test-runtime\\\"\\nnode_archive=\\\"$cache_root/node-$node_sha\\\"\\nmkdir -p \\\"$cache_root\\\"\\nif test -f \\\"$node_archive\\\"; then\\n  printf '%s  %s\\\\n' \\\"$node_sha\\\" \\\"$node_archive\\\" | sha256sum -c -\\nelse\\n  downloaded=0\\n  attempt=0\\n  for node_url in \\\\\\n    https://mirrors.aliyun.com/nodejs-release/v24.22.1/node-v24.22.1-linux-x64.tar.xz \\\\\\n    https://cdn.npmmirror.com/binaries/node/v24.22.1/node-v24.22.1-linux-x64.tar.xz \\\\\\n    https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-x64.tar.xz\\n  do\\n    attempt=$((attempt + 1))\\n    partial=\\\"$node_archive.$$.${attempt}.partial\\\"\\n    test ! -e \\\"$partial\\\"\\n    if curl --fail --location --retry 2 --connect-timeout 20 --max-time 240 \\\"$node_url\\\" --output \\\"$partial\\\"; then\\n      printf '%s  %s\\\\n' \\\"$node_sha\\\" \\\"$partial\\\" | sha256sum -c -\\n      mv \\\"$partial\\\" \\\"$node_archive\\\"\\n      downloaded=1\\n      break\\n    fi\\n  done\\n  test \\\"$downloaded\\\" = 1\\nfi\\nnode_root=\\\"$PWD/_cyf_node24\\\"\\ntest ! -e \\\"$node_root\\\"\\nmkdir \\\"$node_root\\\"\\ntar -xJf \\\"$node_archive\\\" -C \\\"$node_root\\\"\\nexport PATH=\\\"$node_root/node-v24.22.1-linux-x64/bin:$PATH\\\"\\ntest \\\"$(node --version)\\\" = v24.22.1\\nphase runtime.end\\nphase install.begin\\nnpm ci --include=dev --registry=https://registry.npmmirror.com --replace-registry-host=npmjs --fetch-retries=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=30000 --fetch-timeout=120000 --no-audit --no-fund\\ntest -x node_modules/.bin/vite\\ntest -f node_modules/vite/bin/vite.js\\nphase install.end\\nphase test.begin\\nnpm run test\\nphase test.end\\nphase build.begin\\nnpm run build\\nphase build.end\\ntest -d dist\\ntest -f mochawesome-report/mochawesome.html\\ntest -f mochawesome-report/mochawesome.json\\nexport_root=\\\"$PWD/_cyf_web_develop_ci_export\\\"\\ntest ! -e \\\"$export_root\\\"\\nmkdir -m 700 \\\"$export_root\\\"\\ncp -a dist \\\"$export_root/dist\\\"\\ncp -a mochawesome-report \\\"$export_root/mochawesome-report\\\"\\nprintf '%s\\\\n' \\\"$CI_COMMIT_SHA\\\" > \\\"$export_root/source-commit.txt\\\"\\ngit rev-parse HEAD^{tree} > \\\"$export_root/source-tree.txt\\\"\\nnode <<'CYF_MANIFEST'\\n// Runs after npm test/build. Publish only dist; keep test reports in Flow artifacts.\\nconst fs=require('fs'),path=require('path'),crypto=require('crypto');\\nconst root='_cyf_web_develop_ci_export', files=[];\\nfunction walk(dir){for(const e of fs.readdirSync(path.join(root,'dist',dir),{withFileTypes:true})){\\n const relative=path.posix.join(dir,e.name), p=path.join(root,'dist',relative);\\n if(e.isDirectory())walk(relative);\\n else if(e.isFile()){const data=fs.readFileSync(p);files.push({path:relative,size:data.length,sha256:crypto.createHash('sha256').update(data).digest('hex')});}\\n else throw Error('Unsupported dist entry: '+relative);\\n}}\\nwalk('');\\nif(!files.some(x=>x.path==='index.html'))throw Error('Missing site entry');\\nconst packageVersion=JSON.parse(fs.readFileSync('package.json','utf8')).version;\\nif(typeof packageVersion!=='string'||!/^(0|[1-9][0-9]*)\\\\.(0|[1-9][0-9]*)\\\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\\\+([0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*))?$/.test(packageVersion))throw Error('Invalid package version');\\nconst m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,package_version:packageVersion,files};\\nif(m.pipeline_id!=='4403172'||m.branch!=='develop'||!/^[1-9][0-9]*$/.test(m.run_id)||!/^[0-9a-f]{40,64}$/.test(m.commit))throw Error('Wrong Flow identity');\\nfs.writeFileSync(path.join(root,'release.json'),JSON.stringify(m)+'\\\\n');\\nconsole.log('CYF_WEB_ARTIFACT '+JSON.stringify({pipeline:m.pipeline_id,run:m.run_id,commit:m.commit,files:files.length}));\\n\\nCYF_MANIFEST\\nphase export.end\"},{\"ARCHIVE_PATH\":\"_cyf_web_develop_ci_export/\",\"stepType\":\"tb_oss_upload\",\"ARTIFACT\":\"cyf_web_flow_4403172\",\"SHOULD_PACKAGE\":true,\"INCLUDE_PATH_IN_ARTIFACT\":false,\"uploadType\":\"PUBLIC_STORAGE\",\"name\":\"Upload same-run site and test report\",\"stepIdentifier\":\"cloud_ci-web_ci-upload_artifact\",\"source\":\"repo_0\"}],\"PIPELINE_NAME\":\"cyf-web-kit\",\"ENGINE_PIPELINE_NAME\":\"cyf-web-kit\",\"SYSTEM_GLOBAL_VARIABLES_ENCRYPT_KEYS\":\"[]\",\"ENGINE_PIPELINE_INST_NUMBER\":\"358\",\"BUILD_NUMBER\":\"358\",\"DATETIME\":\"2026-10-27-14-10-27\",\"ENGINE_TASK_NAME\":\"Locked install, full tests, and Vite build\",\"buildNodeGroup\":\"K8S-4\",\"SYSTEM_GLOBAL_VARIABLES_KEYS\":\"[]\",\"ENGINE_PIPELINE_INST_ID\":\"178223950\"}",
+            "startTime": 1793081428000,
+            "status": "RUNNING"
+          },
+          {
+            "actions": [
+              {
+                "disable": false,
+                "type": "LogPipelineJobRun"
+              },
+              {
+                "disable": false,
+                "type": "StopPipelineJobRun"
+              }
+            ],
+            "id": 543944397,
+            "name": "JavaScript code scan",
+            "params": "{\"sources\":\"[{\\\"data\\\":{\\\"isBranchMode\\\":false,\\\"repo\\\":\\\"https://gitee.com/chcbz/cyf-web-kit.git\\\",\\\"branch\\\":\\\"develop\\\",\\\"versionFilter\\\":\\\".*\\\",\\\"credentialType\\\":\\\"Gitee\\\",\\\"branchesFilter\\\":\\\"^develop$\\\",\\\"cloneDepthEnable\\\":true,\\\"triggerBranch\\\":\\\"^develop$\\\",\\\"cloneDepth\\\":1,\\\"connection\\\":149709,\\\"triggerFilePaths\\\":\\\".*\\\",\\\"versionFilterEnable\\\":false,\\\"previousCommitId\\\":\\\"69175b99f9b8a4c36194d2b4edf22a26e4e027f1\\\",\\\"branchesFilterEnable\\\":true},\\\"name\\\":\\\"repo_0\\\",\\\"sign\\\":\\\"repo_0\\\",\\\"type\\\":\\\"giteeGit\\\"}]\",\"caches\":\"[\\\"/root/.m2\\\",\\\"/root/.gradle/caches\\\",\\\"/root/.npm\\\",\\\"/root/.yarn\\\",\\\"/go/pkg/mod\\\",\\\"/root/.cache\\\"]\",\"EXECUTOR_NAME\":\"devops\",\"ENGINE_PIPELINE_PORTAL_URL\":\"https://flow.aliyun.com\",\"ENGINE_TASK_SIGN\":\"cloud_ci-code_scan\",\"EXECUTOR_ID\":\"67d63fdb36ec628799f13840\",\"PIPELINE_ID\":\"4403172\",\"ENGINE_PIPELINE_CONFIG_ID\":\"22431262\",\"BUILD_MESSAGE\":\"devops -POP API 触发\",\"ORGANIZATION_ID\":\"5fb7d76ee6f9d07f148529c7\",\"pmLocalMount\":false,\"TIMESTAMP\":\"1793081427402\",\"ENGINE_PIPELINE_CREATOR_ALIYUN_PK\":\"1506826563925287\",\"FLOW_SYSTEM_IDENTIFICATION_PARAM_TRIGGER_SOURCE\":\"POP_API\",\"triggerMode\":\"4\",\"ENGINE_PIPELINE_ID\":\"4403172\",\"runnerCacheMode\":\"local\",\"ENGINE_GLOBAL_PARAM_OPERATOR_ID\":\"67d63fdb36ec628799f13840\",\"clone_option\":\"all\",\"ENGINE_GLOBAL_PARAM_ORGANIZATION_ID\":\"5fb7d76ee6f9d07f148529c7\",\"BUILD_EXECUTOR\":\"devops\",\"steps\":[{\"CHECK_REDLINES\":[],\"stepType\":\"js_code_scan\",\"INCREASE\":false,\"USE_LOCAL_DEPENDENCIES\":\"*\",\"name\":\"javascript_scan\",\"stepIdentifier\":\"cloud_ci-code_scan-javascript_scan\",\"CI_RUNTIME_VERSION\":\"14.8\",\"source\":\"repo_0\",\"USE_LOCAL_RULES\":false}],\"PIPELINE_NAME\":\"cyf-web-kit\",\"ENGINE_PIPELINE_NAME\":\"cyf-web-kit\",\"SYSTEM_GLOBAL_VARIABLES_ENCRYPT_KEYS\":\"[]\",\"ENGINE_PIPELINE_INST_NUMBER\":\"358\",\"BUILD_NUMBER\":\"358\",\"DATETIME\":\"2026-10-27-14-10-27\",\"ENGINE_TASK_NAME\":\"JavaScript code scan\",\"buildNodeGroup\":\"K8S-4\",\"SYSTEM_GLOBAL_VARIABLES_KEYS\":\"[]\",\"ENGINE_PIPELINE_INST_ID\":\"178223950\"}",
+            "startTime": 1793081428000,
+            "status": "RUNNING"
+          }
+        ],
+        "name": "Frontend resource-offloaded CI",
+        "startTime": 1793081428000,
+        "status": "RUNNING"
+      }
+    },
+    {
+      "name": "Authorized unified discussion material Web 1.16.65",
+      "stageInfo": {
+        "jobs": [
+          {
+            "actions": [],
+            "id": 543944398,
+            "name": "Same-Run versioned deployment",
+            "status": "INIT"
+          }
+        ],
+        "name": "Authorized unified discussion material Web 1.16.65",
+        "status": "INIT"
+      }
+    }
+  ],
+  "status": "RUNNING",
+  "triggerMode": 4,
+  "updateTime": 1793081427000
+}

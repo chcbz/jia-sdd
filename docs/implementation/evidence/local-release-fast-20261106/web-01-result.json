@@ -1,0 +1,73 @@
+{
+  "status": "FAILED_DURING_PACKAGE_DISK_FULL",
+  "publishable": false,
+  "scope": "selected release baseline; NOT full suite, installer or deployment",
+  "stages": [
+    {
+      "name": "dependencies",
+      "argv": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "seconds": 14.873,
+      "exitCode": 0
+    },
+    {
+      "name": "tests",
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "./node_modules/mocha/bin/mocha.js",
+        "--no-config",
+        "--require",
+        "./tests/setup.js",
+        "--timeout",
+        "10000",
+        "--exit",
+        "--reporter",
+        "mochawesome",
+        "--reporter-options",
+        "reportDir=/var/tmp/cyf-local-fast-web-20261107-01/test-reports,reportFilename=mochawesome.json,consoleReporter=dot",
+        "tests/app-title.test.js",
+        "tests/home-login-redirect.test.js",
+        "tests/identity-scope.test.js",
+        "tests/interface-wire.test.js",
+        "tests/production-build-flags.test.js",
+        "tests/public-entry-navigation.test.js",
+        "tests/public-pwa-beta-entry.test.js",
+        "tests/pwa-shell-freshness.test.js"
+      ],
+      "seconds": 4.435,
+      "exitCode": 0
+    },
+    {
+      "name": "build",
+      "argv": [
+        "node",
+        "/home/isp/wsps/cyf/docs/implementation/evidence/local-release-fast-20261106/web-build.mjs",
+        "/root/.codex/worktrees/cyf-local-timing-web/web",
+        "/var/tmp/cyf-local-fast-web-20261107-01/dist"
+      ],
+      "seconds": 23.931,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": "2026-11-06T22:23:11.378595+00:00",
+  "source": {
+    "commit": "c1e478f633845a448833a3973e732a12a75874aa",
+    "tree": "ea03d165f0dfc9fe065c06e4837f84e558b360ff"
+  },
+  "lockSha256": "c9c7edd9c41ff19e0ca6306101fd7d9ade19113074b23da0be4dea90454cd5a9",
+  "tools": {
+    "/home/isp/wsps/cyf/docs/implementation/evidence/local-release-fast-20261106/web-fast.py": "130d8c5d37ba87f332210da5a58cab90e02879a98a576e3ccbd3e753aaf443f1",
+    "/home/isp/wsps/cyf/docs/implementation/evidence/local-release-fast-20261106/web-build.mjs": "1a886628824696c642099917c62ce9eec44f6a5093f860bf3ed79b4573ea7de5"
+  },
+  "sparseCheckout": "Only unselected tests/fixtures omitted; all production input and interface-standard fixtures present",
+  "queueSeconds": 0.0,
+  "wallSeconds": 43.267,
+  "exitCode": 1,
+  "detail": "Unit exited 1 during gzip stream with disk available=0; result flush could not finish. Manual systemctl stop afterward found PID0. Unfinished 88MiB stream removed, no final artifact."
+}

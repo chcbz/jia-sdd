@@ -1,0 +1,113 @@
+{
+  "status": "BUILT",
+  "publishable": false,
+  "scope": "selected release baseline; NOT full suite, installer or deployment",
+  "stages": [
+    {
+      "name": "dependencies",
+      "seconds": 3.442
+    },
+    {
+      "name": "tests",
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "./node_modules/mocha/bin/mocha.js",
+        "--no-config",
+        "--require",
+        "./tests/setup.js",
+        "--timeout",
+        "10000",
+        "--exit",
+        "--reporter",
+        "mochawesome",
+        "--reporter-options",
+        "reportDir=/home/isp/state/cyf-local-build/tasks/JUYITING-HELP-CARD-20261109/build-fixed/test-reports,reportFilename=mochawesome.json,consoleReporter=dot",
+        "tests/app-title.test.js",
+        "tests/home-login-redirect.test.js",
+        "tests/identity-scope.test.js",
+        "tests/interface-wire.test.js",
+        "tests/production-build-flags.test.js",
+        "tests/public-entry-navigation.test.js",
+        "tests/public-pwa-beta-entry.test.js",
+        "tests/pwa-shell-freshness.test.js",
+        "tests/juyiting-help-center.test.js",
+        "tests/juyiting-navigation-presentation.test.js"
+      ],
+      "seconds": 7.536,
+      "exitCode": 0
+    },
+    {
+      "name": "build",
+      "argv": [
+        "node",
+        "/home/isp/wsps/cyf/ops/orchestration/local-web-build.mjs",
+        "/home/isp/state/cyf-local-build/tasks/JUYITING-HELP-CARD-20261109/source",
+        "/home/isp/state/cyf-local-build/tasks/JUYITING-HELP-CARD-20261109/build-fixed/dist"
+      ],
+      "seconds": 28.385,
+      "exitCode": 0
+    },
+    {
+      "name": "package",
+      "seconds": 10.374
+    },
+    {
+      "name": "package-integrity",
+      "seconds": 1.69
+    }
+  ],
+  "startedAt": "2026-11-09T02:49:43.810765+00:00",
+  "source": {
+    "commit": "8b1b77cc0d600f67e55861b39926034cb583bf3f",
+    "tree": "d41262ba807a859f094edf92a5656d7cac4f7734"
+  },
+  "lockSha256": "7470bb4c5e8c5fd5e2045459849e720555951c9e11dbeb6a5c01076c5d0c83d8",
+  "tools": {
+    "/home/isp/wsps/cyf/ops/orchestration/local_web_build.py": "f06f53062048d9e8810887de1af0535c5db1496c184b656e838e2eef1aa97b1b",
+    "/home/isp/wsps/cyf/ops/orchestration/local-web-build.mjs": "db6c06e57e868d7c75bd7c68aa5fad4dbc0e3b3e3179549469787f9cf8ff03ff",
+    "/home/isp/wsps/cyf/ops/orchestration/build_storage.py": "466186767b7729d16489b915b0aecb029108d8313f9dca1abc4d741823fb5e49",
+    "/home/isp/wsps/cyf/ops/orchestration/web_dependencies.py": "d9672f6046fb43fd8a337d4507b546a48a724d92ae10f2874779dcaf52bef9c8"
+  },
+  "sparseCheckout": "All production src/public/static and root config present; prototypes and unselected tests omitted; interface-wire mjs suites and fixtures present",
+  "nodeVersion": "v24.22.1",
+  "nodeBinarySha256": "e32e2d16081cf644f88392934288086e7662529d0d43277c34f7aad2207cfafb",
+  "queueSeconds": 0.0,
+  "wallSeconds": 57.252,
+  "dependencies": {
+    "key": "488a64a40be5d059a977f4f8cbedebf12425aeac0e11b7211a1160b0bed1c72d",
+    "path": "/home/isp/state/cyf-local-build/web-dependencies/488a64a40be5d059a977f4f8cbedebf12425aeac0e11b7211a1160b0bed1c72d",
+    "reused": true,
+    "receiptSha256": "be4d6b814f098672351c514ae8da2387cd1a8cc62435de59804a5d4290f0c6c4",
+    "inputs": {
+      "format": "cyf-web-dependencies-v1",
+      "manifestSha256": "ae89ae5b6590ffcbdf47e36bd626c008765331db12ea226debddb3efb7976e73",
+      "lockSha256": "7470bb4c5e8c5fd5e2045459849e720555951c9e11dbeb6a5c01076c5d0c83d8",
+      "node": {
+        "version": "v24.22.1",
+        "abi": "137",
+        "platform": "linux",
+        "arch": "x64",
+        "binarySha256": "e32e2d16081cf644f88392934288086e7662529d0d43277c34f7aad2207cfafb"
+      },
+      "npmVersion": "11.19.1",
+      "install": [
+        "ci",
+        "--no-audit",
+        "--no-fund",
+        "--include=dev",
+        "--include=optional",
+        "--include=peer",
+        "--ignore-scripts=false"
+      ],
+      "npmConfigSha256": "a955d81cd44d84662380da3197d7ca9c2802d4f1b1650dc0769f4e01e132ce91",
+      "npmrcSha256": null
+    }
+  },
+  "artifact": {
+    "path": "/home/isp/state/cyf-local-build/tasks/JUYITING-HELP-CARD-20261109/build-fixed/package/web.tgz",
+    "sha256": "287b036be0c88eec32bf457c1cb99688e12cc59b6dd130e1b91c73fddf980953"
+  },
+  "sourceUnchanged": true
+}

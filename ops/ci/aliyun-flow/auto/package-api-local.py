@@ -195,7 +195,25 @@ def mail_runtime(jar):
 
 def task_executed(log, task):
     lines = re.findall(r'^> Task ' + re.escape(task) + r'(?=\s|$)(.*)$', log, flags=re.MULTILINE)
-    require(len(lines) == 1 and not lines[0].strip(), 'BUILD_NOT_FRESH')
+    # Parallel Gradle can repeat a task header when resuming grouped output.
+    # Keep rejecting cached/skipped/failed tasks; accept repeated empty headers
+    # only with one exact root-build completion from the bound diagnostic init.
+    completions = []
+    for line in log.splitlines():
+        if line.startswith('CYF_TASK_TIMING '):
+            try:
+                item = strict_json(line.split(' ', 1)[1])
+            except Rejected:
+                raise Rejected('BUILD_NOT_FRESH') from None
+            if item.get('rootBuild') is True and item.get('task') == task:
+                completions.append(item)
+    if completions:
+        require(len(completions) == 1 and bool(lines) and all(not x.strip() for x in lines)
+                and completions[0].get('skipped') is False
+                and completions[0].get('failed') is False
+                and completions[0].get('skipMessage') is None, 'BUILD_NOT_FRESH')
+    else:
+        require(len(lines) == 1 and not lines[0].strip(), 'BUILD_NOT_FRESH')
 
 
 def xml_summary(data):
@@ -231,7 +249,9 @@ def validate_argv(argv, required_tasks, inputs):
     require(type(argv) is list and bool(argv) and all(type(x) is str for x in argv))
     require(Path(argv[0]).name in ('gradle', 'gradlew'))
     # Public grammar only. Preserve exact task/filter ordering; never execute argv.
-    simple = {'--no-daemon', '--no-build-cache', '--build-cache', '--rerun-tasks', '--console=plain', '--stacktrace', '--info'}
+    simple = {'--no-daemon', '--no-build-cache', '--build-cache', '--rerun-tasks', '--console=plain', '--stacktrace', '--info', '--parallel', '--no-parallel', '--offline', '--max-workers=2',
+              '-Dorg.gradle.jvmargs=-Xmx768m -XX:MaxMetaspaceSize=384m -XX:ActiveProcessorCount=2 -XX:TieredStopAtLevel=1',
+              '-Dorg.gradle.jvmargs=-Xmx512m -XX:+UseSerialGC -XX:MaxMetaspaceSize=384m -XX:ActiveProcessorCount=2 -XX:TieredStopAtLevel=1'}
     task = re.compile(r':[A-Za-z0-9_:-]+\Z')
     index = 1
     previous_task = None
@@ -241,6 +261,10 @@ def validate_argv(argv, required_tasks, inputs):
         if arg in ('-I', '--init-script'):
             require(index + 1 < len(argv) and any(argv[index + 1] == item['path'] for item in inputs))
             metadata_init_seen |= Path(argv[index + 1]).name == 'local-release-metadata.init.gradle'
+            index += 2
+        elif arg == '--project-cache-dir':
+            require(index + 1 < len(argv) and Path(argv[index + 1]).is_absolute()
+                    and str(Path(argv[index + 1])) == argv[index + 1])
             index += 2
         elif arg == '--tests':
             require(previous_task in required_tasks and previous_task not in (':starter:bootJar', ':validateLayering') and

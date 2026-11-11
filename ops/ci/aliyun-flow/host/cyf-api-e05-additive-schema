@@ -26,8 +26,8 @@ import zipfile
 
 PRODUCTION_PATH = Path('/usr/local/sbin/cyf-api-e05-additive-schema')
 CANONICAL_JAR = Path('/home/isp/hosts/cyf/api/cyf-api-kit.jar')
-PACKAGE = Path('/var/lib/cyf-api-flow/incoming/package.tgz')
-RECORD = Path('/var/lib/cyf-api-flow/record.json')
+PACKAGE = Path('/home/isp/state/cyf-api-flow/incoming/package.tgz')
+RECORD = Path('/home/isp/state/cyf-api-flow/record.json')
 MYSQL = Path('/usr/bin/mysql')
 MYSQL_SOCKET = '/home/isp/apps/mysql/mysql.sock'
 MYSQL_SCHEMA = 'jia'
@@ -44,67 +44,14 @@ EXPECTED_PACKAGE_MEMBERS = frozenset((
 ))
 NESTED_MAPPER_JAR = 'BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar'
 RESOURCE_PATH = 'db/agent-work-item-reassignment-e05.sql'
-RESOURCE_SHA256 = 'f880de923e96630969b0d2107e5560ed94383a2f74663e708d30a6dfb01af842'
+RESOURCE_SHA256 = '3c287315e1d6126c652b219e6b4f14ebf02546ee7458c5d6abc3bf46e46b048c'
 TABLE_ORDER = ('agent_work_item_reassignment',)
 SHA256_RE = re.compile(r'^[0-9a-f]{64}$')
 GIT_RE = re.compile(r'^[0-9a-f]{40}$')
 RUN_RE = re.compile(r'^[1-9][0-9]*$')
 
 # This byte-exact allowlist is the fixed E05 mapper resource.  It is not a generic DDL parser.
-E05_SQL_BYTES = b"""-- M4-E05 bounded additive migration candidate.
--- DDL only: no backfill, no lease mutation, and no transport/history rewrite.
-CREATE TABLE IF NOT EXISTS agent_work_item_reassignment (
-    id                          BIGINT NOT NULL AUTO_INCREMENT,
-    reassignment_id             VARCHAR(100) NOT NULL COMMENT 'Deterministic scope/task/work-item/idempotency receipt identity',
-    request_sha256              CHAR(64) NOT NULL COMMENT 'Canonical exact request digest',
-    task_id                     VARCHAR(100) NOT NULL,
-    work_item_id                VARCHAR(100) NOT NULL,
-    operator_subject            VARCHAR(100) NOT NULL COMMENT 'Exact authenticated JWT sub',
-    coordinator_agent_id        VARCHAR(100) NOT NULL COMMENT 'Exact active task coordinator',
-    previous_agent_id           VARCHAR(100) NOT NULL,
-    target_agent_id             VARCHAR(100) NOT NULL,
-    source_command_id           VARCHAR(100) NOT NULL,
-    command_id                  VARCHAR(100) NOT NULL COMMENT 'New immutable WORK_ITEM_EXECUTE command',
-    message_id                  VARCHAR(100) NOT NULL,
-    outbox_event_id             VARCHAR(100) NOT NULL,
-    expected_work_item_version  BIGINT NOT NULL,
-    result_work_item_version    BIGINT NOT NULL,
-    task_version                BIGINT NOT NULL,
-    lease_fence_sha256          CHAR(64) NOT NULL COMMENT 'SHA-256 of fresh lease token; token is never stored here',
-    previous_lease_until        BIGINT NOT NULL,
-    lease_until                 BIGINT NOT NULL,
-    attempt_count               INT NOT NULL,
-    max_attempts                INT NOT NULL,
-    tenant_id                   VARCHAR(50) NOT NULL,
-    client_id                   VARCHAR(50) NOT NULL,
-    create_time                 BIGINT NOT NULL,
-    update_time                 BIGINT NOT NULL,
-    owner_jiacn                  VARCHAR(50) NOT NULL COMMENT 'Authenticated task owner',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_work_item_reassignment_id
-        (tenant_id, client_id, reassignment_id),
-    UNIQUE KEY uk_work_item_reassignment_command
-        (tenant_id, client_id, command_id),
-    KEY idx_work_item_reassignment_latest
-        (tenant_id, client_id, task_id, work_item_id, id),
-    KEY idx_agent_work_item_reassignment_owner_scope
-        (tenant_id, client_id, owner_jiacn, task_id, work_item_id),
-    CONSTRAINT chk_work_item_reassignment_digest
-        CHECK (CHAR_LENGTH(request_sha256)=64 AND CHAR_LENGTH(lease_fence_sha256)=64),
-    CONSTRAINT chk_work_item_reassignment_versions
-        CHECK (expected_work_item_version >= 0
-               AND result_work_item_version = expected_work_item_version + 1
-               AND task_version >= 0),
-    CONSTRAINT chk_work_item_reassignment_agents
-        CHECK (previous_agent_id <> target_agent_id),
-    CONSTRAINT chk_work_item_reassignment_lease
-        CHECK (previous_lease_until > 0 AND lease_until > previous_lease_until
-               AND attempt_count > 0 AND attempt_count < max_attempts),
-    CONSTRAINT chk_work_item_reassignment_immutable_clock
-        CHECK (create_time > 0 AND update_time = create_time)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  COMMENT='Immutable E05 explicit-target expired-lease reassignment receipts';
-"""
+E05_SQL_BYTES = b"-- M4-E05 bounded additive migration candidate.\n-- DDL only: no backfill, no lease mutation, and no transport/history rewrite.\nCREATE TABLE IF NOT EXISTS agent_work_item_reassignment (\n    id                          BIGINT NOT NULL AUTO_INCREMENT,\n    reassignment_id             VARCHAR(100) NOT NULL COMMENT 'Deterministic scope/task/work-item/idempotency receipt identity',\n    request_sha256              CHAR(64) NOT NULL COMMENT 'Canonical exact request digest',\n    task_id                     VARCHAR(100) NOT NULL,\n    work_item_id                VARCHAR(100) NOT NULL,\n    operator_subject            VARCHAR(100) NOT NULL COMMENT 'Exact authenticated JWT sub',\n    coordinator_agent_id        VARCHAR(100) NOT NULL COMMENT 'Exact active task coordinator',\n    previous_agent_id           VARCHAR(100) NOT NULL,\n    target_agent_id             VARCHAR(100) NOT NULL,\n    source_command_id           VARCHAR(100) NOT NULL,\n    command_id                  VARCHAR(100) NOT NULL COMMENT 'New immutable WORK_ITEM_EXECUTE command',\n    message_id                  VARCHAR(100) NOT NULL,\n    outbox_event_id             VARCHAR(100) NOT NULL,\n    expected_work_item_version  BIGINT NOT NULL,\n    result_work_item_version    BIGINT NOT NULL,\n    task_version                BIGINT NOT NULL,\n    lease_fence_sha256          CHAR(64) NOT NULL COMMENT 'SHA-256 of fresh lease token; token is never stored here',\n    previous_lease_until        BIGINT NOT NULL,\n    lease_until                 BIGINT NOT NULL,\n    attempt_count               INT NOT NULL,\n    max_attempts                INT NOT NULL,\n    tenant_id                   VARCHAR(50) NOT NULL,\n    client_id                   VARCHAR(50) NOT NULL,\n    create_time                 BIGINT NOT NULL,\n    update_time                 BIGINT NOT NULL,\n    owner_jiacn                  VARCHAR(50) NOT NULL COMMENT 'Authenticated task owner',\n    PRIMARY KEY (id),\n    UNIQUE KEY uk_work_item_reassignment_id\n        (tenant_id, client_id, reassignment_id),\n    UNIQUE KEY uk_work_item_reassignment_command\n        (tenant_id, client_id, command_id),\n    KEY idx_work_item_reassignment_latest\n        (tenant_id, client_id, task_id, work_item_id, id),\n    KEY idx_agent_work_item_reassignment_owner_scope\n        (tenant_id, client_id, owner_jiacn, task_id, work_item_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4\n  COMMENT='Immutable E05 explicit-target expired-lease reassignment receipts';\n"
 
 
 class SchemaError(Exception):
@@ -168,21 +115,7 @@ EXPECTED_TABLES = {
             index('idx_work_item_reassignment_latest', False,
                   ('tenant_id', 'client_id', 'task_id', 'work_item_id', 'id')),
         ),
-        'checks': {
-            'chk_work_item_reassignment_digest':
-                'CHAR_LENGTH(request_sha256)=64 AND CHAR_LENGTH(lease_fence_sha256)=64',
-            'chk_work_item_reassignment_versions':
-                'expected_work_item_version >= 0 '
-                'AND result_work_item_version = expected_work_item_version + 1 '
-                'AND task_version >= 0',
-            'chk_work_item_reassignment_agents':
-                'previous_agent_id <> target_agent_id',
-            'chk_work_item_reassignment_lease':
-                'previous_lease_until > 0 AND lease_until > previous_lease_until '
-                'AND attempt_count > 0 AND attempt_count < max_attempts',
-            'chk_work_item_reassignment_immutable_clock':
-                'create_time > 0 AND update_time = create_time',
-        },
+        'checks': {},
         'unique_constraints': (
             'PRIMARY', 'uk_work_item_reassignment_id',
             'uk_work_item_reassignment_command',
@@ -640,135 +573,6 @@ def split_exact_statements(resource):
     return statements
 
 
-# Only the observed MySQL utf8mb4 introducer is decoration. Backticks are
-# identifier delimiters, never removed from string contents. The 8.0.21 DD
-# escaped-delimiter form is accepted only for simple ASCII word literals;
-# interior/backslash escapes and other charsets fail closed, not unescaped.
-TOKEN_RE = re.compile(
-    r"\s*(_utf8mb4\\'[A-Za-z0-9_]+\\'|(?:_utf8mb4)?'(?:''|[^'\\])*'|"
-    r"`[A-Za-z_][A-Za-z0-9_]*`|>=|<>|<|>|=|\+|\(|\)|,|[A-Za-z_][A-Za-z0-9_]*|[0-9]+)",
-    re.IGNORECASE)
-
-
-def check_tokens(text):
-    values = []
-    position = 0
-    while position < len(text):
-        match = TOKEN_RE.match(text, position)
-        if not match:
-            if text[position:].strip():
-                raise SchemaError('check_clause_unparseable')
-            break
-        token = match.group(1)
-        if token.lower().startswith(("_utf8mb4'", "_utf8mb4\\'")):
-            token = token[8:]
-            if token.startswith("\\'"):
-                token = "'" + token[2:-2] + "'"
-        elif token.startswith('`'):
-            token = token[1:-1]
-        values.append(token)
-        position = match.end()
-    return values
-
-
-class CheckParser(object):
-    def __init__(self, text):
-        self.tokens = check_tokens(text)
-        self.at = 0
-
-    def peek(self):
-        return self.tokens[self.at] if self.at < len(self.tokens) else None
-
-    def take(self, value=None):
-        token = self.peek()
-        if token is None or (value is not None and token.upper() != value):
-            raise SchemaError('check_clause_unparseable')
-        self.at += 1
-        return token
-
-    def parse(self):
-        value = self.parse_or()
-        if self.peek() is not None:
-            raise SchemaError('check_clause_unparseable')
-        return value
-
-    def parse_or(self):
-        values = [self.parse_and()]
-        while self.peek() is not None and self.peek().upper() == 'OR':
-            self.take('OR')
-            values.append(self.parse_and())
-        return values[0] if len(values) == 1 else ('or', tuple(values))
-
-    def parse_and(self):
-        values = [self.parse_predicate()]
-        while self.peek() is not None and self.peek().upper() == 'AND':
-            self.take('AND')
-            values.append(self.parse_predicate())
-        return values[0] if len(values) == 1 else ('and', tuple(values))
-
-    def parse_predicate(self):
-        if self.peek() == '(':
-            self.take('(')
-            value = self.parse_or()
-            self.take(')')
-            return value
-        left = self.parse_value()
-        token = self.peek()
-        if token is None:
-            raise SchemaError('check_clause_unparseable')
-        upper = token.upper()
-        if upper == 'IN':
-            self.take('IN')
-            self.take('(')
-            values = [self.parse_value()]
-            while self.peek() == ',':
-                self.take(',')
-                values.append(self.parse_value())
-            self.take(')')
-            return ('in', left, tuple(values))
-        if upper == 'IS':
-            self.take('IS')
-            negated = False
-            if self.peek() is not None and self.peek().upper() == 'NOT':
-                self.take('NOT')
-                negated = True
-            self.take('NULL')
-            return ('is_not_null' if negated else 'is_null', left)
-        if token in ('>=', '<>', '<', '>', '='):
-            self.take()
-            return (token, left, self.parse_value())
-        raise SchemaError('check_clause_unparseable')
-
-    def parse_value(self):
-        value = self.parse_atom()
-        while self.peek() == '+':
-            self.take('+')
-            value = ('+', value, self.parse_atom())
-        return value
-
-    def parse_atom(self):
-        token = self.take()
-        if token == '(':
-            value = self.parse_value()
-            self.take(')')
-            return value
-        if token.startswith("'"):
-            return ('string', token[1:-1].replace("''", "'"))
-        if token.isdigit():
-            return ('number', int(token))
-        name = token.lower()
-        if self.peek() == '(':
-            self.take('(')
-            argument = self.parse_value()
-            self.take(')')
-            return ('function', name, argument)
-        return ('identifier', name)
-
-
-def normalized_check(text):
-    return CheckParser(text).parse()
-
-
 def parse_metadata(rows):
     result = {
         'schema_charset': None,
@@ -897,22 +701,15 @@ def compare_table(metadata, table):
     if sorted(actual_indexes, key=lambda value: value[0]) != expected_indexes:
         mismatches.append('indexes')
 
-    expected_constraints = {}
-    for name in expected['unique_constraints']:
-        expected_constraints[name] = ('PRIMARY KEY' if name == 'PRIMARY' else 'UNIQUE', 'YES')
-    for name in expected['checks']:
-        expected_constraints[name] = ('CHECK', 'YES')
-    if metadata['constraints'][table] != expected_constraints:
+    # Business CHECKs are retired. Inspect metadata without enforcing their semantics.
+    expected_constraints = {
+        name: ('PRIMARY KEY' if name == 'PRIMARY' else 'UNIQUE', 'YES')
+        for name in expected['unique_constraints']
+    }
+    actual_constraints = {name: value for name, value in metadata['constraints'][table].items()
+                          if value[0] != 'CHECK'}
+    if actual_constraints != expected_constraints:
         mismatches.append('constraints')
-    if set(metadata['checks'][table]) != set(expected['checks']):
-        mismatches.append('checks')
-    else:
-        for name, clause in expected['checks'].items():
-            try:
-                if normalized_check(metadata['checks'][table][name]) != normalized_check(clause):
-                    mismatches.append('check_clause:' + name)
-            except SchemaError:
-                mismatches.append('check_clause:' + name)
     return ('equivalent', sorted(set(mismatches))) if not mismatches else ('drift', sorted(set(mismatches)))
 
 

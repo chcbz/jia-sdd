@@ -1,0 +1,9 @@
+# Release tooling exact-union integration evidence
+
+Merge e86b0542f4f2062a5890ed5edcb8e60fd6586bdf/treee6ea596447c4458cef5d990062f266b47142c1b1 in /home/isp/wsps/cyf/.worktrees/jvc-oai-release-integrated-r1, branchcodex/jvc-oai-release-integrated-r1. Parents exactly HOST07a08baa36504ef87f6ccca83708e499cfdb35be then Web1e5bacd472d5a63ce47b77f86e542cea021fc4fa. Shared base83e32efe. Main independently compared complete recursive Git mode/type/blob/path maps: HOST11 paths, Web6 paths, zero overlap, final map exactly their union, no other change, clean. commonSHA2adc6e4b08af31cc9103f2beeac44957df93545510c1d093587aa6bed3685363 and canonicalb333df940a58640a59b46ebd29d301fe2a82e22b3745598693179a004e74d525 confirmed.
+
+Merger reports no remaining commands/processes, no manual source edits/tests/production. A pre-merge read-only cat used wrong matrix basename, zero writes; corrected exact provided path then Git merge/proof completed. This tooling typo does not invalidate exact Git evidence and is disclosed, not a hidden product/test failure.
+
+WebR3 conditional safety admission now satisfied for this exact merged tree. HOSTR6 all failed at fixture subshellPID after build-contractPASS; failure already attributed, R7 source correction is isolated to HOST test file and does not change accepted production/common/Web bytes. Main explicitly permits independent Weball on this merged tree after that attribution, not automatic continuation of failed HOST test. HOSTR7 still requires own test-only review/verification and later exact integration; Web evidence must remain keyed to actuale6ea tree, not relabeled as future tree hit.
+
+No actual activation proof, new application baseline artifact, runtime handoff or production release is implied. Historical Web artifact still cannot replace newer live changes.

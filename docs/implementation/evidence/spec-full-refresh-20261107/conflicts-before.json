@@ -1,0 +1,1587 @@
+[
+  {
+    "path": "specs/account-security-foundation/spec.md",
+    "line": 59,
+    "text": "- 这是 P0 identity/ACL/concurrency/migration 变更，API 必须由 `critical_worker` 单独写入，并由独立只读安全 Reviewer 审查。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/design.md",
+    "line": 266,
+    "text": "| `provider_egress_wrapping_key` | egress_key_id（全局唯一版本 ID）、provider/account_namespace、kms_key_ref、state、security_epoch、activated/retired/blocked/destroyed_at、max_required_unwrap_until、version | `ACTIVE_WRAP_UNWRAP/RETIRED_UNWRAP_ONLY/COMPROMISE_PENDING/COMPROMISED_BLOCKED/DESTROY_PENDING/DESTROYED`；正常轮换不变 security_epoch并保留旧 key 解密能力至全部引用 deadline；compromise 原子递增 epoch 使未 send-start lease 失效；销毁前 current-read 扫描验证且双人审批 |"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/design.md",
+    "line": 268,
+    "text": "| `llm_usage_authorization` | task/workItem/agent、execution_epoch、invocation_id、provider/account_namespace/operation_namespace/idempotency_key、immutable request blob ref/digest、egress_key_security_epoch、Gateway owner_id/owner_epoch/lease_until/fencing_token、price/route version+digest、server-authoritative egress descriptor+digest、provider idempotency retention/safety margin/replay_safe_until、allowed_actual_model_ids、token ceilings、reserved cost、RESERVED/DISPATCHED/CONSUMED/VOIDED_CONFIRMED_UNUSED/UNKNOWN/CLOSED_SYSTEM_RISK、expires_at | 每次调用前的费用上限预留；route/价格/Agent/work item 与保守 replay deadline 服务端派生；owner lease 可 CAS 接管但 request/key 不变 |"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/design.md",
+    "line": 532,
+    "text": "Gateway 上传 blob 和 authorization freeze 都只接受 ACTIVE；dispatch、Broker blob GET、lease 与 send-start 都必须先按全局锁序锁/current-read同一 key root，只接受 ACTIVE 或 RETIRED_UNWRAP_ONLY、且 lease/authorization 冻结的 securityEpoch 必须等于 registry current epoch，并不得超过对应 frozen deadline。成功的 blob GET 事务提交是 unwrap authorization 的线性化点：它创建绑定 exact Broker workload identity、authorizationId、egressLeaseId、blobVersion、egressKeyId/securityEpoch 与短 expiry 的 audited one-use authorization row；同一 lease/blob GET 重放只能返回同一 authorizationId，不得生成第二个。Broker worker 本身没有 raw KMS decrypt IAM；仅受管 unwrap adapter 可在访问 KMS 前把该 row 从 `ISSUED` 原子 CAS 为 `CONSUMED_BEFORE_KMS`，并只对冻结 envelope/AAD 发起一次 KMS unwrap 尝试。CAS 或 KMS 响应丢失均不得重用该 authorization、不得第二次调用 KMS；Broker 放弃该 lease，待安全 EXPIRED 后以新 lease/authorization 恢复。因此“一次性”是受信 Broker/unwrap service boundary 内可审计的 at-most-once grant，不宣称脱离该边界的密码学 one-time ciphertext。若随后发生 compromise，fence 前已 CAS 消费的 decrypt 可能完成，但 send-start 必须再次过 key fence。`COMPROMISE_PENDING` 以 provider key root 作为串行化根；事务持有该 root 后，直接按完整 PK 升序锁全部关联旧 epoch CLAIMED lease，在**同一事务**递增 securityEpoch、置 deny 并把每行物理 CAS 为 `REVOKED_BEFORE_SEND` 后才可提交，任一更新失败整体回滚。该事务不读取或修改 authorization/blob/dispatch，故依全局锁序允许跳过这些中间表；若实现需要读取任一中间表，必须先按 authorization→dispatch→blob 冻结顺序取锁后才能锁 lease，禁止 key→lease→authorization/blob 回锁。任何后续 blob GET/send-start 返回 `EGRESS_WRAPPING_KEY_BLOCKED`，Broker 收到拒绝或 revoke push 后必须在 socket write 前销毁 plaintext；只有 fence 线性化前已 committed SEND_STARTED 的 lease 保留“可能已调用”证据。随后转 `COMPROMISED_BLOCKED` 并通过 outbox 收敛：从未 dispatch/send-start 的 RESERVED 可证明未使用后 void；任何已有 dispatch、SEND_STARTED 或 UNKNOWN 证据的 authorization 保持 UNKNOWN，只能使用不需要该 key 的 provider status API或验证通过的 provider-signed callback 收据对账，deadline 后转 CLOSED_SYSTEM_RISK，由 SYSTEM variance 承担。禁止在 compromise fence 后签发新的 blob GET/unwrap authorization、导出 DEK、生成新 key 重放或修改 frozen request/key envelope；fence 前已授权 decrypt 仅可在受管内存完成并随后零化，绝无 send permission。所有状态转换、unwrap authorization/消费结果、引用扫描摘要、审批者和 KMS policy verifier 结果写不可变审计记录。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/design.md",
+    "line": 536,
+    "text": "仅 LLM Gateway service identity。Body exact 为 `{invocationId,requestCiphertext,nonce,keyEnvelope,egressKeyId,providerAccountNamespaceId,providerOperationNamespace,requestDigest,plaintextSize}`：requestCiphertext/keyEnvelope 使用无 padding base64url，nonce 是 12 bytes/16 chars，requestCiphertext 是随机 AES-256 DEK 加密并含 128-bit GCM tag；GCM AAD exact 为 RFC8785 JCS `{tenantId,clientId,invocationId,requestDigest,egressKeyId,providerAccountNamespaceId,providerOperationNamespace}`，scope 来自认证上下文并必须与 AAD 相等。keyEnvelope 是 active Broker wrapping key `egressKeyId` 对该 DEK 的受管封装并绑定同一 AAD，服务只校验 envelope 格式/key registry 状态，Broker unwrap 后再次验证；plaintextSize 为十进制字符串且 `1..8388608`；`requestDigest=SHA-256(\"CYF_PROVIDER_REQUEST_V1\\0\" || canonical application request bytes)`。canonical application request bytes 固定为 RFC8785 JCS exact closed `{canonicalizerVersion:1,method,path,query:[{name,value}],headers:[{name,value}],bodyBase64url}`：method 大写，path 是冻结 provider operation 的 byte-exact path，query 按 byte-exact `(name,value)` 排序，headers 仅含 route registry 明确列出的非秘密语义头且 name 小写排序，body 使用无 padding base64url；Authorization/API key、trace header 等 transport-only 字段不得进入。每个资金化 route registry 条目必须冻结 canonicalizer、provider account/operation namespace、幂等覆盖范围、`providerIdempotencyRetentionMillis`、`replaySafetyMarginMillis` 和 UNKNOWN reconciliation SLA；只有 `retention >= maxAuthorizationLifetime + reconciliationSla + clockSkewAllowance + safetyMargin` 才可资金化，否则真实扣费 fail closed。authorization 创建时以服务端时间保守冻结 `providerReplaySafeUntil = authorizationCreatedAt + providerIdempotencyRetentionMillis - replaySafetyMarginMillis`（即使 provider 从首次调用才开始计 retention，也不得把 deadline 后移），所有 dispatch/replay grant 必须 current-read 验证 `now < providerReplaySafeUntil`。Economy 同时从受信 route registry 生成 immutable RFC8785 JCS exact closed `egressDescriptor={schemaVersion:1,provider,providerBaseUrlId,providerAccountNamespaceId,providerOperationNamespace,method,path,queryAllowlist,semanticHeaderAllowlist,providerIdempotencyHeaderName,providerIdempotencyKey,allowedActualModelIds,tokenCeilings,requestCanonicalizerVersion,requestPolicyVersion,routeDigest,modelRouteVersion,priceBookVersion}`，数组 byte-exact 排序去重，`egressDescriptorDigest=SHA-256(\"CYF_PROVIDER_EGRESS_DESCRIPTOR_V1\\0\" || JCS(egressDescriptor))`。encrypted request 的 headers 禁止包含 Authorization/API key/provider idempotency header；Broker 必须用 descriptor 指定的 trusted adapter 解析并验证 method/path/query/semantic headers/body 中的 requested model 与 token ceilings，复算 requestDigest，随后由 Broker 注入 descriptor 冻结的 provider credential 与 idempotency key。任一字段/adapter policy 不匹配返回 `EGRESS_REQUEST_POLICY_MISMATCH` 且绝不外呼。同 `(scope,invocationId)` + 同 digest 幂等返回同结果，不同 digest 返回 `409 PROVIDER_BLOB_CONFLICT`。成功返回 `{providerRequestBlobRef,invocationId,egressKeyId,providerAccountNamespaceId,providerOperationNamespace,requestDigest,plaintextSize,state:\"STAGED\",blobVersion,stagedExpiresAt}`；STAGED 最长 10 分钟未绑定即清理，FROZEN 不可修改。若正常轮换后同 invocation 命中使用 RETIRED key 的 STAGED blob，上传重放仍返回原 row，但 authorization freeze 必须返回 `409 EGRESS_WRAPPING_KEY_RETIRED_REUPLOAD_REQUIRED`；Gateway 只能先安全 abandon，再以新 invocationId、当前 ACTIVE key 和新的未使用 provider idempotency key 重建，不得覆盖旧 row。稳定错误：`PROVIDER_BLOB_TOO_LARGE/PROVIDER_BLOB_ENCODING_INVALID/PROVIDER_BLOB_NOT_FOUND_OR_FORBIDDEN`。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/design.md",
+    "line": 552,
+    "text": "仅当前持有有效 owner lease/fence 的 Gateway identity。返回冻结的 invocation/provider namespace/idempotency key、providerRequestBlobRef/requestDigest、ownerEpoch/leaseUntil/fencingToken、`providerReplaySafeUntil`、state/version、providerRequestId/receipt 状态和 `nextAction`。`RESERVED` 只返回 `CALL_DISPATCH_ENDPOINT`。`DISPATCHED/UNKNOWN` 仅当 current owner 精确 epoch/fence 已有 committed dispatch record 且 `now < providerReplaySafeUntil` 时仍只返回 `CALL_DISPATCH_ENDPOINT`，由 dispatch endpoint 重新复核并排队 Broker replay；当前 tuple 无 record 也返回 `CALL_DISPATCH_ENDPOINT` 以先建 record。route 不安全或 replay deadline 已到则只返回 `RECONCILE_ONLY`，绝不直接返回 provider call permission；`CONSUMED/VOIDED/CLOSED_SYSTEM_RISK` 只返回终态。Gateway 重启后必须先读此资源。`POST /internal/agent/tasks/{taskId}/usage-authorizations/{authorizationId}/owner-claims` body exact 为 `{expectedAuthorizationVersion,expectedOwnerEpoch,claimantInstanceId,requestedOwnerLeaseMillis}`；仅同 Gateway service group、`now >= ownerLeaseUntil` 时按 authorizationId→blobRef 锁序 CAS，ownerId 从认证主体+claimantInstanceId 派生，ownerEpoch/fencingToken 各 +1，lease 封顶 30 秒，并返回完整 frozen refs/state/version/nextAction。`owner-renewals` body exact 为 `{expectedAuthorizationVersion,expectedOwnerEpoch,fencingToken,requestedOwnerLeaseMillis}`，仅当前 owner 且 lease 未过期可把 lease 延到 `now+<=30000ms`，不得改变 epoch/fence。Gateway owner 无权调用 blob read；只有后述持 active egress lease 的 Broker 可取得 encrypted envelope 并在受管进程内 unwrap/decrypt。claim/renew/recovery/dispatch 响应都不得包含 plaintext、key envelope 或 transport secrets。绝不创建新 key 覆盖未知调用。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/design.md",
+    "line": 556,
+    "text": "仅当前 Gateway owner identity。此 endpoint 不使用通用 Idempotency-Key。Body exact 为 `{expectedAuthorizationVersion,ownerEpoch,fencingToken,invocationId,requestDigest}`；按全局锁序锁 provider wrapping-key security root、task root、funding/allocation、authorization、invocation blob，复核 key state 为 ACTIVE_WRAP_UNWRAP 或 RETIRED_UNWRAP_ONLY且 current securityEpoch 等于 authorization/blob 冻结值、owner lease/epoch/fence、executionEpoch、任务可执行、escrow ACTIVE、blob FROZEN/digest、预算，并强制 `now < providerReplaySafeUntil` 且不存在 active egress lease。若 deadline 已到：无历史 dispatch/outbox/egress lease 的 RESERVED 可走确认未外呼后的 void；DISPATCHED/UNKNOWN 或已有任一 dispatch record 只能 `RECONCILE_ONLY`，不得 replay，最终按 receipt/provider proof 或 `CLOSED_SYSTEM_RISK` 收敛。deadline 内若为 RESERVED 则 CAS 为 DISPATCHED；若已 DISPATCHED/UNKNOWN，仅允许当前 owner 为同一 blob/key 排队 replay。事务内插入或幂等读取唯一 `(authorizationId,ownerEpoch,fencingToken)` immutable dispatch record，并在同事务写唯一关联 provider-egress outbox；只有 record+outbox 已提交才返回 `dispatchDecision=QUEUED_FOR_PROVIDER_EGRESS` 与 `dispatchVersion/egressOutboxId`，**该响应不含 provider credential、blob envelope 或任何直接外呼权限**。首次 CAS、响应丢失 recovery、owner-claim 后重新调用都只幂等返回同 record/outbox；owner-claim 本身只返回 `nextAction=CALL_DISPATCH_ENDPOINT`。资金化 route registry 只允许 provider 明确保证冻结 key 下相同请求重放至多执行/计费一次；否则真实扣费 fail closed。owner lease/fence 失效者只能 RECONCILE_ONLY。receipt 入账后 outbox/dispatch replay 只返回已完成结果。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/design.md",
+    "line": 560,
+    "text": "仅 Provider Egress Broker mTLS identity；Gateway 不可调用。Body exact 为 `{authorizationId,dispatchOwnerEpoch,dispatchFencingToken,dispatchVersion,egressOutboxId,requestDigest}`；`brokerInstanceId` 只从 mTLS workload identity 派生，body 不得覆盖。事务按 provider wrapping-key security root→task root→funding/allocation→authorization→invocation blob→egress lease 锁序 current-read，复核 key 状态为 ACTIVE_WRAP_UNWRAP 或 RETIRED_UNWRAP_ONLY、current securityEpoch 等于 authorization/blob 冻结值、exact committed dispatch/outbox、当前 owner tuple 与有效 owner lease、任务/escrow 可执行、无 active egress lease、`now < providerReplaySafeUntil`；创建绑定该 `egressKeySecurityEpoch` 的单次 `CLAIMED` lease，`egressLeaseUntil=min(now+5000ms,ownerLeaseUntil,providerReplaySafeUntil)`，若剩余不足 1000ms 则拒绝 `EGRESS_LEASE_WINDOW_TOO_SHORT`；服务端返回 `{egressLeaseId,egressLeaseUntil,egressLeaseTtlMillis,authorizationId,dispatchVersion,providerRequestBlobRef,requestDigest,egressKeySecurityEpoch,egressDescriptor,egressDescriptorDigest}`，其中 ttl 为响应生成时到 leaseUntil 的保守整数毫秒。Broker 在收到响应时取本地 `monotonicNow`，以 `localSendDeadline=monotonicNow+max(0,egressLeaseTtlMillis-250ms)` 冻结本地截止；ttl≤250ms 直接放弃。同 outbox+broker 同字节重放返回原 active lease；先前 lease 为 EXPIRED 且从未 SENT/RECEIPTED 时，同一 outbox 可由当前 Broker 创建新 lease，其他冲突为 `409 EGRESS_LEASE_CONFLICT`；稳定错误另含 `EGRESS_DEADLINE_EXPIRED/EGRESS_OWNER_FENCED/EGRESS_ALREADY_RECEIPTED`。active lease 存在时 owner-claim、cancel、void、CLOSED 和新 dispatch 不得越过；无 receipt 到期后 authorization 转/保持 UNKNOWN 并允许同 key 新 owner 排队恢复。Broker 取得 lease 后调用 blob GET，在受管内存中 unwrap/decrypt，按 egressDescriptor 验证并复算 digest。**第一字节离开前**必须调用 `POST /internal/llm/provider-egress-leases/{egressLeaseId}/send-starts`，body exact `{expectedLeaseVersion,requestDigest,egressDescriptorDigest,egressKeySecurityEpoch}`；事务按 provider wrapping-key security root→authorization→dispatch record→invocation blob→egress lease current-read，复核 Broker mTLS、key state 为 ACTIVE_WRAP_UNWRAP 或 RETIRED_UNWRAP_ONLY、registry/authorization/blob/lease/body securityEpoch exact 相等、CLAIMED、deadline/owner/fence且 server-side 剩余窗口至少 500ms 后原子置 `SEND_STARTED` 并把 authorization 标记为外呼结果未知门禁，响应 exact `{egressLeaseId,leaseVersion,state:\"SEND_STARTED\",sendStartedAt,sendWindowTtlMillis}`。若 key state/epoch 已被 compromise fence，事务把仍为 CLAIMED 的 lease CAS 为 `REVOKED_BEFORE_SEND`，绝不产生 SEND_STARTED/send window，并返回 `409 EGRESS_WRAPPING_KEY_BLOCKED`；Broker 必须零化已解密 plaintext 且不得 socket write。Broker 在 ACK 到达时重新取 monotonicNow，并以 `min(localSendDeadline,monotonicNow+max(0,sendWindowTtlMillis-100ms))` 收紧截止；只有 committed ACK、sendWindowTtlMillis>100ms 且本地 monotonicNow 未过收紧截止才可 socket write。从 SEND_STARTED 起，即使 lease 时间到，owner claim/cancel/void/CLOSED 也只能保持/转 UNKNOWN，绝不能普通释放或覆盖。写出完成调用 `POST /internal/llm/provider-egress-leases/{egressLeaseId}/sent`，body exact `{expectedLeaseVersion}`，做 `SEND_STARTED→SENT` 并返回 `{egressLeaseId,leaseVersion,state:\"SENT\",sentAt}`；响应丢失仍以 SEND_STARTED 作为 receipt-valid 历史证据。未 send-start 的 CLAIMED lease 可由 `POST /internal/llm/provider-egress-leases/{egressLeaseId}/expire` body exact `{expectedLeaseVersion,egressKeySecurityEpoch}` 处理；事务必须按 provider wrapping-key security root→authorization→invocation blob→egress lease current-read。仅 key state/epoch 仍匹配且普通 deadline 到期时做 CLAIMED→EXPIRED；若 key 为 COMPROMISE_PENDING/COMPROMISED_BLOCKED 或 epoch 漂移，只能做 CLAIMED→REVOKED_BEFORE_SEND 并返回该审计终态，绝不写 EXPIRED。compromise 主事务已物理收敛全部当时 CLAIMED，expire 是幂等补偿。SEND_STARTED 不得 expire/revoke 为未调用。Broker 是 provider credentials 和 provider-domain network policy 的唯一主体；任何 Gateway/普通服务直接 egress 都由基础设施 ACL fail closed。provider response/receipt 由 Broker 或带可验证 provider callback proof 的入口提交；Gateway identity 永无 receipt authority。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/tasks.md",
+    "line": 21,
+    "text": "- [ ] B05 实现 Broker-wrapped blob、authorization 与 server-derived exact egressDescriptor/digest；Broker 解密后必须按 trusted adapter验证 route/host/path/query/headers/body model/token ceilings并注入权威 provider idempotency key，Gateway 无 credential/unwrap/network/receipt authority。dispatch 原子提交 exact record+egress outbox；Broker mTLS 派生 identity取得≤5秒 lease与保守 TTL，第一字节前 durable `SEND_STARTED`，其后 expiry/cancel/void/CLOSED 只能 UNKNOWN；定义 send-starts/sent/expire exact CAS，receipt 匹配 SEND_STARTED/SENT。deadline 后禁止 replay，takeover保留同 key，未知可 CLOSED_SYSTEM_RISK；实现 ACTIVE_WRAP_UNWRAP→RETIRED_UNWRAP_ONLY 正常轮换与 deadline 保留、销毁前引用扫描/双人审批/KMS gate；blob GET commit 创建同 lease/blob 唯一的 audited at-most-once unwrap authorization，Broker worker 无 raw KMS IAM，受管 adapter先 CAS consume再单次 KMS attempt且响应丢失不得重用；COMPROMISE_PENDING 以 key root 串行、同事务递增 securityEpoch并按 PK 锁/CAS 全部旧 CLAIMED 为 REVOKED_BEFORE_SEND，跳过未触及中间表但禁止 lease→authorization/blob 回锁，dispatch/blob GET/lease/send-start/expire 全部先锁/current-read key root；fence 前 decrypt可完成但无 send permission且 Broker 零化 plaintext，只有 fence 前 SEND_STARTED 视为可能调用；COMPROMISED_BLOCKED 后只做无 key provider 对账并由 SYSTEM 承担未知费用；RETIRED STAGED blob 仅可安全 abandon 后以新 invocation/key重建。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/acceptance.md",
+    "line": 18,
+    "text": "- [ ] 9. Economy 冻结 server-authoritative egressDescriptor/digest；Broker 解密后按 trusted adapter验证 route/host/path/query/headers/body model/token ceilings并注入权威 credential/idempotency key，Gateway无 unwrap/network/receipt authority。dispatch写 record+outbox；Broker mTLS identity取得保守TTL lease，第一字节前必须 committed `SEND_STARTED`。CLAIMED可 expire为未调用；SEND_STARTED 后任何 expiry/claim/cancel/void/CLOSED只能 UNKNOWN，receipt 匹配 SEND_STARTED/SENT；send-starts/sent/expire exact CAS与同 key恢复通过竞态测试。egressKeyId 为持久化不可复用版本；正常轮换使旧 key 进入 RETIRED_UNWRAP_ONLY 并保持至全部 staged/replay deadline，销毁需 current-read 零引用+双人审批+KMS gate；blob GET commit 是 decrypt authorization 线性化点并创建同 lease/blob 唯一的 audited at-most-once unwrap row；Broker worker无 raw KMS IAM，受管 adapter必须先 CAS `ISSUED→CONSUMED_BEFORE_KMS`再做单次 KMS attempt，丢失不得重用；COMPROMISE_PENDING 以 key root 串行、同事务递增 securityEpoch并按 PK 把全部旧 CLAIMED 物理 CAS 为 REVOKED_BEFORE_SEND，dispatch/blob GET/lease/send-start/expire 均先锁/current-read key root；fence 前已授权 decrypt可完成但绝无 send permission且 Broker 零化 plaintext；覆盖 BLOCKED 后 dispatch 与 blob GET 后/send-start 前 compromise 竞态。未知调用仅走无 key provider 对账并由 SYSTEM 承担；RETIRED STAGED blob 可安全 abandon 后以新 invocation/key 重建。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/acceptance.md",
+    "line": 49,
+    "text": "- [ ] 31. Gateway/Egress Broker保留 usage/request/dispatch/lease证据；Broker必须执行 authoritative egressDescriptor policy并注入 key，receipt仅 Broker/provider-proof；credential/unwrap/network仅 Broker；wrapping-key registry 生命周期、deadline 解密保留、销毁门禁、decrypt授权线性化、unwrap authorization受管 consume/KMS-attempt at-most-once及 KMS成功/响应丢失后的零化/重启取证、securityEpoch compromise全 CLAIMED revoke与 RETIRED STAGED takeover/abandon 可恢复验证。shadow pricing/账单门槛前不能 capture。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/acceptance.md",
+    "line": 50,
+    "text": "- [ ] 32. funded开关须 expand/backfill/drift=0/旧 binary drain后开启。provider crash时新 owner只排队 outbox；CLAIMED未 send-start可重租，SEND_STARTED后按UNKNOWN same-key reconcile，deadline后CLOSED_SYSTEM_RISK；旧 Gateway无credential/unwrap/network/receipt authority。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/beta-wen-billing.md",
+    "line": 110,
+    "text": "- 模型展示复用详情接口和刷新，不增加轮询；无关字段、接口及模块不顺手重构。仅覆盖真实受影响链路的定向测试，观察实际查询/调用开销，不新增无依据性能门禁或业务强制deadline。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/beta-wen-billing.md",
+    "line": 118,
+    "text": "- 不新增数据库CHECK；现有必要主键/唯一键/外键/类型/非空、锁和事务保留，DDL/initializer/catalog与回归随真实结构变化同步。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/beta-wen-billing.md",
+    "line": 158,
+    "text": "- 必要保护及失败范围：owner/绑定错配只拒绝该次选择；余额不足使承办事务整体回滚；预占/结算与业务完成事实任何一步失败均一起回滚；冲突终态不再动钱。唯一键保护重复事实，根锁/charge行锁串行化状态；预占先原子插入（重复不改值）再锁账单，避免缺行FOR UPDATE后插入导致不同事项gap锁冲突；不存在逐层JWT、单价二次校验或新增数据库CHECK。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/beta-wen-billing.md",
+    "line": 204,
+    "text": "- 固定API `27bb05bc61c35eb9670766f3286eb795b43304a3`经Flow5260799/530，未启动事项取消已在原根锁事务接`TaskBillingService.release`。原取消重放不重复调用资金；已承办事实要求账单，明确未承办无账单可取消。沿用原业务终止及撤销能力，不新增钱款适配层/接口字段；无新CHECK。608项中607通过、1既有Runtime联测跳过，完整initialCancellation 97项通过。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/beta-wen-billing.md",
+    "line": 253,
+    "text": "- Chat沿已有afterCommit投影hint及持久扫描映射为CANCELLED；Web停止该执行的轮询并展示原记录，不能显示成果已提交或免除费用。既有成果读取、状态扫描/初始化合法值同步，未新增数据库CHECK/生产迁移。"
+  },
+  {
+    "path": "specs/agent-economy-marketplace/beta-wen-billing.md",
+    "line": 288,
+    "text": "- 新`economy_task_quote/charge`与`economy_usage_attempt/revision/task_cost`尚未出现在该目录中。费用调用记录即使pending也不属于旧钱包清理范围。真实目录有不可变流水触发器与外键；不可执行直接DELETE/TRUNCATE或全库CHECK/触发器清理。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/design.md",
+    "line": 7,
+    "text": "本节覆盖下面历史的硬 deadline/超时结束描述：1s/2.5s/3s/5s 仅作为观测与优化目标，不得仅因超标拒绝、取消请求、跳过依赖或截断 SSE/AI。全局和依赖层均为观测，不向下游传播可执行的性能 deadline。不得用更大的任意阈值替换旧限制。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/design.md",
+    "line": 9,
+    "text": "保留真实网络错误处理、明确配置的传输超时、用户/身份生命周期取消、账户和授权校验、事务、幂等与互斥；没有获得锁不得继续写或伪报成功。慢请求以安全日志、request ID 和延迟指标记录，作为后续优化点；不记录凭证或用户正文。普通发布仍保留云端功能/安全回归、同 Run 制品及健康核验，不靠快速失败满足性能数字。不恢复历史独立 Reviewer/release_guard 前置。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/design.md",
+    "line": 98,
+    "text": "- `cyf.http.inflight`、`cyf.http.deadline.exhausted`、`cyf.http.slow`。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/design.md",
+    "line": 160,
+    "text": "2. **单元/集成：** deadline 不执行/不传播、慢成功与主动取消、request ID、错误映射、幂等、事务取消边界、缓存 ACL。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/design.md",
+    "line": 176,
+    "text": "1. metrics/request ID/安全日志先默认开启，deadline 先 shadow 记录不强制。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/design.md",
+    "line": 178,
+    "text": "3. deadline 保持观测，不切为按性能目标强制拒绝；真实网络和取消行为仍须验证事务、幂等及失败语义。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/design.md",
+    "line": 179,
+    "text": "4. 逐模块推进，不进行一次性全量大改；每批有独立 commit、Owner 自检和云端测试；不设独立 Reviewer。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/tasks.md",
+    "line": 7,
+    "text": "本节覆盖下面历史的硬 deadline/超时结束描述：1s/2.5s/3s/5s 仅作为观测与优化目标，不得仅因超标拒绝、取消请求、跳过依赖或截断 SSE/AI。全局和依赖层均为观测，不向下游传播可执行的性能 deadline。不得用更大的任意阈值替换旧限制。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/tasks.md",
+    "line": 9,
+    "text": "保留真实网络错误处理、明确配置的传输超时、用户/身份生命周期取消、账户和授权校验、事务、幂等与互斥；没有获得锁不得继续写或伪报成功。慢请求以安全日志、request ID 和延迟指标记录，作为后续优化点；不记录凭证或用户正文。普通发布仍保留云端功能/安全回归、同 Run 制品及健康核验，不靠快速失败满足性能数字。不恢复历史独立 Reviewer/release_guard 前置。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/tasks.md",
+    "line": 25,
+    "text": "- [ ] `PERF-A01`（balanced_worker）：加入低基数 Micrometer route histogram、inflight、deadline/slow counters 和 Hikari/Tomcat/JVM 暴露；owned paths 预计为 common starter/service 与 starter 配置。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/tasks.md",
+    "line": 28,
+    "text": "- [ ] `PERF-A03`（critical_worker）：实现 deadline 仅观测且不向下游传播，保留真实 timeout/error contract；Owner 自检写事务、幂等和取消边界并补云端回归。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/tasks.md",
+    "line": 75,
+    "text": "- `PERF-A01-HIST`：已有 HTTP observation 的 histogram/SLO buckets 与 URI 标签上限；不包含 exporter/dashboard、inflight/deadline 或生产指标验收。父任务 `PERF-A01` 保留剩余工作。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/spec.md",
+    "line": 10,
+    "text": "本节覆盖下面历史的硬 deadline/超时结束描述：1s/2.5s/3s/5s 仅作为观测与优化目标，不得仅因超标拒绝、取消请求、跳过依赖或截断 SSE/AI。全局和依赖层均为观测，不向下游传播可执行的性能 deadline。不得用更大的任意阈值替换旧限制。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/spec.md",
+    "line": 12,
+    "text": "保留真实网络错误处理、明确配置的传输超时、用户/身份生命周期取消、账户和授权校验、事务、幂等与互斥；没有获得锁不得继续写或伪报成功。慢请求以安全日志、request ID 和延迟指标记录，作为后续优化点；不记录凭证或用户正文。普通发布仍保留云端功能/安全回归、同 Run 制品及健康核验，不靠快速失败满足性能数字。不恢复历史独立 Reviewer/release_guard 前置。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/acceptance.md",
+    "line": 7,
+    "text": "本节覆盖下面历史的硬 deadline/超时结束描述：1s/2.5s/3s/5s 仅作为观测与优化目标，不得仅因超标拒绝、取消请求、跳过依赖或截断 SSE/AI。全局和依赖层均为观测，不向下游传播可执行的性能 deadline。不得用更大的任意阈值替换旧限制。"
+  },
+  {
+    "path": "specs/api-performance-3s-slo/acceptance.md",
+    "line": 9,
+    "text": "保留真实网络错误处理、明确配置的传输超时、用户/身份生命周期取消、账户和授权校验、事务、幂等与互斥；没有获得锁不得继续写或伪报成功。慢请求以安全日志、request ID 和延迟指标记录，作为后续优化点；不记录凭证或用户正文。普通发布仍保留云端功能/安全回归、同 Run 制品及健康核验，不靠快速失败满足性能数字。不恢复历史独立 Reviewer/release_guard 前置。"
+  },
+  {
+    "path": "specs/architecture-convergence/tasks.md",
+    "line": 147,
+    "text": "出现新路由/新表/新依赖/新全局开关/重复facade/与本批无关格式化时，不得以“顺便优化”继续。先记录具体阻塞和最小必要变化并修订本包；业务范围改变须询问用户。Owner自检不需要独立Reviewer，不为每个普通提交新增审批。"
+  },
+  {
+    "path": "specs/architecture-convergence/acceptance.md",
+    "line": 32,
+    "text": "先读取候选build.gradle，再通过现有编排/Flow入口设置对应参数，不在本机执行这些重任务。"
+  },
+  {
+    "path": "specs/architecture-convergence/development-principles.md",
+    "line": 51,
+    "text": "- CYF不新增/依赖数据库CHECK；业务规则归既有责任层，主键、唯一键、外键、非空、类型、事务不删除。既有生产CHECK需独立授权迁移，不在启动时全库清理。"
+  },
+  {
+    "path": "specs/architecture-convergence/development-principles.md",
+    "line": 70,
+    "text": "- 本地构建发布按2026-11-06最新规则，600秒是完整同批墙钟优化目标，**不是应用deadline或本地强杀门槛**。旧Flow-only和旧Run硬时限不能套用本地；历史文档冲突以根AGENTS为准。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 33,
+    "text": "| `archive-schema.sql` / `ArchiveSchemaCatalog` | DB CHECK 固定 120 回，序回区间到 120；启动精确比对 schema | 有版本的迁移 + 双 schema 兼容阶段；修改 SQL 和 Java 预期两处 |"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 266,
+    "text": "- 连续章节/段落、声明目录与实际目录相符等跨行条件由服务端验证，不伪装成单行 CHECK 可保证。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 439,
+    "text": "这是形状示例，不能直接投递。contextRef 必须由 client 固定 origin 与 job/run 重建并比较，不信任任意 URL。不得新增强制执行的性能 deadline；现有安全 credential/lease 生命周期与可续期机制继续按身份安全处理，不把它当成任务总耗时预算。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 576,
+    "text": "2. **桥接版本**：先部署能识别旧/新 schema 的启动校验器；通用业务入口关闭，旧数据继续读取。修复种子 bootstrap 为“存在则验证，不夺回 active”。若未先桥接，旧程序可能因精确 CHECK 比对而重启失败。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 577,
+    "text": "3. **扩展迁移**：添加管理/草稿/发布旁表，登记旧书库关联与旧版 publication，放宽章回/序言 CHECK。DDL 不假设跨语句事务原子；记录每步 schema 版本/校验摘要，可从实际状态恢复。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 594,
+    "text": "- 不新增独立 Reviewer，不增未知固定资源/耗时硬门槛；部署互斥、实际健康、进程归属、可恢复安装保留。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 622,
+    "text": "- schema 兼容、reader/私人数据/选文解耦来自 source-audit 中实际固定书目和 CHECK 的证据；不是为了通用化做全站重构。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/design.md",
+    "line": 623,
+    "text": "- 新 `expectedWorkRevision` 是为消除默认版 A→B→A 后仅比较 ID 无法发现的并发修改；权限/锁/幂等都用精确事务版本，不添加性能 deadline。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/source-baseline.md",
+    "line": 23,
+    "text": "| 底层结构已有 work/edition/chapter/paragraph，但 CHECK 仍单书约束 | `/home/isp/wsps/cyf/api/chat/jia-chat-mapper/src/main/resources/db/archive-schema.sql` |"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/source-baseline.md",
+    "line": 24,
+    "text": "| 启动按精确列/索引/外键/CHECK 比对，不自动处理新结构 | `/home/isp/wsps/cyf/api/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/config/ArchiveSchemaCatalog.java` |"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/source-baseline.md",
+    "line": 40,
+    "text": "- “已有阅读接口，还需维护 API”方向正确，但还必须修复阅读 SQL、选文验证、schema CHECK 和 bootstrap，否则只会形成半闭环。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/impact-assessment.md",
+    "line": 41,
+    "text": "不需要等待全部历史任务完成，也不需要新增独立 Reviewer。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/tasks.md",
+    "line": 47,
+    "text": "- 每个工作包一个 implementation Owner 自检，不创建独立 Reviewer/release_guard，不等待历史审查队列。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/spec.md",
+    "line": 31,
+    "text": "- 不新增独立 Reviewer 或发布审批岗位；责任 Owner 自检与真实自动化验证保留。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/spec.md",
+    "line": 64,
+    "text": "- 不只是新增 API：数据库 CHECK、启动导入、目录、个人阅读验证、选文提问均存在单书约束。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/spec.md",
+    "line": 79,
+    "text": "- `archive_prepare(operationKey,fileId,fileVersion,sourceSha256,workId,title,author,sourceName,sourceRights)`：用户选定完整UTF-8纯文本底本及权利说明；源文件由具体典籍工具读取/核对摘要并确定性整理，全文不通过模型重写。延续2.0.0脚本的标题、空行和段落规范，以固定Unicode fixture核对两实现摘要。文件读与解析在身份/会话事务外，提交重新进入原turn、岗位和安装fence。只提交DRAFT，不自动上架。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/spec.md",
+    "line": 94,
+    "text": "- 定向回归：ConversationToolExtensionsTest验证任意新技能、无业务provider、资源工具独立、当前turn拒绝和统一路由；ArchiveConversationMySqlTest使用非固定名`configured-editorial-guide`完成草稿/上架SQL回归；Runtime conversation-tools及app-server-native-execution验证空工具技能加载、安装撤销、动态工具与只读隔离。重型API验证仍走Flow。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/spec.md",
+    "line": 102,
+    "text": "API4dc5c51/Flow528和Runtime5d7290c/Flow155已发布。真实吴用普通密议request `01ad2493-fd1f-4f68-a662-d49516c09d60` 完成job `ac_7a028b9bac894e0e846eed5638f04411`，PUBLISHED且active；120回17462段逐章读回，与固定UTF-8底本完全一致，旧版本保留。底本SHA256为`3ff98c1e70f60d0348c57a6d4e3116ca03b9899031ae76a6c374ea1397f95d94`。安装补齐精确制品DDL的两张原生维护记录表，快照/锁保护，无CHECK或内容直写。普通密议引用个人文件库固定版本已验收；附带材料会话的工具视图未扩大。完整证据和恢复说明见既有handoff及 `/home/isp/state/cyf-archive-conversation-20261105/acceptance/release-acceptance.json`。"
+  },
+  {
+    "path": "specs/archive-agent-maintenance/acceptance.md",
+    "line": 10,
+    "text": "- 隔离 MySQL：真实 FK/CHECK、撤任与发布竞态、原子激活、唯一约束、迁移断点；不以 mock 事务代替。"
+  },
+  {
+    "path": "specs/archive-pavilion-reader-mvp/design.md",
+    "line": 11,
+    "text": "- 正章节数量由数据决定，支持超过120章；`activeEdition.preface` 可为null。数据库维持原FK/唯一键/总数校验，旧库两项CHECK需显式一次性迁移。"
+  },
+  {
+    "path": "specs/archive-pavilion-reader-mvp/design.md",
+    "line": 84,
+    "text": "offset 是 UTF-8 byte 左闭右开区间，必须落在码点边界；`blockType` 只能是 `PREFACE` 或 `CHAPTER`，`blockId` 必须分别等于该版 `prefaceId` 或 `chapterId`。同一 block 内的连续 segment 不设置通用段数或选文字节额度（2026-10-24候选修订，旧线上CHECK须单独受控迁移）。服务端按段落原字节重建权威 `selectedText`。"
+  },
+  {
+    "path": "specs/archive-pavilion-reader-mvp/design.md",
+    "line": 215,
+    "text": "必要校验风险/回归：CAS保护跨设备更新，重试必须以真实版本及原书位置构造请求；身份/edition fence保护延迟回读，不在Web增加业务授权。回归在Web tests/archive-reader.test.js的multi-book用例，覆盖冲突恢复、书架可见失败/按钮、并发重试共享和身份切换。源码/Flow/发布状态分别见ARCHIVE-MANAGEMENT-CHAT-20261105 handoff，不因本文更新宣称上线。"
+  },
+  {
+    "path": "specs/archive-pavilion-reader-mvp/spec.md",
+    "line": 14,
+    "text": "- 正章节数量由数据决定，支持超过120章；`activeEdition.preface` 可为null。数据库维持原FK/唯一键/总数校验，旧库两项CHECK需显式一次性迁移。"
+  },
+  {
+    "path": "specs/codex-history-closeout-20261023/summary-20261107.md",
+    "line": 26,
+    "text": "- “默认50条”被“每页20条”替代，不是20次请求。"
+  },
+  {
+    "path": "specs/codex-history-closeout-20261023/spec.md",
+    "line": 6,
+    "text": "- 优先当前AGENTS、现有特性spec与原型；本归纳保留历史决定和交付边界，不恢复旧10状态、旧本地生产构建、旧多Owner排期或任意清理授权。"
+  },
+  {
+    "path": "specs/codex-history-closeout-20261023/spec.md",
+    "line": 8,
+    "text": "- 源码、Flow测试/制品、安装、健康、业务验收分开。重任务走Flow，控制面/轻量检查在本机；develop不自动部署，Run不等待外部放行。"
+  },
+  {
+    "path": "specs/codex-history-closeout-20261023/threads.md",
+    "line": 57,
+    "text": "- `docs/implementation/API_LOGIN_REDIRECT_RECHECK_20260921.md`"
+  },
+  {
+    "path": "specs/codex-history-closeout-20261023/threads.md",
+    "line": 444,
+    "text": "前端重型测试/Vite/打包移Flow以避免本机OOM；旧本地发布例外失效，现规则进一步按资源负载划分两端。"
+  },
+  {
+    "path": "specs/codex-history-closeout-20261023/threads.md",
+    "line": 493,
+    "text": "- `/home/isp/wsps/cyf/docs/implementation/handoffs/AGENT-ACK-CHECKPOINT-20261008.md`"
+  },
+  {
+    "path": "specs/command-observability-v1-9/design.md",
+    "line": 5,
+    "text": "API develop `0b5cfe8cbcafcadca7dcef07874d6b397f0ab1e4`，Web develop `7099b176e06e2322c6a79f258a4ad74d6221c358`；必须保留1.8祖先。新Web路由`/command-observability`，name=`CommandObservability`，个人中心唯一入口“协作运行看板”。无独立Reviewer，各Owner自检。"
+  },
+  {
+    "path": "specs/economy-readonly-preview-v1-7/design.md",
+    "line": 108,
+    "text": "责任Owner自检，不设独立Reviewer。API/Web可在独立worktree并行；Gradle经orchestrator串行；只有契约联调/集成和部署顺序串行。组件自检合origin/develop（快进/精确merge，不覆盖其他提交），相关测试通过后创建新的冻结release/1.7.0，记录前后端commit/tree、测试与制品SHA、`build_origin=local_user_authorized`；云效恢复前本地发布，不伪造Flow Run。"
+  },
+  {
+    "path": "specs/economy-readonly-preview-v1-7/tasks.md",
+    "line": 42,
+    "text": "API18:08、Web18:11已实际部署健康；认证回归发现预览数据503，新增`V1-7-PREVIEW-MYSQL-FIX-20260917`有界修复任务，未标整需求完成/归档。部署runtime Owner与API修复Owner并行，前者独占生命周期、后者独立源码；不另起Reviewer、不生产DML。结果见`docs/implementation/V1_7_LOCAL_RELEASE_RESULT_20260917.md`。"
+  },
+  {
+    "path": "specs/economy-readonly-preview-v1-7/acceptance.md",
+    "line": 16,
+    "text": "10. Web相关既有钱包/技能/租金、悬赏、成果、阅读、移动端与API ACL回归；横竖屏可滚动、详情关闭正常；性能慢仅观测，不以无依据deadline取消请求。"
+  },
+  {
+    "path": "specs/full-tenant-gray/spec.md",
+    "line": 59,
+    "text": "| 其他固定0/历史兼容/SYSTEM运行实体：**尚未全量清理** | 既有[代码库存](../../docs/implementation/handoffs/FULL-TENANT-GRAY-20261030-CODE-REMAINDER.md)及API `docs/minimal-tenant-grey.md`；相关业务SQL/CHECK | 对固定提交区分真实硬编码、配置示例、测试数字、owner哨兵及历史只读事实，修实际边界。已有policy/恢复/WS修复不重列；旧minimal-grey说明含过期兼容口径，不能照抄启动参数或据此宣称开放全部路由 |"
+  },
+  {
+    "path": "specs/full-tenant-gray/spec.md",
+    "line": 63,
+    "text": "**源码存在但尚未执行的维护候选**：API `agent/jia-agent-mapper/src/main/resources/db/`下的`agent-identity-business-tenant-20261030.sql`、`agent-task-execution-grant-tenant-20261030.sql`、`agent-execution-report-tenant-20261030.sql`、`agent-personal-workspace-execution-tenant-20261030.sql`、`agent-task-creation-tenant-20261030.sql`，以及`agent/jia-agent-service/src/main/resources/db/agent-personal-workspace-tenant-links-20261029.sql`等。脚本写好不等于目标数据库已应用；未来须对固定目标检查CHECK、唯一键、索引和授权/备份范围，不能全量执行旧脚本或回填。生产0此次没有执行这些灰度迁移。"
+  },
+  {
+    "path": "specs/full-tenant-gray/spec.md",
+    "line": 78,
+    "text": "4. 主机独立拉取固定真实Run不可变制品，按coordinator→release→lifecycle锁、身份/ACL、摘要、备份及恢复流程安装。精确源码/测试/制品一致时复用，下载/安装重试、文档、重启不重复付费构建；不得把重型任务搬回本机。"
+  },
+  {
+    "path": "specs/juyiting-agent-model-governance/tasks.md",
+    "line": 11,
+    "text": "- [ ] 在实施开始时创建单一责任 Owner 与 path-scoped worktree；普通代码由 Owner 自检后合组件 `develop`，不创建独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-agent-skill-display/design.md",
+    "line": 297,
+    "text": "前后端正式测试、构建、制品和部署分别复用Flow4403172/5260799。固定发布版本及每端commit/tree，各端同Run不可变制品及SHA256；不是把两端误说成同一个Run。develop不自动部署。本机仅预览/定向诊断，禁止本地正式打包或源码到生产路径。API先健康再Web；复用发布锁、备份及可恢复安装，不改变Runtime或DB。"
+  },
+  {
+    "path": "specs/juyiting-agent-skill-display/handoff.md",
+    "line": 43,
+    "text": "API149使用--continue后：2436次测试执行，133次失败，85次skipped（同一类可能在多个保留sourceSet重复执行）；另26处独立编译错误源位置，集中于deadline、User分页和conversation archive测试夹具。133次中3次属于本次两个测试文件的Mockito重复stub写法（替换已有thenThrow时when先触发旧异常，应用尚未被调用）；已用doReturn/doThrow修复至API945cb9ce56f99d10854a379fc3f9fe9a56475d81/tree825897e314de5adc2394bffcdb5df86b5b4afaf8，push feature/develop。剩余既有130次失败为110个独立用例，所有失败/编译夹具均未由本次改动。完整归因与各例见evidence/flow-root-cause-matrix.json。后端全量输入已失败两次，不再盲重试；未逐例证明是“仅测试问题”，不能放行生产。"
+  },
+  {
+    "path": "specs/juyiting-agent-skill-display/acceptance.md",
+    "line": 100,
+    "text": "前端本机诊断可用已有Mocha入口选择新增与既有测试文件；正式测试和生产构建必须Flow4403172，绑定同run制品，不回退本机生产打包。详设验收仅做文档/JSON/路径/源码锚点检查，无需应用构建。"
+  },
+  {
+    "path": "specs/juyiting-assignee-recommendation/vector-concept-20261101.md",
+    "line": 249,
+    "text": "6. 用真实ES与固定Embedding样本分别验证DSL正确性与语义效果；mock测试不能证明任一项成立。重型集成/性能验证按Flow规则，不在本机生产压测。"
+  },
+  {
+    "path": "specs/juyiting-assignee-recommendation/spec.md",
+    "line": 31,
+    "text": "校验和回归见handoff。本特性不新增SLO拒绝、DAG、向量库、审批、DDL或Runtime协议。重型验证Flow，当前源码结果不等于上线。"
+  },
+  {
+    "path": "specs/juyiting-codex-fast-context-20260925/design.md",
+    "line": 954,
+    "text": "- 不创建独立 Reviewer；各 Owner 自检后按项目政策合入和验证。"
+  },
+  {
+    "path": "specs/juyiting-codex-fast-context-20260925/tasks.md",
+    "line": 5,
+    "text": "原则：不创建独立 Reviewer；每个实现 Owner 对其身份、ACL、事务、幂等、并发和恢复边界自检。"
+  },
+  {
+    "path": "specs/juyiting-creative-delivery-mvp/workspace-redesign-20260927.md",
+    "line": 59,
+    "text": "- **A：冻结增量合同。** 明确消息、产物用途、授权、发布/验收衔接、迁移、恢复和兼容；责任 Owner 自检，不创建独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-creative-delivery-mvp/workspace-redesign-20260927.md",
+    "line": 211,
+    "text": "- 用户取消、真实传输错误、身份切换、租约与锁规则继续保留；慢请求仅观测，不用任意性能 deadline 中止流程。媒体预览失败仍可保留合法下载，但该格式的预览验收不能报通过。"
+  },
+  {
+    "path": "specs/juyiting-creative-delivery-mvp/tasks.md",
+    "line": 29,
+    "text": "发布沿届时有效政策：Owner 自检，无独立 Reviewer；组件 develop、冻结发布输入、测试/制品/部署/业务回读分别记录。需要 Gradle 时仍经 orchestrator 串行。文档规划不自动授予生产数据、客户端改造或付费调用权限。"
+  },
+  {
+    "path": "specs/juyiting-creative-delivery-mvp/tasks.md",
+    "line": 48,
+    "text": "候选 API 与 28 项 Given/When/Then 见 `workspace-contract-v1.md`、`workspace-contract-cases.json`。可以先推进 A/B 的代码前准备，不把其宣称为完整 Agent 文件交付；只有完整纵向链路和格式验收通过才计入 MVP 完成。迁移/ACL/事务由责任 Owner 自检，无独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-creative-delivery-mvp/workspace-contract-v1.md",
+    "line": 181,
+    "text": "文件状态、previewState、executionState、formalDeliveryState 四者分离。预览失败不删除已保存文件；工具退出成功不等于成果已保存；已保存不等于用户验收。只有具备实际依据的传输限制才按实际错误报告；不添加任意秒数、文件大小或性能 deadline 硬门禁。"
+  },
+  {
+    "path": "specs/juyiting-creative-delivery-mvp/fast-deliberation-merge-assessment-20260927.md",
+    "line": 65,
+    "text": "- branch readiness 文档包含历史独立 Reviewer、未测算宿主资源门槛和逐次发布授权表述：**不能把这些旧规定当本轮合并阻断依据**。沿用用户最新 Owner 自检、观测优先和真实授权边界；本轮阻断依据是实际冲突、上述代码问题及必要兼容/数据验证缺口，不是历史磁盘/swap 数值或性能目标。"
+  },
+  {
+    "path": "specs/juyiting-dual-orientation-experience/tasks.md",
+    "line": 19,
+    "text": "- [x] D06 `accepted`、`handoffs/D06.md` 存在、独立 Reviewer ACCEPT 已记录、D06 worktree clean。"
+  },
+  {
+    "path": "specs/juyiting-dual-orientation-experience/tasks.md",
+    "line": 146,
+    "text": "O00 → O01 → O02 → O03 → O04。每项独立 commit/tree、handoff、gpt_test_runner evidence 和 Reviewer ACCEPT 后自动推进；REJECT 由原 Writer 在原 worktree 修复。O04 后才允许集成/部署门禁。"
+  },
+  {
+    "path": "specs/juyiting-execution-recovery/design.md",
+    "line": 18,
+    "text": "无DDL、无生产DML、无运行重派发。先验证API兼容现有前端，再发布配套前端；旧API上历史404必须呈现暂不可恢复，不伪报空。当地本地发布授权有效，不触发Flow；精确SHA、相关测试、制品哈希、互斥与实际健康仍必须保留。已有失败记录修复必须另有精确恢复授权，不能因上线而推导。"
+  },
+  {
+    "path": "specs/juyiting-execution-recovery/tasks.md",
+    "line": 4,
+    "text": "- 主 Owner：本条执行精确只读诊断、契约、集成、orchestrator串行验证、授权范围内发布核验。无独立Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-external-commission-mvp/tasks.md",
+    "line": 11,
+    "text": "| EX-05 | 固定候选、正式回归与发布准备；发布仅按另行实际授权 | API Flow5260799、Web Flow4403172及Runtime所属仓验证；不把本地诊断当正式验收 |"
+  },
+  {
+    "path": "specs/juyiting-external-commission-mvp/tasks.md",
+    "line": 13,
+    "text": "EX-01至03先闭合统一合同，EX-04按同一合同接入；无独立Reviewer或逐阶段人工审批。实现、迁移与正式Flow版本化发布已完成；双账号文本/图片外单闭环通过，本人运行端超时局部恢复后复测通过。运行端稳定性风险尚未闭环，不把阶段成功称整体零问题。"
+  },
+  {
+    "path": "specs/juyiting-external-commission-mvp/tasks.md",
+    "line": 15,
+    "text": "交接必须携带 `/home/isp/wsps/cyf/AGENTS.md`、`/home/isp/wsps/cyf/ops/orchestration/README.md`、本目录D3及 `/home/isp/wsps/cyf/api/docs/interface-standard.md` 1.2（SHA见design.md）、真实任务ID/仓库/基线。Runtime跨仓显式传达规则，不修改全局配置。正式构建/部署统一Flow，develop不自动部署。"
+  },
+  {
+    "path": "specs/juyiting-external-commission-mvp/design-recheck-20261021.md",
+    "line": 84,
+    "text": "业务规则无需重新让用户选择；D2.1已能指导按工作项拆解实现与失败回归。但**不能宣布所有实现前提已闭合**：平台域映射/双主体DDL与锁序、撤回协调及新grant/bootstrap不变量，须先完成EX-01/02的具体验证后冻结接口候选。真实跨用户、并发、Runtime隔离、恢复和最终交付必须实施后测试。原型通过、生产同账号页面正常、历史Flow成功均不是该功能验收。"
+  },
+  {
+    "path": "specs/juyiting-flow-repair-20261008/design.md",
+    "line": 6,
+    "text": "错误：保留真实失败与用户可见原因；不加任意deadline或SLO硬门禁。"
+  },
+  {
+    "path": "specs/juyiting-flow-repair-20261008/tasks.md",
+    "line": 24,
+    "text": "无源码写权限，无台账写权限，无独立Reviewer职责。仅在 /var/tmp/cyf-jyt-flow-mixed-20261008/ 写本任务报告。主控收到后决定是否交现有Owner或另开第三个非重叠Writer。"
+  },
+  {
+    "path": "specs/juyiting-flow-repair-20261008/tasks.md",
+    "line": 31,
+    "text": "最多3源码Writer+1只读辅助，单Owner、独立worktree、不重叠路径；他人dirty代码/进程/证据不动。旧台账owner保留，冲突只告警协调不抢占。子任务不得push、部署、改生产数据、调用付费接口；本地不做生产构建，不直接Gradle。正式验证主控走Flow，不沿用技能旧版develop自动部署描述。无独立Reviewer，Owner自检优先。"
+  },
+  {
+    "path": "specs/juyiting-formal-flow-bugfix-20260923/design.md",
+    "line": 51,
+    "text": "- runtime服务共享吴用/林冲/卢俊义；当前MainPID1995806不归本任务独占。已发conflict-alert，不操作现有进程或inbox；本地构建授权不推导foreign进程控制权。发布需明确本次服务操作Owner/授权、确认无在途工作、绑定旧PID/start ticks/current与候选摘要；保持可恢复安装。"
+  },
+  {
+    "path": "specs/juyiting-formal-flow-bugfix-20260923/tasks.md",
+    "line": 5,
+    "text": "本文件为需求工作包，不是运行台账；当前唯一运行 ledger 是 `docs/implementation/TASKS.yaml`。不创建独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-formal-flow-bugfix-20260923/tasks.md",
+    "line": 19,
+    "text": "不创建独立 Reviewer，Owner 自检；身份/事务/租约相关回归必须保留。修复后如需本地测试构建发布，依既有授权由 exact SHA 形成证据；Gradle 只经 orchestrator 串行。本轮已完成本地定向测试、正式构建和联合制品校验；尚未部署、尚无线上业务验收，见 release 计划最新候选实施记录。"
+  },
+  {
+    "path": "specs/juyiting-formal-flow-bugfix-20260923/tasks.md",
+    "line": 85,
+    "text": "- [ ] 回归覆盖真实Rework→Execution服务链（不预设已有INPUT）、拒绝异主成果/不可用源文件、保留一般TASK输入限制；本地相关测试/构建和新冻结release后只部署API，Web26/runtime23不动。"
+  },
+  {
+    "path": "specs/juyiting-formal-flow-bugfix-20260923/remaining-bugfixes.md",
+    "line": 16,
+    "text": "另外未覆盖：实体手机软键盘/刘海、全产品全部边界、所有状态异常分支的线上回放、资金结算、多Agent协作；本次不恢复独立Reviewer，不以原候选固定环境清单阻止已授权主流程交付。"
+  },
+  {
+    "path": "specs/juyiting-lightweight-workbench/real-service-qa.md",
+    "line": 28,
+    "text": "- 以上为原开发候选的历史检查单；本次依用户当前指令不创建独立Reviewer，采用已授权本地构建部署并真实服务验证。18份相关测试265 PASS不是全仓测试，也不冒充固定Chrome133/实体手机验证。"
+  },
+  {
+    "path": "specs/juyiting-lightweight-workbench/tasks.md",
+    "line": 22,
+    "text": "- [x] 已发布旧版对照静态 Demo 排查图标差异：修复工作台页头、概览主操作/资料卡、手机“全部入口”的图标，不改地图；图标修订 Web `7dd607d`，本地相关测试/构建及菜单六视口通过，等待服务器合并发布后复验。"
+  },
+  {
+    "path": "specs/juyiting-lightweight-workbench/acceptance.md",
+    "line": 37,
+    "text": "|A6|320×740/390×844/844×390/1440×900 无横溢、焦点可用；前端构建/适用测试通过|**部分通过**：28 个本地浏览器布局采样（四视口×七表面）`document.scrollWidth=innerWidth`，见 `evidence/computed-live-fixture.json`/PNG；生产构建另采 28 份、660 条控件 CSS/aria/href 样本，当前视口内 1440px/390px 控件去重 68/56 条（`ui-control-attributes.md` 与 `evidence/computed-controls-live-fixture.json`），空数据不等于全业务状态；另 `evidence/long-chat-fixture.json` 有五视口合成消息布局复测；`npm run build` 已在新增焦点代码后重跑通过（仅提示既有超650KB chunk，生产 dist 遮挡图与 public PNG SHA256 一致）；定向 `juyiting-component-behavior` 在主机空闲后 87 passing；账号离厅/语音/协作 mock 集成 34 passing；其他历史定向 317 passing / 1 个在主机高负载下 melonJS 生命周期超时，随后空闲复验已包含在 87 passing。前序新增焦点回退用例后七份相关组件测试 144 passing / 0 failing（`--timeout 20000`，详见下方复现命令）；早前全量 `npm run test` 得 2331 passing / 47 failing（浏览器工具缺失、基线陈旧断言/桩、本机高负载超时）：其中离厅/SelectedAgentCard断言与3条协作/语音桩已更正并经定向复验；地图 E9A/E9B 浏览器解码工具 `/usr/local/bin/chromium-headless-smoke` 不在本机；查明本机为 aarch64，项目固定 Chrome 133 包为 x86-64：已从 Google 官方下载并验证压缩包 SHA256=`cec67d7e4baf84814a8602ea59aa07a669f31d95e63e935b5e7b39e5986895a2`，本机运行报 `Exec format error`，**不能靠系统 Chromium 142 冒充固定 Chrome 133 全量回归**；E13/TMX 高耗时用例也曾超时，需在项目规定的 amd64 流水线受控环境重跑。实机软键盘/安全区/200% 缩放和读屏待测。另在前序 `a935440` 对展开的手机“全部入口”做六视口实际 Vue 空 API 浏览器回归（含 320×320/640×390）：修复 320 宽原菜单 x=-11、底缘超过视口的问题，现 320×320 菜单 x=15..305、y=58..258，内部可滚动，末项可聚焦且不与底栏重叠；见 `evidence/menu-short-screen-fixture.json` 与同次生成的两张候选截图；可用 `tools/check-mobile-menu.py` 按 `evidence/menu-short-screen-review.md` 重跑（系统 Chromium，非固定 CI），脚本确认 `.juyi-page` 为 `offsetParent` 且菜单宽度按容器计算。最新 CSS 约束后的七份相关组件测试 145 passing（单份组件测试在上一 SHA 时为 89 passing，本轮未单独复跑该单份）；最终代码 `npm run build` 通过，均**不等于**固定 Chrome 133 全量通过。现候选 `8f47a12` 还对 160×370、195×422、422×195、720×450 四个**半尺寸 CSS 视口 + DPR2** 的真实 Vue 复排采样（非 Chrome 实际 200% 缩放）确认导航可达、议事消息区/输入区不裁剪或短屏工作窗可滚动；数据与截图见 `evidence/compact-reflow-review.md`；七份相关组件测试 **146 passing**，生产构建通过。另通过系统 Chromium 142 的真实页签 `setZoom(2)`/`getZoom()` 在四原始视口重测布局：DPR=2/缩后内宽一半、长消息独立滚动、短屏发送可达、无页面横溢；详见 `evidence/actual-zoom-review.md`，**这已覆盖本地实际页签缩放预检，但不等于固定 Chrome 133/实体软键盘/真机安全区/真实服务端验收**。额外补核真实页签 200% 缩放下四视口的七主入口（六业务面板+返回概览），源码对应的内容容器/标题/面板边界/页面无横溢和典籍检索页签均在空 API 状态通过；原始记录在同一 `actual-zoom-fixture.json`，不表示内页写流程或权限态通过。A6 整项仍待验。|"
+  },
+  {
+    "path": "specs/juyiting-lightweight-workbench/acceptance.md",
+    "line": 51,
+    "text": "- 历史原型 63 条覆盖结论属于 Demo；新正式组件接入和仍需实际验证的差异分别见 `feature-integration-audit.md`、`ui-detail.md`。`docs/ui-workbench/ui-detail.md` 是原型属性详设，**实现态以本目录及 live fixture 样本为准**。验收完成前不得将 `integration.yaml` 标为 accepted；`./sddw pin` 会提前改成 integration-ready，真实服务/受控浏览器门禁通过前不要执行。Web 提交已推至非发布特性分支；本轮 root 分支为服务器合并单独 pin 了 `web` gitlink，**没有**用 `./sddw pin` 提前标记为验收就绪。前序独立只读复核对 `a935440` 的菜单和详设抽查无 P0/P1；菜单证据 P2 已补候选 PNG/定位祖先约束，原始工作区的另外两项文档 P2 属于其他未提交用户改动，不跨工作树修改。现候选 `8f47a12` 的极窄/极短复排已独立只读复核，无 P0/P1：七份测试 146 passing、四视口数值和截图重产一致；发现脚本原先未校验可见文字/本地 SHA 的两项 P2 后已修并重新跑通。独立审查未重跑 `npm run build`，先前构建成功仍仅是本地验证记录；受控 amd64 门禁、候选部署/真实写入仍缺。"
+  },
+  {
+    "path": "specs/juyiting-lightweight-workbench/no-deploy-amd64-qa.md",
+    "line": 3,
+    "text": "2026-09-23 编写，2026-09-24 更新。本文件是**操作前检查单**，不是运行报告或通过证明。图标修订后目标提交仅限 `cyf-web-kit` 的 `7dd607d69373794897e28b3267943b66a614c73f`（远端 `codex/juyiting-lightweight-workbench` 已核对）；不得把当前 `develop`、旧 Flow Run 147 或本机 Chromium 142 的结果归给该提交。API 源码未改，root 特性分支已为服务器合并预先 pin 该 Web gitlink；验收状态仍未完成，详见 `acceptance.md`。"
+  },
+  {
+    "path": "specs/juyiting-live-map-preview/tasks.md",
+    "line": 11,
+    "text": "| P4 独立审查 | 唯一 fresh sol_reviewer | exact-tree ACCEPT/REJECT、P0/P1/P2、证据匹配 | 禁止作者自审、旧 Reviewer ACCEPT 复用、择优接受 |"
+  },
+  {
+    "path": "specs/juyiting-live-map-preview/acceptance.md",
+    "line": 21,
+    "text": "| A15 | 唯一独立 Reviewer ACCEPT，并确认源码与测试/构建对应同候选 | 权威报告、完整 SHA/tree |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/design.md",
+    "line": 263,
+    "text": "> 按本 design.md 第0节的局部改动边界完成聚义厅多媒体协作；保留现有页面、布局、样式与正常工作的代码，不按独立原型重做页面。用户只有“提需求、选 Agent、会话调整、验收完成”四步，统一添加资料，保存可选。先在已有候选上核实未完成项，只补实际缺口；复用现有 Agent/工具和工作空间，不新建图片专用入口、确认链或文件系统。优先交付真实闭环，不以原型、mock、构建成功代替验收。正式测试/构建/发布走云效，保留同Run源码和制品绑定，不抢占或取消既有Run，不另起Reviewer。开发/发布须由接手任务获得执行授权；本次文档交付不恢复已暂停任务。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u2-provider-start-20260929.md",
+    "line": 3,
+    "text": "API `jia` 的融合分支已快进到 `27aa2c78a64ae66a74fdce7bcfd77adf177992ee`（tree `ef4cff717b982ba21d3cdaade66560689753a0a3`），并推送远端；本 SDD 更新相同 gitlink。Provider 开始前在服务端任务根/grant/execution 锁下核验当前租约、精确资料版本、授权，原子持久化一次 `conversation_provider_started_at` 与租约版本。已 START 的执行不能重新领取/重复 START；响应丢失必须按未知结果对账，不许自动再次付费。新的 MySQL `v1_16` 增量迁移为单个 `ALTER TABLE`，部分列或缺少有效 CHECK 将禁止启动。`mmdU2ConversationOutput` exact-tree 定向 **51/51 PASS**（4 schema、22 service、23 runtime/security、2 真实隔离 MySQL 8.0.21 旧库升级/部分列与缺失 CHECK 负向，0 skip），日志 `evidence/u2-references/gradle-provider-start-mysql-27aa2c78.log`；隔离实例在测试后关闭、未连接生产数据库。**这不是生产迁移或付款许可。**"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u2-provider-start-20260929.md",
+    "line": 5,
+    "text": "Client 独立候选 `codex/juyiting-mmd-native-image-executor` 原提交 `03214a1c71ee61dd45c5fe23d9e4bd03fd45a9a9`（tree `50a413ea4a6dd3076b9e501d5929ed47baf02e6c`），在已确认原生输入、存在执行器、尚有效租约时，向上述精确 endpoint 提交 fenced `POST /internal/agent/tasks/{taskId}/runs/{runId}/conversation/provider-start`。只有收到严格 `{started:true}` 成功响应才调用内置 imagegen；未知/格式不符/错误响应均停止且不报告虚假失败，不自动重试。定向测试 13/13，全目录 Node 测试 **417/417 PASS**（本地复用另一隔离工作树已有依赖，无生产构建或付费调用）；截至 2026-09-30 已与参考图受控读取合入 Client 主融合分支；组合树真实状态以 [组合证据](integration-u2-client-references-20260930.md) 为准。原文 `costAuthorizationRef(null)` 仍不授权收费，显式环境开关默认关闭。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-bridge-contract-v1.md",
+    "line": 130,
+    "text": "性能只观测，资源/等待预算不作未经证据的拒绝门限；真实锁归属、鉴权、事务、幂等、明确传输超时与用户取消仍保留。没有新的独立Reviewer，Owner自检。未ready不合develop/启用/发布；不能停留在“core默认关闭”声称长期融合已落实。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 12,
+    "text": "- Web：源码确实读取 `VITE_JUYITING_FOLLOWUP_EXECUTE_V3_UI`；下一共同候选须在现有两flag之外启用该编辑UI。尚未修改云端配置。正式构建仅Flow。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 20,
+    "text": "voice UX Owner `01a0faaf-fa6c-7771-8b57-d50ff13a447a` 独立树负责Composer/VoiceControls/必要Hud及voice test；本任务Web Owner `01a0fa90-6916-75c3-aca8-f5638c515f82` 独占component-behavior loader fixture。共同基线3a4cdf，最终由Main集成后冻结exact SHA，先核查自动Run再触发，保持4403172控制权与deployment hold。不使用历史Reviewer作为门禁。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 50,
+    "text": "- API工程继续推进：CHECK literal大小写及typed schema先于父表初始化的真实缺陷已形成修复，当前候选3080dc7b/tree0105e845，完整fixture与bootJar结果尚待Owner交付，不宣称通过。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 108,
+    "text": "只读生产catalog确认snapshot/bootstrap两表均不存在，新0a4d将走缺表初始化而非已存在CHECK比较；没有实证表明线上存在本次关注的格式drift。binding1/15均ONLINE，但当前都由同一个旧版共享Client服务刷新；独立local unit inactive，且运行版没有新typed INSPECT/V3生成/编辑声明，不能把两个ONLINE目标当作双模式新功能验收。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 283,
+    "text": "与Flow状态不同，ECS DescribeCloudAssistantStatus=true且有当前心跳，CloudAssistant InvocationCount1309；本机aliyun.service原PID持续heartbeat200/newTasksfalse。hostgroup仍绑定存在的ecs连接149711，但ListServiceConnections不证明凭据有效/调用权限。DescribeInvocations=0仅当前本机AK查询视角，不得外推Flow连接无invoke。准确平台拒绝原因尚未知，不能归因本机服务失活、磁盘、安装器或voice。未重启健康共享服务/未盲retry/未重建；继续只读核对连接/机器状态差异，有据修复后复用同Run部署。34产品用例仍NOT_RUN，未宣称可验收。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 304,
+    "text": "API准入改根schema3/executionAuthorization与controlled V3；全局敏感字段脱敏未关闭。真实MySQL8.0.46暴露REGEXP BINARY与既有bin collation不兼容，修为保持严格小写hex的REGEXP，并仅规范化实证的三种固定字面量旧binary cast/_ascii表示；不移除CHECK。首轮DDL失败及第二轮_ascii规范化失败均保留。当前d85bc64/tree7280d0d：Main直接解析XML核对4+3共7个真实MySQL方法PASS、0fail/skip，另11个schema canonicalizer单测XML曾核对PASS；桥接XML随后被恢复测试替换，未保留独立旧XML副本，不虚填其摘要。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 306,
+    "text": "安装恢复已纠正旧manifest：旧5c初始化器严格比较完整列、索引和CHECK集合，不能直接声称会忽略新增列。实际旧jar类加载器与Spring条件注册2项测试证明，仅关闭bridge-enabled可避开不兼容桥接准入，保留其它初始化器及V3数据；这不是生产环境完整回退演练。Main已准备旧jar硬链和精确恢复配置，正常前向配置不关闭功能。新版本1.13.50仍是候选，未创建新release refs，1.13.48/49不动。证据见 [本次固定快照](integration-evidence-20260928/primary-v3-recovery-20261002/candidate-state.json)。正式制品交接、同Run前端发布和全34项产品验收仍未完成，不通知可验收。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/full-scope-release-gaps-20261002.md",
+    "line": 431,
+    "text": "AC12 Web`8e9809ab`/tree`ecf68d4f`已feature push：31文字+3inline+34voice共68定向通过、旧源六项红测、scoped ESLint/diff通过。请求冻结为lowercase create/items[textSelection]，202和不明确回执重放同key，Unicode边界/摘要、receipt身份与revision单调性明确核验；不传客户端正文。API AC12仍由唯一Owner完成编译、真实隔离MySQL/迁移自检，未合Web develop或用本地构建代替Flow。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1-atomic-reference-intake-source-20261001.md",
+    "line": 14,
+    "text": "旧59ed候选真实MySQL2失败：catalog CHECK_CLAUSE与CLI展示转义不是同一层。原关键词匹配还可能接受弱CHECK。修复精确校验约束集合、ENFORCED及表达式，保留运算符/括号/字面值大小写；只规范化实际catalog的一层引号转义，拒绝歧义多层反斜杠。新增实际Spring CGLIB事务回归，避免新服务final造成代理失败。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/long-term-followup-authority-design-20261001.md",
+    "line": 115,
+    "text": "不创建独立 Reviewer；各责任 Owner 自检，Gradle 仅经 orchestrator 串行。只读准备不占构建/数据库资源，不另建运行台账。按当前本地发布临时授权记录 local_user_authorized 及 exact SHA/tree、测试和制品 SHA-256；不伪造 Flow Run。版本号发布前重新核实，1.13.45 已被其它发布占用，不能覆盖已有 release 分支。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-delivery-handoff-20260930.md",
+    "line": 55,
+    "text": "当前顺序：API/Web先修回执与实时状态领域分离，保持原负向与版本防回退 → 验证V3 CHECK-catalog最小child、完整62V3后82V2及typed原子闭包/真实数据库 → 同一composer的自然多轮与既有执行链联调 → 真实受控查阅和全部媒体闭环 → 双接应/浏览器/正式交付验收 → 达到对应里程碑条件后分版本发布。Owner 自检，不创建独立 Reviewer；所有 Gradle 经 orchestrator。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-delivery-handoff-20260930.md",
+    "line": 161,
+    "text": "> 在本仓 `codex/juyiting-multimedia-deliberation` 的独立 worktree 上，先阅读本 feature README、融合详设v2及对应冻结合同。只领取一个有明确路径边界和依赖的工作包，保留 fast 轻量权限边界及既有 PRIVATE/TASK。实现时复用持久请求/事件和平台资产，固定身份、资料版本、原幂等键、grant/assignment/lease；不得重发首轮或以提示词授予权限。Owner自检并交付 exact commit/tree、实际定向测试、DB fixture digest（适用时）与剩余缺口。Gradle 经 orchestrator；不创建 Reviewer，不改他人脏文件，不部署、不迁移真实库、不调用未获授权的付费 Provider。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1u3-entry-finalization-20260930.md",
+    "line": 18,
+    "text": "5. 真实 MySQL 8.0.21 证明 CHECK 对 UNKNOWN 不拒绝：LEASED 的 null lease version、SUBMITTED 与 TASK_COMPLETED 的 null delivery state 曾漏检。DDL 对这些分支显式增加 IS NOT NULL；未降低检查或伪造 task completed。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1u3-entry-finalization-20260930.md",
+    "line": 19,
+    "text": "6. 新 schema mutex 使用真正等待的 `GET_LOCK(...,-1)`，不以任意更大等待门槛替代旧 deadline；保留归属与 release 核验。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1u3-entry-finalization-20260930.md",
+    "line": 37,
+    "text": "SQL_NULL变更尚未用于生产：旧实验schema与修正后schema采用不同的自有fixture库。`CREATE TABLE IF NOT EXISTS`不会改写已存在的旧CHECK；不能据重复DDL成功推断旧库约束升级完成。正式启用前必须检查真实schema定义，对旧实验schema进行明确授权的迁移或拒绝弱定义；不得无授权DROP/ALTER。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1u3-entry-finalization-20260930.md",
+    "line": 41,
+    "text": "1. 正常模块回归/研发feature已完成；仍需实际Java/MySQL生命周期、旧弱CHECK识别/授权迁移与整套构建证据，不能把研发pin用作直接生产激活授权。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/README.md",
+    "line": 66,
+    "text": "**最新进度**：[回执领域修复与实施优先级](integration-typed-receipt-source-adoption-20261001.md)：Web `ebb664f` 已推送，Main 196 项及合法状态/绑定 probe 通过（基线 lint 两错误与旧合成正向失败保留）；API `642e732` V3实测34通过/3真实MySQL CHECK失败，后续NOT_RUN、未晋升。浏览器启动前置已实测，不等于业务验收。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/README.md",
+    "line": 183,
+    "text": "- 按最新AGENTS/Owner自检政策，使用独立worktree；不覆盖他人脏改、不创建Reviewer、不擅自部署/付费调用。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/README.md",
+    "line": 206,
+    "text": "[旧弱CHECK识别与真实Java/MySQL证据](integration-u3-schema-check-truth-20260930.md)已验证API `b1e7b068`：正常84项报告（42本次、42复用）及真实6项JDBC/Spring全部通过；不是整套启动、迁移或产品验收。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/README.md",
+    "line": 256,
+    "text": "BRIDGE-A/C 已由两个Owner在独立API/Client worktree按冻结合同施工，不创建Reviewer。API原core `acab3411` 保持未验证候选：正常源图已编过agent主类，但无测试/XML；common-test的Testable AP在384MiB仍堆不足。下一修正基于实际11个standalone测试的imports，由原Owner提交仅定向sourceSet依赖修复，保留全部测试/真实production源码图和标准full-test配置，不再盲增堆、不disable AP、不复制baseline类或假overlay。新候选实际通过后才能提升API pin；真实MySQL、跨仓桥接、34产品用例和发布仍未完成。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-actions-v3.md",
+    "line": 64,
+    "text": "- v3 最终结果复用现有 typed outcome 表，与最终消息、轮次、事件及独立动作 outbox 同事务保存，不建第二套结果存储。既有 kind CHECK 仅扩展 ACTION_REQUEST；只在原迁移开关允许且完整目录核验通过后执行一次精确 ALTER，保留旧行，拒绝无关结构漂移。不伪装图片 proposal，不迁移/重放旧执行。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-actions-v3.md",
+    "line": 134,
+    "text": "- 任务根锁与调用方事务内完成准入及执行预约。Spring实际代理/H2诊断覆盖无事务拒绝、签发后失败、预约后Chat失败全回滚和成功提交；不代替MySQL验证。仅精确扩展已知旧CHECK，原目录漂移检查保留；尚未执行生产迁移。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-actions-v3.md",
+    "line": 152,
+    "text": "- 原运行时来源声明和资料行校验已同步；两处既有CHECK精确扩展且先核验完整目录。实际MySQL尚未验证/迁移；上线须先升级客户端再启用新合同。普通动作来源摘要改显式规范序列化，避免JVM重启后的Map顺序影响恢复。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-actions-v3.md",
+    "line": 183,
+    "text": "- 核对本线程MySQL8.0.21数据目录和socket/TCP端口后，仅创建随机隔离测试库：初轮16项通过，新增迁移用例最终6项通过（重叠3项，合计19项独立覆盖）。包括旧行保留、普通动作与资料CHECK升级、无关漂移在修改前拒绝、已知中间状态恢复、原结果上传回滚和并发不重复。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 1,
+    "text": "# 旧弱CHECK识别与真实Java/MySQL生命周期证据（2026-09-30）"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 7,
+    "text": "1. Agent/Chat finalization initializer读取实际CHECK_CLAUSE，拒绝同名且ENFORCED但弱定义；只对已有真实穿透证据的`chk_asof_lease`、`chk_csof_progress`、`chk_csof_terminal`检查规范化精确表达式。不自动ALTER/DROP/DML。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 9,
+    "text": "3. 单测保留错误/null长度、旧弱CHECK、缺失定义、always-TRUE追加、literal case变化与未ENFORCED拒绝。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 18,
+    "text": "| 旧弱CHECK与raw legacy fence | 只读拒绝PASS | 表/列/定义不变；未自动修复旧库 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 19,
+    "text": "| 修正后的既有CHECK | 只读接受PASS | 独立旧/修正fixture，不能由此宣称生产已迁移 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 20,
+    "text": "| 本次Java创建DDL的3种NULL | MySQL3819全部拒绝，0记录 | LEASED null lease version、SUBMITTED/TASK_COMPLETED null delivery state；不依赖重叠CHECK报告顺序 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 26,
+    "text": "真实测试的旧弱CHECK库、修正库及raw拒绝库固定为当前线程独立fixture；新建库独立命名、socket/datadir/版本/skip_networking校验，未使用生产或其他线程库。所有Gradle经orchestrator串行，无抢占/任意性能拒绝门槛。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 36,
+    "text": "- v7：5PASS/1FAIL，TASK_COMPLETED被重叠progress CHECK先拒绝，harness错误假定必须terminal标签。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 37,
+    "text": "- v8：**6PASS/0FAIL**；vendor3819及相关CHECK标签、精确SQL状态仍验证，不给CHECK顺序加无依据门禁。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-schema-check-truth-20260930.md",
+    "line": 43,
+    "text": "实际旧库若有弱CHECK/fence drift，需明确授权、恢复方案与独立迁移验证；本修复只安全识别，不偷做迁移。后续继续[原生能力合同](native-bounty-capability-contract-v1.md)、真实页面/客户端注册接线、task-linked参考图、澄清/修改/派生资产与合法costAuthorizationRef桥；两种接应真实Provider/34项产品用例和版本制品发布仍单独验证。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u2-chat-agent-convergence-20260929.md",
+    "line": 6,
+    "text": "- Agent/** 的 conversation output 仅为基础存储/受控读取候选，执行仍默认关闭；由独立 Owner 验证了 `scopeType=bounty`、`scopeKey=task:<taskId>` 的作用域，拒绝其它 scope。MySQL 8.0.21 隔离实例只验证增量 DDL/CHECK/部分 SQL 回滚，**未**证明 Java 服务真实并发事务/生产迁移。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-api-strict-wire-runtime-verification-20261001.md",
+    "line": 36,
+    "text": "下一源码包限定7条路径：修复上述两处Java实现及测试装配，保持SQL/DDL、CHECK/FK、事务、身份权限、黄金fixture和强断言。任何超出冻结合同的迁移/授权/事务语义变更不属于该包。修复后先真实跑typed11，按变更影响补兼容回归，不重复跑未变的已验证包。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-api-strict-wire-runtime-verification-20261001.md",
+    "line": 56,
+    "text": "下一包冻结为3路径机械修复：Main固定SQL一字节删除，保留全部CHECK谓词/FK/索引；补精确context调用verify，保留no-more-interactions；补语法回归。旧“SQL字节不变”合同保留历史，新合同仅对这一字节显式修订，不授权生产迁移、数据写入或放宽catalog检查。新child提交后再跑typed11，不重复未修正67937。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-api-strict-wire-runtime-verification-20261001.md",
+    "line": 58,
+    "text": "### 2.3 v10与全量CHECK诊断：62通过，剩余3项目录比对失败"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-api-strict-wire-runtime-verification-20261001.md",
+    "line": 62,
+    "text": "为避免逐个猜修重跑，追加独立临时库诊断，一次捕获全部18个真实CHECK和4份SHOW CREATE；使用exact SQL `98af3d88…`，仅Unix socket，前后核对自有前缀为空，未操作mysqld。静态转写比较定位7条expected常量的括号呈现不匹配；转写诊断不是Java测试通过证据。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-api-strict-wire-runtime-verification-20261001.md",
+    "line": 68,
+    "text": "候选 `a6e3e06cb4fa29ed6c01d80e8d8f0ae9372a1de9` / tree `996aa030dd369fcac09a4bf859da90d6767d26e3`：v11 **11份fresh XML、66通过、0失败/错误/跳过**，Main独立逐XML复核。真实MySQL建表/重启目录检查、无效行约束、弱CHECK拒绝，以及Spring事务、typed讨论/澄清测试均包含在所选组内。7条expected常量精确修订，未放宽检查器；真实18行fixture及7个AND改OR拒绝断言通过。附加测试的泛型推断风险在运行前已用显式类型修正，未为此浪费一次构建。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/long-term-fusion-plan-20260928.md",
+    "line": 103,
+    "text": "任务可按独立工作树和路径并行；真实依赖才阻塞。Owner 自检，无独立 Reviewer；Gradle 经 orchestrator。性能只观测，真实权限、锁、幂等、传输错误与用户取消保留。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-current-design-and-contract-findings-20261001.md",
+    "line": 70,
+    "text": "原 consent initializer 对 v1 catalog 的精确列顺序、16 index 行、13 CHECK 名与谓词有严格验证；完整 v3 扩展后重启必须兼容，不能删检查或接受任意 drift。经源码证据，批准原 API Owner 在原 72 路径外仅增加旧 initializer 和对应测试两条路径，共 74 路径：只接受完整 pristine-v1 或完整 v3 catalog，保留原 13 enforced CHECK，严格校验新增 purpose/execution protocol union、列与索引。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-current-design-and-contract-findings-20261001.md",
+    "line": 72,
+    "text": "默认关闭/旧 schema 的 mapper 不得引用不存在的新列；部分迁移、同名弱 CHECK、未知额外列/index/CHECK 必须拒绝。当前仅批准 source-only，自检和实际隔离 MySQL/default-off/restart 验证仍须完成；不推导生产数据库迁移授权。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-current-design-and-contract-findings-20261001.md",
+    "line": 83,
+    "text": "下一可执行步骤：原 API Owner 完成授权源码包与自检，Web 已接受切片继续做跨仓组合，Verifier 完成候选分阶段实际组合验证；Main 再冻结讨论/澄清/INSPECT 下一合同并做跨仓闭包。Owner 自检，无独立 Reviewer；Gradle 经 orchestrator 串行，等待资源不抢占，性能慢仅观测。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1.md",
+    "line": 42,
+    "text": "不修改 voice、初始桥语义、旧wire、正式交付或别仓源，不选择真实Provider/账户、不付费调用、不执行生产DDL。无独立Reviewer；Owner自检。Gradle仅经orchestrator，当前本地验证按已有临时授权记录 local_user_authorized；不伪造Flow。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-durable-assets-20260930.md",
+    "line": 18,
+    "text": "3. `git diff --check` 通过；原不完整候选工作树保留不动，只整合已验证的完成候选。源码自检，无独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/execution-abandonment-contract-20261003.md",
+    "line": 11,
+    "text": "- **无需放宽数据库 CHECK、无需新表、无生产 DML 修复。** 原 execution CHECK 仅允许通用交付失败码；MySQL 红测确认这一合同。独立具体业务原因保存在不可变 journal，不伪造新的运行时失败码。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/execution-abandonment-contract-20261003.md",
+    "line": 86,
+    "text": "- 首次编译前缺少既有publishing占位配置；随后修复新测试void Supplier用法。首次SQL运行发现execution failure CHECK与stage状态假设错误；均保留原始失败日志并按真实合同修正，未关闭CHECK/跳过测试。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-provider-core-normal-mysql-web-recovery-progress.md",
+    "line": 14,
+    "text": "| v14独立MySQL3 | 3测试、3失败、0跳过 | 三例均在setUp抛`chk_atpcc_identity` CHECK definition drift；业务体/CAS并发断言尚未执行 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-provider-core-normal-mysql-web-recovery-progress.md",
+    "line": 18,
+    "text": "普通验证通过不能掩盖真实schema初始化错误；原Owner先补真实CHECK_CLAUSE证据及最小scoped修复，再固定新immutable/matrix重测。不去掉定义检查、不放行同名弱CHECK。此前v9/v10及本补充v11–v14失败保持原结果。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-provider-core-normal-mysql-web-recovery-progress.md",
+    "line": 37,
+    "text": "下一执行步骤：原API Owner修复pristine CHECK误拒绝；Curie对新exact source按新matrix串行验证。Web Owner补真实Page恢复回归后整合其确切源码。随后继续BRIDGE-A三段事务及共同29 fixtures、同会话澄清/旧稿EDIT、全部媒体/归档/正式验收、develop语音收敛与双接应浏览器。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-provider-core-normal-mysql-web-recovery-progress.md",
+    "line": 44,
+    "text": "- API纯`041bd061`只修provider-specific严格13项catalog比较及回归，实际MySQL raw catalog13/13匹配且诊断finally清理；v15 Agent39项中38通过1fixture失败，零skip。两个MySQL生命周期/CAS用例实际通过；第三例DDL`CHECK(1)`被MySQL8.0.21以3812非布尔表达式拒绝，故尚未进入“弱CHECK应拒绝”断言。Chat本轮未到达，不冒用旧v13 XML。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-provider-core-normal-mysql-web-recovery-progress.md",
+    "line": 45,
+    "text": "- 原Owner独立test-only`99ff1a43`将弱约束改为合法布尔永真`CHECK(1=1)`，完整拒绝断言保留。Main固定新v16 matrix/input、live socket/TCP资源并启动新候选的一次验证（不是重跑旧输入）；此补充写入时仍在验证，API pin保持083f。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/unified-materials-correction-20261003.md",
+    "line": 79,
+    "text": "| M5 统一验收发布 | 主控集成exact API/Web/Client | 完整AC01–AC22 + FD01–FD12与下列强制子例、同版本发布证据 | 不用鸟图覆盖通用用例；Web正式test/build仅Flow4403172同Run制品，API沿既有实际授权；不抢占foreign Run |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/unified-materials-correction-20261003.md",
+    "line": 81,
+    "text": "以上是工作包职责，不冒充已派发Owner；当前唯一Main负责协调。独立Writer不可用时Main顺序实现，不等待不存在的线程，不创建Reviewer。现有图像底层修复作为M1/M3适配器子项保留；不能以其通过宣布通用入口具备上线条件。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/tasks.md",
+    "line": 72,
+    "text": "| T09 / P1 | **配套源码及正式CI/制品已核验，待发布与真实验收**：API109/Web167及精确候选已收敛；实际运行版本与浏览器闭环仍未完成 | 集成职责；仅改动组件走既有 Flow | 功能可用及相关检查通过，不等额外全矩阵验证 | exact commit/tree、正式云测、同 Run 制品、运行版本及线上场景一一对应；无虚报 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-detailed-design-v2.md",
+    "line": 253,
+    "text": "明确不做：新建第二套会话数据库、把所有工具塞进fast、无授权自动收费、共享Agent挂载、全盘同步、在线Office编辑器、强制更换Provider、用开发助手直接生图替代平台验收。工程实施继续Owner自检，不创建独立Reviewer。本轮不执行数据库迁移/部署/模型调用。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-detailed-design-v2.md",
+    "line": 317,
+    "text": "[精确源码与证据](integration-u3-schema-check-truth-20260930.md)：`b1e7b068`安全识别旧弱CHECK，不自动迁移；真实MySQL揭示的TEXT/MEDIUMTEXT元数据预期错误已修正。84项正常报告（42本次/42复用），6项真正JDBC/Spring初始化图通过。pre-fence源派生fixture不是生产原始DDL，不将此声明为完整应用启动/旧库迁移。原失败与绑定问题保留。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1-native-capability-source-20260930.md",
+    "line": 55,
+    "text": "长期方案和施工详设继续以 [融合详设 v2](fusion-detailed-design-v2.md)、[媒体/存储详设](design.md)、[实施计划](fusion-implementation-plan-v2.md) 为权威。执行只更新 `/home/isp/wsps/cyf/docs/implementation/TASKS.yaml#runtime_ledger_json`，Owner自检、不创建独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/provider-authority-and-precall-enforcement-design-v1.md",
+    "line": 92,
+    "text": "2. 按非重叠worktree实现Client声明/执行adapter、API authority/事务及Web同意体验；Owner自检，无独立Reviewer。未满足前保留默认关闭，不伪造READY。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-typed-receipt-source-adoption-20261001.md",
+    "line": 17,
+    "text": "API 本轮候选 `642e73238edde3354a8b23654e561a496a2691f3` / tree `b529963ae8ece8f916917e998cd25db9c7fd77f6`，parent `8fc61c4d20fb8879eab501c0938fed75937ebd4d`。Main 检查 clean、两条精确写集、hash、parent/tree 后 FF 到隔离组合和验证工作区；不 cherry-pick 改写同一个提交，不把这当测试通过。它包含 CHECK-catalog 最小修复及 typed 原子闭包，本轮 V3 实际结果为 Agent37 项中34通过、3真实MySQL失败；Chat25/V2/typed 均尚未运行，见第4节。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-typed-receipt-source-adoption-20261001.md",
+    "line": 58,
+    "text": "- API exact642e 正常图实测 **Agent37：34 PASS / 3 FAIL / 0 SKIP**，Main 独立核对9份新鲜XML/hash及clean source。3个实际MySQL均失败于新增 `agent_task_provider_cost_consent.chk_atpcc_purpose_union` 校验（315行）；不是此前已修的legacy CHECK。Chat25V3、82V2及typed全部11类因前序失败 **NOT_RUN**，不重复失败输入。registered raw artifact 未落盘的事实保留；实际daemon日志和9份XML已保存，不伪称完整rawlog。pgrep命中自身shell不是活Gradle；Main以真实java/orchestrator argv独立核对无残留。最小私有fixture诊断两次控制脚本分别因缺USE、手工转录缺右括号失败，own schemas 已清理且prefix=0；没有实际CHECK目录结论，未进行第三次。新的源码Owner先做source-exact计划静态核对，需新明确授权才可复现；不能改生产DDL或放宽CHECK。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-typed-receipt-source-adoption-20261001.md",
+    "line": 70,
+    "text": "所有 Gradle 经 orchestrator 串行；不创建独立 Reviewer。云效暂不可用的用户临时授权下记录 `build_origin=local_user_authorized`、exact commit/tree、测试及制品 SHA-256，绝不伪造 Flow。性能仅观测，不用时延门槛中断后续步骤；权限、锁归属、事务、真实网络错误与用户取消仍保留。Provider 付费和生产数据操作没有由此获得授权。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/flow-control-handoff-20261002.md",
+    "line": 18,
+    "text": "只有这些实际依赖被解决后才按统一发布计划恢复对应发布动作；不等待独立Reviewer，不以历史队列或未测算资源门槛代替实际验证。Run148旧制品（若有）不得用于之后新SHA发布。前端正式构建永久按用户本次指令使用Flow，不回退本地。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-final-design-entry-20261001.md",
+    "line": 115,
+    "text": "| 1 | API 当前组合收口 | 真实 CHECK catalog/事务与 typed 闭包通过，不能放宽弱 CHECK 或把静态检查当数据库通过 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-final-design-entry-20261001.md",
+    "line": 125,
+    "text": "> 在 codex/juyiting-multimedia-deliberation 的独立 worktree 承接一个明确工作包，先读本文、对应冻结合同和当前精确组件 pin。复用已有会话/request/event，讨论实现 typed v1、执行实现独立 v3；只写分配路径，不改黄金 fixture 或其他 Owner 代码。提交 exact commit/tree、变更清单、真实测试及原始证据、未完事项；Owner 自检，不建独立 Reviewer。所有 Gradle 经 orchestrator。不得未经授权调用付费 Provider、迁移生产数据或操作其他任务进程。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/implementation-progress-20261004.md",
+    "line": 105,
+    "text": "API `codex/mmd-attachment-only-v1-20261004`：`88243a317bd32f0495f8c9d9041e3e3582f764d4` / tree `3a9087b100b2737c255131a79519ace2376f97a1`，已推送并独立远端读回。生产实现位于父提交 `ba984d2b`；最终子提交只补两份组合测试。Web仍未改，不重跑未变更235项/本地构建。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/implementation-progress-20261004.md",
+    "line": 286,
+    "text": "- 当前源码诊断：6文件先34通过/7失败，修复后 **42通过/0失败**；原阅读器实际Hall挂载用例 **1通过/0失败**；两文件scoped lint exit0。保留失败日志；这是低成本定向诊断，不替代正式Flow，也没有本地生产构建。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/implementation-progress-20261004.md",
+    "line": 320,
+    "text": "21:35只读配置复核两条pipeline SHA256均与启动前相同，仍仅cloud_ci、无部署阶段；本轮没有恢复暂停配置、更新运行版本或调用Provider。现有CI-only Run不能追加不存在的部署job，不能以直接手工安装或本地包绕过既有Flow；获得发布授权后按原路径完成必要最终发布Run，由该Run使用自己的测试/构建/制品/部署身份，既有历史CI证据保留，不伪装成已部署。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 232,
+    "text": "| `conversationGeneration` | 1 | decimal string | `chat_conversation.lifecycle_generation` defaults/repairs to 1; interaction admission rejects `<1`; archive CHECK permits null only before save and otherwise `>=1`. |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 234,
+    "text": "| `assignmentRevision` / `expectedAssignmentRevision` | 0 | decimal string, max 9007199254740991 | Grant and bounty-binding CHECKs are `>=0`; current interaction admission accepts 0. |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 235,
+    "text": "| `requirementRevision` | 1 | decimal string | Grant/consent CHECKs require positive revision. |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 236,
+    "text": "| baseline `grantVersion` | 1 | decimal string | Grant CHECK and admission require `>=1`. |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 237,
+    "text": "| `workspaceVersion` | 1 | decimal string on schema 3 wire; Java/SQL INT internally | Workspace/version/link/execution-input CHECKs require `>=1`. |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 238,
+    "text": "| `assetRevision` | 1 | decimal string | Archive and conversation-asset access require exact revision; archive CHECK is `>=1`. |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 299,
+    "text": "Keep all v1 columns and semantics. Add purpose-specific nullable columns with a strict union CHECK:"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-contract-v1-base.md",
+    "line": 319,
+    "text": "Add to `agent_personal_workspace_execution`: `execution_protocol_version` (legacy/current rows retain their real version; v3 is 3), `operation_grant_id`, and `runtime_input_snapshot_digest`. The existing `controlled_consent_id` remains. A strict CHECK requires the full v3 tuple only for protocol 3 and permits no schema-3 operation-grant fields on v1/v2 rows. Do not weaken the existing v2 `GENERATE_IMAGE` controlled-consent CHECK."
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/result-delivery-recovery-design-20261003.md",
+    "line": 75,
+    "text": "- 不修改既有执行CHECK：通用FAILED/AGENT_DELIVERY_FAILED表示未交付，精确owner放弃原因写事务journal。stage实际持久化STAGED output但execution仍可能QUEUED，因此必须检查output行，不能只看execution状态。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-release-plan-v3.md",
+    "line": 18,
+    "text": "- frontend `4403172`、backend `5260799`。先核对自动Run与实际checkout，再决定是否需要单次手动触发。正式测试在同Run构建之前，安装使用该Run上传的制品，记录digest和线上精确来源。不用本地构建替代，不抢占活动Run。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-release-plan-v3.md",
+    "line": 27,
+    "text": "| CHAT typed outcome kind | 原CHECK扩展`ACTION_REQUEST` | 旧行保留、迁移关闭不就绪、开启迁移、重启和无关漂移拒绝 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-release-plan-v3.md",
+    "line": 28,
+    "text": "| consent purpose union | 原CHECK扩展`ORDINARY_ACTION`，不伪造旧用户同意 | 实际旧目录升级、全目录预检、重启 |"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/ordinary-request-release-plan-v3.md",
+    "line": 34,
+    "text": "MySQL DDL非事务性：两个资料CHECK迁移前先核对完整目录；中断后只接受已实测的精确旧/新组合并完成前向迁移。不得删除结果/授权/资料行来强行装回旧CHECK。新请求产生后，旧二进制未证明能读新合同，不能把直接降级称为安全回退；保留已验证新制品，采用前向修复及原结果恢复。必要数据恢复须另有精确备份与恢复范围，不能以旧制品安装成功替代数据正确性。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-typed-natural-actual-verification-20261001.md",
+    "line": 49,
+    "text": "`da1710`测试源实际出现4处继承fluent setter返回BaseEntity的编译错误；原Owner单路径child `5f187b5b7be61f590f4592c819f8fb481a8c7768` / tree `cdde506acf9e4644fc8766efe89352a6599db210` 将其拆分调用。正常源图再次实际运行，Agent **37项中34通过、3失败、0跳过，9份新XML**，不是62项通过。三项隔离MySQL测试均在setup被 `legacy.chk_pwex_controlled_consent` CHECK定义比对阻止，业务body未到达；Chat25和完整82项V2 **NOT_RUN**。Verifier已退出并保存真实失败，未盲目重跑；原Owner进行CHECK目录/标准化的最小源码诊断，Verifier仅对自有精确fixture做只读目录核验，不移除约束或改fixture来过测。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1-task-linked-reference-source-20260930.md",
+    "line": 35,
+    "text": "API intake `59ed4c32`此前Owner源码12通过、2个可选MySQL跳过，实际AgentService独立事务组合9通过。Main随后实际隔离MySQL8.0.21运行2项，**2项均失败**：新表创建后的初始化器在 `chk_atco_scope` 校验阶段拒绝实际CHECK_CLAUSE。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u2-lease-20260929.md",
+    "line": 9,
+    "text": "本地用户授权的**非发布**定向测试均经 `python3 ops/orchestration/cyf_orchestrator.py gradle`、同一 exact tree 串行执行：`:agent:jia-agent-service:mmdU2ConversationOutput` 2 classes / 16 tests，`:agent:jia-agent-service:mmdU1Grant` 3 classes / 18 tests，`:chat:jia-chat-service:chatDeliberation` 23 classes / 112 tests；各 0 failure/error/skip。日志位于 `evidence/u2-integrated-lease-988f426f.log`（cache key `98ca860306323b68d68df1a6d8780f814a42f1191889ac357c92b6a0dd20eaab`）及 `evidence/u2-integrated-chat-grant-988f426f.log`（key `ffa399a97f7f47dc0dd58ed343d1816bb9d722a1339dc86120ebd30d6089e29d`），相对于 `/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/`。Agent Owner 的隔离 MySQL 8.0.21 lease/CHECK 实验在 `evidence/u2-conversation-output-agent/mysql8-v1_15-check-fixed.json`；不能代替本集成树的实际服务事务与升级迁移验证。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/bounty-interaction-target-fix-20261003.md",
+    "line": 17,
+    "text": "本地完整component-behavior导入缺生成的`public/juyiting/hall.tmx`，如实记录未执行，不伪造本地全suite通过；正式全套交Flow。没有本地生产构建。证据见`integration-evidence-20260928/bounty-interaction-target-source-20261003/`。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u3-workspace-multimedia-20260930.md",
+    "line": 9,
+    "text": "**仍不完整**：Agent runtime 的 execution output MIME 白名单、现有数据库 CHECK 与客户端能力未扩展到音频/WebP/GIF；故不能声称 Agent 已能生成这些格式的会话产物。会话持久资产 Owner 代码、真实 MySQL 8 建表/旧库迁移、最终选稿正式提交与验收、线上浏览器音频 Range/画鸟流程均未验。不得启用默认标志、合入 develop 或通知用户验收。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/web-provider-consent-core-contract-v1.md",
+    "line": 23,
+    "text": "actorScope变化、dispose、换task/target或新operation generation后，旧响应不得持久或覆盖UI；同时只能一个active写操作。身份切换不清除另一身份持久记录。业务等待无性能deadline。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-controlled-bridge-verification-progress.md",
+    "line": 55,
+    "text": "- 九项失败分四类：security fixture缺jsonassert运行依赖1；完整CHECK catalog rendering drift导致MySQL3；Conversation fixture matcher/能力投影/EXISTING_RUN与ACL诊断4；authority null policy产生NPE而非typed fail-closed1。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-controlled-bridge-verification-progress.md",
+    "line": 57,
+    "text": "Main已核对终态PID缺席及实际XML，按独立修复矩阵交回原API Owner生成新immutable child；不重跑旧输入、不删17fixture、不放松6bridgeCHECK/权限/一次消费断言。新的exact SHA/tree与matrix固定后才由原Verifier经orchestrator串行执行Agent+Chat；未提前宣称这些失败已修复。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-controlled-bridge-verification-progress.md",
+    "line": 74,
+    "text": "API桥v4`dbcd4da1`实际8XML、Agent57中54通过/3失败/0error/0skip：v3的6个非MySQL诊断已通过，bridge6CHECK已越过；3个MySQL用例仍在setUp新遇到execution表CHECK catalog drift，Chat未开始。这不是Provider/OOM失败。完整stdout/XML、实际后prefix空readback及Main两个freeze-checker的控制面错误（未启动测试时发生）均保存[本轮便携证据](integration-evidence-20260928/controlled-bridge-v4-execution-check/manifest.json)。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-controlled-bridge-verification-progress.md",
+    "line": 87,
+    "text": "Main已按归因矩阵授权原API Owner仅修Chat bounded fixture runtime依赖；不改变生产依赖、17测试源、权限/CHECK/一次消费断言、AP、堆参数或selector。只有新immutable child及新freeze后才允许下一次验证；未提升失败候选，不将局部测试改写成完整Bridge、29共同样例或34产品验收通过。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/unified-materials-creation-v2-contract-20261003.md",
+    "line": 9,
+    "text": "- `attachments`最多32项，继承已有JSON数组数据库CHECK的实际容量。每项**恰为**`{fileId:string, version:positive Java int}`。不接收purpose、MIME、hash、owner、URL、path、provider/model/operation或执行授权。相同fileId/version重复拒绝；不同版本可独立引用。按fileId UTF-8字节、version升序规范化，选择顺序不形成新意图。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/unified-materials-creation-v2-contract-20261003.md",
+    "line": 21,
+    "text": "复用`agent_task_creation_operation`，不ALTER旧表、不改原数组CHECK、不把数组改成envelope、不重写历史行。**显式持久版本标签**使用服务端生成的、不允许客户端赋值的operationId类型前缀：旧v1为`atco_`，新v2为`atco2_`；后缀仍随机UUID32hex。它是协议资源类型标签，不从MIME、是否有附件、数组第一项、当前task状态猜版本。空附件也能明确恢复版本。DB标识字段现有100字符容量足够。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/controlled-image-followup-owner-context-v1.1.md",
+    "line": 87,
+    "text": "本补充只闭合 EXECUTE 的 pre-preview 元数据缺口；不把它当 DISCUSSION refs、AVAILABLE/INSPECT、澄清续办、全媒体、多 lineage、双接应和34产品用例完成。无需独立 Reviewer，责任 Owner 自检后提交 exact child，实际组合与版本发布由 Main 按既定授权推进。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-catalog-and-native-runtime-progress-20261001.md",
+    "line": 1,
+    "text": "# 真实 CHECK catalog 与原生引擎兼容推进（2026-10-01）"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-catalog-and-native-runtime-progress-20261001.md",
+    "line": 12,
+    "text": "- 来源精确抽取的25条SQL全部实际 exit0，包含原23条及两张后续表的精确CREATE；没有手抄或弱化原CHECK。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-catalog-and-native-runtime-progress-20261001.md",
+    "line": 17,
+    "text": "Main随后仅对冻结raw TSV/JSON做离线读回：按真实header构造小写键别名、保持所有值/谓词不变；逐行raw与JSON相符，四种catalog都覆盖四表，得到 **4表、27个ENFORCED=YES CHECK、136列、89索引行**。没有再次执行DDL，没有把原FAILED receipt覆盖为PASS。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-catalog-and-native-runtime-progress-20261001.md",
+    "line": 19,
+    "text": "该观察允许 Source Owner 基于真实CHECK rendering修复限定initializer及测试两条路径；不能去掉所有括号、放宽predicate、接受same-name弱CHECK或重写共享canonicalizer。Source Owner 已提交精确 child `354f736a09b0e89d52306616245ba86e16897d85` / tree `15b9015a5734d7d46899788c904659c73535852b`，parent 为原 `642e732`。只改 `ControlledImageFollowupV3SchemaInitializer.java` 及对应测试；三条 catalog literal 与真实观察逐字匹配，原SQL、legacy修复和共享canonicalizer保持不变。新增测试覆盖14个owned CHECK及弱化/TRUE/extra/missing/unenforced拒绝。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-catalog-and-native-runtime-progress-20261001.md",
+    "line": 55,
+    "text": "新Source Owner提交 `7abcd58ad74d4deb23e9b4c0a572168004b05ebb` / tree `7dae5070aa1c5bb45e90419f415c83b07708048a`，仅三路径：新增catalog-only accessor、替换旧initializer两处期待、补实际catalog正向与弱化/TRUE/OR/缺失/额外/未执行CHECK负向测试。Main独立核对生产diff只含该accessor和两处调用替换；DDL、共享normalizer及第四允许路径不变。仅静态接受为新验证输入，尚未晋升feature/pin。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-catalog-and-native-runtime-progress-20261001.md",
+    "line": 106,
+    "text": "v4原Owner实际报`Selected model is at capacity`，没有v4测试/runner结果，不能宣称已执行或通过。Main保留原始控制面错误并关闭自己的errored Agent，不重试同一路由、不改全局模型配置。新Terra验证-only Owner已实际READY，核对3063 clean/source及完整normal graph，无真实阻塞；经唯一ledger`authorize-remediation`和精确owner/SHA/tree绑定后获v5 GO，使用新的独立证据目录。原Sol/Mini失败保留，不调用DeepSeek，不新建独立Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/bounty-conversation-request-index-contract-v1.md",
+    "line": 81,
+    "text": "首扫记录through，keyset每页ORDER BY id ASC、读既有pageSize+1探测hasMore，移除探测行后投影。不允许只下载第一页，逐页直到false；没有总行数/总轮数/等待deadline产品门槛。cursor仅扫描坐标，不签发authority；换cursor不能逃过每页scope ACL。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-provider-core-source-progress.md",
+    "line": 35,
+    "text": "API `acab34116c3eba9a92d431b8863df47219c6b544` / tree `18348bbfeea78d936087ff59943197f04ce168bc` 已修正final类无法CGLIB代理及同名弱CHECK可通过的问题，增加真实Spring read-only事务、13CHECK完整谓词和MySQL规范化测试，但**本次记录时未获得执行通过，不提升API研发pin**。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/point-and-start-entry-design-v1.md",
+    "line": 101,
+    "text": "并行写集须不重叠；Owner 自检，无独立 Reviewer。Java 验证经 orchestrator 串行；正式构建和发布遵循当前授权/版本策略。源码切片、真实启动、Provider 执行、部署、产品验收分别记录；达到完整出厂条件才通知用户“可验收”。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/integration-u1-bootstrap-20260929.md",
+    "line": 39,
+    "text": "私有隔离 MySQL 8.0.21 新库安装原版快照 DDL 两次并验证历史任务不回填、Unicode 全量回读、跨 owner 隔离、唯一键/十余负向 CHECK；精确 JSON（含 DDL SHA-256）在 `evidence/u1-requirement-snapshot-agent/mysql-requirement-snapshot-sql-8470e549.json`。**此项只是 SQL/约束/原文 hash 夹具，不是 Java Spring 真实 transaction 或存量生产库迁移。**"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/requirement-reference-intake-contract-v1.md",
+    "line": 65,
+    "text": "Owner按exact commit/tree/selector/fixture自检；Gradle由orchestrator串行。不做生产迁移、付费调用或独立Reviewer；source PASS与产品验收分开。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/typed-deliberation-atomic-followup-contract-v1.md",
+    "line": 63,
+    "text": "错误：invalid400；foreign/missing404；digest/CAS/assignment冲突409；持久化或真实能力不可用503。没有性能deadline/首帧取消阈值。UNKNOWN写结果仅原key GET/显式原POST恢复，不创建新收费操作。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/typed-deliberation-atomic-followup-contract-v1.md",
+    "line": 69,
+    "text": "保持既有九表、v2 schema/repair与原CHECK字节语义；本包独立additive resource `db/chat-typed-deliberation-schema-v1.sql` 和严格 `ChatTypedDeliberationSchemaInitializer`，共用已有 `cyf:chat-deliberation:v2` migration lock避免并发DDL，version表新增3而不改version2历史。新initializer不得在default-off修改旧表/旧数据；启用后缺表且未明确allow-additive-migration则真实not-ready，不silent-create。迁移资格与identity/paid/生产DML授权分开，本轮仅源码/隔离测试，真实生产迁移另核授权。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/typed-deliberation-atomic-followup-contract-v1.md",
+    "line": 71,
+    "text": "DDL使用原MySQL8 InnoDB utf8mb4_0900_bin，完整NOT NULL/default/PK/UK/FK/index/CHECK实际catalog验证；scope+turn unique、scope+key unique、pending/proposal每outcome唯一。避免在旧chat_turn追加新scopeUK或放宽旧CHECK；新outcome通过原global turn_id FK并在应用事务核完整scope，其余pending/proposal FK可用outcome的scope复合唯一。完整DDL/ExpectedCatalog由责任Owner在受限source范围实现并提交，不凭空声称其已冻结；Main须绑定exact committed DDL/schema hash和隔离MySQL8 fixture后才准DB验证/提升。partial/weak/未知drift必须拒绝，失败保留；不以假H2代替MySQL FK/事务证据。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-implementation-plan-v2.md",
+    "line": 11,
+    "text": "本节是工作包依赖，不是运行台账；不存在/失效Agent句柄不能当作正在施工或验证。复领任务须先核验实际Owner与路径归属，不创建独立Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-implementation-plan-v2.md",
+    "line": 16,
+    "text": "4. API最小CHECK-catalog child`3351bf3`已经在8fc组合中，但V6未启动；须由有实际归属的Verifier经orchestrator正常图完整62V3（包括隔离MySQL3），通过后82V2，并完成typed60/16共同事务/真实数据库核验。沿用精确selector，失败归因不盲重跑。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-implementation-plan-v2.md",
+    "line": 43,
+    "text": "U0不是新的独立Reviewer队列；Owner自检后按真实证据推进。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-implementation-plan-v2.md",
+    "line": 103,
+    "text": "[ENTRY/finalization/readiness组合候选](integration-u1u3-entry-finalization-20260930.md)已推送API `f93febe9` 并提升研发pin；正常模块357次执行、bounded99项、独立MySQL26项和归属锁验证通过。后续不重复把未变的组合树全部重测当作进展；按exact tree/selector/fixture复用证据，对实际新改动补相关验证。旧弱CHECK识别/授权迁移、真实Java/MySQL生命周期、目标能力协商/页面接线、真实引用/澄清/EDIT/合法费用授权与最终全范围发布验收仍单独施工。无develop/release/生产激活或可验收声明；运行状态仍只在runtime ledger。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-implementation-plan-v2.md",
+    "line": 107,
+    "text": "[本次证据](integration-u3-schema-check-truth-20260930.md)关闭精确候选的旧弱CHECK识别及隔离Java/MySQL初始化验证缺口；整套启动、实际旧库授权迁移不合并关闭。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-implementation-plan-v2.md",
+    "line": 136,
+    "text": "1. **互不重叠的源码包**：API 74路径owner/source/per-intent包；API六leaf只读请求目录；Web独立多request catalog；Client原生typed union/stream/atomic final。各包完整自检后交干净child，未完候选不能晋升；不设置Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/fusion-implementation-plan-v2.md",
+    "line": 152,
+    "text": "按[最新领域实施优先级](integration-typed-receipt-source-adoption-20261001.md)执行：Web ebb 源码已接受；API642e仅候选、V3真实MySQL CHECK失败须新源码修复，完整正常图验证继续作为前置。自然讨论与澄清仍仅 typed schema1 入口，独立执行v3不变；不追加早期schema-3讨论或第二套问题状态机。真实INSPECT、双接应、全部媒体及浏览器正式交付验收仍在完整范围内。Owner/gate只用主工作区唯一台账；此节不记录独立运行状态。"
+  },
+  {
+    "path": "specs/juyiting-multimedia-deliberation/runtime-release-20261005.md",
+    "line": 34,
+    "text": "下一步只读跟进168；新Run的完整测试/scan/构建/同Run制品/部署单/record/线上dist字节核验完成后，恢复timers并做真实chcbz T05–T09。IAB已登录，无需再次提醒。不得重复Start112/168、API/Webapply、旧110/111schema、已有helper安装或历史数据清理。只修实际失败，不降级JAR/schema，不用subagent/reviewer，不本地构建兜底，不打印原始Flow日志（可能含敏感环境，仅提取明确非秘密字段）。后文均为阶段性历史，由本段覆盖。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/design.md",
+    "line": 59,
+    "text": "10. 已有包大小、消息资料数量、租约等协议边界本次不随意扩大或新设。等待没有性能强制 deadline；保留真实传输超时和身份/用户取消。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/design.md",
+    "line": 290,
+    "text": "- `output_content_mime_type` 允许 NULL；protocol=4 时从 snapshot.outputs 取允许集合，旧非4行保持原非空/原校验。移除对新协议的单一 MIME 枚举限制，SQL CHECK 必须显式 `(execution_protocol_version IS NOT NULL AND execution_protocol_version=4) OR (output_content_mime_type IS NOT NULL AND ...旧约束...)`，不能利用 SQL NULL 三值逻辑意外放行旧行。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/design.md",
+    "line": 295,
+    "text": "- 原 failure_code 固定 AGENT_DELIVERY_FAILED 的 CHECK 不放宽；具体技能错误存附属 last_error_code，并投影到技能状态。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/design.md",
+    "line": 297,
+    "text": "`chk_pwex_execution_protocol` 当前只允许1/2/3，必须显式扩展第四个分支：protocol=4、CONVERSATION、permitted_operation=EXECUTE_SKILL、controlled_consent_id IS NULL、operation_grant_id IS NULL、runtime_input_snapshot_digest IS NOT NULL 且64位hash。`runtime_input_snapshot_digest` 写冻结 source vector 的摘要；完整 snapshot_sha256 另存附属行，二者不混用。保留旧三个分支的历史约束。同步 `ControlledImageFollowupV3SchemaInitializer` 中 execution CHECK 的期望定义和 schema detector，不让旧初始化器恢复旧 CHECK 或把正确新 schema 判为漂移；取消费用链路不能导致通用 schema 检测随图片开关一起关闭。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/design.md",
+    "line": 299,
+    "text": "同步扩展主表state/failure CHECK：RESULT_COMMITTED只允许protocol4；成功行failure字段仍为空。所有显式列举主执行状态的队列、历史、终止、结果projection及测试同步更新；不能只在附属表标完成让主表永久QUEUED。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/design.md",
+    "line": 369,
+    "text": "5. 视频类异步返回任务 ID：记 ACCEPTED，phase WAITING_PROVIDER；后续轮询属于读取，不创建第二个任务。轮询沿实际退避/网络超时，不加业务 deadline。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/management-plan.md",
+    "line": 31,
+    "text": "- UX负责设计/唯一原型，developer负责Web/API/Runtime有边界的实现，架构/探索/测试仅在获准且有实际收益时辅助。**不调度历史角色、独立Reviewer或发布审批Agent。**"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/management-plan.md",
+    "line": 159,
+    "text": "交接最少内容：任务/Owner与owned paths；规范版本；各仓branch/worktree、base/候选commit-tree；真正修改文件；fixture与selector、结果及证据摘要；真实未知/阻塞；下一动作与接收人。阶段通知不是停工点，已授权范围内同Owner连续推进；不加独立Reviewer或重复人工放行。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 48,
+    "text": "范围和非目标沿SE-2：统一技能执行+资料链路；本批不发布、不改在线配置、不调用付费API、不执行DDL、不抢停共享Runtime。定位/实现/验证/等待按实际后补，不将30分钟作为请求deadline。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 160,
+    "text": "- 用户明确要求先完成基础能力、限定5小时。窗口北京时间2026-10-13 21:14:52～2026-10-14 02:14:52，不给业务请求添加硬deadline。不纳入新增PDF/Excel/video包；目标仍包含统一资料、技能目录/授权、协议4、执行恢复、数据/文件结果、办事图片最小闭环。未通过不算完成。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 182,
+    "text": "完整失败、分层状态与收口证据：`/home/isp/wsps/cyf/specs/juyiting-skill-execution/evidence/base-5h-20261013/deadline-closeout-20261014.json`。定位/实现/验证/等待分段实测未知留空，不用子测试耗时声称整体缩时。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 214,
+    "text": "- 本次Web4403172 Run210正式test/build/scan SUCCESS，但始终没有API-ready marker。窗口收口stop仅自有等待Run，10:02:29真实readback CANCELED，保留同Run正式制品/证据，不放任窗口后自动发布。核对无活动Run且配置仍精确等于本次候选后恢复本批保存的develop仅验证配置，原flow-control单次update APPLIED/readback匹配；没有触发新Run。Web仍原Run207/1.14.12，不声称新版上线。证据/var/tmp/cyf-skill-base-web-release-20261014-r3/deadline-stop-*.json和restore-config-result.json。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 216,
+    "text": "- 完整收口/evidence/base-2h-20261014/deadline-closeout.json。剩余需要续期：先修真实marketplace/Agent身份及合法安装资格，再Runtime/四包实际发布安装、按新窗口核对同Run前端发布入口、真实UI图片闭环。不是再制定方案，不承诺未经实测的完成耗时。定位/实现/验证/等待整体分段未知，不以测试分钟数替代整项周期。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 399,
+    "text": "- 完整备份并核验后，仅临时DROP `trg_skill_app_binding_no_delete`。MySQL DDL与后续删除事务分开；删除32行（8类关联表各4行）并移走吴用4份pending命令，COMMIT后原样恢复触发器，再允许服务启动。无FOREIGN_KEY_CHECKS关闭，无永久删除触发器。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 576,
+    "text": "- 浏览器真实Hall概览现在完整显示，无原字段null故障，截图post-api-1162-login。Roster另一个实际阻塞已取原始HTTP报文：pageNum:\"1\"触发严格Jackson拒绝（Integer字段），符合规范§D0 pageNum/pageSize必须JSON number；不是改后端放宽强转。Web所有已发现literal与String(pageNum/pageSize)生产调用和对应夹具已修，版本1.16.1/commit421f628c245b83466cafb70510ff69188180bdee/tree672f55e4dbdccd74e48dc6c5001b02225552bfd0，新增真实useHallData请求类型回归；109项定向通过。本机不生产构建。Web develop已ff/push；Flow4403172 Run213进行中，绑定候选配置但start时sources尚空，必须后续核实commit，当前仍线上Run212。证据 `/var/tmp/cyf-interface-web-release-20261015-r2/`；Flow结束后恢复原验证配置、同Run制品部署，不重复启动。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 740,
+    "text": "- 系统 Node 为 RPM 管理，先核对包依赖与全局 CLI；不能直接覆盖 RPM 文件、丢失全局包或以 PATH 遮蔽旧版本冒充统一。Runtime 按原指南保留身份/HOME/状态，不原地覆盖1.2.4。API/Web 仍必须同 Run Flow 发布。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 813,
+    "text": "- 原 root 维护发布 harness 的已编译类/源码与原绑定逐字节匹配；调用当前线上 Flow233 JAR 原publisher，probe和真实DB身份readback通过。持现行coordinator→api release锁（当次Runtime激活也使用api release锁；历史runtime独立锁已不存在，未恢复旧锁），完成 pdf-extract1.0.0 APPROVED/PUBLISHED/包摘要readback。无本地构建、无应用重启、无用户角色修改、无手工数据库权益写入。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 864,
+    "text": "- 前续候选已清理上下文/队列/ZIP重复上限、媒体重复体积、只读扩展字段、非唯一索引、通用资料数量等；完整必要性/保留风险见API `docs/interface-catalog/validation-policy.md`。创建事项旧CHECK数量限制另提供受控迁移SQL与隔离MySQL测试，**生产DDL未执行**；不把候选源码当作已上线。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 865,
+    "text": "- 真实Flow：Web303 SUCCESS属较早候选，不能证明当前源码；API270 FAIL为descriptor新测试同时声明null dataSchema和空mimeTypes，已修夹具。最新API271 FAIL（约189秒观察终态），根因新增分页测试在thenReturn参数内再次调用Mockito桩，未完成stubbing；Web304 FAIL（约126秒观察终态），3355passing/2pending/1failing，旧action outcome测试仍断言第33份资料必须被拒绝。两条Flow均CI-only，无部署；17:10已CAS恢复原配置，回执见`validation-scan/material-flow/*-restore.json`，没有在途Run等待。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 869,
+    "text": "- 最新模式库存`validation-scan/final-inventory-r2/`覆盖API2361/Web390/Runtime101/ops61生产/配置源码文件（含新增迁移SQL），固定文件SHA；该库存采集在本节部分后续修改前。模式命中不等于逐条必要性审计。剩余：正式交付100项链、旧F02存储MIME/体积限制、其他HTTP body/文本/只读帧、archive持久CHECK、分页与只读投影等仍需按调用链核实，不默认必要、不声称全量清理完成；Runtime工作空间发现属于显示能力采样（不授权），需区别业务拒绝与扫描负载，不能机械删流控/安全预算。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 880,
+    "text": "- **边界：全库模式扫描不等于逐条审计完成。** 已确认仍需处理work-item计划8项/能力32项/重试10/目标8KiB；description65535需按实际SQL TEXT解释，不能和任意业务额度混同。Archive选文/问答/事件预算仍与持久CHECK耦合，必须同步迁移候选而非只删HTTP；托管UDS16KiB/封闭字段及其他分页/只读封闭字段继续核查。源码迁移尚未生产执行，当前未合develop、未发布、未生产DDL。不能宣称线上不再限制或全库清完。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 894,
+    "text": "- 用户非关键测试约束继续生效：删失效纯容量测试，原长段截前缀测试改普通短段完整锚点/重载；保留Unicode/摘要/连续性/隔离。仅追加一项数据库迁移关键回归到既有owned-MySQL生命周期，验证旧CHECK变更、原笔记不变及归属/版本/唯一约束；不新增runner或大内容正例。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/handoff.md",
+    "line": 905,
+    "text": "- API Flow5260799/275精确ae19ebac90/treee3926f4 **SUCCESS**，281秒观察终态；3515次测试执行中3330通过、185既有条件跳过、0失败/错误。任务拆分18/18、Archive个人资料12/12、问题服务12/12、Provider worker34/34通过。真实owned-MySQL JuyitingWorkflow37/37通过，其中包含此次迁移保留原笔记及身份/版本/唯一CHECK保护；没有生产数据库操作。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-plan-20261027.md",
+    "line": 94,
+    "text": "Owner承担跨端合同、Runtime主链和最终集成责任。API、Web可按互不重叠路径并行实现，须交接AGENTS、interface-standard.md v1.4、RB-1、任务ID和固定源码；不新增独立Reviewer。当前未派发并行工作，不把潜在并行收益当已落实产能。禁止同时修改同一路径或覆盖其他任务脏内容。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-plan-20261027.md",
+    "line": 104,
+    "text": "| 工作区存在大量非本任务改动；Flow占用、冷缓存、安装锁和当前线上基线未新核验（待核验） | 定向核对自有路径及只读发布条件，固定候选；不抢锁/取消他人Run；重型任务仍在Flow | 首轮检查发现即报；12:00未就绪则重新评估14:00，不保证40分钟完成发布 |"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-plan-20261027.md",
+    "line": 107,
+    "text": "这些时点是Owner工作检查点，不是新增请求deadline、审批门禁或自动通知任务。每次连续执行到检查点记录实际结果；本节不代表已创建后台执行/定时提醒。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/responsibility-boundaries.md",
+    "line": 117,
+    "text": "不新增独立Reviewer、人工审批或门禁系统，沿现有Owner自检、handoff、测试和Flow："
+  },
+  {
+    "path": "specs/juyiting-skill-execution/skill-economy-responsibility-separation.md",
+    "line": 110,
+    "text": "18张生命周期表由economy_skill_*改为agent_skill_*；3张交易表原名不变。API源码、DDL/catalog、外键引用及测试同步，保留既有字段/唯一键/事务/权限，不增加CHECK或兼容层。固定正反向单条RENAME脚本只由停写后的受控迁移执行，禁止启动自动迁移或旧JAR访问新表名。备份及回读覆盖真实行摘要、外键与触发器；恢复反向更名配套旧JAR，不恢复业务数据快照。Web复用436，Runtime不变。具体实施与线上状态见同一handoff，原489制品不能配新表发布。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/management-mvp.md",
+    "line": 80,
+    "text": "- **15分钟检查准备条件**：测试环境、双版本包/升级权益政策、身份和Flow资源必须可核验；缺项立即说明对四小时目标的影响，不用演示商品填空。Flow耗时按实际观察安排，不承诺排队和构建一定在预算内结束。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-4plus1-20261028.md",
+    "line": 153,
+    "text": "- 视图/文档检查通过不证明功能完成。产品开发、删除、候选测试、安装和线上验证分别记录，正式重型验证沿既有Flow规则。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/tasks.md",
+    "line": 37,
+    "text": "| I07 | 协议4 PWE CHECK及schema detector | 历史不变；4含RESULT_COMMITTED、假grant拒绝 | I06 | 30 |"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/spec.md",
+    "line": 16,
+    "text": "- 唯一 Owner：本聊天主 Agent；不创建独立 Reviewer，不接管其他聊天任务。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/acceptance.md",
+    "line": 22,
+    "text": "轻量自检与正式验证分开。重型测试/构建/打包使用既有Flow，每Run≤600秒；固定源码、制品、安装、线上验收分别记录。下文历史后端本地构建等口径仅供历史追溯，不覆盖现行AGENTS规则。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/acceptance.md",
+    "line": 49,
+    "text": "| A22 | 索引延迟 | execution定向结果不等全历史；登记耗时独立记录，无SLO拒绝/强制deadline |"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/acceptance.md",
+    "line": 60,
+    "text": "前端正式证据仅Flow4403172精确commit；本地浏览器仅诊断。后端按项目本地固定源码/Gradle编排/validateLayering。价格信息展示测试不需要实际收费。外部paid调用只在实际执行验收阶段发生，本设计未发起。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/reusable-packages-20261102.md",
+    "line": 56,
+    "text": "1. 固定源码后，Flow worker测试/打包/上传不可变技能制品即结束；主机拉取并核对来源Run与SHA。不得把本机测试fixture ZIP当正式制品。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/reusable-packages-20261102.md",
+    "line": 172,
+    "text": "既有`agent_position_authority`有仅含三个权限键的CHECK，修改CREATE TABLE脚本不升级已有表。部署前须只读核对生产SHOW CREATE TABLE/实际CHECK名称，再通过既有受控schema入口删除该权限枚举CHECK，权限词汇与授权规则由API业务层统一实现；不删除其他约束，不授予全站角色。新建schema与旧schema升级均需在隔离MySQL验证。正式授权只对已核实的chcbz owner/client及吴用binding执行；岗位定义/任命走现有HTTP幂等入口。权限行初始化没有现成用户自助授予入口，使用用户本次明确授权的受控数据操作，保存前值、只补缺项、回读；不得直接写商品发布事实。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/reusable-packages-20261102.md",
+    "line": 178,
+    "text": "用户要求其他业务表同样删除CHECK，替代上文只删除authority枚举CHECK的范围。具体规则归档在API `docs/interface-catalog/database-check-rules-20261102.md`（当前任务worktree候选），全库删除不能先于schema initializer/目录校验/测试适配。岗位业务授权不变，PK/UK/FK/NOT NULL/事务/锁等不在删除范围。2026-11-02已按下节完成生产DDL、技能岗位任命及四技能发布；原阶段记录不再代表当前状态。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/reusable-packages-20261102.md",
+    "line": 182,
+    "text": "- API `8ad42be7815e499077c6a97439f0f13c96c7650e` / tree `129909ac3c71c022fffe3256bf16c0f17c9ee046`，Flow5260799/439成功，3659项中3617通过、42原有跳过、0失败。主机独立安装及JAR摘要核验通过，无CHECK正常启动后health UP；临时启动诊断已关闭。Runtime保持既有116版本，未重启。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/reusable-packages-20261102.md",
+    "line": 183,
+    "text": "- 生产jia库44表82条CHECK已受控删除，列/索引/其他约束保持不变，正常启动后仍0条CHECK。未替换为触发器；规则保留于API `docs/interface-catalog/database-check-rules-20261102.md`。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-technical-design-20261027.md",
+    "line": 474,
+    "text": "重型测试/构建/打包走既有Flow，每Run总计≤600秒。业务验证包含真实工具trace、文件重开/下载和后端提交投影；模拟、局部快照测试、文档检查都不能替代。真实服务使用获准测试输入，不重放旧事项。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/management-contract.md",
+    "line": 421,
+    "text": "本条是行为扩展，Schema Reason枚举/Web解析与显示同步；Web先接受新原因，API随后上线，避免旧严格消费者拒绝整个列表。回归入口：SkillManagementTransactionTest（目录/管理员/报价后分类改变）、SkillMarketplaceRealTransactionTest（旧购买入口）、Web skill-market-ui-lifecycle.test.js；正式验证/上线状态见REUSABLE-SKILLS-20261102 handoff。无新DB表、CHECK或Runtime逻辑。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-extensions-20261028.md",
+    "line": 60,
+    "text": "**2026-10-31 空授权浏览器补充（生产task560失败后已修复安装）**：内层命名权限保留本地socket IPC，不能用`network=false`的系统调用过滤阻断Chromium自身sandbox所需`shutdown`。外网目的地仍只由现有namespace/nft默认拒绝及精确origin代理落实；空skill/origin不新增外网目的地，CHAT只读策略不变。必须同时回归真实app-server下空授权HTML操作/下载及代理、直连拒绝，不以仅有授权origin的网络测试替代。修复c12f7ed已由Flow111发布为1.3.29/bridge1.1.20；精确制品真实主机探针3pass/0fail/0skip，新PID三次通道采样通过。task560按原失败事实收口、未重放；新task561已完成生产模型读取原HTML、填写中文、点击、真实下载及PNG截图，经正式成果提交和chcbz鉴权下载核对摘要/内容通过。模型自行处理无扩展名输入的加载问题；没有人工代执行或生图调用。此证明本地页面真实模型闭环；HTTPS/TLS/网络边界另有真实app-server夹具，不宣称公网登录、MFA或付费网页业务已验收。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-extensions-20261028.md",
+    "line": 144,
+    "text": "4. 原生工具实跑、文件重开、后端commit与投影、前端刷新下载分别取证。正式重型验证/部署沿既有Flow，每Run≤600秒。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-extensions-20261028.md",
+    "line": 169,
+    "text": "Flow108实测worker无法创建Office真实探针要求的UID用户命名空间。重型统一回归/工具构建/完整归档roundtrip继续在Flow；同Run制品额外交付精确SHA绑定的原生Office测试源码。目标主机在新暂存程序上、停旧服务前执行该轻量真实沙箱测试，必须无失败且无skip，覆盖中文DOCX/XLSX读取/修改/保存/重开、输入不变和宿主/网络/写入隔离。Flow中该环境相关测试未执行必须如实列出，不得仅以Flow SUCCESS准入安装，不更改生产沙箱策略；目标探针失败不触碰当前服务。此调整仅分配低开销验证位置，不授权本机源码构建或生产打包。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-extensions-20261028.md",
+    "line": 176,
+    "text": "- 取消通用材料32和成果128上限；消费者及持久化CHECK同步，只保留结构、引用完整性、重复引用和授权等原有正确校验。`maxSources`按本次可选目录表达，不改成另一个固定平台上限。用户明确的WebSocket64KiB控制帧限制保留，文件不通过WS传输。"
+  },
+  {
+    "path": "specs/juyiting-skill-execution/native-execution-review-20261028.md",
+    "line": 125,
+    "text": "- 未跑Java/MySQL HTTP集成、浏览器UI端到端、真实图片/视频服务；正式重型验证沿既有Flow且每Run<=600秒，部署仍需授权。"
+  },
+  {
+    "path": "specs/juyiting-task-collaboration/connectivity-plan-20260922.md",
+    "line": 115,
+    "text": "以下为待派发工作包，不是当前运行状态。启动实施后通过 orchestrator 登记唯一台账，Owner 自检，无独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-task-collaboration/connectivity-plan-20260922.md",
+    "line": 162,
+    "text": "- P1/P2/P3 的真实用例通过后，更新既有 runbook、`MODEL_ROUTING.yaml`、AGENTS 的必要条款：Eva 是指定远端扈三娘，不是本地子 Agent；构建测试走结构化派发，失败明确上报，不静默换宿主机；上线仍按发布政策。"
+  },
+  {
+    "path": "specs/juyiting-task-collaboration/connectivity-detailed-design-20260922.md",
+    "line": 200,
+    "text": "- A 的明确后续问题生成新 requestId，并保留 root/parent 关系；因果图拒绝自引用和循环引用，不设置无依据对话轮数或性能 deadline。"
+  },
+  {
+    "path": "specs/juyiting-task-collaboration/connectivity-detailed-design-20260922.md",
+    "line": 289,
+    "text": "新 BUILD_VERIFY 合同增加 `expiryPolicy=NO_BUSINESS_EXPIRY|EXPLICIT`：默认不设置业务过期；只有用户/既有授权明确指定有效期时，才携带 expiresAt。issuedAt 始终记录；不传播性能 SLO deadline、不把默认 TTL 改成另一个任意大数字。"
+  },
+  {
+    "path": "specs/juyiting-task-collaboration/connectivity-detailed-design-20260922.md",
+    "line": 431,
+    "text": "- 慢响应只记录，不传播会被强制执行的性能 deadline；保留明确传输超时、真实网络错误、用户取消与租约归属。没有证据不新增固定等待、磁盘、内存、包大小发布门禁。"
+  },
+  {
+    "path": "specs/juyiting-task-collaboration/connectivity-detailed-design-20260922.md",
+    "line": 588,
+    "text": "研发 Owner 与远端业务 Agent 是两套身份：研发分工用本地 Worker 不证明 Eva 执行。无独立 Reviewer，不因旧审查队列阻断；身份/ACL/事务/迁移风险由责任 Owner 明确自检并补相关回归。"
+  },
+  {
+    "path": "specs/juyiting-ui-baseline-20261006/tasks.md",
+    "line": 3,
+    "text": "Owner：当前聊天（01a1105d-dda8-76e3-bf1b-e41cad45f3c9）。仅文档与静态原型，无业务源码写入，无独立 Reviewer。"
+  },
+  {
+    "path": "specs/juyiting-ui-baseline-20261006/acceptance.md",
+    "line": 60,
+    "text": "浏览器异常与外部请求均为0；所有报告的输入SHA与当前原型一致，见 `evidence/all-pages-refresh-20261016/final/source-verification.json`。未运行历史默认全分支，不将其旧结果算成本版验收。本地诊断不替代前端Flow正式测试，不代表上线；本轮无需产品构建或部署。"
+  },
+  {
+    "path": "specs/juyiting-ui-baseline-20261006/release-1.0.6.md",
+    "line": 37,
+    "text": "- 若需恢复，先核对正式record仍是本Run并等待既有发布锁，通过既有Flow运维入口执行备份校验及资产优先/入口最后恢复，随后还原旧record并复验线上；不得直接调用旧Run安装器（其防倒序部署保护仍保留），不得本机重新构建或抢占其它发布。"
+  },
+  {
+    "path": "specs/juyiting-ui-baseline-20261006/release-1.0.6.md",
+    "line": 47,
+    "text": "Owner / ledger：`WEB-UI-RELEASE-1.0.6-20261008`；单Owner，无独立Reviewer或重复人工门禁。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/tasks.md",
+    "line": 44,
+    "text": "已删除estimation.md及配套estimate.csv；51–82人日/7–10周是旧规划，不是实绩或新承诺。设计WBS仍用于范围追溯，发布及遗留查session-closeout/acceptance，实施规则遵循当前AGENTS而非旧本地构建/双Writer安排。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/spec.md",
+    "line": 83,
+    "text": "7. Owner自检，不设置独立Reviewer。生产DML、额外收费运行、Agent重启不由设计自动授权。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/acceptance.md",
+    "line": 77,
+    "text": "- 问题按实际证据定位、Owner自检；不创建独立Reviewer、任意耗时或资源固定门槛。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/discussion-execution-analysis-20261101.md",
+    "line": 165,
+    "text": "- **必要验证**：API补目录filename HTTP契约、历史名称投影及取消幂等/非final测试，重型测试待Flow；Web定向组件/消息测试与资料弹框真实浏览器几何验证分开记录。没有正式Flow/安装证据前不能称为上线或全链验收通过。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/session-closeout-20260922.md",
+    "line": 57,
+    "text": "4. 后续普通代码由Owner自检；不创建独立Reviewer；Gradle仍经orchestrator串行，当前本地发布授权保留，资源/请求慢只观测。需要真实收费／生产DML／Agent激活时先明确授权。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/agent-execution-plan.md",
+    "line": 3,
+    "text": "> 文档收口（2026-10-23）：仅保留本文件内DRAFT-v1/SUBMISSION-v1/RESULTS-v1/OVERVIEW-v1的原源码契约及历史来源。旧Owner分包、Flow关闭/本机生产构建、旧主机与版本发布命令均不作为当前执行指令；当前任务按根AGENTS，不恢复独立Reviewer或自动部署。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/agent-execution-plan.md",
+    "line": 18,
+    "text": "主Agent仅维护合同/台账/集成和用户通知，不写应用实现；最多两名源码Owner并行。每人独立worktree，Web与API/Runtime路径不重叠。所有包Owner自检，无独立Reviewer。任务状态唯一来源仍是TASKS.yaml，下面是分包与依赖合同，不是动态执行台账。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/business-discussion-test-cases-20261027.md",
+    "line": 97,
+    "text": "- **[补充自动化]**：真实组件/API/Runtime定向测试，不能替代同名主线页面实操。重型应用测试/构建走Flow；每Run总时限600秒，不搬回本机、不删必要保护。"
+  },
+  {
+    "path": "specs/juyiting-unified-experience/business-discussion-test-cases-20261027.md",
+    "line": 288,
+    "text": "4. 按阻断程度集中修复；不每发现一项就重复发布，不扩成新UI或新框架。正式重型验证复用Flow。"
+  },
+  {
+    "path": "specs/juyiting-voice-conversation/tasks.md",
+    "line": 38,
+    "text": "本节替代上文历史执行角色中的独立 Reviewer/release guard 要求，不改写历史证据。"
+  },
+  {
+    "path": "specs/juyiting-voice-conversation/acceptance.md",
+    "line": 20,
+    "text": "按 `docs/implementation/V1_6_VOICE_BETA_EXECUTION_20260917.md` 第 5 节验收。历史 source accepted 与 20/22 只读接口回归均不能替代语音验收。移除独立 Reviewer/最终 release_guard 队列，由责任 Owner 自检；保留实际身份、取消、幂等、云端测试与制品健康核验。未调用真实 Provider、未启用生产语音，不标记功能整体 PASS。"
+  },
+  {
+    "path": "specs/juyiting-voice-realtime/design.md",
+    "line": 23,
+    "text": "Retain exact JWT jiacn/client_id/sub identity; original Redis admission, HMAC digest, encrypted result cache, idempotency and reservation ownership. Replay is format-bound; adjust synthesis MIME validation/cache replay to exact format/provider without allowing mixed cache content. JWT and identity changes still cancel browser work. Backend provider waits for actual terminal events; keep configured transport/inactivity timeout and InterruptedException handling; no new total SLO deadline and no automatic provider retry. Close/abort owned WebSocket on success, error, interruption, transport timeout. Distinguish known pre-dispatch rejection from unknown accepted-request transport failure, preserving RESULT_UNKNOWN semantics. Lease ownership is never bypassed for slow calls."
+  },
+  {
+    "path": "specs/juyiting-voice-realtime/tasks.md",
+    "line": 5,
+    "text": "- Integration Owner：本聊天，合同、台账、相关验证、精确 SHA 合入、版本发布证据。无独立 Reviewer；Gradle 串行走 orchestrator。"
+  },
+  {
+    "path": "specs/personal-center-navigation-v1-8/design.md",
+    "line": 50,
+    "text": "| 网络失败 | 保留准确失败和重试，不冒充0余额，不新增固定性能deadline |"
+  },
+  {
+    "path": "specs/personal-center-navigation-v1-8/design.md",
+    "line": 80,
+    "text": "Owner自检，无独立Reviewer。两个无重叠Web路径实现包并行，集成/同一生产安装串行。云效不可用期间按已授权本地流程：相关测试→合组件develop→exact SHA生产构建→创建未占用冻结release/1.8.0→发布后认证浏览器回归。此文档不立即触发部署。"
+  },
+  {
+    "path": "specs/personal-center-navigation-v1-8/tasks.md",
+    "line": 30,
+    "text": "- 两worktree均从已fetch的远端develop `7c490298`创建；本机主checkout有历史/其他任务改动，不reset、不挪用。N3等待两份自检candidate，不等待独立Reviewer。"
+  },
+  {
+    "path": "specs/public-beta-release/design.md",
+    "line": 3,
+    "text": "Hosted 使用精确身份 scope 隔离且 fail closed；任务搜索/计数 scope 下推 DAO/SQL，拒绝 legacy tenant=0 自动归属；preflight 无默认凭证、非 loopback 要 SHA-bound 批准、TLS fail closed、统一 deadline/清理。具体 API 路由/错误合同引用原任务与 handoff，不放宽凭证或访问边界。"
+  },
+  {
+    "path": "specs/runtime-self-host-onboarding/tasks.md",
+    "line": 5,
+    "text": "不设独立Reviewer；每位Owner只写所属组件，不覆盖无关改动。初轮源码交付不执行生产操作；2026-10-12续接用户“那就都更新”后由Main统一正式验证与版本化发布，子Agent仅交付制品、不自行安装。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/design.md",
+    "line": 29,
+    "text": "公共 `RestTemplateConfig` 已设置 UTF-8，但 OAuth 专用 Client 自行 `new RestTemplate(requestFactory)`，没有继承 converter 配置。OAuth 专用 Client 不应直接改成共享 `RestTemplate`，因为它有意不传播普通 API 的 performance deadline interceptor；正确做法是在专用 Client 内明确 bytes→UTF-8 边界。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/design.md",
+    "line": 117,
+    "text": "- 不新增任意性能 deadline，不改变现有明确传输超时，不记录 body。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/design.md",
+    "line": 379,
+    "text": "| UNE-DES-02 | 不直接注入共享 RestTemplate | 保持 OAuth 不传播普通 API deadline 的既有边界 |"
+  },
+  {
+    "path": "specs/username-encoding-integrity/tasks.md",
+    "line": 6,
+    "text": "- 不创建独立 Reviewer；每个 Owner 完成风险自检后进入组件 `develop`，正式测试/构建/制品/部署由云效 exact-SHA Run 证明。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/tasks.md",
+    "line": 18,
+    "text": "- [ ] 保留事务外调用、明确传输超时、非 2xx 安全失败；不引入普通 API deadline interceptor。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/spec.md",
+    "line": 36,
+    "text": "- 不通过扩大任意超时、增加性能 deadline、取消请求或伪报成功来处理编码问题。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/spec.md",
+    "line": 87,
+    "text": "- 身份/ACL 和生产数据修复属于高风险范围，由任务 Owner 自检并保留恢复边界；不创建独立 Reviewer。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/acceptance.md",
+    "line": 79,
+    "text": "- [ ] 没有通过绕过锁、伪报成功、取消慢请求或新增任意 deadline 达成验收。"
+  },
+  {
+    "path": "specs/username-encoding-integrity/source-audit-20260926.md",
+    "line": 136,
+    "text": "| 2026-09-13 | `d924ef55bf0926884e679c9008c4d771bcb8c148` | 调整 callback deadline，但保留自行 new RestTemplate |"
+  },
+  {
+    "path": "specs/username-encoding-integrity/data-repair-plan.md",
+    "line": 148,
+    "text": "  -> PRECHECKED"
+  }
+]

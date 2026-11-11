@@ -1,0 +1,6 @@
+Stage: post-commit evidence manifest generation before any source/test rerun
+Exit: 1
+Root cause: host python3 is Python 3.6; subprocess.check_output does not accept text=True.
+Traceback terminal: TypeError: __init__() got an unexpected keyword argument 'text'
+Source candidate remained commit 7821209c874995621d139da9047983f3b586d0b0 / tree d829db4ca8084cd10f1d68b0ae553ecf1d9e666a and was not modified.
+Remediation: replace text=True with universal_newlines=True in the evidence-only invocation.

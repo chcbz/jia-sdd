@@ -1,0 +1,140 @@
+{
+  "format": "cyf-local-combined-release-v1",
+  "batchId": "cyf-full-local-20261107-01",
+  "startedAt": "2026-11-06T23:25:27.172588+00:00",
+  "status": "FAIL",
+  "budgetSeconds": 600,
+  "stages": [
+    {
+      "name": "preflight-api-status",
+      "startedAfterSeconds": 0.926,
+      "argv": [
+        "/usr/local/sbin/cyf-api-kit",
+        "status"
+      ],
+      "seconds": 1.802,
+      "exitCode": 0
+    },
+    {
+      "name": "web-build",
+      "startedAfterSeconds": 2.734,
+      "argv": [
+        "systemd-run",
+        "--quiet",
+        "--wait",
+        "--pipe",
+        "--collect",
+        "--unit=cyf-full-local-20261107-01-web-build",
+        "--property=RuntimeMaxSec=597",
+        "--property=KillMode=control-group",
+        "/root/.local/bin/python3.11",
+        "-u",
+        "/home/isp/wsps/cyf/ops/orchestration/local_web_build.py",
+        "--source",
+        "/dev/shm/cyf-local-stable-web",
+        "--output",
+        "/dev/shm/cyf-full-local-20261107-01/web",
+        "--batch-id",
+        "cyf-full-local-20261107-01-web",
+        "--expected-commit",
+        "f1234a0a083b5f38c2677886e89d98fc95aed21c"
+      ],
+      "seconds": 50.15,
+      "exitCode": 0
+    },
+    {
+      "name": "api-build",
+      "startedAfterSeconds": 52.895,
+      "argv": [
+        "systemd-run",
+        "--quiet",
+        "--wait",
+        "--pipe",
+        "--collect",
+        "--unit=cyf-full-local-20261107-01-api-build",
+        "--property=RuntimeMaxSec=547",
+        "--property=KillMode=control-group",
+        "/root/.local/bin/python3.11",
+        "-u",
+        "/home/isp/wsps/cyf/ops/orchestration/local_build.py",
+        "--task-id",
+        "LOCAL-BUILD-TIMING-20261106",
+        "--source",
+        "/root/.codex/worktrees/cyf-local-timing-api/api",
+        "--output",
+        "/dev/shm/cyf-full-local-20261107-01/api",
+        "--cache-home",
+        "/var/tmp/cyf-local-build-timing-20261106/gradle-home",
+        "--jdk",
+        "/dev/shm/cyf-local-toolchain/dragonwell-21.0.11.0.11+10-GA",
+        "--version",
+        "1.1.37",
+        "--batch-id",
+        "cyf-full-local-20261107-01-api",
+        "--offline",
+        "--package"
+      ],
+      "seconds": 113.161,
+      "exitCode": 0
+    },
+    {
+      "name": "api-install",
+      "startedAfterSeconds": 168.015,
+      "argv": [
+        "/usr/local/sbin/cyf-api-flow-deploy",
+        "--source-local",
+        "/dev/shm/cyf-full-local-20261107-01/api/install-descriptor.json"
+      ],
+      "seconds": 74.75,
+      "exitCode": 0
+    },
+    {
+      "name": "api-status",
+      "startedAfterSeconds": 242.772,
+      "argv": [
+        "/usr/local/sbin/cyf-api-kit",
+        "status"
+      ],
+      "seconds": 3.596,
+      "exitCode": 0
+    },
+    {
+      "name": "web-install",
+      "startedAfterSeconds": 248.48,
+      "argv": [
+        "/root/.local/bin/python3.11",
+        "-I",
+        "-B",
+        "-c",
+        "import runpy,sys; m=runpy.run_path('/usr/local/sbin/cyf-web-flow-deploy',run_name='cyf_local_release'); m['deploy_local'](sys.argv[1],float(sys.argv[2]))",
+        "/dev/shm/cyf-full-local-20261107-01/web/install-descriptor.json",
+        "351.5202815210214"
+      ],
+      "seconds": 120.762,
+      "exitCode": -15
+    }
+  ],
+  "cacheScope": "warm verified tool/dependency/JavaCompile caches; no test/JAR evidence reuse",
+  "source": {
+    "api": {
+      "commit": "7bb82c526e4ba4345ca8e88711067ed23dfcdbbc",
+      "tree": "7e6d03056902c4a36abd9ca0959d5a398e65224b"
+    },
+    "web": {
+      "commit": "f1234a0a083b5f38c2677886e89d98fc95aed21c",
+      "tree": "0f6402f29f9644ca8f50ceb3ca2ade846b325012"
+    }
+  },
+  "tools": {
+    "/home/isp/wsps/cyf/ops/orchestration/local_release.py": "7ccaf51eb28bda53e631c1924a20652bdd62c3c6274308a77bb7f2b85a2849ac",
+    "/home/isp/wsps/cyf/ops/orchestration/local_build.py": "796c00e599ac8b14c3c74402764cf881c78a2ad5f79e5f5bdadbc94f9b3c71a5",
+    "/home/isp/wsps/cyf/ops/orchestration/local_web_build.py": "b5221f59d62d97009c3a1e00d69cd899fd5751815376321a88b2b938eb56c3eb",
+    "/home/isp/wsps/cyf/ops/orchestration/local-web-build.mjs": "1a886628824696c642099917c62ce9eec44f6a5093f860bf3ed79b4573ea7de5",
+    "/usr/local/sbin/cyf-api-flow-deploy": "4e69190f202068fdd1f0109602257744aa6aeb11d81d4c08101a2b82a374f9e7",
+    "/usr/local/sbin/cyf-web-flow-deploy": "b49db1dca3a9d8b90e10b57b6be2d5a42e40350b7ec05b9067df0e944c629c47",
+    "/dev/shm/cyf-local-toolchain/dragonwell-21.0.11.0.11+10-GA/bin/java": "876624049501754e902b3f0e2b50488264e091c0c66e883b102a34eb38ba0d02"
+  },
+  "wallSeconds": 369.266,
+  "error": "RuntimeError: web-install exit -15",
+  "endedAt": "2026-11-06T23:31:36.431930+00:00"
+}

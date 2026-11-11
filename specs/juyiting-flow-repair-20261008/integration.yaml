@@ -1,0 +1,41 @@
+schema_version: 1
+feature: juyiting-flow-repair-20261008
+status: implementing
+baseline:
+  api: 49fe947d1b3b61d9419b7b599bc5c58d445c5953
+  web: ee6ca1b6beba562e0c7fa13d422857f554644471
+candidate:
+  api: 317d0460787fee5948b6e05a676eaee6d3f71139
+  web: 1524a0012f5828a936ba74b54c48406e8b95b8b3
+release_version:
+  web: 1.0.7
+  api: 1.1.2-SNAPSHOT+jyt-flow-20261008.sha.317d046
+flow_runs:
+  - component: api
+    pipeline: 5260799
+    run: 118
+    status: failed
+    reason: Spring regression fixture missed enabled flags; assertions retained in changed candidate
+  - component: api
+    pipeline: 5260799
+    run: 119
+    status: success_artifact_verified
+  - component: web
+    pipeline: 4403172
+    run: 181
+    status: success_artifact_verified
+online_retest: text430_completed_429_recovered_immediate_terminal_ui_followup
+deployment:
+  pipeline: 5264702
+  run: 20
+  order: 70693625
+  status: success
+followup:
+  api_commit: ce047c43e0f275d1ad427c484b8919213be36fa4
+  api_run: 120
+  web_commit: dbfe20bca65d1939b37198bb55b5b95fd5fa2775
+  web_version: 1.0.8
+  web_run: 182
+  status: deployed_verified
+  deployment_run: 21
+  deployment_order: 70693860

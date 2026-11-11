@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-08T22:57:48.389489+08:00",
+  "kind": "TWO_DISTINCT_FIXED_INPUT_FAILURES_DIFFERENT_CAUSES_SOURCE_REMEDIATION_NOT_RETRY",
+  "evidence": [
+    {
+      "path": "evidence/unified-agent-runtime-20261008/ur01-install-final-failure/failure-matrix.json",
+      "sha256": "b39a397dd3d6701ec5ac8998a99c8bce57d0c1bb834e1d9b4d6cbd7e9631a3fe"
+    },
+    {
+      "path": "evidence/unified-agent-runtime-20261008/ur01-cp311-install-final-failure/failure-matrix.json",
+      "sha256": "fde72a63082f97d8630d9a4bca0df8c64d43614f769da8d07054d19f125b3250"
+    },
+    {
+      "path": "evidence/unified-agent-runtime-20261008/ur01-py311-venv-config-diagnosis/diagnosis.json",
+      "sha256": "3c7010d64463f044e1af388d722abb43ba6bdf2cd8067ae0b4dfc476a4d4b1e7"
+    }
+  ],
+  "attempts": [
+    {
+      "session": 83600,
+      "payload": "7594fd",
+      "harness": "f3d395",
+      "index": "https://pypi.org/simple",
+      "actualFailure": "Pillow8.4 source build missingjpegheaders/libs",
+      "targetRemoved": true
+    },
+    {
+      "session": 13826,
+      "payload": "d91ebbf",
+      "harness": "253338",
+      "index": "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/",
+      "actualFailure": "prepublication stalevenv configcommand",
+      "allNewDependenciesLoggedInstalled": true,
+      "targetRemoved": true
+    }
+  ],
+  "sameRootSameInputFailureCount": 0,
+  "newSourceScope": [
+    "conf/cyf-agent-runtime-v1/install.sh",
+    "conf/cyf-agent-runtime-v1/test/runtime-host.test.mjs",
+    "conf/cyf-agent-runtime-v1/test/clean-target-install.acceptance.mjs"
+  ],
+  "proposedMaterialChange": "Originalinstaller handles currentPython3.11 pyvenv.cfg command provenance to finalvenv while keeping home/executable/systemsite false/strictstalechecker unchanged; regression fixture exposes field. Separate payloadC and harnessD archiveproof; pins staynew10.4/3.6.13.",
+  "installationRetryAuthorizedByThisRecord": false,
+  "productionAuthorized": false
+}

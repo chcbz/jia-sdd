@@ -1,0 +1,293 @@
+{
+  "generatedAt": "2026-09-13T13:07:58.484252+00:00",
+  "scope": "Read-only Run50 historical startup analysis; current Run51 status recorded separately; no build, restart, attach, release or infrastructure mutation.",
+  "baseline": {
+    "pipeline": 5260799,
+    "run": 50,
+    "status": "SUCCESS",
+    "commit": "1f89f109e4a8c8565755f298ac10c1df94124031",
+    "tree": "0ce7ecc69b23d44a278a94a37d6f7c953f02c769",
+    "jarSha256": "83a449137fdfa2344e3849ef94d1893c44093a0037aa9515e8922a1260e57627",
+    "deployOrder": 69531195,
+    "pid": 3702039,
+    "startTicks": 3087263076,
+    "applicationRunSeconds": 579.014,
+    "execToStableHealthSeconds": 623.1
+  },
+  "laterRelease": {
+    "queriedAt": "2026-09-13T12:58:56.277Z",
+    "pipeline": 5260799,
+    "run": 51,
+    "status": "SUCCESS",
+    "commit": "feb492406efe849cff46681a93db2e8a274c14e1",
+    "deployOrder": 69532075,
+    "jobStatuses": [
+      "SUCCESS",
+      "SUCCESS"
+    ],
+    "timingBaseline": false,
+    "triggeredByThisTask": false
+  },
+  "instance": {
+    "id": "i-wz9j3ip2unzhwij0bs30",
+    "region": "cn-shenzhen",
+    "type": "ecs.t5-lc1m2.large",
+    "vCpu": 2,
+    "memoryGiB": 4,
+    "apiBaselineCreditRaw": 40,
+    "officialAveragePerVCpuBaselinePercent": 20,
+    "derivedBaselineCoreEquivalent": 0.4,
+    "officialCreditsPerHour": 24,
+    "officialInitialCredits": 60,
+    "currentCredits": "USER_REPORTED_0_1_USUALLY_ZERO",
+    "creditMode": "STANDARD_USER_CONFIRMED",
+    "evidence": "/var/tmp/cyf-resource-rootcause-20260913/DescribeInstanceTypes-snapshot.json",
+    "creditBalanceUserEvidence": {
+      "recordedAt": "2026-09-13T13:19:29.340761+00:00",
+      "source": "User message, not API or screenshot",
+      "statement": "已经没有CPU积分了，基本上都是0",
+      "exactRun50WindowVerified": false,
+      "creditModeVerified": false
+    },
+    "creditModeAndBalanceUserEvidence": {
+      "recordedAt": "2026-09-13T13:34:57.362322+00:00",
+      "source": "User message; not independently fetched API metrics",
+      "statement": "性能约束模式，CPU积分恢复到0.1",
+      "reportedCreditBalance": 0.1,
+      "exactRun50WindowVerified": false,
+      "conclusion": "Standard mode and near-zero credit balance confirm current credit-constrained CPU supply. Historical per-stage throttling contribution remains unquantified.",
+      "creditEquivalentCalculation": "0.1 credit * 60 = 6 vCPU-seconds of stored CPU credit; not a prediction of burst duration, since baseline accrual and gradual performance adjustment continue."
+    }
+  },
+  "cpu": {
+    "sampleStart": "2026-09-13T11:50:00.386121+00:00",
+    "sampleEnd": "2026-09-13T11:58:17.315115+00:00",
+    "wallSeconds": 496.9289984740317,
+    "processReportedCpuSeconds": 410.15,
+    "processReportedAverageCoreEquivalent": 0.8253694215058641,
+    "threads": [
+      {
+        "tid": 3702050,
+        "osName": "java",
+        "cpuSecondsCumulative": 186.265849447,
+        "runqueueSecondsCumulative": 296.325135808,
+        "withinStartupWindow": {
+          "start": "2026-09-13T11:55:14.388882+00:00",
+          "end": "2026-09-13T11:57:59.397601+00:00",
+          "cpuSecondsDelta": 51.629155982,
+          "runqueueSecondsDelta": 70.511814545
+        }
+      },
+      {
+        "tid": 3702069,
+        "osName": "C2 CompilerThre",
+        "cpuSecondsCumulative": 202.975243343,
+        "runqueueSecondsCumulative": 305.469297714,
+        "withinStartupWindow": {
+          "start": "2026-09-13T11:55:14.388882+00:00",
+          "end": "2026-09-13T11:57:59.397601+00:00",
+          "cpuSecondsDelta": 70.212019604,
+          "runqueueSecondsDelta": 77.53999709
+        }
+      }
+    ],
+    "concurrentCountersNotAdditive": true,
+    "guestCgroupQuota": -1,
+    "guestCgroupNrThrottled": 0,
+    "hostCpuAccountingCaution": {
+      "aggregateTickDelta": 26762,
+      "aggregateCpuSecondsAtUserHz100": 267.62,
+      "expectedWallTimesTwoCpuSeconds": 993.8579969480634,
+      "stealTickDelta": 0,
+      "conclusion": "Guest aggregate /proc/stat and per-process/scheduler accounting do not reconcile. Do not infer full physical CPU supply, no hypervisor limit from steal=0, or disprove credit exhaustion from 0.825 alone."
+    }
+  },
+  "gc": {
+    "window": "Log beginning through immediately before CYF_STARTUP_SUMMARY, including runners; not just before Spring Started",
+    "pauseCount": 181,
+    "pauseSeconds": 31.086322999999997,
+    "fullGcCount": 0,
+    "oomMarkerCount": 0,
+    "maxPause": {
+      "gcId": 86,
+      "durationMs": 3842.049
+    },
+    "gcCpuRows": 181,
+    "gcUserSeconds": 18.01999999999998,
+    "gcSysSeconds": 0.4500000000000001,
+    "gcRealRoundedSeconds": 31.010000000000012,
+    "peakPreGcHeapMiB": 336,
+    "peakPostGcHeapMiB": 186,
+    "heapLastTransitionsMiB": [
+      [
+        190,
+        146,
+        337
+      ],
+      [
+        264,
+        149,
+        337
+      ],
+      [
+        318,
+        151,
+        337
+      ],
+      [
+        336,
+        155,
+        351
+      ],
+      [
+        159,
+        155,
+        351
+      ]
+    ]
+  },
+  "memoryAndIoRun50Followup": {
+    "queriedAt": "2026-09-13T12:19:52.340273+00:00",
+    "scope": "Same Run50 PID; cumulative counters through this observation, not a contemporaneous startup IO sample",
+    "pid": 3702039,
+    "startTicks": 3087263076,
+    "minorFaults": 207074,
+    "majorFaults": 374,
+    "status": {
+      "Name": "java",
+      "VmHWM": "747656 kB",
+      "VmRSS": "746528 kB",
+      "VmSwap": "0 kB",
+      "Threads": "105"
+    },
+    "io": {
+      "rchar": 612373215,
+      "wchar": 8708901,
+      "syscr": 103742,
+      "syscw": 34929,
+      "read_bytes": 3780608,
+      "write_bytes": 5029888,
+      "cancelled_write_bytes": 0
+    }
+  },
+  "currentDiskObservation": {
+    "scope": "30s passive sample after Run51, not during Run50 startup",
+    "readAwaitMsRange": [
+      0.5,
+      1.06
+    ],
+    "writeAwaitMsRange": [
+      0.72,
+      8.1
+    ],
+    "utilizationPercentRange": [
+      0.6,
+      10.08
+    ],
+    "queueRange": [
+      0,
+      0.19
+    ],
+    "iowaitPercentRange": [
+      0,
+      1.71
+    ],
+    "swap": "Small intermittent swap activity; not zero swapping; no historical disk latency archive found",
+    "evidence": "/var/tmp/cyf-resource-rootcause-20260913/current-iostat.txt"
+  },
+  "network": {
+    "run50SourceDefaultHosts": {
+      "mysql": "127.0.0.1:3306",
+      "redis": "127.0.0.1",
+      "rabbit": "127.0.0.1"
+    },
+    "defaultConfigurationIsNotProofOfRuntimeOverrides": true,
+    "run51PassiveSockets": {
+      "pid": 3729981,
+      "mysql": "127.0.0.1:3306",
+      "redis": "127.0.0.1:6379",
+      "rabbit": "127.0.0.1:5672"
+    },
+    "hikariRun50EnvelopeSeconds": 5.838,
+    "timeoutMarkersCount": 0,
+    "individualSqlWaits": "NOT_CAPTURED"
+  },
+  "deniedReadOnlyRequests": [
+    {
+      "file": "/var/tmp/cyf-resource-rootcause-20260913/DescribeInstanceMonitorData-snapshot.json",
+      "code": "Forbidden.RAM",
+      "requestId": "01A09AD9-604F-5EDD-9902-35B344D4DFF2",
+      "message": "User not authorized to operate on the specified resource, or this API doesn't support RAM.",
+      "retriedUnchanged": false
+    },
+    {
+      "file": "/var/tmp/cyf-resource-rootcause-20260913/DescribeInstances-snapshot.json",
+      "code": "Forbidden.RAM",
+      "requestId": "01A09AD4-3C32-525E-95F9-A381BB46CA18",
+      "message": "User not authorized to operate on the specified resource, or this API doesn't support RAM.",
+      "retriedUnchanged": false
+    },
+    {
+      "file": "/var/tmp/cyf-resource-rootcause-20260913/DescribeMetricList-CPUCreditBalance.json",
+      "code": "403",
+      "requestId": "01A09AD4-3FB2-5D96-898A-C4AF4EFF41C2",
+      "message": "NoPermission",
+      "retriedUnchanged": false
+    },
+    {
+      "file": "/var/tmp/cyf-resource-rootcause-20260913/DescribeMetricList-CPUCreditUsage.json",
+      "code": "403",
+      "requestId": "01A09AD4-439D-5DD3-BDA0-2B7F99D4B6BA",
+      "message": "NoPermission",
+      "retriedUnchanged": false
+    },
+    {
+      "file": "/var/tmp/cyf-resource-rootcause-20260913/DescribeMetricList-CPUUtilization.json",
+      "code": "403",
+      "requestId": "01A09AD4-4753-5B05-9004-EB43BBF2306D",
+      "message": "NoPermission",
+      "retriedUnchanged": false
+    }
+  ],
+  "externalReferences": [
+    {
+      "url": "https://help.aliyun.com/zh/ecs/user-guide/burst-performance-instance-overview",
+      "cachedHtml": "/var/tmp/cyf-resource-rootcause-20260913/burst-official-overview.html"
+    },
+    {
+      "url": "https://help.aliyun.com/zh/ecs/developer-reference/api-ecs-2014-05-26-describeinstancetypes",
+      "cachedHtml": "/var/tmp/cyf-resource-rootcause-20260913/ecs-types.html"
+    },
+    {
+      "url": "https://www.kernel.org/doc/html/latest/scheduler/sched-stats.html",
+      "cachedHtml": "/var/tmp/cyf-startup-spans-20260913/kernel-schedstats.html"
+    }
+  ],
+  "evidenceDigests": [
+    {
+      "path": "/var/tmp/cyf-startup-spans-20260913/run50-startup-complete.log",
+      "sha256": "a3c6026031bb9357765acadb71d35d6e929b5ff639b4e2bc87c7864249044d9a"
+    },
+    {
+      "path": "/var/tmp/cyf-startup-spans-20260913/run50-resources.jsonl",
+      "sha256": "0858446980bb3a35d7a8f9068f485ef43d1d8f42128156dc16ef82cfaee4b431"
+    },
+    {
+      "path": "/var/tmp/cyf-startup-spans-20260913/run50-scheduler.jsonl",
+      "sha256": "2b164d76d83fdb9b94f981025971992d21b702f1759c59ef41b976387aec08d1"
+    },
+    {
+      "path": "/var/tmp/cyf-startup-spans-20260913/run50-resource-followup.json",
+      "sha256": "721c81ad8aae9910dfe763f4d7a442bf70c76d6e66c95cfa0e576b5affa1ffaa"
+    }
+  ],
+  "remainingUnknowns": [
+    "Run50 exact-window CPU credit balance/usage and historical mode; current near-zero balance and standard mode are user-confirmed",
+    "Guest vs hypervisor CPU accounting discrepancy",
+    "Historical full-process CPU contention attribution",
+    "Per-SQL lock/query waits and startup IO latency",
+    "Same-artifact comparison against user computer or non-burstable runtime"
+  ],
+  "hardGatesAdded": false,
+  "productionChangesMade": false
+}

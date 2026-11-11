@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-11-01T13:15:02.397Z",
+  "sourceSummary": [
+    {
+      "type": "giteeGit"
+    }
+  ],
+  "safetyLines": [
+    "    branch: develop",
+    "    triggerEvents: []",
+    "    branchesFilter: ^develop$",
+    "        timeoutMinutes: 9",
+    "            step: CustomEnvironmentBuild",
+    "                test \"${CI_COMMIT_REF_NAME:-}\" = develop",
+    "                      git fetch --unshallow origin \"$CI_COMMIT_REF_NAME\"",
+    "                const m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,package_version:packageVersion,files};",
+    "          upload_artifact:",
+    "            step: ArtifactUpload",
+    "              uploadType: flowPublic",
+    "            step: JavaScriptCodeScan"
+  ],
+  "hostDeployStep": false
+}

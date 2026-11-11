@@ -1,0 +1,84 @@
+{
+  "status": "BUILT",
+  "publishable": false,
+  "scope": "selected release baseline; NOT full suite, installer or deployment",
+  "stages": [
+    {
+      "name": "dependencies",
+      "argv": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "seconds": 16.165,
+      "exitCode": 0
+    },
+    {
+      "name": "tests",
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "./node_modules/mocha/bin/mocha.js",
+        "--no-config",
+        "--require",
+        "./tests/setup.js",
+        "--timeout",
+        "10000",
+        "--exit",
+        "--reporter",
+        "mochawesome",
+        "--reporter-options",
+        "reportDir=/var/tmp/cyf-local-fast-web-20261107-02/test-reports,reportFilename=mochawesome.json,consoleReporter=dot",
+        "tests/app-title.test.js",
+        "tests/home-login-redirect.test.js",
+        "tests/identity-scope.test.js",
+        "tests/interface-wire.test.js",
+        "tests/production-build-flags.test.js",
+        "tests/public-entry-navigation.test.js",
+        "tests/public-pwa-beta-entry.test.js",
+        "tests/pwa-shell-freshness.test.js"
+      ],
+      "seconds": 4.171,
+      "exitCode": 0
+    },
+    {
+      "name": "build",
+      "argv": [
+        "node",
+        "/home/isp/wsps/cyf/docs/implementation/evidence/local-release-fast-20261106/web-build.mjs",
+        "/root/.codex/worktrees/cyf-local-timing-web/web",
+        "/var/tmp/cyf-local-fast-web-20261107-02/dist"
+      ],
+      "seconds": 23.409,
+      "exitCode": 0
+    },
+    {
+      "name": "package",
+      "seconds": 10.923
+    },
+    {
+      "name": "package-integrity",
+      "seconds": 1.592
+    }
+  ],
+  "startedAt": "2026-11-06T22:26:00.555085+00:00",
+  "source": {
+    "commit": "c1e478f633845a448833a3973e732a12a75874aa",
+    "tree": "ea03d165f0dfc9fe065c06e4837f84e558b360ff"
+  },
+  "lockSha256": "c9c7edd9c41ff19e0ca6306101fd7d9ade19113074b23da0be4dea90454cd5a9",
+  "tools": {
+    "/home/isp/wsps/cyf/docs/implementation/evidence/local-release-fast-20261106/web-fast.py": "78fd7099e5011eefeee37aba3d6c35471587cdbee6dfd5b3eebded2368ddb8f0",
+    "/home/isp/wsps/cyf/docs/implementation/evidence/local-release-fast-20261106/web-build.mjs": "1a886628824696c642099917c62ce9eec44f6a5093f860bf3ed79b4573ea7de5"
+  },
+  "sparseCheckout": "Only unselected tests/fixtures omitted; all production input and interface-standard fixtures present",
+  "queueSeconds": 0.0,
+  "wallSeconds": 57.225,
+  "artifact": {
+    "path": "/var/tmp/cyf-local-fast-web-20261107-02/package/web.tgz",
+    "sha256": "20216940fdd891c0fe222ff8dd4d4dcf7523b0808901f07f5fd8c6716f4d4fbc"
+  },
+  "sourceUnchanged": true
+}

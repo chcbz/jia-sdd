@@ -1,0 +1,29 @@
+# Manual-only, fail-closed placeholder. No build, deployment or triggers.
+name: cyf-api-kit-ci
+sources:
+  cyf_api:
+    type: gitee
+    name: CYF API develop
+    endpoint: https://gitee.com/chcbz/jia.git
+    branch: develop
+    certificate:
+      type: serviceConnection
+      serviceConnection: '149709'
+defaultWorkspace: cyf_api
+stages:
+  preflight:
+    name: CI pending review
+    jobs:
+      probe:
+        name: Disabled until review
+        runsOn: public/cn-beijing
+        timeoutMinutes: 5
+        steps:
+          disabled:
+            step: Command
+            name: Fail closed
+            with:
+              run: |
+                set -eu
+                printf '%s\n' 'FLOW_CI_REVIEW_REQUIRED: no build or deployment executed'
+                exit 73

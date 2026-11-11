@@ -12,13 +12,14 @@
 
 ## 构建、测试与发布
 
-当前规则（2026-10-08）：**前端 Flow、后端本地构建部署**，权威策略见 [`docs/aliyun-flow-cicd-strategy.md`](../aliyun-flow-cicd-strategy.md)。
+当前规则（2026-11-07核对）：Web、API及本项目Runtime默认本地测试、构建、打包与受控部署，以根[AGENTS](../../AGENTS.md)和[工具索引](../../ops/orchestration/README.md)为入口，不自动启动Flow或额度恢复后自动切换。
 
-- 前端复用 `4403172`：固定 `web` 发布 commit，Flow 执行扫描、测试、Vite 生产构建及同 Run 制品部署；不要求转 `master`，不运行本机生产打包或 Flow 失败后的本地回退。
-- 后端在固定 `api` commit/tree 的干净源码目录或独立 worktree 本地测试、`validateLayering`、`bootJar` 和制品生成；所有 Gradle 经 `python3 ops/orchestration/cyf_orchestrator.py gradle ...`，先读最新相关 `build.gradle`。本地 build ID/日志及制品摘要是后端正式证据，不伪造 Flow Run。
-- 两端 `develop` 用于集成，push/合入不自动部署。发布显式绑定版本、源码、同批制品、安装记录及在线核验；测试/构建通过不等于上线。
-- 后端本地发布保留统一锁、可信制品安装、备份与恢复；生产目录 `/home/isp/hosts/cyf/api` 只安装已验证 JAR，不编译。现行 Flow 下载适配器不能直接接受本地输入，须适配验证本地制品入口，不恢复旧源码到生产脚本。
-- 本机前端开发预览和轻量诊断允许；数据库集成使用隔离 fixture，不触碰生产数据。本次规则修改不触发部署或重启。
+- 固定任务、完整commit/tree、版本与工具链，在独立于生产安装目录的干净源码/输出位置执行必要测试和构建；默认复用工作区，不按阶段新建worktree，不覆盖脏修改。
+- Web使用既有测试与生产构建命令；API先读build.gradle，再经既有orchestrator串行执行必要回归、依赖完整性、validateLayering及fresh JAR。按负载安排，不并发堆叠高内存构建。
+- 真实本地批次、日志、测试selector/fixture与制品SHA-256作为证据，精确匹配才复用；不伪造Flow来源、不使用必要测试失败的包。
+- develop合入、构建通过不自动授权部署。沿原受控安装入口保留身份、锁、备份、完整性、可恢复安装；生产API固定目录只安装不编译，Runtime保留固定app及独立身份/state。
+- 本地构建发布同批默认上限600秒，保留现有阶段拒绝及本批构建RuntimeMaxSec终止行为；预计或实际超限须向用户申请例外，未获批不延长、不绕过。此限制不用于业务请求或生产服务强杀；包含等待与健康/必要验收，记录完整墙钟、不删必要回归。未执行完整发布记未实测。
+- 构建、安装、健康、业务验收分别报告。数据库集成用隔离fixture；文档更新不触发部署、重启或生产迁移。工具实现差异按工具索引记录，不因规范更新宣称适配完成。
 
 ## SDD 交付顺序
 

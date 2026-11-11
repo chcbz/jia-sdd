@@ -1,13 +1,32 @@
 # Agent workspace capability refresh
 
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 现行规格（2026-11-07）
+
+**本专题：Agent执行工作目录能力刷新。**
+
+### 责任与业务流程
+Runtime验证本机目录可用性与隔离；API记录能力观察；业务服务决定任务是否可用该能力。
+
+配置或执行目录变化→Runtime验证并上报→API更新→页面读取能力事实。
+
+### 明确边界
+不是用户资料库管理；目录可用不等于授权任意文件，读取能力不触发执行或复制整个工具链。
+
+通用开发/验证约束：[统一开发约束](../architecture-convergence/development-principles.md)。业务字段、状态、错误及测试细节仍由本专题下文和详设维护。
+
+### 验收落点
+目录变化、失效/恢复、重复上报、身份及目录隔离、读取不触发本机扫描。
+
+**状态：** 已闭环（released；工作目录能力刷新已生产发布并核验）。最终规格以本文为准；发布/验收证据见 [integration.yaml](integration.yaml)。过程文档已删除。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
+
+> 文档收口（2026-10-23）：保留工作目录能力刷新契约及原发布记录，与资料文件库不同。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
 <!-- SDD delivery reconciliation 2026-09-06 -->
-## 2026-09-06 全量状态核对
-
-历史 acceptance 与 release 均有依据，统一原顶层 accepted 与 release.released 的陈旧状态，归档 2026-08-23 交付。
-
-完整任务/版本/证据及未完成项见 [delivery-status.md](delivery-status.md)。归档：AR-20260906-07。原文合同及历史验收材料保留，不把发布例外标成 PASS。
-<!-- END SDD delivery reconciliation -->
-
 ## Problem
 
 客户端只根据基础能力、Profile 配置和已安装 Skill 上报 abilities，宋江无法区分 Agent 当前工作目录中已有的项目类型、技术栈和模块范围。

@@ -1,0 +1,21 @@
+# W11/W12 cumulative R6 review and bounded R8 correction — 2026-09-06
+
+Independent Sol Leibniz final read-only review of c0fc6a6f543031000c1965c0928eef68c69c9d73 / f1f826f48e6c6c2a2b27b624a1313880fcafe1cc is REJECT. No runtime/build was executed. W12 reached its second consecutive failure and stopped; its previous source-string/incomplete-harness failure remains recorded. W11 findings below complete the same cumulative review, not invented new test runs.
+
+| Scope | Finding/root cause | Bounded correction and actual regression |
+| --- | --- | --- |
+| W11 P1 | Recovery members missing from composable return | Preserve Curie's b799838854b6be3dbcbd3939b7257033a9f914e1 / 280ffbf62dfff4dcda05f9c1c4a23d02c73a72dd two-export patch and actual public-contract test. Delta review still pending. |
+| W11 P1 | remove leaves valid empty records; save returns PRESENT without record, preventing second funded create | Make per-operation absent save valid without overwriting unresolved existing intent, preserving unavailable/corrupt fail-closed behavior. Cover successful first then second create, legacy empty envelope, sibling record preservation if supported. |
+| W11 P1 | Initial actor scope unavailable; asynchronously loaded principal never refreshes recovery | Reactively re-read namespace when scope becomes available or changes; clear previous actor presentation immediately; no cross-actor replay. Cover empty -> A -> B via actual reactive source and public returned API/mounted panel. |
+| W11 P2 | Recovery UI only shows title/amount | Display full immutable title, description, requiredAbilities, settlementPolicy and amount, not draft values. Actual mounted assertions and confirm/cancel wire behavior. |
+| W11 evidence | Missing storage failure, receipt field, canonical race coverage | Add corrupt/unsupported/read-throw cases; malformed full CancelReceipt cases; shared-object and separate-selected concurrent newer canonical snapshots must not regress. Use existing actual composable/DOM harness, not source strings. |
+| W12 P1 | SkillMarket.vue:79 import lacks from 'vue' | Restore valid import only; actual SFC parse precheck and existing real route lifecycle tests. |
+| W12 P1 evidence | Old tests:764 still clear statusless UNKNOWN ORDER | Only code/status 409 QUOTE_EXPIRED, 409 AGENT_VERSION_CONFLICT, 422 INSUFFICIENT_FUNDS clear; same codes statusless/5xx, mismatched status, unknown/conflict preserve original key/body. Correct duplicate contradictory tests without weakening production. |
+
+Already closed and to preserve: storage ABSENT vs CORRUPT/UNAVAILABLE; full CancelReceipt and monotonic application production; W12 frozen Agent A/version, exact status fence, known QUOTE abandon vs UNKNOWN ORDER retention; real Route->Market->Card->Dialog->composable->HTTP three scenarios in c0fc; unchanged R02 rental accepted delta. No API/runner/lease/price changes.
+
+One Terra Writer, new `.worktrees/eco-v0-web-closure-r8` based on b799838/280ffbf, owns only `src/composables/juyiting/economyRequestIntent.js`, `src/composables/juyiting/useHallTaskActions.js`, `src/components/juyiting/BountyPanel.vue`, `src/components/economy/SkillMarket.vue`, and targeted `tests/` changes. Preserve originals. No dependency/release edits, heavy test/build/DB/runtime or delegation. Cheap syntax checks permitted; no full compiler/build resource use. Report complete clean candidate plus delta and unresolved facts; independent bounded review then one admitted focused test/build stage. W09 currently owns the heavy Gradle window. No deployment or charging acceptance.
+
+## Actor-switch asynchronous completion fence (same owned scope)
+
+Coordinator static follow-through: `sendFundedCreate` awaits the request and then calls the store's dynamic-scope `remove`. Once reactive actor switching is covered, an A response arriving after switching to B must never remove B's journal or present A's task in B's UI. Freeze the request's namespace for cleanup and fence visible completion updates, or preserve A's unresolved record for later replay when scope changed; do not remove from the current unrelated namespace. Include delayed A response + preexisting B intent regression. This is the same matrix's required no-cross-actor invariant, not a new API/auth contract or broad refactor.

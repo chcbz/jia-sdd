@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+const root='/tmp/cyf-composer-prototype-20261027';
+const port=fs.readFileSync(root+'/profile/DevToolsActivePort','utf8').split('\n')[0];
+const target=await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`,{method:'PUT'})).json();
+const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.onopen=r);
+let serial=0;const pending=new Map(),errors=[];
+ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);};
+const cdp=(method,params={})=>new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+const ev=async expression=>{const r=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+await cdp('Runtime.enable');await cdp('Page.enable');
+const report={checks:[],errors};
+const check=(name,result)=>{report.checks.push({name,result});if(!result){console.log(JSON.stringify(report));throw new Error(name);}};
+const nav=async(mode,width)=>{await cdp('Emulation.setDeviceMetricsOverride',{width,height:860,deviceScaleFactor:1,mobile:width<=720});await cdp('Page.navigate',{url:`http://127.0.0.1:18786/index.html?scenario=ready&reset=1#${mode}`});await pause(2000);check(mode+' loads '+width,await ev(`!!document.querySelector('.composer-attach')`));};
+const shot=async name=>{const {data}=await cdp('Page.captureScreenshot',{format:'png'});fs.writeFileSync(root+'/'+name+'.png',Buffer.from(data,'base64'));};
+for(const mode of ['chat','private','public']){
+ await nav(mode,390);
+ const positions=await ev(`(()=>{const q=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,w:r.width}};return [q('.composer-more'),q('.composer-attach'),q('.voice-start'),q('.composer-send')]})()`);
+ check(mode+' left plus/attach right voice/send',positions[0].x<positions[1].x&&positions[1].x<positions[2].x&&positions[2].x<positions[3].x&&positions[2].x-positions[1].x>80);
+ await ev(`document.querySelector('.composer-attach').click()`);
+ check(mode+' mobile three actions',await ev(`document.querySelectorAll('.composer-material-actions>label,.composer-material-actions>button').length===3 && !document.querySelector('dialog[open]')`));
+ if(mode==='chat')await shot('mobile-actions');
+ await ev(`document.querySelector('[data-action="complete-material-library"]').click()`);
+ check(mode+' shared material dialog',await ev(`!!document.querySelector('.material-picker-dialog[open]')`));
+ await ev(`document.querySelector('[data-action="picker-select"][data-id="ref-bird"]').click();document.querySelector('[data-action="picker-stage"]').click();document.querySelector('[data-action="confirm-materials"]').click()`);
+ check(mode+' selected card inside input',await ev(`!!document.querySelector('.composer-input-area .composer-file-chip img') && conversation().chatFiles.includes('ref-bird')`));
+ if(mode==='private')await shot('mobile-selected');
+ await ev(`document.querySelector('.composer-file-chip [data-action="remove"]').click()`);
+ check(mode+' removal only unlinks',await ev(`!conversation().chatFiles.includes('ref-bird')&&!!asset('ref-bird')`));
+}
+await nav('chat',1440);await ev(`document.querySelector('.composer-attach').click()`);
+check('desktop direct picker',await ev(`!!document.querySelector('.material-picker-dialog[open]')&&!document.querySelector('.composer-material-actions')`));await shot('desktop-picker');
+await ev(`document.querySelector('[data-action="picker-select"][data-id="ref-bird"]').click();document.querySelector('[data-action="picker-stage"]').click();document.querySelector('.material-back').click()`);
+check('cancel staged selection preserves draft',await ev(`!conversation().chatFiles.includes('ref-bird')`));
+await nav('private',390);await ev(`document.querySelector('.composer-attach').click()`);
+check('native camera and album attributes',await ev(`document.querySelector('[data-composer-images="camera"]').getAttribute('capture')==='environment'&&!document.querySelector('[data-composer-images="album"]').hasAttribute('capture')&&document.querySelector('[data-composer-images="album"]').multiple`));
+await ev(`(async()=>{const file=new File(['<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#416fa3"/></svg>'],'手机相册图片.svg',{type:'image/svg+xml'});const input=document.querySelector('[data-composer-images="album"]');const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);await pause(400);
+check('album saves local space and attaches',await ev(`state.localFiles.some(a=>a.name==='手机相册图片.svg')&&conversation().chatFiles.some(id=>asset(id)?.name==='手机相册图片.svg')&&!!document.querySelector('.composer-input-area .composer-file-chip img')`));await shot('mobile-imported');
+await ev(`document.querySelector('.composer-file-chip [data-action="remove"]').click()`);
+check('remove imported reference retains personal file',await ev(`state.localFiles.some(a=>a.name==='手机相册图片.svg')&&!conversation().chatFiles.length`));
+// Cancel native selection: no files, no write.
+await ev(`importComposerImages({files:[]})`);
+check('native picker cancellation leaves draft unchanged',await ev(`!conversation().chatFiles.length`));
+await ev(`(async()=>{const original=readPrototypeFiles;readPrototypeFiles=async()=>{throw new Error('simulated read failure')};await importComposerImages({files:[new File(['x'],'failure.png',{type:'image/png'})]});readPrototypeFiles=original;})()`);
+check('read failure preserves library and shows retry',await ev(`!state.localFiles.some(a=>a.name==='failure.png')&&!conversation().chatFiles.length&&conversation().materialImportStatus.includes('保存失败')&&!conversation().materialImportPending`));
+await ev(`(async()=>{const ctx=conversation();const original=readPrototypeFiles;readPrototypeFiles=async files=>{const result=await original(files);ctx.topicId='different-topic';return result};await importComposerImages({files:[new File(['x'],'old-topic.png',{type:'image/png'})]});readPrototypeFiles=original;})()`);
+check('late import never attaches to changed topic',await ev(`!conversation().chatFiles.length&&state.localFiles.some(a=>a.name==='old-topic.png')`));
+await ev(`(async()=>{const ctx=conversation();const original=readPrototypeFiles;readPrototypeFiles=async files=>{ctx.chatDraft='上传时不能自动发送';const before=ctx.messages.length;send();if(ctx.messages.length!==before)throw new Error('sent during import');return original(files)};await importComposerImages({files:[new File(['x'],'upload-inflight.png',{type:'image/png'})]});readPrototypeFiles=original;})()`);
+check('upload does not send and pending flag persisted false',await ev(`conversation().chatDraft==='上传时不能自动发送'&&!conversation().materialImportPending&&!JSON.parse(sessionStorage.getItem(storageKey)).state.privateChats['0'].materialImportPending`));
+for(const width of [320,720,721,1440]){await nav('chat',width);check('no horizontal overflow '+width,await ev(`document.documentElement.scrollWidth<=innerWidth`));}
+check('no browser exceptions',!errors.length);
+fs.writeFileSync(root+'/checks.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));ws.close();

@@ -1,0 +1,61 @@
+# Concrete phase1 remediation R4 — review proposal, NOT execution GO
+
+Actual discriminator soleOwner evidence `/tmp/jvc-oai-runtime-phase1-discriminator-r3-20260906.NXZN2A` (six shared named outputs, no sibling evidence). resultSHA838e3cf03aa0f39d5c5a6659c4f6d07b17bea66edfa75ff20e8f242d15ad45cf. Current ownlog12:42–12:50 actualOOM0/GC172; prior classifier matched generic `Metaspace` as OOM, so previousOOM12 is a BROAD_MATCH_COUNT, not confirmedOutOfMemoryError. No memory parameter change authorized/needed by available evidence. Do not tell user proven OOM. JVM values match expected128m/384m/256k/192m/64m G1. No general passive diagnostic repeat.
+
+## Permission P1 concrete choice to review
+
+Original Owner proposed chmod0755 five ancestors and0644 config. Main flags broad shared-group impact and instead proposes exact API UID987 named accessACL restrictions, preserving current isp owner AND other existing group users. Targets ONLY:
+- `/home/isp`
+- `/home/isp/apps`
+- `/home/isp/apps/nginx`
+- `/home/isp/apps/nginx/conf`
+- `/home/isp/apps/nginx/conf/vhost`
+- `/home/isp/apps/nginx/conf/vhost/api.chaoyoufan.cn.conf`
+
+Current all owned1000:1000 mode0775, no named/defaultACL, no symlinks; `/home` root0755. Candidate permissions: named `user:987:r-x` on five directories, named `user:987:r--` on file; explicit accessACL mask retains existing grouprwx and all original baseACL/owner/other/defaultabsence. No chown/chmod to sharedgroup, no configcontent changes, no reload (ACL affects filesystem authorization only). No recursion. Exact precondition mismatch=>stop before changes. API nameduser match prevents write/rename at every ancestor while administrativeisp UID1000 retains existing owner rights. Reviewer must validate no effective write via other groups, ensure APIcurrentUID987 and no privileges/supplementary bypass, and ensure configSHA remains3a0e51c798c579e017e548322eb4c8f7f5b5dbc040436f90d74814f0d42e36c4 latestCORS.
+
+Proposed actual transaction after review: soleTuring owns it, small own backup of exactACL/meta+contentSHA only (not rawsecret config), held/open stable path identity/no-follow, apply restrictive ancestors top-down beforefile, record each outcome, verify postconditions andunchanged contentSHA. Existingretainedconfigured Nginx keepsrunning; no configtest/reload needed to applyfilesystemACL. If partial failure stop/report exact completedsubset, do not blindly revert hardenedpaths. Immutable externalproof only after independentacceptance. No foreign process/lock/evidence operations. Source/admin custody has no active competing Nginx task per sharedledger; notifyknowncontrollers of API-UID-specific change beforeexecution.
+
+## One changed-condition health observation proposal
+
+Original5s curl failure12:22 remainshistorical. Later passive/discriminator diagnostics complete, no realOOM classified; ECO heavyGradle hasended12:30; voicebuild must ALSO finish naturally before freshhealth. With main-reviewed currentaggregate memory/load observation after build completion, authorize ONE fixed directproxy-scrubbedloopbackGET, same5s timeout, improved safecollection rc/http/timing plus curl fixed connect/starttransfer durations and errorcategory (no rawbody). ExactPID/ticks before/after; no canonicalstatus call/no locks. This is a fresh changed-condition measurement, not unbounded retry/timeoutincrease or claim aboutearliercause. If it fails, STOP for concreteoperationalrecovery decision; no automatically escalatingrequests/restarts.
+
+If healthUP and ACLtrust proven, phase1 operationalrescue may be accepted using priorstableartifact/runtime/flags proofs plus freshgeneration checks; historicalsource remainsUNKNOWN. Then independent consumer-proof issuance and install-onlyGO can be decided without mechanical canonicalstatus retry. PendingcandidateAPI neverrebuild. Installedlifecycle then flagsOFFAPI deployment still require exactdistinctauthorization andcorrectbridgebinding. EnabledWeb last after realvoiceactivation.
+
+## Independent acceptance and exact runtime authorization
+
+Godel independent R4 plan CONDITIONAL_ACCEPT with all restrictions below, planfindings0/0/0; currentenvironmentP1 remains untilactualfix. R3actualdiagnosisACCEPT; JVMtuningREJECT/noevidence. Recoverycontroller13:03 confirms no knownregisteredNginxOwner/inflightoperation, not claiming allunregisteredthreads idle. Main accepts isp UID1000 and OTHER members of administrativeisp group as existingadministrativecustody boundary; unprivileged API UID987 is specifically excluded. FreshfullconfigSHA above is CAS baseline, not old09:15 CORS hash.
+
+After successfulcontroller admission, soleTuring receives actual executionGO `JVC-PHASE1-R4-ACL-HEALTH-20260906` for EXACTLY:
+1. ONEchanged-condition fixed5s healthobservation with ownPID/ticks/listener beforeafter and freshaggregate, sanitizedtimings/errorclasses/bodyUPboolean only. AllECO heavy tasks naturallyended; voicebuild session76428 ended13:02:56 native0, mainarchive verification session75370 naturally0. No otherheavywork ownedhere. Maintainfixedtimeout/no canonicalstatus/no locks/no automaticrequestretry. Ifhealthfails, STOP before ACLchanges and report concretenetworktimingclassification for operationalrecoverydecision.
+2. ONLYifhealthUP, exactsixpath API-UID ACLremediation from reviewedproposal. VerifyallCASmeta/ACL/configSHA beforefirstmutation andAPIUID987/GID1000 with effectivecapabilities zero/no privilegebypass. Missing/mismatch=>STOP withoutchanges. Pin currentdev/inode snapshots andno-follow identities; topdown addonlyuser987:r-x tofiveDIRs thenuser987:r-- toconfig, explicitmaskrwx, preserveallbasepermissions/defaultabsence/owner/group/content. Eachstepverify andfinalallpaths+configSHA; nochmod/chown/recurse, noNginxreload/test, no servicecontrol. Partialfailure stops/reportscompletedsubset, noautomaticrollback.
+3. Evidenceownimmutable result/ACLsummary/configSHA/sourceidentities/nativeeachrc/healthtimings; no rawconfig/log/env. Do not issueACCEPTEDconsumerproof yet. Finalproof externalbinding MUST contain sixpathidentities+ACLdigests+configSHA, with fresh checks atinstall/deployboundaries since futureadminreplacementcan dropnamedACL.
+
+This is a narrow productionfilesystemACL authorization, NOT lifecycleinstall/APIdeploy/voiceactivation/WebreleaseGO. NoJVMtuning orforeignprocess access. Ifnewactiveconfigowneridentified, conflictalert andstop; main remainscoordinationonly. Onceactualhealth+ACLpass return to independentconsumerproof/install-onlyreview, not another generaldiagnosticloop.
+
+## Actual R4 health failure and ACL-only corrective authorization
+
+R4 shared `/tmp/jvc-oai-runtime-phase1-r4-20260906.xssvyfqx/result.txt` SHA1218da2cf6c4dd0c3f8d98ce897dfeea979438cc85cc522f37fbba5d8ade5202:13:12:11–16 fixedcurl native28 HTTP000, connect0.000161s/firstbyte0/total5.003298s, zero download; exactPID/ticks/ownedlistener stable, UID987/GID1000 CapEff0 NoNewPrivs1. ACL_NOT_RUN/zerochanges. Main attributed failure; no morehealthpolling/generaldiagnostics.
+
+The previous main-imposed health-before-ACL ordering is now explicitly superseded FOR ACL ONLY: filesystemrestriction is independent of HTTPresponsiveness and cannot recover or interrupt it. IndependentGodel accepted exactACLplan/CAS/mask/custody unchanged; no broadening of path/principal/permission scope. After successfulcontrolleradmission main grants soleTuring `ACL_ONLY_R4B_20260906` to implement that accepted sixpath namedUID987 restriction transaction, exactlyallpriorCAS/no-follow/precheck/configSHA/CapEff/NoNewPrivs/perstep/finalproof conditions. NO HEALTH REQUEST OR JVM/SERVICE/LIFECYCLE ACTION. Preserveallotheradministrativepermissions andcontent; no chmod/chown/recurse/reload. Stop/reportpartialsubset ifanyfailure; noautomaticrollback orproofissuance.
+
+Also allowed in same one boundedpreflight: readaggregate /proc/meminfo andstatvfs canonicalAPIdeployment filesystem to report current freebytes; noforeignprocessdata/noheavyIO. This is to prevent futurestop when default startup minimum5GiBdisk/1GiBmem cannotbe satisfied. Noresource-threshold override authorized. Return actualACLoutcome plus currentresources for explicit forwardrecovery/release decision. Oldrescue remainsartifacttrusted butNOTknownhealthy; cannotlabel healthyrollback. Deploy/start/stop are stillNOTauthorized by this supplement.
+
+## 19:52 fresh ACL-only R4C authorization after accepted hash-domain correction
+
+Old R4B performed zero mutations because it compared different digest domains; independent acceptance of HASH_DOMAIN_MISMATCH is retained in `JVC-OAI-RESOURCE-BLOCK-20260906.md`. The earlier3a0e51 value above is historical reconstructed nginx-T sourceblock SHA, NOT physical CAS. Correct physical rawconfig CAS is `2211351ee8b2bd608bc8cfb620b0f2085e7cf4e1fe52e4a6c0ea2dda89e9e65e`. Do not rewrite original failures or call this provenforeignedit.
+
+At2026-09-06T19:52:46+08 controller gives soleTuring exact ACL_ONLY_FRESH_R4C GO, reusing the independently accepted sixpath/principal/mask/custody scope above. Monitoringcoordinator confirms no Nginx/ACL writeclaim; its owner touches only its monitor artifacts/state. All fresh sixpath nofollow/inode/owner1000:1000/mode0775/baseACL-withoutnamed/default and physicalrawSHA preconditions plus actualAPI1724652/ticks3026648979 UID987/GID1000 CapEff0/NoNewPrivs1 must be checked before FIRST mutation. Hold stable paths, apply topdown with perstep CAS; only user987:r-x on fiveancestor directories and user987:r-- on file, explicitmaskrwx, allotherpermissions/admincustody/content unchanged. Any mismatch stops; partialfailure reports exactsubset withoutautomaticrollback. This is not merely replacing an oldexpectedhash and retrying.
+
+No HTTP/canonicalstatus/lockoperation/Nginxtest/reload/processcontrol/JVM/configcontent/candidateinstall/APIdeploy/Webrelease. Return ownsmall immutable actualACL/meta/digest/native-each-rc evidence for independent acceptance; no consumerproof issuance yet. The19:45 post-session Java generation/cgroup remained alive; onecanonicalstatus stopped at RELEASE_LOCK_BUSY, not provenDOWN or a reason to retry/scanforeignholder. Current voicepublish resourcegates separately fail (MemAvailable723886080 and f_bavail2405220352); existingversionrecovery's0/0 waiver does not waive those releasegates. ACL-only independence remains as previously accepted.
+
+## R4C completed and independently accepted; consumer proof issued
+
+Actual ACL transaction19:55:03–19:55:08 completed6of6, everysetfacl native0. Final allsixdev/inodes, owner1000:1000/mode0775/basepermissions/defaultabsence preserved, fiveUID987:r-x/file:r-- withmaskrwx, physicalconfig221135 unchanged. Main verified shared `/tmp/jvc-oai-runtime-phase1-acl-r4c-20260906.qavda1kg/01-acl-transaction.txt` SHA08e98625dfe2a8cc29d16589f0945a2484c6ecc52f70bf504885a3fb4676d63a and `result.txt` SHA1491ec134be048d30a0aee6b68157ff2e3d0b82dcef01ab3e3093e771750b3f8. IndependentGodel ACCEPT0/0/0 closes mutableNginx environmentalP1 FOR THIS EXACT filesystem generation. No additional runtime/configcontent/reload operation.
+
+Following separate issuance-onlyGO, Turing issued20:07:45 root0444/nlink1/fsynced files in private `/tmp/jvc-oai-runtime-phase1-proof-20260906.3cgifx9n`; Main independently verified stableidentities, allhashes and exactfivefield schema:
+- local-consumer-proof.json SHAc679e2b244349b8240657a2a4ebb43af5c0c5bab2d83b1c18baf3db04a176bad
+- issuance-receipt.json SHA4bdff0f350fc2b97751f6c45062a94a907e769f5388f484b497086b95dc382e5
+- result.txt SHAa8ce1e8d78f6410fd2d1d531b598406151b8eee2266d61062656484b283838a9
+
+Proof binds candidate lifecycleb333df; separate receipt binds sixpathidentity/ACLdigests, physical221135 versus reconstructed3a0e domains, accepted19tuple/WS semantic evidence `/tmp/jvc-oai-runtime-phase1-diagnostic-r1-20260906.t8kPbu/05-nginx-semantic.txt` SHA01816b7645f452a002703cff95d959ceea0ecc49dc13ad5ed26caf3576694670, R4C evidence, exactAPIgeneration and independentacceptance. No new semantic observation or health request wasmade. ExactfreshACL/inode/physicalCAS remains required at install and deploy because adminreplacement can invalidate ACL. Proof issuance is not install/APIdeploy/voiceactivation/Webrelease; resource and hostpersistent-deploy/monitor exclusion gates remain.

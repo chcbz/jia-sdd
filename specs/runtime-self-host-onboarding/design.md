@@ -1,5 +1,27 @@
 # 自家接应闭环（2026-10-12）
 
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 现行设计边界（2026-11-07）
+
+**本专题：自托管Runtime安装与就绪交接。**
+
+### 最小责任链
+安装器管理文件/身份/恢复；Runtime回报目标进程与能力就绪；API确认注册/授权。
+
+固定候选与配置→隔离暂存验证→受控安装→目标进程身份/ready→通道健康→必要业务验证。
+
+### 实施约束
+CYF固定app实体目录，不恢复版本目录/current链接；Node/Python依赖可共享但可变身份/state隔离；不以shell退出或端口存在代替ready。
+
+通用开发/验证约束：[统一开发约束](../architecture-convergence/development-principles.md)。
+
+只在本专题实际改变协议或数据语义时同步生产者/消费者/必要迁移；接口不变的内部修复不默认修改Web、API、Runtime全链。表/索引修改须说明其查询或一致性职责，不新建CHECK/触发器代替业务规则。
+
+**入口与阅读边界：** 文档状态、入口及阅读边界以[需求](spec.md)现行规格为准。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
+
 任务 SELFHOST-ONBOARDING-20261012；Main 集成 Owner。源码基线：API cd1e6d6ebe714767273c440abc5edd925c2333e3，Web 235048e6820afd24f21c6ca78b4b4c30901508b7，isp-install 807b86d66153b765529bba1d547e4bcfbf0a3706；三者本地/远端 develop 已核对一致，组件工作区干净。根仓其他改动不触碰。
 
 ## 冻结契约

@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-06T10:18:45.834838+08:00",
+  "apiCommit": "329d44fd7f8d0b2402853f5eac4cf47c99fcbed9",
+  "taskId": 423,
+  "firstObservedNewError": "2026-10-06T09:51:02.458+08:00",
+  "error": "Chat request is unavailable",
+  "site": "ChatDeliberationService.taskFacts:1047",
+  "rootCause": "taskFacts calls AgentService.getTask, which resolves owner/client from EsContextHolder. Background ChatBountyBootstrapRelay has no authenticated browser context. Typed admission already passes registry readiness and supplies authoritative owner/client via ServerResolvedSender and exact locked conversation, but does not bridge that scope to the nested Agent task read.",
+  "correctionToPriorDiagnosis": "After READY refresh commit37, errors changed from typed runtime unavailable to taskFacts. BOUNTY_ADMISSION_UNAVAILABLE is only the wrapper; do not confuse unchanged wrapper with unchanged root cause.",
+  "clientRuntimeAuthRead": "READY native receipt; one exact test profile GET queue http200 at10:11:43, no commands consumed",
+  "fix": "Install fresh exact server-authorized EsContext only around existing owner-scoped task read and nested projection; restore prior context in finally. No ACL relaxation, DB writes, admission bypass, or task replay."
+}

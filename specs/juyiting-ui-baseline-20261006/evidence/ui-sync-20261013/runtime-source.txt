@@ -1,0 +1,59 @@
+      <div class="setup-head">
+        <strong>{{ setupResult.message || setupTitle }}</strong>
+        <button type="button" class="setup-close" aria-label="关闭接应文书" @click="$emit('clear-setup-result')">
+          <var-icon name="close-circle-outline" />
+        </button>
+      </div>
+      <template v-if="isLocalSetup">
+        <p>Runtime {{ runtimeSetup.runtimeProtocolVersion }} 自家接应；安装授权不代表 Runtime 在线或事项可办理。</p>
+        <dl class="runtime-scope">
+          <div><dt>Tenant</dt><dd>{{ runtimeSetup.tenantId }}</dd></div>
+          <div><dt>Client</dt><dd>{{ runtimeSetup.clientId }}</dd></div>
+          <div><dt>Agent</dt><dd>{{ runtimeSetup.canonicalAgentId }}</dd></div>
+          <div><dt>Manifest 版本</dt><dd>{{ runtimeSetup.manifestVersion }}</dd></div>
+        </dl>
+        <div class="setup-note">
+          <div class="runtime-guide-head">
+            <strong>Runtime 指引</strong>
+            <button type="button" class="setup-copy" @click="copyRuntimeGuide">{{ runtimeCopied ? '已复制文书' : '复制非秘密文书' }}</button>
+          </div>
+          <a :href="runtimeSetup.guideUrl" target="_blank" rel="noopener noreferrer">打开自托管 Runtime v1 指引</a>
+          <p class="runtime-layout">统一目录：程序放 apps/cyf-agent-runtime-v1，配置与策略放 conf/cyf-agent-runtime-v1，各角色 HOME 放 state/cyf-agent-runtime-v1/INSTANCE/agents/SUBJECT/codex-home；路径基目录使用目标机本人获授权的位置。</p>
+          <p class="runtime-upgrade-note">已有统一 Runtime：升级或整理目录时沿用 installation、manifest、hostId、授权和完整会话，不重新生成交接材料、不重复登记或 enroll。按指引第9节迁移 HOME 与会话路径索引，核验后再退役旧入口；本页不会自动更新目标机。</p>
+          <ol>
+            <li>首次接入：在目标机安装 isp-install，并确认运行用户、文件 UID 与权限；系统模板 root 不可由非 root 运行用户直接使用。</li>
+            <li>在 isp-install 仓库准备交接材料（有效期参数为 Unix 毫秒）：</li>
+          </ol>
+          <pre class="runtime-command">{{ prepareCommand }}</pre>
+          <p>将目标机生成的 handoff.json 安全传回本页；不要粘贴或传送 enrollment-secret、subject-key、JWT 或 API Key。</p>
+          <label class="handoff-import">导入 handoff.json<input type="file" accept="application/json,.json" @change="importHandoff" /></label>
+          <p v-if="handoffMessage" role="status">{{ handoffMessage }}</p>
+          <p v-if="runtimeError" class="runtime-error" role="alert">{{ runtimeError }}</p>
+          <div class="runtime-actions">
+            <button type="button" class="catalog-action primary" :disabled="!canCreateInstallation" @click="createInstallation">明确登记安装</button>
+            <button type="button" class="catalog-action subtle" :disabled="!(importedHandoff || lastInstallationId) || runtimeBusy" @click="lookupInstallation">手动查询同一安装</button>
+          </div>
+          <p v-if="installationStatus" role="status">安装授权状态：{{ installationStatus }}。PENDING / ACTIVE 不代表在线；请继续完成 profile/host 配置、validate、enroll、服务切换，并以新事项验收。</p>
+        </div>
+      </template>
+      <dl v-else>
+        <div><dt>好汉编号</dt><dd>{{ setupResult.agentId }}</dd></div>
+        <div><dt>接应牌</dt><dd>{{ setupResult.profileId }}</dd></div>
+        <div><dt>安身处</dt><dd>{{ setupResult.workdir }}</dd></div>
+      </dl>
+    </section>
+
+    <HostingRentPanel
+      v-if="hostingPersona"
+      :persona="hostingPersona"
+      :resolve-persona="resolveHostingPersona"
+      @close="hostingPersonaCode = null"
+      @hosting-changed="$emit('hosting-changed')"
+      @hosting-confirmed="handleHostingConfirmed"
+    />
+
+    <div class="catalog-grid">
+      <article
+        v-for="persona in personas"
+        :key="persona.personaCode"
+        class="persona-card"

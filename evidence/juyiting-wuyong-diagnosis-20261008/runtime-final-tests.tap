@@ -1,0 +1,75 @@
+TAP version 13
+# Subtest: manifest SHA validates exact explicit Runtime v1 identity fields
+ok 1 - manifest SHA validates exact explicit Runtime v1 identity fields
+  ---
+  duration_ms: 3.6428
+  ...
+# Subtest: enrollment secret accepts only a protected environment or 0600 regular file
+ok 2 - enrollment secret accepts only a protected environment or 0600 regular file
+  ---
+  duration_ms: 13.061988
+  ...
+# Subtest: redacted logs do not expose enrollment or runtime authorization values
+ok 3 - redacted logs do not expose enrollment or runtime authorization values
+  ---
+  duration_ms: 1.147188
+  ...
+# Subtest: HTTP client sends explicit v1 identity, uses bearer authorization, and durable ACK replay is monotonic
+ok 4 - HTTP client sends explicit v1 identity, uses bearer authorization, and durable ACK replay is monotonic
+  ---
+  duration_ms: 53.175266
+  ...
+# Subtest: legacy URL api_key and expired non-rejected commands are refused
+ok 5 - legacy URL api_key and expired non-rejected commands are refused
+  ---
+  duration_ms: 1.212332
+  ...
+# Subtest: retry classification is limited to frozen transient network and HTTP failures
+ok 6 - retry classification is limited to frozen transient network and HTTP failures
+  ---
+  duration_ms: 0.897075
+  ...
+# Subtest: ACK flush preserves the unsent suffix on transient failure and propagates authorization failure
+ok 7 - ACK flush preserves the unsent suffix on transient failure and propagates authorization failure
+  ---
+  duration_ms: 56.66304
+  ...
+# Subtest: runtime loop retries transient failures with capped delay and fails closed on rebind/auth
+ok 8 - runtime loop retries transient failures with capped delay and fails closed on rebind/auth
+  ---
+  duration_ms: 1.264895
+  ...
+# Subtest: runtime loop waits are promptly cancelled without a second ACK flush
+ok 9 - runtime loop waits are promptly cancelled without a second ACK flush
+  ---
+  duration_ms: 0.579492
+  ...
+# Subtest: runtime loop aborts an active request and does not begin heartbeat or ACK flush
+ok 10 - runtime loop aborts an active request and does not begin heartbeat or ACK flush
+  ---
+  duration_ms: 2.152887
+  ...
+# Subtest: both source systemd templates suppress permanent exit and back off restarts
+ok 11 - both source systemd templates suppress permanent exit and back off restarts
+  ---
+  duration_ms: 3.812079
+  ...
+# Subtest: SIGTERM between loop steps prevents all subsequent network and ACK calls
+ok 12 - SIGTERM between loop steps prevents all subsequent network and ACK calls
+  ---
+  duration_ms: 0.689573
+  ...
+# Subtest: SIGTERM during ACK flush stops later ACK sends and retains the durable queue
+ok 13 - SIGTERM during ACK flush stops later ACK sends and retains the durable queue
+  ---
+  duration_ms: 26.176842
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 274.278668

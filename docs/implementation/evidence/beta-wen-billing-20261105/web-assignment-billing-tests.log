@@ -1,0 +1,31 @@
+
+
+  .................!..................................!.
+
+  52 passing (85ms)
+  2 failing
+
+  1) persisted exact point-and-start source contract
+       new selection never overwrites an existing original intent:
+     TypeError: Cannot read properties of null (reading 'body')
+      at Context.<anonymous> (tests/juyiting-point-and-start.test.js:177:38)
+
+  2) independent generic action/grant/root fences
+       new body keeps long decimal versions as strings and rejects authority fields in persisted records:
+
+      AssertionError: expected { targetAgentId: 'agent-1', …(4) } to deeply equal { targetAgentId: 'agent-1', …(2) }
+      + expected - actual
+
+       {
+         "expectedTaskVersion": "9007199254740993"
+      -  "quoteId": "quote-1"
+      -  "recommendationId": "rec-1"
+         "requirementRevision": "9223372036854775807"
+         "targetAgentId": "agent-1"
+       }
+      
+      at Context.<anonymous> (tests/juyiting-point-and-start.test.js:435:16)
+      at process.processImmediate (node:internal/timers:574:21)
+
+
+

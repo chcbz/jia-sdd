@@ -1,0 +1,36 @@
+
+
+  workspace immutable in-page write intent
+    ✔ joins double clicks and retries the frozen original request with the same key
+    ✔ retains processing and reconciliation, releases only definitive business rejection
+    ✔ does not retry a committed write when its follow-up read fails
+    ✔ identity cleanup drops queued writes before they can send
+    ✔ uses the summary snapshot revision, not stale detail, and expires a rejected confirmation
+    ✔ task: retries DELETE unchanged and displays current reattached state without repeating deletion
+    ✔ conversation: retries DELETE unchanged and displays current reattached state without repeating deletion
+
+  workspace write recovery presentation
+    ✔ labels retry as a write retry, disables in-flight retry and discloses page lifetime (48ms)
+
+  personal workspace task link adapter
+    ✔ lists exact task links, writes explicit pinned versions, and sends a conditional idempotent detach
+    ✔ accepts an exact business acknowledgement without requiring an exposed transport ETag
+    ✔ accepts an exact detach acknowledgement without a transport ETag
+    ✔ rejects a write acknowledgement for a different version even without an ETag
+    ✔ rejects malformed server data instead of displaying an incomplete association directory
+    ✔ cancels and drops a late task directory response when the JWT identity changes
+    ✔ loads every page as one readonly directory snapshot without hiding cross-page relations
+    ✔ rejects a repeated cursor instead of publishing a partial complete directory
+    ✔ rejects a cross-page relation instead of publishing a partial complete directory
+    ✔ aborts a complete-directory read when identity changes between pages
+    ✔ maps conditional and idempotency failures without retrying or accepting an invalid local request
+
+  personal workspace conversation link adapter
+    ✔ lists exact conversation links, writes explicit pinned versions, and sends a conditional idempotent detach
+    ✔ rejects malformed server data instead of displaying an incomplete association directory
+    ✔ cancels and drops a late conversation directory response when the JWT identity changes
+    ✔ maps conditional and idempotency failures without retrying or accepting an invalid local request
+
+
+  23 passing (171ms)
+

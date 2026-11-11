@@ -1,0 +1,7 @@
+# HOST R7 fixture-only PID correction
+
+R6 all on07a08baa/treee1ac86cb: rc1, build-contract PASS then locks fails stat /proc/1044290/fd/8. Owned full evidence /tmp/cyf-host-adapt-r6.FzLxos; before/after sameclean. Failed cache4c56ea1da544657fee64c4c18c09fd95fe6ac923a9697752f5fe6621c824271c. Failure attributed count1 before correction.
+
+Root cause: test-api-host-adaptation.sh231,240,244,248 open inherited FD8 in `( ... )` subshell but use /proc/$$, which identifies outer shell, not descriptor-owning subshell. Correct each affected fixture to explicitly capture the actual owning shell PID (BASHPID at the right point before further command substitution) and use its proc FD. Do not replace descriptor facts with pathname facts or weaken canonical held-flock validation. Preserve negative cases wrong-FD, unlocked, inode/path changes.
+
+Original HOST Writer owns ONLY test-api-host-adaptation.sh, no production/common/canonical edits. Static Bash/explicitPythonAST and a bounded pure own-process FD smoke are allowed: exclusive private temp file, subshell opens FD8, validate its actual proc descriptor inode/device, no canonical/lifecycle/whole selector/network/process signaling. This is mechanical fixture proof, not full locks/all evidence. Clean tinycommit -> independent delta/safety review -> one newtree all; no old-tree repeat. Merge owner must receive new accepted test commit before final integration verification; original production bytes remain accepted and immutable.

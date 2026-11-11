@@ -299,7 +299,7 @@ for raw in sys.stdin:
         if state.get('create_fail_on') == table:
             print('fixture create failure', file=sys.stderr, flush=True)
         else:
-            state['tables'][table] = ('check_drift' if state.get('create_drift_on') == table
+            state['tables'][table] = ('column_drift' if state.get('create_drift_on') == table
                                       else 'equivalent')
         save(state)
         continue
@@ -436,7 +436,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
             'source_commit_sha': self.commit, 'source_tree_sha': self.tree,
             'run_id': self.run_id, 'receipt_sha256': digest(receipt_bytes),
             'candidate_sha256': digest(jar), 'previous_sha256': 'c' * 64,
-            'backup': '/var/lib/cyf-api-flow/backups/fixture.jar',
+            'backup': '/home/isp/state/cyf-api-flow/backups/fixture.jar',
             'candidate_stop_rc': 0, 'timestamp': '20260913T000000Z',
         }
         if record_overrides:
@@ -467,6 +467,11 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
             self.assertNotIn('--database=attacker_database', args)
             self.assertFalse(any('password' in value.lower() for value in args))
         self.assertNotIn(self.secret, (self.root / 'fake-state.json').read_text())
+
+    def test_create_resource_has_no_business_checks(self):
+        self.assertNotIn(b'CHECK (', f06.F06_SQL_BYTES)
+        for table in f06.TABLE_ORDER:
+            self.assertEqual(f06.EXPECTED_TABLES[table]['checks'], {})
 
     def test_default_plan_is_read_only_and_binds_exact_nested_resource(self):
         result, payload = self.execute()
@@ -646,10 +651,6 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
             ('ENGINE=InnoDB', 'ENGINE=MyISAM'),
             ('CHARSET=utf8mb4', 'CHARSET=utf8'),
             ('COLLATE=utf8mb4_0900_ai_ci', 'COLLATE=utf8mb4_bin'),
-            ('_utf8mb4', '_latin1'),
-            ("'accepted'", "'accept`ed'"),
-            (' >= 1', ' > 1'),
-            (' and ', ' or '),
             ("COMMENT 'Primary key'", "COMMENT 'Primary key' INVISIBLE"),
             ('(`id`)', '(`id`(1))'),
             ("= 64)),", "= 64)) NOT ENFORCED,"),
@@ -672,7 +673,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
                     f06.parse_show_create(rows, first, self.collation)
 
     def test_valid_show_does_not_mask_information_schema_indexes_checks_or_table_drift(self):
-        for drift in ('index_drift', 'constraint_drift', 'check_drift', 'collation_drift'):
+        for drift in ('index_drift', 'constraint_drift', 'collation_drift'):
             with self.subTest(drift=drift):
                 self.use_current_owner_metadata()
                 self.state['tables'][f06.TABLE_ORDER[0]] = drift
@@ -823,40 +824,6 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
                 self.assertEqual(payload['error'], 'create_collation_metadata_invalid')
                 self.assertEqual(self.read_state()['creates'], [])
 
-    def test_actual_escaped_checks_preserve_literals_operators_and_boolean_structure(self):
-        first = f06.TABLE_ORDER[0]
-        checks = RUN49_METADATA['checks'][first]
-        for name, clause in checks.items():
-            self.assertEqual(f06.normalized_check(clause),
-                             f06.normalized_check(f06.EXPECTED_TABLES[first]['checks'][name]))
-        clause = checks['chk_artifact_outcome_supersession']
-        changes = [
-            ('accepted', 'Accepted'), ('accepted', 'accept`ed'),
-            ('accepted', "accept''ed"), ('accepted', r'accep\ted'),
-            ('_utf8mb4', '_latin1'), ('_utf8mb4', '_binary'),
-            (">= 1", "> 1"), (' is null', ' is not null'),
-            (' and ', ' or '), (' or ', ' and '), (' <> ', ' = '),
-            (r"\'accepted\'", r"\'accepted'"),
-            (r"\'accepted\'", r"'accepted\'"),
-        ]
-        self.use_current_owner_metadata(complete_synthetic_columns=True)
-        original = copy.deepcopy(self.state['expected'][first]['CHECKS'])
-        for before, after in changes:
-            with self.subTest(change=(before, after)):
-                self.assertIn(before, clause)
-                self.state['expected'][first]['CHECKS'] = [
-                    [row[0], row[1], hx(clause.replace(before, after, 1))]
-                    if row[1] == hx('chk_artifact_outcome_supersession') else row for row in original]
-                self.write_state()
-                result, payload = self.execute('--apply')
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn('check_clause:chk_artifact_outcome_supersession',
-                              payload['tables'][first]['mismatches'])
-                self.assertEqual(self.read_state()['creates'], [])
-        # Previously global backtick removal silently changed literal contents.
-        self.assertNotEqual(f06.normalized_check("outcome_state = 'accept`ed'"),
-                            f06.normalized_check("outcome_state = 'accepted'"))
-
     def test_runner_file_lock_waits_without_backend_or_schema_mutation(self):
         lock_path = self.root / 'f06-runner.lock'
         lock_path.touch(mode=0o600)
@@ -905,16 +872,6 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         self.assertIn('columns', payload['tables'][f06.TABLE_ORDER[0]]['mismatches'])
         self.assertEqual(self.read_state()['creates'], [])
 
-    def test_check_constraint_drift_fails_closed(self):
-        self.state['tables'][f06.TABLE_ORDER[0]] = 'check_drift'
-        self.write_state()
-        result, payload = self.execute()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(payload['error'], 'existing_schema_drift')
-        self.assertTrue(any(value.startswith('check_clause:')
-                            for value in payload['tables'][f06.TABLE_ORDER[0]]['mismatches']))
-        self.assertEqual(self.read_state()['creates'], [])
-
     def test_partial_autocommit_is_preserved_and_retry_verifies_before_continuing(self):
         second = f06.TABLE_ORDER[1]
         self.state['create_fail_on'] = second
@@ -947,7 +904,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(payload['failed_table'], first)
         state = self.read_state()
-        self.assertEqual(state['tables'][first], 'check_drift')
+        self.assertEqual(state['tables'][first], 'column_drift')
         self.assertEqual(state['tables'][f06.TABLE_ORDER[1]], 'absent')
         self.assertEqual(state['creates'], [first])
 
@@ -998,7 +955,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
 
     def test_preservation_f06_current_sql_and_mandatory_owner_catalog_are_exact(self):
         self.assertEqual(f06.RESOURCE_SHA256,
-                         'ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75')
+                         '80df95b430e6d6e806c8f5b2bf487b63115a23d9692ac1bafd51f9d81e13fb53')
         self.assertEqual(digest(f06.F06_SQL_BYTES), f06.RESOURCE_SHA256)
         self.assertIn(b'owner_jiacn', f06.F06_SQL_BYTES)
         for table in f06.TABLE_ORDER:
@@ -1032,6 +989,16 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
         authored.insert(client + 1, owner)
         self.assertEqual({col[1] for col in f06.parse_show_create(authored, first, self.collation)},
                          {value[0] for value in f06.EXPECTED_TABLES[first]['columns']})
+        # CHECK-free schema retains all owner columns/indexes.
+        without_checks = [row for row in authored if not row[0].startswith('  CONSTRAINT ')]
+        without_checks[-2][0] = without_checks[-2][0].rstrip(',')
+        self.assertEqual(len(f06.parse_show_create(without_checks, first, self.collation)), 17)
+        second = f06.TABLE_ORDER[1]
+        decision = [row for row in synthetic_show_rows(second, self.collation)
+                    if 'CONSTRAINT `chk_artifact_outcome_decision_' not in row[0]]
+        decision[-2][0] = decision[-2][0].rstrip(',')
+        self.assertEqual(len(f06.parse_show_create(decision, second, self.collation)),
+                         len(f06.EXPECTED_TABLES[second]['columns']))
         wrong = copy.deepcopy(authored)
         wrong.remove(owner)
         wrong.insert(1, owner)
@@ -1064,7 +1031,7 @@ class ApiAdditiveSchemaTest(unittest.TestCase):
     def test_oracle_sync_current_show_cannot_omit_or_weaken_owner_scope(self):
         first = f06.TABLE_ORDER[0]
         self.assertEqual(digest(f06.F06_SQL_BYTES),
-                         'ecd557ae6f46810cb3ae9d250df80560976504d07b96650d780f3b699b214e75')
+                         '80df95b430e6d6e806c8f5b2bf487b63115a23d9692ac1bafd51f9d81e13fb53')
         parsed = f06.parse_show_create(CURRENT_OWNER_SHOW_ROWS, first, self.collation)
         self.assertEqual(len(parsed), 17)
         self.assertIn(b'(tenant_id, client_id, owner_jiacn, artifact_id, artifact_version)',

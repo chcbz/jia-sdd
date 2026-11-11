@@ -1,0 +1,35 @@
+{
+  "queriedAt": "2026-10-09T09:23:08.063Z",
+  "pipeline": 4403172,
+  "name": "cyf-web-release",
+  "configSha256": "2fcc386fdad9a083a863e63d5a6dee01270394d8798d1046a0203fd1f3e36561",
+  "sources": [
+    {
+      "branch": "develop",
+      "triggers": [
+        "push"
+      ],
+      "filter": "^(develop|codex/mmd-unified-materials-web-20261003)$"
+    }
+  ],
+  "stages": [
+    {
+      "name": "Frontend develop CI",
+      "jobs": [
+        {
+          "name": "Locked install, full tests, and Vite build",
+          "steps": [
+            "CustomEnvironmentBuild",
+            "ArtifactUpload"
+          ]
+        },
+        {
+          "name": "JavaScript code scan",
+          "steps": [
+            "JavaScriptCodeScan"
+          ]
+        }
+      ]
+    }
+  ]
+}

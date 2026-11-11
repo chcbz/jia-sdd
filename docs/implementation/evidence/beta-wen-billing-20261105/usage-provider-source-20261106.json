@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-06",
+  "sources": [
+    {
+      "artifact": "spring-ai-model",
+      "version": "2.0.0",
+      "sha256": "0e518165adf511c8e90509575f5686b3b74c8659195a27ae76ec9d14e01b2430",
+      "source": "https://repo.maven.apache.org/maven2/org/springframework/ai/spring-ai-model/2.0.0/spring-ai-model-2.0.0-sources.jar"
+    },
+    {
+      "artifact": "spring-ai-openai",
+      "version": "2.0.0",
+      "sha256": "5b958a63b66e5e51dae552350120c8c9e7fb8de0850820ec2705f63595ae62a0",
+      "source": "https://repo.maven.apache.org/maven2/org/springframework/ai/spring-ai-openai/2.0.0/spring-ai-openai-2.0.0-sources.jar"
+    },
+    {
+      "artifact": "openai-java-core",
+      "version": "4.39.1",
+      "sha256": "b2d8476d71595d9a5480994086e400fd59e1c37e6f813cd7d72f6dc998e295cd",
+      "source": "https://repo.maven.apache.org/maven2/com/openai/openai-java-core/4.39.1/openai-java-core-4.39.1-sources.jar"
+    }
+  ],
+  "officialDocumentation": [
+    "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create",
+    "https://developers.openai.com/api/docs/guides/prompt-caching",
+    "https://learn.chatgpt.com/docs/app-server"
+  ],
+  "established": [
+    "Chat Completions input ordinary tokens = prompt tokens minus cached subset; completion tokens already include reasoning and prediction subcounts.",
+    "Official OpenAI caching has no extra cache write charge. This does not silently replace user-registered prices for other channels.",
+    "Spring AI 2.0.0 OpenAiChatModel retains native CompletionUsage and actual response id/model; cache read comes from prompt token details.",
+    "App-server documentation confirms tokenUsage notification but does not establish last versus total billing semantics or model attribution for every underlying inference.",
+    "SDK ObjectMappers.jsonMapper serializes native CompletionUsage, including unknown provider usage properties; Spring single-shot UsageCalculator returns nativeUsage unchanged when there is no previous response. Its multi-response accumulated form has no nativeUsage and is not assumed equivalent."
+  ],
+  "limits": "Downloaded source jars are diagnostic temporary inputs, not production dependencies or tested release artifacts. Runtime normalizer remains UNVERIFIED; only a complete direct Chat Completions response can use the new explicit normalizer."
+}

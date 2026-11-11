@@ -1,0 +1,283 @@
+--- a/src/components/world/JuyiHall.vue
++++ b/src/components/world/JuyiHall.vue
+@@ -9,7 +9,7 @@
+       <div class="workbench-sidebar-bottom">
+         <button class="workbench-map-entry" type="button" @click="openWorkbenchMap"><var-icon name="map-marker-outline" /><span>厅中实景<small>去梁山走一走</small></span><var-icon name="chevron-right" /></button>
+         <nav class="workbench-side-nav workbench-side-utility" aria-label="工作台辅助导航">
+-          <button type="button" @click="emit('open-onboarding', $event.currentTarget)"><var-icon name="help-circle-outline" /><span>使用帮助</span></button>
++          <button type="button" @click="openHelp($event.currentTarget)"><var-icon name="help-circle-outline" /><span>使用帮助</span></button>
+         </nav>
+         <button class="workbench-sidebar-account" type="button" :disabled="accountEntryDisabled" aria-label="个人中心" @click="openProfile"><img v-if="accountAvatar" :src="accountAvatar" alt="" /><var-icon v-else name="account-circle-outline" aria-hidden="true" /><span>{{ accountDisplayName }}<small>个人中心</small></span><var-icon name="chevron-right" aria-hidden="true" /></button>
+       </div>
+@@ -31,7 +31,7 @@
+         <button v-for="tab in workbenchPrimaryTabs" :key="tab.panel" type="button" @click="openWorkbenchPage(tab.panel, $event)"><var-icon :name="tab.icon" aria-hidden="true" /><span>{{ tab.label }}</span></button>
+         <button type="button" @click="openWorkbenchMap"><var-icon name="map-marker-outline" aria-hidden="true" /><span>厅中实景</span></button>
+         <button type="button" :disabled="accountEntryDisabled" @click="workbenchMenuOpen = false; openProfile()"><var-icon name="account-circle-outline" aria-hidden="true" /><span>个人中心</span></button>
+-        <button type="button" @click="workbenchMenuOpen = false; emit('open-onboarding', $event.currentTarget)"><var-icon name="help-circle-outline" aria-hidden="true" /><span>使用帮助</span></button>
++        <button type="button" @click="workbenchMenuOpen = false; openHelp($event.currentTarget)"><var-icon name="help-circle-outline" aria-hidden="true" /><span>使用帮助</span></button>
+       </nav>
+     </header>
+     <div v-show="!isImmersiveMap" class="hall-mode-toolbar" :inert="isPanelSessionActive || voiceInteractionLocked ? '' : null" :aria-hidden="isPanelSessionActive ? 'true' : null">
+@@ -462,6 +462,18 @@
+             />
+           </template>
+ 
++          <HallHelpCenter
++            v-if="panelFrames.includes('help')"
++            ref="helpPanelRef"
++            v-show="renderedPanel === 'help'"
++            :active="renderedPanel === 'help'"
++            :inert="renderedPanel !== 'help' ? '' : null"
++            :aria-hidden="renderedPanel !== 'help' ? 'true' : null"
++            :account-entry-disabled="accountEntryDisabled"
++            @navigate="navigateFromHelp"
++            @replay="emit('open-onboarding', $event)"
++          />
++
+           <HallMinePage
+             v-if="panelFrames.includes('mine')"
+             v-show="renderedPanel === 'mine'"
+@@ -471,7 +483,7 @@
+             @open="openPanel($event, { root: true })"
+             @map="openWorkbenchMap"
+             @profile="openProfile"
+-            @help="emit('open-onboarding', $event)"
++            @help="openHelp"
+           />
+ 
+           <HallOverview
+@@ -788,6 +800,7 @@
+ import { isTerminalMatter } from '@/composables/juyiting/useHallOrdinaryCancellation'
+ import HallOverview from '@/components/juyiting/HallOverview.vue'
+ import HallMinePage from '@/components/juyiting/HallMinePage.vue'
++import HallHelpCenter from '@/components/juyiting/HallHelpCenter.vue'
+ import HallDraftEditor from '@/components/juyiting/HallDraftEditor.vue'
+ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+ import { onBeforeRouteLeave, useRouter } from 'vue-router'
+@@ -915,7 +928,7 @@
+ const hostedPointFlow = ref(null)
+ let hostedPointWaitTimer = null
+ const toast = ref('')
+-const panelWhitelist = new Set(['agents', 'catalog', 'tasks', 'workspace', 'treasure', 'chat', 'library', 'messages', 'mine', 'item', 'formalDraft', 'draft'])
++const panelWhitelist = new Set(['agents', 'catalog', 'tasks', 'workspace', 'treasure', 'chat', 'library', 'messages', 'mine', 'help', 'item', 'formalDraft', 'draft'])
+ const activePanel = ref('')
+ const renderedPanel = ref('')
+ const panelSessionGeneration = ref(0)
+@@ -974,6 +987,7 @@
+ const overviewItemRef = ref(null)
+ const taskReviewRef = ref(null)
+ const hallReadRevision = ref(0)
++const helpPanelRef = ref(null)
+ const agentPanelRef = ref(null)
+ const agentPanelSessionKey = ref(0)
+ watch(() => panelFrames.value.includes('agents'), (present, previous) => { if (present && !previous) agentPanelSessionKey.value++ }, { flush: 'sync' })
+@@ -990,6 +1004,7 @@
+ const canOpenPanelDetail = computed(() => panelDepth.value < 3)
+ const panelChildCanReturn = computed(() => {
+   if (activeDraftEditor()) return Boolean(activeDraftEditor().canGoBack)
++  if (renderedPanel.value === 'help') return Boolean(helpPanelRef.value?.canGoBack)
+   if (renderedPanel.value === 'agents') return Boolean(agentPanelRef.value?.canGoBack)
+   if (renderedPanel.value === 'tasks') return Boolean(formalTaskRef.value || bountyPanelRef.value?.canGoBack)
+   if (renderedPanel.value === 'treasure') return Boolean(treasurePanelRef.value?.canGoBack)
+@@ -1063,6 +1078,7 @@
+   libraryCanGoBack: Boolean(libraryPanelRef.value?.canGoBack),
+   portraitTaskDetailOpen: portraitTaskDetailOpen.value,
+   isKeyboardActive: hallKeyboardActive.value,
++  helpCanGoBack: Boolean(helpPanelRef.value?.canGoBack),
+   externalRootModalOpen: props.onboardingVisible
+ }))
+ const showWorkbenchDock = computed(() => navigationPresentation.value.showWorkbenchDock)
+@@ -1177,6 +1193,7 @@
+   if (renderedPanel.value === 'draft') return '提出需求'
+   if (renderedPanel.value === 'tasks' && formalTaskRef.value) return '正式成果与验收'
+   if (renderedPanel.value === 'formalDraft') return '提出需求'
++  if (renderedPanel.value === 'help') return '使用帮助'
+   if (renderedPanel.value === 'messages') return '消息'
+   if (renderedPanel.value === 'item') return overviewItemRef.value?.sourceType === 'DRAFT' ? '继续草稿' : '事项进展'
+   if (renderedPanel.value === 'agents') return '点将册'
+@@ -1610,6 +1627,14 @@
+   return true
+ }
+ 
++const openHelp = invoker => openPanel('help', { returnFocusTarget: invoker })
++const navigateFromHelp = target => {
++  if (target === 'account') return !accountEntryDisabled.value && openProfile()
++  if (target === 'overview') return openWorkbenchPage('overview')
++  if (['tasks', 'treasure', 'agents', 'messages'].includes(target)) return openPanel(target)
++  return false
++}
++
+ const openWorkbenchMap = () => {
+   workbenchMenuOpen.value = false
+   if (activePanel.value && guardPanelLeave(openWorkbenchMap)) return false
+@@ -1907,7 +1932,7 @@
+   if (guardPanelLeave(() => returnPanel() || closePanel())) return true
+   if (renderedPanel.value === 'tasks' && formalTaskRef.value) { formalTaskRef.value = null; return true }
+   if (panelChildCanReturn.value) {
+-    const child = renderedPanel.value === 'agents' ? agentPanelRef.value : renderedPanel.value === 'tasks' ? bountyPanelRef.value
++    const child = renderedPanel.value === 'help' ? helpPanelRef.value : renderedPanel.value === 'agents' ? agentPanelRef.value : renderedPanel.value === 'tasks' ? bountyPanelRef.value
+       : renderedPanel.value === 'treasure' ? treasurePanelRef.value : libraryPanelRef.value
+     return child.back()
+   }
+@@ -5001,4 +5026,9 @@
+   .home-overview .panel-overlay.theme-workbench.is-agent-overlay .panel-title { padding: 4px 12px; }
+   .home-overview .panel-overlay.theme-workbench.is-agent-overlay .panel-title > span { display: block; }
+ }
++.floating-panel.panel-help.layout-center-modal { width: min(960px, calc(100vw - 48px)); max-width: 960px; }
++@media (max-width: 600px) {
++  .panel-overlay:has(.panel-help) { padding: 0; }
++  .floating-panel.panel-help { width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
++}
+ </style>
+--- a/src/components/HelpCenter.vue
++++ b/src/components/HelpCenter.vue
+@@ -55,7 +55,9 @@
+         </div>
+       </header>
+ 
+-      <div class="feedback-form">
++      <fieldset class="feedback-form" :disabled="submitting || feedbackStatus === 'unknown'">
++        <p v-if="feedbackError" role="alert">{{ feedbackError }}</p>
++        <p v-else-if="feedbackStatus === 'success'" role="status">{{ $t('help.feedback_success') }}</p>
+         <var-input
+           v-model="form.title"
+           :placeholder="$t('help.feedback_subject')"
+@@ -92,18 +94,20 @@
+         >
+           {{ $t('help.submit_feedback') }}
+         </var-button>
+-      </div>
++      </fieldset>
+     </section>
+   </div>
+ </template>
+ 
+ <script setup>
+-import { computed, onMounted, reactive, ref } from 'vue'
++import { computed, onMounted, ref } from 'vue'
+ import { Dialog } from '@varlet/ui'
+ import { useI18n } from 'vue-i18n'
+ import { kefuApi } from '@/composables/useHttp'
+ import { useGlobalStore } from '@/stores/global'
+ import { log } from '@/utils/logger'
++import { useApiStore } from '@/stores/api'
++import { useHelpFeedback } from '@/composables/useHelpFeedback'
+ 
+ const { t } = useI18n()
+ const globalStore = useGlobalStore()
+@@ -112,17 +116,12 @@
+ const faqs = ref([])
+ const faqLoading = ref(false)
+ const faqError = ref('')
+-const submitting = ref(false)
+-
+-const form = reactive({
+-  title: '',
+-  content: '',
+-  name: '',
+-  phone: '',
+-  email: ''
++const apiStore = useApiStore()
++const { form, submitting, canSubmit, status: feedbackStatus, error: feedbackError, submit } = useHelpFeedback({
++  post: kefuApi.post,
++  subject: computed(() => globalStore.getJiacn),
++  identity: computed(() => apiStore.authorizationGeneration)
+ })
+-
+-const canSubmit = computed(() => form.title.trim() && form.content.trim())
+ 
+ const filteredFaqs = computed(() => {
+   const query = keyword.value.trim().toLowerCase()
+@@ -158,43 +157,10 @@
+   }
+ }
+ 
+-const resetForm = () => {
+-  form.title = ''
+-  form.content = ''
+-  form.name = ''
+-  form.phone = ''
+-  form.email = ''
+-}
+-
+ const submitFeedback = async () => {
+-  if (!canSubmit.value || submitting.value) return
+-
+-  submitting.value = true
+-  const formData = new FormData()
+-  formData.append('resourceId', 'help-center')
+-  formData.append('jiacn', globalStore.getJiacn || '')
+-  formData.append('title', form.title.trim())
+-  formData.append('content', form.content.trim())
+-  formData.append('name', form.name.trim())
+-  formData.append('phone', form.phone.trim())
+-  formData.append('email', form.email.trim())
+-
+-  try {
+-    await kefuApi.post('/message/create', formData, { autoLoading: false })
+-    resetForm()
+-    Dialog({
+-      title: t('app.notify'),
+-      message: t('help.feedback_success'),
+-      confirmButtonText: t('app.confirm')
+-    })
+-  } catch (error) {
+-    Dialog({
+-      title: t('app.alert'),
+-      message: error.message || t('help.feedback_failed'),
+-      confirmButtonText: t('app.confirm')
+-    })
+-  } finally {
+-    submitting.value = false
++  const success = await submit()
++  if (success) {
++    Dialog({ title: t('app.notify'), message: t('help.feedback_success'), confirmButtonText: t('app.confirm') })
+   }
+ }
+ 
+@@ -273,6 +239,10 @@
+ }
+ 
+ .feedback-form {
++  border: 0;
++  padding: 0;
++  margin: 0;
++  min-width: 0;
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+--- a/src/components/juyiting/HallMinePage.vue
++++ b/src/components/juyiting/HallMinePage.vue
+@@ -8,7 +8,7 @@
+       <button type="button" @click="$emit('map')"><var-icon name="map-marker-outline" /><span><strong>厅中实景</strong><small>进入梁山场景与地图</small></span></button>
+       <button type="button" :disabled="accountEntryDisabled" @click="$emit('profile')"><var-icon name="account-circle-outline" /><span><strong>个人中心</strong><small>账户、授权与隐私设置</small></span></button>
+     </div>
+-    <nav class="mine-help"><button type="button" @click="$emit('help', $event.currentTarget)">使用帮助</button></nav>
++    <nav class="mine-help"><button type="button" @click="$emit('help', $event.currentTarget)"><var-icon name="help-circle-outline" aria-hidden="true" /><span><strong>使用帮助</strong><small>新手入门、操作指南与常见问题</small></span><var-icon name="chevron-right" aria-hidden="true" /></button></nav>
+   </section>
+ </template>
+ <script setup>
+@@ -18,4 +18,5 @@
+ <style scoped>
+ .hall-mine-page{min-height:100%;padding:24px 16px 96px;box-sizing:border-box;background:#f5f4f0;color:#242e2b}.hall-mine-page header{max-width:760px;margin:0 auto 22px}.hall-mine-page header p,.hall-mine-page header h2,.hall-mine-page header span{margin:0}.hall-mine-page header p{font-size:12px;color:#923f30}.hall-mine-page header h2{margin-top:5px;font:500 25px/1.45 "Noto Serif CJK SC","Songti SC",serif}.hall-mine-page header span{display:block;margin-top:6px;color:#68716b;font-size:14px}.mine-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:760px;margin:auto}.mine-grid button{display:flex;align-items:center;gap:13px;min-height:86px;padding:16px;text-align:left;border:1px solid #e3e5dc;border-radius:12px;background:#fffefa;color:#242e2b}.mine-grid .var-icon{flex:none;font-size:26px;color:#923f30}.mine-grid span{display:grid;gap:4px;min-width:0}.mine-grid strong{font-size:16px}.mine-grid small{color:#68716b;line-height:1.5}.mine-grid button:disabled{opacity:.55}@media(max-width:600px){.mine-grid{grid-template-columns:1fr}.hall-mine-page{padding-top:20px}.mine-grid button{min-height:74px}}
+ .mine-help{max-width:760px;margin:20px auto;text-align:center}.mine-help button{min-height:44px;border:0;background:transparent;color:var(--hall-text-muted,#68716b)}
++.mine-help button{display:flex;align-items:center;gap:12px;width:100%;padding:18px 4px;text-align:left;border-top:1px solid #e3e5dc}.mine-help button>span{display:grid;gap:5px;flex:1}.mine-help strong{font-size:15px;font-weight:500;color:#242e2b}.mine-help small{font-size:12px}.mine-help .var-icon{font-size:22px;color:#923f30}
+ </style>
+--- a/src/composables/juyiting/useHallPanels.js
++++ b/src/composables/juyiting/useHallPanels.js
+@@ -151,6 +151,7 @@
+   bountyCanGoBack = false,
+   treasureCanGoBack = false,
+   libraryCanGoBack = false,
++  helpCanGoBack = false,
+   portraitTaskDetailOpen = false,
+   isKeyboardActive = false,
+   externalRootModalOpen = false
+@@ -169,6 +170,7 @@
+     formalTaskDetail ||
+     (renderedPanel === 'treasure' && treasureCanGoBack) ||
+     renderedPanel === 'workspace' ||
++    (renderedPanel === 'help' && helpCanGoBack) ||
+     (!selfOwnedDetail && hasFrameParent)
+   )
+   const hasChildDetail = selfOwnedDetail || hallOwnedDetail

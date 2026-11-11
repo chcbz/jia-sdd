@@ -1,0 +1,90 @@
+{
+  "status": "BUILT",
+  "publishable": false,
+  "scope": "selected release baseline; NOT full suite, installer or deployment",
+  "stages": [
+    {
+      "name": "dependencies",
+      "argv": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "seconds": 11.992,
+      "exitCode": 0
+    },
+    {
+      "name": "tests",
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "./node_modules/mocha/bin/mocha.js",
+        "--no-config",
+        "--require",
+        "./tests/setup.js",
+        "--timeout",
+        "10000",
+        "--exit",
+        "--reporter",
+        "mochawesome",
+        "--reporter-options",
+        "reportDir=/home/isp/state/cyf-local-build/tasks/cyf-material-picker-20261108-1154/web/test-reports,reportFilename=mochawesome.json,consoleReporter=dot",
+        "tests/app-title.test.js",
+        "tests/home-login-redirect.test.js",
+        "tests/identity-scope.test.js",
+        "tests/interface-wire.test.js",
+        "tests/production-build-flags.test.js",
+        "tests/public-entry-navigation.test.js",
+        "tests/public-pwa-beta-entry.test.js",
+        "tests/pwa-shell-freshness.test.js",
+        "tests/juyiting-hall-overview-component.test.js",
+        "tests/juyiting-requirement-materials-intake.test.js",
+        "tests/juyiting-conversation-material-links.test.js"
+      ],
+      "seconds": 9.643,
+      "exitCode": 0
+    },
+    {
+      "name": "build",
+      "argv": [
+        "node",
+        "/home/isp/wsps/cyf/ops/orchestration/local-web-build.mjs",
+        "/root/.codex/worktrees/material-picker-camera-album/web",
+        "/home/isp/state/cyf-local-build/tasks/cyf-material-picker-20261108-1154/web/dist"
+      ],
+      "seconds": 26.091,
+      "exitCode": 0
+    },
+    {
+      "name": "package",
+      "seconds": 10.147
+    },
+    {
+      "name": "package-integrity",
+      "seconds": 1.754
+    }
+  ],
+  "startedAt": "2026-11-08T03:54:34.986313+00:00",
+  "source": {
+    "commit": "93e2fc0b609540f03f328f6a61b04461e3963766",
+    "tree": "1a93cbb2a2596fd5e7463c7473ee1e692aea8138"
+  },
+  "lockSha256": "cdcd818fde82bcf8e8ec595bf239bd1abf8baf116e217fed01fc354dc8c7b60f",
+  "tools": {
+    "/home/isp/wsps/cyf/ops/orchestration/local_web_build.py": "c8766f7cacdda9adda4849916a5c4f9c7d5ac4655ef94f7be88f4ffbfe5c493f",
+    "/home/isp/wsps/cyf/ops/orchestration/local-web-build.mjs": "1a886628824696c642099917c62ce9eec44f6a5093f860bf3ed79b4573ea7de5",
+    "/home/isp/wsps/cyf/ops/orchestration/build_storage.py": "466186767b7729d16489b915b0aecb029108d8313f9dca1abc4d741823fb5e49"
+  },
+  "sparseCheckout": "All production src/public/static and root config present; prototypes and unselected tests omitted; interface-wire mjs suites and fixtures present",
+  "nodeVersion": "v24.22.1",
+  "nodeBinarySha256": "e32e2d16081cf644f88392934288086e7662529d0d43277c34f7aad2207cfafb",
+  "queueSeconds": 0.0,
+  "wallSeconds": 62.942,
+  "artifact": {
+    "path": "/home/isp/state/cyf-local-build/tasks/cyf-material-picker-20261108-1154/web/package/web.tgz",
+    "sha256": "66cc6e1cef13d4df9d109e202ab70e6aa2c4429cae5e9861294ede1b7f378756"
+  },
+  "sourceUnchanged": true
+}

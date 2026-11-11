@@ -1,0 +1,41 @@
+{
+  "at": "2026-11-03T04:37:03.791Z",
+  "name": "cyf-web-kit",
+  "sources": [
+    {
+      "type": "giteeGit",
+      "repo": "https://gitee.com/chcbz/cyf-web-kit.git",
+      "branch": "develop"
+    }
+  ],
+  "flowChecks": {
+    "hasVMDeploy": false,
+    "hasSSH": false,
+    "lines": [
+      "sources:",
+      "    branch: develop",
+      "    triggerEvents: []",
+      "    branchesFilter: ^develop$",
+      "    name: Frontend resource-offloaded CI",
+      "        timeoutMinutes: 9",
+      "                timeout --signal=TERM --kill-after=10s 500 bash -eu <<'NATIVE_WEB_CI'",
+      "                printf 'CYF_SOURCE_CHECKOUT shallow=%s commit=%s tree=%s\\n' \"$(git rev-parse --is-shallow-repository)\" \"$(git rev-parse HEAD)\" \"$(git rev-parse HEAD^{tree})\"",
+      "                    if curl --fail --location --retry 2 --connect-timeout 20 --max-time 240 \"$node_url\" --output \"$partial\"; then",
+      "                npm ci --include=dev --registry=https://registry.npmmirror.com --replace-registry-host=npmjs --fetch-retries=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=30000 --fetch-timeout=120000 --no-audit --no-fund",
+      "                npm run test",
+      "                npm run build",
+      "                printf '%s\\n' \"$CI_COMMIT_SHA\" > \"$export_root/source-commit.txt\"",
+      "                git rev-parse HEAD^{tree} > \"$export_root/source-tree.txt\"",
+      "                // Runs after npm test/build. Publish only dist; keep test reports in Flow artifacts.",
+      "                const m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,package_version:packageVersion,files};",
+      "                if(m.pipeline_id!=='4403172'||m.branch!=='develop'||!/^[1-9][0-9]*$/.test(m.run_id)||!/^[0-9a-f]{40,64}$/.test(m.commit))throw Error('Wrong Flow identity');",
+      "                console.log('CYF_WEB_ARTIFACT '+JSON.stringify({pipeline:m.pipeline_id,run:m.run_id,commit:m.commit,files:files.length}));",
+      "          upload_artifact:",
+      "            name: Upload same-run site and test report",
+      "            step: ArtifactUpload",
+      "              uploadType: flowPublic",
+      "              artifact: cyf_web_flow_4403172",
+      "              includePathInArtifact: false"
+    ]
+  }
+}

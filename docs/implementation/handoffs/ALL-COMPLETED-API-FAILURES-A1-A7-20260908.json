@@ -1,0 +1,137 @@
+{
+  "task_id": "ALL-COMPLETED-API-INTEGRATION-20260907",
+  "record_kind": "historical_failure_evidence_not_current_ledger",
+  "recorded_at": "2026-09-08T20:48:05+08:00",
+  "blocker": {
+    "category": "a7_submit_inner_digest_stale",
+    "summary": "A7 unique submit exited68 before systemd; stale expected inner SHA in submit script; no build started, no JAR. Owner confirms no active carrier/worktree clean. Combined JY API now contains exact constructor correction.",
+    "consecutive_failures": 1,
+    "attempts": [
+      {
+        "at": "2026-09-08T01:01:23+08:00",
+        "category": "build_environment",
+        "evidence": "/tmp/all-completed-api-integration-20260907-build-a1-3aa2bb389697c12b41a071ef094bfba51595de80/build-result.json",
+        "root_cause": "Outer reviewed launch environment set PATH to system sbin/bin only and did not set JAVA_HOME=/opt/cyf/runtime/temurin-21-jre; gradlew therefore failed before starting Gradle or creating the pinned JAR",
+        "remediation": "Do not reuse a1 or its intent. After explicit authorize-remediation, create exclusive a2 input/intent with identical source/tool/artifact pins except a new releaseId/artifactRoot and add fixed JAVA_HOME=/opt/cyf/runtime/temurin-21-jre plus /opt/cyf/runtime/temurin-21-jre/bin to sanitized PATH; execute R6 build-api exactly once"
+      },
+      {
+        "at": "2026-09-08T01:16:28+08:00",
+        "category": "gradle_daemon_disappeared",
+        "evidence": "/tmp/all-completed-api-integration-20260907-build-a2-3aa2bb389697c12b41a071ef094bfba51595de80/build-result.json",
+        "root_cause": "UNKNOWN: own daemon 2654666 started with JAVA_HOME=/home/isp/apps/jdk21 and Java 21, then its log ended at ExecuteBuild with no Java exception, OOM marker, ENOSPC marker, or task result. Session remained attached and received the native terminal. Available telemetry alone does not prove OOM or capacity failure.",
+        "remediation": "Second consecutive build-chain failure: stop all build/deploy retries. Preserve a1/a2 evidence and clean source. Independent remediation must first classify the owned daemon termination from bounded host/cgroup OOM or executor evidence; only a separately reviewed plan may choose host-persistent execution or bounded JVM settings. Do not relabel old fa808 artifact, delete foreign/evidence, or enter production lifecycle."
+      },
+      {
+        "at": "2026-09-08T01:50:29+08:00",
+        "category": "canonical_existing_jar_health_stabilization_failed",
+        "evidence": "/tmp/all-completed-api-recovery-20260908-r2-existing246520/recovery-result.json",
+        "root_cause": "Canonical start launched Java 2663186 in the owned service and main independently observed 127.0.0.1:10018 HTTP200 status.code=UP at 01:44:34, but canonical later returned rc1 because health status or port ownership did not remain stable. The accepted evidence does not distinguish a post-observation Java exit from canonical identity/ownership stabilization rejection; post-terminal health is NOT_PROVEN.",
+        "remediation": "Return runtime custody to paused monitor with incident I000056 preserved, attempts used 1 and remaining 2. Do not retry from this owner. A future monitor-owned bounded attempt must first use the canonical terminal evidence and preserve the current live JAR/locks; no new artifact, default restart, DB, voice activation, or forced lock action. API heavy window is released to Web."
+      },
+      {
+        "at": "2026-09-08T04:05:41+08:00",
+        "category": "a3_build_unit_start_timeout",
+        "evidence": "/tmp/all-completed-api-build-a3-prep-20260908-3aa2bb38-r2/a3-terminal-summary.json#78a31f6cc990d633d064fd959297bef76ed0952e15115683b40dd230effc0141",
+        "root_cause": "Known boundary cause: exact owned unit timed out at 45min while inner/build-api/orchestrator/Gradle wrapper/daemon were present; systemd Result=timeout ExecMainStatus=15 and outer fallback rc1. Underlying reason for Gradle daemon producing no task output remains UNKNOWN; no OOM, cgroup failcnt, ENOSPC, or native rc was proven.",
+        "remediation": "STOP this attempt with no retry, timeout extension, memory increase, cleanup, deploy, or runtime action. Preserve own logs/fallback/summary. Any future build attempt requires independent root-cause review of the owned daemon stall and a separately authorized plan."
+      },
+      {
+        "at": "2026-09-08T06:05:06+08:00",
+        "category": "a4_build_unit_start_timeout_after_projects_loaded",
+        "evidence": "/tmp/all-completed-api-build-a4-prep-3aa2bb38-r1/a4-terminal-summary.json#918a26eb5322a6e0dfb88ea1127f585872b80a347718d1b328cc8a6f220d6408",
+        "root_cause": "Known boundary cause: exact owned unit timed out at 45min with native invoked, 90 durable own-cgroup heartbeats, Gradle projects loaded, no task output, and systemd SIGTERM before native terminal persistence. Specific internal wait point remains UNKNOWN; evidence does not prove OOM, Gradle test failure, dependency cache miss, network wait, CPU stall, or ENOSPC.",
+        "remediation": "Second consecutive reviewed build failure: STOP at blocked_root_cause. Preserve A3 and A4 intents, logs, heartbeat, fallback, summaries, clean source and tool pins. No A5, retry, timeout extension, memory change, cleanup, deploy, or production action. Independent root-cause matrix/review is required before any new build execution; Knuth production runtime custody remains unchanged.",
+        "bounded_root_cause_matrix": {
+          "reviewer": "original Godel / sol_reviewer / 01a07199-aea5-7242-ab75-9d5e383d0e9b",
+          "verdict": "EVIDENCE_BOUNDARY_ACCEPT; unchanged A5_REJECT; preparation only, no execution GO",
+          "terminal": "2026-09-08T05:57:46+08:00 Result=timeout ExecMainStatus=15 MainPID=0 session18980 rc76; nativeRc UNKNOWN; no new JAR",
+          "evidence": {
+            "summary": "/tmp/all-completed-api-build-a4-prep-3aa2bb38-r1/a4-terminal-summary.json#918a26eb5322a6e0dfb88ea1127f585872b80a347718d1b328cc8a6f220d6408",
+            "own_daemon": "/root/.gradle/daemon/9.3.1/daemon-2783409.out.log#c032a8bb9f1529488650df904166e797cd8d05a03888e3af4977fcf8dbc272e2"
+          },
+          "rows": [
+            {
+              "candidate": "fixed unit timeout",
+              "status": "PROVEN_BOUNDARY",
+              "evidence": "45min Type=oneshot deadline caused external SIGTERM; not the internal slow-operation cause"
+            },
+            {
+              "candidate": "configuration scope",
+              "status": "WIDE_SCOPE_PROVEN_INTERNAL_WAIT_UNKNOWN",
+              "evidence": "96 entries loaded; configureOnDemand=false; root subprojects shared configuration. No All projects evaluated/task graph/task output. Full configuration completion and javac failure NOT_PROVEN"
+            },
+            {
+              "candidate": "cold cache",
+              "status": "NOT_PROVEN",
+              "evidence": "init/settings compilation and instrumentation observed; no-build-cache does not prove empty dependency cache; offline completeness untested"
+            },
+            {
+              "candidate": "CPU stall",
+              "status": "NOT_PROVEN",
+              "evidence": "CLK_TCK100; last live-process ticks27073=270.73s, sampled delta270.68s/2696s; late samples grow and stdout advanced05:53:48"
+            },
+            {
+              "candidate": "memory paging or disk pressure",
+              "status": "SUPPORTING_OBSERVATION_ONLY",
+              "evidence": "own max usage252276736B/failCount0; last memsw409014272B/usage161570816B. Main06:03 available517MiB swap1356MiB wa67/30 si704/732KiB/s, no parent CPU quota/read blkio limit. No causal per-process fault/IO/GC/stack attribution"
+            },
+            {
+              "candidate": "actual JVM mode",
+              "status": "PARTLY_PROVEN",
+              "evidence": "Oracle21.0.8 /home/isp/apps/jdk21, single-use daemon, worker1, Xmx384m; jvmci runtime suffix does not establish compiler enabled. init/JDK/Gradle/plugin identity hashing/classification remains preparation"
+            },
+            {
+              "candidate": "existing alternate trusted builder",
+              "status": "NOT_PROVEN",
+              "evidence": "No identified usable CI/builder in reviewed evidence. Need owner-provided builder identity, source/tree and tool/init/plugin hashes plus existing success receipt; no credentials disclosed"
+            },
+            {
+              "candidate": "OOM/ENOSPC/network wait/dependency miss/test failure",
+              "status": "NOT_PROVEN_FOR_A4",
+              "evidence": "No supporting A4 terminal/task evidence; do not transfer historical A2 OOM attribution to A4"
+            }
+          ],
+          "selected_preparation": "User selected <=10min configuration dry-run with bounded exact-own daemon stack/GC or major-fault evidence, not plain timeout-only dry-run. Keep full 96-project closure, source3aa/treecc3d85 and existing memory constraints. No resource-improvement gate, graph pruning, new platform, blind A5 or timeout extension.",
+          "execution_boundary": "Preparation and independent tiny-delta review only; all Gradle/build/runtime execution remains NO-GO and historical count2 retained. Config diagnostic completion cannot automatically authorize full build."
+        }
+      },
+      {
+        "at": "2026-09-08T13:35:54+08:00",
+        "category": "a5_build_unit_timeout_no_jar",
+        "evidence": "/tmp/all-completed-api-build-a5-prep-3aa2bb38-r1/outer-fallback.json#81001d27219bc15a686a8639b523f3eb716a4e2a4673fbeecb56f0b0ce3b5daa",
+        "root_cause": "Known termination boundary=45min unit start timeout. Inner receipt missing is a consequence, not cause of build delay. Existing stdout406697B awaiting exact owner safe phase/dependency/error analysis; internal bottleneck UNKNOWN. No proven Java compilation failure/OOM/ENOSPC.",
+        "remediation": "Pascal inspect existing own A5 stdout read-only now; return sanitized concrete phase/dependency/error evidence and smallest corrective action. No A6/Gradle retry or cache deletion without evidence-based changed plan. Knuth retains production custody; existing API untouched. Preserve all historical attempts.",
+        "stdout_analysis": {
+          "path": "/tmp/all-completed-api-build-a5-prep-3aa2bb38-r1/native.stdout",
+          "bytes": 420031,
+          "sha256": "5ef3cc9c3a39dc4fb12e80c63ddb2145355d226fb6c082acb24016e9c9b8261c",
+          "independent_main_hash_verified": true,
+          "owner_reported_counts": {
+            "download_events": 678,
+            "resource_missing_events": 749,
+            "transform_events": 75,
+            "script_compilation_events": 196,
+            "task_lines": 0,
+            "explicit_error_markers": 0
+          },
+          "last_project": ":wx:jia-wx-service",
+          "limit": "Counts are log events not distinct dependencies. Missing resource is not a proven HTTP failure. Specific bottleneck remains unproven; source configuration analysis in progress, no retry."
+        }
+      },
+      {
+        "at": "2026-09-08T14:43:59+08:00",
+        "category": "java_constructor_overload_ambiguity",
+        "evidence": "/tmp/all-completed-api-build-a6-prep-3aa2bb38-r1/native.stderr#62a59ea22e314f6338df9c098c6e4144e80168d676c3fcb7d8a0f6d2a190e05f; native-terminal.json#e7b57bba31390587499f71fbd40f4193d963599fc066e689f5011778a6931393; build-result.json#4760987dadb4811470d059f20e40943b02b0a4dd42069350145f08e22d8b52fe",
+        "root_cause": "Main independently rehashed stderr/terminal/result and read exact source3aa/cc AgentController.java84-126. Calls at85/102 pass null to overload positions4/5 accepted by both ObjectProvider and concrete FundedBounty service types; javac cannot select. Actual code integration defect, no need to infer OOM/network/timeout from earlier delays. A6 progressed beyond configuration; prior A5 delay remains separately unproven.",
+        "remediation": "STOP unchanged builds at count2. Authorize only two-call-site typed-null disambiguation to existing concrete service constructor, preserving @Autowired ObjectProvider semantics/ACL/transaction/defaultflags. Source worker makes clean minimalcommit, independent delta review then one changed-tree build via existingcarrier/cache. No unchanged retries, speculative root Gradle rewrite, timeout inflation or production restart."
+      },
+      {
+        "at": "2026-09-08T19:49:08+08:00",
+        "category": "a7_submit_inner_digest_stale",
+        "evidence": "/tmp/all-completed-api-build-a7-prep-2de50b37-20260908; Pascal19:47 shared receipt: expected7e83d75d3d8c5fd0031d830f0495a4e6354d7b86fb38ab80754da32bd4dbeb44 actualec6b0cfa2c31969c40c05b023236df8ed8ed70e6eca3839b716bcf88bfaacacb; shared JY-API-RELEASE-20260908.md",
+        "root_cause": "Mechanical isolated-attempt copy updated inner runner but not submit EXPECTED_INNER_SHA; preflight correctly rejected before any Gradle/systemd execution. Not product compile/runtime failure. Independently verified AgentController blob identical between48d3 andcombined41e9 SHA2564cad15cceba8e13d7694ca06d79dc3d3aba4ddf670fd97901b53434a346b9fd4; source3aa ancestor41e9.",
+        "remediation": "Do not retry A7 or duplicate existing build. Source48d3 byte-exact absorbed by JY-UNBIND-ARCHIVE-API-20260908 combined41e9; release old activeowner and wait for that task currentShannon fix/build/Knuth production artifact result. Preserve all failures; this main monitors actual deployment, does not claim delivered."
+      }
+    ]
+  }
+}

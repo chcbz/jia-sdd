@@ -1,0 +1,99 @@
+{
+  "schema_version": 4,
+  "date": "2026-09-30",
+  "task_id": "MMD-U4-SCHEMA-READINESS-20260930",
+  "scope": "one fresh bounded-v4 exact-source lifecycle verification; not normal build, MySQL, release, or deployment evidence",
+  "candidate": {
+    "commit": "3f079c7cfa7b076e93d185db50faaf4183a584e4",
+    "tree": "768da03f2c3222fb1e30529beb6089e1000227fa",
+    "v3_commit": "399cb3c30002c728a2329a6347f1f4d15f2d3fcf"
+  },
+  "corrections": [
+    {
+      "file": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatSchemaReadinessLifecycleTest.java",
+      "change": "explicit Statement getUpdateCount=-1 and getMoreResults=false terminal stubs",
+      "assertions_changed": false
+    },
+    {
+      "file": "chat/jia-chat-service/src/main/java/cn/jia/chat/config/ChatConversationArchiveSchemaInitializer.java",
+      "change": "resolve case-insensitive metadata entry before mapping nullable value",
+      "prefix_and_drift_rejection_preserved": true
+    }
+  ],
+  "frozen_inputs": {
+    "source_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-source-manifest-v4.json",
+      "sha256": "0ad05c0a2410481532aa09cdba757d0659ac9b350a768db8ec211d0e4594cbae",
+      "main_sources": 4,
+      "test_sources": 1
+    },
+    "classpath": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-v1.txt",
+      "sha256": "ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4",
+      "entries": 364,
+      "built_by_tasks": []
+    },
+    "classpath_content": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-content-v1.json",
+      "sha256": "e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b"
+    },
+    "init_script": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v4.init.gradle",
+      "sha256": "5c714c909f0ad05b50476a2062e0062a16fc68539b3919de3e8a7160a0fdba9a"
+    },
+    "baseline": {
+      "commit": "194ec91a596c28f9575a64aef47a5bf7b9fb6778",
+      "tree": "10d312e61057b1a83da1485238c2f3acf63e5361"
+    }
+  },
+  "task_graph": [
+    ":u4BoundedV4Preflight",
+    ":u4BoundedV4CompileMain",
+    ":u4BoundedV4CompileLifecycleTest",
+    ":u4BoundedV4SchemaReadinessLifecycle"
+  ],
+  "selector": ":u4BoundedV4SchemaReadinessLifecycle",
+  "fixture_digest": "a216d685d507acfc7a7dbd20133fca8a892b7f8d4af2cf300cc89e908d543484",
+  "fixture_digest_basis": {
+    "candidate_commit": "3f079c7cfa7b076e93d185db50faaf4183a584e4",
+    "candidate_tree": "768da03f2c3222fb1e30529beb6089e1000227fa",
+    "selector": ":u4BoundedV4SchemaReadinessLifecycle",
+    "source_manifest_sha256": "0ad05c0a2410481532aa09cdba757d0659ac9b350a768db8ec211d0e4594cbae",
+    "init_sha256": "5c714c909f0ad05b50476a2062e0062a16fc68539b3919de3e8a7160a0fdba9a",
+    "classpath_sha256": "ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4",
+    "classpath_content_sha256": "e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b",
+    "tasks": [
+      ":u4BoundedV4Preflight",
+      ":u4BoundedV4CompileMain",
+      ":u4BoundedV4CompileLifecycleTest",
+      ":u4BoundedV4SchemaReadinessLifecycle"
+    ],
+    "gradle_jvm": "-Xmx256m -XX:MaxMetaspaceSize=160m -XX:ActiveProcessorCount=2 -XX:+UseSerialGC",
+    "test_jvm": "-Xmx128m -XX:MaxMetaspaceSize=96m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC"
+  },
+  "output_namespace": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4",
+  "gradle_jvm": "-Xmx256m -XX:MaxMetaspaceSize=160m -XX:ActiveProcessorCount=2 -XX:+UseSerialGC",
+  "test_jvm": "-Xmx128m -XX:MaxMetaspaceSize=96m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC",
+  "preserved_history": {
+    "v2_failure": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v2.json",
+      "sha256": "12b18db74d1960cb75448016a909ed761691195bf9417dc37a6341e4841172b5"
+    },
+    "v3_failure": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v3.json",
+      "sha256": "ab1aa23d6dd88054c1d2d4e959d94bba53a2f97bb627619f17b38a745abe8e63"
+    },
+    "v3_root_cause": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v3-root-cause-addendum.json",
+      "sha256": "ec4e182c1fc810bad501fbd22ee204ca714922def1ff8447ca63db44a3a79e31"
+    }
+  },
+  "prohibitions": [
+    "no assertion weakening",
+    "no JVM cap increase",
+    "no regular compileJava graph",
+    "no source/build.gradle beyond committed candidate",
+    "no foreign process action",
+    "no push/deploy/provider/production DB"
+  ]
+}

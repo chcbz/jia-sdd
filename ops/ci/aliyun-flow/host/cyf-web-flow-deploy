@@ -19,7 +19,7 @@ import tempfile
 import time
 import urllib.request
 
-ROOT = Path('/var/lib/cyf-web-flow')
+ROOT = Path('/home/isp/state/cyf-web-flow')
 SITE = Path('/home/isp/hosts/cyf/web/kit')
 SITE_URL = 'https://kit.chaoyoufan.cn/'
 CHUNK_SIZE = 1024 * 1024
@@ -158,7 +158,7 @@ def copy_archive_member(archive, member, target=None, keep=False):
     return size, digest.hexdigest(), b''.join(chunks) if chunks is not None else None
 
 
-def scan_archive(fileobj, staging):
+def scan_archive(fileobj, staging, local=False):
     """Consume a gzip tar once without member catalogs or backward seeks."""
     seen = set()
     staged = {}
@@ -174,10 +174,10 @@ def scan_archive(fileobj, staging):
                     fail('unsafe archive entry')
                 if member.isdir():
                     continue
-                if name == 'release.json':
+                if name == ('cyf-local-build.json' if local else 'release.json'):
                     _, _, manifest_bytes = copy_archive_member(archive, member, keep=True)
-                elif name.startswith('dist/'):
-                    relative = name[len('dist/'):]
+                elif local or name.startswith('dist/'):
+                    relative = name if local else name[len('dist/'):]
                     target = private_stage_target(staging, relative)
                     size, digest, _ = copy_archive_member(archive, member, target=target)
                     staged[relative] = dict(path=target, size=size, sha256=digest)
@@ -200,17 +200,7 @@ def unique_json_object(pairs):
     return result
 
 
-def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
-    try:
-        manifest = json.loads(manifest_bytes.decode('utf-8'), object_pairs_hook=unique_json_object)
-    except (UnicodeDecodeError, ValueError):
-        fail('invalid release manifest')
-    if (not isinstance(manifest, dict) or isinstance(manifest.get('schema_version'), bool)
-            or manifest.get('schema_version') != 1
-            or manifest.get('pipeline_id') != pipeline or manifest.get('run_id') != run
-            or manifest.get('branch') != 'develop' or manifest.get('commit') != commit):
-        fail('manifest does not match this develop Flow run')
-    files = manifest.get('files')
+def validate_file_manifest(files, staged):
     if not isinstance(files, list) or not files:
         fail('invalid manifest files')
     expected = {}
@@ -238,7 +228,21 @@ def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
         st = actual['path'].lstat()
         if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1:
             fail('unsafe staged file')
-    record = dict(schema_version=1, pipeline_id=pipeline, run_id=run, branch='develop', commit=commit,
+    return expected, ordered
+
+
+def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
+    try:
+        manifest = json.loads(manifest_bytes.decode('utf-8'), object_pairs_hook=unique_json_object)
+    except (UnicodeDecodeError, ValueError):
+        fail('invalid release manifest')
+    if (not isinstance(manifest, dict) or isinstance(manifest.get('schema_version'), bool)
+            or manifest.get('schema_version') != 1
+            or manifest.get('pipeline_id') != pipeline or manifest.get('run_id') != run
+            or manifest.get('commit') != commit):
+        fail('manifest does not match this fixed Flow run')
+    expected, ordered = validate_file_manifest(manifest.get('files'), staged)
+    record = dict(schema_version=1, pipeline_id=pipeline, run_id=run, branch=manifest.get('branch'), commit=commit,
                   files=[dict(path=name, size=expected[name]['size'], sha256=expected[name]['sha256'])
                          for name in ordered])
     package_version = stable_version(manifest.get('package_version'))
@@ -246,6 +250,52 @@ def validate_manifest(manifest_bytes, staged, pipeline, run, commit):
         record['package_version'] = '.'.join(str(part) for part in package_version)
     return record, expected
 
+
+
+def validate_local_manifest(manifest_bytes, staged):
+    """Genuine local build identity; never synthesize pipeline/Run fields."""
+    try:
+        manifest = json.loads(manifest_bytes.decode('utf-8'), object_pairs_hook=unique_json_object)
+    except (UnicodeDecodeError, ValueError):
+        fail('invalid LOCAL manifest')
+    keys = {'format', 'buildId', 'source', 'version', 'files', 'scope', 'tests'}
+    if (type(manifest) is not dict or not keys <= set(manifest)
+            or not set(manifest) <= keys | {'dependencies'} or manifest['format'] != 'cyf-local-web-build-v2'):
+        fail('invalid LOCAL manifest schema')
+    source = manifest['source']
+    if (type(source) is not dict or set(source) != {'commit', 'tree'}
+            or any(type(source[k]) is not str or not re.fullmatch('[0-9a-f]{40}', source[k]) for k in source)
+            or type(manifest['buildId']) is not str or not re.fullmatch('[A-Za-z][A-Za-z0-9_.-]*', manifest['buildId'])
+            or stable_version(manifest['version']) is None or type(manifest['scope']) is not str or not manifest['scope']):
+        fail('invalid LOCAL source identity')
+    tests = manifest['tests']
+    if (type(tests) is not dict or set(tests) != {'reportSha256', 'selector', 'stats'}
+            or type(tests['reportSha256']) is not str or not re.fullmatch('[0-9a-f]{64}', tests['reportSha256'])
+            or type(tests['selector']) is not list or not tests['selector']
+            or any(type(v) is not str or not v for v in tests['selector'])):
+        fail('invalid LOCAL test evidence')
+    counts = tests['stats']
+    if (type(counts) is not dict or set(counts) != {'tests', 'passes', 'failures', 'pending'}
+            or any(type(v) is not int or v < 0 for v in counts.values())
+            or counts['failures'] != 0 or counts['passes'] == 0
+            or counts['tests'] != counts['passes'] + counts['pending']):
+        fail('LOCAL tests failed or did not execute')
+    if type(manifest['files']) is not dict:
+        fail('invalid LOCAL files')
+    files = []
+    for name, item in manifest['files'].items():
+        if type(item) is not dict or set(item) != {'size', 'sha256'}:
+            fail('invalid LOCAL files')
+        files.append(dict(path=name, **item))
+    expected, ordered = validate_file_manifest(files, staged)
+    identity = dict(source, version=manifest['version'], buildId=manifest['buildId'])
+    record = dict(schema_version=2, source_kind='LOCAL', source=identity, tests=tests,
+                  scope=manifest['scope'], files=[dict(path=n, **expected[n]) for n in ordered])
+    # Optional producer provenance is informational only: never an authorization,
+    # dependency installer input or source override. Package digest already binds it.
+    if 'dependencies' in manifest:
+        record['dependencies'] = manifest['dependencies']
+    return record, expected
 
 
 def stable_version(value):
@@ -525,7 +575,232 @@ def deploy(pipeline, run, commit, release_version, artifact_sha256):
             os.close(lock)
 
 
+# BEGIN NATIVE_LOCAL_WEB_TRANSACTION
+# Explicit LOCAL source on the same site/lock/publication primitives as Flow.
+def local_json_bytes(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode()
+
+
+def local_sync_dir(path):
+    fd = os.open(str(path), os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def local_save(path, value):
+    atomic(path, local_json_bytes(value), 0o600)
+    local_sync_dir(path.parent)
+
+
+def local_private(path):
+    path = Path(path)
+    if not path.is_absolute() or path.resolve() != path:
+        fail('unsafe LOCAL physical path')
+    for parent in path.parents:
+        st = parent.lstat()
+        if (not stat.S_ISDIR(st.st_mode) or st.st_uid != 0
+                or st.st_mode & 0o022 and not st.st_mode & stat.S_ISVTX):
+            fail('unsafe LOCAL parent')
+    st = path.lstat()
+    if (not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1
+            or stat.S_IMODE(st.st_mode) != 0o600):
+        fail('unsafe LOCAL private file')
+    return st
+
+
+def local_descriptor(path):
+    local_private(path)
+    try:
+        value = json.loads(Path(path).read_text(), object_pairs_hook=unique_json_object)
+    except (OSError, ValueError):
+        fail('invalid LOCAL descriptor')
+    keys = {'schema_version', 'source_kind', 'source', 'package',
+            'previousIndexSha256', 'previousRecordSha256'}
+    if (type(value) is not dict or set(value) != keys or type(value['schema_version']) is not int
+            or value['schema_version'] != 1 or value['source_kind'] != 'LOCAL'):
+        fail('invalid LOCAL descriptor schema')
+    source = value['source']
+    if (type(source) is not dict or set(source) != {'commit', 'tree', 'version', 'buildId'}
+            or any(type(source[k]) is not str or not re.fullmatch('[0-9a-f]{40}', source[k]) for k in ('commit', 'tree'))
+            or stable_version(source['version']) is None
+            or type(source['buildId']) is not str or not re.fullmatch('[A-Za-z][A-Za-z0-9_.-]*', source['buildId'])):
+        fail('invalid LOCAL descriptor identity')
+    package = value['package']
+    if (type(package) is not dict or set(package) != {'path', 'sha256', 'size'}
+            or type(package['path']) is not str or type(package['size']) is not int or package['size'] <= 0):
+        fail('invalid LOCAL package reference')
+    for digest in [package['sha256'], value['previousIndexSha256'], value['previousRecordSha256']]:
+        if type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest):
+            fail('invalid LOCAL descriptor digest')
+    return value
+
+
+def local_online(source, expected, deadline):
+    # Verify every published JS/CSS (including lazy chunks), not just HTTP 200.
+    from urllib.parse import quote
+    names = ['index.html'] + sorted(n for n in expected if n != 'index.html' and n.endswith(('.js', '.css')))
+    for name in names:
+        item = expected[name]
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                fail('LOCAL online verification exhausted release budget')
+            try:
+                request = urllib.request.Request(SITE_URL + quote(name, safe='/')
+                    + '?local_build=' + source['buildId'] + '&local_commit=' + source['commit'],
+                    headers={'Accept-Encoding': 'identity', 'Cache-Control': 'no-cache, no-store, max-age=0',
+                             'User-Agent': 'cyf-web-local-deploy/' + source['buildId']})
+                with urllib.request.urlopen(request, timeout=min(ONLINE_VERIFY_TIMEOUT_SECONDS, remaining)) as response:
+                    data = response.read(item['size'] + 1)
+                    status = getattr(response, 'status', 200)
+                if status == 200 and len(data) == item['size'] and hashlib.sha256(data).hexdigest() == item['sha256']:
+                    break
+            except Exception:
+                pass  # The owning LOCAL budget bounds retries, not an application request deadline.
+            time.sleep(min(ONLINE_VERIFY_POLL_DELAY_SECONDS, max(0, deadline - time.monotonic())))
+    return len(names)
+
+
+def local_restore(backup, descriptor, expected, binding):
+    """Restore only this binding's changed files; entry is restored last."""
+    local_private(backup / 'before.json')
+    snapshot = json.loads((backup / 'before.json').read_text(), object_pairs_hook=unique_json_object)
+    if (set(snapshot) != {'binding', 'changed'} or snapshot['binding'] != binding
+            or type(snapshot['changed']) is not dict or not set(snapshot['changed']) <= set(expected)):
+        fail('invalid LOCAL rollback snapshot')
+    validate_site_targets(expected)
+    for name, old in snapshot['changed'].items():
+        if old is not None:
+            local_private(backup / 'files' / name)
+            if type(old) is not dict or set(old) != {'size', 'sha256'} or file_digest(backup / 'files' / name) != (old['size'], old['sha256']):
+                fail('LOCAL rollback bytes changed')
+    local_private(backup / 'record-before.json')
+    old_record = (backup / 'record-before.json').read_bytes()
+    if hashlib.sha256(old_record).hexdigest() != descriptor['previousRecordSha256']:
+        fail('LOCAL previous record changed')
+    for name in sorted(snapshot['changed'], key=lambda n: (n == 'index.html', n)):
+        old = snapshot['changed'][name]
+        target = SITE / name
+        if old is None:
+            if target.exists():
+                if file_digest(target) != (expected[name]['size'], expected[name]['sha256']):
+                    fail('refusing removal of unrelated rollback target')
+                target.unlink()
+                local_sync_dir(target.parent)
+        else:
+            ensure_public_parent(name)
+            atomic_file(target, backup / 'files' / name, 0o644)
+            local_sync_dir(target.parent)
+    atomic(ROOT / 'record.json', old_record, 0o600)
+    local_sync_dir(ROOT)
+
+
+def deploy_local(descriptor_path, budget_seconds=600):
+    if os.geteuid() != 0:
+        fail('LOCAL installation requires root')
+    started = time.monotonic()
+    descriptor = local_descriptor(Path(descriptor_path))
+    binding = hashlib.sha256(local_json_bytes(descriptor)).hexdigest()
+    package = Path(descriptor['package']['path'])
+    before = local_private(package)
+    safe_dir(ROOT)
+    safe_dir(SITE)
+    lock = os.open(str(ROOT / 'deploy.lock'), os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    staging = None
+    try:
+        st = os.fstat(lock)
+        if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_nlink != 1 or stat.S_IMODE(st.st_mode) != 0o600:
+            fail('unsafe LOCAL deployment lock')
+        # No preemption: the caller's full wall clock includes lock waiting.
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        staging = Path(tempfile.mkdtemp(prefix='.cyf-web-stage-', dir=str(ROOT)))
+        with verified_package_handle(package, before) as handle:
+            digest = hashlib.sha256()
+            for block in iter(lambda: handle.read(CHUNK_SIZE), b''):
+                digest.update(block)
+            if before.st_size != descriptor['package']['size'] or digest.hexdigest() != descriptor['package']['sha256']:
+                fail('LOCAL package digest mismatch')
+            handle.seek(0)
+            manifest, staged = scan_archive(handle, staging, local=True)
+        record, expected = validate_local_manifest(manifest, staged)
+        if record['source'] != descriptor['source']:
+            fail('LOCAL descriptor and manifest source differ')
+        validate_site_targets(expected)
+        record_path = ROOT / 'record.json'
+        local_private(record_path)
+        previous_bytes = record_path.read_bytes()
+        previous = json.loads(previous_bytes, object_pairs_hook=unique_json_object)
+        backups = ROOT / 'backups'
+        backups.mkdir(mode=0o700, exist_ok=True)
+        safe_dir(backups)
+        backup = backups / binding
+        backup.mkdir(mode=0o700, exist_ok=True)
+        safe_dir(backup)
+        if previous.get('binding_sha256') == binding and previous.get('source_kind') == 'LOCAL':
+            if previous.get('status') == 'online_verified':
+                verify_installed(expected)
+                local_online(record['source'], expected, started + budget_seconds)
+                return previous
+            # Interrupted publication is rolled back before any new attempt.
+            local_restore(backup, descriptor, expected, binding)
+            previous_bytes = record_path.read_bytes()
+        elif previous.get('status') not in ('installed', 'online_verified'):
+            fail('another Web transaction is unfinished')
+        if (hashlib.sha256(previous_bytes).hexdigest() != descriptor['previousRecordSha256']
+                or file_digest(SITE / 'index.html')[1] != descriptor['previousIndexSha256']):
+            fail('LOCAL previous release changed')
+        changed = {}
+        for name, item in expected.items():
+            target = SITE / name
+            if target.exists() and file_digest(target) == (item['size'], item['sha256']):
+                continue
+            if target.exists():
+                size, digest = file_digest(target)
+                destination = backup / 'files' / name
+                destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                atomic_file(destination, target, 0o600)
+                local_sync_dir(destination.parent)
+                changed[name] = dict(size=size, sha256=digest)
+            else:
+                changed[name] = None
+        atomic(backup / 'record-before.json', previous_bytes, 0o600)
+        local_save(backup / 'before.json', dict(binding=binding, changed=changed))
+        local_save(backup / 'descriptor.json', descriptor)
+        record.update(binding_sha256=binding, artifact_sha256=descriptor['package']['sha256'],
+                      package=descriptor['package'], backup=str(backup), status='publishing', phase='publishing')
+        local_save(record_path, record)
+        try:
+            # Original publication primitive, assets first and index last. Skip
+            # only byte-identical installed files; all installed hashes rechecked.
+            publish_staged({n: staged[n] for n in changed}, {n: expected[n] for n in changed})
+            verify_installed(expected)
+            record.update(status='installed', phase='installed')
+            local_save(record_path, record)
+            count = local_online(record['source'], expected, started + budget_seconds)
+            record.update(status='online_verified', phase='online_verified', onlineVerifiedFiles=count,
+                          wallSeconds=round(time.monotonic() - started, 3))
+            local_save(record_path, record)
+        except BaseException:
+            local_restore(backup, descriptor, expected, binding)
+            raise
+        print('CYF_WEB_LOCAL_INSTALL=PASS ' + json.dumps(dict(source=record['source'], files=len(expected),
+              changedFiles=len(changed), onlineVerifiedFiles=count, wallSeconds=record['wallSeconds']), sort_keys=True))
+        return record
+    finally:
+        if staging is not None:
+            shutil.rmtree(str(staging))
+        os.close(lock)
+# END NATIVE_LOCAL_WEB_TRANSACTION
+
+
 if __name__ == '__main__':
+    if sys.argv[1:2] == ['--source-local']:
+        if len(sys.argv) != 3:
+            fail('expected --source-local descriptor.json')
+        deploy_local(sys.argv[2])
+        raise SystemExit(0)
     if len(sys.argv) != 6:
         fail('expected pipeline run commit version artifact_sha256')
     deploy(*sys.argv[1:])

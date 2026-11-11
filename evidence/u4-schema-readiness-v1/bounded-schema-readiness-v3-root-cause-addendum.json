@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-30T17:55:00+08:00",
+  "task_id": "MMD-U4-SCHEMA-READINESS-20260930",
+  "candidate": {
+    "commit": "399cb3c30002c728a2329a6347f1f4d15f2d3fcf",
+    "tree": "b6ad3746c235e91ae1cae15278636b66f1b253bf"
+  },
+  "v3_failure": {
+    "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v3.json",
+    "sha256": "ab1aa23d6dd88054c1d2d4e959d94bba53a2f97bb627619f17b38a745abe8e63",
+    "outcome": "partial XML 2 tests: 1 passed, 1 skipped; three methods not recorded; test worker Java heap OOM"
+  },
+  "precise_root_cause": {
+    "classification": "bounded lifecycle fixture mock termination bug",
+    "detail": "The mocked java.sql.Statement returns false from execute(), but unstubbed getUpdateCount() defaults to 0. Spring JDBC 7.0.2 ScriptUtils continues while getMoreResults() is false and getUpdateCount() is not -1. Mockito records the repeated calls until the owned 128m test worker exhausts heap.",
+    "not_source_lifecycle_assertion_failure": true,
+    "not_reason_to_increase_heap": true
+  },
+  "bytecode_proof": {
+    "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-main-attribution/spring702-scriptutils-bytecode.txt",
+    "sha256": "193ce07a31bd55534e4e904569164d4928b5f2459a4a2f1db56fa495834dcb13",
+    "relevant_offsets": "execute 171-180; getUpdateCount 243-250; getMoreResults 285-292; termination requires updateCount == -1 at 294-305"
+  },
+  "exact_spring_jdbc_jar": {
+    "path": "/root/.gradle/caches/modules-2/files-2.1/org.springframework/spring-jdbc/7.0.2/a885a68fc3b6835bad22986e0621ed038b838833/spring-jdbc-7.0.2.jar",
+    "sha256": "bde931959e814a353c71f6cc66d484cb5200f989617bd6af4bcadb8edd4108c4",
+    "version": "7.0.2"
+  },
+  "minimal_correction": {
+    "file": "chat/jia-chat-service/src/chatDeliberationTest/java/cn/jia/chat/config/ChatSchemaReadinessLifecycleTest.java",
+    "change": [
+      "stub Statement.getUpdateCount() to -1",
+      "stub Statement.getMoreResults() to false"
+    ],
+    "production_main_change": false,
+    "assertion_change": false,
+    "schema_change": false,
+    "jvm_cap_change": false
+  },
+  "next_verification": "Commit the owned fixture-only correction, then execute one fresh bounded-v4 namespace with new source hash and the unchanged four-task graph, dependency classpath, daemon/test JVM caps, and five-method selector."
+}

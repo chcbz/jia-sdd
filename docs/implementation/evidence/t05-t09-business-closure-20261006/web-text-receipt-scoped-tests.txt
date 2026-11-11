@@ -1,0 +1,51 @@
+
+
+  MMD finalization immutable owner acceptance
+    ✔ rejects missing, unsafe, padded and noncanonical task versions without coercion
+    ✔ requires exact frozen source set, scope, versions and actual accepted/completed facts
+    ✔ persists and reads back the immutable intent before its first POST
+    ✔ does not infer completion from a bare stage/delivery label
+    ✔ does not submit concurrently on a second click
+    ✔ lost acknowledgement/remount keeps the original key/body; a status check never writes
+    ✔ only an explicit resume after 404 replays the original immutable POST
+    ✔ known operation reads by ID and resumes pending only with the original write
+    ✔ does not replay a POST when status reconciliation fails with 401
+    ✔ does not replay a POST when status reconciliation fails with 403
+    ✔ does not replay a POST when status reconciliation fails with 409
+    ✔ does not replay a POST when status reconciliation fails with 500
+    ✔ nonretryable domain failure is not automatically submitted again
+    ✔ retryable phase failure can resume the original operation without generation
+    ✔ identity switching aborts and fences a late completion while preserving each owner recovery key
+    ✔ rejects receipt version rollback and conflicting same-version facts
+    ✔ rejects a higher-version receipt that regresses a confirmed domain stage or completion
+    ✔ never opens a new operation with unavailable storage
+    ✔ never opens a new operation with readback mismatch storage
+    ✔ never opens a new operation with corrupt recovered intent storage
+    ✔ never opens a new operation with recovery read error storage
+    ✔ confirmed server completion stays confirmed when later recovery persistence fails
+    ✔ does not accept hidden permission fields or duplicate source selections
+
+  MMD completed-message finalization wire and recovery
+    ✔ submits text-only without invented output IDs and freezes nested refs
+    ✔ submits ordered mixed media/text without invented output IDs and freezes nested refs
+    ✔ compares every actual message ref and preserves order rather than accepting a newer text receipt
+    ✔ rejects numeric/zero/padded/overflow message IDs and incomplete/hybrid source authority before requesting
+    ✔ rejects duplicate actual text message even with a changed snapshot, digest or title
+    ✔ text acknowledgement loss/remount reads only, then explicitly replays the original mixed key and nested refs
+    ✔ changed nested message refs in a server receipt leave original text intent unresolved
+    ✔ owner switching fences a late text receipt and restores only that owner original refs
+    ✔ does not recover corrupted or fabricated stored message refs into a new operation
+
+  real API text receipt nullable DTO source slots
+    ✔ recognizes completed pure text and mixed receipts without changing frozen request sources
+    ✔ keeps original unknown intent and resolves completion via GET only
+    ✔ rejects invented IDs, partial null slots, extra fields, changed digests and reordered selection
+
+  validated finalization completion refresh boundary
+    ✔ forwards the exact scoped completion to the page without mutating the selected task (53ms)
+    ✔ wires the actual bounty page to refresh server tasks, not to a local completion mutation
+    ✔ compiles the affected templates and scripts (399ms)
+
+
+  38 passing (523ms)
+

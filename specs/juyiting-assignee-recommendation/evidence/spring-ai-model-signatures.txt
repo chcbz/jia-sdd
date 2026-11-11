@@ -1,0 +1,109 @@
+Compiled from "ChatModel.java"
+public interface org.springframework.ai.chat.model.ChatModel extends org.springframework.ai.model.Model<org.springframework.ai.chat.prompt.Prompt, org.springframework.ai.chat.model.ChatResponse>, org.springframework.ai.chat.model.StreamingChatModel {
+  public default java.lang.String call(java.lang.String);
+  public default java.lang.String call(org.springframework.ai.chat.messages.Message...);
+  public abstract org.springframework.ai.chat.model.ChatResponse call(org.springframework.ai.chat.prompt.Prompt);
+  public default org.springframework.ai.chat.prompt.ChatOptions getOptions();
+  public default org.springframework.ai.chat.prompt.ChatOptions getDefaultOptions();
+  public default reactor.core.publisher.Flux<org.springframework.ai.chat.model.ChatResponse> stream(org.springframework.ai.chat.prompt.Prompt);
+  public default org.springframework.ai.model.ModelResponse call(org.springframework.ai.model.ModelRequest);
+  public default reactor.core.publisher.Flux stream(org.springframework.ai.model.ModelRequest);
+}
+Compiled from "ToolCallingChatOptions.java"
+public interface org.springframework.ai.model.tool.ToolCallingChatOptions extends org.springframework.ai.chat.prompt.ChatOptions {
+  public abstract java.util.List<org.springframework.ai.tool.ToolCallback> getToolCallbacks();
+  public abstract java.util.Map<java.lang.String, java.lang.Object> getToolContext();
+  public abstract org.springframework.ai.model.tool.ToolCallingChatOptions$Builder<?> mutate();
+  public static org.springframework.ai.model.tool.ToolCallingChatOptions$Builder<?> builder();
+  public static java.util.List<org.springframework.ai.tool.ToolCallback> mergeToolCallbacks(java.util.List<org.springframework.ai.tool.ToolCallback>, java.util.List<org.springframework.ai.tool.ToolCallback>);
+  public static java.util.Map<java.lang.String, java.lang.Object> mergeToolContext(java.util.Map<java.lang.String, java.lang.Object>, java.util.Map<java.lang.String, java.lang.Object>);
+  public static void validateToolCallbacks(java.util.List<org.springframework.ai.tool.ToolCallback>);
+  public default org.springframework.ai.chat.prompt.ChatOptions$Builder mutate();
+}
+Compiled from "OpenAiChatOptions.java"
+public class org.springframework.ai.openai.OpenAiChatOptions implements org.springframework.ai.model.tool.ToolCallingChatOptions,org.springframework.ai.model.tool.StructuredOutputChatOptions {
+  public static final java.lang.String DEFAULT_CHAT_MODEL;
+  protected org.springframework.ai.openai.OpenAiChatOptions(java.lang.String, java.lang.String, com.openai.credential.Credential, java.lang.String, java.lang.String, com.openai.azure.AzureOpenAIServiceVersion, java.lang.String, java.lang.Boolean, java.lang.Boolean, java.time.Duration, java.lang.Integer, java.net.Proxy, java.util.Map<java.lang.String, java.lang.String>, java.lang.Double, java.lang.Integer, java.lang.Double, java.util.List<java.lang.String>, java.lang.Double, java.lang.Double, java.util.List<org.springframework.ai.tool.ToolCallback>, java.util.Map<java.lang.String, java.lang.Object>, java.util.Map<java.lang.String, java.lang.Integer>, java.lang.Boolean, java.lang.Integer, java.lang.Integer, java.lang.Integer, java.util.List<java.lang.String>, org.springframework.ai.openai.OpenAiChatOptions$AudioParameters, org.springframework.ai.openai.OpenAiChatModel$ResponseFormat, org.springframework.ai.openai.OpenAiChatOptions$StreamOptions, java.lang.Integer, java.lang.Object, java.lang.String, java.lang.Boolean, java.lang.Boolean, java.util.Map<java.lang.String, java.lang.String>, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.util.Map<java.lang.String, java.lang.Object>);
+  public java.lang.String getBaseUrl();
+  public java.lang.String getApiKey();
+  public com.openai.credential.Credential getCredential();
+  public java.lang.String getModel();
+  public java.lang.String getMicrosoftDeploymentName();
+  public java.lang.String getDeploymentName();
+  public com.openai.azure.AzureOpenAIServiceVersion getMicrosoftFoundryServiceVersion();
+  public java.lang.String getOrganizationId();
+  public boolean isMicrosoftFoundry();
+  public boolean isGitHubModels();
+  public java.time.Duration getTimeout();
+  public int getMaxRetries();
+  public java.net.Proxy getProxy();
+  public java.util.Map<java.lang.String, java.lang.String> getCustomHeaders();
+  public java.lang.Double getFrequencyPenalty();
+  public java.util.Map<java.lang.String, java.lang.Integer> getLogitBias();
+  public java.lang.Boolean getLogprobs();
+  public java.lang.Integer getTopLogprobs();
+  public java.lang.Integer getMaxTokens();
+  public java.lang.Integer getMaxCompletionTokens();
+  public java.lang.Integer getN();
+  public java.util.List<java.lang.String> getOutputModalities();
+  public org.springframework.ai.openai.OpenAiChatOptions$AudioParameters getOutputAudio();
+  public java.lang.Double getPresencePenalty();
+  public org.springframework.ai.openai.OpenAiChatModel$ResponseFormat getResponseFormat();
+  public org.springframework.ai.openai.OpenAiChatOptions$StreamOptions getStreamOptions();
+  public java.lang.Integer getSeed();
+  public java.util.List<java.lang.String> getStop();
+  public java.util.List<java.lang.String> getStopSequences();
+  public java.lang.Double getTemperature();
+  public java.lang.Double getTopP();
+  public java.lang.Object getToolChoice();
+  public java.lang.String getUser();
+  public java.lang.Boolean getParallelToolCalls();
+  public java.lang.Boolean getStore();
+  public java.util.Map<java.lang.String, java.lang.String> getMetadata();
+  public java.lang.String getReasoningEffort();
+  public java.lang.String getVerbosity();
+  public java.lang.String getServiceTier();
+  public java.lang.String getPromptCacheKey();
+  public java.util.Map<java.lang.String, java.lang.Object> getExtraBody();
+  public java.util.List<org.springframework.ai.tool.ToolCallback> getToolCallbacks();
+  public java.util.Map<java.lang.String, java.lang.Object> getToolContext();
+  public java.lang.Integer getTopK();
+  public java.lang.String getOutputSchema();
+  public static org.springframework.ai.openai.OpenAiChatOptions$Builder builder();
+  public org.springframework.ai.openai.OpenAiChatOptions$Builder mutate();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  public org.springframework.ai.model.tool.ToolCallingChatOptions$Builder mutate();
+  public org.springframework.ai.chat.prompt.ChatOptions$Builder mutate();
+  public org.springframework.ai.model.tool.StructuredOutputChatOptions$Builder mutate();
+  static {};
+}
+Compiled from "AssistantMessage.java"
+public class org.springframework.ai.chat.messages.AssistantMessage extends org.springframework.ai.chat.messages.AbstractMessage implements org.springframework.ai.content.MediaContent {
+  protected final java.util.List<org.springframework.ai.content.Media> media;
+  public org.springframework.ai.chat.messages.AssistantMessage(java.lang.String);
+  protected org.springframework.ai.chat.messages.AssistantMessage(java.lang.String, java.util.Map<java.lang.String, java.lang.Object>, java.util.List<org.springframework.ai.chat.messages.AssistantMessage$ToolCall>, java.util.List<org.springframework.ai.content.Media>);
+  public java.util.List<org.springframework.ai.chat.messages.AssistantMessage$ToolCall> getToolCalls();
+  public boolean hasToolCalls();
+  public java.util.List<org.springframework.ai.content.Media> getMedia();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  public java.lang.String toString();
+  public static org.springframework.ai.chat.messages.AssistantMessage$Builder<?> builder();
+}
+Compiled from "OpenAiChatModel.java"
+public final class org.springframework.ai.openai.OpenAiChatModel implements org.springframework.ai.chat.model.ChatModel {
+  static final java.lang.String TOOL_CALL_ADDITIONAL_PROPERTIES_METADATA_KEY;
+  public static org.springframework.ai.openai.OpenAiChatModel$Builder builder();
+  public org.springframework.ai.openai.OpenAiChatOptions getOptions();
+  public org.springframework.ai.chat.prompt.ChatOptions getDefaultOptions();
+  public org.springframework.ai.chat.model.ChatResponse call(org.springframework.ai.chat.prompt.Prompt);
+  public reactor.core.publisher.Flux<org.springframework.ai.chat.model.ChatResponse> stream(org.springframework.ai.chat.prompt.Prompt);
+  com.openai.models.chat.completions.ChatCompletionCreateParams createRequest(org.springframework.ai.chat.prompt.Prompt, boolean);
+  public static com.openai.models.chat.completions.ChatCompletionToolChoiceOption parseToolChoice(tools.jackson.databind.JsonNode);
+  public void setObservationConvention(org.springframework.ai.chat.observation.ChatModelObservationConvention);
+  public org.springframework.ai.chat.prompt.ChatOptions getOptions();
+  public org.springframework.ai.model.ModelResponse call(org.springframework.ai.model.ModelRequest);
+  public reactor.core.publisher.Flux stream(org.springframework.ai.model.ModelRequest);
+  static {};
+}

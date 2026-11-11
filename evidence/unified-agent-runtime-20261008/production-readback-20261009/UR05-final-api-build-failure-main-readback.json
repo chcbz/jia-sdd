@@ -1,0 +1,59 @@
+{
+  "at": "2026-10-09T13:28:21.013300+08:00",
+  "task": "UR-05-20261008",
+  "status": "FORMAL_LOCAL_BUILD_FAILED_MAPPER_STALE_OWNER_ORACLE",
+  "identity": {
+    "version": "1.14.0-ur05.20261009",
+    "buildId": "ur05-api-local-20261009T1323-n3k2eueq",
+    "commit": "b951113ac2428c62f2f404859f87299de1552e3d",
+    "tree": "4fac5fc1d960421fa30089f5b50125ffb3e604cb"
+  },
+  "sourceClean": true,
+  "exitCode": 1,
+  "log": {
+    "path": "/var/tmp/cyf-ur05-api-local-20261009T1323-n3k2eueq/build/local-build-sanitized.log",
+    "sha256": "07766a17c3be95a57b8eea53ed60f6af5a511437d934697c9ad96efb527cfc8f"
+  },
+  "result": {
+    "path": "/var/tmp/cyf-ur05-api-local-20261009T1323-n3k2eueq/source-validation-result.json",
+    "sha256": "fd8e91d0c56f23bd23993e791a2fc5af0ac677e07fd93c1ea84065b6c17d383e"
+  },
+  "tests": {
+    "actualExecuted": 18,
+    "passed": 16,
+    "failures": 2,
+    "errors": 0,
+    "skips": 0
+  },
+  "failures": [
+    {
+      "class": "cn.jia.agent.schema.AgentCommandTransportSchemaTest",
+      "method": "scopedBusinessAndTransportIdempotencyKeysAreExact",
+      "line": 56
+    },
+    {
+      "class": "cn.jia.agent.schema.AgentCommandTransportSchemaTest",
+      "method": "tablesReserveRetryLeaseCasExpiryFencingAndReplayFields",
+      "line": 115
+    }
+  ],
+  "rootCause": "Two original pre-owner assertions omit owner_jiacn; canonical and migration SQL since f147995791 include owner. Fix test contract, not SQL/security weakening. Source-unit original failures preserved; no retry.",
+  "remediation": {
+    "owner": "originalTuring",
+    "task": "UR-04-20261008",
+    "submission": "01a11f21-24a0-7c03-b83e-3a45fecab130",
+    "permittedSource": "agent/jia-agent-mapper/src/test/java/cn/jia/agent/schema/AgentCommandTransportSchemaTest.java",
+    "boundary": "ONE necessary actual-failed existing test, no new framework/production, originalmethods retained"
+  },
+  "independentCapacityObservation": {
+    "filesystem": "/dev/vda1",
+    "availableBytes": 155865088,
+    "installedJarBytes": 253759352,
+    "notCurrentFailureCause": true,
+    "cleanupNotAuthorizedOrPerformed": true,
+    "next": "Need enough durable build+JAR+package storage; do not kill processes or remove evidence/production/backups."
+  },
+  "artifactProduced": false,
+  "productionTouched": false,
+  "originalTask432Retained": true
+}

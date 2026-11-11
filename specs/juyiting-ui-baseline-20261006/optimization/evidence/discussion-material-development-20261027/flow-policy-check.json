@@ -1,0 +1,26 @@
+{
+  "queriedAt": "2026-10-27T03:56:44.716Z",
+  "sha256": "0189ce8daf20d156f02fff89d859cd23afbfd3a63eafa0ce0f5cdf4992e0f47b",
+  "policyLines": [
+    "name: cyf-web-kit",
+    "    name: cyf_web_develop",
+    "    branch: develop",
+    "    triggerEvents:",
+    "    branchesFilter: ^develop$",
+    "    name: Frontend resource-offloaded CI",
+    "        name: Locked install, full tests, and Vite build",
+    "        timeoutMinutes: 60",
+    "            name: Alinux3 full frontend CI",
+    "            step: CustomEnvironmentBuild",
+    "                test \"${CI_COMMIT_REF_NAME:-}\" = develop",
+    "                    if curl --fail --location --retry 2 --connect-timeout 20 --max-time 240 \"$node_url\" --output \"$partial\"; then",
+    "                npm ci --include=dev --registry=https://registry.npmmirror.com --replace-registry-host=npmjs --fetch-retries=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=30000 --fetch-timeout=120000 --no-audit --no-fund",
+    "                npm run test",
+    "                npm run build",
+    "                const m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,package_version:packageVersion,files};",
+    "            name: Upload same-run site and test report",
+    "            step: ArtifactUpload",
+    "        name: JavaScript code scan",
+    "            step: JavaScriptCodeScan"
+  ]
+}

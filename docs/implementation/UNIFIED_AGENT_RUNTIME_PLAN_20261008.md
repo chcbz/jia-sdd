@@ -1,0 +1,288 @@
+# 聚义厅统一 Agent Runtime 收敛计划
+
+日期：2026-10-08。状态：用户确认吴用、林冲、卢俊义合到同一个 Runtime 实例；实现与切换尚未完成。本文冻结部署方向，不把此前服务恢复、心跳正常或1.0.1发布当作架构迁移完成。
+
+## 决策与范围
+
+- 同一托管执行环境内，一个受控服务/Runtime主实例承载三个逻辑Agent；执行引擎可以有隔离子进程，不要求整个主机只有一个OS进程。
+- 统一客户端程序、认证协议和运行生命周期；每个Agent仍保留精确tenantId/clientId/canonicalAgentId、独立安装授权、会话、工作根、收件箱/回执状态和审计归属。不因同进程合并身份或授权。
+- 复用现有办事执行、工具、多媒体、资料与成果能力，不扩展用户功能，不重写正常工作的执行引擎。不为过渡保留永久双协议/双心跳来源。
+- 用户自有机器接入能力保持同一合同；本次不搬迁、接管其他Owner的Agent或工作目录。
+- 来源：AGENT_RUNTIME_V1_DESIGN_20260914.md为身份/ACK目标；现有codex-ws-agent为实际执行能力来源。现有单manifest Runtime v1尚不能直接承载三者，更未接管完整执行链路。
+
+## 必需工作与验收
+
+1. **安装/多Agent合同**：明确Runtime实例标识与Agent身份的区别；列出三者现有binding/installation、工作根及维护Owner。多Agent配置校验拒绝重复身份和目录重叠；单Agent授权失效只隔离该Agent，实例不可冒称其健康。
+2. **统一运行宿主与执行接入**：在同一实现中连接身份会话、命令接收、持久化、执行适配器、取消、恢复与回执。移植/复用已有实现而非丢弃CHAT、文件与多媒体链路。支持三Agent独立调度，单工作项仍保持幂等/锁/租约归属。
+3. **服务端定向投递与状态归一**：Runtime安装级授权绑定实际命令通道；投递、领取、ACK、进度、成果均核对相同Agent与任务上下文；以真实可接令/执行就绪决定在线，不以侧车heartbeat代替执行可用。页面读取同一状态来源。
+4. **恢复与隔离**：无跨Agent会话/文件/凭据/任务污染；同一任务不得被两个宿主同时执行；重复投递、掉线、重启、未知执行结果有可审计行为，不通过清空队列或重跑业务解决。
+5. **发布与迁移**：固定版本/commit/tree；按2026-10-08项目规则，前端Flow验证并消费同Run制品，后端在固定干净源码目录/独立worktree经orchestrator本地验证构建并消费同build ID不可变制品；Runtime完整安装fixture和实际发布制品分别核验，不以fixture通过代替上线；维护授权须覆盖原共享进程所有实际承载profile（包括动态托管身份），不能只凭静态吴用/林冲/卢俊义列表推断。完成在途工作核对、受控停止接单/交接、私有完整备份和必要离线状态迁移。按精确身份切流，无旧新双写者；验证后停用旧服务和旧授权。失败恢复须覆盖代码、格式和状态，禁止只回退二进制或自动业务重放。
+6. **真实验收与收尾**：三者各独立办事/交付；并行不同任务不串话；跨Agent协作沿原任务/成果权限；重复消息不重复执行；断线重连与重启不丢终态；撤销一个Agent不影响其他Agent；浏览器显示与实际执行一致。实际运行PID/版本、前端Flow或后端本地正式证据与成果摘要对应，更新架构图/安装运维文档，最后移除重复实现。
+
+## 执行顺序
+
+合同与归属核对 → 客户端/服务端非重叠实现并行 → 集成与故障回归 → 固定版本发布 → 有界切流 → 三Agent真实验收 → 退役旧服务/协议。
+
+验收前不得宣称“已经合到一个Runtime”。本次计划不包含估算未经拆解验证的交付时长，也不直接启动线上停机、身份重建、凭据撤销或业务测试请求。
+
+## 任务分配与初步估算（2026-10-08）
+
+用户请求分配Agent并给出时长。以下为工程估算，非实测耗时或交付保证；各Owner完成代码核对后校正。按有效工作小时计，不包含Flow排队、等待在途任务结束及授权窗口。
+
+|任务|唯一Owner|初估|依赖/当前状态|
+|---|---|---|---|
+|UR-00 合同冻结、身份归属和路径划分|主控|1–2小时|核对计划与路由；汇总客户端/服务端建议后冻结|
+|UR-01 多Agent宿主、现有执行引擎接入及恢复隔离|Knuth / critical_worker / gpt-6.1-sol|8–16小时|已创建Agent并下发契约核对，未开始源码实现；依赖UR-00|
+|UR-02 服务端安装授权、定向命令/回执及就绪状态归一|Turing / critical_worker / gpt-6.1-sol|6–12小时|已发送任务，待回执；依赖UR-00，与UR-01并行|
+|UR-03 验收矩阵、隔离fixture及回归执行|Curie / gpt-6-luna|4–8小时|已发送只读准备任务，待回执；先准备，契约冻结后分配独立测试路径，最终验证依赖UR-01/02|
+|UR-04 跨端集成和缺陷收敛|主控（缺陷回原源码Owner）|4–8小时|依赖UR-01/02；不创建Reviewer|
+|UR-05 固定版本Flow发布、受控迁移与旧服务退役|主控|2–4小时|依赖回归成功和所有实际承载身份/在途工作/维护权限核对|
+|UR-06 三Agent真实业务验收和文档收尾|主控（Curie辅助取证）|2–4小时|依赖发布；业务请求按实际授权执行，不能把心跳正常当作通过|
+
+预计并行关键路径约20–40有效工作小时，按每天8小时约3–5个工作日；不是后台Agent必定持续运行至完成的承诺。首次合同核对后重新估算。当前只下发准备阶段，未执行线上切换。Hopper保留原UI尾项，不打断、不默认调入新任务。最多3源码Writer+1只读辅助，路径互斥；主控不冒充可热切换的子Agent模型。
+
+### 实施接续（2026-10-08 10:58后）
+
+主控核实三者调查均已完成，不再把Turing停止等待主控当作调查进行中。已冻结 `UNIFIED_AGENT_RUNTIME_CONTRACT_20261008.md` 并通过orchestrator登记UR-00至UR-06；UR-01/02已claim并实际发送源码实施任务。两端语义冻结，精确wire fixture为Turing第一交付，Knuth同时做不依赖wire的宿主切片。
+
+另已核实Hopper交付UI尾项251f1558/tree87e6c3e1，干净worktree；标记implemented释放Owner，尚未云验/部署。其回报中“等独立审查”不符合现行规则，不创建Reviewer。吴用1.0.1两个旧台账已按Run23成功证据修正，不再遗留Run22失败状态。
+
+估时校准：客户端Owner14–20小时，服务端8–12小时（若持久fence需迁移10–16小时）。验收Owner原估包含较宽的独立矩阵/集成/线上窗口，正在按与Owner测试去重后的最小三层验收收敛；此前3–5工作日是初估，不能当作承诺。
+
+### 阶段回报接续纠正（2026-10-08 11:39后）
+
+用户指出Agent已停止。主控实际查询确认UR-01两个局部commit到ad7f47fb，UR-02两个局部commit到87c894dc，UR-03矩阵完成；不是全任务完成。此前通知写入outbox后未及时执行主控转达/授权，导致两端停等。已读取完整outbox、把最新fixture直接发给Knuth、明确授权Turing所报四列持久fence与D06过期终态补报源码范围，并给两者发送继续实现指令，台账恢复implementing。线上未改动。
+
+Curie在Hopper释放后转为第三Writer：独立worktree `/home/isp/wsps/worktrees/ur03-unified-runtime-fixtures-20261008`；只拥有新 `conf/cyf-agent-runtime-v1/test/unified-runtime-acceptance.test.mjs` 和 `conf/cyf-agent-runtime-v1/test/fixtures/unified-runtime-wire-v1.redacted.json`，不与Knuth现有Owner测试重叠。实现现有宿主隔离fixture，不用mock PASS冒充尚未实现的跨端HTTP闭环。
+
+主控尚无成功建立的定时自动化；工具检索未发现automation_update。发送通知/outbox并不证明主控被后台唤醒，不能继续承诺已具备持续后台监控。
+
+### r2与首次云端诊断启动对账（2026-10-08 13:32）
+
+已实际读取canonical E05 codec fixture并冻结r2投影，解除客户端M3b fail-closed字段冲突；两Owner已通过send_input接续。UR01当前阶段cf67f74b，Owner562pass/1skip；UR02阶段d0c118，正式编译仍NOT_RUN。
+
+主控将API d0c118固定推送到仅诊断分支codex/ur02-ci-d0c118-20261008；复用5260799原无部署CI配置，在保留原selector基础追加34个变更Owner测试，并保存/回读候选。2026-10-08T05:30:32.693Z仅发起一次启动请求，SDK异常且未返回Run ID；05:30:47和05:31:23两次只读查询仍无新Run，当前启动结果UNKNOWN，禁止盲目重复。旧helper未保留安全错误码，不能推断具体根因。已恢复原流水线配置并readback APPLIED，原SHA256 a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a。记录在/var/tmp/cyf-ur-flow-20261008及UR-04故障台账。不把本次报告为已跑编译/云验通过，无生产部署。后续先只读对账/定位控制面失败，不能回退本机正式构建。
+
+### 正式云验实际接续（2026-10-08 14:18）
+
+- 最新客户端r2阶段95437e9e，Owner575pass/1跨端skip；仍非整体验收。旧provisioning收敛由Knuth继续。
+- API r2+conversation候选fea39341已推任务分支。新的诊断source分支不在旧branchesFilter内导致配置校验拒绝；令source/过滤/脚本准入三者一致后，Flow5260799 Run121实际创建并检出fea39341。此前d0请求异常未留下错误码，仍仅记录无对应Run，不能倒推它的确切服务错误。
+- Run121 FAIL于agent-service compileJava；缺少AllowSensitiveOutput.reason导致首要错误。诊断压缩数据完整还原且hash1fab5767c51de7c2a55935ed651a8c71e6607ed22e8e910d9b8ba4fe397c85f9核对一致。Owner已修复为5f570464，两处注解保留且补reason，未删除敏感输出控制。
+- Run122固定5f570464/job530818518，原agent-service生产编译阻塞已通过，FAIL于compileTestJava：AgentRuntimeSecurityIntegrationTest312 multipart builder与helper参数类型不兼容。完整诊断hash7693a369e519799a59cd66d72017d47d2514b251d470f454a2699eb38da9a110。已通过send_input即时交回原Owner；没有跳过测试或退回本地正式构建。
+- 两次失败均在终态后恢复原流水线配置且readback一致，未部署。证据在evidence/unified-agent-runtime-20261008/flow121和flow122。不得把95条级联错误当95个独立根因，也不得把部分mapper通过当Runtime测试通过。
+- TASK最终准备/持久提交切分源码范围已授权，Turing继续。线上只读服务查询确认原共享PID2237/WuYong324415/runtime324502未被本轮改变；不能以PID/idle外观代替动态身份及在途维护核对。
+
+### 目标巡检接续：首次实际断言阶段（2026-10-08 14:25）
+
+上轮为progress：两次云端失败形成权威诊断并交Owner修复；非仅重述状态。本轮先查询Agent/current worktree，确认Turing已提交bff97dd multipart helper修复，TASK源码仍在实现；Knuth继续旧入口收敛，自检中。没有重复派单或重启其工作。
+
+固定bff97dd新诊断分支实际启动Flow123/job530824587，运行到终态FAIL。生产/测试编译阻塞均已越过，105个JUnit报告汇总1225 tests/13fail/0error/37skip；此为本Run选定套件统计，非全系统验收。完整诊断hash e47e25254cd4f2fe729a77cf97853388ca941e94e60fa28500d655952cf799ed核验一致，0 compiler diagnostics。13失败来自6类套件，集中于JSON数值节点相等、native lease fixture、startup新增认证依赖、过时API-key路径预期及skill拒绝优先级；不能在未查明前一概宣称是测试问题，也不得弱化ACL/金钱/副作用断言。完整明细已实时send_input交原Owner Turing，不创建Reviewer/不对同输入重跑。
+
+Run123终态后已恢复原5260799配置并readback，线上无变化。证据归档evidence/unified-agent-runtime-20261008/flow123。Goal保持active；跨端HTTP/三Agent实际业务/版本发布/动态身份迁移/旧服务退役未完成，不得停止巡检或宣告整体完成。
+
+### 后续云验接续（2026-10-08 14:39）
+
+UR02修正782a76eb已固定到单次Flow124/job530836396；主控保留原selector并追加PersonalWorkspaceNativeTaskPublicationFenceTest。实际终态FAIL，完整压缩诊断hash893464780c1a14006edc6bb90bf636d43eaaf9399d16c69e7b6182b2d054b6d4核对：140reports/1553tests/7fail/0errors/38skip、0compiler diagnostics。上一Run六类13失败所在套件均全通过（本Run78tests），新增TASK publication13tests全通过；进一步进入chat后3suite7失败，不得声称全通过或上线。已立即send_input交Turing同Owner归因与修复，保留隐藏scope/新会话fence/CHAT别名及持久化断言。Run终态及完整分页无活动Run确认后，恢复原5260799配置/readback原hash一致。证据evidence/unified-agent-runtime-20261008/flow124。
+
+UR01安装profile指南精确范围已补充，Owner继续25套件自检。其最新只读发现实际reassignment actor lease调用未在引擎中实现，不能用E05本地ACK stub证明真实TASK闭环。主控已安排Curie原UR03只读定位既有执行/lease/成果复用路径与最小真Java+client隔离测试，不新增Reviewer或业务功能；此调查不阻塞入口源码收敛。旧认证source-set/task引用已删除用例的问题另归Turing精确build.gradle清理。Goal保持active，线上三Agent实测/切换仍NOT_RUN。
+
+### 源码集成与下一Run（2026-10-08 14:50）
+
+客户端安装入口阶段0d1351ee自检659pass/1真实HTTP skip，日志hash核验；累积diff发现继承的单行尾空格，原Owner以7d7608f7纯空白子提交修正。主控确认ignore-space-at-eol语义diff为空/累积diff-check通过，正常FF push remote develop7d7608f7/tree1215325739c94ef6b5ad8c1ee21b25278e262f69并readback。没有切换脏主工作区或部署；659证据仍只归原0d135树，不声称新tree重跑。源码集成证据evidence/unified-agent-runtime-20261008/client-source-integration，clean-target/云制品/线上验收未运行。Knuth同Owner继续E05特定前置围栏/租约适配准备，结果wire待UR02证明，不停在Reviewer等待。
+
+Turing已交Run1247chat失败最小修复5ec39870/treeef995454（包含旧managedHostingHandshake task清理）；主控固定新诊断分支，并于14:48实际单次创建Flow125。上一Run证据不继承为新SHA通过，原所有测试selector和新增TASK publication保留；Run终态前不改配置/取消。E05/真实Java+client HTTP持久DB跨端依旧未完成。Curie首次追加消息工具返回agent not found，主控恢复同Agent再实际send_input接续独立跨端fixture可执行提案，不重复派两Owner源码。Goal仍active。
+
+### 最新正式云验与三Owner接续（2026-10-08 15:04）
+
+Flow125固定5ec39870/job530850144实际FAIL：337JUnit报告/3033tests/6fail/0errors/101skip，0compiler诊断；完整hash151e859bdd597badcade09f5bd9754e60988a61c6d1927289c23952e139298b3核验。上一Run三chat suite71tests均全通过；进一步进入chatDeliberation后的capability negotiation一个suite六失败，已交Turing原Owner归因修复，禁止删套件/旧key fallback或将全部OFFLINE改为预期。终态后完整分页无活动Run，恢复原5260799/readback原hash一致；无部署/新版制品成功。证据evidence/unified-agent-runtime-20261008/flow125。
+
+Curie补充实际Node默认fetch→Tomcat/Spring→生产service/MyBatis/D06→H2-file双JVM重启方案，不等待E05结果wire；主控已授权精确五个独立src/ur03RuntimeHttp路径，创建独立API worktree并实际下发第三Writer任务。只测试合成ACTIVE安装session/fence/ACK，不能冒称enroll/E05/WS/MySQL或线上业务。另发现enroll客户端顶层installationId与真实Java嵌套response不一致，已冻结唯一现行Java格式并交原两Owner修复，不保留兼容格式或重试已消耗secret。
+
+E05 guard883b1d9/tree110ded63 Owner216pass/1跨端skip阶段交付。Turing已证明contextVersion是reassignment CAS后的workItem版、lease/start/heartbeat用已确认响应版，确认generic结果service确无HTTP入口且当前publish有持事务storage问题。主控已冻结最小内部结果POST/只读结果GET/只读原leaseGET、唯一持久证明与短fence prepared-publication语义，两Owner通过send_input真正接续，不只写outbox。
+
+Knuth阶段关闭后send_input返回not_found，resume一次出现thread-limit；主控仅查本聊天自己的既有Agent，精确关闭已完成Hopper槽后恢复同Knuth并实际发送新合同。未关停其他活跃源码Owner/其他聊天进程，不新增Reviewer。当前Turing服务端/Knuth客户端/Curie独立fixture三个源码Owner路径不重叠，Goal仍active。
+
+线上共享服务只读私有metadata发现2静态profile、1动态claim/2历史association；这些不是当前内存profile/在途业务证明，identityInventoryComplete仍false。未解析/输出凭据，不以persona猜安装授权，不据此停服务；相关私有证据precutover-private-identity-metadata.json。
+
+
+### Run126真实云验与接续（2026-10-08 15:20）
+
+固定API b47b79eaaee3880599df5bf79e95dc3e5de3f1d2/tree7e27cc89d781c3d5d6af713a81cbc026e50f2298的Run126/job530863824：Gradle BUILD SUCCESSFUL；338reports/3040tests/0fail/0error/101skip，compiler diagnostics0。原capability负例及nested enrollment序列化已通过。压缩诊断完整解码并核SHA99522d36e17c58818a1fa765ffc664f16deb05bb8484d9dcffcf9405036e5c44；普通日志被tail截断，不称完整日志已读。整Run仍FAIL：末尾artifact packager branch tuple遗漏诊断分支，未产制品/未部署，不将测试绿灯当发布成功。原5260799配置已在无活动Run时恢复/readback原SHA一致；证据evidence/unified-agent-runtime-20261008/flow126。
+
+UR01 nested enrollment独立源码72a4abf/tree10136645已push/readback，Owner75pass0fail0skip（仅注入HTTP单测，不是真enroll）。UR02 E05第一内部wire/接线772c1c9/treec1f096c8已push；fixtureSHAcd0d4fb0b087d140360f5a844f3e8cdd635fac0565341d0764a050dd14d4fcfa，已实际send_input即时交Knuth继续原executor/lease/result/recovery闭环；不是全E05完成。Turing继续真实事务/负例，Curie继续五新增跨端fixture文件，不等Reviewer、不重复派单。
+
+下一正式Flow准备合成已提交E05/UR03固定API树，不重复测试旧b47输入；修复主控诊断候选shell与artifact exact branch/commit准入，不削弱tree/clean/run号/OpenCV/mail完整性。客户端paired源码使用固定72a4abf的两个实际git-show模块archive，不浮动develop、不携带SCM凭据/history；manifest/压缩包hash由主控Flow脚本硬校验，fixture读取实际模块hash/完整commit/tree，明确archive而非伪造git checkout。Node20.20.2依既有校验安装。真实JavaHTTP/H2、MySQL、clean-target安装/ABI、线上三Agent业务/授权迁移/切流/旧服务退役仍未完成，Goal active。
+
+
+### Run127环境归因与Run128实际接续（2026-10-08 15:31）
+
+Curie原Owner静态自检后交b78ae5e8/treea013a884的独占五文件，正式Java/HTTP/H2尚未执行；主控在独立集成worktree将该精确patch合到772 E05候选，形成9b62a352548dcc9672e4144e8a4e8dfd71f7f502/tree105d38da98a7228a06bfe26e49c50095e657cd5a，固定远端诊断分支codex/ur02-ci-9b62a3-20261008。客户端72a4abf阶段已正常FF remote develop/readback，不切换Owner脏工作区、不部署；证据client-source-integration/enrollment-stage-source-result.json。
+
+实际Flow127/job530877531 FAIL于运行环境：完整可用日志more=false/truncated=false；API commit/tree、paired two-module archive SHA、Node20.20.2 archive SHA均核验，但默认JavaBuild镜像libc无法加载Node所需GLIBC_2.28。Gradle、JUnit、真HTTP/H2均NOT_RUN，不称跨端测试失败或0通过/已验收。该Run原配置已终态后恢复/readback；证据flow127。
+
+主控不退旧Node、不削减测试、不本机构建：依据官方Flow任务runsOn指定容器格式，将诊断job改为官方Alinux3容器，保留JavaBuild/SetupJava21、签名包管理、固定Node archive以及全部相同Gradle selectors；加强artifact诊断分支+exactcommit/tree准入。新配置SHA949488fad5dbc11b0cd7cc7339f2104fc6b9230f5daaa8e119215003d8dacff3已保存原值、单次更新/readback，实际单次创建Run128。仅改变有证据的ABI环境输入，不是同根因同输入盲重试；无生产deploy。Run128专属观测/终态恢复进程运行，不泛称半小时自动化成功。Turing/Knuth仍原Owner新增E05事务/客户端闭环，Curie等待首个真实云诊断并按需同线程接续；整体Goal active。
+
+
+### 云验实际环境接续（2026-10-08 15:38）
+
+Run128/job530880112实为startTime=endTime且空log，未证明checkout/Java/Gradle。只读SDK安全字段确认容器模式被识别为specify_container/K8S-4，但平台未返回具体失败原因，记录UNKNOWN_PRE_EXECUTION，不倒推是source/测试或GLIBC失败。终态后原配置已恢复readback，证据flow128；不重跑相同job-container。
+
+Run129已实际单次创建：复用既有frontend-style CustomEnvironmentBuild step+Alinux3 image和原scalar public runner；从官方Alinux3已只读核实有Java21 Dragonwell devel RPM的仓库经保留gpgcheck签名安装，显式JDK21、Node20精确archive、pairedsource/allselectors不变。不退旧Node、不构建本机或发布生产。配置SHA6212e950c84124fe295c1a5dc08bc87e19474a175e72e2bd10ce9f8e7a9f7557；主控专属Run129监测/终态配置恢复在运行，真正结果待查。
+
+Curie阶段结束已及时resume原线程并send_input只读clean-target/Node/Python/venv/状态迁移证明缺口审计，不让其停在未安排下一阶段；若新fixture出现真实编译/HTTP诊断立即同Owner接回精确五文件。Knuth当前E05第一定向切片19pass0fail仍只Owner单测，继续持久checkpoint/原child取消/完整回归；Turing继续真实事务/current fence/恢复负例。未验收、未部署、不改变生产服务。
+
+
+### 最新阶段交付、已归因init修复及Run130（记录时间 2026-10-08T15:58:10.032656）
+
+Knuth E05最后源码d8fae95b3206c4af4266df1209de29651f895ccb/treeee0a2b44b4d463a78e97fa6f694a784a770ed208真实Owner自检898tests：887pass0fail11intrinsic skip。最终logSHA9560db9a6a66ea4b591a3c5ce6a93f6cfd6de5ae1a898fcfdb70ed2f68d616c8已readback，不是旧886证据复用。lease/start/heartbeat→原executor→原result提交/丢响应GET/唯一checkpoint/terminalACK enqueue crash窗口已接；NodeHTTP仍合成server，绝非JavaDB/paidprovider实测。主控已正常FF developd8并远端readback，未部署；证据client-source-integration/e05-source-result.json。stage完成后仅关闭本聊天已完成Knuth槽以恢复Curie实际云缺陷Owner，不关闭活跃/其他聊天/生产进程。
+
+Run129/job530884486终态FAIL：Alinux3签名Java21.0.11.0.11、固定Node20已越过原ABI问题；Gradle9.3.1在included plugin/build-logic上调用全局UR03projectsEvaluated，找不到主APIagent模块，配置阶段失败，Java/JUnit/真HTTP均NOT_RUN。完整诊断SHA847921379c01152c3cd135737ea6d07397d0a7ac876e870bf40aff075c229797核验，0 compiler和0报告不是编译/测试通过。原配置恢复readback；证据flow129。已实际send_input交原Curie；其init-only修复f018f06abaf46415ad0c95b86aa8c19d7445b92b从init源码位置绑定canonical settingsDir，主API缺模块仍拒绝，included builds不注册fixture。主控精确cherry到新E05测试/修复5c613集成树，形成a67ed7217e1e261b50889fe59f4f2fecd01686c4/tree3d318f53bc6e377446d4dfc4eaf3c1432247cfaa。
+
+实际单次创建Flow130：固定a67API与最新d8两模块client archive；archiveSHAeb492b1ca129bf18119f74f39ab173437d415592fef59c92f8019bbd636d314b。保留全部原selector/custom tasks，新增AgentWorkItemRuntimeResultFenceRealTransactionTest16用例；候选SHA bcfec96953cb019805dcf08bf21204566ffa5d9c6eee7fb263e96a26b20e9bad已单次更新/readback。继续CustomEnvironmentBuildAlinux3/signedJava21/Node20，绝不本机构建/旧Node或跳过相关测试。Run130专属后台观测/终态精确恢复已启动，不泛称半小时自动化或全任务持续后台Agent调度。当前真实等待对象是云验，源阶段已交付不等任务全完成。
+
+Curie25源码引用只读安装取证缺口报告/var/tmp/ur03-clean-target-evidence-gap-20261008.md、Turing新契约取证报告/var/tmp/ur02-68470ad4f6-contract-verification-gaps-20261008.md已接到；clean-target npm/venv/ABI/relocation/六格式、真实E05JavaDB/WS就绪/MySQL、全动态身份与停写备份/恢复、受控版本发布和线上三Agent并行/重连/撤销隔离/旧服务退役仍NOT_RUN。Goal active，未版本部署、未整体验收。
+
+
+### Run130真编译归因与Run131/UI183实际接续（2026-10-08 16:13）
+
+Run130固定a67/job530896718终态FAIL：四测试调用跨包new package-private AgentRuntimeAuthentication(Scope)导致compileTestJava失败；12diagnostic为重复位置，不是12根因。完整压缩诊断SHA488384613256bf8fd3a8b56c5d3915ea41950c463a1b76f29ef3773ed59c9c37核验；只有15mapper报告90tests0fail0error0skip，非Runtime/E05/HTTPH2通过。原配置已监测终态完整分页确认后恢复/readback原a9f1。真实send_input01a11a8e交Turing，不只outbox；仅关闭本聊天completedCurie槽恢复原Turing，未关活跃/别聊天/服务。
+
+Turing最小两测试文件修复f1ed7ae0/tree00a4af34采用私有test fixture factory，生产constructor仍packageprivate且断言保留无skip。主控核diff精确cherry到22cc1402a10b7e29a75fdbca4e4cafe85619bacb/tree88d192a7af7890ea1f109e6da55b36da8e322e5a；实际单次启动Flow131，全部原selectors/16RealTx/UR03init及pairedclientd8不变，candidateSHA38ed100caf9141e91efc2d31f11e7e072be8dd519feb8f5670774257339e2820。专属监测session90677及终态精确恢复真实运行；目前结果待验，未部署。
+
+原UI尾项251f1558/tree87e6c3e1是远端developdbfe直接子提交；不碰脏主web。只读完整分页182Run确认无活动，原4403172配置2fcc386f已保存。保留原npm全套测试、三UI buildflag、代码扫描及sameRun制品，禁止部署/自动触发；固定诊断分支和commit/tree候选SHAf31b955c。实际单次启动Run183，专属监测session86370终态精确恢复；不是develop已合入/版本已部署或浏览器实测通过。
+
+Knuth已接续cloud-only C1-C4安装harness，ledger与独占新路径contract已同步；本机不进行真实安装/Gradle。整体Goal active，真实enroll→WS→业务执行结果/D06、安装ABI/六格式、状态迁移、线上三Agent验收与旧服务退役均未完成。
+
+
+### 新断言真实归因与独立UI诊断修复（2026-10-08 16:27）
+
+Flow131固定22cc1402/tree88d192终态FAIL，完整压缩诊断SHA503acf365afb956e2091794ebbf1cc9a52ac2510935c032ca7201098ca91de78核验：0compiler/108report/1281tests/14fail/0error/37skip。先前跨包编译问题已越过，Controller9全通过；14fail全部RealTx16中，prepared publication首报contentHash必须lowercaseSHA256 hex，其余业务断言被400提前阻断，storage latch未到。尚不把所有错误先验归为fixture。主控已实际send_input01a11a9e交原Turing；保留16断言/真实hash/ACL/事务，不改预期为400或skip。HTTPH2仍未运行，制品未创建，无部署。监测终态后原5260799配置恢复readback；evidence/flow131。
+
+UI183实为主控新增前置源状态检查在npm之前失败，扫描成功；完整日志checkout251及缓存下载生成ossutil.log，缺每步错误码，仅将无tracked改动前提下untracked门槛列为疑似根因，不冒称UI测试失败。监测restore guard因主控误读api-candidate文件名停止无写入，精确改web文件名后完整分页/configmatch并恢复readback原2fcc。新UIc92候选保留exactcommit/tree+trackedbyte pristine与全部test/buildflag/scanner/artifact，仅将平台scratch改为观测并加精确失败码，实际单次启动184，扫描SUCCESS，全套test/build待验，专属监测71658。无部署/本机生产构建。
+
+安装lane完整fixed d8 git archive已准备，284tracked regular files3.5MBtar，tarSHA2c6e071c7bcdc5ee6076767e29e5f5ff5a15ecf2eddbdfac3a00ce3eea219f87；传输gzipSHA98442d00bb2657ceb27bbc08a5a65e24ce95844aed95494103bf1e0830183c6a，705274bytes。是测试输入源码非完整Runtime成品，实际installer仅采用原46catalog；不含.git/SCM凭据，不虚称checkout。独立harness在原Knuth完成自检提交后用精确gitshowbyte/hash单独传输；新云lane候选generator只syntax检查，不在本机真实安装。
+
+### 实際跟进与两条云验接续（2026-10-08 16:58）
+
+Run133固定910354/tree461bad实际FAIL：340JUnit报告3068tests/0fail/0error/101skip，16RealTx全通过；首次进入UR03专属compileUr03RuntimeHttpJava，三处JdbcTemplate.query表达式lambda重载歧义/泛型bounds，18诊断为重复位置。完整压缩诊断SHA26fdcdc4e1d8050fe4a44499e618476a0a5c49509175281c00980a23163bb51c核验，HTTPH2尚未运行/无制品/无部署。原配置终态恢复readbacka9f1。即时恢复原Curie并实际send_input01a11ab5，唯一fixture文件显式RowCallbackHandler修复6b1bd175已push；主控精确cherry成1ac11ff92434544a1212664def4d67c99e723ed6/tree38f5a03633008597011757d02d84d2d5b10c8caa，固定远端诊断分支，下一候选ab022f590fe074b2b945e487d7871eaa401ae64370ef1ba3c1a18df1399f4f04仅准备，等当前安装lane终态后运行。不跳测试、不放宽真实链路断言，不本机Gradle。
+
+UI185固定75766a/f6f2f4实际SUCCESS，3185pass/2pending/0fail、Vite11.63s、扫描/同Run制品上传成功；原配置终态恢复readback2fcc。源已正常FF develop但未版本部署，制品完整下载摘要及浏览器新版本验收尚未执行。证据web185，不重复构建。
+
+原Knuth只读核对小SCM transport保留固定d8完整archive/tree/tarSHA及7c harnessSHA/C1-C4，另发现继承NODE_TEST_CONTEXT可能只NOT_RUN但退出0的报告缺口（未证明曾触发）。主控仅在控制脚本清该变量并加成功receipt身份/四项PASS核验，不改installer/依赖/harness断言。候选11851bytes/SHA5b913737f68a332d9e21d44da82f602791306e5af0fd67a6b31523ad84cd6f27。正式启动前remote SHA guard发现尚无诊断分支，未产生start intent/请求；按精确7c正常push/readback后仅实际一次创建Flow134，专属watcher32457负责终态无活动Run/配置match/readback恢复。不把132空日志根因倒推为已证实大payload限制，不认为当前C1-C4已通过。尚无automation_update可用工具，现有Run专属watcher不等于半小时定时主控调度。完整E05/enrollWS/MySQL/状态迁移/动态身份与维护授权/版本切流/三Agent线上业务/退役均未完成，整体Goal保持active。
+
+前端Run185同Run制品已进一步实际下载并验证：106712589bytes，SHA2562469760504e60bee6b4b265d6f6841b2e059699f6f1c217bfc82e28a841d7b37；364dist文件哈希/大小及精确commit/tree/manifest/helperdigest全部MATCH，包内packageVersion1.0.8。发现该CI-only制品内嵌helper仍旧三参数接口，不符合当前版本部署五参数合同；未执行此helper。正式固定版本发布候选必须同步当前adapter/helper及摘要，不能把此构建成功当作可直接按旧helper部署。证据web185/artifact-verification.json。未保存签名URL，未上线或浏览器验收。
+
+### 首轮真干净安装归因与Run135接续（2026-10-08 17:15）
+
+Flow134固定7c SCM+harness/d8完整payload已真实运行installer。完整原日志more=false/truncated=false，压缩诊断SHA73acda4c0263eef28e1c21e764c98098d6d238a830f71cc3e00f4c12ee516cea及fullsource284文件tree/tar/harness全部核验。npmci、Python3.6.8 venv、pip21.3.1准备成功；reportlab3.6.8实际走sdist编译时缺Python.h（供给解释器include路径/usr/include/python3.6m）导致C1 FAIL，target未出版，C2–C4 NOT_RUN，独占stage/root已清理且诊断留存。不能推定openpyxl不兼容、不能改pin回退/跳格式或说单制品已完成。终态原5260799配置恢复readbacka9f1。实际send_input01a11ac9交原Knuth核对云前置签名devel缺失与安装合同责任，并保留完整依赖/搬迁要求；本机/生产安装未运行。证据clean-install134/result.json。
+
+并行保持原scope：Curie在新云缺陷到达前只读设计固定1acAPI+完整d8客户端的E05真HTTP/真实业务事务/lease/原成果证明/D06+恢复验收，不能把两模块UR03当完整E05。17:13经终态恢复、完整分页无活动Run、精确候选/远端readback后，主控实际单次创建Flow135，固定1ac11ff92434544a1212664def4d67c99e723ed6/tree38f5a03633008597011757d02d84d2d5b10c8caa及pairedclientd8；原完整graph/16RealTx/UR03均保留。候选SHAab022f590fe074b2b945e487d7871eaa401ae64370ef1ba3c1a18df1399f4f04，专属watcher81023负责终态配置match/无活动Run/readback恢复。INIT时API尚无commit元数据，真实checkout仍由精确shell/tree/clean合同证明；不补造已跑HTTPH2/成功制品/版本部署。整体Goal保持active。
+
+### 原Owner归因后云前置候选（2026-10-08 17:23）
+
+Knuth实际完整核14条dependencyLogs与receipt摘要，确认本轮首要失败为已启动GCC但缺供给Python3.6头文件；无证据是installer清理/出版算法错误，也不推断补头后即可通过。README对sdist条件性前提说明有缺口，但不要求生产装编译器。本阶段无源码commit，Owner主worktree保持干净，主控接云环境补全。
+
+仅准备 `/var/tmp/cyf-clean-install-scm-r2-cloud-20261008`：按实际sysconfig INCLUDEPY/CONFINCLUDEPY从签名DNF仓库安装文件provides（不猜devel包名），记录解释器/RPM/SOABI和Python.h/pyconfig.h/patchlevel.h路径/哈希/RPM版本与架构，核头文件语言版本匹配供给解释器。官方DNF Command Reference明确支持用提供的文件路径指定安装包；未在本机运行RPM安装。候选15971bytes/SHA35672017ae3fbc230b5fb80573217f2763e989fdd49bc8420b63d96e9e9f6635，固定完整d8源/harness7c/pins/C1-C4/身份receipt均不变。新增native-prerequisite receipt只观测云构建前置，不把stdlib声称成自包含。API135仍活跃，未改其配置/未取消/未开始下一cleanRun；源码缺陷仍按实际云诊断归原Owner，不盲重试d8+旧无头环境。
+
+
+### 接续核验与实际等待对象（2026-10-08 17:42）
+
+主控重新核Run135压缩诊断：完整chunks/base64Bytes/gzip/commit/run及SHA c7f06feef5c4778da9b2349ddf173a856e8f05608496a41c3908daa552288c17均匹配；341JUnit报告3069tests/1failure/0error/101skip，唯一失败为UR03_JAVA_A_BOOT，原340报告3068tests/0failure与16RealTx证据保留。rawlog more=false但outputTruncated=true，不能声称原child日志完整；失败原因尚未证明。证据flow135/result.json。已实际send_input原Curie继续独占HTTPH2fixture最小启动/安全诊断修复，尚无新fixcommit、无新API Run、不把编译成功说成跨端通过。
+
+上轮主控已经实际单次创建安装Run136/job530977113，固定7c harness+d8完整source/pins/C1-C4、候选35672017未变。重新查询RUNNING；17:40云日志实际证明签名DNF file-provides已供给platform-python-devel并核三个头文件/RPM版本/架构/语言版本/SOABI，源码archive/harness/Nodearchive/工具链hash前置通过；真正C1-C4结果仍待Run终态与receipt。主控本轮实际启动专属watcher session54500：仅读该Run终态，完整分页无活动Run+配置完全match后才恢复原a9f1并readback，既不停止他人Run也不是半小时主控自动调度。两条任务台账已由orchestrator同步，validate PASS；生产未变更、整体验收未完成。
+
+
+### 新失败归因交回与Run137启动（2026-10-08 17:53）
+
+Run136终态FAIL，完整原log more=false/outputTruncated=false，全部压缩chunks/base64Bytes/SHA ae4d396abfbf4cb1b4803d35e477536202cd729e20833365d81dedb71458f6d1、14dependencylog内容SHA、d8源码及7c harness核验；npm/venv/pip/全部六依赖实际安装成功，包括reportlab源码扩展编译。新的实际失败出现在stage/runtime/validate.sh：legacy API-key execution retired提示/exit1，C1 FAIL、target未出版，C2–C4 NOT_RUN，独占root清理保留证据。原a9f1配置终态guard恢复readback成功；不是旧134缺头根因重现。即时实际send_input原Knuth继续minimal validate/install与必要Owner测试，不恢复旧入口/绕过验证/改pin。orchestrator累计失败门禁已通过真实两根因矩阵授权源码修复，未盲重跑。证据clean-install136。
+
+原Curie交安全诊断缺口修复5d72bd6d/tree60e872、16静态检查及两文件精确patchSHA08a1449b通过；不声称已经修复启动根因/编译/HTTP。主控在干净集成WT精确cherry成4c5875b5bed143c793d7812143d60deab8d65674/tree81e9275b46d07648cfa925de1b822fdeffa370ec，ownerbytes/远端branch readback/YAML-shell/diff/syntax均核验。固定候选6984fa29100b5acef6cca6aa46bbd5ccb5208396c754cc9b4e73bcb629a27539，保留完整selectors/16RealTx/UR03/paired d8/同Run制品，不猜删依赖/测试。Run136终态无活动Run+原配置match后，实际单次update/readback与单次创建Run137；INIT源码commits为空，不虚称已checkout或已测试。专属watcher98045已实际运行负责终态精确配置恢复。客户端Owner修复与API诊断并行，生产未动，整体验收仍未完成。
+
+
+### 安装真实源码缺陷修复与精确新绑定（2026-10-08 18:05）
+
+Knuth复现Run136校验错误：Node eval把被import的engine路径同时放入argv[1]，引擎真实main guard因而判成已退役standalone CLI。最小validate改传artifact根，再从根导入真实engine并核createRuntimeExecutionHost导出，不恢复旧入口/略过完整校验；payload3746043947888a6b727be88527695d1edf3587c3/treeddc3c0b3355eb77cd0be080f8fc4b734c901cab7，只两文件validator+原runtime-host测试。11定向Owner回归0fail、33selector排除，不是云端安装；原main guard和dependency/config/toolchain验证保留。
+
+第二独立commit fa4e4070060ec30ba2a46eb93561f3a94ce3b507/treea31cc7a100ec2039fdf784236527be874ae09b14仅harnessSOURCE commit/tree/285与标签描述固定更新（C1-C4归一化字节不变），避免自引用commit；harnessSHA b5089d367caa36df1f8e800acb7f0bc9ce583d7c070e33d763d0dda264906b16。主控独立核源blob、所有Owner日志hash、完整固定payload tar 3573760bytes/SHA55ffef55075cf802a1a090114c5a3be6dd933dc8925b80d3403f9404e5fe9781、远端diagnosticbranch和YAML-shell/schema/语法，准备新安装candidate33e29f06c61efa22b52f31d224befd1968172728e00f57e063fb2fb14ae2b9c4于/var/tmp/cyf-clean-install-scm-r3-cloud-20261008。真实C1-C4仍NOT_RUN，等待当前API137终态+原配置恢复；未覆盖活动Run/推develop/改生产。不能新源字节仍称d8通过，后续安装与完整E05也须区分精确来源。
+
+
+### Run137真实结果与新安装Run138接续（2026-10-08 18:12）
+
+Run137/job530990655终态FAIL，0compiler；完整压缩诊断chunks/base64Bytes/hash37af79bddd78e90c8c9b9b6e03b8a319273d0896e1d58ff09242d6e4a3d21e2e核验，341reports3069tests/1failure/0error/101skip，唯一UR03仍JAVA_A_BOOT，本轮安全分类仅type=OTHER/rootType=OTHER，没有证实启动根因/跨端业务。原340reports3068tests/0failure（含101skip）、16RealTx保持；不是3068全部实际执行通过。rawlog more=false但outputTruncated=true，不声称child日志全部取得。证据flow137/result.json；终态原a9f1配置guard恢复readback。即时实际send_input原Curie继续同两文件精确parent-launch/init与child归因，不对同输入盲重跑、不猜删依赖或改业务断言。
+
+真正新客户端安装源码已提交/静态Owner自检与精确archive证明完成，所以主控并行接续该独立lane：Run137终态原配置恢复后，完整分页无活动Run+原配置match，固定newpayload3746043/treeDDC+285members/tar55ff与独立harnessfa4/treeA31/SHAb508，候选33e29单次update/readbackAPPLIED并实际单次创建Run138。当前INIT无commits元数据，不虚称已checkout/安装通过；session91803专属watcher已实际运行，终态满足无活动Run/配置exactmatch才恢复原值，绝非广义定时主控。SOURCE/pins/六格式/C1-C4/receiptguards全部保留，尚待真云结果。台账orchestrator validate PASS，生产未变更，整体验收未完成。
+
+
+### 原目标范围接续与诊断修正（2026-10-08 18:28）
+
+前一goal turn为实际进展（新安装源374+独立harnessfa4绑定/新云Run138），本轮重新查询Run138/job531004854仍RUNNING，不能因无stage输出或observer临时失败判停。原专属observer91803 READ_ERROR已退出而不是流水线终态；主控同Run只读重查18:25实际RUNNING，未重启/重发Pipeline/改活动配置。仅恢复同Run观测：新session88718读查询异常继续观察，终态仍需完整分页无活动Run与精确候选match才恢复原值。observer-reconciliation.json可追溯；不是定时主控已建立。
+
+已确认Run137原savedlog实际含18:09:09 JAVA_MAIN_ENTERED1，纠正前文未确认标记的弱结论：child main已进入，之后初始化失败。Curie新增6e97e978/treeD248只两原文件修复可重现的Jackson3 ERROR可选诊断字段读取缺陷，另加一独立diagnostic JUnit回归；17静态/4隔离库probe只是低成本诊断，正式Java/HTTPH2仍NOT_RUN，底层child初始化根因未证明。主控独立核patchSHA0955122、sourcebytes/cleanintegration/远端readback，精确cherry成eac15d988445784e9004fa393bdce8671ca96dab/tree07223f7fcdce7af0321b1ae021e1f5150c01e03f。固定candidateca3e21d24333c8f230cf5de9d914e6caa0904641051fa74a29dd58b981652070已准备/YAML-shell/源和全selector核验，不覆盖活跃Run138；原340回归/16RealTx与UR03真实主体完整保留。flow137/result.json已追加实际marker与新的父侧可选诊断缺陷，不把启动、构造、业务一概伪称通过。
+
+为不把完整目标缩为只测session/ACK，18:16冻结并实际claim/send给原Knuth UR04已有六新文件真实E05层（real nativeWS注册/authDAO/lease/原Runtime+engine+非付费真实子进程/workspace/output/业务结果+真实事务+D06/重启/负例/rollback）。独立API WT ur04-e05-http、六新路径不重叠CurieUR03两文件；rootcontract最新附录给出全部来源、矩阵和边界。任务实际implementing，不重复UR01或创建Reviewer；原URI03cloud缺陷仍回Curie。完整client输入必须最新修复374/285/tar55ff+云验证的artifact，而非两模块archive或copy本机依赖冒充。来源root设计报告中enroll/MySQL/paid模型/状态迁移/线上三个角色/固定版本发布和旧服务退役仍单独缺证，不省略最终要求。
+
+18:18只读精确原五服务核对与14:16旧证据一致：shared2237、local324415、wuyong runtime324502 active，linchong/lujunyi旧sidecar仍failed；未动服务、不用PID/健康替代执行就绪或维护权限完整。独立证据precutover-service-readonly-observed-20261008-1819.json；不宣称已合单Runtime/新架构上线。
+
+### Run138真实两门失败归因接续与API139实际启动（2026-10-08 19:33）
+
+本轮读取真实外部状态：Run138/job531004854 FAIL。专属observer88718在18:29读终态后guard完整分页无活动Run/候选exactmatch，原配置a9f1实际restore/readbackAPPLIED；不是流水线停止或模糊start重发。主控重新下载rawlog more=false/outputTruncated=true，完整压缩7chunks/65344base64/JSON SHA7793c53272f1ef3427e64cac740a20737b52f5bbc8c67797cbd132fcdd1bb710/gzipSHA074fa7770505e90f1904eb65780ea7bf3ca384462590f3e2551319367fe218a1与58dependency log内容hash逐一核验，payload374/treeDDC/285/tar55ff+harnessfa4/b508均MATCH。证据clean-install138。
+
+真实C1原installer/stage及final validate与C2targetNode/engine/ws/yauzl均PASS；C3失败在final venv launchers残留已删除stage引用，helper health本身ok=true、import/metadata一致不替代可搬迁证明。C4前五格式create/validate/reopen真PASS，PPTXcreate/validate后reopen原instruction断言FAIL，底层原因还未证明。target在独占云root曾出版，finally全部清理，只留receipt/log，未保留完整Runtime制品、无发布/生产操作。源码修复374已越过旧validator失败，不能说新根因是旧CLI或Python.h重现。
+
+原Knuth UR04源码阶段交付34d9e2d6c5b9915c8bb259d14a4761d2ff782e89/tree8d625893abd35fbadb1a9cf40e271c59660c1b4a，独立WT clean/remote exact readback；主控已将六文件精确cherry到544e83910ddefa600b5510f62635a5379c8bf32e/tree2fbefddad76ec93ba507e9f8eb1630ee498bda76、六sourceblob一致与JS syntax检查、诊断branch push/readback。Java/六真实selectors NOT_RUN。完整artifact来源仍缺，不能伪造C1-C4PASS manifest或用两模块archive/本机deps替代。证据/var/tmp/cyf-ur04-e05-source-integration-20261008/source-proof.json。
+
+已通过orchestrator先释放UR04 Owner/awaiting_cloud_fixture，再真实claim同原Knuth UR01并实际send submission01a11b47-dc81-7bb2-a338-35c40e021c94归因修复C3与C4。第一次新根因fail不会满足authorize-remediation的blocked条件，主控实际收到明确拒绝后按正常claim推进；没有重复fail凑门禁/改ledger绕过。必要精确相关helper路径授权增补，断言/pins/六格式/旧入口/安装、Flow与生产边界不变。Owner不同时负责两个实施任务。
+
+独立API诊断不等安装修复：真实138终态原配置恢复后，139 preflight完整分页无活动Run与原配置exactmatch，candidateca3单次update/readbackAPPLIED与单次start139。固定API eac15d/tree07223、原回归/16RealTx/UR03真实主体与可选诊断回归均保留；INITcommits空不伪造checkout，19:31查询RUNNING/job531048271。专属watcher63153只观察此Run、读异常继续，终态无活动Run/配置exactmatch才恢复原值。不是全任务半小时自动调度已建立。生产未改，整体Goal仍active且完整E05/enroll/MySQL/动态身份与在途/状态迁移/同Run固定版本制品/受控切流/三Agent线上业务/旧服务退役仍未验收。
+
+19:36原Knuth实际active/inProgress，已分离C3真实安装器未重定位venv启动器和C4原producer以40列textwrap分段、48字符instruction却被harness要求单shape连续字符串的fixture不匹配。主控只读核实际delivery_tool.py create_pptx+wrapped源码及stdlib-only相同输入严格按序重组演示，不是实际PPTX重开验收；不需改helper或pin。Owner正修改既有install/validate与相关测试，交付/新云验仍待。主控另保存同Run canonical target→UR04 consumer提案/var/tmp/cyf-ur04-e05-source-integration-20261008/cloud-artifact-consumer-next.md，未授权hook实现，不偷偷扩任务；原C1-C4/finalreadback/cleanup必须保留，未来artifact不能引用当前失败Run138冒造PASS。19:35重新查139/job531048271 RUNNING，日志仍云前置DNF仓库信息（more=true），不推断正式编译/HTTP已执行。尚无整体验收、无生产变更。
+
+### 原目标余项并行只读取证（2026-10-08 19:39）
+
+前一goal turn是实际进展：138压缩诊断核验/真实fail归因、UR04精确六文件集成与remote readback、原Knuth单Owner切回安装修复、139单次实际创建。此轮19:37重新查询139/job531048271仍RUNNING且Knuth原WT有其相关改动，非凭旧台账猜工作仍活跃；不因前置等待或sourcecommits元数据null重启/重发。
+
+为不把整体验收缩到HTTP/H2+六E05，主控本轮实际orchestrator将原Curie指派UR06 preparing_acceptance/explorer/support（唯一只读support，不是Reviewer），actualsend submission01a11b4f-29d1-7ca1-9fe7-306ec15cc5a1。在139云验继续期间，仅从固定源码取证真实enroll一次性secret/嵌套授权/session/WSready与真MySQL fence/事务/DDL的最小云测试接点和已有入口，输出唯一/var/tmp/ur06-enroll-mysql-acceptance-seams-20261008.md。无source/rootdocs写、安装/Gradle/Flow修改、生产或秘密读取；不宣称H2/E05替代enroll/MySQL。若139出现新原UR03 fixture缺陷，先协调该support checkpoint/释放UR06再由原Curie继续Writer，不同时claim两个任务。用户无须因只读取证重复授权。整体Goal仍active，生产未变。
+
+### 安装修复新来源精确候选与同Run制品消费接续（2026-10-08 19:53）
+
+原Knuth真实阶段完成，主控读取/tmp/ur01-clean138-fix-handoff-20261008.{json,md}、当前WT clean/remote13 MATCH，独立核payload7594fd72251d38b6e1d23a1a3cca184ae0d085e7/tree0827ce904179862ab55648fe99b780cea94faf98，285全tracked regular文件每项blob/字节/mode/PAX/tar3594240/SHAf4dcd014e409b5a0e32f7419cd9500bf1f3e0022492f533736b366cd325f0106及独立harness13aaec39c0567c049fad63d99b0a32d3e7af237c/tree107b2b9544012201588d7290b3c3eca860443732/SHA789a1fe56086a5172407ea8fce07da8bedfb7188636ec2bbdf7aa4e1540e75ae（仅SOURCEpin两字段差异）、Owner自检logSHA ccdb7e486bca6aa4886aaa3c49ae3dd3192f3742f0b83dc99371fe686f89d7c7。4既有paths范围，没有改helper/pins/engine/认证合同，低成本7定向+6入口PASS/50static是源码片段与合成启动器，不是新云C1-C4通过。
+
+候选/var/tmp/cyf-clean-install-scm-r4-cloud-20261008：15967bytes/SHAfa822248b4148f516d7e412ddfcca5195d2489c20ec284e4bc561af06e88240f，保留完整C1-C4/身份receiptguards/同pins/签名Python头文件前置。main独立bash/Pythonheredoc/Node语法及现有YAML parser解析→run脚本exactbytes核验，无本机真实安装/云配置写。诊断branch codex/ur01-clean-ci-13aaec-20261008单次push/readback精确13，非develop或部署。证据clean-install138/source-fix；下一云Run必须等139真实终态与原a9f1恢复APPLIED/fullpaginationpreflight，当前没有开始安装新Run，也不覆写活跃139。
+
+主控接受原Owner明确consumer接口提案，19:48 rootcontract冻结cloud-only同canonical target消费slice；先把UR01源码修复转awaitcloud释放，再同原Knuth实际claim/send submission01a11b58-8d76-7a80-a222-d1c46d661f0b接续仅既有harness/runtimehosttest。callback显式类型/原四门真PASS/finalsource/tar/targetidentity/localNode/payload完整性、deepfrozen脱敏snapshot、独立consumer结果、失败不篡改四门、alwaysfinally原独占root清理；不增加产品功能、不复制/mv/冒造制品、不改production installer/URI04/Flow/prod。SOURCE仍payload7594避免自引用。r4 standalone13候选保持不变；hook真实实现/云消费仍未完成，URI04原Owner未来checkpoint需精确更新374 SOURCEpin，不能偷偷宽松匹配。Curie仍唯一只读UR06支持，enroll/MySQL接点报告待交，尚不证明真实验收。
+
+19:51主控再次只读查139/job531048271实际RUNNING。日志证明签名Dragonwell21.0.11.0.11安装/Node archiveSHA/paired d8两模块前置已通过，但Gradle输出原脚本重定向，不能从暂时无输出推断停/通过；原340回归/16RealTx/UR03正式结果仍待终态。automation_update再次检索未返回实际工具，仍不承诺半小时主控定时监测已建立。专属139 watcher63153持续负责读终态和有guard的原配置恢复。生产未操作、整体Goal active，未整体验收/版本发布/线上单Runtime或旧服务退役。
+
+## 项目交付规则调整与 Run139 终态接续（2026-10-08 20:08）
+
+用户已明确规则只适用于CYF项目，前端继续Flow，后端正式测试/构建/部署改为本地固定源码输入；Codex全局/服务器级/共享技能改动已撤回。具体以项目AGENTS.md和docs/aliyun-flow-cicd-strategy.md为准。既有冻结条款中Java后端“仅云端/不本机Gradle”执行地点由此次明确授权替代，不能据此恢复脏源码发布或生产目录构建；所有Gradle仍由主控经orchestrator串行，并保持fixedcommit/tree/selector/fixture证据。本文客户端clean-target仅Node/Python安装验收仍沿已有独占云端范围，非Java后端构建或发布，不自动扩大为主机真实npm/pip/安装授权。生产操作、切流、在途/动态身份维护授权边界未变。
+
+Run139已终态FAIL并恢复原配置readback：固定APIeac15d/tree07223，341reports/3070tests/1failure/0errors/101skipped，RealTx16全过；真实UR03 child main已进入，唯一失败为BOOT_MYBATIS_SPRING的UnsatisfiedDependencyException，根NoSuchBeanDefinitionException/bean=runtimes，具体缺失类型仍需证据。诊断压缩SHA499efe8763779f26654859a416bd8349b0f14c446e52c7ff385d3d9defca00d6全核验；rawlog被截断，不称完整原日志。无制品/部署，不能将回归绿灯当HTTP启动成功。
+
+Curie原UR06只读seam报告已真正完成并checkpoint于evidence/unified-agent-runtime-20261008/ur06-source-seams，实测执行0，enroll/MySQL仍NOT_RUN。释放support后转回原UR03唯一Writer，原独立WT和两Java路径不变：先证明缺失bean类型及真实注入链，只修原fixture实际接线/必要安全诊断，保留真实MyBatis/DAO/auth/事务和全部原用例，不mock、不放宽、不猜删依赖。源码交付后主控在固定新commit本地正式复验；不重跑同输入139。Knuth仍UR01消费钩子唯一Writer，交付前不重复分配UR04 Owner。全部原UR05/06迁移、真实三Agent业务与文档收尾目标未缩小。
+
+### 真实本地验收和原Owner连续交接（2026-10-08 20:42）
+
+UR03原6a0db74真实mapper Spring接线和本地opt-in已集成d6209a7/tree766c617；主控经orchestrator实际执行97091终态EXIT0，2完整JUnit reports/19tests/0failure/0error/0skip：真实HTTP/Spring/MyBatis/H2-file双JVM/代际和D06 ACK用例、两safe诊断与RealTx16，validateLayeringPASS。完整日志已脱敏/hash绑定，XML及sourceclean核验；证据local-ur03-result/result.json。此为原139实际fixture缺陷修复的真复验，不是原3070全回归、可发布JAR或整体上线。
+
+UR04原92a3/9da54的最新7594 sourcepin、本地opt-in和12真实mapper接线已核完整Owner交付，在**另一独立WT**集成fcac494a/tree6a21c9，未改运行中UR03源树。六实际E05仍NOT_RUN，不能以sourcearchive/fake四C替代完整artifact。原Knuth释放UR04后接原UR01同两个测试路径，实施20:32真实本地backend完整fixture输入/schema；原Turing已接20:36独立UR06四文件source E1-E5/M1-M3，M4真实MySQL业务和线上三Agent完整目标不省略。两者tool latestTurn实际inProgress，不把thread停止/旧wake当新任务完成。Curie原source已正式验证，无重复Owner/Reviewer。
+
+生产只读核对仍为shared codex-ws-agent PID2237、精确codex-ws-agent@wuyong-local实例及wuyong侧车active，linchong/lujunyi旧侧车failed；未执行重启、停用、身份撤销或切流，单Runtime尚未上线。goal-turn-20261008T2042/progress.json记录完整残项及原Owner真实turn handle。所有已指定最终验收/迁移/文档/旧服务退役范围仍保留，Goal active。
+
+### 实际复验与全局 pip 源接续（2026-10-08 22:32）
+
+原ur04-local-20261008T205238/session83600已于22:02:46真实EXIT1并finally清理独占root。C1失败为Pillow8.4 sdist RequiredDependencyException jpeg缺headers/libs；C2-C4/六E05 NOT_RUN、consumer0、未发布target。慢下载片段和完整下载SHA另证，不混为版本内在不兼容。原日志/receipt全摘要核验在ur01-install-final-failure；不重启旧输入/借宿主包/杀进程。
+
+用户最终授权本机全局pip默认HTTPS清华，不升级Python/pip；/etc/pip.conf与root用户配置已核正确SHA，项目专用源env已删除，不再读取。实际新批次ur04-cp311-local-20261008T222833仅PREPARED：新payload A d91ebbf/b2e3完整285blobmode/archive3624960/SHA3c826b9e/PAX重读，harness B253338/739f唯一绑定A；隔离pip install option parser实际解析全局，URL和/etc/pip.conf SHA已固定，run-acceptance caller显式字典映射CYF_CLEAN_INSTALL_PIP_INDEX_URL并在launch前readback配置SHA。launchReady=false、API未选择、无pip/install/Gradle/消费者执行；不能把准备报告为安装/包提速/ABI通过。等待原API Owner同步两fixture paired SOURCE，而非只source父shell或自动承继被fixture屏蔽的global config。
+
+主控原UR02 e569完整56复验43PASS13FAIL保留；新9966/009144独立WT/session96963实际54PASS2FAIL，0error0skip，compileUr06EnrollMysqlJavaPASS，layering因testfailNOT_RUN。剩余quotedCOMMENT分号抽取缺陷与真实identity baseline SYSTEMtenant NULL/initializer0漂移已归因，原Turing原test及canonicalbaseline提案3行冻结修复，保持全部56方法/严格ACL/CHECK。更宽identity migration drift留待单独源码收敛，不假称已修。源阶段核收后主控新固定输入完整复验；不盲重跑9966。
+
+Knuth UR01新A/B sourceonly交付已主控完整hash/remote/clean核收，14Node scopedPASS/42selector excluded不当全套PASS；Owner释放后原UR05 ba88 WT rootadmission三newpaths草案接续，尚未实现或安装。Curie原UR06 M4真MySQL六E05桥接只读计划仍进行，不以7enroll/单404/H2替代。原总体范围、三Agent真实链路/动态在途维护授权/受控切流/旧服务与凭据退役/图文均未完成，生产未改，Goal active。
+
+### 22:59实际结果与原Owner接续
+
+主控64d/c0e完整原56正式测试已于22:39:13 EXIT0，全部56PASS/0fail/0error/0skip，compileUR06与根validateLayeringPASS、sourceclean；原两个失败批次完整保留。最新来源同步b125/4b875精确四文件仅source literals、remote/clean核收。Curie真MySQL M4只读计划29引用全部SHA匹配已核收，原Turing接四UR06test路径实现，尚无M4编译/运行结果。
+
+全局HTTPS清华源已在NEW真实安装13826实际生效，全部9deps成功安装日志与Pillow/reportlab wheel下载事实已证，原install步骤22.277秒；并非因此整体PASS。新batch于22:46:07 EXIT1，预发布validator因Python3.11 pyvenv.cfg command审计字段仍含stage路径失败，C1FAIL/C2-C4/consumer0/六E05NOT_RUN，target未发布/ownedrootfinally已删。主控原helper+纯stdlib --copies --without-pip私有venv真复现，严格检查仍保留，未借宿主包/升级全局Python/pip或动生产。证据ur01-cp311-install-final-failure及ur01-py311-venv-config-diagnosis；不是网络或原JPEG失败复发，不把已清理旧cfg冒充新probe字节。
+
+经orchestrator累计两失败不同输入/根因矩阵authorize-remediation，原Knuth仅暂停自己的UR05三文件WIP、保存checkpoint再回UR01原三路径修当前cfg provenance与原tests：独立payloadC/helper后harnessD唯一来源/全archive证明，不松validator/删cfg或改pins；实现后回原UR05，不派第二Owner。原Turing M4独立源码继续，待C核收后统一最新SOURCE，不猜未知摘要/保留A或7594双轨。后续主控NEW完整安装/六format/同target单awaited业务验收，当前无任何acceptedtarget可保留或借用。源交付、包安装log、56小范围PASS都不等于全Goal/正式包/切流/线上三Agent完成；当前无活动安装，生产未改，Goal active。

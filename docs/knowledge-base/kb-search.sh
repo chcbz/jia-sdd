@@ -11,6 +11,8 @@ usage() {
   cat <<'USAGE'
 Usage:
   kb-search.sh <ripgrep-pattern>       # summary docs; skips the large raw API inventory
+  kb-search.sh --project <pattern>    # project current routes, including specs/regression
+  kb-search.sh --project-all <pattern> # explicitly include history and unverified references
   kb-search.sh --all <pattern>         # include the raw API inventory
   kb-search.sh --api <ControllerName>  # print all matching Controller sections
   kb-search.sh --freshness             # returns nonzero for stale/dirty/missing state
@@ -48,6 +50,13 @@ worktree_state() {
 }
 
 case "${1:-}" in
+  --project|--project-all)
+    [[ $# -eq 2 ]] || { usage >&2; exit 2; }
+    if [[ "$1" == --project-all ]]; then
+      exec python3 -B "$ROOT_DIR/ops/orchestration/sdd_docs.py" --search "$2" --history
+    fi
+    exec python3 -B "$ROOT_DIR/ops/orchestration/sdd_docs.py" --search "$2"
+    ;;
   --api)
     controller="${2:-}"
     if [[ -z "$controller" ]]; then

@@ -1,0 +1,794 @@
+diff --git a/package-lock.json b/package-lock.json
+index a51ba5b..1cee0cc 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "cyf-web-kit",
+-  "version": "1.16.70",
++  "version": "1.16.71",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "cyf-web-kit",
+-      "version": "1.16.70",
++      "version": "1.16.71",
+       "dependencies": {
+         "@varlet/ui": "^3.10.9",
+         "@vueuse/core": "^13.5.0",
+diff --git a/package.json b/package.json
+index 16e7e39..4b3dc10 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "cyf-web-kit",
+-  "version": "1.16.70",
++  "version": "1.16.71",
+   "type": "module",
+   "description": "A Vue.js project",
+   "author": "chc <c@e2tt.com>",
+diff --git a/prototypes/juyiting/assignee-recommendation.css b/prototypes/juyiting/assignee-recommendation.css
+new file mode 100644
+index 0000000..6cf93d7
+--- /dev/null
++++ b/prototypes/juyiting/assignee-recommendation.css
+@@ -0,0 +1,6 @@
++.model-recommendation-page .matter-advice-card { min-width:0; box-sizing:border-box; overflow-wrap:anywhere; }
++.model-recommendation-page .model-recommendation-demo { padding:12px; border:1px solid #dfd8c9; border-radius:10px; background:#f8f6ef; }
++.model-recommendation-page .model-recommendation-demo h4 { margin:0 0 8px; }
++.model-recommendation-page .model-manual-options,.model-recommendation-page .model-state-options { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
++.model-recommendation-page .matter-advice-card button { max-width:100%; white-space:normal; min-height:36px; }
++.model-recommendation-page .matter-advice-card button:disabled { opacity:.5; cursor:not-allowed; }
+diff --git a/prototypes/juyiting/assignee-recommendation.js b/prototypes/juyiting/assignee-recommendation.js
+new file mode 100644
+index 0000000..fcca5ed
+--- /dev/null
++++ b/prototypes/juyiting/assignee-recommendation.js
+@@ -0,0 +1,26 @@
++/* Recommendation R1: offline examples only; never calls a model or dispatches a task. */
++(() => {
++  const params = new URLSearchParams(location.search);
++  if (params.get('scenario') !== 'assignee-recommendation') return;
++  document.body.classList.add('model-recommendation-page');
++  let stage = 'READY', manual = '', alternatives = false;
++  const labels = { LOADING:'推荐中', READY:'推荐完成', NEEDS_CLARIFICATION:'需补充需求', NO_MATCH:'暂无合适推荐', NO_CANDIDATES:'暂无可承办候选', ERROR:'推荐暂不可用', STALE:'推荐已过期' };
++  if (labels[params.get('recommendationState')]) stage = params.get('recommendationState');
++  const previous = renderDetail;
++  renderDetail = function () {
++    previous();
++    const card = document.querySelector('.matter-advice-card'); if (!card) return;
++    const selected = manual || (stage === 'READY' ? '林冲' : '');
++    card.innerHTML = `<div class="matter-advice-heading"><span>事项进展</span><strong>待确认承办</strong></div><h3>将图片中的腾讯会议改为线上连线</h3><p>保留其余画面，只修改指定文字。</p><dl><div><dt>${manual?'已选承办':'推荐承办'}</dt><dd>${selected||'尚未选择'}</dd></div></dl><section class="model-recommendation-demo" aria-live="polite"><h4>${labels[stage]}</h4><p>${stage==='READY'?'推荐理由（模型建议）：已登记图片编辑本领，相关技能当前可用。':stage==='ERROR'?'智能推荐暂不可用，可重试或手动选择合法候选。':stage==='STALE'?'事项或能力已变化，请重新推荐。':stage==='NEEDS_CLARIFICATION'?'请补充：需要保留原字体和排版吗？':stage==='LOADING'?'正在根据需求、本领和技能比较候选，不会启动办理。':stage==='NO_CANDIDATES'?'暂无可承办候选，请核对接单范围。':'没有足够依据给出推荐，可以另选承办。'}</p>${stage==='READY'?'<p>依据：图片编辑 · 已登记本领；相关技能已安装且当前启用。</p><p>待核实：字体和排版要求；技能就绪不保证工具依赖或最终效果。</p>':''}<button type="button" data-model-retry ${stage==='LOADING'?'disabled':''}>重新推荐</button></section><p>推荐仅供参考；选择不会执行，确认后沿原流程交办。</p><button type="button" data-model-alternatives aria-expanded="${alternatives}">另选承办Agent</button>${alternatives?`<div class="model-manual-options">${['林冲','吴用'].map(name=>`<button type="button" data-model-candidate="${name}" aria-pressed="${selected===name}">${name} · 手动选择（虚构示例）</button>`).join('')}</div>`:''}<div class="matter-primary-actions"><button type="button" class="matter-primary-action" data-model-confirm ${!selected?'disabled':''}>确认承办，进入议事</button></div><p class="draft-hint">离线演示：人物与能力均为虚构，不执行、不扣费。</p><details><summary>切换演示状态</summary><div class="model-state-options">${Object.entries(labels).map(([key,label])=>`<button type="button" data-recommendation-stage="${key}" aria-pressed="${key===stage}">${label}</button>`).join('')}</div></details>`;
++  };
++  document.addEventListener('click', e => {
++    const b=e.target.closest('button'); if(!b)return;
++    if(b.dataset.recommendationStage){stage=b.dataset.recommendationStage;manual='';render();}
++    if(b.hasAttribute('data-model-alternatives')){alternatives=!alternatives;render();}
++    if(b.dataset.modelCandidate){manual=b.dataset.modelCandidate;render();}
++    if(b.hasAttribute('data-model-retry')){stage='LOADING';render();}
++    if(b.hasAttribute('data-model-confirm'))toast('离线演示：仅确认选择，未发送真实任务。');
++  });
++  state.task={title:'将图片中的腾讯会议改为线上连线',description:'保留其余画面，只修改指定文字。',files:[],complete:false};
++  state.agent=null; render();
++})();
+diff --git a/prototypes/juyiting/index.html b/prototypes/juyiting/index.html
+index 1ff6982..35e7ab9 100644
+--- a/prototypes/juyiting/index.html
++++ b/prototypes/juyiting/index.html
+@@ -1,2 +1,2 @@
+ <!doctype html>
+-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'"><title>聚义厅 · 界面优化基准 · 资料选择布局优化 2026-10-16（离线示例）</title><link rel="stylesheet" href="shared/static/index-BrkR_YMh.css"><link rel="stylesheet" href="shared/static/SideMenu-BH98P0VF.css"><link rel="stylesheet" href="shared/static/JuyiHallEntry-sScRnLId.css"><link rel="stylesheet" href="shared/baseline.css"><link rel="stylesheet" href="prototype.css"><script defer src="shared/snapshots.js"></script><script defer src="baseline-ui.js?v=798f7594b0a9"></script><script defer src="interaction-completion.js?v=4f0ed83d1873"></script><script defer src="prototype.js?v=e9905546708f"></script><link rel="stylesheet" href="source-ui.css"><link rel="stylesheet" href="baseline-ui.css"><link rel="stylesheet" href="hall-view-tabs.css"><link rel="stylesheet" href="production-ui.css"><link rel="stylesheet" href="interaction-completion.css?v=26a884a2d37e"><script defer src="delivery-entry.js?v=212acfc89f44"></script><link rel="stylesheet" href="delivery-entry.css?v=9f554116e661"><script defer src="image-turn.js?v=d79383b95147"></script><link rel="stylesheet" href="image-turn.css?v=5200f0a671c7"><script defer src="matter-status.js?v=1"></script><link rel="stylesheet" href="matter-status.css?v=1"></head><body></body></html>
++<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'"><title>聚义厅 · 界面优化基准 · 资料选择布局优化 2026-10-16（离线示例）</title><link rel="stylesheet" href="shared/static/index-BrkR_YMh.css"><link rel="stylesheet" href="shared/static/SideMenu-BH98P0VF.css"><link rel="stylesheet" href="shared/static/JuyiHallEntry-sScRnLId.css"><link rel="stylesheet" href="shared/baseline.css"><link rel="stylesheet" href="prototype.css"><script defer src="shared/snapshots.js"></script><script defer src="baseline-ui.js?v=798f7594b0a9"></script><script defer src="interaction-completion.js?v=4f0ed83d1873"></script><script defer src="prototype.js?v=e9905546708f"></script><link rel="stylesheet" href="source-ui.css"><link rel="stylesheet" href="baseline-ui.css"><link rel="stylesheet" href="hall-view-tabs.css"><link rel="stylesheet" href="production-ui.css"><link rel="stylesheet" href="interaction-completion.css?v=26a884a2d37e"><script defer src="delivery-entry.js?v=212acfc89f44"></script><link rel="stylesheet" href="delivery-entry.css?v=9f554116e661"><script defer src="image-turn.js?v=d79383b95147"></script><link rel="stylesheet" href="image-turn.css?v=5200f0a671c7"><script defer src="matter-status.js?v=1"></script><link rel="stylesheet" href="matter-status.css?v=1"><script defer src="assignee-recommendation.js?v=1"></script><link rel="stylesheet" href="assignee-recommendation.css?v=1"></head><body></body></html>
+diff --git a/prototypes/juyiting/specs/prototype-spec.md b/prototypes/juyiting/specs/prototype-spec.md
+index b3f29a4..a78ab77 100644
+--- a/prototypes/juyiting/specs/prototype-spec.md
++++ b/prototypes/juyiting/specs/prototype-spec.md
+@@ -604,3 +604,6 @@ N08原多话头用例改记DEFERRED（用户明确范围调整，历史BUG04仍
+ 
+ ### 使用指导登录时机（2026-10-27，设计目标）
+ PC与手机均仅在登录成功且身份已确认后自动展示指导；登录跳转、身份尚未确认或登录失效时不展示，也不写入跳过或完成状态。登录后仍沿用原有按用户和版本的完成、稍后及手动重看规则。离线 help 仅模拟已登录状态，不执行真实认证。
++
++## 智能推荐承办 R1（2026-10-28；实施原型，非线上）
++既有入口 `index.html?scenario=assignee-recommendation#detail`；PC/移动端沿事项卡布局。首选展示模型建议、真实能力依据和待确认项，非承诺；失败、无候选、无匹配、需澄清、过期分别展示。用户可手选合法候选，不显示虚构分数，不因选人立即执行。单轨升级原recommend接口，删除旧打分兜底。演示数据明确虚构、无网络调用。
+diff --git a/src/components/juyiting/BountyPanel.vue b/src/components/juyiting/BountyPanel.vue
+index 57ce647..ddf0eaa 100644
+--- a/src/components/juyiting/BountyPanel.vue
++++ b/src/components/juyiting/BountyPanel.vue
+@@ -201,7 +201,18 @@
+                 </section>
+                 <template v-if="embeddedHall">
+                   <template v-if="hasTaskAction(detailTask, 'ASSIGN')">
+-                    <p v-if="matterAgent?.recommendationReason" class="matter-fee-note">推荐参考：{{ matterAgent.recommendationReason }}</p>
++                  <section class="matter-recommendation" aria-label="智能推荐" aria-live="polite">
++                    <p role="status">{{ recommendationStateText(recommendationState.state) }}</p>
++                    <p v-if="recommendationState.result?.requirementSummary">需求理解：{{ recommendationState.result.requirementSummary }}</p>
++                    <p v-for="question in recommendationState.result?.questions || []" :key="question">待确认：{{ question }}</p>
++                    <template v-if="matterAgent?.recommendationReason">
++                      <p>推荐理由（模型建议）：{{ matterAgent.recommendationReason }}</p>
++                      <ul><li v-for="evidence in matterAgent.recommendationEvidence || []" :key="evidence.id">{{ evidence.label }}：{{ evidence.description }}</li></ul>
++                      <p v-for="gap in matterAgent.recommendationGaps || []" :key="gap">待核实：{{ gap }}</p>
++                    </template>
++                    <button type="button" :disabled="recommendationState.state === 'LOADING' || pointAndStartBusy" @click="$emit('refresh-recommendation')">重新推荐</button>
++                  </section>
++
+                     <p class="matter-fee-note">确认后，将需求和所选资料交给这位好汉；其运行环境及模型服务会处理这些内容。好汉离线或忙碌时，提交成功不代表已经开始办理。</p>
+                     <button
+                       type="button"
+@@ -397,7 +408,7 @@
+                   class="auto-assign-task"
+                   type="button"
+                   aria-label="宋江代为点将"
+-                  :disabled="isFundedTask(detailTask) || !hasTaskAction(detailTask, 'ASSIGN') || !recommendedAgents.length"
++                  :disabled="isFundedTask(detailTask) || !hasTaskAction(detailTask, 'ASSIGN') || !matterCandidates.length"
+                   title="宋江代为点将"
+                   @click="$emit('auto-assign-task', detailTask)"
+                 >
+@@ -433,8 +444,14 @@
+ 
+             <div v-if="!embeddedHall && canActOnTask(detailTask)" class="modal-agent-scroll">
+               <div class="section-label">可点好汉</div>
++              <section class="matter-recommendation" aria-label="智能推荐" aria-live="polite">
++                <p role="status">{{ recommendationStateText(recommendationState.state) }}</p>
++                <p v-if="recommendationState.result?.requirementSummary">需求理解：{{ recommendationState.result.requirementSummary }}</p>
++                <p v-for="question in recommendationState.result?.questions || []" :key="question">待确认：{{ question }}</p>
++                <button type="button" :disabled="recommendationState.state === 'LOADING' || pointAndStartBusy" @click="$emit('refresh-recommendation')">重新推荐</button>
++              </section>
+               <div
+-                v-for="agent in recommendedAgents"
++                v-for="agent in matterCandidates"
+                 :key="agent.agentId"
+                 class="recommended-agent-row"
+                 :class="{ active: selectedAgent?.agentId === agent.agentId }"
+@@ -453,17 +470,13 @@
+                     <strong>{{ agentDisplayName(agent) }}</strong>
+                     <small>{{ abilityText(agent) }}</small>
+                   </span>
+-                  <em>{{ recommendationScore(detailTask, agent) }}%</em>
++                  <em>{{ agent.recommendationReason ? '模型建议' : '手动选择' }}</em>
+                 </button>
+                 <p v-if="recommendationReason(agent)" class="recommendation-reason">
+                   {{ recommendationReason(agent) }}
+                 </p>
+-                <p v-if="recommendationExclusionReasons(agent).length" class="recommendation-reason recommendation-exclusions">
+-                  不宜点将：{{ recommendationExclusionReasons(agent).join('、') }}
+-                </p>
+-                <p v-if="recommendationScoreParts(agent).length" class="recommendation-reason recommendation-score-parts">
+-                  评分明细：{{ recommendationScoreParts(agent).join(' / ') }}
+-                </p>
++                <p v-for="evidence in agent.recommendationEvidence || []" :key="evidence.id" class="recommendation-reason">{{ evidence.label }}：{{ evidence.description }}</p>
++                <p v-for="gap in agent.recommendationGaps || []" :key="gap" class="recommendation-reason">待核实：{{ gap }}</p>
+                 <div class="recommended-agent-actions">
+                   <button
+                     type="button"
+@@ -519,6 +532,17 @@
+ </template>
+ 
+ <script setup>
++const recommendationStateText = state => ({
++  IDLE: '尚未生成智能推荐，可手动选择承办。', LOADING: '正在比较需求、本领和技能，不会启动办理…',
++  READY: '以下为模型建议，能力依据以服务端观察为准，不保证办理结果。',
++  NEEDS_CLARIFICATION: '请补充以下需求后重新推荐，也可手动选择承办。',
++  NO_MATCH: '当前没有足够依据推荐合适人选，可手动选择承办。',
++  NO_CANDIDATES: '暂无可承办候选，请核对接单范围和可用状态。',
++  ERROR: '智能推荐暂不可用，可重试或手动选择承办。',
++  STALE: '事项或能力已变化，请重新推荐；原推荐不再使用。'
++}[state] || '智能推荐暂不可用。')
++
++
+ import { assignedTaskTarget, assigneeProviderText, assigneeAvailabilityText } from '@/composables/juyiting/hallAssigneeCandidates.js'
+ import { projectHallTask } from '../../composables/juyiting/hallTaskPresentation.js'
+ import { canCancelOrdinaryTask, ordinaryTaskVersion, isTerminalMatter } from '../../composables/juyiting/useHallOrdinaryCancellation.js'
+@@ -559,6 +583,7 @@ const props = defineProps({
+   candidatesNextAfterAgentId: { type: String, default: null },
+   operableAgents: { type: Array, default: () => [] },
+   recommendedAgents: { type: Array, default: () => [] },
++  recommendationState: { type: Object, default: () => ({ state: 'IDLE', result: null }) },
+   taskAbilityOptions: { type: Array, default: () => [] },
+   taskStatusFilters: { type: Array, default: () => [] },
+   taskAbilityFilter: { type: String, default: '' },
+@@ -583,7 +608,6 @@ const props = defineProps({
+   formatTime: { type: Function, required: true },
+   portraitName: { type: Function, required: true },
+   portraitStyle: { type: Function, required: true },
+-  taskAgentMatchScore: { type: Function, required: true },
+   taskStateClass: { type: Function, required: true },
+   taskStatusCount: { type: Function, required: true },
+   taskStatusText: { type: Function, required: true }
+@@ -591,6 +615,7 @@ const props = defineProps({
+ 
+ const emit = defineEmits([
+   'assign-task',
++  'refresh-recommendation',
+   'refresh-candidates',
+   'more-candidates',
+   'archive-task',
+@@ -748,7 +773,7 @@ const matterCandidates = computed(() => {
+ })
+ const matterAgent = computed(() => {
+   if (!hasTaskAction(detailTask.value, 'ASSIGN')) return assignedAgentForTask(detailTask.value)
+-  return matterCandidateId.value ? matterCandidates.value.find(agent => agent.agentId === matterCandidateId.value) || null : matterCandidates.value[0] || null
++  return matterCandidateId.value ? matterCandidates.value.find(agent => agent.agentId === matterCandidateId.value) || null : assignableRecommendedAgents.value[0] || null
+ })
+ watch(() => [props.identityScope, props.authorizationGeneration, detailTask.value?.id, detailTask.value?.taskVersion], () => { matterCandidateId.value = ''; showMatterCandidates.value = false }, { flush: 'sync' })
+ const confirmMatterAgent = () => {
+@@ -798,31 +823,12 @@ const formatMoney = value => formatSilverMicro(typeof value === 'string' && isCa
+ const canCancelFunding = task => isFundedTask(task) && hasTaskAction(task, 'ASSIGN') && typeof (task.version ?? task.taskVersion) === 'string'
+ const selectedAssignees = computed(() => {
+   const selected = new Set(selectedAssigneeIds.value)
+-  return props.recommendedAgents.filter(agent =>
++  return matterCandidates.value.filter(agent =>
+     selected.has(agent.agentId) && props.canAssign(detailTask.value, agent))
+ })
+ 
+ const agentDisplayName = (agent) => agent?.displayName || agent?.name || agent?.personaName || agent?.agentId || ''
+ const recommendationReason = (agent) => agent?.recommendationReason || ''
+-const recommendationExclusionReasons = (agent) => Array.isArray(agent?.exclusionReasons)
+-  ? agent.exclusionReasons.filter(reason => typeof reason === 'string' && reason)
+-  : []
+-const scorePartLabels = {
+-  ability: '本领',
+-  availability: '可用',
+-  success: '成功',
+-  load: '负载',
+-  context: '上下文',
+-  riskPenalty: '风险扣减'
+-}
+-const recommendationScoreParts = (agent) => {
+-  const parts = agent?.scoreParts
+-  if (!parts || typeof parts !== 'object' || Array.isArray(parts)) return []
+-  return Object.entries(parts)
+-    .filter(([key, value]) => scorePartLabels[key] && typeof value === 'number')
+-    .map(([key, value]) => `${scorePartLabels[key]} ${value}`)
+-}
+-const recommendationScore = (task, agent) => agent?.recommendationScore ?? props.taskAgentMatchScore(task, agent)
+ const taskAssigneeIds = (task) => {
+   if (!task) return []
+   if (Array.isArray(task.assignedAgentIds)) return task.assignedAgentIds
+diff --git a/src/components/world/JuyiHall.vue b/src/components/world/JuyiHall.vue
+index 5de693e..824bb52 100644
+--- a/src/components/world/JuyiHall.vue
++++ b/src/components/world/JuyiHall.vue
+@@ -356,6 +356,8 @@
+             :portrait-name="portraitName"
+             :portrait-style="portraitStyle"
+             :recommended-agents="recommendedAgents"
++            :recommendation-state="recommendationState"
++            @refresh-recommendation="loadTaskRecommendations(selectedTask, { refresh: true })"
+             :assignee-candidates="assigneeCandidates"
+             :candidates-loading="candidatesLoading"
+             :candidates-error="candidatesError"
+@@ -364,7 +366,6 @@
+             :operable-agents="operableRosterAgents"
+             :selected-task="selectedTask"
+             :task-ability-options="taskAbilityOptions"
+-            :task-agent-match-score="taskAgentMatchScore"
+             :task-state-class="taskStateClass"
+             :task-status-count="taskStatusCount"
+             :task-status-filter="taskStatusFilter"
+@@ -1276,13 +1277,6 @@ const abilityText = (agent) => {
+ }
+ 
+ 
+-const taskAgentMatchScore = (task, agent) => {
+-  const requiredAbilities = task?.requiredAbilities || []
+-  if (!requiredAbilities.length) return 80
+-  const agentAbilities = new Set((agent?.abilities || []).map(ability => ability.toLowerCase()))
+-  const matched = requiredAbilities.filter(ability => agentAbilities.has(String(ability).toLowerCase())).length
+-  return Math.round((matched / requiredAbilities.length) * 100)
+-}
+ 
+ const {
+   dispose: disposeHallData,
+@@ -1312,6 +1306,7 @@ const {
+   operableRosterAgents,
+   personaCatalog,
+   recommendedAgents,
++  recommendationState,
+   rosterError,
+   rosterLoading,
+   setAgentFilter,
+@@ -1336,7 +1331,6 @@ const {
+   normalizeStatus,
+   selectedAgent,
+   selectedTask,
+-  taskAgentMatchScore,
+   sceneState: hallSceneState
+ })
+ 
+diff --git a/src/composables/juyiting/hallAssigneeRecommendation.js b/src/composables/juyiting/hallAssigneeRecommendation.js
+new file mode 100644
+index 0000000..f21388b
+--- /dev/null
++++ b/src/composables/juyiting/hallAssigneeRecommendation.js
+@@ -0,0 +1,22 @@
++// R1 only. Additive harmless fields are allowed; old scored arrays are not a second lane.
++const text = value => typeof value === 'string' && value.trim().length > 0
++const strings = value => Array.isArray(value) && value.every(text)
++export const recommendationTaskKey = task => JSON.stringify([task?.id, task?.taskVersion, task?.title, task?.description])
++export const parseAssigneeRecommendation = (value, task) => {
++  if (!value || Array.isArray(value) || value.taskId !== task?.id || value.taskVersion !== task?.taskVersion ||
++      !['READY', 'NEEDS_CLARIFICATION', 'NO_MATCH', 'NO_CANDIDATES'].includes(value.state) ||
++      !Number.isSafeInteger(value.observedAt) || value.observedAt < 0 || !text(value.requirementSummary) ||
++      typeof value.candidateSetComplete !== 'boolean' || !strings(value.questions) || !Array.isArray(value.recommendations)) throw new Error('承办推荐返回格式不正确')
++  const seen = new Set()
++  for (const item of value.recommendations) {
++    const agent = item?.agent
++    if (!text(agent?.agentId) || seen.has(agent.agentId) || !text(agent.name) || !strings(agent.abilities) ||
++        typeof agent.canOperate !== 'boolean' || typeof agent.boundToMe !== 'boolean' || !text(agent.status) ||
++        !text(item.reason) || !strings(item.gaps) || !Array.isArray(item.evidence) || !item.evidence.length ||
++        !item.evidence.every(e => text(e?.id) && text(e.kind) && text(e.label) && text(e.description) && e.available === true)) throw new Error('承办推荐依据未能核对')
++    seen.add(agent.agentId)
++  }
++  if ((value.state === 'READY') !== Boolean(value.recommendations.length) ||
++      (value.state === 'NEEDS_CLARIFICATION' && !value.questions.length)) throw new Error('承办推荐状态不一致')
++  return value
++}
+diff --git a/src/composables/juyiting/useHallData.js b/src/composables/juyiting/useHallData.js
+index cb39f45..ca44940 100644
+--- a/src/composables/juyiting/useHallData.js
++++ b/src/composables/juyiting/useHallData.js
+@@ -1,4 +1,5 @@
+ import { computed, ref, toValue, watch } from 'vue'
++import { parseAssigneeRecommendation, recommendationTaskKey } from './hallAssigneeRecommendation.js'
+ import { assigneePage, assignedTaskTarget } from './hallAssigneeCandidates.js'
+ import { pointAndStartLong } from './hallPointAndStartIntent.js'
+ import { projectHallTask, validateHallTaskCounts } from './hallTaskPresentation.js'
+@@ -15,7 +16,6 @@ export const useHallData = ({
+   normalizeStatus,
+   selectedAgent,
+   selectedTask,
+-  taskAgentMatchScore,
+   sceneState,
+   identityScope = '',
+   authorizationGeneration = 0
+@@ -63,35 +63,21 @@ export const useHallData = ({
+     return [...abilities].sort()
+   })
+ 
+-  const recommendedAgents = computed(() => {
+-    if (!selectedTask.value) return []
+-    const serverRecommendations = taskRecommendations.value[selectedTask.value.id] || []
+-    if (serverRecommendations.length) {
+-      return serverRecommendations.flatMap(recommendation => {
+-        // Ordinary recommendations contribute ranking only. Never copy a full
+-        // management/runtime DTO into the cross-user candidate projection.
+-        const candidate = selectedTask.value.funding?.mode === 'FUNDED_SINGLE_AGENT'
+-          ? recommendation.agent
+-          : assigneeCandidates.value.find(item => item.agentId === recommendation.agent?.agentId)
+-        if (!candidate) return []
+-        return [{ ...candidate,
+-          recommendationScore: recommendation.score,
+-          recommendationReason: recommendation.reason,
+-          eligible: recommendation.eligible,
+-          exclusionReasons: Array.isArray(recommendation.exclusionReasons) ? recommendation.exclusionReasons : [],
+-          scoreParts: recommendation.scoreParts && typeof recommendation.scoreParts === 'object' && !Array.isArray(recommendation.scoreParts)
+-            ? recommendation.scoreParts : null,
+-          matchedAbilities: recommendation.matchedAbilities || []
+-        }]
+-      })
+-    }
+-
+-    if (selectedTask.value.funding?.mode === 'FUNDED_SINGLE_AGENT') return agents.value
+-      .filter(agent => agent.canOperate !== false && normalizeStatus(agent.status) === 'online')
+-      .map(agent => ({ agent, score: taskAgentMatchScore(selectedTask.value, agent) }))
+-      .sort((a, b) => b.score - a.score).slice(0, 5).map(item => item.agent)
+-    return []
++  const recommendationState = computed(() => {
++    const task = selectedTask.value
++    const entry = task && taskRecommendations.value[task.id]
++    if (!entry) return { state: 'IDLE', result: null }
++    return entry.taskKey === recommendationTaskKey(task) ? entry : { state: 'STALE', result: null }
+   })
++  const recommendedAgents = computed(() => recommendationState.value.state === 'READY'
++    ? recommendationState.value.result.recommendations.map(item => ({
++      ...(selectedTask.value?.funding?.mode === 'FUNDED_SINGLE_AGENT' ? item.agent : {
++        agentId: item.agent.agentId, displayName: item.agent.name,
++        providerDisplayName: item.agent.providerDisplayName ?? null, isMine: item.agent.boundToMe,
++        availability: item.agent.status
++      }), recommendationReason: item.reason, recommendationEvidence: item.evidence,
++      recommendationGaps: item.gaps
++    })) : [])
+ 
+   const assigneeCandidates = ref([])
+   const candidatesLoading = ref(false)
+@@ -105,9 +91,12 @@ export const useHallData = ({
+     if (!projectHallTask({ task }).actions.includes('ASSIGN')) return false
+     // External eligibility belongs only to ordinary point-and-deliberate.
+     if (task.funding?.mode === 'FUNDED_SINGLE_AGENT') return agent.canOperate !== false &&
+-      !agent.systemAgent && normalizeStatus(agent.status) === 'online' && agent.eligible !== false
+-    return candidatesTaskId.value === task.id && !candidatesError.value &&
+-      assigneeCandidates.value.some(item => item.agentId === agent.agentId)
++      !agent.systemAgent && normalizeStatus(agent.status) === 'online'
++    return (candidatesTaskId.value === task.id && !candidatesError.value &&
++      assigneeCandidates.value.some(item => item.agentId === agent.agentId)) ||
++      (recommendationState.value.state === 'READY' && recommendationState.value.result.taskId === task.id &&
++       recommendationState.value.result.taskVersion === task.taskVersion &&
++       recommendationState.value.result.recommendations.some(item => item.agent.agentId === agent.agentId))
+   }
+ 
+   let detailEpoch = 0
+@@ -115,8 +104,14 @@ export const useHallData = ({
+   let listEpoch = 0
+   let countsEpoch = 0
+   let recommendationEpoch = 0
++  let recommendationRequest = null
+   const identityFingerprint = () => `${toValue(authorizationGeneration)}\u0000${toValue(identityScope)}`
+   const queryFingerprint = () => `${identityFingerprint()}\u0000${taskAbilityFilter.value}\u0000${taskKeyword.value}`
++  const stopRecommendationTask = watch(() => recommendationTaskKey(selectedTask.value), () => {
++    recommendationEpoch += 1
++    recommendationRequest?.controller.abort()
++    recommendationRequest = null
++  }, { flush: 'sync' })
+   const stopFilters = watch([taskStatusFilter, taskAbilityFilter, taskKeyword], () => {
+     listEpoch += 1
+     countsEpoch += 1
+@@ -126,6 +121,8 @@ export const useHallData = ({
+     listEpoch += 1
+     countsEpoch += 1
+     recommendationEpoch += 1
++    recommendationRequest?.controller.abort()
++    recommendationRequest = null
+     tasks.value = []
+     taskStatusCounts.value = {}
+     taskRecommendations.value = {}
+@@ -135,7 +132,7 @@ export const useHallData = ({
+     tasksError.value = ''
+     taskCountsError.value = ''
+   }, { flush: 'sync' })
+-  const dispose = () => { listEpoch += 1; countsEpoch += 1; recommendationEpoch += 1; stopFilters(); stopIdentity(); stopCandidates(); stopDetailScope(); detailEpoch++; detailController?.abort(); candidatesEpoch++; candidatesController?.abort() }
++  const dispose = () => { listEpoch += 1; countsEpoch += 1; recommendationEpoch += 1; stopFilters(); stopIdentity(); stopRecommendationTask(); recommendationRequest?.controller.abort(); stopCandidates(); stopDetailScope(); detailEpoch++; detailController?.abort(); candidatesEpoch++; candidatesController?.abort() }
+   // Absence/failure is not zero. Preserve decimal strings; never count the loaded page.
+   const taskStatusCount = phase => taskStatusCounts.value.phaseCounts?.[phase || 'total'] ?? '—'
+ 
+@@ -243,34 +240,44 @@ export const useHallData = ({
+     }
+   }
+ 
+-  const loadTaskRecommendations = async (task = selectedTask.value) => {
+-    if (!task?.id) return []
+-    const epoch = ++recommendationEpoch
++  const loadTaskRecommendations = (task = selectedTask.value, { refresh = false } = {}) => {
++    if (!task?.id || !projectHallTask(task ? { task } : {}).actions.includes('ASSIGN')) return Promise.resolve([])
++    const taskKey = recommendationTaskKey(task)
+     const identity = identityFingerprint()
+-    const current = () => epoch === recommendationEpoch && identity === identityFingerprint()
+-    let recommendations = []
+-    try {
+-      await agentApi.create(`/tasks/${task.id}/recommend`, {}, {
+-        autoLoading: false,
+-        onSuccess: (result) => {
+-          if (!current()) return
+-          if (!Array.isArray(result)) throw new Error('承办推荐返回格式不正确')
+-          recommendations = result
+-          taskRecommendations.value = {
+-            ...taskRecommendations.value,
+-            [task.id]: recommendations
+-          }
+-        }
+-      })
+-    } catch (error) {
+-      if (!current()) return []
+-      log.warn('load task recommendations failed:', error)
+-      taskRecommendations.value = {
+-        ...taskRecommendations.value,
+-        [task.id]: []
++    const key = `${identity}\u0000${taskKey}`
++    if (recommendationRequest?.key === key) return recommendationRequest.promise
++    const cached = taskRecommendations.value[task.id]
++    if (!refresh && cached?.taskKey === taskKey && cached.state !== 'LOADING') return Promise.resolve(cached.result?.recommendations || [])
++    recommendationRequest?.controller.abort()
++    const controller = new AbortController()
++    const epoch = ++recommendationEpoch
++    const current = () => epoch === recommendationEpoch && identity === identityFingerprint() &&
++      taskKey === recommendationTaskKey(selectedTask.value)
++    const store = (state, result = null) => { if (current()) taskRecommendations.value = {
++      ...taskRecommendations.value, [task.id]: { state, result, taskKey }
++    } }
++    store('LOADING')
++    const promise = (async () => {
++      try {
++        let response
++        await agentApi.create(`/tasks/${encodeURIComponent(task.id)}/recommend`, { expectedTaskVersion: task.taskVersion }, {
++          autoLoading: false, signal: controller.signal, onSuccess: result => { response = result }
++        })
++        if (!current()) return []
++        const result = parseAssigneeRecommendation(response, task)
++        store(result.state, result)
++        return result.recommendations
++      } catch (error) {
++        if (!current()) return []
++        log.warn('load task recommendations failed:', error?.code || error?.name)
++        store(error?.code === 'RECOMMENDATION_STALE' || error?.status === 409 ? 'STALE' : 'ERROR')
++        return []
++      } finally {
++        if (recommendationRequest?.epoch === epoch) recommendationRequest = null
+       }
+-    }
+-    return current() ? recommendations : []
++    })()
++    recommendationRequest = { key, epoch, controller, promise }
++    return promise
+   }
+ 
+   const reconcileSelectedAgent = () => {
+@@ -537,6 +544,7 @@ export const useHallData = ({
+     operableRosterAgents,
+     personaCatalog,
+     recommendedAgents,
++    recommendationState,
+     rosterError,
+     rosterLoading,
+     setAgentFilter,
+diff --git a/tests/juyiting-assignee-recommendation.test.js b/tests/juyiting-assignee-recommendation.test.js
+new file mode 100644
+index 0000000..356c0d8
+--- /dev/null
++++ b/tests/juyiting-assignee-recommendation.test.js
+@@ -0,0 +1,75 @@
++import { expect } from 'chai'
++import { ref } from 'vue'
++import { useHallData } from '../src/composables/juyiting/useHallData.js'
++import { parseAssigneeRecommendation } from '../src/composables/juyiting/hallAssigneeRecommendation.js'
++
++const task = () => ({ id: 'task-r1', taskVersion: '7', title: '写一份说明', description: '说明使用方式', status: 'open' })
++const agent = { agentId: 'a', name: '好汉', status: 'online', canOperate: true, boundToMe: true, abilities: ['写作'] }
++const result = () => ({ taskId: 'task-r1', taskVersion: '7', state: 'READY', observedAt: 1000,
++  candidateSetComplete: true, requirementSummary: '写使用说明', questions: [], recommendations: [{ agent,
++    reason: '登记了写作本领', evidence: [{ id: 'ability:0', kind: 'DECLARED_ABILITY', label: '写作', description: '登记声明', available: true }], gaps: ['需确认受众'] }] })
++const create = implementation => {
++  const selectedTask = ref(task()), identityScope = ref('owner-a')
++  const data = useHallData({ agentApi: { create: implementation, get: async () => ({ items: [{ agentId: 'a', displayName: '好汉', providerDisplayName: null, isMine: true, availability: 'online' }], nextAfterAgentId: null }) }, log: { warn() {} },
++    normalizeStatus: value => value?.toLowerCase(), selectedAgent: ref(null), selectedTask, identityScope })
++  data.agents.value = [agent]
++  return { data, selectedTask, identityScope }
++}
++describe('single-track model assignee recommendation R1', () => {
++  it('accepts additive fields but rejects old scored arrays, stale task and unsupported states', () => {
++    expect(parseAssigneeRecommendation({ ...result(), future: true }, task()).state).to.equal('READY')
++    for (const value of [[], [{ agent, score: 80 }], { ...result(), taskVersion: '8' }, { ...result(), state: 'DONE' },
++      { ...result(), recommendations: [] }, { ...result(), state: 'NO_MATCH' }]) {
++      expect(() => parseAssigneeRecommendation(value, task())).to.throw()
++    }
++  })
++  it('uses authoritative evidence with no score and coalesces an in-flight request', async () => {
++    let release, calls = 0, body
++    const { data } = create(async (_url, input, options) => { calls++; body = input; await new Promise(r => { release = r }); options.onSuccess(result()) })
++    const first = data.loadTaskRecommendations(), second = data.loadTaskRecommendations()
++    expect(first).to.equal(second)
++    expect(data.recommendationState.value.state).to.equal('LOADING')
++    release(); await first
++    expect(calls).to.equal(1); expect(body).to.deep.equal({ expectedTaskVersion: '7' })
++    expect(data.recommendedAgents.value[0].recommendationEvidence[0].label).to.equal('写作')
++    expect(data.recommendedAgents.value[0]).not.to.have.property('recommendationScore')
++    await data.loadTaskRecommendations(); expect(calls).to.equal(1)
++    data.dispose()
++  })
++  it('never promotes local roster into recommendations on empty or failed model output', async () => {
++    const { data } = create(async (_url, _input, options) => options.onSuccess({ ...result(), state: 'NO_MATCH', recommendations: [] }))
++    await data.loadTaskRecommendations(); expect(data.recommendationState.value.state).to.equal('NO_MATCH')
++    expect(data.recommendedAgents.value).to.deep.equal([]); expect(data.canAssign(task(), agent)).to.equal(true)
++    data.dispose()
++    const failed = create(async () => { throw new Error('provider offline') })
++    await failed.data.loadTaskRecommendations(); expect(failed.data.recommendationState.value.state).to.equal('ERROR')
++    expect(failed.data.recommendedAgents.value).to.deep.equal([]); failed.data.dispose()
++  })
++  it('discards responses after identity or task version changes', async () => {
++    for (const scopeChange of [true, false]) {
++      let release
++      const { data, selectedTask, identityScope } = create(async (_url, _input, options) => { await new Promise(r => { release = r }); options.onSuccess(result()) })
++      const request = data.loadTaskRecommendations()
++      if (scopeChange) identityScope.value = 'other-owner'
++      else selectedTask.value = { ...task(), taskVersion: '8' }
++      release(); await request
++      expect(data.recommendedAgents.value).to.deep.equal([])
++      expect(data.recommendationState.value.state).not.to.equal('LOADING')
++      data.dispose()
++    }
++  })
++  it('requires evidence for each recommended candidate, while allowing missing skills', () => {
++    const valid = result(); expect(parseAssigneeRecommendation(valid, task())).to.equal(valid)
++    valid.recommendations[0].evidence[0].available = false
++    expect(() => parseAssigneeRecommendation(valid, task())).to.throw()
++  })
++  it('represents clarification and stale results distinctly, with explicit retry only', async () => {
++    let calls = 0
++    const { data } = create(async () => { calls++; throw Object.assign(new Error(), { code: 'RECOMMENDATION_STALE', status: 409 }) })
++    await data.loadTaskRecommendations(); expect(data.recommendationState.value.state).to.equal('STALE')
++    await data.loadTaskRecommendations(); expect(calls).to.equal(1)
++    await data.loadTaskRecommendations(task(), { refresh: true }); expect(calls).to.equal(2)
++    data.dispose()
++    expect(parseAssigneeRecommendation({ ...result(), state: 'NEEDS_CLARIFICATION', recommendations: [], questions: ['面向谁？'] }, task()).state).to.equal('NEEDS_CLARIFICATION')
++  })
++})
+diff --git a/tests/juyiting-component-behavior.test.js b/tests/juyiting-component-behavior.test.js
+index 9566ac0..8192f6a 100644
+--- a/tests/juyiting-component-behavior.test.js
++++ b/tests/juyiting-component-behavior.test.js
+@@ -1716,66 +1716,6 @@ describe('JuyiHall component behavior', () => {
+     expect(wrapper.emitted('auto-assign-task')[0]).to.deep.equal([selectedTask])
+   })
+ 
+-  it('shows E01 exclusion reasons and score parts without allowing excluded single or group assignment', async () => {
+-    const selectedTask = {
+-      id: 'task-e01',
+-      title: 'Inspect the camp',
+-      status: 'open',
+-      description: 'Inspect every outpost',
+-      requiredAbilities: ['planning']
+-    }
+-    const excluded = {
+-      agentId: 'agent-excluded',
+-      name: 'Excluded',
+-      status: 'online',
+-      canOperate: true,
+-      eligible: false,
+-      exclusionReasons: ['AGENT_ABILITY_MISMATCH'],
+-      scoreParts: { ability: 0, availability: 20, success: 11, load: 15, context: 8, riskPenalty: 0 }
+-    }
+-    const eligible = {
+-      agentId: 'agent-eligible',
+-      name: 'Eligible',
+-      status: 'online',
+-      canOperate: true,
+-      eligible: true,
+-      scoreParts: { ability: 40, availability: 20, success: 11, load: 15, context: 8, riskPenalty: 0 }
+-    }
+-    const wrapper = mount(BountyPanel, {
+-      global: { stubs },
+-      props: {
+-        tasks: [selectedTask],
+-        selectedTask,
+-        selectedAgent: excluded,
+-        recommendedAgents: [excluded, eligible],
+-        taskAbilityOptions: ['planning'],
+-        taskStatusFilters: [],
+-        abilityText: item => (item.abilities || []).join(' / '),
+-        canAssign: (task, targetAgent) => Boolean(task && targetAgent && targetAgent.eligible !== false),
+-        formatTime: value => value,
+-        portraitName: item => item.name,
+-        portraitStyle: () => ({}),
+-        taskAgentMatchScore: () => 98,
+-        taskStateClass: () => 'is-open',
+-        taskStatusCount: () => 1,
+-        taskStatusText: status => status
+-      }
+-    })
+-
+-    await wrapper.find('.task-card').trigger('click')
+-
+-    const checkboxes = wrapper.findAll('.assignee-check')
+-    expect(checkboxes[0].attributes('disabled')).to.not.equal(undefined)
+-    expect(wrapper.findAll('.recommended-agent-actions button')[1].attributes('disabled')).to.not.equal(undefined)
+-    expect(wrapper.text()).to.include('不宜点将：AGENT_ABILITY_MISMATCH')
+-    expect(wrapper.text()).to.include('评分明细：本领 0 / 可用 20 / 成功 11 / 负载 15 / 上下文 8 / 风险扣减 0')
+-
+-    await checkboxes[1].setChecked(true)
+-    await wrapper.find('.assign-selected-agents').trigger('click')
+-
+-    expect(wrapper.emitted('assign-task')[0]).to.deep.equal([selectedTask, [eligible]])
+-  })
+-
+   it('does not reopen BountyPanel detail modal from a stale selected task', async () => {
+     const selectedTask = {
+       id: 'task-1',
+diff --git a/tests/juyiting-flow-ui.test.js b/tests/juyiting-flow-ui.test.js
+index 27b53af..b2daf61 100644
+--- a/tests/juyiting-flow-ui.test.js
++++ b/tests/juyiting-flow-ui.test.js
+@@ -262,3 +262,56 @@ describe('actual JuyiHall destructive confirmation handler', () => {
+     resolve('confirm'); expect(await pending).to.equal(true); expect(h.dialogs).to.have.length(1); expect(h.deleted).to.have.length(1)
+   })
+ })
++
++
++describe('model recommendation actual matter UI', () => {
++  it('nonembedded detail also exposes model failure and explicit retry', async () => {
++    const task = { id: 'recommend', title: '写说明', status: 'open', taskVersion: '1' }
++    const wrapper = mount(Panel, { props: { ...baseProps, embeddedHall: false, tasks: [task], selectedTask: task,
++      recommendationState: { state: 'ERROR', result: null }, recommendedAgents: [] } })
++    try {
++      wrapper.vm.openTask(task); await Vue.nextTick()
++      expect(wrapper.get('.modal-agent-scroll .matter-recommendation').text()).to.include('暂不可用')
++      await wrapper.get('.modal-agent-scroll .matter-recommendation button').trigger('click')
++      expect(wrapper.emitted('refresh-recommendation')).to.have.length(1)
++      expect(wrapper.emitted('assign-task')).to.equal(undefined)
++    } finally { wrapper.unmount() }
++  })
++
++  it('shows evidence and gaps without score; only explicit confirmation dispatches', async () => {
++    const task = { id: 'recommend', title: '写说明', status: 'open', taskVersion: '1' }
++    const agent = { ...baseProps.operableAgents[0], recommendationReason: '已登记写作本领',
++      recommendationEvidence: [{ id: 'ability:0', label: '写作', description: '登记声明' }], recommendationGaps: ['确认受众'] }
++    const wrapper = mount(Panel, { props: { ...baseProps, tasks: [task], selectedTask: task, recommendedAgents: [agent],
++      recommendationState: { state: 'READY', result: { requirementSummary: '编写说明', questions: [] } } } })
++    try {
++      wrapper.vm.openTask(task); await Vue.nextTick()
++      expect(wrapper.get('.matter-recommendation').text()).to.include('登记声明')
++      expect(wrapper.get('.matter-recommendation').text()).to.include('待核实：确认受众')
++      expect(wrapper.text()).not.to.include('评分明细')
++      expect(wrapper.emitted('assign-task')).to.equal(undefined)
++      await wrapper.get('.matter-recommendation button').trigger('click')
++      expect(wrapper.emitted('refresh-recommendation')).to.have.length(1)
++      expect(wrapper.emitted('assign-task')).to.equal(undefined)
++      await wrapper.get('.matter-primary-action').trigger('click')
++      expect(wrapper.emitted('assign-task')).to.have.length(1)
++    } finally { wrapper.unmount() }
++  })
++  it('model failure keeps explicit manual selection but never silently picks the first roster agent', async () => {
++    const task = { id: 'recommend', title: '写说明', status: 'open', taskVersion: '1' }
++    const wrapper = mount(Panel, { props: { ...baseProps, tasks: [task], selectedTask: task,
++      assigneeCandidates: [{ agentId: 'old-agent', displayName: '林冲', isMine: true, availability: 'online', providerDisplayName: null }],
++      recommendationState: { state: 'ERROR', result: null }, recommendedAgents: [] } })
++    try {
++      wrapper.vm.openTask(task); await Vue.nextTick()
++      expect(wrapper.get('.matter-recommendation').text()).to.include('暂不可用')
++      expect(wrapper.get('.matter-primary-action').attributes('disabled')).not.to.equal(undefined)
++      await wrapper.get('.matter-agent-toggle').trigger('click')
++      await wrapper.get('.matter-candidates button').trigger('click')
++      expect(wrapper.emitted('assign-task')).to.equal(undefined)
++      expect(wrapper.get('.matter-primary-action').attributes('disabled')).to.equal(undefined)
++      await wrapper.get('.matter-primary-action').trigger('click')
++      expect(wrapper.emitted('assign-task')[0][1].agentId).to.equal('old-agent')
++    } finally { wrapper.unmount() }
++  })
++})
+diff --git a/tests/juyiting-hall-data.test.js b/tests/juyiting-hall-data.test.js
+index 5d27f59..830ced9 100644
+--- a/tests/juyiting-hall-data.test.js
++++ b/tests/juyiting-hall-data.test.js
+@@ -362,53 +362,6 @@ describe('useHallData deferred Juyi Hall sources', () => {
+   })
+ })
+ 
+-describe('useHallData advisory recommendations', () => {
+-  it('preserves recommendation diagnostics but uses candidate eligibility even for low-score recommendations without management DTO leakage', async () => {
+-    const selectedTask = ref({ id: 'task-e01', status: 'open', requiredAbilities: ['planning'] })
+-    const hallData = useHallData({
+-      agentApi: {
+-        get: async () => ({ items: ['agent-excluded', 'agent-legacy'].map(agentId => ({ agentId, displayName: agentId, providerDisplayName: null, isMine: false, availability: 'offline' })), nextAfterAgentId: null }),
+-        create: async (_url, _body, options) => options.onSuccess(([{
+-          score: 74,
+-          eligible: false,
+-          exclusionReasons: ['AGENT_ABILITY_MISMATCH'],
+-          scoreParts: { ability: 0, availability: 20, success: 11, load: 15, context: 8, riskPenalty: 0 },
+-          reason: '宋江首领不建议：AGENT_ABILITY_MISMATCH。',
+-          matchedAbilities: [],
+-          agent: { agentId: 'agent-excluded', status: 'online', canOperate: true }
+-        }, {
+-          score: 94,
+-          agent: { agentId: 'agent-legacy', status: 'online', canOperate: true }
+-        }]))
+-      },
+-      log: { warn: () => {} },
+-      normalizeStatus: (status = '') => status.toLowerCase(),
+-      selectedAgent: ref(null),
+-      selectedTask,
+-      taskAgentMatchScore: () => 0
+-    })
+-
+-    await hallData.loadAssigneeCandidates()
+-    await hallData.loadTaskRecommendations()
+-
+-    const [excluded, legacy] = hallData.recommendedAgents.value
+-    expect(excluded).to.include({
+-      agentId: 'agent-excluded',
+-      eligible: false,
+-      recommendationScore: 74,
+-      recommendationReason: '宋江首领不建议：AGENT_ABILITY_MISMATCH。'
+-    })
+-    expect(excluded.exclusionReasons).to.deep.equal(['AGENT_ABILITY_MISMATCH'])
+-    expect(excluded.scoreParts).to.deep.equal({
+-      ability: 0, availability: 20, success: 11, load: 15, context: 8, riskPenalty: 0
+-    })
+-    expect(hallData.canAssign(selectedTask.value, excluded)).to.equal(true)
+-    expect(legacy.eligible).to.equal(undefined)
+-    expect(hallData.canAssign(selectedTask.value, legacy)).to.equal(true)
+-    expect(legacy).not.to.have.property('canOperate')
+-  })
+-})
+-
+ describe('useHallData bounty title reload', () => {
+   it('keeps the persisted bounty title returned by task search after a refresh', async () => {
+     const persistedTask = {

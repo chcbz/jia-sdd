@@ -1,0 +1,7 @@
+# Web R4 bootstrap-only remediation
+
+First merged-tree Weball e86/e6ea rc1 after static fencesPASS. Case1 bootstrap test181 creates LIVE_PARENT=$CASE/host/web before $CASE/host exists; four nested mkdir failures, no adapter transaction reached. Full evidence /tmp/cyf-web-deploy-r1.VWhGJW; failed cache49d435bc0178b21921f7c1ecc23856b6c76a77ed623a4130995fbbffa05662b3. Source clean before/after. Controller stopped count2 before this authorization.
+
+Original Web Writer corrects ONLY ops/release/tests/test-web-deploy-adaptation.sh in original .worktrees/jvc-oai-web-deploy-adapt-r1, base1e5bacd472d5a63ce47b77f86e542cea021fc4fa/tree1c90d3c67507b4c603bedef29035579097c2dfc2. That test blob is byte-exact with failed merged tree, proven in EXACT-MERGE-R1. Integrated e86 worktree remains immutable. Create required private parent hierarchy in correct order with restrictive modes and exclusive fixture root, retaining original case isolation. No production/helper/common changes, no broad path cleanup.
+
+Static Bash/Python and bounded own-temp-directory bootstrap microprobe are permitted: exercise only actual directory creation lines and assert expected parents/leaves mode0700, all under exclusive own temp root; no adapter/guard/whole selector/network/lifecycle. Clean onefile commit -> independent tiny delta review -> ordinary exact integration of accepted test fixes -> one newtree Weball. Do not rerun oldtree. Failure snapshots/hashes remain unchanged; no allPASS claim.

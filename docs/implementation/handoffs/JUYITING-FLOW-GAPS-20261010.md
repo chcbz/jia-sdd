@@ -174,3 +174,17 @@
 - 同Run制品SHA256 `734ff59ba4b375b71cc76d4158bf86ee43efb26d48a9602b7bd198fc4141bb54`；Main只读流式核对364个dist文件的字节长度/SHA与manifest全部一致，从同制品mochawesome JSON核对正式测试计数。完整脱敏build日志122941字符/more=false；同批正式report、下载及验证记录在Main证据目录。
 - 原CI-only配置SHA仍719b28019…未改，无部署阶段/部署单；生产record文件SHA与09:06基线完全一致。**线上仍为此前1.14.4/Run195，本次五项代码尚未上线。** 本候选package metadata仍1.14.4，正式发布须确定新版本并走版本化Flow，不将本次CI制品当无记录的同版本替换；不执行数据库脚本/Runtime/API变更。
 - 最终状态 `IMPLEMENTED_INTEGRATED_CI_VERIFIED_NOT_DEPLOYED`；Main `/var/tmp/cyf-jyt-ui-five-20261011-wdTviG/summary.json`。Owner开发/定向验证约24分钟，之后Main完成集成、正式Flow和同批制品回读；源码修复完成与上线状态分开。未新增Reviewer/框架，未执行生产取消、验收、资金、除名或真实推理。
+
+## 2026-10-11 10:03 用户授权发布五项前端修复
+
+- 用户明确“发布”；Task `JYT-UI-FIVE-RELEASE-20261011`，Main唯一生产/控制面Owner。冻结五项前端修复，不含API、Runtime、DB/资金脚本、生产取消/验收/除名/推理。
+- fresh本地与远端develop为业务候选a63ee17/treea992988c、tracked clean；线上仍1.14.4/Run195。Main仅将package.json/package-lock.json版本改为 **1.14.5**，commit `21ded98d9b642eefa683403fd6068933186d7865` / tree `2de1f51adf35a58bf3f30423a37ec9b96303fc70`；依赖和业务源码不变，正式新Flow绑定此精确源码，不能把旧Run196当新版本发布回执。
+- Main证据 `/var/tmp/cyf-jyt-five-release-20261011-4N3rE2`；复用原4403172发布candidate/start/guard/verify工具，保存fresh原CI-only配置；source/installed deploy helper同SHAfba8d495…，保留发布锁/同Run不可变制品/备份/可恢复安装。备份目标 `/home/isp/baks/cyf-web-1.14.5-20261011`；上线后恢复原CI-only配置。
+- 原Turing发送返回agent not found，没有操作旧进程或重复派开发。新只读浏览器验收支持Ohm `01a128b5-6533-7b02-afba-5d5a78800264`（gpt_test_runner）接续既有工具，业务base明确为a63ee17；只写自己的/var/tmp证据/profile，不改源代码/Flow/生产数据，不充当Reviewer。收到Main新版本/Run通知后再测线上新产物；实际请求守卫阻止所有业务写提交，账号只用于本人已有记录只读/确认框放弃。
+
+### 11:45 发布收尾回读
+
+- Web **1.14.5 / Flow4403172 Run197 / commit21ded98 / tree2de1f51** 已上线，Flow全部SUCCESS。同Run制品SHA256 `405d01782bbb18d176fc70623a203b3c80147cb46c3466b70db3d5f6ab1f4634`；线上安装record为online_verified，364个安装文件及11个公网入口/关键资源字节摘要与制品匹配。
+- 11:45确认无活动Run/配置冲突后恢复原CI-only配置SHA719b28019…，APPLIED且readback一致；不启用develop自动部署。API/Runtime/DB没有变更。
+- 主控10:12调用wait_threads(timeoutMs=0)实际异常阻塞约5544秒，用户打断后11:44接续；不是构建耗时或持续主动跟进。未重复发布，直接核对线上新制品并完成配置恢复。
+- 五项修复已发布；本次新版真实页面交互复测尚未完成，不把先前本地fixture或只读准备当新版线上验收。证据仍在 `/var/tmp/cyf-jyt-five-release-20261011-4N3rE2`。

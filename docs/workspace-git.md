@@ -10,7 +10,9 @@ Use the root repository to inspect or commit an integrated delivery baseline:
 
 ```bash
 git status
-git add specs docs api web
+# Inspect the diff and stage only explicitly reviewed files for this task.
+git add -- specs/<feature-id>/<changed-file> docs/<changed-file>
+# Stage api/web gitlinks only for the exact integrated candidates actually verified.
 git commit -m "release: pin integrated feature baseline"
 ```
 

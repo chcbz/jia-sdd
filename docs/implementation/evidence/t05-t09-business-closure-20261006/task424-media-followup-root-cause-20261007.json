@@ -1,0 +1,56 @@
+{
+  "verifiedAt": "2026-10-07T05:40:17.632117+00:00",
+  "overall": "NOT_COMPLETE",
+  "taskId": "424",
+  "conversationId": "1760458004867",
+  "mediaDelivery": {
+    "state": "COMPLETED",
+    "childState": "OUTPUT_COMMITTED",
+    "assetId": "ast_55c726d77f452bca372b806095f2696e",
+    "sha256": "faff63bfb5b87edfbc9d49a91ab114ea2fd52d6da4a7dcb9d7af962d568f1c5a",
+    "bytes": 1513954,
+    "dimensions": [
+      1370,
+      1148
+    ],
+    "uiVisualObserved": "white background, one blue bird on thin branch, no text",
+    "savedReopenedDownloadedSameBytes": true
+  },
+  "newDefects": [
+    {
+      "rootCause": "frontend_rejects_LF_CR_in_natural_content",
+      "evidence": "task424-mixed-text-send-once-20261007.json",
+      "requestPosted": false,
+      "recordPersisted": false
+    },
+    {
+      "rootCause": "asset_projector_omits_terminal_execution_link_transition",
+      "evidence": "task424-media-child-task-readback-20261007.json",
+      "stepState": "OUTPUT_COMMITTED",
+      "executionLinkState": "RUNNING",
+      "affects": "exact mixed delivery basis and subsequent revisions"
+    },
+    {
+      "rootCause": "inspection_only_recovery_erases_unrelated_completed_media_basis",
+      "evidence": "web-followup-diagnostics-20261007.log",
+      "fix": "ignore only validated same-context INSPECT-only children, retain failed history and all CHAT/EXECUTE fences",
+      "evidenceType": "source + representative fixture reproduction; blocked live follow-up not yet separately attributable"
+    }
+  ],
+  "candidates": {
+    "api": {
+      "commit": "49fe947d1b3b61d9419b7b599bc5c58d445c5953",
+      "tree": "26f43324b0f9d97e51091848929bd43ebf4ba479",
+      "formalFlow": 117
+    },
+    "web": {
+      "commit": "47eb6c58e54d1be621053055cf3cdc6c8a4809ac",
+      "tree": "0283bc845ea24134d42f6723ae1ef81117eff9c9",
+      "version": "1.0.3",
+      "targetedLocalDiagnostic": "43 PASS; not formal Flow",
+      "formalFlow": 175
+    }
+  },
+  "writesForbidden": "no duplicate generate, no manual DML, no replay task423 acceptance",
+  "next": "cloud verification then same-run versioned release and original unsent multiline draft"
+}

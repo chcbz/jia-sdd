@@ -1,0 +1,102 @@
+# 典籍阁 Agent 任职与内容维护
+
+> 文档收口（2026-10-23）：保留D2数据/权限/版本与待核项；后续通用Runtime/技能解耦方向不等于已实现。 本轮仅核对文档归属与覆盖，不重新验证源码/上线；执行规则以根AGENTS为准。
+
+
+状态：**ready / D2 可交接实施（先 M0），未派发、未实施、未任命、未导入、未发布**。
+
+## 1. 目标与结论
+
+用户在聚义厅交代“宋江，新增《三国演义》”，宋江交办给具备有效技能且已任职的 Agent（例如吴用），后者通过受控 API 整理内容、创建版本、校验和按授权发布；读者能在典籍阁阅读、续读、书签、手札和选文提问。成功事实来自服务端发布记录和真实读回，不来自聊天回复或客户端任务 ACK。
+
+采用组合方案：**宋江协调工具 + 典籍维护技能 + 明确任职授权 + 服务端内容管理 API**。Agent 不持有数据库凭据，不执行生产 SQL。任职绑定 canonical Agent 身份和当前 owner/binding，不绑定“吴用”显示名称。任职授权、技能安装、任务分配是三个不同的事实。
+
+阅读入口：[详细设计](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)；[工作包](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)；[验收矩阵](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md)；[源码核对](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-baseline.md)。
+
+## 2. 首期范围
+
+1. 将固定《水浒传》阅读实现扩展为多书、多不可变版本，保留旧入口与旧锚点。
+2. 一个业务岗位 `ARCHIVE_EDITOR`（典籍阁编修），一个当前负责人；任职可授予 `DRAFT_ONLY` 或 `PUBLISH_VALIDATED`，另有可选书目范围，不默认给下架或任命权限。
+3. 一个平台维护的 `archive-maintainer` 技能包，包含确定性的文本处理脚本、工作规范和受控调用适配；第一版不引入付费购买依赖。
+4. 宋江协调或直接 @任职 Agent/密议均可受理新增、修订的请求，展示当前负责人、创建维护单、追踪阻碍和返回成果；无任职者时引导任命，不自行提权。
+5. 内容来源限用户明确提供的固定文件版本，或已配置来源适配器产生的不可变来源快照；默认先冻结底本，不开放任意 URL 抓取。
+6. 支持新增书目、章节导入、草稿修订、完整性检查、不可变版本发布、维护记录；勘误发布新版本。
+7. 手动发布和有明确预授权的自动发布共用一个服务端执行链；一次授权允许范围内后续自动发布，不强制逐书人工确认。
+8. 《三国演义》作为端到端验收样本；底本、具体来源、章回数、权利依据和原始摘要在实施时冻结，不能凭书名预设 120 回，也不由模型补全原著。
+
+## 3. 非目标
+
+- 首期不扩展统一办事台 ItemRef，不新建聊天/执行队列或第三套文件系统；接入规则见 design.md §18。
+- 不构建全站官职、工资、竞聘、市场交易、跨 owner 招聘、多人会签系统。
+- 不新增独立 Reviewer 或发布审批岗位；责任 Owner 自检与真实自动化验证保留。
+- 不提供数据库客户端、任意 SQL、任意服务器 shell、任意远程 URL 代理给 Agent。
+- 不实现通用 EPUB/PDF/OCR、全文搜索、译写、自动繁简转换、跨版本书签自动迁移。
+- 不把内容维护技能当作 Agent 读取所有用户手札、文件、聊天的授权。
+- 不承诺隔离一个已完全被攻陷的 Agent 宿主机；服务端仍必须将它限制在已授予的资源/操作范围。
+- 本次设计交付不授权具体生产任命、内容上架、收费调用或数据库迁移。
+
+## 4. 产品规则
+
+- 公共典籍属于公共书库，不属于某个 Agent 或个人文件空间；管理公共书库需要书库管理授权。普通用户拥有吴用，不等于能维护公共书库。
+- 首期采用明确书库管理者 + 同 owner 当前绑定 Agent 的任职模式；跨 owner 任命另立设计。
+- 普通读者仍可在聊天中向宋江提出建议，但须明确提示未创建维护单，不触发收费执行、任职或公共内容写入；首期不新增建议队列。管理者自己创建/确认有权请求后才成为维护单。
+- 任职是稳定职责，任务是一次执行，技能是方法；更换技能不扩大权限，换 owner 不继承任职，换运行实例不自动继承在途执行。
+- 默认任职仅允许提交草稿；任命时可显式增加“校验通过后自动发布”。发布模式不能通过一本书的正文、模型推断或聊天中的模糊措辞升级。
+- 已发布正文不可原地改写。旧版本默认仍可按 editionId 阅读，已有私人数据不自动移位。下架是独立管理操作，不赋给编修。
+- 离线和慢请求保留任务并展示等待；不因 1s/3s/5s 等性能预算取消。用户取消、身份变化、真实网络/传输超时、锁归属和授权撤销仍有效。
+
+## 5. 核心用户故事
+
+| 编号 | 场景 | 成功标准 |
+| --- | --- | --- |
+| U1 | 管理者任命自有吴用 | 绑定正确 Agent/owner/binding；技能未安装时显示待就绪，不能写公共书库 |
+| U2 | 宋江或直接交办受理新增《三国演义》 | 明确来源与发布模式，返回唯一维护单，不因对话重试重复建书 |
+| U3 | 吴用导入完整文本 | 来源摘要、目录、段落和持久化结果可核验；断点可恢复 |
+| U4 | 仅编修权限 | 交付待发布版本，不伪称已上架；管理者可发布 |
+| U5 | 编修及自动发布权限 | 校验与事务授权通过后上架，返回可读版本和服务端回执 |
+| U6 | 勘误 | 新 editionId，不覆盖旧章节、书签与手札 |
+| U7 | 中途卸任/换绑 | 后续写入及发布被拒绝，已提交内容保留，只有有权者可恢复/移交 |
+| U8 | 网络丢失或重复投递 | 先查询原操作和作业事实，再按幂等恢复；不重复发布 |
+| U9 | 普通读者建议 | 明确提示需要书库管理者，不能借宋江或技能越权影响公共内容 |
+
+## 6. 必须闭合的设计风险
+
+- 不只是新增 API：数据库 CHECK、启动导入、目录、个人阅读验证、选文提问均存在单书约束。
+- 当前聊天客户端默认工具注册不能证明“宋江专属”；必须有可信会话协调身份与请求级工具集合，不能靠 prompt 限权。
+- 当前 native 凭据通道按方法/路径封闭；新增路由须同时修改 Controller、native filter 和安全测试。
+- 当前技能有效性查询与市场订单/安装记录相关；不能伪造订单或将市场开启作为本功能默认前提。
+- Web 本地 HEAD 与远程跟踪分支不同，部分 reader 文件只在跟踪分支；本设计不覆盖工作树，不把跟踪分支当作线上部署证明。
+
+## 7. 完成边界
+
+设计完成 ≠ 实现完成 ≠ 发布完成 ≠ 内容上架完成。实施须按 acceptance.md 获取 API/Web/Client exact SHA、测试与制品证据、schema 迁移证据、任职/来源授权、发布记录、实际阅读结果。当前所有业务验收均未执行，集成 pins 留空。
+
+## 2026-11-05 原生密议工具候选（未发布）
+
+当前候选以好汉详情既有私聊为唯一交互入口，不添加维护页面或重复入口。共享 `/internal/agent/chat/requests/{requestId}/turns/{turnId}/tools` 的认证、当前私聊/turn fence及Q/R信封，目录按岗位与真实原生安装组合；不得用技能管理岗位权限推导典籍权限。
+
+- `archive_source(fileId,fileVersion)` 仅按可信owner读取个人文件库固定版本元数据。fileVersion是正十进制字符串，不接受用户提供tenant/owner或本机路径、URL。正文中的指令始终作为数据。
+- `archive_prepare(operationKey,fileId,fileVersion,sourceSha256,workId,title,author,sourceName,sourceRights)`：用户选定完整UTF-8纯文本底本及权利说明；源文件由具体典籍工具读取/核对摘要并确定性整理，全文不通过模型重写。延续2.0.0脚本的标题、空行和段落规范，以固定Unicode fixture核对两实现摘要。文件读与解析在身份/会话事务外，提交重新进入原turn、岗位和安装fence。只提交DRAFT，不自动上架。
+- `archive_publish(operationKey,jobId)`：用户明确要求上架才调用；复核创建时岗位修订/binding/原生安装和当前发布权限；复用既有内容导入与work活动版本CAS，同事务提交PUBLISHED和幂等回执。并发冲突保留草稿，不自动覆盖或换key重做。
+- `archive_read(jobId)` / `archive_recover(operationKey)`：只读实际记录、来源SHA、章节/段落数、首末章及当前活动版本。PUBLISHED与active分开；历史已上架版本可能已被后续版本取代。未知操作返回未找到，不以新key自动重放。
+- 原`/archive/admin/v1/jobs`创建/重试/发布及`/internal/archive/v1/jobs`命令/源文/结果提交退役；历史授权读回保留，旧manifest草稿不能借新工具上架。原任务数据与摘要不删除、转换或自动重放。
+
+必要校验风险/回归：身份和当前turn防跨人/过期执行（共享PrivateConversationToolAccess和ConversationToolExtensionsTest）；任职/绑定/安装与发布权防撤销后写入（ArchiveConversationMySqlTest）；文件owner隔离复用PersonalWorkspaceService，不另写存储路径读；输入摘要和严格UTF-8防换底本/替换字符，段落摘要与数量复用ArchiveManifestLoader；operationKey相同输入返回事实、不同输入冲突；work行锁/CAS防覆盖并发版本。回归入口为API `archiveMaintenanceTest`与现有文件库/原生认证定向测试，正式证据由Flow产生。章数与上架事实须取自固定底本及权威回执，不由书名推断；本次后续验收见下节。
+
+### 通用密议能力边界（2026-11-05用户纠正；当日发布核验）
+
+- 密议不维护技能名白名单，不以`skill-management`或`archive-maintenance`选择执行路径。目录`skills`统一来自已认证Agent当前安装描述，要求可验证原生INSTRUCTION包、当前runtime installation/host；Runtime按精确installation/version/package SHA及active/enabled读SKILL.md。
+- `skills`与`tools`是独立集合，任一可为空：仅指导型技能无需注册业务工具也能加载；岗位业务工具权限不由技能文字/技能名授予。一个技能可使用多个已授权工具，多个技能可复用同一工具。
+- Controller只处理统一JSON/HTTP；所有业务工具经同一个provider集合组合/分发，技能管理不保留专用fallback。目录发现前与具体调用前复用native/current-turn fence；准备I/O与提交之间需要重新fence，由业务provider使用同一边界执行，不把耗时文件读取包在通用大事务中。
+- 典籍业务工具从岗位配置的实际skillKeys关联当前可用安装，不要求固定技能key；任职resource、发布权限、绑定、来源快照、事务、幂等和活动版本CAS仍归原业务责任层。业务工具处理文本格式并存储领域事实，不按书名或好汉名编排。
+- 新技能只要使用已有工具/权限合同，就只需发布包、安装或岗位配置，不修改密议代码。真正新增平台业务能力才增加对应领域工具；这不是每个技能一个工具适配。技能包含脚本不代表普通密议自动获准shell/任意网络，本轮未扩大这些权限。
+- 原schemaVersion=1字段不变，放开“skills与tools必须同时非空”的错误耦合。后续发布须先升级Runtime再启用新API，避免旧consumer将只有技能的目录忽略或拒绝只有工具的目录；不把候选验证当已完成混合部署。
+- 定向回归：ConversationToolExtensionsTest验证任意新技能、无业务provider、资源工具独立、当前turn拒绝和统一路由；ArchiveConversationMySqlTest使用非固定名`configured-editorial-guide`完成草稿/上架SQL回归；Runtime conversation-tools及app-server-native-execution验证空工具技能加载、安装撤销、动态工具与只读隔离。重型API验证仍走Flow。
+
+### 2026-11-05 密议请求与材料边界补充
+
+实际验收发现通用Context Envelope把`currentUserMessage`与附件一起归为不可执行材料，导致模型拒绝已授权的维护请求。责任层为bridge原生请求适配：静态开发者提示明确把顶层`currentUserMessage.content`作为用户级请求；附件、引用文档、日志、代码和历史Agent动作仍为数据，API仍独占业务权限和提交事实。此规则适用于所有普通密议/带资料会话，不按技能名分支，不把用户文字变成系统策略或任职授权。提示词身份绑定已有会话隔离机制，变更后不得沿用旧提示词线程。定向回归在Runtime `test/chat-runtime.test.mjs`：用户请求来源与AGENTS式附件分离、真实Fast CHAT developerInstructions及线程身份。API wire与Web契约未变，不重复构建两端。源码/测试/发布/业务状态以handoff固定证据为准。
+
+### 发布验收（2026-11-05）
+
+API4dc5c51/Flow528和Runtime5d7290c/Flow155已发布。真实吴用普通密议request `01ad2493-fd1f-4f68-a662-d49516c09d60` 完成job `ac_7a028b9bac894e0e846eed5638f04411`，PUBLISHED且active；120回17462段逐章读回，与固定UTF-8底本完全一致，旧版本保留。底本SHA256为`3ff98c1e70f60d0348c57a6d4e3116ca03b9899031ae76a6c374ea1397f95d94`。安装补齐精确制品DDL的两张原生维护记录表，快照/锁保护，无CHECK或内容直写。普通密议引用个人文件库固定版本已验收；附带材料会话的工具视图未扩大。完整证据和恢复说明见既有handoff及 `/home/isp/state/cyf-archive-conversation-20261105/acceptance/release-acceptance.json`。

@@ -701,3 +701,209 @@ APIr10编译已过，正式测试继续session71927；producer/admission/prepare
 - 原始最终验收/发布摘要原字节副本进入evidence/release-20261015，source-index.json记录原路径与SHA。冻结规范、原计划/审计、失败证据及正式ops工具保留；它们不是临时文件，不可仅凭日期删除。
 - 本任务r2验收浏览器已正常关闭，API/Runtime未操作。14个一次性等待器、浏览器辅助脚本与临时摘录已从原路径移除；恢复备份/home/isp/baks/cyf-delivery-doc-closeout-20261016，逐文件清单evidence/release-20261015/temporary-cleanup-20261016.json。绑定制品的producer/installer及原日志保留，不破坏证据闭包。
 - 提交边界：API接口目录文档、根仓库本技能spec/验收/证据、整体SDD与相关runbook增量、已发布组件gitlink。其他聊天的运维路径迁移、UI基线/原型、全局任务台账等不混入；当前仍可能有其他任务脏工作区，不声明全工作区clean。
+
+### PDF-SKILL-20261022 — 2026-10-22 用户授权：PDF处理迁Agent技能
+
+- 唯一Owner：当前主Agent（PDF-SKILL-20261022）；不另设Reviewer，不接管其他任务/进程。规则已读：`/home/isp/wsps/cyf/AGENTS.md`、`ops/orchestration/README.md`、各组件AGENTS、Runtime仓库AGENTS；共享quick-iterate的develop自动部署历史条款由现行项目规则覆盖。
+- 固定规范：`/home/isp/wsps/cyf/api/docs/interface-standard.md` v1.2，SHA256 `7dc50a51b5c3faa2d5311dd0f749ed2000365c34febc3c3714ba2a945180548f`；Runtime实现显式受本项目规范约束，不修改其他项目或全局技能。
+- 目标：PDF文本读取迁现有`local-script` Agent技能；前端原文件PDF分页查看不再依赖API文本提取；API只保留鉴权/固定版本/字节完整性和被动文件传输，移除PDFBox解析路径，包括成果接收；不以移除PDF分支声称POI/全部元空间根因已解决。
+- 非目标：OCR、任意PDF编辑、Office迁移、新调度系统、自动下单/安装技能、Provider收费、生产配置/重启/部署。技能发布/安装与API/Web部署分别取得真实证据后再标完成，源码准备不代表上线。
+- 三个独立worktree均位于`/home/isp/wsps/worktrees/pdf-agent-skill-20261022/{api,web,runtime}`，branch均`codex/pdf-agent-skill-20261022`；2026-10-22北京时间已实际ls-remote并fetch develop：API `29bd0b302a2fef33b4a573c2b16d90e61354f0c9` / tree `f9be198f9812b966796d20f3b4de5853af731f2b`；Web `b984ddfc2d04054455df67a47ab5a8a54161be9e` / tree `74c5e668d9a75fde7e73ee22082d3e1ae888b279`；Runtime `0e96676d80e1c10917376a99ce2322ce7951c968` / tree `58d4b8a589808c368940a565b351be58e0c61ce3`。远端仅代表查询当时，不代表之后不变。主工作区他人脏修改不覆盖。
+- 当前线上只读诊断：OOM旧API PID445673已在其他操作中退出；新API PID502483，192MiB元空间上限；安装JAR无完整固定源码闭包，本条不冒认基线就是线上输入。诊断证据`/var/tmp/cyf-metaspace-20261022-fAcStj/growth-analysis.md`。
+- 最早反馈：技能真实PDF夹具提取/无网络沙箱与回执定向Node诊断；API零PDFBox生产引用/原字节预览与成果边界回归；Web PDF MIME合同、页切换、失败/身份切换清理。界面先更新唯一原型再实现，保留PDF分页/资料往返。正式前后端验证仍走Flow5260799/4403172，不本机构建。
+- 初始定位：当前PDF预览为API PDFBox逐页文本，另有`PersonalWorkspaceOutputFormatValidator`和无调用者旧`PdfUtil`解析；现有local-script已经实现离线bwrap/授权输入摘要/效果幂等/成果回传，优先复用，不新增PDF专用runner。
+- 计时：定位开始；实现/验证/等待待填，未作耗时承诺。
+
+#### 2026-10-22 PDF-SKILL 源码候选与诊断
+- 三仓任务分支已提交推送，主工作区未切分支/回退：API `1b1128e75585ee82409d840fa8d0b58748b2494c` / tree `2c57a05387962cbf6ee99f9d1d0532c1023866df`；Web `b75c155cc6dbba43383566061923cca814c33c03` / tree `1c38903ebc4b87fd283d35f535d43f68aa777fea`；Runtime `134ffc1ea46e06159a2d2bd53f46c8ae516f7418` / tree `38404b66b3a5a01dc031f269734ec8257de4d79a`。尚未合入develop，未发布/安装/重启。
+- API两条预览链（工作空间、任务成果）统一为单个`content/application/pdf`原字节；任务表示为`ORIGINAL_PDF`，不做UTF-8解释。移除`PdfUtil`与生产PDFBox依赖；PDF成果接收只做头尾包络，不再承诺结构/语义重开保证。Office仍保留POI处理，不声称解决全部元空间问题。新增生产service/starter运行类路径PDF依赖回归，尚待云端执行。
+- Agent包`pdf-extract@1.0.0`使用现有local-script，不改runner；单个授权PDF→分页正文及text/plain成果。无文字页明确`OCR_MAY_BE_REQUIRED`且`ocrPerformed:false`；密码/损坏明确返回不可读取状态、不伪造正文。ZIP共193项/2298888bytes，SHA256 `a406a6883abe81617f247afe9b2ead65fd9ac62e137020dbc75de9fa7a5d6e63`；精确包与manifest/锁摘要见Runtime包内`release-input.json`。未登记市场、未给任何Agent下单或安装。
+- 本机定向诊断：Web47项通过；原始PDF真实浏览器worker/分页/中文页/320px/密码/损坏/关闭清理通过，证据`/var/tmp/cyf-pdf-preview-553031/browser.json`；Agent精确ZIP提取与实际bwrap输入回执4项通过，现有local-script隔离/回执/持久结果恢复合计14项通过（无跳过）。这些不替代前后端正式Flow验收。
+- 初次Agent沙箱探针因`/home/isp/apps/node/bin/node`属isp且0775被既有信任规则拒绝；未放宽策略或改全局权限。实际验证用私有root目录内同字节Node22诊断副本，未安装到生产。浏览器诊断用现有Chromium133实体与临时无沙箱测试启动器，只运行合成夹具；未改公共launcher。
+- Flow控制面证据`/var/tmp/cyf-pdf-skill-20261022/`。14:07后只读发现API配置从此前CI-only被并发Owner切为`Explicit common image input 1.16.27`且Run226 RUNNING；本任务一次候选update返回`FLOW_API_INVALID_YAML`，未启动后端Run，不覆盖并发配置、不取消其Run、不擅自恢复旧配置。后端正式验证受此并发发布阻塞。
+- Web候选仅临时允许任务分支、无部署阶段，保存前值/readback；通用flow-control对超过100条运行历史拒绝start，已归因而非盲重试；任务临时分页适配器完整读取所有历史后复用原`commandStart`单写/配置/源码核对，未修改共享控制器或新增流水线。Web真实Run与配置恢复结果续记。
+
+#### 2026-10-22 PDF-SKILL 续修与版本发布授权
+- 用户明确授权：修复审计缺口，验证无问题后合入develop并发布，核对develop新版本。唯一Owner仍本聊天；无子Agent/Reviewer。发布不包含扣费或伪造安装权益；技能通过既有安装流程交付，不手工复制绕过安装登记。
+- 15:25左右重新fetch：API develop29bd0b302a2fef33b4a573c2b16d90e61354f0c9、Runtime develop0e96676d80e1c10917376a99ce2322ce7951c968未前移；Web develop7c7a00897bd87418932cb7c757bce2741fd2ad7c/version1.16.41，已在任务隔离Web分支合并保留，主工作区未操作。
+- Web Run289真实FAIL：3249passing/2pending/1failure，overview组件测试仍用旧PDF text/plain预览夹具。源码审计同时确认HallMaterialPicker两预览入口、独立PersonalWorkspace版本页、HallDraftEditor成果预览遗漏新pdf分支；本轮统一修复并补回归。
+- 当前只读Flow：Web最新290SUCCESS，API227SUCCESS；Web配置仍为本任务临时无部署候选，API配置已由并发Owner更新，不覆盖旧备份。正式发布前逐次核对归属/活动Run、保存当前前值。
+- 证据续写于/var/tmp/cyf-pdf-skill-20261022/release；固定接口规范v1.2 SHA7dc50a51b5c3faa2d5311dd0f749ed2000365c34febc3c3714ba2a945180548f继续适用。当前仅源码候选，未将诊断视为正式验收。
+
+### PDF-SKILL-20261022：全系统 Node 统一升级授权（2026-10-22 16:04 +08:00）
+
+- 用户将范围从 Runtime 私有升级扩展为全系统统一版本，不接受长期多版本。Owner 沿用本任务；不创建 Reviewer。
+- 官方 dist/index.json 本次实查最新 LTS v24.22.1（2026-10-20），Current v26.12.1（2026-10-21）；生产目标统一 v24.22.1。下载及官方 SHA 校验证据目录 `/var/tmp/cyf-pdf-skill-20261022/release/node-unified/`。尚未切换生产。
+- 已发现系统 `/usr/bin/node` RPM v20.20.2、共享 `/home/isp/apps/node/bin/node` v22.19.0、统一 Runtime 1.2.4 内置 v20.20.2、Flow 前端模板固定 v20.20.2。统一范围包括宿主入口/npm、Runtime、Flow 实际配置和维护模板，不只 PDF 技能。制品可携带同一版本字节，不维护不同版本运行轨道；旧制品仅留作恢复证据。
+- 新确认真实 Node20 执行 PDF 精确 ZIP 4 项失败：Promise.withResolvers 不存在；保留 pdfjs-dist 6.4.299，以升级 Node 解决。不再降级 PDF.js。原降级 npm 进程已退出，Runtime worktree 仍干净。
+- 运行中还存在 Codex 会话和他人任务 Node 进程；不得强杀或擅自重启这些进程。统一升级验收须区分入口已切换与旧进程尚未退出，并协调所属 Owner；全部实际进程收口前不宣称全系统完成。
+- 系统 Node 为 RPM 管理，先核对包依赖与全局 CLI；不能直接覆盖 RPM 文件、丢失全局包或以 PATH 遮蔽旧版本冒充统一。Runtime 按原指南保留身份/HOME/状态，不原地覆盖1.2.4。API/Web 仍必须同 Run Flow 发布。
+- 续进展：官方下载清单固定 linux-x64 tar SHA256 `6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6`，阿里镜像下载通过该摘要校验。仅解压任务私有候选 `/root/.cache/cyf-node-unified-20261022/node-v24.22.1-linux-x64`，未覆盖任何活动 Node。归档原 uid 在本机映射 mysql，已将任务候选改 root:root，避免 local-script 信任失败；未放宽 runner 校验。
+- 本地 Flow 前端 CI/release 模板及其测试已定向替换为24.22.1/官方摘要，模板单元测试6通过；云端配置未改、未触发Run。这三个根仓路径含既有未跟踪文件（CI模板、测试），不得整体提交其他Owner内容，后续需按本轮差异收口。
+- 下一步：取 `release/node-unified/pdf-node24-trusted-diagnostic.txt` 的最终结果，覆盖Runtime/全局CLI兼容回归；系统RPM nodejs/npm需要配套处理并保留全局包；协调Codex/他人活跃进程退出，再按正式Flow与Runtime既有发布流程统一版本。原API/Web候选尚未合入/发布，不能使用旧Node构建证据宣称新工具链验收。
+
+### 2026-10-22 联合 Runtime 接单与续验收
+
+- 已实际读取 `docs/implementation/handoffs/SKILL-UNKNOWN-BACKOFF-20261022.md` 并确认接单。Runtime develop `7b37f5b2b09672c1e989c4284555d27e425068f4` 已 merge 到本任务，保留 UNKNOWN 单执行退避、安全诊断与双方文档；联合版本1.2.5。旧基线准备仅在 stage，已停止本任务该pip子进程并由安装器清理，未生成/覆盖1.2.5。
+- 联合Node24回归49/49（诊断、conversation、store、local-script、PDF、Node安装入口）；r2实际HTTP命令ACK11/11；新载荷目录1/1。联合源码固定记录 `release/continued/runtime-joint-source.txt`；新的安装准备使用该源码和Node24.22.1、Python3.11.13，原npm锁/六项Python pins不变。下载改用阿里PyPI镜像以解决旧镜像低速；不是复制旧venv或上线。
+- 旧基线广泛Runtime诊断252项：249通过、2失败、1历史显式NOT_RUN。其中UID1001子进程执行/root下Node的EACCES已用相同Node字节的root-owned可搜索暂存路径纠正，hosting7/7通过；旧canonical ACK首次执行未发生，未查明当时瞬态原因，不能以旧全套称全绿；联合源码对真实HTTP ACK加安全失败上下文后定向11/11通过，不修改生产ACK/幂等逻辑。
+- Web最新develop ddda0d3 /1.16.42、API1d05101d已merge保留“任意格式上传但不扩大预览权限”；Web候选升1.16.43，工具链.nvmrc/资产CI真实bootstrap也更新24.22.1，避免只改外层Flow后内部又拉Node20。Web102定向与22bootstrap通过。Run292精确f891b58失败为prototype loader漏替换新PDF组件import；已修复两处并定向2通过，源码669bdc9。Run293正式测试/构建与扫描SUCCESS，部署仍等待配对发布条件，未上线。
+- API229精确d793750837a5af808f15615cd7251a7b5bdd42de正式Flow失败，正在只读取日志归因，不本机Gradle兜底、不释放Web部署。上一Owner Run228已SUCCESS（1.16.28），本任务API候选1.16.29。
+- Web r2起初preflight将云端尾换行归一化误判配置变化，未写/未启动；比对确认canonical与本任务Run292配置相同，使用readback原字节后Run293成功创建。所有start初次source为空的UNKNOWN均通过返回Run的只读查询核对，不重复提交start。
+- 系统Node升级恢复准备：已下载并签名校验现有四个RPM（nodejs/npm/full-i18n/docs），保存在 `/home/isp/baks/node-unified-20261022/rpms/`；尚未卸载。Node24下现有Codex CLI、corepack、global docx实测通过。仍未切换宿主入口或重启其他Owner进程。
+
+### 2026-10-22 17:48 +08:00 联合发布续接（进行中）
+
+- 已复核 prepared Runtime 1.2.5：源码 `6c2cadc6d2e30c711cf682be0e70eef6d1a34c89` / tree `ca8d24a0919c86bff076ce3803ca3410444c4561`；远端develop本轮fetch确认已是同提交，含7b37f5b，不重复集成。
+- 宿主Node入口已切换24.22.1/npm11.19.1，RPM四包已按备份恢复方案卸载，`/usr/bin`与`/usr/local/bin`统一指向`/home/isp/apps/node`；保留原全局包及Corepack，不升级CLI。证据`/var/tmp/cyf-pdf-skill-20261022/release/continued/node-host-upgrade.json`。先前stage因同名Corepack目录/链接冲突失败，仅修改任务stage后修复；未覆盖旧活动目录。其他Owner旧Node进程未重启，不宣称全系统进程收口。
+- Runtime已在统一发布锁下温和停止，当前执行停写全状态备份；原身份/配置摘要已保存。session19955，对应`activate-runtime-joint.py`；不能重复启动或改unit。原UNKNOWN和历史DISPATCHED记录精确核对未新增、不清理、不重放。备份完成脚本将切换1.2.5并启动，之后必须核验三通道/心跳并更新current；截至本条未标上线成功。
+- API230失败已归因：4项测试仍断言旧裸响应（Controller已为统一data信封），另2项POI预览测试缺libfreetype/fontmanager。修复测试且保持错误code顶层；新候选 `7841057b057c012cfa203fb658c1043500be055e`。Flow补签名包管理器字体依赖与ldd检查，未跳过任何测试；维护入口`ops/ci/aliyun-flow/backend-ci-run.sh`同步补前置。
+- API新Run231已创建，初始来源为空的UNKNOWN只读核对中，未重复start。证据`release/continued/r4/`；Web293构建与扫描SUCCESS、同Run部署等待配对条件；未创建ready文件，前后端均未发布本次版本。API/Web远端develop分别1d05101d/ddda0d3，本轮fetch无新前移；任务分支包含它们。
+
+### FLOW-PAIR-WAIT-DIAG-20261022 — 并行诊断交接（非接管 PDF Owner）
+
+- 用户在独立聊天要求“云效前端跑27分钟？分析并处理”。本聊天Owner仅负责等待问题诊断/协调，不接管PDF-SKILL-20261022的源码、进程、配置和发布；已读根AGENTS、orchestration索引、Flow工具README和本handoff。接口规范沿用本节固定v1.2，不变更接口。
+- 2026-10-22 17:44 +08:00实查：Web4403172/293，源码669bdc9d6439d1bd7eb71df5ed401202a648f419，17:02:08启动；测试构建135秒、并行扫描150秒均SUCCESS；17:04:39进入部署71614184，主机healthy。17:04:46制品已下载；日志最后为PDF_PAIR_WAIT。云端配置循环只检查ready文件存在，每5秒sleep，不观察API失败；不是构建慢、下载慢或已确认的锁等待。
+- API5260799/229（d793750837a5af808f15615cd7251a7b5bdd42de）失败：verifyPdfProcessingBoundary跨项目解析starter runtimeClasspath缺少所属项目exclusive lock；230（4fe0117f22817e7e15475a5a7d2e1b329587510b）失败：4个AgentTaskDeliverableControllerTest断言未采用统一响应envelope，另2个PersonalWorkspacePreviewRendererTest因libfreetype.so.6缺失/FontManager初始化失败。两次不是同一根因。
+- 原Owner已提交7841057b057c012cfa203fb658c1043500be055e修正envelope断言，并准备font-prerequisites.sh（保留包签名校验和ldd/font检查）。17:45:27实时查询API231为RUNNING；不重复启动、不替Owner改worktree。
+- 安全处置：保留Web293同Run不可变制品与原配对校验，等待原Owner完成API231验证、两端合入与真实配对确认；本聊天不创建ready、不放宽bothBuildsVerified/bothCommitsMerged、不取消他人Run、不改活动流水线配置。通信工具未暴露send_message_to_thread，故在既有handoff留待Owner自然接续读取；尚无接收确认。
+- 待Owner收口：配对控制面应明确固定双方Run/SHA和WAITING/FAILED/READY状态；依赖失败须可观察并通知，而不是只以文件缺失静默循环。后端继续修复时明确更新候选关联，不自动把历史成功当配对成功。不新增无证据硬超时，不绕过统一发布锁；活动Run结束后再维护候选/默认配置。此条为修复建议，尚未应用，不能标已解决。
+- 非目标：不改Node升级/Runtime激活，不创建新流水线，不本机构建API/Web，不覆盖其他任务脏文件。最终Flow/线上状态待续记。
+
+#### FLOW-PAIR-WAIT-DIAG-20261022 规则更正（2026-10-22，供原Owner自然接续）
+
+- 用户后续明确：Flow目的是卸载本机Node.js/Gradle等高内存任务，轻量任务可本机；不是“Flow禁止测试”。已更新根AGENTS、部署策略、门禁说明与工具/SDD入口。根仓基线5e6ab2b6f1a156c320189f17d76941fbe623738a/tree9e1221b3aa7c70ca7f80670ec5ce7ef695af05f2，保留原脏修改，不改组件源码。Owner仅限本聊天规则整理，未接管PDF发布。
+- 最新规则覆盖上一诊断建议：不要将WAITING/FAILED/READY协调状态机继续放入Flow；重型测试/构建和授权部署完成即结束Run，配对/人工/ready文件等待与轻量健康业务核验在本机控制面做。保留制品来源、锁、权限和恢复；不要为关闭等待伪造ready或宣称线上验收成功。
+- 补充查询事实：2026-10-22 17:49:34 API231已FAIL；字体包安装成功，失败在独立ldd对libfontmanager的libjvm.so搜索路径检查。日志仍应由原Owner结合JDK实际路径归因，不等于libfreetype仍缺失。本聊天未改其脚本/云端配置或重复启动。
+- 本次仅文档/规则修改和轻量一致性检查；未更新云端模板/配置/安装器、取消/触发Run或部署重启。活动Owner需在自然接续点重读根AGENTS并自行确认接收；目前无确认，不能称运行中的Web293已解除等待。修改前文档快照：/var/tmp/cyf-flow-resource-rules-20261022/before/。
+
+#### FLOW-RESOURCE-SPLIT-20261022 控制面占用通知
+
+- 用户已在规则聊天明确授权更新两条流水线并各执行一次CI观测。18:15:43本聊天已将空闲Web4403172切换为无部署/无外部等待的资源卸载CI，readback确认，并启动真实Run294（develop669bdc9，初始source字段未填全，仅只读核对，不重复start）。这是配置效果验证，不是PDF发布；不修改应用源码。原Run293非本聊天取消。
+- 本聊天API候选已渲染，但因原Run232在途未写后端配置/未触发新Run。18:12左右部署日志出现`receipt source is not a clean develop build`，需原发布Owner自行归因；不以此允许绕过来源校验。本聊天将仅在无活动Run且云端前值匹配时更新默认CI；若Owner已开始新发布或配置已变，立即停写协调，不覆盖。
+- 任务/候选/前值与结果见docs/implementation/handoffs/FLOW-RESOURCE-SPLIT-20261022.md、/var/tmp/cyf-flow-resource-run-20261022/。请原Owner自然接续时核对当前配置和新Run归属，勿把Run294误作部署成功或在它活动期间覆盖配置。
+
+### 2026-10-22 联合发布收口（程序上线及健康/制品核验完成；业务边界保留）
+
+- Runtime **1.2.5**：`6c2cadc6d2e30c711cf682be0e70eef6d1a34c89` / tree `ca8d24a0919c86bff076ce3803ca3410444c4561`，含UNKNOWN交接7b37f5b，远端develop已集成。真实PID699562/current→releases/1.2.5；Node24.22.1；停写备份后激活，身份/配置摘要保留。API重启后再次核验三通道registered/ready与新鲜ACK。原image-edit RESULT_UNKNOWN不清理不重放；日志实际恢复间隔已增长至约4–5分钟，非CPU改善实测承诺。
+- API **1.16.29**：develop `7841057b057c012cfa203fb658c1043500be055e` / tree `57b0add0c4bf89c313f179d6a365508cf58f9b62`，**5260799/233 SUCCESS**，部署71624603/目标主机Success。2935 tests/0failure/0error/122既有skip，PDF/成果相关4组29项无跳过；fresh JAR与分层/依赖门禁通过。同Run制品SHA256 `f33db467bcc8bbdf44716ed805d4fee0a6862c043e4630f9261cb424239861f3`；安装JAR SHA256 `244f2b6e208bf9794cb5da2ce506903b40acc24aa8483dece30e293c154f5e03`。真实PID719501、canonical cwd/JAR与cyf-api身份匹配、health UP；公开agent/map无凭据401。生产JAR无PDFBox/FontBox/PdfUtil。此次没有上调元空间上限，不声称消除了POI或其他全部元空间增长原因。
+- Web **1.16.43**：develop `669bdc9d6439d1bd7eb71df5ed401202a648f419` / tree `07e73d0e8ed69b6556e7ea67ee7172fe1c09ec8b`，**4403172/295 SUCCESS**，部署71624824/主机Success。release profile3252pass/2pending/0fail（不包含独立assets profile）；同Run制品SHA256 `0cb2319026abc66ac8a64c17983f2897f9fb99fafbd3833d8f1b691ab950c007`。所有安装文件摘要通过，公网站点入口/JuyiHall/PDF代码/worker/loader共5项逐字节摘要一致；显式保留原生产三项VITE开关true。
+- 真实发布顺序：Runtime先激活；两端条件已确认后各自Flow执行，Web安装完成早于API新进程启动及最终健康。未伪报原计划的严格API→Web完成顺序。没有付费Provider调用或新业务事项。
+- 前期API232与Web293来自任务分支，不能满足既有安装器develop来源要求，**不作为上线输入**；API232在替换应用前拒绝，Web293只读终态CANCELED。没有篡改制品branch或降低安装校验；相同源码合入develop后以233/295同Run制品发布。API231字体ldd遗漏JDK server库搜索路径已修正，不是关闭字体回归。
+- 自然接续点已读取根AGENTS 10-22资源分工新规则；API233为此前已冻结配置，预先确认条件而不依赖Web完成；Web295基于另一Owner新resource-offloaded配置追加本次显式部署、没有ready外部等待。Web完成后已按当前摘要/无活动Run保护恢复该Owner验证的CI-only默认，未恢复旧Node20。API233结束已通过FLOW-RESOURCE-SPLIT handoff交回后端默认观测窗口，不覆盖其配置。
+- 宿主Node入口、npm及Runtime统一24.22.1/npm11.19.1；原RPM四包与Node22只在恢复备份。**收口核验时仍有2个其他Owner既存旧Node进程尚需自然退出重开**，未强杀/擅自重启，因此“全部活动进程已统一”仍未完成。
+- `pdf-extract@1.0.0`只是已合入Runtime组件的可发布技能包，尚未登记市场/下单安装到角色；不绕权益/安装回执复制上线。认证后的真实PDF端到端业务验收未执行，程序上线/合成回归/线上资源校验与业务验收分开。
+- 持久收口证据：`specs/juyiting-skill-execution/evidence/pdf-skill-release-20261022/release-summary.json`及相邻Flow/部署/制品/在线/测试记录；敏感恢复备份仍留`/home/isp/baks/cyf-pdf-joint-runtime-1.2.5-20261022/`，详细失败/控制面日志保留`/var/tmp/cyf-pdf-skill-20261022/release/continued/`。本轮未覆盖主工作区/他人根仓修改；组件develop完成，根仓并行维护文档/工具变更保留原归属。
+
+### 2026-10-22 PDF 安装到吴用：发布权限阻塞（本聊天 Owner）
+- 用户明确要求先安装 `pdf-extract@1.0.0` 到吴用；范围仅该角色该技能，不调用 Provider、不重放 UNKNOWN、不调整其他角色/权益。
+- 19:12–19:16 CST 使用既有真实测试账户 OAuth 登录，仅内存持有令牌。市场能力 true，市场仍四个商品无 pdf-extract；吴用 `jyt-jiafewnnv58ec2379c-wuyong` 权益读回仅 image-edit1.0.0 ACTIVE。
+- 待发布 ZIP SHA256 a406a6883abe81617f247afe9b2ead65fd9ac62e137020dbc75de9fa7a5d6e63，与已固定 Runtime 技能 release-input 匹配；拟零价、权限[]，未直接复制到包 store、未改数据库。
+- 真实维护 HTTP 发布首次普通 metadata 表单 part 返回503 SKILL_PUBLICATION_UNAVAILABLE。源码 `HostingRentHttp.noQuery` 使用 getParameterMap，可能将 multipart metadata 当查询参数拒绝；改为带 filename 的 metadata part 后返回明确403 SKILL_PUBLICATION_FORBIDDEN。不能将首次503归因于包或 Runtime，也未盲重发相同输入。
+- 当前认证没有经证明的 ROLE_ADMIN；已有历史 root 维护 CLI 固定旧 JAR/四包清单，不能直接复用为当前 PDF 发布授权证据。未降级鉴权、伪造角色或调用内部数据库写入。未创建 quote/order，未安装成功。
+- 证据 `/var/tmp/cyf-pdf-wuyong-install-20261022/`：preflight.json、entitlements-before.json、publish-intent.json、publish-result.json、publish-filepart-intent.json、publish-filepart-result.json。下一步须取得有效平台维护身份，或正式更新固定当前 JAR/包的维护入口，然后原购买安装/回执/READY核验。
+
+### 2026-10-22 接续：用户授权不经界面直接安装 PDF 到吴用
+- Owner 为本聊天；范围仅 `pdf-extract@1.0.0` 零价发布和吴用的真实安装/回执，不改用户角色、不重启服务、不改其他技能、不调用 Provider。用户明确“直接安装，现在界面安装流程还没打通”。
+- 采用已有 root 维护发布 harness（不伪造普通用户 ROLE_ADMIN），重新固定当前线上 Flow233/JAR SHA244f2b6e…、新 PDF 包摘要和真实数据库身份；随后用真实所属用户 HTTP quote/order，不依赖页面。当前应用与Runtime无需源码改动/重构建。
+- 固定 Runtime worktree `/home/isp/wsps/worktrees/pdf-agent-skill-20261022/runtime` clean HEAD6c2cadc6/treeca8d24a0；API线上/develop远端7841057b（本轮查询），本地api HEAD94b4c8a5非本次发布输入，不覆盖。公共规范 `/home/isp/wsps/cyf/api/docs/interface-standard.md` 当前SHA2567dc50a51b5c3faa2d5311dd0f749ed2000365c34febc3c3714ba2a945180548f。
+- 最早验证：原harness对当前JAR的manifest probe与只读产品readback；发布持原锁、原事务/CAS及不可变对象校验。失败先readback，不重复创建订单。证据继续 `/var/tmp/cyf-pdf-wuyong-install-20261022/`。
+
+#### 19:58 CST 直接安装实际结果（未完成后端激活，不重复下单）
+- 原 root 维护发布 harness 的已编译类/源码与原绑定逐字节匹配；调用当前线上 Flow233 JAR 原publisher，probe和真实DB身份readback通过。持现行coordinator→api release锁（当次Runtime激活也使用api release锁；历史runtime独立锁已不存在，未恢复旧锁），完成 pdf-extract1.0.0 APPROVED/PUBLISHED/包摘要readback。无本地构建、无应用重启、无用户角色修改、无手工数据库权益写入。
+- 真实所属用户按公共规范1.2/protocol1信封直接HTTP报价及零价安装，仅一笔订单 `so_194e9ba7465b4db3b3c538ddf3bd51a2`，安装 `si_d9b8e801d1924b0d94c88d15e65acbdf`，agent version140。初始roster未包公共信封被拒，修正后只读成功；未在失败时创建报价/订单。
+- 原Runtime安装器已安装到 `/home/isp/state/cyf-agent-runtime-v1/unified/agents/wuyong/codex-home/skills/pdf-extract`，193文件全部与已固定ZIP逐字节摘要匹配，本地registry ACTIVE、真实result SUCCEEDED、attempt1。
+- **实际阻塞**：后端订单仍INSTALLING/权益PENDING_INSTALLATION；Runtime真实成功结果 `12dfd156-da64-4d6f-952e-958db10fc081` 留在work-results/pending、sendAttempts0，19:57仍未确认，不能宣称READY或任务可用。当前进程699562/1.2.5三角色channel健康，未停止/重启/inspector注入。没有修改pending/acks/marker/registry或重放旧UNKNOWN。
+- 精确结果路径：`/home/isp/apps/cyf-agent-runtime-v1/wuyong/runtime-state/inbox/6a79742d6a69616665776e6e763538656332333739632d7775796f6e67/skill-install/5774e38345d83e51d078dfb076d5b93a/work-results/pending/12dfd156-da64-4d6f-952e-958db10fc081.json`。仅此pending结果；原toAgentWire对该envelope无传输的纯投影通过，尚未证明在线send为何返回false或抛错。应继续定位 sendRaw→runtimeTransport.send→matchesDurableResultEnvelope / replayResults，不凭推测改状态。
+- 持久证据 `/home/isp/wsps/cyf/specs/juyiting-skill-execution/evidence/pdf-skill-release-20261022/wuyong-install/summary.json`及publication/purchase/installed-bytes/backend-readback；详日志/控制脚本在本任务var/tmp目录。不要把最初联合发布“未上架/未安装”历史观察改写为当时已安装；本节为新增操作。实际PDF业务验收NOT_RUN，无Provider调用。
+
+### 2026-10-22 19:59 跨任务协调通知（external-main，不接管PDF安装）
+- 图片闭环Owner已准备Runtime1.2.6/7dd120f5用于修正“编辑技能MIME限制误用于原生读图”的模型指令，精确512报文AVIF真实模型通过、115定向回归通过。无API/Web改动，无技能安装/权益变更。
+- 首次非阻塞获取统一发布锁失败，未停止1.2.5/未动unit；已观察PDF购买FUNDS_HELD，当前等待你方安装终态，避免打断。你方自然接续请记录安装完成/可切换窗口；本任务保留所有UNKNOWN与恢复记录，不取消或重放。准备/证据 /var/tmp/cyf-unrestricted-release-20261022/continuation，未宣称收到协调确认。
+
+### 2026-10-22 20:23 浏览器 PDF 全流程验证：FAIL
+- 用户明确要求浏览器全流程。本聊天复用既有CDP浏览器driver，在独立profile Chromium133/1440x1000进行线上UI操作；固定Web Run295/API233，无部署或服务重启。认证复用既有真实OAuth会话，仅内存转移；不代表浏览器登录表单验收。
+- 真实UI：技能市场可见PDF产品；上传合成两页PDF成功201，file `pws_95e3924eea2a4696a0e97a3e9e22e11b` v1、934bytes、SHAb1ba765a0218a189379fd17bea129759334ae9d424c3465c3ac926bfec65bd8f；建立唯一任务514，UI点将吴用，conversation1760458006816。指派回执grant ACTIVE包含DELIBERATE/EXECUTE_SKILL和精确PDF输入版本。
+- 预览FAIL：界面“PDF 无法解析”；内容GET200/application/pdf，但worker `/static/pdf.worker.min-Dkey6ZUl.mjs` 返回application/octet-stream；浏览器实际动态module import失败TypeError。合成PDF通过已安装PDF.js本地只读诊断，2页正确含PDF-WUYONG-20261022/123.45，排除该fixture损坏；这不是Agent提取验收。
+- 技能调用FAIL：真实任务目录 pdf-extract=UNAVAILABLE/SKILL_NOT_INSTALLED，image-edit另为SKILL_RUNTIME_INVALID_DECLARATION，页面可调用技能0。安装仍后端未激活，未伪造成功。
+- 吴用真实初始答复已返回，typed outcome kind CLARIFY/deliverable=false：材料不可读取且无可执行PDF操作，需补充文件。没有PDF技能执行或文本成果，结果下载NOT_REACHED。页面“已完成”是回合结束显示，不可当业务验收成功。未再发追问/重传/重复下单，保留待补充的测试事项供修复后接续。
+- 本地测试guard首次拦截新creation-operations/v2及point-and-deliberate路径，后使用UI“确认继续原张榜/继续原点将”按同一原intent放行，不创建重复事项；此类Failed to fetch及ancillary search/recommend拦截不计产品错误。测试浏览器已精确关闭，无其他聊天浏览器操作。
+- 持久证据：`/home/isp/wsps/cyf/specs/juyiting-skill-execution/evidence/pdf-skill-release-20261022/browser-e2e/summary.json`，同目录截图05-pdf-uploaded.png/11-progress.png、目录/typed-outcome/assignment原响应、worker诊断、fixture文本校验；详情 `/var/tmp/cyf-pdf-browser-20261022/`。下一步修复安装回执发送→权益激活/目录声明及前端worker MIME，再对514复测结果生成与下载。
+- 21:28 external-main续接通知：用户得知维护冲突后再次要求继续。只读确认PDF实操已结束、各角色聊天pending/processing为空，统一发布锁已空闲。将温和切换已验证Runtime1.2.6，完整保留PDF成功pending结果12dfd156及所有UNKNOWN/身份；不重复安装、不改权益/原514、不代你方宣称PDF通过。待回执原hash和停写恢复点留external-commission handoff对应continuation目录。
+- 21:58 external-main维护回读补充：1.2.6切换在完整备份阶段空间不足而中止，unit未改，已恢复原1.2.5/PID825655且三通道健康。正常恢复机制已把原PDF结果12dfd156从pending移到acknowledged；只读DB安装si_d9b8e801d1924b0d94c88d15e65acbdf现为SUCCEEDED。未直接写权益或回执，也未重做订单。此事实只说明原回执确认，不声称原514/PDF预览及提取业务验收。证据external-commission对应continuation/pdf-post-recovery.json、pdf-ack-before-r3.json。后续1.2.6维护先做完整备份压缩体积测量，不跳过备份。
+
+### 2026-10-22 23:57 CST PDF 浏览器闭环修复与验收（本聊天 Owner）
+- 自然接续读取10-22 AGENTS资源分工规则、工具索引及external-main通知；范围固定原514，不重复下单/安装/上传/新建事项。23:37真实用户HTTP回读原订单与PDF权益ACTIVE；Runtime current实际为1.2.6/PID856671（其他Owner发布），本任务不接管或重启。原成功回执正常恢复后的激活已生效，未手改数据库/回执。
+- 根因修复：`/home/isp/apps/nginx/conf/mime.types` 唯一映射由 `application/javascript js` 改为 `js mjs`。持原coordinator→API release非阻塞锁，保存完整前值，nginx -t前后通过，23:42平滑reload。公网原worker200/application/javascript；before SHAd61b7bdd…，after SHA5e120779…；未改default_type/PDF类型，未重构建应用。源码增量 `ops/ci/aliyun-flow/host/nginx/javascript-module-mime.patch`；既有README补稳定维护说明。初次Python3.6脚本不支持capture_output，在任何配置写入前失败，改标准PIPE参数后一次应用成功。
+- Chromium独立profile原事项514/v1两页预览PASS，截图实际显示第一页验证码及第二页123.45。真实任务目录pdf-extract及image-edit均CALLABLE（仅执行PDF，不把图片目录可用当图片业务验收）。
+- UI回答原待补充问题一次，request mmd-typed-request_d001ece3111acb84e26a37369b6c905e1a45f74d，Runtime真实ACTION_REQUEST→EXECUTE→RESULT_COMMITTED；execution pwe_6b995bfca126a9093af8aa33bff745a1031ef09ff60ae619c7f3caab8504，child request 2adf009aeabb295d5d47ca7ff855320ae5a8ef5c20eb991f109a967fabb1d518。逐页正文与原合成PDF完全一致，不向模型提供答案文本。
+- 真正点击浏览器“下载文件”，CDP download completed，UTF-8文本124字节、SHA7c60f038bff4c10e6a6151da7456404bd531d2b339b57c154e93a81daf2e9257，与服务端成果摘要一致；包含PDF-WUYONG-20261022、123.45。初次下载监听CDP连接过早关闭未取得文件，保留会话监听后真实下载成功，不用脚本HTTP下载冒充浏览器下载。
+- UI“验收此版→确认验收”仅选本次pdf_text，finalization COMPLETED/SUBMITTED，review COMMITTED，task514 COMPLETED/version4，delivery ACCEPTED/version1。至此原PDF浏览器业务闭环PASS，而非仅聊天回合完成。专属浏览器已关闭；不动其他任务进程。
+- 证据 `specs/juyiting-skill-execution/evidence/pdf-skill-release-20261022/browser-retest/summary.json`，相邻两页截图、真实目录/执行/验收响应、下载文件/事件/hash、MIME安装日志。恢复前值及完整诊断保留 `/var/tmp/cyf-pdf-browser-retest-20261022/`。API233/Web295未重新发布，本轮Nginx维护独立记录，Runtime1.2.6归其他Owner发布证据。
+- 边界：仅合成可提取文本PDF；未验证扫描OCR/加密PDF及所有旧缓存客户端。通用文件消息预览提示下载，文本实际下载可用。服务器磁盘23:41仅剩273MB，未删除其他Owner数据或进行大备份，后续发布需先协调空间；本次轻量配置/截图未冒充完整生产容量验证。
+
+
+### 2026-10-24 全代码校验扫描及第一轮清理
+
+最新用户要求：全代码扫描删除非必要校验，必要的写清规格；单Agent、不新增框架/审批、不部署。以SKILL-MANAGEMENT-RUNTIME-20261023作为本次跨仓续修Owner，其他已结束组件任务不另派Owner；登记API/Web任务时工具禁止同Agent多活动任务，已遵守，不冒用其他Agent名字绕过。
+
+扫描生产/配置/构建源文件共2912个（API2360、Web390、Runtime101、根ops61）；模式命中不是独立校验数量，排除测试/依赖/构建产物/其他项目。远端develop于2026-10-24 15:09北京时间实查：APIff819208、Web8c84e51、Runtimeec9ac757；本地Runtime此前b77f7d0未上线。
+
+已改：HTTP/M外层新增元数据不拒绝、只投影已知字段；承办人/技能/档案/只读能力/Money展示去多余字段数量限制；Runtime各收件箱去16条硬拒绝、租约/效果/提交ACK容忍无害元数据；文本执行器测试不再写死Runtime1.2.0。原缺字段/错类型/身份/授权/摘要/租约/幂等/UNKNOWN保护不删。规格v1.4与必要性矩阵见api/docs/interface-catalog/validation-policy.md；待核实项单列，不用一句安全理由批准所有旧阈值。
+
+固定本地候选：API1acc7bef67e2c6a880842d446ae3ade10fcc2538（tree ae94a9d78439a0709f470ad71768fdbbff04a666）；Web77e4ef92f805f7fe213b53f88ff6556d189c31c5（tree bda6fb95d9f8c31f4ac9a78153dfc1e800482b87，1.16.45）；Runtime5ea9aee75941cc291d63bf01857ceb0a32f832ab（tree4359a27135af0092a09fec782a7df3f4a35ecf3f，候选1.3.2）。均本地提交，未push/合入develop/正式Flow/上线；共享根文档修改仍在原工作区，未覆盖别人的脏文件。
+
+轻量定向：Runtime109+65通过；Web Mocha73通过，协议Node37通过（部分与Mocha重复，不宣称唯一用例284项）；Java新增边界回归未执行，须Flow。实际观察过一次Web旧测试拒绝扩展字段和Runtime旧测试锁死1.2.0失败，按最新合同修订并保留安全负例后通过。SDD导航检查PASS。Flow仅查询现状，无新Run/配置更改。避免编码尚未收齐时碎片化正式构建。
+
+剩余：上下文/队列/绑定数阈值；技能包压缩展开限制的具体数值依据；Provider媒体限制；其余业务/展示DTO精确字段；API业务注解长度/数据库schema/index/地图与构建检查。不能宣称全量逐项核实或清理完成。继续按已有规格映射实际风险再裁定；最后统一Flow验证后集成。完整证据/源码/路径/SHA及检查日志：/var/tmp/cyf-skill-adoption-20261024/validation-scan/verification.json。
+
+
+### 2026-10-24 17:20 校验清理续核与用户测试范围收敛（未部署）
+
+- 当前远端候选基线：API `e465ad091040d8ffc05aa49afc5ea0bf4f9f9023` / tree `e62470ddda18ae814096dd65ef972f422ecf5cd3`；Web `6949910a951e45dc48680afccfef7579ab824414` / tree `e706622ccb61f4eab996b17f5dcce3e5bb0420c4`；Runtime `4ac5fc6e8c7987364ed232cff86e6c64228b423a` / tree `45035815e4d5216d9494d28d324a234a395e947e`。独立worktree沿用skill-adoption-api-20261024 / skill-management-web-20261023 / skill-management-runtime-20261023，未合develop，未部署。
+- 前续候选已清理上下文/队列/ZIP重复上限、媒体重复体积、只读扩展字段、非唯一索引、通用资料数量等；完整必要性/保留风险见API `docs/interface-catalog/validation-policy.md`。创建事项旧CHECK数量限制另提供受控迁移SQL与隔离MySQL测试，**生产DDL未执行**；不把候选源码当作已上线。
+- 真实Flow：Web303 SUCCESS属较早候选，不能证明当前源码；API270 FAIL为descriptor新测试同时声明null dataSchema和空mimeTypes，已修夹具。最新API271 FAIL（约189秒观察终态），根因新增分页测试在thenReturn参数内再次调用Mockito桩，未完成stubbing；Web304 FAIL（约126秒观察终态），3355passing/2pending/1failing，旧action outcome测试仍断言第33份资料必须被拒绝。两条Flow均CI-only，无部署；17:10已CAS恢复原配置，回执见`validation-scan/material-flow/*-restore.json`，没有在途Run等待。
+- 上述候选之后尚未提交的源码修改：补清当前ChatActionOutcomeContract通用32、Web picker手选32（上传入口之前已清）、Web执行128、Runtime文件桥输入/输出128、成果读取/提交128、报告refs32、购买body8KiB/权限32、取消body1KiB/turnIds32、资金创建技能要求64、只读费用body8KiB和浏览器followup缓存64条拒绝。逐项ACL/版本/授权/路径/摘要/事务/原幂等继续保留；真实Provider16张仅限专属路径。API271测试桩已拆开，Web304旧失效数量断言已删除，重复引用负例保留。
+- 用户最新要求：**不要增加非关键测试，不补“超过旧上限仍完整处理”的正例；后续另做非关键用例清理。** 已撤下本轮尚未提交的5个新增数量/体积正例（API2/Web2/Runtime1），不批量改历史已提交测试、不删除权限/幂等/完整性保护；后续优先复用既有关键回归，必要时仅最小调整失效旧断言。原型规格/必要性矩阵已同步此口径。
+- 撤下新增用例后，本地仅复用现有轻量回归：Web三个文件44passing；Runtime workspace-file-bridge 55passing/0fail/0skip；三仓diff --check通过。日志`/var/tmp/cyf-skill-adoption-20261024/validation-scan/residual-web-existing-only.log`及`residual-runtime-existing-only.log`。这是工作区诊断，不是新候选正式Flow/上线验证；此前含新增用例的日志已明确改名`*-before-extra-test-removal.log`，不得混用。
+- 最新模式库存`validation-scan/final-inventory-r2/`覆盖API2361/Web390/Runtime101/ops61生产/配置源码文件（含新增迁移SQL），固定文件SHA；该库存采集在本节部分后续修改前。模式命中不等于逐条必要性审计。剩余：正式交付100项链、旧F02存储MIME/体积限制、其他HTTP body/文本/只读帧、archive持久CHECK、分页与只读投影等仍需按调用链核实，不默认必要、不声称全量清理完成；Runtime工作空间发现属于显示能力采样（不授权），需区别业务拒绝与扫描负载，不能机械删流控/安全预算。
+- 下一步：按已收敛测试范围完成剩余源码裁定，保存固定候选，复用既有关键Flow验证；本轮无发布/生产迁移授权。仅规则/测试范围收敛不启动新Run。
+
+### 2026-10-24 17:47 CST 校验清理续修与正式回归（单Owner）
+
+- 继续读取当前根AGENTS/组件规范/现有工具说明；仅本任务三个独立worktree，未覆盖共享根及共享API/Web的其他脏改动。遵守用户“不要增加非关键数量/体积正例”，本轮只更新既有失效断言、删除纯旧上限断言，无新增用例。必要的身份/ACL、事务/幂等、摘要/不可变引用、租约/锁/恢复仍保留。
+- 已提交并push：Web `74fcd314927b4b42df821d3401b16f5a259940c7` / tree `17ffad9de15bb76f5811bfc0958660b5a28a28f5`；Runtime `7eb3274ecc577beaf5194eeb2127a46f505ee85b` / tree `26cfeaafdafb92d595538553048d108b35b7f2fd`。API旧候选2197fe3经过续修，现为 `fa5e610bc094c8e93f19c8de72e849512533af89` / tree `503591b0e2e802cd4865e12c366f0aee169a6e17`，worktree `/home/isp/wsps/worktrees/skill-adoption-api-20261024` clean。17:43 API远端develop实查仍ff819208，不把候选当已合入/线上。
+- 本轮清理：资料/成果通用32/128、正式交付100条、若干HTTP重复body和响应体上限、F02存储白名单及体积限制；参考图N/32改已选N项。个人工作空间续取消配置maximum，只声明byte[]真实可表示范围；API旧8KiB上下文二次裁剪（资料目录/引用/最近消息）和20万字符历史整条丢弃删除；AMQP重复128KiB对齐真实MEDIUMBLOB边界16,777,215字节。详细必要性与失败边界写入两份validation-policy，原型规格同步参考图说明。
+- Web Flow4403172/305精确74fcd31 **SUCCESS**（3356 passing/2 pending，生产构建成功；非部署）。Runtime已有定向55通过；Web本地79通过与44通过存在重叠，不相加，不代替云端证据。
+- API Flow5260799/272精确2197fe3 **FAIL**：真实MySQL事务回归14项由 `AgentTaskFormalDeliveryDaoImpl` 残留limit>100拒绝导致，另外6项Controller断言仍按旧根级JSON取值。已在fa5e610删除DAO上限，保持limit正数语义；现有HTTP断言改公共R的data字段，并保留状态/身份/不泄密。不是删掉失败回归凑绿。原始诊断 `validation-scan/remaining-flow/diagnostic.json`，两端临时候选配置均已CAS恢复APPLIED+readback。
+- API新正式验证 **5260799/273** 已唯一启动，精确fa5e610/tree503591b，仍CI-only，包含原MySQL/关键回归/validateLayering/fresh JAR，加跑已有Outbox设置/调度测试；不重复Web305构建。start初始UNKNOWN但明确returnedRunId273且非歧义，未重复start；watcher仅跟踪此Run并遵守600秒上限。证据 `/var/tmp/cyf-skill-adoption-20261024/validation-scan/continuation-flow/`，终态/源码reconciliation/配置恢复待补。
+- **边界：全库模式扫描不等于逐条审计完成。** 已确认仍需处理work-item计划8项/能力32项/重试10/目标8KiB；description65535需按实际SQL TEXT解释，不能和任意业务额度混同。Archive选文/问答/事件预算仍与持久CHECK耦合，必须同步迁移候选而非只删HTTP；托管UDS16KiB/封闭字段及其他分页/只读封闭字段继续核查。源码迁移尚未生产执行，当前未合develop、未发布、未生产DDL。不能宣称线上不再限制或全库清完。
+
+#### 17:53 CST API273终态与边界
+- API273精确 `fa5e610bc094c8e93f19c8de72e849512533af89` / tree `503591b0e2e802cd4865e12c366f0aee169a6e17` **SUCCESS**，观察终态286秒（未触达600秒上限）。406个JUnit套件共3502次执行：3318通过、184既有跳过、0失败/错误。原失败的真实 `JuyitingWorkflowMySqlTest` 36/36通过；交付Controller5、Outbox设置4、个人存储4和存储隔离/篡改3全部通过。跳过项不计通过，不据此宣称所有生产流程验收。
+- 原定向策略保留validateLayering/fresh bootJar，构建成功；同Run报告JAR SHA `643c687fdef0edcb2359ac408cb05504c917f12d8fa8e6257eb5d6838a5b1878`。未下载或安装此JAR，不把制品产出当发布。原UNKNOWN启动回执保留，新增reconciliation关联实际源码/Run终态；没有重复start。17:51临时配置已CAS恢复原值并readback APPLIED。
+- 原有云端技能管理peer fixture显示Runtime90f24090，不冒充7eb3274最新Runtime联合E2E。本轮复用Web305结果，Runtime55项仅本机定向证据。无部署/生产DDL/合develop。
+- 稳定安全摘要：`specs/juyiting-skill-execution/evidence/validation-cleanup-20261024/continuation-verification.json`；原日志/诊断/策略/恢复回执在原var/tmp路径。当前源码扫描快照 `validation-scan/final-inventory-r3/`；SDD导航检查通过（1特性、4文档、20目标），不代替源码/业务验证。
+- 下一动作仍为同Owner处理已列残留校验；不是新增大数量正例或另起非关键测试清理。当前三组件worktree均保持本轮候选，根文档按段增补，不覆盖其他任务修改。
+- 证据登记首次因跨仓任务仍绑定Runtime tree而被原编排器拒绝，未绕过或用Runtime tree冒充API；同Owner通过transition显式将当前验证输入固定到API fa5e610/tree503591b后登记Flow273证据。Web/Runtime基线仍按上表保留，下次派发/验证先核对当前组件，不根据任务名猜测源码。
+
+
+### 2026-10-24 18:19 CST 续修范围固定（实施中）
+- 同一Owner沿用API fa5e610/Web74fcd31/Runtime7eb3274独立worktree，不合并、不部署。当前批次仅任务拆分任意阈值、Archive端到端容量、Java托管UDS帧与只读扩展字段；保留实际SQL字段可表示性、身份/摘要/事务/幂等/租约。
+- 先更新validation-policy与阅读器原型规格；现有原型手札无maxlength、完整保存且无旧容量提示，布局无需变化。产品另外发现ArchiveReader.vue按钮与计数仍有20000限制，同链一并去掉，防止仅改composable。其他表单/分页未据此视为核实完。
+- 用户非关键测试约束继续生效：删失效纯容量测试，原长段截前缀测试改普通短段完整锚点/重载；保留Unicode/摘要/连续性/隔离。仅追加一项数据库迁移关键回归到既有owned-MySQL生命周期，验证旧CHECK变更、原笔记不变及归属/版本/唯一约束；不新增runner或大内容正例。
+- Web第一次定向因既有SFC测试loader将import列表写死，去掉未用utf8ByteLength后loader未匹配，43项失败；同步loader而不回退产品或删关键测试。正式结果待补，旧日志独立保留。未执行生产DDL。
+
+#### 18:31 CST 候选与正式验证进度
+- API候选50ec1ded/treec446889，Web338c7a6/tree00ac234均已push，未合develop。Web Flow4403172/306 SUCCESS，3354 passing/2 pending，Vite成功；本机Archive84项通过、定向ESLint通过，不能与云端相加。Web配置已CAS恢复APPLIED并readback。
+- API274在160秒观察到FAIL，编译无错误，ArchiveQuestionServiceTest:208尚有2731个汉字超过旧8192字节必须失败的断言。已正常登记failure attribution，删除该旧额度断言而保留同方法原hash/Unicode/连续性及零写入断言；修正为ae19ebac90aeaa9f759d8b5e16797226364f5475/tree e3926f4e9573fc2783ec92085d0ab4dfe800303d。API274日志及诊断不覆盖，配置已恢复。
+- API275以新候选及完全相同CI策略唯一启动，CI-only；复用Web306，不重复前端构建。初始UNKNOWN且returnedRunId275明确，跟踪该Run，不重发start。此次既有Archive测试加入原策略，唯一新增是受控迁移的关键MySQL回归，不增加容量正例。终态待补。
+- 新库存final-inventory-r4覆盖新增迁移后的生产源码；与最终ae19ebac的差异仅测试旧断言删除，不把模式命中当逐项审核完成。仍需处理ConversationMetadataPolicy的512/100、草稿/创建20000字符多端链及部分分页/只读封闭投影；WorkspaceConversationAccess目标JSON2000已追到实际VARCHAR(2000)，不能与任意数量门槛混同。
+- 日志处理提示：Flow原始环境输出含代码源凭据，本次读取中过宽SOURCE过滤曾命中该字段；后续只提取显式CYF摘要/计数，安全证据不复制凭据。原日志仅留0700目录/0600文件，不因本任务擅自轮换或改他人流水线配置。
+
+#### 18:36 CST 本批正式回归收口（非全库完成、非上线）
+- API Flow5260799/275精确ae19ebac90/treee3926f4 **SUCCESS**，281秒观察终态；3515次测试执行中3330通过、185既有条件跳过、0失败/错误。任务拆分18/18、Archive个人资料12/12、问题服务12/12、Provider worker34/34通过。真实owned-MySQL JuyitingWorkflow37/37通过，其中包含此次迁移保留原笔记及身份/版本/唯一CHECK保护；没有生产数据库操作。
+- 托管适配器13项中12通过/1条件跳过：真实Runtime联合用例未提供CYF_GSS_RUNTIME_TEST_SOURCE，不冒充全链或线上验收。Runtime候选7eb3274未变，本轮没有发布Runtime。API275 fresh JAR SHA b63b362b8e345823daa83ae9d1e8119919407fad8e7c650faa496011b456b9ce，未下载/安装。Web306精确338c7a6 SUCCESS，3354通过/2pending，未重跑。
+- 两条Flow均原600秒内正常结束，临时候选配置均CAS恢复APPLIED+readback；原始UNKNOWN启动回执保留，reconciliation与真实Run源码/诊断关联，无重复start。API274旧断言失败及归因保留，不被275覆盖。
+- 安全摘要：specs/juyiting-skill-execution/evidence/validation-cleanup-20261024/archive-verification.json；完整诊断/策略/恢复在validation-scan/archive-continuation与archive-verification，文件私有保存。SDD导航对当前特性及archive-pavilion-reader-mvp均PASS，仅文档导航，不代替应用验收。
+- API/Web工作区clean，代码已push候选分支；共享根文档只定向补充，未覆盖其他Owner修改。未合develop、未部署、未执行生产DDL。下一批仍为元数据/其他表单长度/分页/只读字段逐链必要性核实，不能把本批三个链路完成宣称全库已清理完成。

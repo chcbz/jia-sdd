@@ -1,0 +1,28 @@
+# Concrete forward-recovery release guard — 2026-09-06, review only
+
+Goal remains deploy acceptedSpringAI voiceAPI flagsOFF first, then realaudioactivation and latestenabledWeb. Current canonicalAPI is NOThealthy-proven: stablePID1222845/ticks3021456883/UID987:GID1000, wildcard10018 acceptsTCP0.000161s but health nofirstbytewithin5s at13:12 afterheavyended; no repeatedpolling allowed. LastcurrentUP at10:09 historical only. ActualR3 OOMsubtype0, oldbroadMetaspace-token count isNOTOOM; noJVMtuning. Generaldiagnosisloopclosed.
+
+SoleTuring is performing independentaccepted exact6path UID987 ACLrestriction underACL_ONLY_R4B_20260906, noAPIcontrol/reload. RuntimeflagsOFF proven. APIpackage exact34b67fed/fb42c46/JARfa808e accepted with native metadata43af337 and externalbridge5b1b940/originalbuildcache preserved; finalR6 HOSTde0582/inputb60c7 unchanged. NoAPIrebuild needed. CurrentJAR246520 is structure/hash/chain/runtime trusted, historicalsourceUNKNOWN, **NOTknownhealthy rollback**. Do not makecurrentUP a circularrequirementforforwardrecoveringacceptedcandidate; also do not silentlywaive rollbackrisk.
+
+## Independent decision requested
+
+Godelsmallsharedsource/evidence only, no livecommands/tests/heavyIO/repairs. Assess whether to classify nextactualoperation as **controlled forwardrecovery with accepted flagsOFFcandidate** ratherthan ordinaryhealthyprestate release:
+1. Explicitly accept legacybackup as artifact-trusted rescue only and recordpossible inabilityto restorehealthyservice. Native deploytrap may attempt exactbackuparchive once on failure; no manualblindrestartloop. Useralreadyexplicitlyauthorizedcompletion/deployment, mainmayauthorizeexactOwner scopedrecovery; identify any materialchoice genuinelyrequiringuserinput ratherthan inventing endlessgates.
+2. PreserveindependentacceptedACLproof/contentCORS andstaticconsumersemantics. Immutableconsumerproof may beissued basedonactualclosedAPI-writecapability+loopbackcompatibility, notactuatorUP. Require exactexternalbind sixpathinode/ACL/configSHA andcandidateb333df, refreshedinstall/deployboundary.
+3. Candidate lifecycle install-onlygo thenverifyinstalledb333df (noAPIprocesschange), separately exactdeploy-api --execute go withAPIhead/tree/approvalID/bridge/originalbuildverified. Installingdoesnotprove deployment orhealth.
+4. Before any STOP, verifyresource/startrequirementswithoutreadingrawsecrets, includingdefault1GiBMemAvailable and5GiBdisk plus projected staging/backups/log overhead; no loweringthreshold/no foreigncleanup. Confirmruntime/JRE/logdir/key metadata/canonicalfiles withinOwner scope; realkeyreadONLYbyapprovedcanonicalstart, nevercollectorkeydump. Ifdiskinsufficient, allowonlyownedreproducibledependencycleanup separatelyafterexactownershipchecks, notevidencedeletion.
+5. Reviewactualscriptlock/order/stopcandidate/restore behavior, exactPIDownership andpossibleTERM→KILLtimeout insidecanonical operation. MainexplicitprocessauthorizationmustcoveronlyitscurrentAPIgeneration+successorfromitsowninvocation. Noforeignprocesses/services/DBconfig. Runtimecoldstartmaytake9–13min; collectnaturalterminal, noexternalkilltimeout.
+6. Scope release stops atflagsOFFhealthyAPI andtrustedreceipt. Nginxroutes/voiceenv/realSTT/TTS activation andWebrelease arelaterseparateoperations. CurrentWebd81artifact44798 accepted, Webpinsbeingpreparedinindependenttask. No oldWeboverwrite.
+
+Return concrete recoveryclassification ACCEPT/REJECT andminimaloneexecutioncontract, notanothergeneralread-onlydiagnosticplan. Reject must identifyactualspecific missinginput/risk oruserdecision, not merelyhistoricalsourceUNKNOWN. Resource/ACLactualresults arependingTuring andmay beconditions. Runtimeexecution remainsNOuntilcontrollerseparateadmission; maincoordinationonly.
+
+## Actual stopped gate and corrected-domain disclosure
+
+IndependentGodel controlledforwardrecovery CONDITIONAL_ACCEPT; oldAPI-UP notprerequisite. ActualruntimeR4B stoppedbeforefirstACLmutation, resources mem864243712/f_bavail3606536192; secondfailurecurrentlyblocked_root_cause. Noresource/ACL/install/deployGO. ConcretepreSTOPgate: MemAvailable>=1073741824 and f_bavail>=5368709120+allocatedblocks(currentJAR)+allocatedblocks(candidateJAR)+67108864margin; logfs>=64MiB. Native deployscript checks startresourcesAFTERSTOP so this externalgate is mandatory. Do not use f_bfree reservedblocks, lowerthreshold or deleteforeign/shared/evidence/artifact/source data.
+
+ExactOwner subsequent OFFLINE disclosure: old3a0e51 is NOTphysicalfilehash. It camefrom nginx-T output slice between `# configuration file /home/isp/apps/nginx/conf/vhost/api.chaoyoufan.cn.conf:` andnextsourcemarker, splitlines then `"\n".join(lines)+"\n"` UTF8 SHA. R4B2211351 is O_NOFOLLOW/os.read physicalrawfullfilehash. Therefore HASH_DOMAIN_MISMATCH, not provenforeignedit. Fixfieldnames:
+- PHYSICAL_CONFIG_SHA256=2211351ee8b2bd608bc8cfb620b0f2085e7cf4e1fe52e4a6c0ea2dda89e9e65e (futureCAS)
+- NGINX_T_RECONSTRUCTED_SOURCE_BLOCK_SHA256=3a0e51c798c579e017e548322eb4c8f7f5b5dbc040436f90d74814f0d42e36c4 (historicalsemanticblockdomain)
+Neitheroldoriginalevidence noroldfailureisrewritten. Sourcecontrolleralreadysharedphysical2211351 asactual09:15CORSbaseline, but receipt aloneisnotfutureCAS. Reviewer mustacceptdomaincorrection explicitlybeforeanyfreshACLauthorization.
+
+Nootherliveattempt is authorized. Sourceownedcacheinventory JVC-OAI-OWN-CACHE-RECLAIM (Shannon) maypropose onlyexactvoiceworktree reproducibledependencies; no deletionGO yet. Onceenoughownedspacefound, independentcleanup+sourcedomainmatrix thencontrollerauthorize-remediation; freshresources mustpass beforeACL/install/deploy. Ifnotpossible, reportgenuineneed forcapacity/waitwithoutcoercingotherowners.

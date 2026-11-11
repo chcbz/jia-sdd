@@ -1,0 +1,2689 @@
+diff --git a/README.md b/README.md
+index b06032c..8b225a7 100644
+--- a/README.md
++++ b/README.md
+@@ -60,7 +60,7 @@ sudo ./shell/jdk_install.sh
+ sudo ./shell/mysql_install.sh
+ sudo ./shell/nginx_install.sh
+ sudo ./shell/redis_install.sh
+-sudo ./shell/codex_ws_agent_install.sh
++# Agent: prepare instance/toolchain inputs, then use shell/cyf_agent_runtime_v1_install.sh
+ 
+ # 3. 使环境变量生效
+ source /etc/profile
+@@ -176,9 +176,10 @@ conf/
+ │   └── etc/openldap/slapd.conf
+ ├── maven/
+ │   └── settings.xml
++├── cyf-agent-runtime-v1/
++│   ├── runtime.env.example
++│   └── manifest.example.json
+ ├── codex-ws-agent/
+-│   ├── env.example
+-│   ├── codex-profiles.conf
+ │   └── codex-home.example.toml
+ ├── xray/
+ │   └── config.json.template
+diff --git a/bin/codex_ws_agent.sh b/bin/codex_ws_agent.sh
+deleted file mode 100755
+index 434e62c..0000000
+--- a/bin/codex_ws_agent.sh
++++ /dev/null
+@@ -1,5 +0,0 @@
+-#!/bin/bash
+-# Retired source entry: no PID/service/workspace action, config read or fallback.
+-# Installed historical services are not retired by this source change.
+-printf '%s\n' 'UNIFIED_RUNTIME_ENTRY_REQUIRED: legacy Agent launcher is retired. Use the unified Runtime artifact-local Node with an explicit --config; service activation and historical maintenance require separate authorization.' >&2
+-exit 2
+diff --git a/conf/codex-ws-agent/README.md b/conf/codex-ws-agent/README.md
+index b794ec7..9f8925a 100644
+--- a/conf/codex-ws-agent/README.md
++++ b/conf/codex-ws-agent/README.md
+@@ -1,554 +1,23 @@
+-# codex-ws-agent
++# Runtime execution library
+ 
+-Connects a local Codex runner to the OpenClaw agent WebSocket channel.
++This directory supplies the execution library used by `conf/cyf-agent-runtime-v1`.
++It is not an independently runnable Agent service. Use the unified Runtime guide
++in `../cyf-agent-runtime-v1/README.md` and its existing installer/host JSON entry.
+ 
+-## Start
++As of 2026-10-09 the retired environment/INI profile loader, API-key installation
++templates, old launcher/installer stubs, dual-mode candidate checker and historical
++HTTP diagnostics have been removed. Explicit Runtime profiles and per-subject
++manifest/session authentication are the supported configuration path.
+ 
+-```bash
+-cd /home/isp/apps/codex-ws-agent
+-npm ci --omit=dev
+-cp -n .env.example .env
+-vi .env
+-/home/isp/bin/codex_ws_agent.sh start
+-```
+-
+-Recommended production mode is `systemd`:
+-
+-```bash
+-systemctl status codex-ws-agent
+-systemctl restart codex-ws-agent
+-journalctl -u codex-ws-agent -f
+-```
+-
+-The helper script `/home/isp/bin/codex_ws_agent.sh` now delegates to `systemd` automatically when the service is installed, and falls back to the legacy direct-start mode otherwise.
+-
+-### Isolated production instances
+-
+-The existing no-argument installer and shared service remain compatible. A new isolated instance uses a strict lowercase slug and the fixed production layout below:
+-
+-```bash
+-shell/codex_ws_agent_install.sh --instance local-a
+-/home/isp/apps/codex-ws-agent-instances/local-a/bin/codex_ws_agent.sh status
+-```
+-
+-Each instance owns its application root, releases/current link, private `.env` and profile file, Codex Homes, workspace roots, inbox/outbox, state, PID record, logs, and provider ledger. The installer creates an **unconfigured** candidate and does not copy a live identity, credential, session, or task state. It never enables, starts, restarts, or registers an instance; an operations Owner must first configure and validate the exact identity and prove custody/idle state, then start it explicitly.
+-
+-Instance controls are systemd-only through `codex-ws-agent@<slug>.service`; there is no tmux/nohup fallback. Before status, stop, or restart can act on an active process, the launcher verifies the exact unit template, `MainPID` working root, absolute agent entrypoint token, and cgroup unit. A mismatch is treated as a foreign process and no stop is sent. The shared/default launcher retains its legacy fallback behavior.
+-
+-Do not use profile hot reload as a migration or drain mechanism. A changed busy profile may shut down the whole process, and disposal may terminate its child; identity migration and service cutover require a separate controlled maintenance action.
+-
+-Required:
+-
+-- Node.js 20 or newer with npm. The client always uses the declared `ws` dependency so authenticated upgrade headers behave consistently; the built-in WebSocket implementation is not used.
+-- `OPENCLAW_API_KEY`: API key accepted by `/ws/agent/channel`. It is sent only as the `X-API-Key` WebSocket upgrade header and same-origin package-download header; it is never appended to a URL.
+-- `WS_URL`: WebSocket endpoint. Default public endpoint is `wss://api.chaoyoufan.cn/ws/agent/channel`. Any legacy `api_key` query parameter is removed before connection and registration.
+-
+-The installer stages both `package.json` and `package-lock.json`, then runs `npm ci --omit=dev --ignore-scripts --no-audit --no-fund` before candidate validation and atomic activation. Dependency installation failure aborts installation without requesting a service restart.
+-
+-## Multiple Codex CLI Profiles
+-
+-The recommended deployment mode is multi-profile:
+-
+-- `CODEX_PROFILES_FILE` pointing to a JSON file or section-style profile file
+-- or `CODEX_PROFILES` as an inline JSON array
+-- plus optional `DEFAULT_CODEX_PROFILE`
+-
+-Legacy single-profile `AGENT_*` and `CODEX_*` variables are still accepted as a fallback, but are no longer recommended.
+-
+-Each profile can define:
+-
+-- `profileId`
+-- `agentId`
+-- `agentName`
+-- `personaName`
+-- `codexBin`
+-- `codexHome`
+-- `codexWorkdir`
+-- `codexSandbox`
+-- `codexApproval`
+-- `codexSessionMode`
+-- `codexTimeoutMs` (0 disables the timeout; otherwise an integer from 1 to 2147483647)
+-- `codexModel` (explicit CLI model override; otherwise `CODEX_MODEL` fallback or Codex Home)
+-- `abilities` (legacy profile metadata; not reported as runtime scheduling abilities)
+-- `skills` (legacy profile metadata; installed/tool skill names are not reported as scheduling abilities)
+-- `workspacePolicyId`
+-- `workspaceRole`
+-- `workspaceNoTaskPolicy`
+-- `workspaceNonCodingCommandTypes`
+-- `workspaceFallbackWorkdir`
+-- `nativeConversationHttpPollEnabled` (explicit opt-in to the authenticated native conversation poll wire)
+-- `nativeConversationImageGenerationEnabled` (explicit opt-in to the local `GENERATE_IMAGE` executor)
+-- `isDefault`
+-
+-Recommended `.env`:
+-
+-```bash
+-DEFAULT_CODEX_PROFILE=codex-default
+-CODEX_PROFILES_FILE=/home/isp/apps/codex-ws-agent/codex-profiles.conf
+-```
+-
+-Example `codex-profiles.conf`:
+-
+-```ini
+-[default]
+-codexBin=/usr/local/bin/codex
+-codexWorkdir=/home/isp
+-codexSandbox=workspace-write
+-codexApproval=never
+-codexSessionMode=resume
+-codexTimeoutMs=900000
+-# Select a trusted entry from workspace-policies.json before accepting coding commands.
+-# workspacePolicyId=cyf
+-workspaceRole=coder
+-workspaceNoTaskPolicy=reject
+-
+-[agent.default]
+-profileId=codex-default
+-agentId=codex-default
+-agentName=Codex
+-personaName=Default
+-codexHome=/home/isp/apps/codex-ws-agent/.codex-default
+-isDefault=true
+-
+-[agent.wuyong]
+-agentId=jyt-client-wuyong
+-agentName=吴用
+-personaName=智多星
+-codexHome=/home/isp/apps/codex-ws-agent/.codex-wuyong
+-codexWorkdir=/home/isp/wsps/cyf
+-enabled=true
+-apiKey=cdx_optional_profile_specific_key
+-```
+-
+-Every `[agent.*]` section inherits fields from `[default]` and can override any of them.
+-
+-At registration and every presence heartbeat, the client rebuilds `agent_runtime.abilities` solely from the current profile `codexWorkdir`. Profile `abilities`/`skills`, generic execution/tool labels such as `codex`, `shell`, `debug`, `imagegen`, Vue, Java, and installed `SKILL.md` names are deliberately excluded, so Song Jiang routes work by current project-business capability rather than stale persona metadata or tools that every client may have. Ability labels remain scheduling hints, not authorization.
+-
+-Workspace discovery scans only the workdir root plus one level inside recognized project containers, with a shared 512-entry cap and descriptor-scoped no-follow access. CYF aggregate modules require a Gradle settings file plus the project signature modules `agent/chat/task/oauth/user/kefu/point`; module-local workspaces require an allowlisted `jia-*` module name. It reports a fixed Chinese allowlist including `聚义厅协作`, `智能体管理`, `智能体调度`, `会话消息`, `多智能体协作`, `任务协作`, `身份认证`, `用户体系`, `客服系统`, `积分体系`, `微信生态`, `短信服务`, `域名与主机管理`, `内容管理`, `工作流编排`, `短链接服务`, and `天气查询`. Unknown directory names, paths, dependency versions, file contents, and technology labels are never reported. Broad home/host directories without direct project evidence produce no inferred abilities.
+-
+-Set `enabled=false` on an `[agent.*]` section to take that profile out of service without deleting it. Hot reload closes the profile connection and skips registration; changing it back to `enabled=true` reconnects it. `active=false` and `status=disabled|inactive|unavailable` are also treated as disabled.
+-
+-Native bounty execution is a separate registration declaration from fast-v1 `runtimeCapabilities`. It is enabled only when both native conversation flags are true, the private API origin/root and release-local validation toolchain are usable, the concrete `GENERATE_IMAGE` executor exists, the HTTP-poll lane is constructed, and the registration socket is open. Missing/disabled/offline configurations declare `enabled=false` with no operations. Installed skill/profile names are never evidence of support, no Provider probe is performed during declaration, and fast-v1 `EXECUTE.supported/enabled` remains false. Regular server profiles and managed-local profiles use the same `PERSONAL_WORKSPACE_CONVERSATION_HTTP_V1` wire; this declaration does not promise installation, cost authorization, Provider availability, or successful execution.
+-
+-If a profile is bound to a different user than the global `OPENCLAW_API_KEY`, set `apiKey` on that profile. Profile-level keys override the global key for that WebSocket connection.
+-
+-Startup validation now checks that:
+-
+-- every configured `codexBin` exists and is executable
+-- every configured `codexWorkdir` exists
+-- profile ids and agent ids are unique
+-- the default profile exists
+-
+-You can run the validation manually:
+-
+-```bash
+-cd /home/isp/apps/codex-ws-agent
+-node agent-client.mjs --validate
+-```
+-
+-### Inspect configuration without starting an Agent
+-
+-```bash
+-cd /home/isp/apps/codex-ws-agent
+-node agent-client.mjs --inspect-config
+-```
+-
+-This prints a field-allowlisted JSON report with profile execution settings, the selected default,
+-WebSocket credential **source** (never its value), discovered scheduling abilities, and command-policy
+-warnings. It does not connect to the server, start Codex, read `auth.json`, initialize worktrees, or
+-change files. It can run without WebSocket credentials or the `ws` dependency. Malformed execution
+-settings produce structured `errors` and exit status 1. This is **not** Codex's fully merged effective
+-configuration: it does not parse Home/project TOML or prove provider authentication/model availability.
+-A configured workspace policy is reported as unverified until `--validate` succeeds; a missing policy
+-blocks ordinary commands but does not disable chat. `--validate` may initialize policy directories and
+-run local Git checks, so it is not a read-only substitute for inspection.
+-
+-New and resumed sessions now both pass `--cd` and `--sandbox` as parent `exec` options, before `resume`.
+-`--model`, approval, and JSON output remain explicit in both paths. This corrects the former resume
+-permission drift, **but deploying it with an existing `danger-full-access` profile can expand resumed
+-session permissions**: review the intended sandbox before updating the live runner. New installation
+-examples use `workspace-write`; the installer does not rewrite existing profiles.
+-
+-`codex-home.example.toml` is a non-secret starting point, not an automatically applied migration.
+-Replace the model and gateway placeholders before use. Do not mix `default_permissions=":workspace"`
+-with an intentionally different `sandbox_mode`; do not rely on top-level `writable_roots` or
+-`preferred_auth_method` (unrecognized by the locally audited CLI 0.153.4). `personaName` is display
+-metadata, not a persona prompt. `abilities` and `skills` remain intentionally excluded from scheduling.
+-
+-Profile-file hot reload is enabled by default at 5000ms; `.env` changes need a controlled process
+-restart. Configuration changes can disconnect profiles or interrupt active work; schedule a maintenance
+-window rather than assuming hot reload is disruption-free.
+-
+-### Conversation-bound Codex sessions
+-
+-For chat profiles with `codexSessionMode=resume`, the Agent resumes only the session ID stored under the
+-exact `agentId:conversationId` key and only after confirming that session exists under that profile's
+-`codexHome/sessions`. An unmapped conversation, a missing/blank `conversationId`, or Home history by
+-itself starts a new `codex exec`. The Agent never uses `resume --last` or `--all`. If a key is mapped but
+-the mapped session is missing from that profile's Home, the chat fails explicitly with
+-`CODEX_SESSION_NOT_FOUND` instead of selecting or creating unrelated state.
+-
+-Only an eligible resume-mode chat captures the current Codex JSON event
+-`{ "type": "thread.started", "thread_id": "..." }` and persists it to `CODEX_SESSION_MAP_FILE`
+-(default `codex-session-map.json`) with private file permissions. Session files that merely appear or
+-become newest are not associated without a session ID emitted by that run. `codexSessionMode=new` chats
+-and managed workspace commands forced to a new session never create or replace a chat mapping, even if
+-they carry the same `conversationId`. This mechanism does not delete Codex history.
+-
+-Compatibility boundary: existing map entries are preserved byte-for-byte until a new mapping is
+-captured. If legacy `--last` behavior previously mapped multiple conversations to the same session,
+-this change does not split, rewrite, delete, or claim to repair that already mixed context; it prevents
+-new unmapped conversation IDs from inheriting the latest Home session.
+-
+-JSON is still supported:
+-
+-```json
+-[
+-  {
+-    "profileId": "songjiang",
+-    "agentId": "songjiang",
+-    "agentName": "宋江",
+-    "personaName": "及时雨",
+-    "codexBin": "codex",
+-    "codexHome": "/home/isp/apps/codex-ws-agent/.codex-songjiang",
+-    "codexWorkdir": "/home/isp/hosts/cyf/workspace/cyf",
+-    "codexSandbox": "workspace-write",
+-    "codexApproval": "never",
+-    "codexSessionMode": "new",
+-    "codexTimeoutMs": 900000,
+-    "isDefault": true
+-  },
+-  {
+-    "profileId": "wuyong",
+-    "agentId": "wuyong",
+-    "agentName": "吴用",
+-    "personaName": "智多星",
+-    "codexBin": "/usr/local/bin/codex",
+-    "codexHome": "/home/isp/apps/codex-ws-agent/.codex-wuyong",
+-    "codexWorkdir": "/home/isp/hosts/cyf/workspace/cyf",
+-    "codexSandbox": "workspace-write",
+-    "codexApproval": "never",
+-    "codexSessionMode": "resume",
+-    "codexTimeoutMs": 900000
+-  }
+-]
+-```
+-
+-When multi-profile mode is enabled:
+-
+-- The process opens one WebSocket connection per configured agent profile.
+-- Each profile maintains its own `CODEX_HOME`, workdir, sandbox, and timeout.
+-- Each WebSocket connection is bound to one configured Agent profile. The client does not reroute a message received on one profile's connection to another local profile.
+-- `command.dispatch` requires `targetAgentId` and rejects a target that differs from the connection's profile. Chat and event messages with an explicit target apply the same check.
+-
+-Reconnect behavior:
+-
+-- The agent reconnects automatically after WebSocket disconnects.
+-- Backoff starts at 1 second and caps at 30 seconds.
+-- Retry window is `RECONNECT_MAX_MS`, default `1800000` (30 minutes).
+-- A successful connection resets the retry window.
+-- If the reconnect window is exhausted, the process exits and should be restarted by `systemd`.
+-- Reconnect scheduling is de-duplicated per profile to avoid repeated `error` + `close` races.
+-
+-## A07 Isolated Task Worktrees
+-
+-`command.dispatch` no longer runs in a profile's shared writable `codexWorkdir`. Production command execution sets `requireWorkspace=true` and fails closed unless the profile selects a trusted workspace policy. Chat remains on the profile workdir and never receives workspace-management privileges.
+-
+-Create an active policy file from the installed example:
+-
+-```bash
+-cp /home/isp/apps/codex-ws-agent/workspace-policies.example.json \
+-  /home/isp/apps/codex-ws-agent/workspace-policies.json
+-chmod 600 /home/isp/apps/codex-ws-agent/workspace-policies.json
+-```
+-
+-Example trusted policy:
+-
+-```json
+-{
+-  "cyf": {
+-    "root": "/home/isp/hosts/cyf/agent-workspaces",
+-    "repository": "/home/isp/hosts/cyf/repository.git",
+-    "baseRef": "refs/heads/master",
+-    "trustedRemoteUrl": "https://git.example.com/chaoyoufan/cyf.git",
+-    "trustedRemoteRef": "refs/heads/master"
+-  }
+-}
+-```
+-
+-Then configure:
+-
+-```bash
+-CODEX_WORKSPACE_POLICIES_FILE=/home/isp/apps/codex-ws-agent/workspace-policies.json
+-```
+-
+-and select the policy in each coding profile:
+-
+-```ini
+-workspacePolicyId=cyf
+-workspaceRole=coder
+-workspaceNoTaskPolicy=reject
+-```
+-
+-Security and lifecycle rules:
+-
+-- `root`, `repository`, `baseRef`, `trustedRemoteUrl`, and `trustedRemoteRef` come only from the local policy file/inline environment policy. Dispatch payload fields cannot replace them. Publication URLs must be credential-free HTTPS; SSH, local paths, and `file://` are rejected in this version. The ref must be one fixed `refs/heads/*` ref.
+-- Policy loading canonicalizes resources and rejects duplicate or overlapping repositories/workspace roots across policy IDs. Workspace lock identity is derived from canonical repository/root plus task/agent, not from a policy alias.
+-- `taskId`, canonical `agentId`, and role must be safe 1-64 character ASCII slugs. Traversal, symlink components, repository/root overlap, and arbitrary paths/refs fail closed.
+-- The default layout is `/home/isp/hosts/cyf/agent-workspaces/<taskId>/agent-<agentId>` with deterministic branch `codex/<taskId>/agent-<agentId>-<role>`.
+-- A cross-process durable lock serializes creation. Durable `creating` metadata is written before `git worktree add`, so a later process can validate and finish a partial creation without adopting an unknown directory or branch.
+-- Reuse requires the Git worktree registration, branch, trusted repository, fixed baseline commit, path, task, agent, role, and durable metadata to match exactly.
+-- Managed command runs force a fresh Codex exec with both process `cwd` and `--cd` set to the task worktree; a resume session from another worktree is not used.
+-- A command without `taskId` is rejected by default. Compatibility is available only when `workspaceNoTaskPolicy=dedicated-workdir`, the command type is explicitly listed in `workspaceNonCodingCommandTypes`, and `workspaceFallbackWorkdir` is a trusted non-Git directory with no overlap in either direction with the repository or workspace root.
+-- Workspaces are never automatically deleted. Archive is an explicit operator action and refuses modified, ignored/untracked, unmerged, index-hidden (`skip-worktree`, `assume-unchanged`, or any non-normal tracked flag), or unpushed work.
+-- Archive is logical and non-destructive: it moves the metadata-owned worktree into the private `.archive-quarantine` directory, keeps the Git worktree registration and all files indefinitely, and persists `state=archived`, `quarantinePath`, branch, and `archivedHead`. It never invokes `git worktree remove` or `git worktree prune`.
+-- Before the logical archive transition, archive enumerates every stage-0 index entry and independently verifies the actual regular-file/symlink type, executable mode, and raw blob hash. This does not trust Git's stat cache, `core.trustctime`, `core.filemode`, file length, or restored mtimes.
+-- For a workspace beyond its baseline, archive creates a new temporary bare verification repository, disables system/global configuration, supplies a fresh HOME/XDG config, clears inherited proxy/askpass/SSH/Git configuration environment, forces TLS verification, and fetches only `trustedRemoteRef` from the exact `trustedRemoteUrl`. The managed repository is never used as the fetch destination. Local upstreams, `insteadOf`, proxy/credential helpers, stale refs, and substituted remotes are not publication proof.
+-- Every archived record is bound to exactly one retained Git worktree. On restart, inspection/reuse validates the exact registered path, Git top-level, symbolic branch, worktree HEAD, and repository branch ref against `quarantinePath`, `branch`, and `archivedHead`. Any registration, path, branch, HEAD, or ref drift fails with `WORKSPACE_ARCHIVE_RECOVERY_REQUIRED` before returning a generic inactive-state result.
+-- This version has no Agent-side GC, delete, prune, recover, or reconcile command. Archived quarantine usage therefore grows with every logical archive; operators must monitor filesystem capacity and inode usage below the policy workspace root. Physical deletion is outside the Agent trust boundary and is not enabled by this package.
+-
+-Operator commands use the installed helper and never accept paths, repositories, refs, or cleanup instructions from an Agent message:
+-
+-```bash
+-/home/isp/bin/codex_ws_agent.sh workspace inspect --policy cyf --task task-123 --agent agent-a --role coder
+-/home/isp/bin/codex_ws_agent.sh workspace ensure  --policy cyf --task task-123 --agent agent-a --role coder
+-# Stop the service first; archive is refused while the Agent process is running.
+-/home/isp/bin/codex_ws_agent.sh workspace archive --policy cyf --task task-123 --agent agent-a --role coder
+-```
+-
+-`workspace inspect` is diagnostic-only. For a valid archived workspace it returns the retained metadata, including `quarantinePath`; it does not reactivate, move, repair, or delete anything. If it reports `WORKSPACE_ARCHIVE_RECOVERY_REQUIRED`, stop the Agent service and preserve the metadata file, quarantine directory, repository refs, and Git worktree administrative records as evidence. Do not run `git worktree remove`, `git worktree prune`, or manually edit/move/delete those paths through the Agent account. Manual recovery starts only after an operator has made a separate backup and reconciled the exact path/registration/branch/HEAD/ref mismatch under an independently authorized administrative procedure.
+-
+-The service account needs `0700` create/fsync permissions below the workspace root, Git ref/worktree administrative permissions in the trusted repository, and credentials/network access to fetch the policy-pinned remote during archive. Prefer a dedicated bare repository or mirror so no Agent ever writes a shared main checkout. Capacity monitoring is mandatory because archived quarantine directories are retained permanently by this version.
+-
+-## Development-preview Skill Installation
+-
+-The dedicated `command.dispatch` / `SKILL_INSTALL` path is **off by default** and is separate from Codex execution and coding-worktree management. Enable it only with a matching preview API deployment:
+-
+-```bash
+-AGENT_SKILL_INSTALL_ENABLED=false
+-AGENT_SKILL_INSTALL_MAX_BYTES=16777216
+-AGENT_SKILL_INSTALL_MAX_EXTRACTED_BYTES=67108864
+-```
+-
+-When enabled, the installer requires the frozen command fields and an exact target Agent. It downloads only the installation-scoped relative path `/internal/agent/skill-installations/<installationId>/package` from the `WS_URL` origin, disables redirects, and authenticates with the existing `X-API-Key` credential. Credential values and package bytes are not logged.
+-
+-Installation safety and durability rules:
+-
+-- The declared size, configured raw/expanded limits, and canonical lowercase SHA-256 digest are checked before activation.
+-- ZIP extraction rejects traversal, absolute/backslash paths, symlinks, special or encrypted entries, duplicates, file-prefix conflicts, the reserved `.cyf-installation.json` namespace, oversized entry sets, a missing root `SKILL.md`, and `SKILL.md` name/version mismatch.
+-- Staging and the installer lock are profile-local below `COMMAND_INBOX_DIR`; activation is one rename into `<CODEX_HOME>/skills/<skillKey>` and never overwrites an existing target.
+-- A durable installed registry keyed by `installationId` binds command attempt/fence/epoch, product version, skill identity, and package digest. Exact replay is idempotent; conflicting reuse fails closed.
+-- `work.result` / `SKILL_INSTALL_RESULT` is durably queued before the command can receive terminal `SUCCEEDED`. Pending identical result envelopes replay after reconnect or restart. Existing ACK order remains `RECEIVED -> STARTED -> SUCCEEDED|FAILED`.
+-
+-Stable installer failure codes are:
+-
+-```text
+-SKILL_INSTALL_DISABLED
+-SKILL_INSTALL_COMMAND_INVALID
+-SKILL_DOWNLOAD_FORBIDDEN
+-SKILL_PACKAGE_TOO_LARGE
+-SKILL_PACKAGE_DIGEST_MISMATCH
+-SKILL_ARCHIVE_INVALID
+-SKILL_IDENTITY_MISMATCH
+-SKILL_INSTALL_CONFLICT
+-SKILL_INSTALL_IO_FAILED
+-```
+-
+-This V0 preview does not provide publisher-signature verification, binding proof-of-possession, mTLS download sessions, isolation attestation, capability leases, or production-grade refund reconciliation. It installs verified bytes into the selected profile's skill directory but does not advertise installed skill names as scheduling abilities.
+-
+-## Protocol v1 Message Handling
+-
+-The client is fail-closed and uses the canonical `messageType` as the semantic discriminator:
+-
+-- `command.dispatch`: the only message type that enters the executable queue. It must use `schemaVersion: 1` and include `messageId`, `commandId`, `commandType`, and `targetAgentId`.
+-- `chat.message`: may invoke Codex for a conversational reply. That path emits only `chat.message.delta` and final `chat.message`; it never emits `task.report`, `work.result`, or `codex.result`.
+-- `task.event`: updates the profile's local observed-task state and never invokes Codex.
+-- Other recognized Protocol v1 messages are non-executable. Unknown, malformed, missing-version, missing-`messageType`, conflicting outer/nested Envelope, and legacy execution messages fail closed.
+-- Known legacy server control notifications are handled without command execution. The existing `connected` and `ping` controls retain their protocol responses, while `agent_status` is ignored for compatibility with existing CYF API presence broadcasts; unknown and execution-like legacy frames still fail closed.
+-
+-The compatibility outer type `agent_direct_message` is accepted only when its canonical `messageType` is explicitly `chat.message` or `command.dispatch`. Legacy `codex.exec`, `task.assign`, and `task_assigned` messages do not execute.
+-
+-Payload prompt fields are resolved from `prompt`, `content`, `instruction`, `description`, `title`, or `currentTaskTitle`.
+-
+-## Process Runtime Identity
+-
+-A new UUID `runtimeInstanceId` is generated once when the Node process starts. All profiles in that process share it. Every WebSocket reconnect reuses the same value, while a process restart generates a new value.
+-
+-The ID is sent in both WebSocket query aliases (`runtime_instance_id` and `runtimeInstanceId`) and in Protocol v1 registration, presence, chat, and protocol-error messages. It is process identity only and is never used as a task, work-item, command, or ownership key.
+-
+-## Durable Command Inbox
+-
+-Configure:
+-
+-```bash
+-COMMAND_INBOX_DIR=/home/isp/apps/codex-ws-agent/data/inbox
+-COMMAND_INBOX_SUCCESS_POLICY=archive
+-```
+-
+-The service account must have create, rename, delete, and `fsync` permissions below `COMMAND_INBOX_DIR` before upgrading.
+-
+-Each canonical Agent receives an isolated directory keyed by the hex encoding of `agentId`:
+-
+-```text
+-COMMAND_INBOX_DIR/
+-  <agent-id-as-utf8-hex>/
+-    pending/
+-    processing/
+-    recovery-required/
+-    archive/
+-    quarantine/
+-    ledger/
+-    ledger-conflicts/
+-    ledger-quarantine/
+-    ledger-blocked/
+-    acks/
+-    acks-quarantine/
+-```
+-
+-Each command is one JSON file with `formatVersion: 1` and these durable fields:
+-
+-```json
+-{
+-  "formatVersion": 1,
+-  "queueId": "uuid",
+-  "queueSequence": 1,
+-  "profileId": "local-profile-key",
+-  "agentId": "canonical-agent-id",
+-  "state": "pending",
+-  "receivedAt": 0,
+-  "enqueuedAt": 0,
+-  "messageId": "message-id",
+-  "commandId": "command-id",
+-  "commandType": "TASK_EXECUTE",
+-  "taskId": "task-id",
+-  "workItemId": "work-item-id",
+-  "attempt": 0,
+-  "issuedAt": 0,
+-  "expiresAt": 0,
+-  "correlationId": "correlation-id",
+-  "causationId": "causation-id",
+-  "rawPayload": {}
+-}
+-```
+-
+-Queue behavior:
+-
+-- A profile-local `sequence.json` counter is atomically persisted before each record; FIFO ordering uses this cross-restart monotonic sequence and never wall-clock time.
+-- The complete record is written to a temporary file, file-synced, and atomically renamed into `pending/` before execution can start.
+-- A profile executes one command at a time in durable enqueue order. Commands arriving while Codex is busy remain in `pending/`.
+-- Claiming is an atomic `pending/ -> processing/` rename.
+-- On process startup, an unfinished `processing/` record moves to durable `recovery-required/`, emits a persistent `REJECTED` ACK, and pauses the profile. It is never automatically re-executed because its external side effects are unknown. Reconciliation or a server dispatch with a new `commandId` is required.
+-- A `processing/` record already durably marked completed is settled without re-execution and its terminal ledger state is reconciled/replayed.
+-- Recovery and the final pre-execution gate fully revalidate Protocol v1 semantics, `command.dispatch`, target, and message/command fields. Invalid records move to `quarantine/` with a `.reason.txt` sidecar and never execute.
+-- Inbox, recovery, ledger, conflict, ACK outbox, blocked, and quarantine directories are forced to `0700`; durable records and reason files are forced to `0600`.
+-- Critical file/directory `fsync`, rename, unlink, and cross-directory move failures propagate and pause execution rather than claiming durability.
+-- With the default `archive` policy, successful and failed executions move to `archive/`. With `delete`, successful executions are removed and failures remain archived.
+-
+-A06 closes the A05 crash window with two durable guards:
+-
+-- `commandId` is deduped in a persistent ledger by a canonical fingerprint containing only command semantics plus the complete nested business payload. Object-key order is normalized, array values/order remain significant, and transport redelivery metadata such as message/runtime/session/correlation ids and timestamps is excluded.
+-- A fingerprint conflict creates a separate durable conflict record and `REJECTED` ACK; it never overwrites the original command fingerprint, terminal status, outcome, or completion timestamp.
+-- `RECEIVED`, `STARTED`, `SUCCEEDED`, `FAILED`, and `REJECTED` ACKs are written to a persistent outbox before send. `ack*Emitted` is persisted only after `send` explicitly succeeds; marker/dequeue failures retain the outbox record for documented at-least-once replay.
+-- Corrupt ledger or ACK records are durably quarantined and the profile pauses fail-closed for manual reconciliation.
+-- Every ACK has a new `messageId`; `correlationId` alone points to the dispatch `messageId`. Duplicate delivery replays the ledger's current ACK state, including terminal `SUCCEEDED` or `FAILED`.
+-
+-Completed failures are archived rather than retried in a hot loop.
+-
+-## Codex Invocation
+-
+-For a managed command, the client calls Codex with the resolved task/Agent worktree as both process cwd and `--cd`:
+-
+-```bash
+-codex exec --cd "/home/isp/hosts/cyf/agent-workspaces/$TASK_ID/agent-$AGENT_ID" \
+-  --ask-for-approval "$CODEX_APPROVAL" --sandbox "$CODEX_SANDBOX" "$PROMPT"
+-```
+-
+-`codexWorkdir` remains the chat workdir and is not a coding-command fallback unless the explicit non-coding compatibility policy above is configured.
+-
+-Command compatibility results remain `task.report` plus `codex.result` until the later ACK/result migration. Chat and task-event paths never use those result types.
+-
+-### Workspace file commands
+-
+-A `command.dispatch` uses the private Workspace File Bridge only when its nested `payload` is *exactly* the canonical object with `taskId`, `runId`, `inputManifest`, and `outputManifest`; any other payload continues through the normal command path. The selected profile must configure the controlled pair `workspaceFileApiOrigin` and `workspaceFileRootDir` (or their `CODEX_WORKSPACE_FILE_*` environment fallbacks). After the current authenticated WebSocket registration ACK, its server-issued `AgentRuntime` token is held only in process memory for the live socket binding. Do **not** configure `workspaceFileRuntimeAuthHeader` or `CODEX_WORKSPACE_FILE_RUNTIME_AUTH_HEADER`: a supplied header is rejected, and no authorization header is copied into prompts, durable inbox payloads, reports, configuration reports, or profile files.
+-
+-Inputs materialize below the private root at `<root>/<taskId>/<runId>`, and that directory is both Codex `cwd` and `--cd`; this path never acquires a Git workspace-manager lease. Successful Codex execution collects only declared outputs, uploads each output, then commits the canonical sorted output manifest. A non-200/201 upload, non-200 commit, redirect, wrong-origin response, or cleanup failure produces a failed command outcome rather than `completed`; private run storage is removed in all terminal paths.
+-
+-## Managed-host identity and socket deployment
+-
+-Managed hosting stays disabled unless `AGENT_MANAGED_HOST_ENABLED=true`. Configure exact
+-`AGENT_MANAGED_HOST_TENANT_ID` and `AGENT_MANAGED_HOST_CLIENT_ID`. Set
+-`AGENT_MANAGED_HOST_OWNER_JIACN` to one exact owner for the compatible fixed-owner mode, or to `*`
+-to accept validated non-empty request owners. Wildcard mode does not wildcard tenant/client; each
+-owner receives a separate encoded directory, Codex Home, workspace, profile, credential association,
+-and engine identity. A canonical Agent ID claimed by one owner is never reused by another owner.
+-
+-A managed Agent is not ready merely because provisioning files exist. The runner initializes the
+-execution engine, sends authenticated `agent.register`, waits for the exact current-process
+-`agent_registered` acknowledgement, and only then publishes `ONLINE` and returns `SERVICE_READY`.
+-Historical readiness is not replayed while that exact managed profile is offline. After a successful
+-initial ensure reaches `STARTED`, the runner stores the exact managed API credential in a generation-local
+-`0600` recovery file below the already private `0700` managed root. On process restart it accepts only an
+-exact tenant/client/owner/Agent/intent/lease/binding association whose credential hash, owner claim, initial
+-journal, Codex Home, and work directory all still match, then initializes a fresh engine and registers the
+-same profile. Recovery never creates another hosting intent or lease and does not reuse `FAILED_NO_EFFECT`
+-generations.
+-
+-Production systemd source uses `User=root` and `Group=isp`. Create the socket parent as canonical
+-`root:isp` mode `0750`; the runner creates the socket as `root:isp` mode `0660`. The API service user
+-must belong to group `isp`, and its configured runner UID must remain `0`. Do not use `0666`, a
+-world-writable parent, a symlinked path, or a stale socket from another process.
+-
+-## Test
+-
+-From the versioned `isp-install` checkout:
+-
+-```bash
+-cd conf/codex-ws-agent
+-npm test
+-OPENCLAW_API_KEY=test CODEX_BIN=/bin/true CODEX_WORKDIR=/tmp node agent-client.mjs --validate
+-```
+-
+-The test suite uses `node:test` with the declared runtime dependencies. Authentication tests use a loopback HTTP server and no external service; installer tests use stub executables and never install into production paths. A07 tests create temporary local Git repositories/worktrees; skill-install tests use in-memory ZIP fixtures and stubbed downloads, and none touches production paths. The production installer copies the runtime files, not the repository-only test directory.
+-
+-## Upgrade and Rollback
+-
+-Before upgrade:
+-
+-1. Create `COMMAND_INBOX_DIR` and grant the service account ownership/write access.
+-2. Stop the old process cleanly before starting the A06 client; do not run old and new clients concurrently for the same canonical `agentId`.
+-3. Keep the default `archive` policy through initial rollout so command outcomes are inspectable.
+-
+-Rollback to the pre-A05 client does not understand the durable inbox, ledger, ACK outbox, or `recovery-required/` files. Preserve all profile-local state and coordinate reconciliation/server redispatch before rollback. Never delete `processing/` or `recovery-required/` blindly; either may represent a command whose external side effect already occurred.
+-
+-## Runtime Notes
+-
+-- Each configured profile keeps its own `CODEX_HOME`.
+-- On shutdown, the agent sends `offline` and terminates active Codex children. Any unsettled `processing/` record becomes fail-closed `recovery-required/` on the next process and is not automatically retried.
+-- Pending commands wait until the profile WebSocket reconnects before executing; recovery-required commands remain paused until explicit reconciliation.
+-- Runtime logs are available from `journalctl -u codex-ws-agent`.
+-
+-## Juyi Hall durable Fast CHAT (disabled by default)
+-
+-Fast CHAT is opt-in per profile with `fastChatEnabled=true`, `appServerEnabled=true`, and `chatEngine=app-server`; `trueDeltaEnabled` independently controls publication of genuine app-server deltas. Modern durable CHAT is rejected with an explicit recovery/error when Fast CHAT is disabled or its app-server trust/readback fails; only explicit legacy protocol messages may use the lower-assurance legacy compatibility runner. The runtime is pinned to Codex CLI/app-server `0.153.4` and schema bundle SHA-256 `b06f77062369d481a59cc70720c12b89cb9dd49c385863923262102d3ad6c978`. Before spawning app-server it resolves the audited JavaScript launcher to its native executable, records launcher/native realpath, inode, timestamps and content hashes, copies the measured native executable and bounded resources from already-opened verified file descriptors into runtime-owned private new-inode snapshots, executes only that pinned snapshot with `--version`, generates its full experimental schema bundle in a temporary directory, hashes the bundle, and removes the temporary output. Version, schema, path, inode, hash, launcher-target or protected-ancestor drift permanently disables Fast CHAT for that profile until configuration/process replacement; modern durable CHAT then enters recovery-required and can never fall through to workspace-write legacy execution. Resource readback marks this measurement explicitly. It sends `turn/start.input` as `UserInput[]`, uses `developerInstructions`/`baseInstructions` on thread start/resume, and treats a schema change as a compatibility event requiring review.
+-
+-The Fast CHAT child runs in a runtime-owned empty directory, with `read-only`, network disabled, and approval `never`. Approval `never` is **not** a deny-all tool policy, so every app-server command/file/permission/network/MCP/dynamic-tool server request is also rejected and the matching turn interrupted. User-input requests are clarification-only and cannot authorize execution. Child exits use bounded exponential restart backoff. Only explicit old-protocol traffic may use final-only fallback. Modern durable CHAT fails closed on feature-disabled, trust, version, schema, or process-identity failures and never enters the legacy runner.
+-
+-Durable hosted CHAT is admitted before ACK under `COMMAND_INBOX_DIR/chat-inbox/<agent>/`. The hot quota covers only `pending/`, `processing/`, and `recovery/` (defaults: `chatInboxMaxFiles=1024`, `chatInboxMaxBytes=67108864`) and is serialized by a cross-process profile lock. Lock publication has no public empty-record window: the runtime writes and fsyncs a private `0600` owner temp file, publishes it with an atomic no-clobber hard link, fsyncs the directory, and removes the temp name. Valid dead PID/start-time owners are grace-reclaimed; malformed legacy locks remain fail-closed unless an operator invokes the explicit `confirmed-stopped` migration mode after stopping old runtimes. Completed/cancelled records first persist a forward-settlement marker and compact dedupe evidence, then move to an independently bounded/retained archive (defaults: 256 files, 16 MiB, seven days). Archive GC does not control dedupe evidence: terminal fingerprints/bindings are written once into a sharded immutable ledger, while a constant-size durable usage manifest avoids full-ledger scans on ordinary admission; the ledger has independently configured 30-day default audit/dedupe retention and hard admission capacity. If a mutation leaves the usage manifest dirty, startup builds a fresh turn-index tree only from authoritative ledger markers and swaps it under the profile lock instead of additively retaining stale entries. Stop lookup revalidates every indexed key and fingerprint against its marker, repairs stale records, and removes orphan entries plus empty buckets. Expired evidence may be collected, but recent evidence is never evicted to admit new work. Capacity rejection occurs before `chat.dispatch.ack`; an ACK enqueue failure does not block an already-durable task and is retried in-process. Processing records found after restart become `ACCEPTANCE_UNKNOWN`/recovery-required unless their completed/cancelled marker proves forward settlement. Thread bindings are profile/agent/key self-bound and capacity-limited; they are a cache only, while the API business database remains authoritative.
+-
+-The hosted wire contract under `contracts/` is the byte-for-byte API-generated artifact from commit `caee54fc27a08146f9cc57219cf86c763e41c531`. Runtime startup and tests require provenance status `API_GENERATED_VERIFIED`, the pinned fixture SHA-256, API source path, and generator class before enabling Fast CHAT; the artifact is produced through the real `ChatDeliberationService.eventPayload -> ChatDeliberationOutboxRelay.hostedWire` path.
+-
+-### U0 runtime capability declaration
++The execution, CHAT, workspace, current capability and ACK implementations remain.
++`migrate-ack-high-water.mjs` is still referenced by the separate active ACK task;
++it is excluded from the installed execution payload, not automatically executed.
+ 
+-`agent.register` and every `agent.presence` include `runtimeCapabilities.capabilityContractVersion=1`.
+-The default profile keeps Fast CHAT disabled, so `profiles.CHAT.enabled=false`; it does not advertise
+-INSPECT or EXECUTE. CHAT declares `toolPolicy=read-only-constrained` only when the opt-in app-server
+-profile is configured with its actual read-only/network-disabled policy. This is not a claim that the
+-Provider has proven a strict no-tools boundary (`strictNoToolsVerified=false`).
++## Retained implementation notes
+ 
+-`profiles.INSPECT` remains `supported=false` and `enabled=false` until a fixed exact manifest, readonly
+-input materialization, and Provider isolation have been independently verified. Existing `PRIVATE`/
+-`TASK` compatibility and native START availability are reported only under `legacyCompatibility`; they
+-are not evidence of new EXECUTE orchestration admission.
++The following notes describe retained code, not additional UR06 delivery gates.
++The offline ACK migration belongs to its existing separate workstream; new-task
++acceptance does not require migrating historical state.
+ 
+ ### Controlled-image v3: retain produced bytes when delivery is uncertain
+ 
+diff --git a/conf/codex-ws-agent/agent-client.mjs b/conf/codex-ws-agent/agent-client.mjs
+index 31093ea..24a09e7 100644
+--- a/conf/codex-ws-agent/agent-client.mjs
++++ b/conf/codex-ws-agent/agent-client.mjs
+@@ -28,7 +28,7 @@ import {
+ import { basename, dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path'
+ import { homedir } from 'node:os'
+ import { fileURLToPath, pathToFileURL } from 'node:url'
+-import { GitWorkspaceManager, WorkspaceManagerError, loadWorkspacePolicies } from './workspace-manager.mjs'
++import { GitWorkspaceManager, WorkspaceManagerError } from './workspace-manager.mjs'
+ import { SkillInstallManager, WORK_RESULT_RECEIPT_TYPE, defaultSkillInstallStateRoot } from './skill-install-manager.mjs'
+ import { ExecutionReportOutbox } from './report-outbox.mjs'
+ import { RegistrationAckObserver, sendRegistrationWithAckObservation } from './registration-ack.mjs'
+@@ -507,18 +507,6 @@ const resolveExecutable = command => {
+   return ''
+ }
+ 
+-const parseScalarValue = rawValue => {
+-  const value = String(rawValue || '').trim()
+-  if (!value) return ''
+-  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+-    return value.slice(1, -1)
+-  }
+-  if (value === 'true') return true
+-  if (value === 'false') return false
+-  if (/^-?\d+(\.\d+)?$/.test(value)) return Number(value)
+-  return value
+-}
+-
+ const configError = (message, exitOnError = true) => {
+   if (exitOnError) {
+     console.error(message)
+@@ -527,41 +515,6 @@ const configError = (message, exitOnError = true) => {
+   throw new Error(message)
+ }
+ 
+-const parseSectionProfiles = (raw, fallbackProfile, options = {}) => {
+-  const exitOnError = options.exitOnError !== false
+-  const profiles = []
+-  let current = null
+-  let defaults = {}
+-  for (const originalLine of String(raw).split(/\r?\n/)) {
+-    const line = originalLine.trim()
+-    if (!line || line.startsWith('#')) continue
+-    if (/^\[(default|profile\.default|agent\.default)\]$/.test(line)) {
+-      if (current) profiles.push(current)
+-      current = { __section: 'default' }
+-      continue
+-    }
+-    const sectionMatch = line.match(/^\[(agent|profile)\.([^\]]+)\]$/)
+-    if (sectionMatch) {
+-      if (current) profiles.push(current)
+-      current = { profileId: sectionMatch[2] }
+-      continue
+-    }
+-    if (!current) continue
+-    const index = line.indexOf('=')
+-    if (index < 0) continue
+-    current[line.slice(0, index).trim()] = parseScalarValue(line.slice(index + 1).trim())
+-  }
+-  if (current) profiles.push(current)
+-  const defaultIndex = profiles.findIndex(profile => profile.__section === 'default')
+-  if (defaultIndex >= 0) {
+-    defaults = { ...profiles[defaultIndex] }
+-    delete defaults.__section
+-    profiles.splice(defaultIndex, 1)
+-  }
+-  if (!profiles.length) configError('CODEX_PROFILES_FILE section format is empty or invalid', exitOnError)
+-  return profiles.map((profile, index) => normalizeProfile({ ...defaults, ...profile }, fallbackProfile, index))
+-}
+-
+ const parseStringList = value => (Array.isArray(value) ? value : String(value || '').split(','))
+   .map(item => String(item).trim())
+   .filter(Boolean)
+@@ -667,108 +620,6 @@ export const normalizeProfile = (profile, fallback = {}, index = 0, { isolated =
+   }
+ }
+ 
+-const legacyProfile = () => normalizeProfile({
+-  profileId: process.env.CODEX_PROFILE_ID || process.env.AGENT_ID || 'default',
+-  agentId: process.env.AGENT_ID || 'local-codex',
+-  agentName: process.env.AGENT_NAME || '本地 Codex',
+-  personaName: process.env.AGENT_PERSONA || '吴用',
+-  codexBin: process.env.CODEX_BIN || 'codex',
+-  codexHome: process.env.CODEX_HOME || '',
+-  codexWorkdir: process.env.CODEX_WORKDIR || process.cwd(),
+-  codexSandbox: process.env.CODEX_SANDBOX || 'workspace-write',
+-  codexApproval: process.env.CODEX_APPROVAL || 'never',
+-  codexSessionMode: process.env.CODEX_SESSION_MODE || 'new',
+-  codexTimeoutMs: parseCodexTimeoutMs(process.env.CODEX_TIMEOUT_MS),
+-  codexModel: process.env.CODEX_MODEL || '',
+-  chatEngine: process.env.CODEX_CHAT_ENGINE || 'legacy-codex',
+-  fastChatEnabled: process.env.CODEX_FAST_CHAT_ENABLED || false,
+-  appServerEnabled: process.env.CODEX_APP_SERVER_ENABLED || false,
+-  trueDeltaEnabled: process.env.CODEX_TRUE_DELTA_ENABLED || false,
+-  typedDeliberationEnabled: process.env.CODEX_TYPED_DELIBERATION_ENABLED || false,
+-  typedInspectionEnabled: process.env.CODEX_TYPED_INSPECTION_ENABLED || false,
+-  typedInspectionRootDir: process.env.CODEX_TYPED_INSPECTION_ROOT_DIR || '',
+-  typedInspectionStateRoot: process.env.CODEX_TYPED_INSPECTION_STATE_ROOT || '',
+-  typedInspectionProfileId: process.env.CODEX_TYPED_INSPECTION_PROFILE_ID || '',
+-  typedInspectionEngineContractId: process.env.CODEX_TYPED_INSPECTION_ENGINE_CONTRACT_ID || '',
+-  typedInspectionProviderId: process.env.CODEX_TYPED_INSPECTION_PROVIDER_ID || '',
+-  typedInspectionProviderBaseUrl: process.env.CODEX_TYPED_INSPECTION_PROVIDER_BASE_URL || '',
+-  typedInspectionProviderWireApi: process.env.CODEX_TYPED_INSPECTION_PROVIDER_WIRE_API || 'responses',
+-  typedInspectionProviderNetwork: process.env.CODEX_TYPED_INSPECTION_PROVIDER_NETWORK || 'isolated',
+-  typedInspectionNetworkConnectTimeoutMs: process.env.CODEX_TYPED_INSPECTION_NETWORK_CONNECT_TIMEOUT_MS || '',
+-  typedInspectionCaBundlePath: process.env.CODEX_TYPED_INSPECTION_CA_BUNDLE_PATH || '',
+-  typedInspectionCarrierEvidencePath: process.env.CODEX_TYPED_INSPECTION_CARRIER_EVIDENCE_PATH || '',
+-  typedInspectionCarrierEvidenceDigest: process.env.CODEX_TYPED_INSPECTION_CARRIER_EVIDENCE_DIGEST || '',
+-  typedInspectionBwrapBin: process.env.CODEX_TYPED_INSPECTION_BWRAP_BIN || '/usr/bin/bwrap',
+-  typedInspectionSupportedInputs: process.env.CODEX_TYPED_INSPECTION_SUPPORTED_INPUTS || '',
+-  chatInboxMaxFiles: process.env.CODEX_CHAT_INBOX_MAX_FILES || 1024,
+-  chatInboxMaxBytes: process.env.CODEX_CHAT_INBOX_MAX_BYTES || 67108864,
+-  chatArchiveMaxFiles: process.env.CODEX_CHAT_ARCHIVE_MAX_FILES || 256,
+-  chatArchiveMaxBytes: process.env.CODEX_CHAT_ARCHIVE_MAX_BYTES || 16777216,
+-  chatArchiveRetentionMs: process.env.CODEX_CHAT_ARCHIVE_RETENTION_MS || 604800000,
+-  chatDedupeMaxEntries: process.env.CODEX_CHAT_DEDUPE_MAX_ENTRIES || 100000,
+-  chatDedupeMaxBytes: process.env.CODEX_CHAT_DEDUPE_MAX_BYTES || 134217728,
+-  chatDedupeRetentionMs: process.env.CODEX_CHAT_DEDUPE_RETENTION_MS || 2592000000,
+-  workspacePolicyId: process.env.CODEX_WORKSPACE_POLICY_ID || '',
+-  workspaceRole: process.env.CODEX_WORKSPACE_ROLE || 'coder',
+-  workspaceNoTaskPolicy: process.env.CODEX_WORKSPACE_NO_TASK_POLICY || 'reject',
+-  workspaceNonCodingCommandTypes: process.env.CODEX_WORKSPACE_NON_CODING_COMMAND_TYPES || '',
+-  executionReportCommandTypes: process.env.CODEX_EXECUTION_REPORT_COMMAND_TYPES || '',
+-  workspaceFallbackWorkdir: process.env.CODEX_WORKSPACE_FALLBACK_WORKDIR || '',
+-  workspaceFileApiOrigin: process.env.CODEX_WORKSPACE_FILE_API_ORIGIN || '',
+-  workspaceFileRootDir: process.env.CODEX_WORKSPACE_FILE_ROOT_DIR || '',
+-  workspaceFileRuntimeAuthHeader: process.env.CODEX_WORKSPACE_FILE_RUNTIME_AUTH_HEADER || '',
+-  nativeConversationHttpPollEnabled: ['1', 'true'].includes(
+-    String(process.env.CYF_CONVERSATION_HTTP_POLL_ENABLED || '').trim().toLowerCase()
+-  ),
+-  nativeConversationImageGenerationEnabled: ['1', 'true'].includes(
+-    String(process.env.CYF_CONVERSATION_IMAGEGEN_ENABLED || '').trim().toLowerCase()
+-  ),
+-  isDefault: true
+-})
+-
+-const loadProfilesRaw = (options = {}) => {
+-  const profilesFile = process.env.CODEX_PROFILES_FILE?.trim()
+-  if (profilesFile) {
+-    try {
+-      return readFileSync(resolve(profilesFile), 'utf8')
+-    } catch (error) {
+-      configError(`failed to read CODEX_PROFILES_FILE ${profilesFile}: ${error.message}`, options.exitOnError !== false)
+-    }
+-  }
+-  return process.env.CODEX_PROFILES || ''
+-}
+-
+-const parseProfiles = (raw, fallbackProfile, options = {}) => {
+-  const exitOnError = options.exitOnError !== false
+-  if (!raw || !String(raw).trim()) return [fallbackProfile]
+-  const text = String(raw).trim()
+-  if (/^\[(agent|profile)\./m.test(text)) return parseSectionProfiles(text, fallbackProfile, { exitOnError })
+-  let parsed
+-  try {
+-    parsed = JSON.parse(text)
+-  } catch (error) {
+-    configError(`CODEX_PROFILES must be valid JSON: ${error.message}`, exitOnError)
+-  }
+-  if (!Array.isArray(parsed) || parsed.length === 0) configError('CODEX_PROFILES must be a non-empty JSON array', exitOnError)
+-  return parsed.map((profile, index) => normalizeProfile(profile || {}, fallbackProfile, index))
+-}
+-
+-// Read-only legacy input inspection for stopped-writer migration diagnostics.
+-// Never used by the unified execution entry or as an authentication fallback.
+-export const loadRuntimeConfig = (options = {}) => {
+-  const loadedProfiles = parseProfiles(loadProfilesRaw(options), legacyProfile(), options).filter(profile => profile.enabled)
+-  if (!loadedProfiles.length) configError('CODEX_PROFILES has no enabled profiles', options.exitOnError !== false)
+-  const configuredDefaultProfile = process.env.DEFAULT_CODEX_PROFILE
+-  const selected = configuredDefaultProfile && loadedProfiles.find(
+-    profile => profile.profileId === configuredDefaultProfile || profile.agentId === configuredDefaultProfile
+-  )
+-  return {
+-    profiles: loadedProfiles,
+-    defaultProfileId: selected?.profileId || loadedProfiles.find(profile => profile.isDefault)?.profileId || loadedProfiles[0].profileId,
+-    workspacePolicies: loadWorkspacePolicies()
+-  }
+-}
+-
+ let config = null
+ let defaultProfile = null
+ let shuttingDown = false
+@@ -6435,32 +6286,6 @@ const isProfileBusy = profile => getProfileState(profile)?.processor?.isBusy() |
+ export const canPublishProfileOnline = (profile, state) => !profile.managedGeneration ||
+   Boolean(state?.managedRegistered && state?.managedEngine?.ready)
+ 
+-// Diagnostic only: one read-only queue GET, no dispatch, retries, or receipt body logging.
+-// Run only for an explicitly enabled managed CHAT profile and its exact native receipt.
+-export const observeTypedRuntimeAuthentication = async ({ profile, receipt, authHeader, apiOrigin,
+-  runtimeInstanceId = PROCESS_RUNTIME_INSTANCE_ID, fetchFn = globalThis.fetch } = {}) => {
+-  if (!profile?.typedDeliberationEnabled || !profile.managedGeneration ||
+-      receipt?.typedDeliberation?.state !== 'READY') return { state: 'NOT_APPLICABLE' }
+-  const binding = receipt.runtimeAuth
+-  if (!binding || binding.scheme !== 'native-runtime-v1' || binding.agentId !== profile.agentId ||
+-      binding.runtimeInstanceId !== runtimeInstanceId || binding.tenantId !== profile.managedTenantId ||
+-      binding.clientId !== profile.managedClientId || binding.ownerJiacn !== profile.managedOwnerJiacn ||
+-      !/^AgentRuntime rts1_[0-9a-f]{64}$/.test(authHeader || '')) return { state: 'RECEIPT_BINDING_MISMATCH' }
+-  try {
+-    const origin = new URL(apiOrigin)
+-    if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password) {
+-      return { state: 'INVALID_API_ORIGIN' }
+-    }
+-    const response = await fetchFn(new URL('/internal/agent/tasks/workspace-executions/commands', origin), {
+-      method: 'GET', redirect: 'error', headers: { Authorization: authHeader, Accept: 'application/json',
+-        'X-Agent-Id': profile.agentId, 'X-Agent-Runtime-Id': runtimeInstanceId }
+-    })
+-    // A queue read never claims or executes a command. Do not retain any returned work data.
+-    await response.body?.cancel()
+-    return { state: response.status === 401 ? 'CURRENT_BINDING_DENIED' : 'HTTP_OBSERVED', httpStatus: response.status }
+-  } catch { return { state: 'TRANSPORT_ERROR' } }
+-}
+-
+ export const startBoundedExecutionReportReplay = ({ outbox, sendFn, isStable = () => true, schedule = callback => setImmediate(callback) }) => {
+   let cancelled = false
+   const run = () => {
+diff --git a/conf/codex-ws-agent/codex-profiles.conf b/conf/codex-ws-agent/codex-profiles.conf
+deleted file mode 100644
+index dc4a154..0000000
+--- a/conf/codex-ws-agent/codex-profiles.conf
++++ /dev/null
+@@ -1,63 +0,0 @@
+-[default]
+-codexBin=/usr/local/bin/codex
+-codexWorkdir=/home/isp
+-# Safe default for NEW installations; existing deployed profiles are preserved by the installer.
+-# danger-full-access is an explicit host-level security decision, not a fix for missing workspace policies.
+-codexSandbox=workspace-write
+-codexApproval=never
+-codexSessionMode=resume
+-# Milliseconds: 0 disables the timeout; otherwise 1..2147483647.
+-codexTimeoutMs=900000
+-# Empty: use CODEX_MODEL fallback or Codex Home's model. Non-empty: CLI --model wins.
+-codexModel=
+-# Fast CHAT is opt-in. Disabled defaults never advertise enabled CHAT/INSPECT/EXECUTE profiles.
+-fastChatEnabled=false
+-appServerEnabled=false
+-trueDeltaEnabled=false
+-# Typed INSPECT remains disabled unless native isolation is freshly measured at startup and an immutable
+-# carrier evidence file matches the exact profile/provider/model/CA/input-source binding. The accepted
+-# 1f95 local-image evidence is shipped read-only but is not enabled by this template:
+-# typedInspectionEnabled=false
+-# chatModel=gpt-5.6-terra
+-# typedInspectionCarrierEvidencePath=/home/isp/apps/codex-ws-agent/evidence/typed-inspection-local-image-gpt-5.6-terra-1f95df2.json
+-# typedInspectionCarrierEvidenceDigest=sha256:d22de19b1b86c988c81deadb2697e5a577fdbc9abb4982ddc015fefa7fd6bdab
+-# abilities/skills are legacy metadata, not scheduling or skill-activation settings.
+-# Check the actual business abilities and command readiness with --inspect-config.
+-# personaName controls display identity, not a model system prompt.
+-# A07 command.dispatch worktrees are enabled per canonical Agent by selecting a trusted policy.
+-# workspacePolicyId=cyf
+-# workspaceRole=coder
+-# workspaceNoTaskPolicy=reject
+-# Explicit no-task compatibility is allowed only for listed non-coding command types and a non-Git directory:
+-# workspaceNoTaskPolicy=dedicated-workdir
+-# workspaceNonCodingCommandTypes=STATUS_QUERY,DOCUMENT_RENDER
+-# workspaceFallbackWorkdir=/home/isp/hosts/cyf/non-code/codex-default
+-# Optional private Workspace File Bridge. Configure only the API origin and a 0700 local root;
+-# the current AgentRuntime token is received on the authenticated registration ACK and stays in memory.
+-# Never set workspaceFileRuntimeAuthHeader in this file or the environment.
+-# workspaceFileApiOrigin=https://api.chaoyoufan.cn
+-# workspaceFileRootDir=/home/isp/apps/codex-ws-agent/data/private-runs
+-# Both must be true to create and declare the native GENERATE_IMAGE HTTP-poll executor.
+-# They do not infer support from installed skills and do not probe a Provider.
+-# nativeConversationHttpPollEnabled=false
+-# nativeConversationImageGenerationEnabled=false
+-
+-[agent.default]
+-profileId=codex-default
+-agentId=codex-default
+-agentName=Codex
+-personaName=Default
+-codexHome=/home/isp/apps/codex-ws-agent/.codex-default
+-isDefault=true
+-
+-# Add more profiles as needed:
+-#
+-# [agent.wuyong]
+-# agentId=jyt-client-wuyong
+-# agentName=吴用
+-# personaName=智多星
+-# codexHome=/home/isp/apps/codex-ws-agent/.codex-wuyong
+-# codexWorkdir=/home/isp/wsps/cyf
+-# enabled=true
+-# codexModel=gpt-5
+-# apiKey=cdx_optional_profile_specific_key
+diff --git a/conf/codex-ws-agent/contracts/probes/api-long-history-wire.mjs b/conf/codex-ws-agent/contracts/probes/api-long-history-wire.mjs
+deleted file mode 100644
+index dd4305d..0000000
+--- a/conf/codex-ws-agent/contracts/probes/api-long-history-wire.mjs
++++ /dev/null
+@@ -1,60 +0,0 @@
+-/** Cross-repository diagnostic: feed actual API-produced scoped history through the Client runtime. */
+-import test from 'node:test'
+-import assert from 'node:assert/strict'
+-import { readFileSync } from 'node:fs'
+-import { buildContextEnvelope } from '../../chat-runtime.mjs'
+-import { normalizeInboundMessage, runFastChat } from '../../agent-client.mjs'
+-
+-const wirePath = process.env.CYF_LONG_HISTORY_WIRE_INPUT
+-if (!wirePath) throw new Error('CYF_LONG_HISTORY_WIRE_INPUT must point at actual API generatedWire(true) output')
+-
+-test('API long-history wire is accepted and cold CHAT treats omissions as data, not materialized files', async () => {
+-  const raw = JSON.parse(readFileSync(wirePath, 'utf8'))
+-  const message = normalizeInboundMessage(JSON.stringify(raw))
+-  const snapshot = buildContextEnvelope(message)
+-  const context = snapshot.authoritative.facts.authorizedContext
+-  const materials = snapshot.authoritative.facts.taskMaterials
+-  assert.equal(snapshot.mode, 'CHAT')
+-  assert.equal(context.coverage, 'BOUNDED_EXTRACTIVE_NOT_COMPLETE')
+-  assert.equal(context.sourceMessageCount, 200)
+-  assert.ok(context.availableRefsOmittedCount > 0)
+-  assert.ok(materials.omittedCount > 0)
+-  assert.equal(materials.complete, false)
+-  assert.deepEqual(context.materializedRefs, [])
+-  assert.equal(snapshot.currentUserMessage.content, raw.content)
+-  assert.ok(Buffer.byteLength(JSON.stringify(context), 'utf8') <= 8192)
+-  assert.ok(Buffer.byteLength(JSON.stringify(materials), 'utf8') <= 8192)
+-  assert.ok(snapshot.instructionPolicy.untrustedDataSources.includes('availableRefs'))
+-  const frames = []
+-  let observedCold = false
+-  const adapter = {
+-    readback: { initialize: {}, account: { account: { type: 'apiKey' } }, models: {}, config: {}, tools: { tools: [] } },
+-    startOrResumeThread: async previous => {
+-      assert.equal(previous, null)
+-      observedCold = true
+-      return { threadId: 'api-long-history-cold-thread', state: 'HOT' }
+-    },
+-    runTurn: async options => {
+-      const received = JSON.parse(options.input)
+-      assert.deepEqual(received.authoritative, snapshot.authoritative)
+-      assert.deepEqual(received.currentUserMessage, snapshot.currentUserMessage)
+-      assert.equal(received.authoritative.facts.authorizedContext.coverage, 'BOUNDED_EXTRACTIVE_NOT_COMPLETE')
+-      assert.deepEqual(received.authoritative.facts.authorizedContext.materializedRefs, [])
+-      options.onAccepted({ threadId: 'api-long-history-cold-thread', turnId: 'engine-cold-turn' })
+-      return { threadId: 'api-long-history-cold-thread', turnId: 'engine-cold-turn', content: '已收到有限历史摘要，未读取参考图。' }
+-    },
+-    interrupt: async () => {}, reconcileTurn: async () => ({ status: 'READBACK' })
+-  }
+-  const result = await runFastChat({
+-    profileId: 'api-contract-profile', agentId: raw.targetAgentId,
+-    fastChatEnabled: true, appServerEnabled: true, trueDeltaEnabled: true
+-  }, message, {
+-    adapter, chatWorkdir: '/runtime-owned-empty-chat',
+-    bindingStore: { get: () => null, put: () => {}, markRecovery: () => {} },
+-    sendProtocolFn: (type, payload) => frames.push({ type, payload })
+-  })
+-  assert.equal(observedCold, true)
+-  assert.equal(result.status, 'completed')
+-  assert.equal(frames.length, 1)
+-  assert.equal(frames[0].payload.content, '已收到有限历史摘要，未读取参考图。')
+-})
+diff --git a/conf/codex-ws-agent/env.example b/conf/codex-ws-agent/env.example
+deleted file mode 100644
+index 38416df..0000000
+--- a/conf/codex-ws-agent/env.example
++++ /dev/null
+@@ -1,91 +0,0 @@
+-WS_URL=wss://api.chaoyoufan.cn/ws/agent/channel
+-OPENCLAW_API_KEY=replace-with-api-key
+-DEFAULT_CODEX_PROFILE=codex-default
+-CODEX_PROFILES_FILE=/home/isp/apps/codex-ws-agent/codex-profiles.conf
+-# Optional inline JSON mode:
+-# CODEX_PROFILES=[{"profileId":"default","agentId":"codex-default","agentName":"Codex","personaName":"Default","codexBin":"/usr/local/bin/codex","codexHome":"/home/isp/apps/codex-ws-agent/.codex-default","codexWorkdir":"/home/isp","codexSandbox":"workspace-write","codexApproval":"never","codexSessionMode":"resume","codexTimeoutMs":900000,"isDefault":true}]
+-
+-# Optional model fallback; explicit profile/[default] codexModel takes precedence.
+-# CODEX_MODEL=replace-with-model-id
+-# The profiles file is polled every 5000ms. .env itself is NOT hot-reloaded.
+-# CODEX_PROFILE_RELOAD_MS=5000
+-
+-# A07 isolated coding worktrees. Copy workspace-policies.example.json to a root-owned/controlled
+-# workspace-policies.json, replace repository/baseRef/trustedRemoteUrl/trustedRemoteRef with trusted values, then enable this line.
+-# CODEX_WORKSPACE_POLICIES_FILE=/home/isp/apps/codex-ws-agent/workspace-policies.json
+-# Optional inline trusted policy map (file mode is recommended):
+-# CODEX_WORKSPACE_POLICIES={"cyf":{"root":"/home/isp/hosts/cyf/agent-workspaces","repository":"/home/isp/hosts/cyf/repository.git","baseRef":"refs/heads/master","trustedRemoteUrl":"https://git.example.com/chaoyoufan/cyf.git","trustedRemoteRef":"refs/heads/master"}}
+-
+-# Private Workspace File Bridge. Both values are required to enable the bridge.
+-# The AgentRuntime credential is returned by the current authenticated WebSocket registration and is held only in memory.
+-# Never configure CODEX_WORKSPACE_FILE_RUNTIME_AUTH_HEADER.
+-# CODEX_WORKSPACE_FILE_API_ORIGIN=https://api.chaoyoufan.cn
+-# CODEX_WORKSPACE_FILE_ROOT_DIR=/home/isp/apps/codex-ws-agent/data/private-runs
+-
+-# Native bounty GENERATE_IMAGE remains undeclared/disabled unless both switches are true,
+-# the private Workspace File Bridge values above are usable, and the release-local toolchain exists.
+-# These switches enable the authenticated conversation HTTP-poll executor only; they do not
+-# prove cost authorization, Provider availability, or successful installation.
+-CYF_CONVERSATION_HTTP_POLL_ENABLED=false
+-CYF_CONVERSATION_IMAGEGEN_ENABLED=false
+-
+-HEARTBEAT_MS=30000
+-RECONNECT_MAX_MS=1800000
+-
+-# Durable Protocol v1 command inbox. The service user must be able to create and fsync this directory.
+-COMMAND_INBOX_DIR=/home/isp/apps/codex-ws-agent/data/inbox
+-# archive: keep completed/failed command records; delete: delete successful records, archive failures.
+-COMMAND_INBOX_SUCCESS_POLICY=archive
+-
+-# Development-preview managed skill installation. Keep disabled unless the matching API preview is enabled.
+-AGENT_SKILL_INSTALL_ENABLED=false
+-# Maximum downloaded ZIP bytes and cumulative extracted bytes per installation.
+-AGENT_SKILL_INSTALL_MAX_BYTES=16777216
+-AGENT_SKILL_INSTALL_MAX_EXTRACTED_BYTES=67108864
+-
+-# R01 private managed-host control is inside this runner. RELEASE ONLY; no daemon or public callback.
+-AGENT_MANAGED_HOST_ENABLED=false
+-# Exact fixed API tenant/client. Owner may be one exact owner or '*' for validated per-request owners.
+-# Wildcard never broadens tenant/client and creates owner-isolated homes/workspaces/profiles under the 0700 root.
+-# Root: existing canonical runner-owned 0700 directory.
+-AGENT_MANAGED_HOST_ROOT=
+-AGENT_MANAGED_HOST_TENANT_ID=
+-AGENT_MANAGED_HOST_CLIENT_ID=
+-AGENT_MANAGED_HOST_OWNER_JIACN=
+-# Existing canonical 0700 seed home, private 0600 config.toml/auth.json; NEVER a persona profile home.
+-AGENT_MANAGED_HOST_TEMPLATE_HOME=
+-# Absolute trusted executable with app-server initialize/account/read/thread/start support.
+-AGENT_MANAGED_HOST_CODEX_BIN=
+-# Existing root:isp 0750 parent, shared only with the API service group; socket remains root:isp 0660.
+-# Must be absent at startup. Operator may remove an owned stale socket only after runner exit is proven.
+-AGENT_MANAGED_HOST_SOCKET=
+-# Existing trusted GitWorkspaceManager policy for task handoff, not a shared writable workdir.
+-AGENT_MANAGED_HOST_WORKSPACE_POLICY_ID=
+-
+-# Juyi Hall Fast CHAT is disabled unless all required flags/policy are enabled.
+-CODEX_CHAT_ENGINE=legacy-codex
+-CODEX_FAST_CHAT_ENABLED=false
+-CODEX_APP_SERVER_ENABLED=false
+-CODEX_TRUE_DELTA_ENABLED=false
+-# Durable hosted CHAT profile capacity (legacy single-profile fallback values).
+-CODEX_CHAT_INBOX_MAX_FILES=1024
+-CODEX_CHAT_INBOX_MAX_BYTES=67108864
+-# Completed/cancelled payload archive is independent from hot admission; compact dedupe evidence is retained.
+-CODEX_CHAT_ARCHIVE_MAX_FILES=256
+-CODEX_CHAT_ARCHIVE_MAX_BYTES=16777216
+-CODEX_CHAT_ARCHIVE_RETENTION_MS=604800000
+-
+-# Sharded immutable CHAT dedupe ledger retains recent exact delivery evidence independently of payload archive.
+-CODEX_CHAT_DEDUPE_MAX_ENTRIES=100000
+-CODEX_CHAT_DEDUPE_MAX_BYTES=134217728
+-CODEX_CHAT_DEDUPE_RETENTION_MS=2592000000
+-
+-# Optional private Operator authorization map for managed controlled-image profiles.
+-# The file must be an existing canonical absolute path, owned by the service user, with no group/world permissions.
+-# Every authorization is exact tenant/client/owner/agent/generation/profile scope and carries its own non-overlapping ledger root.
+-# Managed profiles never inherit controlled-image endpoint, key environment name, model, binding, epoch, or ledger from a default profile.
+-# AGENT_MANAGED_IMAGE_SCOPES_FILE=/home/isp/apps/codex-ws-agent/managed-image-scopes.json
+-# Schema v2 may explicitly select GPT_IMAGE_CLI_V1 and must pin the venv invocation path plus
+-# SHA-256 digests for its resolved Python binary and unchanged run.py/image_gen.py/verifier files.
+-# The runtime hashes the resolved Python target but launches the configured venv/bin/python path so pyvenv.cfg remains effective.
+-# Selection is fail-closed and never falls back to the direct HTTP executor.
+diff --git a/conf/codex-ws-agent/install-candidate/INSTALL-CANDIDATE.md b/conf/codex-ws-agent/install-candidate/INSTALL-CANDIDATE.md
+deleted file mode 100644
+index 6a4b618..0000000
+--- a/conf/codex-ws-agent/install-candidate/INSTALL-CANDIDATE.md
++++ /dev/null
+@@ -1,76 +0,0 @@
+-# Historical `wuyong` dual-mode policy/provenance candidate — NOT an installer
+-
+-This directory is an inert, redacted candidate for one existing `wuyong` identity. It does not create or bind an identity, install a release, restart a service, or call a Provider. An existing persona binding is identity evidence only and is not controlled-image credential-binding evidence. Numeric values are not globally unique across namespaces, so the checker does not blacklist historical IDs. The controlled-image `bindingId` and positive decimal `bindingEpoch` are platform Operator-selected configuration fences: no upstream Provider binding-issuance API or external binding object is required. Evidence remains `UNVERIFIED` when only the Client/API declarations exist.
+-
+-## Current installation entry
+-
+-This is historical audit/provider-policy data, **not** the latest Agent installation
+-procedure. The old broker, standalone engine launcher and unit source entries are
+-retired. New installations use `shell/cyf_agent_runtime_v1_install.sh` and
+-`conf/cyf-agent-runtime-v1/README.md`, explicit sealed multi-Agent configuration
+-and per-installation enrollment. Never restore old API-key authentication, infer
+-new authority from a persona, or automatically adopt/replay old queues.
+-The checker remains a read-only historical validator and is not packaged in the
+-unified Runtime artifact. Its existing static provider-contract/provenance tests
+-use a labelled test-only historical catalog, not a working old installer.
+-
+-## Historical freeze inputs (audit only)
+-
+-Main and the API configuration Owner must separately freeze every placeholder for historical evidence validation (not new installation):
+-
+-- existing `wuyong` agent ID, private Codex home, workspace/API origin, and WebSocket URL;
+-- controlled-image HTTPS origin and exact model ID supplied by the Provider/account custodian;
+-- platform Operator-selected binding ID and positive decimal binding epoch, changed when the local credential/configuration fence is rotated;
+-- exact API tenant/client/owner/target-agent policy, custody, issuer, revision, expiry, and the same model/binding tuple;
+-- historical private Agent credential references (audit only, never new Runtime authorization), separately from controlled-image Provider credential references.
+-
+-Do not place either secret in the profile, freeze JSON, registration capture, or logs. `producerRequestRevision` is server-owned under API contract commit `9ab62d6665c695a574b8b3bde9cfff3ea3ca13d4`; the Client profile, declaration, command, and freeze must not add or override it.
+-
+-The template's typed-inspection values are fixed to the accepted evidence: provider `gpt`, `https://codex.chcbz.net/v1`, model `gpt-5.6-terra`, restricted proxy, `/etc/pki/tls/certs/ca-bundle.crt`, profile/engine IDs, carrier evidence digest, and the `LOCAL_IMAGE` contract digest. `normalizeProfile` and the production declaration builders are used by `install-candidate-check.mjs`; no mock loader or hard-coded PASS is used.
+-
+-## Static scope and Client/API correspondence
+-
+-`verify-template` and `freeze` return `STATIC_VALID` only. Their enabled declarations are a **synthetic expected registration projection** produced through the production declaration builders with static stand-ins; they do not measure a live executor, poller, credential, socket, isolation run, or runtime readiness. Only post-start authenticated registration and presence readback can establish that the live process emitted the expected shapes.
+-
+-`controlled-image-api-policy.redacted.json` is deliberately marked `CONTROLLED_IMAGE_PROVIDER_PARTIAL_POLICY` and `fullInstallationReadiness=false`. It freezes only the provider-lane flags and exact operator policy represented by this Client handoff. It is not the complete product/API installation policy: formal-artifact, conversation-archive, selected-output, schema, exact API artifact/config, and full acceptance evidence remain required from Main/API owners and must not be inferred from this partial artifact.
+-
+-## Client/API correspondence
+-
+-| Capability | Client profile/evidence | Registration/presence | API policy/authority |
+-| --- | --- | --- | --- |
+-| INSPECT | `typedInspection*`, accepted carrier evidence file/digest, CA file bytes, `appServerEnabled=true` | `typedInspection.enabled=true`, exact profile/engine/policy/input declarations | authenticated agent registration and workspace-file access remain server-authorized |
+-| GENERATE_IMAGE | controlled endpoint/key env/model/binding/epoch/ledger; native HTTP poll on and generic native image executor off | V3 operation `GENERATE_IMAGE`, 0–16 `TASK_LINKED_WORKSPACE_VERSION` JPEG/PNG inputs | exact operator-policy tenant/client/owner/target/provider/model/binding tuple; consent/grant and source snapshot remain server authority |
+-| EDIT_IMAGE | same controlled provider tuple | V3 operation `EDIT_IMAGE`, exactly one `CURRENT_CONVERSATION_ASSET` JPEG/PNG input | API resolves and revalidates the authorized archive revision immediately before execution; Client never sends `producerRequestRevision` |
+-
+-Fixed fences are provider lane `CONTROLLED_IMAGE_HTTP_V1`, max inputs `16`, max outbound attempts `1`, and precall fence `1`. API scheduling/consent/grant/policy is authoritative; registration and presence only advertise the live Client's measured readiness.
+-
+-`bindingEpoch` is an exact positive-long equality fence, not an externally issued Provider version. The Client and API do not generate it or prove monotonicity; the Operator freezes one value in both configurations and changes it on a relevant rotation so stale consent/start state no longer matches.
+-
+-### Controlled image HTTP compatibility contract
+-
+-The configured endpoint is an HTTPS origin only. The production adapter appends `/v1/images/generations` or `/v1/images/edits` and sends Bearer-authenticated `application/json`. Generation sends `model`, `prompt`, `n: 1`, and `output_format: "png"`. Editing additionally requires JSON `images: [{"image_url":"data:image/...;base64,..."}]`; a Provider that only supports multipart image edits is not compatible with this adapter. The direct, non-redirected 200 response must contain exactly one canonical PNG in `data[0].b64_json`.
+-
+-This is not the Responses understanding contract. Static validation, model-list output, or a successful understanding request does not establish generation/edit compatibility; that remains unclaimed until supported by Provider contract evidence or a separately authorized real request.
+-
+-### Independent Operator freeze evidence
+-
+-`VERIFIED` is allowed only when `sourceType` is `API_OPERATOR_POLICY_FREEZE_FILE` and `freeze` receives `--operator-binding-freeze FILE`. The checker reads that regular non-symlink file, hashes its actual bytes, requires the digest and internal `sourceReference` to match the policy candidate, and compares its exact tenant/client/owner/target/lane/binding/epoch/model/custody/issuer/revision/expiry/attempt tuple with the API properties. The file is a non-secret platform Operator configuration freeze, not an upstream receipt and not a new signing requirement. Arbitrary non-empty source labels or a claimed SHA without the file cannot become `VERIFIED`.
+-
+-The independent file has exact top-level keys `schemaVersion`, `artifactType`, `sourceContractCommit`, `sourceReference`, and `operatorPolicy`; `artifactType` is `CONTROLLED_IMAGE_OPERATOR_BINDING_FREEZE_V1`. If that independently owned file is unavailable, keep all three source fields null and status `UNVERIFIED`.
+-
+-## Historical freeze and readback are not current install evidence
+-
+-Retain historical manifests, source/installer hashes, non-secret provider tuples,
+-independent Operator freeze evidence and redacted registration/presence captures
+-as audit records. The checker can prove consistency of those historical records;
+-it cannot enroll an installation, prove current session/fence ownership or accept
+-a new Runtime release. No runnable legacy installation, engine CLI validation,
+-service start or API-key readback procedure is prescribed here.
+-
+-The current unified installer excludes these tools/templates and fails if they
+-are reintroduced into its execution payload. New readiness comes from the current
+-installation-derived authenticated channel, actual adapters and durable state,
+-not a historical STATIC_VALID/READBACK_MATCH or heartbeat. Main/runner must still
+-verify actual Java/D06/DB/native/skill boundaries and fixed commit/Flow artifacts.
+-Provider calls, paid business, production credential/state migration and old unit
+-retirement require separate exact authorization; no such operation was performed.
+diff --git a/conf/codex-ws-agent/install-candidate/controlled-image-api-policy.redacted.json b/conf/codex-ws-agent/install-candidate/controlled-image-api-policy.redacted.json
+deleted file mode 100644
+index a9e60f8..0000000
+--- a/conf/codex-ws-agent/install-candidate/controlled-image-api-policy.redacted.json
++++ /dev/null
+@@ -1,55 +0,0 @@
+-{
+-  "schemaVersion": 1,
+-  "scope": "CONTROLLED_IMAGE_PROVIDER_PARTIAL_POLICY",
+-  "fullInstallationReadiness": false,
+-  "sourceContractCommit": "9ab62d6665c695a574b8b3bde9cfff3ea3ca13d4",
+-  "requiredExternalReadinessEvidence": [
+-    "formal-artifact policy/schema and acceptance evidence",
+-    "conversation-archive policy/schema and acceptance evidence",
+-    "selected-output policy/schema and acceptance evidence",
+-    "exact API artifact/config/schema receipt and authenticated capability readback"
+-  ],
+-  "providerBindingEvidence": {
+-    "schemaVersion": 1,
+-    "status": "UNVERIFIED",
+-    "evidenceType": "CONTROLLED_IMAGE_PROVIDER_BINDING_EVIDENCE_V1",
+-    "bindingNamespace": "CONTROLLED_IMAGE_PROVIDER_CREDENTIAL",
+-    "sourceType": null,
+-    "sourceReference": null,
+-    "sourceDigest": null,
+-    "providerLane": "CONTROLLED_IMAGE_HTTP_V1",
+-    "bindingId": "__OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_ID__",
+-    "bindingEpoch": "__OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_EPOCH__",
+-    "modelId": "__FROZEN_CONTROLLED_IMAGE_MODEL_ID__"
+-  },
+-  "properties": {
+-    "agent.controlled-image-provider.bridge-enabled": true,
+-    "agent.controlled-image-provider.enabled": true,
+-    "agent.controlled-image-provider.followup-v3-enabled": true,
+-    "jia.agent.conversation-execution.enabled": true,
+-    "jia.chat.service.websocket.enable": true,
+-    "chat.bounty-bootstrap.enabled": true,
+-    "chat.bounty-execution.enabled": true,
+-    "agent.personal-workspace-storage.enabled": true,
+-    "agent.task-deliberation-operation.read-enabled": true,
+-    "agent.task-requirement-snapshot.read-enabled": true,
+-    "agent.task-reference-inputs.enabled": true,
+-    "agent.controlled-image-provider.operator-policies[0].tenant-id": "0",
+-    "agent.controlled-image-provider.operator-policies[0].client-id": "__EXISTING_CHCBZ_CLIENT_ID__",
+-    "agent.controlled-image-provider.operator-policies[0].owner-jiacn": "__EXISTING_CHCBZ_OWNER_JIACN__",
+-    "agent.controlled-image-provider.operator-policies[0].target-agent-id": "__EXISTING_WUYONG_AGENT_ID__",
+-    "agent.controlled-image-provider.operator-policies[0].provider-lane": "CONTROLLED_IMAGE_HTTP_V1",
+-    "agent.controlled-image-provider.operator-policies[0].binding-id": "__OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_ID__",
+-    "agent.controlled-image-provider.operator-policies[0].binding-epoch": "__OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_EPOCH__",
+-    "agent.controlled-image-provider.operator-policies[0].model-id": "__FROZEN_CONTROLLED_IMAGE_MODEL_ID__",
+-    "agent.controlled-image-provider.operator-policies[0].custody": "__FROZEN_OPERATOR_CUSTODY__",
+-    "agent.controlled-image-provider.operator-policies[0].issuer": "__FROZEN_OPERATOR_ISSUER__",
+-    "agent.controlled-image-provider.operator-policies[0].policy-revision": "__FROZEN_OPERATOR_POLICY_REVISION__",
+-    "agent.controlled-image-provider.operator-policies[0].expires-at": "__FROZEN_OPERATOR_POLICY_EXPIRY_EPOCH_MS__",
+-    "agent.controlled-image-provider.operator-policies[0].allow-unpriced-external-account": true,
+-    "agent.controlled-image-provider.operator-policies[0].max-outbound-request-attempts": 1
+-  },
+-  "forbiddenClientWireFields": [
+-    "producerRequestRevision"
+-  ]
+-}
+diff --git a/conf/codex-ws-agent/install-candidate/install-candidate-check.mjs b/conf/codex-ws-agent/install-candidate/install-candidate-check.mjs
+deleted file mode 100755
+index 9b27315..0000000
+--- a/conf/codex-ws-agent/install-candidate/install-candidate-check.mjs
++++ /dev/null
+@@ -1,501 +0,0 @@
+-#!/usr/bin/env node
+-import { createHash } from 'node:crypto'
+-import { lstatSync, readFileSync, writeFileSync } from 'node:fs'
+-import { dirname, isAbsolute, resolve } from 'node:path'
+-import { fileURLToPath } from 'node:url'
+-
+-import { normalizeProfile } from '../agent-client.mjs'
+-import { buildControlledImageBountyExecutionV3Declaration } from '../controlled-image-bounty-v3-capability.mjs'
+-import { resolveControlledImageHttpConfig } from '../controlled-image-http-config.mjs'
+-import { buildNativeProviderCredentialBinding } from '../controlled-image-http-provider-binding.mjs'
+-
+-const here = dirname(fileURLToPath(import.meta.url))
+-const clientRoot = resolve(here, '..')
+-const templatePath = resolve(here, 'wuyong-dual-mode-profile.redacted.json')
+-const policyTemplatePath = resolve(here, 'controlled-image-api-policy.redacted.json')
+-const envTemplatePath = resolve(here, 'wuyong-dual-mode.env.redacted')
+-const evidencePath = resolve(clientRoot, 'evidence/typed-inspection-local-image-gpt-5.6-terra-1f95df2.json')
+-
+-const PLACEHOLDER = /^__[A-Z0-9_]+__$/
+-const DIGEST = /^sha256:[a-f0-9]{64}$/
+-const PROVIDER_LANE = 'CONTROLLED_IMAGE_HTTP_V1'
+-const OPERATOR_BINDING_SOURCE_TYPE = 'API_OPERATOR_POLICY_FREEZE_FILE'
+-const OPERATOR_BINDING_ARTIFACT_TYPE = 'CONTROLLED_IMAGE_OPERATOR_BINDING_FREEZE_V1'
+-const ACCEPTED_CA_BUNDLE_SHA256 = 'acd28b791f9f338d288efda11d7f192755d4e89f41f0f7c2999bb4d211779fe5'
+-const API_SOURCE_CONTRACT_COMMIT = '9ab62d6665c695a574b8b3bde9cfff3ea3ca13d4'
+-const PROVIDER_KEY_ENV = 'CYF_CONTROLLED_IMAGE_API_KEY'
+-const OWNER_KEY_ENV = 'OPENCLAW_API_KEY'
+-const CANDIDATE_ENV_KEYS = Object.freeze([
+-  'WS_URL', OWNER_KEY_ENV, PROVIDER_KEY_ENV, 'DEFAULT_CODEX_PROFILE', 'CODEX_PROFILES_FILE',
+-  'CODEX_WORKSPACE_POLICIES_FILE', 'COMMAND_INBOX_DIR', 'COMMAND_INBOX_SUCCESS_POLICY',
+-  'CYF_CONVERSATION_HTTP_POLL_ENABLED', 'CYF_CONVERSATION_IMAGEGEN_ENABLED'
+-])
+-const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
+-const canonical = value => {
+-  if (Array.isArray(value)) return value.map(canonical)
+-  if (!value || typeof value !== 'object') return value
+-  return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]))
+-}
+-const canonicalBytes = value => Buffer.from(JSON.stringify(canonical(value)), 'utf8')
+-const digestObject = value => `sha256:${sha256(canonicalBytes(value))}`
+-const fail = message => { throw new Error(message) }
+-const readJson = path => JSON.parse(readFileSync(path, 'utf8'))
+-const readRegular = (path, label) => {
+-  let stat
+-  try { stat = lstatSync(path) } catch { fail(`${label}_MISSING`) }
+-  if (!stat.isFile() || stat.isSymbolicLink()) fail(`${label}_UNSAFE`)
+-  return readFileSync(path)
+-}
+-const safeRelativePath = path => typeof path === 'string' && path.length > 0 && !isAbsolute(path)
+-  && !path.includes('\\') && path.split('/').every(part => part && part !== '.' && part !== '..')
+-const exactKeySet = (value, expected, label) => {
+-  if (!value || Object.keys(value).sort().join('\0') !== [...expected].sort().join('\0')) fail(`${label}_KEY_SET_MISMATCH`)
+-}
+-const exactJson = (left, right, label) => {
+-  if (JSON.stringify(canonical(left)) !== JSON.stringify(canonical(right))) fail(`${label}_MISMATCH`)
+-}
+-const requireText = (value, label) => {
+-  if (typeof value !== 'string' || !value || value !== value.trim() || PLACEHOLDER.test(value)) fail(`${label}_UNFROZEN`)
+-  return value
+-}
+-const policyKey = name => `agent.controlled-image-provider.operator-policies[0].${name}`
+-const operatorPolicyProjection = properties => Object.freeze({
+-  tenantId: properties[policyKey('tenant-id')],
+-  clientId: properties[policyKey('client-id')],
+-  ownerJiacn: properties[policyKey('owner-jiacn')],
+-  targetAgentId: properties[policyKey('target-agent-id')],
+-  providerLane: properties[policyKey('provider-lane')],
+-  bindingId: properties[policyKey('binding-id')],
+-  bindingEpoch: String(properties[policyKey('binding-epoch')]),
+-  modelId: properties[policyKey('model-id')],
+-  custody: properties[policyKey('custody')],
+-  issuer: properties[policyKey('issuer')],
+-  policyRevision: properties[policyKey('policy-revision')],
+-  expiresAt: String(properties[policyKey('expires-at')]),
+-  allowUnpricedExternalAccount: properties[policyKey('allow-unpriced-external-account')],
+-  maxOutboundRequestAttempts: properties[policyKey('max-outbound-request-attempts')]
+-})
+-
+-const verifyOperatorBindingEvidence = ({ evidence, properties, operatorBindingFreezePath }) => {
+-  if (evidence.status === 'UNVERIFIED') {
+-    if (evidence.sourceType !== null || evidence.sourceReference !== null || evidence.sourceDigest !== null
+-        || operatorBindingFreezePath) fail('PROVIDER_BINDING_UNVERIFIED_SOURCE_INVALID')
+-    return Object.freeze({ status: 'UNVERIFIED' })
+-  }
+-  if (evidence.status !== 'VERIFIED') fail('PROVIDER_BINDING_EVIDENCE_STATUS_INVALID')
+-  if (evidence.sourceType !== OPERATOR_BINDING_SOURCE_TYPE) fail('PROVIDER_BINDING_SOURCE_TYPE_INVALID')
+-  requireText(evidence.sourceReference, 'PROVIDER_BINDING_SOURCE_REFERENCE')
+-  if (!DIGEST.test(evidence.sourceDigest || '')) fail('PROVIDER_BINDING_SOURCE_DIGEST_INVALID')
+-  if (typeof operatorBindingFreezePath !== 'string' || !isAbsolute(operatorBindingFreezePath)) {
+-    fail('PROVIDER_BINDING_OPERATOR_FREEZE_REQUIRED')
+-  }
+-  const bytes = readRegular(operatorBindingFreezePath, 'PROVIDER_BINDING_OPERATOR_FREEZE')
+-  if (`sha256:${sha256(bytes)}` !== evidence.sourceDigest) fail('PROVIDER_BINDING_SOURCE_DIGEST_MISMATCH')
+-  let frozen
+-  try { frozen = JSON.parse(bytes) } catch { fail('PROVIDER_BINDING_OPERATOR_FREEZE_INVALID') }
+-  exactKeySet(frozen, ['schemaVersion', 'artifactType', 'sourceContractCommit', 'sourceReference', 'operatorPolicy'],
+-    'PROVIDER_BINDING_OPERATOR_FREEZE')
+-  if (frozen.schemaVersion !== 1 || frozen.artifactType !== OPERATOR_BINDING_ARTIFACT_TYPE
+-      || frozen.sourceContractCommit !== API_SOURCE_CONTRACT_COMMIT
+-      || frozen.sourceReference !== evidence.sourceReference) fail('PROVIDER_BINDING_OPERATOR_FREEZE_INVALID')
+-  exactKeySet(frozen.operatorPolicy, Object.keys(operatorPolicyProjection(properties)), 'PROVIDER_BINDING_OPERATOR_POLICY')
+-  exactJson(frozen.operatorPolicy, operatorPolicyProjection(properties), 'PROVIDER_BINDING_OPERATOR_POLICY')
+-  return Object.freeze({ status: 'VERIFIED', sourceType: evidence.sourceType,
+-    sourceReference: evidence.sourceReference, sourceDigest: evidence.sourceDigest })
+-}
+-
+-const parseCandidateEnv = (text, { allowPlaceholders = false } = {}) => {
+-  const values = {}
+-  for (const [index, raw] of String(text).split(/\r?\n/).entries()) {
+-    const line = raw.trim()
+-    if (!line || line.startsWith('#')) continue
+-    const match = line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/)
+-    if (!match) fail(`ENV_LINE_INVALID:${index + 1}`)
+-    if (Object.hasOwn(values, match[1])) fail(`ENV_KEY_DUPLICATE:${match[1]}`)
+-    values[match[1]] = match[2]
+-  }
+-  if (Object.keys(values).sort().join('\0') !== [...CANDIDATE_ENV_KEYS].sort().join('\0')) fail('ENV_KEY_SET_MISMATCH')
+-  for (const secret of [OWNER_KEY_ENV, PROVIDER_KEY_ENV]) {
+-    const value = values[secret]
+-    if (!value || /[\r\n\0]/.test(value) || (!allowPlaceholders && PLACEHOLDER.test(value))) fail(`ENV_SECRET_UNAVAILABLE:${secret}`)
+-  }
+-  const placeholderWs = allowPlaceholders && PLACEHOLDER.test(values.WS_URL)
+-  let ws = null
+-  if (!placeholderWs) {
+-    try { ws = new URL(values.WS_URL) } catch { fail('ENV_WS_URL_INVALID') }
+-  }
+-  if (!placeholderWs && (!['ws:', 'wss:'].includes(ws.protocol) || !ws.hostname || ws.username || ws.password
+-      || ws.search || ws.hash)) fail('ENV_WS_URL_INVALID')
+-  const fixed = {
+-    DEFAULT_CODEX_PROFILE: 'wuyong',
+-    CODEX_PROFILES_FILE: '/home/isp/apps/codex-ws-agent/codex-profiles.private.json',
+-    CODEX_WORKSPACE_POLICIES_FILE: '/home/isp/apps/codex-ws-agent/workspace-policies.json',
+-    COMMAND_INBOX_DIR: '/home/isp/apps/codex-ws-agent/data/inbox',
+-    COMMAND_INBOX_SUCCESS_POLICY: 'archive',
+-    CYF_CONVERSATION_HTTP_POLL_ENABLED: 'false',
+-    CYF_CONVERSATION_IMAGEGEN_ENABLED: 'false'
+-  }
+-  for (const [key, expected] of Object.entries(fixed)) if (values[key] !== expected) fail(`ENV_${key}_MISMATCH`)
+-  return Object.freeze({
+-    nonSecret: Object.freeze(Object.fromEntries(CANDIDATE_ENV_KEYS
+-      .filter(key => ![OWNER_KEY_ENV, PROVIDER_KEY_ENV].includes(key)).map(key => [key, values[key]]))),
+-    secretEnvironmentNames: Object.freeze([OWNER_KEY_ENV, PROVIDER_KEY_ENV])
+-  })
+-}
+-
+-export const validateCandidateEnvironment = (text, options) => parseCandidateEnv(text, options)
+-
+-export const TEMPLATE_REPLACEMENTS = Object.freeze({
+-  __EXISTING_WUYONG_AGENT_ID__: 'agt_existing_wuyong_candidate',
+-  __EXISTING_WUYONG_CODEX_HOME__: '/home/isp/apps/codex-ws-agent/private-homes/wuyong',
+-  __FROZEN_WORKSPACE_API_ORIGIN__: 'https://api.example.invalid',
+-  __FROZEN_CONTROLLED_IMAGE_HTTPS_ORIGIN__: 'https://images.example.invalid',
+-  __FROZEN_CONTROLLED_IMAGE_MODEL_ID__: 'frozen-image-model',
+-  __OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_ID__: 'controlled-binding-frozen',
+-  __OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_EPOCH__: '7',
+-  __EXISTING_CHCBZ_CLIENT_ID__: 'frozen-client-id',
+-  __EXISTING_CHCBZ_OWNER_JIACN__: 'frozen-owner',
+-  __FROZEN_OPERATOR_CUSTODY__: 'OWNER_EXTERNAL_ACCOUNT',
+-  __FROZEN_OPERATOR_ISSUER__: 'frozen-operator',
+-  __FROZEN_OPERATOR_POLICY_REVISION__: 'policy-revision-1',
+-  __FROZEN_OPERATOR_POLICY_EXPIRY_EPOCH_MS__: '4102444800000'
+-})
+-
+-export const replaceTemplatePlaceholders = (value, replacements = TEMPLATE_REPLACEMENTS) => {
+-  if (Array.isArray(value)) return value.map(item => replaceTemplatePlaceholders(item, replacements))
+-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value)
+-    .map(([key, item]) => [key, replaceTemplatePlaceholders(item, replacements)]))
+-  return typeof value === 'string' && Object.hasOwn(replacements, value) ? replacements[value] : value
+-}
+-
+-const expectedTypedInspection = profile => {
+-  const evidence = readJson(evidencePath)
+-  return Object.freeze({
+-    schemaVersion: 1,
+-    contract: 'juyiting-typed-inspection-v1',
+-    enabled: true,
+-    profileId: evidence.profile.profileId,
+-    engineContractId: evidence.profile.engineContractId,
+-    enginePolicyDigest: evidence.profile.enginePolicyDigest,
+-    toolPolicyDigest: evidence.profile.toolPolicyDigest,
+-    inputPolicyDigest: evidence.profile.inputPolicyDigest,
+-    toolPolicy: 'MANIFEST_READ_ONLY',
+-    recovery: 'durable-inbox-turn-readback-v1',
+-    supportedInputs: profile.typedInspectionSupportedInputs
+-  })
+-}
+-
+-const syntheticExpectedReadinessProjection = (profile, env) => {
+-  const controlledConfig = resolveControlledImageHttpConfig(profile, { env })
+-  const runtime = Object.freeze({
+-    adapterKind: PROVIDER_LANE,
+-    configReady: true,
+-    credentialReady: true,
+-    httpPollEnabled: true,
+-    controlledImageV3Ready: true,
+-    executor: () => {},
+-    pollProtocol: Object.freeze({ poll: () => {} }),
+-    controlledConfig
+-  })
+-  return { profile, runtime, online: true }
+-}
+-
+-/** Static expected wire projection only; this does not measure a live executor, poller, credential, or socket. */
+-export const buildSyntheticExpectedDeclarations = (profile, env = { [PROVIDER_KEY_ENV]: 'redacted-test-credential' }) => {
+-  const readiness = syntheticExpectedReadinessProjection(profile, env)
+-  return Object.freeze({
+-    nativeProviderCredentialBinding: buildNativeProviderCredentialBinding(readiness),
+-    controlledImageBountyExecutionV3: buildControlledImageBountyExecutionV3Declaration(readiness),
+-    typedInspection: expectedTypedInspection(profile)
+-  })
+-}
+-
+-const normalizedProjection = profile => Object.freeze({
+-  profileId: profile.profileId,
+-  agentId: profile.agentId,
+-  codexBin: profile.codexBin,
+-  codexHome: profile.codexHome,
+-  codexWorkdir: profile.codexWorkdir,
+-  codexSandbox: profile.codexSandbox,
+-  codexApproval: profile.codexApproval,
+-  codexSessionMode: profile.codexSessionMode,
+-  codexTimeoutMs: profile.codexTimeoutMs,
+-  chatEngine: profile.chatEngine,
+-  chatModel: profile.chatModel,
+-  chatReasoningEffort: profile.chatReasoningEffort,
+-  appServerEnabled: profile.appServerEnabled,
+-  appServerSchemaContractId: profile.appServerSchemaContractId,
+-  typedInspectionEnabled: profile.typedInspectionEnabled,
+-  typedInspectionRootDir: profile.typedInspectionRootDir,
+-  typedInspectionStateRoot: profile.typedInspectionStateRoot,
+-  typedInspectionProfileId: profile.typedInspectionProfileId,
+-  typedInspectionEngineContractId: profile.typedInspectionEngineContractId,
+-  typedInspectionProviderId: profile.typedInspectionProviderId,
+-  typedInspectionProviderBaseUrl: profile.typedInspectionProviderBaseUrl,
+-  typedInspectionProviderWireApi: profile.typedInspectionProviderWireApi,
+-  typedInspectionProviderNetwork: profile.typedInspectionProviderNetwork,
+-  typedInspectionNetworkConnectTimeoutMs: profile.typedInspectionNetworkConnectTimeoutMs,
+-  typedInspectionCaBundlePath: profile.typedInspectionCaBundlePath,
+-  typedInspectionCarrierEvidencePath: profile.typedInspectionCarrierEvidencePath,
+-  typedInspectionCarrierEvidenceDigest: profile.typedInspectionCarrierEvidenceDigest,
+-  typedInspectionBwrapBin: profile.typedInspectionBwrapBin,
+-  typedInspectionSupportedInputs: profile.typedInspectionSupportedInputs,
+-  workspaceFileApiOrigin: profile.workspaceFileApiOrigin,
+-  workspaceFileRootDir: profile.workspaceFileRootDir,
+-  nativeConversationHttpPollEnabled: profile.nativeConversationHttpPollEnabled,
+-  nativeConversationImageGenerationEnabled: profile.nativeConversationImageGenerationEnabled,
+-  controlledImageHttpEnabled: profile.controlledImageHttpEnabled,
+-  controlledImageHttpEndpoint: profile.controlledImageHttpEndpoint,
+-  controlledImageHttpApiKeyEnv: profile.controlledImageHttpApiKeyEnv,
+-  controlledImageHttpModelId: profile.controlledImageHttpModelId,
+-  controlledImageHttpBindingId: profile.controlledImageHttpBindingId,
+-  controlledImageHttpBindingEpoch: profile.controlledImageHttpBindingEpoch,
+-  controlledImageHttpLedgerRoot: profile.controlledImageHttpLedgerRoot,
+-  enabled: profile.enabled,
+-  isDefault: profile.isDefault
+-})
+-
+-export const validateCandidate = ({ rawProfile, apiPolicy, operatorBindingFreezePath = null,
+-  env = { [PROVIDER_KEY_ENV]: 'redacted-test-credential' } }) => {
+-  if (!Array.isArray(rawProfile) || rawProfile.length !== 1) fail('EXACTLY_ONE_PROFILE_REQUIRED')
+-  exactKeySet(rawProfile[0], Object.keys(readJson(templatePath)[0]), 'PROFILE')
+-  if (Object.hasOwn(rawProfile[0], 'apiKey')) fail('PROFILE_SECRET_BYTES_FORBIDDEN')
+-  const profile = normalizeProfile(rawProfile[0])
+-  if (profile.profileId !== 'wuyong') fail('EXISTING_WUYONG_PROFILE_REQUIRED')
+-  requireText(profile.agentId, 'EXISTING_WUYONG_AGENT_ID')
+-  if (profile.chatModel !== 'gpt-5.6-terra' || profile.typedInspectionProviderId !== 'gpt'
+-      || profile.typedInspectionProviderBaseUrl !== 'https://codex.chcbz.net/v1'
+-      || profile.typedInspectionProviderWireApi !== 'responses'
+-      || profile.typedInspectionProviderNetwork !== 'restricted-proxy'
+-      || profile.typedInspectionCaBundlePath !== '/etc/pki/tls/certs/ca-bundle.crt'
+-      || profile.typedInspectionCarrierEvidenceDigest !== 'sha256:d22de19b1b86c988c81deadb2697e5a577fdbc9abb4982ddc015fefa7fd6bdab') {
+-    fail('TYPED_INSPECTION_EVIDENCE_BINDING_MISMATCH')
+-  }
+-  if (profile.typedInspectionEnabled !== true || profile.appServerEnabled !== true
+-      || profile.nativeConversationHttpPollEnabled !== true
+-      || profile.nativeConversationImageGenerationEnabled !== false
+-      || profile.controlledImageHttpEnabled !== true) fail('REQUIRED_RUNTIME_SWITCH_MISMATCH')
+-  if (profile.controlledImageHttpApiKeyEnv !== PROVIDER_KEY_ENV) fail('CONTROLLED_IMAGE_SECRET_REFERENCE_MISMATCH')
+-  requireText(profile.controlledImageHttpEndpoint, 'CONTROLLED_IMAGE_ENDPOINT')
+-  requireText(profile.controlledImageHttpModelId, 'CONTROLLED_IMAGE_MODEL')
+-  requireText(profile.controlledImageHttpBindingId, 'CONTROLLED_IMAGE_BINDING_ID')
+-  requireText(profile.controlledImageHttpBindingEpoch, 'CONTROLLED_IMAGE_BINDING_EPOCH')
+-  const syntheticExpectedDeclarations = buildSyntheticExpectedDeclarations(profile, env)
+-  if (syntheticExpectedDeclarations.nativeProviderCredentialBinding.enabled !== true
+-      || syntheticExpectedDeclarations.controlledImageBountyExecutionV3.enabled !== true
+-      || syntheticExpectedDeclarations.controlledImageBountyExecutionV3.operations.length !== 2)
+-    fail('EXPECTED_DECLARATION_PROJECTION_INVALID')
+-  if (!apiPolicy || apiPolicy.schemaVersion !== 1 || apiPolicy.sourceContractCommit !== API_SOURCE_CONTRACT_COMMIT
+-      || !apiPolicy.properties) fail('API_POLICY_INVALID')
+-  exactKeySet(apiPolicy, Object.keys(readJson(policyTemplatePath)), 'API_POLICY_DOCUMENT')
+-  if (apiPolicy.scope !== 'CONTROLLED_IMAGE_PROVIDER_PARTIAL_POLICY' || apiPolicy.fullInstallationReadiness !== false
+-      || !Array.isArray(apiPolicy.requiredExternalReadinessEvidence)
+-      || apiPolicy.requiredExternalReadinessEvidence.length < 4) fail('API_POLICY_SCOPE_INVALID')
+-  const providerBindingEvidence = apiPolicy.providerBindingEvidence
+-  exactKeySet(providerBindingEvidence, Object.keys(readJson(policyTemplatePath).providerBindingEvidence), 'PROVIDER_BINDING_EVIDENCE')
+-  if (providerBindingEvidence.schemaVersion !== 1
+-      || providerBindingEvidence.evidenceType !== 'CONTROLLED_IMAGE_PROVIDER_BINDING_EVIDENCE_V1'
+-      || providerBindingEvidence.bindingNamespace !== 'CONTROLLED_IMAGE_PROVIDER_CREDENTIAL'
+-      || providerBindingEvidence.providerLane !== PROVIDER_LANE
+-      || providerBindingEvidence.bindingId !== profile.controlledImageHttpBindingId
+-      || providerBindingEvidence.bindingEpoch !== profile.controlledImageHttpBindingEpoch
+-      || providerBindingEvidence.modelId !== profile.controlledImageHttpModelId) fail('PROVIDER_BINDING_EVIDENCE_TUPLE_MISMATCH')
+-  const properties = apiPolicy.properties
+-  exactKeySet(properties, Object.keys(readJson(policyTemplatePath).properties), 'API_POLICY')
+-  for (const key of [
+-    'agent.controlled-image-provider.bridge-enabled', 'agent.controlled-image-provider.enabled',
+-    'agent.controlled-image-provider.followup-v3-enabled', 'jia.agent.conversation-execution.enabled',
+-    'jia.chat.service.websocket.enable', 'chat.bounty-bootstrap.enabled', 'chat.bounty-execution.enabled',
+-    'agent.personal-workspace-storage.enabled', 'agent.task-deliberation-operation.read-enabled',
+-    'agent.task-requirement-snapshot.read-enabled', 'agent.task-reference-inputs.enabled'
+-  ]) if (properties[key] !== true) fail(`API_POLICY_FEATURE_DISABLED:${key}`)
+-  const pairs = [
+-    ['target-agent-id', profile.agentId], ['provider-lane', PROVIDER_LANE],
+-    ['binding-id', profile.controlledImageHttpBindingId], ['binding-epoch', profile.controlledImageHttpBindingEpoch],
+-    ['model-id', profile.controlledImageHttpModelId]
+-  ]
+-  for (const [key, expected] of pairs) {
+-    if (String(properties[policyKey(key)]) !== String(expected)) fail(`API_POLICY_${key.toUpperCase().replaceAll('-', '_')}_MISMATCH`)
+-  }
+-  for (const key of ['client-id', 'owner-jiacn', 'custody', 'issuer', 'policy-revision', 'expires-at']) {
+-    requireText(String(properties[policyKey(key)] ?? ''), `API_POLICY_${key.toUpperCase().replaceAll('-', '_')}`)
+-  }
+-  if (properties[policyKey('tenant-id')] !== '0'
+-      || properties[policyKey('allow-unpriced-external-account')] !== true
+-      || properties[policyKey('max-outbound-request-attempts')] !== 1) fail('API_POLICY_FIXED_FENCE_MISMATCH')
+-  if (JSON.stringify(apiPolicy.forbiddenClientWireFields) !== JSON.stringify(['producerRequestRevision']))
+-    fail('SERVER_REVISION_AUTHORITY_NOT_FROZEN')
+-  const operatorBindingEvidence = verifyOperatorBindingEvidence({ evidence: providerBindingEvidence,
+-    properties, operatorBindingFreezePath })
+-  return Object.freeze({ profile, projection: normalizedProjection(profile), syntheticExpectedDeclarations,
+-    validationStatus: 'STATIC_VALID', providerBindingEvidenceStatus: operatorBindingEvidence.status,
+-    operatorBindingEvidence })
+-}
+-
+-const installerPayload = installerPath => {
+-  const source = readRegular(installerPath, 'INSTALLER').toString('utf8')
+-  const match = source.match(/RELEASE_PAYLOAD=\(\n([\s\S]*?)\n\)/)
+-  if (!match) fail('INSTALLER_PAYLOAD_INVALID')
+-  const files = match[1].split('\n').map(line => {
+-    const item = line.match(/^\s+"([^"]+)"$/)
+-    if (!item || !safeRelativePath(item[1])) fail('INSTALLER_PAYLOAD_INVALID')
+-    return item[1]
+-  })
+-  if (files.length === 0 || new Set(files).size !== files.length) fail('INSTALLER_PAYLOAD_INVALID')
+-  return Object.freeze({ files: Object.freeze(files), bytes: Buffer.from(source, 'utf8') })
+-}
+-
+-const parseManifest = (releaseDir, expectedPaths) => {
+-  const manifestPath = resolve(releaseDir, 'release-manifest.sha256')
+-  const text = readRegular(manifestPath, 'RELEASE_MANIFEST').toString('utf8')
+-  const files = text.trim().split('\n').map(line => {
+-    const match = line.match(/^([a-f0-9]{64})  (.+)$/)
+-    if (!match || !safeRelativePath(match[2])) fail('RELEASE_MANIFEST_INVALID')
+-    const actual = sha256(readRegular(resolve(releaseDir, match[2]), 'RELEASE_PAYLOAD'))
+-    if (actual !== match[1]) fail(`RELEASE_PAYLOAD_HASH_MISMATCH:${match[2]}`)
+-    return Object.freeze({ path: match[2], sha256: match[1] })
+-  })
+-  if (new Set(files.map(file => file.path)).size !== files.length) fail('RELEASE_MANIFEST_INVALID')
+-  exactJson(files.map(file => file.path), expectedPaths, 'RELEASE_INSTALLER_PAYLOAD')
+-  return Object.freeze({ files, sha256: sha256(Buffer.from(text, 'utf8')) })
+-}
+-
+-const verifyIntegrity = releaseDir => {
+-  const text = readRegular(resolve(releaseDir, 'release-integrity.sha256'), 'RELEASE_INTEGRITY').toString('utf8')
+-  const entries = new Map()
+-  for (const line of text.trim().split('\n')) {
+-    const match = line.match(/^([a-f0-9]{64})  (release-manifest\.sha256|release-provenance\.json)$/)
+-    if (!match || entries.has(match[2])) fail('RELEASE_INTEGRITY_INVALID')
+-    entries.set(match[2], match[1])
+-  }
+-  if (entries.size !== 2) fail('RELEASE_INTEGRITY_INVALID')
+-  for (const [path, expected] of entries) {
+-    if (sha256(readRegular(resolve(releaseDir, path), 'RELEASE_INTEGRITY_TARGET')) !== expected) fail('RELEASE_INTEGRITY_INVALID')
+-  }
+-  return sha256(Buffer.from(text, 'utf8'))
+-}
+-
+-export const freezeCandidate = ({ rawProfile, apiPolicy, operatorBindingFreezePath = null,
+-  envText, releaseDir, sourceCommit, sourceTree, installerPath }) => {
+-  if (!/^[a-f0-9]{40}$/.test(sourceCommit || '') || !/^[a-f0-9]{40}$/.test(sourceTree || '')) fail('SOURCE_IDENTITY_INVALID')
+-  const validated = validateCandidate({ rawProfile, apiPolicy, operatorBindingFreezePath })
+-  const candidateEnv = validateCandidateEnvironment(envText)
+-  const frozenInstallerPath = requireText(installerPath, 'INSTALLER_PATH')
+-  const installer = installerPayload(frozenInstallerPath)
+-  const manifest = parseManifest(releaseDir, installer.files)
+-  const provenanceBytes = readRegular(resolve(releaseDir, 'release-provenance.json'), 'RELEASE_PROVENANCE')
+-  const provenance = JSON.parse(provenanceBytes)
+-  if (provenance.sourceCommit !== sourceCommit || provenance.sourceTree !== sourceTree
+-      || provenance.payloadCount !== manifest.files.length || provenance.payloadManifestSha256 !== manifest.sha256) fail('RELEASE_PROVENANCE_MISMATCH')
+-  if (provenance.installerSha256 !== sha256(installer.bytes)) fail('INSTALLER_PROVENANCE_MISMATCH')
+-  const caBundleSha256 = `sha256:${sha256(readFileSync(validated.profile.typedInspectionCaBundlePath))}`
+-  if (caBundleSha256 !== `sha256:${ACCEPTED_CA_BUNDLE_SHA256}`) fail('CA_BUNDLE_EVIDENCE_MISMATCH')
+-  const evidenceBytes = readFileSync(validated.profile.typedInspectionCarrierEvidencePath)
+-  const evidenceSha256 = `sha256:${sha256(evidenceBytes)}`
+-  if (evidenceSha256 !== validated.profile.typedInspectionCarrierEvidenceDigest) fail('CARRIER_EVIDENCE_FILE_MISMATCH')
+-  const carrierEvidence = JSON.parse(evidenceBytes)
+-  if (!DIGEST.test(carrierEvidence.nativeProbeDigest || '')) fail('CARRIER_NATIVE_PROBE_DIGEST_INVALID')
+-  const frozen = canonical({
+-    schemaVersion: 1,
+-    source: { commit: sourceCommit, tree: sourceTree },
+-    installerSha256: provenance.installerSha256,
+-    release: {
+-      payloadCount: manifest.files.length,
+-      payloadManifestSha256: manifest.sha256,
+-      provenanceSha256: sha256(provenanceBytes),
+-      integritySha256: verifyIntegrity(releaseDir),
+-      payload: manifest.files
+-    },
+-    normalizedNonSecretProfile: validated.projection,
+-    normalizedNonSecretEnvironment: candidateEnv.nonSecret,
+-    secretEnvironmentNames: candidateEnv.secretEnvironmentNames,
+-    publicTrustAndEvidence: { caBundleSha256, carrierEvidenceSha256: evidenceSha256,
+-      nativeProbeDigest: carrierEvidence.nativeProbeDigest,
+-      carrierContractDigests: carrierEvidence.cases.map(item => item.carrierContractDigest) },
+-    apiPolicy: {
+-      sourceContractCommit: apiPolicy.sourceContractCommit,
+-      policyRevision: apiPolicy.properties[policyKey('policy-revision')],
+-      digest: digestObject(apiPolicy.properties),
+-      properties: apiPolicy.properties,
+-      forbiddenClientWireFields: apiPolicy.forbiddenClientWireFields,
+-      operatorBindingEvidence: validated.operatorBindingEvidence
+-    },
+-    validation: { status: 'STATIC_VALID', projectionKind: 'SYNTHETIC_EXPECTED_REGISTRATION',
+-      providerBindingEvidenceStatus: validated.providerBindingEvidenceStatus, fullInstallationReadiness: false },
+-    syntheticExpectedRegistration: validated.syntheticExpectedDeclarations
+-  })
+-  return Object.freeze({ ...frozen, freezeDigest: digestObject(frozen) })
+-}
+-
+-const payload = value => value?.payload && typeof value.payload === 'object' ? value.payload : value
+-export const verifyReadback = ({ freeze, registration, presence }) => {
+-  if (!freeze || freeze.freezeDigest !== digestObject(Object.fromEntries(Object.entries(freeze).filter(([key]) => key !== 'freezeDigest')))) fail('FREEZE_DIGEST_INVALID')
+-  const expected = freeze.syntheticExpectedRegistration
+-  for (const [label, raw] of [['REGISTRATION', registration], ['PRESENCE', presence]]) {
+-    const value = payload(raw)
+-    if (!value || value.agentId !== freeze.normalizedNonSecretProfile.agentId) fail(`${label}_AGENT_ID_MISMATCH`)
+-    exactJson(value.nativeProviderCredentialBinding, expected.nativeProviderCredentialBinding, `${label}_PROVIDER_BINDING`)
+-    exactJson(value.controlledImageBountyExecutionV3, expected.controlledImageBountyExecutionV3, `${label}_V3`)
+-    exactJson(value.typedInspection, expected.typedInspection, `${label}_TYPED_INSPECTION`)
+-  }
+-  const registrationRuntime = registration.runtimeInstanceId ?? registration.payload?.runtimeInstanceId
+-  const presenceRuntime = presence.runtimeInstanceId ?? presence.payload?.runtimeInstanceId
+-  requireText(registrationRuntime, 'REGISTRATION_RUNTIME_INSTANCE_ID')
+-  if (registrationRuntime !== presenceRuntime) fail('READBACK_RUNTIME_INSTANCE_MISMATCH')
+-  return Object.freeze({ status: 'READBACK_MATCH', providerBindingEvidenceStatus: freeze.validation.providerBindingEvidenceStatus, agentId: freeze.normalizedNonSecretProfile.agentId,
+-    runtimeInstanceId: registrationRuntime, operations: expected.controlledImageBountyExecutionV3.operations.map(item => item.operation) })
+-}
+-
+-export const verifyRedactedTemplates = () => {
+-  const rawProfile = replaceTemplatePlaceholders(readJson(templatePath))
+-  const apiPolicy = replaceTemplatePlaceholders(readJson(policyTemplatePath))
+-  const result = validateCandidate({ rawProfile, apiPolicy })
+-  const envText = readFileSync(envTemplatePath, 'utf8')
+-  const candidateEnv = validateCandidateEnvironment(envText, { allowPlaceholders: true })
+-  if (!envText.includes(`${OWNER_KEY_ENV}=__`) || !envText.includes(`${PROVIDER_KEY_ENV}=__`)
+-      || /(?:sk-|Bearer\s+)[A-Za-z0-9_-]{8,}/.test(envText)) fail('ENV_TEMPLATE_SECRET_LEAK')
+-  return Object.freeze({ status: 'STATIC_VALID', projectionKind: 'SYNTHETIC_EXPECTED_REGISTRATION',
+-    providerBindingEvidenceStatus: result.providerBindingEvidenceStatus, fullInstallationReadiness: false,
+-    profile: result.projection, syntheticExpectedDeclarations: result.syntheticExpectedDeclarations,
+-    apiPolicyDigest: digestObject(apiPolicy), secretEnvironmentNames: candidateEnv.secretEnvironmentNames })
+-}
+-
+-const option = (args, name) => {
+-  const index = args.indexOf(name)
+-  if (index < 0 || !args[index + 1]) fail(`MISSING_OPTION:${name}`)
+-  return args[index + 1]
+-}
+-const optional = (args, name) => {
+-  const index = args.indexOf(name)
+-  return index < 0 ? null : option(args, name)
+-}
+-
+-const main = () => {
+-  const [command, ...args] = process.argv.slice(2)
+-  if (command === 'verify-template') {
+-    console.log(JSON.stringify(verifyRedactedTemplates(), null, 2)); return
+-  }
+-  if (command === 'freeze') {
+-    const profile = readJson(option(args, '--profile'))
+-    const policy = readJson(option(args, '--api-policy'))
+-    const envText = readFileSync(option(args, '--env-file'), 'utf8')
+-    const operatorBindingFreeze = optional(args, '--operator-binding-freeze')
+-    const frozen = freezeCandidate({ rawProfile: profile, apiPolicy: policy, envText, releaseDir: resolve(option(args, '--release')),
+-      sourceCommit: option(args, '--source-commit'), sourceTree: option(args, '--source-tree'),
+-      installerPath: resolve(option(args, '--installer')),
+-      operatorBindingFreezePath: operatorBindingFreeze ? resolve(operatorBindingFreeze) : null })
+-    const output = option(args, '--output'); writeFileSync(output, `${JSON.stringify(frozen, null, 2)}\n`, { flag: 'wx', mode: 0o600 })
+-    console.log(JSON.stringify({ status: 'STATIC_VALID', fullInstallationReadiness: false, output, freezeDigest: frozen.freezeDigest }))
+-    return
+-  }
+-  if (command === 'readback') {
+-    const result = verifyReadback({ freeze: readJson(option(args, '--freeze')),
+-      registration: readJson(option(args, '--registration')), presence: readJson(option(args, '--presence')) })
+-    console.log(JSON.stringify(result, null, 2)); return
+-  }
+-  fail('usage: install-candidate-check.mjs verify-template | freeze --profile FILE --env-file FILE --api-policy FILE [--operator-binding-freeze FILE] --release DIR --installer FILE --source-commit SHA --source-tree SHA --output NEW_FILE | readback --freeze FILE --registration FILE --presence FILE')
+-}
+-
+-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+-  try { main() } catch (error) { console.error(error.message); process.exitCode = 1 }
+-}
+diff --git a/conf/codex-ws-agent/install-candidate/wuyong-dual-mode-profile.redacted.json b/conf/codex-ws-agent/install-candidate/wuyong-dual-mode-profile.redacted.json
+deleted file mode 100644
+index d84129c..0000000
+--- a/conf/codex-ws-agent/install-candidate/wuyong-dual-mode-profile.redacted.json
++++ /dev/null
+@@ -1,55 +0,0 @@
+-[
+-  {
+-    "profileId": "wuyong",
+-    "agentId": "__EXISTING_WUYONG_AGENT_ID__",
+-    "agentName": "吴用",
+-    "personaName": "智多星",
+-    "codexBin": "/usr/local/bin/codex",
+-    "codexHome": "__EXISTING_WUYONG_CODEX_HOME__",
+-    "codexWorkdir": "/home/isp/wsps/cyf",
+-    "codexSandbox": "workspace-write",
+-    "codexApproval": "never",
+-    "codexSessionMode": "resume",
+-    "codexTimeoutMs": 900000,
+-    "chatEngine": "app-server",
+-    "chatModel": "gpt-5.6-terra",
+-    "chatReasoningEffort": "low",
+-    "appServerEnabled": true,
+-    "appServerSchemaContractId": "codex-cli-0.159.2",
+-    "typedInspectionEnabled": true,
+-    "typedInspectionRootDir": "/home/isp/apps/codex-ws-agent/data/typed-inspection-inputs/wuyong",
+-    "typedInspectionStateRoot": "/home/isp/apps/codex-ws-agent/data/typed-inspection-state/wuyong",
+-    "typedInspectionProfileId": "mmd-image-understanding-1f95df2-v1",
+-    "typedInspectionEngineContractId": "codex-app-server-codex-cli-0.159.2-typed-inspection-v1",
+-    "typedInspectionProviderId": "gpt",
+-    "typedInspectionProviderBaseUrl": "https://codex.chcbz.net/v1",
+-    "typedInspectionProviderWireApi": "responses",
+-    "typedInspectionProviderNetwork": "restricted-proxy",
+-    "typedInspectionNetworkConnectTimeoutMs": 15000,
+-    "typedInspectionCaBundlePath": "/etc/pki/tls/certs/ca-bundle.crt",
+-    "typedInspectionCarrierEvidencePath": "/home/isp/apps/codex-ws-agent/evidence/typed-inspection-local-image-gpt-5.6-terra-1f95df2.json",
+-    "typedInspectionCarrierEvidenceDigest": "sha256:d22de19b1b86c988c81deadb2697e5a577fdbc9abb4982ddc015fefa7fd6bdab",
+-    "typedInspectionBwrapBin": "/usr/bin/bwrap",
+-    "typedInspectionSupportedInputs": [
+-      {
+-        "mediaKind": "image",
+-        "mimeType": "image/png",
+-        "carrier": "LOCAL_IMAGE",
+-        "carrierContractDigest": "sha256:fb699e707ec0bef6f874c285276f6cec324406f34a2a75620ba235cf36d0244e"
+-      }
+-    ],
+-    "workspaceFileApiOrigin": "__FROZEN_WORKSPACE_API_ORIGIN__",
+-    "workspaceFileRootDir": "/home/isp/apps/codex-ws-agent/data/private-runs/wuyong",
+-    "nativeConversationHttpPollEnabled": true,
+-    "nativeConversationImageGenerationEnabled": false,
+-    "controlledImageHttpEnabled": true,
+-    "controlledImageHttpEndpoint": "__FROZEN_CONTROLLED_IMAGE_HTTPS_ORIGIN__",
+-    "controlledImageHttpApiKeyEnv": "CYF_CONTROLLED_IMAGE_API_KEY",
+-    "controlledImageHttpModelId": "__FROZEN_CONTROLLED_IMAGE_MODEL_ID__",
+-    "controlledImageHttpBindingId": "__OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_ID__",
+-    "controlledImageHttpBindingEpoch": "__OPERATOR_CONFIGURED_CONTROLLED_IMAGE_BINDING_EPOCH__",
+-    "controlledImageHttpLedgerRoot": "/home/isp/apps/codex-ws-agent/data/controlled-image-ledger/wuyong",
+-    "enabled": true,
+-    "isDefault": true
+-  }
+-]
+diff --git a/conf/codex-ws-agent/install-candidate/wuyong-dual-mode.env.redacted b/conf/codex-ws-agent/install-candidate/wuyong-dual-mode.env.redacted
+deleted file mode 100644
+index 3fcd626..0000000
+--- a/conf/codex-ws-agent/install-candidate/wuyong-dual-mode.env.redacted
++++ /dev/null
+@@ -1,11 +0,0 @@
+-# References only. Replace in the private 0600 deployment file; never commit/read back secret bytes.
+-WS_URL=__FROZEN_AGENT_WEBSOCKET_URL__
+-OPENCLAW_API_KEY=__EXISTING_CHCBZ_OWNER_WEBSOCKET_API_KEY_SECRET__
+-CYF_CONTROLLED_IMAGE_API_KEY=__FROZEN_CONTROLLED_IMAGE_PROVIDER_API_KEY_SECRET__
+-DEFAULT_CODEX_PROFILE=wuyong
+-CODEX_PROFILES_FILE=/home/isp/apps/codex-ws-agent/codex-profiles.private.json
+-CODEX_WORKSPACE_POLICIES_FILE=/home/isp/apps/codex-ws-agent/workspace-policies.json
+-COMMAND_INBOX_DIR=/home/isp/apps/codex-ws-agent/data/inbox
+-COMMAND_INBOX_SUCCESS_POLICY=archive
+-CYF_CONVERSATION_HTTP_POLL_ENABLED=false
+-CYF_CONVERSATION_IMAGEGEN_ENABLED=false
+diff --git a/conf/codex-ws-agent/install-policy-check.mjs b/conf/codex-ws-agent/install-policy-check.mjs
+deleted file mode 100644
+index 6e4e7a4..0000000
+--- a/conf/codex-ws-agent/install-policy-check.mjs
++++ /dev/null
+@@ -1,41 +0,0 @@
+-import { existsSync, readFileSync } from 'node:fs'
+-import { resolve } from 'node:path'
+-import { pathToFileURL } from 'node:url'
+-
+-export const assertNoLegacyWorkspaceRemoteSchema = (raw, source = 'workspace-policies.json') => {
+-  let parsed
+-  try {
+-    parsed = JSON.parse(String(raw))
+-  } catch (error) {
+-    throw new Error(`${source} is not valid JSON: ${error.message}`)
+-  }
+-  const policies = Array.isArray(parsed) ? parsed : Object.values(parsed || {})
+-  for (const [index, policy] of policies.entries()) {
+-    if (!policy || typeof policy !== 'object' || Array.isArray(policy)) continue
+-    const remote = policy.remote
+-    if (remote && typeof remote === 'object' && !Array.isArray(remote)
+-        && (Object.hasOwn(remote, 'name') || Object.hasOwn(remote, 'url'))) {
+-      const policyId = String(policy.policyId || Object.keys(parsed || {})[index] || `#${index + 1}`)
+-      throw new Error(
+-        `${source} policy ${policyId} uses removed remote{name,url} schema; migrate explicitly to trustedRemoteUrl and trustedRemoteRef before restart`
+-      )
+-    }
+-  }
+-  return { policies: policies.length }
+-}
+-
+-export const checkWorkspacePolicyFile = file => {
+-  const path = resolve(String(file || 'workspace-policies.json'))
+-  if (!existsSync(path)) return { policies: 0, missing: true }
+-  return assertNoLegacyWorkspaceRemoteSchema(readFileSync(path, 'utf8'), path)
+-}
+-
+-const isMain = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url
+-if (isMain) {
+-  try {
+-    console.log(JSON.stringify(checkWorkspacePolicyFile(process.argv[2])))
+-  } catch (error) {
+-    console.error(`WORKSPACE_POLICY_MIGRATION_REQUIRED: ${error.message}`)
+-    process.exit(1)
+-  }
+-}
+diff --git a/conf/codex-ws-agent/test/config-runtime.test.mjs b/conf/codex-ws-agent/test/config-runtime.test.mjs
+index 7a73e36..3eaf4fb 100644
+--- a/conf/codex-ws-agent/test/config-runtime.test.mjs
++++ b/conf/codex-ws-agent/test/config-runtime.test.mjs
+@@ -24,10 +24,14 @@ const profileFor = root => ({
+ const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => (
+   !/^(CODEX_|AGENT_|OPENCLAW_|DEFAULT_CODEX_PROFILE$|WS_URL$)/.test(key)
+ )))
+-// Exercise retained read-only config/validation helpers, NOT the retired engine CLI.
++// Exercise current explicit profile normalization/validation, not a legacy config loader.
+ const runProfileInspection = (root, profiles, args, extraEnv = {}) => spawnSync(process.execPath, ['--input-type=module', '-e', `
+-  const { loadRuntimeConfig, buildConfigurationReport, ensureProfiles } = await import(${JSON.stringify(entrypoint)});
+-  const settings = loadRuntimeConfig({ exitOnError: false });
++  const { normalizeProfile, buildConfigurationReport, ensureProfiles } = await import(${JSON.stringify(entrypoint)});
++  const profiles = JSON.parse(process.env.TEST_PROFILES_JSON).map((profile, index) => ({
++    ...normalizeProfile(profile, {}, index, { isolated: true }),
++    runtimeIdentity: { installationId: 'test-installation-' + index, tenantId: '0', clientId: 'test-client', canonicalAgentId: profile.agentId }
++  }));
++  const settings = { profiles, defaultProfileId: 'audit', workspacePolicies: new Map(Object.entries(JSON.parse(process.env.TEST_POLICIES_JSON || '{}'))) };
+   if (process.argv.includes('--validate')) {
+     try { ensureProfiles(settings.profiles, settings.defaultProfileId, settings.workspacePolicies, false); }
+     catch (error) { console.error(error.message); process.exitCode = 1; }
+@@ -37,7 +41,7 @@ const runProfileInspection = (root, profiles, args, extraEnv = {}) => spawnSync(
+   }
+ `, '--', ...args], {
+   cwd: root, encoding: 'utf8', timeout: 10000,
+-  env: { ...cleanEnv(), CODEX_PROFILES: JSON.stringify(profiles), DEFAULT_CODEX_PROFILE: 'audit', ...extraEnv }
++  env: { ...cleanEnv(), TEST_PROFILES_JSON: JSON.stringify(profiles), ...extraEnv }
+ })
+ 
+ const writeSession = (selectedProfile, sessionId, fileName = sessionId) => {
+@@ -443,7 +447,7 @@ test('retained library configuration inspection is read-only, secret-free and di
+   const result = runProfileInspection(root, [profile], ['--inspect-config'], {
+     OPENCLAW_API_KEY: 'global-key-never-print',
+     WS_URL: 'ws://127.0.0.1:1/?api_key=url-key-never-print',
+-    CODEX_WORKSPACE_POLICIES: JSON.stringify({ example: {
++    TEST_POLICIES_JSON: JSON.stringify({ example: {
+       root: workspaceRoot, repository: resolve(root, 'missing-repository'),
+       baseRef: 'refs/heads/main', trustedRemoteUrl: 'https://git.example.com/repo.git',
+       trustedRemoteRef: 'refs/heads/main'
+@@ -454,7 +458,7 @@ test('retained library configuration inspection is read-only, secret-free and di
+   const actual = report.profiles[0]
+   assert.equal(actual.commandReadiness, 'policy-configured; requires --validate')
+   assert.deepEqual(actual.schedulingAbilities, ['天气查询'])
+-  assert.equal(actual.websocketAuthSource, 'retired-api-key')
++  assert.equal(actual.websocketAuthSource, 'installation-derived-session')
+   assert.equal(actual.modelSource, 'agent --model')
+   assert.ok(actual.warnings.some(value => value.startsWith('LEGACY_ABILITIES_IGNORED:')))
+   assert.ok(actual.warnings.some(value => value.startsWith('LEGACY_SKILLS_IGNORED:')))
+@@ -469,7 +473,7 @@ test('library inspection needs no WebSocket credential and reports blocked comma
+   const result = runProfileInspection(root, [profileFor(root)], ['--inspect-config'])
+   assert.equal(result.status, 0, result.stderr)
+   const profile = JSON.parse(result.stdout).profiles[0]
+-  assert.equal(profile.websocketAuthSource, 'retired-api-key')
++  assert.equal(profile.websocketAuthSource, 'installation-derived-session')
+   assert.equal(profile.commandReadiness, 'blocked-no-workspace-policy')
+   assert.ok(profile.warnings.some(value => value.startsWith('WORKSPACE_POLICY_REQUIRED:')))
+ })
+@@ -495,14 +499,14 @@ test('read-only inspection helper returns a failing status and structured errors
+   assert.match(JSON.parse(result.stdout).profiles[0].errors[0], /codexTimeoutMs/)
+ })
+ 
+-test('legacy CODEX_MODEL and zero timeout are inherited when the profile does not override them', t => {
++test('explicit Runtime profiles do not inherit retired CODEX_MODEL or CODEX_TIMEOUT_MS', t => {
+   const root = fixture(t)
+   const { codexTimeoutMs, codexModel, ...profile } = profileFor(root)
+   const result = runProfileInspection(root, [profile], ['--inspect-config'], { CODEX_MODEL: 'legacy-model', CODEX_TIMEOUT_MS: '0' })
+   assert.equal(result.status, 0, result.stderr)
+   const actual = JSON.parse(result.stdout).profiles[0]
+-  assert.equal(actual.codexModel, 'legacy-model')
+-  assert.equal(actual.codexTimeoutMs, 0)
++  assert.equal(actual.codexModel, null)
++  assert.equal(actual.codexTimeoutMs, 900000)
+ })
+ 
+ for (const timeoutMs of [0, 10]) {
+@@ -532,41 +536,33 @@ test('explicit profile model takes precedence over CODEX_MODEL', t => {
+   assert.equal(JSON.parse(result.stdout).profiles[0].codexModel, 'test-model')
+ })
+ 
+-test('section-style profile template has a conservative inherited sandbox', t => {
++test('current profile inspection ignores retired inline and INI file environment inputs', t => {
+   const root = fixture(t)
+-  const profilesFile = resolve(import.meta.dirname, '..', 'codex-profiles.conf')
+-  const result = runProfileInspection(root, [], ['--inspect-config'], {
+-    CODEX_PROFILES_FILE: profilesFile, DEFAULT_CODEX_PROFILE: 'codex-default'
++  const result = runProfileInspection(root, [profileFor(root)], ['--inspect-config'], {
++    CODEX_PROFILES_FILE: '/must-not-read-retired-ini', CODEX_PROFILES: 'invalid legacy JSON', DEFAULT_CODEX_PROFILE: 'foreign'
+   })
+   assert.equal(result.status, 0, result.stderr)
+   const report = JSON.parse(result.stdout)
+   assert.equal(report.profiles.length, 1)
+-  assert.equal(report.defaultProfileId, 'codex-default')
+-  assert.equal(report.profiles[0].codexSandbox, 'workspace-write')
+-  assert.equal(report.profiles[0].codexTimeoutMs, 900000)
++  assert.equal(report.defaultProfileId, 'audit')
++  assert.equal(report.profiles[0].agentId, 'audit-agent')
+ })
+ 
+-test('legacy CA bundle environment fallback reaches profile validation without exposing file contents', t => {
++test('explicit CA bundle profile setting reaches validation without exposing file contents', t => {
+   const root = fixture(t)
+   const selectedProfile = profileFor(root)
+   const common = {
+-    CODEX_TYPED_INSPECTION_PROVIDER_NETWORK: 'restricted-proxy',
+-    CODEX_TYPED_INSPECTION_PROVIDER_ID: 'gpt',
+-    CODEX_TYPED_INSPECTION_PROVIDER_BASE_URL: 'https://provider.example.test/v1',
+-    CODEX_TYPED_INSPECTION_NETWORK_CONNECT_TIMEOUT_MS: '1000'
++    typedInspectionProviderNetwork: 'restricted-proxy',
++    typedInspectionProviderId: 'gpt',
++    typedInspectionProviderBaseUrl: 'https://provider.example.test/v1',
++    typedInspectionNetworkConnectTimeoutMs: '1000'
+   }
+-  const relative = runProfileInspection(root, [selectedProfile], ['--inspect-config'], {
+-    ...common,
+-    CODEX_TYPED_INSPECTION_CA_BUNDLE_PATH: 'relative-ca.pem'
+-  })
++  const relative = runProfileInspection(root, [{ ...selectedProfile, ...common, typedInspectionCaBundlePath: 'relative-ca.pem' }], ['--inspect-config'])
+   assert.equal(relative.status, 1)
+   const relativeReport = JSON.parse(relative.stdout)
+   assert.equal(relativeReport.profiles[0].errors.includes('typedInspectionCaBundlePath must be an absolute path'), true)
+ 
+-  const absolute = runProfileInspection(root, [selectedProfile], ['--inspect-config'], {
+-    ...common,
+-    CODEX_TYPED_INSPECTION_CA_BUNDLE_PATH: '/etc/ssl/certs/ca-certificates.crt'
+-  })
++  const absolute = runProfileInspection(root, [{ ...selectedProfile, ...common, typedInspectionCaBundlePath: '/etc/ssl/certs/ca-certificates.crt' }], ['--inspect-config'])
+   assert.equal(absolute.status, 0, absolute.stderr)
+   const absoluteReport = JSON.parse(absolute.stdout)
+   assert.equal(absoluteReport.profiles[0].errors.some(error => error.includes('typedInspectionCaBundlePath')), false)
+diff --git a/conf/codex-ws-agent/test/fixtures/retired-install-payload.baseline-0d80e58.txt b/conf/codex-ws-agent/test/fixtures/retired-install-payload.baseline-0d80e58.txt
+deleted file mode 100644
+index 7267afc..0000000
+--- a/conf/codex-ws-agent/test/fixtures/retired-install-payload.baseline-0d80e58.txt
++++ /dev/null
+@@ -1,62 +0,0 @@
+-# TEST-ONLY historical catalog from 0d80e588be271891348e38b8892d9b9a9b0bb436.
+-# Not an installer; no executable provisioning implementation. Never packaged.
+-RELEASE_PAYLOAD=(
+-    ".gitignore"
+-    "README.md"
+-    "agent-client.mjs"
+-    "app-server-adapter.mjs"
+-    "chat-runtime.mjs"
+-    "codex-home.example.toml"
+-    "codex-profiles.conf"
+-    "contracts/api-hosted-wire-v1.json"
+-    "contracts/api-hosted-wire-v1.provenance.json"
+-    "contracts/probes/api-long-history-wire.mjs"
+-    "controlled-image-bounty-capability.mjs"
+-    "controlled-image-bounty-v3-capability.mjs"
+-    "controlled-image-delivery-retention-v3.mjs"
+-    "controlled-image-gpt-cli-config.mjs"
+-    "controlled-image-gpt-cli-egress-gate.mjs"
+-    "controlled-image-gpt-cli-executor-v3.mjs"
+-    "controlled-image-http-config.mjs"
+-    "controlled-image-http-executor-v3.mjs"
+-    "controlled-image-http-executor.mjs"
+-    "controlled-image-http-ledger.mjs"
+-    "controlled-image-http-provider-binding.mjs"
+-    "controlled-image-v3-files.mjs"
+-    "conversation-controlled-image-v3.mjs"
+-    "conversation-controlled-image.mjs"
+-    "conversation-native.mjs"
+-    "conversation-reference-inputs-v3.mjs"
+-    "conversation-reference-inputs.mjs"
+-    "env.example"
+-    "evidence/typed-inspection-local-image-gpt-5.6-terra-1f95df2.json"
+-    "install-candidate/INSTALL-CANDIDATE.md"
+-    "install-candidate/controlled-image-api-policy.redacted.json"
+-    "install-candidate/install-candidate-check.mjs"
+-    "install-candidate/wuyong-dual-mode.env.redacted"
+-    "install-candidate/wuyong-dual-mode-profile.redacted.json"
+-    "install-policy-check.mjs"
+-    "juyiting-action-outcome.mjs"
+-    "juyiting-typed-outcome-stream.mjs"
+-    "juyiting-typed-outcome.mjs"
+-    "managed-host.mjs"
+-    "migrate-ack-high-water.mjs"
+-    "managed-chat-scope-config.mjs"
+-    "managed-image-scope-config.mjs"
+-    "managed-image-scopes.example.json"
+-    "native-bounty-capability.mjs"
+-    "package-lock.json"
+-    "package.json"
+-    "registration-ack.mjs"
+-    "report-outbox.mjs"
+-    "skill-install-manager.mjs"
+-    "toolchain/delivery_tool.py"
+-    "toolchain/requirements.txt"
+-    "typed-inspection-input-carriers.mjs"
+-    "typed-inspection-network.mjs"
+-    "typed-inspection-profile.mjs"
+-    "typed-inspection-runtime.mjs"
+-    "workspace-file-bridge.mjs"
+-    "workspace-manager.mjs"
+-    "workspace-policies.example.json"
+-)
+diff --git a/conf/codex-ws-agent/test/install-candidate-check.test.mjs b/conf/codex-ws-agent/test/install-candidate-check.test.mjs
+deleted file mode 100644
+index b5c922a..0000000
+--- a/conf/codex-ws-agent/test/install-candidate-check.test.mjs
++++ /dev/null
+@@ -1,348 +0,0 @@
+-import assert from 'node:assert/strict'
+-import { createHash } from 'node:crypto'
+-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+-import { tmpdir } from 'node:os'
+-import { dirname, resolve } from 'node:path'
+-import test from 'node:test'
+-
+-import {
+-  freezeCandidate,
+-  replaceTemplatePlaceholders,
+-  validateCandidate,
+-  validateCandidateEnvironment,
+-  verifyReadback,
+-  verifyRedactedTemplates
+-} from '../install-candidate/install-candidate-check.mjs'
+-
+-const clientRoot = resolve(import.meta.dirname, '..')
+-const repositoryRoot = resolve(clientRoot, '..', '..')
+-// Historical read-only policy/provenance regressions, NOT unified enrollment.
+-const installerPath = resolve(import.meta.dirname, 'fixtures/retired-install-payload.baseline-0d80e58.txt')
+-const profileTemplate = resolve(clientRoot, 'install-candidate/wuyong-dual-mode-profile.redacted.json')
+-const policyTemplate = resolve(clientRoot, 'install-candidate/controlled-image-api-policy.redacted.json')
+-const evidencePath = resolve(clientRoot, 'evidence/typed-inspection-local-image-gpt-5.6-terra-1f95df2.json')
+-const envTemplate = resolve(clientRoot, 'install-candidate/wuyong-dual-mode.env.redacted')
+-const sourceCommit = 'a'.repeat(40)
+-const sourceTree = 'b'.repeat(40)
+-const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
+-const readJson = path => JSON.parse(readFileSync(path, 'utf8'))
+-const clone = value => structuredClone(value)
+-const releasePayload = (() => {
+-  const source = readFileSync(installerPath, 'utf8')
+-  const match = source.match(/RELEASE_PAYLOAD=\(\n([\s\S]*?)\n\)/)
+-  assert.ok(match)
+-  return match[1].split('\n').map(line => line.match(/^\s+"([^"]+)"$/)[1])
+-})()
+-
+-const candidateEnv = () => readFileSync(envTemplate, 'utf8')
+-  .replace('__FROZEN_AGENT_WEBSOCKET_URL__', 'wss://api.example.invalid/ws/agent/channel')
+-  .replace('__EXISTING_CHCBZ_OWNER_WEBSOCKET_API_KEY_SECRET__', 'owner-secret-not-frozen')
+-  .replace('__FROZEN_CONTROLLED_IMAGE_PROVIDER_API_KEY_SECRET__', 'provider-secret-not-frozen')
+-
+-const candidate = () => {
+-  const rawProfile = replaceTemplatePlaceholders(readJson(profileTemplate))
+-  rawProfile[0].typedInspectionCarrierEvidencePath = evidencePath
+-  const apiPolicy = replaceTemplatePlaceholders(readJson(policyTemplate))
+-  return { rawProfile, apiPolicy }
+-}
+-
+-const operatorPolicyProjection = apiPolicy => {
+-  const key = name => `agent.controlled-image-provider.operator-policies[0].${name}`
+-  const properties = apiPolicy.properties
+-  return {
+-    tenantId: properties[key('tenant-id')], clientId: properties[key('client-id')],
+-    ownerJiacn: properties[key('owner-jiacn')], targetAgentId: properties[key('target-agent-id')],
+-    providerLane: properties[key('provider-lane')], bindingId: properties[key('binding-id')],
+-    bindingEpoch: String(properties[key('binding-epoch')]), modelId: properties[key('model-id')],
+-    custody: properties[key('custody')], issuer: properties[key('issuer')],
+-    policyRevision: properties[key('policy-revision')], expiresAt: String(properties[key('expires-at')]),
+-    allowUnpricedExternalAccount: properties[key('allow-unpriced-external-account')],
+-    maxOutboundRequestAttempts: properties[key('max-outbound-request-attempts')]
+-  }
+-}
+-
+-const writeOperatorBindingFreeze = (root, apiPolicy, mutate = value => value) => {
+-  const sourceReference = 'operator-freeze/wuyong-controlled-image-policy-r1'
+-  const document = mutate({
+-    schemaVersion: 1,
+-    artifactType: 'CONTROLLED_IMAGE_OPERATOR_BINDING_FREEZE_V1',
+-    sourceContractCommit: '9ab62d6665c695a574b8b3bde9cfff3ea3ca13d4',
+-    sourceReference,
+-    operatorPolicy: operatorPolicyProjection(apiPolicy)
+-  })
+-  const path = resolve(root, 'operator-binding-freeze.json')
+-  const bytes = Buffer.from(`${JSON.stringify(document, null, 2)}\n`)
+-  writeFileSync(path, bytes)
+-  Object.assign(apiPolicy.providerBindingEvidence, {
+-    status: 'VERIFIED',
+-    sourceType: 'API_OPERATOR_POLICY_FREEZE_FILE',
+-    sourceReference,
+-    sourceDigest: `sha256:${sha256(bytes)}`
+-  })
+-  return path
+-}
+-
+-const writeRelease = root => {
+-  mkdirSync(root, { recursive: true })
+-  const manifest = releasePayload.map(relative => {
+-    const path = resolve(root, relative)
+-    mkdirSync(dirname(path), { recursive: true })
+-    writeFileSync(path, `fixture:${relative}\n`)
+-    return `${sha256(readFileSync(path))}  ${relative}`
+-  }).join('\n') + '\n'
+-  writeFileSync(resolve(root, 'release-manifest.sha256'), manifest)
+-  const provenance = {
+-    schemaVersion: 1,
+-    artifact: 'codex-ws-agent-release',
+-    sourceCommit,
+-    sourceTree,
+-    payloadCount: releasePayload.length,
+-    payloadManifest: 'release-manifest.sha256',
+-    payloadManifestSha256: sha256(Buffer.from(manifest)),
+-    installerSha256: sha256(readFileSync(installerPath))
+-  }
+-  writeFileSync(resolve(root, 'release-provenance.json'), `${JSON.stringify(provenance, null, 2)}\n`)
+-  const integrity = [
+-    `${sha256(readFileSync(resolve(root, 'release-manifest.sha256')))}  release-manifest.sha256`,
+-    `${sha256(readFileSync(resolve(root, 'release-provenance.json')))}  release-provenance.json`
+-  ].join('\n') + '\n'
+-  writeFileSync(resolve(root, 'release-integrity.sha256'), integrity)
+-}
+-
+-const frozenFixture = () => {
+-  const root = mkdtempSync(resolve(tmpdir(), 'cyf-install-candidate-'))
+-  const release = resolve(root, 'release')
+-  writeRelease(release)
+-  const { rawProfile, apiPolicy } = candidate()
+-  const freeze = freezeCandidate({ rawProfile, apiPolicy, envText: candidateEnv(), releaseDir: release, sourceCommit, sourceTree, installerPath })
+-  return { root, freeze, rawProfile, apiPolicy, envText: candidateEnv() }
+-}
+-
+-test('redacted templates are static-valid synthetic projections without secrets or readiness claims', () => {
+-  const verified = verifyRedactedTemplates()
+-  assert.equal(verified.status, 'STATIC_VALID')
+-  assert.equal(verified.projectionKind, 'SYNTHETIC_EXPECTED_REGISTRATION')
+-  assert.equal(verified.fullInstallationReadiness, false)
+-  assert.equal(verified.providerBindingEvidenceStatus, 'UNVERIFIED')
+-  assert.equal(verified.profile.profileId, 'wuyong')
+-  assert.equal(verified.syntheticExpectedDeclarations.typedInspection.enabled, true)
+-  assert.equal(verified.syntheticExpectedDeclarations.nativeProviderCredentialBinding.enabled, true)
+-  assert.deepEqual(verified.syntheticExpectedDeclarations.controlledImageBountyExecutionV3.operations.map(value => value.operation), [
+-    'GENERATE_IMAGE', 'EDIT_IMAGE'
+-  ])
+-  assert.equal(JSON.stringify(verified.syntheticExpectedDeclarations).includes('producerRequestRevision'), false)
+-  const env = readFileSync(resolve(clientRoot, 'install-candidate/wuyong-dual-mode.env.redacted'), 'utf8')
+-  assert.match(env, /^OPENCLAW_API_KEY=__/m)
+-  assert.match(env, /^CYF_CONTROLLED_IMAGE_API_KEY=__/m)
+-  assert.equal(env.includes('sk-'), false)
+-  assert.equal(validateCandidateEnvironment(candidateEnv()).nonSecret.DEFAULT_CODEX_PROFILE, 'wuyong')
+-  assert.throws(() => validateCandidateEnvironment(`${candidateEnv()}UNKNOWN_SECRET=value\n`), /ENV_KEY_SET_MISMATCH/)
+-  assert.throws(() => validateCandidateEnvironment(candidateEnv().replace('owner-secret-not-frozen', '__OWNER_SECRET__')), /ENV_SECRET_UNAVAILABLE/)
+-})
+-
+-test('binding identity is platform-operator fenced and independent freeze evidence fails closed', async t => {
+-  for (const bindingId of ['1', '2', '15']) {
+-    await t.test(`numeric binding ${bindingId} is not rejected across namespaces`, () => {
+-      const { rawProfile, apiPolicy } = candidate()
+-      rawProfile[0].controlledImageHttpBindingId = bindingId
+-      apiPolicy.properties['agent.controlled-image-provider.operator-policies[0].binding-id'] = bindingId
+-      apiPolicy.providerBindingEvidence.bindingId = bindingId
+-      const result = validateCandidate({ rawProfile, apiPolicy })
+-      assert.equal(result.validationStatus, 'STATIC_VALID')
+-      assert.equal(result.providerBindingEvidenceStatus, 'UNVERIFIED')
+-    })
+-  }
+-  await t.test('arbitrary non-empty receipt labels cannot become VERIFIED', () => {
+-    const { rawProfile, apiPolicy } = candidate()
+-    Object.assign(apiPolicy.providerBindingEvidence, {
+-      status: 'VERIFIED',
+-      sourceType: 'API_OPERATOR_PROVIDER_BINDING_RECEIPT',
+-      sourceReference: 'private-receipt/provider-binding-7',
+-      sourceDigest: `sha256:${'7'.repeat(64)}`
+-    })
+-    assert.throws(() => validateCandidate({ rawProfile, apiPolicy }), /PROVIDER_BINDING_SOURCE_TYPE_INVALID/)
+-  })
+-  await t.test('VERIFIED requires the actual independent Operator freeze file', () => {
+-    const { rawProfile, apiPolicy } = candidate()
+-    Object.assign(apiPolicy.providerBindingEvidence, {
+-      status: 'VERIFIED', sourceType: 'API_OPERATOR_POLICY_FREEZE_FILE',
+-      sourceReference: 'operator-freeze/wuyong-controlled-image-policy-r1',
+-      sourceDigest: `sha256:${'7'.repeat(64)}`
+-    })
+-    assert.throws(() => validateCandidate({ rawProfile, apiPolicy }), /PROVIDER_BINDING_OPERATOR_FREEZE_REQUIRED/)
+-  })
+-  await t.test('exact Operator freeze bytes and tuple can be VERIFIED', () => {
+-    const root = mkdtempSync(resolve(tmpdir(), 'cyf-operator-freeze-'))
+-    try {
+-      const { rawProfile, apiPolicy } = candidate()
+-      const path = writeOperatorBindingFreeze(root, apiPolicy)
+-      const result = validateCandidate({ rawProfile, apiPolicy, operatorBindingFreezePath: path })
+-      assert.equal(result.providerBindingEvidenceStatus, 'VERIFIED')
+-      assert.deepEqual(result.operatorBindingEvidence, {
+-        status: 'VERIFIED', sourceType: 'API_OPERATOR_POLICY_FREEZE_FILE',
+-        sourceReference: 'operator-freeze/wuyong-controlled-image-policy-r1',
+-        sourceDigest: apiPolicy.providerBindingEvidence.sourceDigest
+-      })
+-    } finally { rmSync(root, { recursive: true, force: true }) }
+-  })
+-  await t.test('Operator freeze byte digest drift fails closed', () => {
+-    const root = mkdtempSync(resolve(tmpdir(), 'cyf-operator-freeze-'))
+-    try {
+-      const { rawProfile, apiPolicy } = candidate()
+-      const path = writeOperatorBindingFreeze(root, apiPolicy)
+-      apiPolicy.providerBindingEvidence.sourceDigest = `sha256:${'7'.repeat(64)}`
+-      assert.throws(() => validateCandidate({ rawProfile, apiPolicy, operatorBindingFreezePath: path }),
+-        /PROVIDER_BINDING_SOURCE_DIGEST_MISMATCH/)
+-    } finally { rmSync(root, { recursive: true, force: true }) }
+-  })
+-  await t.test('Operator freeze source reference drift fails closed', () => {
+-    const root = mkdtempSync(resolve(tmpdir(), 'cyf-operator-freeze-'))
+-    try {
+-      const { rawProfile, apiPolicy } = candidate()
+-      const path = writeOperatorBindingFreeze(root, apiPolicy)
+-      apiPolicy.providerBindingEvidence.sourceReference = 'operator-freeze/different-policy'
+-      assert.throws(() => validateCandidate({ rawProfile, apiPolicy, operatorBindingFreezePath: path }),
+-        /PROVIDER_BINDING_OPERATOR_FREEZE_INVALID/)
+-    } finally { rmSync(root, { recursive: true, force: true }) }
+-  })
+-  await t.test('Operator freeze tuple drift fails closed', () => {
+-    const root = mkdtempSync(resolve(tmpdir(), 'cyf-operator-freeze-'))
+-    try {
+-      const { rawProfile, apiPolicy } = candidate()
+-      const path = writeOperatorBindingFreeze(root, apiPolicy, value => {
+-        value.operatorPolicy.bindingEpoch = '8'; return value
+-      })
+-      assert.throws(() => validateCandidate({ rawProfile, apiPolicy, operatorBindingFreezePath: path }),
+-        /PROVIDER_BINDING_OPERATOR_POLICY_MISMATCH/)
+-    } finally { rmSync(root, { recursive: true, force: true }) }
+-  })
+-  await t.test('UNVERIFIED binding cannot carry pseudo-source evidence', () => {
+-    const { rawProfile, apiPolicy } = candidate()
+-    apiPolicy.providerBindingEvidence.sourceType = 'persona-binding-row'
+-    assert.throws(() => validateCandidate({ rawProfile, apiPolicy }), /PROVIDER_BINDING_UNVERIFIED_SOURCE_INVALID/)
+-  })
+-  await t.test('provider binding evidence tuple drift', () => {
+-    const { rawProfile, apiPolicy } = candidate()
+-    apiPolicy.providerBindingEvidence.bindingEpoch = '8'
+-    assert.throws(() => validateCandidate({ rawProfile, apiPolicy }), /PROVIDER_BINDING_EVIDENCE_TUPLE_MISMATCH/)
+-  })
+-  await t.test('model drift', () => {
+-    const { rawProfile, apiPolicy } = candidate()
+-    apiPolicy.properties['agent.controlled-image-provider.operator-policies[0].model-id'] = 'different-model'
+-    assert.throws(() => validateCandidate({ rawProfile, apiPolicy }), /API_POLICY_MODEL_ID_MISMATCH/)
+-  })
+-  await t.test('binding epoch drift', () => {
+-    const { rawProfile, apiPolicy } = candidate()
+-    apiPolicy.properties['agent.controlled-image-provider.operator-policies[0].binding-epoch'] = '8'
+-    assert.throws(() => validateCandidate({ rawProfile, apiPolicy }), /API_POLICY_BINDING_EPOCH_MISMATCH/)
+-  })
+-  await t.test('API source contract drift', () => {
+-    const { rawProfile, apiPolicy } = candidate()
+-    apiPolicy.sourceContractCommit = 'c'.repeat(40)
+-    assert.throws(() => validateCandidate({ rawProfile, apiPolicy }), /API_POLICY_INVALID/)
+-  })
+-})
+-
+-test('freeze is stable across release roots and binds source, payload, CA, evidence, and policy without runtime entropy', () => {
+-  const roots = [mkdtempSync(resolve(tmpdir(), 'cyf-freeze-a-')), mkdtempSync(resolve(tmpdir(), 'cyf-freeze-b-'))]
+-  try {
+-    const { rawProfile, apiPolicy } = candidate()
+-    const freezes = roots.map(root => {
+-      const release = resolve(root, 'random-release-root')
+-      writeRelease(release)
+-      return freezeCandidate({ rawProfile, apiPolicy, envText: candidateEnv(), releaseDir: release, sourceCommit, sourceTree, installerPath })
+-    })
+-    assert.deepEqual(freezes[0], freezes[1])
+-    const freeze = freezes[0]
+-    assert.equal(freeze.validation.status, 'STATIC_VALID')
+-    assert.equal(freeze.validation.projectionKind, 'SYNTHETIC_EXPECTED_REGISTRATION')
+-    assert.equal(freeze.validation.providerBindingEvidenceStatus, 'UNVERIFIED')
+-    assert.equal(freeze.validation.fullInstallationReadiness, false)
+-    assert.equal(freeze.source.commit, sourceCommit)
+-    assert.equal(freeze.source.tree, sourceTree)
+-    assert.equal(freeze.publicTrustAndEvidence.caBundleSha256, 'sha256:acd28b791f9f338d288efda11d7f192755d4e89f41f0f7c2999bb4d211779fe5')
+-    assert.equal(freeze.publicTrustAndEvidence.carrierEvidenceSha256, 'sha256:d22de19b1b86c988c81deadb2697e5a577fdbc9abb4982ddc015fefa7fd6bdab')
+-    assert.equal(freeze.apiPolicy.sourceContractCommit, '9ab62d6665c695a574b8b3bde9cfff3ea3ca13d4')
+-    assert.equal(freeze.release.payload.length, releasePayload.length)
+-    assert.ok(freeze.release.payload.some(entry => entry.path === 'migrate-ack-high-water.mjs'))
+-    assert.deepEqual(freeze.secretEnvironmentNames, ['OPENCLAW_API_KEY', 'CYF_CONTROLLED_IMAGE_API_KEY'])
+-    assert.equal(freeze.normalizedNonSecretEnvironment.DEFAULT_CODEX_PROFILE, 'wuyong')
+-    assert.equal(freeze.normalizedNonSecretEnvironment.WS_URL, 'wss://api.example.invalid/ws/agent/channel')
+-    const serialized = JSON.stringify(freeze)
+-    for (const root of roots) assert.equal(serialized.includes(root), false)
+-    for (const unstable of ['runtimeInstanceId', 'processId', 'randomPort', 'nftCounter', 'turnId']) {
+-      assert.equal(serialized.includes(unstable), false)
+-    }
+-    assert.equal(serialized.includes('redacted-test-credential'), false)
+-    assert.equal(serialized.includes('owner-secret-not-frozen'), false)
+-    assert.equal(serialized.includes('provider-secret-not-frozen'), false)
+-  } finally {
+-    for (const root of roots) rmSync(root, { recursive: true, force: true })
+-  }
+-})
+-
+-test('freeze binds verified independent Operator evidence without persisting its private path', () => {
+-  const root = mkdtempSync(resolve(tmpdir(), 'cyf-verified-freeze-'))
+-  try {
+-    const release = resolve(root, 'release')
+-    writeRelease(release)
+-    const { rawProfile, apiPolicy } = candidate()
+-    const operatorBindingFreezePath = writeOperatorBindingFreeze(root, apiPolicy)
+-    const freeze = freezeCandidate({ rawProfile, apiPolicy, operatorBindingFreezePath,
+-      envText: candidateEnv(), releaseDir: release, sourceCommit, sourceTree, installerPath })
+-    assert.equal(freeze.validation.status, 'STATIC_VALID')
+-    assert.equal(freeze.validation.providerBindingEvidenceStatus, 'VERIFIED')
+-    assert.deepEqual(freeze.apiPolicy.operatorBindingEvidence, {
+-      status: 'VERIFIED', sourceType: 'API_OPERATOR_POLICY_FREEZE_FILE',
+-      sourceReference: 'operator-freeze/wuyong-controlled-image-policy-r1',
+-      sourceDigest: apiPolicy.providerBindingEvidence.sourceDigest
+-    })
+-    assert.equal(JSON.stringify(freeze).includes(operatorBindingFreezePath), false)
+-  } finally { rmSync(root, { recursive: true, force: true }) }
+-})
+-
+-test('readback accepts one exact live registration/presence pair and fails closed on drift', () => {
+-  const fixture = frozenFixture()
+-  try {
+-    const payload = {
+-      agentId: fixture.freeze.normalizedNonSecretProfile.agentId,
+-      ...clone(fixture.freeze.syntheticExpectedRegistration)
+-    }
+-    const registration = { runtimeInstanceId: 'runtime-frozen-1', payload: clone(payload) }
+-    const presence = { runtimeInstanceId: 'runtime-frozen-1', payload: clone(payload) }
+-    assert.deepEqual(verifyReadback({ freeze: fixture.freeze, registration, presence }), {
+-      status: 'READBACK_MATCH',
+-      providerBindingEvidenceStatus: 'UNVERIFIED',
+-      agentId: fixture.freeze.normalizedNonSecretProfile.agentId,
+-      runtimeInstanceId: 'runtime-frozen-1',
+-      operations: ['GENERATE_IMAGE', 'EDIT_IMAGE']
+-    })
+-    const drift = clone(presence)
+-    drift.payload.controlledImageBountyExecutionV3.operations = drift.payload.controlledImageBountyExecutionV3.operations.slice(0, 1)
+-    assert.throws(() => verifyReadback({ freeze: fixture.freeze, registration, presence: drift }), /PRESENCE_V3_MISMATCH/)
+-    const otherProcess = clone(presence)
+-    otherProcess.runtimeInstanceId = 'runtime-frozen-2'
+-    assert.throws(() => verifyReadback({ freeze: fixture.freeze, registration, presence: otherProcess }), /READBACK_RUNTIME_INSTANCE_MISMATCH/)
+-  } finally {
+-    rmSync(fixture.root, { recursive: true, force: true })
+-  }
+-})
+-
+-test('freeze rejects installer and payload drift', async t => {
+-  const fixture = frozenFixture()
+-  try {
+-    await t.test('installer drift', () => {
+-      const differentInstaller = resolve(fixture.root, 'installer.sh')
+-      writeFileSync(differentInstaller, `${readFileSync(installerPath, 'utf8')}\n# digest drift\n`)
+-      assert.throws(() => freezeCandidate({ rawProfile: fixture.rawProfile, apiPolicy: fixture.apiPolicy,
+-        envText: fixture.envText, releaseDir: resolve(fixture.root, 'release'), sourceCommit, sourceTree, installerPath: differentInstaller }), /INSTALLER_PROVENANCE_MISMATCH/)
+-    })
+-    await t.test('payload drift', () => {
+-      writeFileSync(resolve(fixture.root, 'release/agent-client.mjs'), 'tampered\n')
+-      assert.throws(() => freezeCandidate({ rawProfile: fixture.rawProfile, apiPolicy: fixture.apiPolicy,
+-        envText: fixture.envText, releaseDir: resolve(fixture.root, 'release'), sourceCommit, sourceTree, installerPath }), /RELEASE_PAYLOAD_HASH_MISMATCH/)
+-    })
+-  } finally {
+-    rmSync(fixture.root, { recursive: true, force: true })
+-  }
+-})
+diff --git a/conf/codex-ws-agent/test/instance-installer-launcher.test.mjs b/conf/codex-ws-agent/test/instance-installer-launcher.test.mjs
+deleted file mode 100644
+index 3dea0e2..0000000
+--- a/conf/codex-ws-agent/test/instance-installer-launcher.test.mjs
++++ /dev/null
+@@ -1,71 +0,0 @@
+-// Source-only retirement, not authorization to touch installed services/PIDs.
+-import assert from 'node:assert/strict'
+-import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync,
+-  readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+-import { tmpdir } from 'node:os'
+-import { resolve } from 'node:path'
+-import { spawnSync } from 'node:child_process'
+-import test from 'node:test'
+-
+-const repositoryRoot = resolve(import.meta.dirname, '..', '..', '..')
+-const installer = resolve(repositoryRoot, 'shell/codex_ws_agent_install.sh')
+-const launcher = resolve(repositoryRoot, 'bin/codex_ws_agent.sh')
+-
+-const snapshot = path => {
+-  const st = lstatSync(path, { bigint: true })
+-  const metadata = [String(st.dev), String(st.ino), String(st.mode), String(st.mtimeNs), String(st.ctimeNs)]
+-  if (st.isSymbolicLink()) return [...metadata, readlinkSync(path)]
+-  if (st.isDirectory()) return [...metadata, readdirSync(path).sort().map(name => [name, snapshot(resolve(path, name))])]
+-  return [...metadata, readFileSync(path).toString('hex')]
+-}
+-
+-test('retired installer and launcher reject shared/instance/maintenance modes without any tool or historical state effects', async t => {
+-  const root = mkdtempSync(resolve(tmpdir(), 'ur01-retired-entries-'))
+-  t.after(() => rmSync(root, { recursive: true, force: true }))
+-  const bin = resolve(root, 'bin'); const app = resolve(root, 'historical-app'); const units = resolve(root, 'units')
+-  for (const path of [bin, app, units, resolve(app, 'releases/old'), resolve(app, 'data/inbox')]) mkdirSync(path, { recursive: true })
+-  writeFileSync(resolve(app, '.env'), 'OPENCLAW_API_KEY=private-legacy-key\n', { mode: 0o600 })
+-  writeFileSync(resolve(app, 'codex-ws-agent.pid'), 'pid=4242\nstart_ticks=12345\n')
+-  writeFileSync(resolve(app, 'data/inbox/unknown.json'), 'UNKNOWN execution evidence\n')
+-  symlinkSync('releases/old', resolve(app, 'current'))
+-  for (const name of ['codex-ws-agent.service', 'codex-ws-agent@.service']) {
+-    writeFileSync(resolve(units, name), '# synthetic INSTALLED history, must remain unchanged\n')
+-  }
+-  const calls = resolve(root, 'tool-was-called')
+-  for (const name of ['node', 'npm', 'python', 'systemctl', 'pgrep', 'tmux', 'nohup', 'setsid', 'kill',
+-    'rm', 'chmod', 'chown', 'mkdir', 'cp', 'install', 'dirname', 'realpath', 'stat', 'id']) {
+-    const path = resolve(bin, name)
+-    writeFileSync(path, `#!/bin/bash\nprintf '%s\\n' '${name}' >> '${calls}'\nexit 19\n`); chmodSync(path, 0o755)
+-  }
+-  const before = snapshot(root)
+-  const env = { PATH: bin, HOME: app, ISP_APPS: root, OPENCLAW_API_KEY: 'private-legacy-key',
+-    CODEX_WS_AGENT_INSTALL_TEST_MODE: '1', CODEX_WS_AGENT_INSTALL_TEST_FULL: '1', CODEX_WS_AGENT_INSTALL_TEST_COLLATE: '1',
+-    CODEX_WS_AGENT_LAUNCHER_TEST_MODE: '1', CODEX_WS_AGENT_TEST_FIXTURE_ROOT: root,
+-    CODEX_WS_AGENT_TEST_APP_HOME: app, CODEX_WS_AGENT_TEST_INSTANCE_ROOT: app, CODEX_WS_AGENT_INSTANCE_ROOT: app,
+-    CODEX_WS_AGENT_DEFAULT_APP_HOME: app, CODEX_WS_AGENT_SYSTEMD_DIR: units, CODEX_WS_AGENT_SYSTEMCTL: resolve(bin, 'systemctl'),
+-    START_CODEX_WS_AGENT: 'y' }
+-  for (const [script, modes] of [
+-    [installer, [[], ['--instance', 'local-a'], ['--instance', '../escape'], ['--help'], ['--test-isolation-check']]],
+-    [launcher, [[], ['start'], ['restart'], ['stop'], ['status'], ['--instance', 'local-a', 'start'],
+-      ['--instance', '../escape', 'stop'], ['workspace', 'archive', '--policy', 'foreign'], ['--test-isolation-check']]]
+-  ]) for (const args of modes) {
+-    await t.test(`${script.split('/').pop()} ${JSON.stringify(args)}`, () => {
+-      const result = spawnSync('/bin/bash', [script, ...args], { cwd: root, encoding: 'utf8', env })
+-      assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`)
+-      assert.match(result.stderr, /UNIFIED_RUNTIME_ENTRY_REQUIRED/)
+-      assert.equal(`${result.stdout}${result.stderr}`.includes('private-legacy-key'), false)
+-      assert.equal(existsSync(calls), false)
+-      assert.deepEqual(snapshot(root), before, 'no service/PID action, credential readback, chmod, inode change, archive or new state')
+-    })
+-  }
+-})
+-
+-test('retired source diagnostics contain no operational implementation or installed service mutation', () => {
+-  for (const path of [installer, launcher]) {
+-    const source = readFileSync(path, 'utf8')
+-    assert.equal(/^(?:source|exec|install|mkdir|cp|chmod|chown|systemctl|read|kill|rm)\s/m.test(source), false)
+-    assert.equal(source.includes('RELEASE_PAYLOAD='), false)
+-    assert.equal(source.includes('agent-client.mjs'), false)
+-    assert.equal(source.includes('$'), false, 'does not interpret caller configuration/args')
+-  }
+-})
+diff --git a/conf/codex-ws-agent/test/managed-chat-scope-config.test.mjs b/conf/codex-ws-agent/test/managed-chat-scope-config.test.mjs
+index 0cd3fbc..29ce5df 100644
+--- a/conf/codex-ws-agent/test/managed-chat-scope-config.test.mjs
++++ b/conf/codex-ws-agent/test/managed-chat-scope-config.test.mjs
+@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, chmodSync, symlinkSync, rmSync } from 'node
+ import { tmpdir } from 'node:os'
+ import { join } from 'node:path'
+ import { parseManagedChatScopes, loadManagedChatScopes } from '../managed-chat-scope-config.mjs'
+-import { normalizeProfile, resolveManagedRuntimeProfile, prepareChatWorkdir, publishMeasuredRuntimeCapabilities, observeTypedRuntimeAuthentication } from '../agent-client.mjs'
++import { normalizeProfile, resolveManagedRuntimeProfile, prepareChatWorkdir, publishMeasuredRuntimeCapabilities } from '../agent-client.mjs'
+ import { buildTypedDeliberationDeclaration } from '../juyiting-typed-outcome.mjs'
+ const authorization = { tenantId: '0', clientId: 'fixture-client', ownerJiacn: 'fixture-owner',
+   agentId: 'agt_00000000000000000000000000000001', generation: 'hri_00000000-0000-0000-0000-000000000001', profileId: 'managed:fixture:agent:generation', appServerSchemaContractId: 'codex-cli-0.160.0' }
+@@ -78,35 +78,6 @@ test('readiness updates acknowledged registration, not a presence-only declarati
+   assert.equal(registrations, 1)
+ })
+ 
+-const nativeReceipt = { typedDeliberation: { state: 'READY' }, runtimeAuth: {
+-  scheme: 'native-runtime-v1', tenantId: profile.managedTenantId, clientId: profile.managedClientId,
+-  ownerJiacn: profile.managedOwnerJiacn, agentId: profile.agentId, runtimeInstanceId: 'fixture-runtime'
+-} }
+-test('typed native diagnostics reads once without claiming, exposing tokens, or reading work bodies', async () => {
+-  let calls = 0, cancelled = false
+-  const result = await observeTypedRuntimeAuthentication({ profile: { ...profile, typedDeliberationEnabled: true },
+-    receipt: nativeReceipt, authHeader: 'AgentRuntime rts1_' + '1'.repeat(64), apiOrigin: 'http://localhost:10018',
+-    runtimeInstanceId: 'fixture-runtime', fetchFn: async (url, options) => {
+-      calls++; assert.equal(url.pathname, '/internal/agent/tasks/workspace-executions/commands')
+-      assert.equal(options.method, 'GET'); assert.equal(options.redirect, 'error')
+-      return { status: 401, body: { cancel: async () => { cancelled = true } },
+-        json: () => assert.fail('Must not read returned work/secret data') }
+-    } })
+-  assert.equal(calls, 1); assert.equal(cancelled, true)
+-  assert.deepEqual(result, { state: 'CURRENT_BINDING_DENIED', httpStatus: 401 })
+-})
+-test('typed native diagnostics never queries another scope, disabled profile, or unavailable receipt', async () => {
+-  for (const args of [ { profile }, { receipt: { ...nativeReceipt, typedDeliberation: { state: 'UNAVAILABLE' } } },
+-      { receipt: { ...nativeReceipt, runtimeAuth: { ...nativeReceipt.runtimeAuth, ownerJiacn: 'other-owner' } } },
+-      { authHeader: '' }, { runtimeInstanceId: 'other-runtime' }, { apiOrigin: 'http://user:password@localhost' } ]) {
+-    const result = await observeTypedRuntimeAuthentication({ profile: { ...profile, typedDeliberationEnabled: true },
+-      receipt: nativeReceipt, authHeader: 'AgentRuntime rts1_' + '1'.repeat(64), apiOrigin: 'http://localhost:10018',
+-      runtimeInstanceId: 'fixture-runtime', ...args, fetchFn: () => assert.fail('Unexpected diagnostic read') })
+-    assert.notEqual(result.state, 'HTTP_OBSERVED')
+-  }
+-})
+-
+-
+ const inspection = { inputRoot:'/private/inspect-inputs', stateRoot:'/private/inspect-state',
+   profileId:'measured-inspection', providerId:'configured-provider', providerBaseUrl:'https://provider.example.test/v1',
+   providerWireApi:'responses', model:'existing-model', networkConnectTimeoutMs:15000, carrierEvidencePath:'/private/carrier.json',
+@@ -175,13 +146,3 @@ test('independent INSPECT API profile setting is rejected, not silently retained
+   assert.throws(() => normalizeProfile({ typedInspectionApiOrigin: 'https://other.example.test' }), /Separate typedInspectionApiOrigin/)
+   assert.throws(() => normalizeProfile({}, { typedInspectionApiOrigin: 'http://127.0.0.1:19001' }), /Separate typedInspectionApiOrigin/)
+ })
+-
+-// Current unified transport never restores the retired native credential format.
+-test('typed native diagnostics rejects retired32hex and redacted credentials before fetch', async () => {
+-  for (const authHeader of ['AgentRuntime ' + '1'.repeat(32), 'AgentRuntime REDACTED_SESSION_TOKEN', 'Bearer legacy-key']) {
+-    const result = await observeTypedRuntimeAuthentication({ profile: { ...profile, typedDeliberationEnabled: true },
+-      receipt: nativeReceipt, authHeader, apiOrigin: 'http://localhost:10018', runtimeInstanceId: 'fixture-runtime',
+-      fetchFn: () => assert.fail('retired authorization cannot enter HTTP execution') })
+-    assert.equal(result.state, 'RECEIPT_BINDING_MISMATCH')
+-  }
+-})
+diff --git a/conf/codex-ws-agent/test/workspace-manager.test.mjs b/conf/codex-ws-agent/test/workspace-manager.test.mjs
+index e555239..7244ac2 100644
+--- a/conf/codex-ws-agent/test/workspace-manager.test.mjs
++++ b/conf/codex-ws-agent/test/workspace-manager.test.mjs
+@@ -1271,66 +1271,3 @@ test('no-task command requires an explicit non-coding dedicated-workdir policy',
+   assert.equal(accepted.status, 'completed', JSON.stringify(accepted))
+   assert.equal(cwd, fallback)
+ })
+-
+-// Installer-only positives retired; all workspace/lock regressions above are unchanged.
+-const policyChecker = fileURLToPath(new URL('../install-policy-check.mjs', import.meta.url))
+-test('historical workspace schema checker remains read-only and requires explicit remote migration', () => {
+-  const root = temporaryDirectory(); const path = resolve(root, 'workspace-policies.json')
+-  const legacy = JSON.stringify({ legacy: { remote: { name: 'origin', url: 'https://trusted.example/repo.git' } } })
+-  writeFileSync(path, legacy, { mode: 0o600 })
+-  const refused = spawnSync(process.execPath, [policyChecker, path], { encoding: 'utf8' })
+-  assert.notEqual(refused.status, 0)
+-  assert.match(refused.stderr, /migrate explicitly to trustedRemoteUrl and trustedRemoteRef/)
+-  assert.equal(readFileSync(path, 'utf8'), legacy)
+-  const current = JSON.stringify({ trusted: { trustedRemoteUrl: 'https://trusted.example/repo.git', trustedRemoteRef: 'refs/heads/master' } })
+-  writeFileSync(path, current)
+-  const valid = spawnSync(process.execPath, [policyChecker, path], { encoding: 'utf8' })
+-  assert.equal(valid.status, 0, valid.stderr)
+-  assert.equal(readFileSync(path, 'utf8'), current)
+-})
+-
+-test('retired installer preserves stopped-writer historical credentials, queues, worktrees and symlink referents', async () => {
+-  const { lstatSync, readdirSync } = await import('node:fs')
+-  const root = temporaryDirectory(); const app = resolve(root, 'historical-app'); mkdirSync(app)
+-  const historical = {
+-    'releases/old/agent-client.mjs': 'old code\n', '.env': 'OPENCLAW_API_KEY=historical-private-secret\n',
+-    'codex-profiles.conf': '[agent.default]\napiKey=historical-profile-secret\n',
+-    'codex-session-map.json': '{"thread":"historical-thread"}\n',
+-    'managed/association.json': '{"apiKeyHash":"audit-only"}\n',
+-    'managed/credential.json': '{"apiKey":"historical-private-secret"}\n',
+-    'managed/journal.json': '{"outcome":"UNKNOWN"}\n',
+-    'data/inbox/command.json': 'immutable-inbox\n', 'data/ledger/command.json': 'original-fingerprint\n',
+-    'data/ack-outbox/pending/ack.json': 'last-confirmed-version\n',
+-    'data/execution-report-outbox/pending/report.json': 'unconfirmed-result\n',
+-    'data/recovery-required/marker.json': 'unknown-started-outcome\n',
+-    'data/provider-ledgers/state.json': 'provider-fence\n',
+-    'data/chat-workdirs/state.txt': 'chat-state\n', 'agent-workspaces/task/work.txt': 'worktree-material\n'
+-  }
+-  for (const [path, bytes] of Object.entries(historical)) {
+-    mkdirSync(resolve(app, path, '..'), { recursive: true })
+-    writeFileSync(resolve(app, path), bytes, { mode: 0o600 })
+-  }
+-  symlinkSync('releases/old', resolve(app, 'current'))
+-  const external = resolve(root, 'external-secret'); writeFileSync(external, 'foreign-do-not-read-or-chmod\n', { mode: 0o640 })
+-  chmodSync(external, 0o640); symlinkSync(external, resolve(app, 'auth.json'))
+-  const snapshot = path => {
+-    const st = lstatSync(path, { bigint: true })
+-    const metadata = [String(st.dev), String(st.ino), String(st.mode), String(st.mtimeNs), String(st.ctimeNs)]
+-    if (st.isSymbolicLink()) return [...metadata, readlinkSync(path)]
+-    if (st.isDirectory()) return [...metadata, readdirSync(path).sort().map(name => [name, snapshot(resolve(path, name))])]
+-    return [...metadata, readFileSync(path).toString('hex')]
+-  }
+-  const before = snapshot(root)
+-  const script = fileURLToPath(new URL('../../../shell/codex_ws_agent_install.sh', import.meta.url))
+-  for (const args of [[], ['--instance', 'historical'], ['--test-isolation-check']]) {
+-    const result = spawnSync('/bin/bash', [script, ...args], { encoding: 'utf8', cwd: root, env: {
+-      PATH: '/nonexistent', HOME: app, ISP_APPS: root, OPENCLAW_API_KEY: 'historical-private-secret',
+-      CODEX_WS_AGENT_INSTALL_TEST_MODE: '1', CODEX_WS_AGENT_INSTALL_TEST_COLLATE: '1',
+-      CODEX_WS_AGENT_TEST_FIXTURE_ROOT: root, CODEX_WS_AGENT_TEST_APP_HOME: app, START_CODEX_WS_AGENT: 'y'
+-    } })
+-    assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`)
+-    assert.match(result.stderr, /UNIFIED_RUNTIME_ENTRY_REQUIRED/)
+-    assert.equal(result.stderr.includes('historical-private-secret'), false)
+-    assert.deepEqual(snapshot(root), before, 'no adoption, chmod, inode swap, new queue or historical-state deletion')
+-  }
+-})
+diff --git a/conf/cyf-agent-runtime-v1/README.md b/conf/cyf-agent-runtime-v1/README.md
+index 35390cc..89f510c 100644
+--- a/conf/cyf-agent-runtime-v1/README.md
++++ b/conf/cyf-agent-runtime-v1/README.md
+@@ -194,7 +194,7 @@ The unified artifact does **not** generate an API-key Agent execution entry.
+ 
+ | Exact source path | Minimal convergence |
+ | --- | --- |
+-| `shell/codex_ws_agent_install.sh` | Retired diagnostic only; exit 2 before reading args/config, sourcing common helpers, copying credentials, staging a release or calling a service manager. Shared, instance, help and former test modes all fail closed. No automatic redirection/enrollment. |
++| `shell/codex_ws_agent_install.sh`, `bin/codex_ws_agent.sh` | Deleted on 2026-10-09; no diagnostic wrapper or old launcher remains. The main dispatcher still rejects removed component names. |
+ | `conf/codex-ws-agent/managed-host.mjs` | Deleted: no API-key broker, ensure/observe admission, credential restore/copy, generation creation or Unix provisioning socket remains. Historical association/journal/credential files are not touched. |
+ | `conf/codex-ws-agent/agent-client.mjs` | Remove dead broker references; standalone CLI remains retired. Only the injected Runtime execution host is used. |
+ | `conf/codex-ws-agent/package.json` | No `start` script; not an alternate executable package. Model/provider credentials remain distinct from Agent authentication. |
+@@ -204,9 +204,9 @@ The unified artifact does **not** generate an API-key Agent execution entry.
+ Existing scoped provider, CHAT, native/skill and checkpoint implementations are
+ not replaced. Long historical profile identifiers remain explicit provider-scope
+ regression inputs; they neither provision an identity nor authorize a Runtime.
+-Historical install-candidate policy/provenance/readback tests use only a labelled
+-baseline catalog fixture, never an executable old installer. That test fixture
+-and all test directories are excluded from the unified artifact.
++The retired candidate/provenance checker, its templates and its dedicated tests
++were deleted on 2026-10-09. Current configuration validation, manifest/session
++contracts and execution tests remain; no old installer fixture is shipped.
+ 
+ ### Registry, launcher and unit source convergence
+ 
+@@ -218,22 +218,17 @@ any component installation, even in a mixed argument list. `shell/sh_list.txt`
+ lists only the current Runtime installer. Explicit instance, prepared canonical
+ parent and Node 20.20.2 prerequisites still apply; no identity is inferred.
+ 
+-`bin/codex_ws_agent.sh` is a no-effects retired diagnostic for **all** arguments,
+-not a redirect that can start, stop, kill, archive or repair historical services.
+-The two old `systemd/codex-ws-agent*.service` source templates are deleted. Only the
+-existing unified Runtime template is shipped, using artifact-local pinned Node,
+-external host configuration and separately authorized activation. These are source
+-changes, **not** removal/stop/restart of any installed service or historical PID.
+-`skills/codex-ws-agent-install/SKILL.md` now documents the same sole Runtime entry;
+-`install-candidate/INSTALL-CANDIDATE.md` is labelled historical policy/provenance
+-audit, not a runnable API-key installation/readback guide.
++The old launcher/installer stubs and API-key env/INI templates are deleted,
++along with the dual-mode candidate checker, workspace migration pre-check and
++historical API probe. The execution library no longer exports `loadRuntimeConfig`
++or `observeTypedRuntimeAuthentication`; explicit JSON profiles are normalized
++under the existing Runtime host. Current tests verify removed paths remain absent.
++
++The old unit templates remain absent. Only the existing unified Runtime unit is
++shipped. These are source changes, not removal or restart of installed services.
++The separate active ACK workstream still references its offline migration tool;
++that tool remains repository-only and excluded from the execution artifact.
+ 
+-Historical engine `README.md`, `env.example`, `codex-profiles.conf`, candidate
+-fixtures/checker, policy checker, offline ACK migration and diagnostic probes remain
+-repository audit/diagnostic inputs, never an active auth fallback or installation
+-payload. Existing workspace locks and exact Runtime child ownership/shutdown tests
+-remain; old launcher-only tests are replaced with stronger no-operation retirement
+-negatives, not skipped as if its removed implementation were still supported.
+ 
+ ## Old/new state migration requirements — no migration performed
+ 
+diff --git a/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs b/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs
+index 30dbdd3..b15ba52 100644
+--- a/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs
++++ b/conf/cyf-agent-runtime-v1/test/install-entry-convergence.test.mjs
+@@ -114,7 +114,14 @@ test('no legacy unit source remains; current single-artifact units and installat
+   assert.match(grouped, /shell\/cyf_agent_runtime_v1_install\.sh/);
+   assert.equal(grouped.includes('node codex-ws-agent'), false); assert.equal(grouped.includes('OPENCLAW_API_KEY'), false);
+   assert.match(grouped, /MYSQL_ROOT_PASSWORD/); assert.match(grouped, /nginx php mysql redis/);
+-  const historical = text('conf/codex-ws-agent/install-candidate/INSTALL-CANDIDATE.md'); assert.match(historical, /NOT an installer/);
+-  assert.equal(historical.includes('--installer shell/codex_ws_agent_install.sh'), false);
+-  assert.equal(historical.includes('node current/agent-client.mjs'), false);
++  for (const removed of [
++    'shell/codex_ws_agent_install.sh', 'bin/codex_ws_agent.sh',
++    'conf/codex-ws-agent/env.example', 'conf/codex-ws-agent/codex-profiles.conf',
++    'conf/codex-ws-agent/install-policy-check.mjs', 'conf/codex-ws-agent/install-candidate',
++    'conf/codex-ws-agent/contracts/probes'
++  ]) assert.equal(existsSync(resolve(repo, removed)), false, removed);
++  const engine = text('conf/codex-ws-agent/agent-client.mjs');
++  for (const removed of ['loadRuntimeConfig', 'legacyProfile', 'parseSectionProfiles', 'loadProfilesRaw', 'observeTypedRuntimeAuthentication'])
++    assert.equal(engine.includes(removed), false, removed);
++
+ });
+diff --git a/shell/codex_ws_agent_install.sh b/shell/codex_ws_agent_install.sh
+deleted file mode 100755
+index 2ef9750..0000000
+--- a/shell/codex_ws_agent_install.sh
++++ /dev/null
+@@ -1,5 +0,0 @@
+-#!/bin/bash
+-# Retired entrypoint: fail before reading configuration or changing any host state.
+-# Do not source common.sh, adopt profiles, enroll identities or control old services.
+-printf '%s\n' 'UNIFIED_RUNTIME_ENTRY_REQUIRED: codex-ws-agent installation/provisioning is retired. Use shell/cyf_agent_runtime_v1_install.sh for a new artifact and explicit sealed multi-Agent configuration; historical credentials/state are not adopted.' >&2
+-exit 2

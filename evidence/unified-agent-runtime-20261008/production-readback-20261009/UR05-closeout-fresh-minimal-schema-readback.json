@@ -1,0 +1,66 @@
+{
+  "at": "2026-10-09T15:49:48.052067+08:00",
+  "task": "UR-05-20261008",
+  "status": "ACTUAL_READONLY_MINIMAL_SCHEMA_DIFFERENCE_READBACK",
+  "sqlSha256": "277e407c40bfa49efc62405620dd68e32a9b381edec031aed685f85f1d912762",
+  "stdoutSha256": "41b80f9a2bcff416d3fc75f1e7b2c2fd9f649148c167fbeea92eefd9101e5422",
+  "rows": [
+    [
+      "COLUMN",
+      "agent_hosted_profile",
+      "tenant_id",
+      "varchar(50)",
+      "NO",
+      "<NULL>"
+    ],
+    [
+      "COLUMN",
+      "agent_persona_binding",
+      "tenant_id",
+      "varchar(50)",
+      "YES",
+      "0"
+    ],
+    [
+      "CHECK",
+      "agent_hosted_profile",
+      "chk_hosted_generation",
+      "(`generation` >= 0)",
+      "YES"
+    ],
+    [
+      "CHECK",
+      "agent_hosted_profile",
+      "chk_hosted_repair",
+      "(((`lifecycle_state` = _utf8mb4\\'REPAIR_REQUIRED\\') and (`resume_state` is not null)) or ((`lifecycle_state` <> _utf8mb4\\'REPAIR_REQUIRED\\') and (`resume_state` is null)))",
+      "YES"
+    ],
+    [
+      "CHECK",
+      "agent_hosted_profile",
+      "chk_hosted_state",
+      "(`lifecycle_state` in (_utf8mb4\\'PREPARED\\',_utf8mb4\\'STAGED_DISABLED\\',_utf8mb4\\'FILE_ENABLED\\',_utf8mb4\\'ACTIVE\\',_utf8mb4\\'SUSPENDING\\',_utf8mb4\\'SUSPENDED\\',_utf8mb4\\'REPAIR_REQUIRED\\'))",
+      "YES"
+    ],
+    [
+      "CHECK",
+      "agent_persona_binding",
+      "chk_agent_binding_status",
+      "(`status` in (0,1,2,3))",
+      "YES"
+    ],
+    [
+      "CHECK",
+      "agent_persona_binding",
+      "chk_agent_binding_tenant_owner",
+      "((`tenant_id` = _utf8mb4\\'0\\') or (`tenant_id` = `owner_jiacn`))",
+      "YES"
+    ]
+  ],
+  "D06TablesPresent": [],
+  "D06TriggersPresent": [],
+  "runtimeFenceColumnsObserved": [],
+  "onlyReadOnlyMetadata": true,
+  "productionDDLOrDataWrites": false,
+  "fullCatalogEquivalence": false
+}

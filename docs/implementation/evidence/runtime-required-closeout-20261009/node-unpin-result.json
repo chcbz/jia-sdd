@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-09T20:48:22.257080+08:00",
+  "task": "UR06 Runtime Node version gate removal",
+  "commit": "b70de3dbf77ef0600376cd65c067b9546efca81d",
+  "tree": "e33b1e5e580e9cfd916b565609c0b97760c93a72",
+  "branch": "develop",
+  "pushedAndRemoteReadBack": true,
+  "trackedWorktreeClean": true,
+  "nodeUsed": {
+    "path": "/home/isp/apps/node/bin/node",
+    "version": "22.19.0"
+  },
+  "changes": [
+    "Removed installer/validator exact-version gate",
+    "Removed Runtime and execution-package root engines.node constraints; third-party requirements unchanged",
+    "Removed clean-install harness exact-version gate; kept supplied binary path/SHA binding",
+    "Installer records actual packaged version in runtime/node-version.txt; installation and validator print actual version",
+    "Existing acceptance receipt includes actual toolchain.node.version and artifact node version/SHA",
+    "Updated dispatcher help, repository-local install guides and tests"
+  ],
+  "verification": {
+    "passedDistinctTests": 119,
+    "failedRemaining": 0,
+    "existingSkipped": 1,
+    "cleanTargetHarnessStaticAssertions": 74,
+    "realCleanInstallation": "NOT_RUN",
+    "explanation": "First combined run: 116 pass/2 fail/1 skip. Both failures in entry fixture missing payload files previously hidden by version rejection; fixed fixture only. Unchanged four-suite Runtime results reused:112 pass/1 skip; final entry suite:7 pass/0 fail. Not a full-install or production acceptance result."
+  },
+  "productionDeployment": false,
+  "hostToolchainChanged": false,
+  "scopeExclusions": [
+    "frontend Flow environment and templates",
+    "Python/npm dependency version policies",
+    "historical test/release evidence"
+  ],
+  "logs": [
+    {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/runtime-required-closeout-20261009/node-unpin-node22-tests.log",
+      "sha256": "40485d03631268b79d8cdebd886216b28d56c94564eed98644ea574773d0544c"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/runtime-required-closeout-20261009/node-unpin-entry-node22-fixed-tests.log",
+      "sha256": "6b3a78ed2d4f8815a5e2169582d9dfa0c9cc9d8f04d2673b2104b0a91f5cec0f"
+    },
+    {
+      "path": "/home/isp/wsps/cyf/docs/implementation/evidence/runtime-required-closeout-20261009/node-unpin-harness-selfcheck.json",
+      "sha256": "de0e2921bc559a961a0210ec6344593cb22d17d7c39ea1ea289c4482d97e9573"
+    }
+  ]
+}

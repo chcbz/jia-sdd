@@ -1,0 +1,174 @@
+test_active_cwd_batch_protected (test_runtime_backup_cleanup.Tests) ... ok
+test_active_fd_batch_protected (test_runtime_backup_cleanup.Tests) ... ok
+test_active_shared_inode_protects_whole_batch (test_runtime_backup_cleanup.Tests) ... ok
+test_audit_failure_before_delete (test_runtime_backup_cleanup.Tests) ... ok
+test_batch_keep_protects (test_runtime_backup_cleanup.Tests) ... ok
+test_clean_idempotent (test_runtime_backup_cleanup.Tests) ... ok
+test_clean_only_payloads_preserves_records (test_runtime_backup_cleanup.Tests) ... ok
+test_clean_shared_links_across_chunks_counts_storage_once (test_runtime_backup_cleanup.Tests) ... ok
+test_current_pin_survives_outside_newest_two (test_runtime_backup_cleanup.Tests) ... ok
+test_external_pin_rejected (test_runtime_backup_cleanup.Tests) ... ok
+test_external_program_alias_rejected (test_runtime_backup_cleanup.Tests) ... ok
+test_grace_period (test_runtime_backup_cleanup.Tests) ... ok
+test_hardlink_skips_whole_batch (test_runtime_backup_cleanup.Tests) ... ok
+test_host_busy_skips (test_runtime_backup_cleanup.Tests) ... ok
+test_incomplete_proc_scan_aborts (test_runtime_backup_cleanup.Tests) ... ok
+test_inherited_host_lock (test_runtime_backup_cleanup.Tests) ... ok
+test_internal_links_can_be_retired_without_touching_other_releases (test_runtime_backup_cleanup.Tests) ... ok
+test_internal_program_links_collected_once_for_space (test_runtime_backup_cleanup.Tests) ... ok
+test_interrupted_clean_does_not_make_shared_survivor_newer_than_pin (test_runtime_backup_cleanup.Tests) ... ok
+test_interrupted_shared_cleanup_can_be_replanned (test_runtime_backup_cleanup.Tests) ... ok
+test_keep_ancestor_protects_all (test_runtime_backup_cleanup.Tests) ... ok
+test_missing_pin_payload_fails_closed (test_runtime_backup_cleanup.Tests) ... ok
+test_mount_protects (test_runtime_backup_cleanup.Tests) ... ok
+test_nested_keep_skips_whole_batch (test_runtime_backup_cleanup.Tests) ... ok
+test_new_external_alias_after_plan_rejected (test_runtime_backup_cleanup.Tests) ... ok
+test_newest_two_and_current_pin (test_runtime_backup_cleanup.Tests) ... ok
+test_no_space_threshold_retention (test_runtime_backup_cleanup.Tests) ... ok
+test_payload_replacement_rejected (test_runtime_backup_cleanup.Tests) ... ok
+test_plan_no_mutation (test_runtime_backup_cleanup.Tests) ... ok
+test_recent_new_content_in_partial_retirement_is_not_aged_by_intent (test_runtime_backup_cleanup.Tests) ... ok
+test_release_busy_skips (test_runtime_backup_cleanup.Tests) ... ok
+test_retired_batch_root_never_reused_for_new_deletion (test_runtime_backup_cleanup.Tests) ... ok
+test_retired_metadata_does_not_consume_active_batch_limit (test_runtime_backup_cleanup.Tests) ... ok
+test_retirement_marker_symlink_never_followed (test_runtime_backup_cleanup.Tests) ... ok
+test_scan_limit_no_partial_batch (test_runtime_backup_cleanup.Tests) ... ok
+test_shared_source_write_between_unlinks_rejected (test_runtime_backup_cleanup.Tests) ... ok
+test_symlink_batch_never_followed (test_runtime_backup_cleanup.Tests) ... ok
+test_symlink_leaf_unlinked_not_target (test_runtime_backup_cleanup.Tests) ... ok
+test_symlink_old_program_never_followed (test_runtime_backup_cleanup.Tests) ... ok
+test_unknown_status_fails_closed (test_runtime_backup_cleanup.Tests) ... ok
+test_unsafe_mode_skips_whole_batch (test_runtime_backup_cleanup.Tests) ... ok
+test_acl_xattr_and_group_survive (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_active_program_protects (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_busy_host_or_release_lock (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_compressed_payload_is_compatible_with_existing_retention (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_compression_failure_keeps_source (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_existing_archive_not_adopted (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_existing_destination_never_overwritten (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_external_hardlink_rejected (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_independent_verification_failure_keeps_source (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_interrupted_directory_retirement_can_resume (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_live_or_nonstaging_destination_refused (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_malicious_archive_members_rejected (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_manifest_drift_rejected (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_mounted_source_protects (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_real_process_snapshot (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_resume_rejects_extra_file (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_roundtrip_keeps_links_metadata_and_state (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_source_keep_protects (test_runtime_program_archive.ProgramArchiveTests) ... ok
+test_tampered_archive_rejected (test_runtime_program_archive.ProgramArchiveTests) ... ERROR
+test_wrong_pinned_digest_no_mutation (test_runtime_program_archive.ProgramArchiveTests) ... ok
+
+======================================================================
+ERROR: test_acl_xattr_and_group_survive (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 101, in test_acl_xattr_and_group_survive
+    self.repin(); self.compact(); dest = self.restore()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_compressed_payload_is_compatible_with_existing_retention (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 212, in test_compressed_payload_is_compatible_with_existing_retention
+    self.compact()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_existing_destination_never_overwritten (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 185, in test_existing_destination_never_overwritten
+    self.compact(); destination = self.root / 'cyf-runtime-restore-existing'; destination.mkdir()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_interrupted_directory_retirement_can_resume (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 166, in test_interrupted_directory_retirement_can_resume
+    with self.assertRaises(OSError): self.compact()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_live_or_nonstaging_destination_refused (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 191, in test_live_or_nonstaging_destination_refused
+    self.compact()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_real_process_snapshot (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 94, in test_real_process_snapshot
+    self.compact(); self.restore()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_resume_rejects_extra_file (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 174, in test_resume_rejects_extra_file
+    with self.assertRaises(OSError): self.compact()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_roundtrip_keeps_links_metadata_and_state (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 83, in test_roundtrip_keeps_links_metadata_and_state
+    self.assertEqual(self.compact()['status'], 'compacted')
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+======================================================================
+ERROR: test_tampered_archive_rejected (test_runtime_program_archive.ProgramArchiveTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 180, in test_tampered_archive_rejected
+    self.compact()
+  File "/home/isp/wsps/cyf/ops/maintenance/tests/test_runtime_program_archive.py", line 72, in compact
+    return m.run_program(self.p, 'compact-program', self.batch, self.sha)
+  File "/home/isp/wsps/cyf/ops/maintenance/runtime_backup_cleanup.py", line 586, in run_program
+    raise Unsafe('independent program restore verification failed')
+runtime_cache_safety.Unsafe: independent program restore verification failed
+
+----------------------------------------------------------------------
+Ran 61 tests in 2.721s
+
+FAILED (errors=9)

@@ -1,0 +1,9 @@
+# W11 R7 public-return stop matrix — 2026-09-06
+
+Independent Sol review of clean c0fc6a6/f1f826f4 (R6 cumulative) identified **W11 P1**: `useHallTaskActions.js` defines `fundedCreateRecovery` and `resumeFundedCreate` but omits both from its returned public object. Actual JuyiHall destructuring receives undefined, so recovery panel/action is unreachable. No tests/build executed. W12's separate original-tree review continues and is not source acceptance.
+
+W11 second consecutive failure stops the loop: prior R5 storage/receipt/monotonicity findings and the new R6 missing-public-return finding remain attributed; do not blindly run rejected UI.
+
+Bounded correction: one fresh Terra Owner in `.worktrees/eco-v0-web-public-contract-r7` from full c0fc6a6f543031000c1965c0928eef68c69c9d73/tree f1f826f48e6c6c2a2b27b624a1313880fcafe1cc. Add exactly the two existing members to useHallTaskActions's return object; no new money behavior, handlers, storage format or broad refactor. Add focused regression through the actual returned composable API and mounted BountyPanel/recovery wiring: original immutable body visible, explicit confirmation invokes real resume, cancellation sends nothing. Never inject fake missing members or replace the recovery action with a stub that would hide this defect. Reuse existing mount harnesses; report a concrete scope conflict rather than introducing a framework or large unrelated JuyiHall rewrite.
+
+Allowed paths: only `src/composables/juyiting/useHallTaskActions.js` and relevant tests/fixtures under tests. Original c0fc tree remains immutable for concurrent W12 review. No build/dependency/API/runner/rental/release changes; no tests/npm/Gradle/DB/runtime/delegation as Writer. Clean candidate, independent bounded delta review, then unified actual tests/build once admitted. Do not repeat full unchanged source review or claim SOURCE acceptance as runtime PASS.

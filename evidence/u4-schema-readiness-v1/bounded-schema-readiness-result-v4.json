@@ -1,0 +1,230 @@
+{
+  "schema_version": 4,
+  "recorded_at": "2026-09-30T18:07:44+08:00",
+  "task_id": "MMD-U4-SCHEMA-READINESS-20260930",
+  "candidate": {
+    "commit": "3f079c7cfa7b076e93d185db50faaf4183a584e4",
+    "tree": "768da03f2c3222fb1e30529beb6089e1000227fa"
+  },
+  "verification_scope": "bounded exact-source real-Spring/mock-schema lifecycle diagnostic only",
+  "fixture_digest": "a216d685d507acfc7a7dbd20133fca8a892b7f8d4af2cf300cc89e908d543484",
+  "gradle_evidence_key": "0f60d52f09ce8aa7daab4a099d865fee178fb1314e6461f14240de64a02eb157",
+  "outcome": "passed",
+  "task_graph": {
+    "expected": [
+      ":u4BoundedV4Preflight",
+      ":u4BoundedV4CompileMain",
+      ":u4BoundedV4CompileLifecycleTest",
+      ":u4BoundedV4SchemaReadinessLifecycle"
+    ],
+    "actual": [
+      ":u4BoundedV4Preflight",
+      ":u4BoundedV4CompileMain",
+      ":u4BoundedV4CompileLifecycleTest",
+      ":u4BoundedV4SchemaReadinessLifecycle"
+    ],
+    "unexpected_tasks": []
+  },
+  "preflight": {
+    "passed": true,
+    "source_hashes_verified": true,
+    "classpath_content_verified": true,
+    "classpath_entries": 364,
+    "classpath_built_by_tasks": []
+  },
+  "compilation": {
+    "main_succeeded": true,
+    "main_class_files": 11,
+    "test_succeeded": true,
+    "test_class_files": 8
+  },
+  "junit": {
+    "tests": 5,
+    "passed": 5,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": "4.957",
+    "cases": [
+      {
+        "name": "missingSourceColumnStillFailsBeforeArchiveDdl()",
+        "status": "passed",
+        "time_seconds": "4.241"
+      },
+      {
+        "name": "realSpringLifecycleMakesSourcesReadyBeforeArchiveAndRunnerPhaseDoesNotRepeat()",
+        "status": "passed",
+        "time_seconds": "0.291"
+      },
+      {
+        "name": "partialFailureIsNotCachedAndRetryDoesNotRepeatCompletedCoreSchema()",
+        "status": "passed",
+        "time_seconds": "0.002"
+      },
+      {
+        "name": "archiveIndexDriftStillFailsClosedAfterSourcesBecomeReady()",
+        "status": "passed",
+        "time_seconds": "0.221"
+      },
+      {
+        "name": "legacyInitializingBeanReproducesFailureBeforeApplicationRunnersExecute()",
+        "status": "passed",
+        "time_seconds": "0.168"
+      }
+    ]
+  },
+  "contracts_observed": [
+    "legacy InitializingBean failure occurs before runners",
+    "explicit readiness makes core then deliberation ready before archive source validation/DDL",
+    "runner phase does not repeat completed migrations",
+    "partial failure is retryable without repeating completed core schema",
+    "missing source column fails before archive DDL",
+    "null sub_part metadata is accepted while wrong archive index order still fails closed"
+  ],
+  "overlay_runtime_load_proof": {
+    "produced": true,
+    "all_expected_types_loaded": true,
+    "type_count": 5
+  },
+  "jvm_caps": {
+    "daemon_heap": "256m",
+    "daemon_metaspace": "160m",
+    "test_heap": "128m",
+    "test_metaspace": "96m",
+    "serial_gc": true,
+    "changed_from_v3": false
+  },
+  "concurrent_global_oom": {
+    "observed": true,
+    "kernel_killed_pid": 1962484,
+    "kernel_killed_uid": 987,
+    "foreign_ownership_inferred": false,
+    "foreign_process_action": false,
+    "caused_v4_failure": false
+  },
+  "evidence": {
+    "plan": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-plan-v4.json",
+      "sha256": "4d4fe69a42633bbe005ca06de0145f9fb25ee93c80b3cd645d1be19703933849",
+      "size_bytes": 4628
+    },
+    "init_script": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v4.init.gradle",
+      "sha256": "5c714c909f0ad05b50476a2062e0062a16fc68539b3919de3e8a7160a0fdba9a",
+      "size_bytes": 13682
+    },
+    "source_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-source-manifest-v4.json",
+      "sha256": "0ad05c0a2410481532aa09cdba757d0659ac9b350a768db8ec211d0e4594cbae",
+      "size_bytes": 2616
+    },
+    "classpath": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-v1.txt",
+      "sha256": "ffe71b5989fa529a9866319891ecf6fd06cfc58efdd0a2b623bdaa10fa9ebaf4",
+      "size_bytes": 51635
+    },
+    "classpath_content": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-classpath-content-v1.json",
+      "sha256": "e3dcd2e3ad4da6d63594045cd84e3fef67881d27d3190592bd9df58c63d58a1b",
+      "size_bytes": 127011
+    },
+    "task_graph": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-task-graph-768da03f-v4.json",
+      "sha256": "e1a60606c7b45da30a016b49a6b750ac1d6ca75337134f857d1224248acabec5",
+      "size_bytes": 369
+    },
+    "preflight": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/preflight.json",
+      "sha256": "4158ad2cdc7119788f6e131f90007ad95ee2bf2e50618961bb132ecc540ad536",
+      "size_bytes": 372
+    },
+    "main_overlay_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/main-overlay-manifest.json",
+      "sha256": "882d5a2ac6913d73101f8f0bc6e3fb898915bfcb49e3fce2e98ecd92eeb0ceee",
+      "size_bytes": 2566
+    },
+    "test_overlay_manifest": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/test-overlay-manifest.json",
+      "sha256": "a448554c9e87ffeebdb798ea54405489951c8f34627efb02abbc79deedadfc6b",
+      "size_bytes": 1987
+    },
+    "junit_xml": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/junit-xml/TEST-cn.jia.chat.config.ChatSchemaReadinessLifecycleTest.xml",
+      "sha256": "0978bb670a0ca883e5f9f6a3b6a331da87ddcdf9c58bce6ebf60ee8b6ebf227c",
+      "size_bytes": 54821
+    },
+    "class_load_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/class-load.log",
+      "sha256": "6f59667def408dd9d912297cef0ba9a28755b52e0d0f3c36aff7a4d19d213002",
+      "size_bytes": 1524496
+    },
+    "overlay_load_proof": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/overlay-load-proof.json",
+      "sha256": "4a19b540956a62ccfb9aed8522aa11e2cefd34e33c6019494e09f6679a653af1",
+      "size_bytes": 1358
+    },
+    "binary_results_generic": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/binary-results/results-generic.bin",
+      "sha256": "09bd896f2b6aab20756c76ea4434b36f5ab9014b6407c409565a50e27e5670b2",
+      "size_bytes": 968
+    },
+    "binary_output_events": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-768da03f-v4/binary-results/output-events.bin",
+      "sha256": "62f9060934ae06e09e6307b2413a8ee8e456e84b556e18fbb1d2e47cde716722",
+      "size_bytes": 60844
+    },
+    "daemon_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-gradle-daemon-1969290-v4.log",
+      "sha256": "4fd5422d82aeee0224088359994fd41503c7af48d9e3fa3b3317a91b144eff90",
+      "size_bytes": 27745
+    },
+    "concurrent_oom_observation": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-v4-concurrent-foreign-oom-observation.log",
+      "sha256": "39f62c0b841b32c3571f20f1ad3d422487602435eaece3b438ff2bc0bd9cbf68",
+      "size_bytes": 1247
+    },
+    "result_log": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v4-result.log",
+      "sha256": "db928956dbc2f33ca9b0e757cf7e81dcdf87475ba26db2dab44d8ddb0f334a2c",
+      "size_bytes": 1464
+    },
+    "v2_failure": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v2.json",
+      "sha256": "12b18db74d1960cb75448016a909ed761691195bf9417dc37a6341e4841172b5",
+      "size_bytes": 9706
+    },
+    "v3_failure": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-failure-v3.json",
+      "sha256": "ab1aa23d6dd88054c1d2d4e959d94bba53a2f97bb627619f17b38a745abe8e63",
+      "size_bytes": 8510
+    },
+    "v3_root_cause": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v3-root-cause-addendum.json",
+      "sha256": "ec4e182c1fc810bad501fbd22ee204ca714922def1ff8447ca63db44a3a79e31",
+      "size_bytes": 2383
+    },
+    "orchestrator_artifact": {
+      "path": "/home/isp/wsps/cyf/evidence/u4-schema-readiness-v1/bounded-schema-readiness-v4.log",
+      "present": false
+    }
+  },
+  "preserved_history": {
+    "v2_failure_unchanged": true,
+    "v3_failure_unchanged": true
+  },
+  "limitations": [
+    "not a normal Gradle module build",
+    "not full chatDeliberation baseline suite",
+    "not MySQL verification",
+    "not release/deployment evidence"
+  ],
+  "actions": {
+    "source_changed_during_v4": false,
+    "build_gradle_changed": false,
+    "retry_after_v4": false,
+    "resource_caps_increased": false,
+    "push_or_deploy": false,
+    "foreign_process_action": false
+  },
+  "next_action": "Release API-main freeze and hand exact candidate/evidence to main for integration/finalization sequencing. Any normal module build or MySQL validation remains separate."
+}

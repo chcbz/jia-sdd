@@ -1,0 +1,28 @@
+{"type":"agentMessage","text":"I’ll copy the input bytes exactly, then stage the result."}
+{"type":"commandExecution","status":"failed","command":"/bin/bash -lc 'mkdir -p /outputs && cp /inputs/input1 /outputs/result.txt && cmp /inputs/input1 /outputs/result.txt'","exitCode":1,"aggregatedOutput":"bwrap: setting up uid map: Operation not permitted\n"}
+{"type":"agentMessage","text":"Unable to copy or stage the file: the shell could not start because sandbox setup failed (`Operation not permitted`). No artifact was created."}
+✖ real isolated model reads original TXT and produces a staged/proposed file with no skills (217881.730136ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 220109.219128
+
+✖ failing tests:
+
+test at ../chcbz/isp-install/conf/codex-bridge/test/native-execution-model.test.mjs:16:1
+✖ real isolated model reads original TXT and produces a staged/proposed file with no skills (217881.730136ms)
+  Error: NATIVE_PROPOSAL_REQUIRED
+      at fail (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/native-artifact-session.mjs:9:76)
+      at NativeArtifactSession.finalize (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/native-artifact-session.mjs:119:20)
+      at runNativeExecution (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/native-execution.mjs:53:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///home/isp/wsps/chcbz/isp-install/conf/codex-bridge/test/native-execution-model.test.mjs:53:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'NATIVE_PROPOSAL_REQUIRED',
+    recoverableToolError: false
+  }

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "pipeline": "5260799",
+  "selector": "backend-develop-ci-v1",
+  "argv": [
+    "./gradlew",
+    "--parallel",
+    "--max-workers=3",
+    "--build-cache",
+    "--no-daemon",
+    "--stacktrace",
+    "--console=plain",
+    "--init-script",
+    "ops/ci/aliyun-flow/cold-init.gradle",
+    "--init-script",
+    "$CYF_EXPERIMENT/flow-compile-cache.init.gradle",
+    "--init-script",
+    "$CYF_EXPERIMENT/owner-fixture-diagnostics.gradle",
+    "--project-cache-dir",
+    "$CYF_EXPERIMENT/project-cache",
+    ":agent:jia-agent-service:test",
+    "--tests",
+    "cn.jia.agent.service.impl.AgentTaskBillingMySqlTransactionTest",
+    "validateLayering",
+    ":starter:bootJar"
+  ]
+}

@@ -1,6 +1,6 @@
 # 李逵：议事到文本文件执行最小接入
 
-核对日期2026-10-11；Owner Main。API基线cf140272、Runtime基线5b902c1b。状态：源码与定向测试完成，API候选制品已生成；发布被实际磁盘空间阻塞，未上线、未业务验收。
+核对日期2026-10-11；Owner Main。API基线cf140272、Runtime基线5b902c1b。当前状态（2026-10-12 09:00核对）：API1.14.10/cd1e6d6、Web1.14.10/235048e6（Flow205）、李逵Runtime1.0.3/807b86d已上线。449真实文件生成、预览、下载、SHA及正式验收正常流程通过，刷新后已完成。已修复grant回读、MIME CHECK和文本子请求进度投影三处遗漏。下载名仍为output_1.txt而非要求的output.txt，不声称文件名要求通过；该显示差异未扩大到本轮前端发布。下文候选/空间阻塞记载均为历史阶段，不代表当前状态。
 工作区：`/home/isp/wsps/cyf-worktrees/likui-textfile-api-20261011`、`/home/isp/wsps/cyf-worktrees/likui-textfile-runtime-20261011`。
 
 ## 冻结范围
@@ -13,7 +13,7 @@
 
 ## 现有表与字段复用
 - `agent_task_execution_grant.permitted_operations_json`：新点将写入GENERATE_TEXT_FILE；既有grant版本、任务指派epoch、固定需求版本仍校验。
-- `agent_personal_workspace_execution`：execution_mode=CONVERSATION、permitted_operation=GENERATE_TEXT_FILE、output_content_mime_type=text/plain；复用task_grant_id/version、assignment_revision、instruction、idempotency_key/request_hash、租约和provider-start单次标记。命名以实体/mapper实际映射为准，不做DDL。
+- `agent_personal_workspace_execution`：execution_mode=CONVERSATION、permitted_operation=GENERATE_TEXT_FILE、output_content_mime_type=text/plain；复用task_grant_id/version、assignment_revision、instruction、idempotency_key/request_hash、租约和provider-start单次标记。命名以实体/mapper实际映射为准。原“不做DDL”判断已被449实测推翻：现存chk_pwex_output_mime不接受text/plain，必须同步精确约束迁移与核验；不新增表/字段。
 - 原input/output表无新字段；输出仍output_1、byte_length/content_hash/storage_uri及STAGED→COMMITTED。
 - `chat_request`、`chat_interaction_step`、`chat_step_execution_link`、typed admission沿用动作父摘要派生的稳定request/step/intent；执行ID由OwnerScope+intent的SHA-256前60位加pwe_前缀稳定派生（64字符，适配原link字段），创建服务返回后严格对照；不变重放只读持久绑定，不重复创建。
 - `chat_conversation_asset`及正式成果验收沿用已提交真实字节投影，不新增文本假成果。
@@ -45,3 +45,20 @@
 - Runtime候选 `807b86d66153b765529bba1d547e4bcfbf0a3706` / tree `959c72f2f9578186da9819ded6fd6798e3e0bb1a`，版本1.0.3。文本/native 24项、profile/hosting 16项均通过；Main另外在固定提交选择2项实际payload闭包测试通过（其余78项未选择，不能计作全套通过）。现有依赖临时软链仅用于本机诊断、已移除，不当作正式installer证据。
 - 更新后的实际容量见本批 `release-capacity-blocker.json`：包已持久保存后剩余204877824字节；原admission+incoming+candidate+rollback估算仍需1215942260字节，缺约1011064436字节。未执行必然失败的admission/安装，未删除旧制品/他人证据。
 - 线上JAR仍SHA333d525e…b8c57；没有本轮生产API/Runtime配置写入或重启。下一步只需在获准清理/可用空间补足后，接续原制品准入与发布、精确配置更新、李逵Runtime原installer1.0.3部署，然后按前述新事项验收；不能将待验收标为已跑通。
+
+## 2026-10-12 01:06 发布后实测纠正（历史阶段）：449未通过
+- 实际已发布：API4345f5e4/1.14.8，Web235048e6/1.14.10（Flow205），Runtime807b86d/1.0.3。Web页面优化已定向实测；版本发布不等于文本文件验收成功。
+- 点将返回500，但449的ACTIVE grant已写入GENERATE_TEXT_FILE；不得再次点将或新建事项掩盖。GET449仍assigned/startedAt=null。
+- `api/agent/jia-agent-service/src/main/java/cn/jia/agent/service/impl/AgentTaskDeliberationOperationReadServiceImpl.java:45-46` 的OPERATIONS漏项，339行拒绝真实已持久化的操作。需同步白名单并补grant发放到回读的测试，仍拒绝未知/重复操作。
+- 实际MySQL `agent_personal_workspace_execution.chk_pwex_output_mime`拒绝text/plain。同步v1_11创建表SQL、v1_13 MIME迁移契约及PersonalWorkspaceExecutionSchemaInitializer的已存在约束识别/迁移/核验；不能只改配置或只改新建表脚本，不删除约束绕过。补真实MySQL文本创建/事务与原图片回归。
+- 这两处尚未修复。原242项测试未覆盖这两个跨层契约；原217项schema源未变证据不是新功能schema有效性证明。新DDL不属于本批原无schema变化的F06/E05发布输入；后续需单独核对授权、备份及迁移输入，构建新后端版本，不改写1.14.8回执。
+- 修复发布后续验同一449及原幂等操作：真实文件生成、上传提交、下载内容/SHA、单次验收；448/446不动。
+- 最终批次证据：`/var/tmp/cyf-likui-textfile-api-release-20261012-stwh_2e6/unified-release-result.json`。
+
+## 2026-10-12 09:00 实际收口
+- 当前API源码 `cd1e6d6ebe714767273c440abc5edd925c2333e3` / tree `241a547d2267ca83bec31d7198ddf1f40940ae6a` 已合入并push develop，版本1.14.10。正式206项测试全通过，无失败/错误/跳过，含真实文本动作准入→进度reader的跨服务回归，原图片/INSPECT、幂等/越权/事务、分层及制品校验保留。
+- 后续进度漏项详设：`/home/isp/wsps/cyf/api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatTextFileActionExecutionService.java:121`统一文本requestId(event)；同文件准入使用该方法。`/home/isp/wsps/cyf/api/chat/jia-chat-service/src/main/java/cn/jia/chat/service/ChatActionFinalService.java:268-278`按冻结operation选择对应请求ID计算，不将text-file-request错作action-execute，不放宽scope/parent/revision/state校验。无兼容兜底、无新接口、无数据库数据修补。
+- 原installer一次安装完成；JAR SHA `5bc239aeda3af9abfc8f4033d59d3c513219b26ec8f948aea58a48fce44b4085`，canonical目录、健康UP、目录回归8项通过。当前切片218项SQL/initializer资源与已上线1.14.9逐字匹配，无新schema迁移；不重跑不相关的独立MySQL安装fixture。
+- 原449/原conversation1760458005713只读进度200/COMPLETED，唯一执行OUTPUT_COMMITTED。实际下载41字节、UTF-8三行，SHA `de2df941fcae44561d2df2d539bd94481bf241045ee57aadddcbfea9433d3b7a`与资产、选中成果、验收回执一致。正常UI一次确认验收POST200，deliveryState=accepted、taskState=completed、taskVersion=4；刷新后历史成果仍可查看。无新建、无重复点将、无手改业务数据。
+- 已知差异仅记录：正式成果下载名output_1.txt，议事文件卡片为part_ID.txt；没有使用聊天文本手造文件，也没有把输出重命名后伪称原下载名正确。无附件text/plain以外的格式生成/编辑及其他Agent仍不在本次覆盖范围。
+- 最终可核验记录：`/var/tmp/cyf-likui-progress-api-20261012-lrxcyfv2/business-acceptance-final.json`；此前1.14.9/279项测试和生产MIME迁移在`/var/tmp/cyf-likui-textfix-api-20261012-2vrlsa7l/`。各版本测试和发布记录不混用。详细过程含OOM、容量与控制面输入错误留handoff，不改写历史失败。

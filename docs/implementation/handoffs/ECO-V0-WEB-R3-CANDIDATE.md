@@ -1,0 +1,9 @@
+# Combined Web R3 candidate
+
+Clean final source candidate `e48246732d5bd0a72025609627cc542a353b882e`, tree `095d548fbe581accf4dac47c8e8a2fe7ace4fed3`, worktree `/home/isp/wsps/cyf/.worktrees/eco-v0-web-combined`. Main checked SHA/tree/clean status and final diff whitespace. Terra source writer released. **Not tested/review-accepted/deployed.**
+
+History: e5e2414 exact W11/W12 merge;70bbf92 W12 recovery/order identity;11f50fd W11 capability/create acknowledgement/route integration;773ccc1 strict owned roster/version;e482467 correct POST roster plus actual fetch method/body regression. Root matrix `ECO-V0-WEB-R2-ROOT-CAUSE.md` preserves prior independent findings and main wrong-verb finding. Independent combined delta review must cover all corrections, not only final tiny commit.
+
+Prepared test selectors: `tests/economy-wallet-bounty.test.js`, `tests/juyiting-hall-task-actions.test.js`, `tests/skill-market.test.js`, `tests/silver-amount.test.js`; include existing affected Juyi Hall collaboration smoke when selecting final verification. No npm/test/build has run on this tree. One production build after heavy verification quiesces; prior137 is not ignored. No generated source restoration unless caused by that exact verifier build.
+
+HTTP integration now documented in `v0-api-contract.md`: authenticated GET economy/capabilities booleans plus opaque principal fingerprint; existing POST agent/roster explicit selection with boundToMe/canOperate/string version; exact echoed skill quote/order tuple and string money/version/time; catalog permissions/canPurchase. These are implementation requirements for W09/W13, not already-live API support. Missing fields remain disabled. W11 and W12 acceptance remain distinct even though they share a corrected combined candidate. Main Web and original W11/W12 worktrees remain untouched.

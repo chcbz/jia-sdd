@@ -1,0 +1,108 @@
+==========================================
+Codex WebSocket Agent 安装脚本
+==========================================
+==========================================
+系统信息
+==========================================
+[0;32m操作系统: alinux[0m
+[0;32m版本: 3[0m
+[0;32m系列: rhel[0m
+[0;32m包管理器: dnf[0m
+==========================================
+
+[1/7] 创建并加固持久目录...
+[0;32mISP 目录结构创建完成[0m
+[1;33m保留已有 .env: /home/isp/apps/codex-ws-agent/.env[0m
+[1;33m保留已有 profile 配置: /home/isp/apps/codex-ws-agent/codex-profiles.conf[0m
+
+[2/7] 在隔离 release 中归集源码和配置模板...
+[3/7] 在候选 release 中按锁文件安装生产依赖...
+[4/7] 验证候选 release 后原子切换 current...
+
+added 3 packages in 2s
+Collecting pip<22
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/a4/6d/6463d49a933f547439d6b5b98b46af8742cc03ae83543e4d7688c2420f8b/pip-21.3.1-py3-none-any.whl (1.7MB)
+Installing collected packages: pip
+  Found existing installation: pip 9.0.3
+    Uninstalling pip-9.0.3:
+      Successfully uninstalled pip-9.0.3
+Successfully installed pip-21.3.1
+Looking in indexes: http://mirrors.cloud.aliyuncs.com/pypi/simple/
+Collecting python-docx==0.8.11
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/8b/a0/52729ce4aa026f31b74cc877be1d11e4ddeaa361dc7aebec148171644b33/python-docx-0.8.11.tar.gz (5.6 MB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting python-pptx==0.6.23
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/72/49/6eee83072983473e9905ffddd5c2032b9a0ca4616425560d6d582287b467/python_pptx-0.6.23-py3-none-any.whl (471 kB)
+Collecting openpyxl==3.1.3
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/58/d9/796181a30827b12101786c21301f0f4536597a9249530916b1fdb5bbad91/openpyxl-3.1.3-py2.py3-none-any.whl (251 kB)
+Collecting Pillow==8.4.0
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/ea/0f/2fa195c2d8c6fe0b3dc2df5fc6ac6b8dbd005ea30aaa0fa43eca88b8c664/Pillow-8.4.0-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+Collecting PyPDF2==1.28.6
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/ab/de/d119dd719304154e83eed74b48aec9b3db6ce1d5fd49ab7d23c07ca1f748/PyPDF2-1.28.6-py3-none-any.whl (87 kB)
+Collecting reportlab==3.6.8
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/50/c7/f80ab0ff9c7f7dc0b537fad0ee929ea5e56091b3f72de8e04ab3e02086b6/reportlab-3.6.8.tar.gz (4.5 MB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting lxml>=2.3.2
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/b7/50/35fd7754c766483f4bec727284354e6a960f2c90826ae8fd29612f8dcfa5/lxml-5.4.0-cp36-cp36m-manylinux_2_28_x86_64.whl (4.8 MB)
+Collecting XlsxWriter>=0.5.7
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/9b/07/df054f7413bdfff5e98f75056e4ed0977d0c8716424011fac2587864d1d3/XlsxWriter-3.2.2-py3-none-any.whl (165 kB)
+Collecting et-xmlfile
+  Downloading http://mirrors.cloud.aliyuncs.com/pypi/packages/96/c2/3dd434b0108730014f1b96fd286040dc3bcb70066346f7e01ec2ac95865f/et_xmlfile-1.1.0-py3-none-any.whl (4.7 kB)
+Using legacy 'setup.py install' for python-docx, since package 'wheel' is not installed.
+Using legacy 'setup.py install' for reportlab, since package 'wheel' is not installed.
+Installing collected packages: XlsxWriter, Pillow, lxml, et-xmlfile, reportlab, python-pptx, python-docx, PyPDF2, openpyxl
+    Running setup.py install for reportlab: started
+    Running setup.py install for reportlab: finished with status 'done'
+    Running setup.py install for python-docx: started
+    Running setup.py install for python-docx: finished with status 'done'
+Successfully installed Pillow-8.4.0 PyPDF2-1.28.6 XlsxWriter-3.2.2 et-xmlfile-1.1.0 lxml-5.4.0 openpyxl-3.1.3 python-docx-0.8.11 python-pptx-0.6.23 reportlab-3.6.8
+{"policies":1}
+configuration warning | profile=lujunyi | WORKSPACE_POLICY_REQUIRED: ordinary command.dispatch is blocked; chat uses a separate path
+configuration warning | profile=lujunyi | MODEL_OVERRIDE: Agent --model overrides the model in Codex Home
+configuration warning | profile=lujunyi | SESSION_MAPPING_STRICT: only an exact conversation mapping can resume a session in this profile Home
+configuration warning | profile=linchong | WORKSPACE_POLICY_REQUIRED: ordinary command.dispatch is blocked; chat uses a separate path
+configuration warning | profile=linchong | MODEL_OVERRIDE: Agent --model overrides the model in Codex Home
+configuration warning | profile=linchong | SESSION_MAPPING_STRICT: only an exact conversation mapping can resume a session in this profile Home
+configuration valid | profiles=2 | workspacePolicies=1 | defaultProfile=lujunyi | runtimeInstanceId=5ac93e8e-6f01-44f9-935b-7fd58d68d56c
+[0;32m配置验证通过[0m
+[0;32m已激活 release: /home/isp/apps/codex-ws-agent/releases/20261007102637-2215064[0m
+
+[5/7] 安装管理脚本...
+
+[6/7] 安装 systemd 服务...
+
+[7/7] 检查 A07 workspace policy...
+[0;32m检测到受控 workspace policy: /home/isp/apps/codex-ws-agent/workspace-policies.json[0m
+● codex-ws-agent.service - Codex WebSocket Agent
+   Loaded: loaded (/etc/systemd/system/codex-ws-agent.service; enabled; vendor preset: enabled)
+   Active: active (running) since Wed 2026-10-07 10:27:08 CST; 17ms ago
+  Process: 2216153 ExecStartPre=/usr/bin/env node /home/isp/apps/codex-ws-agent/agent-client.mjs --validate (code=exited, status=0/SUCCESS)
+ Main PID: 2216170 (node)
+    Tasks: 1 (limit: 23632)
+   Memory: 904.0K
+   CGroup: /system.slice/codex-ws-agent.service
+           └─2216170 node /home/isp/apps/codex-ws-agent/agent-client.mjs
+
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z systemd[1]: Starting Codex WebSocket Agent...
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z env[2216153]: configuration warning | profile=lujunyi | WORKSPACE_POLICY_REQUIRED: ordinary command.dispatch is blocked; chat uses a separate path
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z env[2216153]: configuration warning | profile=lujunyi | MODEL_OVERRIDE: Agent --model overrides the model in Codex Home
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z env[2216153]: configuration warning | profile=lujunyi | SESSION_MAPPING_STRICT: only an exact conversation mapping can resume a session in this profile Home
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z env[2216153]: configuration warning | profile=linchong | WORKSPACE_POLICY_REQUIRED: ordinary command.dispatch is blocked; chat uses a separate path
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z env[2216153]: configuration warning | profile=linchong | MODEL_OVERRIDE: Agent --model overrides the model in Codex Home
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z env[2216153]: configuration warning | profile=linchong | SESSION_MAPPING_STRICT: only an exact conversation mapping can resume a session in this profile Home
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z env[2216153]: configuration valid | profiles=2 | workspacePolicies=1 | defaultProfile=lujunyi | runtimeInstanceId=1181ffd6-0618-48a2-b7f0-8679c6e2d81c
+Oct 07 10:27:08 iZwz9j3ip2unzhwij0bs30Z systemd[1]: Started Codex WebSocket Agent.
+
+[0;32m==========================================
+Codex WebSocket Agent 部署完成
+==========================================\033[0m
+安装模式: shared
+应用目录: /home/isp/apps/codex-ws-agent
+当前 release: /home/isp/apps/codex-ws-agent/current
+配置文件: /home/isp/apps/codex-ws-agent/.env
+Profile:  /home/isp/apps/codex-ws-agent/codex-profiles.conf
+Workspace policy 示例: /home/isp/apps/codex-ws-agent/current/workspace-policies.example.json
+管理脚本: /home/isp/bin/codex_ws_agent.sh
+服务单元: codex-ws-agent.service (/etc/systemd/system/codex-ws-agent.service)

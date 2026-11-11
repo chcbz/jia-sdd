@@ -1,0 +1,513 @@
+GRADLE_DEPENDENCY_CACHE_HOME=/var/cache/cyf-gradle-local
+GRADLE_LOCK_ACQUIRED task=WORKSPACE-MANAGEMENT-AUDIT-20261016 pid=1169679
+Picked up JAVA_TOOL_OPTIONS: -XX:-UseJVMCICompiler -XX:ActiveProcessorCount=2
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :plugin:jia-gradle-plugin:compileJava UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:processResources UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:classes UP-TO-DATE
+> Task :plugin:jia-gradle-plugin:jar UP-TO-DATE
+
+> Task :starter:dependencyInsight
+org.springframework:spring-web:7.0.8
+  Variant runtimeElements:
+    | Attribute Name                     | Provided     | Requested    |
+    |------------------------------------|--------------|--------------|
+    | org.gradle.status                  | release      |              |
+    | org.jetbrains.kotlin.platform.type | jvm          |              |
+    | org.gradle.category                | library      | library      |
+    | org.gradle.dependency.bundling     | external     | external     |
+    | org.gradle.jvm.environment         | standard-jvm | standard-jvm |
+    | org.gradle.jvm.version             | 17           | 21           |
+    | org.gradle.libraryelements         | jar          | jar          |
+    | org.gradle.usage                   | java-runtime | java-runtime |
+   Selection reasons:
+      - By constraint
+      - By conflict resolution: between versions 7.0.8 and 7.0.2
+
+org.springframework:spring-web:7.0.8
++--- org.springframework:spring-webflux:7.0.8
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework:spring-webflux:7.0.2)
+|    |    \--- project :agent:jia-agent-api
+|    |         +--- project :chat:jia-chat-service
+|    |         |    \--- project :chat:jia-chat-starter
+|    |         |         \--- runtimeClasspath
+|    |         +--- project :agent:jia-agent-service
+|    |         |    +--- runtimeClasspath
+|    |         |    +--- project :chat:jia-chat-starter (*)
+|    |         |    \--- project :chat:jia-chat-service (*)
+|    |         \--- project :agent:jia-agent-mapper
+|    |              +--- runtimeClasspath
+|    |              \--- project :agent:jia-agent-service (*)
+|    +--- org.springframework.ai:spring-ai-deepseek:2.0.0
+|    |    \--- org.springframework.ai:spring-ai-starter-model-deepseek:2.0.0
+|    |         +--- runtimeClasspath
+|    |         \--- project :chat:jia-chat-starter (*)
+|    +--- org.springframework.boot:spring-boot-webclient:4.1.0
+|    |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-webclient:4.0.1) (*)
+|    |    \--- org.springframework.boot:spring-boot-starter-webclient:4.1.0
+|    |         +--- org.springframework.ai:spring-ai-starter-model-deepseek:2.0.0 (*)
+|    |         +--- org.springframework.ai:spring-ai-starter-model-openai:2.0.0
+|    |         |    +--- runtimeClasspath
+|    |         |    +--- project :chat:jia-chat-starter (*)
+|    |         |    \--- project :chat:jia-chat-service (*)
+|    |         \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-starter-webclient:4.0.1) (*)
+|    \--- org.springframework.boot:spring-boot-webflux:4.0.1 (requested org.springframework:spring-webflux:7.0.2)
+|         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         \--- org.springframework.boot:spring-boot-starter-webflux:4.0.1
+|              +--- project :chat:jia-chat-service (*)
+|              \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
++--- org.springframework.ai:spring-ai-retry:2.0.0
+|    \--- org.springframework.ai:spring-ai-deepseek:2.0.0 (*)
++--- org.springframework.boot:spring-boot-http-client:4.1.0
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-http-client:4.0.1) (*)
+|    +--- org.springframework.boot:spring-boot-webclient:4.1.0 (*)
+|    \--- org.springframework.boot:spring-boot-restclient:4.1.0
+|         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-restclient:4.0.1) (*)
+|         \--- org.springframework.boot:spring-boot-starter-restclient:4.1.0
+|              +--- org.springframework.ai:spring-ai-starter-model-deepseek:2.0.0 (*)
+|              +--- org.springframework.ai:spring-ai-starter-model-openai:2.0.0 (*)
+|              \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-starter-restclient:4.0.1) (*)
++--- org.springframework.boot:spring-boot-http-codec:4.1.0
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-http-codec:4.0.1) (*)
+|    +--- org.springframework.boot:spring-boot-webclient:4.1.0 (*)
+|    \--- org.springframework.boot:spring-boot-webflux:4.0.1 (requested org.springframework.boot:spring-boot-http-codec:4.0.1) (*)
+\--- org.springframework.boot:spring-boot-http-converter:4.1.0
+     +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-http-converter:4.0.1) (*)
+     +--- org.springframework.boot:spring-boot-starter-webmvc:4.0.1 (requested org.springframework.boot:spring-boot-http-converter:4.0.1)
+     |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     |    +--- org.springframework.boot:spring-boot-starter-oauth2-authorization-server:4.0.1
+     |    |    +--- project :oauth:jia-oauth-server-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     |    \--- org.springframework.boot:spring-boot-starter-websocket:4.0.1
+     |         +--- runtimeClasspath
+     |         +--- project :sms:jia-sms-starter
+     |         |    \--- runtimeClasspath
+     |         +--- project :chat:jia-chat-starter (*)
+     |         \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     +--- org.springframework.boot:spring-boot-starter-web:4.0.1 (requested org.springframework.boot:spring-boot-http-converter:4.0.1)
+     |    +--- project :common:jia-common-starter
+     |    |    +--- runtimeClasspath
+     |    |    +--- project :base:jia-base-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    +--- project :dwz:jia-dwz-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    +--- project :isp:jia-isp-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    +--- project :material:jia-material-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    +--- project :oauth:jia-oauth-resource-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    +--- project :oauth:jia-oauth-server-starter (*)
+     |    |    +--- project :sms:jia-sms-starter (*)
+     |    |    +--- project :task:jia-task-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    +--- project :user:jia-user-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    +--- project :workflow:jia-workflow-starter
+     |    |    |    \--- runtimeClasspath
+     |    |    \--- project :chat:jia-chat-starter (*)
+     |    +--- project :oauth:jia-oauth-client-starter
+     |    |    \--- runtimeClasspath
+     |    \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     +--- org.springframework.boot:spring-boot-webmvc:4.0.1 (requested org.springframework.boot:spring-boot-http-converter:4.0.1)
+     |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     |    +--- org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.1
+     |    |    \--- org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1
+     |    |         \--- project :common:jia-common-starter (*)
+     |    +--- org.springframework.boot:spring-boot-starter-webmvc:4.0.1 (*)
+     |    \--- org.springframework.boot:spring-boot-starter-web:4.0.1 (*)
+     +--- org.springframework.boot:spring-boot-restclient:4.1.0 (*)
+     \--- org.springframework.boot:spring-boot-http-client:4.1.0 (*)
+
+org.springframework:spring-web:7.0.2 -> 7.0.8
++--- org.springframework:spring-webmvc:7.0.2
+|    +--- project :common:jia-common-service
+|    |    +--- project :common:jia-common-starter
+|    |    |    +--- runtimeClasspath
+|    |    |    +--- project :base:jia-base-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :dwz:jia-dwz-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :isp:jia-isp-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :material:jia-material-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :oauth:jia-oauth-resource-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :oauth:jia-oauth-server-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :sms:jia-sms-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :task:jia-task-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :user:jia-user-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    +--- project :workflow:jia-workflow-starter
+|    |    |    |    \--- runtimeClasspath
+|    |    |    \--- project :chat:jia-chat-starter
+|    |    |         \--- runtimeClasspath
+|    |    +--- project :chat:jia-chat-service
+|    |    |    \--- project :chat:jia-chat-starter (*)
+|    |    +--- project :agent:jia-agent-service
+|    |    |    +--- runtimeClasspath
+|    |    |    +--- project :chat:jia-chat-starter (*)
+|    |    |    \--- project :chat:jia-chat-service (*)
+|    |    +--- project :kefu:jia-kefu-service
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :point:jia-point-service
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :economy:jia-economy-service
+|    |    |    +--- runtimeClasspath
+|    |    |    \--- project :agent:jia-agent-service (*)
+|    |    +--- project :wx:jia-wx-service
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :base:jia-base-service
+|    |    |    \--- project :base:jia-base-starter (*)
+|    |    +--- project :dwz:jia-dwz-service
+|    |    |    \--- project :dwz:jia-dwz-starter (*)
+|    |    +--- project :isp:jia-isp-service
+|    |    |    \--- project :isp:jia-isp-starter (*)
+|    |    +--- project :material:jia-material-service
+|    |    |    \--- project :material:jia-material-starter (*)
+|    |    +--- project :oauth:jia-oauth-resource
+|    |    |    \--- project :oauth:jia-oauth-resource-starter (*)
+|    |    +--- project :oauth:jia-oauth-service
+|    |    |    \--- project :oauth:jia-oauth-server-starter (*)
+|    |    +--- project :sms:jia-sms-service
+|    |    |    \--- project :sms:jia-sms-starter (*)
+|    |    +--- project :task:jia-task-service
+|    |    |    \--- project :task:jia-task-starter (*)
+|    |    +--- project :user:jia-user-service
+|    |    |    \--- project :user:jia-user-starter (*)
+|    |    \--- project :workflow:jia-workflow-service
+|    |         \--- project :workflow:jia-workflow-starter (*)
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1
+|    |    \--- project :agent:jia-agent-api
+|    |         +--- project :chat:jia-chat-service (*)
+|    |         +--- project :agent:jia-agent-service (*)
+|    |         \--- project :agent:jia-agent-mapper
+|    |              +--- runtimeClasspath
+|    |              \--- project :agent:jia-agent-service (*)
+|    \--- org.springframework.boot:spring-boot-webmvc:4.0.1
+|         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         +--- org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.1
+|         |    \--- org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1
+|         |         \--- project :common:jia-common-starter (*)
+|         +--- org.springframework.boot:spring-boot-starter-webmvc:4.0.1
+|         |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         |    +--- org.springframework.boot:spring-boot-starter-oauth2-authorization-server:4.0.1
+|         |    |    +--- project :oauth:jia-oauth-server-starter (*)
+|         |    |    \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         |    \--- org.springframework.boot:spring-boot-starter-websocket:4.0.1
+|         |         +--- runtimeClasspath
+|         |         +--- project :sms:jia-sms-starter (*)
+|         |         +--- project :chat:jia-chat-starter (*)
+|         |         \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         \--- org.springframework.boot:spring-boot-starter-web:4.0.1
+|              +--- project :common:jia-common-starter (*)
+|              +--- project :oauth:jia-oauth-client-starter
+|              |    \--- runtimeClasspath
+|              \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
++--- org.springframework:spring-websocket:7.0.2
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    \--- org.springframework.boot:spring-boot-websocket:4.0.1
+|         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         \--- org.springframework.boot:spring-boot-starter-websocket:4.0.1 (*)
++--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
++--- org.springframework.boot:spring-boot-reactor-netty:4.0.1
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    \--- org.springframework.boot:spring-boot-starter-reactor-netty:4.0.1
+|         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         \--- org.springframework.boot:spring-boot-starter-webflux:4.0.1
+|              +--- project :chat:jia-chat-service (*)
+|              \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
++--- org.springframework.boot:spring-boot-servlet:4.0.1
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    \--- org.springframework.boot:spring-boot-webmvc:4.0.1 (*)
++--- org.springframework.boot:spring-boot-thymeleaf:4.0.1
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    \--- org.springframework.boot:spring-boot-starter-thymeleaf:4.0.1
+|         +--- runtimeClasspath
+|         +--- project :oauth:jia-oauth-server-starter (*)
+|         +--- project :user:jia-user-starter (*)
+|         \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
++--- org.springframework.boot:spring-boot-web-server:4.0.1
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    +--- org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.1 (*)
+|    +--- org.springframework.boot:spring-boot-starter-tomcat-runtime:4.0.1
+|    |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |    \--- org.springframework.boot:spring-boot-starter-tomcat:4.0.1
+|    |         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |         +--- org.springframework.boot:spring-boot-starter-webmvc:4.0.1 (*)
+|    |         \--- org.springframework.boot:spring-boot-starter-web:4.0.1 (*)
+|    +--- org.springframework.boot:spring-boot-tomcat:4.0.1
+|    |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |    +--- org.springframework.boot:spring-boot-starter-tomcat:4.0.1 (*)
+|    |    \--- org.springframework.boot:spring-boot-starter-tomcat-runtime:4.0.1 (*)
+|    +--- org.springframework.boot:spring-boot-reactor-netty:4.0.1 (*)
+|    \--- org.springframework.boot:spring-boot-webflux:4.0.1
+|         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         \--- org.springframework.boot:spring-boot-starter-webflux:4.0.1 (*)
++--- org.springframework.boot:spring-boot-webmvc:4.0.1 (*)
++--- org.springframework.security:spring-security-oauth2-core:7.0.2
+|    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    +--- org.springframework.security:spring-security-oauth2-authorization-server:7.0.2
+|    |    +--- runtimeClasspath
+|    |    +--- project :oauth:jia-oauth-service (*)
+|    |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |    \--- org.springframework.boot:spring-boot-security-oauth2-authorization-server:4.0.1
+|    |         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |         \--- org.springframework.boot:spring-boot-starter-oauth2-authorization-server:4.0.1 (*)
+|    +--- org.springframework.security:spring-security-oauth2-resource-server:7.0.2
+|    |    +--- project :oauth:jia-oauth-resource (*)
+|    |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |    +--- org.springframework.security:spring-security-oauth2-authorization-server:7.0.2 (*)
+|    |    \--- org.springframework.boot:spring-boot-security-oauth2-resource-server:4.0.1
+|    |         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |         \--- org.springframework.boot:spring-boot-starter-oauth2-resource-server:4.0.1
+|    |              +--- runtimeClasspath
+|    |              +--- project :oauth:jia-oauth-resource-starter (*)
+|    |              +--- project :chat:jia-chat-starter (*)
+|    |              \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    +--- org.springframework.security:spring-security-oauth2-client:7.0.2
+|    |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |    \--- org.springframework.boot:spring-boot-security-oauth2-client:4.0.1
+|    |         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    |         \--- org.springframework.boot:spring-boot-starter-oauth2-client:4.0.1
+|    |              +--- runtimeClasspath
+|    |              +--- project :oauth:jia-oauth-client-starter (*)
+|    |              \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|    \--- org.springframework.security:spring-security-oauth2-jose:7.0.2
+|         +--- project :oauth:jia-oauth-resource (*)
+|         +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+|         +--- org.springframework.boot:spring-boot-starter-oauth2-client:4.0.1 (*)
+|         +--- org.springframework.security:spring-security-oauth2-authorization-server:7.0.2 (*)
+|         \--- org.springframework.boot:spring-boot-security-oauth2-resource-server:4.0.1 (*)
+\--- org.springframework.security:spring-security-web:7.0.2
+     +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     +--- org.springframework.security:spring-security-oauth2-authorization-server:7.0.2 (*)
+     +--- org.springframework.boot:spring-boot-security:4.0.1
+     |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     |    +--- org.springframework.boot:spring-boot-starter-security:4.0.1
+     |    |    +--- runtimeClasspath
+     |    |    +--- project :user:jia-user-starter (*)
+     |    |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     |    |    +--- org.springframework.boot:spring-boot-starter-oauth2-resource-server:4.0.1 (*)
+     |    |    +--- org.springframework.boot:spring-boot-starter-oauth2-client:4.0.1 (*)
+     |    |    \--- org.springframework.boot:spring-boot-starter-oauth2-authorization-server:4.0.1 (*)
+     |    +--- org.springframework.boot:spring-boot-security-oauth2-authorization-server:4.0.1 (*)
+     |    +--- org.springframework.boot:spring-boot-security-oauth2-resource-server:4.0.1 (*)
+     |    \--- org.springframework.boot:spring-boot-security-oauth2-client:4.0.1 (*)
+     +--- org.springframework.security:spring-security-oauth2-resource-server:7.0.2 (*)
+     \--- org.springframework.security:spring-security-oauth2-client:7.0.2 (*)
+
+org.springframework:spring-webflux:7.0.8
+  Variant runtimeElements:
+    | Attribute Name                     | Provided     | Requested    |
+    |------------------------------------|--------------|--------------|
+    | org.gradle.status                  | release      |              |
+    | org.jetbrains.kotlin.platform.type | jvm          |              |
+    | org.gradle.category                | library      | library      |
+    | org.gradle.dependency.bundling     | external     | external     |
+    | org.gradle.jvm.environment         | standard-jvm | standard-jvm |
+    | org.gradle.jvm.version             | 17           | 21           |
+    | org.gradle.libraryelements         | jar          | jar          |
+    | org.gradle.usage                   | java-runtime | java-runtime |
+   Selection reasons:
+      - By constraint
+      - By conflict resolution: between versions 7.0.8 and 7.0.2
+
+org.springframework:spring-webflux:7.0.8
++--- org.springframework.ai:spring-ai-deepseek:2.0.0
+|    \--- org.springframework.ai:spring-ai-starter-model-deepseek:2.0.0
+|         +--- runtimeClasspath
+|         \--- project :chat:jia-chat-starter
+|              \--- runtimeClasspath
+\--- org.springframework.boot:spring-boot-webclient:4.1.0
+     +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-webclient:4.0.1)
+     |    \--- project :agent:jia-agent-api
+     |         +--- project :chat:jia-chat-service
+     |         |    \--- project :chat:jia-chat-starter (*)
+     |         +--- project :agent:jia-agent-service
+     |         |    +--- runtimeClasspath
+     |         |    +--- project :chat:jia-chat-starter (*)
+     |         |    \--- project :chat:jia-chat-service (*)
+     |         \--- project :agent:jia-agent-mapper
+     |              +--- runtimeClasspath
+     |              \--- project :agent:jia-agent-service (*)
+     \--- org.springframework.boot:spring-boot-starter-webclient:4.1.0
+          +--- org.springframework.ai:spring-ai-starter-model-deepseek:2.0.0 (*)
+          +--- org.springframework.ai:spring-ai-starter-model-openai:2.0.0
+          |    +--- runtimeClasspath
+          |    +--- project :chat:jia-chat-starter (*)
+          |    \--- project :chat:jia-chat-service (*)
+          \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (requested org.springframework.boot:spring-boot-starter-webclient:4.0.1) (*)
+
+org.springframework:spring-webflux:7.0.2 -> 7.0.8
++--- org.springframework.boot:spring-boot-dependencies:4.0.1
+|    \--- project :agent:jia-agent-api
+|         +--- project :chat:jia-chat-service
+|         |    \--- project :chat:jia-chat-starter
+|         |         \--- runtimeClasspath
+|         +--- project :agent:jia-agent-service
+|         |    +--- runtimeClasspath
+|         |    +--- project :chat:jia-chat-starter (*)
+|         |    \--- project :chat:jia-chat-service (*)
+|         \--- project :agent:jia-agent-mapper
+|              +--- runtimeClasspath
+|              \--- project :agent:jia-agent-service (*)
+\--- org.springframework.boot:spring-boot-webflux:4.0.1
+     +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     \--- org.springframework.boot:spring-boot-starter-webflux:4.0.1
+          +--- project :chat:jia-chat-service (*)
+          \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+
+org.springframework:spring-webmvc:7.0.2 (by constraint)
+  Variant runtimeElements:
+    | Attribute Name                     | Provided     | Requested    |
+    |------------------------------------|--------------|--------------|
+    | org.gradle.status                  | release      |              |
+    | org.jetbrains.kotlin.platform.type | jvm          |              |
+    | org.gradle.category                | library      | library      |
+    | org.gradle.dependency.bundling     | external     | external     |
+    | org.gradle.jvm.environment         | standard-jvm | standard-jvm |
+    | org.gradle.jvm.version             | 17           | 21           |
+    | org.gradle.libraryelements         | jar          | jar          |
+    | org.gradle.usage                   | java-runtime | java-runtime |
+
+org.springframework:spring-webmvc:7.0.2
++--- project :common:jia-common-service
+|    +--- project :common:jia-common-starter
+|    |    +--- runtimeClasspath
+|    |    +--- project :base:jia-base-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :dwz:jia-dwz-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :isp:jia-isp-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :material:jia-material-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :oauth:jia-oauth-resource-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :oauth:jia-oauth-server-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :sms:jia-sms-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :task:jia-task-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :user:jia-user-starter
+|    |    |    \--- runtimeClasspath
+|    |    +--- project :workflow:jia-workflow-starter
+|    |    |    \--- runtimeClasspath
+|    |    \--- project :chat:jia-chat-starter
+|    |         \--- runtimeClasspath
+|    +--- project :chat:jia-chat-service
+|    |    \--- project :chat:jia-chat-starter (*)
+|    +--- project :agent:jia-agent-service
+|    |    +--- runtimeClasspath
+|    |    +--- project :chat:jia-chat-starter (*)
+|    |    \--- project :chat:jia-chat-service (*)
+|    +--- project :kefu:jia-kefu-service
+|    |    \--- runtimeClasspath
+|    +--- project :point:jia-point-service
+|    |    \--- runtimeClasspath
+|    +--- project :economy:jia-economy-service
+|    |    +--- runtimeClasspath
+|    |    \--- project :agent:jia-agent-service (*)
+|    +--- project :wx:jia-wx-service
+|    |    \--- runtimeClasspath
+|    +--- project :base:jia-base-service
+|    |    \--- project :base:jia-base-starter (*)
+|    +--- project :dwz:jia-dwz-service
+|    |    \--- project :dwz:jia-dwz-starter (*)
+|    +--- project :isp:jia-isp-service
+|    |    \--- project :isp:jia-isp-starter (*)
+|    +--- project :material:jia-material-service
+|    |    \--- project :material:jia-material-starter (*)
+|    +--- project :oauth:jia-oauth-resource
+|    |    \--- project :oauth:jia-oauth-resource-starter (*)
+|    +--- project :oauth:jia-oauth-service
+|    |    \--- project :oauth:jia-oauth-server-starter (*)
+|    +--- project :sms:jia-sms-service
+|    |    \--- project :sms:jia-sms-starter (*)
+|    +--- project :task:jia-task-service
+|    |    \--- project :task:jia-task-starter (*)
+|    +--- project :user:jia-user-service
+|    |    \--- project :user:jia-user-starter (*)
+|    \--- project :workflow:jia-workflow-service
+|         \--- project :workflow:jia-workflow-starter (*)
++--- org.springframework.boot:spring-boot-dependencies:4.0.1
+|    \--- project :agent:jia-agent-api
+|         +--- project :chat:jia-chat-service (*)
+|         +--- project :agent:jia-agent-service (*)
+|         \--- project :agent:jia-agent-mapper
+|              +--- runtimeClasspath
+|              \--- project :agent:jia-agent-service (*)
+\--- org.springframework.boot:spring-boot-webmvc:4.0.1
+     +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     +--- org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.1
+     |    \--- org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1
+     |         \--- project :common:jia-common-starter (*)
+     +--- org.springframework.boot:spring-boot-starter-webmvc:4.0.1
+     |    +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     |    +--- org.springframework.boot:spring-boot-starter-oauth2-authorization-server:4.0.1
+     |    |    +--- project :oauth:jia-oauth-server-starter (*)
+     |    |    \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     |    \--- org.springframework.boot:spring-boot-starter-websocket:4.0.1
+     |         +--- runtimeClasspath
+     |         +--- project :sms:jia-sms-starter (*)
+     |         +--- project :chat:jia-chat-starter (*)
+     |         \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     \--- org.springframework.boot:spring-boot-starter-web:4.0.1
+          +--- project :common:jia-common-starter (*)
+          +--- project :oauth:jia-oauth-client-starter
+          |    \--- runtimeClasspath
+          \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+
+org.springframework:spring-websocket:7.0.2 (by constraint)
+  Variant runtimeElements:
+    | Attribute Name                 | Provided     | Requested    |
+    |--------------------------------|--------------|--------------|
+    | org.gradle.status              | release      |              |
+    | org.gradle.category            | library      | library      |
+    | org.gradle.dependency.bundling | external     | external     |
+    | org.gradle.jvm.version         | 17           | 21           |
+    | org.gradle.libraryelements     | jar          | jar          |
+    | org.gradle.usage               | java-runtime | java-runtime |
+    | org.gradle.jvm.environment     |              | standard-jvm |
+
+org.springframework:spring-websocket:7.0.2
++--- org.springframework.boot:spring-boot-dependencies:4.0.1
+|    \--- project :agent:jia-agent-api
+|         +--- project :chat:jia-chat-service
+|         |    \--- project :chat:jia-chat-starter
+|         |         \--- runtimeClasspath
+|         +--- project :agent:jia-agent-service
+|         |    +--- runtimeClasspath
+|         |    +--- project :chat:jia-chat-starter (*)
+|         |    \--- project :chat:jia-chat-service (*)
+|         \--- project :agent:jia-agent-mapper
+|              +--- runtimeClasspath
+|              \--- project :agent:jia-agent-service (*)
+\--- org.springframework.boot:spring-boot-websocket:4.0.1
+     +--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+     \--- org.springframework.boot:spring-boot-starter-websocket:4.0.1
+          +--- runtimeClasspath
+          +--- project :sms:jia-sms-starter
+          |    \--- runtimeClasspath
+          +--- project :chat:jia-chat-starter (*)
+          \--- org.springframework.boot:spring-boot-dependencies:4.0.1 (*)
+
+(*) - Indicates repeated occurrences of a transitive dependency subtree. Gradle expands transitive dependency subtrees only once per project; repeat occurrences only display the root of the subtree, followed by this annotation.
+
+A web-based, searchable dependency report is available by adding the --scan option.
+
+BUILD SUCCESSFUL in 34s
+5 actionable tasks: 1 executed, 4 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.3.1/userguide/configuration_cache_enabling.html
+GRADLE_EXECUTION_TIMING {"task_id": "WORKSPACE-MANAGEMENT-AUDIT-20261016", "elapsed_seconds": 35.138, "exit_code": 0, "dependency_cache_home": "/var/cache/cyf-gradle-local"}
+RESOURCE_OBSERVATION {"admission_gate": "disabled_by_user_2026-08-28", "disk_available_bytes": 6507892736, "gradle_label": "standard", "inode_available": 3101594, "mem_available_bytes": 2097385472, "swap_free_bytes": 1207537664, "telemetry_errors": []}
+EVIDENCE_STORED key=5a2fd5fd2ecf6363f0fe24a3faf4732eeec76d0a2867d2f06bfd193ace6d26f9 reusable=true

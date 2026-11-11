@@ -1,0 +1,13 @@
+# R01 R4 source-completion authorization
+
+API checkpoint `.worktrees/eco-v0-rent-application` `3bb9b762`/tree `c72f9740`; new companion worktree `.worktrees/eco-v0-rent-agent`, branch `codex/eco-v0-rent-agent`, starts existing ADR004 repository W10 `3b337d22ee4ec543b7223d45131bcbf8ee38d41d`/tree `3302bf9f6bbba665f8cd7c96fd9fa50346a1ea24`. Existing W10 worktree stays immutable and independently verifiable. No new repository in deployed app.
+
+Same original R01 critical writer owns both source-only worktrees for the bounded remaining implementation. Paid and free-reprovision HTTP DTOs are now frozen in `specs/agent-economy-marketplace/v0-hosting-http-contract.md`. Free reprovision adds durable accepted receipt/lookup state, CAS once, zero ledger movement, unchanged paid-through.
+
+## Concrete success path, not another disabled interface
+
+Implement the proposed trusted local `ensure/observe` readiness channel **inside the existing Agent runner**, not a new service/process-management platform. A narrowly permission-restricted Unix socket is permitted; exact canonical scope/Agent/binding/operation generation and managed profile association must match. Bound message sizes/timeouts, avoid generic shell execution/arbitrary path operations, preserve unrelated profiles and data. Readiness requires actual initialized execution engine plus successful canonical registration of that same generation, not online flag/file existence. Mismatched/unknown/timeout never means refundable failure. Only definitive no-effect initial failure refunds; free reprovision never posts/refunds.
+
+API adapter uses that concrete channel outside transactions, persists/rechecks readiness then captures under existing rent ledger contract. Default-off configuration, exact intended owner/generation, idempotent request/reconciliation. Runner-side source under `conf/codex-ws-agent/`: new managed-host module/tests, minimal profile/agent-client integration and config declarations. Do not modify W10 skill-install-manager/tests/workspace installer paths or broaden its protocol. No KMS/PoP/new web endpoint/general daemon framework.
+
+API owned hosting/economy-hosting paths per R3 checkpoint plus narrow readiness wire integration if necessary. No Web/main/root/foreign source edits. Author actual bounded runtime test sources but run only syntax/static checks until both clean commits are handed off for independent review and verification. No real socket/profile creation, installation, DB, process/service manipulation or deployment during source phase. Release permissions/configuration are described in handoff, not applied by writer.

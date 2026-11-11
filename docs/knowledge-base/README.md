@@ -1,85 +1,44 @@
-# CYF Knowledge Base
+# CYF 实现知识库入口
 
-## 当前入口与有效性（2026-10-08 局部收敛）
+导航核对：2026-11-10。**本库不是当前源码的实时镜像。** `BASELINE.yaml`及生成API清单仍是2026-08-15静态基线；后续局部增量仅证明节内日期/commit/覆盖范围。不得将“当前”旧标题、旧SILVER/runner描述或过去发布结果直接用于今天实施。
 
-本库是**按主题维护的架构/实现导航**，不是“全库已与最新源码同步”的声明。
+Agent先读[统一文档入口](../README.md)，需求与现行合同查[specs索引](../../specs/INDEX.md)，行为以本次固定源码与实际运行证据确认。原2026-09-06/14状态盘点是历史，不是今日交付台账。
 
-| 文档角色 | 使用方式 | 有效性边界 |
+## 按责任定位
+
+| 主题 | 入口 | 读取边界 |
 | --- | --- | --- |
-| 系统、前后端架构 | 查职责、组件和依赖；模块行为继续进入专题 | 未注明局部更新的内容沿用 BASELINE.yaml 的 2026-08-15 静态基线，须核对任务源码 |
-| 模块专题 | 已交付能力的稳定行为、状态、接口、安全边界 | 以节内核对日期/commit/覆盖范围为准，不推及全文 |
-| 需求/设计 SDD | 查目标、非目标和未完成合同 | 提案或 accepted 不等于已上线 |
-| 交接、验收、发布回执 | 追溯历史实现与发布 | 只证明所绑定版本和时间，不直接指导当前操作 |
-| 项目规则与运维 | 查开发、测试、发布和恢复方法 | 根 AGENTS.md 与现行发布策略优先于旧发布记录中的步骤 |
+| 系统、领域、组件关系 | [系统总览](01-system-overview.md) | 旧静态摘要，检查本次组件/模块边界 |
+| 仓库与构建 | [仓库/交付基线](02-repositories-build-and-delivery.md) | 发布执行改读[部署指南](../DEPLOYMENT.md)和根AGENTS，旧Flow-only和计时说明不生效 |
+| 后端分层 | [后端架构](03-backend-architecture.md) | 查真实源码，不能摘要代替调用链 |
+| API路由定位 | [API快速索引](04-backend-api-index.md) | 仍来自旧完整清单；实际接口查源码和接口规范 |
+| API逐方法旧清单 | [完整清单](04-backend-api-inventory.md) | 冻结旧来源参考；其中resource AuthenticationController原路径已不存在，不虚构替代链接 |
+| Vue/状态/路由 | [前端架构](05-frontend-architecture.md) | 局部已更新与其余旧基线分别读取 |
+| 聚义厅实现线索 | [端到端基线](06-juyiting-end-to-end.md) | 业务当前入口是[Runbook](../juyiting-runbook.md)，WEN/原生执行/回归看责任spec |
+| 数据/权限/租户 | [数据安全基线](07-data-security-and-boundaries.md) | 以环境租户、RB-1和本次源码核实，不能恢复旧迁移假设 |
+| 操作/测试参考 | [运维基线](08-operations-testing-and-change-guide.md) | 操作以[工具说明](../../ops/orchestration/README.md)和[部署指南](../DEPLOYMENT.md)为准 |
+| 静态数量 | [静态盘点](appendix-static-inventory.md) | 仅原基线统计，不代表今天文件/API数量 |
 
-**本轮已收口的样板**：聚义厅议事输入区 UI。组件职责见 [前端架构](05-frontend-architecture.md#hall-discussion-composition)，行为与回归边界见 [聚义厅专题](06-juyiting-end-to-end.md#hall-discussion-ui)。已核对源码 `75766a3b78c2e552ef448e924a813ed2dfc7ecd4`，并交叉核对历史 1.0.6 发布记录；没有执行新的线上验收，也没有更新全库生成基线。
+旧静态摘要保留作定向源码定位，已从默认项目当前检索移除；需要时按表阅读或显式全历史检索。不能因为默认不搜而认为旧基线已经刷新。
 
-后续已完成特性按 [文档收口流程](../sdd-workflow.md#feature-documentation-closeout)补入对应主题；不新建平行“最新架构”副本。当前行为入口不要求读者先遍历阶段计划。
-
-
-<!-- SDD delivery reconciliation 2026-09-06 -->
-## SDD 与交付新鲜度提示（2026-09-06）
-
-本次更新的是全量需求/任务/验收交付索引，不是全源码逆向重建。`BASELINE.yaml` 的 2026-08-15 静态生成日期和接口统计保持原值，不能将其当成 9月6日源码事实。当前交付状态请看 `docs/implementation/SDD_STATUS_20260906.md` 和 `specs/INDEX.md`；本库内容仍须结合实际源码核对。
-<!-- END SDD delivery reconciliation -->
-
-本目录原始内容来自代码的**静态逆向知识库**，后续按明确范围增量维护。它描述已在源码、构建配置、SQL 资源和运维资料中观察到的静态状态；不把设计草案或运行环境假设写成既成事实。实现细节以当前 checkout 的源码为准，知识条目对应的生成版本见 [`BASELINE.yaml`](BASELINE.yaml)。
-
-## 2026-10-16局部交付收口
-
-统一接口与图片技能现行实现见[聚义厅整体SDD](06-juyiting-end-to-end.md#image-skill-contract)，配置/发布/临时工具退役见[运维指南](08-operations-testing-and-change-guide.md)。固定三端源码与实际验收分开记录：修改、下载通过，OCR仍失败；未刷新全库静态盘点，也未宣称全部接口或技能验收通过。
-
-## 最短检索路径
-
-不要默认串行读取全部文档。先按问题选择一个入口，再用标题或关键词缩小范围：
-
-| 问题类型 | 首选入口 | 常用关键词 |
-| --- | --- | --- |
-| 系统组成、模块边界、跨仓关系 | [系统总览](01-system-overview.md) | `submodule`、`领域`、`边界` |
-| 构建、分支、集成交付 | [仓库、构建与交付](02-repositories-build-and-delivery.md) | `Gradle`、`npm`、`gitlink` |
-| 后端分层和领域依赖 | [后端架构与领域](03-backend-architecture.md) | `service`、`mapper`、`starter` |
-| Controller、HTTP/SSE 路由 | [API 快速索引](04-backend-api-index.md) | Controller 名、基础路径、领域名 |
-| API 的逐方法静态清单 | [API 完整清单](04-backend-api-inventory.md) | 方法名、mapping、权限 |
-| Vue、路由、store、HTTP 边界 | [前端架构](05-frontend-architecture.md) | `Vue`、`Pinia`、`useHttp` |
-| 聚义厅 Agent/任务/对话/场景链路 | [聚义厅端到端](06-juyiting-end-to-end.md) | `map`、`roster`、`SSE`、`scene` |
-| 数据、租户、安全和高风险边界 | [数据与安全](07-data-security-and-boundaries.md) | `JWT`、`API Key`、`schema`、`ACL` |
-| 测试、运维、改动落点 | [运维测试指南](08-operations-testing-and-change-guide.md) | `build`、`test`、`deploy` |
-| 文件数量和静态统计 | [静态盘点附录](appendix-static-inventory.md) | `count`、`inventory` |
-
-## 定向检索
+## 检索与新鲜度
 
 ```bash
-# 摘要知识搜索；默认跳过体积最大的 API 完整清单
+# 当前项目规则/合同；旧基线、历史计划/证据不进默认项目检索
+./docs/knowledge-base/kb-search.sh --project 'WEN|多轮|典籍'
+# 有明确追溯需求才扩为全历史
+./docs/knowledge-base/kb-search.sh --project-all 'SILVER|旧runner'
+# 传统知识库定向检索，默认不含巨大API完整清单
 ./docs/knowledge-base/kb-search.sh 'agent|roster|map'
-
-# 必要时搜索包括 API 完整清单在内的全部 Markdown
-./docs/knowledge-base/kb-search.sh --all 'auto-assign|PreAuthorize'
-
-# 只提取某个 Controller 的完整清单段落
 ./docs/knowledge-base/kb-search.sh --api AgentController
-
-# 检查 root 工作树、api/web SHA 与工作树、生成索引；发现异常时返回非零
+# 只读核对基线与本地checkout；STALE/DIRTY不等于线上故障
 ./docs/knowledge-base/kb-search.sh --freshness
 ```
 
-也可直接使用 `rg -n '<关键词>' docs/knowledge-base`。查接口时先看 API 快速索引，仅在需要逐方法 mapping 或权限时读取完整清单的对应段落。
+2026-11-10本轮只读检查仍显示根/API/Web为DIRTY，API/Web SHA与旧基线不同；该次检查未fetch远端、未重建全库API清单，不改BASELINE让结果虚假变绿。检查原件见[文档收口](../implementation/handoffs/DOCS-DISCOVERY-20261110.md)。
 
-## Agent 读取约定
+## 维护方式
 
-1. 先读本页，只加载与任务匹配的一至两个主题文件。
-2. 大文件优先用 `rg`、`--api` 或行区间读取，不整库拼接到上下文。
-3. 知识库只用于定位和建立当前状态假设；凡涉及实现、接口契约、行为、安全或验收结论，**无论基线是否匹配，都必须检查相关源码或运行证据**。
-4. 稳定规则、目录和路由放在文档前部；日期、SHA、扫描计数等易变信息集中在 [`BASELINE.yaml`](BASELINE.yaml) 或生成清单中。
-5. 先执行新鲜度检查；若落后或工作树不干净，应降低对摘要的信任，只更新受影响的知识条目，不得用摘要覆盖源码事实。
-6. 不在知识库复制密钥、生产配置值或大段源码。
+稳定知识只回写对应条目，注明真实源码、日期、覆盖范围与未验证项；新合同维护责任spec，历史测试/安装证据沿原路径保留。不要新增平行“最新架构”，不要把本文或新鲜度检查当权限/部署授权。完整流程见[SDD文档收口](../sdd-workflow.md#feature-documentation-closeout)。
 
-## Token 与缓存边界
-
-这种布局首先降低无关上下文和检索 token：稳定入口保持短小，详细清单按需读取，易变基线与稳定说明分离。它只能**间接**提高重复前缀的一致性，不能仅靠仓库文件保证模型侧 prompt cache 命中；实际命中还取决于调用方是否保持模型、工具定义、消息顺序和静态 prompt 前缀一致，并把动态内容放在后部。
-
-## 范围与方法
-
-- 覆盖根协调仓、`api/` 和 `web/` 两个子模块的实现、构建、资源、静态测试/脚本入口。
-- 接口清单由含 Spring MVC mapping 注解的 Controller 静态提取；动态路由、网关重写、条件 Bean 和运行时 feature flag 需以部署环境为准。
-- 未执行数据库迁移、未连接生产服务、未运行广泛 Gradle 构建；本知识库不是生产配置审计或安全认证结论。
-- 变更实现仍以子仓源码为准；知识库应在跨仓交付时随 submodule 指针更新。
+原导航内容保留在[原字节快照](../implementation/archive/2026-11-10-documentation/docs__knowledge-base__README.md)，按原README目录解释相对引用；原静态基线和API清单未改写。

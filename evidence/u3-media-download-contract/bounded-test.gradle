@@ -1,0 +1,7 @@
+allprojects {
+    tasks.withType(Test).configureEach {
+        maxParallelForks = 1
+        maxHeapSize = '256m'
+        jvmArgs '-XX:MaxMetaspaceSize=160m', '-Xss256k'
+    }
+}

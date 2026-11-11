@@ -1,0 +1,59 @@
+TAP version 13
+# Subtest: exact scoped composition enables native typed CHAT, not a fabricated READY
+ok 1 - exact scoped composition enables native typed CHAT, not a fabricated READY
+  ---
+  duration_ms: 3.455637
+  ...
+# Subtest: every identity dimension is exact; global defaults cannot enable unrelated managed CHAT
+ok 2 - every identity dimension is exact; global defaults cannot enable unrelated managed CHAT
+  ---
+  duration_ms: 0.529612
+  ...
+# Subtest: explicit disabled profile stays disabled
+ok 3 - explicit disabled profile stays disabled
+  ---
+  duration_ms: 1.502585
+  ...
+# Subtest: reject duplicate, extra fields and wildcard authorizations
+ok 4 - reject duplicate, extra fields and wildcard authorizations
+  ---
+  duration_ms: 0.895591
+  ...
+# Subtest: operator file permissions and symlink enforced
+ok 5 - operator file permissions and symlink enforced
+  ---
+  duration_ms: 4.836059
+  ...
+# Subtest: managed CHAT workdirs are private and identity-isolated
+not ok 6 - managed CHAT workdirs are private and identity-isolated
+  ---
+  duration_ms: 15.386636
+  location: '/home/isp/wsps/cyf/.worktrees/t05-t09-managed-chat-client-20261006/conf/codex-ws-agent/test/managed-chat-scope-config.test.mjs:52:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    '/tmp/managed-chat-cwd-test-Dvano7/6167745f3030303030303030303030303030303030303030303030303030303030303031'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '/tmp/managed-chat-cwd-test-Dvano7/6167745f3030303030303030303030303030303030303030303030303030303030303031'
+  actual: '/tmp/managed-chat-cwd-test-Dvano7/6167745f3030303030303030303030303030303030303030303030303030303030303031'
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/isp/wsps/cyf/.worktrees/t05-t09-managed-chat-client-20261006/conf/codex-ws-agent/test/managed-chat-scope-config.test.mjs:57:12)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 5
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 224.239978

@@ -5,6 +5,7 @@ sources:
     name: cyf_web_develop
     endpoint: https://gitee.com/chcbz/cyf-web-kit.git
     branch: develop
+    cloneDepth: 1
     triggerEvents:
       - push
     branchesFilter: ^develop$
@@ -14,7 +15,7 @@ sources:
 defaultWorkspace: repo_0
 stages:
   cloud_ci:
-    name: Frontend develop CI
+    name: Frontend resource-offloaded CI
     jobs:
       web_ci:
         name: Locked install, full tests, and Vite build
@@ -28,9 +29,24 @@ stages:
               image: build-steps-public-registry.cn-beijing.cr.aliyuncs.com/build-steps/alinux3:latest
               run: |-
                 set -eu
+                # Heavy execution only; external readiness and online acceptance stay on the control host.
+                phase() { printf 'CYF_FLOW_PHASE %s wall=%s monotonic=' "$1" "$(date -u +%FT%TZ)"; cut -d' ' -f1 /proc/uptime; }
+                phase runtime.begin
                 test "${CI_COMMIT_REF_NAME:-}" = develop
                 test -n "${CI_COMMIT_SHA:-}"
                 test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
+                # Release tests use the current tree. Asset/all profiles verify historical provenance.
+                case "${CYF_TEST_PROFILE:-release}" in
+                  release) ;;
+                  assets|all)
+                    if test "$(git rev-parse --is-shallow-repository)" = true; then
+                      git fetch --unshallow origin "$CI_COMMIT_REF_NAME"
+                    fi
+                    test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
+                    ;;
+                  *) echo 'Unsupported CYF_TEST_PROFILE' >&2; exit 1 ;;
+                esac
+                printf 'CYF_SOURCE_CHECKOUT shallow=%s commit=%s tree=%s\n' "$(git rev-parse --is-shallow-repository)" "$(git rev-parse HEAD)" "$(git rev-parse HEAD^{tree})"
                 manager=
                 if test -x /usr/bin/dnf; then manager=/usr/bin/dnf; elif test -x /usr/bin/yum; then manager=/usr/bin/yum; fi
                 test -n "$manager"
@@ -47,7 +63,7 @@ stages:
                   "$manager" -y --setopt=gpgcheck=1 --setopt=install_weak_deps=False install $missing_packages
                 fi
                 for tool in curl tar xz git; do command -v "$tool" >/dev/null; done
-                node_sha=df770b2a6f130ed8627c9782c988fda9669fa23898329a61a871e32f965e007d
+                node_sha=6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6
                 cache_root="$HOME/.cache/cyf-test-runtime"
                 node_archive="$cache_root/node-$node_sha"
                 mkdir -p "$cache_root"
@@ -57,9 +73,9 @@ stages:
                   downloaded=0
                   attempt=0
                   for node_url in \
-                    https://mirrors.aliyun.com/nodejs-release/v20.20.2/node-v20.20.2-linux-x64.tar.xz \
-                    https://cdn.npmmirror.com/binaries/node/v20.20.2/node-v20.20.2-linux-x64.tar.xz \
-                    https://nodejs.org/dist/v20.20.2/node-v20.20.2-linux-x64.tar.xz
+                    https://mirrors.aliyun.com/nodejs-release/v24.22.1/node-v24.22.1-linux-x64.tar.xz \
+                    https://cdn.npmmirror.com/binaries/node/v24.22.1/node-v24.22.1-linux-x64.tar.xz \
+                    https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-x64.tar.xz
                   do
                     attempt=$((attempt + 1))
                     partial="$node_archive.$$.${attempt}.partial"
@@ -73,17 +89,24 @@ stages:
                   done
                   test "$downloaded" = 1
                 fi
-                node_root="$PWD/_cyf_node20"
+                node_root="$PWD/_cyf_node24"
                 test ! -e "$node_root"
                 mkdir "$node_root"
                 tar -xJf "$node_archive" -C "$node_root"
-                export PATH="$node_root/node-v20.20.2-linux-x64/bin:$PATH"
-                test "$(node --version)" = v20.20.2
+                export PATH="$node_root/node-v24.22.1-linux-x64/bin:$PATH"
+                test "$(node --version)" = v24.22.1
+                phase runtime.end
+                phase install.begin
                 npm ci --include=dev --registry=https://registry.npmmirror.com --replace-registry-host=npmjs --fetch-retries=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=30000 --fetch-timeout=120000 --no-audit --no-fund
                 test -x node_modules/.bin/vite
                 test -f node_modules/vite/bin/vite.js
+                phase install.end
+                phase test.begin
                 npm run test
+                phase test.end
+                phase build.begin
                 npm run build
+                phase build.end
                 test -d dist
                 test -f mochawesome-report/mochawesome.html
                 test -f mochawesome-report/mochawesome.json
@@ -114,6 +137,7 @@ stages:
                 console.log('CYF_WEB_ARTIFACT '+JSON.stringify({pipeline:m.pipeline_id,run:m.run_id,commit:m.commit,files:files.length}));
 
                 CYF_MANIFEST
+                phase export.end
           upload_artifact:
             name: Upload same-run site and test report
             step: ArtifactUpload

@@ -1,0 +1,79 @@
+{
+  "observedAt": "2026-11-06T03:32:59.483809+00:00",
+  "database": "jia",
+  "readOnly": true,
+  "consistentBackup": false,
+  "scope": "aggregate only; not a fixed migration selection or production datasource attestation",
+  "queries": {
+    "walletCurrencies": "SELECT currency, COUNT(*) FROM economy_account GROUP BY currency",
+    "skillOrderStates": "SELECT status, COUNT(*) FROM economy_skill_order GROUP BY status",
+    "hostingStates": "SELECT status, COUNT(*) FROM economy_hosting_lease GROUP BY status",
+    "taskStates": "SELECT reward_status, COUNT(*) FROM agent_task_meta GROUP BY reward_status",
+    "missingTaskScope": "SELECT COUNT(*) FROM agent_task_meta WHERE tenant_id IS NULL OR client_id IS NULL OR owner_jiacn IS NULL OR tenant_id='' OR client_id='' OR owner_jiacn=''",
+    "assignedFacts": "SELECT COUNT(*) FROM agent_task_meta m WHERE m.reward_status IN ('assigned','running','reviewing','blocked','failed','completed') OR m.assigned_agent_id IS NOT NULL OR m.assigned_at IS NOT NULL OR EXISTS(SELECT 1 FROM agent_task_execution_grant g WHERE g.tenant_id=m.tenant_id AND g.client_id=m.client_id AND g.owner_jiacn=m.owner_jiacn AND g.task_id=m.task_id) OR EXISTS(SELECT 1 FROM agent_task_member x WHERE x.tenant_id=m.tenant_id AND x.client_id=m.client_id AND x.owner_jiacn=m.owner_jiacn AND x.task_id=m.task_id AND x.member_status IN ('accepted','left','completed'))"
+  },
+  "results": {
+    "walletCurrencies": [
+      [
+        "SILVER",
+        "314"
+      ]
+    ],
+    "skillOrderStates": [
+      [
+        "ACTIVE",
+        "14"
+      ]
+    ],
+    "hostingStates": [
+      [
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "REFUNDED",
+        "1"
+      ]
+    ],
+    "taskStates": [
+      [
+        "archived",
+        "3"
+      ],
+      [
+        "assigned",
+        "50"
+      ],
+      [
+        "cancelled",
+        "18"
+      ],
+      [
+        "completed",
+        "34"
+      ],
+      [
+        "open",
+        "3"
+      ],
+      [
+        "reviewing",
+        "6"
+      ],
+      [
+        "running",
+        "7"
+      ]
+    ],
+    "missingTaskScope": [
+      [
+        "0"
+      ]
+    ],
+    "assignedFacts": [
+      [
+        "108"
+      ]
+    ]
+  }
+}

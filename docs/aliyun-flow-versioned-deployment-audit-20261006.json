@@ -1,0 +1,259 @@
+{
+  "verifiedAt": "2026-10-06T12:45:11.769380+00:00",
+  "scope": "read-only live Flow configuration, latest run details and local systemd scheduler",
+  "policy": "develop verification only; explicit versioned deployment",
+  "pipelines": [
+    {
+      "queriedAt": "2026-10-06T12:44:05.381Z",
+      "pipeline": "5260799",
+      "name": "cyf-api-release",
+      "flowSha256": "a9f1a63633d75adc2c56e94073dfab4f7c1baa7dc83743c2e5fdc41f42afd33a",
+      "flowKeys": [
+        "name",
+        "variableGroups",
+        "sources",
+        "defaultWorkspace",
+        "stages"
+      ],
+      "rules": [
+        {
+          "path": "sources.repo_0.type",
+          "value": "git"
+        },
+        {
+          "path": "sources.repo_0.branch",
+          "value": "develop"
+        },
+        {
+          "path": "sources.repo_0.triggerEvents",
+          "value": [
+            "push"
+          ]
+        }
+      ],
+      "sourceRules": [
+        {
+          "path": "sources.0.data.branch",
+          "value": "develop"
+        },
+        {
+          "path": "sources.0.data.events",
+          "value": [
+            "push"
+          ]
+        },
+        {
+          "path": "sources.0.type",
+          "value": "git"
+        }
+      ],
+      "activeRuns": [],
+      "listHasMore": true,
+      "latest": {
+        "id": 114,
+        "status": "SUCCESS",
+        "sources": [
+          {
+            "branch": "develop",
+            "commits": [
+              "fba46c6073d5366633d94756cefc78271ad4107e"
+            ]
+          }
+        ],
+        "stages": [
+          {
+            "name": "Backend develop CI",
+            "jobs": [
+              {
+                "name": "Changed-scope tests and bootJar",
+                "status": "SUCCESS",
+                "actions": [
+                  {
+                    "type": "LogPipelineJobRun",
+                    "disable": false,
+                    "hasDeployOrder": false
+                  },
+                  {
+                    "type": "GetPipelineArtifactUrl",
+                    "disable": false,
+                    "hasDeployOrder": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Automatic backend deployment",
+            "jobs": [
+              {
+                "name": "Install same-run artifact and check health",
+                "status": "SUCCESS",
+                "actions": [
+                  {
+                    "type": "GetVMDeployOrder",
+                    "disable": false,
+                    "hasDeployOrder": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "queriedAt": "2026-10-06T12:44:06.587Z",
+      "pipeline": "4403172",
+      "name": "cyf-web-release",
+      "flowSha256": "23743de5835db6bc98864ebd792c26cfd5d7e0ed169902508dd750e51cc420aa",
+      "flowKeys": [
+        "name",
+        "sources",
+        "defaultWorkspace",
+        "stages"
+      ],
+      "rules": [
+        {
+          "path": "sources.repo_0.type",
+          "value": "gitee"
+        },
+        {
+          "path": "sources.repo_0.branch",
+          "value": "develop"
+        },
+        {
+          "path": "sources.repo_0.triggerEvents",
+          "value": [
+            "push"
+          ]
+        },
+        {
+          "path": "sources.repo_0.certificate.type",
+          "value": "serviceConnection"
+        }
+      ],
+      "sourceRules": [
+        {
+          "path": "sources.0.data.branch",
+          "value": "develop"
+        },
+        {
+          "path": "sources.0.data.events",
+          "value": [
+            "push"
+          ]
+        },
+        {
+          "path": "sources.0.type",
+          "value": "giteeGit"
+        }
+      ],
+      "activeRuns": [],
+      "listHasMore": true,
+      "latest": {
+        "id": 172,
+        "status": "SUCCESS",
+        "sources": [
+          {
+            "branch": "develop",
+            "commits": [
+              "fe6d4d542079bdf07f5b5fcf2ff96e7f217be33e"
+            ]
+          }
+        ],
+        "stages": [
+          {
+            "name": "Frontend develop CI",
+            "jobs": [
+              {
+                "name": "Locked install, full tests, and Vite build",
+                "status": "SUCCESS",
+                "actions": [
+                  {
+                    "type": "LogPipelineJobRun",
+                    "disable": false,
+                    "hasDeployOrder": false
+                  },
+                  {
+                    "type": "GetPipelineArtifactUrl",
+                    "disable": false,
+                    "hasDeployOrder": false
+                  }
+                ]
+              },
+              {
+                "name": "JavaScript code scan",
+                "status": "SUCCESS",
+                "actions": [
+                  {
+                    "type": "LogPipelineJobRun",
+                    "disable": false,
+                    "hasDeployOrder": false
+                  },
+                  {
+                    "type": "GetPipelineScanReportUrl",
+                    "disable": false,
+                    "hasDeployOrder": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Automatic frontend deployment",
+            "jobs": [
+              {
+                "name": "Install same-run dist",
+                "status": "SUCCESS",
+                "actions": [
+                  {
+                    "type": "GetVMDeployOrder",
+                    "disable": false,
+                    "hasDeployOrder": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "timers": [
+    {
+      "unit": "cyf-flow-backend-nightly.timer",
+      "activeState": "active",
+      "unitFileState": "enabled",
+      "serviceActiveState": "inactive",
+      "nextTriggerAsiaShanghai": "2026-10-07T00:00:00+08:00"
+    },
+    {
+      "unit": "cyf-flow-frontend-major-nightly.timer",
+      "activeState": "active",
+      "unitFileState": "enabled",
+      "serviceActiveState": "inactive",
+      "nextTriggerAsiaShanghai": "2026-10-07T00:30:00+08:00"
+    }
+  ],
+  "installedScheduler": {
+    "path": "/usr/local/sbin/cyf-flow-release-schedule",
+    "sha256": "1cf8b6acf82644b7688e9711caa97067582f9e4358c84748988e5a69fe7d2ec0",
+    "behavior": "resolve latest develop and start existing release pipeline when pending commit exists",
+    "matchesWorkspaceController": true
+  },
+  "findings": [
+    "Both live pipelines still have develop/push source triggers and deployment stages; latest runs include a deployment order action.",
+    "Both legacy nightly timers remain active/enabled and launch the unversioned latest-develop controller."
+  ],
+  "limitations": [
+    "No deployment-order/host/online artifact checks performed; latest run success is not asserted as online verification.",
+    "Run list checks covered first 10 records per pipeline; both responses have more pages, so empty activeRuns is not a complete absence-of-active-runs assertion.",
+    "No cloud writes, Run starts/cancellations or systemd modifications performed."
+  ],
+  "nextAction": "With explicit service-control authorization, retire the two legacy nightly timers; prepare fixed readback-verified pipeline candidates that separate develop verification from versioned deployment. Recheck all active runs before any shared configuration write.",
+  "correction": {
+    "at": "2026-10-06T12:59:41.303Z",
+    "backendCurrentConfig": "Already had no deploy stage at the original config hash; historical Run114 deployment did not imply current deployment configuration.",
+    "supersededCurrentStateBy": "docs/aliyun-flow-versioned-deployment-switch-20261006.json"
+  }
+}

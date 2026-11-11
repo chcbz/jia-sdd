@@ -1,0 +1,30 @@
+{
+  "task": "API-STARTUP-60S-20261022",
+  "candidateCommit": "2c6f894419c2495b48360460b325af1f3f75ae56",
+  "candidateTree": "0059c1ded11d32d96e8a584d08e402481183418d",
+  "baseCommit": "7841057b057c012cfa203fb658c1043500be055e",
+  "worktree": "/home/isp/wsps/worktrees/api-startup-60s-20261022",
+  "checks": {
+    "diffCheck": "PASS",
+    "localProbe": "PASS: exact candidate six content classes + renamed baseline; no Spring, DB or application JAR build",
+    "cloudTests": "NOT_RUN",
+    "validateLayering": "NOT_RUN",
+    "startup60Seconds": "NOT_VERIFIED",
+    "deployment": "NOT_PERFORMED"
+  },
+  "probeLimits": [
+    "alternating in-process warm-up and CPU contention confound timing; not a production startup benchmark",
+    "local javac of six content classes only; not a Gradle build or formal application acceptance",
+    "no runtime tunings, lazy initialization, integrity bypass or production writes"
+  ],
+  "futureFlowSelector": [
+    ":chat:jia-chat-service:test --tests cn.jia.chat.archive.content.ArchiveManifestLoaderTest --tests cn.jia.chat.archive.config.ArchiveBootstrapTest --tests cn.jia.chat.archive.service.ArchiveContentImporterTest",
+    "validateLayering"
+  ],
+  "evidenceSha256": {
+    "evidence/api-startup-60s-20261022/Probe.java": "e83a3425b3b3abb300e35cce32556eada81ecf9f03f794cb1c06998b754ccd34",
+    "evidence/api-startup-60s-20261022/manifest-probe.txt": "ac980e81a92f09d6a8d677b1d83f2e4a05f11618e7471d79a08ba42b3b24b905",
+    "evidence/api-startup-60s-20261022/candidate.patch": "641b825fd0168d5f7a3b9b1b091c059814f8b87e4ebcdeadd6480ac8e79ad0a8",
+    "evidence/api-startup-60s-20261022/baseline-timings.json": "7d3b8ffcb3570ff76e18cee0a00cbf8e9a9f895c75899e30b63c876d8a02178b"
+  }
+}

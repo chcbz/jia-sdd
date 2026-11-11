@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-07T05:10:15.973657+00:00",
+  "requestId": "mmd-typed-request_7fb9a3ecd57d607565a879d20733add3a00d1cb7",
+  "actionRequestId": "act_3a788789068755ca6d5aae2657126230d3359c9a",
+  "rootCause": "pwe_ + 64 hexadecimal full intent produces 68 characters; chat_step_execution_link.execution_id is VARCHAR(64)",
+  "observed": "Spring DataIntegrityViolationException/MySQL Data too long for column execution_id at insertLink, before execution admission transaction commit",
+  "remediation": "pwe_ + first 60 hex characters (240 bits) yields exactly64; full intentId and runId/immutable binding retained; no database schema migration/DML",
+  "commit": "ae6eca6e778dd0381d01ed8221e6ea220b762be3",
+  "tree": "95ece0268baf6fea54a58738eb3eea8dd09834a5",
+  "testsAdded": [
+    "executionIdentityFitsDurableSqlColumnWithoutChangingFullIntentOrReplay",
+    "actualJdbcLinkRejectsOldOversizedIdentityAndPersistsNewIdentity"
+  ],
+  "testsStatus": "NOT_RUN_LOCAL; await formal Flow",
+  "requestReplay": "NOT_ALLOWED; keep original admitted action for durable recovery after actual release",
+  "scope": "only ChatActionExecutionService and regression tests; no ACL/grant/transaction/provider or schema relaxation"
+}

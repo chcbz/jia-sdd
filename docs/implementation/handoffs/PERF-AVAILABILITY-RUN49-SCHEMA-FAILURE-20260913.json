@@ -1,0 +1,162 @@
+{
+  "recordedAt": "2026-09-13T17:33:56.347478+08:00",
+  "flow": {
+    "queriedAt": "2026-09-13T09:31:51.275Z",
+    "org": "5fb7d76ee6f9d07f148529c7",
+    "pipeline": "5260799",
+    "run": 49,
+    "status": "FAIL",
+    "sources": [
+      {
+        "repo": "https://gitee.com/chcbz/jia.git",
+        "branch": "develop",
+        "commits": [
+          "4be112cdde8397590760292eb04eb823ad88299d",
+          "98cd2ac0d0ce6acb93074c7780628c6f3dd766ac"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "name": "Backend develop CI",
+        "jobs": [
+          {
+            "id": 514669742,
+            "name": "Changed-scope tests and bootJar",
+            "status": "SUCCESS",
+            "actions": [
+              {
+                "type": "LogPipelineJobRun",
+                "disabled": false
+              },
+              {
+                "type": "GetPipelineArtifactUrl",
+                "disabled": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Automatic backend deployment",
+        "jobs": [
+          {
+            "id": 514669743,
+            "name": "Install same-run artifact and check health",
+            "status": "FAIL",
+            "actions": [
+              {
+                "type": "GetVMDeployOrder",
+                "disabled": false,
+                "deployOrderId": 69528306
+              },
+              {
+                "type": "RetryPipelineJobRun",
+                "disabled": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "installedRecord": {
+    "backup": "/var/lib/cyf-api-flow/backups/20260913T091327Z-dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933-3596526.jar",
+    "candidate_sha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+    "candidate_stop_rc": 0,
+    "phase": "installed",
+    "previous_sha256": "20625639587936a543bdbe1fdadef65f4d478bebe0227475937ae2b85105716e",
+    "receipt_sha256": "780b4bc59ac2481dbae3ab719ddbc3b5ad1772bdebcb8b295c2f271550746060",
+    "recovery": "not_required",
+    "run_id": "49",
+    "schema_version": 2,
+    "source_commit_sha": "4be112cdde8397590760292eb04eb823ad88299d",
+    "source_tree_sha": "534c185dce7d07f90333b242120da5284d324ff5",
+    "status": "installed",
+    "ticket_sha256": "cf8adf2722c1482903c1b3a9269246deed84575cdd360ddc9fbf63a4c3231e33",
+    "timestamp": "20260913T091327Z"
+  },
+  "failure": {
+    "f06_schema": "failed",
+    "result": {
+      "action": "inspect the preserved runner report/stdout/stderr and durable table metadata; do not drop tables or rerun this same Flow release automatically",
+      "activation_claim": "schema_only_not_feature_activation",
+      "error": "created_table_not_equivalent",
+      "feature": "M4-F06-additive-schema",
+      "finished_at": "2026-09-13T09:31:24.407226Z",
+      "jar_sha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+      "lock_order": [
+        "flow_coordinator_lock",
+        "api_release_lock",
+        "f06_runner_file_lock",
+        "f06_mysql_named_lock"
+      ],
+      "pipeline_id": "5260799",
+      "prerequisites": [],
+      "receipt_sha256": "780b4bc59ac2481dbae3ab719ddbc3b5ad1772bdebcb8b295c2f271550746060",
+      "run_id": "49",
+      "runner_exit_code": 1,
+      "runner_path": "/usr/local/sbin/cyf-api-additive-schema",
+      "runner_report": {
+        "binding": {
+          "jar_sha256": "dcab9c7105d5b9d30a8c3f37642dbb06259eb1b2a16a9b9f00ab574399cc3933",
+          "organization": "5fb7d76ee6f9d07f148529c7",
+          "pipeline": "5260799",
+          "receipt_sha256": "780b4bc59ac2481dbae3ab719ddbc3b5ad1772bdebcb8b295c2f271550746060",
+          "run": "49",
+          "source_commit": "4be112cdde8397590760292eb04eb823ad88299d",
+          "source_tree": "534c185dce7d07f90333b242120da5284d324ff5"
+        },
+        "candidate": {
+          "resource_inner": "db/agent-task-artifact-outcome-f06.sql",
+          "resource_outer": "BOOT-INF/lib/jia-agent-mapper-1.1.2-SNAPSHOT.jar",
+          "sql_sha256": "77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc",
+          "statement_policy": "exact_create_table_if_not_exists_only",
+          "tables": [
+            "agent_task_artifact_outcome",
+            "agent_task_artifact_outcome_decision"
+          ]
+        },
+        "error": "created_table_not_equivalent",
+        "failed_table": "agent_task_artifact_outcome",
+        "lock_order": [
+          "f06_runner_file_lock",
+          "f06_mysql_named_lock"
+        ],
+        "operation": "apply",
+        "schema_version": 1,
+        "status": "failed",
+        "tables": {
+          "agent_task_artifact_outcome": {
+            "mismatches": [
+              "check_clause:chk_artifact_outcome_state",
+              "check_clause:chk_artifact_outcome_supersession",
+              "columns",
+              "schema_charset",
+              "table_collation"
+            ],
+            "status": "create_result_drift"
+          },
+          "agent_task_artifact_outcome_decision": {
+            "status": "pending_create"
+          }
+        },
+        "transaction_model": "mysql_ddl_autocommit_per_create_no_rollback_or_drop"
+      },
+      "schema_version": 1,
+      "source_commit_sha": "4be112cdde8397590760292eb04eb823ad88299d",
+      "source_tree_sha": "534c185dce7d07f90333b242120da5284d324ff5",
+      "sql_sha256": "77ed9db141c9eedce5e357ebd562c02e060a6cdc238825ade1f60bc5c9dbe9cc",
+      "started_at": "2026-09-13T09:29:57.412397Z",
+      "status": "failed",
+      "stderr_path": "/var/lib/cyf-api-flow/schema-results/run-49.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_path": "/var/lib/cyf-api-flow/schema-results/run-49.stdout",
+      "stdout_sha256": "32571c5d43cdc2aad12c663ceed046b94a7bd9d36efe1448000fd572214fec23",
+      "transaction_model": "installed_record_then_mysql_ddl_autocommit_no_rollback_or_drop"
+    }
+  },
+  "appHealth": "HTTP200 UP at17:30:29+08:00",
+  "coordination": "Direct thread notification failed twice due local MCP transport unavailable; use this shared handoff/sole runtime ledger; no blind retry.",
+  "nextAction": "F06 schema Owner to attribute exact metadata normalization/dialect differences using read-only report/metadata. Do not drop tables or rerun same Flow. Healthy application stays installed; no unrelated runtime control or manual DDL from availability task."
+}

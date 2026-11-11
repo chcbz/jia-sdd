@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cn.jia.agent.contract.WorkspaceManagementAuditTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-16T06:59:14.135Z" hostname="iZwz9j3ip2unzhwij0bs30Z" time="35.943">
+  <properties/>
+  <testcase name="remainingBoundariesOnPrivateMySqlAndRealResourceSecurity()" classname="cn.jia.agent.contract.WorkspaceManagementAuditTest" time="35.623">
+    <failure message="java.util.concurrent.ExecutionException: org.springframework.dao.DuplicateKeyException: &#10;### Error updating database.  Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'&#10;### The error may exist in cn/jia/agent/mapper/PersonalWorkspaceOperationMapper.java (best guess)&#10;### The error may involve cn.jia.agent.mapper.PersonalWorkspaceOperationMapper.insert-Inline&#10;### The error occurred while setting parameters&#10;### SQL: INSERT INTO agent_personal_workspace_operation  ( operation_id, owner_jiacn, operation_type, idempotency_key, request_hash, state,    created_at,  create_time, update_time, tenant_id, client_id )  VALUES (  ?, ?, ?, ?, ?, ?,    ?,  ?, ?, ?, ?  )&#10;### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'&#10;; Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'" type="java.util.concurrent.ExecutionException">java.util.concurrent.ExecutionException: org.springframework.dao.DuplicateKeyException: 
+### Error updating database.  Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'
+### The error may exist in cn/jia/agent/mapper/PersonalWorkspaceOperationMapper.java (best guess)
+### The error may involve cn.jia.agent.mapper.PersonalWorkspaceOperationMapper.insert-Inline
+### The error occurred while setting parameters
+### SQL: INSERT INTO agent_personal_workspace_operation  ( operation_id, owner_jiacn, operation_type, idempotency_key, request_hash, state,    created_at,  create_time, update_time, tenant_id, client_id )  VALUES (  ?, ?, ?, ?, ?, ?,    ?,  ?, ?, ?, ?  )
+### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'
+; Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'
+	at java.base/java.util.concurrent.FutureTask.report(FutureTask.java:122)
+	at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:191)
+	at cn.jia.agent.contract.WorkspaceManagementAuditTest.race(WorkspaceManagementAuditTest.java:304)
+	at cn.jia.agent.contract.WorkspaceManagementAuditTest.remainingBoundariesOnPrivateMySqlAndRealResourceSecurity(WorkspaceManagementAuditTest.java:259)
+Caused by: org.springframework.dao.DuplicateKeyException: 
+### Error updating database.  Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'
+### The error may exist in cn/jia/agent/mapper/PersonalWorkspaceOperationMapper.java (best guess)
+### The error may involve cn.jia.agent.mapper.PersonalWorkspaceOperationMapper.insert-Inline
+### The error occurred while setting parameters
+### SQL: INSERT INTO agent_personal_workspace_operation  ( operation_id, owner_jiacn, operation_type, idempotency_key, request_hash, state,    created_at,  create_time, update_time, tenant_id, client_id )  VALUES (  ?, ?, ?, ?, ?, ?,    ?,  ?, ?, ?, ?  )
+### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'
+; Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'
+	at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:252)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:95)
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:362)
+	at jdk.proxy3/jdk.proxy3.$Proxy88.insert(Unknown Source)
+	at org.mybatis.spring.SqlSessionTemplate.insert(SqlSessionTemplate.java:239)
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:59)
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:156)
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:93)
+	at jdk.proxy3/jdk.proxy3.$Proxy91.insert(Unknown Source)
+	at cn.jia.agent.dao.impl.PersonalWorkspaceDaoImpl.insertOperation(PersonalWorkspaceDaoImpl.java:103)
+	at cn.jia.agent.service.impl.PersonalWorkspaceWriteService.claim(PersonalWorkspaceWriteService.java:42)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:370)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:118)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)
+	at cn.jia.agent.service.impl.PersonalWorkspaceWriteService$$SpringCGLIB$$0.claim(&lt;generated&gt;)
+	at cn.jia.agent.service.impl.PersonalWorkspaceServiceImpl.create(PersonalWorkspaceServiceImpl.java:105)
+	at cn.jia.agent.contract.WorkspaceManagementAuditTest.lambda$remainingBoundariesOnPrivateMySqlAndRealResourceSecurity$11(WorkspaceManagementAuditTest.java:259)
+	at cn.jia.agent.contract.WorkspaceManagementAuditTest.attempt(WorkspaceManagementAuditTest.java:303)
+	at cn.jia.agent.contract.WorkspaceManagementAuditTest.lambda$remainingBoundariesOnPrivateMySqlAndRealResourceSecurity$12(WorkspaceManagementAuditTest.java:259)
+	at cn.jia.agent.contract.WorkspaceManagementAuditTest.lambda$race$15(WorkspaceManagementAuditTest.java:304)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '0-client-a-owner-a-CREATE-same-concurrent-key' for key 'agent_personal_workspace_operation.uk_pws_operation_key'
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.execute(ClientPreparedStatement.java:383)
+	at org.apache.ibatis.executor.statement.PreparedStatementHandler.update(PreparedStatementHandler.java:48)
+	at org.apache.ibatis.executor.statement.RoutingStatementHandler.update(RoutingStatementHandler.java:75)
+	at org.apache.ibatis.executor.SimpleExecutor.doUpdate(SimpleExecutor.java:50)
+	at org.apache.ibatis.executor.BaseExecutor.update(BaseExecutor.java:117)
+	at org.apache.ibatis.executor.CachingExecutor.update(CachingExecutor.java:76)
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.update(DefaultSqlSession.java:197)
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.insert(DefaultSqlSession.java:184)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:348)
+	... 23 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.16 
+]]></system-out>
+  <system-err><![CDATA[2026-10-16T06:59:23.239882541Z Test worker ERROR Log4j API could not find a logging provider.
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+Oct 16, 2026 2:59:33 PM org.apache.coyote.AbstractProtocol init
+INFO: Initializing ProtocolHandler ["http-nio-127.0.0.1-auto-1"]
+Oct 16, 2026 2:59:33 PM org.apache.catalina.core.StandardService startInternal
+INFO: Starting service [Tomcat]
+Oct 16, 2026 2:59:33 PM org.apache.catalina.core.StandardEngine startInternal
+INFO: Starting Servlet engine: [Apache Tomcat/11.0.15]
+Oct 16, 2026 2:59:33 PM org.apache.catalina.core.ApplicationContext log
+INFO: Initializing Spring DispatcherServlet 'dispatcher'
+Oct 16, 2026 2:59:33 PM org.apache.coyote.AbstractProtocol start
+INFO: Starting ProtocolHandler ["http-nio-127.0.0.1-auto-1-39187"]
+Oct 16, 2026 2:59:48 PM org.apache.coyote.AbstractProtocol pause
+INFO: Pausing ProtocolHandler ["http-nio-127.0.0.1-auto-1-39187"]
+Oct 16, 2026 2:59:48 PM org.apache.catalina.core.StandardService stopInternal
+INFO: Stopping service [Tomcat]
+Oct 16, 2026 2:59:48 PM org.apache.catalina.core.ApplicationContext log
+INFO: Destroying Spring FrameworkServlet 'dispatcher'
+Oct 16, 2026 2:59:48 PM org.apache.catalina.loader.WebappClassLoaderBase checkThreadLocalsForLeaks
+WARNING: You need to add "--add-opens=java.base/java.lang=ALL-UNNAMED" to the JVM command line arguments to enable ThreadLocal memory leak detection. Alternatively, you can suppress this warning by disabling ThreadLocal memory leak detection.
+Oct 16, 2026 2:59:48 PM org.apache.catalina.loader.WebappClassLoaderBase clearReferencesRmiTargets
+WARNING: You need to add "--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED" to the JVM command line arguments to enable RMI Target memory leak detection. Alternatively, you can suppress this warning by disabling RMI Target memory leak detection.
+Oct 16, 2026 2:59:48 PM org.apache.coyote.AbstractProtocol stop
+INFO: Stopping ProtocolHandler ["http-nio-127.0.0.1-auto-1-39187"]
+Oct 16, 2026 2:59:48 PM org.apache.coyote.AbstractProtocol destroy
+INFO: Destroying ProtocolHandler ["http-nio-127.0.0.1-auto-1-39187"]
+]]></system-err>
+</testsuite>

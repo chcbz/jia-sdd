@@ -1,0 +1,124 @@
+name: cyf-api-kit-ci
+sources:
+  repo_0:
+    type: gitee
+    name: jia_24b6
+    endpoint: https://gitee.com/chcbz/jia.git
+    branch: develop
+    triggerEvents: []
+    branchesFilter: develop
+    certificate:
+      type: serviceConnection
+      serviceConnection: vyz9pea3uni64twx
+stages:
+  cloud_ci:
+    name: Pinned backend cold validation - NO DEPLOY
+    jobs:
+      api_ci:
+        name: Targeted tests and bootJar with final required gate
+        runsOn: public/cn-beijing
+        timeoutMinutes: 60
+        steps:
+          cold_build:
+            name: Execute ticket-only cloud validation and final receipt gate
+            step: JavaBuild
+            with:
+              jdkVersion: "21"
+              mavenVersion: "3.5.2"
+              run: |-
+                set -eu
+                python3 - <<'PYCLOUD'
+                import base64
+                import hashlib
+                import json
+                import os
+                import pathlib
+                import re
+                import shutil
+                import subprocess
+                import zlib
+
+                TICKET_ZLIB_B64 = 'eNrNV9tu3DYQfc9XBPsc7ZIUb1qgD23SAm2DFEhSFGhRLHgZrmlrJYHi2rUD/3tH2rtrp46ToH1ZrUa8HM6cOTP88Oz58wn8BW6dY9tM5s8/oAFN7srjy2QW6vZqdtWmi74zDmami5MXmxEJHMQuLzqTz+4bOrwW7Tp36zz74fUvvxUvfyy++/blz9+/eVW85cXbX9/MtA+lBE6ot66kzmtGuXdGq4p4KSF4ahhUTAhFRWA6CBm0KW1g3EtKnZptMUzPe8S+w7VuFqlt83+EaQcjt239cRzDiH6Co29fbILQxQT9wowzGGGyIFVByXuq56WYE/X7uPQkxL/yOsEhVD4uoR8ngXPcOAkK0RrhJCHBa0WVoYQSx0mAUklhvKKSiBDA2VIxAsaU3imq6Q57bNBB/X4HtJi0vMT3P7bvaJnOlsn4Gq62k0ZjUTRt4Q2s9uHYmvts3EVOePZTu2ubvq3hm6428c6U2MRc9C5hfI8/POzKWdv1Mxdnpo7X66YYx7m29uNK0w3a0y261J6Dy4Uz7gwKH9O/bvSV+XwC6BjM3LUrdOr8PJpi8xcfCeZ5iPzJmQZLf2xyzRRnTYfh0x7zPMV8PX0HTR9zvIRXJpt3Bh0UbyC9v7PaJbrSmwyvzTWk2CxPEGFIU4Y0t8jxn0yabD/9uRuDvOxzinYUlsU61QNDz3Lu+vlstooptamfurpd+2mGxkGTEeNqy6rto6im5ZQWNjbTm9jtt59svi6ukuk6SAt0Gz5yxOzpzwwTctjKWWY00jpYIV0wpYGKOGk5JRUGxAOmiQ9M6ZIG5yh4wr0VIkivuDOUksNu5+bSLFbmvE24LqN7ew81Bmu0TizyGxpfjITrV+0FFJf0sETfrpODRU4AA8QRXwlVJWVlOPMiVJRLJn0FzPggNROeMeKcIkc4Rkmx62Y4+uGcXJVEMUeYoKIylivhbUlK7ksdjNUVMaAlKZVlDEqg3Cjq8DOppDe2onoTuNu9Dg08P4hLm5bIjhszBjGONUEEq7ySADJUnqhAuRasOihfFzuoYwO74UwSVVUHodtm4n6LO9pyj7Lcqyv3q8qDmvKAonwpPfmomvyPtORxSvIPHXmyijysIQ8oyFY/kBU5BuPyAh05Ztn1QCbEMNtOm9XR7gA+OhUn2fQX/THbHuePp55iWGURYo0Dxpz/RC/ucyb2/Rr8Pb0BO+kNLmIz5py7DtOBY1uWTnNEl2yOM2laFNth0BfpdCY9smtlFpeQ+k0DSTfmUfAOSW6TadzYJ3q4hLrdiflk8HnMO1FEORGUE4f6q3TFGaKwimsJBJ+gHSsF56Vju9lfq8ZsRerqSGeDLZ0NID1B54Bg1iFYyQCdEYJS1gOtRKl5EIxX0iF4TYwuCdG+CqKkh765a+9CXcYMMEJzZ87ezAaSoG1P2qeXjcnXrZF7gg55dYj2RvnvV7Z9k7mh9BKzahiMWbSEjAZkUgzRjRVnN7YGv8QzbKvo51HmdK3PcW171eBCZom0GqavsNws2oT5gJw0gxidjFu1fjzoFSY93PmGwUGRgI161Zgp6IehWkA68vB4XTgk1BfvA7aIBiDHCvnh0PPtrnpDYTwcFOM0Q8E5Ofq0uz5uFg8oaUUdLZXCgHmlNJEmaEXwTgKSSwIcfKUEr8D5klj0umKGGGUItSxoXpFdm3n74lPgDVq4SNg+ZHgYGcUdNFLcKkxkPmzMjAvoUol/qlBS4E75MgjBJUcngxBCeieIDFxz+lhkdzoKvK4WG4Xqz+4HNngMtZmwUio+MN2VenCiFtqakiknNaX4izg5GC+tcgEsqySj3jHtngjsY1enAzhLPSPa+soSIxTWEuWpqoLH0qGc8BhFphkWmUp5EywvrZZ498Rf4aUHLfbgNmVzYPuz22d/A32Yu4s='
+                TICKET_SHA256 = '995549f5dd3d30241281127c2c4408bd0339ab204b860b8b9d73ac8fb0ef3cbd'
+                ORG = '5fb7d76ee6f9d07f148529c7'
+                PIPELINE = '5260799'
+
+
+                def need(condition, message):
+                    if not condition:
+                        raise RuntimeError(message)
+
+
+                def git(*args):
+                    return subprocess.check_output(['git'] + list(args)).decode().strip()
+
+
+                def digest(path):
+                    h = hashlib.sha256()
+                    with pathlib.Path(path).open('rb') as handle:
+                        for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+                            h.update(chunk)
+                    return h.hexdigest()
+
+
+                platform_cwd = pathlib.Path.cwd().resolve()
+                need(os.environ.get('PIPELINE_ID') == PIPELINE, 'Unexpected platform pipeline')
+                run_id = os.environ.get('BUILD_NUMBER', '')
+                need(re.fullmatch('[1-9][0-9]*', run_id) is not None, 'Missing platform run number')
+                tip = git('rev-parse', 'HEAD')
+                need(os.environ.get('CI_COMMIT_SHA') == tip, 'Platform source SHA differs from checkout')
+                need(os.environ.get('CI_COMMIT_REF_NAME') == 'develop', 'Unexpected platform source branch')
+                need(git('rev-parse', '--is-shallow-repository') == 'false', 'Full source history required')
+
+                ticket_bytes = zlib.decompress(base64.b64decode(TICKET_ZLIB_B64))
+                need(hashlib.sha256(ticket_bytes).hexdigest() == TICKET_SHA256, 'Ticket transport mismatch')
+                ticket = json.loads(ticket_bytes.decode('utf-8'))
+                need(ticket['flow']['organization_id'] == ORG and ticket['flow']['pipeline_id'] == PIPELINE, 'Ticket Flow mismatch')
+                api = pathlib.Path(ticket['execution']['cwd'])
+                tools = pathlib.Path(ticket['execution']['tool_root'])
+                receipt_path = pathlib.Path(ticket['execution']['receipt_path'])
+                run_root = receipt_path.parent
+                need(not api.exists() and not tools.exists() and not run_root.exists(), 'Fresh paths required')
+
+                for record in ticket['tools']['files']:
+                    relative = pathlib.Path(record['path'])
+                    need(not relative.is_absolute() and '..' not in relative.parts, 'Unsafe tool path')
+                    source = platform_cwd / relative
+                    destination = tools / relative
+                    need(source.is_file() and not source.is_symlink(), 'Versioned tool source missing')
+                    need(digest(source) == record['sha256'], 'Versioned tool source hash mismatch')
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(str(source), str(destination))
+                    destination.chmod(0o555 if relative.suffix == '.sh' else 0o444)
+
+                ticket_path = pathlib.Path('/tmp/cyf-flow-tickets') / (ticket['nonce'] + '.json')
+                ticket_path.parent.mkdir(parents=True, exist_ok=True)
+                with ticket_path.open('xb') as handle:
+                    handle.write(ticket_bytes)
+                ticket_path.chmod(0o444)
+
+                api.parent.mkdir(parents=True, exist_ok=True)
+                subprocess.check_call(['git', 'clone', '--no-hardlinks', '--no-checkout', str(platform_cwd), str(api)])
+                git('-C', str(api), 'remote', 'set-url', 'origin', ticket['source']['repo_url'])
+                git('-C', str(api), 'update-ref', 'refs/remotes/origin/develop', tip)
+                git('-C', str(api), 'checkout', '--detach', ticket['source']['commit_sha'])
+                need(git('-C', str(api), 'rev-parse', 'HEAD^{tree}') == ticket['source']['tree_sha'], 'Pinned tree differs')
+
+                os.environ['CYF_FLOW_ORGANIZATION_ID'] = ORG
+                os.environ['CYF_FLOW_PIPELINE_ID'] = PIPELINE
+                os.environ['CYF_FLOW_RUN_ID'] = run_id
+                os.environ['CYF_FLOW_JOB_ID'] = 'cloud_ci.api_ci'
+                os.environ['CYF_FLOW_SOURCE_TIP_SHA'] = tip
+                print('FLOW_CI_CONTEXT ' + json.dumps({'pipeline': PIPELINE, 'run': run_id, 'logical_job': 'cloud_ci.api_ci', 'source_tip': tip, 'built_commit': ticket['source']['commit_sha'], 'ticket_sha256': TICKET_SHA256}), flush=True)
+                rc = subprocess.call([str(tools / 'ops/ci/aliyun-flow/run-cloud.sh'), str(ticket_path), TICKET_SHA256, str(api), str(receipt_path)])
+                print('FLOW_CI_RECORDED_RC=' + str(rc), flush=True)
+                if rc != 0:
+                    raise SystemExit(rc)
+                need(receipt_path.is_file() and not receipt_path.is_symlink(), 'Missing receipt after successful native runner')
+                inspect_rc = subprocess.call(['python3', str(tools / 'ops/orchestration/cyf_orchestrator.py'), 'flow-remote', 'inspect', '--ticket', str(ticket_path), '--expected-ticket-sha256', TICKET_SHA256, '--receipt', str(receipt_path)])
+                if inspect_rc != 0:
+                    raise SystemExit(inspect_rc)
+                receipt = json.loads(receipt_path.read_text())
+                need(receipt['status'] == 'success' and receipt['gradle_exit_code'] == 0 and receipt['bridge_exit_code'] == 0, 'Receipt final gate failed')
+                print('FLOW_CI_TARGETED_COLD_GATE_PASS; production/full-suite acceptance NOT granted', flush=True)
+                PYCLOUD

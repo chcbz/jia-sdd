@@ -1,0 +1,41 @@
+
+
+  workspace audit: happy paths with current string-valued wire fixtures
+    ✔ lists, reads detail, previews and downloads an explicit fixed string version (187ms)
+    ✔ uploads and appends with explicit previous version; preserves the confirmed receipt (562ms)
+    ✔ renames, trashes and restores when revision preconditions agree
+
+  workspace audit: confirmed defects (passing means bug reproduced, NOT feature passed)
+    1) version dropdown turns wire strings into numbers, breaking preview/download and draft selection
+    ✔ late rename response for file A overwrites selected B with mixed A metadata/B versions
+    ✔ changing list state while loading drops the new request and displays old ACTIVE data under trash filter
+    ✔ repeating a lost upload response uses a new key and permits two committed files
+    ✔ upload followed by detail GET failure returns success/ready although detail is absent
+    ✔ partial preview text hides the server warning in the actual embedded component
+    ✔ failure to refresh leaves a prior page cursor available for a new query
+    2) the default download/preview argument is a version object and fails validation
+
+
+  9 passing (1s)
+  2 failing
+
+  1) workspace audit: confirmed defects (passing means bug reproduced, NOT feature passed)
+       version dropdown turns wire strings into numbers, breaking preview/download and draft selection:
+
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'' !== '文件版本无效。'
+
+      + expected - actual
+
+      +文件版本无效。
+      
+      at Context.<anonymous> (file:///home/isp/wsps/cyf/docs/implementation/evidence/workspace-management-audit-20261016/audit-observations.test.mjs:101:11)
+
+  2) workspace audit: confirmed defects (passing means bug reproduced, NOT feature passed)
+       the default download/preview argument is a version object and fails validation:
+     TypeError: Cannot read properties of null (reading 'message')
+      at Context.<anonymous> (file:///home/isp/wsps/cyf/docs/implementation/evidence/workspace-management-audit-20261016/audit-observations.test.mjs:165:116)
+
+
+

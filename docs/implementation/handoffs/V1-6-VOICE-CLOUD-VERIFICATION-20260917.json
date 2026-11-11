@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-09-17T09:36:00.518808+08:00",
+  "status": "cloud_verification_blocked",
+  "deployment_authorized": false,
+  "merged_to_develop": false,
+  "pipelines": {
+    "web": {
+      "pipeline": "4403172",
+      "run": 116,
+      "branch": "codex/v1-6-voice-availability-20260917",
+      "commit": "c5fe7484b455843f6e9beeb49573fcc54e729043",
+      "tree": "28bc296d73e183459cb6ba4d37bc8d1c31bf1638",
+      "jobs": [
+        517006505,
+        517006506
+      ],
+      "config_sha256": "425f28e502b4c96126ea957273fa3fccb6fc9ec2369ea2565ed3584efd89bec3",
+      "status": "FAIL",
+      "actual_checkout_commit": null,
+      "test_summary": null,
+      "artifact_digest": null,
+      "deploy_stage_present": false,
+      "logs": [
+        {
+          "path": "/var/tmp/cyf-v1-6-readiness-20260917.jYZRGu/4403172-run116-test-log.json",
+          "sha256": "fb99f26797423e2ae59020714eecb532bac312bb9abb5f3cd4c9ebdc51721939",
+          "content_empty": true,
+          "more": false
+        },
+        {
+          "path": "/var/tmp/cyf-v1-6-readiness-20260917.jYZRGu/4403172-run116-scan-log.json",
+          "sha256": "7a4e68cac688082e10a79692e64cd6af928d3366052e775327c208f40afe0499",
+          "content_empty": true,
+          "more": false
+        }
+      ]
+    },
+    "api": {
+      "pipeline": "5260799",
+      "run": 85,
+      "branch": "codex/v1-6-voice-api-readiness-20260917",
+      "commit": "ab7ba3f610edb4bf9ec91f8124ee1cc254dfc821",
+      "tree": "472fab9c370e4e249a861c41f7e85fdfef72ec3c",
+      "jobs": [
+        517005968
+      ],
+      "config_sha256": "f5e349f744c45b39f9c9d984537f0748d3580aba354e594fe89e988e3a518c8d",
+      "status": "FAIL",
+      "actual_checkout_commit": null,
+      "test_summary": null,
+      "artifact_digest": null,
+      "deploy_stage_present": false,
+      "logs": [
+        {
+          "path": "/var/tmp/cyf-v1-6-readiness-20260917.jYZRGu/5260799-run85-log.json",
+          "sha256": "7c0c58e1b890875af8695dde286da97ed1f730ccfe53958e1f70ab2cd0cb9e4a",
+          "content_empty": true,
+          "more": false
+        }
+      ]
+    }
+  },
+  "root_cause": {
+    "resolved_start_rejection": "API HTTP400 explicitly rejected candidate branch under ^develop$ filter. Narrow develop-or-exact-candidate filter was applied/read back; new Run IDs returned. Web analogous remediation verified by new Run116.",
+    "current_failure": "Both candidate Runs failed within seconds, job logs empty with more=false; no source commit or tests/artifacts returned. Platform root cause not exposed by public Run/log API. Quota exhaustion remains unconfirmed.",
+    "retry_policy": "No job retries or additional unchanged Runs. Await concrete platform diagnosis/remediation."
+  },
+  "next_action": "Inspect Flow Run85/API and Run116/Web execution-start failure in the console or obtain an administrator failure reason; after concrete remediation verify exact candidates, merge develop non-destructively, retain deployment hold."
+}

@@ -1,4 +1,19 @@
-# codex-ws-agent 接口文档与对接方案
+# codex-bridge（原 codex-ws-agent）接口文档与对接方案
+
+## 2026-10-29 当前注册与文本容量（局部核对）
+
+本节仅核对 API `de6776fb3092a3e71aa5004d115c1280b742f2aa` 与 Runtime `a4940cbb21342e9acfbc7904e4bc48e4241c097e`；下文旧协议、独立服务与 CLI 路径仍为历史说明，不能据此执行。公共信封以 `api/docs/interface-standard.md` 1.2 为准。
+
+- Agent 端点单独设置文本接收容量 **65,536 UTF-16 code units**（当前 Tomcat 口径），不是 UTF-8 字节/压缩帧大小，也不是附件上传限制；超过容量由容器1009关闭，不截断协议消息。普通聊天、二进制和数据库容量不联动修改。
+- 注册删除无消费者的 `inputCarriers` 和现代路由不需要的固定重复描述。保留身份/会话、白名单能力、六字段 `runtimeCapabilities`、实际消费的材料/原生执行声明及当前技能目录；API先升级以接受精简声明，再升级Runtime。
+- 周期心跳/状态不携带技能目录或重复能力，不把历史ACK、结果、技能旧版本累加进注册；不能再按下文旧“每次presence重新合并全部技能”实现。
+- 当前技能目录和支持输入类型集合仍可按数量线性增长；64K及去重不是无限容量保证。不静默截断、不擅设技能数量上限，也未新增分片/差量同步框架。
+- 必要性、字段取舍和增长实测见 `specs/juyiting-skill-execution/management-contract.md` 本日末节；源码、正式测试、独立主机安装、连续通道验证及遗留限制分别见 `docs/implementation/handoffs/CODEX-NATIVE-SKILLS-20261027.md` 最新记录。
+
+
+> **2026-10-26命名与修复**：源码和安装候选已改为 `isp-install/conf/codex-bridge/`；2026-10-26线上已通过Flow5264702/65迁移至`app/codex-bridge/`（Runtime1.3.11 / d97449c），task530改图与验收通过。当前任务合同、必要校验及验证状态见 `docs/implementation/handoffs/CODEX-BRIDGE-REPAIR-20261026.md`（仓库根相对路径）。以下旧路径/协议作为历史说明保留，不据此部署。
+
+> **本机运维入口更新（2026-10-12）**：下文独立服务及 `/home/isp/apps/codex-ws-agent` 部署路径为历史说明，不能再照此启动。本机已统一到 `cyf-agent-runtime-v1@unified`，旧目录归档、旧服务masked；现行路径见 `/home/isp/docs/SERVER_ARCHITECTURE.md` 与 `docs/juyiting-runbook.md` 的目录收口小节。内嵌执行库仍保留。本次路径核验对应 Runtime1.0.2/源码 `5b902c1bcd3efced9720e015e3b8240d39ce0738`，并非下文全部协议内容的重新核验。
 
 ## 一、架构概览
 
@@ -123,7 +138,7 @@ Agent ──task.report──> Server     {taskId, status: "completed"}
 - 当前 CLI 的 `thread.started/thread_id` 用于保存映射；不再按 Home 最近修改的文件猜测本轮会话归属。显式 new 与隔离任务 workspace 的 forceNew 保持独立新建。
 - 聚义厅“话头记录”展示当前用户/聊天范围的业务历史，选择后继续使用原 conversationId；“另起话头”下次发送才创建新会话。历史不是 Codex 工具日志，不自动清理历史文件。
 - 旧版本已经将多个业务 ID 映射到同一 Codex session 的记录会保留；本次不自动拆分混合历史。要开始干净上下文，请另起话头。
-- 设计、准确候选与验证/发布证据：`specs/juyiting-conversation-sessions/`。版本源码在 `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`，部署副本在 `/home/isp/apps/codex-ws-agent/current/`。
+- 设计、准确候选与验证/发布证据：`specs/juyiting-conversation-sessions/`。版本源码在 `/home/isp/wsps/chcbz/isp-install/conf/codex-ws-agent/`，本机现用部署副本在 `/home/isp/apps/cyf-agent-runtime-v1/app/codex-ws-agent/`。2026-10-23固定目录迁移记录见 `docs/implementation/handoffs/RUNTIME-FIXED-DIR-20261023.md`：沿用Runtime1.2.6，候选1.2.7未部署；本说明不代表其他主机已迁移。
 
 ### 3.3 文件内容
 
@@ -272,3 +287,7 @@ tail -f /home/isp/apps/codex-ws-agent/logs/startlog_*.log
 - 外部命令的成功回读和失败 stderr 等待 `close`（stdio 排空），不能在 `exit` 时直接结算。只记录本地 nft/slirp 诊断，不记录 provider 凭据或任意 provider 错误内容。
 - 网络契约改变必须重做真实 carrier、绑定当前 profile/policy/native attestation；无模型测量成功不等于 carrier 或真实业务通过。新增验证同时核对 PID1 mountinfo 和保护进程 cgroup/startticks 未变，不在共享服务上重放危险旧路径。
 - typed INSPECT 声明与 CHAT transport capability 是独立契约。后端派发应采用独立 typed registry 的唯一当前、精确 tenant/owner/client/Agent/session READY 项，并匹配 admission manifest profile；不能放宽旧 capability 验证或伪报 READY。2026-10-06 的后端派发修复仍须绑定 Flow 与上线验证，不能把候选文档当作上线结果。
+
+## 统一接口迁移：历史示例执行边界（2026-10-15）
+
+本文上述`node agent-client.mjs`独立部署、query api_key及type顶层帧教程是历史协议资料，不是当前统一Runtime安装指南。`docs/agent-client.mjs`仍是可执行文件，不能仅因为位于docs就当作非消费者。统一迁移详设要求在发布候选中移出可执行部署入口并明确拒绝旧启动，不把它升级成第二个Runtime或恢复旧认证/任务lane；当前仅明确文档边界，尚未改脚本或停止任何进程。现行统一Runtime身份与隔离配置保留，遵循项目入口和统一接口规范，不复制本历史示例到生产。

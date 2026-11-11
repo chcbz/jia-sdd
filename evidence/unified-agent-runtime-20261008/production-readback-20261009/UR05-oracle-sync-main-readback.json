@@ -1,0 +1,56 @@
+{
+  "at": "2026-10-09T09:01:56.020758+08:00",
+  "commit": "7245df47bce3205da44cf10ae3861ca00a8e0519",
+  "tree": "750b5fbf7b0be5e564971e3636baf4f88a9c2841",
+  "remote": "7245df47bce3205da44cf10ae3861ca00a8e0519",
+  "clean": true,
+  "exact3testpaths": true,
+  "filehashesVerified": 26,
+  "committedBlobsVerified": 3,
+  "reports": {
+    "/var/tmp/ur05-shared-helper-oracle-sync-20261009.json": "efe424dc284d722757c1e9c558e1238a9b49b5a85fc11f3ea8f6c688044f718c",
+    "/var/tmp/ur05-shared-helper-oracle-sync-20261009.md": "60fe166aed3adf7da3d2e02a5f30132e68810139e09662f4ce816365f514fd31"
+  },
+  "completeTests": {
+    "PASS": 132,
+    "FAIL": 1,
+    "ERROR": 0,
+    "SKIP": 0
+  },
+  "testEvidence": "exactinput Owner log/result fingerprints verified, no unchanged failure rerun",
+  "productionOrLOCALbinding": false,
+  "remainingGap": {
+    "status": "CONFIRMED_SOURCE_GAP_NOT_MASKED",
+    "blockedCase": "test_api_e05_additive_schema.ApiE05AdditiveSchemaTest.test_create_only_zero_columns_use_complete_synthetic_show_after_single_create",
+    "caseUnchangedFromBase": true,
+    "apiResource": {
+      "worktree": "/home/isp/wsps/worktrees/ur06-m4-mysql-e05-20261008",
+      "path": "/home/isp/wsps/worktrees/ur06-m4-mysql-e05-20261008/agent/jia-agent-mapper/src/main/resources/db/agent-work-item-reassignment-e05.sql",
+      "repoPath": "agent/jia-agent-mapper/src/main/resources/db/agent-work-item-reassignment-e05.sql",
+      "commit": "24cb046e58424c1d999940b518ca0d1d96e34f59",
+      "sha256": "da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1",
+      "bytes": 3009,
+      "ownerOccurrences": 0
+    },
+    "runnerResource": {
+      "path": "/home/isp/wsps/worktrees/ur05-shared-local-installer-20261009/ops/ci/aliyun-flow/host/cyf-api-e05-additive-schema",
+      "sha256": "d6ef15041ce84f4f7d1ecd65c8af3fa56c7bad198703afeea965150db787532f",
+      "embeddedSqlSHA256": "da1ceedd4bfad55f141613d9acdfccb7ee604127360f65f59e5bb053009dcda1"
+    },
+    "reason": "Fixed exact CREATE lacks owner_jiacn and idx_agent_work_item_reassignment_owner_scope. Current installed runner requires both, executes no ALTER/owner extension; bare CREATE SHOW cannot be current-owner success. Existing table current-owner projection is never supplied to this positive CREATE-only case.",
+    "observedOfflineFailure": {
+      "error": "created_table_not_equivalent",
+      "tableStatus": "create_result_unknown",
+      "mismatches": [
+        "post_create_introspection"
+      ],
+      "createdTables": [
+        "agent_work_item_reassignment"
+      ]
+    },
+    "newNegativeCase": "test_api_e05_additive_schema.ApiE05AdditiveSchemaTest.test_oracle_sync_bare_create_cannot_satisfy_current_owner_guard",
+    "newNegativeStatus": "PASS",
+    "notActualDDL": true,
+    "nextBoundary": "Main/Turing freeze same-build schema resource/owner-phase closure. This slice neither edits SQL/runner/initializer nor chooses production schema action."
+  }
+}

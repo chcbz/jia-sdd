@@ -2,9 +2,27 @@
 
 # 聚义厅多媒体协作：待实施任务清单
 
-2026-10-04。对应 [待实施增量详设](implementation-design-20261004.md)；[完整产品目标](design.md)；[最新版交互原型](prototypes/adjusted/index.html)；[界面变化标注](prototypes/adjusted/annotations/index.html)。
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 当前实施与收口方式（2026-11-07）
 
-**这是一份接手清单，不是把完整详设全部重做。2026-10-04 用户已授权恢复开发，并要求按版本节奏落实；当前源码进度见 [分版本开发回执](implementation-progress-20261004.md)。未完成的候选不提前发布。** 历史计划已移至 [历史存档](tasks-history-before-20261004.md)，不要重新执行其中已完成的 F0/B1 等工作包。
+**本专题：普通请求驱动的多媒体议事闭环。**
+
+**实施目标：** 描述需求并选择资料→明确承办→普通议事/必要补充→工具成果→正式交付→用户验收。
+**责任落点：** API资源授权/版本/完成事实；模型编排；bridge隔离/成果适配；工具处理格式；Web展示。
+
+按当前获授权的变更范围执行，不自动重开后文历史未勾选任务或旧版本排程：
+
+1. 核对当前合同及实际责任层调用链：不恢复图片专属多重确认链；资料可存储不等于原生直传；不为每格式新增通用Runtime业务分支；完整最终回复保留。
+2. 复用现有任务/工作区和验证入口实现最小差异；被替代临时路径与对应过时测试同批收口，不新增Reviewer/审批/独立台账。
+3. 运行实际受影响回归：图文资料固定版本、缺材料明确提示、授权边界、流预览与最终正文不重复、真实文件读回/成果与验收分离。
+4. 记录精确源码/测试/未覆盖项；获部署授权才按当前本地来源工具发布，健康与业务验收分开。未获得新范围授权不重放历史任务、迁移或收费调用。
+
+共用规则：[统一开发约束](../architecture-convergence/development-principles.md)。原任务ID、失败样本、未覆盖需求与历史证据保留；未核实的旧待办先对照后续交付，不直接重做。
+
+**入口与阅读边界：** 文档状态、入口及阅读边界以[需求](spec.md)现行规格为准。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
 
 ## 0. 最新优先原则
 
@@ -98,35 +116,10 @@ T05 不能用“自动勾选全部历史成果”替代，但不必为它新建�
 **给接手 Agent：** 从本清单而不是历史 tasks 开始；从已定位候选实施最小差异，T07–T08 随真实闭环验证并修复，不先扩建系统或检查体系。遵循增量详设和现状原型，不大改、不加受控请求/参考图专用入口、不恢复验收多选；不要更改暂停状态或运行流水线，除非接手任务已取得相应执行授权。
 
 
-### 2026-10-05 21:36 CST 接手状态补充
+---
 
-当前配套候选API329d44fd /Clientb8d74b1 /Webf6b81b4均已推develop并读回；API109 SUCCESS、Web167 SUCCESS，同Run制品及精确源SHA/tree已校验（API101 skipped；Web3146通过/2pending/0失败）。来源见 [最新回执](implementation-evidence-20261004/integration-cloud-ci-20261005/manifest.json)。T01–T06现有源码和定向测试不等于真实业务通过，T05–T09剩余仍以新流程真实运行/保存/恢复/隔离及发布验收为准。发布和真实模型/工具调用授权已向用户询问，尚未执行；不为相同候选额外重复CI-only，不恢复旧数据适配，不将CI-only制品手工部署冒充既有Flow发布。
+> 以下为历史发布/联调证据记录（2026-10-05 起），仅供溯源，不构成当前实施指令；当前实施以「当前实施与收口方式（2026-11-07）」+ 第 0–5 节为准。
 
+## 接续优先级收口（2026-10-23）
 
-### 2026-10-05 23:30 CST 三端发布接续
-
-Agent已实装Client4e70c4f，两实例payload/config已核验；主机发布脚本forward-only及现有备份别名问题已修复，26回归PASS；零点调度分页18回归PASS。API5260799现有deploy已恢复，明确新版失败向前修复、不自动降级；等待2026-10-06 00:00既有调度，未创建最终Run。Web仍CI-only且仅API健康后发布。真实业务验收NOT_RUN，T05–T09不标完成。详见 [接续说明](runtime-release-20261005.md) 与 [实际回执](implementation-evidence-20261004/runtime-release-20261005/manifest.json)。用户已授权发布及既有预算内真实调用；IAB已打开chcbz登录页待用户登录，无需传递密码。
-
-
-### 2026-10-05 23:47 CST 立即发布覆盖
-
-用户明确取消零点等待。API既有Flow Run110已创建，实际检出329d44fd已只读核对并绑定发布intent，无重复Start；正在云测，尚未上线。两个timer临时暂停防重复，本次三端发布完结后恢复。API完整健康后立即发布Web。详见 [接续说明](runtime-release-20261005.md)，T05–T09及业务验收状态不变。
-
-
-### 2026-10-06 00:40 CST 立即发布实际进展
-
-Agent已完成。API110新JAR现健康运行，finalization确切一次性迁移已验证，但Flow最终FAIL：发布后schema runner仍拒绝报告目录，两表not_attempted。保留失败状态，不重放110schema。修复F06/E05 catalog及E05 hash pin，60离线回归通过并CAS安装。新API5260799/111正式测试部署正在运行，Start UNKNOWN已只读核对唯一Run/真实检出并绑定intent，未重发。Web仍API-first待111最终核验后立即发布，T05–T09 NOT_RUN。监控已恢复，两个防重timer暂未恢复。详见 [当前接续](runtime-release-20261005.md)。
-
-
-### 主机北京时间2026-10-06 01:04 最新接续
-
-API111 CI成功/JAR健康，但F06旧SQL pin不匹配新版owner-fenced资源，Flow FAIL；保留110/111报告，不重放schema。按当前JAR资源及已有mandatory-owner schema更新严格门禁，62回归通过；真实JAR/MySQL catalog只读equivalent及负控制拒绝已验证，未执行DDL，01:00 CAS安装。最新正式API112运行（CI529282011/deploy529282012），唯一Run/checkout/time/config只读reconcile已完成并绑定intent。Web仍API-first，T05–T09 NOT_RUN；监控健康，timer最后恢复。详见 [权威接续](runtime-release-20261005.md)。
-
-
-### 主机北京时间2026-10-06 01:17 / UTC2026-10-05 17:17 正式API完成
-
-API5260799/112最终SUCCESS，CI/唯一主机/同Run制品/JAR/record/approval/真实健康均核验，F06 PASS existing_equivalent，E05 not_admitted未调用。Web原deploy已一次恢复，Web4403172/168正式CI发布链运行，Start UNKNOWN只读核对唯一168/checkout marker/CI_SHA/time/config并写intent，没有重发。新同Run Web制品和线上dist字节待核验，T05–T09 NOT_RUN。Agent已完成；监控恢复，Web正式完成后恢复两个timer。见 [权威接续](runtime-release-20261005.md)。
-
-## 2026-10-06 01:30 三端正式上线与业务登录阻塞
-
-API112、Agent双实例4e70c4f、Web168正式发布均已完成。Web168同Run源码/tree/归档及364个dist文件安装与公开HTTPS完整字节一致；3146pass/2pending/0失败/0skipped。核对远端develop及安装record后已恢复两个既有nightly timer。刷新真实IAB出现新版统一资料入口，但随后跳转登录页，chcbz需重新登录；业务T05–T09仍NOT_RUN，不标全部完成。详细状态及证据见runtime-release-20261005.md最新权威段。
+原历史任务快照和候选版本预留计划已删除。按本文件既有T01–T09及remaining-tasks的证据边界追溯，但不将旧“未开始”当当前实现；先核对后续技能执行、外单成果选择和体验优化的实际覆盖。冷恢复/身份隔离、无重复执行、原成果固定版本、保存与验收独立及媒体真实字节仍保留；不恢复图片专用入口或双轨协议。当前入口见 [全局索引](../INDEX.md)。

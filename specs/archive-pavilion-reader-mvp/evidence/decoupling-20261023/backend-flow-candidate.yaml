@@ -1,0 +1,450 @@
+name: cyf-api-kit-ci
+variableGroups:
+  - q37x7n8snxqq744z
+sources:
+  repo_0:
+    type: git
+    name: cyf-api-kit-ci
+    endpoint: https://gitee.com/chcbz/jia.git
+    branch: develop
+    triggerEvents:
+      - push
+    branchesFilter: ^(develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003)$
+defaultWorkspace: repo_0
+# Heavy tests/build/package only; no external readiness or acceptance wait.
+# This default never deploys. Explicit releases require a prepared same-Run deployment candidate.
+stages:
+  cloud_ci:
+    name: Backend resource-offloaded CI
+    jobs:
+      api_ci:
+        name: Changed-scope tests and bootJar
+        runsOn: public/cn-beijing
+        timeoutMinutes: 60
+        steps:
+          targeted_build:
+            name: Changed-scope tests, layering, and bootJar
+            step: JavaBuild
+            with:
+              jdkVersion: "1.8"
+              mavenVersion: 3.5.2
+              run: |-
+                set -eu
+                # JavaBuild's platform JDK is only a bootstrap, never the tested toolchain.
+                # The verified Dragonwell 21 archive below always replaces JAVA_HOME/PATH.
+                for tool in python3 git curl tar sha256sum ldd; do command -v "$tool" >/dev/null; done
+                export CYF_EXPERIMENT="$(mktemp -d /tmp/cyf-backend-flow-ci.XXXXXX)"
+                # Numeric preparation evidence survives truncated Flow console logs. No new gate.
+                cyf_phase() {
+                  phase_uptime="$(cut -d' ' -f1 /proc/uptime)"
+                  printf 'CYF_FLOW_PHASE %s wall=%s monotonic=%s\n' "$1" "$(date -u +%FT%TZ)" "$phase_uptime"
+                  printf '%s\t%s\n' "$1" "$phase_uptime" >> "$CYF_EXPERIMENT/preparation-phases.tsv"
+                }
+                cyf_phase runtime.begin
+                python3 - <<'CYFTOOLS'
+                import io,base64,gzip,hashlib,json,os,pathlib
+                raw=base64.b64decode('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',validate=True)
+                assert hashlib.sha256(raw).hexdigest()=='016c670aeb64b589bf973316d4d68efc416ce28ab8d5127495159afd0b1b1f3d', 'tool bundle hash mismatch'
+                root=pathlib.Path(os.environ['CYF_EXPERIMENT'])
+                for name,text in json.loads(gzip.decompress(raw).decode()).items():
+                 p=root/name
+                 p.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+                 p.write_text(text)
+                 p.chmod(0o600)
+                CYFTOOLS
+                cyf_phase jdk.begin
+                python3 "$CYF_EXPERIMENT/prepare-backend-jdk.py" --cache "$HOME/.cache/cyf-backend-jdk-archives" --destination "$CYF_EXPERIMENT/jdk" > "$CYF_EXPERIMENT/jdk-result.txt"
+                cat "$CYF_EXPERIMENT/jdk-result.txt"
+                export JAVA_HOME="$(tail -1 "$CYF_EXPERIMENT/jdk-result.txt")"
+                export PATH="$JAVA_HOME/bin:$PATH"
+                java -version
+                cyf_phase jdk.end
+                # PPT raster previews were removed; no font-rendering packages are installed.
+                cyf_phase runtime.end
+
+                cyf_phase mysql.begin
+                export CYF_REVIEW_MYSQL_ARCHIVE_SHA=e6503f2ca665dbd4524a0109fa15969453f02b69c20f42d3fe8ba0d0b0ca1a1f
+                mysql_cache="$HOME/.cache/cyf-backend-mysql-archives"
+                mkdir -p "$mysql_cache"
+                mysql_archive="$mysql_cache/mysql-$CYF_REVIEW_MYSQL_ARCHIVE_SHA.tar.xz"
+                if [ ! -e "$mysql_archive" ]; then
+                  mysql_temporary="$(mktemp "$mysql_cache/.download.XXXXXX")"
+                  curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' 'https://cdn.mysql.com/archives/mysql-8.0/mysql-8.0.21-linux-glibc2.17-x86_64-minimal.tar.xz' -o "$mysql_temporary"
+                  printf '%s  %s\n' "$CYF_REVIEW_MYSQL_ARCHIVE_SHA" "$mysql_temporary" | sha256sum -c -
+                  mv "$mysql_temporary" "$mysql_archive"
+                fi
+                printf '%s  %s\n' "$CYF_REVIEW_MYSQL_ARCHIVE_SHA" "$mysql_archive" | sha256sum -c -
+                mkdir "$CYF_EXPERIMENT/mysql-runtime"
+                tar -xJf "$mysql_archive" -C "$CYF_EXPERIMENT/mysql-runtime" --strip-components=1
+                export CYF_REVIEW_MYSQLD="$CYF_EXPERIMENT/mysql-runtime/bin/mysqld"
+                libaio_archive="$mysql_cache/libaio-d1476e4beab3d85f8a7d31de94c27472711ed3ef399ce70708e24b259426125b.deb"
+                if [ ! -e "$libaio_archive" ]; then
+                  libaio_temporary="$(mktemp "$mysql_cache/.libaio.XXXXXX")"
+                  curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' 'https://deb.debian.org/debian/pool/main/liba/libaio/libaio1_0.3.113-4_amd64.deb' -o "$libaio_temporary"
+                  printf '%s  %s\n' d1476e4beab3d85f8a7d31de94c27472711ed3ef399ce70708e24b259426125b "$libaio_temporary" | sha256sum -c -
+                  mv "$libaio_temporary" "$libaio_archive"
+                fi
+                printf '%s  %s\n' d1476e4beab3d85f8a7d31de94c27472711ed3ef399ce70708e24b259426125b "$libaio_archive" | sha256sum -c -
+                export CYF_REVIEW_LIBAIO_ARCHIVE="$libaio_archive"
+                python3 - <<'LIBAIO'
+                import io,os,pathlib,tarfile
+                raw=pathlib.Path(os.environ['CYF_REVIEW_LIBAIO_ARCHIVE']).read_bytes()
+                assert raw[:8]==b'!<arch>\n'
+                offset=8;found=[]
+                while offset<len(raw):
+                 header=raw[offset:offset+60];assert len(header)==60 and header[58:60]==b'`\n'
+                 size=int(header[48:58]);name=header[:16].decode().strip().rstrip('/')
+                 payload=raw[offset+60:offset+60+size];assert len(payload)==size
+                 if name=='data.tar.xz':found.append(payload)
+                 offset+=60+size+(size%2)
+                assert len(found)==1
+                with tarfile.open(fileobj=io.BytesIO(found[0]),mode='r:xz') as archive:
+                 data=archive.extractfile('./usr/lib/x86_64-linux-gnu/libaio.so.1.0.2').read()
+                destination=pathlib.Path(os.environ['CYF_EXPERIMENT'])/'mysql-libs'
+                destination.mkdir(mode=0o700)
+                (destination/'libaio.so.1').write_bytes(data)
+                LIBAIO
+                libnuma_archive="$mysql_cache/libnuma-ab2277a2af54056f7c2b01f98c0ac9ea546753a35de00e74285b7a0f667ea7e7.deb"
+                if [ ! -e "$libnuma_archive" ]; then
+                  libnuma_temporary="$(mktemp "$mysql_cache/.libnuma.XXXXXX")"
+                  curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' 'https://archive.debian.org/debian/pool/main/n/numactl/libnuma1_2.0.12-1_amd64.deb' -o "$libnuma_temporary"
+                  printf '%s  %s\n' ab2277a2af54056f7c2b01f98c0ac9ea546753a35de00e74285b7a0f667ea7e7 "$libnuma_temporary" | sha256sum -c -
+                  mv "$libnuma_temporary" "$libnuma_archive"
+                fi
+                printf '%s  %s\n' ab2277a2af54056f7c2b01f98c0ac9ea546753a35de00e74285b7a0f667ea7e7 "$libnuma_archive" | sha256sum -c -
+                export CYF_REVIEW_LIBNUMA_ARCHIVE="$libnuma_archive"
+                python3 - <<'LIBNUMA'
+                import io,os,pathlib,tarfile
+                raw=pathlib.Path(os.environ['CYF_REVIEW_LIBNUMA_ARCHIVE']).read_bytes()
+                assert raw[:8]==b'!<arch>\n'
+                offset=8;found=[]
+                while offset<len(raw):
+                 header=raw[offset:offset+60];assert len(header)==60 and header[58:60]==b'`\n'
+                 size=int(header[48:58]);name=header[:16].decode().strip().rstrip('/')
+                 payload=raw[offset+60:offset+60+size];assert len(payload)==size
+                 if name=='data.tar.xz':found.append(payload)
+                 offset+=60+size+(size%2)
+                assert len(found)==1
+                with tarfile.open(fileobj=io.BytesIO(found[0]),mode='r:xz') as archive:
+                 data=archive.extractfile('./usr/lib/x86_64-linux-gnu/libnuma.so.1.0.0').read()
+                destination=pathlib.Path(os.environ['CYF_EXPERIMENT'])/'mysql-libs'
+                destination.mkdir(mode=0o700,exist_ok=True)
+                (destination/'libnuma.so.1').write_bytes(data)
+                LIBNUMA
+                export LD_LIBRARY_PATH="$CYF_EXPERIMENT/mysql-libs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+                ldd "$CYF_REVIEW_MYSQLD" > "$CYF_EXPERIMENT/mysql-ldd.txt"
+                cat "$CYF_EXPERIMENT/mysql-ldd.txt"
+                if grep -q 'not found' "$CYF_EXPERIMENT/mysql-ldd.txt"; then echo 'MySQL runtime dependency missing' >&2; exit 1; fi
+
+                "$CYF_REVIEW_MYSQLD" --no-defaults --version
+                cyf_phase mysql.end
+
+                export CYF_FLOW_COMPILE_CACHE_OPT_IN=1
+                export CYF_FLOW_SHORT_LIVED_TEST_JVM=1
+                case "${CI_COMMIT_REF_NAME:-}" in develop|codex/v1-6-voice-api-readiness-20260917|codex/mmd-unified-materials-api-20261003) ;; *) echo 'unexpected CI branch' >&2; exit 1 ;; esac
+                test -n "${CI_COMMIT_SHA:-}"
+                test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
+                export CYF_FLOW_GRADLE_ACTIVE=1
+                export CYF_FLOW_BUILD_ROOT="$CYF_EXPERIMENT/build"
+                test ! -e "$CYF_FLOW_BUILD_ROOT"
+                mkdir -p "$CYF_FLOW_BUILD_ROOT"
+                git diff --exit-code HEAD --
+                export CYF_SOURCE_CLEAN_BEFORE=1
+                # Preserve complete compiler diagnostics and per-task timing.
+                cat > "$CYF_EXPERIMENT/owner-fixture-diagnostics.gradle" <<'OWNERDIAGNOSTICS'
+                allprojects {
+                    tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+                        options.compilerArgs += ['-Xmaxerrs', '1000']
+                    }
+                }
+                def cyfDiagnosticStart = System.nanoTime()
+                def cyfRuntime = java.lang.management.ManagementFactory.runtimeMXBean
+                def cyfCpu = java.lang.management.ManagementFactory.operatingSystemMXBean
+                def cyfPhase = { String name ->
+                    println('CYF_GRADLE_PHASE ' + groovy.json.JsonOutput.toJson([
+                        phase: name, rootBuild: gradle.parent == null, elapsedSeconds: (System.nanoTime() - cyfDiagnosticStart) / 1000000000.0,
+                        jvmUptimeSeconds: cyfRuntime.uptime / 1000.0,
+                        processCpuSeconds: cyfCpu.processCpuTime / 1000000000.0,
+                        availableProcessors: cyfCpu.availableProcessors,
+                        c1Only: cyfRuntime.inputArguments.contains('-XX:TieredStopAtLevel=1')]))
+                }
+                cyfPhase('init')
+                gradle.projectsEvaluated { cyfPhase('projectsEvaluated') }
+                gradle.taskGraph.whenReady { cyfPhase('taskGraphReady') }
+                def cyfTaskStarts = new java.util.concurrent.ConcurrentHashMap()
+                gradle.taskGraph.beforeTask { task -> cyfTaskStarts[task.path] = System.nanoTime() }
+                gradle.taskGraph.afterTask { task, state ->
+                    def started = cyfTaskStarts.remove(task.path)
+                    if (started != null) {
+                        println('CYF_TASK_TIMING ' + groovy.json.JsonOutput.toJson([
+                            task: task.path, rootBuild: gradle.parent == null, startedSeconds: (started - cyfDiagnosticStart) / 1000000000.0, seconds: (System.nanoTime() - started) / 1000000000.0,
+                            skipped: state.skipped, skipMessage: state.skipMessage, failed: state.failure != null]))
+                    }
+                }
+
+                OWNERDIAGNOSTICS
+                set +e
+                cyf_phase gradle.begin
+                python3 - > "$CYF_FLOW_BUILD_ROOT/gradle-output.log" 2>&1 <<'CYFGRADLE'
+                import hashlib,json,os,pathlib,subprocess,sys
+                root=pathlib.Path(os.environ['CYF_EXPERIMENT'])
+                raw=(root/'ops/ci/aliyun-flow/backend-ci-policy.json').read_bytes()
+                policy=json.loads(raw)
+                for name in ('build.gradle', 'settings.gradle'):
+                    path=pathlib.Path(name)
+                    print('CYF_BUILD_INPUT '+name+' '+hashlib.sha256(path.read_bytes()).hexdigest(),flush=True)
+                argv=[value.replace('$CYF_EXPERIMENT',str(root)).replace(
+                    '$CYF_FLOW_BUILD_ROOT',os.environ['CYF_FLOW_BUILD_ROOT']) for value in policy['argv']]
+                tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],universal_newlines=True).strip()
+                sys.exit(subprocess.run([sys.executable,str(root/'ops/orchestration/cyf_orchestrator.py'),
+                    'gradle','--flow-ci','--cwd',str(pathlib.Path.cwd()),'--tree-sha',tree,
+                    '--selector',policy['selector'],'--fixture-digest',hashlib.sha256(raw).hexdigest(),
+                    'FLOW-CI-5260799','--']+argv,check=False).returncode)
+                CYFGRADLE
+                gradle_rc=$?
+                cyf_phase gradle.end
+                set -e
+                cat "$CYF_FLOW_BUILD_ROOT/gradle-output.log"
+                python3 - <<'PYDIAGNOSTICS'
+                import base64, gzip, hashlib, json, os, re, xml.etree.ElementTree as ET
+                from pathlib import Path
+                root = Path(os.environ['CYF_FLOW_BUILD_ROOT'])
+                lines = (root / 'gradle-output.log').read_text(errors='replace').splitlines()
+                errors = []
+                current = None
+                for line in lines:
+                    if re.search(r'\.java:\d+: (?:error:|错误:)', line):
+                        current = {'diagnostic': line, 'details': []}
+                        errors.append(current)
+                    elif current is not None and re.match(r'\s*(?:required:|found:|reason:|symbol:|location:|需要:|找到:|原因:|符号:|位置:)', line):
+                        current['details'].append(line.strip())
+                def safe_failure_text(value):
+                    value = value or ''
+                    for name, secret in os.environ.items():
+                        if len(secret) >= 8 and re.search(r'(?i)secret|token|password|credential|access.?key', name):
+                            value = value.replace(secret, '[REDACTED]')
+                    value = re.sub(r'(?i)(authorization|api[_-]?key|password|secret|token)\s*[:=]\s*[^\s,;]+', r'\1=[REDACTED]', value)
+                    value = re.sub(r'https?://[^\s<>]+', '[URL]', value)
+                    return value[:3000]
+                reports = []
+                for path in sorted(root.rglob('TEST-*.xml')):
+                    suite = ET.parse(str(path)).getroot()
+                    failures = []
+                    for case in suite.findall('testcase'):
+                        for failure in list(case.findall('failure')) + list(case.findall('error')):
+                            failures.append({'class': case.get('classname'), 'test': case.get('name'), 'type': failure.get('type'), 'message': safe_failure_text(failure.get('message')), 'projectFrames': [line.strip() for line in (failure.text or '').splitlines() if re.match(r'\s*at (?:app//)?cn\.jia\.[\w.$]+\([^)]*\)', line)][:16]})
+                    reports.append({'path': str(path.relative_to(root)), 'name': suite.get('name'),
+                        'counts': {k: int(suite.get(k, 0)) for k in ('tests', 'failures', 'errors', 'skipped')}, 'failures': failures})
+                data = json.dumps({'commit': os.environ.get('CI_COMMIT_SHA'), 'run': os.environ.get('BUILD_NUMBER'),
+                    'compilerDiagnostics': errors, 'junitReports': reports,
+                    'gradlePhases': [json.loads(line.split(' ', 1)[1]) for line in lines if line.startswith('CYF_GRADLE_PHASE ')]}, separators=(',', ':'), ensure_ascii=False).encode()
+                compressed = base64.b64encode(gzip.compress(data)).decode()
+                print('CYF_DIAGNOSTIC_SUMMARY ' + json.dumps({'compilerErrors': len(errors), 'junitSuites': len(reports),
+                    'sha256': hashlib.sha256(data).hexdigest(), 'encoding': 'gzip+base64', 'base64Bytes': len(compressed)}))
+                for index in range(0, len(compressed), 3000):
+                    print('CYF_DIAGNOSTIC_CHUNK %d %s' % (index // 3000, compressed[index:index + 3000]))
+                PYDIAGNOSTICS
+                if [ "$gradle_rc" -ne 0 ]; then exit "$gradle_rc"; fi
+                python3 - <<'PYARTIFACT'
+                #!/usr/bin/env python3
+                """Package this successful Flow build for the existing transactional installer.
+
+                Call only after the required Gradle command exits zero. ticket_sha256 is a
+                legacy wire-field for a deterministic run identity, not an approval ticket.
+                """
+                import hashlib
+                import io
+                import json
+                import os
+                from pathlib import Path
+                import re
+                import shutil
+                import subprocess
+                import zipfile
+
+
+                def canonical(value):
+                    return (json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode()
+
+
+                def digest(path):
+                    h = hashlib.sha256()
+                    with path.open('rb') as handle:
+                        for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+                            h.update(chunk)
+                    return h.hexdigest()
+
+
+                REQUIRED_MAIL_RUNTIME_CLASSES = frozenset((
+                    'javax/mail/MessagingException.class',
+                    'javax/mail/Session.class',
+                    'javax/mail/Transport.class',
+                    'com/sun/mail/smtp/SMTPTransport.class',
+                    'javax/activation/DataHandler.class',
+                ))
+
+
+                def verify_mail_runtime(jar):
+                    """Check the shipped bootJar, not the broader Gradle test classpath."""
+                    missing = set(REQUIRED_MAIL_RUNTIME_CLASSES)
+                    try:
+                        with zipfile.ZipFile(str(jar)) as boot:
+                            for member in boot.infolist():
+                                if not member.filename.startswith('BOOT-INF/lib/') or not member.filename.endswith('.jar'):
+                                    continue
+                                with zipfile.ZipFile(io.BytesIO(boot.read(member))) as dependency:
+                                    missing.difference_update(dependency.namelist())
+                                if not missing:
+                                    break
+                    except (OSError, zipfile.BadZipFile, RuntimeError) as exc:
+                        raise SystemExit('invalid bootJar runtime archive: ' + type(exc).__name__)
+                    if missing:
+                        raise SystemExit('bootJar missing required mail runtime classes: ' + ', '.join(sorted(missing)))
+                    return sorted(REQUIRED_MAIL_RUNTIME_CLASSES)
+
+
+                def main():
+                    root = Path.cwd()
+                    env = os.environ
+                    commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
+                    tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}']).decode().strip()
+                    if (env.get('PIPELINE_ID') != '5260799' or env.get('CI_COMMIT_REF_NAME') not in ('develop', 'codex/v1-6-voice-api-readiness-20260917', 'codex/mmd-unified-materials-api-20261003')
+                            or commit != env.get('CI_COMMIT_SHA') or not re.fullmatch('[0-9a-f]{40,64}', commit)
+                            or not re.fullmatch('[1-9][0-9]*', env.get('BUILD_NUMBER', ''))):
+                        raise SystemExit('unexpected Flow source/run identity')
+                    # Both checks are enforced in the shell, before and after Gradle; repeat the
+                    # latter here. Untracked build outputs are not part of the tracked source.
+                    if env.get('CYF_SOURCE_CLEAN_BEFORE') != '1':
+                        raise SystemExit('missing successful pre-build source check')
+                    subprocess.check_call(['git', 'diff', '--exit-code', 'HEAD', '--'])
+                    build = Path(env['CYF_FLOW_BUILD_ROOT'])
+                    jars = [p for p in (build / 'jia/starter/libs').glob('*.jar') if not p.name.endswith('-plain.jar')]
+                    provenance = build / 'opencv-resolved.json'
+                    if len(jars) != 1 or any(p.is_symlink() or not p.is_file() for p in jars + [provenance]):
+                        raise SystemExit('expected one bootJar and OpenCV provenance')
+                    prov = json.loads(provenance.read_text())
+                    if (prov.get('jar_sha256') != '323d40119548134b0966d3735e97a78d1edbc79bd91e7fb1074e5152392095f4'
+                            or prov.get('jar_size') != 722802):
+                        raise SystemExit('unexpected private OpenCV artifact')
+                    mail_runtime = verify_mail_runtime(jars[0])
+                    print('CYF_BOOTJAR_MAIL_RUNTIME ' + json.dumps(mail_runtime))
+                    out = root / '_cyf_api_flow_export'
+                    out.mkdir(mode=0o700)  # fail rather than reuse stale output
+                    flow = dict(organization_id='5fb7d76ee6f9d07f148529c7', pipeline_id='5260799',
+                                job_id='cloud_ci.api_ci', run_id=env['BUILD_NUMBER'], source_tip_sha=commit)
+                    source = dict(branch=env.get('CI_COMMIT_REF_NAME'), commit_sha=commit, tree_sha=tree, clean_before=True, clean_after=True)
+                    records = []
+                    for kind, src, name in [('application_jar', jars[0], 'application.jar'),
+                                             ('dependency_provenance', provenance, 'dependency.provenance.json')]:
+                        target = out / name
+                        shutil.copyfile(str(src), str(target))
+                        records.append(dict(kind=kind, path=name, sha256=digest(target), size=target.stat().st_size))
+                    identity = hashlib.sha256(canonical(dict(flow=flow, source=source))).hexdigest()
+                    receipt = dict(schema_version=1, status='success', gradle_exit_code=0, bridge_exit_code=0,
+                                   ticket_sha256=identity, flow=flow, source=source, files=records)
+                    data = canonical(receipt)
+                    (out / 'receipt.json').write_bytes(data)
+                    receipt_sha = hashlib.sha256(data).hexdigest()
+                    (out / 'application.metadata.json').write_bytes(canonical(dict(
+                        schema_version=1, receipt_sha256=receipt_sha, flow=flow, source=source,
+                        application_jar=records[0], dependency_provenance=records[1])))
+                    (out / 'application.sidecar.json').write_bytes(canonical(dict(
+                        schema_version=1, receipt_sha256=receipt_sha, flow=flow,
+                        sha256=records[0]['sha256'], size=records[0]['size'])))
+                    print('CYF_API_ARTIFACT ' + json.dumps(dict(flow=flow, source=source,
+                          jar_sha256=records[0]['sha256'], receipt_sha256=receipt_sha), sort_keys=True))
+
+
+                if __name__ == '__main__':
+                    main()
+                PYARTIFACT
+                python3 - <<'PYTESTREPORT'
+                import json, os, shutil, xml.etree.ElementTree as ET
+                from pathlib import Path
+                root = Path(os.environ['CYF_FLOW_BUILD_ROOT'])
+                dest = Path('_cyf_api_flow_export/test-results')
+                records = []
+                for xml in sorted(root.rglob('TEST-*.xml')):
+                    suite = ET.parse(str(xml)).getroot()
+                    relative = xml.relative_to(root)
+                    target = dest / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(str(xml), str(target))
+                    records.append(dict(path=str(relative), name=suite.attrib.get('name'), **{
+                        k:int(suite.attrib.get(k,0)) for k in ('tests','failures','errors','skipped')}))
+                if not records:
+                    raise RuntimeError('No actual JUnit reports')
+                counts = {k:sum(r[k] for r in records) for k in ('tests','failures','errors','skipped')}
+                if counts['failures'] or counts['errors']:
+                    raise RuntimeError('Actual failing JUnit report')
+                summary = dict(pipeline=os.environ.get('PIPELINE_ID'), run=os.environ.get('BUILD_NUMBER'),
+                    commit=os.environ.get('CI_COMMIT_SHA'), counts=counts, suites=records,
+                    countNote='Test executions; source sets can overlap. Skips remain explicit.')
+                # Keep numeric diagnostics in the existing summary: Flow's log API can omit the
+                # start of the replayed Gradle output even when its more flag is false.
+                gradle_lines=(root/'gradle-output.log').read_text(errors='replace').splitlines()
+                summary['gradlePhases']=[json.loads(line.split(' ',1)[1]) for line in gradle_lines
+                    if line.startswith('CYF_GRADLE_PHASE ')]
+                summary['taskTimings']=[json.loads(line.split(' ',1)[1]) for line in gradle_lines
+                    if line.startswith('CYF_TASK_TIMING ')]
+                # Preparation observations are value-free, optional diagnostics, not acceptance gates.
+                try:
+                    preparation = Path(os.environ['CYF_EXPERIMENT'])
+                    allowed = {name + '.' + edge for name in ('runtime', 'jdk', 'mysql', 'gradle')
+                               for edge in ('begin', 'end')}
+                    events = []
+                    for line in (preparation/'preparation-phases.tsv').read_text().splitlines():
+                        name, value = line.split('\t')
+                        if name in allowed:
+                            events.append(dict(phase=name, monotonicSeconds=float(value)))
+                    summary['flowPreparationPhases'] = events
+                    jdk = [json.loads(line.split(' ', 1)[1])
+                           for line in (preparation/'jdk-result.txt').read_text().splitlines()
+                           if line.startswith('CYF_JDK_TIMING ')]
+                    if len(jdk) == 1:
+                        summary['jdkBootstrap'] = {key: jdk[0][key] for key in
+                            ('archive_sha256', 'cache_hit', 'archive_seconds', 'total_seconds', 'version')}
+                except (OSError, KeyError, ValueError):
+                    summary['preparationObservationStatus'] = 'UNAVAILABLE'
+                (dest / 'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+                print('CYF_API_TEST_SUMMARY '+json.dumps(dict(counts=counts,suites=len(records))))
+                # Bounded, value-free cache inventory. Observation failure does not fail a build.
+                import subprocess,time
+                started=time.monotonic()
+                home=Path.home()
+                paths={'gradle':home/'.gradle/caches', 'maven':home/'.m2',
+                       'jdk_archives':home/'.cache/cyf-backend-jdk-archives',
+                       'mysql_archives':home/'.cache/cyf-backend-mysql-archives',
+                       'other_runtimes':home/'.cache/cyf-test-runtime', 'node':home/'.npm',
+                       'yarn':home/'.yarn', 'go':Path('/go/pkg/mod'), 'all_runtime_cache':home/'.cache'}
+                for label in ('modules-2','build-cache-1','jars-9','transforms-3','transforms-4','8.14.3'):
+                    paths['gradle_'+label]=home/'.gradle/caches'/label
+                inventory={}
+                for label,path in paths.items():
+                    try:
+                        if path.is_symlink():
+                            inventory[label]={'status':'SYMLINK_NOT_FOLLOWED'}
+                        elif path.exists():
+                            result=subprocess.run(['du','-sx','--block-size=1',str(path)],
+                                stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,universal_newlines=True,check=False)
+                            inventory[label]={'bytes':int(result.stdout.split()[0])} if result.returncode==0 else {'status':'DU_FAILED'}
+                        else:
+                            inventory[label]={'bytes':0}
+                    except (OSError,ValueError,IndexError):
+                        inventory[label]={'status':'UNKNOWN'}
+                result=dict(directories=inventory,seconds=round(time.monotonic()-started,3))
+                summary['cacheInventory']=result
+                (dest/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+                print('CYF_CACHE_INVENTORY '+json.dumps(result,sort_keys=True))
+                PYTESTREPORT
+                cyf_phase package.end
+          upload_artifact:
+            name: Upload same-run release artifact
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: cyf_api_flow_5260799
+              filePath:
+                - _cyf_api_flow_export/
+              includePathInArtifact: false

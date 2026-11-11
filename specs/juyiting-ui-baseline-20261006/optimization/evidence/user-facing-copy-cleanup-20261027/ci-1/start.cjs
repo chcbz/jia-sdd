@@ -1,0 +1,15 @@
+const fs=require('fs'),crypto=require('crypto'),cp=require('child_process');const SDK=require('/root/.codex/skills/aliyun-pipeline/node_modules/@alicloud/devops20210625');const auth=JSON.parse(fs.readFileSync('/root/.codex/auth.json'));const client=new SDK.default({accessKeyId:auth.ALIBABA_CLOUD_ACCESS_KEY_ID,accessKeySecret:auth.ALIBABA_CLOUD_ACCESS_KEY_SECRET,endpoint:'devops.cn-hangzhou.aliyuncs.com',regionId:'cn-hangzhou',connectTimeout:10000,readTimeout:20000});
+const org='5fb7d76ee6f9d07f148529c7',pipeline='4403172',repo='https://gitee.com/chcbz/cyf-web-kit.git',commit='0978632826201497c63169866fa2ba88bab2327f',out='/home/isp/wsps/cyf/specs/juyiting-ui-baseline-20261006/optimization/evidence/user-facing-copy-cleanup-20261027/ci-1';
+async function body(p){const b=(await p).body;if(!b||b.success===false||b.errorCode)throw new Error('FLOW_API_REJECTED');return b}
+(async()=>{
+ const config=(await body(client.getPipeline(org,pipeline))).pipeline.pipelineConfig.flow;
+ if(crypto.createHash('sha256').update(config).digest('hex')!=='0189ce8daf20d156f02fff89d859cd23afbfd3a63eafa0ce0f5cdf4992e0f47b')throw new Error('CONFIG_CHANGED');
+ const before=await body(client.listPipelineRuns(org,pipeline,new SDK.ListPipelineRunsRequest({maxResults:100})));
+ if(before.pipelineRuns.some(r=>!['SUCCESS','FAIL','FAILED','CANCELED','CANCELLED','STOPPED'].includes(r.status)))throw new Error('ACTIVE_RUN');
+ if(before.pipelineRuns.some(r=>Number(r.pipelineRunId)>359))throw new Error('NEW_RUN_RECONCILE_FIRST');
+ const remote=cp.execFileSync('git',['ls-remote',repo,'refs/heads/develop'],{encoding:'utf8'}).split(/\s+/)[0];if(remote!==commit)throw new Error('SOURCE_CHANGED');
+ const context={task:'USER-FACING-COPY-CLEANUP-20261027',org,pipeline,commit,branch:'develop',requestStartedAt:new Date().toISOString(),configSha256:crypto.createHash('sha256').update(config).digest('hex'),existingRunIds:before.pipelineRuns.map(r=>r.pipelineRunId),historyNextToken:before.nextToken,params:{runningBranchs:{[repo]:'develop'}},reason:'No push-triggered run observed; existing control start refuses paginated history. Reuse established SDK single-start contract, retain exact-source readback and own-run timeout. No config change or deployment.'};
+ fs.writeFileSync(out+'/flow-start-context-v2.json',JSON.stringify(context,null,2),{flag:'wx'});
+ try {const result=await body(client.startPipelineRun(org,pipeline,new SDK.StartPipelineRunRequest({params:JSON.stringify(context.params)})));const receipt={at:new Date().toISOString(),state:'RESPONDED',run:result.pipelineRunId};fs.writeFileSync(out+'/flow-start-response-v2.json',JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt))}
+ catch {fs.writeFileSync(out+'/flow-start-response-v2.json',JSON.stringify({at:new Date().toISOString(),state:'UNKNOWN',action:'reconcile existing runs; never repeat start'}));console.log('START_RESULT_UNKNOWN')}
+})().catch(e=>{console.error(['CONFIG_CHANGED','ACTIVE_RUN','NEW_RUN_RECONCILE_FIRST','SOURCE_CHANGED','FLOW_API_REJECTED'].includes(e.message)?e.message:'START_PREFLIGHT_FAILED');process.exitCode=1});

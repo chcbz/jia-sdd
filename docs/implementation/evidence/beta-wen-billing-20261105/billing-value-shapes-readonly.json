@@ -1,0 +1,69 @@
+{
+  "observedAt": "2026-11-06T06:24:17.451317+00:00",
+  "mode": "READ_ONLY_AGGREGATES",
+  "database": "jia",
+  "binding": "local catalog only; actual production datasource not attested",
+  "consistentBackup": false,
+  "queries": {
+    "skillProductPricing": "SELECT CASE WHEN price_micro=0 THEN 'ZERO' ELSE 'NONZERO' END,COUNT(*) FROM agent_skill_product_version GROUP BY 1",
+    "skillOrderPricing": "SELECT status,CASE WHEN price_micro=0 THEN 'ZERO' ELSE 'NONZERO' END,COUNT(*),SUM(escrow_id IS NOT NULL),SUM(reserve_transaction_id IS NOT NULL),SUM(capture_transaction_id IS NOT NULL) FROM economy_skill_order GROUP BY 1,2",
+    "skillQuotePricing": "SELECT CASE WHEN expected_price_micro=0 THEN 'ZERO' ELSE 'NONZERO' END,COUNT(*) FROM economy_skill_purchase_quote GROUP BY 1",
+    "skillReceiptPricing": "SELECT CASE WHEN price_micro=0 THEN 'ZERO' ELSE 'NONZERO' END,COUNT(*) FROM economy_skill_order_receipt GROUP BY 1",
+    "hostingIntents": "SELECT status,CASE WHEN amount_micro=0 THEN 'ZERO' ELSE 'NONZERO' END,COUNT(*),SUM(runtime_installation_id IS NOT NULL),SUM(capture_transaction_id IS NOT NULL),SUM(refund_transaction_id IS NOT NULL) FROM economy_hosting_provisioning_intent GROUP BY 1,2",
+    "hostingReprovision": "SELECT status,COUNT(*) FROM economy_hosting_reprovision GROUP BY status"
+  },
+  "results": {
+    "skillProductPricing": [
+      [
+        "ZERO",
+        "19"
+      ]
+    ],
+    "skillOrderPricing": [
+      [
+        "ACTIVE",
+        "ZERO",
+        "14",
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "skillQuotePricing": [
+      [
+        "ZERO",
+        "21"
+      ]
+    ],
+    "skillReceiptPricing": [
+      [
+        "ZERO",
+        "2"
+      ]
+    ],
+    "hostingIntents": [
+      [
+        "REFUNDED",
+        "NONZERO",
+        "1",
+        "0",
+        "0",
+        "1"
+      ],
+      [
+        "ACTIVE",
+        "NONZERO",
+        "2",
+        "1",
+        "2",
+        "0"
+      ]
+    ],
+    "hostingReprovision": [
+      [
+        "SERVICE_READY",
+        "1"
+      ]
+    ]
+  }
+}

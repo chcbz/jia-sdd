@@ -1,0 +1,48 @@
+{
+  "status": "FAIL",
+  "inputs": {
+    "source": "2200c737cf1b4fc7830fad8dcc7b99f5e17ab99a",
+    "tree": "aa103f55c25c7c48cae1abdf2631aee8082cf976",
+    "selector": ":economy:jia-economy-service:test --tests cn.jia.economy.service.impl.HostingRentLedgerServiceRealTransactionTest --tests cn.jia.economy.config.EconomyHostingRentSchemaInitializerMySqlTest.retained* :agent:jia-agent-service:test --tests cn.jia.agent.service.impl.AgentTaskBillingMySqlTransactionTest.browser* --tests cn.jia.agent.hosting.HostingRentApplicationServiceTest --tests cn.jia.agent.hosting.HostingRentReprovisionTransactionTest --tests cn.jia.agent.hosting.HostingRentReconcilerTest :economy:jia-economy-mapper:test --tests cn.jia.economy.schema.EconomyHostingRentSchemaContractTest validateLayering",
+    "initSha256": "74bfab29824aaa59b61990233cd0888f26333750540e1158ce89420ff1268515",
+    "webArchiveSha256": "9ed2bd075336112a5c7cd9fe810ed56734205d20ad94270ec23c95c99147b9ee",
+    "mysqlVersion": "8.0.21",
+    "chromeVersion": "133.0.6943.141",
+    "nodeVersion": "24.22.1",
+    "scope": "local isolated retained hosting migration/service/consumer regressions and billing browser; compiled outputs reused, tests fresh; no production or paid calls"
+  },
+  "suites": [
+    {
+      "suite": {
+        "name": "cn.jia.economy.service.impl.HostingRentLedgerServiceRealTransactionTest",
+        "tests": "17",
+        "skipped": "0",
+        "failures": "0",
+        "errors": "0",
+        "timestamp": "2026-11-06T11:27:49.589Z",
+        "hostname": "iZwz9j3ip2unzhwij0bs30Z",
+        "time": "64.851"
+      },
+      "failures": []
+    },
+    {
+      "suite": {
+        "name": "cn.jia.economy.config.EconomyHostingRentSchemaInitializerMySqlTest",
+        "tests": "2",
+        "skipped": "0",
+        "failures": "1",
+        "errors": "0",
+        "timestamp": "2026-11-06T11:27:32.524Z",
+        "hostname": "iZwz9j3ip2unzhwij0bs30Z",
+        "time": "17.061"
+      },
+      "failures": [
+        {
+          "message": "org.opentest4j.AssertionFailedError: expected: <[{id=1, request_id=request-1, lease_id=lease-1, intent_id=intent-1, agent_id=agent-1, persona_code=p, principal_id=u, idempotency_key=[B@7c9bdee9, request_hash=[B@7afbf561, lease_version=3, paid_through=200, requested_at=120, status=SERVICE_READY, live_slot=1, version=2, service_ready_at=130, runtime_target_generation=3, evidence_ref=ready-evidence, tenant_id=t, client_id=c}]> but was: <[{id=1, request_id=request-1, lease_id=lease-1, intent_id=intent-1, agent_id=agent-1, persona_code=p, principal_id=u, idempotency_key=[B@2f98635e, request_hash=[B@49c8f6e8, lease_version=3, paid_through=200, requested_at=120, status=SERVICE_READY, live_slot=1, version=2, service_ready_at=130, runtime_target_generation=3, evidence_ref=ready-evidence, tenant_id=t, client_id=c}]>",
+          "type": "org.opentest4j.AssertionFailedError"
+        }
+      ]
+    }
+  ],
+  "attribution": "Migration schema validation and identity/lease assertions completed; comparing reprovision byte[] in two JDBC maps used reference equality. Normalize binary fields to hex for value equality. Agent/browser/layering not reached."
+}

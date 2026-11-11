@@ -1,0 +1,18 @@
+local static verification 2026-10-28 Asia/Shanghai
+22b4511945d7ef7e6cfbda0f482f6c8910ce8306
+d8529e3ba852dc541b527c46d556dd8126b7d527
+?? specs/
+fixture tree: d3cdc69da62bddc48af0bc86b4f32dbfa9429b60
+requirements read-only production/candidate: 876ee1e373046e41fa86e5a6043e69d6f8c7fa15e1a14e0d5e36ca461034dce4  /home/isp/apps/cyf-agent-runtime-v1/app/codex-bridge/toolchain/requirements.txt
+876ee1e373046e41fa86e5a6043e69d6f8c7fa15e1a14e0d5e36ca461034dce4  /home/isp/wsps/chcbz/isp-install/conf/codex-bridge/toolchain/requirements.txt
+
+syntax: js-yaml parse, bash -n outer/inner, node --check PAYLOAD, Python ast.parse IMAGE_PACKAGE all PASS
+No CI execution, build, ZIP generation, deployment or model call.
+
+Python 3.6 compatibility remediation (after original static verification):
+- IMAGE_PACKAGE no longer passes compresslevel to ZipFile or text=True to check_output; uses default DEFLATED and universal_newlines=True.
+- Reparsed YAML; bash -n outer and inner; node --check PAYLOAD; Python 3.6.8 AST parse all PASS.
+- Executed exact extracted IMAGE_PACKAGE using local Python 3.6.8 on a temporary synthetic Git fixture, verified entries, bytes, CRC, digest, size and fixture source identity; see runtime-ci-python36-synthetic.log. Fixture ZIP digest is not a production artifact.
+- Embedded Python scan found no remaining compresslevel, text=True or capture_output. Other embedded code is JavaScript and shell; no other Python fragment in candidate.
+- Candidate YAML SHA256: 1be699c4e4ee346112133bd1417c478168ebfdc1af82367cd129748263f7635f
+- No Flow/config write, real skill ZIP, model call or production deployment.

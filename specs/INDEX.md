@@ -1,114 +1,92 @@
-# SDD Feature Index
+# CYF规格索引（导航核对：2026-11-10）
 
-## 阅读入口（2026-10-08 文档收敛，不修改特性生命周期）
+本索引维护**30个现行责任专题**；另有5个已闭环专题、4个已退役专题和1个历史来源目录，仅供追溯。目录仍有40个不代表存在40套现行方案，另有新特性模板。**文档修订版本不等于软件版本、全部实现或线上验收。** 当前责任、业务链、边界和验收从各专题主文档开始；不按旧文件日期、任务未勾选项或历史Run推断今天的状态。
 
-本页原表格与日期补充是**历史状态投影**，并非所有特性的最新状态清单；不要仅因某段写 draft/released 就推断今日状态。当前 Owner/阻塞查 `docs/implementation/TASKS.yaml#runtime_ledger_json`，发布结论查对应精确版本证据；未核实项不在此批量改状态。
+## 开发先读
 
-- 当前架构/模块知识：[知识库入口](../docs/knowledge-base/README.md)（留意局部核对与旧基线边界）。
-- 已完成范围收口样板：[聚义厅议事 UI](juyiting-ui-baseline-20261006/README.md) → [组件职责](../docs/knowledge-base/05-frontend-architecture.md#hall-discussion-composition) / [行为与回归](../docs/knowledge-base/06-juyiting-end-to-end.md#hall-discussion-ui)。仅 UI 切片，非整个特性或业务完成。
-- 其他特性尚未逐项完成知识收口；下方历史合同、状态和证据继续保留，不以本次文档整理替代核验。
+- [Agent文档总入口](../docs/README.md) · [聚义厅全局回归119项](juyiting-unified-experience/global-regression.md)（定义未执行）
 
-## 历史索引及增量记录
+- [根规则](../AGENTS.md) · [规格维护规则](AGENTS.md)（含术语表与冲突仲裁） · [统一性能/职责/校验/兼容/DFX约束](architecture-convergence/development-principles.md)
+- [当前交互原型](../web/prototypes/juyiting/specs/prototype-spec.md) · [实现知识库](../docs/knowledge-base/README.md) · [SDD工作流](../docs/sdd-workflow.md)
+- 默认本地测试、构建和受控部署；精确源码/测试/制品摘要、锁与恢复保护保留。2026-11-09规则：单次单元测试/构建发布上限600秒，异常重试重新计时，回归验证不受此限；超限须申请例外，不向业务请求或生产服务下传deadline；不自动启动Flow或发布develop。
 
+## 现行责任专题（30个）
 
-更新：2026-09-14。唯一执行台账：`docs/implementation/TASKS.yaml#runtime_ledger_json`；当前全量 SDD 投影与重分配入口：`docs/implementation/SDD_STATUS_20260914.md`；逐项待办快照：`docs/implementation/archive/2026-09-14/reassignment-ledger.json`。历史归档仍保留在 `docs/implementation/archive/2026-09-06/`。
+表中内容为现行合同目的，不是交付状态。每个主spec已说明责任层、业务流程、边界与验收落点，并导航到原设计/任务/验收和必要继任合同。原始测试/发布状态仍查对应日期证据。
 
-| Feature | 生命周期 | 当前结论 |
+| 专题 | 现行目标 | 同范围专项合同 |
 | --- | --- | --- |
-| [api-performance-3s-slo](api-performance-3s-slo/delivery-status.md) | implementing | 性能 SDD 与若干观测切片已存在；按 2026-09-13 可用性优先策略，真实慢请求用于排序优化，未测算的 3 秒阈值不再阻断请求、发布或交付。完整运行采集与优化仍待推进。 |
-| [account-security-foundation](account-security-foundation/delivery-status.md) | implementing | Cookie 修复包已在运行台账行政收口，但只记录 manifest 校验，缺 exact Git 绑定与 credentialed 生产验收；不能把整个账号安全需求标为完成。 |
-| [agent-client-skill-refresh](agent-client-skill-refresh/delivery-status.md) | released | 已交付并归档原 2026-08-23 功能；原验收记录 API108、Client97 与运行 smoke，未在本次重复执行。 |
-| [agent-workspace-capability-refresh](agent-workspace-capability-refresh/delivery-status.md) | released | 历史 acceptance 与 release 均有依据，统一原顶层 accepted 与 release.released 的陈旧状态，归档 2026-08-23 交付。 |
-| [archive-pavilion-reader-mvp](archive-pavilion-reader-mvp/delivery-status.md) | implementing | 已有发布和修复记录；真实认证阅读、进度、书签、私密笔记及双身份隔离业务验收仍在 2026-09-14 重分配清单中，整体不归档。 |
-| [juyiting-dual-orientation-experience](juyiting-dual-orientation-experience/delivery-status.md) | implementing | O00–O04 有 accepted 记录；真实设备和用户场景验收仍未因为源码 accepted 自动闭环。 |
-| [oauth-public-client-hardening](oauth-public-client-hardening/delivery-status.md) | released | 按原 SDD 中独立审查与 2026-08-24 发布记录归档；不扩大为所有账号安全/公共公测需求已完成。 |
-| [agent-economy-marketplace](agent-economy-marketplace/delivery-status.md) | implementing_preview | V0 有 accepted 切片，但真实交易、收费、退款/补偿、安装/激活与业务验收未完成；生产完整 SDD 与 V0 预览严格区分。 |
-| [juyiting-voice-conversation](juyiting-voice-conversation/delivery-status.md) | implementing | API/Web/集成候选和部分制品证据已存在；真实 STT/TTS/音频 Provider、运行时启用与用户验收尚未完成。 |
-| [public-beta-release](public-beta-release/delivery-status.md) | implementing | 候选及部分发布记录保留；公开可用性、真实身份隔离及端到端公测验收尚未完成。 |
-| [juyiting-task-collaboration](juyiting-task-collaboration/delivery-status.md) | implementing | 已有 M3 上线和多项 accepted 记录；M4/M5、默认关闭能力、真实 Agent 安装/激活及业务验收未完成，不能整体归档。 |
+| [account-security-foundation](account-security-foundation/spec.md) | 账号认证、安全会话与撤销 | 主spec及design |
+| [agent-economy-marketplace](agent-economy-marketplace/spec.md) | 内测文钱包与人民币成本账 | [细则](agent-economy-marketplace/beta-wen-billing.md) |
+| [api-performance-3s-slo](api-performance-3s-slo/spec.md) | 可用性优先的API性能观测与热点治理 | 主spec及design |
+| [task-scheduling](task-scheduling/spec.md) | 统一后台调度、可靠唤醒与集群执行（设计中） | [设计](task-scheduling/design.md) |
+| [architecture-convergence](architecture-convergence/spec.md) | 统一事实归属、性能与DFX职责 | [细则](architecture-convergence/development-principles.md) |
+| [archive-agent-maintenance](archive-agent-maintenance/spec.md) | 典籍任职、资料整理与受控内容维护 | [细则](archive-agent-maintenance/design.md) |
+| [archive-pavilion-reader-mvp](archive-pavilion-reader-mvp/spec.md) | 数据驱动的典籍阅读与个人进度 | 主spec及design |
+| [command-observability-v1-9](command-observability-v1-9/spec.md) | 只读协作运行看板与异常定位 | 主spec及design |
+| [full-tenant-gray](full-tenant-gray/spec.md) | 环境租户隔离与冻结剩余项 | 主spec及design |
+| [juyiting-agent-model-governance](juyiting-agent-model-governance/spec.md) | 好汉实际模型与能力治理 | 主spec及design |
+| [juyiting-assignee-recommendation](juyiting-assignee-recommendation/spec.md) | 单次模型推荐与用户显式确认承办 | 主spec及design |
+| [juyiting-codex-fast-context-20260925](juyiting-codex-fast-context-20260925/spec.md) | 议事上下文连续性与执行热路径 | [细则](juyiting-codex-fast-context-20260925/../juyiting-ui-baseline-20261006/optimization/detailed-design.md) |
+| [juyiting-conversation-sessions](juyiting-conversation-sessions/spec.md) | 业务会话与原生thread的适用映射 | 主spec及design |
+| [juyiting-creative-delivery-mvp](juyiting-creative-delivery-mvp/spec.md) | 个人资料与固定版本文件交付 | 主spec及design |
+| [juyiting-dual-orientation-experience](juyiting-dual-orientation-experience/spec.md) | 横竖屏展示壳与资源生命周期 | 主spec及design |
+| [juyiting-execution-recovery](juyiting-execution-recovery/spec.md) | 既有执行回执只读核对与新方案恢复 | 主spec及design |
+| [juyiting-external-commission-mvp](juyiting-external-commission-mvp/spec.md) | 同平台外部Agent承办与正式成果验收 | 主spec及design |
+| [juyiting-lightweight-workbench](juyiting-lightweight-workbench/spec.md) | 聚义厅轻量工作台真实功能入口 | 主spec及design |
+| [juyiting-live-map-preview](juyiting-live-map-preview/spec.md) | 复用同一地图状态的只读预览 | 主spec及design |
+| [juyiting-multimedia-deliberation](juyiting-multimedia-deliberation/spec.md) | 普通请求驱动的多媒体议事闭环 | 主spec及design |
+| [juyiting-skill-execution](juyiting-skill-execution/spec.md) | 原生技能执行与管理的职责收敛 | [细则](juyiting-skill-execution/native-execution-technical-design-20261027.md) |
+| [juyiting-task-collaboration](juyiting-task-collaboration/spec.md) | 任务/请求/回合扩展性与协作事实 | 主spec及design |
+| [juyiting-ui-baseline-20261006](juyiting-ui-baseline-20261006/spec.md) | 现行原型与议事消息/成果展示 | [细则](juyiting-ui-baseline-20261006/optimization/detailed-design.md) |
+| [juyiting-unified-experience](juyiting-unified-experience/spec.md) | 最小清晰办事体验与事实展示 | 主spec及design；[全局回归119项](juyiting-unified-experience/global-regression.md)及[用例数据](juyiting-unified-experience/global-regression-cases.json)（定义未执行） |
+| [juyiting-voice-conversation](juyiting-voice-conversation/spec.md) | 语音输入输出的基础适配 | 主spec及design |
+| [juyiting-voice-realtime](juyiting-voice-realtime/spec.md) | 实时语音传输与会话生命周期 | 主spec及design |
+| [personal-center-navigation-v1-8](personal-center-navigation-v1-8/spec.md) | 个人中心身份与功能导航 | 主spec及design |
+| [public-beta-release](public-beta-release/spec.md) | 公测范围与真实交付验收 | 主spec及design |
+| [runtime-self-host-onboarding](runtime-self-host-onboarding/spec.md) | 自托管Runtime安装与就绪交接 | 主spec及design |
+| [username-encoding-integrity](username-encoding-integrity/spec.md) | 用户名编码与权威发送者身份 | 主spec及design |
 
-## 2026-09-17 版本增量
+## 已闭环专题（5个，只保留最终规格）
 
-- `juyiting-agent-model-governance`：ready（2026-09-18）；已冻结 Agent 模型/计费智力值、无副作用揭榜模型费用预估、默认 owner-only 的同 scope 外部精准邀请，以及基于已接受任务结果的可交付技能候选/确认合同。未创建实现任务，未变更冻结经济合同。
-- `economy-readonly-preview-v1-7`：implementing；1.7.0新增只读预览，需求/详设/任务/验收/integration位于同名目录；尚未发布。生产经济冻结合同不修改，真实交易等不算完成。
-- `juyiting-voice-conversation`：1.6代码发布有独立证据；网关TTS404、STT未执行，用户主动延期实际启用/验收，运行任务deferred；不阻塞1.7，也不归档整个语音需求。
-- 上方2026-09-14表为历史快照，不覆盖其后用户已确认的阅读、双身份双客户端、移动端横竖屏验收；本次不因旧快照重复安排这些验收。
+功能已完成发布/验收，不再作为开发入口。仅保留最终 spec（本文即最终规格）与 evidence/integration.yaml；设计/任务/验收过程文档已删除。历史发布/验收证据查各专题 `evidence/` 与 `integration.yaml`。
 
-## 生命周期
+| 专题 | 最终规格 | 闭环依据 |
+| --- | --- | --- |
+| [juyiting-agent-skill-display](juyiting-agent-skill-display/spec.md) | 点将册与好汉详情的轻量能力展示 | accepted；1.16.8/1.16.9 已部署并完成范围内在线验收 |
+| [juyiting-ui-optimization](juyiting-ui-optimization/spec.md) | 移动交互、导航和可访问性 | accepted；软键盘/导航/可访问性发布验收通过 |
+| [agent-client-skill-refresh](agent-client-skill-refresh/spec.md) | Agent技能事实刷新 | released；2026-08-23 生产部署并核验 |
+| [agent-workspace-capability-refresh](agent-workspace-capability-refresh/spec.md) | Agent执行工作目录能力刷新 | released；生产发布并核验 |
+| [oauth-public-client-hardening](oauth-public-client-hardening/spec.md) | OAuth公共客户端与回调边界 | released；OAuth 加固已生产发布 |
 
-draft → ready → implementing → integration-ready → accepted → released。`archived` 是另附的历史交付登记，不是运行台账 gate；功能需完整验收才能整体验收归档。已发布且有后续缺陷的记录可以归档，缺陷任务保持活动。
+## 已退役专题（4个，不作为开发入口）
 
-`agent-economy-marketplace/integration.yaml` 属 SHA 冻结生产合同，仍保留 draft；V0 实施状态由 delivery-status.md 与 2026-09-14 重分配基线补充，不修改 bundle。本文档不派发任务或开启生产。
+原路径保留历史要求、失败、版本和验收证据；不再维护平行现行合同，默认项目检索不加载这些目录。未实现要求没有因退役被标为完成。
 
-## 2026-09-17 个人中心入口规划（最新补充）
+| 历史来源 | 当前责任入口 | 处理依据 |
+| --- | --- | --- |
+| [economy-readonly-preview-v1-7](economy-readonly-preview-v1-7/spec.md) | [责任专题](agent-economy-marketplace/spec.md) | 旧SILVER、合成预览报价和TTL已由WEN合同接替；历史预览不作为真实收费或免费凭证。只读操作不产生订单/资金/安装副作用，接口失败不伪装零余额。 |
+| [single-tenant-role-isolation](single-tenant-role-isolation/spec.md) | [责任专题](full-tenant-gray/spec.md) | 字面tenant0归零迁移已被环境租户合同接替；个人owner/角色授权保留，不重跑旧迁移，不恢复冻结剩余整改。 |
+| [juyiting-flow-repair-20261008](juyiting-flow-repair-20261008/spec.md) | [责任专题](juyiting-unified-experience/spec.md) | 一次性闭环修复转为整体体验和全局回归维护；旧样本不自动重放，旧Flow发布步骤不再生效。 |
+| [juyiting-formal-flow-bugfix-20260923](juyiting-formal-flow-bugfix-20260923/spec.md) | [责任专题](juyiting-unified-experience/spec.md) | 旧BF缺陷/版本计划保留追溯；派发、固定资料、正式交付和返工由整体体验/技能执行合同及全局回归承接，不重开旧版本发布。 |
 
-- `economy-readonly-preview-v1-7`：已部署；授权12表修复及限定范围API40/40、Chromium15/15通过，等待用户验收。上文“尚未发布”是历史快照；最终证据见 `/home/isp/wsps/cyf/docs/implementation/V1_7_LOCAL_RELEASE_RESULT_20260917.md`，不扩大为真实交易/完整托管已交付。
-- `personal-center-navigation-v1-8`：draft；用户确认将聚义厅个人中心入口纳入下一版，详设方案含双向导航/横竖屏/身份保护，仅文档。完整规格 `/home/isp/wsps/cyf/specs/personal-center-navigation-v1-8/`。旧平台增强仍保留后续待排，本轮不派发、不改运行台账。
+历史会话目录另见[codex历史来源](codex-history-closeout-20261023/spec.md)，不是业务专题。
 
-## 1.8/1.9统一候选最新回执（覆盖早期draft排期）
+## 明确替代关系
 
-- `personal-center-navigation-v1-8`：integration-ready，聚义厅个人中心及经济预览导航已完成；按用户要求不单独部署，release/1.8.0保持冻结。
-- `command-observability-v1-9`：integration-ready，协作运行只读看板/安全能力发现已完成；已包含1.8并合入两个组件develop、冻结release/1.9.0，未部署。Web308+策略7、API10+制品64、生产bundle隔离浏览器99通过。
-- 详设与回执：`specs/command-observability-v1-9/`、`docs/implementation/V1_9_RELEASE_READY_20260917.md`。本轮只通知候选可发布；不开启特权读取/权限，不将整体M5/G07、语音或交易标为完成。
+| 旧口径 | 现行合同 | 不变的保护 |
+| --- | --- | --- |
+| 云效为默认正式前置、禁止本机重型构建 | 根AGENTS本地固定源码执行；Flow仅另获授权使用 | 身份、精确制品、互斥、恢复和真实验收 |
+| SILVER/微银两、合成预览价、旧报价TTL | [文钱包与人民币成本账](agent-economy-marketplace/beta-wen-billing.md) | 资金事务、幂等、金额精度、切换授权 |
+| 字面tenant0、请求/JWT决定业务tenant | [环境租户](full-tenant-gray/spec.md) | 个人owner权限、公共持久化隔离；冻结剩余不重启 |
+| 按技能/Provider编排通用Runtime、旧runner执行恢复 | [RB-1](juyiting-skill-execution/responsibility-boundaries.md)及原生详设 | 执行隔离、完整性、旧事实只读、新方案恢复 |
+| 全量历史、50条、逐条/ID集合补查 | [20条页级投影及连续窗口](juyiting-ui-baseline-20261006/optimization/detailed-design.md) | 游标连续性、固定成果版本、身份切换隔离 |
+| 取消最终回复、流缓存拼接落库 | 保留完整最终回复；流仅实时预览 | 最终事实事务与幂等 |
+| 3秒/启动预算硬终止 | 性能观测与优化目标 | 真实网络错误、传输超时、用户取消 |
 
+## 历史与模板
 
-## 1.9.2实际交付回执（覆盖上述候选未部署状态）
-
-- `personal-center-navigation-v1-8`、`command-observability-v1-9` 已统一发布为 **1.9.2**；包含已有hotfix，修复线上回归发现的OAuth身份接口同名类遮蔽。
-- 实际API `e15f7020`、Web `41ca32b`；两个组件develop/release/1.9.2已readback。真实API46/完整本轮浏览器113通过，技术发布与回归完成，**待用户本人验收**。
-- 普通账号的运维看板无权说明已验证；未授予ops-read或开启read-enabled。语音、真实交易、完整server托管及整体M5/G07不在本次完成声明中。
-- 最终说明：`/home/isp/wsps/cyf/docs/implementation/V1_9_2_RELEASE_RESULT_20260918.md`；SDD冻结分支 `codex/v1-9-2-sdd-release-20260918`。
-
-## 2026-09-18 MVP 价值闭环重评估
-
-- 认证只读体验与 exact release 源码核对见 `docs/implementation/MVP_VALUE_GAP_ASSESSMENT_20260918.md`；不把空成果列表、历史聊天或接口 200 当成新任务执行验收。
-- `juyiting-agent-model-governance` 保留 ready 设计，**不等于完整治理优先于 MVP**；最新安排为 1.10 文件库、1.11 Word 闭环、1.12 图片/PPT、1.13 完整文件 MVP、1.14 治理。版本安排见 `docs/implementation/VERSION_PLAN_20260918.md` 第 1 节；未派发、未改运行台账、未自动扩大客户端/付费授权。
-- 正式交付已有发布代码与线上读取入口；缺口按真实任务→执行→成果→验收链路逐段核实，不能把整套 R2 重标为尚未开发。
-
-## 2026-09-18 用户明确 MVP 最低成果范围（覆盖仅文本建议）
-
-- `juyiting-creative-delivery-mvp`：draft（业务目标已明确，技术合同待核）；完整范围分 1.10.0–1.13.0 交付，目标为真实生图、按原图改图、根据用户材料生成可下载可编辑 `.pptx`，并支持上传用户已有 PPT/Word/PDF/Excel 由 Agent 读取和对话修改；逐格式验证预览及新文件下载，不建设在线内容编辑器。必须贯通原图/资料输入、实际执行、文件持久化、预览/下载和修改版本，不以提示词/大纲/演示代替。
-- `juyiting-agent-model-governance`：保留 ready 设计、后移 1.14.0；默认 owner-only/权限隔离/费用诚实前置，完整计费智力值、外单和技能自动总结不阻塞上述 MVP。
-- 最新统一排期：`docs/implementation/VERSION_PLAN_20260918.md`；原只读体验证据保留，未转写为生图/改图/PPT 执行通过；本轮无实现、无用量、无运行台账变更。
-
-## 2026-09-18 个人工作空间补充
-
-- `juyiting-creative-delivery-mvp` 继续 draft、首版 1.10.0 / 完整 MVP 1.13.0：业务中心改为个人工作空间，统一管理上传资料和 Agent 交付，悬赏关联可选、固定文件版本，Agent 仅访问本次授权输入；具体见同目录 `workspace-design.md`。无实现、无运行台账变化；原 C0 证据不等于工作空间已上线。
-
-- C1 接口/数据候选已补入 `juyiting-creative-delivery-mvp/workspace-contract-v1.md`，分 A/B 个人文件库和 C/D Agent 执行桥接；28 项设计案例未执行，feature 保持 draft，无应用/台账变更。
-
-## 2026-09-18 个人工作空间 1.10 实施准备与估算
-
-- 任务和范围：`juyiting-creative-delivery-mvp/v1-10-implementation-plan.md`，10 项未派发任务，工程预算 72–118 人时；API/Web 两线按各每天 6 小时有效投入假设为 10–16 个工作日，非 Agent 连续耗时或上线承诺。
-- 验收：同目录 `v1-10-acceptance.md` / `v1-10-acceptance-cases.json`，30 项全部未执行。已记录 18 个 exact 源码 blob 的估算依据，不是应用测试证据。
-- feature 继续 draft、完整 MVP 仍为 1.13；本轮仅实施准备，无代码/台账/生产/付费变更。
-
-## 2026-09-21 聚义厅整套体验设计
-
-- `juyiting-unified-experience`：draft，基于用户认可的完整离线Demo完成整体方案、UI/工程详设、14包WBS与工作量估算。首次默认地图，明确保留手动横竖屏切换，统一办理链路而不合并私人/正式任务权限。基础45–71人日，含具体风险51–82人日；两名核心研发+兼职测试参考7–10工作周。仅设计交付，未派发、未改应用/运行台账、未构建/部署；接口待M0冻结。规格入口 `/home/isp/wsps/cyf/specs/juyiting-unified-experience/spec.md`。
-
-### 2026-09-21 Agent并行实施补充
-
-`juyiting-unified-experience`已由用户授权开始Agent并行开发，状态implementing；旧7–10周人力排期不用于本次执行。先完成10个已完成worktree清理和历史交接压缩，再从Web1.13.9/API1.13.8建立独立工作树，派发W01与B01A两名Writer。完整14包已登记唯一运行台账；无Reviewer、无Flow、无本机生产构建、无新发布。第一波合同与接续计划见 `/home/isp/wsps/cyf/specs/juyiting-unified-experience/agent-execution-plan.md`。
-
-## 2026-09-22 Agent 通讯与协作执行详设
-
-- `juyiting-task-collaboration` 增量详设：[功能缺口与详细设计](/home/isp/wsps/cyf/specs/juyiting-task-collaboration/connectivity-detailed-design-20260922.md)，draft。覆盖显式 @直达、密议、宋江受限协调、Agent 问答/委托、Eva 真实测试构建和开发控制面；14 项功能、32 项待执行验收。仅文档，不修改既有 feature 生命周期/冻结合同，不派发实现、不激活、不改唯一运行台账。
-
-
-## 2026-09-23 正式悬赏移动竖屏复测 bugfix
-
-- `juyiting-formal-flow-bugfix-20260923`：draft，吴用正式悬赏 #395 真实 UI 复测未闭环。已整理点将未送达、榜文议事 404、正式资料关联缺口、深层文件查看禁用、workspace/events 503、主状态映射不完整六项需求；交付/验收为被阻塞未到达。未实现、未构建/发布；证据及验收见该目录。
-
-- 版本增补：**1.13.19 planned / solution_defined**，上述六项修复纳入同一 bugfix，实施未开始。方案：`docs/implementation/V1_13_19_FORMAL_FLOW_BUGFIX_PLAN_20260923.md`；登记：`specs/juyiting-formal-flow-bugfix-20260923/version-plan.yaml`。
-
-
-## 典籍阁 Agent 任职与内容维护方案
-
-- `archive-agent-maintenance`：ready / D2，可交接其他 Agent 从 M0 实施。宋江协调或直达任职 Agent，经技能与受控 API 完成多书/不可变版本、草稿校验及授权发布；保留旧阅读、身份隔离和共享执行/存储合同，不扩旧 ItemRef。入口：[实施交接](/home/isp/wsps/cyf/specs/archive-agent-maintenance/handoff.md)、[详设](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)、[开发计划](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)。84 项业务验收均未执行；仅文档提交，无派发、组件 gitlink/运行台账修改、构建部署或生产激活。
-
-- 2026-09-30 语音补充：升级后 CLIProxyAPI 的 Realtime 单次真实音频交互已验证，旧独立 STT/TTS 路由404记录仍保留；新适配单列 `juyiting-voice-realtime`，源码/发布/生产启用/设备验收分别追踪，不把网关证明写成页面已上线。
-
-## 2026-10-07 多媒体议事实际状态补录
-
-- [juyiting-multimedia-deliberation](juyiting-multimedia-deliberation/delivery-status.md)：implementing / NOT_COMPLETE。API117、Web177已版本化发布；纯文字、图文理解、原图片生成、可选保存有真实子集证据。新task426最短纯文字完整闭环通过，存在四项确定UI缺口；混合关联/验收、附件-only/澄清、音频、第二账号及Client集成仍见[剩余任务](juyiting-multimedia-deliberation/remaining-tasks-20261007.md)。历史worktree/分支已按范围清理；Codex历史子会话34个已原生删除，当前及Owner主会话保留。本轮未新增构建或部署。
+- [模板](_template/spec.md)：新特性填写真实业务责任、输入输出、最小失败域和验收，不复制旧资金/调度/发布方案。
+- [历史会话归类](codex-history-closeout-20261023/summary-20261107.md)和[旧路径承接映射](../docs/sdd-document-map.json)保留来源；已删除旧D2/D3/UI提案不得重新生成作为当前方案。
+- `integration.yaml`原有精确pin及冻结bundle/fixture/receipt不为这次整理改写。新补推荐专题未虚构SHA；未填写表示本次没有候选绑定。
+- 文档检查：`./sddw check-docs`。全量文件分类/未改证据摘要及本轮差异见[收口记录](../docs/implementation/handoffs/SPEC-FULL-REFRESH-20261107.md)。

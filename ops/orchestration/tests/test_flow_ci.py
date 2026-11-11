@@ -43,14 +43,15 @@ class FlowCiTest(unittest.TestCase):
         self.env['CI_COMMIT_SHA'] = 'c' * 40
         self.assertEqual(self.context()['exact_sha_tree']['commit_sha'], 'c' * 40)
 
-    def test_original_branches_remain_supported(self):
-        for branch in self.policy['branches']:
+    def test_branch_names_are_not_an_execution_allowlist(self):
+        self.assertNotIn('branches', self.policy)
+        for branch in ('develop', 'master', 'codex/new-skill-optimization', 'release/2026.11', ''):
             self.env['CI_COMMIT_REF_NAME'] = branch
             self.context()
 
     def test_wrong_or_missing_flow_identity_rejected(self):
         for name, value in [('PIPELINE_ID', '5264702'), ('BUILD_NUMBER', ''),
-                            ('CI_COMMIT_REF_NAME', 'master'), ('CI_COMMIT_SHA', 'short'),
+                            ('CI_COMMIT_SHA', 'short'),
                             ('CYF_FLOW_GRADLE_ACTIVE', ''), ('CYF_FLOW_COMPILE_CACHE_OPT_IN', ''),
                             ('CYF_FLOW_SHORT_LIVED_TEST_JVM', ''), ('CYF_LOCAL_RELEASE_OPT_IN', '1')]:
             with self.subTest(name=name):

@@ -1,5 +1,27 @@
 # 详细设计 v1
 
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 现行设计边界（2026-11-07）
+
+**本专题：复用同一地图状态的只读预览。**
+
+### 最小责任链
+地图数据/运动由原地图模块维护；竖屏预览只投影视图。
+
+地图事实→共享状态→只读缩略预览→需要交互时进入现行全景入口。
+
+### 实施约束
+不以roster替代map，不建立第二动画/轮询/会话状态；不恢复已取消方向控制。
+
+通用开发/验证约束：[统一开发约束](../architecture-convergence/development-principles.md)。
+
+只在本专题实际改变协议或数据语义时同步生产者/消费者/必要迁移；接口不变的内部修复不默认修改Web、API、Runtime全链。表/索引修改须说明其查询或一致性职责，不新建CHECK/触发器代替业务规则。
+
+**入口与阅读边界：** 文档状态、入口及阅读边界以[需求](spec.md)现行规格为准。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
+
 ## 1. 代码事实与限制
 读取设计基线 `101ac4c6`：
 - `HallPortraitHome.vue` 的 `scene-sky/scene-hall/scene-courtyard` 是装饰；`sceneAgents` 取 `mapAgents.slice(0, 4)`。

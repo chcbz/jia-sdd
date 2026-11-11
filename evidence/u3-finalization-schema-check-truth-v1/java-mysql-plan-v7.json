@@ -1,0 +1,51 @@
+{
+  "candidate_commit": "b1e7b06817f041804f1e1d613ff4aa280641e904",
+  "candidate_tree": "ec0d645cd310517cf836218f285332a402c8228f",
+  "database": "mmd_javamysql_ec0d645c_20260930_201316",
+  "old_readonly_schema": "mmd_final_939d9121_20260930_184124",
+  "repaired_readonly_schema": "mmd_final_8289c1a3_20260930_184353",
+  "proxy_manifest_sha256": "35fdfcbb03b17504c1aee6c1b9caff5160e71745570566fb6160986dc388eac8",
+  "test_source": "/home/isp/wsps/cyf/evidence/u3-finalization-schema-check-truth-v1/java-mysql-v7/src/cn/jia/chat/config/FinalizationActualMySqlLifecycleTest.java",
+  "test_source_sha256": "12685b583adbaf103eeec97b2e5477ac4ac80d5b6bd9b670e84fa25fb57387a1",
+  "seed_ddl": [
+    {
+      "source": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-entry-finalization-integration-v1/agent/jia-agent-mapper/src/main/resources/db/schema.sql",
+      "source_sha256": "b71aede84364dd8382a8e36552dbdce33aa042b88e0551cc168954676adff474",
+      "table": "agent_task_meta",
+      "seed_path": "/home/isp/wsps/cyf/evidence/u3-finalization-schema-check-truth-v1/seed-agent_task_meta-v1.sql",
+      "seed_sha256": "9881e1185d497dfff9e6886364aec780399bc0cc23b39826edd4993b6330a802"
+    },
+    {
+      "source": "/home/isp/wsps/cyf/.worktrees/juyiting-multimedia-deliberation-20260928/api-entry-finalization-integration-v1/chat/jia-chat-mapper/src/test/resources/db/schema.sql",
+      "source_sha256": "e2d5c7c33c8418252b1a1b3b88d8b5417b50cf0f18453fcba12d0b480d584024",
+      "table": "chat_conversation",
+      "seed_path": "/home/isp/wsps/cyf/evidence/u3-finalization-schema-check-truth-v1/seed-chat_conversation-pre-fence-v4.sql",
+      "seed_sha256": "1ed106b314117b46304f7be9d40eb02a68d13687553372395d632e2fc925859a",
+      "source_extraction": "Exact raw chat mapper test table, minus 3 core fence columns + their dependent index so real core initializer supplies its own canonical DDL; synthetic pre-fence fixture, NOT untouched production DDL",
+      "removed_lines": [
+        "  target_agent_ids varchar(2000) DEFAULT NULL COMMENT 'persisted JSON array of authorized juyiting target agent ids',",
+        "  deleted_at bigint DEFAULT NULL COMMENT 'durable deletion tombstone',",
+        "  lifecycle_generation bigint NOT NULL DEFAULT 1 COMMENT 'monotonic conversation lifecycle generation',",
+        "  KEY idx_chat_conversation_live_owner (jiacn, client_id, deleted_at, lifecycle_generation, update_time)"
+      ],
+      "original_seed_path": "/home/isp/wsps/cyf/evidence/u3-finalization-schema-check-truth-v1/seed-chat_conversation-v1.sql",
+      "original_seed_sha256": "4364d68eb8aece9c8ef0bbbe8fb5486562a695ca4e645a2a34ac65b6ff40e59b"
+    }
+  ],
+  "jdbc_prefix": "jdbc:mysql://127.0.0.1:48317/",
+  "verification_scope": "actual isolated MySQL/Spring initializer-only lifecycle, source readiness before ApplicationRunners, exact3 weak checks read-only rejection; NOT full application startup/build/provider/UI/acceptance; fresh synthetic pre-fence source-derived seed, not raw-schema migration verification",
+  "selector": ":mmdActualMysqlV7Lifecycle",
+  "init_sha256": "1c77a8e965b85943a39e0234a0a599d56ee42464a0e2427e31f331c75d659e20",
+  "java_release": 21,
+  "retained_harness_failures": [
+    "v1: Groovy source DSL shadowed by variable; before compile/JDBC",
+    "v2: invalid source release 25 on Java21; before JUnit/JDBC",
+    "v3: 3pass/2fail; raw seed DEFAULT CHARSET=utf8mb4 implies0900_ai_ci independent of binary DB default. Core fence rightly rejected; finalization insert failure is dependent missing table. Failed DB immutable read-only; v4 uses synthetic pre-fence seed, core establishes canonical fence DDL",
+    "v4: initialization1fail; actual init mistakenly still referenced v2 plan. v3 likewise used v2 plan (same candidate/test source bytes); intended v4 fresh pre-fence DB remained0 and reused only after exact0 verification. v5 explicit plan selector/source/database/init identity checks.",
+    "v5: actual4pass/2fail; MySQL-created MEDIUMTEXT has capacity16777215/TEXT65535 but initializer expectednull. True source bug fixed in b1e7 with strict type-capacity checks and negative regression, no DDL/ACL relaxation.",
+    "v6: actual5pass/1fail; genuine SQL error3819 HY000 correctly enforces CHECK, but Spring actual UncategorizedSQLException did not match harness assumed DataIntegrityViolationException. v7 asserts DataAccessException/SQLException/vendor3819/exact constraint, no production change."
+  ],
+  "pre_run_fixture_table_count": 0,
+  "raw_rejected_readonly_schema": "mmd_javamysql_169aab6f_20260930_193039",
+  "fixture_digest": "d7ba0484f257aa930560729577f43d50d5d1a74161be0fa02ca091343001d9d9"
+}

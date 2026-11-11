@@ -1,0 +1,1 @@
+Retain this verified prior site and record. Under existing deploy.lock, preserve new hashed assets and restore prior files assets first and index.html last only after checking API compatibility; Do not roll back API or business state automatically. This archive is not a newly built release.

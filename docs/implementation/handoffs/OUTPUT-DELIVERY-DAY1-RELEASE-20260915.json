@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "release": "1.3.0-day1-task-deliverables",
+  "scope": {
+    "included": [
+      "Trusted server-side task artifact catalog for task/bounty detail",
+      "Whitelisted metadata listing, constrained text/image preview and exact-version download",
+      "Identity/client-scoped cache, request cancellation and stable unmapped-conversation empty state"
+    ],
+    "excluded": [
+      "Agent automatic export/upload",
+      "isp-install/client changes",
+      "chat-to-task mapping without a trusted binding",
+      "formal bounty acceptance, rework or financial settlement"
+    ]
+  },
+  "api": {
+    "repository": "jia",
+    "commit": "36acfb55b4bd1743b280a48864b77bd931c1dc2c",
+    "tree": "d6951e59687a8830f5a524e33824e1fdb48ccd38",
+    "flow": {
+      "pipeline": 5260799,
+      "run": 76,
+      "build_job": 516181070,
+      "deploy_job": 516181071,
+      "deploy_order": 69686863,
+      "source_verified": true,
+      "tests_and_bootjar": "SUCCESS",
+      "deployment": "1/1 Success, healthy"
+    },
+    "artifact": {
+      "jar_sha256": "8108ff55223869187fd1e6b26a1da1abcc6bec81d4e2aba368a937da801689b3",
+      "receipt_sha256": "cf736bb7939180c371542fe62dd9707efbeb78135c6da0f2ab829d5a0d681a29"
+    }
+  },
+  "web": {
+    "repository": "cyf-web-kit",
+    "commit": "4afab07d3d1b52749dcaa179cb2ceeda0dce1257",
+    "tree": "c60ea19d564c3e36367fb1abb78398bb7e42dbd8",
+    "feature_parent": "e7035db8d5679c084195d82a70b5693c85d83467",
+    "flow": {
+      "pipeline": 4403172,
+      "run": 111,
+      "build_job": 516196419,
+      "scan_job": 516196420,
+      "deploy_job": 516196421,
+      "deploy_order": 69687627,
+      "source_verified": true,
+      "full_tests_vite_build": "SUCCESS",
+      "javascript_scan": "SUCCESS",
+      "deployment": "1/1 Success, healthy"
+    },
+    "artifact": {
+      "file_count": 410,
+      "bytes": 104303930,
+      "sha256": "ead6dc3e3335ad9c008dddc6df9120d47f49548e2ecc265a29be0515befc2bc3"
+    }
+  },
+  "remediation": {
+    "failed_run": 110,
+    "failure": "The isolated JuyiHall SFC harness did not stub the new BountyPanel OutputList import; no frontend deployment started.",
+    "fix": "Commit 4afab07 adds the exact OutputList import stub.",
+    "local_regression": "78 passing: output-delivery-rb05 plus juyiting-component-behavior"
+  },
+  "online": {
+    "public_web": {
+      "index_status": 200,
+      "index_sha256": "3aa269a163d6373f13fd0fc79ff253193a2e252c407cee9ffc55650aace8b36e",
+      "juyiting_entry": "static/JuyiHallEntry-BW1xZQGb.js",
+      "juyiting_entry_sha256": "6595b8285d78c9c0f1d35f08b8b322e55c70894dd8016609de680d9b021040a5",
+      "day1_markers": ["/deliverables", "成果目录读取中", "暂无可领取成果"]
+    },
+    "business_readback": "pending_user_authorized_fixture",
+    "limitation": "No authorized user JWT and pre-existing trusted task artifact were supplied. No production artifact was created and no account was impersonated. The public API edge correctly rejected an invalid-token probe, but that is not a substitute for authorized list/download and cross-scope business readback."
+  }
+}

@@ -1,0 +1,33 @@
+
+
+  workspace audit: happy paths with current string-valued wire fixtures
+    ✔ lists, reads detail, previews and downloads an explicit fixed string version
+    ✔ uploads and appends with explicit previous version; preserves the confirmed receipt
+    ✔ renames, trashes and restores when revision preconditions agree
+
+  workspace audit: confirmed defects (passing means bug reproduced, NOT feature passed)
+    ✔ version dropdown turns wire strings into numbers, breaking preview/download and draft selection (91ms)
+    ✔ late rename response for file A overwrites selected B with mixed A metadata/B versions
+    ✔ changing list state while loading drops the new request and displays old ACTIVE data under trash filter
+    ✔ repeating a lost upload response uses a new key and permits two committed files
+    ✔ upload followed by detail GET failure returns success/ready although detail is absent
+    ✔ partial preview text hides the server warning in the actual embedded component
+    ✔ failure to refresh leaves a prior page cursor available for a new query
+    ✔ the default download/preview argument is a version object and fails validation
+
+  workspace audit: additional contract and presentation observations
+    ✔ string latestVersion concatenates into v21; string byteLength renders as unknown size (113ms)
+    ✔ weak current ETag makes rename, trash AND restore fail even without a revision change
+    ✔ usage can refresh impactRevision while retaining stale detail ETag
+    ✔ identity switch suppresses late mutation data without exposing old-owner details
+    ✔ multipart browser-file inference supports blank/octet-stream MIME and rejects HTML
+
+  workspace audit: directory, receipts and safety controls
+    ✔ search/media/state filters and explicit paging preserve fixed fields and deduplicate file IDs
+    ✔ a later detail selection wins over an earlier in-flight GET
+    ✔ known operation IDs can be queried without resubmitting the write
+    ✔ a genuine metadata conflict does not silently retry or mark the operation successful
+
+
+  20 passing (309ms)
+

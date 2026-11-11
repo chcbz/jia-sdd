@@ -1,5 +1,30 @@
 # 1.8.0 验收矩阵
 
+<!-- CYF-CURRENT-CONTRACT-20261107 -->
+## 当前验收合同（2026-11-07）
+
+**本专题：个人中心身份与功能导航。**
+
+### 必须验证的业务结果
+登录/未登录/退出、入口可达、权限与功能开关、移动返回/焦点、不展示前一账号数据。
+
+### 不回归边界
+显示名不是身份；未启用业务不因导航变更自动开放；退出清理本身份缓存/订阅。
+
+### 证据如何判定
+- 绑定实际commit/tree、测试selector/fixture和输入；真实返回/数据库事实/页面行为只证明各自层，mock不冒充跨层验收。
+- 必要身份/ACL、幂等、事务、锁及完整性保护按责任层覆盖；不在每个消费者复制同一防御矩阵。
+- 性能使用真实同一请求/场景：请求数、查询数、读取字节、首字与完成时间分别记录；超标记录待优化，不用快速失败计成功。
+- 以当前规则本地执行必要测试/构建并保存日志/制品摘要；本页历史Flow记录只证明当时输入，不要求重新付费Run。
+- 源码接受、测试、安装、健康、业务验收分别写结果；不把历史PASS迁移到新tree，不补填未实测指标。
+
+责任与DFX：[统一开发约束](../architecture-convergence/development-principles.md)。
+
+**入口与阅读边界：** 文档状态、入口及阅读边界以[需求](spec.md)现行规格为准。
+
+<!-- /CYF-CURRENT-CONTRACT-20261107 -->
+
+
 2026-09-17；矩阵为验收标准；实际已执行范围与限制见下方本轮结果。
 
 | ID | 场景 | 预期与证据 |
@@ -22,33 +47,8 @@
 release/1.8.0已在API/Web创建并推送；源码/构建/隔离集成验证通过；实际部署和用户验收均未发生。
 
 
-## 2026-09-17 实际验证结果
-
-| 层级 | exact范围与结果 | 不代表什么 |
-|---|---|---|
-| Web相关回归 | `7099b176` / tree `8648f749`；294/294，0失败/跳过 | 非全站全部测试 |
-| 只读策略 | 7/7，0失败 | 非经济写入或收费激活 |
-| 最终生产bundle | 新建空输出目录，Vite成功；manifest绑定所有文件摘要 | 非线上安装 |
-| Chromium/CDP | 最终bundle38/38；桌面、触控竖屏/横屏、真实Screen Orientation仿真、单一可见入口、遮挡、反复往返、同页旋转、直达刷新、无JS异常/经济写请求 | API全mock、伪身份；非真机/生产双账号/非空经济数据 |
-| API相关测试 | `0b5cfe8c` / tree `39df5045`；配置/注册16、preview26、scope/catalog/schema12、制品验证64，共118/118，0错误/跳过 | 历史全模块compileTestJava债务仍未清除 |
-| 远端 | API/Web develop与release/1.8.0均精确回读一致 | 非部署成功 |
-
-矩阵映射：A01/A04/A05/A09有隔离浏览器真实点击/截图；A02/A06/A07/A08及退出安全有定向组件/路由/身份单测。A10含语义/焦点样式与组件检查，完整读屏及真机键盘体验未实测；A11仅相关原功能定向回归，不声称所有站点功能；A12 source/artifact/branch完成，production/user acceptance待执行。
-
-返修历史不抹除：首轮reader测试harness缺router依赖；浏览器发现刷新身份未rehydrate而使预览入口缺失，已补产品修复/回归；横屏入口label被隐藏也已修复。仿真orientation缺配置、v-show断言检查DOM而非可见性、CDP取消请求误归类为JS异常属于runner问题，已分别归因并在修改输入后重验。最终构建在全新目录，避免旧hash文件混包。
-
-持久证据：`/home/isp/wsps/cyf/deliverables/releases/v1.8.0-local-ready-20260917/`，含原失败记录、最终Web/API结果、精确制品、远端readback、清单与SHA256SUMS。未复用历史明文账号、未访问生产API、未执行Provider/生产DML/服务操作。
-
-
 ## 随1.9.2实际交付（覆盖上述未部署历史）
 
 按用户要求1.8未单独发布，已统一包含在1.9.2。新exact API/Web及构建/发布证据见integration.yaml#latest_bundled_delivery；真实OAuth API46/本轮完整Chromium113通过，包括个人中心入口/导航/刷新/横竖屏与经济预览。未使用响应mock，未激活付费/交易/语音；第二真实账号/client与真机仍未新增验收证据。
 
 原1.8冻结branch/pins与隔离测试历史保持不变；用户最终验收等待回执，详见 `/home/isp/wsps/cyf/docs/implementation/V1_9_2_RELEASE_RESULT_20260918.md`。
-
-## 2026-09-18 1.9.6 横屏视觉补丁
-
-- 实际线上 Web 已更新至 `737506e7af06bb4ea4ec2386dc507ec745297481`；横屏入口只保留头像、无“我的”文字、无外层圆角长方形框，且保持可访问名称和地图事件隔离。
-- 相关组件/PWA 定向测试 **4 passing**，生产构建、联合 release 校验、Web dry-run 与实际发布均通过；首页、`/juyiting`、`/sw.js` 均为 HTTP 200。
-- 本次 Service Worker 已轮换至 `cyf-pwa-v20260918-hall-account-avatar-only-r2`。最新小程序/WebView 视觉效果需在完全退出重进后由用户确认；这不是新增 API、DB、交易或语音验收。
-- 详细发布证据见 `docs/implementation/V1_9_6_HALL_ACCOUNT_ENTRY_RELEASE_20260918.md`。

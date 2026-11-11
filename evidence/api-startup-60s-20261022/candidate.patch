@@ -1,0 +1,97 @@
+commit 2c6f894419c2495b48360460b325af1f3f75ae56
+Author:     chcbz <chcbz@sina.com>
+AuthorDate: Thu Oct 22 18:53:35 2026 +0800
+Commit:     chcbz <chcbz@sina.com>
+CommitDate: Thu Oct 22 18:53:35 2026 +0800
+
+    perf(chat): avoid per-string databind setup during archive startup validation
+---
+ .../archive/content/ArchiveManifestLoader.java     | 14 ++++++-----
+ .../archive/content/ArchiveManifestLoaderTest.java | 28 ++++++++++++++++++++++
+ 2 files changed, 36 insertions(+), 6 deletions(-)
+
+diff --git a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/content/ArchiveManifestLoader.java b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/content/ArchiveManifestLoader.java
+index e8370d317c..de562efc0f 100644
+--- a/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/content/ArchiveManifestLoader.java
++++ b/chat/jia-chat-service/src/main/java/cn/jia/chat/archive/content/ArchiveManifestLoader.java
+@@ -2,6 +2,7 @@ package cn.jia.chat.archive.content;
+ 
+ import com.fasterxml.jackson.core.JsonFactory;
+ import com.fasterxml.jackson.core.JsonParser;
++import com.fasterxml.jackson.core.io.JsonStringEncoder;
+ import com.fasterxml.jackson.databind.DeserializationFeature;
+ import com.fasterxml.jackson.databind.JsonNode;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+@@ -204,7 +205,7 @@ public class ArchiveManifestLoader {
+                 "golden last chapter ETag mismatch");
+     }
+ 
+-    private byte[] canonicalJsonBytes(JsonNode node) {
++    byte[] canonicalJsonBytes(JsonNode node) {
+         StringBuilder output = new StringBuilder();
+         appendCanonical(node, output, 0);
+         output.append('\n');
+@@ -258,11 +259,12 @@ public class ArchiveManifestLoader {
+     }
+ 
+     private void appendJsonString(String value, StringBuilder output) {
+-        try {
+-            output.append(mapper.writeValueAsString(value));
+-        } catch (IOException failure) {
+-            throw new ArchiveContentException("unable to canonicalize manifest string", failure);
+-        }
++        // Canonicalization visits every field name and paragraph. Use Jackson's JSON
++        // escaping directly instead of creating a generator/serialization context for
++        // each string. Keep the exact quoting/Unicode bytes used by the frozen digest.
++        output.append('"');
++        JsonStringEncoder.getInstance().quoteAsString(value, output);
++        output.append('"');
+     }
+ 
+     private void spaces(StringBuilder output, int count) {
+diff --git a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/content/ArchiveManifestLoaderTest.java b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/content/ArchiveManifestLoaderTest.java
+index 2a9c401c98..c059e92343 100644
+--- a/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/content/ArchiveManifestLoaderTest.java
++++ b/chat/jia-chat-service/src/test/java/cn/jia/chat/archive/content/ArchiveManifestLoaderTest.java
+@@ -1,6 +1,9 @@
+ package cn.jia.chat.archive.content;
+ 
+ import org.junit.jupiter.api.Test;
++import com.fasterxml.jackson.databind.ObjectMapper;
++
++import java.nio.charset.StandardCharsets;
+ 
+ import java.util.HashSet;
+ import java.util.Set;
+@@ -11,6 +14,31 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ class ArchiveManifestLoaderTest {
++    @Test
++    void canonicalStringsKeepJacksonEscapingAndUnicodeBytes() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        ArchiveManifestLoader loader = new ArchiveManifestLoader();
++        StringBuilder controls = new StringBuilder();
++        for (char value = 0; value < 32; value++) {
++            controls.append(value);
++        }
++        for (String value : new String[]{"", "quote\" slash/ backslash\\", controls.toString(),
++                "水滸傳\u2028\u2029😀", "plain ASCII"}) {
++            String expected = mapper.writeValueAsString(value) + "\n";
++            assertEquals(expected, new String(loader.canonicalJsonBytes(mapper.valueToTree(value)),
++                    StandardCharsets.UTF_8));
++        }
++    }
++
++    @Test
++    void canonicalObjectKeysAndNestedContainersKeepFrozenFormatting() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        String canonical = new String(new ArchiveManifestLoader().canonicalJsonBytes(
++                mapper.readTree("{\"z\":[],\"a\":[true,null,3,{}],\"q\\\"\":\"水\"}")), StandardCharsets.UTF_8);
++        assertEquals("{\n  \"a\": [\n    true,\n    null,\n    3,\n    {}\n  ],\n"
++                + "  \"q\\\"\": \"水\",\n  \"z\": []\n}\n", canonical);
++    }
++
+     @Test
+     void packagedFixtureIsByteExactCompleteAndMatchesGoldenValidators() {
+         ArchiveManifestBundle bundle = new ArchiveManifestLoader().load();
