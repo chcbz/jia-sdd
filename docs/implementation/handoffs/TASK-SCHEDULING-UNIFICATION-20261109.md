@@ -1289,3 +1289,13 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - Web **bf6d870**同源正式定向`pricing-web-1` **51/51通过、13.064秒**。实际Vue/控制器浏览器回归在同目录`browser/result.json` **18检查/18截图/0异常，60.982秒**，1440/390/320三视口均覆盖原租约状态、首费清单、取消、过期重新报价、自部署200文首费/50文周期、方式不匹配禁确认与local确认请求；HTTP/身份是明确合成fixture，不是生产或真实资金验收。已查看320px不匹配截图，文字正常折行、无横溢，底部操作在既有面板滚动区；Chrome/Vite已退出。
 - 当前API/Web工作区均干净，Runtime源码未动，生产API/Runtime/李逵版本未变。磁盘剩余约179MB（普通盘），未清理未知包/备份，不转内存盘；最终打包前须按已有策略处理本任务可重建输出并保留包外证据。
 - 下一条主线动作：两种部署存量30天过渡的真实登记/首个调度、legacy规范ID保留实例重邀、真实自部署首次/重邀链路（不能把static已有实例当新建prepare）、生产DDL/ES/主机证书端点配置、最终固定制品/受控安装与真实Web/WS/扣费故障验收。**报价入口闭环不等于本轮总需求完成。** 当前没有在途构建或浏览器，用户无新增确认事项。
+
+### 2026-11-11 17:56 保留身份重邀：责任层和入口一起核对
+- API `b89e8ce86a1f64c8e6160090da1820538c5f08a0`/tree `310e58c69cbc3c639122af5fe973b207e6d389a2`：身份服务增加明确的保留主体创建入口。只有同tenant/client/canonical的SUSPENDED/RETIRED历史来源和新的已持久化active binding可创建新关系；保留原canonical类型，不改写旧owner/身份历史，不复制旧别名。应用仅在已完成原关系交接的保留实例分支使用；新实例仍由opaque生成器创建，未注册legacy不能凭文本创建身份。真实MySQL已验证新owner准入、旧owner拒绝、历史保留及大小写/scope边界。
+- `retained-identity-1` Gradle exit0/layering通过，实际33应用+21身份+1真实MySQL=55项，0fail/error/skip，外层376.501秒FAIL：driver将身份suite数量误记为22、要求56。原FAIL不改；`completion-audit.json`绑定原XML、源码方法数和日志摘要，标TESTS_PASS_RECEIPT_COUNT_ERROR/publishable=false。不为汇总数字盲重跑。已在原orchestrator登记归因。
+- 沿调用链再核实发现**实际入口漏改**：quote、bind与releasedInstance仍以agt_正则拒绝合法legacy ID。修复为现有协议文本校验，合法性仍由原binding/identity/已完成handover与冻结quote决定；新建无请求ID时仍生成agt_，任意请求ID不能指定新Agent或他人的保留实例。候选 `68fb800824`新增legacy报价→确认→原Runtime重新绑定与未授权ID拒绝2项；无schema/Web/Runtime修改。
+- 曾怀疑intent的installation唯一约束会阻止重邀，沿Runtime `hosting-control.mjs` INITIAL/readmission和`hosting-adoption.test.mjs`核实后排除：原实例目录/公共资料保留，但新关系生成新的installation授权身份，测试明确assert.notEqual；**没有删除该唯一约束**，也不把安装身份轮换误报为另建独立实例。
+- 当前 `retained-identity-driver-2.py` / `retained-identity-2/` / exec session6235在途，绑定68fb800824，目标35应用+21身份+1真实MySQL=57；新批600秒独立计时、普通磁盘、原串行编排器。当前不修改受测API源码、不启动并行重型构建。上一批已结束，确认owned MySQL shutdown后仅清理i1/mysql/data（163MB），日志/XML/审计保留，证据mysql-cleanup.json；未动生产/备份。
+- 实际剩余仍是：两模式存量30天过渡登记及原静态实例adopt/首个调度、生产SQL/ES/config、最终精确制品/安装、真实李逵和Web/WS/资金验收。本轮未执行任何生产收费、迁移、停机或清理私有数据。原RETAINED是历史结算归档/0文保留权益，不能直接冒充新的30天过渡：其Web文案说历史账单归档且校验amountWen=0，而新过渡需冻结500/50文后续租费，不得伪造quote/reserve/capture/SERVICE_READY来满足现有非空列。后继须在原责任模块定义显式非付费过渡来源并共用续租/收尾，不能增加独立计费或临时兼容链。
+
+- 17:58 `retained-identity-2`已真实PASS：完整commit68fb800824fcb0ce3ca34a482efc854c1a4b638c/tree61d31191087722b34c271ffc2dd1ba40855aea50，57/57、0fail/error/skip、layering通过，214.262秒；session6235正常exit0。本批没有receipt计数错误，不改写前批FAIL。API工作区干净，当前没有在途构建。未生成发布JAR、未变更线上版本。下一动作是显式非付费30天过渡登记与原静态实例adopt，不再重复已经通过的身份子集。
