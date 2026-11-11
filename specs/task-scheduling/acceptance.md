@@ -1,6 +1,6 @@
 # 验收范围
 
-## 当前提交状态（2026-11-12，本机最终升级及通道/原生启动验证通过）
+## 当前提交状态（2026-11-12，本次范围完成，提交用户验收）
 
 - **API生产**：`c7c0f2d78d4de51d4caed81cfe2caa1a6835b565` / `1.1.48-SNAPSHOT`，PID1884855（22:51仅报价配置重启），固定JAR SHA `9edc1650750a998a3b7e650b8d04c17ea9376e6d37d39399650daf0a1189dfd6`。原`api-final-1`146项、layering、fresh JAR通过，197.962秒；本次复用制品，无重复构建。原安装器实际installed、身份/摘要匹配、HEALTH=UP，监控已恢复。
 - **Web生产**：`c453e0898642b0aec80677df71c088f74563a349` / `1.16.134`。原`web-final-2`101通过/2原pending，177.303秒；本次原安装器32.002秒完成，613文件、30变更、256线上资源核验，record为online_verified。匿名真实桌面/移动浏览器均到达正常OAuth登录页，证书验证未关闭、无横向溢出；随后使用用户提供的账号走正常OAuth登录，已核对chcbz/用户5与李逵owner一致；真实桌面/390px移动个人中心及钱袋通过，可用3487文/预占1文，李逵模型gpt-6-luna。此为只读子集，不是资金全链通过。
@@ -17,7 +17,7 @@
 - **扈三娘宿主**：`husanniang-host-observation-1`当前只读生产查询确认该实例offline，host为`chc-223-6c3ee548-aab2-48a1-8ce1-e47d40cdab54`；记录endpoint为平台WebSocket连接地址，不是可用宿主控制端点。没有将未知宿主误归本机/李逵，也未登记过渡或扣款。
 - **两套餐资金/交接组合**：`selfhost-final-api-2`固定API测试候选d5754586f01d93ade54be6294ab37fb1b13b2467/tree876bb31a1fd6bc698b1f92db40742c9aa0df6cc7、Runtimebbf，两个真实MySQL→UDS→Runtime生命周期用例及layering均通过、无跳过。可信host配置选择50/500文套餐；自部署首次50文，原关系关闭清理后新用户保留1技能重新邀请收100文（周期50+首次技能50），新租约周期仍50；托管对应500/550/500。验证同一公共实例/技能保留、私有会话删除、旧安装撤销、新安装ACTIVE、捕获次数及分录平衡；共享helper不复制费用实现。294.435秒、受限205.741秒/集成88.018秒，最低空闲371716096字节。此处本地UDS及明确账户/executor/provider fixture不声称生产远程关停；远程mTLS及静态adopt保留各自实际适配器证据。首次ENOSPC失败原件保留，未改业务实现/超时/断言求通过。
 - **测试源码集成及磁盘收口**：d575已FF本地/远端develop，实际查询Flow source triggerEvents=[]，未触发付费构建。仅测试变更，不重建/更改生产c7c0 JAR。停止的合成MySQL及已终态classes/非starter模块JAR已按精确记录回收；16个历史源码展开副本经tar --compare及SHA验证无损压缩保存，当前Runtime源码、正式应用JAR/包、测试报告/日志和有效生产备份均保留。02:20根盘观测782MiB可用，不是新资源门槛或未来安装空间保证。
-- **仍未完成**：扈三娘可管理宿主接入及包含该实例的整体验收，需要用户提供宿主地址/连接方式。本机最终102已在原600秒内完成安装和通道/原生启动验收，不再需要20分钟例外。实际Provider到中心账本、最终租费/调度和两套餐完整资金交接用例已通过；生产故障注入及真实用户破坏性关闭重邀未执行，不以隔离回归冒充这些线上操作。
+- **本次范围与后续待办**：用户2026-11-12明确“扈三娘后面再处理”，其宿主接入与该实例验收延期，不再阻塞本次交付；未接入、未扣费，后续仍需宿主地址/连接方式。本次收费、统一调度及已接入四实例的发布范围已完成，提交用户验收，不代表用户已经验收通过。本机最终102已在原600秒内完成安装和通道/原生启动验收，不再需要20分钟例外。实际Provider到中心账本、最终租费/调度和两套餐完整资金交接用例已通过；生产故障注入及真实用户破坏性关闭重邀未执行，不以隔离回归冒充这些线上操作。
 
 证据根：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/`。主批次`production-switch-1/2`、`production-control-access-1`、`production-switch-observation-1`、`production-web-install-1`、`production-browser-entry-1`、`local-knowledge-route-1`、`likui-knowledge-route-1`、`component-integration-1`。历史测试/安装失败保持原件，详细时间与恢复见既有handoff。
 

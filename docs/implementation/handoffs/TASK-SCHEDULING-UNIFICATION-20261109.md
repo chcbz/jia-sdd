@@ -1508,3 +1508,8 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - production-ledger-audit-5一致性只读快照：四类异常0、42账户/76交易/152分录、可用3486，原两用户租费期限不变；无新收费。production-service-user-control-3再次真实API UID987 mTLS通过，错误owner/缺证书拒绝、8项规范路径检查通过。API健康UP；任务648历史真实闭环不重复扣款，当前本机仅声明通道/启动及上述只读验收，不把探测当付费用户事项全链。
 - 原备份保留plan无eligible批次，保护最近retry2/retry3；旧未完整元数据/unsafe目录不改权限绕保护。磁盘仍约165MiB余量，未删当前/回退备份、公共仓库或未知数据。扈三娘仍缺可管理宿主/连接信息且原观察offline，未虚构接入或扣费；该外部输入是包含该实例的整体验收剩余阻塞。
 - 李逵远端只读复核likui-health-followup.json：仍Runtime1.3.102/bbf、PID389574/active，connected/registered/ready均true，无远程升级或重启。全量文档检查仍因原三个退役delivery-status文件重现FAIL，当前可达文档无新增不可达项；不顺手改其他专题、不把检查重标PASS。
+
+### 2026-11-12 用户延期扈三娘，本次范围收口
+- 用户明确“扈三娘后面再处理”：仅将其宿主接入/该实例验收移至后续，不修改实例、关系、租约、身份或收费数据，不将延期写成已接入/已验收。后续接续仍需真实宿主与授权连接信息。
+- 本次已授权收费、统一调度、API/Web及本机/李逵Runtime发布范围完成，提交用户验收。沿前轮精确证据；没有为范围调整重建、重启、重复扣费或伪造新的线上回归。既有跳过项、真实Provider费用PENDING_USAGE、生产HA/破坏性交接未执行及低磁盘观测继续如实保留，不把提交验收写成用户验收通过。
+- 本轮仅更新当前acceptance/tasks与本handoff；其他工作区脏修改和有效制品/回退备份保留，不因范围收口删除共享证据或强行回收受保护载荷。
