@@ -189,7 +189,9 @@ STARTED先落平台账再调用模型；RESPONDED使用原价快照和原attempt
 ### 存量静态实例关联（2026-11-11，候选实现，未切换生产）
 
 - 新控制动作`hosting.adopt`复用protocolVersion=1消息封装及原hosting关联字段；`runtimeInstallationId`、裸`manifestSha256`、字符串`provisionGeneration="1"`必须对应已有运维配置中的同一tenant/client/canonical Agent。只接受INITIAL关联，operationId等于initialIntentId，不接受路径、profile、凭证、报价清单或命令。API必须先按原installation/identity/binding完成业务授权；Runtime只落实精确本机主体与writer所有权，不能据请求新建实例或导入安装身份。
-- 回执为原字段完整回显加`outcome=ADOPTED`及hostId，只证明已有安装与该过渡租约的持久关联。**不是SERVICE_READY、预占/捕获或付费验收证据**。API须核对原hostId与全部关联字段；丢回执按原operation重试，不另建安装/重复收费。真实过渡租约及30天起点仍待数据库切换实现。
+- 回执为原字段完整回显加`outcome=ADOPTED`及hostId，只证明已有安装与该过渡租约的持久关联。**不是SERVICE_READY、预占/捕获或付费验收证据**。API须核对原hostId与全部关联字段；丢回执按原operation重试，不另建安装/重复收费。过渡登记由仅在schema-maintenance配置生效的HostingRentTransitionApplication显式调用：先锁原安装/关系取得快照，事务外adopt，再在同一锁序下复核并登记；不在启动时自动扫描。原输入固定cutoverAt和scope/binding派生的租约/意图ID，重放不得重置30天期限。运维批次入口与生产切换仍待完成。
+- 过渡原始意图使用`settlement_kind=TRANSITION`、amount=0，quote/reserve/capture/refund/serviceReady事实不伪造；租约本身保存正常套餐价，期满直接复用既有续费/欠费/收尾。关联起点只在该原始意图用createTime，付费意图继续使用reservedAt，不在金融记账路径增加猜测回退。四个原支付专属字段的nullable变更走显式DDL迁移，不在启动时自动执行。
+- 免费接入不要求用户已经领取活动或拥有钱包。同一登记事务只幂等创建零余额AVAILABLE账户，保留既有余额、不赠款、不生成交易流水，再登记首次到期调度；调度失败整笔回滚。API78b1cb1c9b的65项及layering通过，含真实MySQL无钱包接入→到期LOCKED→15天FINISHING；仍不代表生产切换完成。
 - 同一HostingControl journal保存静态profileId引用和关联，不复制HOME/配置/凭证；原运行实例、安装ID及既有会话保持不变。静态接入没有待消费注册密钥，其内部enrollment字段明确为null；不伪造过期时间或占位摘要。`template:null`表示宿主只管理既有静态实例，不提供新建托管能力；私有socket、scope、journal路径和所有权保护不变。
 - 原`current/quiesce/evidence/cleanup`直接复用已有状态机。接入后重启不重注册、不自动将接入视为新执行；收尾已经停下的实例重启仍保持停止。最终清理仍要求原租约证据、私有清理和公共文件基线；公共技能/仓库保留，不新增收费引擎或清理分支。
 - 静态实例清理后的重新邀请沿用原readmitAgent：保留同一公共实例、profile和HOME实体目录，只有安装/新关系身份更换；受控写回原manifestPath，复用原私有清理和关系准入。迟到旧关联不能停止或清理新关系。没有完成原交接不允许重新准入。
