@@ -17,10 +17,9 @@ class RuntimeNativeNginxTest(unittest.TestCase):
         return any(p.fullmatch(path) and m.fullmatch(method) for p, m in self.routes)
 
     def test_complete_native_contract(self):
-        self.assertEqual(len(self.routes), 8)
+        self.assertEqual(len(self.routes), 17)
         reads = [
             '/tasks/workspace-executions/commands', '/tasks/conversation-executions/commands',
-            '/tasks/conversation-executions/controlled-image-v3-commands',
             '/skill-installations/a/package', '/tasks/a/runs/b/inputs',
             '/tasks/a/runs/b/inputs/c/content', '/chat/requests/a/turns/b/inspection/inputs/c/content',
             '/tasks/a/work-items/b/reassignments/c/commands/d/lease',
@@ -28,12 +27,16 @@ class RuntimeNativeNginxTest(unittest.TestCase):
         ]
         writes = ['/tasks/a/runs/b/' + end for end in (
             'start', 'failure', 'outputs/c/content', 'output-commits/c',
-            'conversation/inputs', 'conversation/inputs-v3', 'conversation/inputs/c/content',
-            'conversation/lease', 'conversation/lease/renew', 'conversation/provider-start',
-            'conversation/provider-start-controlled-image', 'conversation/provider-start-controlled-image-v3',
-            'conversation/failure', 'conversation/output-commits/c', 'conversation/result-commits/c',
+            'conversation/inputs', 'conversation/inputs/c/content',
+            'conversation/lease', 'conversation/lease/renew', 'conversation/resume',
+            'conversation/usage', 'conversation/provider-usage', 'conversation/effects/c/start', 'conversation/effects/c/result',
+            'conversation/failure', 'conversation/result-commits/c',
             'conversation/outputs/c/content')]
-        writes.append('/tasks/a/work-items/b/reassignments/c/commands/d/result-commit')
+        reads += ['/position-skills', '/position-skills/a/receipt', '/chat/requests/a/turns/b/tools',
+                  '/chat/requests/a/turns/b/materials/inputs/c/content']
+        writes += ['/tasks/a/work-items/b/reassignments/c/commands/d/result-commit',
+                   '/position-skills/results', '/chat/requests/a/turns/b/tools/skill_install',
+                   '/chat/dispatches/a/usage', '/skill-management/results', '/hosting-leases/a/knowledge-usage']
         for method, paths in [('GET', reads), ('POST', writes)]:
             for path in paths:
                 with self.subTest(method=method, path=path):
@@ -43,6 +46,22 @@ class RuntimeNativeNginxTest(unittest.TestCase):
                     other = 'POST' if method == 'GET' else 'GET'
                     if not path.endswith('/result-commit'):
                         self.assertFalse(self.accepts(other, '/internal/agent' + path))
+
+    def test_archive_maintenance_methods(self):
+        for suffix in ('', '/a/source', '/a/result'):
+            self.assertTrue(self.accepts('GET', '/internal/archive/v1/jobs' + suffix))
+        self.assertTrue(self.accepts('POST', '/internal/archive/v1/jobs/a/result'))
+        for method, path in [('POST', '/internal/archive/v1/jobs'), ('POST', '/internal/archive/v1/jobs/a/source'),
+                             ('DELETE', '/internal/archive/v1/jobs/a/result')]:
+            self.assertFalse(self.accepts(method, path))
+
+    def test_retired_execution_routes_not_restored(self):
+        for path in ('/tasks/conversation-executions/controlled-image-v3-commands',
+                     '/tasks/a/runs/b/conversation/inputs-v3', '/tasks/a/runs/b/conversation/provider-start',
+                     '/tasks/a/runs/b/conversation/provider-start-controlled-image-v3',
+                     '/tasks/a/runs/b/conversation/output-commits/c'):
+            for method in ('GET', 'POST'):
+                self.assertFalse(self.accepts(method, '/internal/agent' + path))
 
     def test_unknown_paths_and_invalid_ids_not_forwarded(self):
         for path in ('/internal/health', '/internal/agent/admin', '/internal/agent/tasks',

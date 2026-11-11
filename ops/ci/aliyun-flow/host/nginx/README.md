@@ -1,12 +1,13 @@
 # Runtime 原生 HTTP 网关
 
-2026-10-11 核对 API `cf1402727466e1e51db0860200dc178eab2096c4` 的
-`AgentRuntimeAuthenticationFilter.allowed`；本目录是网关配置源码，不是前后端应用发布。
+2026-11-12 核对已部署 API `c7c0f2d78d4de51d4caed81cfe2caa1a6835b565` 的
+`AgentRuntimeAuthenticationFilter.allowed` 及 `PlatformKnowledgeUsageController` 维护认证；本目录是网关配置源码，不是前后端应用发布。
 
 - 将两个 `.conf` 固定摘要后安装到 `/home/isp/apps/nginx/conf/snippets/`。
 - 仅在 `/home/isp/apps/nginx/conf/vhost/api.chaoyoufan.cn.conf` 的 server 块 include
   `/home/isp/apps/nginx/conf/snippets/cyf-runtime-native-locations.conf`。
 - 保留既有 `/agent`、`/ws` 及默认拒绝路由；不代理整个 `/internal`。
+- 当前17组精确路由覆盖议事工具目录/调用、材料输入、对话和执行用量、原生执行恢复/effects、技能结果/岗位、公共知识成本和归档维护；退役controlled-image-v3/provider-start等旧路径不恢复。配置源码/静态测试不等于已安装，实际状态见调度handoff。
 - 只转发允许路径和方法；Authorization、五个 X-Agent 证明头、Origin 与重复头不改写。
   Runtime/session/channel/owner/task 的权限仍由后端核对。浏览器 CORS 不开放此 native 通道。
 - 沿用现有 100m 主配置上传限制及代理超时；本变更不新增包大小/资源门禁。
