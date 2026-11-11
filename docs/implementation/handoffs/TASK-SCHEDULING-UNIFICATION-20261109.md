@@ -1362,3 +1362,10 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - API客户端证书安装于/home/isp/conf/cyf-api/hosting-control/likui（目录0700/文件0600），路由与SSL bundle仅准备在production-control-config-1/control.properties，未更改当前API配置或重启API。证书365天有效，届满前需按原控制配置轮换流程更换，不建立自动证书框架。
 - 使用正式API c7c0 JAR的隔离HostingRentCutover --preview连接真实生产数据库，production-cutover-preview-1真实PASS，25.140秒，吴用/林冲/卢俊义/李逵4主体身份/安装/路由匹配；输入SHA256 837f22969dd06286637ad936454e7dee182ad6f9e6ad2b3c4bec7e03cd203809，未apply、未写租约/钱包/调度或扣款。扈三娘宿主无已核实控制端点，明确excluded，不能静默纳入；无安装关系不造事实。独立生产只读查询套餐表为空，实际迁移/套餐登记仍待执行。
 - 后续上线检查新增实际缺口：本机3个静态Agent未设置publicFilesPath，当前正常执行/控制探测不受影响，但最终私有数据清理会因缺运维公共基线拒绝确认；不能把通道PASS当清理已闭环。已只读比对：三个当前auth的API key均与运维unified.hosting.json公共providerEnvironment一致，base_url/wire_api也一致；未输出密钥。下一步从运维公共来源生成精确主体基线，不复制旧HOME/private sessions；李逵须独立核实。此项应在启用自动收尾前补齐，避免15天后才暴露。
+
+### 2026-11-11 21:07 静态公共基线补齐与凭证归属待确认
+- 本机公共基线从运维unified.hosting.json的公共provider和各只读profile重新生成，未复制旧HOME/config/auth、项目信任设置或会话。基线固定精确tenant/client/Agent，安装到/home/isp/conf/cyf-agent-runtime-v1/public-baselines，目录0700/文件0600；原host配置和release记录备份于/home/isp/baks/cyf-agent-runtime-v1/20261111-local-public-baselines。
+- local-public-baseline-1配置安装12.984秒，原1.3.99程序不变，当前PID1828572；独立验收100.613秒VERIFIED_ACTIVE_CHANNEL_AND_CONTROL，3个Agent新心跳/ACK及两个owner控制scope均通过。readRuntimeHostConfig→validateStoppedHomeCleanup对3个真实HOME及公共工作仓库只读前置检查PASS（home-preconditions.json），没有清理、模型抽取或费用操作；不能把前置检查当真正交接已完成。
+- 李逵同样没有publicFilesPath；其当前模型API key摘要与本机运维公共provider不同。远端运维目录只有profile/manifest/host/技能及workspace配置，unified.conf只有API地址与workspace policy路径，没有找到该key独立公共基线。未读取/转发明文密钥，未复制旧HOME auth为公共来源，未替换成平台key。
+- 需要用户确认的单一归属问题：李逵当前模型API key是否属于可长期共用的Agent公共凭证，允许解除原用户关系后继续保留供下一位用户使用？若属私有，不可将其加入公共基线，需另指定公开运行凭证来源；不要用户在聊天发送key。确认前保持当前原凭证及业务不变，不启用可能泄露其凭证的自动交接。
+- 其他未完成项仍是生产SQL/ES/套餐和API配置、4主体实际apply、API/Web安装、真实业务/资金验收、扈三娘宿主核实及集成收口。production-cutover-preview-1仅preview、没有迁移/赠送/扣款。当前本任务无在途构建/发布/验收进程。docs全量检查仍因3个其他专题退役路径重现失败，control-activation-doc-check.log保留；本任务diff检查通过。

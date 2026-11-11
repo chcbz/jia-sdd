@@ -1,6 +1,6 @@
 # 验收范围
 
-## 当前提交状态（2026-11-11 20:57，真实控制通道/主体预演通过、整体未交付）
+## 当前提交状态（2026-11-11 21:07，真实控制通道/主体预演通过、整体未交付）
 
 - 正式API制品c7c0f2d78d/1.1.48-SNAPSHOT：api-final-1，146项及layering通过，197.962秒。Web c453e08/1.16.134：web-final-2，101通过/2原pending，177.303秒；生产构建和包摘要通过，尚未安装。
 - 额外迁移资源87ccfef032仅补首次费用报价5列升级SQL，不在上述c7c0包中，独立维护来源明确区分。schema-rehearsal-1按实际生产SHOW CREATE空结构执行11项迁移，16.597秒通过，报价结构与fresh DDL一致；生产报价表只读观察为0行，实际执行前须停writer后复核。所有生产迁移仍未执行。
@@ -9,9 +9,10 @@
 
 - API `6f1d07298a28e14ab6a758149235ecd842b5e0cd` / tree `f8b234ea6c2fd6d13ca1c79f7fecf347ead9e9ac`：`cutover-api-3` 12/12、无失败/错误/跳过，layering通过，107.361秒。真实命令入口→原账号/身份/安装MySQL查询→实际Runtime静态adopt→同事务零余额账户/免费租约/首次调度→原输入重放均已执行；原安装、绑定、投影和到期日不变，交易数0。原生executor/知识Provider是明确合成边界，不冒充生产WS/费用验收。
 - 前置隔离上下文`cutover-api-2` 11/11通过（98.067秒），确认normal profile不注册维护图、专属上下文无业务worker/HTTP/schema写入。`cutover-api-1`的真实代理装配FAIL保留；修复沿生产class-based事务代理，不替换原身份服务。`transition-api-5`的65项、钱包/租期边界及layering证据仍保留，不代表生产迁移。
-- Runtime 1.3.99 / bridge1.1.69，源码`7985667d1d73d3843d9f86dbc94f410a8ca520bd`，237/237；已安装到李逵固定app，PID335808，新进程connected/registered/ready与心跳ACK核验通过。attempt5启动校验失败并自动恢复旧程序；attempt6继承既有app根0700后成功，原FAIL未重标。本机现已同版本安装并核验吴用/林冲/卢俊义新PID心跳与ACK；后续控制配置后本机PID1816754、李逵PID344602。李逵mTLS真实跨机请求通过，错误scope及无客户端证书被拒绝，防火墙只放行API来源IP；本机新增卢俊义真实owner scope并逐scope验证。尚未核实扈三娘所在宿主。
+- Runtime 1.3.99 / bridge1.1.69，源码`7985667d1d73d3843d9f86dbc94f410a8ca520bd`，237/237；已安装到李逵固定app，PID335808，新进程connected/registered/ready与心跳ACK核验通过。attempt5启动校验失败并自动恢复旧程序；attempt6继承既有app根0700后成功，原FAIL未重标。本机现已同版本安装并核验吴用/林冲/卢俊义新PID心跳与ACK；后续控制配置后本机公共基线补齐后PID1828572、李逵PID344602。李逵mTLS真实跨机请求通过，错误scope及无客户端证书被拒绝，防火墙只放行API来源IP；本机新增卢俊义真实owner scope并逐scope验证。尚未核实扈三娘所在宿主。
 - Web `c453e0898642b0aec80677df71c088f74563a349`：真实Vue/浏览器24项通过，含桌面/移动/窄屏、50/500文TRANSITION、无虚构付款和刷新不写入；HTTP/身份为合成fixture。最终Web制品见上；仍没有生产UI验收。
 - 生产切换只读预演：`production-cutover-preview-1`使用已验证c7c0 JAR，4个真实安装主体身份/路由通过，25.140秒；输入及receipt固定，未apply/建租约/扣款。扈三娘无已验证控制端点明确排除，无安装关系不造租约。API客户端证书已私有安装、路由配置仍暂存未激活。
+- 本机3个静态Agent公共基线已从运维来源生成并激活，真实HOME清理前置检查只读通过、没有执行清理。李逵的模型key不同于平台公共key，尚无独立公共基线，须确认可否跨用户保留；当前不复制旧HOME凭证或启用该自动交接。
 - **仍未完成：** 两种部署完整生命周期/真实混合链的最终验收、必要生产SQL/ES和API调度/收费/路由配置、扈三娘宿主核实、API/Web受控安装、真实Web/WS/资金/故障验收及集成收口。未执行生产租费迁移、实际扣费或付费模型turn。入口可运行和李逵在线不是整体上线。
 
 证据根：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/`；切换命令回执在`cutover-api-3/operator-fixture/`，发布在`likui-release-attempt-6/`，浏览器在`web-transition-browser-2/`。具体此前失败及后续修复见既有handoff，不将历史FAIL改写为PASS。
