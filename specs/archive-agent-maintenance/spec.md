@@ -35,7 +35,7 @@ API管理任职/版本/发布权限和事实；模型按技能编排；工具实
 
 采用组合方案：**宋江协调工具 + 典籍维护技能 + 明确任职授权 + 服务端内容管理 API**。Agent 不持有数据库凭据，不执行生产 SQL。任职绑定 canonical Agent 身份和当前 owner/binding，不绑定“吴用”显示名称。任职授权、技能安装、任务分配是三个不同的事实。
 
-阅读入口：[详细设计](/home/isp/wsps/cyf/specs/archive-agent-maintenance/design.md)；[工作包](/home/isp/wsps/cyf/specs/archive-agent-maintenance/tasks.md)；[验收矩阵](/home/isp/wsps/cyf/specs/archive-agent-maintenance/acceptance.md)；[源码核对](/home/isp/wsps/cyf/specs/archive-agent-maintenance/source-baseline.md)。
+阅读入口：[详细设计](design.md)；[工作包](tasks.md)；[验收矩阵](acceptance.md)；[源码核对](source-baseline.md)。
 
 ## 2. 首期范围
 

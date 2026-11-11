@@ -1,0 +1,43 @@
+{
+  "queriedAt": "2026-10-23T16:59:07.499Z",
+  "pipeline": "4403172",
+  "source": [
+    {
+      "sign": "repo_0",
+      "type": "giteeGit",
+      "dataKeys": [
+        "branch",
+        "cloneDepth",
+        "credentialType",
+        "events",
+        "isBranchMode",
+        "repo",
+        "serviceConnectionId",
+        "triggerFilter",
+        "webhook"
+      ],
+      "branch": "develop",
+      "events": [
+        "push"
+      ]
+    }
+  ],
+  "flowControls": [
+    "    branch: develop",
+    "    triggerEvents:",
+    "                test \"${CI_COMMIT_REF_NAME:-}\" = develop",
+    "                test -n \"${CI_COMMIT_SHA:-}\"",
+    "                test \"$(git rev-parse HEAD)\" = \"$CI_COMMIT_SHA\"",
+    "                # Release tests use the current tree. Asset/all profiles verify historical provenance.",
+    "                case \"${CYF_TEST_PROFILE:-release}\" in",
+    "                  release) ;;",
+    "                      git fetch --unshallow origin \"$CI_COMMIT_REF_NAME\"",
+    "                    test \"$(git rev-parse HEAD)\" = \"$CI_COMMIT_SHA\"",
+    "                    [URL] \\",
+    "                npm run test",
+    "                npm run build",
+    "                printf '%s\\n' \"$CI_COMMIT_SHA\" > \"$export_root/source-commit.txt\"",
+    "                const m={schema_version:1,pipeline_id:process.env.PIPELINE_ID,run_id:process.env.BUILD_NUMBER,branch:process.env.CI_COMMIT_REF_NAME,commit:process.env.CI_COMMIT_SHA,package_version:packageVersion,files};",
+    "                fs.writeFileSync(path.join(root,'release.json'),JSON.stringify(m)+'\\n');"
+  ]
+}

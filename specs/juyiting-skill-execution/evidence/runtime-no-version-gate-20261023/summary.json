@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-23",
+  "runtimeVersion": "1.2.9",
+  "commit": "cbc1050825a40378313f283e9f25dc46d44c1ea4",
+  "tree": "4fa8a81432bc9bc8d16d1fc12ab3c065f8d1979a",
+  "scope": "Remove Codex CLI version allowlist and generated protocol digest admission only",
+  "kept": [
+    "identity/ACL",
+    "actual RPC and business message validation",
+    "executable/resource snapshot integrity",
+    "network and filesystem isolation",
+    "idempotency and locks"
+  ],
+  "production": {
+    "queriedAt": "2026-10-23T14:41:27.473789+00:00",
+    "runtimeVersion": "1.2.9",
+    "sourceCommit": "cbc1050825a40378313f283e9f25dc46d44c1ea4",
+    "pid": 1516365,
+    "changedByThisTask": true,
+    "programFlow": 30,
+    "configurationFlow": 31,
+    "status": "CHANNEL_AND_CARRIER_PASS_BUSINESS_PARTIAL_BLOCKED"
+  },
+  "localTests": [
+    {
+      "file": "targeted.log",
+      "passed": 285
+    },
+    {
+      "file": "consumers.log",
+      "passed": 44
+    },
+    {
+      "file": "readback-final.log",
+      "passed": 251,
+      "note": "overlaps targeted.log; do not sum"
+    }
+  ],
+  "actualCliHandshake": {
+    "passed": 1,
+    "cliVersion": "0.164.0",
+    "binarySha256": "b93f6811d3f653f0fb83be4050d857fb9abbb111dfa2ce160563327daff7f306",
+    "emptyHome": true,
+    "credentialsUsed": false,
+    "modelTurnStarted": false
+  },
+  "fullIsolationProbe": {
+    "status": "NOT_PASSED",
+    "reasons": [
+      "initial hardcoded provider.invalid fixture cannot complete TLS",
+      "with configured provider the second profile measurement timed out under existing 1s transport timeout"
+    ],
+    "productTimeoutOrNetworkPolicyChanged": false
+  },
+  "businessRegression": "PARTIAL: two image recognition turns PASS; cross-account revision queue blocked; image generation/edit chain/acceptance NOT_VERIFIED",
+  "cloud": {
+    "pipeline": "5264702",
+    "run": 29,
+    "job": 541894956,
+    "status": "SUCCESS",
+    "commit": "cbc1050825a40378313f283e9f25dc46d44c1ea4",
+    "tests": 354,
+    "passed": 352,
+    "failed": 0,
+    "skipped": 2,
+    "skipReasons": [
+      "opt-in real CLI probe (executed separately locally, passed)",
+      "opt-in full native isolation probe (local TLS failure remains)"
+    ],
+    "deploy": false,
+    "sourceLogSha256": "62cefe6db7d8c2d3bf650efca66d5d5a0dd29a857ec5ca2fbbda141bf5c259dd"
+  },
+  "flowConfigurationRestore": {
+    "state": "APPLIED",
+    "configSha256": "5819598fa185957d196a449546e04b6a8776ccd5eecf388e3307ff9e2851e25f",
+    "canonicalConfigSha256": "1fc8acb3e9dd8718da40eec866394b016a0b5b09b1b9335a01ce8b668f4eca12"
+  },
+  "preReleaseProduction": {
+    "queriedAt": "2026-10-23T21:13:10+08:00",
+    "runtimeVersion": "1.2.8",
+    "sourceCommit": "3c993e58033d901622c24126028199cdf4e2c76f",
+    "pid": 1404284,
+    "changedByThisTask": false
+  },
+  "actualProductionCarrierProbe": {
+    "passed": 9,
+    "installedLoaderContractReady": true,
+    "evidence": "carrier-refresh-flow31.json"
+  },
+  "releaseEvidence": "release-flow30.json"
+}

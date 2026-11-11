@@ -245,6 +245,7 @@ esac
 
 
 
+@unittest.skip('Historical schema3 publication is retired; native LOCAL schema4 is covered by test_native_local_api')
 class ApiLocalSharedInstallerSourceTest(unittest.TestCase):
     """Real original shell transaction with SYNTHETIC verifier/kit and no MySQL.
 
