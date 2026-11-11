@@ -1328,3 +1328,14 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 19:23 attempt6终态安装成功：66.391秒（准备36.064秒），原固定app目录启用Runtime1.3.99/bridge1.1.69，完整源码7985667d1d73d3843d9f86dbc94f410a8ca520bd/tree492579cad57595397c04687b06d6f09ba080e18c，PID335808。候选根保留0700，所有制品文件摘要/模式保持不变；原配置摘要不变。备份精确路径`/home/isp/baks/cyf-agent-runtime-v1/20261111-likui-runtime1399-retry6`，状态归档SHA256 b8d5bb9ce6d4af77ae1a979a5b4f6832618e911498d3d80a7e310677e9467843。
 - 独立上线核验`likui-release-attempt-6/acceptance.json`真实VERIFIED_ACTIVE_CHANNEL：health PID335808、李逵connected/registered/ready=true，观察及presence ACK在新进程启动后，lastFailure=null；源码/版本/配置回读匹配，current release记录在同发布锁下更新。私有远端prepare/install/acceptance/validate日志已收回。未执行付费模型turn、租费数据库迁移、生产扣费或公共知识抽取；不是全部收费闭环验收。
 - 当前无本任务在途构建/发布；整体goal仍active。下一必做仍是隔离operator批次入口、真实存量接入/生命周期组合验证、API/Web制品及受控生产迁移/配置、真实Web/WS/资金验收。自部署host mTLS控制生产端点尚未配置，不能把新Runtime在线当作已启用自动租费。
+
+### 2026-11-11 19:33 隔离运维切换入口
+- 前轮已完成真实李逵1.3.99升级和24项Web浏览器验证，属于progress，不重复构建Runtime。当前API7b6030e3eb在原干净worktree新增`starter/.../maintenance/HostingRentCutover.java`，显式列出既有服务/DAO/Mapper、数据源/SSL配置；没有JiaApplication/组件扫描/worker/DDL/HTTP入口。normal profile不装配该上下文；仅命令入口启用schema-maintenance与专属cutover profile。
+- 输入固定cutoverAt与明确subjects，tenant/client仅来自进程配置；严格JSON、重复Agent拒绝防止模糊财务归属/重置期限。先对整批复用应用preview校验原身份/安装/关系，apply逐个调用原register（事务外adopt、事务内复核与租约/首次调度），不另写收费SQL。输出CREATE_NEW回执、原输入SHA与逐条真实结果；中断保留已提交项，原文件重放不重置租期。preview只证明原主体/配置路由，不证明外部adopt或数据库套餐已经执行。
+- `cutover-api-1`正在验证固定候选的6项应用测试+5项入口/真实Spring隔离上下文测试及layering，独立600秒；exec12527。没有生产DDL/扣费或Runtime配置变更。不能在批次运行中修改该API候选。
+
+### 2026-11-11 19:51 切换入口真实组合验证完成
+- cutover-api-1最终FAIL（138.108秒，10/11通过），隔离Spring默认JDK代理无法注入具体服务；4dca063976改用与生产一致的class-based事务代理，未绕过事务。cutover-api-2真实11/11及layering通过，98.067秒。
+- 新增实际CLI main→隔离MySQL→实际1.3.99静态Runtime adopt组合测试；固定API6f1d07298a28e14ab6a758149235ecd842b5e0cd/tree f8b234ea6c2fd6d13ca1c79f7fecf347ead9e9ac，cutover-api-3真实12/12、零失败/错误/跳过、layering通过，107.361秒。preview无写入、apply两次仍一个租约/意图/调度、零余额零资金流水，原关系/安装不变。输入和三份回执保存在cutover-api-3/operator-fixture；原始结果/测试XML保留。
+- Runtime native executor/provider为合成fixture；本结果不是生产扣费或生命周期全链验收。仅本批专用MySQL已停止并删除其合成data，日志/来源保留。没有本任务在途测试或发布。
+- 当前继续准备最终API/Web制品与实际生产配置。根API及Web存在其他任务修改，保留原样，不盲目合并或覆盖；先核对远端develop和真实已部署来源。李逵1.3.99在线但mTLS控制端点尚未配置，本机Runtime仍待升级；未执行生产租约迁移或扣费，整体目标未完成。

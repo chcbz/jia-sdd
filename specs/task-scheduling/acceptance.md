@@ -1,6 +1,16 @@
 # 验收范围
 
-## 当前提交状态（2026-11-11 16:42，本地/远程控制定向通过、整体未交付）
+## 当前提交状态（2026-11-11 19:48，切换入口实测通过、整体未交付）
+
+- API `6f1d07298a28e14ab6a758149235ecd842b5e0cd` / tree `f8b234ea6c2fd6d13ca1c79f7fecf347ead9e9ac`：`cutover-api-3` 12/12、无失败/错误/跳过，layering通过，107.361秒。真实命令入口→原账号/身份/安装MySQL查询→实际Runtime静态adopt→同事务零余额账户/免费租约/首次调度→原输入重放均已执行；原安装、绑定、投影和到期日不变，交易数0。原生executor/知识Provider是明确合成边界，不冒充生产WS/费用验收。
+- 前置隔离上下文`cutover-api-2` 11/11通过（98.067秒），确认normal profile不注册维护图、专属上下文无业务worker/HTTP/schema写入。`cutover-api-1`的真实代理装配FAIL保留；修复沿生产class-based事务代理，不替换原身份服务。`transition-api-5`的65项、钱包/租期边界及layering证据仍保留，不代表生产迁移。
+- Runtime 1.3.99 / bridge1.1.69，源码`7985667d1d73d3843d9f86dbc94f410a8ca520bd`，237/237；已安装到李逵固定app，PID335808，新进程connected/registered/ready与心跳ACK核验通过。attempt5启动校验失败并自动恢复旧程序；attempt6继承既有app根0700后成功，原FAIL未重标。李逵尚未配置租费mTLS控制端点；本机Runtime仍1.3.71，不能当作已完成全部宿主升级。
+- Web `c453e0898642b0aec80677df71c088f74563a349`：真实Vue/浏览器24项通过，含桌面/移动/窄屏、50/500文TRANSITION、无虚构付款和刷新不写入；HTTP/身份为合成fixture。没有最终Web制品/生产UI验收。
+- **仍未完成：** 两种部署完整生命周期/真实混合链的最终验收、必要生产SQL/ES/Redis及控制端点配置、其余宿主升级、fresh API/Web包和受控安装、真实Web/WS/资金/故障验收及集成收口。未执行生产租费迁移、实际扣费或付费模型turn。入口可运行和李逵在线不是整体上线。
+
+证据根：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/`；切换命令回执在`cutover-api-3/operator-fixture/`，发布在`likui-release-attempt-6/`，浏览器在`web-transition-browser-2/`。具体此前失败及后续修复见既有handoff，不将历史FAIL改写为PASS。
+
+## 历史提交状态（2026-11-11 16:42，本地/远程控制定向通过、整体未交付）
 
 - API `c2f717dac45cb122192f8cedd0cb68f55fbe00fb` / tree `0f3f5cafb5e3aff4c27747c31e9f3811d55f6344`，Runtime `8e556e9f7611c69593e09a6fe486eb47554ebb2b`：`tls-api-3`真实执行99项，**97通过、2失败**，486.248秒，layering通过。实际Java→mTLS→Runtime静态探测/adopt/current/停止/证据/私有清理通过，缺客户端密钥及错误服务端身份被拒绝；应用28项和免费重整H2事务5项均通过。
 - 未通过项是原本地UDS握手的精确字段断言（fixture新增remoteAddress:null）和静态清理第一次调用返回false。前者已改为只在TLS fixture返回该字段；后者未猜测为成功或超时，增加直接exchange异常/响应和Runtime安全阶段耗时诊断，保持原超时/清理断言。
