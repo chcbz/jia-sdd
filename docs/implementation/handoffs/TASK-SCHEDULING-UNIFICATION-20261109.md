@@ -1347,3 +1347,17 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - schema-rehearsal-1复用独占普通磁盘MySQL，按实际生产SHOW CREATE重建空结构后依次执行11个迁移，16.597秒PASS；报价列/类型/空值/排序/索引与fresh权威DDL一致，9张目标表全部存在且无虚构业务行/无CHECK。未复制生产业务数据、未改生产数据库。快照来源production-schema-rehearsal-input-20261111.json，逐迁移摘要及结果保留；专用MySQL已退出并清理合成data。
 - 磁盘清理仅三个已终态专用MySQL fixture（maintenance-sql-api-1、maintenance-auth-api-1、platform-usage-api-1）残留data；先核对退出回执/无对应活进程，保留源/日志/结果及mysql-cleanup.json。不清生产/他人缓存/包/备份。
 - API/Web制品现在可用于后续受控安装，但不代表已上线。仍需本机Runtime升级、李逵控制端点与可信路由、实际备份/停writer/SQL及ES迁移/套餐配置/存量接入、真实业务验收。没有生产扣费、免费租约登记或模型调用；整体目标active。
+
+### 2026-11-11 20:40 本机Runtime安装与三Agent通道验收
+- 复用固定7985667/tree492579c、237项已通过的Runtime1.3.99制品（SHA256 4af933810ed8a1b52b38571077a00105cc94a4b6e14a78e2094c10661a63e525），没有重复构建。local-runtime-upgrade-1在停机状态备份时磁盘耗尽，未切换程序；失败时回执也无法写入，原STOPPING保留，由reconciliation.json和journal记录真实失败与原程序恢复。残缺备份不是可恢复快照。
+- 仅清理本任务已终态构建的classes中间产物，逐批compiled-intermediate-cleanup.json保留来源；未删测试XML、源码、正式包、生产状态、他人目录或历史备份。attempt2在停服务前发现吴用缺writer锁，73.477秒失败，未冒充升级成功。
+- 隔离复制诊断查明原PID212973遗留的ACK序号锁只有零字节owner临时文件、无合法owner，时间早于此次安装。真实服务停机后核对精确inode/mtime/成员/摘要，只归档该未完成锁；未重置ACK、序号、会话或恢复旧状态。证据wuyong-initialization-diagnostic及backup/interrupted-ack-recovery.json。
+- local-runtime-upgrade-3安装成功263.170秒；备份/home/isp/baks/cyf-agent-runtime-v1/20261111-task-scheduling-runtime1399-retry3，状态包SHA256 181788791a647640ac45573267fadbc59383c48797067c7c334ffdc6e9e9dc36。固定app现为Runtime1.3.99/bridge1.1.69，PID1812014，原配置/身份不变。
+- 独立acceptance.json真实VERIFIED_ACTIVE_CHANNEL：吴用、林冲、卢俊义均由新PID产生新心跳及presence ACK，connected/registered/ready全true；验收127.221秒，release current标记verified-active。不是生产租费/模型调用验收，整体目标仍未完成。李逵mTLS证书目前只在私有准备目录，后续按实际端点启用另行记录。
+
+### 2026-11-11 20:57 真实控制端点与生产主体预演
+- 李逵原固定1.3.99程序不变；备份原host配置后安装私有控制证书、精确scope、正确isp:isp运行目录/tmpfiles，并以真实服务用户validate。配置安装12.496秒，PID344602。firewalld不活跃不代表无防火墙：首个跨机probe得到No route to host，保留FAIL；实际iptables服务和最终REJECT存在。只增加API出口47.106.106.57/32→173.230.149.118:9443规则，保留原活动规则/持久文件快照，测试持久配置、无修改其他规则。
+- `likui-control-config-1/control-acceptance.json`真实PASS：合法客户端capabilities返回精确host，错误scope被拒绝、缺客户端证书TLS失败；template=null的available=false表示不创建新托管实例，不是控制通道故障。remote-acceptance.json核实新PID的新心跳/ACK及原李逵connected/registered/ready，current release同步PID及配置摘要。CA私钥未传远端，无付费turn或adopt/扣费。
+- 本机控制scope按只读真实binding增加卢俊义owner，保留原模板/私有配置，仅备份并原子替换hosting配置。local-control-scope-1安装16.794秒、PID1816754，独立acceptance在60.354秒核实3Agent和2scope均通过；没有新增实例、租约、收费或回滚业务状态。
+- API客户端证书安装于/home/isp/conf/cyf-api/hosting-control/likui（目录0700/文件0600），路由与SSL bundle仅准备在production-control-config-1/control.properties，未更改当前API配置或重启API。证书365天有效，届满前需按原控制配置轮换流程更换，不建立自动证书框架。
+- 使用正式API c7c0 JAR的隔离HostingRentCutover --preview连接真实生产数据库，production-cutover-preview-1真实PASS，25.140秒，吴用/林冲/卢俊义/李逵4主体身份/安装/路由匹配；输入SHA256 837f22969dd06286637ad936454e7dee182ad6f9e6ad2b3c4bec7e03cd203809，未apply、未写租约/钱包/调度或扣款。扈三娘宿主无已核实控制端点，明确excluded，不能静默纳入；无安装关系不造事实。独立生产只读查询套餐表为空，实际迁移/套餐登记仍待执行。
