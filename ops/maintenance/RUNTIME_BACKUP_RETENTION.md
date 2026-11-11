@@ -19,7 +19,9 @@ This policy does not guarantee sufficient disk for arbitrary future workloads; n
 
 优先**减少重复程序文件及不必要的备份成员**，不以旧程序重压缩作为优化主线。下面的`compact-program`保持显式手工兼容，不加入cron或未来安装的默认链路；原保留数量、current pin、锁、身份与可恢复安装边界不变。
 
-- `runtime_backup_scope.py`供现有维护helper及未来Owner受控安装事务复用。未知文件默认保留，只排除两类已核实内容：精确`unified/agents/<subject>/inspection-state/<hex>/measurement/.isolated-*|.execution-*`启动探测临时目录；`codex-home/logs_2.sqlite`经只读SQLite检查确认为仅含`logs/_sqlx_migrations/sqlite_sequence`及既有诊断列时，排除该库与其`-wal/-shm`。库无法读取、列/表有变化、名字相同但语义不符均保留。程序不删除任何源状态。
+- `runtime_backup_scope.py`供现有维护helper及未来Owner受控安装事务复用。未知文件默认保留，原有两类排除保持：精确`unified/agents/<subject>/inspection-state/<hex>/measurement/.isolated-*|.execution-*`启动探测临时目录；`codex-home/logs_2.sqlite`经只读SQLite检查确认为仅含`logs/_sqlx_migrations/sqlite_sequence`及既有诊断列时，排除该库与其`-wal/-shm`。库无法读取、列/表有变化、名字相同但语义不符均保留。程序不删除任何源状态。
+- **2026-11-12范围收窄（v2）**：另排除精确静态布局`unified/agents/<subject>/codex-home/.tmp/plugins`、托管布局`unified/<64hex>/home/.tmp/plugins`中可从本地Git恢复的干净工作副本。仅在该目录确为独立Git工作树、无已跟踪修改/未跟踪/忽略文件、无submodule和隐藏修改的index标志时生效；未知/脏目录整体保留。**完整`.git`目录、历史和版本仍打包**，排除记录绑定commit。恢复后在该缓存目录执行`git restore --source=<state-scope.json记录的commit> --worktree -- .`即可离线重建；不需拉取、不清源目录、不改已有备份。普通项目仓库以及其他`.tmp`内容不受影响。
+- 技能`.cyf-skill-view-staging`含原子切换恢复意图，`inbox/.../skill-install`含journal及不可变技能包，不能仅以“暂存”命名排除；与`private-runs`一并保留。v2定向测试含干净/脏/忽略/隐藏文件、静态及托管布局、公共仓库和符号链接保护，以及压缩包真实恢复后离线重建缓存与业务状态保留。
 - `inspection-state`的`requests/conversations`和`private-runs`不是通用垃圾。保留完整会话、请求绑定、身份/授权、队列、ACK、幂等、用户成果、HOME中的其他SQLite及未知临时文件。不按空闲/年龄推断任务完成；不恢复旧状态覆盖新事实。
 - 依据：Runtime1.3.68/source92df9eb8，`isolated-engine-profile.mjs`的`_prepareEphemeralState`逐次mkdtemp生成启动探测状态；`_prepareRequestState`及`typed-inspection-profile.mjs`的持久请求/会话恢复仍依赖原目录。诊断库已核对真实表/列而未读取日志内容。变化后需核实对应生产者，不能把本清单扩成通配删除规则。
 - 新备份显式枚举成员，tar使用`--no-recursion --null --verbatim-files-from`避免重新纳入排除子树；保留ACL/xattr、权限、链接与稀疏文件，tar compare及前后清单复核成功后写该批`state-scope.json`，绑定归档SHA和发布记录摘要。归档沿用既有tar/tar.gz格式，收益来自范围缩小，不转换/重压缩旧备份。API也支持普通`state.tar`，但不能把它的大小和历史gzip包直接比较。

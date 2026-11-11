@@ -1488,3 +1488,14 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 本轮测试的合成MySQL正常退出后回收data，fixture-retirement.json留证。另将4个无.git且无进程引用的历史源码展开副本（3 Runtime及closure-api-source-5）无损压缩到source-snapshot-compaction-2；均tar --compare/SHA通过才移除展开副本，共约98MB。两轮共16份历史源码完整保存，不压缩当前runtime-native102-source-1或生产/他人源码。
 - 对10个本任务已终态批次仅回收build/jia/*/libs中的非starter/非kit/非result.artifact模块编译JAR，逐文件SHA/原结果SHA在module-intermediate-retirement.json；正式应用JAR、最终包、源码、报告和日志仍保留，不绕24小时/最近两批的最终包保留政策。02:20根盘782MiB可用；安装时仍须按实际新备份/暂存输入重新核对，不能以此承诺始终足够。
 - 两套餐组合缺口已关闭；本机1.3.102安装及验收、扈三娘可管理宿主接入和最终收口仍待完成。20分钟单次安装例外未获答复；本轮没有停止生产服务，真实健康UP/原PID1963995已留证。
+
+### 2026-11-12 02:32 安装时限保护准备及通道只读复核
+- 本任务install-local-runtime-13102-retry3.py草稿SHA9ce98b1bd5a74ccdf404014d67b6c63169d509e6cafb11c906175d58cc79bc28默认600秒，以进程定时器中断阻塞子进程，恢复前解除计时；停止意图先记录，恢复兼顾目录rename与标志更新之间的中断。local-installation-deadline-check-2.json记录7项隔离测试通过/0.356秒，未执行生产安装、未停止服务；不宣称全局安装器均已改造。生成草稿的prepare脚本不包含后续修复，不能重新生成覆盖。
+- local102-retry3-preflight.json核对已有failed-candidate全部7512项、包及manifest摘要匹配；保留两次诊断脚本错误原件。1200秒例外仍未获得明确答复，不自动扩大窗口。
+- local-channel-reconciliation-1794421938.json两次只读采样间隔35秒，健康文件observedAt已前进，PID1963995/service active不变，但三Agent均connected/registered=true、ready=false、channelState=connecting、lastFailure=null。因此不能以此前01:10恢复通过代替当前就绪状态，也不能说仅为单次瞬时采样；根因未定，未重启、重放业务或干预其他在办事项。本机102安装及后续就绪验收仍未完成。
+
+### 2026-11-12 用户授权收窄备份范围：只省可离线重建的插件工作副本
+- 责任层为原ops/maintenance/runtime_backup_scope.py，不改Runtime业务代码或另建备份框架。源码复核确认skill-install-manager的`.cyf-skill-view-staging`含原子切换intent，skill-install含journal/不可变包，private-runs含执行事实；此前“大目录”列表不是可整目录排除清单，上述全部继续备份。
+- v2仅在明确静态/托管HOME布局的`.tmp/plugins`为干净独立Git工作树、无未跟踪/忽略/隐藏修改及submodule时省略工作副本；完整.git历史/版本保留，可按state-scope记录commit离线恢复。未知临时文件、业务项目仓库、凭证、会话、ACK和执行恢复数据保留，无源文件删除或既有备份重写。
+- backup-scope-v2-1：Python3.11与主机系统Python各22项通过（0.700/0.878秒），包含真实gzip归档、恢复及Git离线重建、业务数据保留。四处现行插件缓存clean通过。按原归档成员测算少229993470字节（219.3MiB）、21624普通文件，原始数据1412190968→1182197498字节，约少16.3%；这是旧包成员投影，不是新压缩包大小或安装耗时保证。
+- 已持原host→release锁原子安装到/usr/local/libexec/cyf/runtime_backup_scope.py，readback SHA18b6408fe9a0482128a9e50712274eb6c47a03f11a90d2a69b273465e82fd26e与源码一致；原helper包外备份、安装回执/测试/投影见backup-scope-v2-1。首次安装检查错误要求host锁0600（实际0644），写入前退出；按既有safe.regular拒绝可写而允许0644的规则纠正，未改锁权限或绕锁。服务未重启，未执行Runtime升级/新的停机状态备份，原失败证据及窗口审批状态不变。

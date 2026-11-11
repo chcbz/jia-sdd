@@ -74,6 +74,74 @@ class ScopeTests(unittest.TestCase):
         result = m.plan([self.root]); self.assertFalse(result['excluded'])
         self.assertEqual(len([x for x in result['included'] if os.path.islink(x['path'])]), 2)
 
+    def cache(self, path=None):
+        path = path or self.home / '.tmp/plugins'
+        path.mkdir(parents=True)
+        def git(*args):
+            return subprocess.check_output(['git', '-C', str(path)] + list(args), stderr=subprocess.DEVNULL)
+        git('init'); git('config', 'user.name', 'fixture'); git('config', 'user.email', 'fixture@example.invalid')
+        self.put(path / 'plugins/example/data', 'public-package')
+        self.put(path / '.gitignore', '*.ignored\n')
+        git('add', '.'); git('commit', '-m', 'fixture')
+        return path, git
+
+    def test_clean_cache_omits_worktree_but_retains_all_git(self):
+        path, git = self.cache()
+        result = m.plan([self.root])
+        omitted = [r for r in result['excluded'] if r['reason'] == 'rebuildable-plugin-cache-worktree']
+        self.assertEqual(len(omitted), 2)
+        self.assertTrue(all(r['commit'] == git('rev-parse', 'HEAD').decode().strip() for r in omitted))
+        self.assertTrue(any(r['path'] == str(path / '.git/HEAD') for r in result['included']))
+        self.assertTrue((path / 'plugins/example/data').exists())
+
+    def test_dirty_untracked_ignored_or_hidden_changes_keep_entire_cache(self):
+        path, git = self.cache()
+        for name in ('plugins/example/data', 'private', 'private.ignored'):
+            f = self.put(path / name, 'local-data')
+            self.assertFalse(m.plan([self.root])['excluded'])
+            if name == 'plugins/example/data': git('checkout', '--', name)
+            else: f.unlink()
+        git('update-index', '--assume-unchanged', 'plugins/example/data')
+        self.put(path / 'plugins/example/data', 'hidden-local-data')
+        self.assertFalse(m.plan([self.root])['excluded'])
+
+    def test_same_name_public_repository_outside_cache_is_kept(self):
+        self.cache(self.root / 'workspace/.tmp/plugins')
+        self.assertFalse(m.plan([self.root])['excluded'])
+
+    def test_managed_home_cache_and_unknown_tmp(self):
+        self.cache(self.root / ('unified/' + 'a' * 64 + '/home/.tmp/plugins'))
+        self.put(self.home / '.tmp/private.data')
+        result = m.plan([self.root])
+        self.assertEqual(len(result['excluded']), 2)
+        self.assertTrue(any(r['path'].endswith('/.tmp/private.data') for r in result['included']))
+
+    def test_cache_symlink_kept_not_followed(self):
+        path, git = self.cache(self.base / 'external')
+        (self.home / '.tmp').mkdir()
+        (self.home / '.tmp/plugins').symlink_to(path)
+        self.assertFalse(m.plan([self.root])['excluded'])
+
+    def test_archive_restores_cache_offline_from_preserved_git_and_keeps_business_state(self):
+        path, git = self.cache()
+        self.put(self.home / 'sessions/private.jsonl', 'session-fixture')
+        self.put(self.home / '.cyf-skill-view-staging/cmd/data', 'recovery-fixture')
+        self.put(self.root / 'private-runs/output', 'user-output')
+        archive = self.base / 'state.tar.gz'
+        with (self.base / 'log').open('wb') as log: result = m.write_state_archive(archive, [self.root], log)
+        dest = self.base / 'restore'; dest.mkdir()
+        subprocess.check_call(['tar', '-xzf', str(archive), '-C', str(dest)])
+        restored = dest / str(path).lstrip('/')
+        self.assertFalse((restored / 'plugins').exists())
+        subprocess.check_call(['git', '-C', str(restored), 'restore', '--source=HEAD', '--worktree', '--', '.'])
+        self.assertEqual((restored / 'plugins/example/data').read_text(), 'public-package')
+        restored_home = dest / str(self.home).lstrip('/')
+        self.assertEqual((restored_home / 'sessions/private.jsonl').read_text(), 'session-fixture')
+        self.assertEqual((restored_home / '.cyf-skill-view-staging/cmd/data').read_text(), 'recovery-fixture')
+        self.assertEqual((dest / str(self.root).lstrip('/') / 'private-runs/output').read_text(), 'user-output')
+        self.assertEqual(result['policy'], 'runtime-essential-state-v2')
+
+
     def test_roots_must_not_overlap_or_alias(self):
         for roots in ([self.root,self.home],[self.root,self.root]):
             with self.assertRaises(ValueError): m.plan(roots)

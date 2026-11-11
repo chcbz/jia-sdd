@@ -1,7 +1,8 @@
 """Minimal, conservative Runtime state selection; no live cleanup or activation.
 
 Unknown files are included. Only ephemeral startup probes and schema-confirmed
-Codex diagnostic logs are excluded. Requests/conversations/SQLite state, locks,
+Codex diagnostic logs and clean plugin-cache worktrees are excluded. Git history
+and recovery metadata remain included. Requests/conversations/SQLite state, locks,
 authorization and task bindings remain included. Caller owns quiescing writers.
 """
 import hashlib
@@ -47,6 +48,46 @@ def probe_directory(relative):
             parts[5] == 'measurement' and re.fullmatch(r'\.(isolated|execution)-[A-Za-z0-9]+', parts[6]))
 
 
+def plugin_cache_directory(relative):
+    parts = relative.parts
+    return ((len(parts) == 6 and parts[:2] == ('unified', 'agents') and
+             parts[3:] == ('codex-home', '.tmp', 'plugins')) or
+            (len(parts) == 5 and parts[0] == 'unified' and
+             re.fullmatch('[0-9a-f]{64}', parts[1]) and
+             parts[2:] == ('home', '.tmp', 'plugins')))
+
+
+def clean_plugin_cache_revision(path):
+    """Omit only reproducible worktree bytes; retain the complete local Git DB.
+
+    No fetch, reset, clean or source writes. Unknown/dirty/ignored files and
+    linked worktrees/submodules keep the whole cache. Restoring the recorded
+    HEAD worktree from the retained .git needs neither network nor credentials.
+    """
+    git_dir = path / '.git'
+    if git_dir.is_symlink() or not git_dir.is_dir(): return None
+    env = dict(os.environ, GIT_OPTIONAL_LOCKS='0')
+    # The caller's Git environment must not redirect this repository inspection.
+    for key in list(env):
+        if key.startswith('GIT_') and key != 'GIT_OPTIONAL_LOCKS': del env[key]
+    def git(*args):
+        return subprocess.check_output(['git', '-c', 'core.fsmonitor=false',
+                                       '-C', str(path)] + list(args),
+                                      env=env, stderr=subprocess.DEVNULL)
+    try:
+        if os.fsdecode(git('rev-parse', '--show-toplevel')).strip() != str(path): return None
+        if git('status', '--porcelain=v1', '--untracked-files=all', '--ignored'): return None
+        # Skip-worktree/assume-unchanged can conceal local edits from status.
+        index = git('ls-files', '-v', '-z').split(b'\0')
+        if any(row and not row.startswith(b'H ') for row in index): return None
+        if any(row.startswith(b'160000 ') for row in git('ls-files', '--stage', '-z').split(b'\0')): return None
+        revision = git('rev-parse', '--verify', 'HEAD^{commit}').decode().strip()
+        if not re.fullmatch('[0-9a-f]{40}|[0-9a-f]{64}', revision): return None
+        return revision
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
 def plan(roots):
     roots = [Path(p) for p in roots]
     if len(set(roots)) != len(roots): raise ValueError('DUPLICATE_STATE_ROOT')
@@ -69,10 +110,15 @@ def plan(roots):
                     return
                 included.append({'path': str(path), 'signature': signature(path)})
                 children = sorted(path.iterdir())
+                cache_revision = clean_plugin_cache_revision(path) if plugin_cache_directory(relative) else None
                 log = path / 'logs_2.sqlite'
                 is_home = path.name == 'codex-home'  # never omit unrelated business logs
                 omit_log = is_home and diagnostic_database(log)
                 for child in children:
+                    if cache_revision and child.name != '.git':
+                        excluded.append({'path': str(child), 'reason': 'rebuildable-plugin-cache-worktree',
+                                         'gitDirectory': str(path / '.git'), 'commit': cache_revision})
+                        continue
                     if omit_log and child.name in ('logs_2.sqlite', 'logs_2.sqlite-wal', 'logs_2.sqlite-shm') and child.is_file() and not child.is_symlink():
                         excluded.append({'path': str(child), 'reason': 'schema-confirmed-diagnostic-log'})
                     else: visit(child)
@@ -85,7 +131,7 @@ def plan(roots):
             else:
                 raise ValueError('UNSUPPORTED_STATE_FILE: ' + str(path))
         visit(root)
-    return {'policy': 'runtime-essential-state-v1', 'roots': list(map(str, roots)),
+    return {'policy': 'runtime-essential-state-v2', 'roots': list(map(str, roots)),
             'included': included, 'excluded': excluded,
             'includedRegularBytes': sum(r['signature'][5] for r in included if stat.S_ISREG(r['signature'][2]))}
 
