@@ -84,3 +84,9 @@ Owner：本会话；调查基线API49f6b4d20。实现工作区 `/home/isp/wsps/w
 - [x] 合并已部署认证修复后的101项/分层通过，含真实Redis客户端关闭、watchdog过期后接管；只读核实生产Redis4.0.6单机master，无生产故障注入。
 - [ ] 自行部署50文生命周期及存量收费切换仍未实现；最终制品、受控迁移/安装、真实Web/WS/资金与故障验收未完成。没有新增生产扣费。
 - 本轮证据：closure-api-6、closure-runtime-combined-acceptance-8、production-redis-observation-20261111.json；原失败不重标，停止后的本任务MySQL data已回收，包外日志/报告仍保留。
+
+
+## 2026-11-11 远程控制传输进展（未发布）
+
+- [x] Runtime1.3.98候选在原HostingControl上增加可选双向TLS入口，UDS/journal/关系控制共用；235项回归通过，补充TLS配置/凭证根隔离12项通过。固定源码、测试范围及证据见acceptance，非生产证书/远程验收。
+- [ ] API可信主机路由与双向TLS客户端、重新邀请时持久化库存host路由、自部署50文同账本套餐接线；仍需存量双模式30天过渡、首个调度登记及最终发布验收。不能仅因Runtime端可达就启用收费。

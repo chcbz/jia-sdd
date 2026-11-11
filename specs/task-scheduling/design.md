@@ -195,3 +195,14 @@ STARTED先落平台账再调用模型；RESPONDED使用原价快照和原attempt
 - 静态实例清理后的重新邀请沿用原readmitAgent：保留同一公共实例、profile和HOME实体目录，只有安装/新关系身份更换；受控写回原manifestPath，复用原私有清理和关系准入。迟到旧关联不能停止或清理新关系。没有完成原交接不允许重新准入。
 - 免费重整对任何现有安装统一使用安装责任层的`lockExistingInstallation`，不调用创建/确保待注册安装，不依赖注册密钥仍可取。初次新安装仍需完整enrollment信息；REPROVISION允许明确的两项null元数据，缺一项或初次省略均拒绝；后续绑定/租约/manifest/generation事务核对不减少，也不增加一次SQL读取。
 - 定向证据：Runtime2488e71同源232项通过（含静态接入并发重放、重启、真实私有清理及同实例重邀；模型/原生注册明确fixture）。Java↔实际UDS↔Runtime的adopt/停止/证据/清理与安装锁回归已在固定API b49120979d通过62项及validateLayering（356.945秒），证据adoption-api-1；Runtime输入e54aa6c已核对581个Git blob及依赖摘要。远程宿主控制传输、实际存量租约迁移和生产上线仍未完成，不能单独打开收费开关。
+
+
+### 远程宿主控制传输（2026-11-11，Runtime候选已验证、API未接线）
+
+远程自行部署复用同一HostingControl和journal，仅增加运维配置的双向TLS入口；不是新增收费引擎、SSH业务调用或依赖Agent会话的控制入口。私有UDS继续使用原身份/权限合同；TLS在宿主进程持有，单Agent停止后仍可做证据确认及私有清理。应用消息保持protocolVersion=1及原scope/关系/代际，不让请求选择路径、地址或凭证。
+
+Runtime hosting配置可选`remote`，完整字段为`listenHost`（IP字面量）、`port`（0..65535，0供测试）、`certificatePath/privateKeyPath/clientCaPath`（规范绝对普通文件）。TLS最低1.2、强制客户端证书校验；使用专用控制客户端CA，受该CA信任的客户端具有控制调用身份，后续仍按原scope和精确关系约束。证书/CA不能被组或其他用户写入，私钥不能被组或其他用户访问，属主只允许root或服务身份，且必须位于所有Agent可写根、host state、managedRoot之外。证书更新走受控宿主重启，无新轮询框架。省略remote保持本地行为。
+
+两个传输共用16384字节请求帧上限。TLS配置/监听失败关闭已打开的UDS，不遗留半启动控制入口；正常关闭连同未完成TLS握手连接一起回收。本机临时证书的定向测试覆盖停止后继续控制、同journal重放、双向身份拒绝和凭证隔离；详见acceptance和Runtime `conf/cyf-agent-runtime-v1/HOSTING-CONTROL.md`。
+
+API仍待实现可信宿主路由和TLS客户端，不能据Runtime端通过宣布远程闭环。路由只来自运维端点配置及已授权的库存报价/安装hostId；重新邀请时运行投影会清空旧host字段，必须沿用已持久化报价/安装关联，不能误回落本机或让用户传URL。现有计价、账本、关系和调度职责不变；实际生产证书、端口与李逵验收均未执行。

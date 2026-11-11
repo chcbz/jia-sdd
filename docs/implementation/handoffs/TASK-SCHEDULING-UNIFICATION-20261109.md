@@ -1244,3 +1244,13 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 15:53 adoption-api-1真实PASS：APIb49120979dc04eec629a443fa20492932dea2358/treead0595efb45132b58887e5a3af5b29ee557db012，62/62、0fail/error/skip、layering通过，356.945秒，未执行bootJar。已逐项读取XML确认实际Java静态adopt清理用例（1.763秒）、安装fence/无注册元数据重整用例确实执行，没有只看汇总。runtime-input-audit.json核对source3完整581个Git blob、e54aa6c完整commit/tree、Node和依赖摘要；未将mock/fixture当实际生产资金验收。
 - 原Runtime第二批session75382和API8980均已终态；本轮没有在途构建/测试。真实李逵只读查询另确认存在nginx1.12.2/1.14.1及443监听，没有修改nginx/端口/证书/运行配置，也未决定或实现新的远程控制传输。不要因存在443就假设可用mTLS或宿主控制端点。
 - 下一动作继续远程宿主控制（必须独立于被停止的executor存活）、静态实例绑定后的50文套餐/30天过渡及首次调度接线。API工作区干净；Runtime仅保留原无关脏改；Runtime1.3.97候选与此前实际李逵1.3.71部署分开记录，均未新增扣费/清理生产数据。完整目标保持active。
+
+
+### 2026-11-11 16:08 Runtime远程控制子链完成，主目标仍active
+
+- 本轮未改API（仍b49120979d）、未操作生产端口/证书/服务/资金或私有清理。Runtime任务提交121efd99924846b7cc8d4116f731e5a5d58d2548及6ccbfcbb41cc26ecbd635cd66d56c5cbda4e796b，候选1.3.98；保留README/install/python-freeze等所有原无关脏改。
+- 原HostingControl增加可选运维remote配置和mTLS listener，复用原UDS handler/帧/关系/journal；TLS不依赖被停止的executor。私钥/CA必须在Agent可写根之外且权限正确。无未认证入口、SSH业务命令、重复收费引擎或证书轮询。
+- tls-runtime-1：固定121efd9/tree c29cd9bae595acbd519895ef717df095cb42dd87，235/235，0fail/cancel/skip/todo，150.318秒。tls-runtime-2：固定6ccbfcb/tree b6d47b9fad36c33ff2eaedde6a31252ec2f11bde，12/12，9.426秒；后一提交仅追加配置隔离测试/指南。两批source-audit.json逐个核对582个Git blob，Node与依赖tree绑定。driver沿既有adoption模板，普通磁盘tmp t1/t2，各600秒独立计时。sessions32292/96204均终态，无在途测试。
+- 实测包含Agent停止后证据控制、TLS/UDS同journal重放、错误scope、缺失/伪造客户端证书、服务端身份不符、超大帧、密钥权限、Agent根内凭证、符号链接和CA可写拒绝。测试使用临时证书与既有模拟原生执行/provider，不是生产收费或真实李逵远程验收。没有最终制品/部署。
+- 下一动作：API共享adapter的可信host路由和TLS客户端。现UnixManagedHostingProvisioner.exchange约355行只走UDS；可沿Spring已有SSL配置或JDK上下文接入，禁止请求传endpoint。必须解决attachReleasedBinding会清空runtimeHostId的路由点：初次重邀prepare使用持久化quote.inventoryHostId，后续candidate.hostId，不能退回本机。probeCapabilities目前无Agent参数且static template=null会返回不可新建，不能以此拒绝已有静态实例的正常重整。原账本/调度共用，接着自部署50文、存量两种模式30天过渡/首次调度、legacy规范ID重邀身份责任层，再生产迁移/制品/实际验收。
+- 当前磁盘约650MB可用，继续使用普通磁盘，不能为腾空间删未知包/日志/备份或用tmpfs。Runtime安装仍是李逵1.3.71，不把候选1.3.98当已部署。
