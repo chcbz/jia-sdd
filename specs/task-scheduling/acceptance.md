@@ -1,6 +1,6 @@
 # 验收范围
 
-## 当前提交状态（2026-11-11 21:15，ES映射已迁移、控制通道/主体预演通过、整体未交付）
+## 当前提交状态（2026-11-11 21:45，四主体公共基线和控制前置通过、整体未交付）
 
 - 正式API制品c7c0f2d78d/1.1.48-SNAPSHOT：api-final-1，146项及layering通过，197.962秒。Web c453e08/1.16.134：web-final-2，101通过/2原pending，177.303秒；生产构建和包摘要通过，尚未安装。
 - 额外迁移资源87ccfef032仅补首次费用报价5列升级SQL，不在上述c7c0包中，独立维护来源明确区分。schema-rehearsal-1按实际生产SHOW CREATE空结构执行11项迁移，16.597秒通过，报价结构与fresh DDL一致；生产报价表只读观察为0行，实际执行前须停writer后复核。生产SQL迁移仍未执行；ES映射状态见下。
@@ -9,10 +9,10 @@
 
 - API `6f1d07298a28e14ab6a758149235ecd842b5e0cd` / tree `f8b234ea6c2fd6d13ca1c79f7fecf347ead9e9ac`：`cutover-api-3` 12/12、无失败/错误/跳过，layering通过，107.361秒。真实命令入口→原账号/身份/安装MySQL查询→实际Runtime静态adopt→同事务零余额账户/免费租约/首次调度→原输入重放均已执行；原安装、绑定、投影和到期日不变，交易数0。原生executor/知识Provider是明确合成边界，不冒充生产WS/费用验收。
 - 前置隔离上下文`cutover-api-2` 11/11通过（98.067秒），确认normal profile不注册维护图、专属上下文无业务worker/HTTP/schema写入。`cutover-api-1`的真实代理装配FAIL保留；修复沿生产class-based事务代理，不替换原身份服务。`transition-api-5`的65项、钱包/租期边界及layering证据仍保留，不代表生产迁移。
-- Runtime 1.3.99 / bridge1.1.69，源码`7985667d1d73d3843d9f86dbc94f410a8ca520bd`，237/237；已安装到李逵固定app，PID335808，新进程connected/registered/ready与心跳ACK核验通过。attempt5启动校验失败并自动恢复旧程序；attempt6继承既有app根0700后成功，原FAIL未重标。本机现已同版本安装并核验吴用/林冲/卢俊义新PID心跳与ACK；后续控制配置后本机公共基线补齐后PID1828572、李逵PID344602。李逵mTLS真实跨机请求通过，错误scope及无客户端证书被拒绝，防火墙只放行API来源IP；本机新增卢俊义真实owner scope并逐scope验证。尚未核实扈三娘所在宿主。
+- Runtime 1.3.99 / bridge1.1.69，源码`7985667d1d73d3843d9f86dbc94f410a8ca520bd`，237/237；已安装到李逵固定app，PID335808，新进程connected/registered/ready与心跳ACK核验通过。attempt5启动校验失败并自动恢复旧程序；attempt6继承既有app根0700后成功，原FAIL未重标。本机现已同版本安装并核验吴用/林冲/卢俊义新PID心跳与ACK；后续控制配置后本机公共基线补齐后PID1828572、李逵公共基线配置后PID356632。李逵mTLS真实跨机请求通过，错误scope及无客户端证书被拒绝，防火墙只放行API来源IP；本机新增卢俊义真实owner scope并逐scope验证。尚未核实扈三娘所在宿主。
 - Web `c453e0898642b0aec80677df71c088f74563a349`：真实Vue/浏览器24项通过，含桌面/移动/窄屏、50/500文TRANSITION、无虚构付款和刷新不写入；HTTP/身份为合成fixture。最终Web制品见上；仍没有生产UI验收。
 - 生产切换只读预演：`production-cutover-preview-1`使用已验证c7c0 JAR，4个真实安装主体身份/路由通过，25.140秒；输入及receipt固定，未apply/建租约/扣款。扈三娘无已验证控制端点明确排除，无安装关系不造租约。API客户端证书已私有安装、路由配置仍暂存未激活。
-- 本机3个静态Agent公共基线已从运维来源生成并激活，真实HOME清理前置检查只读通过、没有执行清理。李逵的模型key不同于平台公共key，尚无独立公共基线，须确认可否跨用户保留；当前不复制旧HOME凭证或启用该自动交接。
+- 本机3个静态Agent公共基线已从运维来源生成并激活。用户已明确允许李逵当前模型key作为可跨用户保留的公共凭证；仅提升该授权key及最小provider/model配置为独立运维基线，不复制整个HOME、私有设置或会话，不替换成平台key。`likui-public-baseline-1`安装11.467秒，新PID356632通道/控制验收45.304秒；跨机mTLS及错误scope/无证书拒绝再次通过。四个真实HOME清理前置检查均只读通过，没有执行清理或知识抽取。首次李逵前置诊断误用root身份，被文件归属检查拒绝；按实际服务用户isp重跑通过，未放宽权限。
 - ES生产迁移`production-memory-mapping-1`已完成：通过配置别名chat_memory对chat_memory_v2增加tenant_id/client_id keyword，固定87ccf资源SHA；回读确认原有映射不变，没有读写历史正文、猜测归属或批量回填，API未重启。预检索引246条文档不代表均已携带新scope。
 - 生产安装输入`production-release-preparation-1`已固定：原正式API/Web制品摘要重验、原生安装描述和11个已预演SQL资源准备完成；无构建重跑/SQL执行/安装。远端develop重新fetch，API/Web均包含全部远端提交；尚未合入/推送。
 - **仍未完成：** 两种部署完整生命周期/真实混合链的最终验收、必要生产SQL和API调度/收费/路由配置、扈三娘宿主核实、API/Web受控安装、真实Web/WS/资金/故障验收及集成收口。未执行生产租费迁移、实际扣费或付费模型turn。入口可运行和李逵在线不是整体上线。

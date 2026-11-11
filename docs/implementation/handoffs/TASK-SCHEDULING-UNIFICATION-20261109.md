@@ -1377,3 +1377,11 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - `production-release-preparation-1`核对原API/Web正式包SHA及实际已安装来源后，按原native installer契约生成2份安装描述；从87ccf Git blob逐项核对11个SQL与真实结构预演SHA并固定副本/顺序。仅准备，未运行SQL/修改生产配置/安装应用；执行前仍必须重核原JAR/config/record/helpers和真实停写备份，不绕锁、不重复构建。
 - 重新fetch origin/develop后API候选领先157且落后0、Web领先12且落后0，两工作区clean；精确远端SHA见integration-observation.json。未切换或覆盖主工作区无关dirty，未push/触发Flow。仅凭包含远端不能声称已合入develop。
 - 当前没有本任务活跃构建/发布/查询进程。下一步仍需明确李逵key能否跨用户保留，确认后完成其运维公共基线；其余待办保持acceptance首节，不把ES完成当SQL/资金闭环完成。
+
+
+### 2026-11-11 21:45 李逵公共凭证授权已落地
+- 用户明确回答“允许”：当前李逵模型API Key可作为跨用户保留的Agent公共凭证。仅将该已授权key及当前model/provider的最小公共配置提升为运维基线；未替换平台key，未复制原HOME整体配置、项目私有设置或会话。凭证未输出到聊天/公开日志。
+- `likui-public-baseline-1`：沿原远端发布锁，核对原PID344602和host/基线摘要，保存配置与release备份`/home/isp/baks/cyf-agent-runtime-v1/20261111-likui-public-baseline`。新基线在`/home/isp/conf/cyf-agent-runtime-v1/public-baselines/jyt-jiafewnnv58ec2379c-likui.json`，目录0700、文件0600，实际服务用户isp持有；精确tenant/client/Agent与原manifest一致，配置引用publicFilesPath。
+- 以isp执行正式validate后受控重启，安装11.467秒，原Runtime1.3.99/bridge1.1.69及源码7985667未变，新PID356632。独立45.304秒验收`VERIFIED_ACTIVE_CHANNEL_AND_CONTROL`，新心跳/presence ACK、connected/registered/ready及UDS控制均通过，当前release记录已更新。后续实际跨机mTLS重新PASS，错误owner与缺客户端证书仍拒绝；原template=null的available=false语义不变。
+- readRuntimeHostConfig→validateStoppedHomeCleanup首次诊断误用root，`RUNTIME_CONFIG_FILE_UNSAFE`正确拒绝服务用户所有的配置；不是Runtime启动失败。保留`precondition-first-attempt.json`归因，改以实际isp身份执行同一只读前置检查PASS，未改权限校验。没有执行停止清理、私有数据抽取、付费turn、adopt、SQL迁移或扣款。证据在上述本地批次remote-install-result/remote-acceptance/home-preconditions/control-acceptance。
+- 李逵凭证归属阻塞已解除，不再等待同一授权。生产API/Web仍为旧版；剩余为生产SQL/套餐/调度与路由配置、4主体实际接入、两端受控安装和真实业务/资金验收，扈三娘宿主仍未核实，不能将本次配置完成称为完整上线。
