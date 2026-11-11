@@ -1223,3 +1223,12 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 证据：/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/likui-runtime-upgrade-2/remote-acceptance.json；远端/home/isp/state/cyf-runtime-upgrades/likui-20261111-runtime1371/acceptance.json。远端安装切换11.165秒，构建/展开各尝试失败分别保留，不冒充首次成功。
 - 升级前另完成资金责任层续费planId绑定（API0c583d6c77298e866d67d0157cc1d7c3aa470259）：防止跨部署套餐续费，不增加SQL或层层校验；同套餐版本变价继续允许。首批测试误用钱包字段导致编译失败，修正后20项真实H2事务回归及validateLayering通过。原runner误沿用“至少30项”汇总门槛使外层FAIL保留，逐项报告摘要及目标用例核对见renewal-plan-api-2/report-audit.json，无重复构建。本API改动未发布。
 - 本轮升级不解决自部署收费/远程生命周期控制、存量30天过渡、数据库与ES生产迁移等主任务缺口；不能将本次升级标为整套租费功能上线。
+
+### 2026-11-11 15:26 继续自部署接线：现有租约身份入口
+- Owner仍task-scheduling-owner，复用API worktree task-scheduling-api-next；起点0c583d6c77298e866d67d0157cc1d7c3aa470259，候选cac049e991。当前仅补现有租约查询/续费/解除/重整的身份入口，不部署、不扣费、不改李逵identity，不把该切片称为自部署收费完成。
+- 调用链确认：身份责任层原本支持登记的LEGACY_CANONICAL，且按tenant/client/owner精确查registry；租费入口额外硬编码agt_正则导致合法存量ID在到达身份责任层前被拒绝。现有租约入口改为协议文本校验，仍要求返回canonical与请求字节一致，别名不自动转换、外部owner无权读取。初次新建/重新邀请仍走既有opaque路径，尚不支持存量静态主体首次接入/重邀，不能据此迁移真实李逵。
+- 无新SQL、无兼容映射表、无Web/Runtime协议变化；新增5项定向测试，覆盖存量canonical查询/续费、别名拒绝、scope拒绝和非法文本。原应用整类共28项，加validateLayering，经既有编排器执行existing-identity-api-1；结果尚待终态，不先报PASS。
+- 远程控制真正缺口已确认：现有execution-adapter的WS属于executor，RuntimeHost.quiesceAgent会close executor，不能直接拿该WS承载后续evidence/cleanup而声称闭环。需宿主控制通道独立于执行器存活、复用同一hosting业务处理器与原installation认证，并完成静态主体精确接管；不以SSH执行业务命令、不加假READY或空轮询替代。当前只是调用链结论，尚未实现。
+
+- 15:29 existing-identity-api-1真实PASS：API cac049e991e8d46a80aa2955de1a6d73283f6009/tree1cbb207cf94e5de4b45b080f646aeba825a2c94e，28/28、0fail/error/skip，validateLayering通过；155.822秒（受限155.816秒），未生成/发布JAR。证据目录 /home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/existing-identity-api-1/；无本任务在途测试进程。
+- 下一实现仍为自部署宿主控制与静态主体接管；随后两种模式共用租约套餐/30天过渡迁移及生产交付。不要把本次身份入口修正或已完成李逵1.3.71升级当作自部署收费闭环。API工作区干净；Runtime仍bba4f8b且原无关脏改未触碰。本机普通磁盘余约881MB，继续构建前按实际产物检查，仅清理本任务可回收内容，不全盘清缓存。
