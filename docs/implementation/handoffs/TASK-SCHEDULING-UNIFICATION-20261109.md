@@ -1461,3 +1461,10 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 精确18项HostingRentRenewalMySqlTest覆盖重复续费一次扣款、余额增加唤醒/新租期、预占不可挪用、15天边界、并发停止/扣费锁序、两套餐过渡、首次附加费不带入后续、原安装/原租约交接以及慢GENERAL不能阻塞租费；另外46项为finishing/handover/admission/task settlement及runner/Redis协调。case名、XML摘要及阶段时间均由原driver核验，不推断生产HA或远程整链已验。
 - mysqld1981515已正常Shutdown complete并退出；回收本轮自有合成MySQL data约167MiB，fixture-retirement.json记录精确目录/文件，保留原日志/源码/SQL断言/XML，未删除制品或任何生产备份。首次清理前检查误匹配自身shell脚本文本而保守停止、未删除；改为核对/proc/exe确为mysqld及精确datadir后才清理。
 - 同步acceptance/tasks当前正文，取消“真实Provider尚未接中心账本”及笼统“最终租费/故障未测”的过时表述；完整关闭重邀的组合覆盖、未核实宿主及本机最终安装仍未完成。20分钟本机安装例外仍未获答复，未停止生产重试；未修改备份工具或删除既有有效备份。
+
+### 2026-11-12 01:52 等待安装例外期间：最终源码跨端交接及剩余宿主核对
+- 上轮属于实际进展（64项回归与中心账本证明、6781a21f文档提交），不是重复状态汇报。本轮未收到20分钟安装例外，仍未再次停止生产服务或重试安装。
+- 复用原Gradle编排器和现有fixture，仅固定selector/Runtime来源，不改产品代码：final-closure-api-1，API87ccf/tree09697、Runtimebbf/tree1ab2780，源码逐文件SHA及依赖前后核对；2项0失败/跳过及layering通过。383.759秒，受限261.291秒、SQL集成122.029秒，差值为尾部依赖核对等总耗时。真实MySQL/UDS托管500文首次邀请→旧关系关闭/原安装撤销/私有会话清理/公共技能保留→另一用户550文重邀/新安装ACTIVE/唯一扣款，旧完成重放不破坏新关系，真实分录平衡。另项自部署静态adopt/stop/flush重试/cleanup通过、无凭据签发。普通账户目录、executor注册和知识Provider仍是明确fixture；不把静态控制用例扩大为自部署50文完整资金重邀。
+- 只读核实扈三娘仍offline，原host chc-223-6c3ee548-aab2-48a1-8ce1-e47d40cdab54未变，endpoint为wss平台api.chaoyoufan.cn，不是宿主控制端点；证据husanniang-host-observation-1精确限定主体，未查询私有会话或凭据、未将其错误接入本机/李逵。实际纳入仍需要可管理宿主的信息。
+- 停止本任务可选的大目录du扫描，避免无必要磁盘遍历；没有删除任何文件。测试退出后只回收本轮正常停止的合成MySQL data，fixture-retirement.json保留精确清单；日志/SQL/源码/XML/制品/有效备份保留。没有正在运行的本轮构建/安装。
+- 修正责任spec仍写“尚未上线”的过时总述：准确区分API/Web/调度已安装与本机Runtime/整体交付未完成；历史基线标明历史，不改写原测试/安装结果。

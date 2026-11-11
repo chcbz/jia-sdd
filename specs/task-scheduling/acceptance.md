@@ -1,6 +1,6 @@
 # 验收范围
 
-## 当前提交状态（2026-11-12 01:40，最终租费/调度回归通过，本机升级待完成）
+## 当前提交状态（2026-11-12 01:52，最终跨端交接子集通过，本机升级待完成）
 
 - **API生产**：`c7c0f2d78d4de51d4caed81cfe2caa1a6835b565` / `1.1.48-SNAPSHOT`，PID1884855（22:51仅报价配置重启），固定JAR SHA `9edc1650750a998a3b7e650b8d04c17ea9376e6d37d39399650daf0a1189dfd6`。原`api-final-1`146项、layering、fresh JAR通过，197.962秒；本次复用制品，无重复构建。原安装器实际installed、身份/摘要匹配、HEALTH=UP，监控已恢复。
 - **Web生产**：`c453e0898642b0aec80677df71c088f74563a349` / `1.16.134`。原`web-final-2`101通过/2原pending，177.303秒；本次原安装器32.002秒完成，613文件、30变更、256线上资源核验，record为online_verified。匿名真实桌面/移动浏览器均到达正常OAuth登录页，证书验证未关闭、无横向溢出；随后使用用户提供的账号走正常OAuth登录，已核对chcbz/用户5与李逵owner一致；真实桌面/390px移动个人中心及钱袋通过，可用3487文/预占1文，李逵模型gpt-6-luna。此为只读子集，不是资金全链通过。
@@ -13,7 +13,9 @@
 - **集成**：API独立SQL/docs HEAD87ccfef032、Web c453e08已FF合入本地和远端develop，ls-remote回读一致。实时只读云效source配置triggerEvents均为空，没有启动付费Run或改云端配置；原主工作区脏内容/分支及根gitlink保持不动。
 - **真实知识Provider→中心账本**：`live-knowledge-sql-3`固定API87ccf/Runtimebbf，真实提取与复核两次调用经installation HTTP及实际MySQL形成2条PLATFORM attempt、4个revision，全部PRICED；重复flush不重复调用/记账，用户资金交易为0，关闭租约/撤销安装拒绝旧证据。1项联合测试及layering通过，314.425秒。使用合成会话、普通身份协作者和明确测试费率；0.002082元仅为测试算式结果，不是生产账单。原私有输入仍保留，不声称已做生产交接清理。
 - **最终租费/调度回归**：`final-lifecycle-api-1`固定API87ccf/tree09697df29b5c7aac779ab5f3ecb1a53ac11f615e（相对生产c7c0仅迁移SQL/文档差异），7类64项全部通过、无跳过，layering通过。含18项真实MySQL续费/过渡/余额唤醒/15天边界/并发停止/首费不带入月租/交接绑定，以及收尾、旧事项继续执行、新入口限制和Redis客户端失联接管。441.611秒，其中受限阶段300.761秒、真实集成140.843秒；不是生产故障演练或完整远程关闭重邀。停止的合成MySQL仅data已回收，日志/源码/报告保留。
-- **仍未完成**：本机Runtime1.3.102最终安装及受影响回归、两种部署完整关闭重邀的最终组合覆盖核对、扈三娘宿主核实及最终文档/制品收口。本机现行1.3.99已恢复；下一次20分钟安装例外尚未获答复，未重试。实际Provider到中心账本与上述最终租费/调度用例已通过，不再笼统列作未接线/未测试；不以分层通过代替完整组合验收。
+- **最终跨端交接子集**：`final-closure-api-1`以API87ccf/Runtimebbf真实源码运行2项、0失败/跳过，layering通过。托管链实际MySQL→Java UDS→Runtime完成500文首次扣款、旧关系停止/私有session清理/公共技能保留、原安装撤销及关系释放、新用户550文重新邀请与新安装ACTIVE/唯一扣款；重复旧完成不影响新关系，真实分录平衡。另验证自部署现存实例adopt/停止/证据重试/清理，未签发额外凭据。383.759秒（受限261.291秒、集成122.029秒，尾部依赖复核另计入总耗时），Runtime源码逐文件及依赖前后摘要一致。普通账户目录、executor注册/知识Provider仍为fixture；自部署此用例不包含50文实际账本完整重邀，不扩称全部生产整链。
+- **扈三娘宿主**：`husanniang-host-observation-1`当前只读生产查询确认该实例offline，host为`chc-223-6c3ee548-aab2-48a1-8ce1-e47d40cdab54`；记录endpoint为平台WebSocket连接地址，不是可用宿主控制端点。没有将未知宿主误归本机/李逵，也未登记过渡或扣款。
+- **仍未完成**：本机Runtime1.3.102最终安装及受影响回归、自部署50文资金与关闭重邀的完整组合覆盖核对、扈三娘可管理宿主接入及最终文档/制品收口。本机现行1.3.99已恢复；下一次20分钟安装例外尚未获答复，未重试。实际Provider到中心账本与上述最终租费/调度用例已通过，不再笼统列作未接线/未测试；不以分层通过代替完整组合验收。
 
 证据根：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/`。主批次`production-switch-1/2`、`production-control-access-1`、`production-switch-observation-1`、`production-web-install-1`、`production-browser-entry-1`、`local-knowledge-route-1`、`likui-knowledge-route-1`、`component-integration-1`。历史测试/安装失败保持原件，详细时间与恢复见既有handoff。
 
@@ -88,7 +90,7 @@ API候选 `71b8033dea9de91bdfcb470068e004b43d1e7bc1` / tree `bbe36b797a9c222fdba
 10. 节点文件恢复不被另一容器消费；连接心跳和执行续租不误变全局单例。
 11. 费用消费者另验证可用余额、自动续费排序、欠费恢复起租、锁定超15天移除竞争、旧事项继续及技能预占结算。
 
-源码/selector/fixture和实际测试、安装证据沿handoff记录。已有基础/存储应用测试结果；没有生产迁移或发布结果。
+源码/selector/fixture和实际测试、安装证据沿handoff记录；生产迁移及已安装组件见本页当前提交状态，以下早期验证记录不代表当前线上。
 
 ## 已验证子集与未验证边界（2026-11-09）
 - `ScheduledWorkStoreMySqlTest`：生产DDL/Mapper、实际租户插件、Spring事务，独占本机MySQL8.0.21测试实例；20项全部执行，无跳过；还覆盖提交后通知合并、回滚无通知、嵌套事务、通知失败不影响提交、最近期限、worker/未知handler与关闭语义。业务事实与登记同时提交/回滚、存储失败回滚业务事实、独立连接可在回调前登记、新事件保留、并发worker唯一领取、SKIP LOCKED不等待、并发事件合并、分区在LIMIT前生效、节点归属、接管后旧token拒绝、取消/改期优先、CAS、续租、禁止worker嵌入钱包事务、精确字符串键和索引/无CHECK均覆盖。
