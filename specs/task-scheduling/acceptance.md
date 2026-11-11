@@ -1,13 +1,13 @@
 # 验收范围
 
-## 当前提交状态（2026-11-12 02:21，两套餐资金/交接组合通过，本机升级待完成）
+## 当前提交状态（2026-11-12，本机最终升级及通道/原生启动验证通过）
 
 - **API生产**：`c7c0f2d78d4de51d4caed81cfe2caa1a6835b565` / `1.1.48-SNAPSHOT`，PID1884855（22:51仅报价配置重启），固定JAR SHA `9edc1650750a998a3b7e650b8d04c17ea9376e6d37d39399650daf0a1189dfd6`。原`api-final-1`146项、layering、fresh JAR通过，197.962秒；本次复用制品，无重复构建。原安装器实际installed、身份/摘要匹配、HEALTH=UP，监控已恢复。
 - **Web生产**：`c453e0898642b0aec80677df71c088f74563a349` / `1.16.134`。原`web-final-2`101通过/2原pending，177.303秒；本次原安装器32.002秒完成，613文件、30变更、256线上资源核验，record为online_verified。匿名真实桌面/移动浏览器均到达正常OAuth登录页，证书验证未关闭、无横向溢出；随后使用用户提供的账号走正常OAuth登录，已核对chcbz/用户5与李逵owner一致；真实桌面/390px移动个人中心及钱袋通过，可用3487文/预占1文，李逵模型gpt-6-luna。此为只读子集，不是资金全链通过。
 - **数据库**：实际停API写入后备份24个受影响表到`/home/isp/baks/task-scheduling-20261111-production/affected-tables.sql.gz`（174722字节，摘要在production-switch-1/result.json），原配置/发布记录同时保存。固定独立迁移资源`87ccfef032662f15c5c60a820403b8edb2f65c66`的11项SQL已执行，逐表字段与schema-rehearsal-1完全一致，迁移前后业务行数不变。ES两scope关键词映射此前已完成，未读写旧文档正文或猜测归属。
 - **实际免费接入**：吴用、林冲、卢俊义、李逵均已由正式维护CLI登记TRANSITION；实际cutoverAt固定`1794405723301`，30天租期不因后续重试改变。托管正常周期500文、自部署50文，周期2592000秒；两不可变套餐v1已登记。托管报价有效期300秒只属于托管报价，不改变事项报价无TTL合同。四租约ACTIVE、免费意图0文且无虚构报价/预占/扣款引用；交易总数仍74，没有新收费。原输入生产幂等重放13.131秒完成，独立回读同4租约/期限及交易总数不变（production-cutover-replay-1/readback.json）。扈三娘无已核实控制端点明确未接入，无安装关系不造事实。
 - **统一调度已激活**：稳定node-id `cyf-api-prod-01`，GENERAL2/CONTROL1、batch2，lease/recovery60秒、retry/owner-retry5秒。这是2CPU主机初始后台容量，不是业务请求deadline或性能门禁。真实数据库已观察8条cron注册、123条时点工作记录（持续变化，非固定数量合同）和两个租户用户续费期限；最终源码的慢工作与租费隔离、Redis客户端失联/接管已在隔离实例定向通过（见下）；未在生产注入故障。生产Redis4.0.6单master/无副本，不冒充HA证明。
-- **Runtime**：李逵已安装bbf8db06a36a9fc48d1441d5cce9d639e4d4a80b / 1.3.102 / bridge1.1.71、PID389574，354.374秒，原profile及host配置字节未变，新channel/ACK通过。该候选407PASS/10显式跳过/0FAIL，测试打包298.684秒，制品SHA c2b495d40298d888eb5286bdf05ab64132a8158ca79dd15985676c1a66e7d771。本机首轮备份ENOSPC、次轮备份及比较超过600秒，实际668.838秒含恢复；未把超时重标成功。本机已恢复7985667 / 1.3.99 / bridge1.1.69，PID1963995，仍需最终安装；细节和原失败见handoff01:08。网关17组精确路径已安装，不重开全/internal。
+- **Runtime**：李逵已安装bbf8db06a36a9fc48d1441d5cce9d639e4d4a80b / 1.3.102 / bridge1.1.71、PID389574，354.374秒，原profile及host配置字节未变，新channel/ACK通过。该候选407PASS/10显式跳过/0FAIL，测试打包298.684秒，制品SHA c2b495d40298d888eb5286bdf05ab64132a8158ca79dd15985676c1a66e7d771。本机首轮备份ENOSPC、次轮备份及比较超过600秒，实际668.838秒含恢复；未把超时重标成功。前两次失败后曾恢复7985667 / 1.3.99 / bridge1.1.69，PID1963995。后续用户授权缩小备份范围后，第三次复用同一制品已安装1.3.102，PID2138777，154.760秒；新备份609422793字节，源码/配置身份不变。通道验收75.450秒通过，另两次间隔35秒的三Agent新心跳均connected/registered/ready，三个原生启动测量均ready。证据`local-runtime-native102-3/{result,acceptance,native-and-channel-followup}.json`；原失败不重标。网关17组精确路径已安装，不重开全/internal。
 - **已登录真实事项闭环**：同事项648恢复正式议事，停止原pre-model网关失败回合后在原事项补充一次请求，李逵回复20字内欢迎语；UI选择成果并确认验收一次，事项已完成。SQL证明唯一预占1文、唯一验收扣款1文、escrow CAPTURED、可用3486；截图已查看。对话终态实际token证据input13104/output148（reasoning90含于output）已落库，按原合同保留UNVERIFIED/PENDING_USAGE，不称零成本/完整核销；两次推荐已知成本0.006457元，任务共3attempt/1pending。详细证据与边界见handoff 00:33。
 - **失败如实保留**：production-switch-1在迁移/接入成功后因新增全局client缩窄原OAuth允许集合而启动失败，89.792秒；原FAIL保留，forward-only未恢复不兼容旧版。删除该不该新增的限制，保留原tenant和多client准入后重试；过程中发现API服务用户读不到root-only TLS文件，已只给cyf-api四级目录穿越及三个确切文件只读ACL，未授予写入/列目录/世界访问。第二批实际安装成功，但外层因monitor lock busy记录FAIL/169.929秒；原记录未改，另行恢复监控并以实际record/PID/HEALTH与production-switch-observation-1核实安装成功。未重新迁移/发放或重建包。
 - **集成**：API独立SQL/docs HEAD87ccfef032、Web c453e08已FF合入本地和远端develop，ls-remote回读一致。实时只读云效source配置triggerEvents均为空，没有启动付费Run或改云端配置；原主工作区脏内容/分支及根gitlink保持不动。
@@ -17,9 +17,11 @@
 - **扈三娘宿主**：`husanniang-host-observation-1`当前只读生产查询确认该实例offline，host为`chc-223-6c3ee548-aab2-48a1-8ce1-e47d40cdab54`；记录endpoint为平台WebSocket连接地址，不是可用宿主控制端点。没有将未知宿主误归本机/李逵，也未登记过渡或扣款。
 - **两套餐资金/交接组合**：`selfhost-final-api-2`固定API测试候选d5754586f01d93ade54be6294ab37fb1b13b2467/tree876bb31a1fd6bc698b1f92db40742c9aa0df6cc7、Runtimebbf，两个真实MySQL→UDS→Runtime生命周期用例及layering均通过、无跳过。可信host配置选择50/500文套餐；自部署首次50文，原关系关闭清理后新用户保留1技能重新邀请收100文（周期50+首次技能50），新租约周期仍50；托管对应500/550/500。验证同一公共实例/技能保留、私有会话删除、旧安装撤销、新安装ACTIVE、捕获次数及分录平衡；共享helper不复制费用实现。294.435秒、受限205.741秒/集成88.018秒，最低空闲371716096字节。此处本地UDS及明确账户/executor/provider fixture不声称生产远程关停；远程mTLS及静态adopt保留各自实际适配器证据。首次ENOSPC失败原件保留，未改业务实现/超时/断言求通过。
 - **测试源码集成及磁盘收口**：d575已FF本地/远端develop，实际查询Flow source triggerEvents=[]，未触发付费构建。仅测试变更，不重建/更改生产c7c0 JAR。停止的合成MySQL及已终态classes/非starter模块JAR已按精确记录回收；16个历史源码展开副本经tar --compare及SHA验证无损压缩保存，当前Runtime源码、正式应用JAR/包、测试报告/日志和有效生产备份均保留。02:20根盘观测782MiB可用，不是新资源门槛或未来安装空间保证。
-- **仍未完成**：本机Runtime1.3.102最终安装及受影响回归、扈三娘可管理宿主接入及最终文档/制品收口。本机现行1.3.99已恢复；下一次20分钟安装例外尚未获答复，未重试。实际Provider到中心账本与上述最终租费/调度用例已通过，不再笼统列作未接线/未测试；不以分层通过代替完整组合验收。
+- **仍未完成**：扈三娘可管理宿主接入及包含该实例的整体验收，需要用户提供宿主地址/连接方式。本机最终102已在原600秒内完成安装和通道/原生启动验收，不再需要20分钟例外。实际Provider到中心账本、最终租费/调度和两套餐完整资金交接用例已通过；生产故障注入及真实用户破坏性关闭重邀未执行，不以隔离回归冒充这些线上操作。
 
 证据根：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/`。主批次`production-switch-1/2`、`production-control-access-1`、`production-switch-observation-1`、`production-web-install-1`、`production-browser-entry-1`、`local-knowledge-route-1`、`likui-knowledge-route-1`、`component-integration-1`。历史测试/安装失败保持原件，详细时间与恢复见既有handoff。
+
+- **本轮只读复核**：`production-ledger-audit-5`四类账本异常均0，42账户/76交易/152分录，可用3486文，未新增扣款；API健康UP。`production-service-user-control-3`真实API UID987到李逵mTLS通过、错误owner/缺证书拒绝及固定API路径测试通过。未新增付费事项、未重放迁移/过渡，历史任务648和固定源码组合回归保持各自证据范围，不冒称本轮重新执行生产关闭/重邀。备份保留plan无eligible项，最近两份仍保护；磁盘余量约165MiB，不把安装成功解释为长期容量充足。
 
 ## 历史提交状态（2026-11-11 16:42，本地/远程控制定向通过、整体未交付）
 

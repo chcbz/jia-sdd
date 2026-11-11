@@ -1499,3 +1499,12 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - v2仅在明确静态/托管HOME布局的`.tmp/plugins`为干净独立Git工作树、无未跟踪/忽略/隐藏修改及submodule时省略工作副本；完整.git历史/版本保留，可按state-scope记录commit离线恢复。未知临时文件、业务项目仓库、凭证、会话、ACK和执行恢复数据保留，无源文件删除或既有备份重写。
 - backup-scope-v2-1：Python3.11与主机系统Python各22项通过（0.700/0.878秒），包含真实gzip归档、恢复及Git离线重建、业务数据保留。四处现行插件缓存clean通过。按原归档成员测算少229993470字节（219.3MiB）、21624普通文件，原始数据1412190968→1182197498字节，约少16.3%；这是旧包成员投影，不是新压缩包大小或安装耗时保证。
 - 已持原host→release锁原子安装到/usr/local/libexec/cyf/runtime_backup_scope.py，readback SHA18b6408fe9a0482128a9e50712274eb6c47a03f11a90d2a69b273465e82fd26e与源码一致；原helper包外备份、安装回执/测试/投影见backup-scope-v2-1。首次安装检查错误要求host锁0600（实际0644），写入前退出；按既有safe.regular拒绝可写而允许0644的规则纠正，未改锁权限或绕锁。服务未重启，未执行Runtime升级/新的停机状态备份，原失败证据及窗口审批状态不变。
+
+### 2026-11-12 07:24 本机最终102安装、通道及原生启动闭合
+- 用户明确继续剩余任务；沿原600秒上限启动新的retry3，没有把继续解释为1200秒例外。实跑前PID1963995/旧99、候选和制品不变、全部inbox processing为空；备份选择已实改v2，构成相对上次失败的有效输入变化。未重新编译/迁移/收费。
+- local-runtime-native102-3/result.json实际INSTALLED_CHANNEL_PENDING，154.760秒，PID2138777，Runtime1.3.102/bridge1.1.71/bbf8db06a36a9fc48d1441d5cce9d639e4d4a80b，原固定实体app，配置/身份摘要不变。备份20261112-task-scheduling-runtime13102-retry3/state.tar.gz为609422793字节（581.2MiB），SHA2940765223a44d6dca702b9a2018a9c27ff5132e3448fc39b1f01f1f315fe0ba；18052成员/1182084056原始字节。原两次FAIL与备份原件保留。
+- 原安装日志显示07:18:39停服完成，07:20:06进入最终路径验证，07:20:31启动完成。停服后至最终验证前约86.6秒覆盖停止writer清理、状态选择/归档/比较/摘要与切换，并非精确独立“压缩时间”；不拿此次与前次差值全部归因缓存排除，也不承诺将来固定时长。
+- acceptance.json通道独立75.450秒通过，精确新PID、三Agent注册/就绪、ACK均晚于本次启动；current record按原验收入口标verified-active。native-and-channel-followup.json再间隔35秒两次观察三Agent均ready，三个原生启动测量均ready（工具链、shell、document/browser/pdf/script实际启动探测）。原ready=false现象在本次新进程观测中不再复现，不宣称已定位其旧进程根因，也未为此额外改业务代码。
+- production-ledger-audit-5一致性只读快照：四类异常0、42账户/76交易/152分录、可用3486，原两用户租费期限不变；无新收费。production-service-user-control-3再次真实API UID987 mTLS通过，错误owner/缺证书拒绝、8项规范路径检查通过。API健康UP；任务648历史真实闭环不重复扣款，当前本机仅声明通道/启动及上述只读验收，不把探测当付费用户事项全链。
+- 原备份保留plan无eligible批次，保护最近retry2/retry3；旧未完整元数据/unsafe目录不改权限绕保护。磁盘仍约165MiB余量，未删当前/回退备份、公共仓库或未知数据。扈三娘仍缺可管理宿主/连接信息且原观察offline，未虚构接入或扣费；该外部输入是包含该实例的整体验收剩余阻塞。
+- 李逵远端只读复核likui-health-followup.json：仍Runtime1.3.102/bbf、PID389574/active，connected/registered/ready均true，无远程升级或重启。全量文档检查仍因原三个退役delivery-status文件重现FAIL，当前可达文档无新增不可达项；不顺手改其他专题、不把检查重标PASS。
