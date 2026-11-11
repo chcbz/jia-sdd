@@ -89,5 +89,6 @@ Owner：本会话；调查基线API49f6b4d20。实现工作区 `/home/isp/wsps/w
 ## 2026-11-11 远程控制传输进展（未发布）
 
 - [x] Runtime1.3.98候选在原HostingControl上增加可选双向TLS入口，UDS/journal/关系控制共用；235项回归通过，补充TLS配置/凭证根隔离12项通过。固定源码、测试范围及证据见acceptance，非生产证书/远程验收。
-- [x] API共享provider已接入可信host路由与Spring SSL bundles客户端；报价/安装已有host时不再查询运行投影，库存/current/免费重整才单次精确查询。实际Java mTLS静态控制链通过，旧UDS有两项回归未通过，整体不能标验收完成。
-- [ ] `tls-api-4`关闭原UDS握手/首次清理失败，未终态前不宣称PASS；继续自部署50文同账本套餐及Web确认、存量双模式30天过渡、首个调度登记、legacy规范ID重邀及最终发布验收。不能仅因控制端可达就启用收费。
+- [x] API共享provider已接入可信host路由与Spring SSL bundles客户端；报价/安装已有host时不再查询运行投影，库存/current/免费重整才单次精确查询。实际Java mTLS静态控制链通过；后续固定候选897e509580的两类29项全部通过，含原托管/静态UDS链，旧FAIL保持，整体不能标验收完成。
+- [x] `tls-api-4`两类29项和layering通过，489.176秒；握手字段已纠正，静态清理本次实测32.997ms通过，原false原因无证据不猜测、不改写旧FAIL。
+- [ ] 自部署50文同账本套餐及Web确认、存量双模式30天过渡、首个调度登记、legacy规范ID重邀及最终发布验收。不能仅因控制端可达就启用收费。

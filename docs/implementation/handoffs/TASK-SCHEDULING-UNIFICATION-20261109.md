@@ -1268,3 +1268,6 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 控制配置只读核对记录在tls-api-3/local-host-route-observation.json与likui-host-route-observation.json：本地host=cyf-unified-065bb566a2d82210、UDS control.sock/gid1000；李逵host=selfhost-li159-118-935f9597、active/running/PID306359、未配置hostingControlPath。无证书/端口写入。最终部署必须设置新的local-host-id，不能把旧配置原样部署后宣称收费可用。
 - 后续真实缺口：自部署50文套餐和Web确认（现AgentController local仍走免费AgentPersonaProvisioningService，Web hostingRentContract硬编码mode=server）；费用模式必须由可信部署事实决定，不能仅凭用户mode给托管主机50文价。AgentRuntimeEntity没有部署模式字段，不能从远程/本地传输自动推断托管类型；应在既有运维主机配置/原租约责任层明确，并复用同一账本/调度。还需存量双模式30天过渡和首次调度、legacy规范ID重邀（provisionOpaqueIdentity目前拒绝非agt_，原live_agent_id唯一键迁移已允许历史身份保留）、生产DDL/ES/最终fresh制品与完整真实验收。
 - 当前普通磁盘约470MB余量。构建并未使用tmpfs；不清其他任务或未知包/备份。最后文档检查仍为已知3条无关退役路径复现，详见tls-doc-check.log，不将其说成通过。
+
+- 16:42 tls-api-4已真实PASS：API897e5095800f7fc294b0858f04b2767a4954d654/tree0f6e6875110780d84ba03e3eff39f9a29d0dc7ea，Runtime bd73fe4固定source4，两类29/29、0失败/错误/跳过、layering通过，489.176秒全部计入本批600秒。XML逐条核对Java mTLS链8.793秒、原托管UDS链30.095秒、静态UDS链1.979秒；静态首次cleanup CLEANED耗时32.997ms、重放0.897ms。原false本批未复现，原轮没有原因信息，不反推成已证明的超时；未修改原1000ms测试值及生产默认值。
+- session94645已终态exit0，当前本任务没有在途测试/构建；Runtime/API候选均未发布。前批99项中与本次transport两类之外70项通过证据仍绑定原c2f717，而不宣称“本候选99/99”；最终发布仍需受影响整合覆盖。当前普通磁盘约437MB余量。下一动作是实际主线的50文套餐/可信部署类型与Web本地确认，再存量过渡/legacy重邀，不能停在本轮控制子链通过。

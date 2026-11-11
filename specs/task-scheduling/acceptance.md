@@ -1,10 +1,10 @@
 # 验收范围
 
-## 当前提交状态（2026-11-11 16:39，API远程链已实跑，组合验收仍未通过）
+## 当前提交状态（2026-11-11 16:42，本地/远程控制定向通过、整体未交付）
 
 - API `c2f717dac45cb122192f8cedd0cb68f55fbe00fb` / tree `0f3f5cafb5e3aff4c27747c31e9f3811d55f6344`，Runtime `8e556e9f7611c69593e09a6fe486eb47554ebb2b`：`tls-api-3`真实执行99项，**97通过、2失败**，486.248秒，layering通过。实际Java→mTLS→Runtime静态探测/adopt/current/停止/证据/私有清理通过，缺客户端密钥及错误服务端身份被拒绝；应用28项和免费重整H2事务5项均通过。
 - 未通过项是原本地UDS握手的精确字段断言（fixture新增remoteAddress:null）和静态清理第一次调用返回false。前者已改为只在TLS fixture返回该字段；后者未猜测为成功或超时，增加直接exchange异常/响应和Runtime安全阶段耗时诊断，保持原超时/清理断言。
-- 修正候选API `897e5095800f7fc294b0858f04b2767a4954d654` / tree `0f6e6875110780d84ba03e3eff39f9a29d0dc7ea`，Runtime `bd73fe4`（测试fixture变更）：`tls-api-4`当前在途，选择两类adapter/channel共29项及layering；**尚无PASS结论**。本地UDS同样增加选中hostId回显核对，避免错主机库存进入报价。此前通过的70项未重标为本候选完整验收。
+- 修正候选API `897e5095800f7fc294b0858f04b2767a4954d654` / tree `0f6e6875110780d84ba03e3eff39f9a29d0dc7ea`，Runtime `bd73fe4`（测试fixture变更）：`tls-api-4` **29/29通过、0失败/错误/跳过、layering通过**，489.176秒（全部计入本次600秒）。实际Java TLS链8.793秒、原托管UDS链30.095秒、静态UDS链1.979秒。本地UDS同样增加选中hostId回显核对，避免错主机库存进入报价。静态首次清理本次CLEANED实测32.997ms，原false未复现；初轮无原因信息，不能反推成已证明的超时或重写原FAIL。此前通过的70项未重标为本候选完整验收。当前本任务无在途构建/测试。
 - `tls-api-1`是任务源码pin未更新而在Gradle启动前被拒绝；`tls-api-2`是新增fixture缺Map引用而编译失败。原FAIL与归因保持，不能并入后续成功。每批独立600秒、串行、普通磁盘短tmp，无应用超时调整。
 - API候选已接入可信host路由和Spring SSL bundles；李逵仍运行此前Runtime1.3.71、PID306359、没有hostingControlPath/TLS端点，未新增生产扣费/清理/发布。自部署50文计价与Web确认、两模式存量30天过渡/首次调度、legacy canonical ID重邀及最终迁移/发布/真实验收仍未完成。
 
