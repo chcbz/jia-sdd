@@ -1339,3 +1339,11 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 新增实际CLI main→隔离MySQL→实际1.3.99静态Runtime adopt组合测试；固定API6f1d07298a28e14ab6a758149235ecd842b5e0cd/tree f8b234ea6c2fd6d13ca1c79f7fecf347ead9e9ac，cutover-api-3真实12/12、零失败/错误/跳过、layering通过，107.361秒。preview无写入、apply两次仍一个租约/意图/调度、零余额零资金流水，原关系/安装不变。输入和三份回执保存在cutover-api-3/operator-fixture；原始结果/测试XML保留。
 - Runtime native executor/provider为合成fixture；本结果不是生产扣费或生命周期全链验收。仅本批专用MySQL已停止并删除其合成data，日志/来源保留。没有本任务在途测试或发布。
 - 当前继续准备最终API/Web制品与实际生产配置。根API及Web存在其他任务修改，保留原样，不盲目合并或覆盖；先核对远端develop和真实已部署来源。李逵1.3.99在线但mTLS控制端点尚未配置，本机Runtime仍待升级；未执行生产租约迁移或扣费，整体目标未完成。
+
+### 2026-11-11 20:07 正式制品与真实结构迁移预演
+- API c7c0f2d78d4de51d4caed81cfe2caa1a6835b565/tree bd680a4fee415a4b63a5ce07668d7770521a7e6e，1.1.48-SNAPSHOT，api-final-1正式本地构建/打包BUILT，197.962秒；146项0fail/error/skip及layering通过，fresh JAR包含HostingRentCutover入口。JAR SHA256 9edc1650750a998a3b7e650b8d04c17ea9376e6d37d39399650daf0a1189dfd6。19:51 fetch确认origin/develop c661e642及根API516267均为候选祖先；现行生产来源记录仍cbeab0d8c5/1.1.47，没有覆盖其他工作区。
+- Web c453e0898642b0aec80677df71c088f74563a349/tree ab120383afdc2bd11cd54c50a4c729f6225d8192，1.16.134，web-final-2正式BUILT，177.303秒；101PASS、2原pending、0FAIL，生产构建和完整包摘要通过。包SHA256 480f8fda9c34bb83130cede31df7b674f0926c08d9bd5033f033e56adaf40d0d。web-final-1在依赖检查失败（4.630秒）：systemd环境SHELL/NO_COLOR导致npm配置摘要不同；只固定构建unit的SHELL=/bin/bash、NO_COLOR=1，实测得到相同依赖key后重试，未删除/改写依赖或放宽校验。原失败与attribution保留。
+- 生产只读schema preflight确认4张新调度/回执表尚不存在、报价表0行，租约锁定/交接列和身份重邀索引尚未迁移。发现首次技能费5个报价列缺显式升级SQL，补API87ccfef032662f15c5c60a820403b8edb2f65c66，只有迁移资源与说明，不改运行代码。该迁移不在此前c7c0构建包中，不能把包重标为87ccfef；独立维护脚本按其自身SHA绑定。空表前提必须停writer后复核，不能清报价或猜库存。
+- schema-rehearsal-1复用独占普通磁盘MySQL，按实际生产SHOW CREATE重建空结构后依次执行11个迁移，16.597秒PASS；报价列/类型/空值/排序/索引与fresh权威DDL一致，9张目标表全部存在且无虚构业务行/无CHECK。未复制生产业务数据、未改生产数据库。快照来源production-schema-rehearsal-input-20261111.json，逐迁移摘要及结果保留；专用MySQL已退出并清理合成data。
+- 磁盘清理仅三个已终态专用MySQL fixture（maintenance-sql-api-1、maintenance-auth-api-1、platform-usage-api-1）残留data；先核对退出回执/无对应活进程，保留源/日志/结果及mysql-cleanup.json。不清生产/他人缓存/包/备份。
+- API/Web制品现在可用于后续受控安装，但不代表已上线。仍需本机Runtime升级、李逵控制端点与可信路由、实际备份/停writer/SQL及ES迁移/套餐配置/存量接入、真实业务验收。没有生产扣费、免费租约登记或模型调用；整体目标active。
