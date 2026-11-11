@@ -1232,3 +1232,15 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 
 - 15:29 existing-identity-api-1真实PASS：API cac049e991e8d46a80aa2955de1a6d73283f6009/tree1cbb207cf94e5de4b45b080f646aeba825a2c94e，28/28、0fail/error/skip，validateLayering通过；155.822秒（受限155.816秒），未生成/发布JAR。证据目录 /home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/existing-identity-api-1/；无本任务在途测试进程。
 - 下一实现仍为自部署宿主控制与静态主体接管；随后两种模式共用租约套餐/30天过渡迁移及生产交付。不要把本次身份入口修正或已完成李逵1.3.71升级当作自部署收费闭环。API工作区干净；Runtime仍bba4f8b且原无关脏改未触碰。本机普通磁盘余约881MB，继续构建前按实际产物检查，仅清理本任务可回收内容，不全盘清缓存。
+
+### 2026-11-11 15:45 存量静态实例共享生命周期接入
+- 上一goal turn为progress：APIcac049e身份入口修正、28项及layering通过，非整体交付。本轮继续真正缺失的静态主体接管，而非重复已绿托管链。Runtime工作区仍复用isp-install，原README/install/Python等无关脏改未触碰；根AGENTS本地普通磁盘/600秒、RB-1和统一接口v1.2显式适用外部Runtime。
+- Runtime候选1.3.97：bdaab8c新增hosting.adopt、静态profile关联、无模板静态宿主、同一状态机current/停机/证据/清理/重邀；2488e71补完整测试；e54aa6c仅增加Java跨端fixture的静态模式。没有新建业务实例、SSH控制特例或钱款处理；只是协议及本机生命周期能力，远程控制与真实cutover未接线。
+- 第一批adoption-runtime-1真实FAIL：232项225PASS/7FAIL、73.188秒。一项新增测试在尚未绑定evidenceOwner前错误期待EVIDENCE_REQUIRED，实际IDENTITY_CONFLICT是正确保护；补明确pending evidence步骤后同时验证两阶段。另6项原consumer测试读取固定历史git archive，完整源码snapshot无.git，补runner显式只读GIT_DIR及固定历史commit，不修改被冻结历史fixture或生产逻辑。原FAIL保留。
+- 第二批adoption-runtime-2真实PASS：Runtime2488e71dfb869572937eb0fc97fe364d563aea91/tree8de91ed2d655a87d3a3dc51d24d9b0fed73257d4，232/232、0fail/cancel/skip/todo，124.130秒，依赖tree前后相同。实际私有目录清理/同一HOME新关系准入已运行；原生注册/公共知识provider仍fixture，不声称生产WS/付费模型验收。证据 /home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/adoption-runtime-2/。
+- API候选b49120979d：新增同一adapter的adoptExisting，完整回显与host绑定，不签发凭证；免费重整统一使用安装责任层带锁读取而不是再次ensure待注册安装。初次新安装仍需enrollment；既有安装REPROVISION允许明确null，后续关系/安装/manifest/代际检查不变，无新SQL轮次。
+- adoption-api-1固定API候选、Runtimee54aa6c/source3，正在执行62项与layering（真实Java UDS静态adopt→current→quiesce→evidence→cleanup，以及原托管UDS链/身份/安装事务）。独立600秒计时，短普通磁盘tmp a3；没有并发重型任务，没有MySQL/Redis/生产数据变更。待轮询exec session8980，日志路径同证据根adoption-api-1。
+
+- 15:53 adoption-api-1真实PASS：APIb49120979dc04eec629a443fa20492932dea2358/treead0595efb45132b58887e5a3af5b29ee557db012，62/62、0fail/error/skip、layering通过，356.945秒，未执行bootJar。已逐项读取XML确认实际Java静态adopt清理用例（1.763秒）、安装fence/无注册元数据重整用例确实执行，没有只看汇总。runtime-input-audit.json核对source3完整581个Git blob、e54aa6c完整commit/tree、Node和依赖摘要；未将mock/fixture当实际生产资金验收。
+- 原Runtime第二批session75382和API8980均已终态；本轮没有在途构建/测试。真实李逵只读查询另确认存在nginx1.12.2/1.14.1及443监听，没有修改nginx/端口/证书/运行配置，也未决定或实现新的远程控制传输。不要因存在443就假设可用mTLS或宿主控制端点。
+- 下一动作继续远程宿主控制（必须独立于被停止的executor存活）、静态实例绑定后的50文套餐/30天过渡及首次调度接线。API工作区干净；Runtime仅保留原无关脏改；Runtime1.3.97候选与此前实际李逵1.3.71部署分开记录，均未新增扣费/清理生产数据。完整目标保持active。

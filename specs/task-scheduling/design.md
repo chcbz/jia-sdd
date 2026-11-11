@@ -184,3 +184,14 @@ Runtime新增只读`hosting.inventory`，请求只带可信tenant/client/owner�
 API复用Runtime-v1安装认证，在安装锁下验证ACTIVE与凭据摘要，再按installation→binding→initial intent→lease顺序校验原关系。只有原INITIAL已生效、安装/manifest匹配、租约FINISHING、executorStoppedAt已记录且handoverId匹配，才能记平台成本。身份来自原安装和绑定，不由请求指定；不依赖已停用原用户的登录状态/authEpoch。普通session、WS、事项执行及技能授权不变；该维护凭据不能当作新执行资格。
 
 STARTED先落平台账再调用模型；RESPONDED使用原价快照和原attempt身份，重复/断线重投不重复记费。清理和关闭仍待平台费用回执交接完成；最后撤销原安装凭据，与记账共用安装锁避免关闭并发。需要同时验证账户停用、错误/撤销安装、错误租约/handover、未停机、已结束、普通session冒充和丢ACK重放；源码/测试/发布状态见现有handoff，不因本节写入视为通过。
+
+
+### 存量静态实例关联（2026-11-11，候选实现，未切换生产）
+
+- 新控制动作`hosting.adopt`复用protocolVersion=1消息封装及原hosting关联字段；`runtimeInstallationId`、裸`manifestSha256`、字符串`provisionGeneration="1"`必须对应已有运维配置中的同一tenant/client/canonical Agent。只接受INITIAL关联，operationId等于initialIntentId，不接受路径、profile、凭证、报价清单或命令。API必须先按原installation/identity/binding完成业务授权；Runtime只落实精确本机主体与writer所有权，不能据请求新建实例或导入安装身份。
+- 回执为原字段完整回显加`outcome=ADOPTED`及hostId，只证明已有安装与该过渡租约的持久关联。**不是SERVICE_READY、预占/捕获或付费验收证据**。API须核对原hostId与全部关联字段；丢回执按原operation重试，不另建安装/重复收费。真实过渡租约及30天起点仍待数据库切换实现。
+- 同一HostingControl journal保存静态profileId引用和关联，不复制HOME/配置/凭证；原运行实例、安装ID及既有会话保持不变。静态接入没有待消费注册密钥，其内部enrollment字段明确为null；不伪造过期时间或占位摘要。`template:null`表示宿主只管理既有静态实例，不提供新建托管能力；私有socket、scope、journal路径和所有权保护不变。
+- 原`current/quiesce/evidence/cleanup`直接复用已有状态机。接入后重启不重注册、不自动将接入视为新执行；收尾已经停下的实例重启仍保持停止。最终清理仍要求原租约证据、私有清理和公共文件基线；公共技能/仓库保留，不新增收费引擎或清理分支。
+- 静态实例清理后的重新邀请沿用原readmitAgent：保留同一公共实例、profile和HOME实体目录，只有安装/新关系身份更换；受控写回原manifestPath，复用原私有清理和关系准入。迟到旧关联不能停止或清理新关系。没有完成原交接不允许重新准入。
+- 免费重整对任何现有安装统一使用安装责任层的`lockExistingInstallation`，不调用创建/确保待注册安装，不依赖注册密钥仍可取。初次新安装仍需完整enrollment信息；REPROVISION允许明确的两项null元数据，缺一项或初次省略均拒绝；后续绑定/租约/manifest/generation事务核对不减少，也不增加一次SQL读取。
+- 定向证据：Runtime2488e71同源232项通过（含静态接入并发重放、重启、真实私有清理及同实例重邀；模型/原生注册明确fixture）。Java↔实际UDS↔Runtime的adopt/停止/证据/清理与安装锁回归已在固定API b49120979d通过62项及validateLayering（356.945秒），证据adoption-api-1；Runtime输入e54aa6c已核对581个Git blob及依赖摘要。远程宿主控制传输、实际存量租约迁移和生产上线仍未完成，不能单独打开收费开关。
