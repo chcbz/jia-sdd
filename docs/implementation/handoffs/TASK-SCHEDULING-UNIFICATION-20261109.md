@@ -1186,3 +1186,22 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 新失败在HostingRentRenewalMySqlTest:307等待新关系ACTIVE，而不是报价；只读运行诊断确认hostingFixture创建的RuntimeHost.admitRelationship为undefined，RuntimeHost.readmitAgent:205要求真实适配器。生产createExecutionAdapterFactory已有该适配器，先补测试接线而非放宽生产围栏；不能加无条件成功stub。
 - Runtime61项在e543c40通过（87.993秒）；API121独立单测/Mapper输入未变可复用，原失败批不改成PASS。最后bootJar未执行，无新生产包/安装/迁移/真实扣费/付费模型调用。API/Runtime源码提交保留，原脏工作区未覆盖；仅移除已停的本任务MySQL临时data，日志与报告保留。
 - 用户12:00完成闭环目标未达成，按未通过提交验收材料，不宣称完整上线。当前剩余：真实重新准入组合接线与回归、默认库存窗口冷启动、fresh包；自部署50文/存量切换及生产Redis/ES/混合容量/线上验收仍是独立未完成项。下一动作先按现有失败归因处理，不盲重跑或新建框架。
+
+### 2026-11-11 12:55 两小时交付目标恢复
+- 用户要求两小时内完成，目标14:55；范围不缩水，不以降低资金/身份/私有清理断言赶工，不再进行额外重构。
+- 当前归因矩阵：closure-api-4新关系未ACTIVE源于Java组合fixture缺少admitRelationship；Runtime a370d98将生产createExecutionAdapterFactory.admitRelationship接入，该真实manager/engine处理无attached executor的进程恢复形态；executor注册仍明确合成，带attached executor关闭的真实路径已有独立readmission集成测试。不是无条件成功stub，不修改生产围栏。
+- API71b8033保持固定；closure-api-5只跑失败组合链及layering，不提前生成仍缺产品功能的最终包；原FAIL保留。当前仍待默认60秒冷启动、自部署/存量切换及真实交付。
+- 13:21取得closure-api-5真实PASS：API71b8033、Runtime a370d98固定输入，1199.867秒；完整单用例包含首费500文、旧关系关闭/安装撤销、私有文件删除、技能保留、新报价550文/新关系首费捕获、旧完成重放不能影响新关系、账目借贷平衡。executor注册/Provider仍合成；不宣称真实WS上线。Layering通过，未构建JAR。
+- 冷库存实测：旧源a370d98组合中114958.781ms；5036228去重复policy哈希后，在同一主机重载/并行原生测量时88891.855ms，仍超默认60000ms，不判性能通过。第二轮bba4f8b把同一次冷测量的重复全量哈希收口为一次内容测量+前后ctime/inode/权限/祖先状态一致性核验；显式recheck和实际进程身份核验保留，新增测量中二进制/资源同size/mtime篡改拒绝测试。版本Runtime1.3.96/bridge1.1.69，尚未发布。
+- API f9a7365仅测试：恢复组合测试默认库存窗口；新增真实Redisson客户端断开后watchdog过期接管测试，不forceUnlock、不操作生产Redis、不将其冒充容器网络分区全验收。下一批closure-api-6为这8项+layering；先等待Runtime固定bba4f8b定向测试终态，串行重型验证。
+- 当前额外观察：自行部署仍由AgentController→AgentPersonaProvisioningService免费绑定；ManagedHostingProvisioner仅UDS托管适配，HostingControl current/prepare对非托管静态主体无租约关联路径。因此自部署不是只登记50文套餐，需要真实生命周期接线；不能新增假库存/假READY或直接预扣替代。既有主体切换同样依赖精确原安装/绑定接入收尾，不能仅插租约后标迁移完成。当前不实施未经验证的资金或身份临时补丁。
+- 13:34正式固定Runtime bba4f8b的组合证据：closure-runtime-7 135项134PASS/1SKIP、282.966秒（遗漏原生库存测试开关，原批记FAIL不改）；同一冻结source7/同dependency tree的closure-inventory-8显式CYF_INVENTORY_CODEX_BIN补跑库存全6项，6PASS/0SKIP、33.127秒。合并唯一135项PASS见closure-runtime-combined-acceptance-8.json；原生库存用例实际约28.95秒，默认API窗口仍待完整组合再验证。
+- 发布前核对当前线上record：API cbeab0d8c5/1.1.47-SNAPSHOT包含3个未合入本任务的已部署会话刷新修复；远端develop已于13:29成功fetch，固定c661e64213已在本任务祖先中，但不包含该已部署分支。已合并cbeab为f3a97a5224，保留本任务平台维护/证据投递认证lane及线上401/503权威信封；两组WS回归一并保留。不覆盖脏修改，不假称原121项全部可复用。
+- 因真实线上基线合并，closure-api-6扩为受影响会话/注册/维护权限、真实Redis失去客户端接管及默认窗口组合生命周期，所有源码受测期间固定；不增加无关全量业务测试。当前版本未上线，后续新制品须高于已部署1.1.47。
+
+- 13:53线上Redis只读盘点完成：受限配置文件提供现有认证，经标准RESP读取INFO（无锁写入/重启）确认4.0.6 standalone master、0副本、AOF关闭/RDB末次ok；生产JAR prod默认127.0.0.1:6379/db0。PID4136属于既有session scope，不宣称systemd守护或高可用。证据production-redis-observation-20261111.json。首轮CLI4.0.6不兼容新flag的失败记录保留，不能误归因为凭据错误。生产拓扑项已核实，故障接管仍待当前隔离双客户端结果/线上验收；不为此擅自升级Redis或更改配置。
+
+- 14:08 closure-api-6真实PASS：固定API f3a97a5224bf29f3f7a2761b2385e8690b888d45/tree f06853285388dc837abe29b460dd129e24ada96c，Runtime bba4f8b/source7；101/101、0fail/error/skip、分层通过。总1866.891秒，记录的集成区间214.919秒，余1651.938秒；临时取消时限仍按实际记录，不将单测改名规避。Gradle实际1784.973秒，未执行bootJar。认证54、WS17、Redis7、Runtime-v1 22、完整托管生命周期1。
+- 默认60000ms库存窗口下组合全链通过，清理后冷库存30019.752ms、后续2893.541ms。未延长生产窗口；先前120秒诊断批仍单独保留。固定fixture使用实际admitRelationship/manager/engine，账户目录/executor注册/知识Provider仍明确合成，不声明真实线上WS或付费模型验收。
+- 只回收已明确Shutdown complete且无精确datadir存活进程的c6/mysql/data 172847453bytes，三份fixture日志复制到closure-api-6并保存SHA；记录owned-fixture-cleanup.json。未删源码/制品/备份/他人缓存，没有在途本任务测试进程。
+- 当前完整目标仍未达成：自部署须经可信远程安装/库存/准备/就绪/收尾关联接入现有租约闭环（当前只有托管UDS，local bind仍免费）；存量切换必须建立真实原安装/关系关联；不能靠50文配置、假READY、插租约或临时放宽授权交付。其后才是fresh固定包、生产mapping/DDL、受控安装和真实业务验收。两小时目标14:55未被改成缩减范围的交付承诺，已向用户明确剩余时间无法承诺完整上线；不提前发布不完整收费候选。
