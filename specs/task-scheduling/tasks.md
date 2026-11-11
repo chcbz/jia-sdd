@@ -92,3 +92,5 @@ Owner：本会话；调查基线API49f6b4d20。实现工作区 `/home/isp/wsps/w
 - [x] API共享provider已接入可信host路由与Spring SSL bundles客户端；报价/安装已有host时不再查询运行投影，库存/current/免费重整才单次精确查询。实际Java mTLS静态控制链通过；后续固定候选897e509580的两类29项全部通过，含原托管/静态UDS链，旧FAIL保持，整体不能标验收完成。
 - [x] `tls-api-4`两类29项和layering通过，489.176秒；握手字段已纠正，静态清理本次实测32.997ms通过，原false原因无证据不猜测、不改写旧FAIL。
 - [ ] 自部署50文同账本套餐及Web确认、存量双模式30天过渡、首个调度登记、legacy规范ID重邀及最终发布验收。不能仅因控制端可达就启用收费。
+
+- [x] 2026-11-11 自部署套餐和双模式确认源码：API3fdfb9d724、Webbf6d870；按可信主机冻结套餐，原套餐续费，关闭HTTP/Web免费local入口，租约投影增加planId。域服务/路由前候选42项通过，后继HTTP/事务54项XML及layering通过（外层driver exit143见handoff），Web51项及三视口18检查通过；均为候选验证，不勾选生产发布或存量过渡。

@@ -1271,3 +1271,21 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 
 - 16:42 tls-api-4已真实PASS：API897e5095800f7fc294b0858f04b2767a4954d654/tree0f6e6875110780d84ba03e3eff39f9a29d0dc7ea，Runtime bd73fe4固定source4，两类29/29、0失败/错误/跳过、layering通过，489.176秒全部计入本批600秒。XML逐条核对Java mTLS链8.793秒、原托管UDS链30.095秒、静态UDS链1.979秒；静态首次cleanup CLEANED耗时32.997ms、重放0.897ms。原false本批未复现，原轮没有原因信息，不反推成已证明的超时；未修改原1000ms测试值及生产默认值。
 - session94645已终态exit0，当前本任务没有在途测试/构建；Runtime/API候选均未发布。前批99项中与本次transport两类之外70项通过证据仍绑定原c2f717，而不宣称“本候选99/99”；最终发布仍需受影响整合覆盖。当前普通磁盘约437MB余量。下一动作是实际主线的50文套餐/可信部署类型与Web本地确认，再存量过渡/legacy重邀，不能停在本轮控制子链通过。
+
+### 2026-11-11 自部署套餐定向候选
+- 接续未提交草稿并完成报价/确认/续租责任层及fixture收口，API提交 `cc72fe836215f59e4a36019663746299d9a8df13` / tree `2f513c47faae8fb9e96a128a207979cb96296ed5`。保持显式主机计价配置，远程不等于自行部署，前端不能降价；续租按原planId共用账本，未新增表或兼容构造器。
+- 新增自部署50文报价、客户端降价拒绝、主机类型变化拒绝、原套餐续租不探测主机及本地/远程计价分类测试；原有测试修正真实套餐与租约fixture。当前 `pricing-api-driver-1.py` / `pricing-api-1` 正经原编排器运行三个suite及layering，exec session9594，未出结果。普通磁盘初始434MB，不使用内存盘。
+- 尚未改HTTP local免费绑定入口和Web；原型已有两种价格说明，但产品local仍绕开租约面板，需与HTTP一次收口后发布。未变更生产配置、扣款、迁移或Runtime运行版本。
+- `pricing-api-1`实际FAIL/timeout，600.889秒，session9594已结束；没有完整测试报告，不能记为42项通过。日志显示变更配置/mapper ABI后agent/chat依赖重新编译，其中chat compileJava124.037秒，约末段才进入managedHostingRegression。精确归因已由原fail入口登记（本轮连续失败1），保留原结果；所有本任务该批子进程已退出。
+- 复用原JavaCompile缓存、测试与layering不缓存，启动同源`pricing-api-2`，session18220，新输出、新600秒；不修改源码。`authorize-remediation`因尚未达到blocked_root_cause而拒绝（仅一次失败，不需要该操作）；随后原正常transition到targeted_verification，不改写或绕过blocked状态。原失败不重标。最终结果待回收。
+
+- `pricing-api-2`已PASS，42/42、0失败/错误/跳过、layering通过，485.806秒，固定cc72fe8362；session18220已终态。首轮超时与本次通过分别保留，不合并耗时。重跑没有免除测试预算。
+- 后继API4773d49c83删除HTTP默认/local免费绑定，统一付费确认，移除Controller直接方法和旧service构造依赖；租约投影加入planId；补空mode拒绝、两模式真实HTTP信封测试。`pricing-http-1`编译FAIL/118.921秒：误删了仍被Controller异常处理器使用的HostingRentAdmissionException import，修复为f38eb78e29c19fa0868e07a19e38a3a478ee0116/treeec7aa289dd61c8732153f633afb76d2a1b559b85。原fail归因后同Owner新批`pricing-http-2`，session28027，54项四suite及layering在途。沿现有本地构建策略使用C1，实际命令/工具链固定于driver及result，不改生产JVM。
+- Web bf6d870ba85368b0e0c5ade3c44f83f0f2d9e7d8/treebb9f79127e827ab66213856f070c1b81114a54bf：两入口共用面板，按冻结套餐发mode，显示权威类型，所选类型不匹配禁止确认；useHallData旧免费调用不再发请求。未知历史重整没有planId时仍恢复原server操作，不清空/重换资金操作。脏源码诊断51项通过；同源正式定向`pricing-web-1`正在收集，不能当最终生产构建。
+- 原型先行：仅定向改现有脏原型baseline-ui.js的报价函数和spec新增段，其他修改保留、未整体提交。新增`scenario=rent-selfhost`展示200文首费/50文续期与类型不匹配文案；node --check通过，127.0.0.1:18786的index及新JS实际HTTP200、回读命中该场景。产品浏览器脚本已扩展三视口两种选择，本轮尚未跑。原型是离线示例，不代表生产扣费。
+
+- `pricing-http-2`生产编译通过但测试编译FAIL/284.488秒：新AgentControllerTest三处直接调用及反射签名把HttpServletRequest/byte[]顺序写反，按真实签名统一修正，API最终候选 **3fdfb9d72480105e9a6e4e9c04b90b41d7503b3c/tree96c480f163064d143e26ac8af78c4ac4d0206120**。原fail归因计数为1，authorize-remediation因无blocked状态拒绝；正常同Owner transition后再运行，未跳过根因修复。
+- **pricing-http-3：54/54测试通过、layering通过、Gradle exit0/257.117秒，外层driver异常结束exit143，原因未证明。** session89249已终态、无遗留子进程；原result.json停在RUNNING，保持原始文件不伪写PASS。另存`completion-audit.json`逐个XML/摘要/固定source/log核验，标TESTS_PASS_WRAPPER_INTERRUPTED及publishable=false。不能说本批外层driver正常PASS，也不用为已有完整同源测试结果盲重跑；最终发布仍须正规fresh制品回执。
+- Web **bf6d870**同源正式定向`pricing-web-1` **51/51通过、13.064秒**。实际Vue/控制器浏览器回归在同目录`browser/result.json` **18检查/18截图/0异常，60.982秒**，1440/390/320三视口均覆盖原租约状态、首费清单、取消、过期重新报价、自部署200文首费/50文周期、方式不匹配禁确认与local确认请求；HTTP/身份是明确合成fixture，不是生产或真实资金验收。已查看320px不匹配截图，文字正常折行、无横溢，底部操作在既有面板滚动区；Chrome/Vite已退出。
+- 当前API/Web工作区均干净，Runtime源码未动，生产API/Runtime/李逵版本未变。磁盘剩余约179MB（普通盘），未清理未知包/备份，不转内存盘；最终打包前须按已有策略处理本任务可重建输出并保留包外证据。
+- 下一条主线动作：两种部署存量30天过渡的真实登记/首个调度、legacy规范ID保留实例重邀、真实自部署首次/重邀链路（不能把static已有实例当新建prepare）、生产DDL/ES/主机证书端点配置、最终固定制品/受控安装与真实Web/WS/扣费故障验收。**报价入口闭环不等于本轮总需求完成。** 当前没有在途构建或浏览器，用户无新增确认事项。

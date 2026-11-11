@@ -84,3 +84,7 @@ API候选 `71b8033dea9de91bdfcb470068e004b43d1e7bc1` / tree `bbe36b797a9c222fdba
 - cron、旧任务切换、关系移除/私有交接和发布尚未完成。上述完整条目不能据此全部勾选。
 
 准入候选c800400c3d的Agent租期门禁3项、授权54项、既有事项领取34项通过；同轮Chat源集编译失败，未执行派发/密议测试，失败记录保留。d06503d0c3已补现有测试辅助类及最近用户期限同事务登记/两个MySQL回归，尚未运行，不冒充最后候选已全面通过。
+
+
+### 2026-11-11 双模式收费入口候选验证
+API3fdfb9d724的54项覆盖两种mode共用真实HTTP信封/资金应用边界、缺省/null/free请求拒绝、50文套餐、原套餐续租、库存/主机类型变化、免费重整事务及lease.planId投影。Gradle257.117秒exit0/layering通过；外层driver exit143原因未明，原result保留，独立completion-audit核对全部XML及摘要，不宣称外层或发布通过。Webbf6d870定向51项及1440/390/320三视口18检查通过，包括报价类型不匹配禁确认、200文首费/50文周期及local确认字段；浏览器HTTP为合成fixture。证据：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/pricing-http-3/completion-audit.json`、`pricing-web-1/result.json`及`pricing-web-1/browser/result.json`。当前未迁移生产、未发布、未新增扣费，存量过渡/最终李逵全链仍待验收。

@@ -212,3 +212,12 @@ API候选新增`HostingControlChannel`，复用Spring `SslBundles`读取客户�
 已有静态实例的免费重整探测沿原已登记host发capabilities；它只需要该宿主管理现有实例，不要求提供新建模板。`template:null`返回的`available:false`继续表示不可新建，不再误拒绝已存在实例的管理。新建托管探测仍要求available=true，wire不增加兼容字段，后续关系/安装证明不放松。调度和业务服务使用同一个provider，remote不是第二套收费或重试逻辑。
 
 本地只读核对hostId为`cyf-unified-065bb566a2d82210`，仍为UDS；李逵为`selfhost-li159-118-935f9597`，运行PID306359且尚无hostingControlPath。此为2026-11-11本轮观察，不代表已部署候选。最终安装须明确配置local-host-id及对应远程TLS端点，不能沿旧空配置发布后声称可用。双端固定源码测试结果见acceptance；生产证书/端口和实际李逵验收均未执行。
+
+### 部署计价归属（2026-11-11，API 3fdfb9d724 / Web bf6d870，未发布）
+
+- 复用同一租费应用服务、账本和调度；平台托管使用既有 `agent-hosting-preview` 套餐，自行部署使用 `agent-self-hosted` 套餐，默认50文/2592000秒。主机的计价类型由运维可信 `agent.hosting-rent.control.self-hosted-host-ids` 指定，不由HTTP的mode、网络地址或UDS/mTLS传输类型决定；远程主机也可属于平台托管。
+- 初次报价在事务外取得真实库存和hostId，按可信主机类型冻结套餐、首次技能库存及周期价。确认时所选mode必须匹配冻结套餐；真实库存/host/部署类型变化只使尚未提交的报价失效，不预占、不创建关系。已经受理的资金操作仍按原key/报价重放，不因主机配置变化丢弃完成事实。
+- 续租沿用原租约不可变planId，取该套餐当前明确版本及价格，不重新探测主机。为保留 plan→binding→lease 的加锁顺序，先按scope/lease主键做一次非锁定套餐发现，然后复用原业务锁及资金事务；无全表扫描、轮询或新增计费引擎。已有技能首费不进入周期租金。
+- HTTP绑定入口两种mode统一委托收费应用服务，不再接受null/default/local直接创建免费关系；空值/缺少幂等键只拒绝该请求。原直接绑定Controller方法及其免费service依赖删除。租约只读投影新增原planId，资金记录和原操作hash不变。
+- Web两种接应方式共用租约面板，确认请求使用冻结报价/租约planId；首次报价的实际部署类型和用户所选方式不一致时明确提示并禁止确认，不静默改收另一价格。旧版持久化免费重整操作没有planId时，保留其原来唯一的server请求语义，不清除未知操作或重换key；这只保留已提交事实，不新增免费入口。旧useHallData直接绑定不发请求，要求进入报价确认。
+- cc72fe8362域服务/主机路由三个suite在`pricing-api-2`通过42项及layering（485.806秒），此前600秒超时保留FAIL。后继HTTP与Web候选的验证另见handoff；存量首次登记和最终发布仍未完成，不能仅凭控制/报价子链打开生产收费。
