@@ -1447,3 +1447,17 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 原安装器恢复固定app的旧1.3.99与原record/manifest，未恢复旧业务状态；新PID1963995，实际整次668.838秒含恢复。result保留FAIL/OWNED_RELEASE_TIME_LIMIT，bounded-abort.json记录延迟；前轮尝试终止已经自然结束的compare进程失败，未误杀其他进程。未再启动新尝试，后续需要明确单次安装窗口例外，并让监督入口真正约束安装器、留出恢复路径，不给业务请求加deadline。
 - 102验证制品和完整失败候选仍保留，可按精确manifest复用，不重新编译；现行有效备份保留。生产API原PID1884855仍在，production-ledger-audit-4一致性快照42账户/76交易/152分录、四类账本异常全0、可用3486文；不是空集合通过，没有额外扣款。
 - 01:10独立恢复核验：本机PID1963995三Agent connected/registered/ready均true，新ACK可见，recovered-health.json已保存并将current record更新为真实旧程序PID。最初读到connecting时未宣称恢复通过；复核后才记录。文档检查仍只报原三个退役delivery-status路径重现，无新的不可达当前文档；不把全量检查说成PASS。
+
+### 2026-11-12 01:29 等待安装例外期间：知识Provider与中心账本联合验证完成
+- 未收到本机单次20分钟安装例外，未再次安装、停止生产服务或扩大授权；上轮为实际进展而非空转。本轮独立完成此前未覆盖的真实Provider→Runtime维护→installation HTTP→API规范化→隔离MySQL中心账本链，不伪造生产租约或把用户会话送作测试。
+- live-knowledge-sql-3固定API87ccfef032（运行代码为原c7c0，后续仅迁移资源/文档）和Runtimebbf8db0，正式Gradle串行入口＋固定Java/Node测试overlay摘要。生产源码/版本未改，合成停机session文件、真实gpt-6-luna、真实installation/binding/原intent/FINISHING租约SQL与使用成本SQL；普通身份协作者及费率仍明确fixture。1项完整联合用例和validateLayering PASS，314.425秒，其中受限阶段279.355秒、真实集成35.067秒。
+- 实际提取557输入/80输出、隐私复核560输入/113输出（其中reasoning28含于output），两次Provider调用、两条平台attempt/四个revision，全部PRICED；待发送成本flush两次未再调用模型或新增版本，用户/事项归属行0、用户资金交易0。保留原始Provider回执与实际usage。测试价INPUT1/CACHED0.1/OUTPUT5元每百万token得到0.002082元，这是用于独立算式断言的**测试费率结果，不是生产费率/实际对账金额**；未更新线上单价。关闭原租约及撤销安装后的旧证据继续拒绝，原私有合成session仍保留，未假称实际生产清理。
+- acceptance-summary.json绑定完整结果、Provider摘要、中心账本证明和Node日志SHA；本轮测试终态PASS后才清理已停止的本任务合成MySQL data（原arrears-finishing-3、后复用为上述测试的engine文件），fixture-retirement.json保留来源/文件目录，原SQL源码、日志、报告、状态及生产备份均未删除。
+- 失败保持：live-knowledge-sql-1在included plugin build误用rootProject.project而失败，66.601秒，没有调用Provider；v2使用findProject仅作用于真实agent项目。attempt2因fail归因后未恢复targeted_verification，被原编排器在Gradle前拒绝11.946秒，未绕门禁；显式通过原transition恢复同Owner/精确源码后attempt3才运行。没有将这两次失败重标PASS或静默重复付费回合。
+- 李逵1.3.102的production-service-user-control-2再次以真实API UID987完成mTLS，错误owner/缺客户端证书拒绝，8项API固定目录检查通过。101→102实际源码差异仅private-material-cleanup、对应测试和包版本，不为未变化的议事链再建事项扣费；648原真实验收证据仍只声明原候选范围。
+
+### 2026-11-12 01:40 最终租费/调度定向验收完成
+- 接续原在途final-lifecycle-api-1，没有重复启动。API87ccfef032662f15c5c60a820403b8edb2f65c66/tree09697df29b5c7aac779ab5f3ecb1a53ac11f615e，7类64项、0失败/错误/跳过，validateLayering通过。完整441.611秒，受限阶段300.761秒、真实SQL/Redis集成140.843秒。相对生产c7c0仅独立migration-hosting-initial-fee-v1.sql与ops/schema/README.md差异，运行类未变。
+- 精确18项HostingRentRenewalMySqlTest覆盖重复续费一次扣款、余额增加唤醒/新租期、预占不可挪用、15天边界、并发停止/扣费锁序、两套餐过渡、首次附加费不带入后续、原安装/原租约交接以及慢GENERAL不能阻塞租费；另外46项为finishing/handover/admission/task settlement及runner/Redis协调。case名、XML摘要及阶段时间均由原driver核验，不推断生产HA或远程整链已验。
+- mysqld1981515已正常Shutdown complete并退出；回收本轮自有合成MySQL data约167MiB，fixture-retirement.json记录精确目录/文件，保留原日志/源码/SQL断言/XML，未删除制品或任何生产备份。首次清理前检查误匹配自身shell脚本文本而保守停止、未删除；改为核对/proc/exe确为mysqld及精确datadir后才清理。
+- 同步acceptance/tasks当前正文，取消“真实Provider尚未接中心账本”及笼统“最终租费/故障未测”的过时表述；完整关闭重邀的组合覆盖、未核实宿主及本机最终安装仍未完成。20分钟本机安装例外仍未获答复，未停止生产重试；未修改备份工具或删除既有有效备份。
