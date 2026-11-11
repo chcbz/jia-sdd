@@ -1,16 +1,16 @@
 # 验收范围
 
-## 当前提交状态（2026-11-11 22:28，API/Web已安装、四主体已接入，业务验收未完成）
+## 当前提交状态（2026-11-11 23:05，已登录真实验收，李逵原生执行配置缺口处理中）
 
-- **API生产**：`c7c0f2d78d4de51d4caed81cfe2caa1a6835b565` / `1.1.48-SNAPSHOT`，PID1860923，固定JAR SHA `9edc1650750a998a3b7e650b8d04c17ea9376e6d37d39399650daf0a1189dfd6`。原`api-final-1`146项、layering、fresh JAR通过，197.962秒；本次复用制品，无重复构建。原安装器实际installed、身份/摘要匹配、HEALTH=UP，监控已恢复。
-- **Web生产**：`c453e0898642b0aec80677df71c088f74563a349` / `1.16.134`。原`web-final-2`101通过/2原pending，177.303秒；本次原安装器32.002秒完成，613文件、30变更、256线上资源核验，record为online_verified。匿名真实桌面/移动浏览器均到达正常OAuth登录页，证书验证未关闭、无横向溢出；没有已登录业务验收。
+- **API生产**：`c7c0f2d78d4de51d4caed81cfe2caa1a6835b565` / `1.1.48-SNAPSHOT`，PID1884855（22:51仅报价配置重启），固定JAR SHA `9edc1650750a998a3b7e650b8d04c17ea9376e6d37d39399650daf0a1189dfd6`。原`api-final-1`146项、layering、fresh JAR通过，197.962秒；本次复用制品，无重复构建。原安装器实际installed、身份/摘要匹配、HEALTH=UP，监控已恢复。
+- **Web生产**：`c453e0898642b0aec80677df71c088f74563a349` / `1.16.134`。原`web-final-2`101通过/2原pending，177.303秒；本次原安装器32.002秒完成，613文件、30变更、256线上资源核验，record为online_verified。匿名真实桌面/移动浏览器均到达正常OAuth登录页，证书验证未关闭、无横向溢出；随后使用用户提供的账号走正常OAuth登录，已核对chcbz/用户5与李逵owner一致；真实桌面/390px移动个人中心及钱袋通过，可用3487文/预占1文，李逵模型gpt-6-luna。此为只读子集，不是资金全链通过。
 - **数据库**：实际停API写入后备份24个受影响表到`/home/isp/baks/task-scheduling-20261111-production/affected-tables.sql.gz`（174722字节，摘要在production-switch-1/result.json），原配置/发布记录同时保存。固定独立迁移资源`87ccfef032662f15c5c60a820403b8edb2f65c66`的11项SQL已执行，逐表字段与schema-rehearsal-1完全一致，迁移前后业务行数不变。ES两scope关键词映射此前已完成，未读写旧文档正文或猜测归属。
 - **实际免费接入**：吴用、林冲、卢俊义、李逵均已由正式维护CLI登记TRANSITION；实际cutoverAt固定`1794405723301`，30天租期不因后续重试改变。托管正常周期500文、自部署50文，周期2592000秒；两不可变套餐v1已登记。托管报价有效期300秒只属于托管报价，不改变事项报价无TTL合同。四租约ACTIVE、免费意图0文且无虚构报价/预占/扣款引用；交易总数仍74，没有新收费。原输入生产幂等重放13.131秒完成，独立回读同4租约/期限及交易总数不变（production-cutover-replay-1/readback.json）。扈三娘无已核实控制端点明确未接入，无安装关系不造事实。
 - **统一调度已激活**：稳定node-id `cyf-api-prod-01`，GENERAL2/CONTROL1、batch2，lease/recovery60秒、retry/owner-retry5秒。这是2CPU主机初始后台容量，不是业务请求deadline或性能门禁。真实数据库已观察8条cron注册、123条时点工作记录（持续变化，非固定数量合同）和两个租户用户续费期限；慢工作与资金混合链/故障接管仍须最终验收。生产Redis4.0.6单master/无副本，不冒充HA证明。
 - **Runtime**：本机及李逵均为`7985667d1d73d3843d9f86dbc94f410a8ca520bd` / 1.3.99 / bridge1.1.69，原237项通过。本轮补齐运维知识提取配置后，本机PID1866266、李逵PID364269；两次受控配置安装8.808/24.383秒，独立新心跳/ACK及控制验收45.271/35.700秒均通过。公共基线四主体清理前置只读通过。用户授权的李逵公共凭证提升为明确运维来源；知识路由仅从运维公共基线生成、使用gpt/gpt-6-luna，费用归PLATFORM，未复制整个HOME/私有设置，未执行真实提取、清理或收费模型调用。
 - **失败如实保留**：production-switch-1在迁移/接入成功后因新增全局client缩窄原OAuth允许集合而启动失败，89.792秒；原FAIL保留，forward-only未恢复不兼容旧版。删除该不该新增的限制，保留原tenant和多client准入后重试；过程中发现API服务用户读不到root-only TLS文件，已只给cyf-api四级目录穿越及三个确切文件只读ACL，未授予写入/列目录/世界访问。第二批实际安装成功，但外层因monitor lock busy记录FAIL/169.929秒；原记录未改，另行恢复监控并以实际record/PID/HEALTH与production-switch-observation-1核实安装成功。未重新迁移/发放或重建包。
 - **集成**：API独立SQL/docs HEAD87ccfef032、Web c453e08已FF合入本地和远端develop，ls-remote回读一致。实时只读云效source配置triggerEvents均为空，没有启动付费Run或改云端配置；原主工作区脏内容/分支及根gitlink保持不动。
-- **仍未完成**：授权账号登录后的真实Web/WS/资金验收、两部署完整生命周期及真实混合/故障链最终验收、真实Provider知识抽取/平台成本确认、扈三娘宿主核实及最终收口。当前只取得匿名登录页，没有可复用的授权登录会话/已定位的测试密码来源；不能伪造JWT或把synthetic HTTP组件回归说成真实用户验收。
+- **仍未完成**：授权账号登录后的真实Web/WS/资金验收、两部署完整生命周期及真实混合/故障链最终验收、真实Provider知识抽取/平台成本确认、扈三娘宿主核实及最终收口。登录障碍已解除，不再索要凭据。新建真实事项648（上线验收1111-LK）发现李逵缺operator报价路由；已按现有gpt/gpt-6-luna/standard补五类路由，仅配置重启68.370秒，原JAR不变、HEALTH UP、监控已恢复。原锁冲突尝试在任何配置写入前退出并保留。重新登录后李逵1文报价可选、确认承办一次，钱包可用3486文；bootstrap持久RETRY/BOUNTY_RUNTIME_AWAITING，未重复提交、未验收或取消。远端profile缺inputCarriers，通道ready不等于nativeExecution就绪；正在既有程序隔离预演原生配置，未改生产Runtime。不能将这个真实未完成链标PASS。
 
 证据根：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/`。主批次`production-switch-1/2`、`production-control-access-1`、`production-switch-observation-1`、`production-web-install-1`、`production-browser-entry-1`、`local-knowledge-route-1`、`likui-knowledge-route-1`、`component-integration-1`。历史测试/安装失败保持原件，详细时间与恢复见既有handoff。
 
