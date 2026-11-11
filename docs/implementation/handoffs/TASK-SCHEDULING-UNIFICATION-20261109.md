@@ -1468,3 +1468,23 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 只读核实扈三娘仍offline，原host chc-223-6c3ee548-aab2-48a1-8ce1-e47d40cdab54未变，endpoint为wss平台api.chaoyoufan.cn，不是宿主控制端点；证据husanniang-host-observation-1精确限定主体，未查询私有会话或凭据、未将其错误接入本机/李逵。实际纳入仍需要可管理宿主的信息。
 - 停止本任务可选的大目录du扫描，避免无必要磁盘遍历；没有删除任何文件。测试退出后只回收本轮正常停止的合成MySQL data，fixture-retirement.json保留精确清单；日志/SQL/源码/XML/制品/有效备份保留。没有正在运行的本轮构建/安装。
 - 修正责任spec仍写“尚未上线”的过时总述：准确区分API/Web/调度已安装与本机Runtime/整体交付未完成；历史基线标明历史，不改写原测试/安装结果。
+
+### 2026-11-12 自部署资金/重邀组合补测范围（实施中）
+- Owner仍task-scheduling-owner，复用干净API工作区task-scheduling-api-next；本地/远端develop只读核对均87ccfef032。目标仅补原真实SQL/Runtime交接用例的50文套餐分支，不改应用实现/接口/Runtime版本或生产状态，不重建发布应用包。
+- 沿既有HostingRentRenewalMySqlTest抽取同一实际交接过程，两测试分别用可信HostingControlRemoteProperties.selfHostedHostIds选择500/50文；报价、预占/捕获、旧关系关闭、新用户携保留技能重邀、周期金额不含首次技能费使用真实服务/SQL。原身份目录/executor/provider fixture及本地UDS边界保留并注明；静态adopt和mTLS已由独立实际适配器测试覆盖，不把这个测试说成远程生产关停。
+- 接口规范api/docs/interface-standard.md v1.4、RB-1及根分层原则保持；实际修改仅测试，沿原编排器运行这两个精确方法与layering，普通磁盘、单次600秒受限阶段及真实集成分开记时。
+
+### 2026-11-12 02:09 自部署组合首次失败、空间归因与重测
+- 测试候选fdc0e472246f791368edda72d9e00f20f6f21edd仅改HostingRentRenewalMySqlTest，500/50文共用真实交接helper，确认mode来自被断言的服务端plan；无业务实现/接口变化。selfhost-final-api-1实际FAIL/466.437秒，2项均失败，不改写此前final-closure-api-1在原候选的通过。
+- 真实根盘ENOSPC：隔离MySQL日志明确Disk is full并崩溃，Gradle cache/result写入失败；Runtime出现NOT_RUNNING及APP_SERVER_BINARY_UNTRUSTED。空间耗尽已证实，后两项在首次结果中不单独猜为产品缺陷或声称已解决。原fixture两case共用日志会覆盖前例，d5754586f0仅改为按plan保留两份独立日志；没有放宽传输窗口/身份/资金断言。
+- 先按原fail登记归因，未盲重试。停止的本轮合成MySQL data约179MiB回收，原crash日志/源码/XML保留。final-lifecycle-api-1、final-closure-api-1、live-knowledge-sql-3、hosting-position-final-1、api-final-1、selfhost-final-api-1仅已终态且无进程引用的classes目录回收，目录内容摘要/数量及结果SHA在各compiled-intermediate-retirement.json；正式JAR/包、源码、报告、日志和所有有效生产备份未删。首次记录逐文件清单写盘ENOSPC，未删除任何目录；后改用每目录内容摘要的小receipt后才删除，原空文件不冒充完整证据。
+- 为不继续挤占生产磁盘，对12个本任务已停止的历史Runtime源码展开副本做**无损压缩**，逐包tar --compare及SHA通过才移除展开副本，完整源码/依赖字节仍在source-snapshot-compaction-1，原测试/日志/摘要不变；没有压缩当前runtime-native102-source-1或他人工作区、包/备份。净回收约225MB，原路径需要按记录从同名归档显式恢复后才能运行历史driver。生产API健康UP、本机Runtime仍原PID1963995/active，未重启，production-health-after-test-enospc.json记录只读核验。
+- 余量从原批次开始约284MiB提高至重试前574MiB；该数为本轮观测而非新增固定资源门禁。通过原transition固定d575候选恢复同Owner，selfhost-final-api-2在途，额外记录磁盘余量起点/最低值而不向应用加deadline。20分钟生产安装例外仍未获答复，未进行生产升级。
+
+### 2026-11-12 02:21 两套餐完整费用/重邀组合通过，测试源码已集成
+- selfhost-final-api-2固定d5754586f01d93ade54be6294ab37fb1b13b2467/tree876bb31a1fd6bc698b1f92db40742c9aa0df6cc7与Runtimebbf，2项0失败/错误/跳过、layering通过，294.435秒；受限205.741秒，真实SQL/Runtime集成88.018秒，尾部依赖复核等计入总耗时。原source/dependency摘要核对保持不变；起始可用604700672字节，最低371716096，未再出现ENOSPC。第一次失败及其MySQL崩溃/Runtime错误原件保留，没有在新证据上伪造原错误细分根因。
+- 自部署50文首次→停止/清理/关系关闭/原安装撤销→保留1公共技能，新用户100文重邀（50周期+50首次技能）、新租约amountWen=50，托管对应500/550/500；两者同一真实服务/SQL/UDS/Runtime路径，新用户ACTIVE、同一实例公开技能保留、私有session不残留、原identity历史不变，旧完成重放不会解绑新关系，捕获次数2、账目借贷平衡。应用实现、接口、Runtime和时限均未改；账户目录/executor/provider仍明确fixture，静态adopt/mTLS另有真实适配器证据，不称本轮操作过真实用户移除/付款。
+- selfhost-test-integration-1重新只读查询实际Flow YAML source triggerEvents=[]，git远端develop仍87ccf后才非强制push d575并ls-remote回读；本地未被worktree检出的develop以旧SHA条件FF更新，原脏主工作区/根gitlink不动。相对87ccf只有原测试文件变更，生产JAR仍c7c0，没有付费Run或应用重建/安装。
+- 本轮测试的合成MySQL正常退出后回收data，fixture-retirement.json留证。另将4个无.git且无进程引用的历史源码展开副本（3 Runtime及closure-api-source-5）无损压缩到source-snapshot-compaction-2；均tar --compare/SHA通过才移除展开副本，共约98MB。两轮共16份历史源码完整保存，不压缩当前runtime-native102-source-1或生产/他人源码。
+- 对10个本任务已终态批次仅回收build/jia/*/libs中的非starter/非kit/非result.artifact模块编译JAR，逐文件SHA/原结果SHA在module-intermediate-retirement.json；正式应用JAR、最终包、源码、报告和日志仍保留，不绕24小时/最近两批的最终包保留政策。02:20根盘782MiB可用；安装时仍须按实际新备份/暂存输入重新核对，不能以此承诺始终足够。
+- 两套餐组合缺口已关闭；本机1.3.102安装及验收、扈三娘可管理宿主接入和最终收口仍待完成。20分钟单次安装例外未获答复；本轮没有停止生产服务，真实健康UP/原PID1963995已留证。
