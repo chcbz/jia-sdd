@@ -1,9 +1,9 @@
 # 验收范围
 
-## 当前提交状态（2026-11-11 21:07，真实控制通道/主体预演通过、整体未交付）
+## 当前提交状态（2026-11-11 21:15，ES映射已迁移、控制通道/主体预演通过、整体未交付）
 
 - 正式API制品c7c0f2d78d/1.1.48-SNAPSHOT：api-final-1，146项及layering通过，197.962秒。Web c453e08/1.16.134：web-final-2，101通过/2原pending，177.303秒；生产构建和包摘要通过，尚未安装。
-- 额外迁移资源87ccfef032仅补首次费用报价5列升级SQL，不在上述c7c0包中，独立维护来源明确区分。schema-rehearsal-1按实际生产SHOW CREATE空结构执行11项迁移，16.597秒通过，报价结构与fresh DDL一致；生产报价表只读观察为0行，实际执行前须停writer后复核。所有生产迁移仍未执行。
+- 额外迁移资源87ccfef032仅补首次费用报价5列升级SQL，不在上述c7c0包中，独立维护来源明确区分。schema-rehearsal-1按实际生产SHOW CREATE空结构执行11项迁移，16.597秒通过，报价结构与fresh DDL一致；生产报价表只读观察为0行，实际执行前须停writer后复核。生产SQL迁移仍未执行；ES映射状态见下。
 
 ### 已完成的前置链路（原19:48记录）
 
@@ -13,7 +13,9 @@
 - Web `c453e0898642b0aec80677df71c088f74563a349`：真实Vue/浏览器24项通过，含桌面/移动/窄屏、50/500文TRANSITION、无虚构付款和刷新不写入；HTTP/身份为合成fixture。最终Web制品见上；仍没有生产UI验收。
 - 生产切换只读预演：`production-cutover-preview-1`使用已验证c7c0 JAR，4个真实安装主体身份/路由通过，25.140秒；输入及receipt固定，未apply/建租约/扣款。扈三娘无已验证控制端点明确排除，无安装关系不造租约。API客户端证书已私有安装、路由配置仍暂存未激活。
 - 本机3个静态Agent公共基线已从运维来源生成并激活，真实HOME清理前置检查只读通过、没有执行清理。李逵的模型key不同于平台公共key，尚无独立公共基线，须确认可否跨用户保留；当前不复制旧HOME凭证或启用该自动交接。
-- **仍未完成：** 两种部署完整生命周期/真实混合链的最终验收、必要生产SQL/ES和API调度/收费/路由配置、扈三娘宿主核实、API/Web受控安装、真实Web/WS/资金/故障验收及集成收口。未执行生产租费迁移、实际扣费或付费模型turn。入口可运行和李逵在线不是整体上线。
+- ES生产迁移`production-memory-mapping-1`已完成：通过配置别名chat_memory对chat_memory_v2增加tenant_id/client_id keyword，固定87ccf资源SHA；回读确认原有映射不变，没有读写历史正文、猜测归属或批量回填，API未重启。预检索引246条文档不代表均已携带新scope。
+- 生产安装输入`production-release-preparation-1`已固定：原正式API/Web制品摘要重验、原生安装描述和11个已预演SQL资源准备完成；无构建重跑/SQL执行/安装。远端develop重新fetch，API/Web均包含全部远端提交；尚未合入/推送。
+- **仍未完成：** 两种部署完整生命周期/真实混合链的最终验收、必要生产SQL和API调度/收费/路由配置、扈三娘宿主核实、API/Web受控安装、真实Web/WS/资金/故障验收及集成收口。未执行生产租费迁移、实际扣费或付费模型turn。入口可运行和李逵在线不是整体上线。
 
 证据根：`/home/isp/state/cyf-local-build/tasks/task-scheduling-20261109/`；切换命令回执在`cutover-api-3/operator-fixture/`，发布在`likui-release-attempt-6/`，浏览器在`web-transition-browser-2/`。具体此前失败及后续修复见既有handoff，不将历史FAIL改写为PASS。
 

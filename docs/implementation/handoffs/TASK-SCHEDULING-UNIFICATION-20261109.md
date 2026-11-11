@@ -1369,3 +1369,11 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 李逵同样没有publicFilesPath；其当前模型API key摘要与本机运维公共provider不同。远端运维目录只有profile/manifest/host/技能及workspace配置，unified.conf只有API地址与workspace policy路径，没有找到该key独立公共基线。未读取/转发明文密钥，未复制旧HOME auth为公共来源，未替换成平台key。
 - 需要用户确认的单一归属问题：李逵当前模型API key是否属于可长期共用的Agent公共凭证，允许解除原用户关系后继续保留供下一位用户使用？若属私有，不可将其加入公共基线，需另指定公开运行凭证来源；不要用户在聊天发送key。确认前保持当前原凭证及业务不变，不启用可能泄露其凭证的自动交接。
 - 其他未完成项仍是生产SQL/ES/套餐和API配置、4主体实际apply、API/Web安装、真实业务/资金验收、扈三娘宿主核实及集成收口。production-cutover-preview-1仅preview、没有迁移/赠送/扣款。当前本任务无在途构建/发布/验收进程。docs全量检查仍因3个其他专题退役路径重现失败，control-activation-doc-check.log保留；本任务diff检查通过。
+
+### 2026-11-11 21:15 独立上线前置继续推进（凭证确认未收到）
+- 上轮属于真实进展：Runtime公共基线及通道已生效；本轮不将自动续行视作用户已回答李逵key归属，不复制该凭证为公共基线、不启用其交接。
+- 生产Memory索引只读预检：服务账号经chat_memory别名可访问，直接chat_memory_v2路径GET mapping被403拒绝；原preflight-1失败保留，未换管理员或扩大权限。preflight-2沿正式配置别名查询成功：实际chat_memory_v2、246条文档、缺tenant_id/client_id。
+- `production-memory-mapping-1`在既有API发布锁下执行固定87ccf资源chat-memory-scope-mapping-v1.json（SHA256 c7ed585da6b79f67142ab8dc2109331638d202caa16bfbf942c73dffef11642f），通过正式别名PUT并回读APPLIED_VERIFIED，0.084秒。完整旧mapping/alias、候选/服务端ack/新mapping均保留；两个keyword之外映射逐项不变。没有读写文档正文、猜测旧tenant/client、历史回填或重启API。增量字段采用前向兼容，不删除原索引或声称可原地删回mapping字段。
+- `production-release-preparation-1`核对原API/Web正式包SHA及实际已安装来源后，按原native installer契约生成2份安装描述；从87ccf Git blob逐项核对11个SQL与真实结构预演SHA并固定副本/顺序。仅准备，未运行SQL/修改生产配置/安装应用；执行前仍必须重核原JAR/config/record/helpers和真实停写备份，不绕锁、不重复构建。
+- 重新fetch origin/develop后API候选领先157且落后0、Web领先12且落后0，两工作区clean；精确远端SHA见integration-observation.json。未切换或覆盖主工作区无关dirty，未push/触发Flow。仅凭包含远端不能声称已合入develop。
+- 当前没有本任务活跃构建/发布/查询进程。下一步仍需明确李逵key能否跨用户保留，确认后完成其运维公共基线；其余待办保持acceptance首节，不把ES完成当SQL/资金闭环完成。
