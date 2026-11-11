@@ -1405,3 +1405,23 @@ origin/develop:wx/jia-wx-service/src/main/java/cn/jia/wx/schedule/WxSchedule.jav
 - 正常重新登录后同事项李逵报价1文，可选择并确认一次；钱包可用3486。页面停留“正在准备议事”，只查询原发送结果，不补发。只读DB：648/COMMITTED，bootstrap RETRY、BOUNTY_RUNTIME_AWAITING；调度已实际领取，不是调度未触发。likui-business-diagnostic-1。
 - 根因进一步定位：李逵profile有workspaceFileApiOrigin/root和typedDeliberation，但没有inputCarriers，代码因此不创建TypedInspectionProfileRuntime，也无nativeExecution声明。远端channel connected/registered/ready不能证明正式议事原生执行可用；本轮明确发现此原上线缺口，不绕过API就绪条件。使用现有1.3.99程序、真实isp身份在专用普通磁盘目录预演原生隔离配置，不改生产HOME或profile、不调用付费模型。预演结果后继续修复并完成原事项，不换林冲规避。
 - 仍需完整真实资金/租期生命周期、Provider公共知识费用、扈三娘控制端点与最终收口。当前目标active，未完整交付。
+
+### 2026-11-11 23:43 李逵rootless原生执行修复与独立预演
+- 真实isp隔离预演进一步定位：原namespace进入仅net、不进入其所属user namespace，非root服务下nft/slirp失败；进入holder的user namespace也不正确，因为bwrap存在嵌套user namespace。采用已固定netns FD经NS_GET_USERNS取得真实owner FD，再由nsenter preserve-credentials进入：nft/probe同时进入netns，slirp仅进入owner user namespace并保留原mount隔离。没有升root、sudo运行bridge、关闭网络规则或复制平台密钥；stdin EPIPE转为受控失败而非进程崩溃。
+- Runtime候选7442c54为实现，d07006cbbffe66716a3321f5c7345edb07c6f545/tree38f0d89cedb670aac92143f2b75d533f99b4f7bb仅再修测试fixture私有mode；版本1.3.100/bridge1.1.70。精确实现远端isp原生探测65秒及本机root22.607秒均PASS，没有付费模型回合；材料认证不伪造。原失败预演全部保留于likui-business-diagnostic-1。
+- runtime-rootless-tests-1失败：导出源码不完整导致3项失败，固定历史fixture归档mode644导致1项失败；没有产包。完整精确源码导出及fixture临时0600后runtime-rootless-tests-2为363项中357PASS、6显式opt-in跳过、0FAIL，134.747秒；跳过项不写为通过，真实root/isp预演另列。随后runtime-rootless-package-2打包并核实原依赖锁/工具链字节，整次测试+打包255.809秒，包SHA a3541a42b7841818d7a62fd18846468260415a70510dfe4d55be2284dff1c41a。
+- 远端磁盘空间不足以重复展开不可变依赖，准备阶段改复用已经逐项manifest核对的同盘依赖硬链接，候选业务代码仍来自完整新包；最终manifest须完全相等。likui-rootless-release-1转包232.080秒，准备因tar内部node硬链接引用在复用node建立前出现而FAIL，总285.129秒，未停服务/未改线上配置。retry2先建立已验证依赖再解包；保留原失败脚本与日志，仅删除本次未激活的失败解包目录，不删备份或业务状态，不重复传包/测试。
+- 新profile两处inspection目录计划置于现有agent.stateRoot之下，已核对private-state-cleanup递归清理实际覆盖，不添加顶层兼容字段、不改公共workspace/HOME位置。源码与配置验收、安装与真实事项648完成仍分别记账；本节不宣称已部署或资金闭环通过。
+- fetch发现Runtime origin/develop有3个并行的原生就绪解耦提交（最新92df9eb），与本任务候选分叉3/78；未覆盖/强推，后续集成须保留这组修改并核对实际依赖。当前工作区其他未提交内容完整保留。
+
+### 2026-11-11 23:57 安装验证与并行原生就绪改动集成
+- likui-rootless-release-2复用原已验证包，准备51.606秒、整次安装92.187秒；真实备份/锁/停写/固定app切换后远端李逵PID379225，Runtime1.3.100/bridge1.1.70。精确新profile摘要ee0c7972195c014007bad78a9b4bf5a701785bd949cb33813fe299f4d84f50fc。原host配置不变；acceptance中的configUnchanged仅核对host文件，不表示profile未变。独立新channel ACK通过，未声明付费模型回合已完成。
+- 进一步读取真实PID启动日志：材料启动在TYPED_INSPECTION_EGRESS_OWNER_LOST失败，native-execution-measure瞬时返回，仍未发布原生能力；channel通过不代表648执行通过。之前独立预演直接调用native测量可通过，但生产启动仍被材料失败阻断。该差异证据改变下一步：合并已存在的独立原生就绪实现，不再围绕inputCarriers补临时启动逻辑。
+- 主工作区有其他任务脏修改且incoming修改同一文档，因此只新增一个实际集成冲突隔离worktree `/home/isp/wsps/chcbz/isp-install-native-integration`，显式继承CYF根规则、RB-1和接口规范；不替换原工作区。本任务d070与远端92df9eb合并，保留三项原生就绪工作、rootless网络修复及本任务资金/生命周期全部历史。冲突主要为import/版本/方法拆分；dispose失败保留所有权的已验证逻辑迁入提取后的IsolatedEngineProfileRuntime，并保留native测量等待。
+- 集成候选fb8db72dbb2a7770381ad52210f888ff23a4f47f/tree95043a2bfb7c70203872c7f119c07a020e097769，1.3.101/bridge1.1.71，当前未发布、未push。runtime-native-integration-tests-1在测（新增native-readiness/materials/model/browser/image/shutdown/registration消费者）。源码远端独立预演第一轮因把.sandbox-toolchain作为symlink而被NATIVE_TOOLCHAIN_IMAGE_UNSAFE拒绝；未改变安全校验。第二轮采用已安装且摘要不变的真实工具链初始化实现，测候选原生owner/启动入口，结果另记。没有重复创建648、追加扣费、清理会话或假造完成事实。
+
+### 2026-11-12 00:08 集成候选真实探测通过，发布在途
+- fb8db72候选扩大消费者回归408项中398PASS、10显式opt-in跳过、0FAIL，187.101秒。runtime-native-integration-package-1复用不变依赖、普通磁盘硬链接并前后核对生产供体manifest；从本批测试开始保守计入等待到包完成542.733秒，未按打包阶段重置600秒。完整包293080746字节，SHA6f42be589a5c276535863b3eded537280b65eefd083d609dee108997b34f36b2，manifest0f673299aab17fd0f8f14736082ac29a11763331281ac7e2b42c868f467988f4。
+- 同候选createNativeExecutionRuntime→ensureNativeExecutionProfile实际isp预演native101-preflight-2 PASS，32.429秒；本机完整新payload的root预演PASS，55.020秒，均能声明含PDF的8类输出及SCRIPT，dispose成功、无付费回合/生产配置改变。前轮symlink工具链被正确拒绝的失败保留。李逵计划删除本任务上轮新增inputCarriers，改独立native provider及现有私有state内目录；不假造材料认证，也不需要材料认证才接正式事项。
+- likui-native101-release-1正在复用完整包发布，转包252.172秒，后续准备/安装/真实业务状态另记；不能把在途当成功。发布前只读发现上轮record引用的20261111-likui-runtime13100备份目录已不存在，整个远端backup根为空（当前app与record仍为d070/PID379225）；本任务未删除这些备份，原因未核实，不宣称历史回退仍可用。本次安装仍须按原锁/停写创建新的真实状态和程序备份，不依赖缺失旧备份。
+- 集成真实依赖扫描另发现：新增nativeExecutionRootDir/StateRoot若运维配置在agent.stateRoot之外，原private-material-cleanup未覆盖。当前李逵候选已固定两目录在state内，现行state递归清理覆盖；但长期配置能力必须齐全。已在同一材料清理责任层补两字段，扩展既有aggregate用例同时验证原生目录删除、公共repo及另一Agent保留；没有新框架/逐层校验。后续源码bbf8db0 / Runtime1.3.102（bridge不变1.1.71）尚未产包/部署；定向9项通过记录在native-root-cleanup-regression-3，首轮缺worktree依赖失败保留，未当业务失败。不得用101已测包宣称102已发布。
