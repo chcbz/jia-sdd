@@ -4,7 +4,7 @@ The workspace root is the `jia-sdd` coordinating repository. It records the SDD 
 
 - `api/` is the backend Git submodule (`https://gitee.com/chcbz/jia.git`, tracking `develop`).
 - `web/` is the frontend Git submodule (`https://gitee.com/chcbz/cyf-web-kit.git`, tracking `develop`).
-- The root remote is `https://gitee.com/chcbz/jia-sdd.git` on `master`.
+- The root remote is `https://gitee.com/chcbz/jia-sdd.git` on `develop` (verified 2026-11-12).
 
 Use the root repository to inspect or commit an integrated delivery baseline:
 
