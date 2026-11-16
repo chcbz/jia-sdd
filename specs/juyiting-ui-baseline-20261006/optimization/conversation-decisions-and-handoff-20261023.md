@@ -95,3 +95,25 @@ API安装记录JAR SHA256：`0bb2752967dcd7d03a15f5649ee22975cd3baee906d325c728d
 其他会话新增报告包括：存储白名单移除及15项上传回读、外单与“验收此版”闭环、AVIF任务512、独立PDF技能任务514闭环、Runtime固定app目录迁移完成，以及API启动优化仍未达60秒。上述来源与版本边界见跨会话摘要；不覆盖本会话PDF暂停、不重标本会话旧实测，也不将历史报告冒充当前在线核验。先核对新证据再排期，避免重复修已完成项。
 
 删除使用官方app-server thread/delete，实际结果看全项目入口的deletion-status.json；本文件前文“尚未删除”仅为初次整理时状态。当前会话/执行中记录保护，未直接修改SQLite或删除认证配置。
+
+## 2026-11-16 微信资料导入实施（WECHAT-MATERIAL-20261116）
+
+- Owner：当前任务。范围：首页选择资料、既有议事附件区、配套小程序原生选择/上传及身份隔离恢复；保留系统文件/拍照/相册。议事入口为拍照、相册、微信、资料，纯文字44px。
+- 非目标：自动发送/执行、后端新接口、数据库、发布/部署。其他编辑器未具备现场恢复上下文时不显示原生导入入口。
+- 源码：Web develop `60ddd8acfa75bb07db2d7b362072fb398c4f5e77`，2026-11-16重新查询远端develop相同；原型脏修改属于本任务，其他仓库/根文档既有修改保留。
+- 契约：`api/docs/interface-standard.md` v1.2（2026-10-14），protocolVersion=1；H5->native `file.import`，仅内存传输bearer；原生上传固定部署配置HTTPS地址，复用现有workspace multipart/幂等契约。URL只放随机关联号、固定文件版本引用及结果状态，不放token、正文、文件名或内容。
+- 生命周期：redirectTo销毁原web-view交接；H5在跳转前保存身份/来源/草稿/资料选择快照，返回后先重新鉴权恢复原会话，再逐项授权读取固定版本，重新打开选择器供用户确认。失败不创建替代会话、不自动关联/发送。原生不默认打开选择器，用户主动选择；同一文件失败重试使用原幂等键，未知结果不自动重新上传。
+- 原生权威目录：`web/miniprogram/juyiting`；开发者工具镜像 `C:/Users/Think/WeChatProjects/juyiting`，同步前备份并逐文件核对，不覆盖private/project配置及无关文件。
+- 最早定向诊断：新桥接/原生工厂VM测试、下载桥接回归、Vue SFC编译和相关组件行为测试。仅本机诊断；正式验收Flow4403172及微信开发者工具/真机独立记录。
+- 状态：实施中，未上传/发布小程序、未部署H5。
+
+### 本轮实施与交接结果
+
+- H5入口/作用域恢复与原生文件选择/上传已写入候选源码，API未修改。开发者工具镜像已备份合并同步，36个运行文件SHA-256一致、14个变动，两个project配置未改。
+- 本机诊断新增21用例通过；镜像+workspace/下载/方向/资料/输入区组合236通过。大组件组合126通过、1个招募旧测试失败，HEAD测试同样复现，未改招募实现。曾遇Windows file URL pathname导致旧草稿测试无法打开源码，测试夹具改用fileURLToPath后已覆盖通过。
+- 证据：`C:/Users/Think/.codex/visualizations/2026/11/16/01a1e25b-e096-7030-8856-2942c682486f/wechat-material-implementation/`，含focused-regression、mirror-and-workspace-regression、component-regression、baseline-unrelated-recruit、source-restore日志和mirror-sync.json。
+- 未提交/push、未触发Flow、未生产构建部署、未上传/发布小程序、未真实聊天文件上传。下一步是核对uploadFile合法域名、在开发者工具及真机按README矩阵验证，再固定源码走正式Flow/配套发布。
+
+### 2026-11-16 源码推送交接
+
+用户授权先提交并推送，由用户自行部署。本次 Web develop `03d4712b1af8c39f6c1d8809bc29c5f60ee97938` 已普通推送，远端SHA一致，Web工作区干净；上节“未提交/push”为实施阶段结束时状态，不代表本次交接结果。Root本地develop落后远端92提交，因此以远端 `88b0042e1192517de89628a9a3330fe814b57626` 建隔离工作区，仅携带本任务三处说明与Web引用；不携带旧下载说明、API引用、无关报告或临时文件，不覆盖原工作区脏修改。本次不触发Flow、不部署H5、不上传/发布小程序；API、Client无本次提交。开发者工具镜像已配套同步，仍需检查uploadFile合法域名及完成微信平台验收。
